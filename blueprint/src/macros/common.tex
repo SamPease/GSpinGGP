@@ -1,0 +1,42 @@
+% In this file you should put all LaTeX macros and settings to be used both by
+% the pdf version and the web version.
+% This should be most of your macros.
+
+% The theorem-like environments defined below are those that appear by default
+% in the dependency graph. See the README of leanblueprint if you need help to
+% customize this. 
+% The configuration below use the theorem counter for all those environments
+% (this is what the [theorem] arguments mean) and never resets it.
+% If you want for instance to number them within chapters then you can add
+% [chapter] at the end of the next line.
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+
+% Results assumed from the literature (Lean `axiom`s): their own environment, so that
+% they are visibly distinct from proved and from unproved (sorry) steps.
+\newtheorem{literature}[theorem]{Literature}
+\newcommand{\assumedfrom}[1]{\emph{Assumed from:} #1.}
+
+% Notation
+\newcommand{\GSpin}{\mathrm{GSpin}}
+\newcommand{\gspin}{\mathfrak{gspin}}
+\newcommand{\SO}{\mathrm{SO}}
+\newcommand{\Spin}{\mathrm{Spin}}
+\newcommand{\Hom}{\mathrm{Hom}}
+\newcommand{\Ad}{\mathrm{Ad}}
+\newcommand{\Supp}{\mathrm{Supp}}
+\newcommand{\Fbar}{\overline{F}}
+\newcommand{\Nil}{\mathrm{Nil}}
+\newcommand{\Nilreg}{\mathrm{Nil}_{\mathrm{reg}}}
+\newcommand{\Greg}{G_{\mathrm{reg}}}
+\newcommand{\ellreg}{G_{\mathrm{ell,reg}}}
+\newcommand{\mgeom}{m_{\mathrm{geom}}}
+\newcommand{\QC}{\mathrm{QC}}
+\newcommand{\scusp}{\mathcal{C}_{\mathrm{scusp}}}
+\newcommand{\Rind}{R_{\mathrm{ind}}}
+\newcommand{\Rtemp}{R_{\mathrm{temp}}}

@@ -11,7 +11,9 @@ unitary groups (Astérisque 418) and Waldspurger's and Luo's work on special ort
 
 **This is a work in progress.** The main theorem is stated and its proof is assembled, but it still
 depends on unproved steps (`sorry`) and on results from the literature that are assumed as axioms.
-See [Status](#status).
+See [Status](#status), and the **[blueprint](https://sampease.github.io/GSpinGGP/)**, whose
+[dependency graph](https://sampease.github.io/GSpinGGP/blueprint/dep_graph_document.html) shows
+every step of the proof coloured by formalization status.
 
 ## The main theorem
 

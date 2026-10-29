@@ -1,0 +1,128 @@
+% Generated from the Lean dependency data; see the comment at the top of content.tex.
+\chapter{Inner forms and the main theorem}
+\label{chap:mainthm}
+Thesis \S6.1--6.4. The Langlands parameter is not modelled: the main theorem is proved for every
+family of packets satisfying the stability, transfer and genericity hypotheses, which is all the proof
+uses.
+
+\section{Inner forms, stability and packets}
+\begin{definition}[Inner twists]
+\label{InnerTwist}
+\lean{GSpinGGP.InnerTwist}
+\leanok
+An inner twist of $\GSpin(W)$: a quadratic space $W'$ on $F^m$ of the same dimension and discriminant
+with a fixed $\Fbar$-isometry $\varphi:W_{\Fbar}\simeq W'_{\Fbar}$ such that
+$\varphi^{-1}\circ\sigma(\varphi)\in\SO(W)(\Fbar)$ for all $\sigma$. It gives
+$\psi_\alpha=C(\varphi)\times C(\varphi\oplus\mathrm{id}_Z):G_{\Fbar}\simeq G_{\alpha,\Fbar}$.
+This differs from Thesis \S6.2: the inner forms are indexed by $H^1(F,\SO(W))$, not $H^1(F,\mathrm{PGSpin}(W))$.
+\end{definition}
+
+\begin{definition}[Stable conjugacy across inner forms]
+\label{StablyConjG}
+\lean{GSpinGGP.GGPData.StablyConjG}
+\leanok
+\uses{G, GGPData, GSpin, InnerTwist}
+$x\in G(F)$ and $y\in G_\alpha(F)$ are stably conjugate if $y=\psi_\alpha(g x g^{-1})$ for some
+$g\in G(\Fbar)$, componentwise.
+\end{definition}
+
+\begin{definition}[The Kottwitz sign]
+\label{kottwitzSign}
+\lean{GSpinGGP.kottwitzSign}
+\leanok
+\uses{GGPData, InnerTwist}
+$e(G_\alpha) = (-1)^{\mathrm{rk}_F G-\mathrm{rk}_F G_\alpha}=(-1)^{w(W)+w(W_\alpha)+w(V)+w(V_\alpha)}$
+(the $p$-adic formula; that it equals Kottwitz's cohomological sign is \cite{Kot83}).
+\end{definition}
+
+\begin{definition}[Systems of inner forms]
+\label{InnerFormSystem}
+\lean{GSpinGGP.InnerFormSystem}
+\leanok
+\uses{GGPData, InnerTwist}
+An index set $\{\alpha\}$ with inner twists $(W_\alpha,\varphi_\alpha)$, $\alpha=1$ the trivial one, such that every
+nondegenerate form on $F^m$ with the discriminant of $W$ is isometric to exactly one $W_\alpha$; so the index
+set is $H^1(F,\SO(W))=H^1(F,H/Z_{G,H})$. $(G_\alpha,H_\alpha,\xi_\alpha)$ is the GGP triple of
+$(W_\alpha,V_\alpha=W_\alpha\oplus Z)$. This differs from Thesis \S6.2: the inner forms are indexed by
+$H^1(F,\SO(W))$, not $H^1(F,\mathrm{PGSpin}(W))$.
+\end{definition}
+
+\begin{definition}[Stable functions]
+\label{IsStableFn}
+\lean{GSpinGGP.IsStableFn}
+\leanok
+\uses{G, GGPData, GSpin, InnerTwist, gspin}
+(STAB) $\theta$ is constant on stable conjugacy classes of regular semisimple elements (Thesis \S6.1).
+\end{definition}
+
+\begin{definition}[Tempered packets on the inner forms]
+\label{TemperedPacketFamily}
+\lean{GSpinGGP.TemperedPacketFamily}
+\leanok
+\uses{G, GGPData, GSpin, InnerFormSystem, InnerTwist, IsStableFn, IsTempered, StablyConjG, UnitaryRep, WhittakerDatum, charG, gspin, kottwitzSign}
+Finite families $\Pi_\alpha$ of pairwise inequivalent irreducible tempered representations of $G_\alpha(F)$
+with central characters trivial on $Z_{G,H}(F)$, such that, with $\theta_\alpha=\sum_{\pi\in\Pi_\alpha}\theta_\pi$
+(Thesis \S6.3):
+(STAB) each $\theta_\alpha$ is stable;
+(TRANS) $\theta_\alpha(y)=e(G_\alpha)\theta_1(x)$ for stably conjugate regular $x\in G(F)$, $y\in G_\alpha(F)$;
+(WHITT) for every Whittaker datum of $G$ exactly one member of $\Pi_1$ has a Whittaker model.
+\end{definition}
+
+\section{The main theorem}
+\begin{definition}[The multiplicity formula (statement)]
+\label{MultiplicityFormula}
+\lean{GSpinGGP.MultiplicityFormula}
+\leanok
+\uses{G, GGPData, GSpin, IsTempered, UnitaryRep, charG, mGeom, mult}
+The statement of Thesis Thm.~7.2.2 (= Thm.~1.0.2): for every GGP triple and every irreducible tempered
+$\pi$ with central character trivial on $A_{G,H}(F)$, $m(\pi)<\infty$ and $m(\pi)=\mgeom(\theta_\pi)$.
+\end{definition}
+
+\begin{theorem}[The multiplicity formula]
+\label{multiplicity_formula}
+\lean{GSpinGGP.multiplicity_formula}
+\leanok
+\uses{MultiplicityFormula}
+The multiplicity formula holds (Thesis Thm.~7.2.2 = Thm.~1.0.2).
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{multiplicityFormula_of_traceFormula}
+By the strong induction on $\dim G$ of Thesis \S7.2, from the geometric expansion, the elliptic form of
+Thesis Prop.~7.4.1(ii) and elliptic isolation (Chapter~\ref{chap:multformula}).
+\end{proof}
+
+\begin{theorem}[The count (Thesis (6.7.1))]
+\label{sum_mult_eq_one}
+\lean{GSpinGGP.sum_mult_eq_one}
+\leanok
+\uses{GGPData, InnerFormSystem, InnerTwist, IsQuasiSplit, TemperedPacketFamily, mult}
+Let $G$ be quasi-split and $(\Pi_\alpha)$ as above, with finitely many inner forms. Then
+$\sum_\alpha\sum_{\pi\in\Pi_\alpha} m(\pi)=1$.
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{G, GSpin, IsTempered, LIT-germ_unique, LIT-hc_character_isQuasiCharacter, LIT-rodier_germ_one, UnitaryRep, WhittakerDatum, charG, germ, gspin, jHat, mGeom, multiplicity_formula, orbitChoice, orbitChoice_one_mem_nilReg, sum_mult_eq_germ_one}
+By (6.7.7) the sum is the germ $c_{\theta_1,\mathcal O_1}(1)$. By Rodier's theorem applied to
+the regular orbit $\mathcal O_1$, $c_{\theta_1,\mathcal O_1}(1)$ is the number of members of $\Pi_1$ with a Whittaker
+model for the corresponding datum, which is $1$ by (WHITT). The multiplicity formula gives $m(\pi)<\infty$.
+\end{proof}
+
+\begin{theorem}[Main theorem: the local GGP conjecture for $\GSpin$]
+\label{local_ggp}
+\lean{GSpinGGP.local_ggp}
+\leanok
+\uses{GGPData, InnerFormSystem, InnerTwist, IsQuasiSplit, TemperedPacketFamily, mult}
+(Thesis Thm.~6.4.1 = Thm.~1.0.1, $p$-adic case.) Let $G$ be quasi-split and $(\Pi_\alpha)_\alpha$ tempered
+packets on the inner forms $G_\alpha$, $\alpha\in H^1(F,\SO(W))$, with central characters trivial on
+$Z_{G,H}(F)$, satisfying (STAB), (TRANS), (WHITT). Then exactly one $\pi\in\bigsqcup_\alpha\Pi_\alpha$ has
+$m(\pi)=1$, and $m(\pi')=0$ for all others.
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{LIT-padic_quadratic_classes, sum_mult_eq_one}
+The inner forms are finite in number (classification of $p$-adic quadratic forms). The sum of the
+multiplicities is $1$, and each is a natural number, so exactly one is $1$ and the rest vanish
+(Thesis \S6.7). Multiplicity one is not needed for this deduction.
+\end{proof}
+

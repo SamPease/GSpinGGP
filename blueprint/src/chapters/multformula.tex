@@ -1,0 +1,289 @@
+% Generated from the Lean dependency data; see the comment at the top of content.tex.
+\chapter{The multiplicity formula}
+\label{chap:multformula}
+Thesis Ch.~7. The multiplicity formula is proved by strong induction on $\dim G$, together with the
+geometric expansion of the distribution $J$. Test functions are taken in $C_c^\infty$ modulo $A_G(F)$
+instead of the Harish-Chandra Schwartz space; every stated theorem of the trace formula uses this space.
+
+\section{\texorpdfstring{Strongly cuspidal functions and the distribution $J$}{Strongly cuspidal functions and the distribution J}}
+\begin{definition}[Strongly cuspidal test functions]
+\label{ScuspTestFn}
+\lean{GSpinGGP.ScuspTestFn}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, H, N}
+$\scusp(A_G(F)\backslash G(F),\chi^{-1})$, $C_c^\infty$ version: locally constant $f$ on $G(F)$ with
+$f(ag)=\chi(a)^{-1}f(g)$ for $a\in A_G(F)$, compactly supported modulo $A_G(F)$, and strongly cuspidal
+($\int_{U(F)}f(pu)\,du=0$ for every proper parabolic $P=MU$ and $p\in P(F)$) (Thesis Ch.~1, \S4.5, \S7.1).
+\end{definition}
+
+\begin{definition}[The distribution $J$]
+\label{distribJ}
+\lean{GSpinGGP.distribJ}
+\leanok
+\uses{G, GGPData, GSpin, H, N, xi}
+\[ J(f)=\int_{H(F)\backslash G(F)/A_G(F)}K(f,x)\,dx,\qquad K(f,x)=\int_{H(F)/A_{G,H}(F)}f(x^{-1}hx)\xi(h)\,dh \]
+(Thesis \S7.1, \S10.1), for the Weil quotient measure on $H(F)\backslash G(F)/A_G(F)$.
+\end{definition}
+
+\begin{theorem}[Convergence of $J$]
+\label{distribJ_convergent}
+\lean{GSpinGGP.GGPData.distribJ_convergent}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, H, N, ScuspTestFn, xi}
+For $f\in\scusp(A_G\backslash G,\chi^{-1})$, $x\mapsto K(f,x)$ is integrable on $H(F)\backslash G(F)/A_G(F)$
+(Thesis Thm.~10.1.1(ii) with Prop.~8.4.1(iii); = Thm.~1.0.3).
+\end{theorem}
+\begin{proof}
+Not yet formalized. The bound $|K(f,x)|\le\nu(f)\,\Xi^{H\backslash G}(x)^2\sigma(x)^{-d}$ for strongly cuspidal $f$,
+and integrability of $\Xi^{H\backslash G}(x)^2\sigma(x)^{-d}$ for $d$ large.
+\end{proof}
+
+\begin{lemma}[$J$ is linear]
+\label{distribJ_add}
+\lean{GSpinGGP.GGPData.distribJ_add}
+\leanok
+\uses{CentralCharOn, G, GGPData, ScuspTestFn, distribJ}
+$J(f+g)=J(f)+J(g)$ for $f,g\in\scusp(A_G\backslash G,\chi^{-1})$ (Thesis \S10.1).
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{GSpin, H, N, distribJ_convergent, xi}
+Linearity of the integral, given convergence.
+\end{proof}
+
+\begin{definition}[The quasi-character $\theta_f$]
+\label{thetaF}
+\lean{GSpinGGP.thetaF}
+\leanok
+\uses{G, GGPData, GSpin, H, N, gspin}
+For strongly cuspidal $f$, $\theta_f$ is the function representing the orbital pairing
+$f'\mapsto\int_{G(F)/A_G(F)}\int_{G(F)}f(x^{-1}gx)f'(g)\,dg\,dx$ (Thesis \S4.8, \cite{BP} \S5.5);
+$0$ if there is none. Convention: $\theta_f(ag)=\chi(a)^{-1}\theta_f(g)$.
+\end{definition}
+
+\begin{literature}[$\theta_f$ represents the orbital pairing]
+\label{LIT-bp_thetaF_exists}
+\lean{GSpinGGP.LitTF.bp_thetaF_exists}
+\leanok
+\uses{G, GGPData, GSpin, IsQuasiCharacter, gspin}
+Let $f_0\in C_c^\infty(G(F))$ be strongly cuspidal. Then there is a quasi-character $\theta$, locally integrable
+and locally constant on $\Greg(F)$, with $\int_{G(F)}\theta f'\,dg=\int_{G(F)/A_G(F)}\int_{G(F)}f_0(x^{-1}gx)f'(g)\,dg\,dx$
+for every $f'\in C_c^\infty(G(F))$, the outer integrand being integrable.
+
+\assumedfrom{\cite{BP}, Thm.~5.5.1(ii),(iv), Prop.~5.6.1(ii) (= Thesis Thm.~4.7.1, Prop.~4.8.1(ii)); \cite{Art91}; Weyl integration formula}
+\end{literature}
+
+\begin{lemma}[$\chi$-transfer of $\theta_f$]
+\label{isThetaF_chiProj}
+\lean{GSpinGGP.isThetaF_chiProj}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, H, IsQuasiCharacter, N, gspin}
+For strongly cuspidal $f_0\in C_c^\infty(G(F))$, the orbital pairing of its $\chi$-projection $P_\chi f_0$
+is represented by a quasi-character (Thesis \S4.8, \S7.1).
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{LIT-bp_thetaF_exists, ScuspTestFn, jHat}
+Glue central translates of the quasi-character of a cut-off of $P_\chi f_0$ along the fibres of the Harish-Chandra map $H_G$.
+\end{proof}
+
+\begin{proposition}[$\theta_f$ of a strongly cuspidal function]
+\label{thetaF_spec}
+\lean{GSpinGGP.thetaF_spec}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, H, IsQuasiCharacter, N, ScuspTestFn, gspin, thetaF}
+For $f\in\scusp(A_G\backslash G,\chi^{-1})$, $\theta_f$ represents the orbital pairing of $f$ and is a
+quasi-character (Thesis \S4.8, Prop.~4.8.1(ii)).
+\end{proposition}
+\begin{proof}
+\leanok
+\uses{LIT-hc_regularSet_open_conull, isThetaF_chiProj, jHat, weylDisc}
+From the $\chi$-transfer and uniqueness on the open conull regular set.
+\end{proof}
+
+\begin{definition}[$\QC(G(F),\chi^{-1})$]
+\label{QC}
+\lean{GSpinGGP.QC}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, IsQuasiCharacter, gspin, jHat}
+Quasi-characters $\theta$ on $G(F)$ with $\theta(ag)=\chi(a)^{-1}\theta(g)$ for $a\in A_G(F)$, $g\in\Greg(F)$
+(Thesis \S4.1.1, \S7.2).
+\end{definition}
+
+\begin{lemma}[$\theta_f\in\QC(G,\chi^{-1})$]
+\label{thetaF_mem_QC}
+\lean{GSpinGGP.thetaF_mem_QC}
+\leanok
+\uses{CentralCharOn, G, GGPData, QC, ScuspTestFn, thetaF}
+For $f\in\scusp(A_G\backslash G,\chi^{-1})$, $\theta_f\in\QC(G(F),\chi^{-1})$ (Thesis Prop.~4.8.1(ii)).
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{GSpin, H, IsQuasiCharacter, LIT-hc_regularSet_open_conull, N, gspin, thetaF_spec}
+From the previous proposition and central equivariance of $f$.
+\end{proof}
+
+\begin{lemma}[Characters are quasi-characters]
+\label{charG_mem_QC}
+\lean{GSpinGGP.charG_mem_QC}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, IsTempered, QC, UnitaryRep, charG, mult, orbitChoice}
+If $\pi$ is irreducible tempered with central character $\eta$ on $A_G(F)$ then $\theta_\pi\in\QC(G(F),\eta)$
+(Thesis Ch.~1, \S4.4).
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{IsQuasiCharacter, LIT-hc_character_exists, LIT-hc_character_isQuasiCharacter, LIT-hc_regularSet_open_conull, gspin}
+Harish-Chandra's local expansion, and central translation of characters.
+\end{proof}
+
+\section{The induction}
+Thesis \S7.2 and \S7.4.
+
+\begin{definition}[The geometric expansion at $(G,\chi)$]
+\label{GeomAt}
+\lean{GSpinGGP.GeomAt}
+\leanok
+\uses{CentralCharOn, G, GGPData, ScuspTestFn, distribJ, mGeom, thetaF}
+$J(f)=\mgeom(\theta_f)$ for every $f\in\scusp(A_G\backslash G,\chi^{-1})$ (Thesis Thm.~7.2.1 = Thm.~12.2.1 = Thm.~1.0.5).
+\end{definition}
+
+\begin{definition}[The multiplicity formula at one triple]
+\label{MultAt}
+\lean{GSpinGGP.MultAt}
+\leanok
+\uses{G, GGPData, GSpin, IsTempered, UnitaryRep, charG, mGeom, mult}
+For every irreducible tempered $\pi$ of $G(F)$ trivial on $A_{G,H}(F)$: $m(\pi)<\infty$ and
+$m(\pi)=\mgeom(\theta_\pi)$.
+\end{definition}
+
+\begin{definition}[The induction hypothesis (HYP)]
+\label{HYP}
+\lean{GSpinGGP.HYP}
+\leanok
+\uses{CentralCharOn, GGPData, GeomAt, MultAt}
+The geometric expansion (for every central character) and the multiplicity formula hold for every GGP
+triple $(G',H',\xi')$ with $\dim G'<\dim G$ (Thesis \S7.2).
+\end{definition}
+
+\begin{definition}[Virtual tempered representations]
+\label{VirtualTemp}
+\lean{GSpinGGP.VirtualTemp}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, IsTempered, UnitaryRep, charG, mult, orbitChoice}
+$\Rtemp(G,\eta)\otimes\mathbb C$: finite formal linear combinations of classes of irreducible tempered
+representations with central character $\eta$ on $A_G(F)$ (Thesis \S3.4, \S7.4), with the linear extensions
+$\theta_\Pi$, $m(\Pi)$, $\mgeom(\Pi)$.
+\end{definition}
+
+\begin{definition}[The defect]
+\label{defect}
+\lean{GSpinGGP.defect}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, IsTempered, UnitaryRep, VirtualTemp, charG, mGeom, mult, orbitChoice}
+$\Pi\mapsto m(\Pi)-\mgeom(\Pi)$, extended linearly (Thesis Prop.~7.4.1(ii)). The multiplicity formula
+for $\pi$ is $\mathrm{defect}[\pi]=0$.
+\end{definition}
+
+\begin{literature}[Elliptic isolation]
+\label{LIT-bp_scusp_surj_ell}
+\lean{GSpinGGP.LitTF.bp_scusp_surj_ell}
+\leanok
+\uses{G, GGPData, GSpin, IsQuasiCharacter, gspin}
+There is an open, closed, invariant, $A_G(F)$-stable $\Omega\subset G(F)$ containing the elliptic regular set
+and compact modulo conjugation and $A_G(F)$, such that every quasi-character supported (compactly
+modulo conjugation) in $\Omega$ is $\theta_{f_0}$ on $\Greg(F)$ for some strongly cuspidal $f_0\in C_c^\infty(G(F))$
+supported in $\Omega$.
+
+\assumedfrom{\cite{BP}, Cor.~5.7.2(i) (= Thesis Cor.~4.8.3(i)), stated there for compact centre; adapted to a nontrivial split centre $A_G$ by its local proof}
+\end{literature}
+
+\begin{proposition}[Elliptic isolation, $\chi$-equivariant]
+\label{exists_scusp_ell}
+\lean{GSpinGGP.exists_scusp_ell}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, IsTempered, ScuspTestFn, UnitaryRep, VirtualTemp, charG, gspin, mult, orbitChoice, thetaF}
+For every virtual tempered $\Pi$ with central character $\eta$ there is $f\in\scusp(A_G\backslash G,\eta)$ with
+$\theta_f=\theta_\Pi$ on $\ellreg(F)$ (Thesis Cor.~4.8.3(i) in $\chi$-equivariant form).
+This differs from the Thesis, which uses \cite{BP} Cor.~5.7.2(iv) and Schwartz functions.
+\end{proposition}
+\begin{proof}
+\leanok
+\uses{H, IsQuasiCharacter, LIT-bp_scusp_surj_ell, LIT-bp_thetaF_exists, LIT-hc_regularSet_open_conull, N, QC, charG_mem_QC, jHat}
+Cut $\theta_\Pi$ off near the elliptic set, apply elliptic isolation, and project with $P_\chi$.
+\end{proof}
+
+\begin{proposition}[Thesis Prop.~7.4.1(ii), elliptic form]
+\label{prop_11_5_1_ii_ell}
+\lean{GSpinGGP.prop_11_5_1_ii_ell}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, HYP, IsTempered, ScuspTestFn, UnitaryRep, VirtualTemp, charG, defect, distribJ, gspin, mGeom, mult, orbitChoice, thetaF}
+Assume (HYP). Let $f\in\scusp(A_G\backslash G,\eta)$ and $\Pi$ virtual tempered with central character $\eta$ such
+that $\theta_\Pi=\theta_f$ on $\ellreg(F)$. Then $J(f)-\mgeom(\theta_f)=m(\Pi)-\mgeom(\Pi)$.
+\end{proposition}
+\begin{proof}
+\leanok
+\uses{defect_eq_zero_of_vChar_eq_zero_ell, exists_virtual_spectral_ell}
+The spectral expansion gives a $\Pi_f$ with the same elliptic character and
+$J(f)-\mgeom(\theta_f)=\mathrm{defect}(\Pi_f)$; $\Pi-\Pi_f$ has vanishing elliptic character, so it lies in $\Rind$,
+where the defect vanishes (Chapter~\ref{chap:spectral}).
+\end{proof}
+
+\begin{proposition}[Geometric expansion implies multiplicity formula]
+\label{multAt_of_hyp_geom}
+\lean{GSpinGGP.multAt_of_hyp_geom}
+\leanok
+\uses{CentralCharOn, GGPData, GeomAt, HYP, MultAt}
+(Thesis Prop.~7.4.1(iii), direction Thm.~7.2.1 $\Rightarrow$ Thm.~7.2.2.) Under (HYP), if the geometric
+expansion holds at $G$ for all central characters, the multiplicity formula holds at $G$.
+\end{proposition}
+\begin{proof}
+\leanok
+\uses{G, GSpin, H, IsTempered, LIT-emoryTakeda_mult_le_one, LIT-schur_central, ScuspTestFn, UnitaryRep, VirtualTemp, charG, defect, distribJ, exists_scusp_ell, gspin, mGeom, mult, orbitChoice, prop_11_5_1_ii_ell, thetaF, xi}
+Let $\eta$ be the central character of $\pi$ (Schur) and choose $f$ with $\theta_f=\theta_\pi$ on the elliptic set
+(elliptic isolation). Then $0=J(f)-\mgeom(\theta_f)=\mathrm{defect}[\pi]$. Finiteness is multiplicity one.
+\end{proof}
+
+\begin{theorem}[The geometric expansion under (HYP)]
+\label{geomAt_of_hyp}
+\lean{GSpinGGP.geomAt_of_hyp}
+\leanok
+\uses{CentralCharOn, GGPData, GeomAt, HYP}
+(Thesis Thm.~12.2.1 under (HYP).) If (HYP) holds for $G$, then $J(f)=\mgeom(\theta_f)$ for every central
+character $\chi$ and every $f\in\scusp(A_G\backslash G,\chi^{-1})$.
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{G, GSpin, GammaClass, H, IsGammaElt, IsQuasiCharacter, LIT-germ_unique, LIT-hc_regularSet_open_conull, N, QC, ScuspTestFn, deltaGGP, distribJ, distribJ_add, geomAt_away, geomAt_near, germ, gspin, isThetaF_chiProj, jHat, mGeom, mGeom_add, mem_mul_parabolicU_iff, orbitChoice, thetaF, thetaF_mem_QC, thetaF_spec, weylDisc}
+Choose the invariant clopen $\Omega\ni1$ of the expansion near $1$; cut $f=f_1+(f-f_1)$ with $f_1$ supported in $\Omega$
+and $\theta_{f_1}=1_\Omega\theta_f$; apply the expansion near $1$ to $f_1$ and the expansion away from $1$ to
+$f-f_1$, and add, using linearity of $J$ and $\mgeom$ (Chapter~\ref{chap:geometric}).
+\end{proof}
+
+\begin{theorem}[The induction]
+\label{geom_mult_all}
+\lean{GSpinGGP.geom_mult_all}
+\leanok
+\uses{CentralCharOn, GGPData, GeomAt, MultAt}
+For every GGP triple, the geometric expansion (for every central character) and the multiplicity formula hold.
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{HYP, geomAt_of_hyp, multAt_of_hyp_geom}
+Strong induction on $\dim G$: (HYP) is the induction hypothesis; apply the two preceding results.
+\end{proof}
+
+\begin{theorem}[Multiplicity formula from the trace formula]
+\label{multiplicityFormula_of_traceFormula}
+\lean{GSpinGGP.multiplicityFormula_of_traceFormula}
+\leanok
+\uses{MultiplicityFormula}
+$m(\pi)=\mgeom(\theta_\pi)$ (and $m(\pi)<\infty$) for every GGP triple and every tempered $\pi$ trivial on
+$A_{G,H}(F)$ (Thesis Thm.~7.2.2 = Thm.~1.0.2).
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{CentralCharOn, GGPData, GeomAt, MultAt, geom_mult_all}
+The multiplicity-formula half of the induction.
+\end{proof}
+

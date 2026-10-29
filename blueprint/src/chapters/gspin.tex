@@ -1,0 +1,215 @@
+% Generated from the Lean dependency data; see the comment at the top of content.tex.
+\chapter{General spin groups and GGP triples}
+\label{chap:gspin}
+This chapter follows Thesis Ch.~5. Throughout, $F$ is a $p$-adic field (a finite extension of
+$\mathbb{Q}_p$) and $\psi$ a nontrivial continuous additive character of $F$. Quadratic spaces are
+nondegenerate and finite-dimensional; $b$ is the bilinear form with $q(v)=b(v,v)$.
+
+\section{Quadratic spaces and the general spin group}
+\begin{definition}[The general spin group]
+\label{GSpin}
+\lean{GSpinGGP.GSpin}
+\leanok
+For a quadratic space $(V,q)$ with Clifford algebra $C(V)$ and even part $C^+(V)$, the general spin
+group is
+\[ \GSpin(V) = \{ g \in C^+(V)^\times : g V g^{-1} = V \} \]
+(Thesis \S5.1.2). Conjugation gives a surjection $P:\GSpin(V)\to \SO(V)$ on $\Fbar$-points with
+kernel the scalars $\mathbb{G}_m$. (This is not the spin group of unit spinor norm.)
+\end{definition}
+
+\begin{definition}[The Lie algebra $\mathfrak{gspin}(V)$]
+\label{gspin}
+\lean{GSpinGGP.gspin}
+\leanok
+\uses{GSpin}
+$\gspin(V) = \{ X \in C^+(V) : [X,v] \in V \text{ for all } v\in V\}$, a Lie subalgebra of
+$C(V)$ for the commutator bracket (Thesis Prop.~5.1.3.1); $\gspin(V)=\mathfrak{so}(V)\oplus F$.
+\end{definition}
+
+\begin{literature}[Witt decomposition]
+\label{LIT-witt_decomposition}
+\lean{GSpinGGP.witt_decomposition}
+\leanok
+A quadratic space is $V \cong H^{w}\perp V_{\mathrm{an}}$ with $H$ the hyperbolic plane and
+$V_{\mathrm{an}}$ anisotropic, where $w=w(V)$ is the Witt index (the maximal dimension of a totally
+isotropic subspace). In particular $\dim V_{\mathrm{an}} = \dim V - 2w(V)$, so $\GSpin(V)$ is
+quasi-split iff $\dim V - 2w(V)\le 2$.
+
+\assumedfrom{\cite{Lam}, Ch.~I \S4; Thesis \S5.1.4}
+\end{literature}
+
+\begin{literature}[Witt cancellation]
+\label{LIT-witt_cancellation}
+\lean{GSpinGGP.witt_cancellation}
+\leanok
+Over a field of characteristic $\neq 2$, if $U\perp X \cong U\perp Y$ then $X\cong Y$.
+
+\assumedfrom{\cite{Lam}, Ch.~I \S4}
+\end{literature}
+
+\begin{literature}[Quadratic forms over a $p$-adic field]
+\label{LIT-padic_quadratic_classes}
+\lean{GSpinGGP.padic_quadratic_classes}
+\leanok
+Let $Q$ be a nondegenerate quadratic form on $F^m$. The isometry classes of nondegenerate forms
+on $F^m$ with the same discriminant as $Q$ are finite in number, $n\le 2$ of them, and admit a system of
+representatives containing $Q$; $n=2$ if $m\ge 3$, $n=1$ if $m\le 1$, and for $m=2$, $n=1$ iff
+$-\det Q$ is a square.
+
+\assumedfrom{\cite{Lam}, Ch.~VI \S2; O'Meara \S63}
+\end{literature}
+
+\begin{literature}[Cartan--Dieudonn\'e, $\SO$ form]
+\label{LIT-cartan_dieudonne_even}
+\lean{GSpinGGP.cartan_dieudonne_even}
+\leanok
+In a nondegenerate quadratic space over a field of characteristic $\neq 2$, every isometry of
+determinant $1$ is a product $\prod_i s_{u_i}s_{w_i}$ of pairs of reflections in anisotropic vectors.
+
+\assumedfrom{\cite{Artin}, Ch.~III; \cite{Lam}, Ch.~I}
+\end{literature}
+
+\begin{literature}[Centralizers of semisimple elements of $\GSpin$]
+\label{LIT-steinberg_centralizer_connected}
+\lean{GSpinGGP.steinberg_centralizer_connected}
+\leanok
+\uses{GSpin}
+Let $x\in\GSpin(V)$ be semisimple, $\bar x=P(x)$, and $W_{\pm1}=\ker(\bar x\mp 1)$. Then
+$Z_{\GSpin(V)}(x)=P^{-1}(Z_{\SO(V)}(\bar x)^0)$; explicitly, $g$ commutes with $x$ iff $P(g)$
+commutes with $\bar x$ and $\det P(g)|_{W_{+1}} = \det P(g)|_{W_{-1}} = 1$. (Characteristic $0$.)
+
+\assumedfrom{\cite{Steinberg}, Thm.~8.1 (the derived group $\Spin(V)$ is simply connected)}
+\end{literature}
+
+\begin{literature}[Regular nilpotent orbits and quasi-splitness]
+\label{LIT-nilReg_nonempty_iff_quasiSplit}
+\lean{GSpinGGP.nilReg_nonempty_iff_quasiSplit}
+\leanok
+\uses{GSpin, gspin}
+$\Nilreg(\gspin(V))\neq\emptyset$ iff $\GSpin(V)$ is quasi-split, i.e.\ $\dim V-2w(V)\le 2$.
+
+\assumedfrom{\cite{Wal01}, Ch.~I; \cite{Wal10}, \S7.1; \cite{Luo}, \S2.1; Thesis \S5.1.4}
+\end{literature}
+
+\section{GGP triples}
+\begin{definition}[Admissible pairs]
+\label{GGPData}
+\lean{GSpinGGP.GGPData}
+\leanok
+A GGP datum is a quadratic space $W$ on $F^m$ together with $r\ge 0$ and $\nu\in F^\times$. Put
+$Z$ the split space of dimension $2r+1$ with basis $z_{-r},\dots,z_r$, $b(z_i,z_j)=\nu\delta_{i,-j}$,
+and $V = W\oplus^\perp Z$ (Thesis \S5.2).
+\end{definition}
+
+\begin{definition}[The group $G$]
+\label{G}
+\lean{GSpinGGP.GGPData.G}
+\leanok
+\uses{GGPData, GSpin}
+$G = \GSpin(W)\times\GSpin(V)$ (Thesis \S5.2), as a subgroup of $(C(W)\times C(V))^\times$.
+Its Lie algebra is $\mathfrak g = \gspin(W)\oplus\gspin(V)$, and $A_G$ denotes its split centre.
+\end{definition}
+
+\begin{definition}[The unipotent subgroup $N$]
+\label{N}
+\lean{GSpinGGP.GGPData.N}
+\leanok
+\uses{GGPData, GSpin}
+$N\subset \GSpin(V)$ is the unipotent radical of the stabilizer $P_V$ in $\GSpin(V)$ of the isotropic
+flag $\langle z_r\rangle\subset\langle z_r,z_{r-1}\rangle\subset\dots\subset\langle z_r,\dots,z_1\rangle$
+(Thesis \S5.2).
+\end{definition}
+
+\begin{definition}[The subgroup $H$]
+\label{H}
+\lean{GSpinGGP.GGPData.H}
+\leanok
+\uses{G, GGPData, GSpin, N}
+$H = \GSpin(W)\ltimes N\subset G$: the pairs $(a, an)$ with $a\in\GSpin(W)$, $n\in N$
+(Thesis \S5.2). $Z_{G,H}=A_{G,H}$ is the diagonal central $\mathbb{G}_m$.
+\end{definition}
+
+\begin{definition}[The character $\xi$]
+\label{xi}
+\lean{GSpinGGP.GGPData.xi}
+\leanok
+\uses{G, GGPData, GSpin, H}
+$\xi(h) = \psi(\lambda(h))$, where $\lambda(an) = \sum_{i=0}^{r-1} b(z_{-i-1}, n z_i)$ is a
+homomorphism $H\to\mathbb{G}_a$ (Thesis \S5.2).
+\end{definition}
+
+\begin{definition}[Quasi-split triples]
+\label{IsQuasiSplit}
+\lean{GSpinGGP.GGPData.IsQuasiSplit}
+\leanok
+\uses{GGPData}
+$G$ is quasi-split iff both $W$ and $V$ are, i.e.\ $\dim U-2w(U)\le 2$ for $U=W,V$ (Thesis \S6.4).
+\end{definition}
+
+\begin{definition}[Central characters]
+\label{CentralCharOn}
+\lean{GSpinGGP.CentralCharOn}
+\leanok
+\uses{G, GGPData, GSpin}
+A continuous unitary character $\chi: A_G(F)\to\mathbb{S}^1$ trivial on $A_{G,H}(F)$
+(Thesis \S7.1). It is fixed throughout the trace formula.
+\end{definition}
+
+\begin{definition}[Whittaker data]
+\label{WhittakerDatum}
+\lean{GSpinGGP.WhittakerDatum}
+\leanok
+\uses{G, GGPData, GSpin}
+A Whittaker datum of $G$ (Thesis \S4.4): a Borel subgroup $B$ (stabilizer of full maximal isotropic
+flags of $W$ and $V$) with unipotent radical $U$, and a generic continuous unitary character $\chi$
+of $U(F)$, i.e.\ its stabilizer in $B(F)$ is $Z_G(F)U(F)$. (The Thesis takes $G(F)$-conjugacy classes
+of such pairs.)
+\end{definition}
+
+\begin{literature}[Luo's orbit $\mathcal O_\nu$]
+\label{LIT-exists_regularNil_inOrbitNu}
+\lean{GSpinGGP.exists_regularNil_inOrbitNu}
+\leanok
+\uses{GGPData, IsQuasiSplit, gspin}
+Let $G$ be quasi-split. If $\dim V$ is even and $\ge 4$, some regular nilpotent $X\in\gspin(V)$
+has image in $\mathfrak{so}(V)$ in the orbit $\mathcal O_\nu$ (it kills an anisotropic line $Fd_0$ and is
+one Jordan block on $U_1=d_0^\perp\cong\langle\nu\rangle\oplus H^k$). If $\dim W$ is even and $\ge 4$,
+some regular nilpotent $X\in\gspin(W)$ has image in $\mathcal O_{-\nu}$.
+
+\assumedfrom{\cite{Wal10}, \S7.1; \cite{Luo}, \S2.1, \S7.1; \cite{Wal01}, Ch.~I; Thesis \S5.1.4}
+\end{literature}
+
+\begin{literature}[Germs vanish off quasi-split centralizers]
+\label{LIT-nilReg_centralizer_nonempty_imp}
+\lean{GSpinGGP.nilReg_centralizer_nonempty_imp}
+\leanok
+\uses{G, GGPData, GSpin, gspin}
+For semisimple $x\in\GSpin(W)(F)$ embedded diagonally in $G$, with $W'_x=\ker(P(x)-1)$ and
+$V'_x = W'_x\oplus Z$: if $\Nilreg(\mathfrak g_x)\ne\emptyset$ then $W'_x$ and $V'_x$ are quasi-split.
+
+\assumedfrom{\cite{Wal01}, Ch.~I applied to the factors of $G_x$; \cite{BP}, Prop.~4.5.1(i)}
+\end{literature}
+
+\begin{literature}[Regular nilpotent orbits of GGP centralizers]
+\label{LIT-nilReg_centralizer_nonempty_iff}
+\lean{GSpinGGP.nilReg_centralizer_nonempty_iff}
+\leanok
+\uses{G, GGPData, GSpin, gspin}
+For semisimple $x\in\GSpin(W)(F)$ whose moved part $G''_x$ is a torus (true for every $x$ contributing
+to $\Gamma(G,H)$): $\Nilreg(\mathfrak g_x)\neq\emptyset$ iff $W'_x$ and $V'_x=W'_x\oplus Z$ are
+quasi-split.
+
+\assumedfrom{\cite{Wal01}, Ch.~I; \cite{Wal10}, \S7.1}
+\end{literature}
+
+\begin{literature}[Multiplicity at most one]
+\label{LIT-emoryTakeda_mult_le_one}
+\lean{GSpinGGP.emoryTakeda_mult_le_one}
+\leanok
+\uses{G, GGPData, GSpin, H, IsTempered, UnitaryRep, xi}
+For every GGP triple and every irreducible tempered unitary representation $\pi$ of $G(F)$,
+$m(\pi)=\dim\Hom_{H(F)}(\pi^\infty,\xi)\le 1$ (Thesis Thm.~5.5.1).
+
+\assumedfrom{\cite{ET}, Thm.~1.3 ($r=0$), with the reduction of \cite{BP}, \S6.3 and \cite{GGP}, \S15; directly \cite{Yan}}
+\end{literature}
+

@@ -11,6 +11,10 @@ permissions:
   pages: write # Write access to GitHub Pages
   id-token: write # Write access to ID tokens
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -18,4 +22,13 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: leanprover/lean-action@v1
+      # Builds the blueprint (web + PDF), checks its Lean declarations exist, and deploys
+      # `site/` (a static landing page plus the blueprint) to GitHub Pages.
+      # API docs are off: building them for a Mathlib-based project runs out of memory
+      # on the standard runner.
       - uses: leanprover-community/docgen-action@v1
+        with:
+          api-docs: false
+          blueprint: true
+          build-page: false
+          homepage: site

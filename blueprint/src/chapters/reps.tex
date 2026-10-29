@@ -1,0 +1,193 @@
+% Generated from the Lean dependency data; see the comment at the top of content.tex.
+\chapter{Representations, characters and quasi-characters}
+\label{chap:reps}
+Background of Thesis Ch.~2--4: tempered representations, the multiplicity $m(\pi)$,
+Harish-Chandra characters, quasi-characters and their germs.
+
+\section{Representations and the multiplicity}
+\begin{definition}[Unitary representations]
+\label{UnitaryRep}
+\lean{GSpinGGP.UnitaryRep}
+\leanok
+A strongly continuous unitary representation of a topological group on a complex Hilbert space
+(Thesis \S3.1).
+\end{definition}
+
+\begin{definition}[Tempered representations]
+\label{IsTempered}
+\lean{GSpinGGP.IsTempered}
+\leanok
+\uses{UnitaryRep}
+$\pi$ is irreducible and tempered: irreducible and weakly contained in the left regular representation
+of $G$ (Thesis Ch.~1, \S3.1.2). The Thesis uses the growth condition on matrix coefficients and notes the
+equivalence (Cowling--Haagerup--Howe); the weak-containment form is used here because it stays valid
+when the centre of $G$ is noncompact.
+\end{definition}
+
+\begin{definition}[The multiplicity $m(\pi)$]
+\label{mult}
+\lean{GSpinGGP.mult}
+\leanok
+\uses{G, GGPData, H, UnitaryRep, xi}
+For a unitary representation $\pi$ of $G(F)$, \[ m(\pi)=\dim\Hom_{H(F)}(\pi^\infty,\xi)\in\mathbb N\cup\{\infty\}, \]
+where $\pi^\infty$ is the space of smooth vectors (Thesis \S5.5).
+\end{definition}
+
+\begin{literature}[Schur's lemma]
+\label{LIT-schur_central}
+\lean{GSpinGGP.schur_central}
+\leanok
+\uses{UnitaryRep}
+In an irreducible unitary representation of a topological group, the centre acts by a character.
+
+\assumedfrom{\cite{Dixmier}; Thesis \S3.1.2}
+\end{literature}
+
+\begin{literature}[$G(F)$ is unimodular]
+\label{LIT-haar_G_isMulRightInvariant}
+\lean{GSpinGGP.LitTF.haar_G_isMulRightInvariant}
+\leanok
+\uses{G, GGPData, GSpin}
+The Haar measure of $G(F)=\GSpin(W)(F)\times\GSpin(V)(F)$ (and of every inner form) is right invariant.
+
+\assumedfrom{Bourbaki, \emph{Groupes et alg\`ebres de Lie} III \S3; \cite{BP}, \S1.6; Thesis \S2.4}
+\end{literature}
+
+\begin{literature}[Weil's quotient-measure formula]
+\label{LIT-weil_quotient}
+\lean{GSpinGGP.weil_quotient}
+\leanok
+Let $S\hookrightarrow\Gamma$ be a closed embedding of unimodular locally compact, Hausdorff, second countable
+groups with Haar measures $\mu,\nu$. There is a unique measure $m$ on $S\backslash\Gamma$ with
+$\int_\Gamma\varphi\,d\nu=\int_{S\backslash\Gamma}\int_S\varphi(sq)\,d\mu(s)\,dm(q)$ for all
+$\varphi\in C_c(\Gamma)$. (Used for $H(F)/A_{G,H}(F)\subset G(F)/A_G(F)$, Thesis \S7.1.)
+
+\assumedfrom{Bourbaki, \emph{Int\'egration} VII \S2; \cite{Folland}, Thm.~2.49}
+\end{literature}
+
+\begin{literature}[Integration over $G=PK$]
+\label{LIT-integral_eq_mul_integral_compact_integral}
+\lean{GSpinGGP.integral_eq_mul_integral_compact_integral}
+\leanok
+Let $G$ be a locally compact, Hausdorff, second countable group, $P$ a closed subgroup and $K$ a compact
+subgroup with $G=PK$. For Haar measures $dx,dp,dk$ there is $c>0$ with
+$\int_G f(x)\,dx = c\int_K\int_P f(pk)\,dp\,dk$ for continuous compactly supported $f$.
+
+\assumedfrom{\cite{Knapp}, Thm.~8.32; Bourbaki, \emph{Int\'egration} VII \S2; Casselman's notes \S3.1}
+\end{literature}
+
+\section{Characters and quasi-characters}
+\begin{definition}[The Weyl discriminant]
+\label{weylDisc}
+\lean{GSpinGGP.weylDisc}
+\leanok
+$D^G(x)=|\det(1-\Ad x)|_{\mathfrak g/\mathfrak g_x}|_F$ (Thesis \S2.1), computed as the absolute value of the
+trailing coefficient of the characteristic polynomial of $1-\Ad x$ on $\mathfrak g$.
+\end{definition}
+
+\begin{literature}[The regular set]
+\label{LIT-hc_regularSet_open_conull}
+\lean{GSpinGGP.hc_regularSet_open_conull}
+\leanok
+\uses{G, GGPData, GSpin, gspin}
+The regular semisimple set $\Greg(F)$ is open in $G(F)$ and its complement has Haar measure zero.
+
+\assumedfrom{\cite{HC70}; \cite{BP}, \S1; Thesis \S2.1}
+\end{literature}
+
+\begin{literature}[Harish-Chandra's regularity theorem]
+\label{LIT-hc_character_exists}
+\lean{GSpinGGP.hc_character_exists}
+\leanok
+\uses{G, GGPData, GSpin, IsTempered, UnitaryRep, gspin}
+For an irreducible tempered $\pi$, the distribution $f\mapsto\operatorname{tr}\pi(f)$ on $C_c^\infty(G(F))$
+is given by a locally integrable function which is locally constant on $\Greg(F)$.
+
+\assumedfrom{Bernstein (admissibility); \cite{HC99}; \cite{BP}, \S2.1; Thesis Ch.~1}
+\end{literature}
+
+\begin{definition}[The character $\theta_\pi$]
+\label{charG}
+\lean{GSpinGGP.charG}
+\leanok
+\uses{G, GGPData, GSpin, UnitaryRep, gspin, mult}
+The Harish-Chandra character $\theta_\pi$ of $\pi$, the representative of $f\mapsto\operatorname{tr}\pi(f)$
+that is locally constant on $\Greg(F)$ (Thesis Ch.~1).
+\end{definition}
+
+\begin{definition}[Fourier transforms of nilpotent orbits]
+\label{jHat}
+\lean{GSpinGGP.jHat}
+\leanok
+For a nilpotent orbit $\mathcal O\subset\mathfrak g(F)$, $\hat{j}(\mathcal O,\cdot)$ is the function
+representing $f\mapsto\mu_{\mathcal O}(\hat f)$, the Fourier transform being normalized by $b$ and $\psi$
+(\cite{BP} \S1.8, \S4.1; Thesis \S4.1.1). It is unique on $\mathfrak g_{\mathrm{reg}}$.
+\end{definition}
+
+\begin{definition}[Quasi-characters]
+\label{IsQuasiCharacter}
+\lean{GSpinGGP.IsQuasiCharacter}
+\leanok
+\uses{jHat}
+$\theta: G(F)\to\mathbb C$ is a quasi-character (Thesis \S4.1.1, \cite{BP} \S4.1) if it is conjugation
+invariant on $\Greg(F)$ and at every semisimple $x$ there are coefficients $c_{\theta,\mathcal O}(x)$,
+$\mathcal O\in\Nil(\mathfrak g_x)$, with
+$\theta(xe^X)=\sum_{\mathcal O}c_{\theta,\mathcal O}(x)\,\hat j(\mathcal O,X)$ for $X\in\mathfrak g_x(F)$
+regular and near $0$.
+\end{definition}
+
+\begin{definition}[Germs]
+\label{germ}
+\lean{GSpinGGP.germ}
+\leanok
+\uses{jHat}
+For a quasi-character $\theta$, semisimple $x$ and $\mathcal O\in\Nilreg(\mathfrak g_x)$, the germ
+$c_{\theta,\mathcal O}(x)$ is the coefficient of $\hat j(\mathcal O,\cdot)$ in the local expansion of $\theta$
+at $x$ (Thesis \S4.2, \cite{BP} \S4.5); it is $0$ if $\mathcal O$ is not regular or there is no expansion.
+\end{definition}
+
+\begin{literature}[Uniqueness of germs]
+\label{LIT-germ_unique}
+\lean{GSpinGGP.germ_unique}
+\leanok
+\uses{G, GGPData, gspin, jHat}
+At semisimple $x$, the coefficients of a local expansion $\theta(xe^X)=\sum_{\mathcal O}c_{\mathcal O}\hat j(\mathcal O,X)$
+are unique on the regular orbits $\mathcal O\in\Nilreg(\mathfrak g_x)$ (linear independence of the
+$\hat j(\mathcal O,\cdot)$ near $0$).
+
+\assumedfrom{\cite{HC99}; \cite{BP}, \S4.5; Thesis \S4.2}
+\end{literature}
+
+\begin{literature}[Local character expansion]
+\label{LIT-hc_character_isQuasiCharacter}
+\lean{GSpinGGP.hc_character_isQuasiCharacter}
+\leanok
+\uses{G, GGPData, GSpin, IsQuasiCharacter, IsTempered, UnitaryRep, gspin}
+For irreducible tempered $\pi$, $\theta_\pi$ is a quasi-character.
+
+\assumedfrom{\cite{HC99}; \cite{Wal10}, \S4; \cite{BP}, Prop.~4.1.1(i); Thesis Prop.~4.1.1.1(i)}
+\end{literature}
+
+\begin{literature}[Rodier's theorem]
+\label{LIT-rodier_germ_one}
+\lean{GSpinGGP.rodier_germ_one}
+\leanok
+\uses{G, GGPData, GSpin, IsQuasiSplit, IsTempered, UnitaryRep, WhittakerDatum, germ, gspin}
+Let $G$ be quasi-split. For each $\mathcal O\in\Nilreg(\mathfrak g)$ there is a Whittaker datum $(U,\chi)$
+such that for every irreducible tempered $\pi$, $c_{\theta_\pi,\mathcal O}(1)=1$ if $\pi$ has a
+$(U,\chi)$-Whittaker model and $0$ otherwise (Thesis Prop.~4.4.1(i)).
+
+\assumedfrom{\cite{Rodier}; \cite{MW87}; \cite{BP}, Prop.~4.8.1(i)}
+\end{literature}
+
+\begin{literature}[Self-dual Haar measures]
+\label{LIT-exists_isSelfDual}
+\lean{GSpinGGP.exists_isSelfDual}
+\leanok
+For a finite-dimensional $F$-vector space $V$ with a nondegenerate bilinear form $B$ there is a Haar measure
+$\mu$ on $V$ for which Fourier inversion holds: $f(Z)=\int\hat f(Y)\psi(-B(Z,Y))\,d\mu(Y)$ with
+$\hat f(Y)=\int f(X)\psi(B(X,Y))\,d\mu(X)$, for all $f\in C_c^\infty(V)$.
+
+\assumedfrom{Tate's thesis; \cite{Weil}, Ch.~II \S5, Ch.~VII \S2; \cite{BP}, \S1.6; Thesis \S2.4}
+\end{literature}
+

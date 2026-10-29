@@ -1,0 +1,48 @@
+/* This file contains CSS tweaks for this blueprint.
+ * As an example, we included CSS rules that put
+ * a vertical line on the left of theorem statements
+ * and proofs.
+ * */
+
+div.theorem_thmcontent {
+	border-left: .15rem solid black;
+}
+
+div.proposition_thmcontent {
+	border-left: .15rem solid black;
+}
+
+div.lemma_thmcontent {
+	border-left: .1rem solid black;
+}
+
+div.corollary_thmcontent {
+	border-left: .1rem solid black;
+}
+
+div.proof_content {
+	border-left: .08rem solid grey;
+}
+
+
+/* Results assumed from the literature (Lean axioms): never shown as proved.
+ * The blueprint software puts a check mark on every statement marked \leanok without a
+ * proof; for these nodes it is replaced by an explicit "assumed" tag. */
+div.literature_thmcontent {
+	border-left: .15rem dashed #b06000;
+}
+
+div.literature_thmheading .thm_header_extras {
+	display: none;
+}
+
+span.literature_thmcaption::after {
+	content: " (assumed, not proved here)";
+	font-weight: normal;
+	font-style: italic;
+	color: #b06000;
+}
+
+/* No API documentation is built (it exceeds the CI runner's memory), so Lean
+   declaration names are shown as plain text rather than links to it. */
+a.lean_decl { pointer-events: none; color: inherit; text-decoration: none; cursor: text; }

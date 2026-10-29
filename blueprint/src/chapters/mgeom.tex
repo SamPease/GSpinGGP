@@ -1,0 +1,117 @@
+% Generated from the Lean dependency data; see the comment at the top of content.tex.
+\chapter{\texorpdfstring{The linear form $m_{\mathrm{geom}}$}{The linear form m geom}}
+\label{chap:mgeom}
+Thesis Prop.~12.1.1(i): convergence, linearity and continuity of $\mgeom$ on quasi-characters.
+
+\begin{lemma}[Measurability of the integrand]
+\label{aestronglyMeasurable_torusFn_of_mem_QC}
+\lean{GSpinGGP.aestronglyMeasurable_torusFn_of_mem_QC}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, IsGammaElt, QC, deltaGGP, germ, gspin, orbitChoice, weylDisc}
+For $\theta\in\QC(G,\chi)$, the integrand \[ t\mapsto D^G(t)^{1/2}c_{\theta,\mathcal O_t}(t)\Delta(t)^{s-1/2} \] of
+$m_{\mathrm{geom},s}$ is a.e.\ strongly measurable on $T(F)/A_{G,H}(F)$ (Thesis \S6.5).
+\end{lemma}
+\begin{proof}
+Not yet formalized. The integrand is continuous on the open set $T_\natural$ (germs are locally constant there) and $0$ off it.
+\end{proof}
+
+\begin{lemma}[Boundedness of germs]
+\label{germ_bound_of_mem_QC}
+\lean{GSpinGGP.germ_bound_of_mem_QC}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, IsGammaElt, QC, germ, gspin, orbitChoice, weylDisc}
+For $\theta\in\QC(G,\chi)$ and a torus $T$, $D^G(t)^{1/2}c_{\theta,\mathcal O_t}(t)$ is bounded on
+$T_\natural=\{t\in\Gamma(G,H): T_t=T\}$.
+\end{lemma}
+\begin{proof}
+Not yet formalized. \cite{BP} Prop.~4.5.1 for the individual germs, and compactness of $T(F)/A_{G,H}(F)$.
+\end{proof}
+
+\begin{literature}[Integrability of $\Delta^{s-1/2}$]
+\label{LIT-bp_integrable_deltaGGP_rpow}
+\lean{GSpinGGP.bp_integrable_deltaGGP_rpow}
+\leanok
+\uses{GGPData, GSpin, IsGammaElt, deltaGGP}
+For $x\in\Gamma(G,H)$, $T=T_x$ and $s>0$, $t\mapsto 1_{T_\natural}(t)\Delta(t)^{s-1/2}$ is integrable on
+$T(F)/A_{G,H}(F)$.
+
+\assumedfrom{\cite{BP}, Lemma B.1.2(i), applied as in Thesis Prop.~12.1.1(i)}
+\end{literature}
+
+\begin{lemma}[Thesis (12.1.2), torus by torus]
+\label{isTorusIntegrable_of_mem_QC}
+\lean{GSpinGGP.isTorusIntegrable_of_mem_QC}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, IsGammaElt, QC, deltaGGP, germ, gspin, orbitChoice, weylDisc}
+For $\theta\in\QC(G,\chi)$ and $s>0$, the integrand of $m_{\mathrm{geom},s}(\theta)$ is integrable on each
+$T(F)/A_{G,H}(F)$.
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{LIT-bp_integrable_deltaGGP_rpow, aestronglyMeasurable_torusFn_of_mem_QC, germ_bound_of_mem_QC}
+Bounded germs times the integrable $\Delta^{s-1/2}$.
+\end{proof}
+
+\begin{lemma}[Existence of the limit]
+\label{tendsto_mGeomS_of_mem_QC}
+\lean{GSpinGGP.tendsto_mGeomS_of_mem_QC}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, GammaClass, IsGammaElt, QC, deltaGGP, germ, gspin, orbitChoice, weylDisc}
+For $\theta\in\QC(G(F),\chi)$, $\lim_{s\to0^+}m_{\mathrm{geom},s}(\theta)$ exists (Thesis Prop.~12.1.1(i), (12.1.4)).
+\end{lemma}
+\begin{proof}
+Not yet formalized. Induction on $\dim G$: semisimple descent away from $1$, descent to the Lie algebra and homogeneity near $1$.
+\end{proof}
+
+\begin{proposition}[$\mgeom$ converges]
+\label{tendsto_mGeomS}
+\lean{GSpinGGP.tendsto_mGeomS}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, GammaClass, IsGammaElt, QC, deltaGGP, germ, gspin, orbitChoice, weylDisc}
+For $\theta$ in the span $\QC_{\mathrm{fin}}$ of the spaces $\QC(G,\chi)$, the limit $\mgeom(\theta)$ exists
+(Thesis Prop.~12.1.1(i)).
+\end{proposition}
+\begin{proof}
+\leanok
+\uses{IsQuasiCharacter, LIT-germ_unique, finite_gammaClass, isTorusIntegrable_of_mem_QC, jHat, tendsto_mGeomS_of_mem_QC}
+Linearity of $m_{\mathrm{geom},s}$ for $s>0$ and the limit for each $\chi$.
+\end{proof}
+
+\begin{proposition}[$\mgeom$ is additive]
+\label{mGeom_add}
+\lean{GSpinGGP.mGeom_add}
+\leanok
+\uses{CentralCharOn, G, GGPData, QC, mGeom}
+$\mgeom(\theta_1+\theta_2)=\mgeom(\theta_1)+\mgeom(\theta_2)$ on $\QC_{\mathrm{fin}}$ (Thesis Prop.~12.1.1(i)).
+\end{proposition}
+\begin{proof}
+\leanok
+\uses{GSpin, GammaClass, IsGammaElt, IsQuasiCharacter, LIT-germ_unique, deltaGGP, finite_gammaClass, germ, gspin, isTorusIntegrable_of_mem_QC, jHat, orbitChoice, tendsto_mGeomS, weylDisc}
+From convergence.
+\end{proof}
+
+\begin{literature}[Harish-Chandra's compactness lemma]
+\label{LIT-hc_exists_invariantClopen_superset}
+\lean{GSpinGGP.hc_exists_invariantClopen_superset}
+\leanok
+\uses{G, GGPData, GSpin}
+Every compact $C\subset G(F)$ is contained in an open, closed, invariant, $A_G(F)$-stable $\Omega$ that is compact
+modulo conjugation and $A_G(F)$.
+
+\assumedfrom{\cite{HC70}, Part I; \cite{BP}, Prop.~3.1.1(i) (= Thesis Prop.~3.5.1(i)), adapted}
+\end{literature}
+
+\begin{proposition}[Support of $\mgeom$]
+\label{exists_qcCutoff_mGeom}
+\lean{GSpinGGP.exists_qcCutoff_mGeom}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, QC, gspin, mGeom}
+There is an invariant clopen $\Omega$, compact modulo conjugation and $A_G(F)$, such that $\mgeom(\theta)=0$ for
+every $\theta\in\QC(G,\chi)$ vanishing on $\Omega\cap\Greg(F)$ (Thesis Prop.~12.1.1(i), continuity).
+\end{proposition}
+\begin{proof}
+\leanok
+\uses{GammaClass, IsGammaElt, LIT-germ_unique, LIT-hc_exists_invariantClopen_superset, deltaGGP, finite_gammaClass, germ, jHat, orbitChoice, weylDisc}
+$\Gamma(G,H)$ is a finite union of images of tori compact modulo $A_{G,H}(F)$; take $\Omega$ around them; germs only depend on $\theta$ near the point.
+\end{proof}
+

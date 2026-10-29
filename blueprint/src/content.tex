@@ -1,0 +1,111 @@
+% Content of the blueprint, shared by the web and print versions.
+%
+% The chapter files in chapters/ are generated: every node's \lean, \leanok and \uses
+% are computed from the compiled Lean project (the constants occurring in each
+% declaration's type and value, followed through declarations that are not nodes of
+% this blueprint). Statement dependencies go in the statement's \uses, proof
+% dependencies in the proof's \uses.
+
+\chapter*{How to read this blueprint}
+
+This blueprint accompanies the Lean~4 formalization
+\href{https://github.com/SamPease/GSpinGGP}{GSpinGGP} (work in progress) of the dissertation
+\cite{Thesis}: S.~Pease, \emph{The Local Gan--Gross--Prasad Conjecture for General Spin Groups},
+Rutgers University--Newark, 2026, \href{https://doi.org/10.7282/t3-qb3s-s249}{doi:10.7282/t3-qb3s-s249}.
+It is cited as ``Thesis'', with the numbers of the printed dissertation. The proof adapts
+Beuzart-Plessis's local trace formula for unitary groups \cite{BP} and the work of Waldspurger
+\cite{Wal10} and Luo \cite{Luo} on special orthogonal groups.
+
+Every node is a Lean declaration, and every statement is formalized. The main theorem
+(Theorem~\ref{local_ggp}) is proved in Lean from three kinds of inputs: results whose Lean proof is
+still missing (\texttt{sorry}), results from the literature that are assumed (Lean \texttt{axiom}s),
+and definitions. Results are attributed as follows.
+\begin{itemize}
+  \item \textbf{Proved}: the Lean proof of this step contains no \texttt{sorry}. It may still rely,
+    through the results it uses, on unproved steps or on the literature.
+  \item \textbf{Not yet proved}: the Lean proof is \texttt{sorry}. Its proof paragraph gives the
+    intended argument.
+  \item \textbf{Assumed from the literature}: a ``Literature'' environment, with an
+    ``Assumed from'' line giving the source. These are Lean \texttt{axiom}s; they have no proof
+    paragraph, and are never proved in this project. Several are adapted to general spin groups from
+    statements for unitary or special orthogonal groups.
+  \item \textbf{Definitions}: real Lean definitions (never axiomatized).
+\end{itemize}
+Where a Lean statement deliberately differs from the dissertation, its node says so in one line.
+
+\paragraph{Colours in the dependency graph.}
+Boxes are definitions, ellipses are results. A green border means the statement is formalized,
+which is the case for every node. The interior colour gives the status of the proof:
+\begin{itemize}
+  \item \emph{light green fill}: proved (the Lean proof of this step has no \texttt{sorry});
+  \item \emph{dark green fill}: proved, and so is everything it depends on (no \texttt{sorry} and no
+    literature assumption among its ancestors);
+  \item \emph{blue fill}: not yet proved (\texttt{sorry}); the statement and everything it uses are
+    formalized, so the proof is ready to be written;
+  \item \emph{no fill (white)}, with a label starting with \texttt{LIT-}: assumed from the literature
+    (Lean \texttt{axiom});
+  \item \emph{light green box}: a definition.
+\end{itemize}
+Because every result on the path of the main theorem rests on literature assumptions, none of them is
+dark green: the dark green nodes are the self-contained results. The graph's own legend uses the
+generic wording of the blueprint software (``ready to be formalized'' for the blue fill).
+
+\paragraph{Status} (October 2026). The project builds with 29 declarations containing
+\texttt{sorry}; the main theorem depends on 18 of them and on 31 of the 35 literature assumptions.
+The 11 unproved statements not on its path are collected in Chapter~\ref{chap:offpath}. To see exactly
+what the main theorem rests on, run \texttt{\#print axioms GSpinGGP.local\_ggp}.
+
+\input{chapters/gspin}
+\input{chapters/reps}
+\input{chapters/mainthm}
+\input{chapters/proofmain}
+\input{chapters/multformula}
+\input{chapters/spectral}
+\input{chapters/mgeom}
+\input{chapters/geometric}
+\input{chapters/offpath}
+
+\begin{thebibliography}{99}
+\bibitem{Thesis} S.~Pease, \emph{The Local Gan--Gross--Prasad Conjecture for General Spin Groups},
+  PhD dissertation, Rutgers University--Newark, 2026, doi:10.7282/t3-qb3s-s249.
+\bibitem{Art91} J.~Arthur, \emph{A local trace formula}, Publ.\ Math.\ IH\'ES 73 (1991), 5--96.
+\bibitem{Art93} J.~Arthur, \emph{On elliptic tempered characters}, Acta Math.\ 171 (1993), 73--138.
+\bibitem{Artin} E.~Artin, \emph{Geometric Algebra}, Interscience, 1957.
+\bibitem{BP} R.~Beuzart-Plessis, \emph{A local trace formula for the Gan--Gross--Prasad conjecture for
+  unitary groups: the archimedean case}, Ast\'erisque 418, 2020.
+\bibitem{Dixmier} J.~Dixmier, \emph{$C^*$-algebras}, North-Holland, 1977.
+\bibitem{ET} M.~Emory, S.~Takeda, \emph{Contragredients and a multiplicity one theorem for general
+  spin groups}.
+\bibitem{Folland} G.~Folland, \emph{A Course in Abstract Harmonic Analysis}, CRC Press.
+\bibitem{GGP} W.~T.~Gan, B.~Gross, D.~Prasad, \emph{Symplectic local root numbers, central critical
+  $L$-values, and restriction problems in the representation theory of classical groups},
+  Ast\'erisque 346, 2012.
+\bibitem{HC70} Harish-Chandra, \emph{Harmonic analysis on reductive $p$-adic groups}, LNM 162,
+  Springer, 1970.
+\bibitem{HC99} Harish-Chandra, \emph{Admissible invariant distributions on reductive $p$-adic groups},
+  University Lecture Series 16, AMS, 1999.
+\bibitem{Knapp} A.~Knapp, \emph{Lie Groups Beyond an Introduction}, 2nd ed., Birkh\"auser, 2002.
+\bibitem{Kot83} R.~Kottwitz, \emph{Sign changes in harmonic analysis on reductive groups},
+  Trans.\ Amer.\ Math.\ Soc.\ 278 (1983), 289--297.
+\bibitem{Lam} T.~Y.~Lam, \emph{Introduction to Quadratic Forms over Fields}, AMS, 2005.
+\bibitem{Luo} Z.~Luo, \emph{A local trace formula for the local Gan--Gross--Prasad conjecture for
+  special orthogonal groups}, arXiv:2009.13947.
+\bibitem{MW87} C.~M\oe glin, J.-L.~Waldspurger, \emph{Mod\`eles de Whittaker d\'eg\'en\'er\'es pour
+  des groupes $p$-adiques}, Math.\ Z.\ 196 (1987), 427--452.
+\bibitem{Rodier} F.~Rodier, \emph{Mod\`ele de Whittaker et caract\`eres de repr\'esentations},
+  LNM 466, Springer, 1975.
+\bibitem{SerreCG} J.-P.~Serre, \emph{Cohomologie galoisienne}, LNM 5, Springer.
+\bibitem{SerreLF} J.-P.~Serre, \emph{Local Fields}, GTM 67, Springer, 1979.
+\bibitem{Steinberg} R.~Steinberg, \emph{Endomorphisms of linear algebraic groups}, Mem.\ Amer.\ Math.\
+  Soc.\ 80, 1968.
+\bibitem{vD72} G.~van Dijk, \emph{Computation of certain induced characters of $p$-adic groups},
+  Math.\ Ann.\ 199 (1972), 229--240.
+\bibitem{Wal01} J.-L.~Waldspurger, \emph{Int\'egrales orbitales nilpotentes et endoscopie pour les
+  groupes classiques non ramifi\'es}, Ast\'erisque 269, 2001.
+\bibitem{WalPl} J.-L.~Waldspurger, \emph{La formule de Plancherel pour les groupes $p$-adiques
+  d'apr\`es Harish-Chandra}, J.\ Inst.\ Math.\ Jussieu 2 (2003), 235--333.
+\bibitem{Wal10} J.-L.~Waldspurger, \emph{Une formule int\'egrale reli\'ee \`a la conjecture locale de
+  Gross--Prasad}, Compositio Math.\ 146 (2010), 1180--1290.
+\bibitem{Weil} A.~Weil, \emph{Basic Number Theory}, Springer.
+\bibitem{Yan} P.~Yan, \emph{Uniqueness of Bessel models for GSpin}, arXiv:2503.20116.
+\end{thebibliography}

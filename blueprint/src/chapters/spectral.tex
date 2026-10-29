@@ -1,0 +1,136 @@
+% Generated from the Lean dependency data; see the comment at the top of content.tex.
+\chapter{The spectral side}
+\label{chap:spectral}
+Thesis Ch.~9--10 and Prop.~7.4.1: the spectral expansion of $J$, in the elliptic form used by the induction,
+and the vanishing of the defect on properly induced representations.
+
+\section{Parabolic induction}
+\begin{definition}[Normalized parabolic induction]
+\label{parInd}
+\lean{GSpinGGP.GGPData.parInd}
+\leanok
+\uses{G, GGPData, GSpin, LIT-haar_G_isMulRightInvariant, LIT-integral_eq_mul_integral_compact_integral, UnitaryRep}
+$i_P^G(\sigma)$: the completion of the smooth $f:G(F)\to H_\sigma$ with $f(pg)=\delta_P(p)^{1/2}\sigma(p)f(g)$ for
+$\|f\|^2=\int_K\|f(k)\|^2dk$, with $G(F)$ acting by right translation (Thesis \S3.2).
+\end{definition}
+
+\begin{definition}[Properly induced virtual representations]
+\label{Rind}
+\lean{GSpinGGP.GGPData.Rind}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, IsTempered, UnitaryRep, VirtualTemp, charG, gspin, mult, orbitChoice, parInd}
+$\Rind(G,\eta)$: the span of the virtual tempered representations whose character on $\Greg(F)$ is that of some
+$i_P^G(\sigma)$, $P$ proper, $\sigma$ tempered with central character $\eta$ (Thesis \S7.4).
+\end{definition}
+
+\begin{literature}[Van Dijk's formula]
+\label{LIT-vanDijk_charG_parInd_ell}
+\lean{GSpinGGP.vanDijk_charG_parInd_ell}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, IsTempered, UnitaryRep, charG, gspin, parInd}
+For $P$ proper and $\sigma$ tempered, $\theta_{i_P^G\sigma}$ vanishes on $\ellreg(F)$.
+
+\assumedfrom{\cite{vD72}; \cite{BP}, (3.4.2)/(3.4.3) = Thesis (3.5.3.2)}
+\end{literature}
+
+\begin{literature}[Multiplicity of an induced representation]
+\label{LIT-hc_vMult_eq_mult_parInd}
+\lean{GSpinGGP.hc_vMult_eq_mult_parInd}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, IsTempered, UnitaryRep, VirtualTemp, charG, gspin, mult, orbitChoice, parInd}
+If a virtual representation $\Pi$ has the character of $i_P^G(\sigma)$ on $\Greg(F)$, then $m(\Pi)=m(i_P^G\sigma)$.
+
+\assumedfrom{Harish-Chandra (linear independence of characters); \cite{WalPl}, \S III.4, \S VII; \cite{BP}, \S2.2, \S2.7}
+\end{literature}
+
+\begin{literature}[Vanishing elliptic character means properly induced]
+\label{LIT-arthur_mem_Rind_of_vChar_ell}
+\lean{GSpinGGP.arthur_mem_Rind_of_vChar_ell}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, IsTempered, Rind, UnitaryRep, VirtualTemp, charG, gspin, mult, orbitChoice}
+If $\Pi\in\Rtemp(G,\eta)$ has $\theta_\Pi=0$ on $\ellreg(F)$, then $\Pi\in\Rind(G,\eta)$.
+
+\assumedfrom{\cite{Art93}, \S6 (orthogonality of elliptic tempered characters); \cite{BP}, \S2.7, (2.7.1)}
+\end{literature}
+
+\begin{literature}[$\theta_f$ is a virtual character on the elliptic set]
+\label{LIT-bp_exists_vChar_eq_thetaF_ell}
+\lean{GSpinGGP.bp_exists_vChar_eq_thetaF_ell}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, IsTempered, ScuspTestFn, UnitaryRep, VirtualTemp, charG, gspin, mult, orbitChoice, thetaF}
+For $f\in\scusp(A_G\backslash G,\eta)$ there is a virtual tempered $\Pi$ with central character $\eta$ with
+$\theta_\Pi=\theta_f$ on $\ellreg(F)$.
+
+\assumedfrom{\cite{BP}, Prop.~5.6.1(ii), Lemma 5.4.2(i) (= Thesis Prop.~4.8.1), adapted to the $\chi$-equivariant setting and a finite sum}
+\end{literature}
+
+\section{The spectral expansion}
+\begin{proposition}[Thesis Prop.~7.4.1(i) at an induced representation]
+\label{mult_parInd_eq_mGeom}
+\lean{GSpinGGP.mult_parInd_eq_mGeom}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, HYP, IsTempered, UnitaryRep, charG, mGeom, mult, parInd}
+Assume (HYP). For $\pi=i_Q^G(\sigma)$, $Q$ proper and $\sigma$ tempered with central character $\eta$,
+$m(\pi)=\mgeom(\theta_\pi)$.
+\end{proposition}
+\begin{proof}
+Not yet formalized. $m(i_Q^G\sigma)=m(\tilde\sigma)$ for the GGP triple of the Levi (Thesis Cor.~9.5.1);
+$\mgeom(\theta_{i_Q^G\sigma})=\mgeom^{\tilde G}(\theta_{\tilde\sigma})$ (Thesis Lemma~7.3.1, \cite{BP} Prop.~4.8.1(i));
+conclude by (HYP).
+\end{proof}
+
+\begin{proposition}[The defect vanishes on $\Rind$]
+\label{defect_eq_zero_of_mem_Rind}
+\lean{GSpinGGP.defect_eq_zero_of_mem_Rind}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, HYP, IsTempered, Rind, UnitaryRep, VirtualTemp, charG, defect, mult, orbitChoice}
+Assume (HYP). The defect vanishes on $\Rind(G,\eta)$ (Thesis Prop.~7.4.1(i), extended linearly).
+\end{proposition}
+\begin{proof}
+\leanok
+\uses{GammaClass, IsGammaElt, IsQuasiCharacter, LIT-germ_unique, LIT-hc_vMult_eq_mult_parInd, QC, charG_mem_QC, deltaGGP, germ, gspin, jHat, mGeom, mGeom_add, mult_parInd_eq_mGeom, parInd, tendsto_mGeomS, weylDisc}
+On a generator: $m(\Pi)=m(i_Q^G\sigma)$, $\mgeom(\Pi)=\mgeom(\theta_{i_Q^G\sigma})$, and these agree.
+\end{proof}
+
+\begin{proposition}[Vanishing elliptic character implies vanishing defect]
+\label{defect_eq_zero_of_vChar_eq_zero_ell}
+\lean{GSpinGGP.defect_eq_zero_of_vChar_eq_zero_ell}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, HYP, IsTempered, UnitaryRep, VirtualTemp, charG, defect, gspin, mult, orbitChoice}
+Assume (HYP). If $\theta_\Pi=0$ on $\ellreg(F)$ then $m(\Pi)=\mgeom(\Pi)$.
+\end{proposition}
+\begin{proof}
+\leanok
+\uses{LIT-arthur_mem_Rind_of_vChar_ell, defect_eq_zero_of_mem_Rind}
+Such $\Pi$ lie in $\Rind$ (Arthur), where the defect vanishes.
+\end{proof}
+
+\begin{theorem}[The spectral expansion, elliptic form]
+\label{thm_9_1_1_ell}
+\lean{GSpinGGP.thm_9_1_1_ell}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, HYP, IsTempered, ScuspTestFn, UnitaryRep, VirtualTemp, charG, defect, distribJ, gspin, mGeom, mult, orbitChoice, thetaF}
+(Thesis Thm.~10.2.1 = Thm.~1.0.4 and Prop.~7.4.1(ii), elliptic form.) Assume (HYP). For
+$f\in\scusp(A_G\backslash G,\eta)$, $J(f)-\mgeom(\theta_f)=\mathrm{defect}(\Pi_f)$, where $\Pi_f$ is a virtual
+tempered representation with $\theta_{\Pi_f}=\theta_f$ on $\ellreg(F)$.
+\end{theorem}
+\begin{proof}
+Not yet formalized. The spectral expansion $J(f)=\int_{\mathcal X(G,\chi)}D(\pi)\hat\theta_f(\pi)m(\bar\pi)\,d\pi$
+(Thesis Thm.~10.2.1, from Thm.~10.1.1, Arthur's local trace formula, the matricial Paley--Wiener theorem,
+Thm.~9.2.1 and Cor.~9.5.1); on the induced part $m=\mgeom$ by Prop.~7.4.1(i).
+\end{proof}
+
+\begin{proposition}[The spectral expansion in elliptic form]
+\label{exists_virtual_spectral_ell}
+\lean{GSpinGGP.exists_virtual_spectral_ell}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, HYP, IsTempered, ScuspTestFn, UnitaryRep, VirtualTemp, charG, defect, distribJ, gspin, mGeom, mult, orbitChoice, thetaF}
+Assume (HYP). For $f\in\scusp(A_G\backslash G,\eta)$ there is a virtual tempered $\Pi_f$ with central character
+$\eta$, $\theta_{\Pi_f}=\theta_f$ on $\ellreg(F)$ and $J(f)-\mgeom(\theta_f)=m(\Pi_f)-\mgeom(\Pi_f)$.
+\end{proposition}
+\begin{proof}
+\leanok
+\uses{LIT-bp_exists_vChar_eq_thetaF_ell, thm_9_1_1_ell}
+Combine the previous theorem with the elliptic virtual character of $\theta_f$.
+\end{proof}
+

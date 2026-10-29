@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GSpinGGP</title>
+<meta name="description" content="Lean 4 formalization (work in progress) of the local Gan-Gross-Prasad conjecture for general spin groups.">
+<style>
+  :root {
+    --bg: #fbfaf7; --fg: #1f2328; --muted: #5b6168; --line: #e3e0d8;
+    --accent: #2f5d8a; --card: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #16181c; --fg: #e6e6e3; --muted: #a0a4aa; --line: #2c3036;
+            --accent: #8db7e0; --card: #1d2025; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font: 17px/1.6 Georgia, "Times New Roman", serif;
+  }
+  main { max-width: 720px; margin: 0 auto; padding: 56px 16px 64px; }
+  h1 { font-size: 1.9rem; line-height: 1.25; margin: 0 0 .4rem; font-weight: 600; }
+  .sub { color: var(--muted); margin: 0 0 2rem; }
+  .wip {
+    display: inline-block; font: 600 .75rem/1 system-ui, sans-serif; letter-spacing: .04em;
+    text-transform: uppercase; color: var(--muted); border: 1px solid var(--line);
+    border-radius: 999px; padding: .35rem .7rem; margin-bottom: 1.2rem;
+  }
+  .links { display: grid; gap: 12px; margin: 2rem 0; }
+  .links a {
+    display: block; padding: 14px 16px; background: var(--card); border: 1px solid var(--line);
+    border-radius: 8px; color: var(--fg); text-decoration: none;
+  }
+  .links a:hover { border-color: var(--accent); }
+  .links strong { color: var(--accent); font-family: system-ui, sans-serif; font-weight: 600; }
+  .links span { display: block; color: var(--muted); font-size: .92rem; }
+  p a { color: var(--accent); }
+  footer { color: var(--muted); font-size: .9rem; border-top: 1px solid var(--line); padding-top: 1rem; margin-top: 2.5rem; }
+</style>
+</head>
+<body>
+<main>
+  <div class="wip">Work in progress</div>
+  <h1>The local Gan–Gross–Prasad conjecture for general spin groups, in Lean</h1>
+  <p class="sub">A Lean 4 + Mathlib formalization of the dissertation of Samantha Pease
+    (Rutgers University–Newark, 2026,
+    <a href="https://doi.org/10.7282/t3-qb3s-s249">doi:10.7282/t3-qb3s-s249</a>).</p>
+
+  <p>The main theorem is stated and its proof assembled in Lean, but it still rests on unproved
+    steps and on results from the literature assumed as axioms. The blueprint shows which.</p>
+
+  <div class="links">
+    <a href="blueprint/dep_graph_document.html"><strong>Dependency graph</strong>
+      <span>Every definition, theorem and assumed result, coloured by formalization status.</span></a>
+    <a href="blueprint/index.html"><strong>Blueprint</strong>
+      <span>The argument, statement by statement, linked to the Lean declarations.</span></a>
+    <a href="blueprint.pdf"><strong>Blueprint (PDF)</strong>
+      <span>The same, as a printable document.</span></a>
+    <a href="https://github.com/SamPease/GSpinGGP"><strong>Source on GitHub</strong>
+      <span>The Lean code, with build instructions and current status.</span></a>
+  </div>
+
+  <footer>The Lean code was written by AI agents (Anthropic's Claude), directed by the dissertation's
+    author. Licensed under Apache 2.0.</footer>
+</main>
+</body>
+</html>

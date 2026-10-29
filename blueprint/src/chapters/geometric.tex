@@ -1,0 +1,285 @@
+% Generated from the Lean dependency data; see the comment at the top of content.tex.
+\chapter{The geometric expansion}
+\label{chap:geometric}
+Thesis \S12.2--12.5: the geometric expansion $J(f)=\mgeom(\theta_f)$ under (HYP), split into a neighbourhood
+of the centre (descent to the Lie algebra) and its complement (semisimple descent).
+
+\section{\texorpdfstring{Extending $J$ to quasi-characters}{Extending J to quasi-characters}}
+\begin{definition}[Extensions $J_{\mathrm{qc}}$ of $J$]
+\label{IsJqc}
+\lean{GSpinGGP.IsJqc}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, QC, ScuspTestFn, distribJ, gspin, mGeom, thetaF, thetaF_mem_QC}
+A linear form $J_{\mathrm{qc}}$ on $\QC(G,\chi^{-1})$ that depends only on values on $\Greg(F)$, satisfies
+$J(f)=J_{\mathrm{qc}}(\theta_f)$, is continuous, and $J_{\mathrm{qc}}-\mgeom$ is supported in the elliptic set
+(Thesis Prop.~12.2.3). This differs from Thesis Prop.~12.2.3, which has $\Supp(J_{\mathrm{qc}})\subset G(F)_{\mathrm{ell}}$:
+here $\Gamma(G,H)$ need not lie in the elliptic set.
+\end{definition}
+
+\begin{lemma}[$J-\mgeom$ only sees the elliptic set]
+\label{distribJ_sub_mGeom_eq_of_eqOn_ell}
+\lean{GSpinGGP.distribJ_sub_mGeom_eq_of_eqOn_ell}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, HYP, ScuspTestFn, distribJ, gspin, mGeom, thetaF}
+Assume (HYP). If $\theta_f=\theta_{f'}$ on $\ellreg(F)$ then $J(f)-\mgeom(\theta_f)=J(f')-\mgeom(\theta_{f'})$
+(Thesis Prop.~7.4.1(ii)).
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{IsTempered, UnitaryRep, VirtualTemp, charG, defect, defect_eq_zero_of_vChar_eq_zero_ell, exists_virtual_spectral_ell, mult, orbitChoice}
+Both are defects of virtual representations with the same elliptic character.
+\end{proof}
+
+\begin{proposition}[Existence of $J_{\mathrm{qc}}$]
+\label{exists_isJqc}
+\lean{GSpinGGP.exists_isJqc}
+\leanok
+\uses{CentralCharOn, G, GGPData, HYP, IsJqc, QC}
+Assume (HYP). Then $J$ extends to some $J_{\mathrm{qc}}$ as above (Thesis Prop.~12.2.3).
+\end{proposition}
+\begin{proof}
+\leanok
+\uses{GSpin, GammaClass, H, IsGammaElt, IsQuasiCharacter, LIT-bp_scusp_surj_ell, LIT-bp_thetaF_exists, LIT-germ_unique, LIT-hc_regularSet_open_conull, N, ScuspTestFn, deltaGGP, distribJ, distribJ_add, distribJ_sub_mGeom_eq_of_eqOn_ell, exists_qcCutoff_mGeom, germ, gspin, isThetaF_chiProj, jHat, mGeom, mGeom_add, orbitChoice, tendsto_mGeomS, thetaF, thetaF_mem_QC, thetaF_spec, weylDisc, xi}
+$J_{\mathrm{qc}}(\theta)=\mgeom(\theta)+(J(f)-\mgeom(\theta_f))$ for any $f$ with $\theta_f=\theta$ on the elliptic set (elliptic isolation); well defined by the previous lemma.
+\end{proof}
+
+\begin{lemma}[$J(f)$ depends only on $\theta_f$]
+\label{distribJ_eq_of_thetaF_eqOn}
+\lean{GSpinGGP.distribJ_eq_of_thetaF_eqOn}
+\leanok
+\uses{CentralCharOn, G, GGPData, HYP, ScuspTestFn, distribJ, gspin, thetaF}
+Assume (HYP). If $\theta_f=\theta_{f'}$ on $\Greg(F)$ then $J(f)=J(f')$ (Thesis Prop.~12.2.3).
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{IsJqc, QC, exists_isJqc, thetaF_mem_QC}
+$J=J_{\mathrm{qc}}\circ\theta$.
+\end{proof}
+
+\section{Away from the centre}
+Thesis \S12.3.
+
+\begin{lemma}[Invariant clopen sets are saturated along unipotent radicals]
+\label{mem_mul_parabolicU_iff}
+\lean{GSpinGGP.mem_mul_parabolicU_iff}
+\leanok
+\uses{G, GGPData, GSpin}
+For an invariant clopen $\Omega$, $p\in P(F)$ and $u\in U(F)$, $pu\in\Omega\iff p\in\Omega$.
+\end{lemma}
+\begin{proof}
+Not yet formalized. Contract $U$ by a cocharacter of $A_M$; the Levi part lies in the closure of both classes.
+\end{proof}
+
+\begin{proposition}[Partition of unity]
+\label{geomAt_glue}
+\lean{GSpinGGP.geomAt_glue}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, HYP, ScuspTestFn, distribJ, gspin, mGeom, thetaF}
+Assume (HYP). If invariant clopen sets $\Omega_i$ are each either good (the geometric expansion holds for $f$
+supported there) or contained in the zero set of $\theta$, and $\theta_f$ is supported in $\bigcup_i\Omega_i$ and
+in the support of $\theta$, then $J(f)=\mgeom(\theta_f)$ (Thesis Prop.~12.3.1, \cite{BP} \S11.6).
+\end{proposition}
+\begin{proof}
+\leanok
+\uses{GammaClass, H, IsGammaElt, IsQuasiCharacter, LIT-germ_unique, LIT-hc_regularSet_open_conull, N, QC, deltaGGP, distribJ_add, distribJ_eq_of_thetaF_eqOn, germ, isThetaF_chiProj, jHat, mGeom_add, mem_mul_parabolicU_iff, orbitChoice, thetaF_mem_QC, thetaF_spec, weylDisc}
+Induction on the number of sets, cutting $f$ by $\Omega_i$.
+\end{proof}
+
+\begin{literature}[Neighbourhoods of the near-central set]
+\label{LIT-hc_exists_invariantClopen_nearCentral}
+\lean{GSpinGGP.hc_exists_invariantClopen_nearCentral}
+\leanok
+\uses{G, GGPData, GSpin}
+For every neighbourhood $U$ of $1$ there is an open, closed, invariant, $A_G(F)$-stable $\Omega$ containing every
+near-central element ($1$ in the closure of $A_G(F)c^{G(F)}$), each element of which is conjugate into $U$
+modulo $A_G(F)$.
+
+\assumedfrom{\cite{HC70}, Part I; \cite{BP}, \S3.3 (= Thesis \S3.5.2), adapted}
+\end{literature}
+
+\begin{lemma}[Thesis Prop.~12.3.1, local form]
+\label{exists_good_nhd_of_not_nearCentral}
+\lean{GSpinGGP.exists_good_nhd_of_not_nearCentral}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, HYP, ScuspTestFn, distribJ, gspin, mGeom, thetaF}
+Assume (HYP). Every $c$ whose semisimple part is not in $A_G(F)$ has an invariant clopen neighbourhood that
+either contains no elliptic regular element or on which the geometric expansion holds.
+\end{lemma}
+\begin{proof}
+Not yet formalized. Semisimple descent to $G_x=G'_x\cdot G''_x$: (HYP) for the smaller GGP triple
+$(G'_x,H'_x,\xi'_x)$ and Arthur's local trace formula on $G''_x$ (Thesis (12.3.3), Thm.~4.7.1).
+\end{proof}
+
+\begin{proposition}[Thesis Prop.~12.3.1]
+\label{geomAt_away}
+\lean{GSpinGGP.geomAt_away}
+\leanok
+\uses{CentralCharOn, G, GGPData, HYP, ScuspTestFn, distribJ, gspin, mGeom, thetaF}
+Assume (HYP). If $f\in\scusp(A_G\backslash G,\chi^{-1})$ and $\theta_f$ vanishes near $1$, then $J(f)=\mgeom(\theta_f)$.
+\end{proposition}
+\begin{proof}
+\leanok
+\uses{GSpin, H, IsJqc, IsQuasiCharacter, LIT-hc_exists_invariantClopen_nearCentral, LIT-hc_exists_invariantClopen_superset, LIT-hc_regularSet_open_conull, N, QC, exists_good_nhd_of_not_nearCentral, exists_isJqc, geomAt_glue, jHat, thetaF_mem_QC, thetaF_spec}
+Cover the support of $\theta_f$ (compact modulo conjugation and $A_G$) by finitely many good sets and glue.
+\end{proof}
+
+\section{Near the centre: descent to the Lie algebra}
+Thesis \S12.4--12.5 and Ch.~11. Here $\mathfrak g^0=\mathfrak{so}(W)\oplus\mathfrak{so}(V)$.
+
+\begin{definition}[The distribution $J^{\mathrm{Lie}}$]
+\label{distribJLie}
+\lean{GSpinGGP.GGPData.distribJLie}
+\leanok
+\uses{G, GGPData, GSpin, H, N, gspin}
+$J^{\mathrm{Lie}}(f)=\int_{H(F)\backslash G(F)/A_G(F)}K^{\mathrm{Lie}}(f,x)\,dx$ for $f$ on $\mathfrak g^0(F)$
+(Thesis \S10.1; \cite{Luo} \S4, \cite{BP} \S8.1).
+\end{definition}
+
+\begin{definition}[$\theta_f$ on the Lie algebra]
+\label{thetaFLie}
+\lean{GSpinGGP.GGPData.thetaFLie}
+\leanok
+\uses{G, GGPData, GSpin, distribJLie, gspin}
+For $f\in\mathcal S_{\mathrm{scusp}}(\mathfrak g^0(F))$, the quasi-character $\theta_f$ (Thesis \S4.8; \cite{BP} \S5.5).
+\end{definition}
+
+\begin{definition}[$m^{\mathrm{Lie}}_{\mathrm{geom}}$]
+\label{mGeomLie}
+\lean{GSpinGGP.GGPData.mGeomLie}
+\leanok
+\uses{G, GGPData, GSpin, GammaClass, H, IsGammaElt, N, gspin, jHat, weylDisc}
+$m^{\mathrm{Lie}}_{\mathrm{geom}}(\theta)=\lim_{s\to0^+}m^{\mathrm{Lie}}_{\mathrm{geom},s}(\theta)$ (Thesis Prop.~12.1.1(iii)).
+\end{definition}
+
+\begin{lemma}[Descent to the Lie algebra near $1$]
+\label{exists_lie_descent}
+\lean{GSpinGGP.exists_lie_descent}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, ScuspTestFn, distribJ, distribJLie, gspin, mGeom, mGeomLie, thetaF, thetaFLie}
+(Thesis Prop.~12.4.1(i), Prop.~12.1.1(iv).) If neither $W$ nor $V$ is a hyperbolic plane, there is an invariant
+clopen $\Omega\ni1$ such that every $f\in\scusp(A_G\backslash G,\chi^{-1})$ supported in $\Omega$ has a strongly cuspidal
+$F$ on $\mathfrak g^0$ with $J(f)=J^{\mathrm{Lie}}(F)$ and $\mgeom(\theta_f)=m^{\mathrm{Lie}}_{\mathrm{geom}}(\theta_F)$.
+\end{lemma}
+\begin{proof}
+Not yet formalized. $\Omega=A_G(F)\exp(\omega)$ for a $G(F)$-excellent $\omega$, $F=(j_G^H)^{1/2}f_\omega$.
+\end{proof}
+
+\begin{literature}[Spectral expansion of $J^{\mathrm{Lie}}$]
+\label{LIT-jLie_eq_of_thetaFLie_eqOn}
+\lean{GSpinGGP.jLie_eq_of_thetaFLie_eqOn}
+\leanok
+\uses{G, GGPData, GSpin, distribJLie, gspin}
+(Thesis Thm.~11.6.1, in normalization-free form.) If neither $W$ nor $V$ is a hyperbolic plane, $J^{\mathrm{Lie}}(f)$
+depends only on $\theta_f|_{\mathfrak g^0_{\mathrm{reg}}}$.
+
+\assumedfrom{\cite{Luo}, Thm.~6.6.1; \cite{Wal10}, \S9--10; following \cite{BP}, Thm.~10.8.1}
+\end{literature}
+
+\begin{lemma}[$J^{\mathrm{Lie}}$ factors through $\theta_f$]
+\label{distribJLie_eq_jqcLie}
+\lean{GSpinGGP.distribJLie_eq_jqcLie}
+\leanok
+\uses{G, GGPData, GSpin, distribJLie, gspin, thetaFLie}
+If neither $W$ nor $V$ is a hyperbolic plane, $J^{\mathrm{Lie}}(f)=J^{\mathrm{Lie}}_{\mathrm{qc}}(\theta_f)$ for every
+strongly cuspidal $f$ on $\mathfrak g^0$ (Thesis Prop.~12.4.1(ii)).
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{LIT-jLie_eq_of_thetaFLie_eqOn}
+From the spectral expansion of $J^{\mathrm{Lie}}$.
+\end{proof}
+
+\begin{lemma}[Thesis Prop.~12.5.1, test-function form]
+\label{prop_11_8_1_of_jqc}
+\lean{GSpinGGP.prop_11_8_1_of_jqc}
+\leanok
+\uses{G, GGPData, GSpin, H, HYP, N, distribJLie, gspin, jHat, mGeomLie, thetaFLie}
+Assume (HYP), and that $J^{\mathrm{Lie}}$ factors through $\theta_f$ by a form seeing only $\mathfrak g^0_{\mathrm{reg}}$.
+Then $J^{\mathrm{Lie}}(f)-m^{\mathrm{Lie}}_{\mathrm{geom}}(\theta_f)=\sum_{\mathcal O\in\Nilreg(\mathfrak g^0)}c_{\mathcal O}\,c_{\theta_f,\mathcal O}(0)$
+for some constants $c_{\mathcal O}$.
+\end{lemma}
+\begin{proof}
+Not yet formalized. The difference is a homogeneous continuous form, vanishing on quasi-characters with
+$0\notin\Supp\theta$ by semisimple descent and (HYP) (Prop.~12.4.1(iv)); such a form is a combination of germs at
+$0$ (\cite{BP} Prop.~4.6.1).
+\end{proof}
+
+\begin{proposition}[Thesis Prop.~12.5.1]
+\label{prop_11_8_1}
+\lean{GSpinGGP.prop_11_8_1}
+\leanok
+\uses{G, GGPData, GSpin, H, HYP, N, distribJLie, gspin, jHat, mGeomLie, thetaFLie}
+Assume (HYP), neither $W$ nor $V$ a hyperbolic plane. Then
+$J^{\mathrm{Lie}}(f)-m^{\mathrm{Lie}}_{\mathrm{geom}}(\theta_f)=\sum_{\mathcal O\in\Nilreg(\mathfrak g^0)}c_{\mathcal O}\,c_{\theta_f,\mathcal O}(0)$.
+\end{proposition}
+\begin{proof}
+\leanok
+\uses{distribJLie_eq_jqcLie, prop_11_8_1_of_jqc}
+The test-function form with $J^{\mathrm{Lie}}_{\mathrm{qc}}$.
+\end{proof}
+
+\begin{literature}[The endgame]
+\label{LIT-lie_endgame}
+\lean{GSpinGGP.lie_endgame}
+\leanok
+\uses{G, GGPData, GSpin, H, N, distribJLie, gspin, jHat, mGeomLie, thetaFLie}
+(Thesis \S12.5.) If $J^{\mathrm{Lie}}(f)-m^{\mathrm{Lie}}_{\mathrm{geom}}(\theta_f)=\sum_{\mathcal O}c_{\mathcal O}c_{\theta_f,\mathcal O}(0)$
+for every strongly cuspidal $f$ on $\mathfrak g^0$, then every $c_{\mathcal O}$ vanishes.
+
+\assumedfrom{\cite{Wal10}, \S11.4--11.6; \cite{Luo}, Prop.~7.3.7, Lemma B.3.1}
+\end{literature}
+
+\begin{theorem}[$J^{\mathrm{Lie}}=J^{\mathrm{Lie}}_{\mathrm{geom}}$]
+\label{distribJLie_eq_mGeomLie}
+\lean{GSpinGGP.distribJLie_eq_mGeomLie}
+\leanok
+\uses{G, GGPData, GSpin, HYP, distribJLie, gspin, mGeomLie, thetaFLie}
+Assume (HYP), neither $W$ nor $V$ a hyperbolic plane. Then $J^{\mathrm{Lie}}(f)=m^{\mathrm{Lie}}_{\mathrm{geom}}(\theta_f)$
+for strongly cuspidal $f$ on $\mathfrak g^0$ (Thesis Thm.~12.2.2).
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{H, LIT-lie_endgame, N, jHat, prop_11_8_1}
+Prop.~12.5.1 and the endgame.
+\end{proof}
+
+\begin{lemma}[The case $V$ a hyperbolic plane]
+\label{geomAt_near_of_isHypPlane_V}
+\lean{GSpinGGP.geomAt_near_of_isHypPlane_V}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, ScuspTestFn, distribJ, mGeom, thetaF}
+If $V$ is a hyperbolic plane ($\dim W=1$, $r=0$), the geometric expansion holds on all of $G(F)$.
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{GammaClass, H, IsGammaElt, LIT-exists_isSelfDual, N, deltaGGP, germ, gspin, jHat, orbitChoice, weylDisc, xi}
+$G$ is a split torus, $A_G=G$; then $J(f)=f(1)$, $\theta_f=f$ and $\mgeom(\theta_f)=c_{\theta_f,0}(1)=f(1)$, using a self-dual measure for $\hat j(0,\cdot)=1$.
+\end{proof}
+
+\begin{lemma}[The case $W$ a hyperbolic plane]
+\label{geomAt_near_of_isHypPlane_W}
+\lean{GSpinGGP.geomAt_near_of_isHypPlane_W}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, HYP, ScuspTestFn, distribJ, mGeom, thetaF}
+Assume (HYP) and $W$ a hyperbolic plane. There is an invariant clopen $\Omega\ni1$ on which the geometric
+expansion holds.
+\end{lemma}
+\begin{proof}
+Not yet formalized. Here $A_{\bar G}=\SO(W)$ is a nontrivial split central torus; the Lie-algebra argument must be
+run modulo $A_{\bar G}$, which the cited literature does not state in this form (\cite{BP} Ch.~10--11 modulo $A_{\bar G}$).
+\end{proof}
+
+\begin{theorem}[The geometric expansion near the centre]
+\label{geomAt_near}
+\lean{GSpinGGP.geomAt_near}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, HYP, ScuspTestFn, distribJ, mGeom, thetaF}
+(Thesis Prop.~12.4.1 and Thm.~12.2.2.) Assume (HYP). For every $\chi$ there is an invariant clopen $\Omega\ni1$
+with $J(f)=\mgeom(\theta_f)$ for every $f\in\scusp(A_G\backslash G,\chi^{-1})$ supported in $\Omega$.
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{distribJLie, distribJLie_eq_mGeomLie, exists_lie_descent, geomAt_near_of_isHypPlane_V, geomAt_near_of_isHypPlane_W, gspin, mGeomLie, thetaFLie}
+Cases: $V$ a hyperbolic plane; $W$ a hyperbolic plane; otherwise descend to $\mathfrak g^0$ and use $J^{\mathrm{Lie}}=J^{\mathrm{Lie}}_{\mathrm{geom}}$.
+\end{proof}
+

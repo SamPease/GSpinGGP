@@ -1,0 +1,144 @@
+% Generated from the Lean dependency data; see the comment at the top of content.tex.
+\chapter{Further statements not yet used by the main theorem}
+\label{chap:offpath}
+These statements are formalized but not (yet) on the path of the main theorem: the analytic estimates of
+Thesis Ch.~8 and 10 (the convergence of $J$ is stated separately above), the Levi decomposition and transport
+of $\mgeom$ (Thesis \S7.2, \S9.3), and checks of the normalization of $\hat j$ on $\mathfrak{sl}_2$.
+
+\section{Estimates}
+Thesis Ch.~8, \S10.1.
+
+\begin{proposition}[Good minimal parabolic subgroups]
+\label{exists_good_minimal_parabolic}
+\lean{GSpinGGP.GGPData.exists_good_minimal_parabolic}
+\leanok
+\uses{G, GGPData, GSpin, H}
+(Thesis Prop.~8.1.1(i), existence.) There are full isotropic flags of $W$ and $V$ whose stabilizer $\bar P$
+satisfies $H\cap\bar U_{\min}=\{1\}$, with $H(F)\bar P(F)$ open in $G(F)$ and of Haar-null complement.
+\end{proposition}
+\begin{proof}
+Not yet formalized (adapted from \cite{BP} Prop.~6.4.1). ``Good'' is replaced by its two consequences used in the estimates.
+\end{proof}
+
+\begin{lemma}[Thesis Lemma~8.2.1(i)]
+\label{lemma_6_5_1_i}
+\lean{GSpinGGP.GGPData.lemma_6_5_1_i}
+\leanok
+\uses{G, GGPData, GSpin, H, N}
+For $r=0$ there is $\epsilon>0$ with $\int_{H_0(F)/A_{G,H}(F)}\Xi^{G_0}(h_0)e^{\epsilon\sigma(h_0)}\,dh_0<\infty$.
+This differs from Thesis Lemma~8.2.1(i), which integrates over $H_0(F)/A_{H_0}(F)$.
+\end{lemma}
+\begin{proof}
+Not yet formalized (adapted from \cite{BP} Lemma 6.5.1(i)).
+\end{proof}
+
+\begin{lemma}[Thesis Lemma~8.2.1(ii)]
+\label{lemma_6_5_1_ii}
+\lean{GSpinGGP.GGPData.lemma_6_5_1_ii}
+\leanok
+\uses{G, GGPData, GSpin, H, N}
+There is $d>0$ with $\int_{H(F)/A_{G,H}(F)}\Xi^G(h)\sigma(h)^{-d}\,dh<\infty$.
+\end{lemma}
+\begin{proof}
+Not yet formalized (adapted from \cite{BP} Lemma 6.5.1(ii)).
+\end{proof}
+
+\begin{lemma}[Thesis Lemma~8.2.1(iii)]
+\label{lemma_6_5_1_iii}
+\lean{GSpinGGP.GGPData.lemma_6_5_1_iii}
+\leanok
+\uses{G, GGPData, GSpin, H, N}
+For every $\delta>0$ there is $\epsilon>0$ with
+$\int_{H(F)/A_{G,H}(F)}\Xi^G(h)e^{\epsilon\sigma(h)}(1+|\lambda(h)|)^{-\delta}\,dh<\infty$.
+\end{lemma}
+\begin{proof}
+Not yet formalized (adapted from \cite{BP} Lemma 6.5.1(iii)).
+\end{proof}
+
+\begin{theorem}[Thesis Thm.~10.1.1(i)]
+\label{kernelK_bound}
+\lean{GSpinGGP.GGPData.kernelK_bound}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, H, N, xi}
+There are $d>0$ and a continuous seminorm $\nu$ on $\mathcal C(A_G(F)\backslash G(F),\chi^{-1})$ with
+$|K(f,x)|\le\nu(f)\,\Xi^{H\backslash G}(x)^2\sigma_{H\backslash G}(x)^{d}$.
+\end{theorem}
+\begin{proof}
+Not yet formalized (adapted from \cite{BP} Thm.~8.1.1(i)).
+\end{proof}
+
+\begin{theorem}[Thesis Thm.~10.1.1(ii)]
+\label{kernelK_bound_scusp}
+\lean{GSpinGGP.GGPData.kernelK_bound_scusp}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, H, N, xi}
+For every $d>0$ there is a continuous seminorm $\nu_d$ with
+$|K(f,x)|\le\nu_d(f)\,\Xi^{H\backslash G}(x)^2\sigma_{H\backslash G}(x)^{-d}$ for strongly cuspidal $f$.
+\end{theorem}
+\begin{proof}
+Not yet formalized (adapted from \cite{BP} Thm.~8.1.1(ii)).
+\end{proof}
+
+\section{Levi subgroups}
+\begin{proposition}[The Levi decomposition]
+\label{exists_leviHom_of_leviSpec}
+\lean{GSpinGGP.GGPData.exists_leviHom_of_leviSpec}
+\leanok
+\uses{G, GGPData, GSpin}
+For a GGP datum $\tilde d$ realizing the Levi pair $(\tilde W,\tilde V)$ of a pair of isotropic flags, there is a
+surjective homomorphism with central kernel from the Levi quotient $P/U$ onto
+$\prod\mathrm{GL}(Z'_{i,W})\times\prod\mathrm{GL}(Z'_{j,V})\times\tilde G(F)$ (Thesis \S5.1.2, (9.3.1)--(9.3.3)).
+\end{proposition}
+\begin{proof}
+Not yet formalized: it needs the Clifford-algebra description of the Levi subgroup.
+\end{proof}
+
+\begin{lemma}[Transport of $\mgeom$]
+\label{mGeom_congr_iso}
+\lean{GSpinGGP.GGPIso.mGeom_congr_iso}
+\leanok
+\uses{G, GGPData, GSpin, H, IsQuasiCharacter, gspin, mGeom}
+For an isomorphism of GGP triples $e:G\to G'$ and a quasi-character $\theta'$ of $G'(F)$,
+$\mgeom(\theta'\circ e)=\mgeom(\theta')$ (Thesis \S7.2, Prop.~12.1.1).
+\end{lemma}
+\begin{proof}
+Not yet formalized: needs the transport of $\mathcal O_x$ and $\hat j$.
+\end{proof}
+
+\section{\texorpdfstring{Normalization checks on $\mathfrak{sl}_2$}{Normalization checks on sl 2}}
+Sanity checks of the definition of $\hat j$ for $\mathrm{GL}_2(F)$
+acting on $\mathfrak{sl}_2(F)$ with the trace form.
+
+\begin{lemma}[The regular orbit measure exists]
+\label{exists_isOrbitMeasure_regOrbit}
+\lean{GSpinGGP.Sanity.NilpotentOrbit.exists_isOrbitMeasure_regOrbit}
+\leanok
+The $\mathrm{GL}_2(F)$-invariant measure on the regular nilpotent orbit, normalized by the self-dual measure on
+$\mathfrak g/\mathfrak g_E$ (\cite{BP} \S1.6, Thesis \S2.4), exists.
+\end{lemma}
+\begin{proof}
+Not yet formalized: needs the $p$-adic inverse function theorem and invariant measures on homogeneous spaces.
+\end{proof}
+
+\begin{lemma}[$\hat j(\mathcal O_{\mathrm{reg}},\cdot)$ on the split torus]
+\label{jHat_regOrbit_split}
+\lean{GSpinGGP.Sanity.NilpotentOrbit.jHat_regOrbit_split}
+\leanok
+\uses{jHat}
+For $X=x\,\mathrm{diag}(1,-1)$, $x\neq0$: $\hat j(\mathcal O_{\mathrm{reg}},X)=2/|2x|$.
+\end{lemma}
+\begin{proof}
+Not yet formalized (hand computation, every residue characteristic).
+\end{proof}
+
+\begin{lemma}[$\hat j(\mathcal O_{\mathrm{reg}},\cdot)$ on elliptic tori]
+\label{jHat_regOrbit_elliptic}
+\lean{GSpinGGP.Sanity.NilpotentOrbit.jHat_regOrbit_elliptic}
+\leanok
+\uses{jHat}
+For $\varepsilon$ a nonsquare and $x\neq0$, $\hat j(\mathcal O_{\mathrm{reg}},x\begin{pmatrix}0&1\\\varepsilon&0\end{pmatrix})=0$.
+\end{lemma}
+\begin{proof}
+Not yet formalized: $\mu_{\mathcal O_{\mathrm{reg}}}$ is induced from the Borel, so its Fourier transform is induced from the split torus.
+\end{proof}
+

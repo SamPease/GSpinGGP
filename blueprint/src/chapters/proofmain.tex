@@ -1,0 +1,463 @@
+% Generated from the Lean dependency data; see the comment at the top of content.tex.
+\chapter{Proof of the main theorem from the multiplicity formula}
+\label{chap:proofmain}
+Thesis \S6.5--6.7: summing the multiplicity formula over all inner forms and rearranging the geometric
+side over stable classes in $\Gamma(G,H)$, everything cancels except the contribution of $x=1$.
+For $x\in\GSpin(W)(F)$ write $W'_x=\ker(P(x)-1)$, $W''_x$ its orthogonal complement, and
+$T_x\subset\GSpin(W)$ the centralizer of $x$ acting trivially on $W'_x$; $S_x=T_x/A_{G,H}$.
+
+\section{\texorpdfstring{The space $\Gamma(G,H)$ and the geometric multiplicity}{The space Gamma(G,H) and the geometric multiplicity}}
+\begin{definition}[Elements of $\Gamma(G,H)$]
+\label{IsGammaElt}
+\lean{GSpinGGP.GGPData.IsGammaElt}
+\leanok
+\uses{GGPData, GSpin}
+$x\in\GSpin(W)(F)$ defines an element of $\Gamma(G,H)$ if $x$ is semisimple, $T_x$ is a torus and
+$T_x(F)/A_{G,H}(F)$ is compact. This differs from Thesis \S6.5, which requires $T_x$ itself to be anisotropic.
+\end{definition}
+
+\begin{definition}[Classes of tori in $\Gamma(G,H)$]
+\label{GammaClass}
+\lean{GSpinGGP.GammaClass}
+\leanok
+\uses{GGPData, GSpin, IsGammaElt}
+The index set of $\Gamma(G,H)$: $\GSpin(W)(F)$-conjugacy classes of the tori $T_x$, $x\in\Gamma(G,H)$.
+\end{definition}
+
+\begin{lemma}[Finiteness of the classes of tori]
+\label{finite_gammaClass}
+\lean{GSpinGGP.finite_gammaClass}
+\leanok
+\uses{GGPData, GammaClass}
+$\Gamma(G,H)$ meets finitely many conjugacy classes of tori (Thesis \S6.5).
+\end{lemma}
+\begin{proof}
+Not yet formalized. $T_x$ is determined by $W''_x$ (finitely many up to $\SO(W)$, by Witt) and a maximal torus
+of $\SO(W''_x)$, of which there are finitely many conjugacy classes over a $p$-adic field.
+\end{proof}
+
+\begin{definition}[The function $\Delta$]
+\label{deltaGGP}
+\lean{GSpinGGP.deltaGGP}
+\leanok
+\uses{GGPData, GSpin, IsGammaElt}
+$\Delta(x)=|\det((P(x)-1)|_{W''_x})|_F$ (Thesis (6.5.9)).
+\end{definition}
+
+\begin{definition}[The orbit $\mathcal O_x$]
+\label{orbitChoice}
+\lean{GSpinGGP.orbitChoice}
+\leanok
+\uses{G, GGPData, GSpin, IsGammaElt, gspin}
+The regular nilpotent orbit $\mathcal O_x\in\Nilreg(\mathfrak g_x)$ selected by Luo's recipe (\cite{Luo} \S7.1)
+applied to $(G'_x,H'_x)$; a junk value if there is none (then germs vanish anyway).
+This differs from the choice in Thesis \S5.4: it is Luo's recipe applied to $(G'_x,H'_x)$.
+\end{definition}
+
+\begin{definition}[The geometric multiplicity $\mgeom$]
+\label{mGeom}
+\lean{GSpinGGP.mGeom}
+\leanok
+\uses{G, GGPData, GSpin, GammaClass, IsGammaElt, deltaGGP, germ, gspin, orbitChoice, weylDisc}
+For $s>0$,
+\[ m_{\mathrm{geom},s}(\theta)=\sum_{[T]}|W(T)|^{-1}\int_{T(F)/A_{G,H}(F)}D^G(t)^{1/2}c_{\theta,\mathcal O_t}(t)\Delta(t)^{s-1/2}\,dt, \]
+the sum over the classes of tori of $\Gamma(G,H)$, with the probability Haar measure and
+$W(T)=N_{\GSpin(W)(F)}(T)/Z_{\GSpin(W)(F)}(T)$; and $\mgeom(\theta)=\lim_{s\to0^+}m_{\mathrm{geom},s}(\theta)$
+(Thesis \S7.2, Prop.~12.1.1). This differs from Thesis (6.5.3), which uses $N_{\GSpin(W'')(F)}(T)/T(F)$ for $W(T)$.
+\end{definition}
+
+\begin{proposition}[Linearity of $\mgeom$ on characters]
+\label{mGeom_finset_sum}
+\lean{GSpinGGP.mGeom_finset_sum}
+\leanok
+\uses{G, GGPData, GSpin, IsTempered, UnitaryRep, charG, mGeom}
+For tempered $\pi_1,\dots,\pi_k$ with central characters trivial on $A_{G,H}(F)$,
+$\mgeom(\sum_i\theta_{\pi_i})=\sum_i\mgeom(\theta_{\pi_i})$ (Thesis Prop.~12.1.1, used in (6.7.2)).
+\end{proposition}
+\begin{proof}
+\leanok
+\uses{CentralCharOn, GammaClass, IsGammaElt, IsQuasiCharacter, LIT-germ_unique, LIT-schur_central, QC, charG_mem_QC, deltaGGP, germ, gspin, jHat, mGeom_add, mult, orbitChoice, tendsto_mGeomS, weylDisc}
+Each $\theta_{\pi_i}$ lies in $\QC(G,\eta_i)$ for its central character $\eta_i$, and $\mgeom$ is linear on the
+span of these spaces (Chapter~\ref{chap:mgeom}).
+\end{proof}
+
+\begin{proposition}[Thesis (6.7.2)]
+\label{packet_sum_mult}
+\lean{GSpinGGP.packet_sum_mult}
+\leanok
+\uses{G, GGPData, InnerFormSystem, InnerTwist, TemperedPacketFamily, charG, mGeom, mult}
+$\sum_{\pi\in\Pi_\alpha}m(\pi)=\mgeom(\theta_\alpha)$ for every inner form $\alpha$.
+\end{proposition}
+\begin{proof}
+\leanok
+\uses{mGeom_finset_sum, multiplicity_formula}
+The multiplicity formula for $(G_\alpha,H_\alpha,\xi_\alpha)$ and linearity of $\mgeom$.
+\end{proof}
+
+\section{Germ transfer}
+\begin{literature}[Transfer preserves germs]
+\label{LIT-bp_germ_transfer}
+\lean{GSpinGGP.bp_germ_transfer}
+\leanok
+\uses{G, GGPData, GSpin, InnerTwist, IsQuasiCharacter, IsQuasiSplit, StablyConjG, germ, gspin}
+(Thesis (6.1.2).) Let $G$ be quasi-split, $\theta$ a stable quasi-character on $G(F)$ and $\theta'$ a stable
+quasi-character on $G_\alpha(F)$ with $\theta'(y)=\theta(x)$ for stably conjugate regular $x,y$. Then for
+semisimple, strongly stably conjugate $x\in\GSpin(W)(F)$, $y\in\GSpin(W_\alpha)(F)$,
+$c_{\theta',\mathcal O'}(y)=c_{\theta,\mathcal O}(x)$ for all regular $\mathcal O,\mathcal O'$.
+
+\assumedfrom{\cite{BP}, (12.1.2), stated there for pure inner forms; the proof is unchanged for these inner twists}
+\end{literature}
+
+\begin{proposition}[Germ transfer for packets]
+\label{packet_germ_transfer}
+\lean{GSpinGGP.packet_germ_transfer}
+\leanok
+\uses{G, GGPData, GSpin, InnerFormSystem, InnerTwist, IsQuasiSplit, StablyConjG, TemperedPacketFamily, charG, germ, gspin, kottwitzSign}
+If $x\in\GSpin(W)(F)$, $y\in\GSpin(W_\alpha)(F)$ are semisimple and strongly stably conjugate, then
+$c_{\theta_\alpha,\mathcal O'}(y)=e(G_\alpha)\,c_{\theta_1,\mathcal O}(x)$ for all regular $\mathcal O,\mathcal O'$
+(Thesis \S6.7 after (6.7.4)).
+\end{proposition}
+\begin{proof}
+\leanok
+\uses{IsQuasiCharacter, IsStableFn, LIT-bp_germ_transfer, LIT-germ_unique, LIT-hc_character_isQuasiCharacter, jHat}
+Apply the germ transfer to $e(G_\alpha)\theta_1$ and $\theta_\alpha$, using (STAB) and (TRANS).
+\end{proof}
+
+\section{\texorpdfstring{Stable conjugacy in $\Gamma(G,H)$}{Stable conjugacy in Gamma(G,H)}}
+Thesis Prop.~6.6.1.
+
+\begin{lemma}[Thesis Prop.~6.6.1(i), step 1]
+\label{exists_isometry_fixedSub_of_qd}
+\lean{GSpinGGP.exists_isometry_fixedSub_of_qd}
+\leanok
+\uses{GGPData, GSpin, InnerFormSystem, InnerTwist, IsGammaElt, IsQuasiSplit}
+Let $G$ be quasi-split and $y\in\Gamma(G_\alpha,H_\alpha)$ with $G_{\alpha,y}$ quasi-split. Then $W'_{\alpha,y}$
+embeds isometrically in $W$.
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{LIT-padic_quadratic_classes, LIT-witt_cancellation, LIT-witt_decomposition}
+By the classification of $p$-adic quadratic forms and Witt cancellation: if $W''_{\alpha,y}$ is $0$ or a
+hyperbolic plane then $W_\alpha\cong W$; $\dim W''_{\alpha,y}=1$ is impossible; otherwise a second class of the
+dimension and discriminant of $W''_{\alpha,y}$ exists.
+\end{proof}
+
+\begin{lemma}[Thesis Prop.~6.6.1(i), steps 2--3]
+\label{exists_stronglyStablyConj_of_isometry}
+\lean{GSpinGGP.exists_stronglyStablyConj_of_isometry}
+\leanok
+\uses{G, GGPData, GSpin, InnerFormSystem, InnerTwist, IsGammaElt, IsQuasiSplit, StablyConjG}
+Given an isometric embedding $W'_{\alpha,y}\hookrightarrow W$, some $x\in\Gamma(G,H)$ is strongly stably
+conjugate to $y$.
+\end{lemma}
+\begin{proof}
+Not yet formalized. Transport the anisotropic torus through a cocycle in $S_y$ (\cite{BP} (12.1.6)), lift
+$(1_{W'},\bar x'')$ from $\SO$ to $\GSpin$ and rescale by a scalar.
+\end{proof}
+
+\begin{proposition}[Thesis Prop.~6.6.1(i)]
+\label{prop_12_5_1_i}
+\lean{GSpinGGP.prop_12_5_1_i}
+\leanok
+\uses{G, GGPData, GSpin, InnerFormSystem, InnerTwist, IsGammaElt, IsQuasiSplit, StablyConjG}
+Let $G$ be quasi-split and $y\in\Gamma(G_\alpha,H_\alpha)$ with $G_{\alpha,y}$ quasi-split. Then some
+$x\in\Gamma(G,H)$ is strongly stably conjugate to $y$.
+\end{proposition}
+\begin{proof}
+\leanok
+\uses{exists_isometry_fixedSub_of_qd, exists_stronglyStablyConj_of_isometry}
+Combine the two preceding lemmas.
+\end{proof}
+
+\begin{definition}[Torus transfer]
+\label{TorusTransfer}
+\lean{GSpinGGP.TorusTransfer}
+\leanok
+\uses{G, GGPData, GSpin, InnerFormSystem, InnerTwist, IsGammaElt, StablyConjG, deltaGGP, gspin, weylDisc}
+For $x\in\Gamma(G,H)$, $y\in\Gamma(G_\alpha,H_\alpha)$: an $F$-rational isomorphism of topological groups
+$T_x(F)\simeq T_y(F)$, the identity on $A_{G,H}$, with $x\mapsto y$, matching the regular parts $T_\natural$ and
+the strong stable classes, and preserving $D^G$ and $\Delta$ (the conclusion of Thesis Prop.~6.6.1(ii)).
+It need not preserve $|W(T)|$.
+\end{definition}
+
+\begin{lemma}[The torus isomorphism]
+\label{exists_torusTransfer_core}
+\lean{GSpinGGP.exists_torusTransfer_core}
+\leanok
+\uses{G, GGPData, GSpin, InnerFormSystem, InnerTwist, IsGammaElt, StablyConjG}
+If $x\in\Gamma(G,H)$ and $y\in\Gamma(G_\alpha,H_\alpha)$ are strongly stably conjugate, then $\Ad(g)\circ\psi_\alpha$
+restricts to an $F$-rational isomorphism of topological groups $T_x(F)\simeq T_y(F)$, the identity on scalars,
+$x\mapsto y$, carrying $T_{x,\natural}$ onto $T_{y,\natural}$ with every $t$ stably conjugate to its image.
+\end{lemma}
+\begin{proof}
+Not yet formalized. The values of $t\mapsto gC(\varphi_\alpha)(t)g^{-1}$ are Galois-fixed, hence rational
+(Galois descent), commute with $y$ and fix $W'_y$.
+\end{proof}
+
+\begin{lemma}[$\Delta$ is a stable invariant]
+\label{deltaGGP_eq_of_stablyConjVia}
+\lean{GSpinGGP.deltaGGP_eq_of_stablyConjVia}
+\leanok
+\uses{GGPData, GSpin, InnerTwist, deltaGGP}
+If $P(t')=hP(t)h^{-1}$ over $\Fbar$ with $h=P(g)\circ\varphi$, then $\Delta(t')=\Delta(t)$.
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{IsGammaElt}
+$h$ conjugates $(P(t)-1)|_{W''_t}$ to $(P(t')-1)|_{W''_{t'}}$; both determinants lie in $F$.
+\end{proof}
+
+\begin{lemma}[$D^G$ is a stable invariant]
+\label{weylDisc_eq_of_stablyConjG}
+\lean{GSpinGGP.weylDisc_eq_of_stablyConjG}
+\leanok
+\uses{G, GGPData, InnerTwist, StablyConjG, gspin, weylDisc}
+If $t\in G(F)$ and $t'\in G_\alpha(F)$ are stably conjugate then $D^{G_\alpha}(t')=D^G(t)$.
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{GSpin}
+$\psi_\alpha\circ\Ad(g)$ conjugates $1-\Ad t$ to $1-\Ad t'$ over $\Fbar$; characteristic polynomials are unchanged by base change.
+\end{proof}
+
+\begin{proposition}[Thesis Prop.~6.6.1(ii)]
+\label{prop_12_5_1_ii}
+\lean{GSpinGGP.prop_12_5_1_ii}
+\leanok
+\uses{G, GGPData, GSpin, InnerFormSystem, InnerTwist, IsGammaElt, StablyConjG, TorusTransfer}
+If $x\in\Gamma(G,H)$ and $y\in\Gamma(G_\alpha,H_\alpha)$ are strongly stably conjugate, there is a torus transfer
+from $x$ to $y$. So the $\Gamma$-integrals over $T_x(F)/A(F)$ and $T_y(F)/A(F)$ match locally.
+\end{proposition}
+\begin{proof}
+\leanok
+\uses{deltaGGP, deltaGGP_eq_of_stablyConjVia, exists_torusTransfer_core, gspin, weylDisc, weylDisc_eq_of_stablyConjG}
+The torus isomorphism, with the invariance of $\Delta$ and $D^G$.
+\end{proof}
+
+\section{The signed count}
+Thesis (6.7.6) and Prop.~6.6.1(iii).
+
+\begin{definition}[The counts $n_\alpha(x)$]
+\label{n_alpha}
+\lean{GSpinGGP.n_alpha}
+\leanok
+\uses{G, GGPData, GSpin, InnerFormSystem, InnerTwist, IsGammaElt, StablyConjG}
+$n_\alpha(x)$ is the number of $\GSpin(W_\alpha)(F)$-conjugacy classes of $y\in\Gamma(G_\alpha,H_\alpha)$ strongly
+stably conjugate to $x$ (Thesis \S6.7).
+\end{definition}
+
+\begin{definition}[The signed count]
+\label{signedCount}
+\lean{GSpinGGP.signedCount}
+\leanok
+\uses{GGPData, GSpin, InnerFormSystem, kottwitzSign, n_alpha}
+$\sum_\alpha e(G_\alpha)\,n_\alpha(x)$ (Thesis (6.7.6)).
+\end{definition}
+
+\begin{literature}[Hilbert's Theorem 90 for $\mathrm{GL}_m$]
+\label{LIT-hilbert90_GL}
+\lean{GSpinGGP.hilbert90_GL}
+\leanok
+Every continuous cocycle $\sigma\mapsto a_\sigma\in\mathrm{GL}_m(\Fbar)$ of $\mathrm{Gal}(\Fbar/F)$ is a coboundary:
+$a_\sigma=M^{-1}\sigma(M)$.
+
+\assumedfrom{\cite{SerreLF}, Ch.~X \S1 Prop.~3; \cite{SerreCG}, Ch.~III \S1.1}
+\end{literature}
+
+\begin{lemma}[The map $q_x:H^1(F,S_x)\to\{\alpha\}$]
+\label{existsUnique_twistIdx}
+\lean{GSpinGGP.existsUnique_twistIdx}
+\leanok
+\uses{GGPData, GSpin, InnerFormSystem, InnerTwist}
+Every class $\beta\in H^1(F,S_x)$ determines a unique inner form $\alpha=q_x(\beta)$: the twist of $W$ by a
+cocycle representing $\beta$ is isometric to exactly one $W_\alpha$.
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{LIT-hilbert90_GL}
+Hilbert 90 writes the cocycle as $M^{-1}\sigma(M)$; $v\mapsto Q(M^{-1}v)$ is an $F$-form of the discriminant of $W$. Cohomologous cocycles give $F$-isometric forms by Galois descent.
+\end{proof}
+
+\begin{lemma}[$S_x$ is commutative]
+\label{torusBarFbar_commute}
+\lean{GSpinGGP.torusBarFbar_commute}
+\leanok
+\uses{GGPData, GSpin, InnerTwist, IsGammaElt}
+For $x\in\Gamma(G,H)$, the group $S_x(\Fbar)$ is commutative.
+\end{lemma}
+\begin{proof}
+Not yet formalized. $S_x$ is connected reductive with commutative $F$-points, which are Zariski dense.
+\end{proof}
+
+\begin{literature}[Finiteness of $H^1(F,S_x)$]
+\label{LIT-finite_H1_torusBar}
+\lean{GSpinGGP.finite_H1_torusBar}
+\leanok
+\uses{GGPData, GSpin, InnerTwist, IsGammaElt}
+For $x\in\Gamma(G,H)$, $H^1(F,S_x)$ is finite.
+
+\assumedfrom{\cite{SerreCG}, III \S4.3 Thm.~4 (Borel--Serre); Tate--Nakayama}
+\end{literature}
+
+\begin{lemma}[Thesis Prop.~6.6.1(iii)]
+\label{n_alpha_eq_card_twistIdx}
+\lean{GSpinGGP.n_alpha_eq_card_twistIdx}
+\leanok
+\uses{GGPData, GSpin, InnerFormSystem, InnerTwist, IsGammaElt, n_alpha}
+For $x\in\Gamma(G,H)$ and every $\alpha$, $n_\alpha(x)=|q_x^{-1}(\alpha)|$, $q_x^{-1}(\alpha)\subset H^1(F,S_x)$.
+This differs from Thesis Prop.~6.6.1(iii), which uses $H^1(F,T_x)$.
+\end{lemma}
+\begin{proof}
+Not yet formalized. Galois-cohomological parametrization of stable classes, then Witt cancellation.
+\end{proof}
+
+\begin{literature}[The Kottwitz sign is multiplicative on $H^1(F,S_x)$]
+\label{LIT-kottwitzSign_twistIdx_mul}
+\lean{GSpinGGP.kottwitzSign_twistIdx_mul}
+\leanok
+\uses{GGPData, GSpin, InnerFormSystem, InnerTwist, IsGammaElt, IsQuasiSplit, kottwitzSign}
+For $G$ quasi-split and $x\in\Gamma(G,H)$, $\beta\mapsto e(G_{q_x(\beta)})$ is multiplicative on $H^1(F,S_x)$.
+
+\assumedfrom{\cite{Kot83}; \cite{BP}, \S12.1, (12.1.6), via Tate--Nakayama}
+\end{literature}
+
+\begin{lemma}[The sign takes the value $-1$]
+\label{exists_twistIdx_kottwitzSign_neg}
+\lean{GSpinGGP.exists_twistIdx_kottwitzSign_neg}
+\leanok
+\uses{GGPData, GSpin, InnerFormSystem, InnerTwist, IsGammaElt, IsQuasiSplit, kottwitzSign}
+For $G$ quasi-split and $x\in\Gamma(G,H)$ not central, some $\beta\in H^1(F,S_x)$ has $e(G_{q_x(\beta)})=-1$.
+\end{lemma}
+\begin{proof}
+Not yet formalized. By \cite{BP} (12.1.6) it suffices that the inverse image of $S_x$ in the simply connected cover is connected; its character group is torsion free.
+\end{proof}
+
+\begin{theorem}[The signed count]
+\label{signed_count}
+\lean{GSpinGGP.signed_count}
+\leanok
+\uses{GGPData, GSpin, InnerFormSystem, IsGammaElt, IsQuasiSplit, signedCount}
+Let $G$ be quasi-split and $x\in\Gamma(G,H)$ with $G_x$ quasi-split. Then
+$\sum_\alpha e(G_\alpha)n_\alpha(x)=1$ if $x$ is central and $0$ otherwise.
+This replaces the Kottwitz-sign cancellation of Thesis \S6.7 after (6.7.6).
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{InnerTwist, LIT-finite_H1_torusBar, LIT-kottwitzSign_twistIdx_mul, LIT-padic_quadratic_classes, existsUnique_twistIdx, exists_twistIdx_kottwitzSign_neg, gspin, kottwitzSign, n_alpha, n_alpha_eq_card_twistIdx, torusBarFbar_commute}
+The sum equals $\sum_{\beta\in H^1(F,S_x)}e(G_{q_x(\beta)})$. If $x$ is central this is $e(G)=1$. Otherwise the
+sign is a character of the finite group $H^1(F,S_x)$ taking the value $-1$, so the sum vanishes.
+\end{proof}
+
+\section{Rearrangement and the atom}
+\begin{lemma}[The stable rearrangement at $s>0$]
+\label{stable_rearrangement_pos}
+\lean{GSpinGGP.stable_rearrangement_pos}
+\leanok
+\uses{G, GGPData, GSpin, GammaClass, InnerFormSystem, InnerTwist, IsGammaElt, IsQuasiSplit, StablyConjG, TemperedPacketFamily, TorusTransfer, charG, deltaGGP, germ, gspin, kottwitzSign, n_alpha, orbitChoice, signedCount, weylDisc}
+Given germ transfer, vanishing of the non-quasi-split classes, and Prop.~6.6.1(i),(ii): for $s>0$,
+\[ \sum_\alpha m_{\mathrm{geom},s}(\theta_\alpha)=\int_{\Gamma(G,H)}\frac{\sum_\alpha e(G_\alpha)n_\alpha(x)}{n_1(x)}
+c_{\theta_1}(x)D^G(x)^{1/2}\Delta(x)^{s-1/2}\,dx \] (Thesis (6.7.2)--(6.7.5) before the limit).
+\end{lemma}
+\begin{proof}
+Not yet formalized. At fixed $s>0$ the integrals converge absolutely; $y\mapsto x$ is a measure-preserving
+injection $\Gamma^{qd}_{\mathrm{stab}}(G_\alpha,H_\alpha)\hookrightarrow\Gamma^{qd}_{\mathrm{stab}}(G,H)$, and
+(TRANS) gives $c_{\theta_\alpha}(y)=e(G_\alpha)c_{\theta_1}(x)$.
+\end{proof}
+
+\begin{proposition}[Thesis (6.7.5)]
+\label{stable_rearrangement}
+\lean{GSpinGGP.stable_rearrangement}
+\leanok
+\uses{G, GGPData, GSpin, GammaClass, InnerFormSystem, InnerTwist, IsGammaElt, IsQuasiSplit, StablyConjG, TemperedPacketFamily, TorusTransfer, charG, deltaGGP, germ, gspin, kottwitzSign, mGeom, n_alpha, orbitChoice, signedCount, weylDisc}
+Under the same hypotheses, \[ \sum_\alpha\mgeom(\theta_\alpha)=\lim_{s\to0^+}\int_{\Gamma(G,H)}
+\frac{\sum_\alpha e(G_\alpha)n_\alpha(x)}{n_1(x)}c_{\theta_1}(x)D^G(x)^{1/2}\Delta(x)^{s-1/2}\,dx. \]
+\end{proposition}
+\begin{proof}
+\leanok
+\uses{CentralCharOn, IsTempered, LIT-padic_quadratic_classes, LIT-schur_central, QC, UnitaryRep, charG_mem_QC, mult, stable_rearrangement_pos, tendsto_mGeomS}
+The rearrangement at $s>0$, and the finite sum over $\alpha$ commutes with the limit.
+\end{proof}
+
+\begin{lemma}[Central translation of the germ]
+\label{germ_baseChar_central}
+\lean{GSpinGGP.germ_baseChar_central}
+\leanok
+\uses{G, GGPData, GSpin, InnerFormSystem, InnerTwist, TemperedPacketFamily, charG, germ, gspin, orbitChoice}
+For central $c\in A_{G,H}(F)$, $c_{\theta_1,\mathcal O_c}(c)=c_{\theta_1,\mathcal O_1}(1)$.
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{IsQuasiCharacter, IsTempered, LIT-germ_unique, LIT-hc_character_exists, LIT-hc_character_isQuasiCharacter, LIT-hc_regularSet_open_conull, UnitaryRep, jHat}
+$\theta_1(cy)=\theta_1(y)$ on $\Greg(F)$ since the central characters are trivial on $Z_{G,H}(F)$; $e^X$ is
+regular for small regular $X$, so the expansion at $1$ is one at $c$ (uniqueness of germs); $\mathcal O_c=\mathcal O_1$.
+\end{proof}
+
+\begin{lemma}[The atom]
+\label{atom_value}
+\lean{GSpinGGP.atom_value}
+\leanok
+\uses{G, GGPData, GSpin, InnerFormSystem, InnerTwist, IsGammaElt, IsQuasiSplit, TemperedPacketFamily, charG, deltaGGP, germ, gspin, n_alpha, orbitChoice, signedCount, weylDisc}
+Assuming the signed count, the contribution of the class of $T=A_{G,H}$ to the stable integral is
+$c_{\theta_1,\mathcal O_1}(1)$: $|W(T)|=1$, $T(F)/A(F)$ is a point, the weight is $1$ and $D^G=\Delta=1$.
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{StablyConjG, germ_baseChar_central}
+Direct computation, with central translation of the germ.
+\end{proof}
+
+\begin{proposition}[Only the atom contributes]
+\label{mGeomStabS_eq_germ_one}
+\lean{GSpinGGP.mGeomStabS_eq_germ_one}
+\leanok
+\uses{G, GGPData, GSpin, GammaClass, InnerFormSystem, InnerTwist, IsGammaElt, IsQuasiSplit, TemperedPacketFamily, charG, deltaGGP, germ, gspin, n_alpha, orbitChoice, signedCount, weylDisc}
+If the signed count holds on quasi-split classes, then for $s>0$ the stable integral equals
+$c_{\theta_1,\mathcal O_1}(1)$ (Thesis \S6.7 after (6.7.6)).
+\end{proposition}
+\begin{proof}
+\leanok
+\uses{LIT-nilReg_centralizer_nonempty_imp, atom_value, jHat}
+Non-central and non-quasi-split classes have weight $0$; the atom gives the value above.
+\end{proof}
+
+\begin{lemma}[Luo's orbit at $x=1$]
+\label{exists_orbitSpec_one_of_even}
+\lean{GSpinGGP.exists_orbitSpec_one_of_even}
+\leanok
+\uses{G, GGPData, GSpin, IsQuasiSplit, gspin}
+Let $G$ be quasi-split with $\dim V$ or $\dim W$ even and $\ge 4$. Then some $\mathcal O\in\Nilreg(\mathfrak g)$
+satisfies Luo's condition at $x=1$ (\cite{Luo} \S7.1).
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{LIT-exists_regularNil_inOrbitNu, LIT-nilReg_nonempty_iff_quasiSplit}
+Luo's orbit in the even factor, paired with a regular nilpotent of the other factor.
+\end{proof}
+
+\begin{lemma}[$\mathcal O_1$ is regular]
+\label{orbitChoice_one_mem_nilReg}
+\lean{GSpinGGP.orbitChoice_one_mem_nilReg}
+\leanok
+\uses{G, GGPData, GSpin, IsQuasiSplit, gspin, orbitChoice}
+For $G$ quasi-split, $\mathcal O_1\in\Nilreg(\mathfrak g)$.
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{IsGammaElt, LIT-nilReg_centralizer_nonempty_iff, exists_orbitSpec_one_of_even}
+Luo's recipe applied to $(G,H)$ selects a regular orbit, which exists since $G$ is quasi-split.
+\end{proof}
+
+\begin{theorem}[Thesis (6.7.7)]
+\label{sum_mult_eq_germ_one}
+\lean{GSpinGGP.sum_mult_eq_germ_one}
+\leanok
+\uses{G, GGPData, GSpin, InnerFormSystem, InnerTwist, IsQuasiSplit, TemperedPacketFamily, charG, germ, gspin, mult, orbitChoice}
+Let $G$ be quasi-split. Then $\sum_\alpha\sum_{\pi\in\Pi_\alpha}m(\pi)=c_{\theta_1,\mathcal O_1}(1)$.
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{GammaClass, IsGammaElt, LIT-nilReg_centralizer_nonempty_imp, StablyConjG, TorusTransfer, deltaGGP, jHat, kottwitzSign, mGeom, mGeomStabS_eq_germ_one, n_alpha, packet_germ_transfer, packet_sum_mult, prop_12_5_1_i, prop_12_5_1_ii, signedCount, signed_count, stable_rearrangement, weylDisc}
+Sum (6.7.2) over $\alpha$; rearrange by (6.7.5) using germ transfer and Prop.~6.6.1(i),(ii); the
+signed count kills every class but the atom.
+\end{proof}
+
