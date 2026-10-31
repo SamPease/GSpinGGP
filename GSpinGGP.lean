@@ -4,6 +4,7 @@ import GSpinGGP.Foundations.GSpin
 import GSpinGGP.Foundations.QuadraticForms
 import GSpinGGP.Foundations.GSpinLipschitz
 import GSpinGGP.Foundations.LocalFieldBridge
+import GSpinGGP.Foundations.PAdicQuadraticForms
 import GSpinGGP.Literature.Measure
 import GSpinGGP.Literature.Fourier
 import GSpinGGP.Literature.HarishChandra

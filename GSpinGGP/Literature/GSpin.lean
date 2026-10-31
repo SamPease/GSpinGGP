@@ -2,6 +2,7 @@ import GSpinGGP.Foundations.LocalGroups
 import GSpinGGP.Foundations.Representations
 import GSpinGGP.Foundations.GSpin
 import GSpinGGP.Foundations.QuadraticForms
+import GSpinGGP.Foundations.PAdicQuadraticForms
 import GSpinGGP.GGP.Triple
 
 /-!
@@ -19,7 +20,8 @@ Galois cohomology `H¹` is **not** modelled.
 * (a) Witt cancellation and the Witt decomposition are theorems now
   (`Foundations/QuadraticForms`, from Tau Ceti).
 * (b) Classification over `p`-adic fields (Lam Ch. VI; O'Meara §63) —
-  `padic_quadratic_classes`; existence of inner-twist data `exists_innerTwist_of_sameDisc`
+  `padic_quadratic_classes` (a theorem, `Foundations/PAdicQuadraticForms`, from Tau Ceti);
+  existence of inner-twist data `exists_innerTwist_of_sameDisc`
   (a *theorem*, from Mathlib's algebraically closed classification); the derived theorem
   `exists_innerFormIndex`.
 * (c) `GSpin(Q)(K) → SO(Q)(K)` is onto (`gspin_specP_surjective_SO`, a theorem, from
@@ -50,25 +52,6 @@ namespace GSpinGGP
 /-! ## (b) Quadratic forms over `p`-adic fields; inner-twist data -/
 
 section Classification
-
-/-- **Classification of quadratic forms over a `p`-adic field** (Lam, Ch. VI §2; O'Meara §63
-(theorem numbers unverified); used for: `H¹(F, SO(W))` classifies the quadratic spaces of the
-same dimension and discriminant, and has exactly two elements when `dim W ≥ 3`).
-
-For a nondegenerate `Q` on `F^m`, the isometry classes of nondegenerate `Q'` on `F^m` with the
-same discriminant are finite in number; we give a system of representatives `R : Fin n → _`
-containing `Q` itself (at `i₀`), each class met exactly once.  The count is:
-`n = 2` if `m ≥ 3` (the Hasse invariant takes both values); `n = 1` if `m ≤ 1`;
-for `m = 2`, `n = 1` iff `-det Q` is a square (`Q` hyperbolic), and `n = 2` otherwise
-(planes `⟨a, a·det⟩` classified by `a` modulo the norms of `F(√-det)`).
-`discr'` is the Gram determinant (Mathlib `QuadraticForm.discr'`). -/
-axiom padic_quadratic_classes {F : Type*} [NontriviallyNormedField F] [PAdicField F] {m : ℕ}
-    (Q : QuadraticForm F (Fin m → F)) (hQ : IsNondeg Q) :
-    ∃ (n : ℕ) (R : Fin n → QuadraticForm F (Fin m → F)) (i₀ : Fin n),
-      R i₀ = Q ∧ (∀ i, IsNondeg (R i) ∧ SameDisc Q (R i)) ∧
-      (∀ Q' : QuadraticForm F (Fin m → F), IsNondeg Q' → SameDisc Q Q' →
-        ∃! i, Nonempty (Q'.IsometryEquiv (R i))) ∧
-      (3 ≤ m → n = 2) ∧ (m ≤ 1 → n = 1) ∧ (m = 2 → (n = 1 ↔ IsSquare (-Q.discr'))) ∧ n ≤ 2
 
 /-! ### Inner-twist data (proved; formerly an axiom) -/
 
