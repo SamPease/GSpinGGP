@@ -136,7 +136,7 @@ embeds isometrically in $W$.
 \end{lemma}
 \begin{proof}
 \leanok
-\uses{LIT-padic_quadratic_classes, LIT-witt_cancellation, LIT-witt_decomposition}
+\uses{padic_quadratic_classes, witt_cancellation, witt_decomposition}
 By the classification of $p$-adic quadratic forms and Witt cancellation: if $W''_{\alpha,y}$ is $0$ or a
 hyperbolic plane then $W_\alpha\cong W$; $\dim W''_{\alpha,y}=1$ is impossible; otherwise a second class of the
 dimension and discriminant of $W''_{\alpha,y}$ exists.
@@ -343,7 +343,7 @@ This replaces the Kottwitz-sign cancellation of Thesis \S6.7 after (6.7.6).
 \end{theorem}
 \begin{proof}
 \leanok
-\uses{InnerTwist, LIT-finite_H1_torusBar, LIT-kottwitzSign_twistIdx_mul, LIT-padic_quadratic_classes, existsUnique_twistIdx, exists_twistIdx_kottwitzSign_neg, gspin, kottwitzSign, n_alpha, n_alpha_eq_card_twistIdx, torusBarFbar_commute}
+\uses{InnerTwist, LIT-finite_H1_torusBar, LIT-kottwitzSign_twistIdx_mul, existsUnique_twistIdx, exists_twistIdx_kottwitzSign_neg, gspin, kottwitzSign, n_alpha, n_alpha_eq_card_twistIdx, padic_quadratic_classes, torusBarFbar_commute}
 The sum equals $\sum_{\beta\in H^1(F,S_x)}e(G_{q_x(\beta)})$. If $x$ is central this is $e(G)=1$. Otherwise the
 sign is a character of the finite group $H^1(F,S_x)$ taking the value $-1$, so the sum vanishes.
 \end{proof}
@@ -374,7 +374,7 @@ Under the same hypotheses, \[ \sum_\alpha\mgeom(\theta_\alpha)=\lim_{s\to0^+}\in
 \end{proposition}
 \begin{proof}
 \leanok
-\uses{CentralCharOn, IsTempered, LIT-padic_quadratic_classes, LIT-schur_central, QC, UnitaryRep, charG_mem_QC, mult, stable_rearrangement_pos, tendsto_mGeomS}
+\uses{CentralCharOn, IsTempered, LIT-schur_central, QC, UnitaryRep, charG_mem_QC, mult, padic_quadratic_classes, stable_rearrangement_pos, tendsto_mGeomS}
 The rearrangement at $s>0$, and the finite sum over $\alpha$ commutes with the limit.
 \end{proof}
 

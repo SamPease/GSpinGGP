@@ -45,10 +45,13 @@ As of October 2026:
   depends on 18 of them: 7 are the analytic core of the local trace formula (Thesis Ch. 8–12,
   e.g. convergence of the distribution `J` and its spectral expansion), the rest smaller lemmas.
 - Results from the literature are assumed as `axiom`s in `GSpinGGP/Literature/`, each with a
-  docstring citing its source. `local_ggp` uses 31 of the 35. Several are adapted to general
+  docstring citing its source. `local_ggp` uses 28 of the 31. Several are adapted to general
   spin groups from statements in the literature for unitary or special orthogonal groups; their
   docstrings say how.
 - Definitions are never axiomatized. `GSpinGGP/Sanity/` checks key definitions on small cases.
+- Classical facts about quadratic forms (Witt cancellation and decomposition, Cartan–Dieudonné,
+  the classification over `p`-adic fields) are proved from the
+  [Tau Ceti](https://github.com/TauCetiProject/TauCeti) library, which this project depends on.
 
 To see exactly what the main theorem rests on:
 
@@ -61,7 +64,7 @@ import GSpinGGP
 
 | Folder | Contents |
 |---|---|
-| `Foundations/` | p-adic groups and their representations; `GSpin` via Clifford algebras |
+| `Foundations/` | p-adic groups and their representations; `GSpin` via Clifford algebras; quadratic forms, and the links to Tau Ceti and Mathlib (local fields, the Lipschitz group) |
 | `GGP/` | GGP triples, inner forms, semisimple descent, Levi subgroups |
 | `Literature/` | results assumed from the literature (Harish-Chandra, Waldspurger, Beuzart-Plessis, Arthur, Kottwitz, …) |
 | `TraceFormula/` | quasi-characters, `θ_f`, the distributions `J` and `J^Lie`, `m_geom`, spectral and geometric expansions |
@@ -70,11 +73,13 @@ import GSpinGGP
 
 ## Building
 
-Requires [elan](https://github.com/leanprover/elan). Lean and Mathlib versions are pinned
-(`lean-toolchain`, `lakefile.toml`, Mathlib `v4.35.0`).
+Requires [elan](https://github.com/leanprover/elan). The Lean version is pinned in
+`lean-toolchain`; the project depends on a pinned commit of
+[Tau Ceti](https://github.com/TauCetiProject/TauCeti) (`lakefile.toml`), and Mathlib comes
+through Tau Ceti at the commit recorded in `lake-manifest.json`.
 
 ```sh
-lake exe cache get   # download prebuilt Mathlib
+bash scripts/get-cache.sh   # download prebuilt Mathlib and Tau Ceti
 lake build
 ```
 

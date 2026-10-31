@@ -19,6 +19,13 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: leanprover/lean-action@v1
+        with:
+          build: false
+      # Prebuilt Mathlib and Tau Ceti outputs; without them Tau Ceti would be compiled from source.
+      - name: Fetch build caches
+        run: PATH="$HOME/.elan/bin:$PATH" bash scripts/get-cache.sh
+      - name: Build
+        run: ~/.elan/bin/lake build
 
       # Build the blueprint (web + PDF) into site/, next to the static landing page.
       # These are the steps of leanprover-community/docgen-action, except that pygraphviz is

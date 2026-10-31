@@ -26,48 +26,57 @@ $\gspin(V) = \{ X \in C^+(V) : [X,v] \in V \text{ for all } v\in V\}$, a Lie sub
 $C(V)$ for the commutator bracket (Thesis Prop.~5.1.3.1); $\gspin(V)=\mathfrak{so}(V)\oplus F$.
 \end{definition}
 
-\begin{literature}[Witt decomposition]
-\label{LIT-witt_decomposition}
+\begin{theorem}[Witt decomposition]
+\label{witt_decomposition}
 \lean{GSpinGGP.witt_decomposition}
 \leanok
 A quadratic space is $V \cong H^{w}\perp V_{\mathrm{an}}$ with $H$ the hyperbolic plane and
 $V_{\mathrm{an}}$ anisotropic, where $w=w(V)$ is the Witt index (the maximal dimension of a totally
 isotropic subspace). In particular $\dim V_{\mathrm{an}} = \dim V - 2w(V)$, so $\GSpin(V)$ is
 quasi-split iff $\dim V - 2w(V)\le 2$.
+\end{theorem}
+\begin{proof}
+\leanok
+Proved from Tau Ceti's Witt decomposition of a regular form (\cite{Lam}, Ch.~I \S4).
+\end{proof}
 
-\assumedfrom{\cite{Lam}, Ch.~I \S4; Thesis \S5.1.4}
-\end{literature}
-
-\begin{literature}[Witt cancellation]
-\label{LIT-witt_cancellation}
+\begin{theorem}[Witt cancellation]
+\label{witt_cancellation}
 \lean{GSpinGGP.witt_cancellation}
 \leanok
-Over a field of characteristic $\neq 2$, if $U\perp X \cong U\perp Y$ then $X\cong Y$.
+Over a field of characteristic $\neq 2$, if $U\perp X \cong U\perp Y$ then $X\cong Y$
+(all forms finite-dimensional, possibly degenerate).
+\end{theorem}
+\begin{proof}
+\leanok
+Split off the radicals and apply Tau Ceti's Witt cancellation for a regular summand (\cite{Lam}, Ch.~I \S4).
+\end{proof}
 
-\assumedfrom{\cite{Lam}, Ch.~I \S4}
-\end{literature}
-
-\begin{literature}[Quadratic forms over a $p$-adic field]
-\label{LIT-padic_quadratic_classes}
+\begin{theorem}[Quadratic forms over a $p$-adic field]
+\label{padic_quadratic_classes}
 \lean{GSpinGGP.padic_quadratic_classes}
 \leanok
 Let $Q$ be a nondegenerate quadratic form on $F^m$. The isometry classes of nondegenerate forms
 on $F^m$ with the same discriminant as $Q$ are finite in number, $n\le 2$ of them, and admit a system of
 representatives containing $Q$; $n=2$ if $m\ge 3$, $n=1$ if $m\le 1$, and for $m=2$, $n=1$ iff
 $-\det Q$ is a square.
+\end{theorem}
+\begin{proof}
+\leanok
+Proved from Tau Ceti's classification of regular forms over a nonarchimedean local field by rank, discriminant and Hasse invariant, and its list of the realizable invariants (\cite{Lam}, Ch.~VI \S2; O'Meara \S63), through the fact that a $p$-adic field is a nonarchimedean local field.
+\end{proof}
 
-\assumedfrom{\cite{Lam}, Ch.~VI \S2; O'Meara \S63}
-\end{literature}
-
-\begin{literature}[Cartan--Dieudonn\'e, $\SO$ form]
-\label{LIT-cartan_dieudonne_even}
+\begin{theorem}[Cartan--Dieudonn\'e, $\SO$ form]
+\label{cartan_dieudonne_even}
 \lean{GSpinGGP.cartan_dieudonne_even}
 \leanok
 In a nondegenerate quadratic space over a field of characteristic $\neq 2$, every isometry of
 determinant $1$ is a product $\prod_i s_{u_i}s_{w_i}$ of pairs of reflections in anisotropic vectors.
-
-\assumedfrom{\cite{Artin}, Ch.~III; \cite{Lam}, Ch.~I}
-\end{literature}
+\end{theorem}
+\begin{proof}
+\leanok
+Proved from Tau Ceti's factorization of an element of $\SO$ into an even number of reflections (\cite{Artin}, Ch.~III; \cite{Lam}, Ch.~I), grouped in pairs.
+\end{proof}
 
 \begin{literature}[Centralizers of semisimple elements of $\GSpin$]
 \label{LIT-steinberg_centralizer_connected}
