@@ -1,6 +1,9 @@
 import GSpinGGP.Foundations.LocalGroups
 import GSpinGGP.Foundations.Representations
 import GSpinGGP.Foundations.GSpin
+import GSpinGGP.Foundations.QuadraticForms
+import GSpinGGP.Foundations.GSpinLipschitz
+import GSpinGGP.Foundations.LocalFieldBridge
 import GSpinGGP.Literature.Measure
 import GSpinGGP.Literature.Fourier
 import GSpinGGP.Literature.HarishChandra

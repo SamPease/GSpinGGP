@@ -9,10 +9,11 @@ relaxedAutoImplicit = false
 weak.linter.mathlibStandardSet = true
 maxSynthPendingDepth = 3
 
+# Mathlib comes through Tau Ceti, at the commit pinned in Tau Ceti's manifest.
 [[require]]
-name = "mathlib"
-scope = "leanprover-community"
-rev = "v4.35.0"
+name = "TauCeti"
+git = "https://github.com/TauCetiProject/TauCeti"
+rev = "580580ea8726c50dcf98e199fa0a7caef5a74302"
 
 [[lean_lib]]
 name = "GSpinGGP"

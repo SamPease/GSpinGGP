@@ -1,6 +1,7 @@
 import GSpinGGP.Foundations.LocalGroups
 import GSpinGGP.Foundations.Representations
 import GSpinGGP.Foundations.GSpin
+import GSpinGGP.Foundations.QuadraticForms
 import GSpinGGP.GGP.Triple
 
 /-!
@@ -15,14 +16,14 @@ correct, using only layer-1 notions (`Foundations/LocalGroups`, `Representations
 Galois cohomology `H¹` is **not** modelled.
 
 ## Contents
-* (a) Witt cancellation and the Witt decomposition (Lam, Ch. I) — `witt_cancellation`,
-  `hypForm`, `witt_decomposition`.
+* (a) Witt cancellation and the Witt decomposition are theorems now
+  (`Foundations/QuadraticForms`, from Tau Ceti).
 * (b) Classification over `p`-adic fields (Lam Ch. VI; O'Meara §63) —
   `padic_quadratic_classes`; existence of inner-twist data `exists_innerTwist_of_sameDisc`
   (a *theorem*, from Mathlib's algebraically closed classification); the derived theorem
   `exists_innerFormIndex`.
-* (c) Cartan–Dieudonné — `cartan_dieudonne_even`; hence `GSpin(Q)(K) → SO(Q)(K)` is onto
-  (`gspin_specP_surjective_SO`, now a theorem).
+* (c) `GSpin(Q)(K) → SO(Q)(K)` is onto (`gspin_specP_surjective_SO`, a theorem, from
+  Cartan–Dieudonné `cartan_dieudonne_even` in `Foundations/QuadraticForms`).
 * (d) Steinberg's connectedness of centralizers, in concrete form —
   `steinberg_centralizer_connected` (`IsSS`-version `steinberg_centralizer_connected'`).
 * (e) Regular nilpotent orbits exist iff quasi-split (Waldspurger) —
@@ -44,50 +45,7 @@ attribute [local instance 100] LieRing.ofAssociativeRing LieAlgebra.ofAssociativ
 
 namespace GSpinGGP
 
-/-! ## (a) Witt's theorems -/
-
-section Witt
-
-variable {K : Type*} [Field K] [Invertible (2 : K)]
-
-/-- **Witt cancellation** (Lam, *Introduction to Quadratic Forms over Fields*, Ch. I,
-§4 (Witt cancellation; theorem number unverified); used for the injectivity of `[U] ↦ [U ⊕ Z]`).
-Over a field of characteristic `≠ 2`, `U ⊥ X ≅ U ⊥ Y` implies `X ≅ Y`.
-Lam proves this for arbitrary (possibly singular) forms; we only assume finite-dimensionality.
-Mathlib (v4.35) has no Witt cancellation.
-
-**Characteristic `≠ 2` is essential and is an explicit binder here** (a section variable not
-mentioned in the statement would be dropped by Lean).  Over `ZMod 2` the statement is false:
-`⟨1⟩ ⊥ H ≅ ⟨1⟩ ⊥ [1,1]` via `(u,x,y) ↦ (u+x+y,x,y)` but `H ≇ [1,1]`. -/
-axiom witt_cancellation [Invertible (2 : K)] {U X Y : Type*} [AddCommGroup U] [Module K U]
-    [FiniteDimensional K U]
-    [AddCommGroup X] [Module K X] [FiniteDimensional K X]
-    [AddCommGroup Y] [Module K Y] [FiniteDimensional K Y]
-    (QU : QuadraticForm K U) (QX : QuadraticForm K X) (QY : QuadraticForm K Y)
-    (h : Nonempty ((QU.prod QX).IsometryEquiv (QU.prod QY))) :
-    Nonempty (QX.IsometryEquiv QY)
-
-/-- Gram matrix of the hyperbolic space `H^n` of dimension `2n`: `b(e_i, e_j) = [i + j = 2n-1]`
-(an orthogonal sum of `n` hyperbolic planes, written with an antidiagonal Gram matrix). -/
-def hypMatrix (K : Type*) [Field K] (n : ℕ) : Matrix (Fin (2 * n)) (Fin (2 * n)) K :=
-  fun i j => if (i : ℕ) + (j : ℕ) + 1 = 2 * n then 1 else 0
-
-/-- The hyperbolic quadratic space `H^n` on `K^{2n}` (Lam Ch. I §3), `q(v) = vᵀ (hypMatrix n) v`. -/
-def hypForm (K : Type*) [Field K] (n : ℕ) : QuadraticForm K (Fin (2 * n) → K) :=
-  Matrix.toQuadraticForm' (hypMatrix K n)
-
-/-- **Witt decomposition** (Lam Ch. I §4, theorem number unverified; Thesis §5.1.4):
-a nondegenerate finite-dimensional quadratic space is `H^w ⊥ V_an` with `V_an` anisotropic, and
-`w` is the Witt index (the maximal dimension of a totally isotropic subspace, `wittIndex`).
-In particular the `sSup` defining `wittIndex` is attained and
-`dim V_an = dim V - 2 w(V)`, so `IsQuasiSplitQF Q ↔ dim V_an ≤ 2`. -/
-axiom witt_decomposition {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
-    (Q : QuadraticForm K V) (hQ : IsNondeg Q) :
-    ∃ (k : ℕ) (Qa : QuadraticForm K (Fin k → K)), Qa.Anisotropic ∧
-      Nonempty (Q.IsometryEquiv ((hypForm K (wittIndex Q)).prod Qa)) ∧
-      finrank K V = 2 * wittIndex Q + k
-
-end Witt
+/-! ## (a) Witt's theorems: proved in `Foundations/QuadraticForms` -/
 
 /-! ## (b) Quadratic forms over `p`-adic fields; inner-twist data -/
 
@@ -269,37 +227,6 @@ section Surjective
 variable {K : Type*} [Field K] [Invertible (2 : K)]
 variable {V : Type*} [AddCommGroup V] [Module K V]
 
-/-- The reflection `s_w(v) = v − q(w)⁻¹ polar(w, v) w` of `V` in the vector `w` (E. Artin,
-*Geometric Algebra*, Ch. III §3, "symmetry"; with `polar(w, v) = 2 b(w, v)` this is the usual
-`v − 2 b(v,w)/q(w) · w`).  For `q(w) = 0` the formula degenerates to the identity; it is only used
-for anisotropic `w`. -/
-def quadReflection (Q : QuadraticForm K V) (w : V) : V →ₗ[K] V :=
-  LinearMap.id - (Q w)⁻¹ • (QuadraticMap.polarBilin Q w).smulRight w
-
-omit [Invertible (2 : K)] in
-theorem quadReflection_apply (Q : QuadraticForm K V) (w v : V) :
-    quadReflection Q w v = v - (Q w)⁻¹ • QuadraticMap.polar Q w v • w := by
-  simp [quadReflection, smul_smul]
-
-/-- **Cartan–Dieudonné, `SO` form** (E. Artin, *Geometric Algebra*, Interscience 1957, Ch. III,
-Thm. 3.20: in a nonsingular space of dimension `n` over a field of characteristic `≠ 2`, every
-isometry is a product of at most `n` symmetries; also Lam, *Introduction to Quadratic Forms over
-Fields*, Ch. I, Thm. 7.1; theorem numbers not checked against the books).  A symmetry has
-determinant `−1`, so an isometry of determinant `1` is a product of an *even* number of them,
-which we group in consecutive pairs: `σ = ∏ᵢ s_{uᵢ} s_{wᵢ}` with all `uᵢ, wᵢ` anisotropic.
-
-Used for `closure_scalarGSpin_gspinPair` (the products `uw` and the scalars generate `GSpin(V)`),
-and it implies `gspin_specP_surjective_SO`
-(`gspin_specP_surjective_SO_of_cartanDieudonne`).  Characteristic `≠ 2` is an explicit binder
-(as for `witt_cancellation`); nondegeneracy is necessary (for a degenerate form the radical
-is fixed by every symmetry, but not by every isometry).  Degenerate instances: `V = 0` and
-`dim V = 1`, where `SO(V) = 1` and the empty product works. -/
-axiom cartan_dieudonne_even [Invertible (2 : K)] [FiniteDimensional K V] (Q : QuadraticForm K V)
-    (hQ : IsNondeg Q) (σ : V ≃ₗ[K] V) (hσ : ∀ v, Q (σ v) = Q v)
-    (hdet : LinearMap.det (σ : V →ₗ[K] V) = 1) :
-    ∃ l : List (V × V), (∀ p ∈ l, Q p.1 ≠ 0 ∧ Q p.2 ≠ 0) ∧
-      (σ : V →ₗ[K] V) = (l.map fun p => quadReflection Q p.1 * quadReflection Q p.2).prod
-
 /-- `P(u w) = s_u s_w` for anisotropic `u, w` (Thesis §5.1.2: `w v w⁻¹ = −s_w(v)`). -/
 theorem specP_gspinPair (Q : QuadraticForm K V) {u w : V} (hu : Q u ≠ 0) (hw : Q w ≠ 0) :
     (specP Q (gspinPair Q hu hw) : V →ₗ[K] V) = quadReflection Q u * quadReflection Q w := by
@@ -317,9 +244,8 @@ theorem specP_gspinPair (Q : QuadraticForm K V) {u w : V} (hu : Q u ≠ 0) (hw :
     QuadraticMap.polar_smul_right, smul_eq_mul]
   match_scalars <;> (field_simp; try ring)
 
-/-- Cartan–Dieudonné implies the surjectivity of `P : GSpin(V) → SO(V)`, i.e. the axiom
-`gspin_specP_surjective_SO` is a consequence of `cartan_dieudonne_even` (consistency check; a lift
-of `∏ s_{uᵢ} s_{wᵢ}` is `∏ uᵢ wᵢ`, `specP_gspinPair`). -/
+/-- Cartan–Dieudonné implies the surjectivity of `P : GSpin(V) → SO(V)`: a lift of
+`∏ s_{uᵢ} s_{wᵢ}` is `∏ uᵢ wᵢ` (`specP_gspinPair`). -/
 theorem gspin_specP_surjective_SO_of_cartanDieudonne [FiniteDimensional K V]
     (Q : QuadraticForm K V) (hQ : IsNondeg Q)
     (g : V ≃ₗ[K] V) (hg : ∀ v, Q (g v) = Q v) (hdet : LinearMap.det (g : V →ₗ[K] V) = 1) :

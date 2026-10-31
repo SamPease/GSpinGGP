@@ -793,59 +793,6 @@ namespace LeviAux
 
 variable {K : Type*} [Field K]
 
-theorem hypForm_apply (n : ℕ) (v : Fin (2 * n) → K) :
-    hypForm K n v = ∑ i, v i * v i.rev := by
-  unfold hypForm Matrix.toQuadraticForm'
-  simp only [LinearMap.BilinMap.toQuadraticMap_apply, Matrix.toLinearMap₂'_apply', dotProduct,
-    Matrix.mulVec, hypMatrix]
-  refine Finset.sum_congr rfl fun i _ => ?_
-  rw [Finset.mul_sum]
-  rw [Finset.sum_eq_single i.rev]
-  · have h : (i : ℕ) + (i.rev : ℕ) + 1 = 2 * n := by simp [Fin.val_rev]; omega
-    simp only [h, ↓reduceIte, one_mul]
-  · intro j _ hj
-    have h : ¬ ((i : ℕ) + (j : ℕ) + 1 = 2 * n) := by
-      intro h; apply hj; ext; simp [Fin.val_rev]; omega
-    simp only [h, ↓reduceIte, zero_mul, mul_zero]
-  · simp
-
-/-- The block permutation `Fin (2a) ⊕ Fin (2b) → Fin (2(a+b))`: the outer block carries `H^a`,
-the middle block `H^b`. -/
-def hypBlock (a b : ℕ) : Fin (2 * a) ⊕ Fin (2 * b) → Fin (2 * (a + b))
-  | Sum.inl i => ⟨if (i : ℕ) < a then i else i + 2 * b, by split_ifs <;> omega⟩
-  | Sum.inr j => ⟨a + j, by omega⟩
-
-theorem hypBlock_injective (a b : ℕ) : Function.Injective (hypBlock a b) := by
-  rintro (i | i) (j | j) h <;> simp only [hypBlock, Fin.mk.injEq] at h
-  · congr 1; ext; split_ifs at h <;> omega
-  · split_ifs at h <;> omega
-  · split_ifs at h <;> omega
-  · congr 1; ext; omega
-
-def hypBlockEquiv (a b : ℕ) : Fin (2 * a) ⊕ Fin (2 * b) ≃ Fin (2 * (a + b)) :=
-  Equiv.ofBijective _ ((Fintype.bijective_iff_injective_and_card _).2
-    ⟨hypBlock_injective a b, by simp; ring⟩)
-
-theorem hypBlock_rev (a b : ℕ) (s : Fin (2 * a) ⊕ Fin (2 * b)) :
-    (hypBlock a b s).rev = hypBlock a b (Sum.map Fin.rev Fin.rev s) := by
-  rcases s with i | j
-  · ext; simp only [hypBlock, Fin.val_rev, Sum.map_inl]; split_ifs <;> omega
-  · ext; simp only [hypBlock, Fin.val_rev, Sum.map_inr]; omega
-
-/-- `H^{a+b} ≅ H^a ⊥ H^b`. -/
-def hypAddEquiv (a b : ℕ) :
-    ((hypForm K a).prod (hypForm K b)).IsometryEquiv (hypForm K (a + b)) where
-  toLinearEquiv := (LinearEquiv.sumArrowLequivProdArrow _ _ K K).symm.trans
-    (LinearEquiv.funCongrLeft K K (hypBlockEquiv a b).symm)
-  map_app' v := by
-    obtain ⟨v₁, v₂⟩ := v
-    rw [hypForm_apply]
-    simp only [QuadraticMap.prod_apply, hypForm_apply]
-    rw [← (hypBlockEquiv a b).sum_comp, Fintype.sum_sum_type]
-    congr 1 <;> refine Finset.sum_congr rfl fun i _ => ?_ <;>
-      simp [LinearMap.funLeft, hypBlockEquiv, hypBlock_rev, LinearEquiv.sumArrowLequivProdArrow,
-        Equiv.sumArrowEquivProdArrow_symm_apply_inl, Equiv.sumArrowEquivProdArrow_symm_apply_inr]
-
 
 section Nondeg
 
