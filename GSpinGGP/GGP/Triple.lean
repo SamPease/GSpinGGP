@@ -34,6 +34,8 @@ open scoped Classical
 /- The commutator Lie structure on associative algebras is only a local instance in Mathlib. -/
 attribute [local instance 100] LieRing.ofAssociativeRing LieAlgebra.ofAssociativeAlgebra
 
+open CliffordAlgebra (ιInv ιInv_ι ι_injective)
+
 namespace GSpinGGP
 
 variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]

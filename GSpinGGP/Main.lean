@@ -41,6 +41,7 @@ Own-work statements that are not yet proved are `sorry`; cited results are the a
 noncomputable section
 
 open MeasureTheory Filter Topology Module
+open CliffordAlgebra (ι_injective)
 open scoped Classical
 
 attribute [local instance 100] LieRing.ofAssociativeRing LieAlgebra.ofAssociativeAlgebra

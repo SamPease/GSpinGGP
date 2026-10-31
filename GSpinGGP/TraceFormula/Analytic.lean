@@ -54,6 +54,8 @@ attribute [local instance 100] LieRing.ofAssociativeRing LieAlgebra.ofAssociativ
 
 set_option linter.unusedSectionVars false
 
+open CliffordAlgebra (ιInv ιInv_ι ι_injective)
+
 namespace GSpinGGP
 
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F]

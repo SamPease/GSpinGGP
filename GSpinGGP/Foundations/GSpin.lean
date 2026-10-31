@@ -1,4 +1,6 @@
 import Mathlib
+import TauCeti.LinearAlgebra.CliffordAlgebra.Vectors
+import TauCeti.LinearAlgebra.CliffordAlgebra.Functoriality
 
 /-!
 # Quadratic spaces, general spin groups, GGP triples, inner twists, Whittaker data
@@ -269,19 +271,6 @@ ring for the module topology. -/
 instance instIsTopologicalRingCliffordAlgebra [TopologicalSpace K] [IsTopologicalRing K]
     [Module.Finite K V] (Q : QuadraticForm K V) : IsTopologicalRing (CliffordAlgebra Q) :=
   IsModuleTopology.isTopologicalRing K _
-
-/-- A left inverse of `ι : V → C(V)` (characteristic `≠ 2`), via the exterior algebra. -/
-def ιInv (Q : QuadraticForm K V) : CliffordAlgebra Q →ₗ[K] V :=
-  ExteriorAlgebra.ιInv ∘ₗ (equivExterior Q).toLinearMap
-
-@[simp] theorem ιInv_ι (Q : QuadraticForm K V) (v : V) : ιInv Q (ι Q v) = v := by
-  simp only [ιInv, LinearMap.coe_comp, LinearEquiv.coe_coe, Function.comp_apply]
-  unfold equivExterior
-  erw [changeFormEquiv_apply, changeForm_ι]
-  exact ExteriorAlgebra.ι_leftInverse v
-
-theorem ι_injective (Q : QuadraticForm K V) : Function.Injective (ι Q) :=
-  Function.LeftInverse.injective (ιInv_ι Q)
 
 end Clifford
 
@@ -2681,14 +2670,6 @@ theorem exists_fg_mem_range_map (Q : QuadraticForm K V) (x : CliffordAlgebra Q) 
     refine ⟨U ⊔ K ∙ m, hU.sup (Submodule.fg_span_singleton m), mul_mem ?_
       (range_map_inclIsometry_mono Q le_sup_left hxU)⟩
     exact ι_mem_range_map_inclIsometry Q (Submodule.mem_sup_right (Submodule.mem_span_singleton_self m))
-
-omit [Invertible (2 : K)] in
-theorem map_involute {Q₁ : QuadraticForm K V₁} {Q₂ : QuadraticForm K V₂} (f : Q₁ →qᵢ Q₂)
-    (x : CliffordAlgebra Q₁) :
-    CliffordAlgebra.map f (involute x) = involute (CliffordAlgebra.map f x) := by
-  have : (CliffordAlgebra.map f).comp involute = involute.comp (CliffordAlgebra.map f) :=
-    CliffordAlgebra.hom_ext (LinearMap.ext fun m => by simp)
-  exact congrArg (fun φ : CliffordAlgebra Q₁ →ₐ[K] CliffordAlgebra Q₂ => φ x) this
 
 /-- Evenness is reflected by an injective `C(f)`. -/
 theorem mem_evenOdd_zero_of_map {Q₁ : QuadraticForm K V₁} {Q₂ : QuadraticForm K V₂}

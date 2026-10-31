@@ -1296,19 +1296,12 @@ section ModularInvolution
 variable {Q : Type*} [Group Q] [TopologicalSpace Q] [IsTopologicalGroup Q] [LocallyCompactSpace Q]
   [T2Space Q] [SecondCountableTopology Q] [MeasurableSpace Q] [BorelSpace Q]
 
-/-- `map (· * q) μ = Δ(q) • μ` for the Haar measure `μ`, `Δ` the modular character. -/
-theorem map_mul_right_haar_eq_modularCharacter_smul (q : Q) :
-    Measure.map (· * q) (Measure.haar : Measure Q) =
-      Measure.modularCharacter q • (Measure.haar : Measure Q) := by
-  show _ = Measure.modularCharacterFun q • _
-  rw [Measure.modularCharacterFun_eq_haarScalarFactor Measure.haar q]
-  exact Measure.isMulLeftInvariant_eq_smul _ _
-
 /-- Right translation by `q` preserves Haar measure iff `Δ(q) = 1`. -/
 theorem map_mul_right_haar_eq_self_of_modularCharacter_eq_one {q : Q}
     (hq : Measure.modularCharacter q = 1) :
     Measure.map (· * q) (Measure.haar : Measure Q) = Measure.haar := by
-  rw [map_mul_right_haar_eq_modularCharacter_smul, hq, one_smul]
+  rw [Measure.map_right_mul_eq_modularCharacterFun_smul, show Measure.modularCharacterFun q = 1 from hq,
+    one_smul]
 
 /-- The modular character is invariant under a continuous involutive automorphism `σ`
 (`σ ∘ σ = id`): `σ` carries Haar measure to a Haar measure. -/
@@ -1329,7 +1322,8 @@ theorem modularCharacter_apply_of_involutive (σ : Q →* Q) (hσ : Continuous �
     funext x
     exact (σ.map_mul x q).symm
   have h2 : Measure.map (· * σ q) ν = Measure.modularCharacter q • ν := by
-    rw [h1, map_mul_right_haar_eq_modularCharacter_smul, Measure.map_smul _ hmeas.aemeasurable]
+    rw [h1, Measure.map_right_mul_eq_modularCharacterFun_smul, Measure.map_smul _ hmeas.aemeasurable]
+    rfl
   have h3 : Measure.haarScalarFactor (Measure.map (· * σ q) ν) ν =
       Measure.haarScalarFactor (Measure.modularCharacter q • ν) ν := by
     congr 1
