@@ -50,10 +50,14 @@ Because every result on the path of the main theorem rests on literature assumpt
 dark green: the dark green nodes are the self-contained results. The graph's own legend uses the
 generic wording of the blueprint software (``ready to be formalized'' for the blue fill).
 
-\paragraph{Status} (October 2026). The project builds with 29 declarations containing
-\texttt{sorry}; the main theorem depends on 18 of them and on 27 of the 30 literature assumptions.
+\paragraph{Status} (November 2026). The project builds with 48 declarations containing
+\texttt{sorry}; the main theorem depends on 35 of them and on 10 of the 11 literature assumptions.
 Classical facts about quadratic forms (Witt cancellation and decomposition, Cartan--Dieudonn\'e,
-the classification over $p$-adic fields) are proved from the Tau Ceti library.
+the classification over $p$-adic fields) are proved from the Tau Ceti library; Hilbert's Theorem 90
+for $\mathrm{GL}_m$ is proved from Mathlib. Only results stated verbatim in the literature (specialized
+to general spin groups, with the source's hypotheses checked) are literature assumptions; where the
+dissertation adapts or combines published results, the statement is a theorem whose proof is not yet
+formalized, and its proof sketch names the exact ingredients.
 The 11 unproved statements not on its path are collected in Chapter~\ref{chap:offpath}. To see exactly
 what the main theorem rests on, run \texttt{\#print axioms GSpinGGP.local\_ggp}.
 

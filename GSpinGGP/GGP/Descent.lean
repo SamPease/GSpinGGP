@@ -1,6 +1,6 @@
 import GSpinGGP.GGP.Triple
-import GSpinGGP.Literature.GSpin
-import GSpinGGP.Literature.HarishChandra
+import GSpinGGP.GGP.Centralizers
+import GSpinGGP.GGP.Germs
 
 /-!
 # Descent data: `𝔤⁰`, the special orthogonal quotient, and semisimple descent

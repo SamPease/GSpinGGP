@@ -27,16 +27,17 @@ $T_\natural=\{t\in\Gamma(G,H): T_t=T\}$.
 Not yet formalized. \cite{BP} Prop.~4.5.1 for the individual germs, and compactness of $T(F)/A_{G,H}(F)$.
 \end{proof}
 
-\begin{literature}[Integrability of $\Delta^{s-1/2}$]
-\label{LIT-bp_integrable_deltaGGP_rpow}
+\begin{theorem}[Integrability of $\Delta^{s-1/2}$]
+\label{bp_integrable_deltaGGP_rpow}
 \lean{GSpinGGP.bp_integrable_deltaGGP_rpow}
 \leanok
 \uses{GGPData, GSpin, IsGammaElt, deltaGGP}
 For $x\in\Gamma(G,H)$, $T=T_x$ and $s>0$, $t\mapsto 1_{T_\natural}(t)\Delta(t)^{s-1/2}$ is integrable on
 $T(F)/A_{G,H}(F)$.
-
-\assumedfrom{\cite{BP}, Lemma B.1.2(i), applied as in Thesis Prop.~12.1.1(i)}
-\end{literature}
+\end{theorem}
+\begin{proof}
+Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{BP}, Lemma B.1.2(i), applied as in Thesis Prop.~12.1.1(i)}
+\end{proof}
 
 \begin{lemma}[Thesis (12.1.2), torus by torus]
 \label{isTorusIntegrable_of_mem_QC}
@@ -48,7 +49,7 @@ $T(F)/A_{G,H}(F)$.
 \end{lemma}
 \begin{proof}
 \leanok
-\uses{LIT-bp_integrable_deltaGGP_rpow, aestronglyMeasurable_torusFn_of_mem_QC, germ_bound_of_mem_QC}
+\uses{aestronglyMeasurable_torusFn_of_mem_QC, bp_integrable_deltaGGP_rpow, germ_bound_of_mem_QC}
 Bounded germs times the integrable $\Delta^{s-1/2}$.
 \end{proof}
 
@@ -90,16 +91,17 @@ $\mgeom(\theta_1+\theta_2)=\mgeom(\theta_1)+\mgeom(\theta_2)$ on $\QC_{\mathrm{f
 From convergence.
 \end{proof}
 
-\begin{literature}[Harish-Chandra's compactness lemma]
-\label{LIT-hc_exists_invariantClopen_superset}
+\begin{theorem}[Harish-Chandra's compactness lemma]
+\label{hc_exists_invariantClopen_superset}
 \lean{GSpinGGP.hc_exists_invariantClopen_superset}
 \leanok
 \uses{G, GGPData, GSpin}
 Every compact $C\subset G(F)$ is contained in an open, closed, invariant, $A_G(F)$-stable $\Omega$ that is compact
 modulo conjugation and $A_G(F)$.
-
-\assumedfrom{\cite{HC70}, Part I; \cite{BP}, Prop.~3.1.1(i) (= Thesis Prop.~3.5.1(i)), adapted}
-\end{literature}
+\end{theorem}
+\begin{proof}
+Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{HC70}, Part I; \cite{BP}, Prop.~3.1.1(i) (= Thesis Prop.~3.5.1(i)), adapted}
+\end{proof}
 
 \begin{proposition}[Support of $\mgeom$]
 \label{exists_qcCutoff_mGeom}
@@ -111,7 +113,7 @@ every $\theta\in\QC(G,\chi)$ vanishing on $\Omega\cap\Greg(F)$ (Thesis Prop.~12.
 \end{proposition}
 \begin{proof}
 \leanok
-\uses{GammaClass, IsGammaElt, LIT-germ_unique, LIT-hc_exists_invariantClopen_superset, deltaGGP, finite_gammaClass, germ, jHat, orbitChoice, weylDisc}
+\uses{GammaClass, IsGammaElt, LIT-germ_unique, deltaGGP, finite_gammaClass, germ, hc_exists_invariantClopen_superset, jHat, orbitChoice, weylDisc}
 $\Gamma(G,H)$ is a finite union of images of tori compact modulo $A_{G,H}(F)$; take $\Omega$ around them; germs only depend on $\theta$ near the point.
 \end{proof}
 

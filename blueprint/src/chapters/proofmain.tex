@@ -95,8 +95,8 @@ The multiplicity formula for $(G_\alpha,H_\alpha,\xi_\alpha)$ and linearity of $
 \end{proof}
 
 \section{Germ transfer}
-\begin{literature}[Transfer preserves germs]
-\label{LIT-bp_germ_transfer}
+\begin{theorem}[Transfer preserves germs]
+\label{bp_germ_transfer}
 \lean{GSpinGGP.bp_germ_transfer}
 \leanok
 \uses{G, GGPData, GSpin, InnerTwist, IsQuasiCharacter, IsQuasiSplit, StablyConjG, germ, gspin}
@@ -104,9 +104,10 @@ The multiplicity formula for $(G_\alpha,H_\alpha,\xi_\alpha)$ and linearity of $
 quasi-character on $G_\alpha(F)$ with $\theta'(y)=\theta(x)$ for stably conjugate regular $x,y$. Then for
 semisimple, strongly stably conjugate $x\in\GSpin(W)(F)$, $y\in\GSpin(W_\alpha)(F)$,
 $c_{\theta',\mathcal O'}(y)=c_{\theta,\mathcal O}(x)$ for all regular $\mathcal O,\mathcal O'$.
-
-\assumedfrom{\cite{BP}, (12.1.2), stated there for pure inner forms; the proof is unchanged for these inner twists}
-\end{literature}
+\end{theorem}
+\begin{proof}
+Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{BP}, (12.1.2), stated there for pure inner forms; the proof is unchanged for these inner twists}
+\end{proof}
 
 \begin{proposition}[Germ transfer for packets]
 \label{packet_germ_transfer}
@@ -119,7 +120,7 @@ $c_{\theta_\alpha,\mathcal O'}(y)=e(G_\alpha)\,c_{\theta_1,\mathcal O}(x)$ for a
 \end{proposition}
 \begin{proof}
 \leanok
-\uses{IsQuasiCharacter, IsStableFn, LIT-bp_germ_transfer, LIT-germ_unique, LIT-hc_character_isQuasiCharacter, jHat}
+\uses{IsQuasiCharacter, IsStableFn, LIT-germ_unique, LIT-hc_character_isQuasiCharacter, bp_germ_transfer, jHat}
 Apply the germ transfer to $e(G_\alpha)\theta_1$ and $\theta_\alpha$, using (STAB) and (TRANS).
 \end{proof}
 
@@ -254,15 +255,17 @@ stably conjugate to $x$ (Thesis \S6.7).
 $\sum_\alpha e(G_\alpha)\,n_\alpha(x)$ (Thesis (6.7.6)).
 \end{definition}
 
-\begin{literature}[Hilbert's Theorem 90 for $\mathrm{GL}_m$]
-\label{LIT-hilbert90_GL}
+\begin{theorem}[Hilbert's Theorem 90 for $\mathrm{GL}_m$]
+\label{hilbert90_GL}
 \lean{GSpinGGP.hilbert90_GL}
 \leanok
 Every continuous cocycle $\sigma\mapsto a_\sigma\in\mathrm{GL}_m(\Fbar)$ of $\mathrm{Gal}(\Fbar/F)$ is a coboundary:
 $a_\sigma=M^{-1}\sigma(M)$.
-
-\assumedfrom{\cite{SerreLF}, Ch.~X \S1 Prop.~3; \cite{SerreCG}, Ch.~III \S1.1}
-\end{literature}
+\end{theorem}
+\begin{proof}
+\leanok
+Speiser's argument: average the cocycle over $\mathrm{Gal}(L/F)$, $L$ the normal closure of a field of definition, and use Dedekind's independence of characters to find an invertible average $B$ with $a_\sigma\,\sigma(B)=B$ (\cite{SerreLF}, Ch.~X \S1 Prop.~3).
+\end{proof}
 
 \begin{lemma}[The map $q_x:H^1(F,S_x)\to\{\alpha\}$]
 \label{existsUnique_twistIdx}
@@ -274,7 +277,7 @@ cocycle representing $\beta$ is isometric to exactly one $W_\alpha$.
 \end{lemma}
 \begin{proof}
 \leanok
-\uses{LIT-hilbert90_GL}
+\uses{hilbert90_GL}
 Hilbert 90 writes the cocycle as $M^{-1}\sigma(M)$; $v\mapsto Q(M^{-1}v)$ is an $F$-form of the discriminant of $W$. Cohomologous cocycles give $F$-isometric forms by Galois descent.
 \end{proof}
 
@@ -311,15 +314,16 @@ This differs from Thesis Prop.~6.6.1(iii), which uses $H^1(F,T_x)$.
 Not yet formalized. Galois-cohomological parametrization of stable classes, then Witt cancellation.
 \end{proof}
 
-\begin{literature}[The Kottwitz sign is multiplicative on $H^1(F,S_x)$]
-\label{LIT-kottwitzSign_twistIdx_mul}
+\begin{theorem}[The Kottwitz sign is multiplicative on $H^1(F,S_x)$]
+\label{kottwitzSign_twistIdx_mul}
 \lean{GSpinGGP.kottwitzSign_twistIdx_mul}
 \leanok
 \uses{GGPData, GSpin, InnerFormSystem, InnerTwist, IsGammaElt, IsQuasiSplit, kottwitzSign}
 For $G$ quasi-split and $x\in\Gamma(G,H)$, $\beta\mapsto e(G_{q_x(\beta)})$ is multiplicative on $H^1(F,S_x)$.
-
-\assumedfrom{\cite{Kot83}; \cite{BP}, \S12.1, (12.1.6), via Tate--Nakayama}
-\end{literature}
+\end{theorem}
+\begin{proof}
+Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{Kot83}; \cite{BP}, \S12.1, (12.1.6), via Tate--Nakayama}
+\end{proof}
 
 \begin{lemma}[The sign takes the value $-1$]
 \label{exists_twistIdx_kottwitzSign_neg}
@@ -343,7 +347,7 @@ This replaces the Kottwitz-sign cancellation of Thesis \S6.7 after (6.7.6).
 \end{theorem}
 \begin{proof}
 \leanok
-\uses{InnerTwist, LIT-finite_H1_torusBar, LIT-kottwitzSign_twistIdx_mul, existsUnique_twistIdx, exists_twistIdx_kottwitzSign_neg, gspin, kottwitzSign, n_alpha, n_alpha_eq_card_twistIdx, padic_quadratic_classes, torusBarFbar_commute}
+\uses{InnerTwist, LIT-finite_H1_torusBar, existsUnique_twistIdx, exists_twistIdx_kottwitzSign_neg, gspin, kottwitzSign, kottwitzSign_twistIdx_mul, n_alpha, n_alpha_eq_card_twistIdx, padic_quadratic_classes, torusBarFbar_commute}
 The sum equals $\sum_{\beta\in H^1(F,S_x)}e(G_{q_x(\beta)})$. If $x$ is central this is $e(G)=1$. Otherwise the
 sign is a character of the finite group $H^1(F,S_x)$ taking the value $-1$, so the sum vanishes.
 \end{proof}
@@ -387,7 +391,7 @@ For central $c\in A_{G,H}(F)$, $c_{\theta_1,\mathcal O_c}(c)=c_{\theta_1,\mathca
 \end{lemma}
 \begin{proof}
 \leanok
-\uses{IsQuasiCharacter, IsTempered, LIT-germ_unique, LIT-hc_character_exists, LIT-hc_character_isQuasiCharacter, LIT-hc_regularSet_open_conull, UnitaryRep, jHat}
+\uses{IsQuasiCharacter, IsTempered, LIT-germ_unique, LIT-hc_character_exists, LIT-hc_character_isQuasiCharacter, UnitaryRep, hc_regularSet_open_conull, jHat}
 $\theta_1(cy)=\theta_1(y)$ on $\Greg(F)$ since the central characters are trivial on $Z_{G,H}(F)$; $e^X$ is
 regular for small regular $X$, so the expansion at $1$ is one at $c$ (uniqueness of germs); $\mathcal O_c=\mathcal O_1$.
 \end{proof}
@@ -416,7 +420,7 @@ $c_{\theta_1,\mathcal O_1}(1)$ (Thesis \S6.7 after (6.7.6)).
 \end{proposition}
 \begin{proof}
 \leanok
-\uses{LIT-nilReg_centralizer_nonempty_imp, atom_value, jHat}
+\uses{atom_value, jHat, nilReg_centralizer_nonempty_imp}
 Non-central and non-quasi-split classes have weight $0$; the atom gives the value above.
 \end{proof}
 
@@ -430,7 +434,7 @@ satisfies Luo's condition at $x=1$ (\cite{Luo} \S7.1).
 \end{lemma}
 \begin{proof}
 \leanok
-\uses{LIT-exists_regularNil_inOrbitNu, LIT-nilReg_nonempty_iff_quasiSplit}
+\uses{exists_regularNil_inOrbitNu, nilReg_nonempty_iff_quasiSplit}
 Luo's orbit in the even factor, paired with a regular nilpotent of the other factor.
 \end{proof}
 
@@ -443,7 +447,7 @@ For $G$ quasi-split, $\mathcal O_1\in\Nilreg(\mathfrak g)$.
 \end{lemma}
 \begin{proof}
 \leanok
-\uses{IsGammaElt, LIT-nilReg_centralizer_nonempty_iff, exists_orbitSpec_one_of_even}
+\uses{IsGammaElt, exists_orbitSpec_one_of_even, nilReg_centralizer_nonempty_iff}
 Luo's recipe applied to $(G,H)$ selects a regular orbit, which exists since $G$ is quasi-split.
 \end{proof}
 
@@ -456,7 +460,7 @@ Let $G$ be quasi-split. Then $\sum_\alpha\sum_{\pi\in\Pi_\alpha}m(\pi)=c_{\theta
 \end{theorem}
 \begin{proof}
 \leanok
-\uses{GammaClass, IsGammaElt, LIT-nilReg_centralizer_nonempty_imp, StablyConjG, TorusTransfer, deltaGGP, jHat, kottwitzSign, mGeom, mGeomStabS_eq_germ_one, n_alpha, packet_germ_transfer, packet_sum_mult, prop_12_5_1_i, prop_12_5_1_ii, signedCount, signed_count, stable_rearrangement, weylDisc}
+\uses{GammaClass, IsGammaElt, StablyConjG, TorusTransfer, deltaGGP, jHat, kottwitzSign, mGeom, mGeomStabS_eq_germ_one, n_alpha, nilReg_centralizer_nonempty_imp, packet_germ_transfer, packet_sum_mult, prop_12_5_1_i, prop_12_5_1_ii, signedCount, signed_count, stable_rearrangement, weylDisc}
 Sum (6.7.2) over $\alpha$; rearrange by (6.7.5) using germ transfer and Prop.~6.6.1(i),(ii); the
 signed count kills every class but the atom.
 \end{proof}

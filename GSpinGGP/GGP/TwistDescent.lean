@@ -3,7 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Literature.Kottwitz
-import GSpinGGP.Literature.GSpin
+import GSpinGGP.GGP.Centralizers
 
 /-!
 # Galois descent for twisted quadratic forms

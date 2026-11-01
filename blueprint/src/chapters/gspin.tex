@@ -78,27 +78,29 @@ determinant $1$ is a product $\prod_i s_{u_i}s_{w_i}$ of pairs of reflections in
 Proved from Tau Ceti's factorization of an element of $\SO$ into an even number of reflections (\cite{Artin}, Ch.~III; \cite{Lam}, Ch.~I), grouped in pairs.
 \end{proof}
 
-\begin{literature}[Centralizers of semisimple elements of $\GSpin$]
-\label{LIT-steinberg_centralizer_connected}
+\begin{theorem}[Centralizers of semisimple elements of $\GSpin$]
+\label{steinberg_centralizer_connected}
 \lean{GSpinGGP.steinberg_centralizer_connected}
 \leanok
 \uses{GSpin}
 Let $x\in\GSpin(V)$ be semisimple, $\bar x=P(x)$, and $W_{\pm1}=\ker(\bar x\mp 1)$. Then
 $Z_{\GSpin(V)}(x)=P^{-1}(Z_{\SO(V)}(\bar x)^0)$; explicitly, $g$ commutes with $x$ iff $P(g)$
 commutes with $\bar x$ and $\det P(g)|_{W_{+1}} = \det P(g)|_{W_{-1}} = 1$. (Characteristic $0$.)
+\end{theorem}
+\begin{proof}
+Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{Steinberg}, Thm.~8.1 (the derived group $\Spin(V)$ is simply connected)}
+\end{proof}
 
-\assumedfrom{\cite{Steinberg}, Thm.~8.1 (the derived group $\Spin(V)$ is simply connected)}
-\end{literature}
-
-\begin{literature}[Regular nilpotent orbits and quasi-splitness]
-\label{LIT-nilReg_nonempty_iff_quasiSplit}
+\begin{theorem}[Regular nilpotent orbits and quasi-splitness]
+\label{nilReg_nonempty_iff_quasiSplit}
 \lean{GSpinGGP.nilReg_nonempty_iff_quasiSplit}
 \leanok
 \uses{GSpin, gspin}
 $\Nilreg(\gspin(V))\neq\emptyset$ iff $\GSpin(V)$ is quasi-split, i.e.\ $\dim V-2w(V)\le 2$.
-
-\assumedfrom{\cite{Wal01}, Ch.~I; \cite{Wal10}, \S7.1; \cite{Luo}, \S2.1; Thesis \S5.1.4}
-\end{literature}
+\end{theorem}
+\begin{proof}
+Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{Wal01}, Ch.~I; \cite{Wal10}, \S7.1; \cite{Luo}, \S2.1; Thesis \S5.1.4}
+\end{proof}
 
 \section{GGP triples}
 \begin{definition}[Admissible pairs]
@@ -175,8 +177,8 @@ of $U(F)$, i.e.\ its stabilizer in $B(F)$ is $Z_G(F)U(F)$. (The Thesis takes $G(
 of such pairs.)
 \end{definition}
 
-\begin{literature}[Luo's orbit $\mathcal O_\nu$]
-\label{LIT-exists_regularNil_inOrbitNu}
+\begin{theorem}[Luo's orbit $\mathcal O_\nu$]
+\label{exists_regularNil_inOrbitNu}
 \lean{GSpinGGP.exists_regularNil_inOrbitNu}
 \leanok
 \uses{GGPData, IsQuasiSplit, gspin}
@@ -184,32 +186,35 @@ Let $G$ be quasi-split. If $\dim V$ is even and $\ge 4$, some regular nilpotent 
 has image in $\mathfrak{so}(V)$ in the orbit $\mathcal O_\nu$ (it kills an anisotropic line $Fd_0$ and is
 one Jordan block on $U_1=d_0^\perp\cong\langle\nu\rangle\oplus H^k$). If $\dim W$ is even and $\ge 4$,
 some regular nilpotent $X\in\gspin(W)$ has image in $\mathcal O_{-\nu}$.
+\end{theorem}
+\begin{proof}
+Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{Wal10}, \S7.1; \cite{Luo}, \S2.1, \S7.1; \cite{Wal01}, Ch.~I; Thesis \S5.1.4}
+\end{proof}
 
-\assumedfrom{\cite{Wal10}, \S7.1; \cite{Luo}, \S2.1, \S7.1; \cite{Wal01}, Ch.~I; Thesis \S5.1.4}
-\end{literature}
-
-\begin{literature}[Germs vanish off quasi-split centralizers]
-\label{LIT-nilReg_centralizer_nonempty_imp}
+\begin{theorem}[Germs vanish off quasi-split centralizers]
+\label{nilReg_centralizer_nonempty_imp}
 \lean{GSpinGGP.nilReg_centralizer_nonempty_imp}
 \leanok
 \uses{G, GGPData, GSpin, gspin}
 For semisimple $x\in\GSpin(W)(F)$ embedded diagonally in $G$, with $W'_x=\ker(P(x)-1)$ and
 $V'_x = W'_x\oplus Z$: if $\Nilreg(\mathfrak g_x)\ne\emptyset$ then $W'_x$ and $V'_x$ are quasi-split.
+\end{theorem}
+\begin{proof}
+Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{Wal01}, Ch.~I applied to the factors of $G_x$; \cite{BP}, Prop.~4.5.1(i)}
+\end{proof}
 
-\assumedfrom{\cite{Wal01}, Ch.~I applied to the factors of $G_x$; \cite{BP}, Prop.~4.5.1(i)}
-\end{literature}
-
-\begin{literature}[Regular nilpotent orbits of GGP centralizers]
-\label{LIT-nilReg_centralizer_nonempty_iff}
+\begin{theorem}[Regular nilpotent orbits of GGP centralizers]
+\label{nilReg_centralizer_nonempty_iff}
 \lean{GSpinGGP.nilReg_centralizer_nonempty_iff}
 \leanok
 \uses{G, GGPData, GSpin, gspin}
 For semisimple $x\in\GSpin(W)(F)$ whose moved part $G''_x$ is a torus (true for every $x$ contributing
 to $\Gamma(G,H)$): $\Nilreg(\mathfrak g_x)\neq\emptyset$ iff $W'_x$ and $V'_x=W'_x\oplus Z$ are
 quasi-split.
-
-\assumedfrom{\cite{Wal01}, Ch.~I; \cite{Wal10}, \S7.1}
-\end{literature}
+\end{theorem}
+\begin{proof}
+Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{Wal01}, Ch.~I; \cite{Wal10}, \S7.1}
+\end{proof}
 
 \begin{literature}[Multiplicity at most one]
 \label{LIT-emoryTakeda_mult_le_one}

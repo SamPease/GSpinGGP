@@ -1,8 +1,8 @@
 import GSpinGGP.GGP.Triple
 import GSpinGGP.TraceFormula.Spine
-import GSpinGGP.Literature.HarishChandra
-import GSpinGGP.Literature.GSpin
-import GSpinGGP.Literature.Kottwitz
+import GSpinGGP.GGP.Germs
+import GSpinGGP.GGP.Centralizers
+import GSpinGGP.GGP.KottwitzSign
 import GSpinGGP.GGP.Hilbert90
 import GSpinGGP.GGP.TwistDescent
 import GSpinGGP.GGP.QuadClassify

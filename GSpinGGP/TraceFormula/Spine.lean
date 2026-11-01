@@ -10,8 +10,8 @@ import GSpinGGP.TraceFormula.Spectral
 import GSpinGGP.TraceFormula.Geometric
 import GSpinGGP.TraceFormula.Lie
 import GSpinGGP.GGP.Triple
-import GSpinGGP.Literature.HarishChandra
-import GSpinGGP.Literature.GSpin
+import GSpinGGP.GGP.Germs
+import GSpinGGP.GGP.Centralizers
 
 /-!
 # The spine of the local trace formula: geometric expansion ⇒ multiplicity formula
@@ -182,7 +182,7 @@ functions `ScuspTestFn` are compactly supported modulo `A_G(F)`.
 "Proper parabolic" is the thesis's notion, `whittB FW FV ≠ ⊤` (`GGPData.IsProperFlagPair`). -/
 theorem exists_scusp_ell (d : GGPData F) (η : CentralCharOn d) (P : VirtualTemp d η) :
     ∃ f ∈ ScuspTestFn d η.inv, ∀ x ∈ d.ellRegSet, thetaF d f x = vChar d P x := by
-  -- the χ-transfer of BP Cor 5.7.2(i) (axiom `bp_scusp_surj_ell`), via `exists_scusp_of_qc_bp`
+  -- the χ-transfer of BP Cor 5.7.2(i) (`bp_scusp_surj_ell`), via `exists_scusp_of_qc_bp`
   exact exists_scusp_ell_bp d η P
 
 /-! ## 3. The central character of a tempered representation -/

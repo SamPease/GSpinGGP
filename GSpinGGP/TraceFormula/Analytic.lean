@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.TraceFormula.Basic
 import GSpinGGP.Literature.Measure
-import GSpinGGP.Literature.HarishChandra
+import GSpinGGP.GGP.Germs
 
 /-!
 # The local trace formula: analytic objects and estimates

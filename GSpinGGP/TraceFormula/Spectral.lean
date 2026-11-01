@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import GSpinGGP.TraceFormula.Interface
 import GSpinGGP.TraceFormula.MGeom
 import GSpinGGP.GGP.Levi
-import GSpinGGP.Literature.Arthur
+import GSpinGGP.TraceFormula.EllipticRepresentations
 
 /-!
 # The spectral side: Thesis Prop 7.4.1(ii) in elliptic form
@@ -27,10 +27,10 @@ How the two are proved here:
   (`GGPData.parInd`, `GGPData.IsTempIndData`, `GGPData.Rind`, at the level of characters).
 * **Thesis Prop 7.4.1(i)** (`defect_eq_zero_of_mem_Rind`, proved): the defect vanishes on `R_ind(G, η)` under
   (HYP), from one SORRY at a single induced representation, `mult_parInd_eq_mGeom` (Thesis
-  Prop 7.4.1(i)), the Harish-Chandra axiom `hc_vMult_eq_mult_parInd`, and the linearity of `m_geom`
+  Prop 7.4.1(i)), `hc_vMult_eq_mult_parInd`, and the linearity of `m_geom`
   on `QCfin` (`MGeom.lean`; `vMGeom_eq_mGeom_vChar`).
 * **The characterization** `R_ind(G, η) = {Π : θ_Π = 0 on G_ell,reg(F)}` (`mem_Rind_iff`, proved
-  from van Dijk and Arthur, `Literature/Arthur.lean`).
+  from van Dijk and Arthur, `TraceFormula/EllipticRepresentations.lean`).
 * **The spectral side**: `ellVirtual d η f`, a virtual representation with `θ = θ_f` on the
   elliptic set (BP Prop 5.6.1(ii) + Lemma 5.4.2(i), axiom), and Thesis Thm 10.2.1 + Prop 7.4.1(ii)
   in elliptic form for it (`thm_9_1_1_ell`, SORRY).

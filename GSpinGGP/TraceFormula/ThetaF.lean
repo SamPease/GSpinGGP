@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.TraceFormula.Basic
 import GSpinGGP.TraceFormula.SpinorNorm
-import GSpinGGP.Literature.TraceFormula
-import GSpinGGP.Literature.HarishChandra
+import GSpinGGP.TraceFormula.StronglyCuspidal
+import GSpinGGP.GGP.Germs
 import GSpinGGP.Literature.Measure
 
 /-!

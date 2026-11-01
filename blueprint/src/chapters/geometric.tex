@@ -39,7 +39,7 @@ Assume (HYP). Then $J$ extends to some $J_{\mathrm{qc}}$ as above (Thesis Prop.~
 \end{proposition}
 \begin{proof}
 \leanok
-\uses{GSpin, GammaClass, H, IsGammaElt, IsQuasiCharacter, LIT-bp_scusp_surj_ell, LIT-bp_thetaF_exists, LIT-germ_unique, LIT-hc_regularSet_open_conull, N, ScuspTestFn, deltaGGP, distribJ, distribJ_add, distribJ_sub_mGeom_eq_of_eqOn_ell, exists_qcCutoff_mGeom, germ, gspin, isThetaF_chiProj, jHat, mGeom, mGeom_add, orbitChoice, tendsto_mGeomS, thetaF, thetaF_mem_QC, thetaF_spec, weylDisc, xi}
+\uses{GSpin, GammaClass, H, IsGammaElt, IsQuasiCharacter, LIT-germ_unique, N, ScuspTestFn, bp_scusp_surj_ell, bp_thetaF_exists, deltaGGP, distribJ, distribJ_add, distribJ_sub_mGeom_eq_of_eqOn_ell, exists_qcCutoff_mGeom, germ, gspin, hc_regularSet_open_conull, isThetaF_chiProj, jHat, mGeom, mGeom_add, orbitChoice, tendsto_mGeomS, thetaF, thetaF_mem_QC, thetaF_spec, weylDisc, xi}
 $J_{\mathrm{qc}}(\theta)=\mgeom(\theta)+(J(f)-\mgeom(\theta_f))$ for any $f$ with $\theta_f=\theta$ on the elliptic set (elliptic isolation); well defined by the previous lemma.
 \end{proof}
 
@@ -81,21 +81,22 @@ in the support of $\theta$, then $J(f)=\mgeom(\theta_f)$ (Thesis Prop.~12.3.1, \
 \end{proposition}
 \begin{proof}
 \leanok
-\uses{GammaClass, H, IsGammaElt, IsQuasiCharacter, LIT-germ_unique, LIT-hc_regularSet_open_conull, N, QC, deltaGGP, distribJ_add, distribJ_eq_of_thetaF_eqOn, germ, isThetaF_chiProj, jHat, mGeom_add, mem_mul_parabolicU_iff, orbitChoice, thetaF_mem_QC, thetaF_spec, weylDisc}
+\uses{GammaClass, H, IsGammaElt, IsQuasiCharacter, LIT-germ_unique, N, QC, deltaGGP, distribJ_add, distribJ_eq_of_thetaF_eqOn, germ, hc_regularSet_open_conull, isThetaF_chiProj, jHat, mGeom_add, mem_mul_parabolicU_iff, orbitChoice, thetaF_mem_QC, thetaF_spec, weylDisc}
 Induction on the number of sets, cutting $f$ by $\Omega_i$.
 \end{proof}
 
-\begin{literature}[Neighbourhoods of the near-central set]
-\label{LIT-hc_exists_invariantClopen_nearCentral}
+\begin{theorem}[Neighbourhoods of the near-central set]
+\label{hc_exists_invariantClopen_nearCentral}
 \lean{GSpinGGP.hc_exists_invariantClopen_nearCentral}
 \leanok
 \uses{G, GGPData, GSpin}
 For every neighbourhood $U$ of $1$ there is an open, closed, invariant, $A_G(F)$-stable $\Omega$ containing every
 near-central element ($1$ in the closure of $A_G(F)c^{G(F)}$), each element of which is conjugate into $U$
 modulo $A_G(F)$.
-
-\assumedfrom{\cite{HC70}, Part I; \cite{BP}, \S3.3 (= Thesis \S3.5.2), adapted}
-\end{literature}
+\end{theorem}
+\begin{proof}
+Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{HC70}, Part I; \cite{BP}, \S3.3 (= Thesis \S3.5.2), adapted}
+\end{proof}
 
 \begin{lemma}[Thesis Prop.~12.3.1, local form]
 \label{exists_good_nhd_of_not_nearCentral}
@@ -119,7 +120,7 @@ Assume (HYP). If $f\in\scusp(A_G\backslash G,\chi^{-1})$ and $\theta_f$ vanishes
 \end{proposition}
 \begin{proof}
 \leanok
-\uses{GSpin, H, IsJqc, IsQuasiCharacter, LIT-hc_exists_invariantClopen_nearCentral, LIT-hc_exists_invariantClopen_superset, LIT-hc_regularSet_open_conull, N, QC, exists_good_nhd_of_not_nearCentral, exists_isJqc, geomAt_glue, jHat, thetaF_mem_QC, thetaF_spec}
+\uses{GSpin, H, IsJqc, IsQuasiCharacter, N, QC, exists_good_nhd_of_not_nearCentral, exists_isJqc, geomAt_glue, hc_exists_invariantClopen_nearCentral, hc_exists_invariantClopen_superset, hc_regularSet_open_conull, jHat, thetaF_mem_QC, thetaF_spec}
 Cover the support of $\theta_f$ (compact modulo conjugation and $A_G$) by finitely many good sets and glue.
 \end{proof}
 
@@ -164,16 +165,17 @@ $F$ on $\mathfrak g^0$ with $J(f)=J^{\mathrm{Lie}}(F)$ and $\mgeom(\theta_f)=m^{
 Not yet formalized. $\Omega=A_G(F)\exp(\omega)$ for a $G(F)$-excellent $\omega$, $F=(j_G^H)^{1/2}f_\omega$.
 \end{proof}
 
-\begin{literature}[Spectral expansion of $J^{\mathrm{Lie}}$]
-\label{LIT-jLie_eq_of_thetaFLie_eqOn}
+\begin{theorem}[Spectral expansion of $J^{\mathrm{Lie}}$]
+\label{jLie_eq_of_thetaFLie_eqOn}
 \lean{GSpinGGP.jLie_eq_of_thetaFLie_eqOn}
 \leanok
 \uses{G, GGPData, GSpin, distribJLie, gspin}
 (Thesis Thm.~11.6.1, in normalization-free form.) If neither $W$ nor $V$ is a hyperbolic plane, $J^{\mathrm{Lie}}(f)$
 depends only on $\theta_f|_{\mathfrak g^0_{\mathrm{reg}}}$.
-
-\assumedfrom{\cite{Luo}, Thm.~6.6.1; \cite{Wal10}, \S9--10; following \cite{BP}, Thm.~10.8.1}
-\end{literature}
+\end{theorem}
+\begin{proof}
+Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{Luo}, Thm.~6.6.1; \cite{Wal10}, \S9--10; following \cite{BP}, Thm.~10.8.1}
+\end{proof}
 
 \begin{lemma}[$J^{\mathrm{Lie}}$ factors through $\theta_f$]
 \label{distribJLie_eq_jqcLie}
@@ -185,7 +187,7 @@ strongly cuspidal $f$ on $\mathfrak g^0$ (Thesis Prop.~12.4.1(ii)).
 \end{lemma}
 \begin{proof}
 \leanok
-\uses{LIT-jLie_eq_of_thetaFLie_eqOn}
+\uses{jLie_eq_of_thetaFLie_eqOn}
 From the spectral expansion of $J^{\mathrm{Lie}}$.
 \end{proof}
 
@@ -218,16 +220,17 @@ $J^{\mathrm{Lie}}(f)-m^{\mathrm{Lie}}_{\mathrm{geom}}(\theta_f)=\sum_{\mathcal O
 The test-function form with $J^{\mathrm{Lie}}_{\mathrm{qc}}$.
 \end{proof}
 
-\begin{literature}[The endgame]
-\label{LIT-lie_endgame}
+\begin{theorem}[The endgame]
+\label{lie_endgame}
 \lean{GSpinGGP.lie_endgame}
 \leanok
 \uses{G, GGPData, GSpin, H, N, distribJLie, gspin, jHat, mGeomLie, thetaFLie}
 (Thesis \S12.5.) If $J^{\mathrm{Lie}}(f)-m^{\mathrm{Lie}}_{\mathrm{geom}}(\theta_f)=\sum_{\mathcal O}c_{\mathcal O}c_{\theta_f,\mathcal O}(0)$
 for every strongly cuspidal $f$ on $\mathfrak g^0$, then every $c_{\mathcal O}$ vanishes.
-
-\assumedfrom{\cite{Wal10}, \S11.4--11.6; \cite{Luo}, Prop.~7.3.7, Lemma B.3.1}
-\end{literature}
+\end{theorem}
+\begin{proof}
+Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{Wal10}, \S11.4--11.6; \cite{Luo}, Prop.~7.3.7, Lemma B.3.1}
+\end{proof}
 
 \begin{theorem}[$J^{\mathrm{Lie}}=J^{\mathrm{Lie}}_{\mathrm{geom}}$]
 \label{distribJLie_eq_mGeomLie}
@@ -239,7 +242,7 @@ for strongly cuspidal $f$ on $\mathfrak g^0$ (Thesis Thm.~12.2.2).
 \end{theorem}
 \begin{proof}
 \leanok
-\uses{H, LIT-lie_endgame, N, jHat, prop_11_8_1}
+\uses{H, N, jHat, lie_endgame, prop_11_8_1}
 Prop.~12.5.1 and the endgame.
 \end{proof}
 

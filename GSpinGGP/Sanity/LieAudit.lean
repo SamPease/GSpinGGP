@@ -8,7 +8,7 @@ import GSpinGGP.TraceFormula.Lie
 /-!
 # Consistency checks of the Lie-algebra axioms on small triples
 
-The two axioms of `Literature/LieAlgebra.lean`
+The two literature statements of `TraceFormula/LieAlgebra.lean`
 (`jLie_eq_of_thetaFLie_eqOn`, `lie_endgame`) are instantiated at the smallest triple
 (`toyData`: `W = 0`, `V` a line) and at small triples with a hyperbolic-plane factor, and each
 instance is checked to give no `False`.
@@ -18,7 +18,7 @@ instance is checked to give no `False`.
   parabolic), and we compute, *without the axioms*:
   `J^Lie(f) = f(0)` (`toyD_distribJLie`), `θ_f = f` (`toyD_thetaFLie`),
   `m^Lie_geom(θ) = θ(0)` (`toyD_mGeomLie`) and `c_{θ,0}(0) = θ(0)` (`toyD_germLie0`).
-  Both axiom instances are then *proved* from these computations (`toyD_jLie_eq_of_thetaFLie_eqOn`,
+  Both instances are then *proved* from these computations (`toyD_jLie_eq_of_thetaFLie_eqOn`,
   `toyD_lie_endgame`), so they are consistent there.  This is load-bearing: had any of the measures
   `measH0`, `measLie0`, `measLieTorus` been a junk value (`0`), or had `IsLieScusp` collapsed to
   `{0}`, the instance of `lie_endgame` at `toyData` would prove `False`.
@@ -362,7 +362,7 @@ theorem toyD_not_isHypPlane_QV : ¬ IsHypPlane (𝕋).QV := fun h => by
   rw [h0] at this
   exact zero_ne_one this
 
-/-- **`jLie_eq_of_thetaFLie_eqOn` holds at the toy datum** (proved without the axiom). -/
+/-- **`jLie_eq_of_thetaFLie_eqOn` holds at the toy datum** (proved without `sorry`). -/
 theorem toyD_jLie_eq_of_thetaFLie_eqOn {f f' θ θ' : ↥(𝕋).lieZero → ℂ}
     (hθ : (𝕋).IsThetaFLie ψ f θ) (hθ' : (𝕋).IsThetaFLie ψ f' θ')
     (he : ∀ X : ↥(𝕋).lieZero, IsRegularSS (𝕋).lieZero (X : (𝕋).ambient) → θ X = θ' X) :
@@ -378,7 +378,7 @@ theorem toyD_jLie_eq_of_thetaFLie_eqOn {f f' θ θ' : ↥(𝕋).lieZero → ℂ}
     toyD_isRegularSS _ (𝕋).lieZero_le_lie 0
   rw [toyD_distribJLie, toyD_distribJLie, ← key hθ, ← key hθ', he 0 hreg]
 
-/-- **`lie_endgame` holds at the toy datum** (proved without the axiom): with `f = 1`,
+/-- **`lie_endgame` holds at the toy datum** (proved without `sorry`): with `f = 1`,
 `J^Lie(1) − m^Lie_geom(θ_1) = 1 − 1 = 0 = c_0 · c_{θ_1,0}(0) = c_0`. -/
 theorem toyD_lie_endgame
     (c : NilOrbit (lieGrpCentralizer (𝕋).G 0) (lieCentralizer (𝕋).lieZero 0) → ℂ)
