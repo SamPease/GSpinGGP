@@ -1864,11 +1864,12 @@ end EndElemGal
 /-- **`P(x)_{F̄}` is semisimple** for semisimple `x ∈ GSpin(W)(F)` (own work, elementary).  Route:
 left and right multiplication by `x` are commuting semisimple operators on `C(W)`, so conjugation
 `v ↦ x v x⁻¹` is semisimple and so is its restriction to `ι(W)`, which is `P(x)`; semisimplicity
-over `F` of characteristic `0` survives base change to `F̄` (squarefree minimal polynomial). -/
+over `F` of characteristic `0` survives base change to `F̄` (squarefree minimal polynomial).
+Proved: `isSemisimple_specP_of_isSS`, `isSemisimple_baseChange` (`GGP/TorusCommute.lean`). -/
 theorem isSemisimple_specP_baseChange (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) :
     Module.End.IsSemisimple
       ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange (AlgebraicClosure F)) :=
-  sorry
+  isSemisimple_baseChange (isSemisimple_specP_of_isSS d.QW x hx.1)
 
 /-- **The Lie algebra of `S_x` is abelian over `F̄`** (own work).  Route: a skew endomorphism `Y`
 of `W_{F̄}` commuting with `X = P(x)_{F̄}` and vanishing on `ker (X − 1) = W'_x ⊗ F̄` is `ad`

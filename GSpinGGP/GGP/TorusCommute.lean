@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.GGP.TorusTransfer
 import GSpinGGP.GGP.IsometryCentralizer
+import GSpinGGP.GGP.Descent
+import TauCeti.LinearAlgebra.TensorProduct.Kernel
 
 /-!
 # `S_x(F̄)` is commutative
@@ -45,6 +47,95 @@ theorem isNondeg_baseChange {V : Type*} [AddCommGroup V] [Module F V] [Module.Fi
   rw [this, ← RingHom.map_det]
   exact (map_ne_zero _).2 hQ
 
+section Semisimple
+
+variable {V : Type*} [AddCommGroup V] [Module F V] [Module.Finite F V]
+
+open Polynomial
+
+/-- `P(x)` is semisimple for semisimple `x` (characteristic `0`). -/
+theorem isSemisimple_specP_of_isSS (Q : QuadraticForm F V) (x : GSpin Q)
+    (hx : IsSS F (((x : (CliffordAlgebra Q)ˣ)) : CliffordAlgebra Q)) :
+    Module.End.IsSemisimple (specP Q x : V →ₗ[F] V) := by
+  set a : CliffordAlgebra Q := (((x : (CliffordAlgebra Q)ˣ)) : CliffordAlgebra Q) with ha
+  set ai : CliffordAlgebra Q := ((((x : (CliffordAlgebra Q)ˣ))⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) with hai
+  -- `a⁻¹ ∈ F[a]`
+  have hinv : ai ∈ Algebra.adjoin F {a} := by
+    let A := Algebra.adjoin F {a}
+    let f : A →ₗ[F] A := LinearMap.mulLeft F (⟨a, Algebra.subset_adjoin rfl⟩ : A)
+    have hinj : Function.Injective f := by
+      intro y z h
+      apply Subtype.ext
+      have h' : a * (y : CliffordAlgebra Q) = a * z := congrArg Subtype.val h
+      have := congrArg (ai * ·) h'
+      simpa only [← mul_assoc, ha, hai, Units.inv_mul, one_mul] using this
+    obtain ⟨y, hy⟩ := (LinearMap.injective_iff_surjective.1 hinj) 1
+    have hy' : a * (y : CliffordAlgebra Q) = 1 := congrArg Subtype.val hy
+    have : (y : CliffordAlgebra Q) = ai := by
+      calc (y : CliffordAlgebra Q) = ai * (a * y) := by
+            rw [← mul_assoc, hai, ha, Units.inv_mul, one_mul]
+        _ = ai := by rw [hy', mul_one]
+    rw [← this]; exact y.2
+  -- `L_a` and `R_{a⁻¹}` are commuting semisimple operators
+  have hqa : aeval a (minpoly F (LinearMap.mulLeft F a)) = 0 := by
+    have h0 : aeval (LinearMap.mulLeft F a) (minpoly F (LinearMap.mulLeft F a)) = 0 :=
+      minpoly.aeval F _
+    rw [show LinearMap.mulLeft F a = Algebra.lmul F (CliffordAlgebra Q) a from rfl,
+      aeval_algHom_apply] at h0
+    exact Algebra.lmul_injective (R := F) (h0.trans (map_zero _).symm)
+  have hRa : Module.End.IsSemisimple (LinearMap.mulRight F a) :=
+    Module.End.isSemisimple_of_squarefree_aeval_eq_zero hx.minpoly_squarefree
+      (by rw [aeval_mulRight, hqa, LinearMap.mulRight_zero_eq_zero])
+  have hRai : Module.End.IsSemisimple (LinearMap.mulRight F ai) := by
+    rw [Algebra.adjoin_singleton_eq_range_aeval] at hinv
+    obtain ⟨r, hr⟩ := hinv
+    have hr' : aeval a r = ai := hr
+    rw [← hr', ← aeval_mulRight]
+    exact hRa.aeval r
+  have hc : Module.End.IsSemisimple (LinearMap.mulLeft F a * LinearMap.mulRight F ai) :=
+    Module.End.IsSemisimple.mul_of_commute (LinearMap.commute_mulLeft_right a ai) hx hRai
+  -- `ι ∘ P(x) = c ∘ ι`, so the minimal polynomial of `c` kills `P(x)`
+  set c := LinearMap.mulLeft F a * LinearMap.mulRight F ai
+  have hint : ∀ v, ι Q (specP Q x v) = c (ι Q v) := fun v => by
+    rw [ι_specP]
+    simp only [c, Module.End.mul_apply, LinearMap.mulLeft_apply, LinearMap.mulRight_apply, ha,
+      hai, mul_assoc]
+  have hpow : ∀ (n : ℕ) v, ι Q (((specP Q x : V →ₗ[F] V) ^ n) v) = (c ^ n) (ι Q v) := by
+    intro n
+    induction n with
+    | zero => intro v; simp
+    | succ n ih =>
+      intro v
+      rw [pow_succ', pow_succ', Module.End.mul_apply, Module.End.mul_apply, LinearEquiv.coe_coe,
+        hint, ih]
+  have hint' : ∀ (q : F[X]) v, ι Q (aeval (specP Q x : V →ₗ[F] V) q v) = aeval c q (ι Q v) := by
+    intro q
+    induction q using Polynomial.induction_on' with
+    | add p q hp hq => intro v; simp only [map_add, LinearMap.add_apply, hp, hq]
+    | monomial n b =>
+      intro v
+      rw [aeval_monomial, aeval_monomial, Module.End.mul_apply, Module.End.mul_apply,
+        Module.algebraMap_end_apply, Module.algebraMap_end_apply, map_smul, hpow]
+  refine Module.End.isSemisimple_of_squarefree_aeval_eq_zero hc.minpoly_squarefree ?_
+  refine LinearMap.ext fun v => ι_injective Q ?_
+  rw [hint', minpoly.aeval, LinearMap.zero_apply, LinearMap.zero_apply, map_zero]
+
+omit [Module.Finite F V] in
+/-- Semisimplicity survives base change to `F̄` (characteristic `0`: squarefree polynomials stay
+squarefree). -/
+theorem isSemisimple_baseChange {f : Module.End F V} [Module.Finite F V]
+    (hf : f.IsSemisimple) : Module.End.IsSemisimple (f.baseChange (AlgebraicClosure F)) := by
+  have hsep : (minpoly F f).Separable :=
+    PerfectField.separable_iff_squarefree.2 hf.minpoly_squarefree
+  refine Module.End.isSemisimple_of_squarefree_aeval_eq_zero
+    (hsep.map (f := algebraMap F (AlgebraicClosure F))).squarefree ?_
+  rw [Polynomial.aeval_map_algebraMap]
+  have : f.baseChange (AlgebraicClosure F) =
+      Module.End.baseChangeHom F (AlgebraicClosure F) V f := rfl
+  rw [this, Polynomial.aeval_algHom_apply, minpoly.aeval, map_zero]
+
+end Semisimple
+
 namespace GGPData
 
 variable (d : GGPData F)
@@ -59,21 +150,11 @@ theorem specP_bcUnits (x : GSpin d.QW) (w : AlgebraicClosure F ⊗[F] (Fin d.m �
   rw [ι_specP]
   exact TorusTransfer.bcUnits_conj_ι' d.QW x w
 
-/-- Flatness: `ker (A_{F̄}) ⊆ (ker A)_{F̄}`. -/
+/-- Flatness: `ker (A_{F̄}) ⊆ (ker A)_{F̄}` (Tau Ceti's `LinearMap.ker_baseChange_of_flat`). -/
 theorem mem_baseChange_ker {V : Type*} [AddCommGroup V] [Module F V] (A : V →ₗ[F] V)
     {u : AlgebraicClosure F ⊗[F] V} (hu : u ∈ LinearMap.ker (A.baseChange (AlgebraicClosure F))) :
     u ∈ (LinearMap.ker A).baseChange (AlgebraicClosure F) := by
-  have hk := Module.Flat.ker_lTensor_eq (R := F) (AlgebraicClosure F) (AlgebraicClosure F) A
-  have hu' : u ∈ LinearMap.ker
-      (TensorProduct.AlgebraTensorModule.lTensor (AlgebraicClosure F) (AlgebraicClosure F) A) := hu
-  rw [hk] at hu'
-  obtain ⟨u₀, rfl⟩ := hu'
-  clear hu
-  induction u₀ using TensorProduct.inductionOn with
-  | tmul z k =>
-    show z ⊗ₜ (k : V) ∈ _
-    exact Submodule.tmul_mem_baseChange_of_mem z k.2
-  | add a b ha hb => rw [map_add]; exact Submodule.add_mem _ ha hb
+  rwa [← LinearMap.ker_baseChange_of_flat]
 
 /-- **`S_x(F̄)` is commutative**, given that `X = P(x)_{F̄}` is semisimple and that the skew
 endomorphisms of `W_{F̄}` commuting with `X` and vanishing on `ker (X − 1)` commute. -/
