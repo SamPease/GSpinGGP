@@ -163,3 +163,4 @@ GSpinGGP.GGPIso.mGeom_congr_iso
 GSpinGGP.Sanity.NilpotentOrbit.exists_isOrbitMeasure_regOrbit
 GSpinGGP.Sanity.NilpotentOrbit.jHat_regOrbit_split
 GSpinGGP.Sanity.NilpotentOrbit.jHat_regOrbit_elliptic
+GSpinGGP.torusTransfer_clauses
