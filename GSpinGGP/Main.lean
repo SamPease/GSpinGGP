@@ -1656,11 +1656,10 @@ theorem weylDisc_eq_of_stablyConjG (τ : InnerTwist d.QW) (t : ↥d.G) (t' : ↥
 
 /-- **The remaining clauses of Thesis Prop. 6.6.1(ii)** for the transport `e` of `T_x(F)` to
 `T_y(F)`, i.e. any `e` with `ē(t) = Ad(g) C(φ_α)(t̄)` for a `g` witnessing `x ∼ y`
-(`TorusTransfer.transportEquiv`): `e` is a homeomorphism, it matches the regular parts
+(`TorusTransfer.transportEquiv`): `e` matches the regular parts
 `T_{x,♮} ↔ T_{y,♮}`, every `t ∈ T_{x,♮}` is strongly stably conjugate to `e(t)`, and every
-`t ∈ T_x(F)` is stably conjugate to `e(t)` in `G`.  Route (own work): continuity — `e` is the
-restriction of an `F`-linear map between finite-dimensional spaces (the `F`-span of `T_x(F)` in
-`C(W)` and `C(W_α)`); the regular parts and strong stable conjugacy because `G_t = G_x` on
+`t ∈ T_x(F)` is stably conjugate to `e(t)` in `G`.  Route (own work):
+the regular parts and strong stable conjugacy because `G_t = G_x` on
 `T_{x,♮}` (`T_y` central in `G_{α,y}`); stable conjugacy in `G` uses the `V`-component of the
 conjugating element from `hxy`. -/
 theorem torusTransfer_clauses (IF : InnerFormSystem d) (α : IF.Idx)
@@ -1672,7 +1671,6 @@ theorem torusTransfer_clauses (IF : InnerFormSystem d) (α : IF.Idx)
       (((e t : ↥((IF.data α).torusOf y)) : ↥(GSpin (IF.data α).QW)) : (CliffordAlgebra _)ˣ) =
         TorusTransfer.psiU (IF.twist α).φ g
           (bcUnits d.QW ((t : ↥(GSpin d.QW)) : (CliffordAlgebra d.QW)ˣ))) :
-      Continuous e ∧ Continuous e.symm ∧
       (∀ t : ↥(d.torusOf x),
         (d.IsGammaElt t ∧ d.torusOf t = d.torusOf x ↔
           (IF.data α).IsGammaElt (e t) ∧ (IF.data α).torusOf (e t) = (IF.data α).torusOf y)) ∧
@@ -1687,7 +1685,9 @@ through `ψ_α`).  Proved: with `g` the `W`-component of the conjugating element
 `t ↦ g C(φ_α)(t) g⁻¹` restricts to a group isomorphism `e : T_x(F) ≃ T_y(F)`
 (`TorusTransfer.transportEquiv`: values are Galois-fixed by the rationality clause, hence rational;
 they commute with `y` and fix `W'_y`; the inverse comes from `g⁻¹` and `φ_α⁻¹`); it fixes the
-scalars and sends `x ↦ y`.  The other clauses are `torusTransfer_clauses`. -/
+scalars and sends `x ↦ y`; it and its inverse are continuous, being restrictions of `F`-linear
+maps `C(W) → C(W_α)` (`TorusTransfer.continuous_of_bcUnits_eq`).  The other clauses are
+`torusTransfer_clauses`. -/
 theorem exists_torusTransfer_core (IF : InnerFormSystem d) (α : IF.Idx)
     (x : ↥(GSpin d.QW)) (y : ↥(GSpin (IF.data α).QW)) (hx : d.IsGammaElt x)
     (hy : (IF.data α).IsGammaElt y) (hxy : d.StronglyStablyConjW (IF.twist α) x y) :
@@ -1709,7 +1709,16 @@ theorem exists_torusTransfer_core (IF : InnerFormSystem d) (α : IF.Idx)
         TorusTransfer.psiU (IF.twist α).φ g
           (bcUnits d.QW ((t : ↥(GSpin d.QW)) : (CliffordAlgebra d.QW)ˣ)) :=
     TorusTransfer.bcUnits_transportEquiv hg hrat hconj
-  obtain ⟨c1, c2, c5, c6, c7⟩ := torusTransfer_clauses IF α x y hx hy hxy e he
+  obtain ⟨c5, c6, c7⟩ := torusTransfer_clauses IF α x y hx hy hxy e he
+  have he' : ∀ s : ↥((IF.data α).torusOf y), bcUnits d.QW
+      (((e.symm s : ↥(d.torusOf x)) : ↥(GSpin d.QW)) : (CliffordAlgebra _)ˣ) =
+        TorusTransfer.psiU (IF.twist α).φ.symm (cliffUnits (IF.twist α).φ.symm g⁻¹)
+          (bcUnits (IF.data α).QW ((s : ↥(GSpin (IF.data α).QW)) : (CliffordAlgebra _)ˣ)) := by
+    intro s
+    conv_rhs => rw [← e.apply_symm_apply s, he]
+    rw [TorusTransfer.psiU_symm_psiU]
+  have c1 : Continuous e := TorusTransfer.continuous_of_bcUnits_eq e.toMonoidHom he
+  have c2 : Continuous e.symm := TorusTransfer.continuous_of_bcUnits_eq e.symm.toMonoidHom he'
   refine ⟨e, c1, c2, fun c => ?_, fun t ht => ?_, c5, c6, c7⟩
   · apply TorusTransfer.bcUnits_GSpin_injective
     show bcUnits _ _ = bcUnits _ _

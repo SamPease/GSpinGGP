@@ -277,5 +277,73 @@ theorem psiU_bcUnits_scalar {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V�
 
 end Equiv
 
+section Continuity
+
+/-- The base change `C(Q) → C(Q_{F̄})` as an `F`-linear map. -/
+def bcHomL {V : Type*} [AddCommGroup V] [Module F V] (Q : QuadraticForm F V) :
+    CliffordAlgebra Q →ₗ[F] CliffordAlgebra (Q.baseChange (AlgebraicClosure F)) :=
+  ((CliffordAlgebra.ofBaseChange (AlgebraicClosure F) Q).toLinearMap.restrictScalars F) ∘ₗ
+    (Algebra.TensorProduct.includeRight (R := F) (A := AlgebraicClosure F)).toLinearMap
+
+theorem bcHomL_apply {V : Type*} [AddCommGroup V] [Module F V] (Q : QuadraticForm F V)
+    (a : CliffordAlgebra Q) : bcHomL Q a = bcHom Q a := rfl
+
+/-- `Ad(g) ∘ C(φ)` as an `F`-linear map. -/
+def psiL (φ : (Q₁.baseChange (AlgebraicClosure F)).IsometryEquiv (Q₂.baseChange (AlgebraicClosure F)))
+    (g : (CliffordAlgebra (Q₂.baseChange (AlgebraicClosure F)))ˣ) :
+    CliffordAlgebra (Q₁.baseChange (AlgebraicClosure F)) →ₗ[F]
+      CliffordAlgebra (Q₂.baseChange (AlgebraicClosure F)) :=
+  ((LinearMap.mulRight (AlgebraicClosure F) ((g⁻¹ : (CliffordAlgebra _)ˣ) : CliffordAlgebra _) ∘ₗ
+    LinearMap.mulLeft (AlgebraicClosure F) (g : CliffordAlgebra _) ∘ₗ
+      (CliffordAlgebra.map φ.toIsometry).toLinearMap).restrictScalars F)
+
+theorem psiL_apply
+    (φ : (Q₁.baseChange (AlgebraicClosure F)).IsometryEquiv (Q₂.baseChange (AlgebraicClosure F)))
+    (g : (CliffordAlgebra (Q₂.baseChange (AlgebraicClosure F)))ˣ)
+    (a : CliffordAlgebra (Q₁.baseChange (AlgebraicClosure F))) : psiL φ g a = psiA φ g a := rfl
+
+variable [Module.Finite F V₁] [Module.Finite F V₂]
+
+/-- **A map of subgroups given by `t̄ ↦ Ad(g) C(φ)(t̄)` is continuous**: it is the restriction of
+the `F`-linear map `r ∘ Ad(g) ∘ C(φ) ∘ (base change)` from `C(Q₁)` to `C(Q₂)`, where `r` is an
+`F`-linear left inverse of the base change of `C(Q₂)`. -/
+theorem continuous_of_bcUnits_eq
+    {φ : (Q₁.baseChange (AlgebraicClosure F)).IsometryEquiv (Q₂.baseChange (AlgebraicClosure F))}
+    {g : (CliffordAlgebra (Q₂.baseChange (AlgebraicClosure F)))ˣ}
+    {S₁ : Subgroup (GSpin Q₁)} {S₂ : Subgroup (GSpin Q₂)} (f : S₁ →* S₂)
+    (hf : ∀ t : S₁, bcUnits Q₂ (((f t : S₂) : GSpin Q₂) : (CliffordAlgebra Q₂)ˣ) =
+      psiU φ g (bcUnits Q₁ ((t : GSpin Q₁) : (CliffordAlgebra Q₁)ˣ))) :
+    Continuous f := by
+  obtain ⟨r, hr⟩ := (bcHomL Q₂).exists_leftInverse_of_injective
+    (LinearMap.ker_eq_bot.mpr (bcHom_injective Q₂))
+  let Λ : CliffordAlgebra Q₁ →ₗ[F] CliffordAlgebra Q₂ := r ∘ₗ psiL φ g ∘ₗ bcHomL Q₁
+  have hΛc : Continuous Λ := IsModuleTopology.continuous_of_linearMap Λ
+  have hΛ : ∀ t : S₁, Λ (((t : GSpin Q₁) : (CliffordAlgebra Q₁)ˣ) : CliffordAlgebra Q₁) =
+      (((f t : S₂) : GSpin Q₂) : (CliffordAlgebra Q₂)ˣ) := by
+    intro t
+    have h := congrArg Units.val (hf t)
+    show r (psiA φ g ((bcUnits Q₁ ((t : GSpin Q₁) : (CliffordAlgebra Q₁)ˣ) :
+      (CliffordAlgebra _)ˣ) : CliffordAlgebra _)) = _
+    rw [← coe_psiU, ← h]
+    exact LinearMap.congr_fun hr _
+  have hc1 : Continuous fun t : S₁ => (((f t : S₂) : GSpin Q₂) : (CliffordAlgebra Q₂)ˣ) := by
+    rw [Units.continuous_iff]
+    constructor
+    · have : (fun t : S₁ => ((((f t : S₂) : GSpin Q₂) : (CliffordAlgebra Q₂)ˣ) : CliffordAlgebra Q₂))
+          = Λ ∘ fun t : S₁ => (((t : GSpin Q₁) : (CliffordAlgebra Q₁)ˣ) : CliffordAlgebra Q₁) :=
+        funext fun t => (hΛ t).symm
+      rw [show (Units.val ∘ fun t : S₁ => (((f t : S₂) : GSpin Q₂) : (CliffordAlgebra Q₂)ˣ)) =
+        Λ ∘ fun t : S₁ => (((t : GSpin Q₁) : (CliffordAlgebra Q₁)ˣ) : CliffordAlgebra Q₁) from this]
+      exact hΛc.comp (Units.continuous_val.comp (continuous_subtype_val.comp continuous_subtype_val))
+    · refine (hΛc.comp (Units.continuous_val.comp
+        (continuous_subtype_val.comp (continuous_subtype_val.comp continuous_inv)))).congr ?_
+      intro t
+      simp only [Function.comp_apply]
+      rw [hΛ, map_inv]
+      rfl
+  exact Continuous.subtype_mk (Continuous.subtype_mk hc1 _) _
+
+end Continuity
+
 end TorusTransfer
 end GSpinGGP
