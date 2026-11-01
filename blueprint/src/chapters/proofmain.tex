@@ -281,6 +281,29 @@ cocycle representing $\beta$ is isometric to exactly one $W_\alpha$.
 Hilbert 90 writes the cocycle as $M^{-1}\sigma(M)$; $v\mapsto Q(M^{-1}v)$ is an $F$-form of the discriminant of $W$. Cohomologous cocycles give $F$-isometric forms by Galois descent.
 \end{proof}
 
+\begin{lemma}[$P(x)$ is semisimple over $\Fbar$]
+\label{isSemisimple_specP_baseChange}
+\lean{GSpinGGP.isSemisimple_specP_baseChange}
+\leanok
+\uses{GGPData, GSpin, IsGammaElt}
+For $x\in\Gamma(G,H)$, $P(x)\otimes\Fbar$ is semisimple on $W_{\Fbar}$.
+\end{lemma}
+\begin{proof}
+\leanok
+Conjugation by $x$ is a commuting product of left and right multiplication by elements of $F[x]$, hence semisimple; it restricts to $P(x)$ on $\iota(W)$. Squarefree polynomials stay squarefree over $\Fbar$ in characteristic $0$.
+\end{proof}
+
+\begin{lemma}[The Lie algebra of $S_x$ is abelian]
+\label{lieAbelian_specP_baseChange}
+\lean{GSpinGGP.lieAbelian_specP_baseChange}
+\leanok
+\uses{GGPData, GSpin, IsGammaElt}
+For $x\in\Gamma(G,H)$, the skew endomorphisms of $W_{\Fbar}$ commuting with $P(x)$ and vanishing on $W'_x\otimes\Fbar$ commute.
+\end{lemma}
+\begin{proof}
+Not yet formalized. Over $F$ this is the commutativity of the moved part of $\mathfrak g_x$ (proved, via the exponential map); the conditions are $F$-linear, so the $\Fbar$-solutions are spanned by the $F$-solutions.
+\end{proof}
+
 \begin{lemma}[$S_x$ is commutative]
 \label{torusBarFbar_commute}
 \lean{GSpinGGP.torusBarFbar_commute}
@@ -289,7 +312,9 @@ Hilbert 90 writes the cocycle as $M^{-1}\sigma(M)$; $v\mapsto Q(M^{-1}v)$ is an 
 For $x\in\Gamma(G,H)$, the group $S_x(\Fbar)$ is commutative.
 \end{lemma}
 \begin{proof}
-Not yet formalized. $S_x$ is connected reductive with commutative $F$-points, which are Zariski dense.
+\leanok
+\uses{isSemisimple_specP_baseChange, lieAbelian_specP_baseChange}
+$S_x(\Fbar)$ consists of the isometries of determinant $1$ commuting with the semisimple $P(x)$ and fixing $W'_x$. If the corresponding Lie algebra is abelian, the eigenvalues $\lambda\ne\pm1$ of $P(x)$ are simple and $\dim E_{-1}\le2$; the determinant on $E_{-1}$ is $1$, and Cayley--Hamilton on $E_{-1}$ gives commutativity.
 \end{proof}
 
 \begin{literature}[Finiteness of $H^1(F,S_x)$]

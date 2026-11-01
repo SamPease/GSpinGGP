@@ -68,6 +68,8 @@ GSpinGGP.n_alpha
 GSpinGGP.signedCount
 GSpinGGP.hilbert90_GL
 GSpinGGP.existsUnique_twistIdx
+GSpinGGP.isSemisimple_specP_baseChange
+GSpinGGP.lieAbelian_specP_baseChange
 GSpinGGP.torusBarFbar_commute
 GSpinGGP.finite_H1_torusBar
 GSpinGGP.n_alpha_eq_card_twistIdx
