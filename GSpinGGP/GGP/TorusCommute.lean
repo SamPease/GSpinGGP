@@ -136,6 +136,125 @@ theorem isSemisimple_baseChange {f : Module.End F V} [Module.Finite F V]
 
 end Semisimple
 
+section Lift
+
+attribute [local instance 100] LieRing.ofAssociativeRing LieAlgebra.ofAssociativeAlgebra
+
+variable {K : Type*} [Field K] [Invertible (2 : K)] {V : Type*} [AddCommGroup V] [Module K V]
+  [FiniteDimensional K V] {Q : QuadraticForm K V}
+
+omit [FiniteDimensional K V] in
+/-- `[ι a ι c, ι v] = 2 b(c,v) ι a − 2 b(a,v) ι c`. -/
+theorem commutator_ι_mul_ι (a c v : V) :
+    ι Q a * ι Q c * ι Q v - ι Q v * (ι Q a * ι Q c) =
+      (2 * bform Q c v) • ι Q a - (2 * bform Q a v) • ι Q c := by
+  have h1 := CliffordAlgebra.ι_mul_ι_add_swap (Q := Q) c v
+  have h2 := CliffordAlgebra.ι_mul_ι_add_swap (Q := Q) a v
+  rw [polar_eq_two_mul_bform] at h1 h2
+  have e1 : ι Q c * ι Q v = algebraMap K _ (2 * bform Q c v) - ι Q v * ι Q c := by
+    rw [← h1]; abel
+  have e2 : ι Q v * ι Q a = algebraMap K _ (2 * bform Q a v) - ι Q a * ι Q v := by
+    rw [← h2]; abel
+  rw [mul_assoc, e1, ← mul_assoc (ι Q v), e2, mul_sub, sub_mul, ← Algebra.commutes,
+    ← Algebra.smul_def, ← Algebra.smul_def]
+  simp only [mul_assoc]
+  abel
+
+/-- **Lifting `so(V)` to `C(V)`**: a `b`-skew endomorphism `Y` of a nondegenerate `V` is
+`[Ŷ, ·]` on `ι(V)` for an even `Ŷ = ¼ Σ ι(Y bᵢ) ι(dᵢ) ∈ gspin(V)` (`dᵢ` the `b`-dual basis). -/
+theorem exists_lift_skew (hQ : IsNondeg Q) (Y : Module.End K V)
+    (hY : ∀ u v, bform Q (Y u) v = - bform Q u (Y v)) :
+    ∃ Yh : CliffordAlgebra Q, Yh ∈ gspin Q ∧ ∀ v, Yh * ι Q v - ι Q v * Yh = ι Q (Y v) := by
+  classical
+  let b := Module.finBasis K V
+  have hsym : (bform Q).IsSymm := ⟨fun u v => bform_comm Q u v⟩
+  let dB := (bform Q).dualBasis hQ b
+  refine ⟨(⅟2 * ⅟2 : K) • ∑ i, ι Q (Y (b i)) * ι Q (dB i), (gspin Q).smul_mem _
+    (Submodule.sum_mem _ fun i _ => ι_mul_ι_mem_gspin Q _ _), fun v => ?_⟩
+  have e1 : ∑ i, bform Q (dB i) v • b i = v := by
+    conv_rhs => rw [← b.sum_repr v]
+    refine Finset.sum_congr rfl fun i _ => ?_
+    congr 1
+    conv_lhs => rw [← b.sum_repr v]
+    have hd : ∀ x, (bform Q) (dB i) (b x) = if x = i then 1 else 0 := fun x =>
+      LinearMap.BilinForm.apply_dualBasis_left hQ b i x
+    simp only [map_sum, map_smul, smul_eq_mul, hd, mul_ite, mul_one, mul_zero,
+      Finset.sum_ite_eq', Finset.mem_univ, ite_true]
+  have e2 : ∑ i, bform Q (b i) (Y v) • dB i = Y v := by
+    conv_rhs => rw [← dB.sum_repr (Y v)]
+    refine Finset.sum_congr rfl fun i _ => ?_
+    have hr := LinearMap.BilinForm.dualBasis_repr_apply hQ b (Y v) i
+    rw [hr, bform_comm]
+  rw [smul_mul_assoc, mul_smul_comm, ← smul_sub, Finset.sum_mul, Finset.mul_sum, ← Finset.sum_sub_distrib]
+  simp only [commutator_ι_mul_ι, Finset.sum_sub_distrib]
+  have s1 : ∑ x, (2 * bform Q (dB x) v) • ι Q (Y (b x)) = (2 : K) • ι Q (Y v) := by
+    conv_rhs => rw [← e1]
+    simp only [map_sum, map_smul, Finset.smul_sum, smul_smul]
+  have s2 : ∑ x, (2 * bform Q (Y (b x)) v) • ι Q (dB x) = (-2 : K) • ι Q (Y v) := by
+    conv_rhs => rw [← e2]
+    simp only [map_sum, map_smul, Finset.smul_sum, smul_smul, hY, bform_comm Q (b _) (Y v)]
+    refine Finset.sum_congr rfl fun x _ => ?_
+    congr 1; ring
+  rw [s1, s2, ← sub_smul, smul_smul]
+  have h4 : (⅟2 * ⅟2 : K) * (2 - -2) = 1 := by
+    rw [show (2 : K) - -2 = 2 * 2 by ring, mul_mul_mul_comm, invOf_mul_self, one_mul]
+  rw [h4, one_smul]
+
+/-- **The lift commutes with `g`** when `P(g)` commutes with `Y`: `g Ŷ g⁻¹ − Ŷ` is even and commutes
+with `ι(V)`, hence a scalar, and it is traceless. -/
+theorem commute_of_lift (hQ : IsNondeg Q) (g : GSpin Q) {Y : Module.End K V}
+    (hYc : Commute (specP Q g : V →ₗ[K] V) Y) {Yh : CliffordAlgebra Q} (hYh0 : Yh ∈ gspin Q)
+    (hYh : ∀ v, Yh * ι Q v - ι Q v * Yh = ι Q (Y v)) :
+    ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * Yh =
+      Yh * ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) := by
+  set a : CliffordAlgebra Q := ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)
+  set b : CliffordAlgebra Q :=
+    (((g : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)
+  have hba : b * a = 1 := Units.inv_mul _
+  have hab : a * b = 1 := Units.mul_inv _
+  have hb0 : b ∈ even Q := (g⁻¹ : GSpin Q).2.1
+  set D := a * Yh * b - Yh with hD
+  have hDc : ∀ v, ι Q v * D = D * ι Q v := by
+    intro v
+    set u := specP Q g⁻¹ v
+    have hv : ι Q v = a * ι Q u * b := by
+      rw [← ι_specP, specP_inv_apply_apply]
+    have hYv : Y v = specP Q g (Y u) := by
+      have := LinearMap.congr_fun hYc.eq u
+      simp only [Module.End.mul_apply, LinearEquiv.coe_coe] at this
+      rw [this, specP_inv_apply_apply]
+    have e1 : a * Yh * b * (a * ι Q u * b) = a * (Yh * ι Q u) * b := by
+      simp only [mul_assoc]; rw [← mul_assoc b a, hba, one_mul]
+    have e2 : a * ι Q u * b * (a * Yh * b) = a * (ι Q u * Yh) * b := by
+      simp only [mul_assoc]; rw [← mul_assoc b a, hba, one_mul]
+    have h1 : a * Yh * b * ι Q v - ι Q v * (a * Yh * b) = ι Q (Y v) := by
+      rw [hv, e1, e2, ← sub_mul, ← mul_sub, hYh, hYv, ι_specP]
+    have h2 := hYh v
+    rw [hD, mul_sub, sub_mul]
+    rw [← sub_eq_zero]
+    rw [show ι Q v * (a * Yh * b) - ι Q v * Yh - (a * Yh * b * ι Q v - Yh * ι Q v) =
+      (Yh * ι Q v - ι Q v * Yh) - (a * Yh * b * ι Q v - ι Q v * (a * Yh * b)) by abel, h1, h2,
+      sub_self]
+  have hD0 : D ∈ evenOdd Q 0 := by
+    rw [← even_toSubmodule]
+    exact Subalgebra.sub_mem _ (Subalgebra.mul_mem _ (Subalgebra.mul_mem _ g.2.1 hYh0.1) hb0)
+      hYh0.1
+  obtain ⟨r, hr⟩ := eq_algebraMap_of_commute_ι hQ hD0 hDc
+  have htr : cliffTrace Q D = 0 := by
+    rw [hD, sub_eq_add_neg, cliffTrace_add,
+      show cliffTrace Q (a * Yh * b) = cliffTrace Q (b * (a * Yh)) from trace_mulLeft_comm Q _ _,
+      ← mul_assoc, hba, one_mul, ← neg_one_smul K Yh, cliffTrace_smul]
+    ring
+  have hr0 : r = 0 := by
+    rw [hr, Algebra.algebraMap_eq_smul_one, cliffTrace_smul, cliffTrace_one] at htr
+    exact (mul_eq_zero.mp htr).resolve_right (cast_finrank_cliffordAlgebra_ne_zero Q)
+  have hD' : a * Yh * b = Yh := by
+    rw [← sub_eq_zero, ← hD, hr, hr0, map_zero]
+  calc a * Yh = a * Yh * b * a := by rw [mul_assoc _ b, hba, mul_one]
+    _ = Yh * a := by rw [hD']
+
+end Lift
+
 namespace GGPData
 
 variable (d : GGPData F)
