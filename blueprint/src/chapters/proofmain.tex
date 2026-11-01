@@ -191,8 +191,21 @@ restricts to an $F$-rational isomorphism of topological groups $T_x(F)\simeq T_y
 $x\mapsto y$, carrying $T_{x,\natural}$ onto $T_{y,\natural}$ with every $t$ stably conjugate to its image.
 \end{lemma}
 \begin{proof}
-Not yet formalized. The values of $t\mapsto gC(\varphi_\alpha)(t)g^{-1}$ are Galois-fixed, hence rational
-(Galois descent), commute with $y$ and fix $W'_y$.
+\leanok
+\uses{torusTransfer_clauses}
+The values of $t\mapsto gC(\varphi_\alpha)(t)g^{-1}$ are Galois-fixed, hence rational
+(Galois descent); they commute with $y$ and fix $W'_y$. The inverse comes from $g^{-1}$ and $\varphi_\alpha^{-1}$. Scalars are central and $x\mapsto y$ by the choice of $g$. The remaining clauses are Lemma~\ref{torusTransfer_clauses}.
+\end{proof}
+
+\begin{lemma}[Properties of the torus isomorphism]
+\label{torusTransfer_clauses}
+\lean{GSpinGGP.torusTransfer_clauses}
+\leanok
+\uses{G, GGPData, GSpin, InnerFormSystem, InnerTwist, IsGammaElt, StablyConjG}
+The transport $e:T_x(F)\simeq T_y(F)$, $\bar e(t)=\Ad(g)C(\varphi_\alpha)(\bar t)$, is a homeomorphism, maps $T_{x,\natural}$ onto $T_{y,\natural}$, every $t\in T_{x,\natural}$ is strongly stably conjugate to $e(t)$, and every $t\in T_x(F)$ is stably conjugate to $e(t)$ in $G$.
+\end{lemma}
+\begin{proof}
+Not yet formalized. Continuity: $e$ is the restriction of an $F$-linear map between finite-dimensional spaces. The regular parts and strong stable conjugacy: $G_t=G_x$ on $T_{x,\natural}$. Stable conjugacy in $G$ uses the $V$-component of the conjugating element.
 \end{proof}
 
 \begin{lemma}[$\Delta$ is a stable invariant]
