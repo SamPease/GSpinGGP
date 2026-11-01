@@ -12,7 +12,31 @@ For $\theta\in\QC(G,\chi)$, the integrand \[ t\mapsto D^G(t)^{1/2}c_{\theta,\mat
 $m_{\mathrm{geom},s}$ is a.e.\ strongly measurable on $T(F)/A_{G,H}(F)$ (Thesis \S6.5).
 \end{lemma}
 \begin{proof}
-Not yet formalized. The integrand is continuous on the open set $T_\natural$ (germs are locally constant there) and $0$ off it.
+\leanok
+\uses{IsQuasiCharacter, LIT-germ_unique, continuousOn_gammaIntegrand_of_mem_QC, isOpen_torusNat, jHat}
+The integrand is invariant under $A_{G,H}(F)$ (germs are translation invariant), continuous on the open set $T_\natural$ and $0$ off it; so its descent to the quotient is measurable.
+\end{proof}
+
+\begin{lemma}[$T_\natural$ is open]
+\label{isOpen_torusNat}
+\lean{GSpinGGP.isOpen_torusNat}
+\leanok
+\uses{GGPData, GSpin, IsGammaElt}
+$T_\natural=\{t\in T: t\in\Gamma(G,H),\ T_t=T\}$ is open in $T(F)$ (Thesis \S6.5).
+\end{lemma}
+\begin{proof}
+Not yet formalized. Near $t_0\in T_\natural$ the rank of $P(t)-1$ cannot drop, so $W'_t=W'_{t_0}$, and $P(t)|_{W''}$ stays regular.
+\end{proof}
+
+\begin{lemma}[Continuity on $T_\natural$]
+\label{continuousOn_gammaIntegrand_of_mem_QC}
+\lean{GSpinGGP.continuousOn_gammaIntegrand_of_mem_QC}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, IsGammaElt, QC, deltaGGP, germ, gspin, orbitChoice, weylDisc}
+For $\theta\in\QC(G,\chi)$, the integrand of $m_{\mathrm{geom},s}$ is continuous on $T_\natural$.
+\end{lemma}
+\begin{proof}
+Not yet formalized. On $T_\natural$ the centralizers are constant, $D^G$ and $\Delta$ are continuous, and the germs are locally constant: $\hat{j}(\mathcal O,X+Y)=\hat{j}(\mathcal O,X)$ for $Y$ central in $\mathfrak g_t$.
 \end{proof}
 
 \begin{lemma}[Boundedness of germs]

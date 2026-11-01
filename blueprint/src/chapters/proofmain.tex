@@ -325,6 +325,17 @@ For $G$ quasi-split and $x\in\Gamma(G,H)$, $\beta\mapsto e(G_{q_x(\beta)})$ is m
 Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{Kot83}; \cite{BP}, \S12.1, (12.1.6), via Tate--Nakayama}
 \end{proof}
 
+\begin{lemma}[A twist into the other form]
+\label{exists_twistIdx_not_isometric}
+\lean{GSpinGGP.exists_twistIdx_not_isometric}
+\leanok
+\uses{GGPData, GSpin, InnerFormSystem, InnerTwist, IsGammaElt, IsQuasiSplit}
+For $G$ quasi-split and $x\in\Gamma(G,H)$ not central, some $\beta\in H^1(F,S_x)$ twists $W$ into a form $W_{q_x(\beta)}\not\cong W$.
+\end{lemma}
+\begin{proof}
+Not yet formalized. By \cite{BP} (12.1.6) the map $H^1(F,S_x)\to\mathrm{Br}_2(F)$ is onto once the inverse image of $S_x$ in the double cover of $\mathrm{SO}(W)\times\mathrm{SO}(V)$ is connected (its character group is torsion free); a class with nontrivial image twists $W''_x$ into the other form of its dimension and discriminant \cite{Kot83}.
+\end{proof}
+
 \begin{lemma}[The sign takes the value $-1$]
 \label{exists_twistIdx_kottwitzSign_neg}
 \lean{GSpinGGP.exists_twistIdx_kottwitzSign_neg}
@@ -333,7 +344,9 @@ Not verbatim in the literature (adapted from, or derived from, published results
 For $G$ quasi-split and $x\in\Gamma(G,H)$ not central, some $\beta\in H^1(F,S_x)$ has $e(G_{q_x(\beta)})=-1$.
 \end{lemma}
 \begin{proof}
-Not yet formalized. By \cite{BP} (12.1.6) it suffices that the inverse image of $S_x$ in the simply connected cover is connected; its character group is torsion free.
+\leanok
+\uses{exists_twistIdx_not_isometric, padic_quadratic_classes, witt_cancellation, witt_decomposition}
+From the previous lemma: if $W_\alpha\not\cong W$ then $e(G_\alpha)=-1$, since two $p$-adic forms of the same dimension and discriminant have Witt indices of opposite parity in odd dimension and of the same parity in even dimension.
 \end{proof}
 
 \begin{theorem}[The signed count]

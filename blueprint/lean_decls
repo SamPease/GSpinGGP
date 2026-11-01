@@ -72,6 +72,7 @@ GSpinGGP.torusBarFbar_commute
 GSpinGGP.finite_H1_torusBar
 GSpinGGP.n_alpha_eq_card_twistIdx
 GSpinGGP.kottwitzSign_twistIdx_mul
+GSpinGGP.exists_twistIdx_not_isometric
 GSpinGGP.exists_twistIdx_kottwitzSign_neg
 GSpinGGP.signed_count
 GSpinGGP.stable_rearrangement_pos
@@ -117,6 +118,8 @@ GSpinGGP.defect_eq_zero_of_vChar_eq_zero_ell
 GSpinGGP.thm_9_1_1_ell
 GSpinGGP.exists_virtual_spectral_ell
 GSpinGGP.aestronglyMeasurable_torusFn_of_mem_QC
+GSpinGGP.isOpen_torusNat
+GSpinGGP.continuousOn_gammaIntegrand_of_mem_QC
 GSpinGGP.germ_bound_of_mem_QC
 GSpinGGP.bp_integrable_deltaGGP_rpow
 GSpinGGP.isTorusIntegrable_of_mem_QC
