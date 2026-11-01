@@ -1654,14 +1654,90 @@ theorem weylDisc_eq_of_stablyConjG (τ : InnerTwist d.QW) (t : ↥d.G) (t' : ↥
     weylDisc (d.twist τ).lie (t' : (d.twist τ).ambientˣ) = weylDisc d.lie (t : d.ambientˣ) :=
   weylDisc_eq_of_conj d (d.twist τ) τ.φ (d.twistV τ) t t' h.1 h.2
 
+section TwistIncl
+
+open CliffordAlgebra
+open scoped TensorProduct
+
+/-- `W_{α,F̄} ↪ V_{α,F̄}`. -/
+def inlBC (d : GGPData F) (τ : InnerTwist d.QW) :
+    (τ.Q'.baseChange (AlgebraicClosure F)) →qᵢ ((d.twist τ).QV.baseChange (AlgebraicClosure F)) :=
+  (prodBaseChange τ.Q' d.QZ).symm.toIsometry.comp
+    (QuadraticMap.Isometry.inl (τ.Q'.baseChange (AlgebraicClosure F)) (d.QZ.baseChange (AlgebraicClosure F)))
+
+theorem map_twistV_bcHom_incl (τ : InnerTwist d.QW) (a : CliffordAlgebra d.QW) :
+    CliffordAlgebra.map (d.twistV τ).toIsometry
+        (bcHom d.QV (CliffordAlgebra.map (QuadraticMap.Isometry.inl d.QW d.QZ) a)) =
+      CliffordAlgebra.map (inlBC d τ) (CliffordAlgebra.map τ.φ.toIsometry (bcHom d.QW a)) := by
+  induction a using CliffordAlgebra.induction with
+  | algebraMap r => simp only [AlgHom.commutes, bcHom_algebraMap]
+  | ι w =>
+    rw [map_apply_ι, bcHom_ι, bcHom_ι, map_apply_ι, map_apply_ι, map_apply_ι]
+    congr 1
+    simp only [GGPData.twistV, inlBC, prodBaseChange]
+    show (prodBaseChange τ.Q' d.QZ).symm ((τ.φ.prod (QuadraticMap.IsometryEquiv.refl _))
+      (TensorProduct.prodRight F (AlgebraicClosure F) (AlgebraicClosure F) _ _ (1 ⊗ₜ (w, 0)))) = _
+    rw [TensorProduct.prodRight_tmul, TensorProduct.tmul_zero]
+    have e : (τ.φ.prod (QuadraticMap.IsometryEquiv.refl (d.QZ.baseChange (AlgebraicClosure F))))
+        ((1 : AlgebraicClosure F) ⊗ₜ[F] w, 0) = (τ.φ (1 ⊗ₜ w), 0) := Prod.ext rfl rfl
+    rw [e]
+    rfl
+  | mul a b ha hb => simp only [map_mul, ha, hb]
+  | add a b ha hb => simp only [map_add, ha, hb]
+
+theorem bcHom_incl_twist (τ : InnerTwist d.QW) (a : CliffordAlgebra τ.Q') :
+    bcHom (d.twist τ).QV (CliffordAlgebra.map (QuadraticMap.Isometry.inl τ.Q' d.QZ) a) =
+      CliffordAlgebra.map (inlBC d τ) (bcHom τ.Q' a) := by
+  induction a using CliffordAlgebra.induction with
+  | algebraMap r => simp only [AlgHom.commutes, bcHom_algebraMap]
+  | ι w =>
+    rw [map_apply_ι, bcHom_ι, bcHom_ι, map_apply_ι]
+    simp only [inlBC, QuadraticMap.Isometry.comp_apply, QuadraticMap.Isometry.inl_apply]
+    have e : ((1 : AlgebraicClosure F) ⊗ₜ[F] w, (0 : AlgebraicClosure F ⊗[F] d.Z)) =
+        prodBaseChange τ.Q' d.QZ (1 ⊗ₜ (w, 0)) := by
+      show _ = TensorProduct.prodRight F (AlgebraicClosure F) (AlgebraicClosure F) _ _ _
+      rw [TensorProduct.prodRight_tmul, TensorProduct.tmul_zero]
+    rw [e]
+    congr 1
+    exact ((prodBaseChange τ.Q' d.QZ).symm_apply_apply _).symm
+  | mul a b ha hb => simp only [map_mul, ha, hb]
+  | add a b ha hb => simp only [map_add, ha, hb]
+
+/-- **Stable conjugacy in `G` from a transport on `W`**: if `ē = Ad(g) C(φ_α)(t̄)` with
+`g ∈ GSpin(W_α)(F̄)`, then `diag t` and `diag e` are stably conjugate in `G` through `ψ_α`, the
+`V`-component conjugating by the image of `g` under `W_{α,F̄} ⊆ V_{α,F̄}`. -/
+theorem stablyConjG_diag_of_psiU (τ : InnerTwist d.QW)
+    {g : (CliffordAlgebra (τ.Q'.baseChange (AlgebraicClosure F)))ˣ}
+    (hg : g ∈ GSpin (τ.Q'.baseChange (AlgebraicClosure F))) (t : GSpin d.QW)
+    (s : GSpin (d.twist τ).QW)
+    (hs : bcUnits τ.Q' (s : (CliffordAlgebra τ.Q')ˣ) =
+      TorusTransfer.psiU τ.φ g (bcUnits d.QW (t : (CliffordAlgebra d.QW)ˣ))) :
+    d.StablyConjG τ (d.diag t) ((d.twist τ).diag s) := by
+  refine ⟨⟨g, hg, hs.symm⟩, ?_⟩
+  let gV : GSpin ((d.twist τ).QV.baseChange (AlgebraicClosure F)) :=
+    GSpin.map (inlBC d τ) (isNondeg_baseChange _ τ.nondeg') ⟨g, hg⟩
+  refine ⟨gV, gV.2, Units.ext ?_⟩
+  have hs' := congrArg Units.val hs
+  rw [TorusTransfer.coe_psiU] at hs'
+  rw [Units.val_mul, Units.val_mul, GSpin.coe_map_inv]
+  show CliffordAlgebra.map (inlBC d τ) (g : CliffordAlgebra _) *
+      CliffordAlgebra.map (d.twistV τ).toIsometry
+        (bcHom d.QV (CliffordAlgebra.map (QuadraticMap.Isometry.inl d.QW d.QZ)
+          ((t : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW))) *
+      CliffordAlgebra.map (inlBC d τ) ((g⁻¹ : (CliffordAlgebra _)ˣ) : CliffordAlgebra _) =
+    bcHom (d.twist τ).QV (CliffordAlgebra.map (QuadraticMap.Isometry.inl τ.Q' d.QZ)
+      ((s : (CliffordAlgebra τ.Q')ˣ) : CliffordAlgebra τ.Q'))
+  rw [map_twistV_bcHom_incl, bcHom_incl_twist, ← map_mul, ← map_mul]
+  congr 1
+  exact hs'.symm
+
+end TwistIncl
+
 /-- **The remaining clauses of Thesis Prop. 6.6.1(ii)** for the transport `e` of `T_x(F)` to
 `T_y(F)`, i.e. any `e` with `ē(t) = Ad(g) C(φ_α)(t̄)` for a `g` witnessing `x ∼ y`
 (`TorusTransfer.transportEquiv`): `e` matches the regular parts
-`T_{x,♮} ↔ T_{y,♮}`, every `t ∈ T_{x,♮}` is strongly stably conjugate to `e(t)`, and every
-`t ∈ T_x(F)` is stably conjugate to `e(t)` in `G`.  Route (own work):
-the regular parts and strong stable conjugacy because `G_t = G_x` on
-`T_{x,♮}` (`T_y` central in `G_{α,y}`); stable conjugacy in `G` uses the `V`-component of the
-conjugating element from `hxy`. -/
+`T_{x,♮} ↔ T_{y,♮}`, and every `t ∈ T_{x,♮}` is strongly stably conjugate to `e(t)`.
+Route (own work): `G_t = G_x` on `T_{x,♮}` (`T_y` central in `G_{α,y}`). -/
 theorem torusTransfer_clauses (IF : InnerFormSystem d) (α : IF.Idx)
     (x : ↥(GSpin d.QW)) (y : ↥(GSpin (IF.data α).QW)) (hx : d.IsGammaElt x)
     (hy : (IF.data α).IsGammaElt y) (hxy : d.StronglyStablyConjW (IF.twist α) x y)
@@ -1675,8 +1751,7 @@ theorem torusTransfer_clauses (IF : InnerFormSystem d) (α : IF.Idx)
         (d.IsGammaElt t ∧ d.torusOf t = d.torusOf x ↔
           (IF.data α).IsGammaElt (e t) ∧ (IF.data α).torusOf (e t) = (IF.data α).torusOf y)) ∧
       (∀ t : ↥(d.torusOf x), d.IsGammaElt t → d.torusOf t = d.torusOf x →
-        d.StronglyStablyConjW (IF.twist α) t (e t)) ∧
-      (∀ t : ↥(d.torusOf x), d.StablyConjG (IF.twist α) (d.diag t) ((IF.data α).diag (e t))) :=
+        d.StronglyStablyConjW (IF.twist α) t (e t)) :=
   sorry
 
 /-- **Thesis Prop. 6.6.1(ii), the torus isomorphism** (own work): the clauses of `TorusTransfer`
@@ -1686,8 +1761,8 @@ through `ψ_α`).  Proved: with `g` the `W`-component of the conjugating element
 (`TorusTransfer.transportEquiv`: values are Galois-fixed by the rationality clause, hence rational;
 they commute with `y` and fix `W'_y`; the inverse comes from `g⁻¹` and `φ_α⁻¹`); it fixes the
 scalars and sends `x ↦ y`; it and its inverse are continuous, being restrictions of `F`-linear
-maps `C(W) → C(W_α)` (`TorusTransfer.continuous_of_bcUnits_eq`).  The other clauses are
-`torusTransfer_clauses`. -/
+maps `C(W) → C(W_α)` (`TorusTransfer.continuous_of_bcUnits_eq`); `t` and `e(t)` are stably
+conjugate in `G` (`stablyConjG_diag_of_psiU`).  The `♮` clauses are `torusTransfer_clauses`. -/
 theorem exists_torusTransfer_core (IF : InnerFormSystem d) (α : IF.Idx)
     (x : ↥(GSpin d.QW)) (y : ↥(GSpin (IF.data α).QW)) (hx : d.IsGammaElt x)
     (hy : (IF.data α).IsGammaElt y) (hxy : d.StronglyStablyConjW (IF.twist α) x y) :
@@ -1709,7 +1784,9 @@ theorem exists_torusTransfer_core (IF : InnerFormSystem d) (α : IF.Idx)
         TorusTransfer.psiU (IF.twist α).φ g
           (bcUnits d.QW ((t : ↥(GSpin d.QW)) : (CliffordAlgebra d.QW)ˣ)) :=
     TorusTransfer.bcUnits_transportEquiv hg hrat hconj
-  obtain ⟨c5, c6, c7⟩ := torusTransfer_clauses IF α x y hx hy hxy e he
+  obtain ⟨c5, c6⟩ := torusTransfer_clauses IF α x y hx hy hxy e he
+  have c7 : ∀ t : ↥(d.torusOf x), d.StablyConjG (IF.twist α) (d.diag t) ((IF.data α).diag (e t)) :=
+    fun t => stablyConjG_diag_of_psiU (IF.twist α) hg t (e t) (he t)
   have he' : ∀ s : ↥((IF.data α).torusOf y), bcUnits d.QW
       (((e.symm s : ↥(d.torusOf x)) : ↥(GSpin d.QW)) : (CliffordAlgebra _)ˣ) =
         TorusTransfer.psiU (IF.twist α).φ.symm (cliffUnits (IF.twist α).φ.symm g⁻¹)
