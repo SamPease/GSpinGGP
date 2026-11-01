@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.TraceFormula.Interface
 import GSpinGGP.TraceFormula.DeltaIntegrability
+import GSpinGGP.TraceFormula.TorusDescent
 
 /-!
 # `m_geom` on quasi-characters: Thesis Prop 12.1.1
@@ -19,7 +20,8 @@ The statements in §1 are the interface consumed by
   plus the eigenvalues of `t` on `W''`) and `tendsto_mGeomS_of_mem_QC` (the thesis's induction for
   one `χ`).  `integrable_delta_rpow` is proved from the literature axiom
   `bp_integrable_deltaGGP_rpow` (the GSpin consequence of B.1.2(i); B.1.2(i) itself is about
-  algebraic characters of a torus, which are not available here); the others are SORRY.
+  algebraic characters of a torus, which are not available here), `aestronglyMeasurable_torusFn_of_mem_QC` from three SORRY inputs in
+  `TraceFormula/TorusDescent.lean`; the others are SORRY.
   `mGeomS_smul` needs no input.
 * `mGeom_congr_regularSet`: `m_geom(θ)` depends only on `θ|_{G_reg}` (germs only see the regular
   set, by `exists_nhds_mul_expA_mem_regularSet`).
@@ -57,37 +59,6 @@ theorem isQuasiCharacter_of_mem_QCfin {θ : ↥d.G → ℂ} (hθ : θ ∈ QCfin 
       smul_mem' := fun c _ h ψ' => isQuasiCharacter_smul d ψ' c (h ψ') }
   have hle : QCfin d ≤ S := iSup_le fun χ _ h => h.1
   exact hle hθ ψ'
-
-/-- **`x ∈ GSpin(W)(F)` semisimple ⇒ `diag x = (x, x)` semisimple in `C(W) × C(V)`**: the
-squarefree minimal polynomial `p` of `x` kills `x` in `C(W)`, hence its image under the algebra
-map `C(W) → C(V)`, hence the pair. -/
-theorem isSS_diag_of_isSS {t : ↥(GSpin d.QW)}
-    (ht : IsSS F (((t : (CliffordAlgebra d.QW)ˣ)) : CliffordAlgebra d.QW)) :
-    IsSS F (((d.diag t : ↥d.G) : d.ambientˣ) : d.ambient) := by
-  set a : CliffordAlgebra d.QW := ((t : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW)
-  set p := minpoly F (LinearMap.mulLeft F a)
-  have hsq : Squarefree p := Module.End.IsSemisimple.minpoly_squarefree ht
-  have h0 : Polynomial.aeval (Algebra.lmul F (CliffordAlgebra d.QW) a) p = 0 := minpoly.aeval F _
-  rw [Polynomial.aeval_algHom_apply] at h0
-  have h1 : Polynomial.aeval a p = 0 :=
-    Algebra.lmul_injective (R := F) (h0.trans (map_zero _).symm)
-  set φ := CliffordAlgebra.map (QuadraticMap.Isometry.inl d.QW d.QZ)
-  have hcoe : (((d.diag t : ↥d.G) : d.ambientˣ) : d.ambient) = (a, φ a) := rfl
-  have h2 : Polynomial.aeval (((d.diag t : ↥d.G) : d.ambientˣ) : d.ambient) p = 0 := by
-    rw [hcoe]
-    refine Prod.ext ?_ ?_
-    · have := Polynomial.aeval_algHom_apply (AlgHom.fst F (CliffordAlgebra d.QW)
-        (CliffordAlgebra d.QV)) (a, φ a) p
-      simp only [AlgHom.fst_apply] at this
-      rw [Prod.fst_zero, ← this, h1]
-    · have := Polynomial.aeval_algHom_apply (AlgHom.snd F (CliffordAlgebra d.QW)
-        (CliffordAlgebra d.QV)) (a, φ a) p
-      simp only [AlgHom.snd_apply] at this
-      rw [Prod.snd_zero, ← this, Polynomial.aeval_algHom_apply, h1, map_zero]
-  have h3 : Polynomial.aeval (Algebra.lmul F d.ambient
-      (((d.diag t : ↥d.G) : d.ambientˣ) : d.ambient)) p = 0 := by
-    rw [Polynomial.aeval_algHom_apply, h2, map_zero]
-  exact Module.End.isSemisimple_of_squarefree_aeval_eq_zero hsq h3
 
 /-- Points of `Γ(G,H)` are semisimple in `G`. -/
 theorem isSS_diag_of_isGammaElt {t : ↥(GSpin d.QW)} (ht : d.IsGammaElt t) :
@@ -207,27 +178,37 @@ BP Astérisque 418, proof of Prop 11.2.1, (11.2.6)): `Γ(G,H)` is compact modulo
 function `(D^G)^{1/2} c_{θ,O}` is locally bounded (BP Prop 4.5.1), so it suffices that
 `∫_{Γ(G,H)} Δ(x)^{s - 1/2} dx` converges for `Re s > 0`, which is BP Lemma B.1.2(i).
 
-Here that argument is split torus by torus into three precisely stated inputs (the first two
-SORRY, the third proved from `bp_integrable_deltaGGP_rpow`), whose combination is proved
+Here that argument is split torus by torus into three precisely stated inputs (the first
+SORRY, the second proved from three SORRY inputs on `T(F)` in `TraceFormula/TorusDescent.lean`,
+the third proved from `bp_integrable_deltaGGP_rpow`), whose combination is proved
 (`isTorusIntegrable_of_mem_QC`):
 * `germ_bound_of_mem_QC`: `‖D^G(t)^{1/2} c_{θ,O_t}(t)‖ ≤ C` on `T_♮`;
 * `aestronglyMeasurable_torusFn_of_mem_QC`: measurability of the integrand on `T(F)/A_{G,H}(F)`;
 * `integrable_delta_rpow`: `∫_{T(F)/A_{G,H}(F)} 1_{T_♮} Δ^{s - 1/2} < ∞` for `s > 0`
   (BP Lemma B.1.2(i), applied to the eigencharacters of `t` on `W''`).
-Together with `finite_gammaClass` (`Γ(G,H)` meets finitely many tori up to conjugacy) this gives
+Together with `finite_gammaClass` (`Γ(G,H)` meets finitely many tori up to conjugacy;
+SORRY, resting on Borel–Serre 1964, Cor. 6.5) this gives
 additivity of `m_{geom,s}` on `QCfin d`.  The existence of the limit for one `χ`
 (`tendsto_mGeomS_of_mem_QC`, Thesis (12.1.4)) is the thesis's inductive argument and stays a
 SORRY; the `QCfin` forms are then proved by linearity (submodules `qcGood`, `qcLim`). -/
 
 section Convergence
 
-/-- **`Γ(G,H)` meets finitely many conjugacy classes of tori** (Thesis §6.5:
-"finite for `p`-adic `F`").  Why: `T_x = P^{-1}(Z_{SO(W''_x)}(x̄))` is determined by the
-nondegenerate subspace `W''_x` (finitely many up to `SO(W)`, Witt) and the maximal torus
-`Z_{SO(W''_x)}(x̄)^0` of `SO(W''_x)` (finitely many `SO(W''_x)(F)`-conjugacy classes of maximal tori
-over a `p`-adic field: they are classified by étale algebras of bounded degree with finitely many
-`H¹`-twists).  Status: SORRY (own work, GSpin input; consistent with
-`toyD_subsingleton_gammaClass`). -/
+/-- **`Γ(G,H)` meets finitely many conjugacy classes of tori** (used implicitly in Thesis §6.5,
+(6.5.3)).  `T_x = P^{-1}(Z_{SO(W''_x)}(x̄)^0)` (extended by `1` on `W'_x`) is determined by the
+nondegenerate subspace `W''_x` (finitely many up to `SO(W)(F)`, Witt) and the maximal torus
+`Z_{SO(W''_x)}(x̄)^0` of `SO(W''_x)` (finitely many `SO(W''_x)(F)`-conjugacy classes, Borel–Serre
+1964, Cor. 6.5).
+
+Exact ingredient: Borel–Serre, *Théorèmes de finitude en cohomologie galoisienne*, Comment. Math.
+Helv. 39 (1964), Corollaire 6.5: for a linear algebraic group `G` over a field `k` as in their
+Thm 6.2 (perfect, finitely many extensions of each degree; e.g. a `p`-adic field), the maximal
+tori of `G` defined over `k` form finitely many `G(k)`-conjugacy classes.  It applies to
+`SO(W''_x)`.  The reduction to it (finitely many `W''_x` up to `SO(W)(F)` by Witt; the stabilizer
+of `W''` maps onto `SO(W'')(F)`; `GSpin(W)(F) → SO(W)(F)` is onto) is not in the source, and
+algebraic tori are not formalized here, so this stays a `sorry`.  Consistent with
+`toyD_subsingleton_gammaClass` (`Sanity/Witnesses.lean`) and `subsingleton_gammaClass`
+(`TraceFormula/Lie.lean`), proved outright. -/
 theorem finite_gammaClass : Finite (GammaClass d) := by
   sorry
 
@@ -248,13 +229,14 @@ theorem germ_bound_of_mem_QC {χ : CentralCharOn d} {θ : ↥d.G → ℂ} (hθ :
   sorry
 
 /-- **Measurability of the integrand of `m_{geom,s}` on `T(F)/A_{G,H}(F)`** (Thesis §6.5, the
-measure on `Γ(G,H)`).  Why: for `θ ∈ QC d χ` the integrand
-`t ↦ D^G(t)^{1/2} c_{θ,O_t}(t) Δ(t)^{s-1/2}` is `A_{G,H}(F)`-invariant (see
-`germ_bound_of_mem_QC`), so evaluating it on the representatives `Quotient.out q` gives the
-descended function; `T_♮` is open in `T(F)` (no new eigenvalue `1` on `W''` and `Z(t) = T` are
-open conditions on `T(F)`), the germs `c_{θ,O_t}(t)` are locally constant on `T_♮` (for `t' = t e^Y`, `Y ∈ Lie T` central in `𝔤_t`, the expansions at `t` and `t'`
-coincide), and `D^G`, `Δ` are continuous; so the descended function is continuous on the open
-image of `T_♮` and `0` off it.  Status: SORRY (own work, GSpin input). -/
+measure on `Γ(G,H)`).  The integrand `t ↦ D^G(t)^{1/2} c_{θ,O_t}(t) Δ(t)^{s-1/2}` on `T(F)` is
+`A_{G,H}(F)`-invariant, so evaluating it on the representatives `Quotient.out q` gives its descent;
+it is continuous on the open set `T_♮` and `0` off it, so the descent is continuous on the open
+image of `T_♮` and `0` off it (`aestronglyMeasurable_comp_out`).  Status: proved
+(`aestronglyMeasurable_torusFn_of_inputs`) from the three SORRY inputs in
+`TraceFormula/TorusDescent.lean`: `gammaIntegrand_scalar_mul_of_mem_QC` (invariance),
+`isOpen_torusNat` (openness of `T_♮`), `continuousOn_gammaIntegrand_of_mem_QC` (continuity on
+`T_♮`: the germs are locally constant there, `D^G` and `Δ` continuous). -/
 theorem aestronglyMeasurable_torusFn_of_mem_QC {χ : CentralCharOn d} {θ : ↥d.G → ℂ}
     (hθ : θ ∈ QC d χ) (T : Subgroup ↥(GSpin d.QW)) (s : ℝ) :
     letI : MeasurableSpace (d.TorusQuot T) := borel _
@@ -262,7 +244,9 @@ theorem aestronglyMeasurable_torusFn_of_mem_QC {χ : CentralCharOn d} {θ : ↥d
     AEStronglyMeasurable (fun q : d.TorusQuot T =>
       gammaIntegrand ψ d θ T s ((Quotient.out q : ↥T) : ↥(GSpin d.QW)))
       (probHaar (d.TorusQuot T)) := by
-  sorry
+  let _ : MeasurableSpace (d.TorusQuot T) := borel _
+  have : BorelSpace (d.TorusQuot T) := ⟨rfl⟩
+  exact aestronglyMeasurable_torusFn_of_inputs ψ d hθ T s _
 
 /-- **`∫_{T(F)/A_{G,H}(F)} 1_{T_♮}(t) Δ(t)^{s-1/2} dt < ∞` for `s > 0`** (Thesis Prop 12.1.1(i),
 proof of (12.1.2): "a straightforward application of BP Lemma B.1.2(i)").

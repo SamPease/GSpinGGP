@@ -2354,56 +2354,6 @@ theorem IsCharacterOf.comp_mul_left_of_central {π : UnitaryRep G} {θ : G → �
 end CentralTranslate
 
 
-/-- `x ↦ c x` preserves regular semisimplicity for a nonzero scalar `c`. -/
-theorem isRegularSS_algebraMap_mul {A : Type*} [Ring A] [Algebra F A] (𝔤 : LieSubalgebra F A)
-    {a : F} (ha : a ≠ 0) {y : A} (hy : IsRegularSS 𝔤 y) :
-    IsRegularSS 𝔤 (algebraMap F A a * y) := by
-  rw [← Algebra.smul_def]
-  have hL : LinearMap.mulLeft F (a • y) = a • LinearMap.mulLeft F y := by
-    ext w; simp
-  have hC : lieCentralizer 𝔤 (a • y) = lieCentralizer 𝔤 y := by
-    ext X
-    rw [mem_lieCentralizer, mem_lieCentralizer, smul_mul_assoc, mul_smul_comm]
-    exact and_congr_right fun _ => smul_right_inj ha
-  refine ⟨?_, hC ▸ hy.2⟩
-  unfold IsSS
-  rw [hL]
-  exact Module.End.IsSemisimple_smul a hy.1
-
-/-- A scalar is semisimple. -/
-theorem isSS_algebraMap {A : Type*} [Ring A] [Algebra F A] (a : F) :
-    IsSS F (algebraMap F A a) := by
-  have hL : LinearMap.mulLeft F (algebraMap F A a) = a • LinearMap.id := by
-    ext w; simp [Algebra.smul_def]
-  unfold IsSS
-  rw [hL]
-  exact Module.End.IsSemisimple_smul a Module.End.isSemisimple_id
-
-/-- The central scalar `c ∈ GSpin(W)` embeds diagonally as the scalar `c` of `C(W) × C(V)`. -/
-theorem coe_diag_scalarGSpin (c : Fˣ) :
-    (((d.diag (scalarGSpin d.QW c) : d.G) : d.ambientˣ) : d.ambient) =
-      algebraMap F d.ambient (c : F) := by
-  refine Prod.ext ?_ ?_
-  · rfl
-  · show CliffordAlgebra.map (QuadraticMap.Isometry.inl d.QW d.QZ)
-        (algebraMap F (CliffordAlgebra d.QW) (c : F)) = _
-    exact AlgHom.commutes _ _
-
-/-- `G_x = G` for `x` central in the ambient algebra. -/
-theorem grpCentralizer_eq_of_central {A : Type*} [Ring A] (G : Subgroup Aˣ) {x : Aˣ}
-    (hx : ∀ a : A, (x : A) * a = a * x) : grpCentralizer G x = G := by
-  ext g
-  simp only [grpCentralizer, Subgroup.mem_inf, Subgroup.mem_centralizer_iff, Set.mem_singleton_iff,
-    forall_eq, and_iff_left_iff_imp]
-  exact fun _ => Units.ext (hx g)
-
-/-- `𝔤_x = 𝔤` for `x` central in the ambient algebra. -/
-theorem lieCentralizer_eq_of_central {A : Type*} [Ring A] [Algebra F A] (𝔤 : LieSubalgebra F A)
-    {x : A} (hx : ∀ a : A, x * a = a * x) : lieCentralizer 𝔤 x = 𝔤 := by
-  ext X
-  rw [mem_lieCentralizer]
-  exact and_iff_left (hx X)
-
 /-- **Characters are invariant under `A_{G,H}(F)` on `G_reg(F)`**: for `π` tempered with
 central character trivial on `A_{G,H}(F)` and `c ∈ F^×`, `θ_π(c y) = θ_π(y)` for regular `y`.
 `g ↦ θ_π(cg)` is again a character of `π` (`IsCharacterOf.comp_mul_left_of_central`) and is
@@ -2449,67 +2399,6 @@ theorem TemperedPacketFamily.baseChar_diag_scalar_mul {IF : InnerFormSystem d}
     P.baseChar (d.diag (scalarGSpin d.QW c) * y) = P.baseChar y :=
   transportFn_diag_scalar_mul IF.data_base _ (fun c _ hy => Finset.sum_congr rfl fun i _ =>
     charG_diag_scalar_mul _ (P.tempered _ i) (P.central_trivial _ i) c hy) c y hy
-
-/-- Transport of germ coefficients along equalities of centralizers. -/
-theorem exists_coeff_transport (b : LinearMap.BilinForm F d.ambient)
-    (H H' : Subgroup d.ambientˣ) (𝔥 𝔥' : LieSubalgebra F d.ambient) (hH : H = H') (h𝔥 : 𝔥 = 𝔥')
-    (c' : NilOrbit H' 𝔥' → ℂ) :
-    ∃ c : NilOrbit H 𝔥 → ℂ, ((Function.support c).Finite ↔ (Function.support c').Finite) ∧
-      (∀ X, ∑ᶠ O, c O * jHat H 𝔥 b ψ O X = ∑ᶠ O, c' O * jHat H' 𝔥' b ψ O X) ∧
-      ∀ O O', HEq O O' → c O = c' O' ∧ (O ∈ NilReg H 𝔥 ↔ O' ∈ NilReg H' 𝔥') := by
-  subst hH h𝔥
-  refine ⟨c', Iff.rfl, fun _ => rfl, fun O O' hO => ?_⟩
-  obtain rfl := eq_of_heq hO
-  exact ⟨rfl, Iff.rfl⟩
-
-/-- **Germs only see the local behaviour**: if `x, x'` are semisimple with the same centralizers
-and `θ(x e^X) = θ(x' e^X)` for `X ∈ 𝔤_x` small and regular, then the germs of `θ` at `x` and `x'`
-agree (via uniqueness of the local expansion, `germ_unique`). -/
-theorem germ_eq_germ_of_translate (θ : ↥d.G → ℂ) (x x' : ↥d.G)
-    (hx : IsSS F ((x : d.ambientˣ) : d.ambient)) (hx' : IsSS F ((x' : d.ambientˣ) : d.ambient))
-    (hH : grpCentralizer d.G x = grpCentralizer d.G x')
-    (h𝔥 : lieCentralizer d.lie ((x : d.ambientˣ) : d.ambient) =
-      lieCentralizer d.lie ((x' : d.ambientˣ) : d.ambient))
-    (hθ : ∃ ω ∈ 𝓝 (0 : d.ambient), ∀ X ∈ ω, X ∈ lieCentralizer d.lie ((x : d.ambientˣ) : d.ambient) →
-      IsRegularSS (lieCentralizer d.lie ((x : d.ambientˣ) : d.ambient)) X →
-      ∀ y : ↥d.G, ((y : d.ambientˣ) : d.ambient) = ((x : d.ambientˣ) : d.ambient) * expA F X →
-        ∃ y' : ↥d.G, ((y' : d.ambientˣ) : d.ambient) = ((x' : d.ambientˣ) : d.ambient) * expA F X ∧
-          θ y = θ y')
-    (hexp : ∃ c, HasGermExpansion d.G d.lie d.bilin ψ θ x' c)
-    (O : NilOrbit (grpCentralizer d.G x) (lieCentralizer d.lie ((x : d.ambientˣ) : d.ambient)))
-    (O' : NilOrbit (grpCentralizer d.G x') (lieCentralizer d.lie ((x' : d.ambientˣ) : d.ambient)))
-    (hO : HEq O O') :
-    germ d.G d.lie d.bilin ψ θ x O = germ d.G d.lie d.bilin ψ θ x' O' := by
-  obtain ⟨c', hc'⟩ := hexp
-  obtain ⟨c, hfin, hsum, hcO⟩ := exists_coeff_transport ψ d.bilin _ _ _ _ hH h𝔥 c'
-  obtain ⟨ω₁, hω₁, hθ'⟩ := hθ
-  obtain ⟨ω₂, hω₂, hc'e⟩ := hc'.2
-  have hc : HasGermExpansion d.G d.lie d.bilin ψ θ x c := by
-    refine ⟨hfin.mpr hc'.1, ω₁ ∩ ω₂, inter_mem hω₁ hω₂, fun X hX hXc hXr y hy => ?_⟩
-    obtain ⟨y', hy', hθy⟩ := hθ' X hX.1 hXc hXr y hy
-    rw [hθy, hsum X]
-    exact hc'e X hX.2 (h𝔥 ▸ hXc) (h𝔥 ▸ hXr) y' hy'
-  obtain ⟨hcc, hreg⟩ := hcO O O' hO
-  by_cases hOr : O ∈ NilReg _ _
-  · rw [germ_eq_of_hasGermExpansion d ψ hx hc hOr,
-      germ_eq_of_hasGermExpansion d ψ hx' hc' (hreg.mp hOr), hcc]
-  · rw [germ_of_not_mem hOr, germ_of_not_mem fun h => hOr (hreg.mpr h)]
-
-/-- The selection rule behind `orbitChoice`, with the centralizers and the condition as
-parameters. -/
-def pickNilOrbit (H : Subgroup d.ambientˣ) (𝔥 : LieSubalgebra F d.ambient)
-    (P : d.ambient → Prop) : NilOrbit H 𝔥 :=
-  if h : ∃ O ∈ NilReg H 𝔥, ∃ X ∈ nilOrbitSet O, P (X : d.ambient) then h.choose
-  else Quotient.mk (nilSetoid _ _) ⟨0, LieSubalgebra.zero_mem _, IsNilpotent.zero⟩
-
-theorem orbitChoice_eq_pickNilOrbit (x : ↥(GSpin d.QW)) :
-    orbitChoice d x = pickNilOrbit _ _ (OrbitSpec d x) := rfl
-
-theorem heq_pickNilOrbit (H H' : Subgroup d.ambientˣ) (𝔥 𝔥' : LieSubalgebra F d.ambient)
-    (hH : H = H') (h𝔥 : 𝔥 = 𝔥') (P P' : d.ambient → Prop) (hP : P = P') :
-    HEq (pickNilOrbit H 𝔥 P) (pickNilOrbit H' 𝔥' P') := by
-  subst hH h𝔥 hP
-  rfl
 
 /-- **Central translation of the germ** (own work; Thesis §6.7: `c_{θ_1}(c) = c_{θ_1}(1)`
 for `c ∈ A_{G,H}(F)`, the central character being trivial on `Z_{G,H}(F)`).  Proof: (a) `θ_1(cy) = θ_1(y)`
