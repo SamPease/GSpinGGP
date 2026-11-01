@@ -7,6 +7,7 @@ import GSpinGGP.GGP.Hilbert90
 import GSpinGGP.GGP.TwistDescent
 import GSpinGGP.GGP.WittParity
 import GSpinGGP.GGP.TorusCommute
+import GSpinGGP.GGP.TorusTransport
 import GSpinGGP.GGP.QuadClassify
 
 /-!
@@ -1653,17 +1654,40 @@ theorem weylDisc_eq_of_stablyConjG (τ : InnerTwist d.QW) (t : ↥d.G) (t' : ↥
     weylDisc (d.twist τ).lie (t' : (d.twist τ).ambientˣ) = weylDisc d.lie (t : d.ambientˣ) :=
   weylDisc_eq_of_conj d (d.twist τ) τ.φ (d.twistV τ) t t' h.1 h.2
 
+/-- **The remaining clauses of Thesis Prop. 6.6.1(ii)** for the transport `e` of `T_x(F)` to
+`T_y(F)`, i.e. any `e` with `ē(t) = Ad(g) C(φ_α)(t̄)` for a `g` witnessing `x ∼ y`
+(`TorusTransfer.transportEquiv`): `e` is a homeomorphism, it matches the regular parts
+`T_{x,♮} ↔ T_{y,♮}`, every `t ∈ T_{x,♮}` is strongly stably conjugate to `e(t)`, and every
+`t ∈ T_x(F)` is stably conjugate to `e(t)` in `G`.  Route (own work): continuity — `e` is the
+restriction of an `F`-linear map between finite-dimensional spaces (the `F`-span of `T_x(F)` in
+`C(W)` and `C(W_α)`); the regular parts and strong stable conjugacy because `G_t = G_x` on
+`T_{x,♮}` (`T_y` central in `G_{α,y}`); stable conjugacy in `G` uses the `V`-component of the
+conjugating element from `hxy`. -/
+theorem torusTransfer_clauses (IF : InnerFormSystem d) (α : IF.Idx)
+    (x : ↥(GSpin d.QW)) (y : ↥(GSpin (IF.data α).QW)) (hx : d.IsGammaElt x)
+    (hy : (IF.data α).IsGammaElt y) (hxy : d.StronglyStablyConjW (IF.twist α) x y)
+    {g : (CliffordAlgebra ((IF.data α).QW.baseChange (AlgebraicClosure F)))ˣ}
+    (e : ↥(d.torusOf x) ≃* ↥((IF.data α).torusOf y))
+    (he : ∀ t : ↥(d.torusOf x), bcUnits (IF.data α).QW
+      (((e t : ↥((IF.data α).torusOf y)) : ↥(GSpin (IF.data α).QW)) : (CliffordAlgebra _)ˣ) =
+        TorusTransfer.psiU (IF.twist α).φ g
+          (bcUnits d.QW ((t : ↥(GSpin d.QW)) : (CliffordAlgebra d.QW)ˣ))) :
+      Continuous e ∧ Continuous e.symm ∧
+      (∀ t : ↥(d.torusOf x),
+        (d.IsGammaElt t ∧ d.torusOf t = d.torusOf x ↔
+          (IF.data α).IsGammaElt (e t) ∧ (IF.data α).torusOf (e t) = (IF.data α).torusOf y)) ∧
+      (∀ t : ↥(d.torusOf x), d.IsGammaElt t → d.torusOf t = d.torusOf x →
+        d.StronglyStablyConjW (IF.twist α) t (e t)) ∧
+      (∀ t : ↥(d.torusOf x), d.StablyConjG (IF.twist α) (d.diag t) ((IF.data α).diag (e t))) :=
+  sorry
+
 /-- **Thesis Prop. 6.6.1(ii), the torus isomorphism** (own work): the clauses of `TorusTransfer`
 other than `Δ`, `D^G`, together with: every `t ∈ T_x(F)` is stably conjugate to `e(t)` (in `G`,
-through `ψ_α`).  Route: take `g` (the `W`-component) from `hxy`; `t ↦ g C(φ_α)(t) g⁻¹`
-sends `T_x(F)` into `GSpin(W_α)(F̄)`, and its values are Galois-fixed by the rationality clause of
-`StronglyStablyConjVia` (`T_x ⊆ Z(x)`), hence rational (Galois descent for `C(W_α) ⊗ F̄`); they
-commute with `y` and fix `W'_y = P(g)φ_α(W'_x)`, so lie in `T_y(F)`.  The inverse is built the same
-way from `g⁻¹`; continuity: the map is the restriction of an `F`-linear map between
-finite-dimensional spaces (the `F`-span of `T_x(F)` in `C(W)` and `C(W_α)`).  Scalars are fixed and
-`x ↦ y` by construction; `T_{x,♮} ↔ T_{y,♮}` and strong stable conjugacy on `T_{x,♮}` because
-`G_t = G_x` there (`T_y` central in `G_{α,y}`); stable conjugacy of `t` and `e(t)`
-uses `g` and its image in `GSpin(V_α)(F̄)`. -/
+through `ψ_α`).  Proved: with `g` the `W`-component of the conjugating element in `hxy`,
+`t ↦ g C(φ_α)(t) g⁻¹` restricts to a group isomorphism `e : T_x(F) ≃ T_y(F)`
+(`TorusTransfer.transportEquiv`: values are Galois-fixed by the rationality clause, hence rational;
+they commute with `y` and fix `W'_y`; the inverse comes from `g⁻¹` and `φ_α⁻¹`); it fixes the
+scalars and sends `x ↦ y`.  The other clauses are `torusTransfer_clauses`. -/
 theorem exists_torusTransfer_core (IF : InnerFormSystem d) (α : IF.Idx)
     (x : ↥(GSpin d.QW)) (y : ↥(GSpin (IF.data α).QW)) (hx : d.IsGammaElt x)
     (hy : (IF.data α).IsGammaElt y) (hxy : d.StronglyStablyConjW (IF.twist α) x y) :
@@ -1677,8 +1701,24 @@ theorem exists_torusTransfer_core (IF : InnerFormSystem d) (α : IF.Idx)
           (IF.data α).IsGammaElt (e t) ∧ (IF.data α).torusOf (e t) = (IF.data α).torusOf y)) ∧
       (∀ t : ↥(d.torusOf x), d.IsGammaElt t → d.torusOf t = d.torusOf x →
         d.StronglyStablyConjW (IF.twist α) t (e t)) ∧
-      (∀ t : ↥(d.torusOf x), d.StablyConjG (IF.twist α) (d.diag t) ((IF.data α).diag (e t))) :=
-  sorry
+      (∀ t : ↥(d.torusOf x), d.StablyConjG (IF.twist α) (d.diag t) ((IF.data α).diag (e t))) := by
+  obtain ⟨⟨g, hg, hconj, hrat⟩, -⟩ := id hxy
+  let e : ↥(d.torusOf x) ≃* ↥((IF.data α).torusOf y) := TorusTransfer.transportEquiv hg hrat hconj
+  have he : ∀ t : ↥(d.torusOf x), bcUnits (IF.data α).QW
+      (((e t : ↥((IF.data α).torusOf y)) : ↥(GSpin (IF.data α).QW)) : (CliffordAlgebra _)ˣ) =
+        TorusTransfer.psiU (IF.twist α).φ g
+          (bcUnits d.QW ((t : ↥(GSpin d.QW)) : (CliffordAlgebra d.QW)ˣ)) :=
+    TorusTransfer.bcUnits_transportEquiv hg hrat hconj
+  obtain ⟨c1, c2, c5, c6, c7⟩ := torusTransfer_clauses IF α x y hx hy hxy e he
+  refine ⟨e, c1, c2, fun c => ?_, fun t ht => ?_, c5, c6, c7⟩
+  · apply TorusTransfer.bcUnits_GSpin_injective
+    show bcUnits _ _ = bcUnits _ _
+    rw [he]
+    exact TorusTransfer.psiU_bcUnits_scalar _ _ c
+  · apply TorusTransfer.bcUnits_GSpin_injective
+    show bcUnits _ _ = bcUnits _ _
+    rw [he, ht]
+    exact hconj
 
 /-- **Thesis Prop. 6.6.1(ii)** (own work).
 If `x ∈ Γ(G,H)` and `y ∈ Γ(G_α,H_α)` are strongly stably conjugate, `Ad(g) ∘ ψ_α` restricts to an

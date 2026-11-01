@@ -262,6 +262,19 @@ theorem bcUnits_transportEquiv (t : torusSub Q₁ x) :
       (CliffordAlgebra Q₂)ˣ) = psiU φ g (bcUnits Q₁ ((t : GSpin Q₁) : (CliffordAlgebra Q₁)ˣ)) :=
   bcUnits_transportHom hg hrat ⟨t, t.2.1⟩
 
+/-- `Ad(g) ∘ C(φ)` fixes the scalars `F^×`. -/
+theorem psiU_bcUnits_scalar {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V₁] [AddCommGroup V₂]
+    [Module F V₂] {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂}
+    (φ : (Q₁.baseChange (AlgebraicClosure F)).IsometryEquiv (Q₂.baseChange (AlgebraicClosure F)))
+    (g : (CliffordAlgebra (Q₂.baseChange (AlgebraicClosure F)))ˣ) (c : Fˣ) :
+    psiU φ g (bcUnits Q₁ ((scalarGSpin Q₁ c : GSpin Q₁) : (CliffordAlgebra Q₁)ˣ)) =
+      bcUnits Q₂ ((scalarGSpin Q₂ c : GSpin Q₂) : (CliffordAlgebra Q₂)ˣ) := by
+  apply Units.ext
+  rw [coe_psiU]
+  show psiA φ g (bcHom Q₁ (algebraMap F _ (c : F))) = bcHom Q₂ (algebraMap F _ (c : F))
+  rw [bcHom_algebraMap, bcHom_algebraMap, psiA, AlgHom.commutes, ← Algebra.commutes,
+    mul_assoc, Units.mul_inv, mul_one]
+
 end Equiv
 
 end TorusTransfer
