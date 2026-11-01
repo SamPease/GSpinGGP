@@ -5,6 +5,7 @@ import GSpinGGP.GGP.Centralizers
 import GSpinGGP.GGP.KottwitzSign
 import GSpinGGP.GGP.Hilbert90
 import GSpinGGP.GGP.TwistDescent
+import GSpinGGP.GGP.WittParity
 import GSpinGGP.GGP.QuadClassify
 
 /-!
@@ -1906,17 +1907,33 @@ theorem galGL_mem_torusBarFbar (x : ↥(GSpin d.QW)) (σ : GalF F) :
   rw [coe_specMatFbar, coe_galGL, coe_specMatFbar]
   exact toMatrix_of_galV_comm σ _ _ fun w => specP_galGS d.QW σ g w
 
-/-- **Surjectivity of the Kottwitz sign on `H¹(F, S_x)`** (own work on top of
-BP (12.1.6)): for `G` quasi-split
-and `x ∈ Γ(G,H)` not central, some `β ∈ H¹(F, S_x)` has `e(G_{q_x(β)}) = -1`.  Route: by
-BP (12.1.6) ("if" direction, Tate–Nakayama: `H²(F, S~) = 0` for an anisotropic torus) it suffices
-that the inverse image `S~_x` of `S_x` in `Ḡ~ = SO(U_ev) × Spin(U_odd)` (Luo §8.1) is connected;
-its character group is `X*(S_x) + ℤ r`, `2r = Σ t_i`, torsion free because `t_1, …, t_k` is a
-basis of `X*(S_x)` and `k ≥ 1` (`W''_x ≠ 0` as `x` is not central). -/
+/-- **Some class of `H¹(F, S_x)` twists `W` into a non-isometric form** (statement (S) for
+`U = W''_x`; Thesis Prop 6.5.1(iv), first half).  For `G` quasi-split and `x ∈ Γ(G,H)` not central,
+some `β ∈ H¹(F, S_x)` has `W_{q_x(β)} ≇ W`.
+
+Route (own work): with `Ḡ = SO(W) × SO(V)` quasi-split and `S_x` anisotropic, BP Astérisque 418,
+(12.1.6) says that `H¹(F, S_x) → Br₂(F)` is onto iff the inverse image `S~_x` of `S_x` in the
+canonical double cover `Ḡ~` is a torus.  Here `Ḡ~ = SO(U_ev) × Spin(U_odd)` (Luo §8.1), and
+`S~_x` is connected: its character group is `X*(S_x) + ℤ r` with `2r = Σ t_i`, which is torsion
+free because `t_1, …, t_k` is a basis of `X*(S_x)` and `k ≥ 1` (`W''_x ≠ 0`, as `x` is not
+central).  A class with nontrivial image in `Br₂(F)` twists `W''_x`, hence `W` (Witt
+cancellation), into the other form of its dimension and discriminant (Kottwitz 1983: the sign of
+`SO(W_α)` is `(−1)^{rk_F − rk_F}`).  Not verbatim in a source, so it is a `sorry`. -/
+theorem exists_twistIdx_not_isometric (hqs : d.IsQuasiSplit) (IF : InnerFormSystem d)
+    (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) (hc : ¬ IsCentralW d x) :
+    ∃ β α, TwistIdx IF x β α ∧ ¬ Nonempty (d.QW.IsometryEquiv (IF.twist α).Q') :=
+  sorry
+
+/-- **Surjectivity of the Kottwitz sign on `H¹(F, S_x)`** (Thesis Prop 6.5.1(iv)): for `G`
+quasi-split and `x ∈ Γ(G,H)` not central, some `β ∈ H¹(F, S_x)` has `e(G_{q_x(β)}) = -1`.
+Proved from `exists_twistIdx_not_isometric` and the sign computation
+`WittParity.kottwitzSign_eq_neg_one` (`e(G_α) = −1` whenever `W_α ≇ W`: Witt indices of the two
+`p`-adic forms of the same dimension and discriminant). -/
 theorem exists_twistIdx_kottwitzSign_neg (hqs : d.IsQuasiSplit) (IF : InnerFormSystem d)
     (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) (hc : ¬ IsCentralW d x) :
-    ∃ β α, TwistIdx IF x β α ∧ kottwitzSign d (IF.twist α) = -1 :=
-  sorry
+    ∃ β α, TwistIdx IF x β α ∧ kottwitzSign d (IF.twist α) = -1 := by
+  obtain ⟨β, α, h, hne⟩ := exists_twistIdx_not_isometric hqs IF x hx hc
+  exact ⟨β, α, h, WittParity.kottwitzSign_eq_neg_one d (IF.twist α) hne⟩
 
 /-- For `x` central, `S_x(F̄) = 1` (`P` of an element fixing all of `W_{F̄}` is the identity). -/
 theorem torusBarFbar_eq_bot_of_central (x : ↥(GSpin d.QW)) (hx : IsCentralW d x) :
