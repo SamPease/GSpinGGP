@@ -949,21 +949,6 @@ theorem toy_hasModel_trivial (w : WhittakerDatum (toyData (K := F))) :
     exact w.χ_one
 
 /-! ### Stable conjugacy in the toy datum is equality -/
-
-/-- Base change `C(Q) → C(Q_{K̄})` is injective (`K̄` is flat over `K`). -/
-theorem bcHom_injective {K : Type*} [Field K] [Invertible (2 : K)] {V : Type*} [AddCommGroup V]
-    [Module K V] (Q : QuadraticForm K V) : Function.Injective (bcHom Q) := by
-  intro a b h
-  have h' := congrArg (CliffordAlgebra.toBaseChange (AlgebraicClosure K) Q) h
-  simp only [bcHom, AlgHom.toRingHom_eq_coe, RingHom.coe_comp, RingHom.coe_coe,
-    Function.comp_apply, toBaseChange_ofBaseChange] at h'
-  exact Algebra.TensorProduct.includeRight_injective
-    (algebraMap K (AlgebraicClosure K)).injective h'
-
-theorem bcUnits_injective {K : Type*} [Field K] [Invertible (2 : K)] {V : Type*}
-    [AddCommGroup V] [Module K V] (Q : QuadraticForm K V) : Function.Injective (bcUnits Q) :=
-  fun _ _ h => Units.ext (bcHom_injective Q (congrArg Units.val h))
-
 /-- If every vector of `V` is a multiple of `e`, every vector of `K̄ ⊗ V` is a multiple of
 `1 ⊗ e`. -/
 theorem baseChange_line {K : Type*} [Field K] {V : Type*} [AddCommGroup V] [Module K V] (e : V)

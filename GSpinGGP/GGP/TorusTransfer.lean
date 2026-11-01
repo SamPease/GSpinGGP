@@ -100,38 +100,22 @@ open CliffordAlgebra
 
 variable {V : Type*} [AddCommGroup V] [Module F V] (Q : QuadraticForm F V)
 
-theorem bcHom_injective' : Function.Injective (bcHom Q) := by
-  have h1 : Function.Injective (CliffordAlgebra.ofBaseChange (AlgebraicClosure F) Q) := by
-    intro a b hab
-    have := congrArg (CliffordAlgebra.toBaseChange (AlgebraicClosure F) Q) hab
-    simpa using this
-  exact h1.comp (Algebra.TensorProduct.includeRight_injective (algebraMap F _).injective)
-
-theorem bcHom_ι' (v : V) : bcHom Q (ι Q v) = ι (Q.baseChange (AlgebraicClosure F)) (1 ⊗ₜ v) :=
-  ofBaseChange_tmul_ι _ _ _ _
-
-theorem bcHom_algebraMap' (r : F) :
-    bcHom Q (algebraMap F _ r) = algebraMap (AlgebraicClosure F) _ (algebraMap F (AlgebraicClosure F) r) := by
-  show ofBaseChange (AlgebraicClosure F) Q (1 ⊗ₜ algebraMap F _ r) = _
-  rw [Algebra.algebraMap_eq_smul_one, ← TensorProduct.smul_tmul, ofBaseChange_tmul_one,
-    Algebra.smul_def, mul_one]
-
 theorem bcHom_mem_evenOdd_zero {X : CliffordAlgebra Q} (hX : X ∈ evenOdd Q 0) :
     bcHom Q X ∈ evenOdd (Q.baseChange (AlgebraicClosure F)) 0 := by
   induction X, hX using even_induction with
-  | algebraMap r => rw [bcHom_algebraMap']; exact SetLike.algebraMap_mem_graded _ _
+  | algebraMap r => rw [bcHom_algebraMap]; exact SetLike.algebraMap_mem_graded _ _
   | add x y hx hy ihx ihy => rw [map_add]; exact Submodule.add_mem _ ihx ihy
   | ι_mul_ι_mul m₁ m₂ x hx ih =>
-    rw [map_mul, map_mul, bcHom_ι', bcHom_ι']
+    rw [map_mul, map_mul, bcHom_ι, bcHom_ι]
     exact zero_add (0 : ZMod 2) ▸ SetLike.mul_mem_graded (ι_mul_ι_mem_evenOdd_zero _ _ _) ih
 
 theorem bcHom_mem_evenOdd_one {X : CliffordAlgebra Q} (hX : X ∈ evenOdd Q 1) :
     bcHom Q X ∈ evenOdd (Q.baseChange (AlgebraicClosure F)) 1 := by
   induction X, hX using odd_induction with
-  | ι v => rw [bcHom_ι']; exact ι_mem_evenOdd_one _ _
+  | ι v => rw [bcHom_ι]; exact ι_mem_evenOdd_one _ _
   | add x y hx hy ihx ihy => rw [map_add]; exact Submodule.add_mem _ ihx ihy
   | ι_mul_ι_mul m₁ m₂ x hx ih =>
-    rw [map_mul, map_mul, bcHom_ι', bcHom_ι']
+    rw [map_mul, map_mul, bcHom_ι, bcHom_ι]
     exact zero_add (1 : ZMod 2) ▸ SetLike.mul_mem_graded (ι_mul_ι_mem_evenOdd_zero _ _ _) ih
 
 /-- Evenness descends along base change. -/
@@ -147,7 +131,7 @@ theorem mem_even_of_bcHom {X : CliffordAlgebra Q} (hX : bcHom Q X ∈ even (Q.ba
   have h0 : bcHom Q b = 0 :=
     (Submodule.disjoint_def.1 (evenOdd_isCompl (Q.baseChange (AlgebraicClosure F))).disjoint) _ hb'
       (bcHom_mem_evenOdd_one Q hb)
-  rw [show b = 0 from bcHom_injective' Q (h0.trans (map_zero _).symm), add_zero]
+  rw [show b = 0 from bcHom_injective Q (h0.trans (map_zero _).symm), add_zero]
   exact ha
 
 /-- `σ(ι(w)) = ι((σ ⊗ 1) w)`. -/
@@ -175,8 +159,8 @@ theorem mem_range_ι_of_bcHom {X : CliffordAlgebra Q}
     apply ι_injective (Q.baseChange (AlgebraicClosure F))
     rw [← galC_ι', hw, galC_bcHom']
   obtain ⟨v, rfl⟩ := exists_tmul_of_fixed V w hfix
-  refine ⟨v, bcHom_injective' Q ?_⟩
-  rw [bcHom_ι', hw]
+  refine ⟨v, bcHom_injective Q ?_⟩
+  rw [bcHom_ι, hw]
 
 /-- **`GSpin` descends along base change**: a unit of `C(Q)` whose base change lies in
 `GSpin(Q)(F̄)` lies in `GSpin(Q)(F)`. -/
@@ -189,11 +173,11 @@ theorem mem_GSpin_of_bcUnits {b : (CliffordAlgebra Q)ˣ}
   refine ⟨mem_even_of_bcHom Q h0, fun v => mem_range_ι_of_bcHom Q ?_,
     fun v => mem_range_ι_of_bcHom Q ?_⟩
   · have := h1 (1 ⊗ₜ v)
-    rw [hinv, ← bcHom_ι'] at this
+    rw [hinv, ← bcHom_ι] at this
     rw [map_mul, map_mul]
     exact this
   · have := h2 (1 ⊗ₜ v)
-    rw [hinv, ← bcHom_ι'] at this
+    rw [hinv, ← bcHom_ι] at this
     rw [map_mul, map_mul]
     exact this
 
@@ -263,12 +247,9 @@ theorem exists_bcUnits_of_fixed (U : (CliffordAlgebra (Q₂.baseChange (Algebrai
     ∃ b : (CliffordAlgebra Q₂)ˣ, bcUnits Q₂ b = U := by
   obtain ⟨b, hb⟩ := exists_bcHom_of_fixed Q₂ _ h
   obtain ⟨c, hc⟩ := exists_bcHom_of_fixed Q₂ _ h'
-  have hbc : b * c = 1 := bcHom_injective' Q₂ (by rw [map_mul, hb, hc, map_one, Units.mul_inv])
-  have hcb : c * b = 1 := bcHom_injective' Q₂ (by rw [map_mul, hb, hc, map_one, Units.inv_mul])
+  have hbc : b * c = 1 := bcHom_injective Q₂ (by rw [map_mul, hb, hc, map_one, Units.mul_inv])
+  have hcb : c * b = 1 := bcHom_injective Q₂ (by rw [map_mul, hb, hc, map_one, Units.inv_mul])
   exact ⟨⟨b, c, hbc, hcb⟩, Units.ext hb⟩
-
-theorem bcUnits_injective' (Q : QuadraticForm F V₁) : Function.Injective (bcUnits Q) :=
-  fun _ _ h => Units.ext (bcHom_injective' Q (congrArg Units.val h))
 
 /-- `C(φ)` maps `GSpin(Q₁)(F̄)` into `GSpin(Q₂)(F̄)`. -/
 theorem cliffUnits_mem_GSpin

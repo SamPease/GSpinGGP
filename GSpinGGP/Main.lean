@@ -423,25 +423,6 @@ theorem gammaIntegrand_central (θ : ↥d.G → ℂ) (s : ℝ) (t : ↥(GSpin d.
   rw [hΔ, Real.one_rpow]
   simp
 
-/-- The base change `C(Q) → C(Q_{F̄})` is injective (`F̄` is flat over `F`). -/
-theorem bcHom_injective {V : Type*} [AddCommGroup V] [Module F V] (Q : QuadraticForm F V) :
-    Function.Injective (bcHom Q) := by
-  have h1 : Function.Injective (CliffordAlgebra.ofBaseChange (AlgebraicClosure F) Q) := by
-    intro a b hab
-    have := congrArg (CliffordAlgebra.toBaseChange (AlgebraicClosure F) Q) hab
-    simpa using this
-  exact h1.comp (Algebra.TensorProduct.includeRight_injective (algebraMap F _).injective)
-
-/-- Base change sends the scalar `c` to the scalar `c`. -/
-theorem bcHom_algebraMap {V : Type*} [AddCommGroup V] [Module F V] (Q : QuadraticForm F V)
-    (c : F) : bcHom Q (algebraMap F _ c) =
-      algebraMap (AlgebraicClosure F) _ (algebraMap F (AlgebraicClosure F) c) := by
-  simp only [bcHom, RingHom.coe_comp, Function.comp_apply, AlgHom.toRingHom_eq_coe,
-    RingHom.coe_coe, Algebra.TensorProduct.includeRight_apply]
-  rw [Algebra.algebraMap_eq_smul_one, TensorProduct.tmul_smul,
-    ← algebraMap_smul (AlgebraicClosure F) c, ← Algebra.TensorProduct.one_def, map_smul, map_one,
-    Algebra.algebraMap_eq_smul_one, Algebra.algebraMap_eq_smul_one]
-
 /-- Anything stably conjugate (through any `φ`) to a scalar `c` is `c`: after base change, `C(φ)` and
 conjugation fix the scalar `c`, and base change is injective. -/
 theorem eq_scalar_of_stablyConjVia {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V₁]
@@ -1053,10 +1034,6 @@ theorem ofBaseChange_tmul_eq (Q : QuadraticForm F V) (z : AlgebraicClosure F)
   rw [show z ⊗ₜ[F] X = (z ⊗ₜ[F] (1 : CliffordAlgebra Q)) * (1 ⊗ₜ X) by
     rw [Algebra.TensorProduct.tmul_mul_tmul, mul_one, one_mul], map_mul, ofBaseChange_tmul_one]
   rfl
-
-theorem bcHom_ι (Q : QuadraticForm F V) (v : V) :
-    bcHom Q (ι Q v) = ι (Q.baseChange (AlgebraicClosure F)) (1 ⊗ₜ v) :=
-  ofBaseChange_tmul_ι _ _ _ _
 
 theorem bcHom_mem_even (Q : QuadraticForm F V) {X : CliffordAlgebra Q} (hX : X ∈ even Q) :
     bcHom Q X ∈ even (Q.baseChange (AlgebraicClosure F)) := by

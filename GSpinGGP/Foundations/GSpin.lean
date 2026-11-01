@@ -3910,6 +3910,31 @@ def bcUnits (Q : QuadraticForm K V) :
     (CliffordAlgebra Q)ˣ →* (CliffordAlgebra (Q.baseChange (AlgebraicClosure K)))ˣ :=
   Units.map (bcHom Q).toMonoidHom
 
+/-- Base change `C(Q) → C(Q_{K̄})` is injective (`K̄` is flat over `K`). -/
+theorem bcHom_injective (Q : QuadraticForm K V) : Function.Injective (bcHom Q) := by
+  intro a b h
+  have h' := congrArg (CliffordAlgebra.toBaseChange (AlgebraicClosure K) Q) h
+  simp only [bcHom, AlgHom.toRingHom_eq_coe, RingHom.coe_comp, RingHom.coe_coe,
+    Function.comp_apply, CliffordAlgebra.toBaseChange_ofBaseChange] at h'
+  exact Algebra.TensorProduct.includeRight_injective
+    (algebraMap K (AlgebraicClosure K)).injective h'
+
+theorem bcUnits_injective (Q : QuadraticForm K V) : Function.Injective (bcUnits Q) :=
+  fun _ _ h => Units.ext (bcHom_injective Q (congrArg Units.val h))
+
+theorem bcHom_ι (Q : QuadraticForm K V) (v : V) :
+    bcHom Q (CliffordAlgebra.ι Q v) =
+      CliffordAlgebra.ι (Q.baseChange (AlgebraicClosure K)) (1 ⊗ₜ v) :=
+  CliffordAlgebra.ofBaseChange_tmul_ι _ _ _ _
+
+/-- Base change sends the scalar `c` to the scalar `c`. -/
+theorem bcHom_algebraMap (Q : QuadraticForm K V) (c : K) :
+    bcHom Q (algebraMap K _ c) =
+      algebraMap (AlgebraicClosure K) _ (algebraMap K (AlgebraicClosure K) c) := by
+  show CliffordAlgebra.ofBaseChange (AlgebraicClosure K) Q (1 ⊗ₜ algebraMap K _ c) = _
+  rw [Algebra.algebraMap_eq_smul_one, ← TensorProduct.smul_tmul,
+    CliffordAlgebra.ofBaseChange_tmul_one, Algebra.smul_def, mul_one]
+
 /-- The Galois action `σ ⊗ 1` on `C(Q_{K̄}) ≅ K̄ ⊗ C(Q)`. -/
 def galC (Q : QuadraticForm K V) (σ : AlgebraicClosure K ≃ₐ[K] AlgebraicClosure K) :
     CliffordAlgebra (Q.baseChange (AlgebraicClosure K)) →+*
