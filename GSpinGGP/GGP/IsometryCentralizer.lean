@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import Mathlib
+import TauCeti.LinearAlgebra.Matrix.Block
 
 /-!
 # Centralizers of a semisimple isometry with abelian Lie algebra
@@ -264,6 +265,309 @@ theorem finrank_eigenspace_neg_one_le_two [CharZero K] (hB : B.IsSymm) (hnd : B.
   exact mul_ne_zero hvv hz (hind _ _ key).1
 
 end Mult
+
+/-! ## The eigenspace decomposition and determinants -/
+
+section Decomp
+
+/-- The determinant of an endomorphism preserving an internal direct sum decomposition is the
+product of the determinants of its restrictions. -/
+theorem det_eq_prod_det_restrict [FiniteDimensional K V] {ι : Type*} [Fintype ι] [DecidableEq ι]
+    {N : ι → Submodule K V} (hN : DirectSum.IsInternal N) (f : Module.End K V)
+    (hf : ∀ i, Set.MapsTo f (N i) (N i)) :
+    LinearMap.det f = ∏ i, LinearMap.det (f.restrict (hf i)) := by
+  classical
+  let b : (i : ι) → Basis _ K (N i) := fun i => Module.Free.chooseBasis K (N i)
+  rw [← LinearMap.det_toMatrix (hN.collectedBasis b),
+    LinearMap.toMatrix_directSum_collectedBasis_eq_blockDiagonal' hN hN b b hf,
+    Matrix.det_blockDiagonal']
+  simp_rw [LinearMap.det_toMatrix]
+
+variable {X : Module.End K V}
+
+open Module.End
+
+/-- Over an algebraically closed field, `V` is the internal direct sum of the eigenspaces of a
+semisimple `X`. -/
+theorem isInternal_eigenspace [DecidableEq K] [IsAlgClosed K] [FiniteDimensional K V] (hss : X.IsSemisimple) :
+    DirectSum.IsInternal (fun μ : X.Eigenvalues => X.eigenspace (μ : K)) := by
+  classical
+  rw [DirectSum.isInternal_submodule_iff_iSupIndep_and_iSup_eq_top]
+  refine ⟨X.eigenspaces_iSupIndep.comp Subtype.val_injective, ?_⟩
+  refine eq_top_iff.2 ?_
+  rw [← hss.iSup_eigenspace_eq_top]
+  refine iSup_le fun μ => ?_
+  by_cases h : X.HasEigenvalue μ
+  · exact le_iSup_of_le (⟨μ, h⟩ : X.Eigenvalues) le_rfl
+  · rw [hasEigenvalue_iff, not_not] at h
+    rw [h]; exact bot_le
+
+end Decomp
+
+/-! ## The group `S` -/
+
+section Group
+
+variable {X : Module.End K V}
+
+open Module.End
+
+theorem mapsTo_eigenspace_of_commute {h : Module.End K V} (hc : Commute X h) (μ : K) :
+    ∀ v ∈ X.eigenspace μ, h v ∈ X.eigenspace μ := by
+  intro v hv
+  rw [mem_eigenspace_iff] at hv ⊢
+  rw [← Module.End.mul_apply, hc.eq, Module.End.mul_apply, hv, map_smul]
+
+/-- Endomorphisms of a space of dimension `≤ 1` commute. -/
+theorem commute_of_finrank_le_one {E : Type*} [AddCommGroup E] [Module K E] [FiniteDimensional K E]
+    (h1 : finrank K E ≤ 1) (f g : Module.End K E) : Commute f g := by
+  rcases Nat.le_one_iff_eq_zero_or_eq_one.1 h1 with h0 | h1
+  · have : Subsingleton E := Module.finrank_zero_iff.1 h0
+    exact LinearMap.ext fun x => Subsingleton.elim _ _
+  · obtain ⟨c, hc, -⟩ := LinearMap.existsUnique_eq_smul_id_of_finrank_eq_one h1 f
+    rw [hc]
+    exact (Commute.one_left g).smul_left c
+
+/-- Cayley–Hamilton in dimension `2`. -/
+theorem sq_sub_trace_add_det {E : Type*} [AddCommGroup E] [Module K E] [FiniteDimensional K E]
+    (h2 : finrank K E = 2) (f : Module.End K E) :
+    f ^ 2 - LinearMap.trace K E f • f + LinearMap.det f • (1 : Module.End K E) = 0 := by
+  let b := Module.finBasisOfFinrankEq K E h2
+  have hc : f.charpoly = Polynomial.X ^ 2 - Polynomial.C (LinearMap.trace K E f) * Polynomial.X +
+      Polynomial.C (LinearMap.det f) := by
+    rw [← LinearMap.charpoly_toMatrix f b, Matrix.charpoly_fin_two,
+      LinearMap.trace_eq_matrix_trace K b, LinearMap.det_toMatrix]
+  have := LinearMap.aeval_self_charpoly f
+  rw [hc] at this
+  simpa [Algebra.smul_def] using this
+
+variable [IsAlgClosed K] [FiniteDimensional K V]
+
+theorem hasEigenvalue_inv (hnd : B.Nondegenerate) (hX : IsIsom B X) (hss : X.IsSemisimple)
+    {μ : K} (hμ : X.HasEigenvalue μ) : X.HasEigenvalue μ⁻¹ := by
+  obtain ⟨u, hu, hu0⟩ := Submodule.exists_mem_ne_zero_of_ne_bot (hasEigenvalue_iff.1 hμ)
+  obtain ⟨w, hw, hBw⟩ := exists_eigen_pair_ne_zero hnd hX hss hu hu0
+  refine hasEigenvalue_iff.2 fun hbot => hBw ?_
+  rw [hbot, Submodule.mem_bot] at hw
+  rw [hw, map_zero]
+
+/-- On a line `E_μ` (`μ ≠ ±1`) and its partner `E_{μ⁻¹}`, `h` acts by `c` and `c⁻¹`. -/
+theorem det_restrict_mul_inv [CharZero K] (hB : B.IsSymm) (hnd : B.Nondegenerate)
+    (hX : IsIsom B X) (hss : X.IsSemisimple) (hL : LieAbelian B X) {h : Module.End K V}
+    (hi : IsIsom B h) (hc : Commute X h) (hfix : ∀ z ∈ X.eigenspace 1, h z = z) {μ : K}
+    (hμ : X.HasEigenvalue μ) (hμm : μ ≠ -1) :
+    LinearMap.det (h.restrict (mapsTo_eigenspace_of_commute hc μ)) *
+      LinearMap.det (h.restrict (mapsTo_eigenspace_of_commute hc μ⁻¹)) = 1 := by
+  by_cases hμ1 : μ = 1
+  · subst hμ1
+    have hid : h.restrict (mapsTo_eigenspace_of_commute hc 1) = LinearMap.id :=
+      LinearMap.ext fun v => Subtype.ext (hfix v v.2)
+    have hid' : h.restrict (mapsTo_eigenspace_of_commute hc (1 : K)⁻¹) = LinearMap.id :=
+      LinearMap.ext fun v => Subtype.ext (hfix v (by simpa using v.2))
+    rw [hid, hid', LinearMap.det_id, LinearMap.det_id, one_mul]
+  have hμ2 : μ * μ ≠ 1 := by
+    intro h2
+    have : (μ - 1) * (μ + 1) = 0 := by linear_combination h2
+    rcases mul_eq_zero.1 this with h0 | h0
+    · exact hμ1 (by linear_combination h0)
+    · exact hμm (by linear_combination h0)
+  have hμ' : X.HasEigenvalue μ⁻¹ := hasEigenvalue_inv hnd hX hss hμ
+  have hμ'1 : μ⁻¹ ≠ 1 := by rwa [ne_eq, inv_eq_one]
+  have hμ'2 : μ⁻¹ * μ⁻¹ ≠ 1 := by
+    rw [← mul_inv]; intro h; exact hμ2 (inv_eq_one.1 h)
+  have hr : ∀ ν : K, X.HasEigenvalue ν → ν ≠ 1 → ν * ν ≠ 1 → finrank K (X.eigenspace ν) = 1 := by
+    intro ν hν h1 h2
+    have hle := finrank_eigenspace_le_one hB hnd hX hss hL h1 h2
+    have hpos : 0 < finrank K (X.eigenspace ν) :=
+      Nat.pos_of_ne_zero fun h0 => (hasEigenvalue_iff.1 hν) (Submodule.finrank_eq_zero.1 h0)
+    omega
+  obtain ⟨c, hc1, -⟩ := LinearMap.existsUnique_eq_smul_id_of_finrank_eq_one
+    (hr μ hμ hμ1 hμ2) (h.restrict (mapsTo_eigenspace_of_commute hc μ))
+  obtain ⟨c', hc2, -⟩ := LinearMap.existsUnique_eq_smul_id_of_finrank_eq_one
+    (hr μ⁻¹ hμ' hμ'1 hμ'2) (h.restrict (mapsTo_eigenspace_of_commute hc μ⁻¹))
+  rw [hc1, hc2, LinearMap.det_smul, LinearMap.det_smul, LinearMap.det_id, LinearMap.det_id,
+    hr μ hμ hμ1 hμ2, hr μ⁻¹ hμ' hμ'1 hμ'2, pow_one, pow_one, mul_one, mul_one]
+  obtain ⟨u, hu, hu0⟩ := Submodule.exists_mem_ne_zero_of_ne_bot (hasEigenvalue_iff.1 hμ)
+  obtain ⟨w, hw, hBw⟩ := exists_eigen_pair_ne_zero hnd hX hss hu hu0
+  have hhu : h u = c • u := by
+    have := LinearMap.congr_fun hc1 ⟨u, hu⟩
+    rw [Subtype.ext_iff, LinearMap.coe_restrict_apply] at this
+    simpa using this
+  have hhw : h w = c' • w := by
+    have := LinearMap.congr_fun hc2 ⟨w, hw⟩
+    rw [Subtype.ext_iff, LinearMap.coe_restrict_apply] at this
+    simpa using this
+  have := hi u w
+  rw [hhu, hhw, map_smul, map_smul, LinearMap.smul_apply, smul_eq_mul, smul_eq_mul,
+    ← mul_assoc] at this
+  have h0 : (c * c' - 1) * B u w = 0 := by linear_combination this
+  rcases mul_eq_zero.1 h0 with h0 | h0
+  · linear_combination h0
+  · exact absurd h0 hBw
+
+theorem ne_zero_of_hasEigenvalue (hnd : B.Nondegenerate) (hX : IsIsom B X) {μ : K}
+    (hμ : X.HasEigenvalue μ) : μ ≠ 0 := by
+  rintro rfl
+  obtain ⟨u, hu, hu0⟩ := Submodule.exists_mem_ne_zero_of_ne_bot (hasEigenvalue_iff.1 hμ)
+  refine hu0 (IsIsom.injective hnd hX ?_)
+  rw [mem_eigenspace_iff.1 hu, zero_smul, map_zero]
+
+/-- **`det (h|_{E_{−1}}) = 1`** for `h ∈ S`: the other eigenspaces pair off as `E_μ, E_{μ⁻¹}`
+with determinants `c, c⁻¹`, or are `E_1`, where `h = 1`. -/
+theorem det_restrict_neg_one [CharZero K] (hB : B.IsSymm) (hnd : B.Nondegenerate)
+    (hX : IsIsom B X) (hss : X.IsSemisimple) (hL : LieAbelian B X) {h : Module.End K V}
+    (hi : IsIsom B h) (hd : LinearMap.det h = 1) (hc : Commute X h)
+    (hfix : ∀ z ∈ X.eigenspace 1, h z = z) :
+    LinearMap.det (h.restrict (mapsTo_eigenspace_of_commute hc (-1))) = 1 := by
+  classical
+  by_cases hm : X.HasEigenvalue (-1)
+  swap
+  · have hbot : X.eigenspace (-1) = ⊥ := by rwa [hasEigenvalue_iff, not_not] at hm
+    have h0 : finrank K (X.eigenspace (-1)) = 0 := by rw [hbot, finrank_bot]
+    exact LinearMap.det_eq_one_of_finrank_eq_zero h0 _
+  let f : X.Eigenvalues → K := fun μ =>
+    LinearMap.det (h.restrict (mapsTo_eigenspace_of_commute hc (μ : K)))
+  have hprod : LinearMap.det h = ∏ μ, f μ :=
+    det_eq_prod_det_restrict (isInternal_eigenspace hss) h
+      (fun μ => mapsTo_eigenspace_of_commute hc (μ : K))
+  let m : X.Eigenvalues := ⟨-1, hm⟩
+  rw [← Finset.mul_prod_erase Finset.univ f (Finset.mem_univ m)] at hprod
+  have hne : ∀ μ ∈ Finset.univ.erase m, (μ : K) ≠ -1 := by
+    intro μ hμ heq
+    exact (Finset.mem_erase.1 hμ).1 (Subtype.ext heq)
+  have hrest : ∏ μ ∈ Finset.univ.erase m, f μ = 1 := by
+    refine Finset.prod_involution
+      (fun μ _ => (⟨(μ : K)⁻¹, hasEigenvalue_inv hnd hX hss μ.2⟩ : X.Eigenvalues)) ?_ ?_ ?_ ?_
+    · intro μ hμ
+      exact det_restrict_mul_inv hB hnd hX hss hL hi hc hfix μ.2 (hne μ hμ)
+    · intro μ hμ hf heq
+      have hinv : (μ : K)⁻¹ = μ := congrArg Subtype.val heq
+      have h0 := ne_zero_of_hasEigenvalue hnd hX μ.2
+      have hsq : ((μ : K) - 1) * ((μ : K) + 1) = 0 := by
+        have : (μ : K) * (μ : K) = 1 := by
+          calc (μ : K) * μ = μ * (μ : K)⁻¹ := by rw [hinv]
+            _ = 1 := mul_inv_cancel₀ h0
+        linear_combination this
+      rcases mul_eq_zero.1 hsq with h1 | h1
+      · apply hf
+        have hμ1 : (μ : K) = 1 := by linear_combination h1
+        have hid : h.restrict (mapsTo_eigenspace_of_commute hc (μ : K)) = LinearMap.id :=
+          LinearMap.ext fun v => Subtype.ext (hfix v (by rw [← hμ1]; exact v.2))
+        show LinearMap.det (h.restrict (mapsTo_eigenspace_of_commute hc (μ : K))) = 1
+        rw [hid, LinearMap.det_id]
+      · exact hne μ hμ (by linear_combination h1)
+    · intro μ hμ
+      refine Finset.mem_erase.2 ⟨fun heq => hne μ hμ ?_, Finset.mem_univ _⟩
+      have : (μ : K)⁻¹ = -1 := congrArg Subtype.val heq
+      rw [← inv_inv (μ : K), this, inv_neg, inv_one]
+    · intro μ hμ
+      exact Subtype.ext (inv_inv _)
+  rw [hrest, mul_one, hd] at hprod
+  exact hprod.symm
+
+/-- The inverse of an isometry `h ∈ S`, and `h − h⁻¹ ∈ 𝔩`. -/
+theorem exists_inv_mem_lie (hnd : B.Nondegenerate) (hX : IsIsom B X) {h : Module.End K V}
+    (hi : IsIsom B h) (hc : Commute X h) (hfix : ∀ z ∈ X.eigenspace 1, h z = z) :
+    ∃ g : Module.End K V, (∀ v, h (g v) = v) ∧ (∀ v, g (h v) = v) ∧ IsSkew B (h - g) ∧
+      Commute X (h - g) ∧ ∀ z ∈ X.eigenspace 1, (h - g) z = 0 := by
+  let e := LinearEquiv.ofInjectiveEndo h (IsIsom.injective hnd hi)
+  let g : Module.End K V := e.symm
+  have hhg : ∀ v, h (g v) = v := fun v => e.apply_symm_apply v
+  have hgh : ∀ v, g (h v) = v := fun v => e.symm_apply_apply v
+  refine ⟨g, hhg, hgh, ?_, ?_, ?_⟩
+  · intro u v
+    simp only [LinearMap.sub_apply, map_sub, LinearMap.sub_apply]
+    have e1 : B (h u) v = B u (g v) := by conv_lhs => rw [← hhg v]; exact hi u (g v)
+    have e2 : B (g u) v = B u (h v) := by rw [← hi (g u) v, hhg]
+    rw [e1, e2]; ring
+  · have hXg : Commute X g := by
+      refine LinearMap.ext fun v => ?_
+      apply IsIsom.injective hnd hi
+      simp only [Module.End.mul_apply]
+      rw [hhg, ← Module.End.mul_apply h X, ← hc.eq, Module.End.mul_apply, hhg]
+    exact hc.sub_right hXg
+  · intro z hz
+    have : g z = z := by conv_lhs => rw [← hfix z hz]; exact hgh z
+    rw [LinearMap.sub_apply, hfix z hz, this, sub_self]
+
+/-- **Main result.**  If `𝔩` is abelian, the isometries of determinant `1` commuting with `X` and
+fixing `ker (X − 1)` pointwise commute with each other. -/
+theorem commute_of_lieAbelian [CharZero K] (hB : B.IsSymm) (hnd : B.Nondegenerate)
+    (hX : IsIsom B X) (hss : X.IsSemisimple) (hL : LieAbelian B X) {h₁ h₂ : Module.End K V}
+    (hi₁ : IsIsom B h₁) (hi₂ : IsIsom B h₂) (hd₁ : LinearMap.det h₁ = 1)
+    (hd₂ : LinearMap.det h₂ = 1) (hc₁ : Commute X h₁) (hc₂ : Commute X h₂)
+    (hf₁ : ∀ z ∈ X.eigenspace 1, h₁ z = z) (hf₂ : ∀ z ∈ X.eigenspace 1, h₂ z = z) :
+    Commute h₁ h₂ := by
+  refine LinearMap.ext fun v => ?_
+  simp only [Module.End.mul_apply]
+  have hv : v ∈ ⨆ μ : K, X.eigenspace μ := by rw [hss.iSup_eigenspace_eq_top]; trivial
+  induction hv using Submodule.iSup_induction' with
+  | zero => simp
+  | add x y _ _ hx hy => rw [map_add, map_add, map_add, map_add, hx, hy]
+  | mem μ v hv =>
+    -- restrictions to `E_μ`
+    let r₁ := h₁.restrict (mapsTo_eigenspace_of_commute hc₁ μ)
+    let r₂ := h₂.restrict (mapsTo_eigenspace_of_commute hc₂ μ)
+    have hrest : Commute r₁ r₂ → h₁ (h₂ v) = h₂ (h₁ v) := by
+      intro hr
+      have := LinearMap.congr_fun hr.eq ⟨v, hv⟩
+      rw [Subtype.ext_iff] at this
+      simpa [r₁, r₂, Module.End.mul_apply, LinearMap.coe_restrict_apply] using this
+    by_cases hμ1 : μ = 1
+    · subst hμ1
+      rw [hf₂ v hv, hf₁ v hv, hf₂ v hv]
+    by_cases hμm : μ = -1
+    swap
+    · have hμ2 : μ * μ ≠ 1 := by
+        intro h2
+        have : (μ - 1) * (μ + 1) = 0 := by linear_combination h2
+        rcases mul_eq_zero.1 this with h0 | h0
+        · exact hμ1 (by linear_combination h0)
+        · exact hμm (by linear_combination h0)
+      exact hrest (commute_of_finrank_le_one
+        (finrank_eigenspace_le_one hB hnd hX hss hL hμ1 hμ2) r₁ r₂)
+    subst hμm
+    have hle := finrank_eigenspace_neg_one_le_two hB hnd hX hss hL
+    by_cases h2 : finrank K (X.eigenspace (-1)) ≤ 1
+    · exact hrest (commute_of_finrank_le_one h2 r₁ r₂)
+    have h2 : finrank K (X.eigenspace (-1)) = 2 := by omega
+    obtain ⟨g₁, hhg₁, hgh₁, hs₁, hcY₁, hz₁⟩ := exists_inv_mem_lie hnd hX hi₁ hc₁ hf₁
+    obtain ⟨g₂, hhg₂, hgh₂, hs₂, hcY₂, hz₂⟩ := exists_inv_mem_lie hnd hX hi₂ hc₂ hf₂
+    have hY := (hL _ _ hs₁ hs₂ hcY₁ hcY₂ hz₁ hz₂).eq
+    -- on `E_{−1}`: `g w = t w − h w` (Cayley–Hamilton, `det = 1`)
+    have hinv : ∀ {h g : Module.End K V} (hc : Commute X h), (∀ v, g (h v) = v) →
+        LinearMap.det (h.restrict (mapsTo_eigenspace_of_commute hc (-1))) = 1 →
+        ∀ w ∈ X.eigenspace (-1), g w =
+          LinearMap.trace K _ (h.restrict (mapsTo_eigenspace_of_commute hc (-1))) • w - h w := by
+      intro h g hc hgh hdet w hw
+      have hCH := sq_sub_trace_add_det h2 (h.restrict (mapsTo_eigenspace_of_commute hc (-1)))
+      rw [hdet, one_smul] at hCH
+      have := LinearMap.congr_fun hCH ⟨w, hw⟩
+      rw [Subtype.ext_iff] at this
+      simp only [LinearMap.add_apply, LinearMap.sub_apply, LinearMap.smul_apply, pow_two,
+        Module.End.mul_apply, LinearMap.coe_restrict_apply, Submodule.coe_add, Submodule.coe_sub,
+        Submodule.coe_smul, Module.End.one_apply, LinearMap.zero_apply,
+        Submodule.coe_zero] at this
+      -- `h (h w) − t h w + w = 0`; apply `g`
+      have := congrArg g this
+      rw [map_add, map_sub, hgh, map_smul, hgh, map_zero] at this
+      linear_combination (norm := module) this
+    have hd₁' := det_restrict_neg_one hB hnd hX hss hL hi₁ hd₁ hc₁ hf₁
+    have hd₂' := det_restrict_neg_one hB hnd hX hss hL hi₂ hd₂ hc₂ hf₂
+    set t₁ := LinearMap.trace K _ (h₁.restrict (mapsTo_eigenspace_of_commute hc₁ (-1)))
+    set t₂ := LinearMap.trace K _ (h₂.restrict (mapsTo_eigenspace_of_commute hc₂ (-1)))
+    have hm₁ := mapsTo_eigenspace_of_commute hc₁ (-1)
+    have hm₂ := mapsTo_eigenspace_of_commute hc₂ (-1)
+    have a1 := hinv hc₁ hgh₁ hd₁' v hv
+    have a2 := hinv hc₂ hgh₂ hd₂' v hv
+    have a3 := hinv hc₁ hgh₁ hd₁' _ (hm₂ v hv)
+    have a4 := hinv hc₂ hgh₂ hd₂' _ (hm₁ v hv)
+    have eq := LinearMap.congr_fun hY v
+    simp only [Module.End.mul_apply, LinearMap.sub_apply, map_sub, map_smul, a1, a2, a3,
+      a4] at eq
+    linear_combination (norm := module) (1 / 4 : K) • eq
+
+end Group
 
 end IsomCent
 
