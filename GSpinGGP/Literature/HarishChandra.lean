@@ -13,8 +13,8 @@ The results of harmonic analysis on `p`-adic
 reductive groups that the proof of the main theorem (Thesis Thm 6.4.1) uses
 as black boxes, stated as `axiom`s about the concrete groups `d.G = GSpin(W) × GSpin(V)` of a
 `d : GGPData F` over a `p`-adic field `F`. Every axiom quantifies over *all* `d`, so it applies
-to the inner forms `d.twist τ` as well (those are not quasi-split; no axiom below except (e)
-and (f) assumes quasi-splitness).
+to the inner forms `d.twist τ` as well (those are not quasi-split; no axiom below except (f)
+assumes quasi-splitness).
 
 Since `GGP/Triple.lean` is in the same layer and not visible here, the character
 `θ_π = characterOn π (regularSet d.G d.lie)` (= Triple's `charG d π`) and stability/transfer are
@@ -23,7 +23,6 @@ written out inline.
 ## Contents
 * instances `T2Space ↥d.G`, `LocallyCompactSpace ↥d.G` (theorems of LocalGroups, made instances
   here because `F` is recoverable from `d`);
-* (a) `hc_regularSet_open_conull`  — `G_reg(F)` is open with Haar-null complement (Harish-Chandra);
 * (b) `hc_character_exists`, theorem `hc_character` — `θ_π` is a function, locally constant on
   `G_reg(F)` (Harish-Chandra's regularity theorem; Bernstein's admissibility);
 * (c) `hc_character_isQuasiCharacter` — `θ_π` is a quasi-character (HC local character expansion;
@@ -31,13 +30,15 @@ written out inline.
 * (d) `germ_unique` — uniqueness of the local expansion (linear independence of the `ĵ(O,·)`,
   Harish-Chandra; BP §4.5, Thesis §4.2); derived: `germ_eq_of_hasGermExpansion`, `germ_add`,
   `germ_smul`, `germ_finset_sum`, `germ_zero`;
-* (e) `bp_germ_transfer` — BP (12.1.2) = Thesis (6.1.2), extended to the inner twists of `GSpin`;
 * (f) `rodier_germ_one` — BP Prop 4.8.1(i) = Thesis Prop 4.4.1(i) (Rodier, Mœglin–Waldspurger);
 * (g) `schur_central` — Schur's lemma for irreducible unitary representations.
 
 Not needed as an axiom: BP Prop 4.5.1(i) (`c_θ(x) = 0` if `G_x` is not quasi-split) — `germ` is
 `0` off `NilReg` by definition (`germ_of_not_mem`), and `NilReg(𝔤_x) = ∅ ↔ G_x` not quasi-split
-is a GSpin fact (`Literature/GSpin.lean`).
+is a GSpin fact (`GGP/Centralizers.lean`).
+
+Two former entries of this file are not verbatim in the literature and are now `sorry` theorems in
+`GGP/Germs.lean`: `hc_regularSet_open_conull` and `bp_germ_transfer`.
 -/
 
 open MeasureTheory Topology Filter
@@ -88,12 +89,22 @@ variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 representation `π` of `G(F)`, the distribution `f ↦ tr π(f)` on `C_c^∞(G(F))` is given by a locally
 integrable function which is locally constant on `G_reg(F)`.
 
-Sources: Bernstein, *All reductive p-adic groups are tame* (Funct. Anal. Appl. 8, 1974) —
-irreducible unitary representations are admissible, so `tr π(f)` is defined (`traceOf`);
-Harish-Chandra, *Admissible invariant distributions on reductive p-adic groups* (Univ. Lecture
-Series 16, AMS 1999) (theorem number unverified) — the character of an admissible irreducible representation is a
-locally integrable function, locally constant on `G_reg(F)` (characteristic `0`).
-Thesis Ch. 1, BP §2.1 / Prop 4.1.1(i). -/
+Sources:
+* Bernstein, *All reductive p-adic groups are tame*, Funct. Anal. Appl. 8 (1974), 91–93, Thm 1.
+  For `G` the group of `F`-points of a reductive group over a non-archimedean local field and
+  `K ⊆ G` compact open, `dim V^K` is bounded over all irreducible unitary `(π, V)`. In particular
+  `π` is admissible, so `tr π(f)` is defined (`traceOf`).
+* Harish-Chandra, *Admissible invariant distributions on reductive p-adic groups*, Univ. Lecture
+  Series 16, AMS 1999, Thm 16.3 (= Theorem 1 of the introduction; proved in §21). For `G` the
+  `F`-points of a connected reductive group, `char F = 0`, the character `Θ_π` of an admissible
+  irreducible `π` is a locally summable function on `G`, locally constant on
+  `G' = {x : D_G(x) ≠ 0}`.
+
+Harish-Chandra's `G'` (`D_G(x)` is the coefficient of `t^ℓ` in `det(t − Ad(x) + 1)`, with
+`ℓ = rank G`) is the set of regular semisimple elements. In characteristic `0` it equals
+`regularSet` (semisimple with abelian centralizer in `𝔤`): for semisimple `x`, `𝔤_x` is reductive
+of rank `ℓ`, so it is abelian iff `dim 𝔤_x = ℓ`. Only continuity on `G_reg(F)` is stated here,
+which is weaker than local constancy. Thesis Ch. 1, BP §2.1 / Prop 4.1.1(i). -/
 axiom hc_character_exists (d : GGPData F) (π : UnitaryRep ↥d.G) (hπ : IsTempered π) :
     ∃ θ : ↥d.G → ℂ, IsCharacterOf π θ ∧ ContinuousOn θ (regularSet d.G d.lie)
 
@@ -112,9 +123,13 @@ it is conjugation invariant on `G_reg(F)`, and at every semisimple `x ∈ G(F)` 
 many coefficients `c_{θ_π,O}(x)`, `O ∈ Nil(𝔤_x)`, with
 `θ_π(x e^X) = ∑_O c_{θ_π,O}(x) ĵ(O, X)` for `X ∈ 𝔤_x(F)` regular and close to `0`.
 
-Sources: Harish-Chandra 1999 (op. cit.; theorem number unverified), local expansion at `x = 1`, with
-semisimple descent; Waldspurger, *Une formule intégrale reliée à la conjecture locale de
-Gross–Prasad* (Compositio 146, 2010), §4; BP Astérisque 418, Prop 4.1.1(i); Thesis Prop 4.1.1.1(i).
+Sources: Harish-Chandra 1999 (op. cit.), Thm 16.2 (= Theorems 5 and 20): for `γ` semisimple,
+with `M`, `𝔪` its centralizers in `G`, `𝔤`, there are unique `c_ξ` with
+`Θ_π(γ exp Y) = Σ_ξ c_ξ μ̂_ξ(Y)` for `Y` close to `0` in `𝔪`, `ξ` running over the nilpotent
+`M`-orbits in `𝔪` (applied with the admissibility of `Θ_π` at `γ`, §15); BP Astérisque 418,
+Prop 4.1.1(i): "for every irreducible admissible representation `π` of `G(F)`, the character `θ_π`
+is a quasi-character on `G(F)`", which is the form stated here (BP §4.1's definition);
+Waldspurger, Compositio 146 (2010), §4; Thesis Prop 4.1.1.1(i).
 Here `ĵ` is normalized by `d.bilin` and `ψ` (Thesis §2.4); a rescaling of `ĵ` is absorbed by the
 coefficients, so this axiom is insensitive to the measure normalization. -/
 axiom hc_character_isQuasiCharacter (d : GGPData F) (ψ : NontrivialAddChar F)
@@ -130,9 +145,11 @@ in `𝔤_{x,reg}(F)` are linearly independent (homogeneity `ĵ(O, t²X) = |t|^{-
 this to linear independence on all of `𝔤_x(F)`, Harish-Chandra), and `x e^X ∈ G(F)` for small
 `X ∈ 𝔤_x(F)`.
 
-Sources: Harish-Chandra, *Admissible invariant distributions…* (1999) (Fourier transforms of
-nilpotent orbital integrals; theorem number unverified); BP Astérisque 418 §4.5 ("by homogeneity and
-linear independence the `c_{θ,O}(x)`, `O ∈ Nil_reg(𝔤_x)`, are uniquely defined"); Thesis §4.2.
+Sources: Harish-Chandra, *Admissible invariant distributions…* (1999), Cor 5.10 (and Thm 5.11 =
+Theorem 4): for a reductive Lie algebra `𝔤` over `F` and any open neighbourhood `V` of `0`, the
+functions `μ̂_O`, `O` a nilpotent orbit, are linearly independent on `V ∩ 𝔤'` (applied to
+`𝔤_x`; the normalization of `μ̂_O` does not affect independence); BP Astérisque 418 §4.5 ("by
+homogeneity and linear independence the `c_{θ,O}(x)`, `O ∈ Nil_reg(𝔤_x)`, are uniquely defined"); Thesis §4.2.
 
 Only uniqueness on `Nil_reg` is asserted (that is all `germ` reads). -/
 axiom germ_unique (d : GGPData F) (ψ : NontrivialAddChar F) (θ : ↥d.G → ℂ) (x : ↥d.G)
