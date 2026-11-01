@@ -3,7 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Literature.Kottwitz
-import GSpinGGP.Literature.GSpin
+import GSpinGGP.GGP.Centralizers
 
 /-!
 # Galois descent for twisted quadratic forms
@@ -19,7 +19,7 @@ X §2), used for `Main.existsUnique_twistIdx` (the map
   forms (the comparison isometry is Galois-invariant, hence rational).
 * `exists_twist_of_split`: an `SO(Q)`-valued cocycle `a_σ = M⁻¹ σ(M)` that splits in `GL_m(F̄)`
   is the cocycle of a rational form of the discriminant of `Q` (Gram matrix `M⁻ᵀ G M⁻¹`).
-  The splitting is Hilbert 90 for `GL_m` (`Literature/Hilbert90.lean`).
+  The splitting is Hilbert 90 for `GL_m` (`GGP/Hilbert90.lean`).
 * `isTwistBy_of_isometryEquiv`: `IsTwistBy` only depends on the rational class of the target.
 
 The fixed field of `Aut(F̄/F)` is `F` because `F` has characteristic `0`

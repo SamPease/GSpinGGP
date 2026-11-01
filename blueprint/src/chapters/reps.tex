@@ -85,15 +85,16 @@ $D^G(x)=|\det(1-\Ad x)|_{\mathfrak g/\mathfrak g_x}|_F$ (Thesis \S2.1), computed
 trailing coefficient of the characteristic polynomial of $1-\Ad x$ on $\mathfrak g$.
 \end{definition}
 
-\begin{literature}[The regular set]
-\label{LIT-hc_regularSet_open_conull}
+\begin{theorem}[The regular set]
+\label{hc_regularSet_open_conull}
 \lean{GSpinGGP.hc_regularSet_open_conull}
 \leanok
 \uses{G, GGPData, GSpin, gspin}
 The regular semisimple set $\Greg(F)$ is open in $G(F)$ and its complement has Haar measure zero.
-
-\assumedfrom{\cite{HC70}; \cite{BP}, \S1; Thesis \S2.1}
-\end{literature}
+\end{theorem}
+\begin{proof}
+Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{HC70}; \cite{BP}, \S1; Thesis \S2.1}
+\end{proof}
 
 \begin{literature}[Harish-Chandra's regularity theorem]
 \label{LIT-hc_character_exists}

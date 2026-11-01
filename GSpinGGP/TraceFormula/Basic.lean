@@ -6,7 +6,7 @@ import GSpinGGP.Foundations.LocalGroups
 import GSpinGGP.Foundations.Representations
 import GSpinGGP.Foundations.GSpin
 import GSpinGGP.Literature.Measure
-import GSpinGGP.Literature.GSpin
+import GSpinGGP.GGP.Centralizers
 
 /-!
 # The local trace formula: basic objects (`J`, `θ_f`, test functions)

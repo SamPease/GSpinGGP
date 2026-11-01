@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.TraceFormula.Scusp
 import GSpinGGP.TraceFormula.Geometric
-import GSpinGGP.Literature.LieAlgebra
+import GSpinGGP.TraceFormula.LieAlgebra
 import GSpinGGP.Literature.Fourier
 
 /-!
@@ -17,7 +17,7 @@ consequence "the geometric expansion holds for test functions supported near `A_
 
 The Lie-algebra definitions (`𝔤⁰`, `𝔥⁰`, `J^Lie`, `θ_f` on `𝔤⁰`, germs, `m^Lie_geom`) and the two
 cited theorems Thesis Thm 11.6.1 (`jLie_eq_of_thetaFLie_eqOn`) and the endgame of Thesis §12.5
-(`lie_endgame`) are in `Literature/LieAlgebra.lean`; the axioms exclude a hyperbolic-plane factor.
+(`lie_endgame`) are in `TraceFormula/LieAlgebra.lean`; they exclude a hyperbolic-plane factor.
 This file holds:
 * §1 `jqcLie`: `J^Lie_qc` on the `θ_f` (Prop 12.4.1(ii)), well defined by Thesis Thm 11.6.1;
 * §2 Prop 12.5.1 (`prop_11_8_1_of_jqc`, SORRY; `prop_11_8_1`) and Thm 12.2.2 on `𝔤⁰`

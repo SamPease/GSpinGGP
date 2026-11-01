@@ -39,19 +39,24 @@ satisfying the stability, transfer and genericity hypotheses, which is all the p
 
 ## Status
 
-As of October 2026:
+As of November 2026:
 
-- The project builds with 29 declarations containing `sorry`. The main theorem `local_ggp`
-  depends on 18 of them: 7 are the analytic core of the local trace formula (Thesis Ch. 8–12,
-  e.g. convergence of the distribution `J` and its spectral expansion), the rest smaller lemmas.
+- The project builds with 48 declarations containing `sorry`. The main theorem `local_ggp`
+  depends on 35 of them: 7 are the analytic core of the local trace formula (Thesis Ch. 8–12,
+  e.g. convergence of the distribution `J` and its spectral expansion), 17 are published results
+  that the dissertation adapts to general spin groups (see below), the rest smaller lemmas.
 - Results from the literature are assumed as `axiom`s in `GSpinGGP/Literature/`, each with a
-  docstring citing its source. `local_ggp` uses 28 of the 31. Several are adapted to general
-  spin groups from statements in the literature for unitary or special orthogonal groups; their
-  docstrings say how.
+  docstring citing its source. Only statements that appear in a source, specialized to general spin
+  groups with the source's hypotheses checked, are axioms. `local_ggp` uses 10 of the 11.
+  Where the dissertation adapts a published result (stated for orthogonal or unitary groups, groups
+  with compact centre, pure inner forms, …) or combines several, the statement is a theorem with
+  `sorry`, and its docstring names the exact ingredients and sketches the argument.
 - Definitions are never axiomatized. `GSpinGGP/Sanity/` checks key definitions on small cases.
 - Classical facts about quadratic forms (Witt cancellation and decomposition, Cartan–Dieudonné,
   the classification over `p`-adic fields) are proved from the
   [Tau Ceti](https://github.com/TauCetiProject/TauCeti) library, which this project depends on.
+- Hilbert's Theorem 90 for `GL_m` is proved (`GGP/Hilbert90.lean`), from Mathlib's linear
+  independence of characters.
 
 To see exactly what the main theorem rests on:
 

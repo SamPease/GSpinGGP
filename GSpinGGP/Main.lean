@@ -1,9 +1,9 @@
 import GSpinGGP.GGP.Triple
 import GSpinGGP.TraceFormula.Spine
-import GSpinGGP.Literature.HarishChandra
-import GSpinGGP.Literature.GSpin
-import GSpinGGP.Literature.Kottwitz
-import GSpinGGP.Literature.Hilbert90
+import GSpinGGP.GGP.Germs
+import GSpinGGP.GGP.Centralizers
+import GSpinGGP.GGP.KottwitzSign
+import GSpinGGP.GGP.Hilbert90
 import GSpinGGP.GGP.TwistDescent
 import GSpinGGP.GGP.QuadClassify
 
@@ -1658,8 +1658,8 @@ Hilbert 90 for `GL_m` (Serre, *Local Fields*, X §1 Prop. 3) a cocycle `a` with 
 form on `F^m` of the discriminant of `W` (`det a_σ = 1`), isometric to a unique `W_α`
 (`IF.classify`).  Uniqueness: if `φ, φ'` have cohomologous cocycles `a`, `a' = c⁻¹ a σ(c)`
 (`c ∈ S_x(F̄)`), then `φ' c⁻¹ φ⁻¹ : W_{α,F̄} ≃ W_{α',F̄}` is Galois-invariant, hence defined over
-`F`, so `α = α'` (`IF.classify`).  Proved (`GGP/TwistDescent.lean`; the only cited input is
-`hilbert90_GL`). -/
+`F`, so `α = α'` (`IF.classify`).  Proved (`GGP/TwistDescent.lean`, `GGP/Hilbert90.lean`; no
+cited input). -/
 theorem existsUnique_twistIdx (IF : InnerFormSystem d) (x : ↥(GSpin d.QW))
     (β : H1 (d.torusBarFbar x)) : ∃! α, TwistIdx IF x β α := by
   have hS := TwistDescent.gram_mem_torusBarFbar d x

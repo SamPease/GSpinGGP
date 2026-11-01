@@ -61,17 +61,18 @@ $f'\mapsto\int_{G(F)/A_G(F)}\int_{G(F)}f(x^{-1}gx)f'(g)\,dg\,dx$ (Thesis \S4.8, 
 $0$ if there is none. Convention: $\theta_f(ag)=\chi(a)^{-1}\theta_f(g)$.
 \end{definition}
 
-\begin{literature}[$\theta_f$ represents the orbital pairing]
-\label{LIT-bp_thetaF_exists}
+\begin{theorem}[$\theta_f$ represents the orbital pairing]
+\label{bp_thetaF_exists}
 \lean{GSpinGGP.LitTF.bp_thetaF_exists}
 \leanok
 \uses{G, GGPData, GSpin, IsQuasiCharacter, gspin}
 Let $f_0\in C_c^\infty(G(F))$ be strongly cuspidal. Then there is a quasi-character $\theta$, locally integrable
 and locally constant on $\Greg(F)$, with $\int_{G(F)}\theta f'\,dg=\int_{G(F)/A_G(F)}\int_{G(F)}f_0(x^{-1}gx)f'(g)\,dg\,dx$
 for every $f'\in C_c^\infty(G(F))$, the outer integrand being integrable.
-
-\assumedfrom{\cite{BP}, Thm.~5.5.1(ii),(iv), Prop.~5.6.1(ii) (= Thesis Thm.~4.7.1, Prop.~4.8.1(ii)); \cite{Art91}; Weyl integration formula}
-\end{literature}
+\end{theorem}
+\begin{proof}
+Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{BP}, Thm.~5.5.1(ii),(iv), Prop.~5.6.1(ii) (= Thesis Thm.~4.7.1, Prop.~4.8.1(ii)); \cite{Art91}; Weyl integration formula}
+\end{proof}
 
 \begin{lemma}[$\chi$-transfer of $\theta_f$]
 \label{isThetaF_chiProj}
@@ -83,7 +84,7 @@ is represented by a quasi-character (Thesis \S4.8, \S7.1).
 \end{lemma}
 \begin{proof}
 \leanok
-\uses{LIT-bp_thetaF_exists, ScuspTestFn, jHat}
+\uses{ScuspTestFn, bp_thetaF_exists, jHat}
 Glue central translates of the quasi-character of a cut-off of $P_\chi f_0$ along the fibres of the Harish-Chandra map $H_G$.
 \end{proof}
 
@@ -97,7 +98,7 @@ quasi-character (Thesis \S4.8, Prop.~4.8.1(ii)).
 \end{proposition}
 \begin{proof}
 \leanok
-\uses{LIT-hc_regularSet_open_conull, isThetaF_chiProj, jHat, weylDisc}
+\uses{hc_regularSet_open_conull, isThetaF_chiProj, jHat, weylDisc}
 From the $\chi$-transfer and uniqueness on the open conull regular set.
 \end{proof}
 
@@ -119,7 +120,7 @@ For $f\in\scusp(A_G\backslash G,\chi^{-1})$, $\theta_f\in\QC(G(F),\chi^{-1})$ (T
 \end{lemma}
 \begin{proof}
 \leanok
-\uses{GSpin, H, IsQuasiCharacter, LIT-hc_regularSet_open_conull, N, gspin, thetaF_spec}
+\uses{GSpin, H, IsQuasiCharacter, N, gspin, hc_regularSet_open_conull, thetaF_spec}
 From the previous proposition and central equivariance of $f$.
 \end{proof}
 
@@ -133,7 +134,7 @@ If $\pi$ is irreducible tempered with central character $\eta$ on $A_G(F)$ then 
 \end{lemma}
 \begin{proof}
 \leanok
-\uses{IsQuasiCharacter, LIT-hc_character_exists, LIT-hc_character_isQuasiCharacter, LIT-hc_regularSet_open_conull, gspin}
+\uses{IsQuasiCharacter, LIT-hc_character_exists, LIT-hc_character_isQuasiCharacter, gspin, hc_regularSet_open_conull}
 Harish-Chandra's local expansion, and central translation of characters.
 \end{proof}
 
@@ -185,8 +186,8 @@ $\Pi\mapsto m(\Pi)-\mgeom(\Pi)$, extended linearly (Thesis Prop.~7.4.1(ii)). The
 for $\pi$ is $\mathrm{defect}[\pi]=0$.
 \end{definition}
 
-\begin{literature}[Elliptic isolation]
-\label{LIT-bp_scusp_surj_ell}
+\begin{theorem}[Elliptic isolation]
+\label{bp_scusp_surj_ell}
 \lean{GSpinGGP.LitTF.bp_scusp_surj_ell}
 \leanok
 \uses{G, GGPData, GSpin, IsQuasiCharacter, gspin}
@@ -194,9 +195,10 @@ There is an open, closed, invariant, $A_G(F)$-stable $\Omega\subset G(F)$ contai
 and compact modulo conjugation and $A_G(F)$, such that every quasi-character supported (compactly
 modulo conjugation) in $\Omega$ is $\theta_{f_0}$ on $\Greg(F)$ for some strongly cuspidal $f_0\in C_c^\infty(G(F))$
 supported in $\Omega$.
-
-\assumedfrom{\cite{BP}, Cor.~5.7.2(i) (= Thesis Cor.~4.8.3(i)), stated there for compact centre; adapted to a nontrivial split centre $A_G$ by its local proof}
-\end{literature}
+\end{theorem}
+\begin{proof}
+Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{BP}, Cor.~5.7.2(i) (= Thesis Cor.~4.8.3(i)), stated there for compact centre; adapted to a nontrivial split centre $A_G$ by its local proof}
+\end{proof}
 
 \begin{proposition}[Elliptic isolation, $\chi$-equivariant]
 \label{exists_scusp_ell}
@@ -209,7 +211,7 @@ This differs from the Thesis, which uses \cite{BP} Cor.~5.7.2(iv) and Schwartz f
 \end{proposition}
 \begin{proof}
 \leanok
-\uses{H, IsQuasiCharacter, LIT-bp_scusp_surj_ell, LIT-bp_thetaF_exists, LIT-hc_regularSet_open_conull, N, QC, charG_mem_QC, jHat}
+\uses{H, IsQuasiCharacter, N, QC, bp_scusp_surj_ell, bp_thetaF_exists, charG_mem_QC, hc_regularSet_open_conull, jHat}
 Cut $\theta_\Pi$ off near the elliptic set, apply elliptic isolation, and project with $P_\chi$.
 \end{proof}
 
@@ -254,7 +256,7 @@ character $\chi$ and every $f\in\scusp(A_G\backslash G,\chi^{-1})$.
 \end{theorem}
 \begin{proof}
 \leanok
-\uses{G, GSpin, GammaClass, H, IsGammaElt, IsQuasiCharacter, LIT-germ_unique, LIT-hc_regularSet_open_conull, N, QC, ScuspTestFn, deltaGGP, distribJ, distribJ_add, geomAt_away, geomAt_near, germ, gspin, isThetaF_chiProj, jHat, mGeom, mGeom_add, mem_mul_parabolicU_iff, orbitChoice, thetaF, thetaF_mem_QC, thetaF_spec, weylDisc}
+\uses{G, GSpin, GammaClass, H, IsGammaElt, IsQuasiCharacter, LIT-germ_unique, N, QC, ScuspTestFn, deltaGGP, distribJ, distribJ_add, geomAt_away, geomAt_near, germ, gspin, hc_regularSet_open_conull, isThetaF_chiProj, jHat, mGeom, mGeom_add, mem_mul_parabolicU_iff, orbitChoice, thetaF, thetaF_mem_QC, thetaF_spec, weylDisc}
 Choose the invariant clopen $\Omega\ni1$ of the expansion near $1$; cut $f=f_1+(f-f_1)$ with $f_1$ supported in $\Omega$
 and $\theta_{f_1}=1_\Omega\theta_f$; apply the expansion near $1$ to $f_1$ and the expansion away from $1$ to
 $f-f_1$, and add, using linearity of $J$ and $\mgeom$ (Chapter~\ref{chap:geometric}).

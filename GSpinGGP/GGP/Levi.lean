@@ -1,7 +1,7 @@
 import GSpinGGP.GGP.Triple
-import GSpinGGP.Literature.GSpin
-import GSpinGGP.Literature.HarishChandra
-import GSpinGGP.Literature.TraceFormula
+import GSpinGGP.GGP.Centralizers
+import GSpinGGP.GGP.Germs
+import GSpinGGP.TraceFormula.StronglyCuspidal
 import GSpinGGP.Literature.Parabolic
 
 /-!
@@ -21,7 +21,7 @@ invariant forms `bilin` is a theorem (`GGPIso.bilin_alg`), as is the transport o
 
 Transport along `e` (proved): temperedness `isTempered_congr_iso`, the multiplicity
 `mult_congr_iso`, the character on the regular set `charG_congr_iso` (from the Harish-Chandra
-axioms `hc_character_exists`, `hc_regularSet_open_conull`), `A_{G,H}` (`mem_AGH_iff`) and the
+`hc_character_exists`, `hc_regularSet_open_conull`), `A_{G,H}` (`mem_AGH_iff`) and the
 regular set (`mem_regularSet_iff`).  Representations of `G'(F)` are pulled back along `e`
 (`GGPIso.pullback`); the generic transport lemmas (Haar measure, `π(f)`, traces, characters,
 weak containment in the regular representation) are in §2–§3 of this file, for any isomorphism of

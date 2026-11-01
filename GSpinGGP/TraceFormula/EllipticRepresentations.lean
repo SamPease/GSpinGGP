@@ -6,10 +6,11 @@ import GSpinGGP.TraceFormula.Interface
 import GSpinGGP.GGP.Levi
 
 /-!
-# Arthur's elliptic theory and the spectral side (cited)
+# Arthur's elliptic theory and the spectral side
 
-The cited facts used by `TraceFormula/Spectral.lean`, each an
-`axiom` with its source.  They are stated for the objects of `GGP/Levi.lean` §6–§7: normalized
+The facts from Arthur's elliptic theory used by `TraceFormula/Spectral.lean`.  None of them is
+verbatim in the literature (each is a composite of, or an adaptation of, published results; see
+the docstrings), so each is a `sorry` theorem naming its exact ingredients.  They are stated for the objects of `GGP/Levi.lean` §6–§7: normalized
 parabolic induction `parInd` (a real definition) and `R_ind(G, η)` (`Rind`, defined at the level of
 characters).
 
@@ -62,20 +63,30 @@ decomposition.  `K` in `ParIndData` may be any compact open subgroup with `G(F) 
 Degenerate cases: if `G` has no proper parabolic subgroup (e.g. `toyData`) nothing is asserted.
 If `charG (parInd D)` were `0` on `G_reg(F)` (the junk value of `characterOn`), the hypothesis
 forces `Π = 0` by linear independence, and then `m(i_P^G(σ)) = 0` is what is asserted; this cannot
-occur for a genuine `i_P^G(σ) ≠ 0`, whose character is nonzero. -/
-axiom hc_vMult_eq_mult_parInd (ψ : NontrivialAddChar F) (d : GGPData F) (η : CentralCharOn d)
+occur for a genuine `i_P^G(σ) ≠ 0`, whose character is nonzero.
+
+**Status: `sorry`, not a literature axiom** (the statement is not verbatim in a source). A composite
+of Harish-Chandra's finite decomposition of `i_P^G(σ)`, the linear independence of characters, and
+`emoryTakeda_mult_le_one`, as explained above. -/
+theorem hc_vMult_eq_mult_parInd (ψ : NontrivialAddChar F) (d : GGPData F) (η : CentralCharOn d)
     (D : d.ParIndData) (hD : d.IsTempIndData η D) (P : VirtualTemp d η)
     (hP : Set.EqOn (vChar d P) (charG d (d.parInd D)) (regularSet d.G d.lie)) :
-    vMult ψ d P = ((mult ψ d (d.parInd D)).toNat : ℂ)
+    vMult ψ d P = ((mult ψ d (d.parInd D)).toNat : ℂ) := by
+  sorry
 
 /-- **Van Dijk's formula: induced characters vanish on the elliptic set** (G. van Dijk,
 *Computation of certain induced characters of `p`-adic groups*, Math. Ann. 199 (1972), 229–240;
 BP (3.4.2)/(3.4.3) = Thesis (3.5.3.2)).  The character of `i_P^G(σ)` at a regular `x` is a sum over
 the `M(F)`-conjugacy classes of `M(F)`-elements `G(F)`-conjugate to `x`; for `P` proper the split
 centre `A_M` of `M` strictly contains `A_G`, so an elliptic `x` (centralizer compact modulo
-`A_G(F)`) is conjugate to no element of `M(F)`, and `θ_{i_P^G σ}(x) = 0`. -/
-axiom vanDijk_charG_parInd_ell (d : GGPData F) (η : CentralCharOn d) (D : d.ParIndData)
-    (hD : d.IsTempIndData η D) : ∀ x ∈ d.ellRegSet, charG d (d.parInd D) x = 0
+`A_G(F)`) is conjugate to no element of `M(F)`, and `θ_{i_P^G σ}(x) = 0`.
+
+**Status: `sorry`, not a literature axiom** (the statement is not verbatim in a source). Van Dijk's
+formula for induced characters (any `p`-adic reductive group), plus the fact that a regular elliptic
+element is not conjugate into a proper Levi subgroup. -/
+theorem vanDijk_charG_parInd_ell (d : GGPData F) (η : CentralCharOn d) (D : d.ParIndData)
+    (hD : d.IsTempIndData η D) : ∀ x ∈ d.ellRegSet, charG d (d.parInd D) x = 0 := by
+  sorry
 
 /-- **Virtual representations with vanishing elliptic character are properly induced**
 (J. Arthur, *On elliptic tempered characters*, Acta Math. 171 (1993), 73–138, §6 (orthogonality
@@ -87,14 +98,19 @@ with `π ∈ 𝒳_ell(G, η)`; `θ_{Π_ind} = 0` on `G_ell,reg(F)` by van Dijk; 
 all `c_π = 0` by orthogonality.  Only the vanishing is used, not the value of the elliptic norms.
 
 Implicit content: a generator of `Rind` carries a `ParIndData`, i.e. a compact open `K` with
-`G(F) = P(F) K`; the axiom therefore also asserts that such `K` exist for the parabolic subgroups
+`G(F) = P(F) K`; the statement therefore also asserts that such `K` exist for the parabolic subgroups
 involved (Bruhat–Tits: a good maximal compact subgroup; Thesis §2.3, BP §1.5).
 
 Degenerate case `toyData` (`A_G = G`, so every regular element is elliptic and there is no proper
-parabolic subgroup, `Rind = 0`): the axiom says `θ_Π = 0` on `G_reg(F)` implies `Π = 0`, which is
-the linear independence of characters. -/
-axiom arthur_mem_Rind_of_vChar_ell (d : GGPData F) (η : CentralCharOn d) (P : VirtualTemp d η)
-    (hP : ∀ x ∈ d.ellRegSet, vChar d P x = 0) : P ∈ d.Rind η
+parabolic subgroup, `Rind = 0`): the statement says `θ_Π = 0` on `G_reg(F)` implies `Π = 0`, which is
+the linear independence of characters.
+
+**Status: `sorry`, not a literature axiom** (the statement is not verbatim in a source). Adapted: BP
+(2.7.1) and Arthur's orthogonality relations are for virtual tempered representations without a
+fixed central character; this is the `η`-equivariant form. -/
+theorem arthur_mem_Rind_of_vChar_ell (d : GGPData F) (η : CentralCharOn d) (P : VirtualTemp d η)
+    (hP : ∀ x ∈ d.ellRegSet, vChar d P x = 0) : P ∈ d.Rind η := by
+  sorry
 
 /-- **On the elliptic set, `θ_f` is a virtual tempered character** (BP Prop 5.6.1(ii) and
 Lemma 5.4.2(i); Thesis Prop 4.8.1; transported to the `χ`-equivariant setting).  For `f ∈ 𝒞_scusp(A_G(F)\G(F))` with `θ_f(ag) = η(a) θ_f(g)`
@@ -115,9 +131,14 @@ makes the sum finite; (3) is not cited from a source.  Direction of the central 
 `VirtualTemp d η`; positive normalization constants are absorbed into `Π`.
 
 Degenerate cases: `f = 0` (take `Π = 0`); if no quasi-character represents the orbital pairing of
-`f`, then `thetaF d f = 0` by definition and `Π = 0` works. -/
-axiom bp_exists_vChar_eq_thetaF_ell (d : GGPData F) (η : CentralCharOn d) {f : ↥d.G → ℂ}
+`f`, then `thetaF d f = 0` by definition and `Π = 0` works.
+
+**Status: `sorry`, not a literature axiom** (the statement is not verbatim in a source). Adapted, as
+explained above. BP Prop 5.6.1(ii) holds for any connected reductive group (no compact-centre
+hypothesis), but it gives `θ_f` as an integral over `𝒳(G)` without a central character. -/
+theorem bp_exists_vChar_eq_thetaF_ell (d : GGPData F) (η : CentralCharOn d) {f : ↥d.G → ℂ}
     (hf : f ∈ ScuspTestFn d η.inv) :
-    ∃ P : VirtualTemp d η, ∀ x ∈ d.ellRegSet, vChar d P x = thetaF d f x
+    ∃ P : VirtualTemp d η, ∀ x ∈ d.ellRegSet, vChar d P x = thetaF d f x := by
+  sorry
 
 end GSpinGGP

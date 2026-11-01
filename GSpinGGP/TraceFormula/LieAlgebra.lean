@@ -6,11 +6,12 @@ import GSpinGGP.TraceFormula.Interface
 import GSpinGGP.GGP.Descent
 
 /-!
-# The Lie-algebra theorems of Waldspurger 2010 and Luo (cited)
+# The Lie-algebra objects and the theorems of Waldspurger 2010 and Luo
 
 This file holds the *definitions* of the Lie-algebra objects on
-`𝔤⁰ = so(W) ⊕ so(V)` that the two cited theorems mention, followed by the two literature axioms.
-(The definitions live here, not in `TraceFormula/Lie.lean`, because the axioms must mention them
+`𝔤⁰ = so(W) ⊕ so(V)` that the two cited theorems mention, followed by two statements from the literature for `SO(W) × SO(V)`, stated here for our objects
+as `sorry` theorems.
+(The definitions live here, not in `TraceFormula/Lie.lean`, because those statements mention them
 and `Lie.lean` imports this file.)  All definitions are real definitions; measures and functions
 that are pinned only by a property are chosen by the epsilon pattern, as elsewhere in the project.
 
@@ -35,7 +36,7 @@ that are pinned only by a property are chosen by the epsilon pattern, as elsewhe
   the same tori `T` as `mGeom` (`GammaClass d`), with `𝔱⁰ = Lie(T/A_{G,H})` (`lieTorus`) and the
   measure on `𝔱⁰(F)` compatible through `exp` with the probability measure on `T(F)/A_{G,H}(F)`.
 
-## The axioms (§7)
+## The literature statements (§7)
 
 The two cited theorems are stated on `𝔤⁰` for triples **without a hyperbolic-plane factor**:
 `¬ IsHypPlane d.QW` and `¬ IsHypPlane d.QV`.  Then `Ā_G = 1` (`AGbar_eq_bot`) and
@@ -483,7 +484,7 @@ Thm 10.8.1); for `p`-adic `F` the content is Waldspurger, Compositio 146 (2010) 
 truncated `I_N` formalism.  The right-hand side depends only on `θ_f` as a distribution, hence
 only on `θ_f|_{𝔤⁰_reg}` (`𝔤⁰_reg` is open of full measure).  The `Γ(Σ)` formula itself is not
 stated: it needs the measure on `Γ(𝔤⁰)` (tori, Weyl groups, normalized measures on each `𝔱(F)`),
-which is not formalized, and a wrong constant there would make the axiom false.  This form is
+which is not formalized, and a wrong constant there would make the statement false.  This form is
 normalization-free: rescaling `Measure.haar` on `G(F)/A_G(F)` rescales `θ_f` and `θ_{f'}` alike.
 
 **Coverage.**  Luo defines `J^Lie(f) = ∫_{H(F)\G(F)} K^Lie(f,x) dx` with
@@ -498,13 +499,19 @@ Luo's objects for `(Ḡ, H̄, ξ)`.
 Not confirmed against the texts: that Waldspurger 2010 / Luo need no
 odd-residue-characteristic hypothesis (`PAdicField` imposes none), and that the degenerate
 Whittaker-type triples `dim W ∈ {0, 1}`, which the hyperbolic-plane exclusion still admits, are
-covered. -/
-axiom jLie_eq_of_thetaFLie_eqOn (d : GGPData F) (ψ : NontrivialAddChar F)
+covered.
+
+**Status: `sorry`, not a literature axiom** (the statement is not verbatim in a source). Exact
+source statement: Luo, Prop 7.3.6(2) (with Thm 7.3.3 removing the induction hypothesis) gives
+`J^Lie(f) = J^Lie_qc(θ_f)` for `G = SO(W) × SO(V)`. What remains is to identify the objects here
+with Luo's for `(Ḡ, H̄)`. -/
+theorem jLie_eq_of_thetaFLie_eqOn (d : GGPData F) (ψ : NontrivialAddChar F)
     (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
     {f f' θ θ' : ↥d.lieZero → ℂ} (hf : d.IsLieScusp f) (hf' : d.IsLieScusp f')
     (hθ : d.IsThetaFLie ψ f θ) (hθ' : d.IsThetaFLie ψ f' θ')
     (he : ∀ X : ↥d.lieZero, IsRegularSS d.lieZero (X : d.ambient) → θ X = θ' X) :
-    d.distribJLie ψ f = d.distribJLie ψ f'
+    d.distribJLie ψ f = d.distribJLie ψ f' := by
+  sorry
 
 /-- **The endgame (Thesis §12.5), in test-function form: if
 `J^Lie(f) − m^Lie_geom(θ_f) = Σ_{O ∈ Nil_reg(𝔤⁰)} c_O c_{θ_f,O}(0)` for every
@@ -527,12 +534,12 @@ Weyl-integration step relating `θ_f` to BP's weighted orbital integrals (`= 1`)
 the smallest triple in `Sanity/LieAudit.lean`.
 
 **The constant must be exactly 1.**  Because `c` is
-arbitrary, the axiom is equivalent to `J^Lie(f) = m^Lie_geom(θ_f)` modulo regular germs at `0`
+arbitrary, the statement is equivalent to `J^Lie(f) = m^Lie_geom(θ_f)` modulo regular germs at `0`
 *with Lean's normalizations*.  At a triple whose `Γ^Lie(G,H)` is only the zero torus (`W = 0`, or
 `dim W = 1`), `m^Lie_geom(θ)` is the germ of `θ` at `0` for `orbitChoiceLie 0`; if the true
 identity were `J^Lie(f) = κ · m^Lie_geom(θ_f)` with `κ ≠ 1` (from the Weyl-integration constant, the
 `ĵ`/self-dual germ normalization, or the `measH0`/`weilMeasureHG` conventions), then
-`c = (κ − 1) δ_{O_0}` satisfies the hypothesis and the axiom would prove `False`.  Likewise if
+`c = (κ − 1) δ_{O_0}` satisfies the hypothesis and the statement would prove `False`.  Likewise if
 `orbitChoiceLie 0` (sign of `ν`) picked a different regular orbit than the sources' central term.
 Checked: `toyD` (proved in Lean, `κ = 1`); by hand computation with the Lean measures,
 `dim W = 1`, `V` an anisotropic plane (`κ = 1`), and the first case with a nonzero regular
@@ -549,14 +556,21 @@ anisotropic), `dim V = 3` split, `p` odd (one explicit computation).  Not comput
 `−ν` choice (first at `dim W = 4`, `dim V = 5`), `p = 2` at `(2, 3)`.
 
 **Coverage**: as for `jLie_eq_of_thetaFLie_eqOn`, whence the hypotheses
-`¬ IsHypPlane d.QW`, `¬ IsHypPlane d.QV`. -/
-axiom lie_endgame (d : GGPData F) (ψ : NontrivialAddChar F)
+`¬ IsHypPlane d.QW`, `¬ IsHypPlane d.QV`.
+
+**Status: `sorry`, not a literature axiom** (the statement is not verbatim in a source). Exact
+ingredients: Luo Thm 7.3.3, `J^Lie(f) = m^Lie_geom(θ_f)` on `S_scusp(so(W) ⊕ so(V))`; and the linear
+independence of the functionals `f ↦ c_{θ_f,O}(0)`, `O ∈ Nil_reg`. The latter follows from the
+surjectivity of `f ↦ θ_f` onto compactly supported quasi-characters (Waldspurger 2010, §6.4) and
+from regular germs of `ĵ(X, ·)` (BP Prop 4.5.1 2.(v)). -/
+theorem lie_endgame (d : GGPData F) (ψ : NontrivialAddChar F)
     (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
     (c : NilOrbit (lieGrpCentralizer d.G 0) (lieCentralizer d.lieZero 0) → ℂ)
     (h : ∀ f : ↥d.lieZero → ℂ, d.IsLieScusp f →
       d.distribJLie ψ f - d.mGeomLie ψ (d.thetaFLie ψ f) =
         ∑ᶠ O ∈ NilReg (lieGrpCentralizer d.G 0) (lieCentralizer d.lieZero 0),
           c O * d.germLie0 ψ (d.thetaFLie ψ f) 0 O) :
-    ∀ O ∈ NilReg (lieGrpCentralizer d.G 0) (lieCentralizer d.lieZero 0), c O = 0
+    ∀ O ∈ NilReg (lieGrpCentralizer d.G 0) (lieCentralizer d.lieZero 0), c O = 0 := by
+  sorry
 
 end GSpinGGP

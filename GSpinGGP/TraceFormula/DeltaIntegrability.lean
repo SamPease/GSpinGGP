@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import GSpinGGP.TraceFormula.Interface
 
 /-!
-# Literature inputs for `m_geom` (Thesis Prop 12.1.1)
+# Integrability of `Δ^{s−1/2}` on the tori of `Γ(G,H)` (Thesis Prop 12.1.1)
 
 Content: BP Astérisque 418, Lemma B.1.2 (convergence
 of the integrals defining `m_geom`), and any other cited input of Thesis Prop 12.1.1, each as an
@@ -19,16 +19,16 @@ false (on `F^×`, `χ_1(t) = t` and `χ_2(t) = t^a` on `1 + pℤ_p` with `a ∈ 
 ℤ-independent, but `|t − 1|^{2s−2}` is not locally integrable near `1` for `s ≤ 1/2`).  So
 B.1.2(i) itself is not stated.
 
-**What is an axiom.**  Its GSpin consequence, the one Thesis Prop 12.1.1(i) uses:
+**What is stated (as a `sorry` theorem).**  Its GSpin consequence, the one Thesis Prop 12.1.1(i) uses:
 * `bp_integrable_deltaGGP_rpow`: for `x ∈ Γ(G,H)` and `s > 0`,
   `∫_{T_x(F)/A_{G,H}(F)} 1_{T_♮}(t) Δ(t)^{s−1/2} dt < ∞`.
-It is an *adapted* citation (BP Lemma B.1.2(i) plus the thesis's eigenvalue computation), not a
-verbatim one; see its docstring.  Consistency check: at `x = 1` (a point of `Γ(G,H)` for every
-`d`) the conclusion is proved outright, without the axiom (`TraceFormula/MGeom.lean`,
+It is not a verbatim citation (BP Lemma B.1.2(i) plus the thesis's eigenvalue computation), so it
+is a `sorry` theorem; see its docstring.  Consistency check: at `x = 1` (a point of `Γ(G,H)` for every
+`d`) the conclusion is proved outright, without the statement (`TraceFormula/MGeom.lean`,
 `integrable_delta_rpow_torusOf_one`).  For `toyData` (`W = 0`) and for `W` of dimension `1` or a
 hyperbolic plane, every torus `T_x` of `Γ(G,H)` is `T_1` (by hand: `W''_x` is even-dimensional,
 and `W''_x = W` split makes `T_x(F)/A_{G,H}(F) ≅ F^×` non-compact), so this covers them.  These
-instances test consistency only: the content of the axiom is `dim W''_x ≥ 2`.
+instances test consistency only: the content of the statement is `dim W''_x ≥ 2`.
 -/
 
 open MeasureTheory
@@ -62,8 +62,12 @@ fixes `W'_x`, so `W''_t ⊆ W''_x`, and `x ∈ T_x = T_t` fixes `W'_t`, so `W''_
 Lemma B.1.2(i), for `F` any local field of characteristic `0` other than `ℂ`.
 
 Stated for `Γ`-tori only (`T = T_x`, `x ∈ Γ(G,H)`); for any other subgroup the integrand is `0`
-(`TraceFormula/MGeom.lean`, `integrable_delta_rpow`). -/
-axiom bp_integrable_deltaGGP_rpow (d : GGPData F) {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
+(`TraceFormula/MGeom.lean`, `integrable_delta_rpow`).
+
+**Status: `sorry`, not a literature axiom** (the statement is not verbatim in a source). Derived, as
+explained above, from BP Lemma B.1.2(i), which applies to any torus over `F` with characters in
+`X^*(T)` over `F̄`. -/
+theorem bp_integrable_deltaGGP_rpow (d : GGPData F) {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
     {s : ℝ} (hs : 0 < s) :
     letI : MeasurableSpace (d.TorusQuot (d.torusOf x)) := borel _
     haveI : BorelSpace (d.TorusQuot (d.torusOf x)) := ⟨rfl⟩
@@ -71,6 +75,7 @@ axiom bp_integrable_deltaGGP_rpow (d : GGPData F) {x : ↥(GSpin d.QW)} (hx : d.
       Set.indicator {t : ↥(GSpin d.QW) | d.IsGammaElt t ∧ d.torusOf t = d.torusOf x}
         (fun t => deltaGGP d t ^ (s - 1 / 2))
         ((Quotient.out q : ↥(d.torusOf x)) : ↥(GSpin d.QW)))
-      (probHaar (d.TorusQuot (d.torusOf x)))
+      (probHaar (d.TorusQuot (d.torusOf x))) := by
+  sorry
 
 end GSpinGGP

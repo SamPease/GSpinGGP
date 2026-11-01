@@ -8,7 +8,7 @@ import GSpinGGP.TraceFormula.Spectral
 import GSpinGGP.TraceFormula.Analytic
 import GSpinGGP.GGP.Descent
 import GSpinGGP.Literature.Localization
-import GSpinGGP.Literature.InvariantSets
+import GSpinGGP.TraceFormula.InvariantSets
 import Mathlib.Algebra.Module.CharacterModule
 
 /-!
@@ -391,7 +391,7 @@ private theorem mGeom_zero : mGeom ψ d (0 : ↥d.G → ℂ) = 0 := by
 
 /-- **Elliptic isolation for quasi-characters** (BP Cor 5.7.2(i) with an elliptic cutoff): every
 `θ ∈ QC(G, χ⁻¹)` agrees on `G_ell,reg(F)` with some `θ_f`, `f ∈ ScuspTestFn d χ`.
-Proved from `exists_scusp_of_qc_bp` (`Scusp.lean`; axiom `bp_scusp_surj_ell`). -/
+Proved from `exists_scusp_of_qc_bp` (`Scusp.lean`; `bp_scusp_surj_ell`). -/
 theorem exists_scusp_eqOn_ell {θ : ↥d.G → ℂ} (hθ : θ ∈ QC d χ) :
     ∃ f ∈ ScuspTestFn d χ, Set.EqOn (thetaF d f) θ d.ellRegSet := by
   obtain ⟨Ω, hΩ, hell, hcpt, htr⟩ := exists_scusp_of_qc_bp d
@@ -487,7 +487,7 @@ Here: `J_qc(θ) = m_geom(θ) + (J(f) − m_geom(θ_f))` for any `f` with `θ_f =
 (`jqcLin`), which is the same by Prop 7.4.1(ii); it avoids BP Cor 5.7.2(ii), Prop 4.8.1(ii) and
 (2.7.2).  Continuity in the `p`-adic topology is compact support (`continuous_qc_of_local`).
 Status: **proved** from `exists_qcCutoff_ellRegSet`, `exists_scusp_eqOn_ell` (both from BP Cor 5.7.2(i)),
-`exists_qcCutoff_mGeom` (proved from the `InvariantSets` axioms and `finite_gammaClass`),
+`exists_qcCutoff_mGeom` (proved from the `InvariantSets` statements and `finite_gammaClass`),
 `exists_virtual_spectral_ell`, `defect_eq_zero_of_vChar_eq_zero_ell`, and the linearity of
 `m_geom`. -/
 theorem exists_isJqc (h : HYP ψ d) (χ : CentralCharOn d) : ∃ J, IsJqc ψ d χ J := by
@@ -651,7 +651,7 @@ containing the closure of `A_G(F) c^{G(F)}` (all `a u`, `u` unipotent); inside `
 `Ω = A_G(F) · a₀ exp(ω)` with `c ∈ a₀ exp(ω)` and `ω` a small `G(F)`-excellent compact open
 neighbourhood of `0` in `𝔤(F)` (BP §3.3), which is open and closed.
 Status: **proved** from the cited `hc_exists_invariantClopen_nearCentral`
-(`Literature/InvariantSets.lean`: an invariant clopen `Ω` containing the near-central set, every
+(`TraceFormula/InvariantSets.lean`: an invariant clopen `Ω` containing the near-central set, every
 element of which is conjugate into `U` modulo `A_G(F)`) and the invariance and `A_G(F)`-equivariance
 of `θ` on `G_reg(F)` (the invariance is part of the quasi-character property, for some `ψ`:
 `nonempty_nontrivialAddChar`). -/

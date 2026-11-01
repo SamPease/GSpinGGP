@@ -23,46 +23,50 @@ $\Rind(G,\eta)$: the span of the virtual tempered representations whose characte
 $i_P^G(\sigma)$, $P$ proper, $\sigma$ tempered with central character $\eta$ (Thesis \S7.4).
 \end{definition}
 
-\begin{literature}[Van Dijk's formula]
-\label{LIT-vanDijk_charG_parInd_ell}
+\begin{theorem}[Van Dijk's formula]
+\label{vanDijk_charG_parInd_ell}
 \lean{GSpinGGP.vanDijk_charG_parInd_ell}
 \leanok
 \uses{CentralCharOn, G, GGPData, GSpin, IsTempered, UnitaryRep, charG, gspin, parInd}
 For $P$ proper and $\sigma$ tempered, $\theta_{i_P^G\sigma}$ vanishes on $\ellreg(F)$.
+\end{theorem}
+\begin{proof}
+Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{vD72}; \cite{BP}, (3.4.2)/(3.4.3) = Thesis (3.5.3.2)}
+\end{proof}
 
-\assumedfrom{\cite{vD72}; \cite{BP}, (3.4.2)/(3.4.3) = Thesis (3.5.3.2)}
-\end{literature}
-
-\begin{literature}[Multiplicity of an induced representation]
-\label{LIT-hc_vMult_eq_mult_parInd}
+\begin{theorem}[Multiplicity of an induced representation]
+\label{hc_vMult_eq_mult_parInd}
 \lean{GSpinGGP.hc_vMult_eq_mult_parInd}
 \leanok
 \uses{CentralCharOn, G, GGPData, GSpin, IsTempered, UnitaryRep, VirtualTemp, charG, gspin, mult, orbitChoice, parInd}
 If a virtual representation $\Pi$ has the character of $i_P^G(\sigma)$ on $\Greg(F)$, then $m(\Pi)=m(i_P^G\sigma)$.
+\end{theorem}
+\begin{proof}
+Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{Harish-Chandra (linear independence of characters); \cite{WalPl}, \S III.4, \S VII; \cite{BP}, \S2.2, \S2.7}
+\end{proof}
 
-\assumedfrom{Harish-Chandra (linear independence of characters); \cite{WalPl}, \S III.4, \S VII; \cite{BP}, \S2.2, \S2.7}
-\end{literature}
-
-\begin{literature}[Vanishing elliptic character means properly induced]
-\label{LIT-arthur_mem_Rind_of_vChar_ell}
+\begin{theorem}[Vanishing elliptic character means properly induced]
+\label{arthur_mem_Rind_of_vChar_ell}
 \lean{GSpinGGP.arthur_mem_Rind_of_vChar_ell}
 \leanok
 \uses{CentralCharOn, G, GGPData, GSpin, IsTempered, Rind, UnitaryRep, VirtualTemp, charG, gspin, mult, orbitChoice}
 If $\Pi\in\Rtemp(G,\eta)$ has $\theta_\Pi=0$ on $\ellreg(F)$, then $\Pi\in\Rind(G,\eta)$.
+\end{theorem}
+\begin{proof}
+Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{Art93}, \S6 (orthogonality of elliptic tempered characters); \cite{BP}, \S2.7, (2.7.1)}
+\end{proof}
 
-\assumedfrom{\cite{Art93}, \S6 (orthogonality of elliptic tempered characters); \cite{BP}, \S2.7, (2.7.1)}
-\end{literature}
-
-\begin{literature}[$\theta_f$ is a virtual character on the elliptic set]
-\label{LIT-bp_exists_vChar_eq_thetaF_ell}
+\begin{theorem}[$\theta_f$ is a virtual character on the elliptic set]
+\label{bp_exists_vChar_eq_thetaF_ell}
 \lean{GSpinGGP.bp_exists_vChar_eq_thetaF_ell}
 \leanok
 \uses{CentralCharOn, G, GGPData, GSpin, IsTempered, ScuspTestFn, UnitaryRep, VirtualTemp, charG, gspin, mult, orbitChoice, thetaF}
 For $f\in\scusp(A_G\backslash G,\eta)$ there is a virtual tempered $\Pi$ with central character $\eta$ with
 $\theta_\Pi=\theta_f$ on $\ellreg(F)$.
-
-\assumedfrom{\cite{BP}, Prop.~5.6.1(ii), Lemma 5.4.2(i) (= Thesis Prop.~4.8.1), adapted to the $\chi$-equivariant setting and a finite sum}
-\end{literature}
+\end{theorem}
+\begin{proof}
+Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{BP}, Prop.~5.6.1(ii), Lemma 5.4.2(i) (= Thesis Prop.~4.8.1), adapted to the $\chi$-equivariant setting and a finite sum}
+\end{proof}
 
 \section{The spectral expansion}
 \begin{proposition}[Thesis Prop.~7.4.1(i) at an induced representation]
@@ -88,7 +92,7 @@ Assume (HYP). The defect vanishes on $\Rind(G,\eta)$ (Thesis Prop.~7.4.1(i), ext
 \end{proposition}
 \begin{proof}
 \leanok
-\uses{GammaClass, IsGammaElt, IsQuasiCharacter, LIT-germ_unique, LIT-hc_vMult_eq_mult_parInd, QC, charG_mem_QC, deltaGGP, germ, gspin, jHat, mGeom, mGeom_add, mult_parInd_eq_mGeom, parInd, tendsto_mGeomS, weylDisc}
+\uses{GammaClass, IsGammaElt, IsQuasiCharacter, LIT-germ_unique, QC, charG_mem_QC, deltaGGP, germ, gspin, hc_vMult_eq_mult_parInd, jHat, mGeom, mGeom_add, mult_parInd_eq_mGeom, parInd, tendsto_mGeomS, weylDisc}
 On a generator: $m(\Pi)=m(i_Q^G\sigma)$, $\mgeom(\Pi)=\mgeom(\theta_{i_Q^G\sigma})$, and these agree.
 \end{proof}
 
@@ -101,7 +105,7 @@ Assume (HYP). If $\theta_\Pi=0$ on $\ellreg(F)$ then $m(\Pi)=\mgeom(\Pi)$.
 \end{proposition}
 \begin{proof}
 \leanok
-\uses{LIT-arthur_mem_Rind_of_vChar_ell, defect_eq_zero_of_mem_Rind}
+\uses{arthur_mem_Rind_of_vChar_ell, defect_eq_zero_of_mem_Rind}
 Such $\Pi$ lie in $\Rind$ (Arthur), where the defect vanishes.
 \end{proof}
 
@@ -130,7 +134,7 @@ $\eta$, $\theta_{\Pi_f}=\theta_f$ on $\ellreg(F)$ and $J(f)-\mgeom(\theta_f)=m(\
 \end{proposition}
 \begin{proof}
 \leanok
-\uses{LIT-bp_exists_vChar_eq_thetaF_ell, thm_9_1_1_ell}
+\uses{bp_exists_vChar_eq_thetaF_ell, thm_9_1_1_ell}
 Combine the previous theorem with the elliptic virtual character of $\theta_f$.
 \end{proof}
 

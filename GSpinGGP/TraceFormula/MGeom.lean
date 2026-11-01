@@ -3,7 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.TraceFormula.Interface
-import GSpinGGP.Literature.GeomMult
+import GSpinGGP.TraceFormula.DeltaIntegrability
 
 /-!
 # `m_geom` on quasi-characters: Thesis Prop 12.1.1
@@ -208,7 +208,7 @@ function `(D^G)^{1/2} c_{θ,O}` is locally bounded (BP Prop 4.5.1), so it suffic
 `∫_{Γ(G,H)} Δ(x)^{s - 1/2} dx` converges for `Re s > 0`, which is BP Lemma B.1.2(i).
 
 Here that argument is split torus by torus into three precisely stated inputs (the first two
-SORRY, the third proved from the axiom `bp_integrable_deltaGGP_rpow`), whose combination is proved
+SORRY, the third proved from `bp_integrable_deltaGGP_rpow`), whose combination is proved
 (`isTorusIntegrable_of_mem_QC`):
 * `germ_bound_of_mem_QC`: `‖D^G(t)^{1/2} c_{θ,O_t}(t)‖ ≤ C` on `T_♮`;
 * `aestronglyMeasurable_torusFn_of_mem_QC`: measurability of the integrand on `T(F)/A_{G,H}(F)`;
@@ -278,7 +278,7 @@ are linearly independent characters of `T`, and `Δ(t) = ∏ |λ_i(t) − 1|·|�
 B.1.2(i) itself is not an axiom: it quantifies over *algebraic* characters of an `F`-torus, which
 this development cannot express, and the naive version for continuous characters is false.
 Its GSpin consequence for the `Γ`-tori `T = T_x` is the literature
-axiom `bp_integrable_deltaGGP_rpow`; for any other subgroup `T` the integrand is `0`.
+theorem `bp_integrable_deltaGGP_rpow`; for any other subgroup `T` the integrand is `0`.
 Status: proved from `bp_integrable_deltaGGP_rpow`. -/
 theorem integrable_delta_rpow (T : Subgroup ↥(GSpin d.QW)) {s : ℝ} (hs : 0 < s) :
     letI : MeasurableSpace (d.TorusQuot T) := borel _

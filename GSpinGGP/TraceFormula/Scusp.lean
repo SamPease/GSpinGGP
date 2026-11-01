@@ -3,8 +3,8 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.TraceFormula.MGeom
-import GSpinGGP.Literature.TraceFormula
-import GSpinGGP.Literature.InvariantSets
+import GSpinGGP.TraceFormula.StronglyCuspidal
+import GSpinGGP.TraceFormula.InvariantSets
 
 /-!
 # Elliptic isolation and cutting quasi-characters
