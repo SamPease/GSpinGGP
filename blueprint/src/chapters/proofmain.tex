@@ -301,7 +301,9 @@ Conjugation by $x$ is a commuting product of left and right multiplication by el
 For $x\in\Gamma(G,H)$, the skew endomorphisms of $W_{\Fbar}$ commuting with $P(x)$ and vanishing on $W'_x\otimes\Fbar$ commute.
 \end{lemma}
 \begin{proof}
-Not yet formalized. Over $F$ this is the commutativity of the moved part of $\mathfrak g_x$ (proved, via the exponential map); the conditions are $F$-linear, so the $\Fbar$-solutions are spanned by the $F$-solutions.
+\leanok
+\uses{InnerTwist, gspin}
+A skew $Y$ lifts to $\hat Y\in\mathfrak{gspin}(W_{\Fbar})$ with $[\hat Y,v]=Y v$; $\hat Y$ commutes with $x$ (the difference $x\hat Yx^{-1}-\hat Y$ is a traceless central element) and with $W'_x\otimes\Fbar$. These are $F$-linear conditions, so by flatness the $\Fbar$-solutions are spanned by the $F$-solutions, which commute by the commutativity of the moved part of $\mathfrak g_x$ over $F$. Then $[[\hat Y_1,\hat Y_2],v]=[Y_1,Y_2]v$.
 \end{proof}
 
 \begin{lemma}[$S_x$ is commutative]
