@@ -6,6 +6,7 @@ import GSpinGGP.GGP.KottwitzSign
 import GSpinGGP.GGP.Hilbert90
 import GSpinGGP.GGP.TwistDescent
 import GSpinGGP.GGP.WittParity
+import GSpinGGP.GGP.TorusCommute
 import GSpinGGP.GGP.QuadClassify
 
 /-!
@@ -1043,26 +1044,6 @@ theorem charpoly_eq_of_intertwine {K M N : Type*} [Field K] [AddCommGroup M] [Mo
       LinearEquiv.coe_coe, ← h, e.apply_symm_apply]
   rw [this, LinearEquiv.charpoly_conj]
 
-/-- A nondegenerate form stays nondegenerate over `F̄` (the Gram determinant is unchanged). -/
-theorem isNondeg_baseChange {V : Type*} [AddCommGroup V] [Module F V] [Module.Finite F V]
-    (Q : QuadraticForm F V) (hQ : IsNondeg Q) :
-    IsNondeg (Q.baseChange (AlgebraicClosure F)) := by
-  unfold IsNondeg bform at *
-  set b := Module.Free.chooseBasis F V
-  rw [QuadraticForm.associated_baseChange,
-    LinearMap.BilinForm.nondegenerate_iff_det_ne_zero (b.baseChange (AlgebraicClosure F))]
-  rw [LinearMap.BilinForm.nondegenerate_iff_det_ne_zero b] at hQ
-  have : LinearMap.BilinForm.toMatrix (b.baseChange (AlgebraicClosure F))
-      (LinearMap.BilinForm.baseChange (AlgebraicClosure F) (QuadraticMap.associated Q)) =
-      (algebraMap F (AlgebraicClosure F)).mapMatrix
-        (LinearMap.BilinForm.toMatrix b (QuadraticMap.associated Q)) := by
-    ext i j
-    rw [LinearMap.BilinForm.toMatrix_apply, RingHom.mapMatrix_apply, Matrix.map_apply,
-      LinearMap.BilinForm.toMatrix_apply, Module.Basis.baseChange_apply,
-      Module.Basis.baseChange_apply, LinearMap.BilinForm.baseChange_tmul, mul_one,
-      Algebra.smul_def, mul_one]
-  rw [this, ← RingHom.map_det]
-  exact (map_ne_zero _).2 hQ
 
 variable {V : Type*} [AddCommGroup V] [Module F V]
 
@@ -1880,21 +1861,35 @@ theorem galGS_mem_torusFbar (x : ↥(GSpin d.QW)) (σ : GalF F)
 
 end EndElemGal
 
-/-- **`S_x(F̄)` is commutative** for `x ∈ Γ(G,H)` (own work).  Route: `S_x(F̄) =
-Z_{SO(W''_x)}(x̄)⁰(F̄)` is the `F̄`-points of a connected reductive group
-whose `F`-points `T_x(F)/A_{G,H}(F)` commute (`IsGammaElt`); `F`-points are Zariski dense
-(Borel, *Linear Algebraic Groups*, 18.3), so it is commutative.
+/-- **`P(x)_{F̄}` is semisimple** for semisimple `x ∈ GSpin(W)(F)` (own work, elementary).  Route:
+left and right multiplication by `x` are commuting semisimple operators on `C(W)`, so conjugation
+`v ↦ x v x⁻¹` is semisimple and so is its restriction to `ι(W)`, which is `P(x)`; semisimplicity
+over `F` of characteristic `0` survives base change to `F̄` (squarefree minimal polynomial). -/
+theorem isSemisimple_specP_baseChange (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) :
+    Module.End.IsSemisimple
+      ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange (AlgebraicClosure F)) :=
+  sorry
 
-Density-free route (not yet formalized): the Lie algebra `L` of the moved part (centralizer of
-`x` in `gspin(W)` killing `ι(W'_x)`) is abelian over `F` (`movedPartAbelian_of_isGammaElt`, proved),
-hence over `F̄` (`L` is cut out by `F`-linear equations and `gspin` commutes with base change,
-`range_gspinBC`); so on `W''_x ⊗ F̄` every eigenvalue `λ ≠ -1` of the semisimple `x̄` is simple and
-`-1` has multiplicity `≤ 2` (otherwise `gl(E_λ)` or `so(E_{-1})` would sit in `L ⊗ F̄`). An element
-of `S_x(F̄)` preserves the eigenspaces, acts by scalars on the lines and by `SO(E_{-1})` on `E_{-1}`
-(the paired lines contribute determinant `1`), and such elements commute. -/
+/-- **The Lie algebra of `S_x` is abelian over `F̄`** (own work).  Route: a skew endomorphism `Y`
+of `W_{F̄}` commuting with `X = P(x)_{F̄}` and vanishing on `ker (X − 1) = W'_x ⊗ F̄` is `ad`
+of an element of `so(W_{F̄}) ⊆ gspin(W_{F̄})` (`gspin = so ⊕ F`) in the centralizer of `x` and
+killing `ι(W'_x ⊗ F̄)`.  These conditions are `F`-linear equations, so their solutions over `F̄`
+are the `F̄`-span of the solutions over `F` (flatness, `range_gspinBC`), which commute by
+`movedPartAbelian_of_isGammaElt`; hence so do the `Y`. -/
+theorem lieAbelian_specP_baseChange (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) :
+    IsomCent.LieAbelian (bform (d.QW.baseChange (AlgebraicClosure F)))
+      ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange (AlgebraicClosure F)) :=
+  sorry
+
+/-- **`S_x(F̄)` is commutative** for `x ∈ Γ(G,H)` (own work).  Proved from the two lemmas above
+by `GGPData.torusBarFbar_commute_of`: the group of determinant-`1` isometries of `W_{F̄}`
+commuting with the semisimple `X` and fixing `ker (X − 1)` is commutative when the corresponding
+Lie algebra is (`IsomCent.commute_of_lieAbelian`: the eigenvalues `λ ≠ ±1` of `X` on `W''_x` are
+simple, `dim E_{−1} ≤ 2`, and on `E_{−1}` the determinant is `1`). -/
 theorem torusBarFbar_commute (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) :
     ∀ s ∈ d.torusBarFbar x, ∀ t ∈ d.torusBarFbar x, Commute s t :=
-  sorry
+  d.torusBarFbar_commute_of x (isSemisimple_specP_baseChange x hx)
+    (lieAbelian_specP_baseChange x hx)
 
 /-- **`S_x(F̄)` is Galois-stable** (own work, elementary): `σ` acts on `GSpin(W)(F̄)` by `galC`,
 fixes `x` and `W'_x ⊗ F̄` (both are defined over `F`), and `P` is defined over `F`, so the matrix of

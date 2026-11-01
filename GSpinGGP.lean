@@ -31,6 +31,7 @@ import GSpinGGP.GGP.TorusTransfer
 import GSpinGGP.GGP.Cocharacter
 import GSpinGGP.GGP.Contraction
 import GSpinGGP.GGP.IsometryCentralizer
+import GSpinGGP.GGP.TorusCommute
 import GSpinGGP.GGP.Levi
 import GSpinGGP.TraceFormula.Basic
 import GSpinGGP.TraceFormula.SpinorNorm
