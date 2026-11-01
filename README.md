@@ -45,13 +45,15 @@ As of October 2026:
   depends on 18 of them: 7 are the analytic core of the local trace formula (Thesis Ch. 8–12,
   e.g. convergence of the distribution `J` and its spectral expansion), the rest smaller lemmas.
 - Results from the literature are assumed as `axiom`s in `GSpinGGP/Literature/`, each with a
-  docstring citing its source. `local_ggp` uses 28 of the 31. Several are adapted to general
+  docstring citing its source. `local_ggp` uses 27 of the 30. Several are adapted to general
   spin groups from statements in the literature for unitary or special orthogonal groups; their
   docstrings say how.
 - Definitions are never axiomatized. `GSpinGGP/Sanity/` checks key definitions on small cases.
 - Classical facts about quadratic forms (Witt cancellation and decomposition, Cartan–Dieudonné,
   the classification over `p`-adic fields) are proved from the
   [Tau Ceti](https://github.com/TauCetiProject/TauCeti) library, which this project depends on.
+- Hilbert's Theorem 90 for `GL_m` is proved (`GGP/Hilbert90.lean`), from Mathlib's linear
+  independence of characters.
 
 To see exactly what the main theorem rests on:
 

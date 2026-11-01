@@ -14,7 +14,7 @@ import GSpinGGP.Literature.GeomMult
 import GSpinGGP.Literature.Arthur
 import GSpinGGP.Literature.LieAlgebra
 import GSpinGGP.Literature.Kottwitz
-import GSpinGGP.Literature.Hilbert90
+import GSpinGGP.GGP.Hilbert90
 import GSpinGGP.Literature.Localization
 import GSpinGGP.Literature.Parabolic
 import GSpinGGP.Literature.InvariantSets
