@@ -266,6 +266,124 @@ theorem finrank_lieCentralizer_lieCentralizer_gspin {Q : QuadraticForm K V} (hQ 
 
 end Centralizer
 
+/-! ## Splitting off the fixed space of an isometry -/
+
+section Fixed
+
+variable {K : Type*} [Field K] [Invertible (2 : K)]
+variable {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
+
+/-- The endomorphisms killing `A`. -/
+def killSub (A : Submodule K V) : Submodule K (Module.End K V) where
+  carrier := {M | ∀ a ∈ A, M a = 0}
+  add_mem' hM hN a ha := by rw [LinearMap.add_apply, hM a ha, hN a ha, add_zero]
+  zero_mem' a _ := rfl
+  smul_mem' c M hM a ha := by rw [LinearMap.smul_apply, hM a ha, smul_zero]
+
+omit [FiniteDimensional K V] in
+theorem bform_comp_subtype (Q : QuadraticForm K V) (A : Submodule K V) (a b : A) :
+    bform (Q.comp A.subtype) a b = bform Q a b := by
+  simp [bform, QuadraticMap.associated_comp]
+
+/-- **`so(V)_{g,N} = so(A)_{N|A} ⊕ (the part killing A)`** for the fixed space `A = ker(g − 1)` of
+an isometry `g` with `V = A ⊥ A^⊥`, and `N ∈ so(V)_g`: restriction to `A` maps `so(V)_{g,N}` onto
+`so(A)_{N|A}` (extend by `0` on `A^⊥`), with kernel the elements killing `A`. -/
+theorem finrank_soCent_inf_eq {Q : QuadraticForm K V} {g N : Module.End K V} {A : Submodule K V}
+    (hA : IsCompl A ((bform Q).orthogonal A)) (hAg : ∀ v, v ∈ A ↔ g v = v)
+    (hgB : ∀ b ∈ (bform Q).orthogonal A, g b ∈ (bform Q).orthogonal A)
+    (hNs : ∀ u w, bform Q (N u) w = -bform Q u (N w)) (hNg : N * g = g * N) :
+    finrank K ↥(soCent Q g ⊓ soCent Q N) =
+      finrank K ↥(soCent (Q.comp A.subtype) (N.restrict (p := A) (q := A) fun a ha =>
+        (hAg _).2 (by rw [← Module.End.mul_apply, ← hNg, Module.End.mul_apply, (hAg a).1 ha]))) +
+      finrank K ↥(soCent Q g ⊓ soCent Q N ⊓ killSub A) := by
+  set B := (bform Q).orthogonal A
+  have hsymm : ∀ x y, bform Q x y = bform Q y x := fun x y => QuadraticMap.associated_isSymm K Q x y
+  -- elements commuting with `g` preserve `A`
+  have hpres : ∀ M : Module.End K V, M * g = g * M → ∀ a ∈ A, M a ∈ A := fun M hM a ha =>
+    (hAg _).2 (by rw [← Module.End.mul_apply, ← hM, Module.End.mul_apply, (hAg a).1 ha])
+  have hNA := hpres N hNg
+  set NA : Module.End K A := N.restrict (p := A) (q := A) hNA
+  -- the projection onto `A` along `B`
+  set π := A.projectionOnto B hA
+  have hπA : ∀ a (ha : a ∈ A), π a = ⟨a, ha⟩ := fun a ha =>
+    Submodule.projectionOnto_apply_of_mem_left hA ha
+  have hπB : ∀ b ∈ B, π b = 0 := fun b hb => Submodule.projectionOnto_apply_of_mem_right hA hb
+  have hsplit : ∀ v, v - (π v : V) ∈ B := fun v => Submodule.sub_projection_mem hA v
+  have hAB : ∀ a ∈ A, ∀ b ∈ B, bform Q a b = 0 := fun a ha b hb => hb a ha
+  -- `bform Q ↑a v = bform Q ↑a ↑(π v)`
+  have hbπ : ∀ (a : A) v, bform Q a v = bform Q a (π v : V) := by
+    intro a v
+    have := hAB a a.2 _ (hsplit v)
+    rw [map_sub, sub_eq_zero] at this
+    exact this
+  have hbπ' : ∀ v (a : A), bform Q v a = bform Q (π v : V) a := fun v a => by
+    rw [hsymm, hbπ, hsymm]
+  have hgπ : ∀ v, π (g v) = π v := by
+    intro v
+    have e : g v = (π v : V) + g (v - π v) := by
+      rw [map_sub, (hAg _).1 (π v).2]; abel
+    rw [e, map_add, hπA _ (π v).2, hπB _ (hgB _ (hsplit v)), add_zero]
+  have hNB : ∀ b ∈ B, N b ∈ B := fun b hb a ha => by
+    change bform Q a (N b) = 0
+    rw [← neg_eq_zero, ← hNs, hAB _ (hNA a ha) b hb]
+  have hNπ : ∀ v, π (N v) = NA (π v) := by
+    intro v
+    have e : N v = N (π v : V) + N (v - π v) := by rw [map_sub]; abel
+    rw [e, map_add, hπA _ (hNA _ (π v).2), hπB _ (hNB _ (hsplit v)), add_zero]
+    rfl
+  let ρ : ↥(soCent Q g ⊓ soCent Q N) →ₗ[K] ↥(soCent (Q.comp A.subtype) NA) :=
+    { toFun := fun M => ⟨(M : Module.End K V).restrict (p := A) (q := A)
+          (hpres M (mem_soCent.mp (Submodule.mem_inf.mp M.2).1).2), by
+        obtain ⟨hMg, hMN⟩ := Submodule.mem_inf.mp M.2
+        obtain ⟨hMs, -⟩ := mem_soCent.mp hMg
+        obtain ⟨-, hMNc⟩ := mem_soCent.mp hMN
+        refine mem_soCent.2 ⟨fun a b => ?_, ?_⟩
+        · rw [bform_comp_subtype, bform_comp_subtype]; exact hMs a b
+        · ext a
+          simp only [Module.End.mul_apply, LinearMap.restrict_apply, NA]
+          exact congrArg (fun T : Module.End K V => T a) hMNc⟩
+      map_add' := fun _ _ => rfl
+      map_smul' := fun _ _ => rfl }
+  have hsurj : Function.Surjective ρ := by
+    rintro ⟨MA, hMA⟩
+    obtain ⟨hMAs, hMAN⟩ := mem_soCent.mp hMA
+    set M : Module.End K V := A.subtype ∘ₗ MA ∘ₗ π
+    have hMv : ∀ v, M v = (MA (π v) : V) := fun v => rfl
+    have hMs : ∀ u w, bform Q (M u) w = -bform Q u (M w) := by
+      intro u w
+      rw [hMv, hMv, hbπ, ← bform_comp_subtype, hMAs, bform_comp_subtype, hbπ' u (MA (π w))]
+    have hMg : M * g = g * M := by
+      ext v
+      simp only [Module.End.mul_apply, hMv, hgπ]
+      exact ((hAg _).1 (MA (π v)).2).symm
+    have hMN : M * N = N * M := by
+      ext v
+      simp only [Module.End.mul_apply, hMv, hNπ]
+      have := congrArg (fun T : Module.End K A => (T (π v) : V)) hMAN
+      simpa [Module.End.mul_apply, NA] using this
+    refine ⟨⟨M, Submodule.mem_inf.mpr ⟨mem_soCent.2 ⟨hMs, hMg⟩, mem_soCent.2 ⟨hMs, hMN⟩⟩⟩, ?_⟩
+    apply Subtype.ext
+    ext a
+    show M a = (MA a : V)
+    rw [hMv, hπA _ a.2]
+  have hker : finrank K (LinearMap.ker ρ) = finrank K ↥(soCent Q g ⊓ soCent Q N ⊓ killSub A) := by
+    have e : LinearMap.ker ρ = (soCent Q g ⊓ soCent Q N ⊓ killSub A).comap
+        (soCent Q g ⊓ soCent Q N).subtype := by
+      ext M
+      simp only [LinearMap.mem_ker, Submodule.mem_comap, Submodule.subtype_apply, Submodule.mem_inf]
+      constructor
+      · intro h
+        refine ⟨Submodule.mem_inf.mp M.2, fun a ha => ?_⟩
+        exact congrArg Subtype.val (LinearMap.congr_fun (congrArg Subtype.val h) ⟨a, ha⟩)
+      · rintro ⟨-, hk⟩
+        exact Subtype.ext (LinearMap.ext fun a => Subtype.ext (hk a a.2))
+    rw [e, (Submodule.comapSubtypeEquivOfLe inf_le_left).finrank_eq]
+  have hrn := LinearMap.finrank_range_add_finrank_ker (V₂ := ↥(soCent (Q.comp A.subtype) NA)) ρ
+  rw [LinearMap.range_eq_top.2 hsurj, finrank_top, hker] at hrn
+  exact hrn.symm
+
+end Fixed
+
 /-! ## An upper bound from a Jordan chain -/
 
 section Chain
