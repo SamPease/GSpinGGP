@@ -11,10 +11,10 @@ import GSpinGGP.Foundations.LocalGroups
 * `exists_localInverse_exp`: in a complete normed algebra over a nontrivially normed field of
   characteristic `0` in which the exponential series has positive radius (any `p`-adic or real
   Banach algebra), `exp` has a continuous local inverse `L` at `1`, injective domain included;
-* `exp_units_conj_of_mem_ball`: `exp(g x g⁻¹) = g exp(x) g⁻¹` without a `ℚ`-normed structure;
 * `commute_of_commute_exp`: on an injectivity domain of `exp`, `Y` commutes with everything
   commuting with `exp Y` (so the local inverse `L(c)` commutes with the commutant of `c`);
 * `eventually_map_expA`: `φ(e^X) = e^{φ X}` near `0` for linear maps preserving powers;
+* `stabSubalgebra`, `expA_ad_eq`: `e^{ad Y} = Ad(e^Y)` near `0` in `End(A)`;
 * `exists_logA`: a local logarithm `log`, continuous at `1`, with `e^{log u} = u` near `1`
   (no logarithm series: the local inverse of `exp` on `End(F^d)` restricted to `A`).
 -/
@@ -58,27 +58,6 @@ open NormedSpace
 
 variable {𝕂 E : Type*} [NontriviallyNormedField 𝕂] [CharZero 𝕂] [NormedRing E] [NormedAlgebra 𝕂 E]
   [CompleteSpace E]
-
-/-- `exp(g x g⁻¹) = g exp(x) g⁻¹` when the exponential series of `x` converges. -/
-theorem exp_units_conj_of_mem_ball (g : Eˣ) {x : E}
-    (hx : x ∈ Metric.eball (0 : E) (expSeries 𝕂 E).radius) :
-    exp ((g : E) * x * ↑g⁻¹) = (g : E) * exp x * ↑g⁻¹ := by
-  have h := expSeries_hasSum_exp_of_mem_ball' (𝕂 := 𝕂) x hx
-  have hc : Continuous fun a : E => (g : E) * a * ↑g⁻¹ :=
-    (continuous_const.mul continuous_id).mul continuous_const
-  have h' := h.map ((AddMonoidHom.mulLeft (g : E)).comp (AddMonoidHom.mulRight (↑g⁻¹ : E))) (by
-    simpa [Function.comp_def, mul_assoc] using hc)
-  have e : ∀ n : ℕ, (AddMonoidHom.mulLeft (g : E)).comp (AddMonoidHom.mulRight (↑g⁻¹ : E))
-      (((n.factorial : 𝕂)⁻¹) • x ^ n) = ((n.factorial : 𝕂)⁻¹) • ((g : E) * x * ↑g⁻¹) ^ n := by
-    intro n
-    simp only [AddMonoidHom.comp_apply, AddMonoidHom.coe_mulLeft, AddMonoidHom.coe_mulRight]
-    rw [Units.conj_pow]
-    simp only [smul_mul_assoc, mul_smul_comm, mul_assoc]
-  simp only [Function.comp_def, e] at h'
-  calc exp ((g : E) * x * ↑g⁻¹) = ∑' n : ℕ, ((n.factorial : 𝕂)⁻¹) • ((g : E) * x * ↑g⁻¹) ^ n :=
-        congrFun (exp_eq_tsum 𝕂) _
-    _ = _ := h'.tsum_eq
-    _ = (g : E) * exp x * ↑g⁻¹ := by simp [mul_assoc]
 
 /-- **Local inverse of `exp` at `1`** (inverse function theorem): there are open `s ∋ 0` (inside the
 ball of convergence) and `t ∋ 1` and `L : E → E`, continuous at `1` with `L 1 = 0`, such that
@@ -139,8 +118,16 @@ theorem commute_of_commute_exp {s : Set E} (hs : IsOpen s)
   have hginv : Ring.inverse (1 + ε • z) = ↑g⁻¹ := by rw [← hgv, Ring.inverse_unit]
   rw [hginv, ← hgv] at hεs
   have hgc : Commute (g : E) (exp Y) := by rw [hgv]; exact (Commute.one_left _).add_left (hz.smul_left ε)
+  -- conjugation by `g` is a continuous ring homomorphism, so it commutes with `exp`
+  set φ := MulSemiringAction.toRingHom (ConjAct Eˣ) E (ConjAct.toConjAct g)
+  have hφ : ∀ x : E, φ x = (g : E) * x * ↑g⁻¹ := fun x => by
+    simp [φ, ConjAct.units_smul_def]
+  have hφc : Continuous φ := by
+    rw [show (φ : E → E) = fun x => (g : E) * x * ↑g⁻¹ from funext hφ]
+    fun_prop
   have hexp : exp ((g : E) * Y * ↑g⁻¹) = exp Y := by
-    rw [exp_units_conj_of_mem_ball g (hsr hY), hgc.eq, mul_assoc, Units.mul_inv, mul_one]
+    rw [← hφ, ← map_exp_of_mem_ball (𝕂 := 𝕂) φ hφc Y (hsr hY), hφ, hgc.eq, mul_assoc,
+      Units.mul_inv, mul_one]
   have hYeq := hinj hεs hY hexp
   have h3 : (g : E) * Y = Y * g := by
     calc (g : E) * Y = (g : E) * Y * ↑g⁻¹ * g := by rw [mul_assoc _ (↑g⁻¹ : E), Units.inv_mul, mul_one]
@@ -222,5 +209,66 @@ theorem exists_logA : ∃ log : A → A, ContinuousAt log 1 ∧ log 1 = 0 ∧
   rwa [lmulPiInv_lmulPi, lmulPiInv_lmulPi] at this
 
 end Log
+
+/-- The endomorphisms of `M` preserving the submodule `p`, as a subalgebra of `End(M)`. -/
+def stabSubalgebra {R M : Type*} [CommRing R] [AddCommGroup M] [Module R M] (p : Submodule R M) :
+    Subalgebra R (Module.End R M) where
+  carrier := {f | ∀ v ∈ p, f v ∈ p}
+  mul_mem' hf hg v hv := hf _ (hg v hv)
+  add_mem' hf hg v hv := p.add_mem (hf v hv) (hg v hv)
+  algebraMap_mem' c v hv := by
+    simpa [Module.algebraMap_end_apply] using p.smul_mem c hv
+
+theorem mem_stabSubalgebra {R M : Type*} [CommRing R] [AddCommGroup M] [Module R M]
+    {p : Submodule R M} {f : Module.End R M} : f ∈ stabSubalgebra p ↔ ∀ v ∈ p, f v ∈ p :=
+  Iff.rfl
+
+section Ad
+
+variable {F} {B : Type*} [Ring B] [Algebra F B]
+
+/-- Right multiplication as a linear map `B → End(B)`. -/
+def mulRightₗ : B →ₗ[F] Module.End F B := (LinearMap.mul F B).flip
+
+omit [PAdicField F] in
+theorem mulRightₗ_apply (a : B) : mulRightₗ (F := F) a = LinearMap.mulRight F a := rfl
+
+variable [Module.Finite F B] [TopologicalSpace B] [IsModuleTopology F B]
+
+variable (F) in
+/-- **`e^{ad Y} = Ad(e^Y)`** for `Y` near `0`, in `End(B)` with its module topology:
+`ad Y = L_Y − R_Y` with commuting `L_Y`, `R_Y`, and `e^{L_Y} = L_{e^Y}`, `e^{−R_Y} = R_{e^{−Y}}`. -/
+theorem expA_ad_eq [TopologicalSpace (Module.End F B)] [IsModuleTopology F (Module.End F B)] :
+    ∀ᶠ Y in 𝓝 (0 : B), expA F (LinearMap.mulLeft F Y - LinearMap.mulRight F Y) =
+      LinearMap.mulLeft F (expA F Y) * LinearMap.mulRight F (expA F (-Y)) := by
+  letI := isTopologicalRing_of_moduleTopology F B
+  letI := isTopologicalRing_of_moduleTopology F (Module.End F B)
+  obtain ⟨UB, hUB, hadd⟩ := expA_add_of_commute F (A := Module.End F B)
+  have hl := eventually_map_expA (F := F) (A := B) (B := Module.End F B)
+    (Algebra.lmul F B).toLinearMap (fun X n => map_pow (Algebra.lmul F B) X n)
+  have hr := eventually_map_expA (F := F) (A := B) (B := Module.End F B) mulRightₗ
+    (fun X n => by rw [mulRightₗ_apply, mulRightₗ_apply, LinearMap.pow_mulRight])
+  have hcl : Continuous ((Algebra.lmul F B).toLinearMap : B → Module.End F B) :=
+    IsModuleTopology.continuous_of_linearMap _
+  have hcr : Continuous (mulRightₗ (F := F) : B → Module.End F B) :=
+    IsModuleTopology.continuous_of_linearMap _
+  have h1 : (fun Y : B => (Algebra.lmul F B).toLinearMap Y) ⁻¹' UB ∈ 𝓝 (0 : B) :=
+    hcl.continuousAt.preimage_mem_nhds (by rwa [map_zero])
+  have h2 : (fun Y : B => -mulRightₗ (F := F) Y) ⁻¹' UB ∈ 𝓝 (0 : B) :=
+    hcr.neg.continuousAt.preimage_mem_nhds (by simpa using hUB)
+  have hr' : ∀ᶠ Y in 𝓝 (0 : B), mulRightₗ (F := F) (expA F (-Y)) = expA F (mulRightₗ (-Y)) :=
+    (continuous_neg.tendsto' (0 : B) 0 neg_zero).eventually hr
+  filter_upwards [hl, hr', h1, h2] with Y hlY hrY h1Y h2Y
+  have hc : Commute (LinearMap.mulLeft F Y) (-LinearMap.mulRight F Y) :=
+    (LinearMap.commute_mulLeft_right Y Y).neg_right
+  have h1Y' : LinearMap.mulLeft F Y ∈ UB := h1Y
+  have h2Y' : -LinearMap.mulRight F Y ∈ UB := h2Y
+  rw [sub_eq_add_neg, hadd _ h1Y' _ h2Y' hc]
+  congr 1
+  · exact hlY.symm
+  · rw [mulRightₗ_apply, map_neg, mulRightₗ_apply] at hrY
+    exact hrY.symm
+
+end Ad
 
 end GSpinGGP

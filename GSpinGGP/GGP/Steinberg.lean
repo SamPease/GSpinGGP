@@ -18,7 +18,7 @@ Over an algebraically closed field this is `commute_iff_det_negFixedSub`; it des
 of characteristic `0` by base change (`commute_iff`). The `W₊₁` condition then comes for free, since
 `det P(g) = det P(g)|_{W₊₁} · det P(g)|_{W₋₁}` (`IsomCent.det_eq_det_one_mul_det_neg_one_of_charZero`).
 
-* `isNondeg_baseChange`, `isSemisimple_specP_of_isSS`, `bcGSpin`, `specP_bcGSpin`: base change of
+* `isSemisimple_specP_of_isSS`, `bcGSpin`, `specP_bcGSpin`: base change of
   `GSpin(V)` along `K → K̄`, over any field.
 -/
 
@@ -34,26 +34,6 @@ namespace GSpinGGP
 section BaseChange
 
 variable {K : Type*} [Field K] [Invertible (2 : K)] {V : Type*} [AddCommGroup V] [Module K V]
-
-/-- A nondegenerate form stays nondegenerate over `K̄` (the Gram determinant is unchanged). -/
-theorem isNondeg_baseChange [Module.Finite K V] (Q : QuadraticForm K V) (hQ : IsNondeg Q) :
-    IsNondeg (Q.baseChange (AlgebraicClosure K)) := by
-  unfold IsNondeg bform at *
-  set b := Module.Free.chooseBasis K V
-  rw [QuadraticForm.associated_baseChange,
-    LinearMap.BilinForm.nondegenerate_iff_det_ne_zero (b.baseChange (AlgebraicClosure K))]
-  rw [LinearMap.BilinForm.nondegenerate_iff_det_ne_zero b] at hQ
-  have : LinearMap.BilinForm.toMatrix (b.baseChange (AlgebraicClosure K))
-      (LinearMap.BilinForm.baseChange (AlgebraicClosure K) (QuadraticMap.associated Q)) =
-      (algebraMap K (AlgebraicClosure K)).mapMatrix
-        (LinearMap.BilinForm.toMatrix b (QuadraticMap.associated Q)) := by
-    ext i j
-    rw [LinearMap.BilinForm.toMatrix_apply, RingHom.mapMatrix_apply, Matrix.map_apply,
-      LinearMap.BilinForm.toMatrix_apply, Module.Basis.baseChange_apply,
-      Module.Basis.baseChange_apply, LinearMap.BilinForm.baseChange_tmul, mul_one,
-      Algebra.smul_def, mul_one]
-  rw [this, ← RingHom.map_det]
-  exact (map_ne_zero _).2 hQ
 
 /-- Base change `GSpin(Q)(K) → GSpin(Q)(K̄)`. -/
 def bcGSpin (Q : QuadraticForm K V) : GSpin Q →* GSpin (Q.baseChange (AlgebraicClosure K)) where
@@ -74,19 +54,6 @@ theorem specP_bcGSpin (Q : QuadraticForm K V) (t : GSpin Q) :
 
 section Semisimple
 
-/-- `p(R_x) = R_{p(x)}` for right multiplication. -/
-theorem aeval_mulRight {A : Type*} [Ring A] [Algebra K A] (x : A) (p : Polynomial K) :
-    Polynomial.aeval (LinearMap.mulRight K x) p = LinearMap.mulRight K (Polynomial.aeval x p) := by
-  induction p using Polynomial.induction_on' with
-  | add p q hp hq =>
-    rw [map_add, map_add, hp, hq]
-    ext z; simp [mul_add]
-  | monomial n a =>
-    ext z
-    simp only [Polynomial.aeval_monomial, Module.End.mul_apply, Module.algebraMap_end_apply,
-      LinearMap.pow_mulRight, LinearMap.mulRight_apply]
-    rw [Algebra.smul_def, ← mul_assoc, ← mul_assoc, Algebra.commutes]
-
 variable [Module.Finite K V] [PerfectField K]
 
 open Polynomial
@@ -99,41 +66,9 @@ theorem isSemisimple_specP_of_isSS (Q : QuadraticForm K V) (x : GSpin Q)
   set a : CliffordAlgebra Q := (((x : (CliffordAlgebra Q)ˣ)) : CliffordAlgebra Q) with ha
   set ai : CliffordAlgebra Q :=
     ((((x : (CliffordAlgebra Q)ˣ))⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) with hai
-  -- `a⁻¹ ∈ K[a]`
-  have hinv : ai ∈ Algebra.adjoin K {a} := by
-    let A := Algebra.adjoin K {a}
-    let f : A →ₗ[K] A := LinearMap.mulLeft K (⟨a, Algebra.subset_adjoin rfl⟩ : A)
-    have hinj : Function.Injective f := by
-      intro y z h
-      apply Subtype.ext
-      have h' : a * (y : CliffordAlgebra Q) = a * z := congrArg Subtype.val h
-      have := congrArg (ai * ·) h'
-      simpa only [← mul_assoc, ha, hai, Units.inv_mul, one_mul] using this
-    obtain ⟨y, hy⟩ := (LinearMap.injective_iff_surjective.1 hinj) 1
-    have hy' : a * (y : CliffordAlgebra Q) = 1 := congrArg Subtype.val hy
-    have : (y : CliffordAlgebra Q) = ai := by
-      calc (y : CliffordAlgebra Q) = ai * (a * y) := by
-            rw [← mul_assoc, hai, ha, Units.inv_mul, one_mul]
-        _ = ai := by rw [hy', mul_one]
-    rw [← this]; exact y.2
-  -- `L_a` and `R_{a⁻¹}` are commuting semisimple operators
-  have hqa : aeval a (minpoly K (LinearMap.mulLeft K a)) = 0 := by
-    have h0 : aeval (LinearMap.mulLeft K a) (minpoly K (LinearMap.mulLeft K a)) = 0 :=
-      minpoly.aeval K _
-    rw [show LinearMap.mulLeft K a = Algebra.lmul K (CliffordAlgebra Q) a from rfl,
-      aeval_algHom_apply] at h0
-    exact Algebra.lmul_injective (R := K) (h0.trans (map_zero _).symm)
-  have hRa : Module.End.IsSemisimple (LinearMap.mulRight K a) :=
-    Module.End.isSemisimple_of_squarefree_aeval_eq_zero hx.minpoly_squarefree
-      (by rw [aeval_mulRight, hqa, LinearMap.mulRight_zero_eq_zero])
-  have hRai : Module.End.IsSemisimple (LinearMap.mulRight K ai) := by
-    rw [Algebra.adjoin_singleton_eq_range_aeval] at hinv
-    obtain ⟨r, hr⟩ := hinv
-    have hr' : aeval a r = ai := hr
-    rw [← hr', ← aeval_mulRight]
-    exact hRa.aeval r
+  -- `c = L_a R_{a⁻¹}` is semisimple
   have hc : Module.End.IsSemisimple (LinearMap.mulLeft K a * LinearMap.mulRight K ai) :=
-    Module.End.IsSemisimple.mul_of_commute (LinearMap.commute_mulLeft_right a ai) hx hRai
+    isSemisimple_conj_of_mulLeft hx
   -- `ι ∘ P(x) = c ∘ ι`, so the minimal polynomial of `c` kills `P(x)`
   set c := LinearMap.mulLeft K a * LinearMap.mulRight K ai
   have hint : ∀ v, ι Q (specP Q x v) = c (ι Q v) := fun v => by

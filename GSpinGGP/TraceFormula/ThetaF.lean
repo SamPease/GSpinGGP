@@ -1033,14 +1033,7 @@ theorem mul_mem_regularSet_of_mem_AG (a : ↥d.AG) {g : ↥d.G} (hg : g ∈ regu
     · intro h
       rw [mul_assoc, h, ← mul_assoc, hAc Y hY, mul_assoc]
   refine ⟨?_, hC ▸ hg.2⟩
-  have hcomm : Commute (LinearMap.mulLeft F A)
-      (LinearMap.mulLeft F (((g : ↥d.G) : d.ambientˣ) : d.ambient)) := by
-    change LinearMap.mulLeft F A * LinearMap.mulLeft F _ = LinearMap.mulLeft F _ * LinearMap.mulLeft F A
-    refine LinearMap.ext fun w => ?_
-    simp only [Module.End.mul_apply, LinearMap.mulLeft_apply, ← mul_assoc, hAg]
-  have := Module.End.IsSemisimple.mul_of_commute hcomm hAss hg.1
-  unfold IsSS
-  rwa [LinearMap.mulLeft_mul]
+  exact isSS_mul_of_commute hAg hAss hg.1
 
 open Classical Polynomial in
 /-- An element of `A_G(F)` is semisimple in `C(W) × C(V)` and commutes with `𝔤` (the first half of
@@ -1086,15 +1079,8 @@ theorem coe_AG_commute (a : ↥d.AG) (g : ↥d.G) :
 /-- `a x` is semisimple for `a ∈ A_G(F)` and semisimple `x`. -/
 theorem isSS_mul_AG (a : ↥d.AG) {x : ↥d.G} (hx : IsSS F ((x : d.ambientˣ) : d.ambient)) :
     IsSS F ((((a : ↥d.G) * x : ↥d.G) : d.ambientˣ) : d.ambient) := by
-  have hcomm : Commute (LinearMap.mulLeft F (((a : ↥d.G) : d.ambientˣ) : d.ambient))
-      (LinearMap.mulLeft F ((x : d.ambientˣ) : d.ambient)) := by
-    change LinearMap.mulLeft F _ * LinearMap.mulLeft F _ = LinearMap.mulLeft F _ * LinearMap.mulLeft F _
-    refine LinearMap.ext fun w => ?_
-    simp only [Module.End.mul_apply, LinearMap.mulLeft_apply, ← mul_assoc, coe_AG_commute d a x]
-  have := Module.End.IsSemisimple.mul_of_commute hcomm (coe_AG_spec d a).1 hx
-  unfold IsSS
-  rw [Subgroup.coe_mul, Units.val_mul, LinearMap.mulLeft_mul]
-  exact this
+  rw [Subgroup.coe_mul, Units.val_mul]
+  exact isSS_mul_of_commute (coe_AG_commute d a x) (coe_AG_spec d a).1 hx
 
 /-- `𝔤_{a x} = 𝔤_x` for `a ∈ A_G(F)`. -/
 theorem lieCentralizer_mul_AG (a : ↥d.AG) (x : ↥d.G) :

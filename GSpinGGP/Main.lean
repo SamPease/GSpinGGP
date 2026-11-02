@@ -1784,7 +1784,7 @@ Lie algebra is (`IsomCent.commute_of_lieAbelian`: the eigenvalues `λ ≠ ±1` o
 simple, `dim E_{−1} ≤ 2`, and on `E_{−1}` the determinant is `1`). -/
 theorem torusBarFbar_commute (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) :
     ∀ s ∈ d.torusBarFbar x, ∀ t ∈ d.torusBarFbar x, Commute s t :=
-  d.torusBarFbar_commute_of x (isSemisimple_specP_baseChange x hx)
+  d.torusBarFbar_commute_of x (isSemisimple_specP_baseChange x hx.1)
     (lieAbelian_specP_baseChange x hx)
 
 /-- **`S_x(F̄)` is Galois-stable** (own work, elementary): `σ` acts on `GSpin(W)(F̄)` by `galC`,

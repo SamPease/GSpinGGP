@@ -3,7 +3,6 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.GGP.Steinberg
-import TauCeti.RingTheory.Adjoin.Unit
 
 /-!
 # Semisimplicity in `GSpin(V)` is detected by `P`
@@ -30,33 +29,6 @@ open scoped TensorProduct
 namespace GSpinGGP
 
 variable {K : Type*} [Field K]
-
-/-- If left multiplication by `a` is semisimple, so is right multiplication by `a` (both are
-annihilated by the squarefree minimal polynomial of `L_a`). -/
-theorem isSemisimple_mulRight_of_mulLeft {A : Type*} [Ring A] [Algebra K A] [FiniteDimensional K A]
-    {a : A} (ha : Module.End.IsSemisimple (LinearMap.mulLeft K a)) :
-    Module.End.IsSemisimple (LinearMap.mulRight K a) := by
-  refine Module.End.isSemisimple_of_squarefree_aeval_eq_zero ha.minpoly_squarefree ?_
-  have hpa : aeval a (minpoly K (LinearMap.mulLeft K a)) = 0 := by
-    have h1 : aeval (Algebra.lmul K A a) (minpoly K (LinearMap.mulLeft K a)) =
-        Algebra.lmul K A (aeval a (minpoly K (LinearMap.mulLeft K a))) :=
-      aeval_algHom_apply (Algebra.lmul K A) a _
-    have h2 : aeval (LinearMap.mulLeft K a) (minpoly K (LinearMap.mulLeft K a)) = 0 :=
-      minpoly.aeval K _
-    have h3 := congrArg (fun f : Module.End K A => f 1) (h1.symm.trans h2)
-    simpa using h3
-  have hR : ∀ q : K[X], aeval (LinearMap.mulRight K a) q = LinearMap.mulRight K (aeval a q) := by
-    intro q
-    induction q using Polynomial.induction_on' with
-    | add p q hp hq =>
-      rw [map_add, map_add, hp, hq]
-      ext z; simp [mul_add]
-    | monomial k c =>
-      ext z
-      simp only [aeval_monomial, Module.End.mul_apply, Module.algebraMap_end_apply,
-        LinearMap.mulRight_apply, LinearMap.pow_mulRight, Algebra.smul_def,
-        mul_assoc, Algebra.commutes]
-  rw [hR, hpa, LinearMap.mulRight_zero_eq_zero]
 
 variable [CharZero K] [Invertible (2 : K)] {V : Type*} [AddCommGroup V] [Module K V]
   [FiniteDimensional K V]
@@ -153,16 +125,9 @@ theorem isSS_of_isSemisimple_specP_baseChange {Q : QuadraticForm K V} (hQ : IsNo
   have hssi : s * si = 1 := by rw [← hsUs]; exact sU.mul_inv
   have hxxi : xi * X = 1 := xU.inv_mul
   -- `c_s = L_s R_{s⁻¹}` is semisimple
-  have hLsi : Module.End.IsSemisimple (LinearMap.mulLeft K si) := by
-    refine hLs.of_mem_adjoin_singleton ?_
-    have : (Algebra.adjoin K {s}).map (Algebra.lmul K A) =
-        Algebra.adjoin K {LinearMap.mulLeft K s} := by
-      rw [AlgHom.map_adjoin_singleton]; rfl
-    rw [← this]
-    exact ⟨si, hsi_adj, rfl⟩
-  have hcs : Module.End.IsSemisimple (LinearMap.mulLeft K s * LinearMap.mulRight K si) :=
-    Module.End.IsSemisimple.mul_of_commute (LinearMap.commute_mulLeft_right s si) hLs
-      (isSemisimple_mulRight_of_mulLeft hLsi)
+  have hcs : Module.End.IsSemisimple (LinearMap.mulLeft K s * LinearMap.mulRight K si) := by
+    have := isSemisimple_conj_of_mulLeft (u := sU) (by rw [hsUs]; exact hLs)
+    rwa [hsUs] at this
   -- the nilpotent part `N = c_x − c_s = L_n R_{X⁻¹} + L_s R_w`, `w = X⁻¹ − s⁻¹`
   set w : A := xi - si with hwdef
   have hwB : w ∈ B := B.sub_mem hxiB hsiB

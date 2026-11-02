@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.GGP.TorusCommute
+import GSpinGGP.Foundations.ExpLocal
 
 /-!
 # The moved part of the centralizer of `x ∈ GSpin(W)(F)`
@@ -10,7 +11,10 @@ import GSpinGGP.GGP.TorusCommute
 For `x ∈ GSpin(W)(F)`, the *moved part* of the Lie centralizer is
 `𝔩_x = {X ∈ gspin(W) : [X, x] = 0, [X, ι(W'_x)] = 0}` (`so(W''_x)_{x̄} ⊕ F`).
 
-* `MovedPart.exists_nhds_expA_mem_GSpin`: `e^X ∈ GSpin(W)(F)` for small `X ∈ gspin(W)`;
+* `MovedPart.exists_nhds_expA_mem_GSpin`: `e^X ∈ GSpin(W)(F)` for small `X ∈ gspin(W)`, and
+  conversely `eventually_mem_gspin_of_expA_mem`;
+* `exists_gspin_commute_iff`: an element of `GSpin` with the commutant of a given `Z ∈ gspin`;
+  `mem_torusOf_of_commute`: commuting with `x` and `ι(W'_x)` puts `g` in `T_x`;
 * `movedPartAbelian_of_isGammaElt`: `𝔩_x` is abelian for `x ∈ Γ(G,H)`;
 * `gspinBC`, `movedCentMap`, `gspinBC_commute_of_mem`: `𝔩_x ⊗ F̄` and its commutativity;
 * `lieAbelian_specP_baseChange_of_movedPartAbelian`: if `𝔩_x` is abelian, so is the Lie algebra
@@ -34,127 +38,37 @@ variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 /-! ### The moved part on `Γ(G,H)` (helpers for `movedPartAbelian_of_isGammaElt`)
 
 The exponential of a small element of `gspin(W)` lies in `GSpin(W)(F)`
-(`MovedPart.exists_nhds_expA_mem_GSpin`): conjugation by `e^X` is `e^{ad X}` (computed in
-`End(F^d)` via left and right multiplication), which preserves the `ad X`-stable closed subspace
-`ι(W)`. -/
+(`MovedPart.exists_nhds_expA_mem_GSpin`): conjugation by `e^X` is `e^{ad X}` (`expA_ad_eq`), which
+preserves the `ad X`-stable subspace `ι(W)`. -/
 
 namespace MovedPart
 
 variable {A : Type*} [Ring A] [Algebra F A] [Module.Finite F A] [TopologicalSpace A]
   [IsModuleTopology F A]
 
-local notation "VA" => (Fin (Module.finrank F A) → F)
-
-variable (F) in
-/-- Right multiplication by `a`, transported to a continuous endomorphism of `F^d`. -/
-def rmulPi (a : A) : VA →L[F] VA :=
-  LinearMap.toContinuousLinearMap
-    ((toPiCLE F A).toLinearEquiv.toLinearMap ∘ₗ LinearMap.mulRight F a ∘ₗ
-      (toPiCLE F A).symm.toLinearEquiv.toLinearMap)
-
-lemma rmulPi_apply (a : A) (v : VA) :
-    rmulPi F a v = toPiCLE F A ((toPiCLE F A).symm v * a) := rfl
-
-variable (F) in
-/-- `a ↦ rmulPi a` as a linear map. -/
-def rmulPiₗ : A →ₗ[F] (VA →L[F] VA) where
-  toFun := rmulPi F
-  map_add' a b := ContinuousLinearMap.ext fun v => by simp [rmulPi_apply, mul_add]
-  map_smul' c a := ContinuousLinearMap.ext fun v => by simp [rmulPi_apply]
-
-lemma continuous_rmulPi : Continuous (rmulPi F : A → VA →L[F] VA) :=
-  IsModuleTopology.continuous_of_linearMap (rmulPiₗ F)
-
-lemma rmulPi_mul (a b : A) : rmulPi F (a * b) = rmulPi F b * rmulPi F a :=
-  ContinuousLinearMap.ext fun v => by simp [rmulPi_apply, mul_assoc]
-
-lemma rmulPi_pow (a : A) (n : ℕ) : rmulPi F (a ^ n) = rmulPi F a ^ n := by
-  induction n with
-  | zero => ext v; simp [rmulPi_apply]
-  | succ n ih => rw [pow_succ', rmulPi_mul, ih, pow_succ]
-
-lemma commute_lmulPi_rmulPi (a b : A) : Commute (lmulPi F a) (rmulPi F b) := by
-  ext v
-  simp [lmulPi_apply, rmulPi_apply, mul_assoc]
-
-lemma rmulPi_expA_neg_aux {X : A}
-    (hs : HasSum (fun n : ℕ ↦ ((n.factorial : F)⁻¹) • (-X) ^ n) (expA F (-X))) :
-    rmulPi F (expA F (-X)) = NormedSpace.exp (rmulPi F (-X)) := by
-  have h2 := hs.map (rmulPiₗ F) (continuous_rmulPi (F := F))
-  have hterm : ((rmulPiₗ F : A →ₗ[F] (VA →L[F] VA)) ∘
-      fun n : ℕ ↦ ((n.factorial : F)⁻¹) • (-X) ^ n) =
-      fun n ↦ ((n.factorial : F)⁻¹) • rmulPi F (-X) ^ n := by
-    funext n
-    simp only [Function.comp_apply, map_smul]
-    rw [show (rmulPiₗ F) ((-X) ^ n) = rmulPi F ((-X) ^ n) from rfl, rmulPi_pow]
-  rw [hterm] at h2
-  rw [NormedSpace.exp_eq_tsum F]
-  exact h2.tsum_eq.symm
-
-/-- **`e^X r e^{-X}` stays in an `ad X`-stable subspace** for `X` near `0`: in `End(F^d)`,
-`L_{e^X} R_{e^{-X}} = e^{L_X} e^{-R_X} = e^{L_X - R_X} = e^{ad X}` (left and right multiplications
-commute), and `e^{ad X} r = ∑ (ad X)ⁿ r / n!` lies in the closed subspace `R`. -/
+/-- **`e^X r e^{-X}` stays in an `ad X`-stable subspace** for `X` near `0`: in `End(A)`,
+`L_{e^X} R_{e^{-X}} = e^{ad X}` (`expA_ad_eq`), and `e^{ad X} ∈ F[ad X]` preserves `R`. -/
 lemma exists_nhds_expA_conj_mem :
     ∃ U ∈ 𝓝 (0 : A), ∀ X ∈ U, ∀ R : Submodule F A, (∀ r ∈ R, X * r - r * X ∈ R) →
       ∀ r ∈ R, expA F X * r * expA F (-X) ∈ R := by
-  let _ := isTopologicalRing_of_moduleTopology F A
-  have _ := t2Space_of_moduleTopology F A
-  obtain ⟨U₀, hU₀, hneg, h⟩ := expA_aux F (A := A)
-  set B := Metric.eball (0 : VA →L[F] VA) (NormedSpace.expSeries F (VA →L[F] VA)).radius
-  have hB0 : (0 : VA →L[F] VA) ∈ B := by
-    rw [Metric.mem_eball, edist_self]
-    exact expSeries_radius_pos_of_pAdic F (VA →L[F] VA)
-  let adPi : A → (VA →L[F] VA) := fun X => lmulPi F X - rmulPi F X
-  have hadc : Continuous adPi := (continuous_lmulPi F).sub (continuous_rmulPi (F := F))
-  have hrc : Continuous fun X : A => rmulPi F (-X) := (continuous_rmulPi (F := F)).comp continuous_neg
-  refine ⟨U₀ ∩ ((fun X : A => rmulPi F (-X)) ⁻¹' B) ∩ (adPi ⁻¹' B), ?_, ?_⟩
-  · refine inter_mem (inter_mem hU₀ ?_) ?_
-    · refine (Metric.isOpen_eball.preimage hrc).mem_nhds ?_
-      show rmulPi F (-0 : A) ∈ B
-      rw [neg_zero, show rmulPi F (0 : A) = 0 from map_zero (rmulPiₗ F)]
-      exact hB0
-    · refine (Metric.isOpen_eball.preimage hadc).mem_nhds ?_
-      show lmulPi F (0 : A) - rmulPi F 0 ∈ B
-      rw [show rmulPi F (0 : A) = 0 from map_zero (rmulPiₗ F),
-        show lmulPi F (0 : A) = 0 from map_zero (lmulPiₗ F), sub_zero]
-      exact hB0
-  rintro X ⟨⟨hX0, hXr⟩, hXad⟩ R hR r hr
-  obtain ⟨hb, -, he⟩ := h X hX0
-  have hρ := rmulPi_expA_neg_aux (h (-X) (hneg X hX0)).2.1
-  have hadd : NormedSpace.exp (lmulPi F X) * NormedSpace.exp (rmulPi F (-X)) =
-      NormedSpace.exp (adPi X) := by
-    rw [← NormedSpace.exp_add_of_commute_of_mem_ball (𝕂 := F) (commute_lmulPi_rmulPi X (-X)) hb hXr]
-    congr 1
-    simp only [adPi, sub_eq_add_neg]
-    rw [show rmulPi F (-X) = -rmulPi F X from map_neg (rmulPiₗ F) X]
-  have hsum := NormedSpace.expSeries_hasSum_exp_of_mem_ball' (𝕂 := F) (adPi X) hXad
-  have hsv := hsum.map (ContinuousLinearMap.apply F VA (toPiCLE F A r))
-    (ContinuousLinearMap.apply F VA (toPiCLE F A r)).continuous
-  set S : Submodule F VA := R.map (toPiCLE F A).toLinearEquiv.toLinearMap
-  have hclosed : IsClosed (S : Set VA) := S.closed_of_finiteDimensional
-  have hpow : ∀ n : ℕ, ∃ z ∈ R, (adPi X ^ n) (toPiCLE F A r) = toPiCLE F A z := by
-    intro n
-    induction n with
-    | zero => exact ⟨r, hr, by simp⟩
-    | succ n ih =>
-      obtain ⟨z, hz, hzeq⟩ := ih
-      refine ⟨X * z - z * X, hR z hz, ?_⟩
-      rw [pow_succ', mul_apply_eq_comp, hzeq]
-      simp [adPi, lmulPi_apply, rmulPi_apply, map_sub]
-  have hmem : NormedSpace.exp (adPi X) (toPiCLE F A r) ∈ S := by
-    refine hclosed.mem_of_tendsto hsv (Eventually.of_forall fun s => ?_)
-    refine Submodule.sum_mem _ fun n _ => ?_
-    simp only [Function.comp_apply, ContinuousLinearMap.apply_apply,
-      smul_apply]
-    obtain ⟨z, hz, hzeq⟩ := hpow n
-    rw [hzeq]
-    exact S.smul_mem _ ⟨z, hz, rfl⟩
-  rw [← hadd, ← he, ← hρ, mul_apply_eq_comp, rmulPi_apply, lmulPi_apply] at hmem
-  obtain ⟨z, hz, hzeq⟩ := hmem
-  simp only [ContinuousLinearEquiv.symm_apply_apply] at hzeq
-  have := (toPiCLE F A).injective hzeq
-  rw [mul_assoc, ← this]
-  exact hz
+  letI : TopologicalSpace (Module.End F A) := moduleTopology F (Module.End F A)
+  haveI : IsModuleTopology F (Module.End F A) := ⟨rfl⟩
+  letI := isTopologicalRing_of_moduleTopology F A
+  letI := isTopologicalRing_of_moduleTopology F (Module.End F A)
+  obtain ⟨UB, hUB, hadj⟩ := exists_nhds_expA_mem_adjoin F (A := Module.End F A)
+  obtain ⟨U, hU, hAd⟩ := (expA_ad_eq F (B := A)).exists_mem
+  set ad : A →ₗ[F] Module.End F A := (Algebra.lmul F A).toLinearMap - mulRightₗ with had
+  have h3 : ad ⁻¹' UB ∈ 𝓝 (0 : A) :=
+    (IsModuleTopology.continuous_of_linearMap ad).continuousAt.preimage_mem_nhds
+      (by rwa [map_zero])
+  refine ⟨U ∩ ad ⁻¹' UB, inter_mem hU h3, fun X hX R hR r hr => ?_⟩
+  have hadR : ad X ∈ stabSubalgebra R := fun r hr => by
+    simpa [had, mulRightₗ_apply] using hR r hr
+  have hmem : expA F (ad X) ∈ stabSubalgebra R :=
+    Algebra.adjoin_le (Set.singleton_subset_iff.mpr hadR) (hadj _ hX.2)
+  have := hmem r hr
+  rw [show ad X = LinearMap.mulLeft F X - LinearMap.mulRight F X from rfl, hAd X hX.1] at this
+  simpa [mul_assoc] using this
 
 /-- **`e^X ∈ GSpin(V)` for `X ∈ gspin(V)` near `0`**: `e^X` is a unit (inverse `e^{-X}`), even
 (`e^X ∈ F[X] ⊆ C⁺(V)`), and conjugation by `e^{±X}` preserves `ι(V)`, which is `ad X`-stable
@@ -191,72 +105,125 @@ lemma exists_nhds_expA_mem_GSpin {V : Type*} [AddCommGroup V] [Module F V] [Modu
 
 end MovedPart
 
+section Clifford
+
+open CliffordAlgebra
+
+variable {V : Type*} [AddCommGroup V] [Module F V] [Module.Finite F V] (Q : QuadraticForm F V)
+
+/-- **The logarithm of `GSpin(Q)` near `1` lies in `gspin(Q)`** (converse of
+`MovedPart.exists_nhds_expA_mem_GSpin`): for `Y` near `0` in `C(Q)`, if
+`e^Y ∈ GSpin(Q)` then `Y` is even (`e^Y` is, and `exp` detects subalgebras near `0`) and
+`[Y, ι(V)] ⊆ ι(V)` (`e^{ad Y} = Ad(e^Y)` preserves `ι(V)`, and `exp` detects the stabilizer of
+`ι(V)` in `End(C(Q))`). -/
+theorem eventually_mem_gspin_of_expA_mem :
+    ∀ᶠ Y in 𝓝 (0 : CliffordAlgebra Q), ∀ g : ↥(GSpin Q),
+      ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) = expA F Y → Y ∈ gspin Q := by
+  letI : TopologicalSpace (Module.End F (CliffordAlgebra Q)) :=
+    moduleTopology F (Module.End F (CliffordAlgebra Q))
+  haveI : IsModuleTopology F (Module.End F (CliffordAlgebra Q)) := ⟨rfl⟩
+  letI := isTopologicalRing_of_moduleTopology F (Module.End F (CliffordAlgebra Q))
+  obtain ⟨U₁, hU₁, hsub⟩ := exists_nhds_mem_of_expA_mem F (A := CliffordAlgebra Q)
+  obtain ⟨U₂, hU₂, hneg⟩ := expA_mul_expA_neg F (A := CliffordAlgebra Q)
+  obtain ⟨UB, hUB, hsubB⟩ := exists_nhds_mem_of_expA_mem F (A := Module.End F (CliffordAlgebra Q))
+  set ad : CliffordAlgebra Q →ₗ[F] Module.End F (CliffordAlgebra Q) :=
+    (Algebra.lmul F (CliffordAlgebra Q)).toLinearMap - mulRightₗ with had
+  have hadc : Continuous ad := IsModuleTopology.continuous_of_linearMap ad
+  have h3 : ad ⁻¹' UB ∈ 𝓝 (0 : CliffordAlgebra Q) :=
+    hadc.continuousAt.preimage_mem_nhds (by rwa [map_zero])
+  filter_upwards [hU₁, hU₂, h3, expA_ad_eq F (B := CliffordAlgebra Q)] with Y hY₁ hY₂ hY₃ hY₄
+  intro g hg
+  obtain ⟨hg0, hg1, -⟩ := g.2
+  have hginv : (((g : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) =
+      expA F (-Y) := Units.inv_eq_of_mul_eq_one_right (by rw [hg]; exact hneg Y hY₂)
+  refine ⟨hsub Y hY₁ (CliffordAlgebra.even Q) (hg ▸ hg0), fun v => ?_⟩
+  -- `Ad(e^Y) = e^{ad Y}` preserves `ι(V)`
+  have hAd : expA F (ad Y) ∈ stabSubalgebra (LinearMap.range (ι Q)) := by
+    have : ad Y = LinearMap.mulLeft F Y - LinearMap.mulRight F Y := rfl
+    rw [this, hY₄, mem_stabSubalgebra]
+    rintro _ ⟨w, rfl⟩
+    have := hg1 w
+    rw [hg, hginv] at this
+    simpa [mul_assoc] using this
+  have hmem := hsubB _ hY₃ _ hAd (ι Q v) (LinearMap.mem_range_self _ v)
+  have : ad Y (ι Q v) = ⁅Y, ι Q v⁆ := by
+    simp [had, mulRightₗ_apply, Ring.lie_def]
+  rwa [this] at hmem
+
+end Clifford
+
+/-- **A group element with the commutant of `Z`**: for `Z ∈ gspin(Q)` there is `g ∈ GSpin(Q)(F)`
+(namely `e^{cZ}` for small `c ≠ 0`, `MovedPart.exists_nhds_expA_mem_GSpin`) commuting with exactly
+the elements of `C(Q)` that commute with `Z` (`commute_expA_of_commute`,
+`exists_nhds_commute_of_commute_expA`). -/
+theorem exists_gspin_commute_iff {V : Type*} [AddCommGroup V] [Module F V] [Module.Finite F V]
+    (Q : QuadraticForm F V) {Z : CliffordAlgebra Q} (hZ : Z ∈ gspin Q) :
+    ∃ g : GSpin Q, ∀ W : CliffordAlgebra Q,
+      Commute W ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ↔ Commute W Z := by
+  obtain ⟨U, hU, hG⟩ := MovedPart.exists_nhds_expA_mem_GSpin (F := F) Q
+  obtain ⟨U', hU', hc⟩ := exists_nhds_commute_of_commute_expA F (A := CliffordAlgebra Q)
+  have hlim : Tendsto (fun c : F => c • Z) (𝓝[≠] 0) (𝓝 0) := by
+    have : Continuous (fun c : F => c • Z) := continuous_id.smul continuous_const
+    simpa using (this.tendsto 0).mono_left nhdsWithin_le_nhds
+  obtain ⟨c, hcU, hc0⟩ := ((hlim.eventually (inter_mem hU hU')).and self_mem_nhdsWithin).exists
+  obtain ⟨g, hg⟩ := hG _ hcU.1 ((gspin Q).smul_mem c hZ)
+  refine ⟨g, fun W => ⟨fun h => ?_, fun h => ?_⟩⟩
+  · rw [hg] at h
+    have h2 := (hc _ hcU.2 _ h).eq
+    rw [mul_smul_comm, smul_mul_assoc] at h2
+    exact smul_right_injective _ hc0 h2
+  · rw [hg]
+    exact commute_expA_of_commute (h.smul_right c)
+
+/-- `g ∈ T_x(F)` as soon as `g` commutes with `x` and with `ι(W'_x)`. -/
+theorem mem_torusOf_of_commute (d : GGPData F) {x g : ↥(GSpin d.QW)}
+    (hx : Commute ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW)
+      ((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW))
+    (hf : ∀ w ∈ fixedSub x, Commute (CliffordAlgebra.ι d.QW w)
+      ((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW)) :
+    g ∈ d.torusOf x := by
+  refine ⟨?_, fun w hw => ?_⟩
+  · show g ∈ Subgroup.centralizer {x}
+    rw [Subgroup.mem_centralizer_singleton_iff]
+    exact Subtype.ext (Units.ext hx.eq.symm)
+  · apply CliffordAlgebra.ι_injective d.QW
+    rw [ι_specP, ← (hf w hw).eq, mul_assoc, Units.mul_inv, mul_one]
+
 /-- For `x ∈ Γ(G,H)` the moved part `G''_x` is a torus: `T_x(F) = Z(x) ∩ Fix(W'_x)`
 is commutative, hence so is its Lie algebra
 `so(W''_x)_{x̄} ⊕ F`.  Own work; this is the hypothesis under which
 `nilReg_centralizer_nonempty_iff` applies.
 
-Proof (exponential, no Zariski density): for `X, Y` in the moved part and `c ≠ 0` small, `e^{cX}`,
-`e^{cY}` lie in `GSpin(W)(F)` (`MovedPart.exists_nhds_expA_mem_GSpin`), commute with `x` and fix
-`W'_x` pointwise (`X`, `Y` commute with `x` and with `ι(W'_x)`), so they lie in `T_x(F)` and
-commute.  Near `0` the centralizer of `e^Z` is that of `Z`
-(`exists_nhds_commute_of_commute_expA`), so `cX` and `cY` commute.  Only the commutativity of
+Proof (exponential, no Zariski density): `X` and `Y` in the moved part have the commutants of some
+`g, h ∈ GSpin(W)(F)` (`exists_gspin_commute_iff`: `e^{cX}`, `e^{cY}` for small `c ≠ 0`), which
+commute with `x` and fix `W'_x` pointwise, so lie in `T_x(F)` (`mem_torusOf_of_commute`) and
+commute; hence `X` and `Y` commute.  Only the commutativity of
 `T_x(F)` is used, not the semisimplicity of `x` or the compactness of `T_x(F)/A(F)`. -/
 theorem movedPartAbelian_of_isGammaElt (d : GGPData F) (x : ↥(GSpin d.QW))
     (hx : d.IsGammaElt x) : MovedPartAbelian d.QW x := by
   intro X hX Y hY hXf hYf
-  obtain ⟨U, hU, hG⟩ := MovedPart.exists_nhds_expA_mem_GSpin (F := F) d.QW
-  obtain ⟨U', hU', hc⟩ := exists_nhds_commute_of_commute_expA F (A := CliffordAlgebra d.QW)
-  have ht : ∀ Z : CliffordAlgebra d.QW, Tendsto (fun t : F => t • Z) (𝓝[≠] 0) (𝓝 0) := by
-    intro Z
-    have : Continuous (fun t : F => t • Z) := continuous_id.smul continuous_const
-    simpa using (this.tendsto 0).mono_left nhdsWithin_le_nhds
-  obtain ⟨c, ⟨hcX, hcY⟩, hc0⟩ := ((((ht X).eventually (inter_mem hU hU')).and
-    ((ht Y).eventually (inter_mem hU hU'))).and self_mem_nhdsWithin).exists
-  -- `e^{cZ}` lies in `T_x` for `Z` in the moved part
-  have key : ∀ Z ∈ lieCentralizer (gspin d.QW) ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW),
-      (∀ v ∈ fixedSub x, ⁅Z, CliffordAlgebra.ι d.QW v⁆ = 0) → c • Z ∈ U →
-      ∃ g ∈ d.torusOf x, (((g : (CliffordAlgebra d.QW)ˣ)) : CliffordAlgebra d.QW) =
-        expA F (c • Z) := by
-    intro Z hZ hZf hcZ
-    rw [mem_lieCentralizer] at hZ
-    obtain ⟨g, hg⟩ := hG _ hcZ ((gspin d.QW).smul_mem c hZ.1)
-    refine ⟨g, ⟨?_, fun w hw => ?_⟩, hg⟩
-    · show g ∈ Subgroup.centralizer {x}
-      rw [Subgroup.mem_centralizer_singleton_iff]
-      have hxc : Commute ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) (c • Z) :=
-        (Commute.smul_right hZ.2 c)
-      have := commute_expA_of_commute (F := F) hxc
-      rw [← hg] at this
-      exact Subtype.ext (Units.ext this.eq.symm)
-    · apply ι_injective d.QW
-      rw [ι_specP]
-      have hw0 := hZf w hw
-      rw [Ring.lie_def, sub_eq_zero] at hw0
-      have hwc : Commute (CliffordAlgebra.ι d.QW w) (c • Z) :=
-        Commute.smul_right hw0.symm c
-      have := (commute_expA_of_commute (F := F) hwc).eq
-      rw [← hg] at this
-      rw [← this, mul_assoc, Units.mul_inv, mul_one]
-  obtain ⟨g, hg, hge⟩ := key X hX hXf hcX.1
-  obtain ⟨h, hh, hhe⟩ := key Y hY hYf hcY.1
-  have hgh : Commute (expA F (c • X)) (expA F (c • Y)) := by
-    have := congrArg (fun k : ↥(GSpin d.QW) =>
-      (((k : (CliffordAlgebra d.QW)ˣ)) : CliffordAlgebra d.QW)) (hx.2.1 g hg h hh).eq
-    simp only [Subgroup.coe_mul, Units.val_mul] at this
-    rw [hge, hhe] at this
-    exact this
-  have h1 : Commute (expA F (c • X)) (c • Y) := hc _ hcY.2 _ hgh
-  have h2 : Commute (c • Y) (c • X) := hc _ hcX.2 _ h1.symm
-  have h3 : c • c • (Y * X) = c • c • (X * Y) := by
-    have := h2.eq
-    rw [smul_mul_smul_comm, smul_mul_smul_comm] at this
-    rw [smul_smul, smul_smul]
-    exact this
+  rw [mem_lieCentralizer] at hX hY
+  -- `Z` in the moved part has the commutant of some `g ∈ T_x`
+  have key : ∀ Z ∈ gspin d.QW,
+      Commute ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) Z →
+      (∀ v ∈ fixedSub x, ⁅Z, CliffordAlgebra.ι d.QW v⁆ = 0) →
+      ∃ g ∈ d.torusOf x, ∀ W : CliffordAlgebra d.QW,
+        Commute W ((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) ↔ Commute W Z := by
+    intro Z hZ hZx hZf
+    obtain ⟨g, hg⟩ := exists_gspin_commute_iff d.QW hZ
+    refine ⟨g, mem_torusOf_of_commute d ((hg _).mpr hZx) fun w hw => (hg _).mpr ?_, hg⟩
+    have hw0 := hZf w hw
+    rw [Ring.lie_def, sub_eq_zero] at hw0
+    exact hw0.symm
+  obtain ⟨g, hgT, hg⟩ := key X hX.1 hX.2 hXf
+  obtain ⟨h, hhT, hh⟩ := key Y hY.1 hY.2 hYf
+  have h1 : Commute ((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW)
+      ((h : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) :=
+    congrArg (fun k : ↥(GSpin d.QW) => ((k : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW))
+      (hx.2.1 g hgT h hhT).eq
+  have h3 : Commute Y X := (hg _).mp ((hh _).mp h1).symm
   rw [Ring.lie_def, sub_eq_zero]
-  have hc' : c * c ≠ 0 := mul_ne_zero hc0 hc0
-  rw [smul_smul, smul_smul] at h3
-  exact (smul_right_injective _ hc' h3).symm
+  exact h3.eq.symm
 
 section WD
 
@@ -552,10 +519,11 @@ left and right multiplication by `x` are commuting semisimple operators on `C(W)
 over `F` of characteristic `0` survives base change to `F̄` (squarefree minimal polynomial).
 Proved: `isSemisimple_specP_of_isSS` (`GGP/Steinberg.lean`), `isSemisimple_baseChange`
 (`GGP/TorusCommute.lean`). -/
-theorem isSemisimple_specP_baseChange {d : GGPData F} (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) :
+theorem isSemisimple_specP_baseChange {d : GGPData F} (x : ↥(GSpin d.QW))
+    (hx : IsSS F (((x : (CliffordAlgebra d.QW)ˣ)) : CliffordAlgebra d.QW)) :
     Module.End.IsSemisimple
       ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange (AlgebraicClosure F)) :=
-  isSemisimple_baseChange (isSemisimple_specP_of_isSS d.QW x hx.1)
+  isSemisimple_baseChange (isSemisimple_specP_of_isSS d.QW x hx)
 
 namespace GGPData
 
@@ -672,7 +640,7 @@ theorem commute_bc_iff_of_torusOf_eq {x t : GSpin d.QW} (hx : d.IsGammaElt x)
   have hss : ∀ y : GSpin d.QW, d.IsGammaElt y → Module.End.IsSemisimple
       (specP _ (bcGSpin d.QW y) :
         AlgebraicClosure F ⊗[F] (Fin d.m → F) →ₗ[AlgebraicClosure F] _) := fun y hy => by
-    rw [specP_bcGSpin]; exact isSemisimple_specP_baseChange y hy
+    rw [specP_bcGSpin]; exact isSemisimple_specP_baseChange y hy.1
   have hL : ∀ y : GSpin d.QW, d.IsGammaElt y → IsomCent.LieAbelian
       (bform (d.QW.baseChange (AlgebraicClosure F)))
       (specP _ (bcGSpin d.QW y) :
