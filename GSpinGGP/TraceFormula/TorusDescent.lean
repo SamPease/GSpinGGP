@@ -9,6 +9,8 @@ import GSpinGGP.Foundations.RankSemicontinuity
 import GSpinGGP.GGP.IsometrySemisimple
 import GSpinGGP.GGP.GSpinSemisimple
 import GSpinGGP.TraceFormula.ThetaF
+import GSpinGGP.Foundations.GSpinExp
+import GSpinGGP.Foundations.JHatTranslate
 
 /-!
 # Measurability of the integrand of `m_{geom,s}` on `T(F)/A_{G,H}(F)`
@@ -789,6 +791,29 @@ theorem weylDisc_eq_oneSubAd (d : GGPData F) (t : ↥d.G) :
     weylDisc d.lie (t : d.ambientˣ) = absF (LinearMap.charpoly (oneSubAd d t)).trailingCoeff := by
   rw [weylDisc, dite_eq_left (lie_conj_stable d t)]
 
+/-- `1 − Ad g` is semisimple on `𝔤` for semisimple `g ∈ G(F)`. -/
+theorem isSemisimple_oneSubAd (g : ↥d.G) (hg : IsSS F ((g : d.ambientˣ) : d.ambient)) :
+    Module.End.IsSemisimple (oneSubAd d g) := by
+  set a : d.ambient := ((g : d.ambientˣ) : d.ambient)
+  set ai : d.ambient := (((g : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient)
+  have hinv : Module.End.IsSemisimple (LinearMap.mulLeft F ai) := isSS_coe_inv hg
+  have hAd : Module.End.IsSemisimple (LinearMap.mulLeft F a * LinearMap.mulRight F ai) :=
+    Module.End.IsSemisimple.mul_of_commute (LinearMap.commute_mulLeft_right _ _) hg
+      (isSemisimple_mulRight_of_mulLeft hinv)
+  have hp' : ∀ X ∈ d.lie.toSubmodule,
+      (LinearMap.mulLeft F a * LinearMap.mulRight F ai) X ∈ d.lie.toSubmodule := fun X hX => by
+    have := lie_conj_stable d g X hX
+    simpa [mul_assoc] using this
+  have hp : d.lie.toSubmodule ∈ Module.End.invtSubmodule
+      (LinearMap.mulLeft F a * LinearMap.mulRight F ai) :=
+    (Module.End.mem_invtSubmodule _).mpr hp'
+  have hres := hAd.restrict hp
+  have heq : (conjAd F (g : d.ambientˣ)).toLinearEquiv.toLinearMap.restrict (lie_conj_stable d g) =
+      (LinearMap.mulLeft F a * LinearMap.mulRight F ai).restrict hp' :=
+    LinearMap.ext fun X => Subtype.ext (mul_assoc _ _ _)
+  rw [oneSubAd, heq]
+  exact Module.End.IsSemisimple.sub_of_commute (Commute.one_left _) Module.End.isSemisimple_id hres
+
 
 omit [PAdicField F] in
 /-- **Equal centralizers in `GSpin` give equal centralizers in `gspin`**: if `a, b ∈ GSpin(V)` have
@@ -920,38 +945,8 @@ theorem continuousOn_weylDisc_torusNat (T : Subgroup ↥(GSpin d.QW)) :
     abel
   -- `N_x` is semisimple
   have hss : Module.End.IsSemisimple (N t₀) := by
-    have hu : IsSS F (u t₀) := isSS_diag_of_isSS d hx.1
-    set uU : d.ambientˣ := ((d.diag x : ↥d.G) : d.ambientˣ)
-    have hinv : Module.End.IsSemisimple (LinearMap.mulLeft F (ui t₀)) := by
-      refine Module.End.IsSemisimple.of_mem_adjoin_singleton hu ?_
-      have hmem := TauCeti.Units.coe_inv_mem_adjoin uU (IsIntegral.of_finite F (uU : d.ambient))
-      have : (Algebra.adjoin F {(uU : d.ambient)}).map (Algebra.lmul F d.ambient) =
-          Algebra.adjoin F {LinearMap.mulLeft F (uU : d.ambient)} := by
-        rw [AlgHom.map_adjoin_singleton]; rfl
-      rw [← this]
-      exact ⟨_, hmem, rfl⟩
-    have hAd : Module.End.IsSemisimple
-        (LinearMap.mulLeft F (u t₀) * LinearMap.mulRight F (ui t₀)) :=
-      Module.End.IsSemisimple.mul_of_commute (LinearMap.commute_mulLeft_right _ _) hu
-        (isSemisimple_mulRight_of_mulLeft hinv)
-    have hp' : ∀ X ∈ d.lie.toSubmodule,
-        (LinearMap.mulLeft F (u t₀) * LinearMap.mulRight F (ui t₀)) X ∈ d.lie.toSubmodule :=
-      fun X hX => by
-        have := lie_conj_stable d (d.diag x) X hX
-        simpa [mul_assoc] using this
-    have hp : d.lie.toSubmodule ∈ Module.End.invtSubmodule
-        (LinearMap.mulLeft F (u t₀) * LinearMap.mulRight F (ui t₀)) :=
-      (Module.End.mem_invtSubmodule _).mpr hp'
-    have hres := hAd.restrict hp
-    have heq : (conjAd F ((d.diag x : ↥d.G) : d.ambientˣ)).toLinearEquiv.toLinearMap.restrict
-        (lie_conj_stable d (d.diag x)) =
-        (LinearMap.mulLeft F (u t₀) * LinearMap.mulRight F (ui t₀)).restrict hp' :=
-      LinearMap.ext fun X => Subtype.ext (mul_assoc _ _ _)
     rw [hNdef]
-    show Module.End.IsSemisimple (oneSubAd d (d.diag x))
-    rw [oneSubAd, heq]
-    exact Module.End.IsSemisimple.sub_of_commute (Commute.one_left _) Module.End.isSemisimple_id
-      hres
+    exact isSemisimple_oneSubAd d (d.diag x) (isSS_diag_of_isSS d hx.1)
   -- `𝔤 = L ⊕ C`, both `N_t`-stable
   obtain ⟨L, hLdef⟩ : ∃ L, L = LinearMap.ker (N t₀) := ⟨_, rfl⟩
   obtain ⟨C, hCdef⟩ : ∃ C, C = LinearMap.range (N t₀) := ⟨_, rfl⟩
@@ -1085,33 +1080,275 @@ theorem bilin_eq_zero_of_commute_of_isNilpotent {Y N : d.ambient} (hc : Commute 
   have hYN : IsNilpotent (Y * N) := hc.isNilpotent_mul_left hN
   exact LinearMap.isNilpotent_trace_of_isNilpotent (hYN.map (Algebra.lmul F d.ambient)) |>.eq_zero
 
+/-! ### The germ term on `T_♮` -/
+
+/-- **`b` is nondegenerate on `𝔤_g`** for semisimple `g ∈ G(F)`: `𝔤 = 𝔤_g ⊕ im(1 − Ad g)`
+(`1 − Ad g` is semisimple), and `b(Z, W − g W g⁻¹) = b(Z, W) − b(g Z g⁻¹, g W g⁻¹) = 0` for
+`Z ∈ 𝔤_g`, as `b` is `Ad`-invariant; so `b(Z, ·) = 0` on `𝔤_g` forces `b(Z, ·) = 0` on `𝔤`. -/
+theorem restrictForm_lieCentralizer_nondegenerate (g : ↥d.G)
+    (hg : IsSS F ((g : d.ambientˣ) : d.ambient)) :
+    (restrictForm (lieCentralizer d.lie ((g : d.ambientˣ) : d.ambient)) d.bilin).Nondegenerate := by
+  set a : d.ambient := ((g : d.ambientˣ) : d.ambient)
+  set ai : d.ambient := (((g : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient)
+  have hia : ai * a = 1 := Units.inv_mul _
+  have hai : a * ai = 1 := Units.mul_inv _
+  set N := oneSubAd d g
+  have hss := isSemisimple_oneSubAd d g hg
+  have hcompl : IsCompl (LinearMap.ker N) (LinearMap.range N) := by
+    refine (Submodule.isCompl_iff_disjoint _ _ ?_).2 (disjoint_ker_range_of_isSemisimple hss)
+    have := LinearMap.finrank_range_add_finrank_ker N
+    omega
+  have hN : ∀ X : d.lie.toSubmodule, ((N X : d.lie.toSubmodule) : d.ambient) =
+      (X : d.ambient) - a * X * ai := fun X => rfl
+  have hL : ∀ Z : ↥(lieCentralizer d.lie a),
+      (∀ W, restrictForm (lieCentralizer d.lie a) d.bilin Z W = 0) → Z = 0 := by
+    intro Z hZ
+    obtain ⟨hZl, hZc⟩ := mem_lieCentralizer.mp Z.2
+    refine Subtype.ext (d.bilin_nondegenerate_lie Z hZl fun Y hY => ?_)
+    obtain ⟨l, hl, c, hc, hlc⟩ := Submodule.mem_sup.mp
+      (hcompl.sup_eq_top ▸ Submodule.mem_top (x := (⟨Y, hY⟩ : d.lie.toSubmodule)))
+    have hYeq : Y = (l : d.ambient) + (c : d.ambient) := by
+      have := congrArg Subtype.val hlc
+      simpa using this.symm
+    rw [hYeq, map_add]
+    have h1 : d.bilin Z l = 0 := by
+      have hl0 := congrArg Subtype.val (LinearMap.mem_ker.mp hl)
+      rw [hN, ZeroMemClass.coe_zero, sub_eq_zero] at hl0
+      have hl' : (l : d.ambient) ∈ lieCentralizer d.lie a := by
+        rw [mem_lieCentralizer]
+        refine ⟨l.2, ?_⟩
+        calc a * l = a * l * ai * a := by rw [mul_assoc _ ai, hia, mul_one]
+          _ = l * a := by rw [← hl0]
+      have := hZ ⟨l, hl'⟩
+      simpa [restrictForm] using this
+    have h2 : d.bilin Z c = 0 := by
+      obtain ⟨w, rfl⟩ := hc
+      have hconj : a * (Z : d.ambient) * ai = Z := by
+        rw [hZc, mul_assoc, hai, mul_one]
+      rw [hN, map_sub, ← d.bilin_conj g (Z : d.ambient) (w : d.ambient)]
+      change d.bilin (a * Z * ai) (a * w * ai) - d.bilin (Z : d.ambient) (a * w * ai) = 0
+      rw [hconj, sub_self]
+    rw [h1, h2, add_zero]
+  refine ⟨hL, fun Y hY => hL Y fun X => ?_⟩
+  have := hY X
+  simp only [restrictForm, LinearMap.compl₁₂_apply] at this ⊢
+  rw [GGPData.bilin_apply, LinearMap.mulLeft_mul, ← Module.End.mul_eq_comp,
+    LinearMap.trace_mul_comm, Module.End.mul_eq_comp, ← LinearMap.mulLeft_mul, ← GGPData.bilin_apply]
+  exact this
+
+/-- **The regular semisimple set of `𝔤_g` is open** for semisimple `g ∈ G(F)`.
+Sketch: `𝔤_g` is reductive (centralizer of a semisimple element, characteristic `0`), and in a
+reductive Lie algebra of rank `r` the regular semisimple elements are those where the coefficient
+of `T^r` in `det(T − ad Z)` does not vanish, a polynomial condition (Harish-Chandra's regular set
+`𝔤'`); `IsRegularSS` (semisimple in `C(W) × C(V)` with abelian centralizer in `𝔤_g`) is that
+condition, as the representation of `𝔤_g` on `C(W) × C(V)` is faithful.  This is the Lie algebra
+analogue of `hc_regularSet_open_conull`; the identification is not formalized.
+Status: SORRY (structure of reductive Lie algebras). -/
+theorem isOpen_regularSS_lieCentralizer (g : ↥d.G)
+    (hg : IsSS F ((g : d.ambientˣ) : d.ambient)) :
+    IsOpen {Z : ↥(lieCentralizer d.lie ((g : d.ambientˣ) : d.ambient)) |
+      IsRegularSS (lieCentralizer d.lie ((g : d.ambientˣ) : d.ambient)) (Z : d.ambient)} := by
+  sorry
+
+/-- `expA` on `C(W) × C(V)` is computed componentwise near `0`. -/
+theorem eventually_expA_ambient :
+    ∀ᶠ X in 𝓝 (0 : d.ambient), (expA F X).1 = expA F X.1 ∧ (expA F X).2 = expA F X.2 := by
+  have h1 := eventually_map_expA (F := F) (A := d.ambient)
+    (LinearMap.fst F (CliffordAlgebra d.QW) (CliffordAlgebra d.QV)) (fun X n => Prod.pow_fst X n)
+  have h2 := eventually_map_expA (F := F) (A := d.ambient)
+    (LinearMap.snd F (CliffordAlgebra d.QW) (CliffordAlgebra d.QV)) (fun X n => Prod.pow_snd X n)
+  filter_upwards [h1, h2] with X hX1 hX2
+  exact ⟨hX1, hX2⟩
+
+/-- **`e^X ∈ G(F)` for `X ∈ 𝔤` near `0`** (componentwise `MovedPart.exists_nhds_expA_mem_GSpin`). -/
+theorem eventually_expA_mem_G :
+    ∀ᶠ X in 𝓝 (0 : d.ambient), X ∈ d.lie → ∃ g : ↥d.G, ((g : d.ambientˣ) : d.ambient) = expA F X := by
+  obtain ⟨U₁, hU₁, h₁⟩ := MovedPart.exists_nhds_expA_mem_GSpin (F := F) d.QW
+  obtain ⟨U₂, hU₂, h₂⟩ := MovedPart.exists_nhds_expA_mem_GSpin (F := F) d.QV
+  have hf : (fun X : d.ambient => X.1) ⁻¹' U₁ ∈ 𝓝 (0 : d.ambient) :=
+    continuous_fst.continuousAt.preimage_mem_nhds hU₁
+  have hs : (fun X : d.ambient => X.2) ⁻¹' U₂ ∈ 𝓝 (0 : d.ambient) :=
+    continuous_snd.continuousAt.preimage_mem_nhds hU₂
+  filter_upwards [hf, hs, eventually_expA_ambient d] with X hX1 hX2 hX hXl
+  obtain ⟨g₁, hg₁⟩ := h₁ X.1 hX1 hXl.1
+  obtain ⟨g₂, hg₂⟩ := h₂ X.2 hX2 hXl.2
+  refine ⟨d.pair (g₁, g₂), Prod.ext ?_ ?_⟩
+  · rw [hX.1]; exact hg₁
+  · rw [hX.2]; exact hg₂
+
+/-- **The logarithm of `G(F)` near `1` lies in `𝔤`**: for `Y` near `0`, `e^Y ∈ G(F)` implies
+`Y ∈ 𝔤 = gspin(W) × gspin(V)` (componentwise `eventually_mem_gspin_of_expA_mem`). -/
+theorem eventually_mem_lie_of_expA_mem :
+    ∀ᶠ Y in 𝓝 (0 : d.ambient), ∀ g : ↥d.G, ((g : d.ambientˣ) : d.ambient) = expA F Y →
+      Y ∈ d.lie := by
+  have h₁ := (continuous_fst.tendsto (0 : d.ambient)).eventually
+    (eventually_mem_gspin_of_expA_mem (F := F) d.QW)
+  have h₂ := (continuous_snd.tendsto (0 : d.ambient)).eventually
+    (eventually_mem_gspin_of_expA_mem (F := F) d.QV)
+  filter_upwards [h₁, h₂, eventually_expA_ambient d] with Y hY1 hY2 hY g hg
+  refine ⟨hY1 (d.fst g) ?_, hY2 (d.snd g) ?_⟩
+  · rw [← hY.1, ← hg]; rfl
+  · rw [← hY.2, ← hg]; rfl
+
+/-- `t ↦ diag t` is continuous from `GSpin(W)(F)` to `C(W) × C(V)`. -/
+theorem continuous_coe_diag :
+    Continuous fun t : ↥(GSpin d.QW) => (((d.diag t : ↥d.G) : d.ambientˣ) : d.ambient) := by
+  have hval : Continuous fun t : ↥(GSpin d.QW) =>
+      ((t : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) :=
+    Units.continuous_val.comp continuous_subtype_val
+  have hmap : Continuous (CliffordAlgebra.map (QuadraticMap.Isometry.inl d.QW d.QZ)) :=
+    IsModuleTopology.continuous_of_linearMap
+      (CliffordAlgebra.map (QuadraticMap.Isometry.inl d.QW d.QZ)).toLinearMap
+  exact hval.prodMk (hmap.comp hval)
+
+/-- **Translation by a small central semisimple `e^Y` preserves the germ** (the step of Thesis
+Prop 12.1.1(i)): if `diag t = diag x · e^Y` with `t ∈ T_{x,♮}` and `Y ∈ 𝔤_x` small, central in
+`𝔤_x` and semisimple, then for `X ∈ 𝔤_t = 𝔤_x` small and regular
+`θ(t e^X) = θ(x e^{X+Y}) = ∑ c_O ĵ(O, X + Y) = ∑ c_O ĵ(O, X) = θ(x e^X)`
+(`jHat_add_eq_of_nondegenerate`, with `b` nondegenerate on `𝔤_x`), so the germs at `t` and `x`
+agree (`germ_eq_germ_of_translate`; `O_t = O_x`). -/
+theorem exists_nhds_germ_eq_of_central {χ : CentralCharOn d} {θ : ↥d.G → ℂ} (hθ : θ ∈ QC d χ)
+    {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x) :
+    ∃ N ∈ 𝓝 (0 : d.ambient), ∀ t : ↥(GSpin d.QW), d.IsGammaElt t → t ∈ d.torusOf x →
+      d.torusOf t = d.torusOf x → ∀ Y ∈ N,
+      Y ∈ lieCentralizer d.lie (((d.diag x : ↥d.G) : d.ambientˣ) : d.ambient) →
+      (∀ W ∈ lieCentralizer d.lie (((d.diag x : ↥d.G) : d.ambientˣ) : d.ambient), Commute W Y) →
+      IsSS F Y →
+      (((d.diag t : ↥d.G) : d.ambientˣ) : d.ambient) =
+        (((d.diag x : ↥d.G) : d.ambientˣ) : d.ambient) * expA F Y →
+      germ d.G d.lie d.bilin ψ θ (d.diag t) (orbitChoice d t) =
+        germ d.G d.lie d.bilin ψ θ (d.diag x) (orbitChoice d x) := by
+  set X₀ : d.ambient := (((d.diag x : ↥d.G) : d.ambientˣ) : d.ambient) with hX₀
+  have hssx : IsSS F X₀ := isSS_diag_of_isSS d hx.1
+  obtain ⟨c', hc'⟩ := (hθ.1 ψ).2 (d.diag x) hssx
+  obtain ⟨-, ω, hω, hexp⟩ := id hc'
+  obtain ⟨ω₁, hω₁, hhalf⟩ := exists_nhds_zero_half hω
+  obtain ⟨Ua, hUa, hadd⟩ := expA_add_of_commute F (A := d.ambient)
+  obtain ⟨UG, hUG, hG⟩ := (eventually_expA_mem_G d).exists_mem
+  have hnd := restrictForm_lieCentralizer_nondegenerate d (d.diag x) hssx
+  have hopen := isOpen_regularSS_lieCentralizer d (d.diag x) hssx
+  refine ⟨ω₁ ∩ Ua, inter_mem hω₁ hUa, fun t ht htx hT Y hYN hY hYc hYss hYt => ?_⟩
+  have hsst : IsSS F (((d.diag t : ↥d.G) : d.ambientˣ) : d.ambient) := isSS_diag_of_isSS d ht.1
+  have hH := grpCentralizer_diag_eq_of_torusOf_eq d hx ht htx hT
+  have hL := lieCentralizer_diag_eq_of_torusOf_eq d hx ht htx hT
+  refine germ_eq_germ_of_translate ψ θ (d.diag t) (d.diag x) hsst hssx hH hL ?_ ⟨c', hc'⟩ _ _
+    (orbitChoice_heq_of_torusOf_eq d hx ht htx hT)
+  refine ⟨ω₁ ∩ Ua ∩ UG, inter_mem (inter_mem hω₁ hUa) hUG, fun X hX hXc hXr y hy => ?_⟩
+  rw [hL] at hXc hXr
+  obtain ⟨g, hg⟩ := hG X hX.2 (mem_lieCentralizer.mp hXc).1
+  have hy'' : (((d.diag x * g : ↥d.G) : d.ambientˣ) : d.ambient) = X₀ * expA F X := by
+    rw [Subgroup.coe_mul, Units.val_mul, hg]
+  refine ⟨d.diag x * g, hy'', ?_⟩
+  have hXY : Commute X Y := hYc X hXc
+  have hy' : ((y : d.ambientˣ) : d.ambient) = X₀ * expA F (X + Y) := by
+    rw [hy, hYt, mul_assoc, add_comm X Y, hadd Y hYN.2 X hX.1.2 hXY.symm]
+  have hXYc : X + Y ∈ lieCentralizer d.lie X₀ := (lieCentralizer d.lie X₀).add_mem hXc hY
+  have hXYr : IsRegularSS (lieCentralizer d.lie X₀) (X + Y) :=
+    (isRegularSS_add_iff_of_central hYss hYc hXc).mpr hXr
+  have hω0 : X ∈ ω := by simpa using hhalf X hX.1.1 0 (mem_of_mem_nhds hω₁)
+  rw [hexp (X + Y) (hhalf X hX.1.1 Y hYN.1) hXYc hXYr y hy', hexp X hω0 hXc hXr _ hy'']
+  refine finsum_congr fun O => ?_
+  congr 1
+  exact jHat_add_eq_of_nondegenerate (X := ⟨X, hXc⟩) O hnd ⟨Y, hY⟩
+    (fun N hN => bilin_eq_zero_of_commute_of_isNilpotent d (hYc N N.2).symm hN)
+    (fun Z => isRegularSS_add_iff_of_central hYss hYc Z.2) hopen subset_rfl hXr
+
+/-- **The germ is constant near `x` on `T_{x,♮}`**, in terms of a logarithm: for `t ∈ T_{x,♮}`
+and `Y` near `0` with `e^Y = diag(x)⁻¹ diag(t)`, the germs at `t` and `x` agree.  `Y` lies in `𝔤`
+(`eventually_mem_lie_of_expA_mem`), commutes with `diag x` and with `𝔤_x = 𝔤_t`
+(`exists_nhds_commute_of_commute_expA`), and lies in `F[e^Y]` (`exists_nhds_mem_of_expA_mem`),
+hence is semisimple; then `exists_nhds_germ_eq_of_central` applies. -/
+theorem exists_nhds_germ_eq_of_expA {χ : CentralCharOn d} {θ : ↥d.G → ℂ} (hθ : θ ∈ QC d χ)
+    {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x) :
+    ∃ N ∈ 𝓝 (0 : d.ambient), ∀ t : ↥(GSpin d.QW), d.IsGammaElt t → t ∈ d.torusOf x →
+      d.torusOf t = d.torusOf x → ∀ Y ∈ N,
+      expA F Y = ((((d.diag x : ↥d.G) : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient) *
+        (((d.diag t : ↥d.G) : d.ambientˣ) : d.ambient) →
+      germ d.G d.lie d.bilin ψ θ (d.diag t) (orbitChoice d t) =
+        germ d.G d.lie d.bilin ψ θ (d.diag x) (orbitChoice d x) := by
+  obtain ⟨N₁, hN₁, hgerm⟩ := exists_nhds_germ_eq_of_central ψ d hθ hx
+  obtain ⟨Ul, hUl, hlie⟩ := (eventually_mem_lie_of_expA_mem d).exists_mem
+  obtain ⟨Uc, hUc, hcomm⟩ := exists_nhds_commute_of_commute_expA F (A := d.ambient)
+  obtain ⟨Us, hUs, hsub⟩ := exists_nhds_mem_of_expA_mem F (A := d.ambient)
+  refine ⟨N₁ ∩ Ul ∩ Uc ∩ Us, inter_mem (inter_mem (inter_mem hN₁ hUl) hUc) hUs,
+    fun t ht htx hT Y hY he => ?_⟩
+  obtain ⟨⟨⟨hYN, hYl⟩, hYc⟩, hYs⟩ := hY
+  obtain ⟨X₀, hX₀⟩ : ∃ X₀ : d.ambient, X₀ = (((d.diag x : ↥d.G) : d.ambientˣ) : d.ambient) :=
+    ⟨_, rfl⟩
+  obtain ⟨Dt, hDt⟩ : ∃ Dt : d.ambient, Dt = (((d.diag t : ↥d.G) : d.ambientˣ) : d.ambient) :=
+    ⟨_, rfl⟩
+  have hssx : IsSS F X₀ := hX₀ ▸ isSS_diag_of_isSS d hx.1
+  have hsst : IsSS F Dt := hDt ▸ isSS_diag_of_isSS d ht.1
+  have hDX : Commute Dt X₀ := by
+    have hc : Commute t x := Subgroup.mem_centralizer_singleton_iff.mp htx.1
+    rw [hDt, hX₀]
+    exact congrArg (fun k : ↥d.G => ((k : d.ambientˣ) : d.ambient)) (hc.map d.diag).eq
+  have hDteq : (((d.diag t : ↥d.G) : d.ambientˣ) : d.ambient) =
+      (((d.diag x : ↥d.G) : d.ambientˣ) : d.ambient) * expA F Y := by
+    rw [he, ← mul_assoc, Units.mul_inv, one_mul]
+  have hYlie : Y ∈ d.lie := hlie Y hYl ((d.diag x)⁻¹ * d.diag t) (by rw [he]; rfl)
+  have hcommY : ∀ W : d.ambient, Commute W X₀ → Commute W Dt → Commute W Y := fun W h1 h2 => by
+    refine hcomm Y hYc W ?_
+    rw [he]
+    rw [hX₀] at h1
+    rw [hDt] at h2
+    exact h1.units_inv_right.mul_right h2
+  have hL := lieCentralizer_diag_eq_of_torusOf_eq d hx ht htx hT
+  rw [← hX₀, ← hDt] at hL
+  have hYcent : Y ∈ lieCentralizer d.lie X₀ :=
+    mem_lieCentralizer.mpr ⟨hYlie, (hcommY X₀ (Commute.refl _) hDX.symm).eq⟩
+  have hYc' : ∀ W ∈ lieCentralizer d.lie X₀, Commute W Y := by
+    intro W hW
+    have h1 := (mem_lieCentralizer.mp hW).2
+    have h2 := (mem_lieCentralizer.mp (hL.symm ▸ hW : W ∈ lieCentralizer d.lie Dt)).2
+    exact hcommY W h1.symm h2.symm
+  have huss : IsSS F (expA F Y) := by
+    rw [he]
+    refine isSS_mul_of_commute ?_ (isSS_coe_inv (hX₀ ▸ hssx)) (hDt ▸ hsst)
+    have := hDX.symm
+    rw [hDt, hX₀] at this
+    exact this.units_inv_left
+  have hYss : IsSS F Y := isSS_of_mem_adjoin huss
+    (hsub Y hYs (Algebra.adjoin F {expA F Y}) (Algebra.self_mem_adjoin_singleton F _))
+  exact hgerm t ht htx hT Y hYN (hX₀ ▸ hYcent) (hX₀ ▸ hYc') hYss hDteq
+
 /-- **The germ term is continuous on `T_♮`** (Thesis Prop 12.1.1(i)): for `θ ∈ QC(G(F), χ)`,
-`t ↦ c_{θ,O_t}(t)` is locally constant on `T_♮`.  Proof sketch: for `t' = t e^Y` with `Y ∈ Lie T`
-small (central in `𝔤_t`), `θ(t' e^X) = θ(t e^{X+Y})`, and `ĵ(O, X + Y) = ĵ(O, X)` on `𝔤_{t,reg}`
-(`b(Y, N) = 0` for `N` nilpotent commuting with `Y`), so the expansion at `t` is one at `t'` with
-the same coefficients, while `O_{t'} = O_t`.  Missing inputs: (1) germ expansions at `t e^Y`
-derived from those at `t` for `Y` central only in `𝔤_t` (`germ_eq_germ_of_translate` covers
-translation by central elements of `G`); (2) the invariance `ĵ(O, X + Y) = ĵ(O, X)` for such `Y`;
-(3) `O_{t'} = O_t`: proved, `orbitChoice_heq_of_torusOf_eq`.  (2) is `jHat_add_eq` (with
-`bilin_eq_zero_of_commute_of_isNilpotent`), applied to `𝔥 = 𝔤_t`; what is missing there is its
-hypotheses for `𝔤_t`: `IsSelfDual` for `b|_{𝔤_t}`, the topological and measure-theoretic instances on
-`𝔤_t` (local compactness, total disconnectedness, σ-compactness, outer regularity), an open set of
-regular elements of `𝔤_t` around `X`, and `X + Y` regular iff `X` is.  For (1), writing `t' = t e^Y` needs a logarithm near `1`
-in `C(W) × C(V)` and `e^Y e^X = e^{X+Y}` for commuting `X, Y`.
-Literature: Waldspurger 2010 (Compositio 146; arXiv:0902.1875, §7.3, Proposition (i), proof in §7.6–7.7)
-states this local constancy for quasi-characters of `SO(W)` and of `SO(V)` separately, with his orbit
-choices and tori `T` with `A_T = 1`; the proof rests on `ĵ(O_t, ·)` being locally invariant under
-translation by the centre of `𝔤_t(F)` (§7.6).  Here the group is `GSpin(W) × GSpin(V)`, `θ` is a
-quasi-character of the product evaluated at `diag(t)`, and `T` contains the central `A_{G,H}`, so this
-is an adaptation, not a citation.  Beuzart-Plessis (Astérisque 418, Prop 4.5.1) only gives the
-vanishing, limit, boundedness and descent properties of the averaged `c_θ`.
-Status: SORRY (own work, GSpin input). -/
+`t ↦ c_{θ,O_t}(t)` is locally constant on `T_♮`.  Near `t₀ ∈ T_♮`, write
+`diag t = diag t₀ · e^Y` with `Y = log(diag(t₀)⁻¹ diag t)` (`exists_logA`), small; then the germs at
+`t` and `t₀` agree (`exists_nhds_germ_eq_of_expA`): `Y` is central in `𝔤_{t₀}` and semisimple, and
+`ĵ(O, X + Y) = ĵ(O, X)` on the regular set of `𝔤_{t₀}`.
+Literature: Waldspurger 2010 (Compositio 146; arXiv:0902.1875, §7.3, Proposition (i), proof in
+§7.6–7.7) proves this local constancy for quasi-characters of `SO(W)` and of `SO(V)` separately; here
+the group is `GSpin(W) × GSpin(V)` and the argument is carried out directly.  The openness of the
+regular set of `𝔤_{t₀}` is `isOpen_regularSS_lieCentralizer` (not yet formalized). -/
 theorem continuousOn_germ_of_mem_QC {χ : CentralCharOn d} {θ : ↥d.G → ℂ}
     (hθ : θ ∈ QC d χ) (T : Subgroup ↥(GSpin d.QW)) :
     ContinuousOn (fun t : ↥T => germ d.G d.lie d.bilin ψ θ (d.diag (t : ↥(GSpin d.QW)))
         (orbitChoice d (t : ↥(GSpin d.QW))))
       {t : ↥T | d.IsGammaElt (t : ↥(GSpin d.QW)) ∧ d.torusOf (t : ↥(GSpin d.QW)) = T} := by
-  sorry
+  rw [(isOpen_torusNat d T).continuousOn_iff]
+  rintro t₀ ⟨hx, hT⟩
+  obtain ⟨N, hN, hgerm⟩ := exists_nhds_germ_eq_of_expA ψ d hθ hx
+  obtain ⟨log, hlc, hl1, hle⟩ := exists_logA F (A := d.ambient)
+  -- `u(t) = diag(t₀)⁻¹ diag(t) → 1`, so `log u(t) → 0`
+  obtain ⟨u, hudef⟩ : ∃ u : ↥T → d.ambient, u = fun t : ↥T =>
+      ((((d.diag (t₀ : ↥(GSpin d.QW)) : ↥d.G) : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient) *
+        (((d.diag (t : ↥(GSpin d.QW)) : ↥d.G) : d.ambientˣ) : d.ambient) := ⟨_, rfl⟩
+  have hu : Continuous u := by
+    rw [hudef]
+    exact continuous_const.mul ((continuous_coe_diag d).comp continuous_subtype_val)
+  have hut : Tendsto u (𝓝 t₀) (𝓝 1) := by
+    have h1 : u t₀ = 1 := by rw [hudef]; exact Units.inv_mul _
+    simpa [h1] using hu.tendsto t₀
+  have hY : Tendsto (fun t => log (u t)) (𝓝 t₀) (𝓝 0) := by
+    have := hlc.tendsto.comp hut
+    rwa [hl1] at this
+  have h0 : ∀ᶠ t in 𝓝 t₀, t ∈ {t : ↥T | d.IsGammaElt (t : ↥(GSpin d.QW)) ∧
+      d.torusOf (t : ↥(GSpin d.QW)) = T} := (isOpen_torusNat d T).mem_nhds ⟨hx, hT⟩
+  refine tendsto_nhds_of_eventually_eq ?_
+  filter_upwards [h0, hut.eventually hle, hY.eventually hN] with t ⟨ht, hT'⟩ he hYN
+  have htx : (t : ↥(GSpin d.QW)) ∈ d.torusOf (t₀ : ↥(GSpin d.QW)) := hT.symm ▸ t.2
+  exact hgerm t ht htx (hT'.trans hT.symm) _ hYN (he.trans (by rw [hudef]))
 
 /-- **`D^G(t)^{1/2} c_{θ,O_t}(t)` is continuous on `T_♮`** (Thesis Prop 12.1.1(i)): from
 `continuousOn_weylDisc_torusNat` and `continuousOn_germ_of_mem_QC`. -/

@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Foundations.ExpLocal
 import GSpinGGP.Foundations.GSpin
+import TauCeti.RingTheory.Adjoin.Unit
 
 /-!
 # The logarithm of `GSpin` near `1` lies in `gspin`
@@ -13,7 +14,10 @@ import GSpinGGP.Foundations.GSpin
 * `eventually_mem_gspin_of_expA_mem`: for `Y` near `0` in `C(Q)`, `e^Y ∈ GSpin(Q)` implies
   `Y ∈ gspin(Q)` (evenness, and `[Y, ι(V)] ⊆ ι(V)` from `Ad(e^Y) ι(V) ⊆ ι(V)`), by
   `exists_nhds_mem_of_expA_mem`;
-* `isSS_of_mem_adjoin`: an element of `F[u]` is semisimple if `u` is.
+* `isSS_of_mem_adjoin`, `isSS_coe_inv`, `isSS_mul_of_commute`: semisimplicity of elements of
+  `F[u]`, of inverses and of commuting products;
+* `isRegularSS_add_iff_of_central`: translation by a central semisimple element preserves
+  regularity.
 -/
 
 noncomputable section
@@ -144,6 +148,54 @@ theorem isSS_of_mem_adjoin [PerfectField F] [FiniteDimensional F A] {u Y : A} (h
     rw [← AlgHom.map_adjoin_singleton]
     exact Subalgebra.mem_map.mpr ⟨_, hY, rfl⟩
   exact Module.End.IsSemisimple.of_mem_adjoin_singleton hu hmem
+
+/-- The inverse of a semisimple unit is semisimple (it lies in `F[u]`). -/
+theorem isSS_coe_inv [PerfectField F] [FiniteDimensional F A] {u : Aˣ} (hu : IsSS F (u : A)) :
+    IsSS F ((u⁻¹ : Aˣ) : A) :=
+  isSS_of_mem_adjoin hu (TauCeti.Units.coe_inv_mem_adjoin u (IsIntegral.of_finite F (u : A)))
+
+/-- The product of commuting semisimple elements is semisimple. -/
+theorem isSS_mul_of_commute [PerfectField F] [FiniteDimensional F A] {a c : A} (h : Commute a c)
+    (ha : IsSS F a) (hc : IsSS F c) : IsSS F (a * c) := by
+  unfold IsSS at *
+  rw [LinearMap.mulLeft_mul]
+  have hcomm : Commute (LinearMap.mulLeft F a) (LinearMap.mulLeft F c) := by
+    exact LinearMap.ext fun w => by
+      simp only [Module.End.mul_apply, LinearMap.mulLeft_apply, ← mul_assoc, h.eq]
+  exact Module.End.IsSemisimple.mul_of_commute hcomm ha hc
+
+/-- **Translation by a central semisimple element preserves regularity**: if `Y` is semisimple and
+commutes with every element of `𝔥`, then `Z + Y` is regular semisimple in `𝔥` iff `Z` is, for
+`Z ∈ 𝔥` (same centralizer in `𝔥`; sums of commuting semisimple elements are semisimple). -/
+theorem isRegularSS_add_iff_of_central [PerfectField F] [FiniteDimensional F A]
+    {𝔥 : LieSubalgebra F A} {Y : A} (hY : IsSS F Y) (hc : ∀ W ∈ 𝔥, Commute W Y) {Z : A}
+    (hZ : Z ∈ 𝔥) : IsRegularSS 𝔥 (Z + Y) ↔ IsRegularSS 𝔥 Z := by
+  have hC : lieCentralizer 𝔥 (Z + Y) = lieCentralizer 𝔥 Z := by
+    ext W
+    rw [mem_lieCentralizer, mem_lieCentralizer]
+    refine and_congr_right fun hW => ?_
+    rw [add_mul, mul_add, (hc W hW).eq]
+    exact add_left_inj _
+  have hss : ∀ {a c : A}, Commute a c → IsSS F a → IsSS F c → IsSS F (a + c) := by
+    intro a c h ha hc'
+    unfold IsSS at *
+    rw [show LinearMap.mulLeft F (a + c) = LinearMap.mulLeft F a + LinearMap.mulLeft F c from
+      LinearMap.ext fun w => add_mul a c w]
+    have hcomm : Commute (LinearMap.mulLeft F a) (LinearMap.mulLeft F c) := by
+      exact LinearMap.ext fun w => by
+        simp only [Module.End.mul_apply, LinearMap.mulLeft_apply, ← mul_assoc, h.eq]
+    exact Module.End.IsSemisimple.add_of_commute hcomm ha hc'
+  have hnY : IsSS F (-Y) := by
+    unfold IsSS at *
+    rw [show LinearMap.mulLeft F (-Y) = (-1 : F) • LinearMap.mulLeft F Y from
+      LinearMap.ext fun w => by simp]
+    exact Module.End.IsSemisimple_smul _ hY
+  have hZY : Commute Z Y := hc Z hZ
+  unfold IsRegularSS
+  rw [hC]
+  refine and_congr_left fun _ => ⟨fun h => ?_, fun h => hss hZY h hY⟩
+  have := hss ((hZY.add_left (Commute.refl Y)).neg_right) h hnY
+  rwa [add_neg_cancel_right] at this
 
 end Semisimple
 
