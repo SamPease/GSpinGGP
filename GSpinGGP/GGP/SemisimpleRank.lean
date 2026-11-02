@@ -172,6 +172,14 @@ variable {Q : QuadraticForm K V} {X : Module.End K V}
 
 open IsomCent
 
+/-- An eigenvector of an isometry with eigenvalue `ν`, `ν² ≠ 1`, is isotropic. -/
+theorem bform_self_eq_zero_of_eigen (hX : IsIsom (bform Q) X) {x : V} {ν : K} (hν : ν * ν ≠ 1)
+    (hx : X x = ν • x) : bform Q x x = 0 := by
+  have e := hX x x
+  simp only [hx, map_smul, LinearMap.smul_apply, smul_eq_mul] at e
+  have e' : (ν * ν - 1) * bform Q x x = 0 := by linear_combination e
+  exact (mul_eq_zero.1 e').resolve_left (sub_ne_zero.2 hν)
+
 /-- **A hyperbolic pair of eigenvectors.** If `V` is spanned by `u, w` with `X u = μ u`,
 `X w = μ⁻¹ w`, `μ² ≠ 1` and `b(u, w) ≠ 0`, then `so(V)_X` is the line spanned by
 `z ↦ b(w, z) u − b(u, z) w` (acting by `b(u,w)` on `u` and `−b(u,w)` on `w`). -/
@@ -184,15 +192,8 @@ theorem soCent_eq_span_wedge (hX : IsIsom (bform Q) X) {μ : K} (hμ0 : μ ≠ 0
   have hμi : μ⁻¹ * μ⁻¹ ≠ 1 := by rw [← mul_inv]; exact fun h => hμ (inv_eq_one.1 h)
   have hμμ : μ⁻¹ ≠ μ := fun e => hμ (calc μ * μ = μ * μ⁻¹ := by rw [e]
     _ = 1 := mul_inv_cancel₀ hμ0)
-  -- `u` and `w` are isotropic
-  have hiso : ∀ {x : V} {ν : K}, ν * ν ≠ 1 → X x = ν • x → bform Q x x = 0 := by
-    intro x ν hν hx
-    have e := hX x x
-    simp only [hx, map_smul, LinearMap.smul_apply, smul_eq_mul] at e
-    have e' : (ν * ν - 1) * bform Q x x = 0 := by linear_combination e
-    exact (mul_eq_zero.1 e').resolve_left (sub_ne_zero.2 hν)
-  have huu := hiso hμ hu
-  have hww := hiso hμi hw
+  have huu := bform_self_eq_zero_of_eigen hX hμ hu
+  have hww := bform_self_eq_zero_of_eigen hX hμi hw
   have hw0 : w ≠ 0 := fun h => huw (by rw [h, map_zero])
   have hu0 : u ≠ 0 := fun h => huw (by rw [h, map_zero, LinearMap.zero_apply])
   have hmem : ∀ x : V, ∃ a b : K, a • u + b • w = x := fun x =>
@@ -244,6 +245,17 @@ theorem soCent_eq_span_wedge (hX : IsIsom (bform Q) X) {μ : K} (hμ0 : μ ≠ 0
     match_scalars <;> field_simp <;> ring
   · rintro ⟨r, rfl⟩
     exact Submodule.smul_mem _ r hJ
+
+theorem finrank_soCent_pair (hX : IsIsom (bform Q) X) {μ : K} (hμ0 : μ ≠ 0) (hμ : μ * μ ≠ 1)
+    {u w : V} (hu : X u = μ • u) (hw : X w = μ⁻¹ • w) (huw : bform Q u w ≠ 0)
+    (hspan : Submodule.span K {u, w} = ⊤) : finrank K (soCent Q X) = 1 := by
+  rw [soCent_eq_span_wedge hX hμ0 hμ hu hw huw hspan]
+  refine finrank_span_singleton fun h => huw ?_
+  have := congrArg (fun F : Module.End K V => bform Q (F u) w) h
+  simp only [IsomCent.wedge_apply, map_sub, map_smul, LinearMap.sub_apply, LinearMap.smul_apply,
+    smul_eq_mul, bform_self_eq_zero_of_eigen hX hμ hu, bform_comm Q w u, zero_mul, sub_zero,
+    LinearMap.zero_apply, map_zero] at this
+  exact mul_self_eq_zero.1 this
 
 /-- In an orthogonal basis, `b(v, e_i) = v_i b(e_i, e_i)`. -/
 theorem bform_basis_right {ι : Type*} [Fintype ι] {e : Basis ι K V} (he : (bform Q).IsOrthoᵢ e)
@@ -337,3 +349,105 @@ theorem finrank_le_two_of_commute [CharZero K] [IsAlgClosed K] [FiniteDimensiona
   have : (-1 : Module.End K V).eigenspace (-1) = ⊤ := by
     ext x; simp [Module.End.mem_eigenspace_iff]
   rwa [this, finrank_top] at h
+
+/-- `so(V)_X = so(V)` when `X` is a scalar. -/
+theorem soCent_of_scalar {c : K} (hX : ∀ v, X v = c • v) : soCent Q X = soCent Q 1 := by
+  have : X = c • (1 : Module.End K V) := LinearMap.ext fun v => by simp [hX]
+  ext M
+  simp only [mem_soCent, this, mul_smul_comm, smul_mul_assoc, mul_one, one_mul]
+
+omit [Invertible (2 : K)] in
+theorem exists_smul_of_finrank_le_one [FiniteDimensional K V] {E : Submodule K V}
+    (h : finrank K E ≤ 1) {u x : V} (hu : u ∈ E) (hu0 : u ≠ 0) (hx : x ∈ E) :
+    ∃ c : K, x = c • u := by
+  obtain ⟨v, hv⟩ := finrank_le_one_iff.1 h
+  obtain ⟨a, ha⟩ := hv ⟨u, hu⟩
+  obtain ⟨b, hb⟩ := hv ⟨x, hx⟩
+  have e1 : a • (v : V) = u := congrArg Subtype.val ha
+  have e2 : b • (v : V) = x := congrArg Subtype.val hb
+  have ha0 : a ≠ 0 := by rintro rfl; exact hu0 (by rw [← e1, zero_smul])
+  exact ⟨b / a, by rw [← e1, ← e2, smul_smul, div_mul_cancel₀ _ ha0]⟩
+
+omit [Invertible (2 : K)] in
+/-- If `E_c(X) ≤ U`, restricting `X` to `U` does not change `dim E_c`. -/
+theorem finrank_eigenspace_restrict {U : Submodule K V} (hXU : Set.MapsTo X U U) (c : K)
+    (hle : X.eigenspace c ≤ U) :
+    finrank K (Module.End.eigenspace (X.restrict hXU) c) = finrank K (X.eigenspace c) := by
+  have : Module.End.eigenspace (X.restrict hXU) c = (X.eigenspace c).comap U.subtype := by
+    ext x
+    simp only [Module.End.mem_eigenspace_iff, Submodule.mem_comap, Submodule.subtype_apply,
+      Subtype.ext_iff, Submodule.coe_smul]
+    rfl
+  rw [this]
+  exact (Submodule.comapSubtypeEquivOfLe hle).finrank_eq
+
+end Pieces
+
+section Main
+
+universe u
+
+variable {K : Type*} [Field K] [Invertible (2 : K)] [CharZero K] [IsAlgClosed K]
+
+open IsomCent
+
+theorem finrank_soCent_aux (n : ℕ) : ∀ {V : Type u} [AddCommGroup V] [Module K V]
+    [FiniteDimensional K V] (Q : QuadraticForm K V) (X : Module.End K V), finrank K V = n →
+    IsNondeg Q → IsIsom (bform Q) X → X.IsSemisimple → Even (finrank K (X.eigenspace (-1))) →
+    (∀ M₁ ∈ soCent Q X, ∀ M₂ ∈ soCent Q X, Commute M₁ M₂) → finrank K (soCent Q X) = n / 2 := by
+  induction n using Nat.strong_induction_on with
+  | _ n ih =>
+  intro V _ _ _ Q X hn hQ hX hss hev hab
+  have hB : (bform Q).IsSymm := ⟨bform_comm Q⟩
+  have hL : LieAbelian (bform Q) X := fun Y₁ Y₂ h₁ h₂ c₁ c₂ _ _ =>
+    hab Y₁ (mem_soCent.2 ⟨h₁, c₁.eq.symm⟩) Y₂ (mem_soCent.2 ⟨h₂, c₂.eq.symm⟩)
+  have hcM : ∀ M ∈ soCent Q X, Commute X M := fun M hM => (mem_soCent.1 hM).2.symm
+  by_cases hA : ∃ μ, X.HasEigenvalue μ ∧ μ * μ ≠ 1
+  · sorry
+  · -- all eigenvalues are `±1`: `V = E₁ ⊥ E₋₁`
+    push Not at hA
+    set E₁ := X.eigenspace 1
+    set E₂ := X.eigenspace (-1)
+    have horth : ∀ x ∈ E₁, ∀ y ∈ E₂, bform Q x y = 0 := fun x hx y hy =>
+      bform_eigen_eq_zero (B := bform Q) hX (by norm_num) hx hy
+    have horth' : ∀ y ∈ E₂, ∀ x ∈ E₁, bform Q y x = 0 := fun y hy x hx =>
+      bform_orth' horth ⟨y, hy⟩ ⟨x, hx⟩
+    have hcompl : IsCompl E₁ E₂ := by
+      constructor
+      · rw [Submodule.disjoint_def]
+        intro x h1 h2
+        have h : (1 : K) • x = (-1 : K) • x :=
+          (Module.End.mem_eigenspace_iff.1 h1).symm.trans (Module.End.mem_eigenspace_iff.1 h2)
+        have h' : (2 : K) • x = 0 := by linear_combination (norm := module) h
+        exact (smul_eq_zero.1 h').resolve_left two_ne_zero
+      · rw [codisjoint_iff, eq_top_iff, ← hss.iSup_eigenspace_eq_top]
+        refine iSup_le fun ν => ?_
+        by_cases hν : X.HasEigenvalue ν
+        · rcases mul_self_eq_one_iff.1 (hA ν hν) with rfl | rfl
+          · exact le_sup_left
+          · exact le_sup_right
+        · rw [Module.End.hasEigenvalue_iff, not_not] at hν
+          rw [hν]
+          exact bot_le
+    have hX1 : Set.MapsTo X E₁ E₁ := mapsTo_eigenspace_of_commute (Commute.refl X) 1
+    have hX2 : Set.MapsTo X E₂ E₂ := mapsTo_eigenspace_of_commute (Commute.refl X) (-1)
+    have hM : ∀ M ∈ soCent Q X, Set.MapsTo M E₁ E₁ := fun M hM' =>
+      mapsTo_eigenspace_of_commute (hcM M hM') 1
+    have hs1 : soCent (Q.comp E₁.subtype) (X.restrict hX1) = soCent (Q.comp E₁.subtype) 1 :=
+      soCent_of_scalar (c := 1) fun v => Subtype.ext (Module.End.mem_eigenspace_iff.1 v.2)
+    have hs2 : soCent (Q.comp E₂.subtype) (X.restrict hX2) = soCent (Q.comp E₂.subtype) 1 :=
+      soCent_of_scalar (c := -1) fun v => Subtype.ext (Module.End.mem_eigenspace_iff.1 v.2)
+    have hab1 := commute_of_restrict horth hcompl hX1 hX2 hab
+    have hab2 := commute_of_restrict horth' hcompl.symm hX2 hX1 hab
+    rw [hs1] at hab1
+    rw [hs2] at hab2
+    have hQ1 := isNondeg_comp_subtype horth hQ hcompl
+    have hQ2 := isNondeg_comp_subtype horth' hQ hcompl.symm
+    have hd := Submodule.finrank_add_eq_of_isCompl hcompl
+    rw [finrank_soCent_eq_add horth hQ hcompl hX1 hX2 hM, hs1, hs2,
+      finrank_soCent_one_of_le_two hQ1 (finrank_le_two_of_commute hQ1 hab1),
+      finrank_soCent_one_of_le_two hQ2 (finrank_le_two_of_commute hQ2 hab2)]
+    obtain ⟨k, hk⟩ := hev
+    omega
+
+end Main
