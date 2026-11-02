@@ -626,10 +626,8 @@ theorem isSemisimple_oneSubAd (g : ↥d.G) (hg : IsSS F ((g : d.ambientˣ) : d.a
     Module.End.IsSemisimple (oneSubAd d g) := by
   set a : d.ambient := ((g : d.ambientˣ) : d.ambient)
   set ai : d.ambient := (((g : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient)
-  have hinv : Module.End.IsSemisimple (LinearMap.mulLeft F ai) := isSS_coe_inv hg
   have hAd : Module.End.IsSemisimple (LinearMap.mulLeft F a * LinearMap.mulRight F ai) :=
-    Module.End.IsSemisimple.mul_of_commute (LinearMap.commute_mulLeft_right _ _) hg
-      (isSemisimple_mulRight_of_mulLeft hinv)
+    isSemisimple_conj_of_mulLeft hg
   have hp' : ∀ X ∈ d.lie.toSubmodule,
       (LinearMap.mulLeft F a * LinearMap.mulRight F ai) X ∈ d.lie.toSubmodule := fun X hX => by
     have := lie_conj_stable d g X hX

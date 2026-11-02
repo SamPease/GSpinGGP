@@ -13,8 +13,8 @@ For `x ∈ GSpin(W)(F)`, the *moved part* of the Lie centralizer is
 
 * `MovedPart.exists_nhds_expA_mem_GSpin`: `e^X ∈ GSpin(W)(F)` for small `X ∈ gspin(W)`, and
   conversely `eventually_mem_gspin_of_expA_mem`;
-* `exists_gspin_commute_iff`, `mem_torusOf_of_commute`: an element of `GSpin` with the commutant
-  of a given `Z ∈ gspin`;
+* `exists_gspin_commute_iff`: an element of `GSpin` with the commutant of a given `Z ∈ gspin`;
+  `mem_torusOf_of_commute`: commuting with `x` and `ι(W'_x)` puts `g` in `T_x`;
 * `movedPartAbelian_of_isGammaElt`: `𝔩_x` is abelian for `x ∈ Γ(G,H)`;
 * `gspinBC`, `movedCentMap`, `gspinBC_commute_of_mem`: `𝔩_x ⊗ F̄` and its commutativity;
 * `lieAbelian_specP_baseChange_of_movedPartAbelian`: if `𝔩_x` is abelian, so is the Lie algebra

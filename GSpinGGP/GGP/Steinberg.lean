@@ -54,19 +54,6 @@ theorem specP_bcGSpin (Q : QuadraticForm K V) (t : GSpin Q) :
 
 section Semisimple
 
-/-- `p(R_x) = R_{p(x)}` for right multiplication. -/
-theorem aeval_mulRight {A : Type*} [Ring A] [Algebra K A] (x : A) (p : Polynomial K) :
-    Polynomial.aeval (LinearMap.mulRight K x) p = LinearMap.mulRight K (Polynomial.aeval x p) := by
-  induction p using Polynomial.induction_on' with
-  | add p q hp hq =>
-    rw [map_add, map_add, hp, hq]
-    ext z; simp [mul_add]
-  | monomial n a =>
-    ext z
-    simp only [Polynomial.aeval_monomial, Module.End.mul_apply, Module.algebraMap_end_apply,
-      LinearMap.pow_mulRight, LinearMap.mulRight_apply]
-    rw [Algebra.smul_def, ← mul_assoc, ← mul_assoc, Algebra.commutes]
-
 variable [Module.Finite K V] [PerfectField K]
 
 open Polynomial
@@ -79,41 +66,9 @@ theorem isSemisimple_specP_of_isSS (Q : QuadraticForm K V) (x : GSpin Q)
   set a : CliffordAlgebra Q := (((x : (CliffordAlgebra Q)ˣ)) : CliffordAlgebra Q) with ha
   set ai : CliffordAlgebra Q :=
     ((((x : (CliffordAlgebra Q)ˣ))⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) with hai
-  -- `a⁻¹ ∈ K[a]`
-  have hinv : ai ∈ Algebra.adjoin K {a} := by
-    let A := Algebra.adjoin K {a}
-    let f : A →ₗ[K] A := LinearMap.mulLeft K (⟨a, Algebra.subset_adjoin rfl⟩ : A)
-    have hinj : Function.Injective f := by
-      intro y z h
-      apply Subtype.ext
-      have h' : a * (y : CliffordAlgebra Q) = a * z := congrArg Subtype.val h
-      have := congrArg (ai * ·) h'
-      simpa only [← mul_assoc, ha, hai, Units.inv_mul, one_mul] using this
-    obtain ⟨y, hy⟩ := (LinearMap.injective_iff_surjective.1 hinj) 1
-    have hy' : a * (y : CliffordAlgebra Q) = 1 := congrArg Subtype.val hy
-    have : (y : CliffordAlgebra Q) = ai := by
-      calc (y : CliffordAlgebra Q) = ai * (a * y) := by
-            rw [← mul_assoc, hai, ha, Units.inv_mul, one_mul]
-        _ = ai := by rw [hy', mul_one]
-    rw [← this]; exact y.2
-  -- `L_a` and `R_{a⁻¹}` are commuting semisimple operators
-  have hqa : aeval a (minpoly K (LinearMap.mulLeft K a)) = 0 := by
-    have h0 : aeval (LinearMap.mulLeft K a) (minpoly K (LinearMap.mulLeft K a)) = 0 :=
-      minpoly.aeval K _
-    rw [show LinearMap.mulLeft K a = Algebra.lmul K (CliffordAlgebra Q) a from rfl,
-      aeval_algHom_apply] at h0
-    exact Algebra.lmul_injective (R := K) (h0.trans (map_zero _).symm)
-  have hRa : Module.End.IsSemisimple (LinearMap.mulRight K a) :=
-    Module.End.isSemisimple_of_squarefree_aeval_eq_zero hx.minpoly_squarefree
-      (by rw [aeval_mulRight, hqa, LinearMap.mulRight_zero_eq_zero])
-  have hRai : Module.End.IsSemisimple (LinearMap.mulRight K ai) := by
-    rw [Algebra.adjoin_singleton_eq_range_aeval] at hinv
-    obtain ⟨r, hr⟩ := hinv
-    have hr' : aeval a r = ai := hr
-    rw [← hr', ← aeval_mulRight]
-    exact hRa.aeval r
+  -- `c = L_a R_{a⁻¹}` is semisimple
   have hc : Module.End.IsSemisimple (LinearMap.mulLeft K a * LinearMap.mulRight K ai) :=
-    Module.End.IsSemisimple.mul_of_commute (LinearMap.commute_mulLeft_right a ai) hx hRai
+    isSemisimple_conj_of_mulLeft hx
   -- `ι ∘ P(x) = c ∘ ι`, so the minimal polynomial of `c` kills `P(x)`
   set c := LinearMap.mulLeft K a * LinearMap.mulRight K ai
   have hint : ∀ v, ι Q (specP Q x v) = c (ι Q v) := fun v => by

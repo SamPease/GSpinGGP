@@ -289,6 +289,19 @@ section MulRight
 
 variable {K : Type*} [Field K]
 
+/-- `p(R_x) = R_{p(x)}` for right multiplication. -/
+theorem aeval_mulRight {A : Type*} [Ring A] [Algebra K A] (x : A) (p : Polynomial K) :
+    Polynomial.aeval (LinearMap.mulRight K x) p = LinearMap.mulRight K (Polynomial.aeval x p) := by
+  induction p using Polynomial.induction_on' with
+  | add p q hp hq =>
+    rw [map_add, map_add, hp, hq]
+    ext z; simp [mul_add]
+  | monomial n a =>
+    ext z
+    simp only [Polynomial.aeval_monomial, Module.End.mul_apply, Module.algebraMap_end_apply,
+      LinearMap.pow_mulRight, LinearMap.mulRight_apply]
+    rw [Algebra.smul_def, ← mul_assoc, ← mul_assoc, Algebra.commutes]
+
 open Polynomial in
 /-- If left multiplication by `a` is semisimple, so is right multiplication by `a` (both are
 annihilated by the squarefree minimal polynomial of `L_a`). -/
@@ -304,18 +317,19 @@ theorem isSemisimple_mulRight_of_mulLeft {A : Type*} [Ring A] [Algebra K A] [Fin
       minpoly.aeval K _
     have h3 := congrArg (fun f : Module.End K A => f 1) (h1.symm.trans h2)
     simpa using h3
-  have hR : ∀ q : K[X], aeval (LinearMap.mulRight K a) q = LinearMap.mulRight K (aeval a q) := by
-    intro q
-    induction q using Polynomial.induction_on' with
-    | add p q hp hq =>
-      rw [map_add, map_add, hp, hq]
-      ext z; simp [mul_add]
-    | monomial k c =>
-      ext z
-      simp only [aeval_monomial, Module.End.mul_apply, Module.algebraMap_end_apply,
-        LinearMap.mulRight_apply, LinearMap.pow_mulRight, Algebra.smul_def,
-        mul_assoc, Algebra.commutes]
-  rw [hR, hpa, LinearMap.mulRight_zero_eq_zero]
+  rw [aeval_mulRight, hpa, LinearMap.mulRight_zero_eq_zero]
+
+/-- **`Ad(u) = L_u R_{u⁻¹}` is semisimple** for a unit `u` with `L_u` semisimple (`u⁻¹ ∈ K[u]`). -/
+theorem isSemisimple_conj_of_mulLeft [PerfectField K] {A : Type*} [Ring A] [Algebra K A]
+    [FiniteDimensional K A] {u : Aˣ} (hu : Module.End.IsSemisimple (LinearMap.mulLeft K (u : A))) :
+    Module.End.IsSemisimple
+      (LinearMap.mulLeft K (u : A) * LinearMap.mulRight K ((u⁻¹ : Aˣ) : A)) := by
+  have hmem : Algebra.lmul K A ((u⁻¹ : Aˣ) : A) ∈ Algebra.adjoin K {Algebra.lmul K A (u : A)} := by
+    rw [← AlgHom.map_adjoin_singleton]
+    exact Subalgebra.mem_map.mpr
+      ⟨_, TauCeti.Units.coe_inv_mem_adjoin u (IsIntegral.of_finite K (u : A)), rfl⟩
+  exact Module.End.IsSemisimple.mul_of_commute (LinearMap.commute_mulLeft_right _ _) hu
+    (isSemisimple_mulRight_of_mulLeft (Module.End.IsSemisimple.of_mem_adjoin_singleton hu hmem))
 
 end MulRight
 
