@@ -25,7 +25,13 @@ jobs:
       - name: Fetch build caches
         run: PATH="$HOME/.elan/bin:$PATH" bash scripts/get-cache.sh
       - name: Build
-        run: ~/.elan/bin/lake build
+        run: |
+          set -o pipefail
+          ~/.elan/bin/lake build 2>&1 | tee build.log
+      # Axioms only in Literature/, local_ggp's axioms as listed in scripts/main-axioms.txt, and the
+      # README's sorry and axiom counts up to date.
+      - name: Check assumptions and README counts
+        run: LAKE=~/.elan/bin/lake bash scripts/check-assumptions.sh build.log
 
       # Build the blueprint (web + PDF) into site/, next to the static landing page.
       # These are the steps of leanprover-community/docgen-action, except that pygraphviz is
