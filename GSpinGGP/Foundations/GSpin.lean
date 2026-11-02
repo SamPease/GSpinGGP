@@ -2,6 +2,7 @@ import Mathlib
 import TauCeti.LinearAlgebra.CliffordAlgebra.Vectors
 import TauCeti.LinearAlgebra.CliffordAlgebra.Functoriality
 import TauCeti.LinearAlgebra.BilinearForm.BaseChange
+import TauCeti.LinearAlgebra.CliffordAlgebra.Quadratic.Realization
 
 /-!
 # Quadratic spaces, general spin groups, GGP triples, inner twists, Whittaker data
@@ -1260,6 +1261,62 @@ theorem trace_nondegenerate_gspin [Module.Finite K V] {Q : QuadraticForm K V} (h
 
 
 
+/-- The action `v ↦ [X, v]` on `V ⊂ C(V)` of an element `X ∈ gspin(V)` (the image of `X` in
+`so(V)`). For `X ∉ gspin(V)` the value has no meaning. -/
+def adV (Q : QuadraticForm K V) : CliffordAlgebra Q →ₗ[K] Module.End K V where
+  toFun X := ιInv Q ∘ₗ (LinearMap.mulLeft K X - LinearMap.mulRight K X) ∘ₗ ι Q
+  map_add' X Y := by ext v; simp [add_mul, mul_add, sub_add_sub_comm]
+  map_smul' c X := by ext v; simp [smul_sub]
+
+theorem adV_apply (Q : QuadraticForm K V) (X : CliffordAlgebra Q) (v : V) :
+    adV Q X v = ιInv Q (X * ι Q v - ι Q v * X) := rfl
+
+/-- For `X ∈ gspin(V)`: `ι(adV X v) = [X, ι v]`. -/
+theorem ι_adV {Q : QuadraticForm K V} {X : CliffordAlgebra Q} (hX : X ∈ gspin Q) (v : V) :
+    ι Q (adV Q X v) = X * ι Q v - ι Q v * X := by
+  obtain ⟨w, hw⟩ := hX.2 v
+  rw [Ring.lie_def] at hw
+  rw [adV_apply, ← hw, ιInv_ι]
+
+/-- `adV X` is skew for the bilinear form of `Q`, for `X ∈ gspin(V)` (Thesis Prop. 5.1.3.1). -/
+theorem bform_adV {Q : QuadraticForm K V} {X : CliffordAlgebra Q} (hX : X ∈ gspin Q) (u w : V) :
+    bform Q (adV Q X u) w = -bform Q u (adV Q X w) := by
+  set A := adV Q X
+  have hXA : ∀ u, X * ι Q u = ι Q u * X + ι Q (A u) := fun u => by
+    rw [ι_adV hX]; abel
+  have e := ι_mul_ι_add_swap (Q := Q) u w
+  have h1 : X * (ι Q u * ι Q w + ι Q w * ι Q u) = (ι Q u * ι Q w + ι Q w * ι Q u) * X := by
+    rw [e, Algebra.commutes]
+  have h2 : X * (ι Q u * ι Q w + ι Q w * ι Q u) = (ι Q u * ι Q w + ι Q w * ι Q u) * X +
+      ((ι Q u * ι Q (A w) + ι Q (A w) * ι Q u) + (ι Q (A u) * ι Q w + ι Q w * ι Q (A u))) := by
+    simp only [mul_add, ← mul_assoc, hXA, add_mul]
+    simp only [mul_assoc, hXA, mul_add]
+    abel
+  rw [h1, e, ι_mul_ι_add_swap u (A w), ι_mul_ι_add_swap (A u) w, ← map_add,
+    left_eq_add] at h2
+  have h3 := (algebraMap K (CliffordAlgebra Q)).injective (h2.trans (map_zero _).symm)
+  rw [polar_eq_two_mul_bform, polar_eq_two_mul_bform, ← mul_add] at h3
+  have h4 := (mul_eq_zero.mp h3).resolve_left (Invertible.ne_zero 2)
+  rw [QuadraticMap.associated_isSymm K Q u (A w)] at h4
+  change bform Q (A w) u + bform Q (A u) w = 0 at h4
+  rw [QuadraticMap.associated_isSymm K Q u (A w)]
+  exact eq_neg_of_add_eq_zero_right h4
+
+/-- Every skew endomorphism `A` of a nondegenerate `V` is `[Y, ·]` on `ι(V)` for a quadratic
+element `Y` (a combination of bivectors; Thesis Prop. 5.1.3.1). This is Tau Ceti's
+`soEquivQuadratic`. -/
+theorem exists_mem_quadratic_commutator_eq [Module.Finite K V] {Q : QuadraticForm K V}
+    (hQ : IsNondeg Q) (A : V →ₗ[K] V) (hskew : ∀ u w, bform Q (A u) w = -bform Q u (A w)) :
+    ∃ Y ∈ quadraticLieSubalgebra Q, ∀ v, Y * ι Q v - ι Q v * Y = ι Q (A v) := by
+  have hA : A ∈ skewAdjointLieSubalgebra (QuadraticMap.polarBilin Q) := by
+    show A ∈ (QuadraticMap.polarBilin Q).skewAdjointSubmodule
+    rw [LinearMap.mem_skewAdjointSubmodule]
+    intro x y
+    simp only [QuadraticMap.polarBilin_apply_apply, polar_eq_two_mul_bform, hskew, Pi.neg_apply,
+      map_neg, mul_neg]
+  let Y := soEquivQuadratic Q (QuadraticMap.nondegenerate_associated_iff (Q := Q) |>.1 hQ) ⟨A, hA⟩
+  exact ⟨Y, Y.2, fun v => by rw [← Ring.lie_def, soEquivQuadratic_lie_ι]⟩
+
 /-- Thesis Prop. 5.1.3.1: `gspin(V) = so(V) ⊕ K`, where `so(V)` is the
 span of the bivectors `v₁ v₂` (for `V ≠ 0` the scalars are already in that span). -/
 theorem gspin_eq_span [Module.Finite K V] {Q : QuadraticForm K V} (hQ : IsNondeg Q) :
@@ -1269,72 +1326,15 @@ theorem gspin_eq_span [Module.Finite K V] {Q : QuadraticForm K V} (hQ : IsNondeg
   apply le_antisymm
   · intro X hX
     change X ∈ gspin Q at hX
-    let A : V →ₗ[K] V := ιInv Q ∘ₗ (LinearMap.mulLeft K X - LinearMap.mulRight K X) ∘ₗ ι Q
-    have hXA : ∀ u, X * ι Q u = ι Q u * X + ι Q (A u) := gspin_mul_ι hX
-    -- `A` is skew
-    have hskew : ∀ u w, bform Q (A u) w = -bform Q u (A w) := by
-      intro u w
-      have e := ι_mul_ι_add_swap (Q := Q) u w
-      have h1 : X * (ι Q u * ι Q w + ι Q w * ι Q u) = (ι Q u * ι Q w + ι Q w * ι Q u) * X := by
-        rw [e, Algebra.commutes]
-      have h2 : X * (ι Q u * ι Q w + ι Q w * ι Q u) = (ι Q u * ι Q w + ι Q w * ι Q u) * X +
-          ((ι Q u * ι Q (A w) + ι Q (A w) * ι Q u) + (ι Q (A u) * ι Q w + ι Q w * ι Q (A u))) := by
-        simp only [mul_add, ← mul_assoc, hXA, add_mul]
-        simp only [mul_assoc, hXA, mul_add]
-        abel
-      rw [h1, e, ι_mul_ι_add_swap u (A w), ι_mul_ι_add_swap (A u) w, ← map_add,
-        left_eq_add] at h2
-      have h3 := (algebraMap K (CliffordAlgebra Q)).injective (h2.trans (map_zero _).symm)
-      rw [polar_eq_two_mul_bform, polar_eq_two_mul_bform, ← mul_add] at h3
-      have h4 := (mul_eq_zero.mp h3).resolve_left (Invertible.ne_zero 2)
-      rw [QuadraticMap.associated_isSymm K Q u (A w)] at h4
-      change bform Q (A w) u + bform Q (A u) w = 0 at h4
-      rw [QuadraticMap.associated_isSymm K Q u (A w)]
-      exact eq_neg_of_add_eq_zero_right h4
-    let b := Module.finBasis K V
-    have hQ' : (bform Q).Nondegenerate := hQ
-    let f := (bform Q).dualBasis hQ' b
-    have hrepr : ∀ v i, b.repr v i = bform Q (f i) v := by
-      intro v i
-      conv_rhs => rw [← b.sum_repr v]
-      simp only [map_sum, map_smul, smul_eq_mul, f]
-      rw [Finset.sum_eq_single i]
-      · rw [LinearMap.BilinForm.apply_dualBasis_left]; simp
-      · intro j _ hj; rw [LinearMap.BilinForm.apply_dualBasis_left]; simp [hj]
-      · simp
-    have h4 : (4 : K) ≠ 0 := by
-      have h2 := Invertible.ne_zero (2 : K)
-      rw [show (4 : K) = 2 * 2 by norm_num]; exact mul_ne_zero h2 h2
-    let Y : CliffordAlgebra Q := (4 : K)⁻¹ • ∑ i, ι Q (A (b i)) * ι Q (f i)
-    have hY : ∀ v, Y * ι Q v - ι Q v * Y = ι Q (A v) := by
-      intro v
-      have hs1 : ∑ i, QuadraticMap.polar Q (f i) v • A (b i) = (2 : K) • A v := by
-        conv_rhs => rw [← b.sum_repr v]
-        rw [map_sum, Finset.smul_sum]
-        refine Finset.sum_congr rfl fun i _ => ?_
-        rw [polar_eq_two_mul_bform, hrepr, map_smul, smul_smul]
-      have hs2 : ∑ i, QuadraticMap.polar Q (A (b i)) v • f i = -((2 : K) • A v) := by
-        conv_rhs => rw [← f.sum_repr (A v)]
-        rw [Finset.smul_sum, ← Finset.sum_neg_distrib]
-        refine Finset.sum_congr rfl fun i _ => ?_
-        rw [polar_eq_two_mul_bform, hskew]
-        simp only [f, LinearMap.BilinForm.dualBasis_repr_apply]
-        rw [QuadraticMap.associated_isSymm K Q (b i) (A v), smul_smul, ← neg_smul]
-        congr 1; ring
-      simp only [Y, smul_mul_assoc, mul_smul_comm, ← smul_sub, Finset.sum_mul, Finset.mul_sum]
-      rw [← Finset.sum_sub_distrib]
-      simp_rw [ι_mul_ι_commutator]
-      rw [← map_sum, Finset.sum_sub_distrib, hs1, hs2, ← map_smul]
-      congr 1
-      rw [sub_neg_eq_add, ← two_smul K ((2 : K) • A v), smul_smul, smul_smul]
-      rw [show (4 : K)⁻¹ * 2 * 2 = 1 by
-        rw [mul_assoc, show (2 : K) * 2 = 4 by norm_num, inv_mul_cancel₀ h4], one_smul]
-    have hYmem : Y ∈ Submodule.span K (Set.range fun p : V × V => ι Q p.1 * ι Q p.2) :=
-      Submodule.smul_mem _ _ (Submodule.sum_mem _ fun i _ =>
-        Submodule.subset_span ⟨(A (b i), f i), rfl⟩)
-    have hYeven : Y ∈ evenOdd Q 0 := by
-      refine Submodule.smul_mem _ _ (Submodule.sum_mem _ fun i _ => ?_)
-      exact ι_mul_ι_mem_evenOdd_zero Q _ _
+    obtain ⟨Y, hYq, hY⟩ := exists_mem_quadratic_commutator_eq hQ (adV Q X) (bform_adV hX)
+    have hYmem : Y ∈ Submodule.span K (Set.range fun p : V × V => ι Q p.1 * ι Q p.2) := by
+      refine quadraticLieSubalgebra_toSubmodule_le_of_bivector_mem Q (fun a b => ?_) hYq
+      rw [bivector_def]
+      exact Submodule.smul_mem _ _ (Submodule.sub_mem _ (Submodule.subset_span ⟨(a, b), rfl⟩)
+        (Submodule.subset_span ⟨(b, a), rfl⟩))
+    have hXA : ∀ u, X * ι Q u = ι Q u * X + ι Q (adV Q X u) := fun u => by
+      rw [ι_adV hX]; abel
+    have hYeven : Y ∈ evenOdd Q 0 := quadraticLieSubalgebra_le_evenOdd_zero Q hYq
     have hX0 : X ∈ evenOdd Q 0 := by rw [← even_toSubmodule]; exact hX.1
     obtain ⟨r, hr⟩ := eq_algebraMap_of_commute_ι hQ (Submodule.sub_mem _ hX0 hYeven)
       (fun v => by
