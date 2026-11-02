@@ -735,6 +735,93 @@ theorem commute_of_lieAbelian_of_det [CharZero K] (hB : B.IsSymm) (hnd : B.Nonde
     simp only [map_sub, map_smul, LinearMap.sub_apply, a1, a2, a3, a4] at eq
     linear_combination (norm := module) (1 / 16 : K) • eq
 
+/-- `LieAbelian` is invariant under isometric isomorphisms conjugating the operators. -/
+theorem LieAbelian.of_equiv {V₁ : Type*} [AddCommGroup V₁] [Module K V₁]
+    {B₁ : LinearMap.BilinForm K V₁} {X₁ : Module.End K V₁} (e : V₁ ≃ₗ[K] V)
+    (hB : ∀ u v, B (e u) (e v) = B₁ u v) (hX : ∀ v, X (e v) = e (X₁ v))
+    (hL : LieAbelian B₁ X₁) : LieAbelian B X := by
+  intro Y₁ Y₂ hs₁ hs₂ hc₁ hc₂ hf₁ hf₂
+  let c : Module.End K V → Module.End K V₁ := fun Y => e.symm.toLinearMap ∘ₗ Y ∘ₗ e.toLinearMap
+  have hcY : ∀ Y : Module.End K V, IsSkew B Y → IsSkew B₁ (c Y) := by
+    intro Y hY u v
+    simp only [c, LinearMap.comp_apply, LinearEquiv.coe_coe]
+    rw [← hB, ← hB, e.apply_symm_apply, e.apply_symm_apply, hY]
+  have hcc : ∀ Y : Module.End K V, Commute X Y → Commute X₁ (c Y) := by
+    intro Y hY
+    refine LinearMap.ext fun v => ?_
+    simp only [c, Module.End.mul_apply, LinearMap.comp_apply, LinearEquiv.coe_coe]
+    apply e.injective
+    rw [e.apply_symm_apply, ← hX, e.apply_symm_apply, ← Module.End.mul_apply X Y, hY.eq,
+      Module.End.mul_apply, hX]
+  have hcf : ∀ Y : Module.End K V, (∀ z ∈ X.eigenspace 1, Y z = 0) →
+      ∀ z ∈ X₁.eigenspace 1, c Y z = 0 := by
+    intro Y hY z hz
+    simp only [c, LinearMap.comp_apply, LinearEquiv.coe_coe]
+    rw [hY (e z) (by
+      rw [Module.End.mem_eigenspace_iff, one_smul] at hz ⊢
+      rw [hX, hz]), map_zero]
+  have h := (hL _ _ (hcY _ hs₁) (hcY _ hs₂) (hcc _ hc₁) (hcc _ hc₂) (hcf _ hf₁) (hcf _ hf₂)).eq
+  refine LinearMap.ext fun v => ?_
+  have := LinearMap.congr_fun h (e.symm v)
+  simp only [c, Module.End.mul_apply, LinearMap.comp_apply, LinearEquiv.coe_coe,
+    e.apply_symm_apply] at this
+  simpa using congrArg e this
+
+
+/-- **`LieAbelian` from a subspace containing the moved part**: if `X` preserves `U` and every
+eigenspace of `X` for `μ ≠ 1` lies in `U`, then `LieAbelian` for `X|_U` gives it for `X`. -/
+theorem LieAbelian.of_restrict (hss : X.IsSemisimple) (U : Submodule K V)
+    (hXU : ∀ u ∈ U, X u ∈ U) (hU : ∀ μ, μ ≠ 1 → X.eigenspace μ ≤ U)
+    (hL : LieAbelian (B.restrict U) (X.restrict hXU)) : LieAbelian B X := by
+  intro Y₁ Y₂ hs₁ hs₂ hc₁ hc₂ hf₁ hf₂
+  -- `Y` maps `V` into `U`
+  have hmapsU : ∀ Y : Module.End K V, Commute X Y → (∀ z ∈ X.eigenspace 1, Y z = 0) →
+      ∀ v, Y v ∈ U := by
+    intro Y hc hf v
+    have hv : v ∈ ⨆ μ : K, X.eigenspace μ := by rw [hss.iSup_eigenspace_eq_top]; trivial
+    induction hv using Submodule.iSup_induction' with
+    | zero => simp
+    | add a b _ _ ha hb => rw [map_add]; exact U.add_mem ha hb
+    | mem μ w hw =>
+      by_cases hμ : μ = 1
+      · subst hμ; rw [hf w hw]; exact U.zero_mem
+      · exact hU μ hμ (mapsTo_eigenspace_of_commute hc μ w hw)
+  have hm₁ := hmapsU Y₁ hc₁ hf₁
+  have hm₂ := hmapsU Y₂ hc₂ hf₂
+  let r₁ : Module.End K U := Y₁.restrict (fun u _ => hm₁ u)
+  let r₂ : Module.End K U := Y₂.restrict (fun u _ => hm₂ u)
+  have hskew : ∀ (Y : Module.End K V) (h : ∀ v, Y v ∈ U), IsSkew B Y →
+      IsSkew (B.restrict U) (Y.restrict (fun u _ => h u)) := by
+    intro Y h hY u v
+    exact hY u v
+  have hcom : ∀ (Y : Module.End K V) (h : ∀ v, Y v ∈ U), Commute X Y →
+      Commute (X.restrict hXU) (Y.restrict (fun u _ => h u)) := by
+    intro Y h hY
+    refine LinearMap.ext fun u => Subtype.ext ?_
+    simp only [Module.End.mul_apply, LinearMap.restrict_coe_apply]
+    rw [← Module.End.mul_apply X Y, hY.eq, Module.End.mul_apply]
+  have hfix : ∀ (Y : Module.End K V) (h : ∀ v, Y v ∈ U), (∀ z ∈ X.eigenspace 1, Y z = 0) →
+      ∀ z ∈ Module.End.eigenspace (X.restrict hXU) 1, Y.restrict (fun u _ => h u) z = 0 := by
+    intro Y h hY z hz
+    apply Subtype.ext
+    rw [LinearMap.restrict_coe_apply, Submodule.coe_zero]
+    apply hY
+    rw [Module.End.mem_eigenspace_iff, one_smul] at hz ⊢
+    exact congrArg Subtype.val hz
+  have key := (hL _ _ (hskew _ hm₁ hs₁) (hskew _ hm₂ hs₂) (hcom _ hm₁ hc₁) (hcom _ hm₂ hc₂)
+    (hfix _ hm₁ hf₁) (hfix _ hm₂ hf₂)).eq
+  refine LinearMap.ext fun v => ?_
+  simp only [Module.End.mul_apply]
+  have hv : v ∈ ⨆ μ : K, X.eigenspace μ := by rw [hss.iSup_eigenspace_eq_top]; trivial
+  induction hv using Submodule.iSup_induction' with
+  | zero => simp
+  | add a b _ _ ha hb => rw [map_add, map_add, map_add, map_add, ha, hb]
+  | mem μ w hw =>
+    by_cases hμ : μ = 1
+    · subst hμ; rw [hf₁ w hw, hf₂ w hw, map_zero, map_zero]
+    · have := congrArg Subtype.val (LinearMap.congr_fun key ⟨w, hU μ hμ hw⟩)
+      simpa [Module.End.mul_apply, LinearMap.restrict_coe_apply] using this
+
 end Group
 
 end IsomCent

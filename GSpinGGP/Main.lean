@@ -1710,11 +1710,385 @@ theorem stablyConjG_diag_of_psiU (τ : InnerTwist d.QW)
 
 end TwistIncl
 
+/-- **`P(x)_{F̄}` is semisimple** for semisimple `x ∈ GSpin(W)(F)` (own work, elementary).  Route:
+left and right multiplication by `x` are commuting semisimple operators on `C(W)`, so conjugation
+`v ↦ x v x⁻¹` is semisimple and so is its restriction to `ι(W)`, which is `P(x)`; semisimplicity
+over `F` of characteristic `0` survives base change to `F̄` (squarefree minimal polynomial).
+Proved: `isSemisimple_specP_of_isSS` (`GGP/Steinberg.lean`), `isSemisimple_baseChange`
+(`GGP/TorusCommute.lean`). -/
+theorem isSemisimple_specP_baseChange (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) :
+    Module.End.IsSemisimple
+      ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange (AlgebraicClosure F)) :=
+  isSemisimple_baseChange (isSemisimple_specP_of_isSS d.QW x hx.1)
+
+open CliffordAlgebra in
+open scoped TensorProduct in
+/-- **The Lie algebra of `S_x` is abelian over `F̄`** (own work).  Route: a skew endomorphism `Y`
+of `W_{F̄}` commuting with `X = P(x)_{F̄}` and vanishing on `ker (X − 1) = W'_x ⊗ F̄` is `ad`
+of an element of `so(W_{F̄}) ⊆ gspin(W_{F̄})` (`gspin = so ⊕ F`) in the centralizer of `x` and
+killing `ι(W'_x ⊗ F̄)`.  These conditions are `F`-linear equations, so their solutions over `F̄`
+are the `F̄`-span of the solutions over `F` (flatness, `range_gspinBC`), which commute by
+`movedPartAbelian_of_isGammaElt`; hence so do the `Y`. -/
+theorem lieAbelian_specP_baseChange (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) :
+    IsomCent.LieAbelian (bform (d.QW.baseChange (AlgebraicClosure F)))
+      ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange (AlgebraicClosure F)) := by
+  intro Y₁ Y₂ hs₁ hs₂ hc₁ hc₂ hf₁ hf₂
+  have hQ := isNondeg_baseChange _ d.nondeg
+  let xb : GSpin (d.QW.baseChange (AlgebraicClosure F)) :=
+    ⟨bcUnits d.QW (x : (CliffordAlgebra d.QW)ˣ), TorusTransfer.bcUnits_mem_GSpin d.QW x⟩
+  have hX : (specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange (AlgebraicClosure F) =
+      (specP (d.QW.baseChange (AlgebraicClosure F)) xb : _ →ₗ[AlgebraicClosure F] _) :=
+    LinearMap.ext fun w => (GGPData.specP_bcUnits d x w).symm
+  have key : ∀ Y : Module.End (AlgebraicClosure F) (AlgebraicClosure F ⊗[F] (Fin d.m → F)),
+      IsomCent.IsSkew (bform (d.QW.baseChange (AlgebraicClosure F))) Y →
+      Commute ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange
+        (AlgebraicClosure F)) Y →
+      (∀ z ∈ Module.End.eigenspace ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange
+        (AlgebraicClosure F)) 1, Y z = 0) →
+      ∃ u ∈ (LinearMap.ker (movedCentMap d.QW x)).baseChange (AlgebraicClosure F),
+        ∀ v, gspinBC d.QW u * ι _ v - ι _ v * gspinBC d.QW u = ι _ (Y v) := by
+    intro Y hs hc hf
+    obtain ⟨Yh, hYh0, hYh⟩ := exists_lift_skew hQ Y hs
+    have hYh0' := hYh0
+    rw [← LieSubalgebra.mem_toSubmodule, ← range_gspinBC d.QW hQ] at hYh0'
+    obtain ⟨u, rfl⟩ := hYh0'
+    refine ⟨u, mem_movedCent_baseChange d.QW x u ?_ ?_, hYh⟩
+    · rw [hX] at hc
+      exact commute_of_lift hQ xb hc hYh0 hYh
+    · intro w hw
+      have h1 : (1 : AlgebraicClosure F) ⊗ₜ[F] w ∈ Module.End.eigenspace
+          ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange (AlgebraicClosure F)) 1 := by
+        rw [Module.End.mem_eigenspace_iff, one_smul, LinearMap.baseChange_tmul]
+        congr 1
+        have := LinearMap.mem_ker.mp hw
+        rw [LinearMap.sub_apply, sub_eq_zero] at this
+        exact this
+      have := hYh (1 ⊗ₜ w)
+      rw [hf _ h1, map_zero, sub_eq_zero] at this
+      exact this
+  obtain ⟨u₁, hu₁, h₁⟩ := key Y₁ hs₁ hc₁ hf₁
+  obtain ⟨u₂, hu₂, h₂⟩ := key Y₂ hs₂ hc₂ hf₂
+  have h12 := gspinBC_commute_of_mem (movedPartAbelian_of_isGammaElt d x hx) hu₁ hu₂
+  refine LinearMap.ext fun v => ι_injective (d.QW.baseChange (AlgebraicClosure F)) ?_
+  rw [Module.End.mul_apply, Module.End.mul_apply, ← sub_eq_zero, ← h₁, ← h₂, ← h₂, ← h₁]
+  set A := gspinBC d.QW u₁
+  set B := gspinBC d.QW u₂
+  have e : A * (B * ι _ v - ι _ v * B) - (B * ι _ v - ι _ v * B) * A -
+      (B * (A * ι _ v - ι _ v * A) - (A * ι _ v - ι _ v * A) * B) =
+      (A * B - B * A) * ι _ v - ι _ v * (A * B - B * A) := by noncomm_ring
+  rw [e, h12, sub_self, zero_mul, mul_zero, sub_zero]
+
+section TorusNat
+
+open CliffordAlgebra Module
+open scoped TensorProduct
+
+namespace GGPData
+
+variable (d)
+
+theorem specP_incl_eq_prodMap (a : GSpin d.QW) :
+    (specP d.QV (d.incl a) : d.V →ₗ[F] d.V) =
+      (specP d.QW a : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).prodMap LinearMap.id := by
+  ext ⟨w, z⟩ <;> simp [d.specP_incl_apply]
+
+/-- `W_{F̄} ↪ V_{F̄}`. -/
+abbrev inlF : (AlgebraicClosure F ⊗[F] (Fin d.m → F)) →ₗ[AlgebraicClosure F]
+    (AlgebraicClosure F ⊗[F] d.V) :=
+  (LinearMap.inl F (Fin d.m → F) d.Z).baseChange (AlgebraicClosure F)
+
+theorem inlF_injective : Function.Injective d.inlF := by
+  intro a b h
+  have := congrArg ((LinearMap.fst F (Fin d.m → F) d.Z).baseChange (AlgebraicClosure F)) h
+  rw [inlF, ← LinearMap.comp_apply, ← LinearMap.comp_apply, ← LinearMap.baseChange_comp,
+    LinearMap.fst_comp_inl, LinearMap.baseChange_id] at this
+  exact this
+
+theorem bform_inlF (u v : AlgebraicClosure F ⊗[F] (Fin d.m → F)) :
+    bform (d.QV.baseChange (AlgebraicClosure F)) (d.inlF u) (d.inlF v) =
+      bform (d.QW.baseChange (AlgebraicClosure F)) u v := by
+  simp only [bform, QuadraticForm.associated_baseChange]
+  induction u using TensorProduct.inductionOn with
+  | add a b ha hb => simp only [map_add, LinearMap.add_apply, ha, hb]
+  | tmul a w =>
+    induction v using TensorProduct.inductionOn with
+    | add c e hc he => rw [map_add, map_add, map_add, hc, he]
+    | tmul b w' =>
+      simp [inlF, LinearMap.BilinForm.baseChange_tmul, QuadraticMap.associated_prod]
+
+theorem specP_bc_incl_inlF (a : GSpin d.QW) (u : AlgebraicClosure F ⊗[F] (Fin d.m → F)) :
+    (specP d.QV (d.incl a) : d.V →ₗ[F] d.V).baseChange (AlgebraicClosure F) (d.inlF u) =
+      d.inlF ((specP d.QW a : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange
+        (AlgebraicClosure F) u) := by
+  rw [d.specP_incl_eq_prodMap a, inlF, ← LinearMap.comp_apply, ← LinearMap.baseChange_comp,
+    ← LinearMap.comp_apply, ← LinearMap.baseChange_comp]
+  congr 2
+
+theorem eigenspace_le_range_inlF (a : GSpin d.QW) {μ : AlgebraicClosure F} (hμ : μ ≠ 1) :
+    Module.End.eigenspace ((specP d.QV (d.incl a) : d.V →ₗ[F] d.V).baseChange
+      (AlgebraicClosure F)) μ ≤ LinearMap.range d.inlF := by
+  intro v hv
+  rw [Module.End.mem_eigenspace_iff] at hv
+  set sndF := (LinearMap.snd F (Fin d.m → F) d.Z).baseChange (AlgebraicClosure F)
+  set fstF := (LinearMap.fst F (Fin d.m → F) d.Z).baseChange (AlgebraicClosure F)
+  have hs : sndF ((specP d.QV (d.incl a) : d.V →ₗ[F] d.V).baseChange (AlgebraicClosure F) v) =
+      sndF v := by
+    rw [d.specP_incl_eq_prodMap a, ← LinearMap.comp_apply, ← LinearMap.baseChange_comp]
+    congr 2
+  rw [hv, map_smul] at hs
+  have h0 : sndF v = 0 := by
+    by_contra hne
+    exact hμ (smul_left_injective (AlgebraicClosure F) hne (by simpa using hs))
+  refine ⟨fstF v, ?_⟩
+  have hid : (LinearMap.inl F (Fin d.m → F) d.Z ∘ₗ LinearMap.fst F _ _ +
+      LinearMap.inr F (Fin d.m → F) d.Z ∘ₗ LinearMap.snd F _ _) = LinearMap.id := by
+    ext ⟨w, z⟩ <;> simp
+  have := congrArg (fun f => (f.baseChange (AlgebraicClosure F)) v) hid
+  simp only [LinearMap.baseChange_add, LinearMap.baseChange_comp, LinearMap.add_apply,
+    LinearMap.comp_apply, LinearMap.baseChange_id, LinearMap.id_apply] at this
+  conv_rhs => rw [← this]
+  rw [show (LinearMap.snd F (Fin d.m → F) d.Z).baseChange (AlgebraicClosure F) v = 0 from h0,
+    map_zero, add_zero]
+
+/-- **The moved part of `Lie(G_{incl t})` over `F̄` is abelian**, from that of `t` on `W`. -/
+theorem lieAbelian_incl (a : GSpin d.QW)
+    (hss : Module.End.IsSemisimple ((specP d.QV (d.incl a) : d.V →ₗ[F] d.V).baseChange
+      (AlgebraicClosure F)))
+    (hL : IsomCent.LieAbelian (bform (d.QW.baseChange (AlgebraicClosure F)))
+      ((specP d.QW a : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange (AlgebraicClosure F))) :
+    IsomCent.LieAbelian (bform (d.QV.baseChange (AlgebraicClosure F)))
+      ((specP d.QV (d.incl a) : d.V →ₗ[F] d.V).baseChange (AlgebraicClosure F)) := by
+  have hXU : ∀ u ∈ LinearMap.range d.inlF,
+      (specP d.QV (d.incl a) : d.V →ₗ[F] d.V).baseChange (AlgebraicClosure F) u ∈
+        LinearMap.range d.inlF := by
+    rintro _ ⟨w, rfl⟩
+    exact ⟨_, (d.specP_bc_incl_inlF a w).symm⟩
+  refine IsomCent.LieAbelian.of_restrict hss _ hXU (fun μ hμ => d.eigenspace_le_range_inlF a hμ) ?_
+  let e := LinearEquiv.ofInjective d.inlF d.inlF_injective
+  refine IsomCent.LieAbelian.of_equiv e (fun u v => ?_) (fun v => ?_) hL
+  · exact d.bform_inlF u v
+  · apply Subtype.ext
+    exact d.specP_bc_incl_inlF a v
+
+theorem mem_fixedSub_iff {x : GSpin d.QW} {v : Fin d.m → F} :
+    v ∈ fixedSub x ↔ specP d.QW x v = v := by
+  simp [fixedSub, sub_eq_zero]
+
+theorem self_mem_torusOf (x : GSpin d.QW) : x ∈ d.torusOf x :=
+  ⟨Subgroup.mem_centralizer_singleton_iff.mpr rfl, fun v hv => (d.mem_fixedSub_iff).mp hv⟩
+
+/-- On the regular part `T_{x,♮}` the fixed spaces agree: `W'_t = W'_x`. -/
+theorem fixedSub_eq_of_torusOf_eq {x t : GSpin d.QW} (ht : t ∈ d.torusOf x)
+    (hT : d.torusOf t = d.torusOf x) : fixedSub t = fixedSub x := by
+  apply le_antisymm
+  · intro v hv
+    have hx : x ∈ d.torusOf t := hT ▸ d.self_mem_torusOf x
+    exact (d.mem_fixedSub_iff).mpr (hx.2 v hv)
+  · intro v hv
+    exact (d.mem_fixedSub_iff).mpr (ht.2 v hv)
+
+omit d in
+theorem eigenspace_bc_one {V' : Type*} [AddCommGroup V'] [Module F V']
+    (Q : QuadraticForm F V') (x : GSpin Q) :
+    Module.End.eigenspace (specP _ (bcGSpin Q x) :
+        AlgebraicClosure F ⊗[F] V' →ₗ[AlgebraicClosure F] _) 1 =
+      (fixedSub x).baseChange (AlgebraicClosure F) := by
+  rw [specP_bcGSpin, Steinberg.fixedSub_eq_eigenspace,
+    ← Module.End.eigenspace_baseChange_of_flat, map_one]
+
+/-- **On `T_{x,♮}` the centralizers over `F̄` agree**: for `x ∈ Γ(G,H)` and `t ∈ T_x` with
+`t ∈ Γ(G,H)` and `T_t = T_x`, an element of `GSpin(W)(F̄)` commutes with `t̄` iff it commutes with
+`x̄` (`Steinberg.commute_of_commute_of_lieAbelian`, both ways). -/
+theorem commute_bc_iff_of_torusOf_eq {x t : GSpin d.QW} (hx : d.IsGammaElt x)
+    (ht : d.IsGammaElt t) (htx : t ∈ d.torusOf x) (hT : d.torusOf t = d.torusOf x)
+    (z : GSpin (d.QW.baseChange (AlgebraicClosure F))) :
+    Commute z (bcGSpin d.QW t) ↔ Commute z (bcGSpin d.QW x) := by
+  have hQ := isNondeg_baseChange _ d.nondeg
+  have hss : ∀ y : GSpin d.QW, d.IsGammaElt y → Module.End.IsSemisimple
+      (specP _ (bcGSpin d.QW y) :
+        AlgebraicClosure F ⊗[F] (Fin d.m → F) →ₗ[AlgebraicClosure F] _) := fun y hy => by
+    rw [specP_bcGSpin]; exact isSemisimple_specP_baseChange y hy
+  have hL : ∀ y : GSpin d.QW, d.IsGammaElt y → IsomCent.LieAbelian
+      (bform (d.QW.baseChange (AlgebraicClosure F)))
+      (specP _ (bcGSpin d.QW y) :
+        AlgebraicClosure F ⊗[F] (Fin d.m → F) →ₗ[AlgebraicClosure F] _) := fun y hy => by
+    rw [specP_bcGSpin]; exact lieAbelian_specP_baseChange y hy
+  have hxt : Commute x t := (Subgroup.mem_centralizer_singleton_iff.mp htx.1).symm
+  have hxt' : Commute (bcGSpin d.QW x) (bcGSpin d.QW t) := hxt.map _
+  have hE : Module.End.eigenspace (specP _ (bcGSpin d.QW x) :
+        AlgebraicClosure F ⊗[F] (Fin d.m → F) →ₗ[AlgebraicClosure F] _) 1 =
+      Module.End.eigenspace (specP _ (bcGSpin d.QW t) :
+        AlgebraicClosure F ⊗[F] (Fin d.m → F) →ₗ[AlgebraicClosure F] _) 1 := by
+    rw [eigenspace_bc_one, eigenspace_bc_one, d.fixedSub_eq_of_torusOf_eq htx hT]
+  constructor
+  · exact Steinberg.commute_of_commute_of_lieAbelian hQ (hss x hx) (hss t ht) (hL t ht) hxt' hE
+  · exact Steinberg.commute_of_commute_of_lieAbelian hQ (hss t ht) (hss x hx) (hL x hx)
+      hxt'.symm hE.symm
+
+theorem fixedSub_incl_eq {x t : GSpin d.QW} (h : fixedSub t = fixedSub x) :
+    fixedSub (d.incl t) = fixedSub (d.incl x) := by
+  ext ⟨w, z⟩
+  rw [d.mem_fixedSub_incl_iff, d.mem_fixedSub_incl_iff, h]
+
+/-- **On `T_{x,♮}` the centralizers in `GSpin(V)(F̄)` agree** (`V`-version of
+`commute_bc_iff_of_torusOf_eq`). -/
+theorem commute_bc_incl_iff_of_torusOf_eq {x t : GSpin d.QW} (hx : d.IsGammaElt x)
+    (ht : d.IsGammaElt t) (htx : t ∈ d.torusOf x) (hT : d.torusOf t = d.torusOf x)
+    (z : GSpin (d.QV.baseChange (AlgebraicClosure F))) :
+    Commute z (bcGSpin d.QV (d.incl t)) ↔ Commute z (bcGSpin d.QV (d.incl x)) := by
+  have hQ := isNondeg_baseChange _ d.nondeg_QV
+  have hss : ∀ y : GSpin d.QW, d.IsGammaElt y → Module.End.IsSemisimple
+      (specP _ (bcGSpin d.QV (d.incl y)) :
+        AlgebraicClosure F ⊗[F] d.V →ₗ[AlgebraicClosure F] _) := fun y hy => by
+    rw [specP_bcGSpin]
+    exact isSemisimple_baseChange (isSemisimple_specP_of_isSS d.QV (d.incl y) (d.isSS_incl hy.1))
+  have hL : ∀ y : GSpin d.QW, d.IsGammaElt y → IsomCent.LieAbelian
+      (bform (d.QV.baseChange (AlgebraicClosure F)))
+      (specP _ (bcGSpin d.QV (d.incl y)) :
+        AlgebraicClosure F ⊗[F] d.V →ₗ[AlgebraicClosure F] _) := fun y hy => by
+    have h := hss y hy
+    rw [specP_bcGSpin] at h ⊢
+    exact d.lieAbelian_incl y h (lieAbelian_specP_baseChange y hy)
+  have hxt : Commute x t := (Subgroup.mem_centralizer_singleton_iff.mp htx.1).symm
+  have hxt' : Commute (bcGSpin d.QV (d.incl x)) (bcGSpin d.QV (d.incl t)) :=
+    (hxt.map d.incl).map _
+  have hE : Module.End.eigenspace (specP _ (bcGSpin d.QV (d.incl x)) :
+        AlgebraicClosure F ⊗[F] d.V →ₗ[AlgebraicClosure F] _) 1 =
+      Module.End.eigenspace (specP _ (bcGSpin d.QV (d.incl t)) :
+        AlgebraicClosure F ⊗[F] d.V →ₗ[AlgebraicClosure F] _) 1 := by
+    rw [eigenspace_bc_one, eigenspace_bc_one,
+      d.fixedSub_incl_eq (d.fixedSub_eq_of_torusOf_eq htx hT)]
+  constructor
+  · exact Steinberg.commute_of_commute_of_lieAbelian hQ (hss x hx) (hss t ht) (hL t ht) hxt' hE
+  · exact Steinberg.commute_of_commute_of_lieAbelian hQ (hss t ht) (hss x hx) (hL x hx)
+      hxt'.symm hE.symm
+
+end GGPData
+
+section Clause6
+
+
+/-- The `V`-component of the transport: conjugation by the image `g_V` of `g` under
+`W_{α,F̄} ⊆ V_{α,F̄}` sends `C(φ_α ⊕ 1)(incl t̄)` to `incl s̄` when `s̄ = Ad(g) C(φ_α)(t̄)`. -/
+theorem conj_gV (τ : InnerTwist d.QW)
+    {g : (CliffordAlgebra (τ.Q'.baseChange (AlgebraicClosure F)))ˣ}
+    (hg : g ∈ GSpin (τ.Q'.baseChange (AlgebraicClosure F))) (t : GSpin d.QW)
+    (s : GSpin (d.twist τ).QW)
+    (hs : bcUnits τ.Q' (s : (CliffordAlgebra τ.Q')ˣ) =
+      TorusTransfer.psiU τ.φ g (bcUnits d.QW (t : (CliffordAlgebra d.QW)ˣ))) :
+    ((GSpin.map (inlBC d τ) (isNondeg_baseChange _ τ.nondeg') ⟨g, hg⟩ : GSpin _) :
+        (CliffordAlgebra _)ˣ) *
+      cliffUnits (d.twistV τ) (bcUnits d.QV ((d.incl t : GSpin d.QV) : (CliffordAlgebra d.QV)ˣ)) *
+      ((GSpin.map (inlBC d τ) (isNondeg_baseChange _ τ.nondeg') ⟨g, hg⟩ : GSpin _) :
+        (CliffordAlgebra _)ˣ)⁻¹ =
+      bcUnits (d.twist τ).QV (((d.twist τ).incl s : GSpin _) : (CliffordAlgebra _)ˣ) := by
+  apply Units.ext
+  have hs' := congrArg Units.val hs
+  rw [TorusTransfer.coe_psiU] at hs'
+  rw [Units.val_mul, Units.val_mul, GSpin.coe_map_inv]
+  show CliffordAlgebra.map (inlBC d τ) (g : CliffordAlgebra _) *
+      CliffordAlgebra.map (d.twistV τ).toIsometry
+        (bcHom d.QV (CliffordAlgebra.map (QuadraticMap.Isometry.inl d.QW d.QZ)
+          ((t : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW))) *
+      CliffordAlgebra.map (inlBC d τ) ((g⁻¹ : (CliffordAlgebra _)ˣ) : CliffordAlgebra _) =
+    bcHom (d.twist τ).QV (CliffordAlgebra.map (QuadraticMap.Isometry.inl τ.Q' d.QZ)
+      ((s : (CliffordAlgebra τ.Q')ˣ) : CliffordAlgebra τ.Q'))
+  rw [map_twistV_bcHom_incl, bcHom_incl_twist, ← map_mul, ← map_mul]
+  congr 1
+  exact hs'.symm
+
+theorem cliffUnits_symm_cliffUnits {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V₁]
+    [AddCommGroup V₂] [Module F V₂] {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂}
+    (φ : (Q₁.baseChange (AlgebraicClosure F)).IsometryEquiv (Q₂.baseChange (AlgebraicClosure F)))
+    (z : (CliffordAlgebra (Q₁.baseChange (AlgebraicClosure F)))ˣ) :
+    cliffUnits φ.symm (cliffUnits φ z) = z :=
+  Units.ext (TorusTransfer.map_symm_map φ z)
+
+theorem cliffUnits_cliffUnits_symm {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V₁]
+    [AddCommGroup V₂] [Module F V₂] {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂}
+    (φ : (Q₁.baseChange (AlgebraicClosure F)).IsometryEquiv (Q₂.baseChange (AlgebraicClosure F)))
+    (z : (CliffordAlgebra (Q₂.baseChange (AlgebraicClosure F)))ˣ) :
+    cliffUnits φ (cliffUnits φ.symm z) = z :=
+  Units.ext (TorusTransfer.map_map_symm φ z)
+
+/-- A group identity behind the `V`-component: if `g_V` and `g₂` both conjugate `f(X)` to `B`, and
+everything commuting with `X` (pulled back by `f'`) commutes with `T`, then they conjugate `f(T)`
+alike. -/
+theorem conj_transfer {G H : Type*} [Group G] [Group H] (f : G →* H) (f' : H →* G)
+    (hff : ∀ a, f' (f a) = a) (hf'f : ∀ b, f (f' b) = b) (gV g₂ : H) {X T : G} {A B : H}
+    (hA : gV * f T * gV⁻¹ = A) (hB : gV * f X * gV⁻¹ = B) (hC : g₂ * f X * g₂⁻¹ = B)
+    (hcomm : f' (gV⁻¹ * g₂) * X = X * f' (gV⁻¹ * g₂) →
+      f' (gV⁻¹ * g₂) * T = T * f' (gV⁻¹ * g₂)) :
+    g₂ * f T * g₂⁻¹ = A := by
+  obtain ⟨k, hk⟩ : ∃ k, k = gV⁻¹ * g₂ := ⟨_, rfl⟩
+  rw [← hk] at hcomm
+  have heq : g₂ * f X * g₂⁻¹ = gV * f X * gV⁻¹ := hC.trans hB.symm
+  have hkX : k * f X = f X * k := by
+    calc k * f X = gV⁻¹ * (g₂ * f X * g₂⁻¹) * g₂ := by simp [hk, mul_assoc]
+      _ = gV⁻¹ * (gV * f X * gV⁻¹) * g₂ := by rw [heq]
+      _ = f X * k := by simp [hk, mul_assoc]
+  have h1 : f' k * X = X * f' k := by
+    have := congrArg f' hkX
+    rwa [map_mul, map_mul, hff] at this
+  have h2 := hcomm h1
+  have hkT : k * f T = f T * k := by
+    have := congrArg f h2
+    rwa [map_mul, map_mul, hf'f] at this
+  have hg₂ : g₂ = gV * k := by simp [hk]
+  rw [← hA, hg₂, mul_inv_rev]
+  calc gV * k * f T * (k⁻¹ * gV⁻¹) = gV * (k * f T) * k⁻¹ * gV⁻¹ := by simp [mul_assoc]
+    _ = gV * f T * gV⁻¹ := by rw [hkT]; simp [mul_assoc]
+
+/-- **Thesis Prop. 6.6.1(ii), strong stable conjugacy on `T_{x,♮}`**: every `t ∈ T_x(F)` with
+`t ∈ Γ(G,H)` and `T_t = T_x` is strongly stably conjugate to its transport `e(t)`. The centralizers
+of `t̄` and `x̄` agree over `F̄` (on `W` and on `V`), so the rationality clauses for `x` give those
+for `t`; on `V` the conjugating element of `hxy` is used, which agrees with the image of `g` up to
+an element of `Z(x̄) = Z(t̄)`. -/
+theorem stronglyStablyConjW_of_torusOf_eq (IF : InnerFormSystem d) (α : IF.Idx)
+    (x : ↥(GSpin d.QW)) (y : ↥(GSpin (IF.data α).QW)) (hx : d.IsGammaElt x)
+    (hxy : d.StronglyStablyConjW (IF.twist α) x y)
+    {g : (CliffordAlgebra ((IF.data α).QW.baseChange (AlgebraicClosure F)))ˣ}
+    (hg : g ∈ GSpin ((IF.data α).QW.baseChange (AlgebraicClosure F)))
+    (hconj : g * cliffUnits (IF.twist α).φ (bcUnits d.QW (x : (CliffordAlgebra d.QW)ˣ)) * g⁻¹ =
+      bcUnits (IF.data α).QW (y : (CliffordAlgebra _)ˣ))
+    (hrat : TorusTransfer.RatAt (IF.twist α).φ g (x : (CliffordAlgebra d.QW)ˣ))
+    (t : ↥(d.torusOf x)) (s : ↥(GSpin (IF.data α).QW))
+    (hs : bcUnits (IF.data α).QW (s : (CliffordAlgebra _)ˣ) =
+      TorusTransfer.psiU (IF.twist α).φ g
+        (bcUnits d.QW ((t : ↥(GSpin d.QW)) : (CliffordAlgebra d.QW)ˣ)))
+    (ht : d.IsGammaElt t) (hT : d.torusOf t = d.torusOf x) :
+    d.StronglyStablyConjW (IF.twist α) t s := by
+  obtain ⟨-, g₂, hg₂, hconj₂, hrat₂⟩ := hxy
+  refine ⟨⟨g, hg, hs.symm, fun σ z hz hzt => hrat σ z hz ?_⟩, ⟨g₂, hg₂, ?_, fun σ z hz hzt =>
+    hrat₂ σ z hz ?_⟩⟩
+  · have h := (d.commute_bc_iff_of_torusOf_eq hx ht t.2 hT ⟨z, hz⟩).mp
+      (Subtype.ext hzt.eq)
+    exact congrArg Subtype.val h.eq
+  · refine conj_transfer (cliffUnits (d.twistV (IF.twist α)))
+      (cliffUnits (d.twistV (IF.twist α)).symm) (cliffUnits_symm_cliffUnits _)
+      (cliffUnits_cliffUnits_symm _) _ g₂
+      (conj_gV (IF.twist α) hg t s hs) (conj_gV (IF.twist α) hg x y hconj.symm) hconj₂
+      (fun hk' => ?_)
+    have hkG := TorusTransfer.cliffUnits_mem_GSpin (d.twistV (IF.twist α)).symm
+      ((GSpin _).mul_mem ((GSpin _).inv_mem
+        (GSpin.map (inlBC d (IF.twist α)) (isNondeg_baseChange _ (IF.twist α).nondeg')
+          ⟨g, hg⟩).2) hg₂)
+    have h := (d.commute_bc_incl_iff_of_torusOf_eq hx ht t.2 hT ⟨_, hkG⟩).mpr (Subtype.ext hk')
+    exact congrArg Subtype.val h.eq
+  · have h := (d.commute_bc_incl_iff_of_torusOf_eq hx ht t.2 hT ⟨z, hz⟩).mp
+      (Subtype.ext hzt.eq)
+    exact congrArg Subtype.val h.eq
+
+end Clause6
+
+end TorusNat
+
 /-- **The remaining clauses of Thesis Prop. 6.6.1(ii)** for the transport `e` of `T_x(F)` to
 `T_y(F)`, i.e. any `e` with `ē(t) = Ad(g) C(φ_α)(t̄)` for a `g` witnessing `x ∼ y`
 (`TorusTransfer.transportEquiv`): `e` matches the regular parts
-`T_{x,♮} ↔ T_{y,♮}`, and every `t ∈ T_{x,♮}` is strongly stably conjugate to `e(t)`.
-Route (own work): `G_t = G_x` on `T_{x,♮}` (`T_y` central in `G_{α,y}`). -/
+`T_{x,♮} ↔ T_{y,♮}`. Route (own work): on `T_{x,♮}` the centralizers of `t̄` and `x̄` in
+`GSpin(W)(F̄)` agree (`GGPData.commute_bc_iff_of_torusOf_eq`), and `e` is the restriction of
+`Ad(g) ∘ C(φ_α)`, which carries them onto the centralizers of `ē(t)` and `ȳ`. -/
 theorem torusTransfer_clauses (IF : InnerFormSystem d) (α : IF.Idx)
     (x : ↥(GSpin d.QW)) (y : ↥(GSpin (IF.data α).QW)) (hx : d.IsGammaElt x)
     (hy : (IF.data α).IsGammaElt y) (hxy : d.StronglyStablyConjW (IF.twist α) x y)
@@ -1726,9 +2100,7 @@ theorem torusTransfer_clauses (IF : InnerFormSystem d) (α : IF.Idx)
           (bcUnits d.QW ((t : ↥(GSpin d.QW)) : (CliffordAlgebra d.QW)ˣ))) :
       (∀ t : ↥(d.torusOf x),
         (d.IsGammaElt t ∧ d.torusOf t = d.torusOf x ↔
-          (IF.data α).IsGammaElt (e t) ∧ (IF.data α).torusOf (e t) = (IF.data α).torusOf y)) ∧
-      (∀ t : ↥(d.torusOf x), d.IsGammaElt t → d.torusOf t = d.torusOf x →
-        d.StronglyStablyConjW (IF.twist α) t (e t)) :=
+          (IF.data α).IsGammaElt (e t) ∧ (IF.data α).torusOf (e t) = (IF.data α).torusOf y)) :=
   sorry
 
 /-- **Thesis Prop. 6.6.1(ii), the torus isomorphism** (own work): the clauses of `TorusTransfer`
@@ -1739,7 +2111,9 @@ through `ψ_α`).  Proved: with `g` the `W`-component of the conjugating element
 they commute with `y` and fix `W'_y`; the inverse comes from `g⁻¹` and `φ_α⁻¹`); it fixes the
 scalars and sends `x ↦ y`; it and its inverse are continuous, being restrictions of `F`-linear
 maps `C(W) → C(W_α)` (`TorusTransfer.continuous_of_bcUnits_eq`); `t` and `e(t)` are stably
-conjugate in `G` (`stablyConjG_diag_of_psiU`).  The `♮` clauses are `torusTransfer_clauses`. -/
+conjugate in `G` (`stablyConjG_diag_of_psiU`); every `t ∈ T_{x,♮}` is strongly stably conjugate to
+`e(t)` (`stronglyStablyConjW_of_torusOf_eq`).  The matching of the regular parts is
+`torusTransfer_clauses`. -/
 theorem exists_torusTransfer_core (IF : InnerFormSystem d) (α : IF.Idx)
     (x : ↥(GSpin d.QW)) (y : ↥(GSpin (IF.data α).QW)) (hx : d.IsGammaElt x)
     (hy : (IF.data α).IsGammaElt y) (hxy : d.StronglyStablyConjW (IF.twist α) x y) :
@@ -1761,7 +2135,10 @@ theorem exists_torusTransfer_core (IF : InnerFormSystem d) (α : IF.Idx)
         TorusTransfer.psiU (IF.twist α).φ g
           (bcUnits d.QW ((t : ↥(GSpin d.QW)) : (CliffordAlgebra d.QW)ˣ)) :=
     TorusTransfer.bcUnits_transportEquiv hg hrat hconj
-  obtain ⟨c5, c6⟩ := torusTransfer_clauses IF α x y hx hy hxy e he
+  have c5 := torusTransfer_clauses IF α x y hx hy hxy e he
+  have c6 : ∀ t : ↥(d.torusOf x), d.IsGammaElt t → d.torusOf t = d.torusOf x →
+      d.StronglyStablyConjW (IF.twist α) t (e t) := fun t ht hT =>
+    stronglyStablyConjW_of_torusOf_eq IF α x y hx hxy hg hconj hrat t (e t) (he t) ht hT
   have c7 : ∀ t : ↥(d.torusOf x), d.StablyConjG (IF.twist α) (d.diag t) ((IF.data α).diag (e t)) :=
     fun t => stablyConjG_diag_of_psiU (IF.twist α) hg t (e t) (he t)
   have he' : ∀ s : ↥((IF.data α).torusOf y), bcUnits d.QW
@@ -2046,76 +2423,8 @@ theorem galGS_mem_torusFbar (x : ↥(GSpin d.QW)) (σ : GalF F)
 
 end EndElemGal
 
-/-- **`P(x)_{F̄}` is semisimple** for semisimple `x ∈ GSpin(W)(F)` (own work, elementary).  Route:
-left and right multiplication by `x` are commuting semisimple operators on `C(W)`, so conjugation
-`v ↦ x v x⁻¹` is semisimple and so is its restriction to `ι(W)`, which is `P(x)`; semisimplicity
-over `F` of characteristic `0` survives base change to `F̄` (squarefree minimal polynomial).
-Proved: `isSemisimple_specP_of_isSS` (`GGP/Steinberg.lean`), `isSemisimple_baseChange`
-(`GGP/TorusCommute.lean`). -/
-theorem isSemisimple_specP_baseChange (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) :
-    Module.End.IsSemisimple
-      ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange (AlgebraicClosure F)) :=
-  isSemisimple_baseChange (isSemisimple_specP_of_isSS d.QW x hx.1)
-
-open CliffordAlgebra in
-open scoped TensorProduct in
-/-- **The Lie algebra of `S_x` is abelian over `F̄`** (own work).  Route: a skew endomorphism `Y`
-of `W_{F̄}` commuting with `X = P(x)_{F̄}` and vanishing on `ker (X − 1) = W'_x ⊗ F̄` is `ad`
-of an element of `so(W_{F̄}) ⊆ gspin(W_{F̄})` (`gspin = so ⊕ F`) in the centralizer of `x` and
-killing `ι(W'_x ⊗ F̄)`.  These conditions are `F`-linear equations, so their solutions over `F̄`
-are the `F̄`-span of the solutions over `F` (flatness, `range_gspinBC`), which commute by
-`movedPartAbelian_of_isGammaElt`; hence so do the `Y`. -/
-theorem lieAbelian_specP_baseChange (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) :
-    IsomCent.LieAbelian (bform (d.QW.baseChange (AlgebraicClosure F)))
-      ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange (AlgebraicClosure F)) := by
-  intro Y₁ Y₂ hs₁ hs₂ hc₁ hc₂ hf₁ hf₂
-  have hQ := isNondeg_baseChange _ d.nondeg
-  let xb : GSpin (d.QW.baseChange (AlgebraicClosure F)) :=
-    ⟨bcUnits d.QW (x : (CliffordAlgebra d.QW)ˣ), TorusTransfer.bcUnits_mem_GSpin d.QW x⟩
-  have hX : (specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange (AlgebraicClosure F) =
-      (specP (d.QW.baseChange (AlgebraicClosure F)) xb : _ →ₗ[AlgebraicClosure F] _) :=
-    LinearMap.ext fun w => (GGPData.specP_bcUnits d x w).symm
-  have key : ∀ Y : Module.End (AlgebraicClosure F) (AlgebraicClosure F ⊗[F] (Fin d.m → F)),
-      IsomCent.IsSkew (bform (d.QW.baseChange (AlgebraicClosure F))) Y →
-      Commute ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange
-        (AlgebraicClosure F)) Y →
-      (∀ z ∈ Module.End.eigenspace ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange
-        (AlgebraicClosure F)) 1, Y z = 0) →
-      ∃ u ∈ (LinearMap.ker (movedCentMap d.QW x)).baseChange (AlgebraicClosure F),
-        ∀ v, gspinBC d.QW u * ι _ v - ι _ v * gspinBC d.QW u = ι _ (Y v) := by
-    intro Y hs hc hf
-    obtain ⟨Yh, hYh0, hYh⟩ := exists_lift_skew hQ Y hs
-    have hYh0' := hYh0
-    rw [← LieSubalgebra.mem_toSubmodule, ← range_gspinBC d.QW hQ] at hYh0'
-    obtain ⟨u, rfl⟩ := hYh0'
-    refine ⟨u, mem_movedCent_baseChange d.QW x u ?_ ?_, hYh⟩
-    · rw [hX] at hc
-      exact commute_of_lift hQ xb hc hYh0 hYh
-    · intro w hw
-      have h1 : (1 : AlgebraicClosure F) ⊗ₜ[F] w ∈ Module.End.eigenspace
-          ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange (AlgebraicClosure F)) 1 := by
-        rw [Module.End.mem_eigenspace_iff, one_smul, LinearMap.baseChange_tmul]
-        congr 1
-        have := LinearMap.mem_ker.mp hw
-        rw [LinearMap.sub_apply, sub_eq_zero] at this
-        exact this
-      have := hYh (1 ⊗ₜ w)
-      rw [hf _ h1, map_zero, sub_eq_zero] at this
-      exact this
-  obtain ⟨u₁, hu₁, h₁⟩ := key Y₁ hs₁ hc₁ hf₁
-  obtain ⟨u₂, hu₂, h₂⟩ := key Y₂ hs₂ hc₂ hf₂
-  have h12 := gspinBC_commute_of_mem (movedPartAbelian_of_isGammaElt d x hx) hu₁ hu₂
-  refine LinearMap.ext fun v => ι_injective (d.QW.baseChange (AlgebraicClosure F)) ?_
-  rw [Module.End.mul_apply, Module.End.mul_apply, ← sub_eq_zero, ← h₁, ← h₂, ← h₂, ← h₁]
-  set A := gspinBC d.QW u₁
-  set B := gspinBC d.QW u₂
-  have e : A * (B * ι _ v - ι _ v * B) - (B * ι _ v - ι _ v * B) * A -
-      (B * (A * ι _ v - ι _ v * A) - (A * ι _ v - ι _ v * A) * B) =
-      (A * B - B * A) * ι _ v - ι _ v * (A * B - B * A) := by noncomm_ring
-  rw [e, h12, sub_self, zero_mul, mul_zero, sub_zero]
-
-/-- **`S_x(F̄)` is commutative** for `x ∈ Γ(G,H)` (own work).  Proved from the two lemmas above
-by `GGPData.torusBarFbar_commute_of`: the group of determinant-`1` isometries of `W_{F̄}`
+/-- **`S_x(F̄)` is commutative** for `x ∈ Γ(G,H)` (own work).  Proved from
+`isSemisimple_specP_baseChange` and `lieAbelian_specP_baseChange` by `GGPData.torusBarFbar_commute_of`: the group of determinant-`1` isometries of `W_{F̄}`
 commuting with the semisimple `X` and fixing `ker (X − 1)` is commutative when the corresponding
 Lie algebra is (`IsomCent.commute_of_lieAbelian`: the eigenvalues `λ ≠ ±1` of `X` on `W''_x` are
 simple, `dim E_{−1} ≤ 2`, and on `E_{−1}` the determinant is `1`). -/
