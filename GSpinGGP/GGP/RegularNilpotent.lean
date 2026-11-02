@@ -154,6 +154,198 @@ theorem exists_hyp_of_quasiSplit_odd {Q : QuadraticForm K V} (hQ : IsNondeg Q)
 
 end Witt
 
+/-! ## Centralizers of `Y ∈ gspin(V)_y`: the fixed part and the moved part -/
+
+section Side
+
+variable {K : Type*} [Field K] [CharZero K] [Invertible (2 : K)]
+variable {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
+
+/-- **Lower bound** for `dim gspin(V)_{y,Y}` when the moved part is abelian (the elements of
+`so(V)_{P y}` killing `A` commute): `≥ ⌊dim A/2⌋ + dim (so(V)_{P y} killing A) + 1`. -/
+theorem le_finrank_lieCentralizer_fixed {Q : QuadraticForm K V} (hQ : IsNondeg Q) (y : GSpin Q)
+    (hc : IsCompl (fixedSub y) ((bform Q).orthogonal (fixedSub y)))
+    (hab : ∀ M₁ ∈ soCent Q (specP Q y : Module.End K V) ⊓ killSub (fixedSub y),
+      ∀ M₂ ∈ soCent Q (specP Q y : Module.End K V) ⊓ killSub (fixedSub y), M₁ * M₂ = M₂ * M₁)
+    {Y : CliffordAlgebra Q}
+    (hY : Y ∈ lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) :
+    finrank K (fixedSub y) / 2 +
+        finrank K ↥(soCent Q (specP Q y : Module.End K V) ⊓ killSub (fixedSub y)) + 1 ≤
+      finrank K (lieCentralizer (lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) :
+        CliffordAlgebra Q)) Y) := by
+  obtain ⟨h, e⟩ := finrank_lieCentralizer_fixed hQ y hc hY
+  obtain ⟨hYg, hYc⟩ := mem_lieCentralizer.mp hY
+  have hNg : adV Q Y * (specP Q y : Module.End K V) = (specP Q y : Module.End K V) * adV Q Y :=
+    ((commute_iff_adV hQ y hYg).mp hYc).symm
+  have hgB : ∀ b ∈ (bform Q).orthogonal (fixedSub y),
+      (specP Q y : Module.End K V) b ∈ (bform Q).orthogonal (fixedSub y) :=
+    fun b hb => specP_mem_orthogonal_fixedSub y hb
+  rw [e, soCent_inf_killSub_eq hc (mem_fixedSub_iff y) hgB (bform_adV hYg) hNg hab]
+  have hNs : ∀ a b, bform (Q.comp (fixedSub y).subtype) ((adV Q Y).restrict h a) b =
+      -bform (Q.comp (fixedSub y).subtype) a ((adV Q Y).restrict h b) := by
+    intro a b
+    rw [bform_comp_subtype, bform_comp_subtype]
+    exact bform_adV hYg a b
+  have := le_finrank_soCent (isNondeg_comp_subtype_of_isCompl hc) hNs
+  omega
+
+
+end Side
+
+/-! ## The two sides of `G_x`: `W'_x ⊂ W` and `V'_x = W'_x ⊕ Z ⊂ V` -/
+
+section GGPSides
+
+variable {K : Type*} [Field K] [Invertible (2 : K)] (d : GGPData K)
+
+theorem fixedSub_inf_movedSub_incl (x : GSpin d.QW) (h : fixedSub x ⊓ movedSub x = ⊥) :
+    fixedSub (d.incl x) ⊓ movedSub (d.incl x) = ⊥ := by
+  rw [eq_bot_iff]
+  intro v hv
+  obtain ⟨hf, hm⟩ := Submodule.mem_inf.mp hv
+  obtain ⟨u, rfl⟩ := LinearMap.mem_range.mp hm
+  rw [Submodule.mem_bot]
+  set m : Fin d.m → K := specP d.QW x u.1 - u.1
+  have hu : (((specP d.QV (d.incl x) : d.V →ₗ[K] d.V) - LinearMap.id : d.V →ₗ[K] d.V) u) =
+      (m, 0) := by
+    obtain ⟨w, z⟩ := u
+    simp [d.specP_incl_apply, m]
+  rw [hu] at hf ⊢
+  have h1 : m ∈ fixedSub x ⊓ movedSub x :=
+    ⟨(d.mem_fixedSub_incl_iff x m 0).mp hf, LinearMap.mem_range.mpr ⟨u.1, by simp [m]⟩⟩
+  rw [h, Submodule.mem_bot] at h1
+  simp [h1]
+
+/-- **The moved part of `V` is that of `W`**: an element of `so(V)_{P(x)}` killing `V'_x` is
+`(w, z) ↦ (M' w, 0)` with `M' ∈ so(W)_{P(x)}` killing `W'_x`. So if the latter commute, so do the
+former. -/
+theorem commute_movedPart_incl (x : GSpin d.QW)
+    (hW : ∀ M₁ ∈ soCent d.QW (specP d.QW x : Module.End K (Fin d.m → K)) ⊓ killSub (fixedSub x),
+      ∀ M₂ ∈ soCent d.QW (specP d.QW x : Module.End K (Fin d.m → K)) ⊓ killSub (fixedSub x),
+        M₁ * M₂ = M₂ * M₁) :
+    ∀ M₁ ∈ soCent d.QV (specP d.QV (d.incl x) : Module.End K d.V) ⊓ killSub (fixedSub (d.incl x)),
+      ∀ M₂ ∈ soCent d.QV (specP d.QV (d.incl x) : Module.End K d.V) ⊓
+        killSub (fixedSub (d.incl x)), M₁ * M₂ = M₂ * M₁ := by
+  have hZnd := isNondeg_splitOddForm d.r d.ν.ne_zero
+  -- the restriction to `W`
+  have key : ∀ M ∈ soCent d.QV (specP d.QV (d.incl x) : Module.End K d.V) ⊓
+      killSub (fixedSub (d.incl x)),
+      (∀ v, M v = ((M (v.1, 0)).1, 0)) ∧
+      (LinearMap.fst K _ _ ∘ₗ M ∘ₗ LinearMap.inl K _ _) ∈
+        soCent d.QW (specP d.QW x : Module.End K (Fin d.m → K)) ⊓ killSub (fixedSub x) := by
+    intro M hM
+    obtain ⟨hMg, hMk⟩ := Submodule.mem_inf.mp hM
+    obtain ⟨hMs, hMc⟩ := mem_soCent.mp hMg
+    have hz : ∀ z : d.Z, ((0 : Fin d.m → K), z) ∈ fixedSub (d.incl x) := fun z =>
+      (d.mem_fixedSub_incl_iff x 0 z).mpr (Submodule.zero_mem _)
+    have h2 : ∀ v, (M v).2 = 0 := by
+      intro v
+      refine (isNondeg_iff _).mp hZnd _ fun z => ?_
+      have := hMs (0, z) v
+      rw [hMk _ (hz z), map_zero, LinearMap.zero_apply, bform_prod] at this
+      simp only [map_zero, LinearMap.zero_apply, zero_add] at this
+      rw [bform_comm]; linear_combination this
+    have hv : ∀ v, M v = ((M (v.1, 0)).1, 0) := by
+      intro v
+      have e : v = (v.1, 0) + (0, v.2) := by simp
+      conv_lhs => rw [e, map_add, hMk _ (hz _), add_zero]
+      exact Prod.ext rfl (h2 _)
+    refine ⟨hv, Submodule.mem_inf.mpr ⟨mem_soCent.2 ⟨fun a b => ?_, ?_⟩, fun a ha => ?_⟩⟩
+    · have := hMs (a, 0) (b, 0)
+      rw [hv (a, 0), hv (b, 0), bform_prod, bform_prod] at this
+      simpa using this
+    · refine LinearMap.ext fun w => ?_
+      show (M (specP d.QW x w, 0)).1 = specP d.QW x ((M (w, 0)).1)
+      have := congrArg (fun T : Module.End K d.V => T (w, 0)) hMc
+      simp only [Module.End.mul_apply, LinearEquiv.coe_coe] at this
+      rw [d.specP_incl_apply] at this
+      conv_rhs at this => rw [hv (w, 0)]
+      rw [d.specP_incl_apply] at this
+      exact congrArg Prod.fst this
+    · show (M (a, 0)).1 = 0
+      rw [hMk _ ((d.mem_fixedSub_incl_iff x a 0).mpr ha), Prod.fst_zero]
+  intro M₁ hM₁ M₂ hM₂
+  obtain ⟨hv₁, h₁⟩ := key M₁ hM₁
+  obtain ⟨hv₂, h₂⟩ := key M₂ hM₂
+  have hc := hW _ h₁ _ h₂
+  refine LinearMap.ext fun v => ?_
+  have := congrArg (fun T : Module.End K (Fin d.m → K) => T v.1) hc
+  simp only [Module.End.mul_apply, LinearMap.comp_apply, LinearMap.inl_apply,
+    LinearMap.fst_apply] at this
+  simp only [Module.End.mul_apply]
+  rw [hv₂ v, hv₁, hv₁ v, hv₂]
+  simp only [this]
+  exact (hv₂ ((M₁ (v.1, 0)).1, 0)).symm
+
+end GGPSides
+
+/-! ## Regular nilpotent elements of `𝔤_x` -/
+
+section CentralizerNilReg
+
+variable {K : Type*} [Field K] [Invertible (2 : K)]
+
+/-- `𝔤_{a,Y} = gspin(W)_{a₁,Y₁} × gspin(V)_{a₂,Y₂}`. -/
+theorem finrank_lieCentralizer_lieCentralizer_lie (d : GGPData K) (a Y : d.ambient) :
+    finrank K (lieCentralizer (lieCentralizer d.lie a) Y) =
+      finrank K (lieCentralizer (lieCentralizer (gspin d.QW) a.1) Y.1) +
+        finrank K (lieCentralizer (lieCentralizer (gspin d.QV) a.2) Y.2) := by
+  have hl : ∀ Z : d.ambient, Z ∈ d.lie ↔ Z.1 ∈ gspin d.QW ∧ Z.2 ∈ gspin d.QV := fun Z => Iff.rfl
+  have h : (lieCentralizer (lieCentralizer d.lie a) Y).toSubmodule =
+      (lieCentralizer (lieCentralizer (gspin d.QW) a.1) Y.1).toSubmodule.prod
+        (lieCentralizer (lieCentralizer (gspin d.QV) a.2) Y.2).toSubmodule := by
+    ext Z
+    simp only [LieSubalgebra.mem_toSubmodule, Submodule.mem_prod, mem_lieCentralizer, hl,
+      Prod.ext_iff, Prod.fst_mul, Prod.snd_mul]
+    tauto
+  show finrank K ↥(lieCentralizer (lieCentralizer d.lie a) Y).toSubmodule =
+    finrank K ↥(lieCentralizer (lieCentralizer (gspin d.QW) a.1) Y.1).toSubmodule +
+      finrank K ↥(lieCentralizer (lieCentralizer (gspin d.QV) a.2) Y.2).toSubmodule
+  rw [h, (Submodule.prodEquiv _ _).finrank_eq, Module.finrank_prod]
+
+/-- **A regular element of one side**: if `(A, q|_A)` (`A = W'_y`) is quasi-split, some nilpotent
+`X ∈ gspin(V)_y` (an explicit `regNil` on `A`, or `0` if `A = 0`) has
+`dim gspin(V)_{y,X} ≤ ⌊dim A/2⌋ + dim (so(V)_{P y} killing A) + 1`. -/
+theorem exists_side_regNil [CharZero K] {V : Type*} [AddCommGroup V] [Module K V]
+    [FiniteDimensional K V] {Q : QuadraticForm K V} (hQ : IsNondeg Q) (y : GSpin Q)
+    (hc : IsCompl (fixedSub y) ((bform Q).orthogonal (fixedSub y)))
+    (hqs : IsQuasiSplitQF (Q.comp (fixedSub y).subtype)) :
+    ∃ X ∈ lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q),
+      IsNilpotent X ∧
+      finrank K (lieCentralizer (lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) :
+        CliffordAlgebra Q)) X) ≤ finrank K (fixedSub y) / 2 +
+          finrank K ↥(soCent Q (specP Q y : Module.End K V) ⊓ killSub (fixedSub y)) + 1 := by
+  have hQA : IsNondeg (Q.comp (fixedSub y).subtype) := isNondeg_comp_subtype_of_isCompl hc
+  by_cases hpos : 0 < finrank K (fixedSub y)
+  · obtain ⟨w, ν, k, hν, hw, hdim⟩ := exists_isSplitFamily_of_quasiSplit hQA hqs hpos
+    set X := regNil Q (fun j => (w j : V)) ν k
+    have hw' : IsSplitFamily Q (fun j => (w j : V)) ν k := fun i j hi hj => by
+      rw [← bform_comp_subtype]; exact hw i j hi hj
+    have hXm : X ∈ lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) :=
+      mem_lieCentralizer.mpr ⟨regNil_mem_gspin, commute_regNil y (fun j => (w j).2) ν k⟩
+    have h : ∀ a ∈ (fixedSub y), adV Q X a ∈ (fixedSub y) := fun a ha => by
+      rw [show a = ((⟨a, ha⟩ : (fixedSub y)) : V) from rfl, adV_regNil_subtype w ν k ⟨a, ha⟩]
+      exact Submodule.coe_mem _
+    have hr : (adV Q X).restrict h = adV (Q.comp (fixedSub y).subtype) (regNil (Q.comp (fixedSub y).subtype) w ν k) :=
+      LinearMap.ext fun a => Subtype.ext (adV_regNil_subtype w ν k a)
+    have h1 := finrank_lieCentralizer_fixed_le hQ y hc hXm h
+    rw [hr] at h1
+    have h2 := finrank_soCent_regNil_le hQA hw hν hdim
+    have h3 := (linearIndependent_isSplitFamily hw hν).fintype_card_le_finrank
+    rw [Fintype.card_fin] at h3
+    exact ⟨X, hXm, isNilpotent_regNil hw' hν, by omega⟩
+  · have h0 : finrank K (fixedSub y) = 0 := by omega
+    have hXm : (0 : CliffordAlgebra Q) ∈
+        lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) :=
+      Submodule.zero_mem (lieCentralizer (gspin Q) _).toSubmodule
+    have h : ∀ a ∈ (fixedSub y), adV Q 0 a ∈ (fixedSub y) := fun a _ => by rw [map_zero]; exact Submodule.zero_mem _
+    have h1 := finrank_lieCentralizer_fixed_le hQ y hc hXm h
+    have h2 := Submodule.finrank_le (soCent (Q.comp (fixedSub y).subtype) ((adV Q 0).restrict h))
+    rw [Module.finrank_linearMap, h0, mul_zero] at h2
+    exact ⟨0, hXm, IsNilpotent.zero, by omega⟩
+
+end CentralizerNilReg
+
 /-! ## Regular nilpotent orbits and quasi-splitness -/
 
 section NilReg
@@ -222,10 +414,19 @@ orbit then `G_x`, hence `G'_x`, is quasi-split, i.e. `W'_x` and `V'_x = W'_x ⊕
 direction holds for every semisimple `x`; the converse needs `MovedPartAbelian`).
 Combined with `germ = 0` off `NilReg`, this gives BP Prop. 4.5.1(i) for the germs `c_{θ,O}(x)`.
 
-**Status: `sorry`, not a literature axiom** (the statement is not verbatim in a source). Derived
-from `nilReg_nonempty_iff_quasiSplit` applied to the factors of the centralizer `G_x`. The
-literature (Waldspurger 2001, Ch. I) treats the orthogonal factors one at a time; this GGP form is
-not stated there. -/
+**Status: `sorry`, not a literature axiom** (the statement is not verbatim in a source). Sketch:
+for `Y ∈ 𝔤_x`, `dim 𝔤_{x,Y} = a_W(Y) + b_W(Y) + a_V(Y) + b_V(Y) + 2` with
+`a_W(Y) = dim so(W'_x)_{adV Y₁|W'_x}` and `b_W(Y)` the dimension of the part of `so(W)_{P x, adV Y₁}`
+killing `W'_x`, likewise for `V` with `V'_x ≅ W'_x ⊕ Z` (`QVfixIso`)
+(`finrank_lieCentralizer_lieCentralizer_lie`, `finrank_lieCentralizer_fixed`). Missing lemma:
+restriction to `(W'_x)^⊥` identifies that part with `so(W''_x)_{x̄, adV Y₁|W''_x}`, so `b_W` depends
+only on the moved component of `Y`. The four summands then depend on independent components of `Y`
+(each extends by `0` and lifts, `exists_mem_gspin_adV_eq`), so `lieRank 𝔤_x` is the sum of their
+minima and a regular nilpotent `X` minimizes `a_W` and `a_V`. A lift `Z'` of `adV X₁|_{W'_x}` to
+`gspin(W'_x)` is nilpotent (nilpotent elements of `so` act nilpotently on the spin module) and regular
+nilpotent there, so `W'_x` is quasi-split by `quasiSplit_of_nilReg_nonempty`; likewise `V'_x`. The
+literature (Waldspurger 2001, Ch. I) treats the orthogonal factors one at a time; this GGP form is not
+stated there. -/
 theorem nilReg_centralizer_nonempty_imp (d : GGPData F) (x : GSpin d.QW)
     (hx : IsSS F ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW)) :
     (NilReg (grpCentralizer d.G ((d.diag x : d.G) : d.ambientˣ))
@@ -339,6 +540,93 @@ theorem isInOrbitNu_regNil {V : Type*} [AddCommGroup V] [Module F V] [FiniteDime
     unfold IsSplitQF
     omega
 
+/-- `V'_x = W'_x ⊕ Z` (`QVfix`) is the fixed space of `P(incl x)` in `V`, with the restricted form. -/
+def QVfixIso (d : GGPData F) (x : GSpin d.QW) :
+    (d.QVfix x).IsometryEquiv (d.QV.comp (fixedSub (d.incl x)).subtype) where
+  toFun p := ⟨((p.1 : Fin d.m → F), p.2), (d.mem_fixedSub_incl_iff x _ _).mpr p.1.2⟩
+  invFun v := (⟨(v : d.V).1, (d.mem_fixedSub_incl_iff x (v : d.V).1 (v : d.V).2).mp v.2⟩, (v : d.V).2)
+  map_add' p q := rfl
+  map_smul' c p := rfl
+  left_inv p := rfl
+  right_inv v := rfl
+  map_app' p := by
+    simp [GGPData.QVfix, GGPData.QWfix, QuadraticMap.prod_apply]
+
+/-- **Existence of regular nilpotent orbits of `𝔤_x`** (the direction `⇐` of
+`nilReg_centralizer_nonempty_iff`). For semisimple `x` with abelian moved part and `W'_x`, `V'_x`
+quasi-split: `X = (regNil on W'_x, regNil on V'_x)` is regular nilpotent in `𝔤_x`. Indeed
+`dim 𝔤_{x,Y} = dim so(W'_x)_{Y} + dim so(V'_x)_{Y} + (moved parts, constant) + 2` for `Y ∈ 𝔤_x`
+(`finrank_lieCentralizer_lieCentralizer_lie`, `finrank_lieCentralizer_fixed`,
+`soCent_inf_killSub_eq`), and the `so(W'_x)`, `so(V'_x)` terms are minimal at `X`
+(`le_finrank_soCent`, `finrank_soCent_regNil_le`). -/
+theorem nilReg_centralizer_nonempty_of_quasiSplit (d : GGPData F) (x : GSpin d.QW)
+    (hx : IsSS F ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW))
+    (hmoved : MovedPartAbelian d.QW x) (hW : IsQuasiSplitQF (d.QWfix x))
+    (hV : IsQuasiSplitQF (d.QVfix x)) :
+    (NilReg (grpCentralizer d.G ((d.diag x : d.G) : d.ambientˣ))
+      (lieCentralizer d.lie (((d.diag x : d.G) : d.ambientˣ) : d.ambient))).Nonempty := by
+  set dx : d.ambient := (((d.diag x : d.G) : d.ambientˣ) : d.ambient)
+  have hdx : dx = (((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW),
+      ((d.incl x : (CliffordAlgebra d.QV)ˣ) : CliffordAlgebra d.QV)) := rfl
+  have hdisj := fixedSub_inf_movedSub_of_isSS x hx
+  have hcW := isCompl_fixedSub_orthogonal d.nondeg x hdisj
+  have hcV := isCompl_fixedSub_orthogonal d.nondeg_QV (d.incl x)
+    (fixedSub_inf_movedSub_incl d x hdisj)
+  have habW := commute_of_movedPart d.nondeg x hmoved
+  have habV := commute_movedPart_incl d x habW
+  have hV' : IsQuasiSplitQF (d.QV.comp (fixedSub (d.incl x)).subtype) :=
+    QuadClassify.isQuasiSplitQF_of_isometryEquiv (QVfixIso d x) hV
+  obtain ⟨XW, hXWm, hXWn, hXWb⟩ := exists_side_regNil d.nondeg x hcW hW
+  obtain ⟨XV, hXVm, hXVn, hXVb⟩ := exists_side_regNil d.nondeg_QV (d.incl x) hcV hV'
+  set X : d.ambient := (XW, XV)
+  have hXm : X ∈ lieCentralizer d.lie dx := by
+    obtain ⟨h1, h2⟩ := mem_lieCentralizer.mp hXWm
+    obtain ⟨h3, h4⟩ := mem_lieCentralizer.mp hXVm
+    exact mem_lieCentralizer.mpr ⟨⟨h1, h3⟩, by rw [hdx]; exact Prod.ext h2 h4⟩
+  have hXn : IsNilpotent X := by
+    obtain ⟨n, hn⟩ := hXWn
+    obtain ⟨k, hk⟩ := hXVn
+    refine ⟨n + k, ?_⟩
+    rw [Prod.pow_mk, pow_eq_zero_of_le (Nat.le_add_right n k) hn,
+      pow_eq_zero_of_le (Nat.le_add_left k n) hk]; rfl
+  have hreg : IsRegularNil (lieCentralizer d.lie dx) X := by
+    refine ⟨hXm, hXn, le_antisymm ?_ ?_⟩
+    · have : Nonempty ↥(lieCentralizer d.lie dx) := ⟨0⟩
+      refine le_ciInf fun Y => ?_
+      obtain ⟨⟨hY1, hY2⟩, hYc⟩ := mem_lieCentralizer.mp Y.2
+      have hYc1 : ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) * (Y : d.ambient).1 =
+          (Y : d.ambient).1 * ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) :=
+        congrArg Prod.fst hYc
+      have hYc2 : ((d.incl x : (CliffordAlgebra d.QV)ˣ) : CliffordAlgebra d.QV) * (Y : d.ambient).2 =
+          (Y : d.ambient).2 * ((d.incl x : (CliffordAlgebra d.QV)ˣ) : CliffordAlgebra d.QV) :=
+        congrArg Prod.snd hYc
+      have hY1m : (Y : d.ambient).1 ∈ lieCentralizer (gspin d.QW)
+          ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) :=
+        mem_lieCentralizer.mpr ⟨hY1, hYc1⟩
+      have hY2m : (Y : d.ambient).2 ∈ lieCentralizer (gspin d.QV)
+          ((d.incl x : (CliffordAlgebra d.QV)ˣ) : CliffordAlgebra d.QV) :=
+        mem_lieCentralizer.mpr ⟨hY2, hYc2⟩
+      have l1 := le_finrank_lieCentralizer_fixed d.nondeg x hcW habW hY1m
+      have l2 := le_finrank_lieCentralizer_fixed d.nondeg_QV (d.incl x) hcV habV hY2m
+      rw [finrank_lieCentralizer_lieCentralizer_lie, finrank_lieCentralizer_lieCentralizer_lie]
+      exact Nat.add_le_add (hXWb.trans l1) (hXVb.trans l2)
+    · unfold lieRank
+      exact ciInf_le (OrderBot.bddBelow _) (⟨X, hXm⟩ : lieCentralizer d.lie dx)
+  have hG : ∀ g ∈ grpCentralizer d.G ((d.diag x : d.G) : d.ambientˣ), ∀ Y ∈ lieCentralizer d.lie dx,
+      (g : d.ambient) * Y * (↑g⁻¹ : d.ambient) ∈ lieCentralizer d.lie dx := by
+    intro g hg Y hY
+    obtain ⟨hgG, hgc⟩ := Subgroup.mem_inf.mp hg
+    have hgc' : (g : d.ambient) * dx = dx * g := by
+      have := Subgroup.mem_centralizer_singleton_iff.mp hgc
+      exact congrArg Units.val this
+    obtain ⟨hYl, hYc⟩ := mem_lieCentralizer.mp hY
+    refine mem_lieCentralizer.mpr ⟨⟨conj_mem_gspin d.QW (d.fst ⟨g, hgG⟩) hYl.1,
+      conj_mem_gspin d.QV (d.snd ⟨g, hgG⟩) hYl.2⟩, ?_⟩
+    have hc1 : Commute dx (g : d.ambient) := hgc'.symm
+    have hc3 : Commute dx (↑g⁻¹ : d.ambient) := hc1.units_inv_right
+    exact ((hc1.mul_right hYc).mul_right hc3)
+  exact ⟨_, mk_mem_nilReg_of_isRegularNil _ _ hG ⟨X, hXm, hXn⟩ hreg⟩
+
 /-- **Regular nilpotent orbits of GGP centralizers** (Waldspurger 2001
 Ch. I, 2010 §7.1).  For semisimple `x ∈ GSpin(W)(F)` whose moved part `G''_x` is a torus
 (`MovedPartAbelian`, true for all `x` contributing to `Γ(G,H)`), `Nil_reg(𝔤_x) ≠ ∅` iff `W'_x`
@@ -353,16 +641,16 @@ example cannot occur, by a Witt-group computation): `F = Q_3`, `W = N_D ⊥ ⟨1
 only for `x` with `Z_{SO(W''_x)}(x̄)⁰` a torus, which is this hypothesis.  It holds on `Γ(G,H)` (`movedPartAbelian_of_isGammaElt` in `Main`).  See
 `nilReg_centralizer_nonempty_imp` for the unconditional direction.
 
-**Status: `sorry`, not a literature axiom** (the statement is not verbatim in a source). Derived as
-`nilReg_centralizer_nonempty_imp`, using `MovedPartAbelian` for the converse. Not stated in this
-form in the literature. -/
+**Status:** `⇐` is proved (`nilReg_centralizer_nonempty_of_quasiSplit`); `⇒` is
+`nilReg_centralizer_nonempty_imp` (`sorry`). Not stated in this form in the literature. -/
 theorem nilReg_centralizer_nonempty_iff (d : GGPData F) (x : GSpin d.QW)
     (hx : IsSS F ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW))
     (hmoved : MovedPartAbelian d.QW x) :
     (NilReg (grpCentralizer d.G ((d.diag x : d.G) : d.ambientˣ))
       (lieCentralizer d.lie (((d.diag x : d.G) : d.ambientˣ) : d.ambient))).Nonempty ↔
-    IsQuasiSplitQF (d.QWfix x) ∧ IsQuasiSplitQF (d.QVfix x) := by
-  sorry
+    IsQuasiSplitQF (d.QWfix x) ∧ IsQuasiSplitQF (d.QVfix x) :=
+  ⟨nilReg_centralizer_nonempty_imp d x hx,
+    fun h => nilReg_centralizer_nonempty_of_quasiSplit d x hx hmoved h.1 h.2⟩
 
 /-- **Witt data for `O_{−ν}` in `W`** (the second Witt-theory step in the docstring of
 `exists_regularNil_inOrbitNu`): for a quasi-split GGP datum with `dim W = 2s + 2` even, `W` contains
