@@ -7,11 +7,12 @@ import GSpinGGP.GGP.IsometryCentralizer
 /-!
 # Joint eigenspaces of a commuting isometry and skew map
 
-Let `B` be a nondegenerate symmetric bilinear form, `P` an isometry and `N` a skew endomorphism
-(`B(N u, v) = −B(u, N v)`) with `P N = N P`. The joint eigenspaces `E_{(μ,λ)} = E_μ(P) ∩ E_λ(N)`
-are orthogonal unless `(ν, κ) = (μ⁻¹, −λ)`, and `B` pairs `E_{(μ,λ)}` with `E_{(μ⁻¹,−λ)}`
-nondegenerately (`exists_joint_eigen_pair`, `exists_dual_family`). The wedges `u ∧ w`
-(`u ∈ E_{(μ,λ)}`, `w ∈ E_{(μ⁻¹,−λ)}`) commute with `P` and `N` (`commute_wedge`,
+Let `B` be a bilinear form, `P` an isometry and `N` a skew endomorphism (`B(N u, v) = −B(u, N v)`)
+with `N P = P N`. The joint eigenspaces `E_{(μ,c)} = E_μ(P) ∩ E_c(N)` and `E_{(ν,c')}` are
+orthogonal unless `(ν, c') = (μ⁻¹, −c)`, and (for `P`, `N` semisimple over an algebraically closed
+field) every value of `B` on `E_{(μ,c)} × V` is attained on `E_{(μ⁻¹,−c)}` (`exists_joint_eigen_pair`).
+A nondegenerate pairing of two subspaces has dual bases (`exists_dual_family`). The wedges `u ∧ w`
+(`u ∈ E_{(μ,c)}`, `w ∈ E_{(μ⁻¹,−c)}`) commute with `P` and `N` (`commute_wedge`,
 `commute_wedge_of_skew`), and `d²` of them are independent (`le_finrank_of_wedge_dual`).
 -/
 
@@ -36,17 +37,15 @@ theorem bform_eigen_eq_zero_of_skew (hN : IsSkew B N) {c c' : K} (hcc' : c + c' 
   exact (mul_eq_zero.1 this).resolve_left hcc'
 
 /-- The wedge of `u ∈ E_c(N)` and `w ∈ E_{−c}(N)` commutes with the skew `N`. -/
-theorem commute_wedge_of_skew (hB : B.IsSymm) (hN : IsSkew B N) {c : K} {u w : V}
+theorem commute_wedge_of_skew (hN : IsSkew B N) {c : K} {u w : V}
     (hu : u ∈ N.eigenspace c) (hw : w ∈ N.eigenspace (-c)) : Commute N (wedge B u w) := by
   rw [mem_eigenspace_iff] at hu hw
   ext z
   simp only [Module.End.mul_apply, wedge_apply, map_sub, map_smul]
   have h1 : B w (N z) = c * B w z := by
-    rw [hB.eq w, ← neg_neg (B (N z) w), hN, hB.eq, hw, map_smul, LinearMap.smul_apply, smul_eq_mul]
-    simp
+    rw [← neg_neg (B w (N z)), ← hN, hw, map_smul, LinearMap.smul_apply, smul_eq_mul]; ring
   have h2 : B u (N z) = -c * B u z := by
-    rw [hB.eq u, ← neg_neg (B (N z) u), hN, hB.eq, hu, map_smul, LinearMap.smul_apply, smul_eq_mul]
-    simp
+    rw [← neg_neg (B u (N z)), ← hN, hu, map_smul, LinearMap.smul_apply, smul_eq_mul]; ring
   rw [h1, h2, hu, hw]
   module
 
@@ -75,43 +74,33 @@ theorem exists_dual_family [FiniteDimensional K V] {E E' : Submodule K V}
     (h1 : ∀ x ∈ E, x ≠ 0 → ∃ y ∈ E', B y x ≠ 0) (h2 : ∀ y ∈ E', y ≠ 0 → ∃ x ∈ E, B y x ≠ 0) :
     finrank K E' = finrank K E ∧ ∃ u w : Fin (finrank K E) → V, (∀ k, u k ∈ E) ∧ (∀ j, w j ∈ E') ∧
       ∀ j k, B (w j) (u k) = if j = k then 1 else 0 := by
-  let φ : E' →ₗ[K] Module.Dual K E := B.compl₁₂ E'.subtype E.subtype
-  let ψ : E →ₗ[K] Module.Dual K E' := B.flip.compl₁₂ E.subtype E'.subtype
+  let φ : E' →ₗ[K] E →ₗ[K] K := B.compl₁₂ E'.subtype E.subtype
   have hφ : Function.Injective φ := by
     rw [← LinearMap.ker_eq_bot, Submodule.eq_bot_iff]
     intro y hy
     by_contra hne
     obtain ⟨x, hx, hB⟩ := h2 y y.2 (fun h => hne (Subtype.ext h))
     exact hB (LinearMap.congr_fun (LinearMap.mem_ker.1 hy) ⟨x, hx⟩)
-  have hψ : Function.Injective ψ := by
+  have hψ : Function.Injective φ.flip := by
     rw [← LinearMap.ker_eq_bot, Submodule.eq_bot_iff]
     intro x hx
     by_contra hne
     obtain ⟨y, hy, hB⟩ := h1 x x.2 (fun h => hne (Subtype.ext h))
     exact hB (LinearMap.congr_fun (LinearMap.mem_ker.1 hx) ⟨y, hy⟩)
-  have hd : finrank K E' = finrank K E := le_antisymm
-    ((LinearMap.finrank_le_finrank_of_injective hφ).trans (Subspace.dual_finrank_eq).le)
-    ((LinearMap.finrank_le_finrank_of_injective hψ).trans (Subspace.dual_finrank_eq).le)
-  have hsurj : Function.Surjective φ :=
-    (LinearMap.injective_iff_surjective_of_finrank_eq_finrank
-      (hd.trans Subspace.dual_finrank_eq.symm)).1 hφ
-  let e := LinearEquiv.ofBijective φ ⟨hφ, hsurj⟩
+  have : φ.IsPerfPair := LinearMap.IsPerfPair.of_injective hφ hψ
+  have hd : finrank K E' = finrank K E := Module.finrank_of_isPerfPair φ
+  let e := φ.toPerfPair
   let b := Module.finBasis K E
   refine ⟨hd, fun k => b k, fun j => e.symm (b.dualBasis j), fun k => (b k).2,
     fun j => (e.symm (b.dualBasis j)).2, fun j k => ?_⟩
   have := LinearMap.congr_fun (e.apply_symm_apply (b.dualBasis j)) (b k)
+  rw [LinearMap.toPerfPair_apply] at this
   rw [Module.Basis.dualBasis_apply_self] at this
   simp only [eq_comm (a := j)]
   rw [← this]
   rfl
 
 variable {P : Module.End K V}
-
-/-- An eigenvector of the restriction of `P` to an invariant subspace is an eigenvector of `P`. -/
-theorem mem_eigenspace_of_restrict {E : Submodule K V} (hE : ∀ x ∈ E, P x ∈ E) {μ : K} {z : E}
-    (hz : z ∈ Module.End.eigenspace (P.restrict hE) μ) : (z : V) ∈ P.eigenspace μ := by
-  rw [mem_eigenspace_iff] at hz ⊢
-  exact congrArg Subtype.val hz
 
 variable [IsAlgClosed K] [FiniteDimensional K V]
 
@@ -138,7 +127,7 @@ theorem exists_joint_eigen_pair (hP : IsIsom B P) (hssP : P.IsSemisimple) (hN : 
       intro z hz
       induction hz using Submodule.iSup_induction' with
       | mem ν z hz =>
-        have hzP := mem_eigenspace_of_restrict hE hz
+        have hzP : (z : V) ∈ P.eigenspace ν := eigenspace_restrict_le_eigenspace P hE ν ⟨z, hz, rfl⟩
         by_cases hν : μ * ν = 1
         · refine ⟨z, ⟨?_, z.2⟩, rfl⟩
           rwa [show μ⁻¹ = ν from (eq_inv_of_mul_eq_one_right hν).symm]
