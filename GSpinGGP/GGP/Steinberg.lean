@@ -528,6 +528,47 @@ theorem commute_iff [CharZero K] [FiniteDimensional K V] (hQ : IsNondeg Q) (x : 
     refine hcommG.2 ((hneg hc).2 ?_)
     exact (det_restrict_eq rfl (negFixedSub_eq_eigenspace x).symm _ hn).trans hdn
 
+/-- **Centralizers in a regular torus**: if `x` commutes with `t`, `P(x)`, `P(t)` are semisimple,
+`ker (P(x) − 1) = ker (P(t) − 1)` and the moved part of the Lie centralizer of `P(t)` is abelian,
+then every `z` commuting with `t` commutes with `x` (over an algebraically closed field). -/
+theorem commute_of_commute_of_lieAbelian [CharZero K] [IsAlgClosed K] [FiniteDimensional K V]
+    (hQ : IsNondeg Q) {x t z : GSpin Q}
+    (hxss : Module.End.IsSemisimple (specP Q x : V →ₗ[K] V))
+    (htss : Module.End.IsSemisimple (specP Q t : V →ₗ[K] V))
+    (hL : LieAbelian (bform Q) (specP Q t : V →ₗ[K] V)) (hxt : Commute x t)
+    (hE : Module.End.eigenspace (specP Q x : V →ₗ[K] V) 1 =
+      Module.End.eigenspace (specP Q t : V →ₗ[K] V) 1)
+    (hzt : Commute z t) : Commute z x := by
+  have hB : (bform Q).IsSymm := ⟨fun u v => bform_comm Q u v⟩
+  have hzt' : Commute (specP Q z) (specP Q t) := hzt.map (specP Q)
+  have hxt' : Commute (specP Q x) (specP Q t) := hxt.map (specP Q)
+  have hct := commute_toLinearMap hzt'
+  -- `det P(z)|_{E₋₁(P t)} = 1` (Steinberg for `t`)
+  have hdz : LinearMap.det ((specP Q z : V →ₗ[K] V).restrict
+      (mapsTo_eigenspace_of_commute hct (-1))) = 1 :=
+    (commute_iff_det_negFixedSub hQ t htss z hzt').mp hzt
+  -- `P(x)` and `P(z)` commute
+  have hxz : Commute (specP Q x : V →ₗ[K] V) (specP Q z : V →ₗ[K] V) := by
+    refine commute_of_lieAbelian_of_det hB hQ (isIsom_specP t) htss hL (isIsom_specP x)
+      (isIsom_specP z) (det_specP x) (commute_toLinearMap hxt') hct (fun v hv => ?_) hdz
+    rw [← hE, Module.End.mem_eigenspace_iff, one_smul] at hv
+    exact hv
+  have hxz' : Commute (specP Q z) (specP Q x) := by
+    refine Commute.symm ?_
+    show specP Q x * specP Q z = specP Q z * specP Q x
+    apply LinearEquiv.toLinearMap_injective
+    exact hxz.eq
+  rw [commute_iff_det_negFixedSub hQ x hxss z hxz']
+  have hcx := commute_toLinearMap hxz'
+  have hsplit := det_eq_det_one_mul_det_neg_one hB hQ (isIsom_specP x) hxss (isIsom_specP z) hcx
+  have h1 : LinearMap.det ((specP Q z : V →ₗ[K] V).restrict
+      (mapsTo_eigenspace_of_commute hcx 1)) = 1 := by
+    have hsplit_t := det_eq_det_one_mul_det_neg_one hB hQ (isIsom_specP t) htss (isIsom_specP z) hct
+    rw [det_specP, hdz, mul_one] at hsplit_t
+    exact (det_restrict_eq rfl hE _ (mapsTo_eigenspace_of_commute hct 1)).trans hsplit_t.symm
+  rw [det_specP, h1, one_mul] at hsplit
+  exact hsplit.symm
+
 end Steinberg
 
 end GSpinGGP

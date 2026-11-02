@@ -567,6 +567,174 @@ theorem commute_of_lieAbelian [CharZero K] (hB : B.IsSymm) (hnd : B.Nondegenerat
       a4] at eq
     linear_combination (norm := module) (1 / 4 : K) • eq
 
+/-- An isometry commuting with `X` has a two-sided inverse commuting with `X`. -/
+theorem exists_inv_of_isIsom (hnd : B.Nondegenerate) {h : Module.End K V} (hi : IsIsom B h)
+    (hc : Commute X h) :
+    ∃ g : Module.End K V, (∀ v, h (g v) = v) ∧ (∀ v, g (h v) = v) ∧ Commute X g ∧
+      ∀ u v, B (h u) v = B u (g v) := by
+  let e := LinearEquiv.ofInjectiveEndo h (IsIsom.injective hnd hi)
+  let g : Module.End K V := e.symm
+  have hhg : ∀ v, h (g v) = v := fun v => e.apply_symm_apply v
+  have hgh : ∀ v, g (h v) = v := fun v => e.symm_apply_apply v
+  refine ⟨g, hhg, hgh, ?_, fun u v => ?_⟩
+  · refine LinearMap.ext fun v => ?_
+    apply IsIsom.injective hnd hi
+    simp only [Module.End.mul_apply]
+    rw [hhg, ← Module.End.mul_apply h X, ← hc.eq, Module.End.mul_apply, hhg]
+  · conv_lhs => rw [← hhg v]
+    exact hi u (g v)
+
+/-- `(h − h⁻¹)(2 − X − X⁻¹) ∈ 𝔩` for an isometry `h` commuting with `X`, with
+`2 − X − X⁻¹ = 4` on `E₋₁`. -/
+theorem exists_mem_lie_of_commute (hnd : B.Nondegenerate)
+    (hX : IsIsom B X) {h : Module.End K V} (hi : IsIsom B h) (hc : Commute X h) :
+    ∃ g S : Module.End K V, (∀ v, h (g v) = v) ∧ (∀ v, g (h v) = v) ∧
+      IsSkew B ((h - g) * S) ∧ Commute X ((h - g) * S) ∧
+      (∀ z ∈ X.eigenspace 1, ((h - g) * S) z = 0) ∧
+      (∀ w ∈ X.eigenspace (-1), S w = (4 : K) • w) ∧
+      ∀ w, S (X w) = X (S w) := by
+  obtain ⟨g, hhg, hgh, hXg, hBg⟩ := exists_inv_of_isIsom hnd hi hc
+  obtain ⟨gX, hXgX, hgXX, hXgX', hBgX⟩ := exists_inv_of_isIsom hnd hX (Commute.refl X)
+  set S : Module.End K V := (2 : K) • 1 - X - gX with hS
+  -- `S` is self-adjoint and commutes with `X`, `h`, `g`
+  have hSadj : ∀ u v, B (S u) v = B u (S v) := by
+    intro u v
+    have e1 : B (X u) v = B u (gX v) := hBgX u v
+    have e2 : B (gX u) v = B u (X v) := by rw [← hX (gX u) v, hXgX]
+    simp only [hS, LinearMap.sub_apply, LinearMap.smul_apply, Module.End.one_apply, map_sub,
+      map_smul, LinearMap.sub_apply, LinearMap.smul_apply, e1, e2]
+    ring
+  have hXgXc : Commute X gX := hXgX'
+  have hgXh : Commute gX h := by
+    refine LinearMap.ext fun v => ?_
+    apply IsIsom.injective hnd hX
+    simp only [Module.End.mul_apply]
+    rw [hXgX, ← Module.End.mul_apply X h, hc.eq, Module.End.mul_apply, hXgX]
+  have hgXg : Commute gX g := by
+    refine LinearMap.ext fun v => ?_
+    apply IsIsom.injective hnd hX
+    simp only [Module.End.mul_apply]
+    rw [hXgX, ← Module.End.mul_apply X g, hXg.eq, Module.End.mul_apply, hXgX]
+  have hSh : Commute S h :=
+    (((Commute.one_left h).smul_left (2 : K)).sub_left hc).sub_left hgXh
+  have hSg : Commute S g :=
+    (((Commute.one_left g).smul_left (2 : K)).sub_left hXg).sub_left hgXg
+  have hSX : Commute S X :=
+    (((Commute.one_left X).smul_left (2 : K)).sub_left (Commute.refl X)).sub_left hXgX'.symm
+  have hAS : Commute (h - g) S := (hSh.sub_right hSg).symm
+  have hAskew : ∀ u v, B ((h - g) u) v = - B u ((h - g) v) := by
+    intro u v
+    have e2 : B (g u) v = B u (h v) := by rw [← hi (g u) v, hhg]
+    simp only [LinearMap.sub_apply, map_sub, LinearMap.sub_apply, hBg, e2]
+    ring
+  have hgX1 : ∀ z ∈ X.eigenspace 1, gX z = z := by
+    intro z hz
+    rw [Module.End.mem_eigenspace_iff, one_smul] at hz
+    conv_lhs => rw [← hz]
+    exact hgXX z
+  have hgXm : ∀ w ∈ X.eigenspace (-1), gX w = -w := by
+    intro w hw
+    rw [Module.End.mem_eigenspace_iff, neg_one_smul] at hw
+    have := hgXX w
+    rw [hw, map_neg] at this
+    rw [← neg_neg (gX w), this]
+  refine ⟨g, S, hhg, hgh, fun u v => ?_, ((hc.sub_right hXg).mul_right hSX.symm), fun z hz => ?_,
+    fun w hw => ?_, fun w => ?_⟩
+  · rw [Module.End.mul_apply, hAskew, hSadj, ← Module.End.mul_apply S, ← hAS.eq]
+  · have : S z = 0 := by
+      rw [Module.End.mem_eigenspace_iff, one_smul] at hz
+      simp only [hS, LinearMap.sub_apply, LinearMap.smul_apply, Module.End.one_apply, hz,
+        hgX1 z (by rw [Module.End.mem_eigenspace_iff, one_smul]; exact hz)]
+      module
+    rw [Module.End.mul_apply, this, map_zero]
+  · have hw' := hw
+    rw [Module.End.mem_eigenspace_iff, neg_one_smul] at hw'
+    simp only [hS, LinearMap.sub_apply, LinearMap.smul_apply, Module.End.one_apply, hw',
+      hgXm w hw]
+    module
+  · rw [← Module.End.mul_apply, hSX.eq, Module.End.mul_apply]
+
+
+/-- **Variant of `commute_of_lieAbelian`**: only `h₁` need fix `ker (X − 1)`; for `h₂` it suffices that
+`det h₂|_{E₋₁} = 1`. -/
+theorem commute_of_lieAbelian_of_det [CharZero K] (hB : B.IsSymm) (hnd : B.Nondegenerate)
+    (hX : IsIsom B X) (hss : X.IsSemisimple) (hL : LieAbelian B X) {h₁ h₂ : Module.End K V}
+    (hi₁ : IsIsom B h₁) (hi₂ : IsIsom B h₂) (hd₁ : LinearMap.det h₁ = 1)
+    (hc₁ : Commute X h₁) (hc₂ : Commute X h₂)
+    (hf₁ : ∀ z ∈ X.eigenspace 1, h₁ z = z)
+    (hd₂' : LinearMap.det (h₂.restrict (mapsTo_eigenspace_of_commute hc₂ (-1))) = 1) :
+    Commute h₁ h₂ := by
+  refine LinearMap.ext fun v => ?_
+  simp only [Module.End.mul_apply]
+  have hv : v ∈ ⨆ μ : K, X.eigenspace μ := by rw [hss.iSup_eigenspace_eq_top]; trivial
+  induction hv using Submodule.iSup_induction' with
+  | zero => simp
+  | add x y _ _ hx hy => rw [map_add, map_add, map_add, map_add, hx, hy]
+  | mem μ v hv =>
+    -- restrictions to `E_μ`
+    let r₁ := h₁.restrict (mapsTo_eigenspace_of_commute hc₁ μ)
+    let r₂ := h₂.restrict (mapsTo_eigenspace_of_commute hc₂ μ)
+    have hrest : Commute r₁ r₂ → h₁ (h₂ v) = h₂ (h₁ v) := by
+      intro hr
+      have := LinearMap.congr_fun hr.eq ⟨v, hv⟩
+      rw [Subtype.ext_iff] at this
+      simpa [r₁, r₂, Module.End.mul_apply, LinearMap.coe_restrict_apply] using this
+    by_cases hμ1 : μ = 1
+    · subst hμ1
+      rw [hf₁ v hv, hf₁ _ (mapsTo_eigenspace_of_commute hc₂ 1 v hv)]
+    by_cases hμm : μ = -1
+    swap
+    · have hμ2 : μ * μ ≠ 1 := by
+        intro h2
+        have : (μ - 1) * (μ + 1) = 0 := by linear_combination h2
+        rcases mul_eq_zero.1 this with h0 | h0
+        · exact hμ1 (by linear_combination h0)
+        · exact hμm (by linear_combination h0)
+      exact hrest (commute_of_finrank_le_one
+        (finrank_eigenspace_le_one hB hnd hX hss hL hμ1 hμ2) r₁ r₂)
+    subst hμm
+    have hle := finrank_eigenspace_neg_one_le_two hB hnd hX hss hL
+    by_cases h2 : finrank K (X.eigenspace (-1)) ≤ 1
+    · exact hrest (commute_of_finrank_le_one h2 r₁ r₂)
+    have h2 : finrank K (X.eigenspace (-1)) = 2 := by omega
+    obtain ⟨g₁, hhg₁, hgh₁, hs₁, hcY₁, hz₁⟩ := exists_inv_mem_lie hnd hX hi₁ hc₁ hf₁
+    obtain ⟨g₂, S, hhg₂, hgh₂, hs₂, hcY₂, hz₂, hS4, -⟩ := exists_mem_lie_of_commute hnd hX hi₂ hc₂
+    have hY := (hL _ _ hs₁ hs₂ hcY₁ hcY₂ hz₁ hz₂).eq
+    -- on `E_{−1}`: `g w = t w − h w` (Cayley–Hamilton, `det = 1`)
+    have hinv : ∀ {h g : Module.End K V} (hc : Commute X h), (∀ v, g (h v) = v) →
+        LinearMap.det (h.restrict (mapsTo_eigenspace_of_commute hc (-1))) = 1 →
+        ∀ w ∈ X.eigenspace (-1), g w =
+          LinearMap.trace K _ (h.restrict (mapsTo_eigenspace_of_commute hc (-1))) • w - h w := by
+      intro h g hc hgh hdet w hw
+      have hCH := sq_sub_trace_add_det h2 (h.restrict (mapsTo_eigenspace_of_commute hc (-1)))
+      rw [hdet, one_smul] at hCH
+      have := LinearMap.congr_fun hCH ⟨w, hw⟩
+      rw [Subtype.ext_iff] at this
+      simp only [LinearMap.add_apply, LinearMap.sub_apply, LinearMap.smul_apply, pow_two,
+        Module.End.mul_apply, LinearMap.coe_restrict_apply, Submodule.coe_add, Submodule.coe_sub,
+        Submodule.coe_smul, Module.End.one_apply, LinearMap.zero_apply,
+        Submodule.coe_zero] at this
+      -- `h (h w) − t h w + w = 0`; apply `g`
+      have := congrArg g this
+      rw [map_add, map_sub, hgh, map_smul, hgh, map_zero] at this
+      linear_combination (norm := module) this
+    have hd₁' := det_restrict_neg_one hB hnd hX hss hL hi₁ hd₁ hc₁ hf₁
+    set t₁ := LinearMap.trace K _ (h₁.restrict (mapsTo_eigenspace_of_commute hc₁ (-1)))
+    set t₂ := LinearMap.trace K _ (h₂.restrict (mapsTo_eigenspace_of_commute hc₂ (-1)))
+    have hm₁ := mapsTo_eigenspace_of_commute hc₁ (-1)
+    have hm₂ := mapsTo_eigenspace_of_commute hc₂ (-1)
+    have a1 := hinv hc₁ hgh₁ hd₁' v hv
+    have a2 := hinv hc₂ hgh₂ hd₂' v hv
+    have a3 := hinv hc₁ hgh₁ hd₁' _ (hm₂ v hv)
+    have a4 := hinv hc₂ hgh₂ hd₂' _ (hm₁ v hv)
+    have hg₁v : g₁ v ∈ X.eigenspace (-1) := by
+      rw [a1]; exact sub_mem (Submodule.smul_mem _ _ hv) (hm₁ v hv)
+    have eq := LinearMap.congr_fun hY v
+    simp only [Module.End.mul_apply, LinearMap.sub_apply] at eq
+    rw [hS4 v hv, hS4 _ (sub_mem (hm₁ v hv) hg₁v)] at eq
+    simp only [map_sub, map_smul, LinearMap.sub_apply, a1, a2, a3, a4] at eq
+    linear_combination (norm := module) (1 / 16 : K) • eq
+
 end Group
 
 end IsomCent
