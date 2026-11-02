@@ -15,6 +15,7 @@ skew-adjoint matrices `skewAdjointMatricesSubmodule Φ`. Here `n = dim V`; Jantz
 `n / 2`.
 
 * `jantzen_finrank_soCentMat_ge`: every centralizer `g_X` has dimension at least `rk G = ⌊n/2⌋`.
+* `jantzen_regularNil_partition`: the Jordan type of a regular nilpotent element of `g`.
 -/
 
 open Module
@@ -36,5 +37,34 @@ axiom jantzen_finrank_soCentMat_ge {K : Type*} [Field K] [IsAlgClosed K] [CharZe
     (hn : 3 ≤ n) (Φ : Matrix (Fin n) (Fin n) K) (hΦ : Φ.transpose = Φ) (hdet : Φ.det ≠ 0)
     (X : Matrix (Fin n) (Fin n) K) (hX : X ∈ skewAdjointMatricesSubmodule Φ) :
     n / 2 ≤ finrank K (soCentMat Φ X)
+
+/-- **Regular nilpotent elements of `so(V)` have partition `[n]` (`n` odd) or `[n − 1, 1]`
+(`n` even)** (Jantzen 2004, §6.3, p. 64, last paragraph: for `G = SO(V, φ)` with `dim V ≥ 3`, the
+regular nilpotent orbit in `so(V, φ)` consists of the nilpotent elements with partition `[2n + 1]`
+when `dim V = 2n + 1`, and of those with partition `[2n − 1, 1]` when `dim V = 2n`. Jantzen
+leaves the deduction from §3.2 (5) to the reader and gives a second proof in the Remark after
+§6.4, p. 65. Chapter 6 assumes `G ⊂ GL(V)` connected reductive, which `SO(V, φ)` is; partitions
+are `GL(V)`-invariant, so working with `SO` rather than `O` does not affect the conclusion.)
+
+Hypothesis. Jantzen calls `X` regular nilpotent if its orbit is dense in the nilpotent cone, and
+shows in §6.3 that a nilpotent `X` is regular iff `dim G_X` is minimal among nilpotent elements
+(by §2.1 (6)). In characteristic `0`, `Lie(G_X) = g_X` (§2.2, condition (iii)), and
+`dim G_X = dim Lie(G_X)` (standard for algebraic groups), so `hreg`
+(`dim g_X` minimal among nilpotent `Y ∈ g`) says that `X` is regular nilpotent.
+
+Conclusion. The partition of a nilpotent `X` is the list of its Jordan block sizes (§1.1, §1.6),
+so its largest part is the least `k` with `X^k = 0`. For an `n × n` nilpotent matrix, partition
+`[n]` means `X^(n−1) ≠ 0`, and partition `[n − 1, 1]` means `X^(n−2) ≠ 0` and `X^(n−1) = 0`;
+these are the two conjuncts below, with no loss.
+
+Specialization: as for `jantzen_finrank_soCentMat_ge` (`K` algebraically closed of characteristic
+`0`, `V = K^n` with the form of `Φ`, `n ≥ 3`). -/
+axiom jantzen_regularNil_partition {K : Type*} [Field K] [IsAlgClosed K] [CharZero K] {n : ℕ}
+    (hn : 3 ≤ n) (Φ : Matrix (Fin n) (Fin n) K) (hΦ : Φ.transpose = Φ) (hdet : Φ.det ≠ 0)
+    (X : Matrix (Fin n) (Fin n) K) (hX : X ∈ skewAdjointMatricesSubmodule Φ)
+    (hnil : IsNilpotent X)
+    (hreg : ∀ Y ∈ skewAdjointMatricesSubmodule Φ, IsNilpotent Y →
+      finrank K (soCentMat Φ X) ≤ finrank K (soCentMat Φ Y)) :
+    (Odd n → X ^ (n - 1) ≠ 0) ∧ (Even n → X ^ (n - 2) ≠ 0 ∧ X ^ (n - 1) = 0)
 
 end GSpinGGP

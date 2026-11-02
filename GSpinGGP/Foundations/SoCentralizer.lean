@@ -19,7 +19,10 @@ kernel the scalars (Thesis Prop. 5.1.3.1). So the centralizer of `X ∈ gspin(V)
   `commute_of_isLieAbelian_lieCentralizer`: the same for the centralizer of `g ∈ GSpin(V)`, with
   `so(V)_{P(g)}`; `commute_of_lift`: a lift of `M ∈ so(V)_{P(g)}` commutes with `g`.
 
-* `finrank_soCent_le_of_chain`: an upper bound for `dim so(V)_N` when `N` has a long Jordan chain.
+* `finrank_soCent_le_of_chain`: an upper bound for `dim so(V)_N` when `N` has a long Jordan chain;
+  `isTotallyIsotropic_span_pow`: the upper half of a Jordan chain of a skew `N` is totally isotropic.
+* `linearIndependent_pow_apply`, `exists_pow_apply_ne_zero_of_isNilpotent`: Jordan chains of a
+  nilpotent endomorphism.
 * `soCentMat`, `soCentMat_toMatrix`: the same in matrix form; `ker_jointMatMap`: `so(J)_A ⊓ so(J)_C`
   is the kernel of a linear map of matrices. So `finrank_soCentMat_map`: its dimension does not
   change under extension of scalars; `soCentMat_map_eq_span`: over an extension it is spanned by
@@ -785,7 +788,79 @@ theorem finrank_soCent_le_of_chain {Q : QuadraticForm K V} (hQ : IsNondeg Q) {N 
   rw [LinearMap.BilinForm.finrank_orthogonal hQ, hE] at h1
   exact h1
 
+omit [FiniteDimensional K V] in
+/-- **The upper half of a Jordan chain of a skew `N` is totally isotropic**: if `N^(m+1) v = 0` and
+`m + 1 ≤ 2a`, then `b(N^(a+i) v, N^(a+j) v) = ± b(v, N^(2a+i+j) v) = 0`. -/
+theorem isTotallyIsotropic_span_pow {Q : QuadraticForm K V} {N : Module.End K V}
+    (hN : ∀ u w, bform Q (N u) w = -bform Q u (N w)) {v : V} {m a : ℕ}
+    (hm : (N ^ (m + 1)) v = 0) (ha : m + 1 ≤ 2 * a) (l : ℕ) :
+    IsTotallyIsotropic Q (Submodule.span K (Set.range fun i : Fin l => (N ^ (a + i)) v)) := by
+  set S := Submodule.span K (Set.range fun i : Fin l => (N ^ (a + i)) v)
+  have hgen : ∀ i j : ℕ, bform Q ((N ^ (a + i)) v) ((N ^ (a + j)) v) = 0 := by
+    intro i j
+    rw [bform_pow_skew hN (a + j), ← Module.End.mul_apply, ← pow_add]
+    rw [Module.End.pow_map_zero_of_le (by omega) hm, map_zero, LinearMap.zero_apply, mul_zero]
+  have h1 : ∀ i : Fin l, S ≤ LinearMap.ker (bform Q ((N ^ (a + i)) v)) := fun i =>
+    Submodule.span_le.2 <| by rintro _ ⟨j, rfl⟩; exact hgen i j
+  intro u hu
+  have h2 : S ≤ LinearMap.ker ((bform Q).flip u) :=
+    Submodule.span_le.2 <| by rintro _ ⟨i, rfl⟩; exact h1 i hu
+  rw [← QuadraticMap.associated_eq_self_apply K Q u]
+  exact h2 hu
+
 end Chain
+
+/-! ## Jordan chains of a nilpotent endomorphism -/
+
+section JordanChain
+
+variable {K : Type*} [Field K]
+variable {V : Type*} [AddCommGroup V] [Module K V]
+
+/-- **A Jordan chain is linearly independent**: if `f^m v ≠ 0` and `f^(m+1) v = 0`, then
+`v, f v, …, f^m v` are linearly independent. -/
+theorem linearIndependent_pow_apply {f : Module.End K V} {v : V} {m : ℕ}
+    (hm : (f ^ m) v ≠ 0) (hm' : (f ^ (m + 1)) v = 0) :
+    LinearIndependent K fun i : Fin (m + 1) => (f ^ (i : ℕ)) v := by
+  induction m generalizing v with
+  | zero =>
+    change LinearIndependent K fun i : Fin 1 => (f ^ (i : ℕ)) v
+    exact linearIndependent_unique_iff.2 (by simpa using hm)
+  | succ m ih =>
+    have e : ∀ j, (f ^ (j + 1)) v = (f ^ j) (f v) := fun j => by
+      rw [pow_succ, Module.End.mul_apply]
+    rw [linearIndependent_finSucc]
+    have ht : Fin.tail (fun i : Fin (m + 2) => (f ^ (i : ℕ)) v) =
+        fun i : Fin (m + 1) => (f ^ (i : ℕ)) (f v) := funext fun i => e i
+    rw [ht]
+    refine ⟨ih (by rwa [← e]) (by rwa [← e]), fun hv => hm ?_⟩
+    have hle : Submodule.span K (Set.range fun i : Fin (m + 1) => (f ^ (i : ℕ)) (f v)) ≤
+        LinearMap.ker (f ^ (m + 1)) := Submodule.span_le.2 <| by
+      rintro _ ⟨i, rfl⟩
+      rw [SetLike.mem_coe, LinearMap.mem_ker, ← Module.End.mul_apply, ← pow_add, ← e]
+      exact Module.End.pow_map_zero_of_le (by omega) hm'
+    exact hle hv
+
+/-- For `f` nilpotent and `f^m v ≠ 0` there is a Jordan chain through `v` of length at least
+`m + 1`: some `k ≥ m` with `f^k v ≠ 0` and `f^(k+1) v = 0`. -/
+theorem exists_pow_apply_ne_zero_of_isNilpotent {f : Module.End K V} (hf : IsNilpotent f)
+    {v : V} {m : ℕ} (hm : (f ^ m) v ≠ 0) :
+    ∃ k, m ≤ k ∧ (f ^ k) v ≠ 0 ∧ (f ^ (k + 1)) v = 0 := by
+  classical
+  have ex : ∃ k, (f ^ (k + 1)) v = 0 := by
+    obtain ⟨n, hn⟩ := hf
+    exact ⟨n, by rw [pow_succ, hn, zero_mul, LinearMap.zero_apply]⟩
+  refine ⟨Nat.find ex, ?_, ?_, Nat.find_spec ex⟩
+  · by_contra hlt
+    exact hm (Module.End.pow_map_zero_of_le (by omega) (Nat.find_spec ex))
+  · rcases Nat.eq_zero_or_eq_succ_pred (Nat.find ex) with h0 | hs
+    · rw [h0, pow_zero, Module.End.one_apply]
+      rintro rfl
+      exact hm (map_zero _)
+    · rw [hs]
+      exact Nat.find_min ex (by omega)
+
+end JordanChain
 
 /-! ## Matrices, and extension of scalars -/
 

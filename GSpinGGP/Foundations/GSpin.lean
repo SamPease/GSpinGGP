@@ -1307,6 +1307,22 @@ theorem ι_adV {Q : QuadraticForm K V} {X : CliffordAlgebra Q} (hX : X ∈ gspin
   rw [Ring.lie_def] at hw
   rw [adV_apply, ← hw, ιInv_ι]
 
+/-- `adV X` is nilpotent for nilpotent `X ∈ gspin(V)`: `ι((adV X)^j v) = (ad X)^j (ι v)`, and
+`ad X` is nilpotent (Mathlib's `LieAlgebra.ad_nilpotent_of_nilpotent`). -/
+theorem isNilpotent_adV {Q : QuadraticForm K V} {X : CliffordAlgebra Q} (hX : X ∈ gspin Q)
+    (hn : IsNilpotent X) : IsNilpotent (adV Q X) := by
+  obtain ⟨k, hk⟩ := LieAlgebra.ad_nilpotent_of_nilpotent (R := K) hn
+  have h : ∀ j v, ι Q ((adV Q X ^ j) v) = (LieAlgebra.ad K _ X ^ j) (ι Q v) := by
+    intro j
+    induction j with
+    | zero => intro v; rfl
+    | succ j ih =>
+      intro v
+      rw [pow_succ', Module.End.mul_apply, ι_adV hX, ih, pow_succ', Module.End.mul_apply,
+        LieAlgebra.ad_apply, Ring.lie_def]
+  refine ⟨k, LinearMap.ext fun v => CliffordAlgebra.ι_injective Q ?_⟩
+  rw [h, hk, LinearMap.zero_apply, LinearMap.zero_apply, map_zero]
+
 /-- `adV X` is skew for the bilinear form of `Q`, for `X ∈ gspin(V)` (Thesis Prop. 5.1.3.1). -/
 theorem bform_adV {Q : QuadraticForm K V} {X : CliffordAlgebra Q} (hX : X ∈ gspin Q) (u w : V) :
     bform Q (adV Q X u) w = -bform Q u (adV Q X w) := by
