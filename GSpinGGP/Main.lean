@@ -2550,7 +2550,7 @@ theorem isRegularNil_lie_mk (d : GGPData F) {a : CliffordAlgebra d.QW} {b : Clif
     · exact ciInf_le (OrderBot.bddBelow _) (⟨(a, b), haL, hbL⟩ : ↥d.lie)
 
 /-- **A regular orbit satisfying Luo's condition exists at `x = 1` when `dim V` or `dim W` is even
-`≥ 4`** (Luo §7.1).  From the literature axiom
+`≥ 4`** (Luo §7.1).  From
 `exists_regularNil_inOrbitNu` (Luo's orbit `O_ν` exists in `gspin(V)`, resp. `O_{−ν}` in
 `gspin(W)`: Waldspurger 2010 §7.1, Luo §2.1), paired with a regular nilpotent of the other factor
 (`nilReg_nonempty_iff_quasiSplit`); the pair is regular in `𝔤` (`isRegularNil_lie_mk`), and its
@@ -2578,7 +2578,7 @@ theorem exists_orbitSpec_one_of_even (d : GGPData F) (hqs : d.IsQuasiSplit)
     · have hV' := hV
       rw [hfix, Submodule.prod_top, finrank_top] at hV'
       obtain ⟨b, hb, hbν⟩ := hV1 hV'.1 hV'.2
-      obtain ⟨O, hO⟩ := (nilReg_nonempty_iff_quasiSplit d.QW d.nondeg).mpr hqs.1
+      obtain ⟨O, hO⟩ := nilReg_nonempty_of_quasiSplit d.QW d.nondeg hqs.1
       refine ⟨((Quotient.out O).1, b), isRegularNil_lie_mk d hO hb, ?_⟩
       unfold OrbitSpec
       rw [ite_eq_left_of_eq_true _ _ (eq_true hV), hfix, Submodule.prod_top]
@@ -2587,7 +2587,7 @@ theorem exists_orbitSpec_one_of_even (d : GGPData F) (hqs : d.IsQuasiSplit)
       have hW' := hW
       rw [hfix, finrank_top, Module.finrank_fin_fun] at hW'
       obtain ⟨a, ha, haν⟩ := hW1 hW'.1 hW'.2
-      obtain ⟨O, hO⟩ := (nilReg_nonempty_iff_quasiSplit d.QV d.nondeg_QV).mpr hqs.2
+      obtain ⟨O, hO⟩ := nilReg_nonempty_of_quasiSplit d.QV d.nondeg_QV hqs.2
       refine ⟨(a, (Quotient.out O).1), isRegularNil_lie_mk d ha hO, ?_⟩
       unfold OrbitSpec
       rw [ite_eq_right_of_eq_false _ _ (eq_false hV), ite_eq_left_of_eq_true _ _ (eq_true hW), hfix]
