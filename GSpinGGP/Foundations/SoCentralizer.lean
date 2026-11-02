@@ -19,6 +19,9 @@ kernel the scalars (Thesis Prop. 5.1.3.1). So the centralizer of `X ∈ gspin(V)
   `commute_of_isLieAbelian_lieCentralizer`: the same for the centralizer of `g ∈ GSpin(V)`, with
   `so(V)_{P(g)}`; `commute_of_lift`: a lift of `M ∈ so(V)_{P(g)}` commutes with `g`.
 
+* `finrank_lieCentralizer_fixed`: `dim gspin(V)_{y,Y}` through the fixed space `A = W'_y`;
+  `soCent_inf_killSub_congr`: the part killing `A` only sees `adV Y` on `A^⊥`, so
+  `exists_lieCentralizer_fixed_swap` can change the `A`-component of `Y` freely.
 * `finrank_soCent_le_of_chain`: an upper bound for `dim so(V)_N` when `N` has a long Jordan chain;
   `isTotallyIsotropic_span_pow`: the upper half of a Jordan chain of a skew `N` is totally isotropic.
 * `linearIndependent_pow_apply`, `exists_pow_apply_ne_zero_of_isNilpotent`: Jordan chains of a
@@ -663,6 +666,109 @@ theorem finrank_lieCentralizer_fixed {Q : QuadraticForm K V} (hQ : IsNondeg Q) (
     fun b hb => specP_mem_orthogonal_fixedSub y hb
   have e := finrank_soCent_inf_eq hc (mem_fixedSub_iff y) hgB (bform_adV hYg) hNg
   exact ⟨_, by rw [finrank_lieCentralizer_lieCentralizer_gspin hQ y hYg, e]⟩
+
+omit [FiniteDimensional K V] in
+/-- A skew `M` killing `A` maps `V` into `A^⊥`. -/
+theorem mem_orthogonal_of_mem_killSub {Q : QuadraticForm K V} {A : Submodule K V}
+    {M : Module.End K V} (hMs : ∀ u w, bform Q (M u) w = -bform Q u (M w)) (hMA : M ∈ killSub A)
+    (v : V) : M v ∈ (bform Q).orthogonal A := by
+  intro a ha
+  change bform Q a (M v) = 0
+  have hsymm : ∀ x y, bform Q x y = bform Q y x := fun x y => QuadraticMap.associated_isSymm K Q x y
+  rw [hsymm, hMs, hsymm, hMA a ha, map_zero, LinearMap.zero_apply, neg_zero]
+
+omit [FiniteDimensional K V] in
+/-- **The part of `so(V)_{g,N}` killing `A` only sees `N` on `A^⊥`**: if `N`, `N'` preserve `A`
+and agree on `A^⊥ = B`, with `V = A ⊕ B`, the two parts coincide. -/
+theorem soCent_inf_killSub_congr {Q : QuadraticForm K V} {g N N' : Module.End K V}
+    {A : Submodule K V} (hA : IsCompl A ((bform Q).orthogonal A)) (hNA : ∀ a ∈ A, N a ∈ A)
+    (hN'A : ∀ a ∈ A, N' a ∈ A) (hNN' : ∀ b ∈ (bform Q).orthogonal A, N b = N' b) :
+    soCent Q g ⊓ soCent Q N ⊓ killSub A = soCent Q g ⊓ soCent Q N' ⊓ killSub A := by
+  have key : ∀ {N N' : Module.End K V}, (∀ a ∈ A, N a ∈ A) → (∀ a ∈ A, N' a ∈ A) →
+      (∀ b ∈ (bform Q).orthogonal A, N b = N' b) →
+      soCent Q g ⊓ soCent Q N ⊓ killSub A ≤ soCent Q g ⊓ soCent Q N' ⊓ killSub A := by
+    intro N N' hNA hN'A hNN' M hM
+    obtain ⟨⟨hMg, hMN⟩, hMA⟩ := hM
+    obtain ⟨hMs, hMN⟩ := mem_soCent.1 hMN
+    refine ⟨⟨hMg, mem_soCent.2 ⟨hMs, ?_⟩⟩, hMA⟩
+    ext v
+    obtain ⟨a, ha, b, hb, rfl⟩ := Submodule.mem_sup.1 (hA.sup_eq_top ▸ Submodule.mem_top (x := v))
+    have hMb := mem_orthogonal_of_mem_killSub hMs hMA b
+    have hb' := congrArg (fun T : Module.End K V => T b) hMN
+    simp only [Module.End.mul_apply] at hb' ⊢
+    rw [map_add, map_add, map_add, map_add, hMA _ (hN'A a ha), hMA a ha, map_zero, ← hNN' b hb,
+      ← hNN' _ hMb, hb']
+  exact le_antisymm (key hNA hN'A hNN') (key hN'A hNA fun b hb => (hNN' b hb).symm)
+
+/-- **Changing the fixed-space component of `Y ∈ gspin(V)_y`**: for any skew `M` on `A = W'_y`
+there is `Y' ∈ gspin(V)_y` acting as `M` on `A` and as `Y` on `A^⊥`, so that
+`dim gspin(V)_{y,Y'} − dim so(A)_M = dim gspin(V)_{y,Y} − dim so(A)_{adV Y|_A}`
+(`finrank_lieCentralizer_fixed`, `soCent_inf_killSub_congr`). -/
+theorem exists_lieCentralizer_fixed_swap {Q : QuadraticForm K V} (hQ : IsNondeg Q) (y : GSpin Q)
+    (hc : IsCompl (fixedSub y) ((bform Q).orthogonal (fixedSub y))) {Y : CliffordAlgebra Q}
+    (hY : Y ∈ lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q))
+    (h : ∀ a ∈ fixedSub y, adV Q Y a ∈ fixedSub y) {M : Module.End K (fixedSub y)}
+    (hM : ∀ u w, bform (Q.comp (fixedSub y).subtype) (M u) w =
+      -bform (Q.comp (fixedSub y).subtype) u (M w)) :
+    ∃ Y' ∈ lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q),
+      finrank K (lieCentralizer (lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) :
+        CliffordAlgebra Q)) Y') +
+        finrank K (soCent (Q.comp (fixedSub y).subtype) ((adV Q Y).restrict h)) =
+      finrank K (lieCentralizer (lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) :
+        CliffordAlgebra Q)) Y) +
+        finrank K (soCent (Q.comp (fixedSub y).subtype) M) := by
+  set g : Module.End K V := (specP Q y : Module.End K V)
+  set N := adV Q Y
+  have hsymm : ∀ x z, bform Q x z = bform Q z x := fun x z => QuadraticMap.associated_isSymm K Q x z
+  obtain ⟨hYg, hYc⟩ := mem_lieCentralizer.mp hY
+  have hNs := bform_adV hYg
+  have hNg : N * g = g * N := ((commute_iff_adV hQ y hYg).mp hYc).symm
+  set N' : Module.End K V := LinearMap.ofIsCompl hc ((fixedSub y).subtype ∘ₗ M) (N ∘ₗ ((bform Q).orthogonal (fixedSub y)).subtype)
+  have hN'a : ∀ a : (fixedSub y), N' a = M a := fun a => by
+    simp [N', LinearMap.ofIsCompl_apply_left]
+  have hN'b : ∀ b : ((bform Q).orthogonal (fixedSub y)), N' b = N b := fun b => by
+    simp [N', LinearMap.ofIsCompl_apply_right]
+  have hdec : ∀ v : V, ∃ a : (fixedSub y), ∃ b : ((bform Q).orthogonal (fixedSub y)), v = a + b := fun v => by
+    obtain ⟨a, ha, b, hb, rfl⟩ := Submodule.mem_sup.1 (hc.sup_eq_top ▸ Submodule.mem_top (x := v))
+    exact ⟨⟨a, ha⟩, ⟨b, hb⟩, rfl⟩
+  have hAB : ∀ (a : (fixedSub y)) (b : ((bform Q).orthogonal (fixedSub y))), bform Q a b = 0 := fun a b => b.2 a a.2
+  have hBA : ∀ (b : ((bform Q).orthogonal (fixedSub y))) (a : (fixedSub y)), bform Q b a = 0 := fun b a => by rw [hsymm]; exact hAB a b
+  have hNA : ∀ a : (fixedSub y), N a ∈ (fixedSub y) := fun a => h a a.2
+  have hMs : ∀ a a' : (fixedSub y), bform Q (M a) a' = -bform Q a (M a') := fun a a' => by
+    have := hM a a'; rwa [bform_comp_subtype, bform_comp_subtype] at this
+  have hskew : ∀ u w, bform Q (N' u) w = -bform Q u (N' w) := by
+    intro u w
+    obtain ⟨a, b, rfl⟩ := hdec u
+    obtain ⟨a', b', rfl⟩ := hdec w
+    simp only [map_add, LinearMap.add_apply, hN'a, hN'b]
+    have e1 := hAB (M a) b'
+    have e2 : bform Q (N b) a' = 0 := by rw [hNs, neg_eq_zero]; exact hBA b ⟨_, hNA a'⟩
+    have e3 : bform Q a (N b') = 0 := by
+      rw [← neg_eq_zero, ← hNs]; exact hAB ⟨_, hNA a⟩ b'
+    have e4 := hBA b (M a')
+    rw [e1, e2, e3, e4, hMs, hNs]
+    ring
+  have hfix : ∀ a : (fixedSub y), g a = a := fun a => (mem_fixedSub_iff y a).mp a.2
+  have hcomm : N' * g = g * N' := by
+    ext v
+    obtain ⟨a, b, rfl⟩ := hdec v
+    have hgb : g b ∈ ((bform Q).orthogonal (fixedSub y)) := specP_mem_orthogonal_fixedSub y b.2
+    simp only [Module.End.mul_apply, map_add, hfix, hN'a, hN'b]
+    rw [show N' (g b) = N (g b) from hN'b ⟨_, hgb⟩, ← Module.End.mul_apply, hNg,
+      Module.End.mul_apply]
+  obtain ⟨Y', hY'm, hY'⟩ := exists_mem_lieCentralizer_adV_eq hQ y (mem_soCent.2 ⟨hskew, hcomm⟩)
+  obtain ⟨h1, e1⟩ := finrank_lieCentralizer_fixed hQ y hc hY'm
+  obtain ⟨h0, e0⟩ := finrank_lieCentralizer_fixed hQ y hc hY
+  have hres : (adV Q Y').restrict h1 = M := by
+    ext a; simp only [LinearMap.restrict_apply, hY', hN'a]
+  have hkill : soCent Q (specP Q y : Module.End K V) ⊓ soCent Q (adV Q Y') ⊓ killSub (fixedSub y) =
+      soCent Q (specP Q y : Module.End K V) ⊓ soCent Q (adV Q Y) ⊓ killSub (fixedSub y) :=
+    soCent_inf_killSub_congr hc (fun a ha => h1 a ha) (fun a ha => h a ha)
+      fun b hb => by rw [hY']; exact hN'b ⟨b, hb⟩
+  have hr0 : (adV Q Y).restrict h0 = (adV Q Y).restrict h := rfl
+  refine ⟨Y', hY'm, ?_⟩
+  rw [e1, e0, hres, hkill, hr0]
+  omega
 
 /-- **Upper bound** for `dim gspin(V)_{y,Y}`: `≤ dim so(A)_{adV Y|_A} + dim (so(V)_{P y} killing A) + 1`. -/
 theorem finrank_lieCentralizer_fixed_le {Q : QuadraticForm K V} (hQ : IsNondeg Q) (y : GSpin Q)
