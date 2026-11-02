@@ -381,20 +381,6 @@ theorem centralizer_eq_map_sup (hQ : IsNondeg Q) (f : Q' →qᵢ Q) (hf : IsNond
     rintro _ ⟨g', rfl⟩
     exact Subgroup.mem_centralizer_singleton_iff.mpr (map_commute_of_range f hf hrange g')
 
-/-- Semisimplicity is preserved by algebra homomorphisms: `p(a) = 0` with `p` squarefree gives
-`p(φ a) = 0`.  Used for `x ↦ incl x`, `C(W) → C(V)`. -/
-theorem isSS_algHom {A B : Type*} [Ring A] [Algebra F A] [FiniteDimensional F A] [Ring B]
-    [Algebra F B] (φ : A →ₐ[F] B) {a : A} (ha : IsSS F a) : IsSS F (φ a) := by
-  set p := minpoly F (LinearMap.mulLeft F a)
-  have hsq : Squarefree p := Module.End.IsSemisimple.minpoly_squarefree ha
-  have h0 : Polynomial.aeval (Algebra.lmul F A a) p = 0 := minpoly.aeval F _
-  rw [Polynomial.aeval_algHom_apply] at h0
-  have h1 : Polynomial.aeval a p = 0 :=
-    Algebra.lmul_injective (R := F) (h0.trans (map_zero _).symm)
-  have h3 : Polynomial.aeval (Algebra.lmul F B (φ a)) p = 0 := by
-    rw [Polynomial.aeval_algHom_apply, Polynomial.aeval_algHom_apply, h1, map_zero, map_zero]
-  exact Module.End.isSemisimple_of_squarefree_aeval_eq_zero hsq h3
-
 /-- For a semisimple endomorphism `D`, `D² w = 0 ⇒ D w = 0`. -/
 theorem apply_eq_zero_of_sq_of_isSemisimple {M : Type*} [AddCommGroup M] [Module F M]
     {D : Module.End F M} (hD : D.IsSemisimple) {w : M} (hw : D (D w) = 0) : D w = 0 := by

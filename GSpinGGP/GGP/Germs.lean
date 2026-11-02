@@ -94,25 +94,6 @@ theorem lieRank_lie (d : GGPData F) :
     exact add_le_add (ciInf_le (OrderBot.bddBelow _) (⟨(Y : d.ambient).1, Y.2.1⟩ : ↥(gspin d.QW)))
       (ciInf_le (OrderBot.bddBelow _) (⟨(Y : d.ambient).2, Y.2.2⟩ : ↥(gspin d.QV)))
 
-/-- Left multiplication by a product is semisimple iff it is on each factor (`⇒` direction). -/
-theorem isSemisimple_mulLeft_fst_snd {A B : Type*} [Ring A] [Algebra F A] [Module.Finite F A]
-    [Ring B] [Algebra F B] [Module.Finite F B] {x : A × B}
-    (hx : Module.End.IsSemisimple (LinearMap.mulLeft F x)) :
-    Module.End.IsSemisimple (LinearMap.mulLeft F x.1) ∧
-      Module.End.IsSemisimple (LinearMap.mulLeft F x.2) := by
-  have hx' : Module.End.IsSemisimple (Algebra.lmul F (A × B) x) := hx
-  have hsq := hx'.minpoly_squarefree
-  have h0 : Polynomial.aeval x (minpoly F (Algebra.lmul F (A × B) x)) = 0 := by
-    have h := minpoly.aeval F (Algebra.lmul F (A × B) x)
-    rw [Polynomial.aeval_algHom_apply] at h
-    simpa using congrArg (fun f : Module.End F (A × B) => f 1) h
-  refine ⟨Module.End.isSemisimple_of_squarefree_aeval_eq_zero hsq ?_,
-    Module.End.isSemisimple_of_squarefree_aeval_eq_zero hsq ?_⟩
-  · rw [show LinearMap.mulLeft F x.1 = Algebra.lmul F A x.1 from rfl, Polynomial.aeval_algHom_apply,
-      show x.1 = AlgHom.fst F A B x from rfl, Polynomial.aeval_algHom_apply, h0, map_zero, map_zero]
-  · rw [show LinearMap.mulLeft F x.2 = Algebra.lmul F B x.2 from rfl, Polynomial.aeval_algHom_apply,
-      show x.2 = AlgHom.snd F A B x from rfl, Polynomial.aeval_algHom_apply, h0, map_zero, map_zero]
-
 /-- If `𝔤_{(a,b)}` is abelian, so are `gspin(W)_a` and `gspin(V)_b`. -/
 theorem isLieAbelian_lieCentralizer_fst_snd (d : GGPData F) {X : d.ambient}
     (hab : IsLieAbelian (lieCentralizer d.lie X)) :
@@ -145,7 +126,8 @@ theorem finrank_lieCentralizer_eq_lieRank (d : GGPData F) {x : ↥d.G}
     (hx : x ∈ regularSet d.G d.lie) :
     Module.finrank F ↥(lieCentralizer d.lie ((x : d.ambientˣ) : d.ambient)) = lieRank d.lie := by
   obtain ⟨hss, hab⟩ := hx
-  obtain ⟨hssW, hssV⟩ := isSemisimple_mulLeft_fst_snd hss
+  have hssW := isSS_algHom (AlgHom.fst F _ _) hss
+  have hssV := isSS_algHom (AlgHom.snd F _ _) hss
   obtain ⟨habW, habV⟩ := isLieAbelian_lieCentralizer_fst_snd d hab
   rw [finrank_lieCentralizer_lie, lieRank_lie, lieRank_gspin d.nondeg, lieRank_gspin d.nondeg_QV]
   exact congrArg₂ (· + ·)

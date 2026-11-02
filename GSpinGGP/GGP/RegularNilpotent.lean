@@ -4,11 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Foundations.RegularNilpotent
 import GSpinGGP.GGP.LieRank
-import GSpinGGP.Literature.NilpotentOrbits
 import GSpinGGP.GGP.QuadClassify
 import GSpinGGP.GGP.WittParity
 import GSpinGGP.GGP.Levi
-import Mathlib.FieldTheory.IsAlgClosed.AlgebraicClosure
 
 /-!
 # Regular nilpotent elements of `gspin(V)`
@@ -195,8 +193,7 @@ theorem nilReg_nonempty_of_quasiSplit {V : Type*} [AddCommGroup V] [Module F V]
 /-- **Regular nilpotent orbits exist only if `GSpin(V)` is quasi-split** (Thesis §5.1.4).
 
 **Status: `sorry`, not a literature axiom.** Sketch (`n = dim V ≥ 3`; `n ≤ 2` is always
-quasi-split): `lieRank gspin(V) = ⌊n/2⌋ + 1` (`le_lieRank_gspin`, and a regular semisimple element of
-`so(V)` has centralizer of dimension `⌊n/2⌋`; one exists as `F` is infinite), so a regular nilpotent
+quasi-split): `lieRank gspin(V) = ⌊n/2⌋ + 1` (`lieRank_gspin`), so a regular nilpotent
 `X` has `dim so(V)_{adV X} = ⌊n/2⌋` (`finrank_lieCentralizer_gspin`), also over `F̄`
 (`finrank_soCentMat_map`). Then `N = adV X` is regular nilpotent in `so(V_{F̄})`, of Jordan type `[n]`
 or `[n−1, 1]` (Jantzen 2004 §6.3 for `SO(V, φ)`). Let `m = n − 1` (`n` odd) or `n − 2` (`n` even);

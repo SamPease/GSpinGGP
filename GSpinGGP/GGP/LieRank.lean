@@ -13,8 +13,8 @@ For a nondegenerate quadratic space `V` of dimension `n` over a field of charact
 
 The lower bound `le_lieRank_gspin` comes from `le_finrank_soCent`: `dim so(V)_N ≥ ⌊dim V/2⌋` for
 every `N ∈ so(V)`, by Jantzen's bound over `F̄` (`jantzen_finrank_soCentMat_ge`) and the invariance
-of `dim so(V)_N` under extension of scalars (`finrank_soCentMat_map`). For the upper bound we build a skew `Z` with
-`dim so(V)_Z ≤ ⌊n/2⌋` (`exists_skew_finrank_soCent_le`): split off an anisotropic orthogonal plane
+of `dim so(V)_N` under extension of scalars (`finrank_soCentMat_map`). For the upper bound we
+build a skew `Z` with `dim so(V)_Z ≤ ⌊n/2⌋` (`exists_skew_finrank_soCent_le`): split off an anisotropic orthogonal plane
 `P = ⟨a, b⟩`, take `Z = c J ⊕ Z'` with `J = wedge(a, b)` (so `J² = −q(a) q(b)` on `P`) and `Z'`
 given by induction on `P^⊥`, and choose `c` so that `c² J²` is not an eigenvalue of `Z'²`. Then
 `P` is an eigenspace of `Z²`, every element of `so(V)_Z` preserves it, and
