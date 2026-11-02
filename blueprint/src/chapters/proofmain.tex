@@ -192,20 +192,9 @@ $x\mapsto y$, carrying $T_{x,\natural}$ onto $T_{y,\natural}$ with every $t$ sta
 \end{lemma}
 \begin{proof}
 \leanok
-\uses{stablyConjG_diag_of_psiU, torusTransfer_clauses}
+\uses{gspin, isSemisimple_specP_baseChange, lieAbelian_specP_baseChange, stablyConjG_diag_of_psiU}
 The values of $t\mapsto gC(\varphi_\alpha)(t)g^{-1}$ are Galois-fixed, hence rational
-(Galois descent); they commute with $y$ and fix $W'_y$. The inverse comes from $g^{-1}$ and $\varphi_\alpha^{-1}$. Scalars are central and $x\mapsto y$ by the choice of $g$. $e$ and $e^{-1}$ are restrictions of $F$-linear maps $C(W)\to C(W_\alpha)$, hence continuous. Stable conjugacy in $G$ is Lemma~\ref{stablyConjG_diag_of_psiU}; the regular parts are Lemma~\ref{torusTransfer_clauses}.
-\end{proof}
-
-\begin{lemma}[Regular parts under the torus isomorphism]
-\label{torusTransfer_clauses}
-\lean{GSpinGGP.torusTransfer_clauses}
-\leanok
-\uses{G, GGPData, GSpin, InnerFormSystem, InnerTwist, IsGammaElt, StablyConjG}
-The transport $e:T_x(F)\simeq T_y(F)$, $\bar e(t)=\Ad(g)C(\varphi_\alpha)(\bar t)$, maps $T_{x,\natural}$ onto $T_{y,\natural}$, and every $t\in T_{x,\natural}$ is strongly stably conjugate to $e(t)$.
-\end{lemma}
-\begin{proof}
-Not yet formalized. On $T_{x,\natural}$ the centralizers $G_t=G_x$ agree (also over $\Fbar$), so the rationality of $\Ad(g)\circ\psi_\alpha$ on $G_x$ gives it on $G_t$.
+(Galois descent); they commute with $y$ and fix $W'_y$. The inverse comes from $g^{-1}$ and $\varphi_\alpha^{-1}$. Scalars are central and $x\mapsto y$ by the choice of $g$. $e$ and $e^{-1}$ are restrictions of $F$-linear maps $C(W)\to C(W_\alpha)$, hence continuous. Stable conjugacy in $G$ is Lemma~\ref{stablyConjG_diag_of_psiU}. On $T_{x,\natural}$ the centralizers of $\bar t$ and $\bar x$ in $\GSpin(W)(\Fbar)$ and $\GSpin(V)(\Fbar)$ agree (by the centralizer theorem, Theorem~\ref{steinberg_centralizer_connected}, and the commutativity of the Lie algebra of $S_t$); hence the rationality clauses for $x$ give those for $t$, and $\Ad(g)\circ C(\varphi_\alpha)$ carries centralizers, fixed spaces and semisimplicity, so $T_{x,\natural}$ and $T_{y,\natural}$ correspond.
 \end{proof}
 
 \begin{lemma}[Stable conjugacy in $G$ from $W$]
