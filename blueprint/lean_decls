@@ -5,6 +5,8 @@ GSpinGGP.witt_cancellation
 GSpinGGP.padic_quadratic_classes
 GSpinGGP.cartan_dieudonne_even
 GSpinGGP.steinberg_centralizer_connected
+GSpinGGP.Steinberg.commute_iff_det_negFixedSub
+GSpinGGP.Steinberg.commute_of_fix
 GSpinGGP.nilReg_nonempty_iff_quasiSplit
 GSpinGGP.GGPData
 GSpinGGP.GGPData.G

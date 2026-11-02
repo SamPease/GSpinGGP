@@ -88,7 +88,42 @@ $Z_{\GSpin(V)}(x)=P^{-1}(Z_{\SO(V)}(\bar x)^0)$; explicitly, $g$ commutes with $
 commutes with $\bar x$ and $\det P(g)|_{W_{+1}} = \det P(g)|_{W_{-1}} = 1$. (Characteristic $0$.)
 \end{theorem}
 \begin{proof}
-Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{Steinberg}, Thm.~8.1 (the derived group $\Spin(V)$ is simply connected)}
+\leanok
+\uses{steinberg_sign, cartan_dieudonne_even}
+Own derivation, with no literature input; it replaces the appeal to \cite{Steinberg}, Thm.~8.1.
+If $P(g)$ commutes with $\bar x$, then $gxg^{-1}=c\,x$ with $c=\pm1$ (the commutator lies in $\ker P$, and the Clifford
+norm gives $c^2=1$). By base change to $\bar K$ it suffices to show $c=\det P(g)|_{W_{-1}}$ there
+(Lemma~\ref{steinberg_sign}). The condition on $W_{+1}$ then follows from
+$\det P(g)=\det P(g)|_{W_{+1}}\cdot\det P(g)|_{W_{-1}}$: the eigenspaces $E_\mu$ and $E_{\mu^{-1}}$ ($\mu\neq\pm1$)
+are paired perfectly, so $P(g)$ has determinant $1$ on their sum.
+\end{proof}
+
+\begin{lemma}[The commutator sign]
+\label{steinberg_sign}
+\lean{GSpinGGP.Steinberg.commute_iff_det_negFixedSub}
+\leanok
+\uses{steinberg_pair_blocks}
+Over an algebraically closed field of characteristic $0$, let $x\in\GSpin(V)$ with $\bar x=P(x)$ semisimple, and let $P(g)$
+commute with $\bar x$. Then $g$ commutes with $x$ iff $\det P(g)|_{W_{-1}}=1$.
+\end{lemma}
+\begin{proof}
+\leanok
+Cartan--Dieudonn\'e on the nondegenerate spaces $W_{+1}$ and $W_{-1}$ writes $P(g)|_{W_{\pm1}}$ as products of reflections
+in vectors $u_i\in W_{+1}$, $w_j\in W_{-1}$; their number is even, and $y=\prod u_i\prod w_j\in\GSpin(V)$. Since $xv=\pm vx$
+for $v\in W_{\pm1}$, $xy=(-1)^{\#\{w_j\}}yx$, and $(-1)^{\#\{w_j\}}=\det P(g)|_{W_{-1}}$. Finally $y^{-1}g$ commutes with $x$
+by Lemma~\ref{steinberg_pair_blocks}.
+\end{proof}
+
+\begin{lemma}[Pair blocks]
+\label{steinberg_pair_blocks}
+\lean{GSpinGGP.Steinberg.commute_of_fix}
+Over an algebraically closed field of characteristic $0$, let $\bar x=P(x)$ be semisimple, and let $P(g)$ commute with
+$\bar x$ and be the identity on $W_{+1}\oplus W_{-1}$. Then $g$ commutes with $x$.
+\end{lemma}
+\begin{proof}
+Not yet formalized. $P(g)$ acts on each $E_\mu\oplus E_{\mu^{-1}}$ ($\mu\neq\pm1$) as $(A,A^{-*})$ with $A\in\mathrm{GL}(E_\mu)$.
+Eichler transvections $E_{u,w}$ ($u\in E_\mu$, $w\in E_{\mu^{-1}}$) and the torus elements of hyperbolic pairs
+commute with $\bar x$, are squares of such elements, and generate these blocks; the sign of a square is $(\pm1)^2=1$.
 \end{proof}
 
 \begin{theorem}[Regular nilpotent orbits and quasi-splitness]

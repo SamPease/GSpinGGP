@@ -12,7 +12,8 @@ Statements about centralizers of semisimple elements and regular nilpotent orbit
 the GGP centralizers `G_x`. The literature states their ingredients for orthogonal groups or for
 general reductive groups (Steinberg 1968; Waldspurger, *Astérisque* 269 (2001), Ch. I;
 Luo, arXiv:2009.13947, §2.1). The forms here are derived from those, so they are `sorry`
-theorems, and each docstring names its exact ingredients.
+theorems, and each docstring names its exact ingredients; `steinberg_centralizer_connected` is
+proved directly (`GGP/Steinberg.lean`).
 -/
 
 noncomputable section
@@ -43,11 +44,10 @@ connected, with determinant one), so
 via `Q.baseChange`); semisimplicity is that of left multiplication on `C(V)` (definitionally
 `IsSS`, which needs a normed field — see `steinberg_centralizer_connected'`).
 
-**Status: `sorry`, not a literature axiom** (the statement is not verbatim in a source). Steinberg's
-theorem (*Endomorphisms of linear algebraic groups*, Thm 8.1) applies verbatim: `Z_{GSpin(V)}(x)` is
-connected because `Spin(V)` is simply connected. The explicit description stated here is derived
-from it through `Z_{SO(V)}(x̄)⁰ = SO(W₊₁) × SO(W₋₁) × ∏ GL`, as sketched above. That derivation is
-not in the source, so this is a `sorry` theorem. -/
+**Status: proved, with no literature input** (`Steinberg.commute_iff`, `GGP/Steinberg.lean`), from
+the one remaining `sorry` `Steinberg.commute_of_fix` (elements acting trivially on `W₊₁ ⊕ W₋₁`). The
+proof computes the sign `c` in `g x g⁻¹ = c x` as `det P(g)|_{W₋₁}`, instead of going through
+Steinberg's connectedness theorem. -/
 theorem steinberg_centralizer_connected {K : Type*} [Field K] [CharZero K]
     {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
     (Q : QuadraticForm K V) (hQ : IsNondeg Q) (x : GSpin Q)

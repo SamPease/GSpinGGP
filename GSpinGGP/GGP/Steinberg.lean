@@ -336,7 +336,14 @@ theorem exists_gspin_list_prod :
       rfl
 
 /-- **Pair blocks are sign-trivial**: an element of `GSpin(V)` whose image commutes with `P(x)` and
-is the identity on `E₁ ⊕ E₋₁` commutes with `x` (over an algebraically closed field). -/
+is the identity on `E₁ ⊕ E₋₁` commutes with `x` (over an algebraically closed field).
+
+**Status: `sorry`, own derivation (no literature input).** Proof sketch: `π = P(g)` acts on each
+`E_μ ⊕ E_{μ⁻¹}` (`μ ≠ ±1`) as `(A, A^{-*})` with `A ∈ GL(E_μ)`. Eichler transvections `E_{u,w}`
+(`u ∈ E_μ`, `w ∈ E_{μ⁻¹}`, `polar(u, w) = 0`; Tau Ceti `TauCeti.QuadraticMap.transvection`) commute
+with `P(x)` and are squares, `E_{u,w} = E_{u,w/2}²`; so are the torus elements `(d, d⁻¹)` of a hyperbolic
+pair `e ∈ E_μ`, `f ∈ E_{μ⁻¹}` (take `√d`). These generate the blocks, and squares are sign-trivial
+(`CentralizerSign.signTrivial_sq`), as are products (`CentralizerSign.SignTrivial.mul`). -/
 theorem commute_of_fix [CharZero K] [IsAlgClosed K] [FiniteDimensional K V]
     (hQ : IsNondeg Q) (x : GSpin Q) (hx : Module.End.IsSemisimple (specP Q x : V →ₗ[K] V))
     (g : GSpin Q) (hc : Commute (specP Q g) (specP Q x))
