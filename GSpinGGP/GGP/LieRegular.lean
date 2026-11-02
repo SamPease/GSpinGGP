@@ -4,21 +4,21 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.GGP.JointRankDescent
 import GSpinGGP.GGP.RegularNilpotent
-import GSpinGGP.GGP.Descent
 import GSpinGGP.Foundations.JordanAlgebra
 import GSpinGGP.Foundations.RankSemicontinuity
 
 /-!
 # Regular semisimple elements of `𝔤_g`
 
-Let `g ∈ GSpin(V)` be semisimple and `Y ∈ gspin(V)_g` with `L_Y` semisimple on `C(V)`. Then
+Let `g ∈ GSpin(V)` and `Y ∈ gspin(V)_g` be semisimple (left multiplication by each is semisimple
+on `C(V)`, as in `IsSS`). Then
 `adV Y` is a semisimple skew map commuting with `P(g)` (`isSemisimple_adV`), and
 `jointClauses_of_charZero` for the pair `(P(g), adV Y)` gives, for the centralizer
 `gspin(V)_{g,Y}` (of dimension `1 + dim (so(V)_{P(g)} ⊓ so(V)_{adV Y})`):
 
 * `le_finrank_lieCentralizer_gspin_of_isSemisimple`: `⌊dim V/2⌋ + 1 ≤ dim gspin(V)_{g,Y}`;
 * `finrank_lieCentralizer_gspin_eq_iff_isLieAbelian`: equality iff `gspin(V)_{g,Y}` is abelian;
-* `eq_zero_of_isNilpotent_of_finrank_eq`: in case of equality, its only nilpotent element is `0`.
+* `eq_zero_of_isNilpotent_mem_lieCentralizer_gspin`: in case of equality, its only nilpotent element is `0`.
 
 For `𝔤 = gspin(W) × gspin(V)` and semisimple `g ∈ G(F)` the same holds for `𝔤_{g,Z}` with
 `ℓ = (⌊dim W/2⌋ + 1) + (⌊dim V/2⌋ + 1)` (`lieClauses`). With the Jordan decomposition in `𝔤_g` and
@@ -34,144 +34,7 @@ attribute [local instance 100] LieRing.ofAssociativeRing LieAlgebra.ofAssociativ
 
 namespace GSpinGGP
 
-/-! ## Kernels of powers -/
-
-section Kernel
-
-variable {K M : Type*} [Field K] [AddCommGroup M] [Module K M]
-
-/-- If `n` is nilpotent and commutes with `s`, then `s + n` is nilpotent on `ker s`:
-`ker s ≤ ker (s + n)^(dim M)`. -/
-theorem ker_le_ker_pow_add [FiniteDimensional K M] {s n : Module.End K M} (hc : Commute s n)
-    (hn : IsNilpotent n) : LinearMap.ker s ≤ LinearMap.ker ((s + n) ^ finrank K M) := by
-  intro x hx
-  rw [LinearMap.mem_ker] at hx ⊢
-  have key : ∀ k : ℕ, ((s + n) ^ k) x = (n ^ k) x := by
-    intro k
-    induction k with
-    | zero => rfl
-    | succ k ih =>
-      rw [pow_succ', Module.End.mul_apply, ih, LinearMap.add_apply, ← Module.End.mul_apply,
-        (hc.pow_right k).eq, Module.End.mul_apply, hx, map_zero, zero_add, ← Module.End.mul_apply,
-        ← pow_succ']
-  have hD : n ^ finrank K M = 0 := by
-    have h := LinearMap.aeval_self_charpoly n
-    rwa [hn.charpoly_eq_X_pow_finrank, Polynomial.aeval_X_pow] at h
-  rw [key, hD, LinearMap.zero_apply]
-
-/-- For `f` semisimple, `ker f^k = ker f` (`k > 0`). -/
-theorem ker_pow_eq_ker_of_isSemisimple {f : Module.End K M} (hf : f.IsSemisimple) {k : ℕ}
-    (hk : 0 < k) : LinearMap.ker (f ^ k) = LinearMap.ker f := by
-  have h := hf.isFinitelySemisimple.genEigenspace_eq_eigenspace 0 (k := k) (by exact_mod_cast hk)
-  rw [Module.End.genEigenspace_nat, Module.End.eigenspace_def, zero_smul, sub_zero] at h
-  simpa using h
-
-end Kernel
-
-/-! ## `adV` of semisimple and nilpotent elements -/
-
-section AdV
-
-variable {K : Type*} [Field K] [Invertible (2 : K)]
-variable {V : Type*} [AddCommGroup V] [Module K V]
-
-/-- `ι((adV Y)^k v) = (ad Y)^k (ι v)` for `Y ∈ gspin(V)`. -/
-theorem ι_adV_pow {Q : QuadraticForm K V} {Y : CliffordAlgebra Q} (hY : Y ∈ gspin Q) (k : ℕ)
-    (v : V) : ι Q ((adV Q Y ^ k) v) = (LieAlgebra.ad K _ Y ^ k) (ι Q v) := by
-  induction k with
-  | zero => rfl
-  | succ k ih =>
-    rw [pow_succ', Module.End.mul_apply, ι_adV hY, ih, pow_succ', Module.End.mul_apply,
-      LieAlgebra.ad_apply, Ring.lie_def]
-
-/-- `adV Y` is nilpotent for nilpotent `Y ∈ gspin(V)`. -/
-theorem isNilpotent_adV {Q : QuadraticForm K V} {Y : CliffordAlgebra Q} (hY : Y ∈ gspin Q)
-    (hn : IsNilpotent Y) : IsNilpotent (adV Q Y) := by
-  obtain ⟨k, hk⟩ := LieAlgebra.ad_nilpotent_of_nilpotent (R := K) hn
-  refine ⟨k, LinearMap.ext fun v => ι_injective Q ?_⟩
-  rw [ι_adV_pow hY, hk, LinearMap.zero_apply, LinearMap.zero_apply, map_zero]
-
-/-- `adV Y` is semisimple for `Y ∈ gspin(V)` with `L_Y` semisimple on `C(V)` (`adV Y` is the
-restriction of `ad Y` to `ι V`). -/
-theorem isSemisimple_adV [PerfectField K] [FiniteDimensional K V] {Q : QuadraticForm K V}
-    {Y : CliffordAlgebra Q} (hY : Y ∈ gspin Q)
-    (hs : Module.End.IsSemisimple (LinearMap.mulLeft K Y)) : (adV Q Y).IsSemisimple := by
-  have hR : Set.MapsTo (LieAlgebra.ad K _ Y) (LinearMap.range (ι Q)) (LinearMap.range (ι Q)) := by
-    rintro _ ⟨v, rfl⟩
-    exact hY.2 v
-  have hss := (LieAlgebra.ad_isSemisimple_of_isSemisimple_mulLeft hs).restrict
-    ((Module.End.mem_invtSubmodule _).2 hR)
-  let e : V ≃ₗ[K] LinearMap.range (ι Q) := LinearEquiv.ofInjective (ι Q) (ι_injective Q)
-  refine (LinearEquiv.isSemisimple_iff _ _ e (LinearMap.ext fun v => Subtype.ext ?_)).2 hss
-  simp only [LinearMap.coe_comp, LinearEquiv.coe_coe, Function.comp_apply, e,
-    LinearEquiv.ofInjective_apply]
-  exact ι_adV hY v
-
-end AdV
-
-/-! ## The centralizer `gspin(V)_{g,Y}` -/
-
-section Lift
-
-variable {K : Type*} [Field K] [Invertible (2 : K)]
-variable {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
-variable {Q : QuadraticForm K V} (hQ : IsNondeg Q) (g : GSpin Q) {Y : CliffordAlgebra Q}
-
-include hQ in
-/-- `adV` maps `gspin(V)_{g,Y}` into `so(V)_{P(g)} ⊓ so(V)_{adV Y}`. -/
-theorem adV_mem_soCent_inf (hYg : Y ∈ gspin Q) {Z : CliffordAlgebra Q}
-    (hZ : Z ∈ lieCentralizer (lieCentralizer (gspin Q)
-      ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) Y) :
-    adV Q Z ∈ soCent Q (specP Q g : Module.End K V) ⊓ soCent Q (adV Q Y) := by
-  obtain ⟨hZ', hYZ⟩ := mem_lieCentralizer.mp hZ
-  obtain ⟨hZg, hxZ⟩ := mem_lieCentralizer.mp hZ'
-  have hc := adV_commutator hZg hYg
-  rw [← hYZ, sub_self, map_zero, eq_comm, sub_eq_zero] at hc
-  exact Submodule.mem_inf.mpr
-    ⟨mem_soCent.2 ⟨bform_adV hZg, ((commute_iff_adV hQ g hZg).mp hxZ).symm⟩,
-    mem_soCent.2 ⟨bform_adV hZg, hc⟩⟩
-
-include hQ in
-/-- Every element of `so(V)_{P(g)} ⊓ so(V)_{adV Y}` is `adV Z` for some `Z ∈ gspin(V)_{g,Y}`. -/
-theorem exists_mem_lieCentralizer_lieCentralizer_adV_eq (hYg : Y ∈ gspin Q) {M : Module.End K V}
-    (hM : M ∈ soCent Q (specP Q g : Module.End K V) ⊓ soCent Q (adV Q Y)) :
-    ∃ Z ∈ lieCentralizer (lieCentralizer (gspin Q)
-      ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) Y, adV Q Z = M := by
-  obtain ⟨hMg, hMN⟩ := Submodule.mem_inf.mp hM
-  obtain ⟨hMs, hMgc⟩ := mem_soCent.mp hMg
-  obtain ⟨-, hMNc⟩ := mem_soCent.mp hMN
-  obtain ⟨Z, hZg, rfl⟩ := exists_mem_gspin_adV_eq hQ M hMs
-  have hZY : Z * Y = Y * Z := commute_of_adV_commute hQ hZg hYg hMNc
-  have hxZ := (commute_iff_adV hQ g hZg).mpr hMgc.symm
-  exact ⟨Z, mem_lieCentralizer.mpr ⟨mem_lieCentralizer.mpr ⟨hZg, hxZ⟩, hZY.symm⟩, rfl⟩
-
-include hQ in
-/-- `gspin(V)_{g,Y}` is abelian iff `so(V)_{P(g)} ⊓ so(V)_{adV Y}` is. -/
-theorem isLieAbelian_lieCentralizer_gspin_iff (hYg : Y ∈ gspin Q) :
-    IsLieAbelian (lieCentralizer (lieCentralizer (gspin Q)
-      ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) Y) ↔
-    ∀ M₁ ∈ soCent Q (specP Q g : Module.End K V) ⊓ soCent Q (adV Q Y),
-      ∀ M₂ ∈ soCent Q (specP Q g : Module.End K V) ⊓ soCent Q (adV Q Y), Commute M₁ M₂ := by
-  constructor
-  · intro hab M₁ h₁ M₂ h₂
-    obtain ⟨Z₁, hZ₁, rfl⟩ := exists_mem_lieCentralizer_lieCentralizer_adV_eq hQ g hYg h₁
-    obtain ⟨Z₂, hZ₂, rfl⟩ := exists_mem_lieCentralizer_lieCentralizer_adV_eq hQ g hYg h₂
-    have h0 := congrArg Subtype.val (hab.trivial ⟨Z₁, hZ₁⟩ ⟨Z₂, hZ₂⟩)
-    rw [LieSubalgebra.coe_bracket, Ring.lie_def, ZeroMemClass.coe_zero] at h0
-    have := adV_commutator (mem_lieCentralizer.mp (mem_lieCentralizer.mp hZ₁).1).1
-      (mem_lieCentralizer.mp (mem_lieCentralizer.mp hZ₂).1).1
-    rw [h0, map_zero, eq_comm, sub_eq_zero] at this
-    exact this
-  · intro hab
-    refine ⟨fun Z₁ Z₂ => Subtype.ext ?_⟩
-    rw [LieSubalgebra.coe_bracket, Ring.lie_def, ZeroMemClass.coe_zero, sub_eq_zero]
-    exact commute_of_adV_commute hQ (mem_lieCentralizer.mp (mem_lieCentralizer.mp Z₁.2).1).1
-      (mem_lieCentralizer.mp (mem_lieCentralizer.mp Z₂.2).1).1
-      (hab _ (adV_mem_soCent_inf hQ g hYg Z₁.2) _ (adV_mem_soCent_inf hQ g hYg Z₂.2)).eq
-
-end Lift
-
-/-! ## The centralizer `gspin(V)_{g,Y}` -/
+/-! ## Clauses for semisimple `g`, `Y` -/
 
 section Factor
 
@@ -216,7 +79,7 @@ theorem finrank_lieCentralizer_gspin_eq_iff_isLieAbelian :
 
 /-- **If `dim gspin(V)_{g,Y} = ⌊dim V/2⌋ + 1`, its only nilpotent element is `0`**, for `g` and `Y`
 semisimple. -/
-theorem eq_zero_of_isNilpotent_of_finrank_eq
+theorem eq_zero_of_isNilpotent_mem_lieCentralizer_gspin
     (he : finrank K (lieCentralizer (lieCentralizer (gspin Q)
       ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) Y) = finrank K V / 2 + 1)
     {Z : CliffordAlgebra Q}
@@ -236,70 +99,12 @@ theorem eq_zero_of_isNilpotent_of_finrank_eq
 
 end Factor
 
-/-! ## The centralizer `𝔤_{g,Z}` in `𝔤 = gspin(W) × gspin(V)` -/
-
-section Pair
-
-/-- A Lie subalgebra of an associative algebra is abelian iff its elements commute. -/
-theorem isLieAbelian_iff_forall_commute {K A : Type*} [Field K] [Ring A] [Algebra K A]
-    {L : LieSubalgebra K A} : IsLieAbelian L ↔ ∀ X₁ ∈ L, ∀ X₂ ∈ L, X₁ * X₂ = X₂ * X₁ :=
-  ⟨fun h X₁ h₁ X₂ h₂ => by
-    have := congrArg Subtype.val (h.trivial ⟨X₁, h₁⟩ ⟨X₂, h₂⟩)
-    rwa [LieSubalgebra.coe_bracket, Ring.lie_def, ZeroMemClass.coe_zero, sub_eq_zero] at this,
-   fun h => ⟨fun X₁ X₂ => Subtype.ext (by
-    rw [LieSubalgebra.coe_bracket, Ring.lie_def, ZeroMemClass.coe_zero, sub_eq_zero]
-    exact h _ X₁.2 _ X₂.2)⟩⟩
-
-/-- `L_Y = L ∩ ker (ad Y)`. -/
-theorem lieCentralizer_toSubmodule_eq {K A : Type*} [Field K] [Ring A] [Algebra K A]
-    (L : LieSubalgebra K A) (Y : A) :
-    (lieCentralizer L Y).toSubmodule = L.toSubmodule ⊓ LinearMap.ker (LieAlgebra.ad K A Y) := by
-  ext X
-  rw [LieSubalgebra.mem_toSubmodule, mem_lieCentralizer, Submodule.mem_inf, LinearMap.mem_ker,
-    LieAlgebra.ad_apply, Ring.lie_def, sub_eq_zero, LieSubalgebra.mem_toSubmodule]
-
-variable {K : Type*} [Field K] [Invertible (2 : K)] (d : GGPData K)
-
-/-- `𝔤_{a,Y} = gspin(W)_{a₁,Y₁} × gspin(V)_{a₂,Y₂}`. -/
-theorem mem_lieCentralizer_lieCentralizer_lie {a Y X : d.ambient} :
-    X ∈ lieCentralizer (lieCentralizer d.lie a) Y ↔
-      X.1 ∈ lieCentralizer (lieCentralizer (gspin d.QW) a.1) Y.1 ∧
-        X.2 ∈ lieCentralizer (lieCentralizer (gspin d.QV) a.2) Y.2 := by
-  have hl : ∀ Z : d.ambient, Z ∈ d.lie ↔ Z.1 ∈ gspin d.QW ∧ Z.2 ∈ gspin d.QV := fun Z => Iff.rfl
-  simp only [mem_lieCentralizer, hl, Prod.ext_iff, Prod.fst_mul, Prod.snd_mul]
-  tauto
-
-/-- `𝔤_{a,Y}` is abelian iff both factors are. -/
-theorem isLieAbelian_lieCentralizer_lieCentralizer_lie_iff {a Y : d.ambient} :
-    IsLieAbelian (lieCentralizer (lieCentralizer d.lie a) Y) ↔
-      IsLieAbelian (lieCentralizer (lieCentralizer (gspin d.QW) a.1) Y.1) ∧
-        IsLieAbelian (lieCentralizer (lieCentralizer (gspin d.QV) a.2) Y.2) := by
-  rw [isLieAbelian_iff_forall_commute, isLieAbelian_iff_forall_commute,
-    isLieAbelian_iff_forall_commute]
-  have h0W : (0 : CliffordAlgebra d.QW) ∈ lieCentralizer (lieCentralizer (gspin d.QW) a.1) Y.1 :=
-    zero_mem _
-  have h0V : (0 : CliffordAlgebra d.QV) ∈ lieCentralizer (lieCentralizer (gspin d.QV) a.2) Y.2 :=
-    zero_mem _
-  constructor
-  · intro h
-    refine ⟨fun X₁ h₁ X₂ h₂ => ?_, fun X₁ h₁ X₂ h₂ => ?_⟩
-    · have := h (X₁, 0) ((mem_lieCentralizer_lieCentralizer_lie d).2 ⟨h₁, h0V⟩) (X₂, 0)
-        ((mem_lieCentralizer_lieCentralizer_lie d).2 ⟨h₂, h0V⟩)
-      exact congrArg Prod.fst this
-    · have := h (0, X₁) ((mem_lieCentralizer_lieCentralizer_lie d).2 ⟨h0W, h₁⟩) (0, X₂)
-        ((mem_lieCentralizer_lieCentralizer_lie d).2 ⟨h0W, h₂⟩)
-      exact congrArg Prod.snd this
-  · rintro ⟨hW, hV⟩ X₁ h₁ X₂ h₂
-    rw [mem_lieCentralizer_lieCentralizer_lie] at h₁ h₂
-    exact Prod.ext (hW _ h₁.1 _ h₂.1) (hV _ h₁.2 _ h₂.2)
-
-end Pair
-
 section Assembly
 
-variable {F : Type*} [NontriviallyNormedField F] [PAdicField F] (d : GGPData F)
+variable {F : Type*} [NontriviallyNormedField F] [CompleteSpace F] [CharZero F] (d : GGPData F)
 
-/-- The rank `ℓ = (⌊dim W/2⌋ + 1) + (⌊dim V/2⌋ + 1)` of `𝔤 = gspin(W) × gspin(V)`. -/
+/-- The rank `ℓ = (⌊dim W/2⌋ + 1) + (⌊dim V/2⌋ + 1)` of `𝔤 = gspin(W) × gspin(V)` (the rank of
+each factor is `lieRank_gspin`). -/
 def lieRankNat : ℕ := (finrank F (Fin d.m → F) / 2 + 1) + (finrank F d.V / 2 + 1)
 
 variable (g : ↥d.G) (hg : IsSS F ((g : d.ambientˣ) : d.ambient))
@@ -339,8 +144,8 @@ theorem lieClauses {Z : d.ambient}
   have l2 := le_finrank_lieCentralizer_gspin_of_isSemisimple d.nondeg_QV (d.snd g) hg2 hZ2 hs2
   have e1 := finrank_lieCentralizer_gspin_eq_iff_isLieAbelian d.nondeg (d.fst g) hg1 hZ1 hs1
   have e2 := finrank_lieCentralizer_gspin_eq_iff_isLieAbelian d.nondeg_QV (d.snd g) hg2 hZ2 hs2
-  have n1 := eq_zero_of_isNilpotent_of_finrank_eq d.nondeg (d.fst g) hg1 hZ1 hs1
-  have n2 := eq_zero_of_isNilpotent_of_finrank_eq d.nondeg_QV (d.snd g) hg2 hZ2 hs2
+  have n1 := eq_zero_of_isNilpotent_mem_lieCentralizer_gspin d.nondeg (d.fst g) hg1 hZ1 hs1
+  have n2 := eq_zero_of_isNilpotent_mem_lieCentralizer_gspin d.nondeg_QV (d.snd g) hg2 hZ2 hs2
   rw [← ha1] at l1 e1 n1
   rw [← ha2] at l2 e2 n2
   rw [finrank_lieCentralizer_lieCentralizer_lie, isLieAbelian_lieCentralizer_lieCentralizer_lie_iff,

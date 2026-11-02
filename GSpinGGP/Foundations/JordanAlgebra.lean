@@ -88,9 +88,45 @@ theorem mapsTo_of_mem_adjoin_singleton {R M : Type*} [CommSemiring R] [AddCommMo
   | add a b _ _ ha hb => intro y hy; exact W.add_mem (ha hy) (hb hy)
   | mul a b _ _ ha hb => intro y hy; exact ha (hb hy)
 
+/-! ### Kernels of powers -/
+
+section Kernel
+
+variable {K M : Type*} [Field K] [AddCommGroup M] [Module K M]
+
+/-- If `n` is nilpotent and commutes with `s`, then `s + n` is nilpotent on `ker s`:
+`ker s ≤ ker (s + n)^(dim M)`. -/
+theorem ker_le_ker_pow_add [FiniteDimensional K M] {s n : Module.End K M} (hc : Commute s n)
+    (hn : IsNilpotent n) : LinearMap.ker s ≤ LinearMap.ker ((s + n) ^ finrank K M) := by
+  intro x hx
+  rw [LinearMap.mem_ker] at hx ⊢
+  have key : ∀ k : ℕ, ((s + n) ^ k) x = (n ^ k) x := by
+    intro k
+    induction k with
+    | zero => rfl
+    | succ k ih =>
+      rw [pow_succ', Module.End.mul_apply, ih, LinearMap.add_apply, ← Module.End.mul_apply,
+        (hc.pow_right k).eq, Module.End.mul_apply, hx, map_zero, zero_add, ← Module.End.mul_apply,
+        ← pow_succ']
+  have hD : n ^ finrank K M = 0 := by
+    have h := LinearMap.aeval_self_charpoly n
+    rwa [hn.charpoly_eq_X_pow_finrank, Polynomial.aeval_X_pow] at h
+  rw [key, hD, LinearMap.zero_apply]
+
+/-- For `f` semisimple, `ker f^k = ker f` (`k > 0`). -/
+theorem ker_pow_eq_ker_of_isSemisimple {f : Module.End K M} (hf : f.IsSemisimple) {k : ℕ}
+    (hk : 0 < k) : LinearMap.ker (f ^ k) = LinearMap.ker f := by
+  have h := hf.isFinitelySemisimple.genEigenspace_eq_eigenspace 0 (k := k) (by exact_mod_cast hk)
+  rw [Module.End.genEigenspace_nat, Module.End.eigenspace_def, zero_smul, sub_zero] at h
+  simpa using h
+
+end Kernel
+
 section GSpin
 
 variable {V : Type*} [AddCommGroup V] [Module F V] [FiniteDimensional F V] [Invertible (2 : F)]
+
+open CliffordAlgebra
 
 /-- **The semisimple part of `x ∈ gspin(V)` lies in `gspin(V)`**: if `s ∈ F[x]` has `L_s` semisimple
 and `x − s` nilpotent, then `s ∈ gspin(V)` (`s` is even as a polynomial in `x`; `[s, ι V] ⊆ ι V`
@@ -121,6 +157,39 @@ theorem exists_jordan_gspin {Q : QuadraticForm F V} {x : CliffordAlgebra Q} (hx 
   refine ⟨s, hs, n, hn, hss, hnil, rfl, hsg, ?_⟩
   have := (gspin Q).sub_mem hx hsg
   rwa [add_sub_cancel_left] at this
+
+omit [PerfectField F] [FiniteDimensional F V] in
+/-- `ι((adV Y)^k v) = (ad Y)^k (ι v)` for `Y ∈ gspin(V)`. -/
+theorem ι_adV_pow {Q : QuadraticForm F V} {Y : CliffordAlgebra Q} (hY : Y ∈ gspin Q) (k : ℕ)
+    (v : V) : ι Q ((adV Q Y ^ k) v) = (LieAlgebra.ad F _ Y ^ k) (ι Q v) := by
+  induction k with
+  | zero => rfl
+  | succ k ih =>
+    rw [pow_succ', Module.End.mul_apply, ι_adV hY, ih, pow_succ', Module.End.mul_apply,
+      LieAlgebra.ad_apply, Ring.lie_def]
+
+/-- `adV Y` is nilpotent for nilpotent `Y ∈ gspin(V)`. -/
+theorem isNilpotent_adV {Q : QuadraticForm F V} {Y : CliffordAlgebra Q} (hY : Y ∈ gspin Q)
+    (hn : IsNilpotent Y) : IsNilpotent (adV Q Y) := by
+  obtain ⟨k, hk⟩ := LieAlgebra.ad_nilpotent_of_nilpotent (R := F) hn
+  refine ⟨k, LinearMap.ext fun v => ι_injective Q ?_⟩
+  rw [ι_adV_pow hY, hk, LinearMap.zero_apply, LinearMap.zero_apply, map_zero]
+
+/-- `adV Y` is semisimple for `Y ∈ gspin(V)` with `L_Y` semisimple on `C(V)` (`adV Y` is the
+restriction of `ad Y` to `ι V`). -/
+theorem isSemisimple_adV {Q : QuadraticForm F V}
+    {Y : CliffordAlgebra Q} (hY : Y ∈ gspin Q)
+    (hs : Module.End.IsSemisimple (LinearMap.mulLeft F Y)) : (adV Q Y).IsSemisimple := by
+  have hR : Set.MapsTo (LieAlgebra.ad F _ Y) (LinearMap.range (ι Q)) (LinearMap.range (ι Q)) := by
+    rintro _ ⟨v, rfl⟩
+    exact hY.2 v
+  have hss := (LieAlgebra.ad_isSemisimple_of_isSemisimple_mulLeft hs).restrict
+    ((Module.End.mem_invtSubmodule _).2 hR)
+  let e : V ≃ₗ[F] LinearMap.range (ι Q) := LinearEquiv.ofInjective (ι Q) (ι_injective Q)
+  refine (LinearEquiv.isSemisimple_iff _ _ e (LinearMap.ext fun v => Subtype.ext ?_)).2 hss
+  simp only [LinearMap.coe_comp, LinearEquiv.coe_coe, Function.comp_apply, e,
+    LinearEquiv.ofInjective_apply]
+  exact ι_adV hY v
 
 end GSpin
 
