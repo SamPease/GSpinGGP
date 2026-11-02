@@ -1,4 +1,5 @@
 import GSpinGGP.Foundations.LocalGroups
+import GSpinGGP.Foundations.RankSemicontinuity
 import GSpinGGP.Foundations.Representations
 import GSpinGGP.Foundations.GSpin
 import GSpinGGP.Foundations.QuadraticForms
@@ -36,6 +37,7 @@ import GSpinGGP.GGP.Cocharacter
 import GSpinGGP.GGP.Contraction
 import GSpinGGP.GGP.IsometryCentralizer
 import GSpinGGP.GGP.TorusCommute
+import GSpinGGP.GGP.MovedCentralizer
 import GSpinGGP.GGP.TorusTransport
 import GSpinGGP.GGP.Levi
 import GSpinGGP.TraceFormula.Basic

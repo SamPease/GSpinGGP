@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.TraceFormula.Interface
 import GSpinGGP.TraceFormula.GermTranslate
+import GSpinGGP.GGP.MovedCentralizer
+import GSpinGGP.Foundations.RankSemicontinuity
 
 /-!
 # Measurability of the integrand of `m_{geom,s}` on `T(F)/A_{G,H}(F)`
@@ -289,15 +291,209 @@ theorem gammaIntegrand_scalar_mul_of_mem_QC {χ : CentralCharOn d} {θ : ↥d.G 
       germ_scalar_mul_of_mem_QC ψ d hθ c t h.1.1]
   · rfl
 
-/-- **`T_♮` is open in `T(F)`** (Thesis §6.5: `T_♮` is Zariski open in `T`).  Why: for
-`t₀ ∈ T_♮` and `t ∈ T` near `t₀`, `t` fixes `W'_{t₀}` (`t ∈ T`) and `rk(P(t) − 1) ≥ rk(P(t₀) − 1)`
-(lower semicontinuity of the rank), so `W'_t = W'_{t₀}`; `P(t)|_{W''}` stays regular in
-`SO(W'')`, so `T_t = T`; and the clauses of `IsGammaElt t` follow from `T_t = T`
-(elements of the torus `T` are semisimple; `T` is commutative; `T(F)/A_{G,H}(F)` is compact).
+/-! ### `T_♮` is open in `T(F)` -/
+
+open scoped TensorProduct
+
+omit [NontriviallyNormedField F] [PAdicField F] in
+/-- `W'_x = ker(P(x) − 1)` is the set of `v` with `ι(v)` commuting with `x`. -/
+theorem mem_fixedSub_iff_commute_ι {K V : Type*} [Field K] [Invertible (2 : K)] [AddCommGroup V]
+    [Module K V] {Q : QuadraticForm K V} (x : GSpin Q) (v : V) :
+    v ∈ fixedSub x ↔ ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * CliffordAlgebra.ι Q v =
+      CliffordAlgebra.ι Q v * ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) := by
+  have hP : v ∈ fixedSub x ↔ specP Q x v = v := by simp [fixedSub, sub_eq_zero]
+  rw [hP]
+  constructor
+  · intro h
+    have h' := congrArg (CliffordAlgebra.ι Q) h
+    rw [ι_specP] at h'
+    conv_rhs => rw [← h']
+    simp [mul_assoc]
+  · intro h
+    apply CliffordAlgebra.ι_injective Q
+    rw [ι_specP, h, mul_assoc, Units.mul_inv, mul_one]
+
+/-- The space `{Z ∈ gspin(W) : [Z, ι(U)] = 0}`; for `U = W'_x`, the moved part of `𝔤_x` is the
+kernel of `ad x` on it. -/
+def movedLieSub (U : Submodule F (Fin d.m → F)) : Submodule F (CliffordAlgebra d.QW) :=
+  (gspin d.QW).toSubmodule ⊓ ⨅ u : U, LinearMap.ker
+    (LinearMap.mulLeft F (CliffordAlgebra.ι d.QW (u : Fin d.m → F)) -
+      LinearMap.mulRight F (CliffordAlgebra.ι d.QW (u : Fin d.m → F)))
+
+theorem mem_movedLieSub {U : Submodule F (Fin d.m → F)} {Z : CliffordAlgebra d.QW} :
+    Z ∈ movedLieSub d U ↔ Z ∈ gspin d.QW ∧ ∀ u ∈ U,
+      CliffordAlgebra.ι d.QW u * Z = Z * CliffordAlgebra.ι d.QW u := by
+  simp [movedLieSub, Submodule.mem_iInf, sub_eq_zero]
+
+/-- **Elements of the moved part of `𝔤_x` commute with `T_x(F)`**: if `T_x(F)` is commutative,
+`Z ∈ gspin(W)` commutes with `x` and with `ι(W'_x)`, and `t ∈ T_x`, then `Z` commutes with `t`.
+For `c ≠ 0` small, `e^{cZ} ∈ T_x(F)` (`MovedPart.exists_nhds_expA_mem_GSpin`), so it commutes
+with `t`, and near `0` the centralizer of `e^{cZ}` is that of `cZ`
+(`exists_nhds_commute_of_commute_expA`). -/
+theorem commute_of_mem_torusOf_of_movedPart {x t : ↥(GSpin d.QW)}
+    (hcomm : ∀ a ∈ d.torusOf x, ∀ b ∈ d.torusOf x, Commute a b) (ht : t ∈ d.torusOf x)
+    {Z : CliffordAlgebra d.QW} (hZ : Z ∈ gspin d.QW)
+    (hZx : ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) * Z =
+      Z * ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW))
+    (hZf : ∀ v ∈ fixedSub x, CliffordAlgebra.ι d.QW v * Z = Z * CliffordAlgebra.ι d.QW v) :
+    ((t : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) * Z =
+      Z * ((t : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) := by
+  obtain ⟨U, hU, hG⟩ := MovedPart.exists_nhds_expA_mem_GSpin (F := F) d.QW
+  obtain ⟨U', hU', hc⟩ := exists_nhds_commute_of_commute_expA F (A := CliffordAlgebra d.QW)
+  have hlim : Tendsto (fun c : F => c • Z) (𝓝[≠] 0) (𝓝 0) := by
+    have : Continuous (fun c : F => c • Z) := continuous_id.smul continuous_const
+    simpa using (this.tendsto 0).mono_left nhdsWithin_le_nhds
+  obtain ⟨c, hcU, hc0⟩ := ((hlim.eventually (inter_mem hU hU')).and self_mem_nhdsWithin).exists
+  obtain ⟨g, hg⟩ := hG _ hcU.1 ((gspin d.QW).smul_mem c hZ)
+  have hgT : g ∈ d.torusOf x := by
+    refine ⟨?_, fun w hw => ?_⟩
+    · show g ∈ Subgroup.centralizer {x}
+      rw [Subgroup.mem_centralizer_singleton_iff]
+      have hxc : Commute ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) (c • Z) :=
+        Commute.smul_right hZx c
+      have := commute_expA_of_commute (F := F) hxc
+      rw [← hg] at this
+      exact Subtype.ext (Units.ext this.eq.symm)
+    · apply CliffordAlgebra.ι_injective d.QW
+      rw [ι_specP]
+      have hwc : Commute (CliffordAlgebra.ι d.QW w) (c • Z) := Commute.smul_right (hZf w hw) c
+      have := (commute_expA_of_commute (F := F) hwc).eq
+      rw [← hg] at this
+      rw [← this, mul_assoc, Units.mul_inv, mul_one]
+  have h1 : Commute ((t : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) (expA F (c • Z)) := by
+    have := congrArg (fun k : ↥(GSpin d.QW) =>
+      (((k : (CliffordAlgebra d.QW)ˣ)) : CliffordAlgebra d.QW)) (hcomm g hgT t ht).eq
+    simp only [Subgroup.coe_mul, Units.val_mul] at this
+    rw [hg] at this
+    exact this.symm
+  have h2 := (hc _ hcU.2 _ h1).eq
+  rw [mul_smul_comm, smul_mul_assoc] at h2
+  exact smul_right_injective _ hc0 h2
+
+/-- **Elements of `T_x` are semisimple** for `x ∈ Γ(G,H)` (Thesis §6.5: `T_x` is a torus).
+Proof sketch: over `F̄`, `X = P(x)` is semisimple and the moved part of its Lie centralizer is
+abelian (`lieAbelian_specP_baseChange`), so its eigenspaces `E_μ`, `μ ≠ ±1`, are lines and
+`dim E₋₁ ≤ 2` (`IsomCent.finrank_eigenspace_le_one`, `IsomCent.finrank_eigenspace_neg_one_le_two`).
+`P(t)` commutes with `X`, is `1` on `E₁ = W'_x ⊗ F̄`, scalar on each line `E_μ`, and on `E₋₁` an
+isometry of determinant `1` (`Steinberg.commute_iff`), i.e. an element of `SO(2)(F̄) ≅ 𝔾_m`; so
+`P(t)` is semisimple.  Then `t` is semisimple in `C(W)`: `ker P = 𝔾_m` is a central torus, so the
+unipotent part of `t` (Jordan decomposition in `GSpin(W)`) is trivial.
 Status: SORRY (own work). -/
+theorem isSS_of_mem_torusOf {x t : ↥(GSpin d.QW)} (hx : d.IsGammaElt x) (ht : t ∈ d.torusOf x) :
+    IsSS F (((t : (CliffordAlgebra d.QW)ˣ)) : CliffordAlgebra d.QW) := by
+  sorry
+
+/-- **`T_♮` is open in `T(F)`** (Thesis §6.5: `T_♮` is Zariski open in `T`).  For `x = t₀ ∈ T_♮`
+(so `T = T_x`) and `t ∈ T` near `x`:
+* `W'_x ⊆ W'_t` (`t ∈ T_x`), and `dim W'_t ≤ dim W'_x` by upper semicontinuity of kernel dimension
+  (`W'_t = ker(v ↦ t ι(v) − ι(v) t)`), so `W'_t = W'_x`;
+* likewise the moved part `𝔩_t` of `𝔤_t` contains `𝔩_x` (`commute_of_mem_torusOf_of_movedPart`)
+  and has dimension `≤ dim 𝔩_x`, so `𝔩_t = 𝔩_x` is abelian; hence so is the Lie algebra of `S_t`
+  over `F̄` (`lieAbelian_specP_baseChange_of_movedPartAbelian`);
+* `t` is semisimple (`isSS_of_mem_torusOf`), so by Steinberg's description of centralizers
+  (`Steinberg.commute_of_commute_of_lieAbelian`) everything commuting with `t` and fixing
+  `W'_t = W'_x` commutes with `x`: `T_t ⊆ T_x`; and `T_x ⊆ T_t` as `T_x` is commutative.
+So `T_t = T`, and the commutativity and compactness clauses of `t ∈ Γ(G,H)` are those of `x`. -/
 theorem isOpen_torusNat (T : Subgroup ↥(GSpin d.QW)) :
     IsOpen {t : ↥T | d.IsGammaElt (t : ↥(GSpin d.QW)) ∧ d.torusOf (t : ↥(GSpin d.QW)) = T} := by
-  sorry
+  rw [isOpen_iff_mem_nhds]
+  rintro t₀ ⟨hx, hT⟩
+  set x : ↥(GSpin d.QW) := (t₀ : ↥(GSpin d.QW)) with hxdef
+  set val : ↥T → CliffordAlgebra d.QW :=
+    fun t => (((t : ↥(GSpin d.QW)) : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) with hvaldef
+  have hval : Continuous val :=
+    (Units.continuous_val.comp continuous_subtype_val).comp continuous_subtype_val
+  have hmemT : ∀ t : ↥T, (t : ↥(GSpin d.QW)) ∈ d.torusOf x := fun t => hT.symm ▸ t.2
+  -- `W'_t = W'_x` near `x`
+  let f : ↥T → (Fin d.m → F) →ₗ[F] CliffordAlgebra d.QW := fun t =>
+    (LinearMap.mulLeft F (val t) - LinearMap.mulRight F (val t)) ∘ₗ CliffordAlgebra.ι d.QW
+  have hfker : ∀ t : ↥T, LinearMap.ker (f t) = fixedSub (t : ↥(GSpin d.QW)) := fun t => by
+    ext v
+    simp [f, val, mem_fixedSub_iff_commute_ι, sub_eq_zero]
+  have hfc : ∀ v, Continuous fun t => f t v := fun v =>
+    (hval.mul continuous_const).sub (continuous_const.mul hval)
+  have hE1 := eventually_ker_eq_of_le f hfc t₀ (Eventually.of_forall fun t => by
+    rw [hfker, hfker]
+    intro v hv
+    have := (hmemT t).2 v hv
+    simpa [fixedSub, sub_eq_zero] using this)
+  -- `𝔩_t = 𝔩_x` near `x`
+  let M := movedLieSub d (fixedSub x)
+  let g : ↥T → ↥M →ₗ[F] CliffordAlgebra d.QW := fun t =>
+    (LinearMap.mulLeft F (val t) - LinearMap.mulRight F (val t)) ∘ₗ M.subtype
+  have hgker : ∀ t : ↥T, ∀ Z : ↥M, Z ∈ LinearMap.ker (g t) ↔
+      val t * (Z : CliffordAlgebra d.QW) = Z * val t := fun t Z => by
+    simp [g, sub_eq_zero]
+  have hgc : ∀ Z, Continuous fun t => g t Z := fun Z =>
+    (hval.mul continuous_const).sub (continuous_const.mul hval)
+  have hE2 := eventually_ker_eq_of_le g hgc t₀ (Eventually.of_forall fun t Z hZ => by
+    rw [hgker] at hZ ⊢
+    obtain ⟨hZg, hZf⟩ := mem_movedLieSub d |>.mp Z.2
+    exact commute_of_mem_torusOf_of_movedPart d hx.2.1 (hmemT t) hZg hZ hZf)
+  filter_upwards [hE1, hE2] with t h1 h2
+  rw [hfker, hfker] at h1
+  set tt : ↥(GSpin d.QW) := (t : ↥(GSpin d.QW)) with httdef
+  have htT : tt ∈ d.torusOf x := hmemT t
+  -- the moved part of `𝔤_t` is abelian
+  have hMPA : MovedPartAbelian d.QW tt := by
+    have hin : ∀ X ∈ lieCentralizer (gspin d.QW) ((tt : (CliffordAlgebra d.QW)ˣ) :
+        CliffordAlgebra d.QW), (∀ v ∈ fixedSub tt, ⁅X, CliffordAlgebra.ι d.QW v⁆ = 0) →
+        X ∈ lieCentralizer (gspin d.QW) ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) := by
+      intro X hX hXf
+      rw [mem_lieCentralizer] at hX ⊢
+      have hXM : X ∈ M := (mem_movedLieSub d).mpr ⟨hX.1, fun u hu => by
+        have := hXf u (h1 ▸ hu)
+        rw [Ring.lie_def, sub_eq_zero] at this
+        exact this.symm⟩
+      have hk : (⟨X, hXM⟩ : ↥M) ∈ LinearMap.ker (g t) := (hgker t _).mpr hX.2
+      rw [h2] at hk
+      exact ⟨hX.1, (hgker t₀ _).mp hk⟩
+    intro X hX Y hY hXf hYf
+    exact movedPartAbelian_of_isGammaElt d x hx X (hin X hX hXf) Y (hin Y hY hYf)
+      (fun v hv => hXf v (h1 ▸ hv)) (fun v hv => hYf v (h1 ▸ hv))
+  have hss := isSS_of_mem_torusOf d hx htT
+  have hxt : Commute x tt := (Subgroup.mem_centralizer_singleton_iff.mp htT.1).symm
+  -- `T_t = T_x`
+  have hTT : d.torusOf tt = d.torusOf x := by
+    apply le_antisymm
+    · intro z hz
+      have hQ := isNondeg_baseChange _ d.nondeg
+      have hxss : Module.End.IsSemisimple (specP _ (bcGSpin d.QW x) :
+          AlgebraicClosure F ⊗[F] (Fin d.m → F) →ₗ[AlgebraicClosure F] _) := by
+        rw [specP_bcGSpin]
+        exact isSemisimple_baseChange (isSemisimple_specP_of_isSS d.QW x hx.1)
+      have htss : Module.End.IsSemisimple (specP _ (bcGSpin d.QW tt) :
+          AlgebraicClosure F ⊗[F] (Fin d.m → F) →ₗ[AlgebraicClosure F] _) := by
+        rw [specP_bcGSpin]
+        exact isSemisimple_baseChange (isSemisimple_specP_of_isSS d.QW tt hss)
+      have hL : IsomCent.LieAbelian (bform (d.QW.baseChange (AlgebraicClosure F)))
+          (specP _ (bcGSpin d.QW tt) :
+            AlgebraicClosure F ⊗[F] (Fin d.m → F) →ₗ[AlgebraicClosure F] _) := by
+        rw [specP_bcGSpin]
+        exact lieAbelian_specP_baseChange_of_movedPartAbelian tt hMPA
+      have hE : Module.End.eigenspace (specP _ (bcGSpin d.QW x) :
+            AlgebraicClosure F ⊗[F] (Fin d.m → F) →ₗ[AlgebraicClosure F] _) 1 =
+          Module.End.eigenspace (specP _ (bcGSpin d.QW tt) :
+            AlgebraicClosure F ⊗[F] (Fin d.m → F) →ₗ[AlgebraicClosure F] _) 1 := by
+        rw [GGPData.eigenspace_bc_one, GGPData.eigenspace_bc_one, h1]
+      have hzt : Commute z tt := Subgroup.mem_centralizer_singleton_iff.mp hz.1
+      have key := Steinberg.commute_of_commute_of_lieAbelian hQ hxss htss hL (hxt.map _) hE
+        (hzt.map (bcGSpin d.QW))
+      have hzx : Commute z x := by
+        refine bcGSpin_injective d.QW ?_
+        rw [map_mul, map_mul]
+        exact key.eq
+      refine ⟨Subgroup.mem_centralizer_singleton_iff.mpr hzx.eq, fun v hv => hz.2 v ?_⟩
+      rw [h1]
+      exact hv
+    · intro a ha
+      refine ⟨Subgroup.mem_centralizer_singleton_iff.mpr (hx.2.1 a ha tt htT).eq,
+        fun v hv => ha.2 v ?_⟩
+      rw [← h1]
+      exact hv
+  refine ⟨⟨hss, ?_, ?_⟩, hTT.trans hT⟩
+  · rw [hTT]; exact hx.2.1
+  · rw [hTT]; exact hx.2.2
 
 /-- **The integrand of `m_{geom,s}` is continuous on `T_♮`** (Thesis Prop 12.1.1(i)).  Why: on
 `T_♮` the subspaces `W'_t = W'_T`, `W''_t = W''_T` and the centralizers `G_t`, `𝔤_t` are constant,
