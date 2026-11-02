@@ -1509,6 +1509,41 @@ theorem fixedSub_orthogonal_movedSub {Q : QuadraticForm K V} (x : GSpin Q) :
   conv_lhs => rw [← hu']
   rw [show ((specP Q x : V →ₗ[K] V) y) = specP Q x y from rfl, bform_specP, hu', sub_self]
 
+theorem mem_fixedSub_iff {Q : QuadraticForm K V} (x : GSpin Q) (v : V) :
+    v ∈ fixedSub x ↔ (specP Q x : Module.End K V) v = v := by
+  simp [fixedSub, sub_eq_zero]
+
+/-- `W = W'_y ⊕ W''_y` when `W'_y ∩ W''_y = 0` (e.g. `y` semisimple). -/
+theorem isCompl_fixedSub_movedSub [Module.Finite K V] {Q : QuadraticForm K V} (y : GSpin Q)
+    (hdisj : fixedSub y ⊓ movedSub y = ⊥) : IsCompl (fixedSub y) (movedSub y) := by
+  refine (Submodule.isCompl_iff_disjoint _ _ ?_).2 (disjoint_iff.2 hdisj)
+  have := LinearMap.finrank_range_add_finrank_ker ((specP Q y : V →ₗ[K] V) - LinearMap.id)
+  unfold fixedSub movedSub
+  omega
+
+/-- `W = W'_y ⊥ (W'_y)^⊥` with `(W'_y)^⊥ = W''_y`, when `W'_y ∩ W''_y = 0`. -/
+theorem isCompl_fixedSub_orthogonal [Module.Finite K V] {Q : QuadraticForm K V} (hQ : IsNondeg Q)
+    (y : GSpin Q) (hdisj : fixedSub y ⊓ movedSub y = ⊥) :
+    IsCompl (fixedSub y) ((bform Q).orthogonal (fixedSub y)) := by
+  have hc := isCompl_fixedSub_movedSub y hdisj
+  have hle : movedSub y ≤ (bform Q).orthogonal (fixedSub y) := fun w hw u hu =>
+    fixedSub_orthogonal_movedSub y u hu w hw
+  have hdim : finrank K (movedSub y) = finrank K ((bform Q).orthogonal (fixedSub y)) := by
+    rw [LinearMap.BilinForm.finrank_orthogonal hQ]
+    have := Submodule.finrank_add_eq_of_isCompl hc
+    omega
+  rwa [← Submodule.eq_of_le_of_finrank_eq hle hdim]
+
+/-- `P(y)` preserves `(W'_y)^⊥`. -/
+theorem specP_mem_orthogonal_fixedSub {Q : QuadraticForm K V} (y : GSpin Q) {b : V}
+    (hb : b ∈ (bform Q).orthogonal (fixedSub y)) :
+    (specP Q y : Module.End K V) b ∈ (bform Q).orthogonal (fixedSub y) := by
+  intro a ha
+  have ha' := (mem_fixedSub_iff y a).mp ha
+  change bform Q a (specP Q y b) = 0
+  rw [← ha']; change bform Q (specP Q y a) (specP Q y b) = 0
+  rw [bform_specP]; exact hb a ha
+
 end GSpinGroup
 
 /-! ## Isotropic flags, parabolic subgroups and their unipotent radicals -/
@@ -3578,6 +3613,20 @@ theorem specP_incl_inl (a : GSpin d.QW) (w : Fin d.m → K) :
   rw [ι_specP, e3, e1, e2, ← CliffordAlgebra.map_apply_ι, ← CliffordAlgebra.map_apply_ι, ι_specP,
     incl, GSpin.coe_map, ← map_mul, ← map_mul]
   rfl
+
+/-- `P(incl a)(w, z) = (P(a) w, z)`. -/
+theorem specP_incl_apply (a : GSpin d.QW) (w : Fin d.m → K) (z : d.Z) :
+    specP d.QV (d.incl a) (w, z) = (specP d.QW a w, z) := by
+  rw [show ((w, z) : d.V) = (w, 0) + (0, z) by simp, map_add, specP_incl_inl, specP_incl_inr]
+  simp
+
+/-- `V'_x = W'_x ⊕ Z`: `(w, z)` is fixed by `x` iff `w` is. -/
+theorem mem_fixedSub_incl_iff (a : GSpin d.QW) (w : Fin d.m → K) (z : d.Z) :
+    ((w, z) : d.V) ∈ fixedSub (d.incl a) ↔ w ∈ fixedSub a := by
+  simp only [fixedSub, LinearMap.mem_ker, LinearMap.sub_apply, LinearMap.id_apply, sub_eq_zero]
+  change specP d.QV (d.incl a) (w, z) = (w, z) ↔ specP d.QW a w = w
+  rw [specP_incl_apply, Prod.mk.injEq]
+  simp
 
 /-- `z₀ ⊥ Z_r`, the top of the flag. -/
 theorem zV_zero_mem_orthogonal_top : d.zV 0 ∈ (bform d.QV).orthogonal d.flag.top := by

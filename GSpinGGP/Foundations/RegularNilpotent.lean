@@ -446,4 +446,31 @@ theorem finrank_lieCentralizer_regNil_le (hQ : IsNondeg Q) (hw : IsSplitFamily Q
 
 end Centralizer
 
+section Commute
+
+variable {K : Type*} [Field K] [Invertible (2 : K)]
+
+/-- `y ∈ GSpin(V)` commutes with `regNil` built from vectors fixed by `P(y)`. -/
+theorem commute_regNil {V : Type*} [AddCommGroup V] [Module K V] {Q : QuadraticForm K V}
+    (y : GSpin Q) {w : ℤ → V} (hw : ∀ j, w j ∈ fixedSub y) (ν : K) (k : ℕ) :
+    ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * regNil Q w ν k =
+      regNil Q w ν k * ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) := by
+  set u : CliffordAlgebra Q := ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)
+  have hι : ∀ j, u * ι Q (w j) = ι Q (w j) * u := by
+    intro j
+    have hfix : specP Q y (w j) = w j := by
+      have := LinearMap.mem_ker.mp (hw j)
+      simpa [sub_eq_zero] using this
+    have e := ι_specP y (w j)
+    rw [hfix] at e
+    calc u * ι Q (w j) = u * ι Q (w j) * ((((y : (CliffordAlgebra Q)ˣ))⁻¹ : (CliffordAlgebra Q)ˣ) :
+          CliffordAlgebra Q) * u := by simp [u, mul_assoc]
+      _ = ι Q (w j) * u := by rw [← e]
+  unfold regNil
+  rw [Finset.mul_sum, Finset.sum_mul]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [mul_smul_comm, smul_mul_assoc, ← mul_assoc, hι, mul_assoc, hι, ← mul_assoc]
+
+end Commute
+
 end GSpinGGP
