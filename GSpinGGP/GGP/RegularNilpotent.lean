@@ -427,6 +427,64 @@ theorem commute_movedPart_incl (x : GSpin d.QW)
 
 end GGPSides
 
+/-! ## Regular nilpotent elements of `𝔤_x` -/
+
+section CentralizerNilReg
+
+variable {K : Type*} [Field K] [Invertible (2 : K)]
+
+/-- `V = W'_y ⊥ (W'_y)^⊥` for semisimple `y` (`W'_y = ker(P y − 1)`). -/
+theorem isCompl_fixedSub_orthogonal {V : Type*} [AddCommGroup V] [Module K V]
+    [FiniteDimensional K V] {Q : QuadraticForm K V} (hQ : IsNondeg Q) (y : GSpin Q)
+    (hdisj : fixedSub y ⊓ movedSub y = ⊥) :
+    IsCompl (fixedSub y) ((bform Q).orthogonal (fixedSub y)) := by
+  have h := isCompl_orthogonal_ker_sub_one hQ (g := (specP Q y : Module.End K V))
+    (fun u v => bform_specP y u v) (by
+      have := QuadClassify.isCompl_fixedSub_movedSub y hdisj
+      simpa [fixedSub, movedSub, Module.End.one_eq_id] using this)
+  simpa [fixedSub, Module.End.one_eq_id] using h
+
+/-- `y ∈ GSpin(V)` commutes with `regNil` built from vectors fixed by `P(y)`. -/
+theorem commute_regNil {V : Type*} [AddCommGroup V] [Module K V] {Q : QuadraticForm K V}
+    (y : GSpin Q) {w : ℤ → V} (hw : ∀ j, w j ∈ fixedSub y) (ν : K) (k : ℕ) :
+    ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * regNil Q w ν k =
+      regNil Q w ν k * ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) := by
+  set u : CliffordAlgebra Q := ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)
+  have hι : ∀ j, u * ι Q (w j) = ι Q (w j) * u := by
+    intro j
+    have hfix : specP Q y (w j) = w j := by
+      have := LinearMap.mem_ker.mp (hw j)
+      simpa [sub_eq_zero] using this
+    have e := ι_specP y (w j)
+    rw [hfix] at e
+    calc u * ι Q (w j) = u * ι Q (w j) * ((((y : (CliffordAlgebra Q)ˣ))⁻¹ : (CliffordAlgebra Q)ˣ) :
+          CliffordAlgebra Q) * u := by simp [u, mul_assoc]
+      _ = ι Q (w j) * u := by rw [← e]
+  unfold regNil
+  rw [Finset.mul_sum, Finset.sum_mul]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [mul_smul_comm, smul_mul_assoc, ← mul_assoc, hι, mul_assoc, hι, ← mul_assoc]
+
+/-- `𝔤_{a,Y} = gspin(W)_{a₁,Y₁} × gspin(V)_{a₂,Y₂}`. -/
+theorem finrank_lieCentralizer_lieCentralizer_lie (d : GGPData K) (a Y : d.ambient) :
+    finrank K (lieCentralizer (lieCentralizer d.lie a) Y) =
+      finrank K (lieCentralizer (lieCentralizer (gspin d.QW) a.1) Y.1) +
+        finrank K (lieCentralizer (lieCentralizer (gspin d.QV) a.2) Y.2) := by
+  have hl : ∀ Z : d.ambient, Z ∈ d.lie ↔ Z.1 ∈ gspin d.QW ∧ Z.2 ∈ gspin d.QV := fun Z => Iff.rfl
+  have h : (lieCentralizer (lieCentralizer d.lie a) Y).toSubmodule =
+      (lieCentralizer (lieCentralizer (gspin d.QW) a.1) Y.1).toSubmodule.prod
+        (lieCentralizer (lieCentralizer (gspin d.QV) a.2) Y.2).toSubmodule := by
+    ext Z
+    simp only [LieSubalgebra.mem_toSubmodule, Submodule.mem_prod, mem_lieCentralizer, hl,
+      Prod.ext_iff, Prod.fst_mul, Prod.snd_mul]
+    tauto
+  show finrank K ↥(lieCentralizer (lieCentralizer d.lie a) Y).toSubmodule =
+    finrank K ↥(lieCentralizer (lieCentralizer (gspin d.QW) a.1) Y.1).toSubmodule +
+      finrank K ↥(lieCentralizer (lieCentralizer (gspin d.QV) a.2) Y.2).toSubmodule
+  rw [h, (Submodule.prodEquiv _ _).finrank_eq, Module.finrank_prod]
+
+end CentralizerNilReg
+
 /-! ## Regular nilpotent orbits and quasi-splitness -/
 
 section NilReg
