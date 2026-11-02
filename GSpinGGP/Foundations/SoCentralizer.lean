@@ -382,6 +382,72 @@ theorem finrank_soCent_inf_eq {Q : QuadraticForm K V} {g N : Module.End K V} {A 
   rw [LinearMap.range_eq_top.2 hsurj, finrank_top, hker] at hrn
   exact hrn.symm
 
+/-- If the elements of `so(V)_g` killing the fixed space `A` commute with each other (the moved part
+is abelian), then every `N ∈ so(V)_g` centralizes them: write `N = N₁ + N₂` with `N₁` the extension
+by `0` of `N|_A` (which has disjoint support from them) and `N₂` killing `A`. -/
+theorem soCent_inf_killSub_eq {Q : QuadraticForm K V} {g N : Module.End K V} {A : Submodule K V}
+    (hA : IsCompl A ((bform Q).orthogonal A)) (hAg : ∀ v, v ∈ A ↔ g v = v)
+    (hgB : ∀ b ∈ (bform Q).orthogonal A, g b ∈ (bform Q).orthogonal A)
+    (hNs : ∀ u w, bform Q (N u) w = -bform Q u (N w)) (hNg : N * g = g * N)
+    (hab : ∀ M₁ ∈ soCent Q g ⊓ killSub A, ∀ M₂ ∈ soCent Q g ⊓ killSub A, M₁ * M₂ = M₂ * M₁) :
+    soCent Q g ⊓ soCent Q N ⊓ killSub A = soCent Q g ⊓ killSub A := by
+  set B := (bform Q).orthogonal A
+  have hsymm : ∀ x y, bform Q x y = bform Q y x := fun x y => QuadraticMap.associated_isSymm K Q x y
+  have hNA : ∀ a ∈ A, N a ∈ A := fun a ha =>
+    (hAg _).2 (by rw [← Module.End.mul_apply, ← hNg, Module.End.mul_apply, (hAg a).1 ha])
+  set π := A.projectionOnto B hA
+  have hπA : ∀ a (ha : a ∈ A), π a = ⟨a, ha⟩ := fun a ha =>
+    Submodule.projectionOnto_apply_of_mem_left hA ha
+  have hπB : ∀ b ∈ B, π b = 0 := fun b hb => Submodule.projectionOnto_apply_of_mem_right hA hb
+  have hsplit : ∀ v, v - (π v : V) ∈ B := fun v => Submodule.sub_projection_mem hA v
+  have hAB : ∀ a ∈ A, ∀ b ∈ B, bform Q a b = 0 := fun a ha b hb => hb a ha
+  have hbπ : ∀ (a : A) v, bform Q a v = bform Q a (π v : V) := by
+    intro a v
+    have := hAB a a.2 _ (hsplit v)
+    rw [map_sub, sub_eq_zero] at this
+    exact this
+  have hgπ : ∀ v, π (g v) = π v := by
+    intro v
+    have e : g v = (π v : V) + g (v - π v) := by
+      rw [map_sub, (hAg _).1 (π v).2]; abel
+    rw [e, map_add, hπA _ (π v).2, hπB _ (hgB _ (hsplit v)), add_zero]
+  -- `N₁ = ` extension of `N|_A` by `0`
+  set N₁ : Module.End K V := A.subtype ∘ₗ (N.restrict hNA) ∘ₗ π
+  have hN₁v : ∀ v, N₁ v = N (π v : V) := fun v => rfl
+  have hN₁s : ∀ u w, bform Q (N₁ u) w = -bform Q u (N₁ w) := by
+    intro u w
+    rw [hN₁v, hN₁v]
+    rw [show bform Q (N (π u : V)) w = bform Q (N (π u : V)) (π w : V) from
+      hbπ ⟨_, hNA _ (π u).2⟩ w, hNs, hsymm u, hbπ ⟨_, hNA _ (π w).2⟩ u, hsymm]
+  have hN₁g : N₁ * g = g * N₁ := by
+    ext v
+    simp only [Module.End.mul_apply, hN₁v, hgπ]
+    exact ((hAg _).1 (hNA _ (π v).2)).symm
+  set N₂ := N - N₁
+  have hN₂ : N₂ ∈ soCent Q g ⊓ killSub A := by
+    refine Submodule.mem_inf.mpr ⟨mem_soCent.2 ⟨fun u w => ?_, ?_⟩, fun a ha => ?_⟩
+    · simp only [N₂, LinearMap.sub_apply, map_sub, LinearMap.sub_apply, hNs, hN₁s]; ring
+    · rw [sub_mul, mul_sub, hNg, hN₁g]
+    · simp only [N₂, LinearMap.sub_apply, hN₁v, hπA a ha, sub_self]
+  apply le_antisymm
+  · exact fun M hM => Submodule.mem_inf.mpr ⟨(Submodule.mem_inf.mp (Submodule.mem_inf.mp hM).1).1,
+      (Submodule.mem_inf.mp hM).2⟩
+  · intro M hM
+    obtain ⟨hMg, hMk⟩ := Submodule.mem_inf.mp hM
+    obtain ⟨hMs, -⟩ := mem_soCent.mp hMg
+    have hMB : ∀ v, M v ∈ B := fun v a ha => by
+      change bform Q a (M v) = 0
+      rw [← neg_eq_zero, ← hMs, hMk a ha, map_zero, LinearMap.zero_apply]
+    have h1 : M * N₁ = N₁ * M := by
+      ext v
+      simp only [Module.End.mul_apply, hN₁v, hMk _ (hNA _ (π v).2), hπB _ (hMB v),
+        Submodule.coe_zero, map_zero]
+    have h2 := hab M hM N₂ hN₂
+    have hMN : M * N = N * M := by
+      have : N = N₁ + N₂ := by simp [N₂]
+      rw [this, mul_add, add_mul, h1, h2]
+    exact Submodule.mem_inf.mpr ⟨Submodule.mem_inf.mpr ⟨hMg, mem_soCent.2 ⟨hMs, hMN⟩⟩, hMk⟩
+
 end Fixed
 
 /-! ## An upper bound from a Jordan chain -/
