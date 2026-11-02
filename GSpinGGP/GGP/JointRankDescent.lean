@@ -179,4 +179,65 @@ theorem jointClausesMat_of_isAlgClosed {J A C : Matrix (Fin n) (Fin n) K}
 
 end AlgClosed
 
+section CharZero
+
+variable {F : Type*} [Field F] [CharZero F] [Invertible (2 : F)]
+
+/-- **The four clauses for matrices over a field of characteristic `0`**, by descent from the
+algebraic closure. -/
+theorem jointClausesMat_of_charZero {J A C : Matrix (Fin n) (Fin n) F}
+    (hJ : J.transpose = J) (hJd : J.det ≠ 0) (hiso : A.transpose * J * A = J)
+    (hssA : Module.End.IsSemisimple (Matrix.toLin' A)) (hdet : A.det = 1)
+    (hsk : C.transpose * J + J * C = 0) (hssC : Module.End.IsSemisimple (Matrix.toLin' C))
+    (hc : Commute C A) : JointClausesMat J A C (n / 2) := by
+  let K := AlgebraicClosure F
+  let φ := algebraMap F K
+  have : CharZero K := charZero_of_injective_algebraMap φ.injective
+  let M' := φ.mapMatrix (m := Fin n)
+  have hM'inj : Function.Injective M' := fun X Y h => Matrix.map_injective φ.injective h
+  have hK := jointClausesMat_of_isAlgClosed (J := M' J) (A := M' A) (C := M' C)
+    (by rw [show (M' J).transpose = M' J.transpose from rfl, hJ]) (by rw [← RingHom.map_det]; exact (map_ne_zero φ).2 hJd)
+    (by rw [show (M' A).transpose = M' A.transpose from rfl, ← map_mul, ← map_mul, hiso])
+    (isSemisimple_toLin'_map hssA) (by rw [← RingHom.map_det, hdet, map_one])
+    (by rw [show (M' C).transpose = M' C.transpose from rfl, ← map_mul, ← map_mul, ← map_add,
+      hsk, map_zero])
+    (isSemisimple_toLin'_map hssC) (hc.map M')
+  have hfg : ∀ X i, jointMatMap (M' J) (M' A) (M' C) (X.map φ) i =
+      (jointMatMap J A C X i).map φ := fun X i => jointMatMap_map φ J A C X i
+  have hfin := finrank_ker_map_matrix _ _ hfg
+  have hspan := ker_map_matrix_eq_span _ _ hfg
+  rw [ker_jointMatMap, ker_jointMatMap] at hfin hspan
+  have hmemK : ∀ X ∈ soCentMat J A ⊓ soCentMat J C,
+      M' X ∈ soCentMat (M' J) (M' A) ⊓ soCentMat (M' J) (M' C) := fun X hX =>
+    hspan ▸ Submodule.subset_span ⟨X, hX, rfl⟩
+  obtain ⟨l, ab, nil, uni⟩ := hK
+  refine ⟨hfin ▸ l, ⟨fun he M₁ h₁ M₂ h₂ => ?_, fun hab => ?_⟩, fun he M hM hnil => ?_,
+    fun he H hH hnil hAH hCH => ?_⟩
+  · have := ab.1 (hfin.trans he) _ (hmemK M₁ h₁) _ (hmemK M₂ h₂)
+    exact hM'inj (by rw [map_mul, map_mul]; exact this.eq)
+  · rw [← hfin]
+    refine ab.2 fun X₁ h₁ X₂ h₂ => ?_
+    rw [hspan] at h₁ h₂
+    induction h₁ using Submodule.span_induction with
+    | mem x hx =>
+      induction h₂ using Submodule.span_induction with
+      | mem y hy =>
+        obtain ⟨M, hM, rfl⟩ := hx
+        obtain ⟨N, hN, rfl⟩ := hy
+        exact (hab M hM N hN).map M'
+      | zero => exact Commute.zero_right _
+      | add y z _ _ hy hz => exact hy.add_right hz
+      | smul c y _ hy => exact hy.smul_right c
+    | zero => exact Commute.zero_left _
+    | add x y _ _ hx hy => exact hx.add_left hy
+    | smul c x _ hx => exact hx.smul_left c
+  · have h0 := nil (hfin.trans he) _ (hmemK M hM) (hnil.map M')
+    exact hM'inj (h0.trans (map_zero M').symm)
+  · have h1 := uni (hfin.trans he) (M' H)
+      (by rw [show (M' H).transpose = M' H.transpose from rfl, ← map_mul, ← map_mul, hH])
+      (by rw [← map_one M', ← map_sub]; exact hnil.map M') (hAH.map M') (hCH.map M')
+    exact hM'inj (h1.trans (map_one M').symm)
+
+end CharZero
+
 end GSpinGGP
