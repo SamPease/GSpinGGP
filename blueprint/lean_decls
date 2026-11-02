@@ -7,6 +7,7 @@ GSpinGGP.cartan_dieudonne_even
 GSpinGGP.steinberg_centralizer_connected
 GSpinGGP.Steinberg.commute_iff_det_negFixedSub
 GSpinGGP.Steinberg.commute_of_fix
+GSpinGGP.PairBlock.realizes_of_det_ne_zero
 GSpinGGP.nilReg_nonempty_iff_quasiSplit
 GSpinGGP.GGPData
 GSpinGGP.GGPData.G
@@ -63,6 +64,7 @@ GSpinGGP.exists_stronglyStablyConj_of_isometry
 GSpinGGP.prop_12_5_1_i
 GSpinGGP.TorusTransfer
 GSpinGGP.exists_torusTransfer_core
+GSpinGGP.stablyConjG_diag_of_psiU
 GSpinGGP.deltaGGP_eq_of_stablyConjVia
 GSpinGGP.weylDisc_eq_of_stablyConjG
 GSpinGGP.prop_12_5_1_ii
@@ -165,5 +167,3 @@ GSpinGGP.GGPIso.mGeom_congr_iso
 GSpinGGP.Sanity.NilpotentOrbit.exists_isOrbitMeasure_regOrbit
 GSpinGGP.Sanity.NilpotentOrbit.jHat_regOrbit_split
 GSpinGGP.Sanity.NilpotentOrbit.jHat_regOrbit_elliptic
-GSpinGGP.stablyConjG_diag_of_psiU
-GSpinGGP.PairBlock.realizes_of_det_ne_zero
