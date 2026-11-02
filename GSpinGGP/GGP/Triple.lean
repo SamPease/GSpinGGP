@@ -312,11 +312,6 @@ section Orbits
 
 variable {V : Type*} [AddCommGroup V] [Module F V]
 
-/-- The action `v ↦ [X, v]` on `V ⊂ C(V)` of an element `X ∈ gspin(V)` (the image of `X` in
-`so(V)`). -/
-def adV (Q : QuadraticForm F V) (X : CliffordAlgebra Q) : V →ₗ[F] V :=
-  ιInv Q ∘ₗ (LinearMap.mulLeft F X - LinearMap.mulRight F X) ∘ₗ CliffordAlgebra.ι Q
-
 /-- `N ∈ so(U)` lies in the regular nilpotent orbit `O_ν` of the even-dimensional quadratic space
 `U ⊆ V` (after Waldspurger 2010 §7.1 / Luo §2.1): `U = D ⊕^⊥ U₁` with `D = F d₀` an
 anisotropic line and `U₁ ≅ H^k ⊕ ⟨ν⟩` split odd-dimensional whose anisotropic line has form
