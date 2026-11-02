@@ -570,4 +570,100 @@ theorem mapsTo_orthogonal_of_isIsom (hQ : IsNondeg Q) {g : Module.End K V}
 
 end Base
 
+section Main
+
+universe u
+
+variable {K : Type*} [Field K] [Invertible (2 : K)] [CharZero K] [IsAlgClosed K]
+
+/-- Induction form of `jointClauses`, with `dim (E₋₁(P) ∩ ker N)` even in place of `det P = 1`. -/
+private theorem jointClauses_aux (n : ℕ) : ∀ {V : Type u} [AddCommGroup V] [Module K V]
+    [FiniteDimensional K V] (Q : QuadraticForm K V) (P N : Module.End K V), finrank K V = n →
+    IsNondeg Q → IsIsom (bform Q) P → P.IsSemisimple → IsSkew (bform Q) N → N.IsSemisimple →
+    Commute N P → Even (finrank K ↥(P.eigenspace (-1) ⊓ N.eigenspace 0)) →
+    JointClauses Q P N (n / 2) := by
+  induction n using Nat.strong_induction_on with
+  | _ n ih =>
+  intro V _ _ _ Q P N hn hQ hP hssP hN hssN hc hev
+  by_cases hA : ∃ μ c : K, P.eigenspace μ ⊓ N.eigenspace c ≠ ⊥ ∧ (μ⁻¹ ≠ μ ∨ c ≠ 0)
+  · sorry
+  · -- only self-paired joint eigenvalues: `N = 0` and `P = ±1` on its eigenspaces
+    push Not at hA
+    have hjoint : ∀ c : K, N.eigenspace c ≠ ⊥ → ∃ μ, P.eigenspace μ ⊓ N.eigenspace c ≠ ⊥ := by
+      intro c hcne
+      set E := N.eigenspace c
+      have hE : ∀ x ∈ E, P x ∈ E := mapsTo_eigenspace_of_commute hc c
+      haveI : Nontrivial E := Submodule.nontrivial_iff_ne_bot.2 hcne
+      obtain ⟨μ, hμ⟩ := Module.End.exists_eigenvalue (P.restrict hE)
+      obtain ⟨z, hz, hz0⟩ := Submodule.exists_mem_ne_zero_of_ne_bot
+        (Module.End.hasEigenvalue_iff.1 hμ)
+      refine ⟨μ, fun hbot => hz0 (Subtype.ext ?_)⟩
+      have : (z : V) ∈ P.eigenspace μ ⊓ N.eigenspace c :=
+        ⟨Module.End.eigenspace_restrict_le_eigenspace P hE μ ⟨z, hz, rfl⟩, z.2⟩
+      rw [hbot] at this
+      exact (Submodule.mem_bot K).1 this
+    have hN0 : N.eigenspace 0 = ⊤ := by
+      rw [eq_top_iff, ← hssN.iSup_eigenspace_eq_top]
+      refine iSup_le fun c => ?_
+      by_cases hc0 : N.eigenspace c = ⊥
+      · rw [hc0]; exact bot_le
+      · obtain ⟨μ, hμ⟩ := hjoint c hc0
+        rw [(hA μ c hμ).2]
+    have hNv : ∀ v, N v = (0 : K) • v := fun v =>
+      Module.End.mem_eigenspace_iff.1 (hN0 ▸ Submodule.mem_top)
+    have hPpm : ∀ μ, P.HasEigenvalue μ → μ = 1 ∨ μ = -1 := by
+      intro μ hμ
+      have h1 := (hA μ 0 (by rw [hN0, inf_top_eq]; exact Module.End.hasEigenvalue_iff.1 hμ)).1
+      have hμ0 : μ ≠ 0 := ne_zero_of_hasEigenvalue (B := bform Q) hQ hP hμ
+      have : μ * μ = 1 := by
+        calc μ * μ = μ * μ⁻¹ := by rw [h1]
+          _ = 1 := mul_inv_cancel₀ hμ0
+      exact mul_self_eq_one_iff.1 this
+    set E₁ := P.eigenspace 1
+    set E₂ := P.eigenspace (-1)
+    have horth : ∀ x ∈ E₁, ∀ y ∈ E₂, bform Q x y = 0 := fun x hx y hy =>
+      bform_eigen_eq_zero (B := bform Q) hP (by norm_num) hx hy
+    have hcompl : IsCompl E₁ E₂ := by
+      constructor
+      · rw [Submodule.disjoint_def]
+        intro x h1 h2
+        have h : (1 : K) • x = (-1 : K) • x :=
+          (Module.End.mem_eigenspace_iff.1 h1).symm.trans (Module.End.mem_eigenspace_iff.1 h2)
+        have h' : (2 : K) • x = 0 := by linear_combination (norm := module) h
+        exact (smul_eq_zero.1 h').resolve_left two_ne_zero
+      · rw [codisjoint_iff, eq_top_iff, ← hssP.iSup_eigenspace_eq_top]
+        refine iSup_le fun ν => ?_
+        by_cases hν : P.HasEigenvalue ν
+        · rcases hPpm ν hν with rfl | rfl
+          · exact le_sup_left
+          · exact le_sup_right
+        · rw [Module.End.hasEigenvalue_iff, not_not] at hν
+          rw [hν]
+          exact bot_le
+    have hmaps : ∀ g : Module.End K V, Commute P g → Set.MapsTo g E₁ E₁ ∧ Set.MapsTo g E₂ E₂ :=
+      fun g hg => ⟨mapsTo_eigenspace_of_commute hg 1, mapsTo_eigenspace_of_commute hg (-1)⟩
+    have hP1 := (hmaps P (Commute.refl P)).1
+    have hP2 := (hmaps P (Commute.refl P)).2
+    have hN1 := (hmaps N hc.symm).1
+    have hN2 := (hmaps N hc.symm).2
+    have horth' : ∀ y ∈ E₂, ∀ x ∈ E₁, bform Q y x = 0 := fun y hy x hx =>
+      bform_orth' horth ⟨y, hy⟩ ⟨x, hx⟩
+    have c₁ := jointClauses_scalar (isNondeg_comp_subtype horth hQ hcompl) (P := P.restrict hP1)
+      (N := N.restrict hN1) (ε := 1) (c := 0)
+      (fun v => Subtype.ext (Module.End.mem_eigenspace_iff.1 v.2)) (fun v => Subtype.ext (hNv v))
+    have c₂ := jointClauses_scalar (isNondeg_comp_subtype horth' hQ hcompl.symm)
+      (P := P.restrict hP2) (N := N.restrict hN2) (ε := -1) (c := 0)
+      (fun v => Subtype.ext (Module.End.mem_eigenspace_iff.1 v.2)) (fun v => Subtype.ext (hNv v))
+    have hcomb := jointClauses_of_split horth hcompl hP1 hP2 hN1 hN2
+      (fun M hM => (hmaps M (mem_soCent.1 hM.1).2.symm).1)
+      (fun M hM => (hmaps M (mem_soCent.1 hM.1).2.symm).2)
+      (fun g _ hg _ => hmaps g hg) c₁ c₂
+    have hd := Submodule.finrank_add_eq_of_isCompl hcompl
+    rw [hN0, inf_top_eq] at hev
+    obtain ⟨k, hk⟩ := hev
+    have : finrank K E₁ / 2 + finrank K E₂ / 2 = n / 2 := by omega
+    rwa [this] at hcomb
+
+end Main
+
 end GSpinGGP
