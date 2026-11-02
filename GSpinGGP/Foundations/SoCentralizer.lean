@@ -142,6 +142,135 @@ theorem finrank_lieCentralizer_gspin {Q : QuadraticForm K V} (hQ : IsNondeg Q)
     exact ⟨r, Subtype.ext (Subtype.ext (by simp [e, Algebra.algebraMap_eq_smul_one]))⟩
   rw [← LinearMap.finrank_range_add_finrank_ker φ, LinearMap.range_eq_top.2 hsurj, finrank_top, hker]
 
+/-- **Lifting `so(V)_{P(g)}` to `gspin(V)_g`**: for `g ∈ GSpin(V)`, every `M ∈ so(V)_{P(g)}` is
+`adV Y` for some `Y ∈ gspin(V)` commuting with `g`. A lift `Y ∈ gspin(V)` of `M` has
+`adV (g Y g⁻¹) = P(g) M P(g)⁻¹ = M`, so `g Y g⁻¹ − Y` is a scalar, traceless on `C(V)`, hence
+`0`. -/
+theorem exists_mem_lieCentralizer_adV_eq {Q : QuadraticForm K V} (hQ : IsNondeg Q) (g : GSpin Q)
+    {M : Module.End K V} (hM : M ∈ soCent Q (specP Q g : Module.End K V)) :
+    ∃ Y ∈ lieCentralizer (gspin Q) ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q),
+      adV Q Y = M := by
+  obtain ⟨u, hu⟩ : ∃ u : (CliffordAlgebra Q)ˣ, u = g := ⟨_, rfl⟩
+  -- `ι (P(g)⁻¹ v)` conjugated back
+  have hPinv : ∀ v, (u : CliffordAlgebra Q) * ι Q (specP Q g⁻¹ v) * ((u⁻¹ : (CliffordAlgebra Q)ˣ) :
+      CliffordAlgebra Q) = ι Q v := by
+    intro v
+    rw [hu, ← ι_specP, ← LinearEquiv.mul_apply, ← map_mul, mul_inv_cancel, map_one]
+    rfl
+  have hPP : ∀ v, specP Q g (specP Q g⁻¹ v) = v := fun v => by
+    rw [← LinearEquiv.mul_apply, ← map_mul, mul_inv_cancel, map_one]; rfl
+  -- `adV (g Y g⁻¹) = P(g) adV(Y) P(g)⁻¹`
+  have hconj : ∀ Y ∈ gspin Q, adV Q ((u : CliffordAlgebra Q) * Y *
+      ((u⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) =
+      (specP Q g : Module.End K V) * adV Q Y * (specP Q g⁻¹ : Module.End K V) := by
+    intro Y hY
+    have hm := conj_mem_gspin Q g hY
+    rw [← hu] at hm
+    ext v
+    apply ι_injective Q
+    rw [ι_adV hm, Module.End.mul_apply, Module.End.mul_apply, LinearEquiv.coe_coe,
+      LinearEquiv.coe_coe, ι_specP, ι_adV hY, ← hu, ← hPinv v]
+    simp only [mul_sub, sub_mul, mul_assoc, Units.inv_mul_cancel_left]
+  rw [← hu]
+  obtain ⟨hMs, hMN⟩ := mem_soCent.mp hM
+  obtain ⟨Y, hYg, hYM⟩ := exists_mem_gspin_adV_eq hQ M hMs
+  have hm := conj_mem_gspin Q g hYg
+  rw [← hu] at hm
+  have hC := (gspin Q).toSubmodule.sub_mem hm hYg
+  have h0 : adV Q ((u : CliffordAlgebra Q) * Y * ((u⁻¹ : (CliffordAlgebra Q)ˣ) :
+      CliffordAlgebra Q) - Y) = 0 := by
+    rw [map_sub, hconj Y hYg, hYM, ← hMN]
+    ext v
+    simp only [Module.End.mul_apply, LinearEquiv.coe_coe, hPP, LinearMap.sub_apply,
+      LinearMap.zero_apply, sub_self]
+  obtain ⟨r, hr⟩ := eq_algebraMap_of_adV_eq_zero hQ hC h0
+  have htr : LinearMap.trace K _ (LinearMap.mulLeft K ((u : CliffordAlgebra Q) * Y *
+      ((u⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - Y)) = 0 := by
+    rw [show LinearMap.mulLeft K ((u : CliffordAlgebra Q) * Y *
+        ((u⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - Y) =
+        LinearMap.mulLeft K ((u : CliffordAlgebra Q) * (Y *
+          ((u⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q))) - LinearMap.mulLeft K Y by
+        ext; simp [sub_mul, mul_assoc],
+      map_sub, trace_mulLeft_comm, mul_assoc, Units.inv_mul, mul_one, sub_self]
+  have hsc : ∀ r : K, LinearMap.mulLeft K (algebraMap K (CliffordAlgebra Q) r) =
+      r • LinearMap.id := by
+    intro r; ext z; simp [Algebra.smul_def]
+  rw [hr, hsc, map_smul, LinearMap.trace_id, smul_eq_mul] at htr
+  have hr0 : r = 0 :=
+    (mul_eq_zero.mp htr).resolve_right (cast_finrank_cliffordAlgebra_ne_zero Q)
+  rw [hr0, map_zero, sub_eq_zero] at hr
+  refine ⟨Y, mem_lieCentralizer.2 ⟨hYg, ?_⟩, hYM⟩
+  calc (u : CliffordAlgebra Q) * Y = (u : CliffordAlgebra Q) * Y *
+        ((u⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * u := by
+        rw [mul_assoc _ _ (u : CliffordAlgebra Q), Units.inv_mul, mul_one]
+    _ = Y * u := by rw [hr]
+
+/-- **`dim gspin(V)_g = 1 + dim so(V)_{P(g)}`** for `g ∈ GSpin(V)` (Thesis Prop. 5.1.3.1:
+`gspin(V) = so(V) ⊕ K`, with `Ad g` acting as `P(g)` on `so(V)`): `Y ↦ adV Y` maps `gspin(V)_g`
+onto `so(V)_{P(g)}` (`exists_mem_lieCentralizer_adV_eq`) with kernel the scalars. -/
+theorem finrank_lieCentralizer_gspin_unit {Q : QuadraticForm K V} (hQ : IsNondeg Q)
+    (g : GSpin Q) :
+    finrank K (lieCentralizer (gspin Q) ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) =
+      finrank K (soCent Q (specP Q g : Module.End K V)) + 1 := by
+  obtain ⟨u, hu⟩ : ∃ u : (CliffordAlgebra Q)ˣ, u = g := ⟨_, rfl⟩
+  -- `adV` of a `g`-commuting element commutes with `P(g)`
+  have hcomm : ∀ Y ∈ gspin Q, (u : CliffordAlgebra Q) * Y = Y * u →
+      adV Q Y * (specP Q g : Module.End K V) = (specP Q g : Module.End K V) * adV Q Y := by
+    intro Y hY hYu
+    have hYu' : ((u⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * Y =
+        Y * ((u⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) := by
+      rw [Units.inv_mul_eq_iff_eq_mul, ← mul_assoc, hYu, mul_assoc, Units.mul_inv, mul_one]
+    ext v
+    apply ι_injective Q
+    simp only [Module.End.mul_apply, LinearEquiv.coe_coe]
+    rw [ι_adV hY, ι_specP, ι_specP, ι_adV hY, ← hu]
+    simp only [mul_sub, sub_mul, mul_assoc]
+    rw [← mul_assoc Y (u : CliffordAlgebra Q), ← hYu, hYu', ← mul_assoc (u : CliffordAlgebra Q) Y]
+  rw [← hu]
+  let φ : lieCentralizer (gspin Q) (u : CliffordAlgebra Q) →ₗ[K]
+      soCent Q (specP Q g : Module.End K V) :=
+    { toFun := fun Y => ⟨adV Q Y, mem_soCent.2 ⟨bform_adV (mem_lieCentralizer.mp Y.2).1,
+        hcomm Y (mem_lieCentralizer.mp Y.2).1 (mem_lieCentralizer.mp Y.2).2⟩⟩
+      map_add' := fun Y Z => Subtype.ext (map_add (adV Q) Y.1 Z.1)
+      map_smul' := fun c Y => Subtype.ext (map_smul (adV Q) c Y.1) }
+  have hsurj : Function.Surjective φ := by
+    rintro ⟨M, hM⟩
+    obtain ⟨Y, hY, hYM⟩ := exists_mem_lieCentralizer_adV_eq hQ g hM
+    rw [← hu] at hY
+    exact ⟨⟨Y, hY⟩, Subtype.ext hYM⟩
+  have hker : finrank K (LinearMap.ker φ) = 1 := by
+    have h1 : (1 : CliffordAlgebra Q) ∈ lieCentralizer (gspin Q) (u : CliffordAlgebra Q) :=
+      mem_lieCentralizer.2 ⟨one_mem_gspin Q, by rw [one_mul, mul_one]⟩
+    let e : LinearMap.ker φ := ⟨⟨1, h1⟩, Subtype.ext (by
+      change adV Q 1 = 0
+      rw [← map_one (algebraMap K (CliffordAlgebra Q)), adV_algebraMap])⟩
+    have he : e ≠ 0 := fun h =>
+      one_ne_zero (congrArg (fun z : LinearMap.ker φ => ((z : _) : CliffordAlgebra Q)) h)
+    refine (finrank_eq_one_iff_of_nonzero' e he).2 fun ⟨⟨Y, hY⟩, hYk⟩ => ?_
+    have hY0 : adV Q Y = 0 := congrArg Subtype.val (LinearMap.mem_ker.mp hYk)
+    obtain ⟨r, rfl⟩ := eq_algebraMap_of_adV_eq_zero hQ (mem_lieCentralizer.mp hY).1 hY0
+    exact ⟨r, Subtype.ext (Subtype.ext (by simp [e, Algebra.algebraMap_eq_smul_one]))⟩
+  rw [← LinearMap.finrank_range_add_finrank_ker φ, LinearMap.range_eq_top.2 hsurj, finrank_top,
+    hker]
+
+
+/-- If `gspin(V)_g` is abelian, so is `so(V)_{P(g)}`: `adV` maps `gspin(V)_g` onto it and preserves
+commutators. -/
+theorem commute_of_isLieAbelian_lieCentralizer {Q : QuadraticForm K V} (hQ : IsNondeg Q)
+    (g : GSpin Q)
+    (hab : IsLieAbelian
+      (lieCentralizer (gspin Q) ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q))) :
+    ∀ M₁ ∈ soCent Q (specP Q g : Module.End K V), ∀ M₂ ∈ soCent Q (specP Q g : Module.End K V),
+      Commute M₁ M₂ := by
+  intro M₁ h₁ M₂ h₂
+  obtain ⟨Y₁, hY₁, rfl⟩ := exists_mem_lieCentralizer_adV_eq hQ g h₁
+  obtain ⟨Y₂, hY₂, rfl⟩ := exists_mem_lieCentralizer_adV_eq hQ g h₂
+  have h0 := congrArg Subtype.val (hab.trivial ⟨Y₁, hY₁⟩ ⟨Y₂, hY₂⟩)
+  rw [LieSubalgebra.coe_bracket, Ring.lie_def] at h0
+  have := adV_commutator (mem_lieCentralizer.mp hY₁).1 (mem_lieCentralizer.mp hY₂).1
+  rw [h0, ZeroMemClass.coe_zero, map_zero, eq_comm, sub_eq_zero] at this
+  exact this
+
 end Centralizer
 
 /-! ## An upper bound from a Jordan chain -/
