@@ -378,12 +378,12 @@ variable {K : Type*} [Field K] [Invertible (2 : K)]
 variable {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
 variable {Q : QuadraticForm K V} {w : ℤ → V} {ν : K} {k : ℕ}
 
-/-- **The centralizer of `X` in `gspin(V)` has dimension `≤ dim V − k`** when
-`dim V ≤ 2k + 2`, i.e. `V = ⟨w⟩ ⊕ ⟨w⟩^⊥` with `dim ⟨w⟩^⊥ ≤ 1` (`finrank_lieCentralizer_gspin` and the Jordan chain
-`w_{-k} ↦ … ↦ w_k` of length `2k + 1`, `finrank_soCent_le_of_chain`). -/
-theorem finrank_lieCentralizer_regNil_le (hQ : IsNondeg Q) (hw : IsSplitFamily Q w ν k)
+/-- **`dim so(V)_{adV X} ≤ dim V − (k + 1)`** when `dim V ≤ 2k + 2`, i.e. `V = ⟨w⟩ ⊕ ⟨w⟩^⊥` with
+`dim ⟨w⟩^⊥ ≤ 1` (the Jordan chain `w_{-k} ↦ … ↦ w_k` of length `2k + 1`,
+`finrank_soCent_le_of_chain`). -/
+theorem finrank_soCent_regNil_le (hQ : IsNondeg Q) (hw : IsSplitFamily Q w ν k)
     (hν : ν ≠ 0) (hdim : finrank K V ≤ 2 * k + 2) :
-    finrank K (lieCentralizer (gspin Q) (regNil Q w ν k)) ≤ finrank K V - k := by
+    finrank K (soCent Q (adV Q (regNil Q w ν k))) ≤ finrank K V - (k + 1) := by
   have hsup := span_sup_orthogonal_isSplitFamily hw hν hQ
   have hU : finrank K (Submodule.span K (Set.range fun i : Fin (2 * k + 1) => w ((i : ℤ) - k))) =
       2 * k + 1 := by
@@ -418,11 +418,18 @@ theorem finrank_lieCentralizer_regNil_le (hQ : IsNondeg Q) (hw : IsSplitFamily Q
     exact (linearIndependent_isSplitFamily hw hν).units_smul fun i => Units.mk0 (ε i) (hε0 i)
   have h := finrank_soCent_le_of_chain hQ (bform_adV regNil_mem_gspin) (w (-k)) (2 * k + 1) hli
     (by rw [hspan]; exact hsup) (by rw [hspan]; exact hperp)
-  rw [finrank_lieCentralizer_gspin hQ regNil_mem_gspin]
   have h2 : (2 * k + 1 + 1) / 2 = k + 1 := by omega
-  rw [h2] at h
-  have hdim := hli.fintype_card_le_finrank
-  rw [Fintype.card_fin] at hdim
+  rwa [h2] at h
+
+/-- **The centralizer of `X` in `gspin(V)` has dimension `≤ dim V − k`** when `dim V ≤ 2k + 2`
+(`finrank_lieCentralizer_gspin`, `finrank_soCent_regNil_le`). -/
+theorem finrank_lieCentralizer_regNil_le (hQ : IsNondeg Q) (hw : IsSplitFamily Q w ν k)
+    (hν : ν ≠ 0) (hdim : finrank K V ≤ 2 * k + 2) :
+    finrank K (lieCentralizer (gspin Q) (regNil Q w ν k)) ≤ finrank K V - k := by
+  rw [finrank_lieCentralizer_gspin hQ regNil_mem_gspin]
+  have h := finrank_soCent_regNil_le hQ hw hν hdim
+  have hge := (linearIndependent_isSplitFamily hw hν).fintype_card_le_finrank
+  rw [Fintype.card_fin] at hge
   omega
 
 end Centralizer
