@@ -382,6 +382,7 @@ theorem finrank_soCent_inf_eq {Q : QuadraticForm K V} {g N : Module.End K V} {A 
   rw [LinearMap.range_eq_top.2 hsurj, finrank_top, hker] at hrn
   exact hrn.symm
 
+omit [FiniteDimensional K V] in
 /-- If the elements of `so(V)_g` killing the fixed space `A` commute with each other (the moved part
 is abelian), then every `N ∈ so(V)_g` centralizes them: write `N = N₁ + N₂` with `N₁` the extension
 by `0` of `N|_A` (which has disjoint support from them) and `N₂` killing `A`. -/
