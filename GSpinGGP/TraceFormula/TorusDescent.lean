@@ -10,7 +10,7 @@ import GSpinGGP.GGP.IsometrySemisimple
 import GSpinGGP.GGP.GSpinSemisimple
 import GSpinGGP.TraceFormula.ThetaF
 import GSpinGGP.Foundations.GSpinExp
-import GSpinGGP.Foundations.JHatTranslate
+import GSpinGGP.TraceFormula.JHatSelfDual
 
 /-!
 # Measurability of the integrand of `m_{geom,s}` on `T(F)/A_{G,H}(F)`
@@ -1141,7 +1141,9 @@ Sketch: `𝔤_g` is reductive (centralizer of a semisimple element, characterist
 reductive Lie algebra of rank `r` the regular semisimple elements are those where the coefficient
 of `T^r` in `det(T − ad Z)` does not vanish, a polynomial condition (Harish-Chandra's regular set
 `𝔤'`); `IsRegularSS` (semisimple in `C(W) × C(V)` with abelian centralizer in `𝔤_g`) is that
-condition, as the representation of `𝔤_g` on `C(W) × C(V)` is faithful.  This is the Lie algebra
+condition, as `𝔤_g = Lie(G_g)` is the Lie algebra of a reductive group acting algebraically on
+`C(W) × C(V)`, so its centre acts semisimply and semisimplicity in `𝔤_g` (Jordan decomposition)
+agrees with semisimplicity in `C(W) × C(V)`.  This is the Lie algebra
 analogue of `hc_regularSet_open_conull`; the identification is not formalized.
 Status: SORRY (structure of reductive Lie algebras). -/
 theorem isOpen_regularSS_lieCentralizer (g : ↥d.G)
@@ -1201,8 +1203,9 @@ theorem continuous_coe_diag :
       (CliffordAlgebra.map (QuadraticMap.Isometry.inl d.QW d.QZ)).toLinearMap
   exact hval.prodMk (hmap.comp hval)
 
-/-- **Translation by a small central semisimple `e^Y` preserves the germ** (the step of Thesis
-Prop 12.1.1(i)): if `diag t = diag x · e^Y` with `t ∈ T_{x,♮}` and `Y ∈ 𝔤_x` small, central in
+/-- **Translation by a small central semisimple `e^Y` preserves the germ** (an ingredient, not
+written out in the Thesis, of the proof of Thesis Prop 12.1.1(i)): if `diag t = diag x · e^Y`
+with `t ∈ T_{x,♮}` and `Y ∈ 𝔤_x` small, central in
 `𝔤_x` and semisimple, then for `X ∈ 𝔤_t = 𝔤_x` small and regular
 `θ(t e^X) = θ(x e^{X+Y}) = ∑ c_O ĵ(O, X + Y) = ∑ c_O ĵ(O, X) = θ(x e^X)`
 (`jHat_add_eq_of_nondegenerate`, with `b` nondegenerate on `𝔤_x`), so the germs at `t` and `x`
@@ -1312,7 +1315,8 @@ theorem exists_nhds_germ_eq_of_expA {χ : CentralCharOn d} {θ : ↥d.G → ℂ}
     (hsub Y hYs (Algebra.adjoin F {expA F Y}) (Algebra.self_mem_adjoin_singleton F _))
   exact hgerm t ht htx hT Y hYN (hX₀ ▸ hYcent) (hX₀ ▸ hYc') hYss hDteq
 
-/-- **The germ term is continuous on `T_♮`** (Thesis Prop 12.1.1(i)): for `θ ∈ QC(G(F), χ)`,
+/-- **The germ term is continuous on `T_♮`** (an ingredient, not written out in the Thesis, of
+the proof of Thesis Prop 12.1.1(i)): for `θ ∈ QC(G(F), χ)`,
 `t ↦ c_{θ,O_t}(t)` is locally constant on `T_♮`.  Near `t₀ ∈ T_♮`, write
 `diag t = diag t₀ · e^Y` with `Y = log(diag(t₀)⁻¹ diag t)` (`exists_logA`), small; then the germs at
 `t` and `t₀` agree (`exists_nhds_germ_eq_of_expA`): `Y` is central in `𝔤_{t₀}` and semisimple, and

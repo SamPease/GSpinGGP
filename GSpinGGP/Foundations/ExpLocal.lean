@@ -14,7 +14,6 @@ import GSpinGGP.Foundations.LocalGroups
 * `exp_units_conj_of_mem_ball`: `exp(g x g⁻¹) = g exp(x) g⁻¹` without a `ℚ`-normed structure;
 * `commute_of_commute_exp`: on an injectivity domain of `exp`, `Y` commutes with everything
   commuting with `exp Y` (so the local inverse `L(c)` commutes with the commutant of `c`);
-* `exists_nhds_mem_of_expA_mem`: near `0`, `e^X ∈ P` implies `X ∈ P` for every subalgebra `P`;
 * `eventually_map_expA`: `φ(e^X) = e^{φ X}` near `0` for linear maps preserving powers;
 * `exists_logA`: a local logarithm `log`, continuous at `1`, with `e^{log u} = u` near `1`
   (no logarithm series: the local inverse of `exp` on `End(F^d)` restricted to `A`).
@@ -52,80 +51,6 @@ lemma expA_add_of_commute :
     _ = expA F X * expA F Y := by rw [key, lmulPiInv_lmulPi]
 
 local notation "VA" => (Fin (Module.finrank F A) → F)
-
-/-- **Subalgebras are detected by `exp` near `0`**: there is a neighbourhood `U` of `0` such that
-for `X ∈ U` and every subalgebra `P` of `A`, `e^X ∈ P` implies `X ∈ P`.  Proof: `e^{nX} = (e^X)^n`
-lies in `P`, and for `|m| < 1` the difference quotients `(e^{m^k X} − 1)/m^k ∈ P` tend to `X`;
-`P` is closed (finite-dimensional).  Computed in `End(F^d)` via `lmulPi`. -/
-lemma exists_nhds_mem_of_expA_mem :
-    ∃ U ∈ 𝓝 (0 : A), ∀ X ∈ U, ∀ P : Subalgebra F A, expA F X ∈ P → X ∈ P := by
-  letI := isTopologicalRing_of_moduleTopology F A
-  haveI := t2Space_of_moduleTopology F A
-  obtain ⟨U, hU, -, h⟩ := expA_aux F (A := A)
-  refine ⟨U, hU, fun X hX P hP => ?_⟩
-  obtain ⟨hb, -, he⟩ := h X hX
-  set L := lmulPi F X
-  set r := (NormedSpace.expSeries F (VA →L[F] VA)).radius
-  have hball : ∀ c : F, ‖c‖ ≤ 1 → c • L ∈ Metric.eball (0 : VA →L[F] VA) r := by
-    intro c hc
-    rw [Metric.mem_eball, edist_zero_right] at hb ⊢
-    refine lt_of_le_of_lt ?_ hb
-    rw [enorm_smul]
-    calc ‖c‖ₑ * ‖L‖ₑ ≤ 1 * ‖L‖ₑ := by
-          gcongr
-          rw [← ofReal_norm]
-          exact ENNReal.ofReal_le_one.mpr hc
-      _ = ‖L‖ₑ := one_mul _
-  have hle : ∀ n : ℕ, ‖(n : F)‖ ≤ 1 := fun n =>
-    isUltrametricDist_iff_forall_norm_natCast_le_one.mp inferInstance n
-  have hballn : ∀ n : ℕ, n • L ∈ Metric.eball (0 : VA →L[F] VA) r := fun n => by
-    rw [← Nat.cast_smul_eq_nsmul F]; exact hball _ (hle n)
-  have hpow : ∀ n : ℕ, NormedSpace.exp (n • L) = NormedSpace.exp L ^ n := by
-    intro n
-    induction n with
-    | zero => rw [zero_nsmul, NormedSpace.exp_zero, pow_zero]
-    | succ n ih =>
-      rw [succ_nsmul, NormedSpace.exp_add_of_commute_of_mem_ball (𝕂 := F)
-          (by rw [nsmul_eq_mul]; exact (Nat.cast_commute n L).mul_left (Commute.refl L))
-          (hballn n) hb, ih, pow_succ]
-  -- the derivative of `s ↦ e^{sL}` at `0` is `L`
-  have hd : HasDerivAt (fun u : F => NormedSpace.exp (u • L)) L 0 := by
-    have h1 : HasDerivAt (fun u : F => u • L) L 0 := by
-      simpa using (hasDerivAt_id (0 : F)).smul_const L
-    have h2 := hasFDerivAt_exp_zero_of_radius_pos (expSeries_radius_pos_of_pAdic F (VA →L[F] VA))
-    have h3 := h2.comp_hasDerivAt_of_eq (0 : F) h1 (zero_smul F L).symm
-    rw [one_apply_eq_self] at h3
-    exact h3
-  have hf0 : NormedSpace.exp ((0 : F) • L) = 1 := by
-    rw [show (0 : F) • L = 0 from zero_smul F L]; exact NormedSpace.exp_zero
-  have hderiv := hd.tendsto_slope_zero
-  simp only [zero_add, hf0] at hderiv
-  obtain ⟨m, hm0, hm1⟩ := exists_natCast_norm_lt_one F
-  set s : ℕ → F := fun k => ((m ^ k : ℕ) : F)
-  have hs : Tendsto s atTop (𝓝[≠] 0) := by
-    refine tendsto_nhdsWithin_iff.mpr ⟨?_, Eventually.of_forall fun k => ?_⟩
-    · rw [tendsto_zero_iff_norm_tendsto_zero]
-      simp only [s, Nat.cast_pow, norm_pow]
-      exact tendsto_pow_atTop_nhds_zero_of_lt_one (norm_nonneg _) hm1
-    · simp only [s, Nat.cast_pow, Set.mem_compl_iff, Set.mem_singleton_iff]
-      exact pow_ne_zero _ (norm_pos_iff.mp hm0)
-  have hlim := hderiv.comp hs
-  have hclosedP : IsClosed (P : Set A) := (Subalgebra.toSubmodule P).closed_of_finiteDimensional
-  have hclosed : IsClosed {Z : VA →L[F] VA | lmulPiInv F Z ∈ P} :=
-    hclosedP.preimage (lmulPiInv F).continuous
-  have hexpn : ∀ n : ℕ, lmulPiInv F (NormedSpace.exp L ^ n) = expA F X ^ n := by
-    intro n
-    rw [← he, ← lmulPi_pow, lmulPiInv_lmulPi]
-  have hL : lmulPiInv F L ∈ P := by
-    refine hclosed.mem_of_tendsto hlim (Eventually.of_forall fun k => ?_)
-    simp only [Function.comp_apply, Set.mem_ofPred_eq, s]
-    have hk : ((m ^ k : ℕ) : F) • L = (m ^ k) • L := by
-      rw [← Nat.cast_smul_eq_nsmul F]
-    rw [hk, hpow, map_smul, map_sub, hexpn, show lmulPiInv F (1 : VA →L[F] VA) = (1 : A) by
-      rw [← lmulPi_one F (A := A), lmulPiInv_lmulPi]]
-    exact Subalgebra.smul_mem _ (Subalgebra.sub_mem _ (Subalgebra.pow_mem _ hP _)
-      (Subalgebra.one_mem _)) _
-  rwa [lmulPiInv_lmulPi] at hL
 
 section LocalInverse
 

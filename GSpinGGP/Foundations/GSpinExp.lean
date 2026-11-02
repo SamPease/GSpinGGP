@@ -14,8 +14,8 @@ import TauCeti.RingTheory.Adjoin.Unit
 * `eventually_mem_gspin_of_expA_mem`: for `Y` near `0` in `C(Q)`, `e^Y ∈ GSpin(Q)` implies
   `Y ∈ gspin(Q)` (evenness, and `[Y, ι(V)] ⊆ ι(V)` from `Ad(e^Y) ι(V) ⊆ ι(V)`), by
   `exists_nhds_mem_of_expA_mem`;
-* `isSS_of_mem_adjoin`, `isSS_coe_inv`, `isSS_mul_of_commute`: semisimplicity of elements of
-  `F[u]`, of inverses and of commuting products;
+* `isSS_of_mem_adjoin`, `isSS_coe_inv`, `isSS_mul_of_commute`, `isSS_add_of_commute`:
+  semisimplicity of elements of `F[u]`, of inverses, and of commuting products and sums;
 * `isRegularSS_add_iff_of_central`: translation by a central semisimple element preserves
   regularity.
 -/
@@ -159,10 +159,15 @@ theorem isSS_mul_of_commute [PerfectField F] [FiniteDimensional F A] {a c : A} (
     (ha : IsSS F a) (hc : IsSS F c) : IsSS F (a * c) := by
   unfold IsSS at *
   rw [LinearMap.mulLeft_mul]
-  have hcomm : Commute (LinearMap.mulLeft F a) (LinearMap.mulLeft F c) := by
-    exact LinearMap.ext fun w => by
-      simp only [Module.End.mul_apply, LinearMap.mulLeft_apply, ← mul_assoc, h.eq]
-  exact Module.End.IsSemisimple.mul_of_commute hcomm ha hc
+  exact Module.End.IsSemisimple.mul_of_commute (h.map (Algebra.lmul F A)) ha hc
+
+/-- The sum of commuting semisimple elements is semisimple. -/
+theorem isSS_add_of_commute [PerfectField F] [FiniteDimensional F A] {a c : A} (h : Commute a c)
+    (ha : IsSS F a) (hc : IsSS F c) : IsSS F (a + c) := by
+  unfold IsSS at *
+  rw [show LinearMap.mulLeft F (a + c) = LinearMap.mulLeft F a + LinearMap.mulLeft F c from
+    LinearMap.ext fun w => add_mul a c w]
+  exact Module.End.IsSemisimple.add_of_commute (h.map (Algebra.lmul F A)) ha hc
 
 /-- **Translation by a central semisimple element preserves regularity**: if `Y` is semisimple and
 commutes with every element of `𝔥`, then `Z + Y` is regular semisimple in `𝔥` iff `Z` is, for
@@ -176,15 +181,6 @@ theorem isRegularSS_add_iff_of_central [PerfectField F] [FiniteDimensional F A]
     refine and_congr_right fun hW => ?_
     rw [add_mul, mul_add, (hc W hW).eq]
     exact add_left_inj _
-  have hss : ∀ {a c : A}, Commute a c → IsSS F a → IsSS F c → IsSS F (a + c) := by
-    intro a c h ha hc'
-    unfold IsSS at *
-    rw [show LinearMap.mulLeft F (a + c) = LinearMap.mulLeft F a + LinearMap.mulLeft F c from
-      LinearMap.ext fun w => add_mul a c w]
-    have hcomm : Commute (LinearMap.mulLeft F a) (LinearMap.mulLeft F c) := by
-      exact LinearMap.ext fun w => by
-        simp only [Module.End.mul_apply, LinearMap.mulLeft_apply, ← mul_assoc, h.eq]
-    exact Module.End.IsSemisimple.add_of_commute hcomm ha hc'
   have hnY : IsSS F (-Y) := by
     unfold IsSS at *
     rw [show LinearMap.mulLeft F (-Y) = (-1 : F) • LinearMap.mulLeft F Y from
@@ -193,8 +189,8 @@ theorem isRegularSS_add_iff_of_central [PerfectField F] [FiniteDimensional F A]
   have hZY : Commute Z Y := hc Z hZ
   unfold IsRegularSS
   rw [hC]
-  refine and_congr_left fun _ => ⟨fun h => ?_, fun h => hss hZY h hY⟩
-  have := hss ((hZY.add_left (Commute.refl Y)).neg_right) h hnY
+  refine and_congr_left fun _ => ⟨fun h => ?_, fun h => isSS_add_of_commute hZY h hY⟩
+  have := isSS_add_of_commute ((hZY.add_left (Commute.refl Y)).neg_right) h hnY
   rwa [add_neg_cancel_right] at this
 
 end Semisimple
