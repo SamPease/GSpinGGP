@@ -63,7 +63,33 @@ The integrand is the product of $D^G(t)^{1/2}c_{\theta,\mathcal O_t}(t)$ (next l
 For $\theta\in\QC(G,\chi)$, $t\mapsto D^G(t)^{1/2}c_{\theta,\mathcal O_t}(t)$ is continuous on $T_\natural$.
 \end{lemma}
 \begin{proof}
-Not yet formalized. On $T_\natural$ the centralizers $G_t$, $\mathfrak g_t$ are those of $x$ (over $\bar F$ by the centralizer theorem, then exponentiate), so $D^G(t)$ is the absolute value of a fixed coefficient of the characteristic polynomial of $1-\mathrm{Ad}\,t$, continuous. The germs are locally constant: $\hat{j}(\mathcal O,X+Y)=\hat{j}(\mathcal O,X)$ for $Y$ central in $\mathfrak g_t$, and $\mathcal O_{t'}=\mathcal O_t$.
+\leanok
+\uses{continuousOn_germ_of_mem_QC, continuousOn_weylDisc_torusNat}
+Product of the next two lemmas.
+\end{proof}
+
+\begin{lemma}[Continuity of $D^G$ on $T_\natural$]
+\label{continuousOn_weylDisc_torusNat}
+\lean{GSpinGGP.continuousOn_weylDisc_torusNat}
+\leanok
+\uses{G, GGPData, GSpin, IsGammaElt, gspin, weylDisc}
+$t\mapsto D^G(t)$ is continuous on $T_\natural$.
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{InnerTwist, isOpen_torusNat, isSemisimple_specP_baseChange, lieAbelian_specP_baseChange}
+Fix $x\in T_\natural$ and let $N_t=1-\mathrm{Ad}(t)$ on $\mathfrak g$, $L=\ker N_x=\mathfrak g_x$, $C=\mathrm{im}\,N_x$. As $N_x$ is semisimple, $\mathfrak g=L\oplus C$, and both are $N_t$-stable for $t\in T$. On $T_\natural$ the centralizers in $G(F)$ of $t$ and $x$ agree (by the centralizer theorem over $\bar F$), hence so do the Lie centralizers (exponentiate), so $\ker N_t=L$, $N_t|_C$ is invertible and $D^G(t)=|\det(N_t|_C)|_F$, continuous in $t$.
+\end{proof}
+
+\begin{lemma}[Local constancy of germs on $T_\natural$]
+\label{continuousOn_germ_of_mem_QC}
+\lean{GSpinGGP.continuousOn_germ_of_mem_QC}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, IsGammaElt, QC, germ, gspin, orbitChoice}
+For $\theta\in\QC(G,\chi)$, $t\mapsto c_{\theta,\mathcal O_t}(t)$ is continuous (locally constant) on $T_\natural$.
+\end{lemma}
+\begin{proof}
+Not yet formalized. For $t'=te^Y$ with $Y\in\mathrm{Lie}\,T$ small, the expansion at $t$ is one at $t'$: this needs germ expansions transported along $Y$ central only in $\mathfrak g_t$, the invariance $\hat{j}(\mathcal O,X+Y)=\hat{j}(\mathcal O,X)$, and $\mathcal O_{t'}=\mathcal O_t$ (equal centralizers, proved).
 \end{proof}
 
 \begin{lemma}[Boundedness of germs]
