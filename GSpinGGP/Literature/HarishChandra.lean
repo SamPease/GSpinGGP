@@ -25,8 +25,9 @@ written out inline.
   (`hcDisc`);
 * instances `T2Space ↥d.G`, `LocallyCompactSpace ↥d.G` (theorems of LocalGroups, made instances
   here because `F` is recoverable from `d`);
-* (b) `hc_character_exists`, theorem `hc_character` — `θ_π` is a function, locally constant on
-  `G_reg(F)` (Harish-Chandra's regularity theorem; Bernstein's admissibility);
+* (b) `hc_character_exists` — `θ_π` is a function, continuous on Harish-Chandra's `G' = {D ≠ 0}`
+  (Harish-Chandra's regularity theorem; Bernstein's admissibility); the form on `G_reg(F)` is
+  `hc_character` in `GGP/Germs.lean`;
 * (c) `hc_character_isQuasiCharacter` — `θ_π` is a quasi-character (HC local character expansion;
   BP Prop 4.1.1(i), Thesis Prop 4.1.1.1);
 * (d) `germ_unique` — uniqueness of the local expansion (linear independence of the `ĵ(O,·)`,
@@ -117,7 +118,7 @@ axiom hc_regular_open_dense_conull (d : GGPData F) :
 
 /-- **(b) Harish-Chandra's regularity theorem.** For an irreducible tempered unitary
 representation `π` of `G(F)`, the distribution `f ↦ tr π(f)` on `C_c^∞(G(F))` is given by a locally
-integrable function which is locally constant on `G_reg(F)`.
+integrable function which is locally constant on `G' = {D ≠ 0}`.
 
 Sources:
 * Bernstein, *All reductive p-adic groups are tame*, Funct. Anal. Appl. 8 (1974), 91–93, Thm 1.
