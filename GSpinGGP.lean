@@ -33,6 +33,7 @@ import GSpinGGP.GGP.LieRank
 import GSpinGGP.GGP.RegularNilpotentConverse
 import GSpinGGP.GGP.RegularRank
 import GSpinGGP.GGP.JointRankDescent
+import GSpinGGP.GGP.LieRegular
 import GSpinGGP.GGP.Centralizers
 import GSpinGGP.Literature.TraceFormula
 import GSpinGGP.TraceFormula.StronglyCuspidal
