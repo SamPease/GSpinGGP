@@ -206,6 +206,140 @@ theorem pair_nilpotent_unipotent :
 
 end Pieces
 
+section Clauses
+
+variable {K : Type*} [Field K] [Invertible (2 : K)]
+variable {V : Type*} [AddCommGroup V] [Module K V]
+
+/-- The four clauses for the joint centralizer `C = so(V)_P ⊓ so(V)_N` with bound `ℓ`:
+`ℓ ≤ dim C`; `dim C = ℓ ↔ C` abelian; if `dim C = ℓ`, `C` has no nonzero nilpotent element and the
+only unipotent isometry commuting with `P` and `N` is `1`. -/
+def JointClauses (Q : QuadraticForm K V) (P N : Module.End K V) (ℓ : ℕ) : Prop :=
+  ℓ ≤ finrank K ↥(soCent Q P ⊓ soCent Q N) ∧
+  (finrank K ↥(soCent Q P ⊓ soCent Q N) = ℓ ↔
+    ∀ M₁ ∈ soCent Q P ⊓ soCent Q N, ∀ M₂ ∈ soCent Q P ⊓ soCent Q N, Commute M₁ M₂) ∧
+  (finrank K ↥(soCent Q P ⊓ soCent Q N) = ℓ →
+    ∀ M ∈ soCent Q P ⊓ soCent Q N, IsNilpotent M → M = 0) ∧
+  (finrank K ↥(soCent Q P ⊓ soCent Q N) = ℓ → ∀ h : Module.End K V, IsomCent.IsIsom (bform Q) h →
+    IsNilpotent (h - 1) → Commute P h → Commute N h → h = 1)
+
+omit [Invertible (2 : K)] in
+theorem isNilpotent_restrict {U : Submodule K V} {M : Module.End K V} (hM : IsNilpotent M)
+    (hMU : Set.MapsTo M U U) : IsNilpotent (M.restrict hMU) := by
+  obtain ⟨k, hk⟩ := hM
+  have key : ∀ (n : ℕ) (x : U), (((M.restrict hMU) ^ n) x : V) = (M ^ n) x := by
+    intro n
+    induction n with
+    | zero => intro x; rfl
+    | succ n ih => intro x; rw [pow_succ, Module.End.mul_apply, ih, pow_succ, Module.End.mul_apply]; rfl
+  exact ⟨k, LinearMap.ext fun x => Subtype.ext (by rw [key, hk]; rfl)⟩
+
+end Clauses
+
+section Transfer
+
+variable {K : Type*} [Field K] [Invertible (2 : K)]
+variable {V : Type*} [AddCommGroup V] [Module K V]
+variable {Q : QuadraticForm K V} {X Y : Module.End K V} {U U' : Submodule K V}
+variable (horth : ∀ u ∈ U, ∀ w ∈ U', bform Q u w = 0) (h : IsCompl U U')
+  (hXU : Set.MapsTo X U U) (hXU' : Set.MapsTo X U' U') (hYU : Set.MapsTo Y U U)
+  (hYU' : Set.MapsTo Y U' U')
+include horth h
+
+include hXU' hYU' in
+/-- `so(V)_{X,Y}` abelian ⇒ `so(U)_{X,Y}` abelian. -/
+theorem commute_of_restrict_inf
+    (hab : ∀ M₁ ∈ soCent Q X ⊓ soCent Q Y, ∀ M₂ ∈ soCent Q X ⊓ soCent Q Y, Commute M₁ M₂) :
+    ∀ A₁ ∈ soCent (Q.comp U.subtype) (X.restrict hXU) ⊓ soCent (Q.comp U.subtype) (Y.restrict hYU),
+      ∀ A₂ ∈ soCent (Q.comp U.subtype) (X.restrict hXU) ⊓
+        soCent (Q.comp U.subtype) (Y.restrict hYU), Commute A₁ A₂ := by
+  intro A₁ h₁ A₂ h₂
+  have z : ∀ (Z : Module.End K V) (hZ : Set.MapsTo Z U' U'),
+      (0 : Module.End K U') ∈ soCent (Q.comp U'.subtype) (Z.restrict hZ) := fun _ _ => zero_mem _
+  have m : ∀ A ∈ soCent (Q.comp U.subtype) (X.restrict hXU) ⊓
+      soCent (Q.comp U.subtype) (Y.restrict hYU), sumEnd h A 0 ∈ soCent Q X ⊓ soCent Q Y :=
+    fun A hA => ⟨sumEnd_mem_soCent horth h hXU hXU' hA.1 (z X hXU'),
+      sumEnd_mem_soCent horth h hYU hYU' hA.2 (z Y hYU')⟩
+  have hc := (hab _ (m A₁ h₁) _ (m A₂ h₂)).eq
+  refine LinearMap.ext fun u => Subtype.ext ?_
+  have := congrArg (fun F : Module.End K V => F u) hc
+  simpa only [Module.End.mul_apply, sumEnd_left] using this
+
+omit horth in
+/-- An endomorphism preserving `U` and `U'` is determined by its restrictions. -/
+theorem ext_of_restrict {A B : Module.End K V} (hAU : Set.MapsTo A U U) (hAU' : Set.MapsTo A U' U')
+    (hBU : Set.MapsTo B U U) (hBU' : Set.MapsTo B U' U')
+    (h1 : A.restrict hAU = B.restrict hBU) (h2 : A.restrict hAU' = B.restrict hBU') : A = B := by
+  refine LinearMap.ext fun v => ?_
+  obtain ⟨a, a', rfl, -⟩ := Submodule.existsUnique_add_of_isCompl h v
+  rw [map_add, map_add]
+  congr 1
+  · exact congrArg Subtype.val (LinearMap.congr_fun h1 a)
+  · exact congrArg Subtype.val (LinearMap.congr_fun h2 a')
+
+include hXU' hYU' in
+/-- **Combining the clauses over `V = U ⊥ U'`.** -/
+theorem jointClauses_of_split [FiniteDimensional K V]
+    (hM : ∀ M ∈ soCent Q X ⊓ soCent Q Y, Set.MapsTo M U U)
+    (hM' : ∀ M ∈ soCent Q X ⊓ soCent Q Y, Set.MapsTo M U' U')
+    (hH : ∀ g : Module.End K V, IsomCent.IsIsom (bform Q) g → Commute X g → Commute Y g →
+      Set.MapsTo g U U ∧ Set.MapsTo g U' U')
+    {ℓ₁ ℓ₂ : ℕ} (h₁ : JointClauses (Q.comp U.subtype) (X.restrict hXU) (Y.restrict hYU) ℓ₁)
+    (h₂ : JointClauses (Q.comp U'.subtype) (X.restrict hXU') (Y.restrict hYU') ℓ₂) :
+    JointClauses Q X Y (ℓ₁ + ℓ₂) := by
+  have hsplit := finrank_soCent_inf_eq_add horth h hXU hXU' hYU hYU' hM hM'
+  have horth' : ∀ y ∈ U', ∀ x ∈ U, bform Q y x = 0 := fun y hy x hx =>
+    bform_orth' horth ⟨y, hy⟩ ⟨x, hx⟩
+  obtain ⟨l₁, ab₁, nil₁, uni₁⟩ := h₁
+  obtain ⟨l₂, ab₂, nil₂, uni₂⟩ := h₂
+  have heq : finrank K ↥(soCent Q X ⊓ soCent Q Y) = ℓ₁ + ℓ₂ →
+      finrank K ↥(soCent (Q.comp U.subtype) (X.restrict hXU) ⊓
+        soCent (Q.comp U.subtype) (Y.restrict hYU)) = ℓ₁ ∧
+      finrank K ↥(soCent (Q.comp U'.subtype) (X.restrict hXU') ⊓
+        soCent (Q.comp U'.subtype) (Y.restrict hYU')) = ℓ₂ := fun he => by omega
+  have hres : ∀ M (hMC : M ∈ soCent Q X ⊓ soCent Q Y),
+      M.restrict (hM M hMC) ∈ soCent (Q.comp U.subtype) (X.restrict hXU) ⊓
+        soCent (Q.comp U.subtype) (Y.restrict hYU) ∧
+      M.restrict (hM' M hMC) ∈ soCent (Q.comp U'.subtype) (X.restrict hXU') ⊓
+        soCent (Q.comp U'.subtype) (Y.restrict hYU') := fun M hMC =>
+    ⟨⟨restrict_mem_soCent hXU hMC.1 _, restrict_mem_soCent hYU hMC.2 _⟩,
+      ⟨restrict_mem_soCent hXU' hMC.1 _, restrict_mem_soCent hYU' hMC.2 _⟩⟩
+  refine ⟨by omega, ⟨fun he M₁ hM₁ M₂ hM₂ => ?_, fun hab => ?_⟩, fun he M hMC hnil => ?_,
+    fun he g hg hnil hXg hYg => ?_⟩
+  · obtain ⟨e₁, e₂⟩ := heq he
+    have c₁ := ab₁.1 e₁ _ (hres M₁ hM₁).1 _ (hres M₂ hM₂).1
+    have c₂ := ab₂.1 e₂ _ (hres M₁ hM₁).2 _ (hres M₂ hM₂).2
+    refine ext_of_restrict h (fun x hx => hM M₁ hM₁ (hM M₂ hM₂ hx))
+      (fun x hx => hM' M₁ hM₁ (hM' M₂ hM₂ hx)) (fun x hx => hM M₂ hM₂ (hM M₁ hM₁ hx))
+      (fun x hx => hM' M₂ hM₂ (hM' M₁ hM₁ hx)) ?_ ?_
+    · exact LinearMap.ext fun x => congrArg (fun F : Module.End K U => F x) c₁.eq
+    · exact LinearMap.ext fun x => congrArg (fun F : Module.End K U' => F x) c₂.eq
+  · rw [hsplit, (ab₁.2 (commute_of_restrict_inf horth h hXU hXU' hYU hYU' hab)),
+      (ab₂.2 (commute_of_restrict_inf horth' h.symm hXU' hXU hYU' hYU hab))]
+  · obtain ⟨e₁, e₂⟩ := heq he
+    have n₁ := nil₁ e₁ _ (hres M hMC).1 (isNilpotent_restrict hnil _)
+    have n₂ := nil₂ e₂ _ (hres M hMC).2 (isNilpotent_restrict hnil _)
+    refine ext_of_restrict h (hM M hMC) (hM' M hMC) (fun x _ => zero_mem _) (fun x _ => zero_mem _)
+      (n₁.trans ?_) (n₂.trans ?_) <;> rfl
+  · obtain ⟨e₁, e₂⟩ := heq he
+    obtain ⟨gU, gU'⟩ := hH g hg hXg hYg
+    have hsU : Set.MapsTo ⇑(g - 1 : Module.End K V) U U := fun x hx => sub_mem (gU hx) hx
+    have hsU' : Set.MapsTo ⇑(g - 1 : Module.End K V) U' U' := fun x hx => sub_mem (gU' hx) hx
+    have hnilU : IsNilpotent (g.restrict gU - 1) := by
+      rw [show g.restrict gU - 1 = (g - 1).restrict hsU from LinearMap.ext fun _ => rfl]
+      exact isNilpotent_restrict hnil hsU
+    have hnilU' : IsNilpotent (g.restrict gU' - 1) := by
+      rw [show g.restrict gU' - 1 = (g - 1).restrict hsU' from LinearMap.ext fun _ => rfl]
+      exact isNilpotent_restrict hnil hsU'
+    have g₁ := uni₁ e₁ _ (fun x y => by simp only [bform_comp_subtype]; exact hg x y) hnilU
+      (LinearMap.restrict_commute hXg _ _) (LinearMap.restrict_commute hYg _ _)
+    have g₂ := uni₂ e₂ _ (fun x y => by simp only [bform_comp_subtype]; exact hg x y) hnilU'
+      (LinearMap.restrict_commute hXg _ _) (LinearMap.restrict_commute hYg _ _)
+    refine ext_of_restrict h gU gU' (fun x hx => hx) (fun x hx => hx) (g₁.trans ?_) (g₂.trans ?_)
+      <;> rfl
+
+end Transfer
+
 section Base
 
 variable {K : Type*} [Field K] [Invertible (2 : K)] [IsAlgClosed K]
