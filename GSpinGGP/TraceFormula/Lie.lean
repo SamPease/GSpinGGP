@@ -684,11 +684,6 @@ theorem jHat_zeroOrbit_eq_one (G : Subgroup Aˣ) (𝔤 : LieSubalgebra F A)
 
 end Generic
 
-theorem absF_one' : absF (1 : F) = 1 := by
-  rw [absF_of_ne_zero one_ne_zero]
-  have : Units.mk0 (1 : F) one_ne_zero = 1 := Units.ext rfl
-  rw [this, map_one]
-  rfl
 theorem probHaar_real_univ (Q : Type*) [Group Q] [TopologicalSpace Q] [IsTopologicalGroup Q]
     [MeasurableSpace Q] [BorelSpace Q] [CompactSpace Q] : (probHaar Q).real Set.univ = 1 := by
   unfold probHaar
@@ -1107,7 +1102,7 @@ theorem deltaGGP_eq_one (hV : IsHypPlane d.QV) (t : GSpin d.QW) : deltaGGP d t =
   unfold deltaGGP
   haveI : Subsingleton ↥(movedSub (scalarGSpin d.QW c)) := by
     rw [hm]; infer_instance
-  rw [LinearMap.det_eq_one_of_subsingleton, absF_one']
+  rw [LinearMap.det_eq_one_of_subsingleton, absF_one]
 
 /-- `D^G(g) = 1` (`Ad g` is trivial on `𝔤`). -/
 theorem weylDisc_eq_one (hV : IsHypPlane d.QV) (g : ↥d.G) :
@@ -1122,7 +1117,7 @@ theorem weylDisc_eq_one (hV : IsHypPlane d.QV) (g : ↥d.G) :
   have h0 : (conjAd F (g : d.ambientˣ)).toLinearEquiv.toLinearMap.restrict hst = 1 :=
     LinearMap.ext fun v => Subtype.ext (hconj (v : d.ambient) v.2)
   rw [h0, sub_self, LinearMap.charpoly_zero, Polynomial.trailingCoeff,
-    Polynomial.natTrailingDegree_X_pow, Polynomial.coeff_X_pow_self, absF_one']
+    Polynomial.natTrailingDegree_X_pow, Polynomial.coeff_X_pow_self, absF_one]
 
 theorem exists_isSelfDual_lie : ∃ μ, IsSelfDual μ (restrictForm d.lie d.bilin) ψ := by
   haveI := t2Space_of_moduleTopology F d.ambient

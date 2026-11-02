@@ -314,11 +314,11 @@ theorem toyD_weylDiscLie (X : (𝕋).ambient) : weylDiscLie (𝕋).lieZero X = 1
   have h0 : (LinearMap.mulLeft F X - LinearMap.mulRight F X).restrict hst = 0 :=
     LinearMap.ext fun v => Subsingleton.elim (α := ↥(𝕋).lieZero.toSubmodule) _ _
   rw [h0, LinearMap.charpoly_zero, Polynomial.trailingCoeff, Polynomial.natTrailingDegree_X_pow,
-    Polynomial.coeff_X_pow_self, absF_one']
+    Polynomial.coeff_X_pow_self, absF_one]
 
 theorem toyD_deltaLie (X : CliffordAlgebra (𝕋).QW) : (𝕋).deltaLie X = 1 := by
   unfold GGPData.deltaLie
-  rw [LinearMap.det_eq_one_of_subsingleton, absF_one']
+  rw [LinearMap.det_eq_one_of_subsingleton, absF_one]
 
 theorem toyD_diagLie_zero : (𝕋).diagLie 0 = 0 := by
   simp [GGPData.diagLie]

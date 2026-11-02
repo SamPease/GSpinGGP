@@ -100,6 +100,56 @@ lemma absF_haar [LocallyCompactSpace F] [MeasurableSpace F] [BorelSpace F]
   rw [absF_of_ne_zero ha, ENNReal.ofReal_coe_nnreal, distribHaarChar_mul]
   rfl
 
+/-- `|1|_F = 1`. -/
+lemma absF_one [LocallyCompactSpace F] : absF (1 : F) = 1 := by
+  rw [absF_of_ne_zero one_ne_zero]
+  have : Units.mk0 (1 : F) one_ne_zero = 1 := Units.ext rfl
+  rw [this, map_one]
+  rfl
+
+open scoped Pointwise in
+/-- `|u|_F = 1` for `‖u‖ = 1`: multiplication by `u` preserves the closed unit ball. -/
+theorem absF_eq_one_of_norm_eq_one [LocallyCompactSpace F] {u : F} (hu : ‖u‖ = 1) :
+    absF u = 1 := by
+  let _ : MeasurableSpace F := borel F
+  have : BorelSpace F := ⟨rfl⟩
+  have : ProperSpace F := .of_nontriviallyNormedField_of_weaklyLocallyCompactSpace F
+  have hu0 : u ≠ 0 := by rintro rfl; simp at hu
+  set μ : Measure F := Measure.addHaar
+  have hs : u • Metric.closedBall (0 : F) 1 = Metric.closedBall 0 1 := by
+    rw [smul_closedBall u (0 : F) zero_le_one, smul_zero, hu, mul_one]
+  have h := absF_haar μ hu0 (Metric.closedBall 0 1)
+  rw [hs] at h
+  have hpos := Metric.measure_closedBall_pos μ (0 : F) zero_lt_one
+  have hfin := (isCompact_closedBall (0 : F) 1).measure_lt_top (μ := μ)
+  have h1 : ENNReal.ofReal (absF u) = 1 := (ENNReal.mul_eq_right hpos.ne' hfin.ne).mp h.symm
+  rwa [ENNReal.ofReal_eq_one] at h1
+
+/-- `|a|_F` only depends on `‖a‖`. -/
+theorem absF_eq_of_norm_eq [LocallyCompactSpace F] {a b : F} (ha : a ≠ 0) (h : ‖b‖ = ‖a‖) :
+    absF b = absF a := by
+  have hb : b = a * (b / a) := by field_simp
+  rw [hb, absF_mul, absF_eq_one_of_norm_eq_one (u := b / a) ?_, mul_one]
+  rw [norm_div, h, div_self (norm_ne_zero_iff.mpr ha)]
+
+/-- Over an ultrametric local field, `|·|_F` is locally constant on `F^×`. -/
+theorem continuousAt_absF [LocallyCompactSpace F] [IsUltrametricDist F] {a : F} (ha : a ≠ 0) :
+    ContinuousAt absF a := by
+  have hpos : 0 < ‖a‖ := norm_pos_iff.mpr ha
+  refine (continuousAt_const (y := absF a)).congr ?_
+  filter_upwards [Metric.ball_mem_nhds a hpos] with b hb
+  rw [Metric.mem_ball, dist_eq_norm] at hb
+  refine (absF_eq_of_norm_eq ha ?_).symm
+  have := IsUltrametricDist.norm_add_eq_max_of_norm_ne_norm (ne_of_gt hb)
+  rwa [add_sub_cancel, max_eq_left hb.le] at this
+
+/-- A function that is eventually `|D|_F` for `D` continuous and nonzero at `x₀` is continuous at
+`x₀` (ultrametric `F`). -/
+theorem continuousAt_of_eventually_eq_absF [LocallyCompactSpace F] [IsUltrametricDist F]
+    {X : Type*} [TopologicalSpace X] {x₀ : X} {f : X → ℝ} {D : X → F} (hD : ContinuousAt D x₀)
+    (h0 : D x₀ ≠ 0) (hev : ∀ᶠ x in 𝓝 x₀, absF (D x) = f x) : ContinuousAt f x₀ :=
+  ((continuousAt_absF h0).comp hD).congr hev
+
 /-- A continuous nontrivial additive character `ψ : F → 𝕊¹` (Thesis §2.4). -/
 structure NontrivialAddChar (F : Type*) [NontriviallyNormedField F] where
   /-- the underlying additive character -/

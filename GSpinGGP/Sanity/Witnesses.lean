@@ -1529,12 +1529,6 @@ theorem toyD_thetaF {f : ↥(𝕋).G → ℂ} (hf : f ∈ ScuspTestFn (𝕋) χ)
 
 /-! ### The geometric side for the toy datum -/
 
-theorem absF_one' : absF (1 : F) = 1 := by
-  rw [absF_of_ne_zero one_ne_zero]
-  have : Units.mk0 (1 : F) one_ne_zero = 1 := Units.ext rfl
-  rw [this, map_one]
-  rfl
-
 instance toyD_subsingleton_W : Subsingleton (Fin (𝕋).m → F) :=
   (inferInstance : Subsingleton (Fin 0 → F))
 
@@ -1603,7 +1597,7 @@ theorem probHaar_real_univ (Q : Type*) [Group Q] [TopologicalSpace Q] [IsTopolog
 /-- `Δ(t) = 1` (`W'' = 0`). -/
 theorem toyD_deltaGGP (t : GSpin (𝕋).QW) : deltaGGP (𝕋) t = 1 := by
   unfold deltaGGP
-  rw [LinearMap.det_eq_one_of_subsingleton, absF_one']
+  rw [LinearMap.det_eq_one_of_subsingleton, absF_one]
 
 /-- `D^G(t) = 1` for the toy datum (`Ad t` is trivial on the commutative ambient algebra). -/
 theorem toyD_weylDisc (x : (𝕋).ambientˣ) : weylDisc (𝕋).lie x = 1 := by
@@ -1616,7 +1610,7 @@ theorem toyD_weylDisc (x : (𝕋).ambientˣ) : weylDisc (𝕋).lie x = 1 := by
   have h0 : (conjAd F x).toLinearEquiv.toLinearMap.restrict hst = 1 :=
     LinearMap.ext fun v => Subtype.ext (hconj (v : (𝕋).ambient))
   rw [h0, sub_self, LinearMap.charpoly_zero, Polynomial.trailingCoeff, Polynomial.natTrailingDegree_X_pow,
-    Polynomial.coeff_X_pow_self, absF_one']
+    Polynomial.coeff_X_pow_self, absF_one]
 
 
 /-- The trace form `b(X,Y) = tr(L_{XY})` of a GGP datum is symmetric (`tr(L_X L_Y) = tr(L_Y L_X)`). -/
