@@ -107,59 +107,6 @@ theorem exists_lift_skew (hQ : IsNondeg Q) (Y : Module.End K V)
     rw [show (2 : K) - -2 = 2 * 2 by ring, mul_mul_mul_comm, invOf_mul_self, one_mul]
   rw [h4, one_smul]
 
-/-- **The lift commutes with `g`** when `P(g)` commutes with `Y`: `g Ŷ g⁻¹ − Ŷ` is even and commutes
-with `ι(V)`, hence a scalar, and it is traceless. -/
-theorem commute_of_lift (hQ : IsNondeg Q) (g : GSpin Q) {Y : Module.End K V}
-    (hYc : Commute (specP Q g : V →ₗ[K] V) Y) {Yh : CliffordAlgebra Q} (hYh0 : Yh ∈ gspin Q)
-    (hYh : ∀ v, Yh * ι Q v - ι Q v * Yh = ι Q (Y v)) :
-    ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * Yh =
-      Yh * ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) := by
-  set a : CliffordAlgebra Q := ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)
-  set b : CliffordAlgebra Q :=
-    (((g : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)
-  have hba : b * a = 1 := Units.inv_mul _
-  have hab : a * b = 1 := Units.mul_inv _
-  have hb0 : b ∈ even Q := (g⁻¹ : GSpin Q).2.1
-  set D := a * Yh * b - Yh with hD
-  have hDc : ∀ v, ι Q v * D = D * ι Q v := by
-    intro v
-    set u := specP Q g⁻¹ v
-    have hv : ι Q v = a * ι Q u * b := by
-      rw [← ι_specP, specP_inv_apply_apply]
-    have hYv : Y v = specP Q g (Y u) := by
-      have := LinearMap.congr_fun hYc.eq u
-      simp only [Module.End.mul_apply, LinearEquiv.coe_coe] at this
-      rw [this, specP_inv_apply_apply]
-    have e1 : a * Yh * b * (a * ι Q u * b) = a * (Yh * ι Q u) * b := by
-      simp only [mul_assoc]; rw [← mul_assoc b a, hba, one_mul]
-    have e2 : a * ι Q u * b * (a * Yh * b) = a * (ι Q u * Yh) * b := by
-      simp only [mul_assoc]; rw [← mul_assoc b a, hba, one_mul]
-    have h1 : a * Yh * b * ι Q v - ι Q v * (a * Yh * b) = ι Q (Y v) := by
-      rw [hv, e1, e2, ← sub_mul, ← mul_sub, hYh, hYv, ι_specP]
-    have h2 := hYh v
-    rw [hD, mul_sub, sub_mul]
-    rw [← sub_eq_zero]
-    rw [show ι Q v * (a * Yh * b) - ι Q v * Yh - (a * Yh * b * ι Q v - Yh * ι Q v) =
-      (Yh * ι Q v - ι Q v * Yh) - (a * Yh * b * ι Q v - ι Q v * (a * Yh * b)) by abel, h1, h2,
-      sub_self]
-  have hD0 : D ∈ evenOdd Q 0 := by
-    rw [← even_toSubmodule]
-    exact Subalgebra.sub_mem _ (Subalgebra.mul_mem _ (Subalgebra.mul_mem _ g.2.1 hYh0.1) hb0)
-      hYh0.1
-  obtain ⟨r, hr⟩ := eq_algebraMap_of_commute_ι hQ hD0 hDc
-  have htr : cliffTrace Q D = 0 := by
-    rw [hD, sub_eq_add_neg, cliffTrace_add,
-      show cliffTrace Q (a * Yh * b) = cliffTrace Q (b * (a * Yh)) from trace_mulLeft_comm Q _ _,
-      ← mul_assoc, hba, one_mul, ← neg_one_smul K Yh, cliffTrace_smul]
-    ring
-  have hr0 : r = 0 := by
-    rw [hr, Algebra.algebraMap_eq_smul_one, cliffTrace_smul, cliffTrace_one] at htr
-    exact (mul_eq_zero.mp htr).resolve_right (cast_finrank_cliffordAlgebra_ne_zero Q)
-  have hD' : a * Yh * b = Yh := by
-    rw [← sub_eq_zero, ← hD, hr, hr0, map_zero]
-  calc a * Yh = a * Yh * b * a := by rw [mul_assoc _ b, hba, mul_one]
-    _ = Yh * a := by rw [hD']
-
 end Lift
 
 namespace GGPData
