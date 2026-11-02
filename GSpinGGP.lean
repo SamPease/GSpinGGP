@@ -2,6 +2,7 @@ import GSpinGGP.Foundations.LocalGroups
 import GSpinGGP.Foundations.RankSemicontinuity
 import GSpinGGP.Foundations.JHatTranslate
 import GSpinGGP.Foundations.ExpLocal
+import GSpinGGP.Foundations.GSpinExp
 import GSpinGGP.Foundations.Representations
 import GSpinGGP.Foundations.GSpin
 import GSpinGGP.Foundations.QuadraticForms
