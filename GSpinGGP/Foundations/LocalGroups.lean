@@ -697,24 +697,19 @@ lemma exists_natCast_norm_lt_one : ∃ m : ℕ, 0 < ‖(m : F)‖ ∧ ‖(m : F)
 local notation "VA" => (Fin (Module.finrank F A) → F)
 
 set_option backward.isDefEq.respectTransparency false in
-/-- **The centralizer of `e^X` is that of `X`** for `X` near `0` (one inclusion; the other is
-`commute_expA_of_commute`).  Proof: if `Y` commutes with `e^X` it commutes with
-`e^{mX} = (e^X)^m` for `m ∈ ℕ`, hence with `(e^{sX} - 1)/s` for `s = m^k`; choosing `|m| < 1`, these
-tend to the derivative `X` of `s ↦ e^{sX}` at `0`.  Computed in `End(F^d)` via `lmulPi`. -/
-lemma exists_nhds_commute_of_commute_expA :
-    ∃ U ∈ 𝓝 (0 : A), ∀ X ∈ U, ∀ Y : A, Commute Y (expA F X) → Commute Y X := by
+/-- **Subalgebras are detected by `exp` near `0`**: there is a neighbourhood `U` of `0` such that
+for `X ∈ U` and every subalgebra `P` of `A`, `e^X ∈ P` implies `X ∈ P`.  Proof: `e^{nX} = (e^X)^n`
+lies in `P`, and for `|m| < 1` the difference quotients `(e^{m^k X} − 1)/m^k ∈ P` tend to `X`;
+`P` is closed (finite-dimensional).  Computed in `End(F^d)` via `lmulPi`. -/
+lemma exists_nhds_mem_of_expA_mem :
+    ∃ U ∈ 𝓝 (0 : A), ∀ X ∈ U, ∀ P : Subalgebra F A, expA F X ∈ P → X ∈ P := by
   letI := isTopologicalRing_of_moduleTopology F A
+  haveI := t2Space_of_moduleTopology F A
   obtain ⟨U, hU, -, h⟩ := expA_aux F (A := A)
-  refine ⟨U, hU, fun X hX Y hY => ?_⟩
+  refine ⟨U, hU, fun X hX P hP => ?_⟩
   obtain ⟨hb, -, he⟩ := h X hX
   set L := lmulPi F X
-  set M := lmulPi F Y
   set r := (NormedSpace.expSeries F (VA →L[F] VA)).radius
-  have hML : Commute M (NormedSpace.exp L) := by
-    rw [← he]
-    change M * lmulPi F (expA F X) = lmulPi F (expA F X) * M
-    rw [← lmulPi_mul, ← lmulPi_mul, hY.eq]
-  -- scalar multiples of `L` by elements of norm `≤ 1` stay in the ball of convergence
   have hball : ∀ c : F, ‖c‖ ≤ 1 → c • L ∈ Metric.eball (0 : VA →L[F] VA) r := by
     intro c hc
     rw [Metric.mem_eball, edist_zero_right] at hb ⊢
@@ -735,10 +730,9 @@ lemma exists_nhds_commute_of_commute_expA :
     | zero => rw [zero_nsmul, NormedSpace.exp_zero, pow_zero]
     | succ n ih =>
       rw [succ_nsmul, NormedSpace.exp_add_of_commute_of_mem_ball (𝕂 := F)
-          (by rw [nsmul_eq_mul]; exact (Nat.cast_commute n L).mul_left (Commute.refl L)) (hballn n) hb, ih, pow_succ]
+          (by rw [nsmul_eq_mul]; exact (Nat.cast_commute n L).mul_left (Commute.refl L))
+          (hballn n) hb, ih, pow_succ]
   -- the derivative of `s ↦ e^{sL}` at `0` is `L`
-  have h0 : (0 : F) • L ∈ Metric.eball (0 : VA →L[F] VA) r := by
-    simpa using hball 0 (by simp)
   have hd : HasDerivAt (fun u : F => NormedSpace.exp (u • L)) L 0 := by
     have h1 : HasDerivAt (fun u : F => u • L) L 0 := by
       simpa using (hasDerivAt_id (0 : F)).smul_const L
@@ -760,23 +754,36 @@ lemma exists_nhds_commute_of_commute_expA :
     · simp only [s, Nat.cast_pow, Set.mem_compl_iff, Set.mem_singleton_iff]
       exact pow_ne_zero _ (norm_pos_iff.mp hm0)
   have hlim := hderiv.comp hs
-  have hclosed : IsClosed {Z : VA →L[F] VA | M * Z = Z * M} :=
-    isClosed_eq (continuous_const.mul continuous_id) (continuous_id.mul continuous_const)
-  have hsmulL : ∀ (c : F) (W : VA →L[F] VA), M * (c • W) = c • (M * W) := fun c W => by
-    ext v; simp
-  have hsmulR : ∀ (c : F) (W : VA →L[F] VA), (c • W) * M = c • (W * M) := fun c W => by
-    ext v; simp
-  have hML' : M * L = L * M := by
+  have hclosedP : IsClosed (P : Set A) := (Subalgebra.toSubmodule P).closed_of_finiteDimensional
+  have hclosed : IsClosed {Z : VA →L[F] VA | lmulPiInv F Z ∈ P} :=
+    hclosedP.preimage (lmulPiInv F).continuous
+  have hexpn : ∀ n : ℕ, lmulPiInv F (NormedSpace.exp L ^ n) = expA F X ^ n := by
+    intro n
+    rw [← he, ← lmulPi_pow, lmulPiInv_lmulPi]
+  have hL : lmulPiInv F L ∈ P := by
     refine hclosed.mem_of_tendsto hlim (Eventually.of_forall fun k => ?_)
     simp only [Function.comp_apply, Set.mem_ofPred_eq, s]
     have hk : ((m ^ k : ℕ) : F) • L = (m ^ k) • L := by
       rw [← Nat.cast_smul_eq_nsmul F]
-    rw [hk, hpow, hsmulL, hsmulR, ((hML.pow_right _).sub_right (Commute.one_right M)).eq]
-  have hA : lmulPi F (Y * X) = lmulPi F (X * Y) := by
-    rw [lmulPi_mul, lmulPi_mul]; exact hML'
-  have := congrArg (lmulPiInv F) hA
-  rw [lmulPiInv_lmulPi, lmulPiInv_lmulPi] at this
-  exact this
+    rw [hk, hpow, map_smul, map_sub, hexpn, show lmulPiInv F (1 : VA →L[F] VA) = (1 : A) by
+      rw [← lmulPi_one F (A := A), lmulPiInv_lmulPi]]
+    exact Subalgebra.smul_mem _ (Subalgebra.sub_mem _ (Subalgebra.pow_mem _ hP _)
+      (Subalgebra.one_mem _)) _
+  rwa [lmulPiInv_lmulPi] at hL
+
+set_option backward.isDefEq.respectTransparency false in
+/-- **The centralizer of `e^X` is that of `X`** for `X` near `0` (one inclusion; the other is
+`commute_expA_of_commute`): the case `P = Z(Y)` of `exists_nhds_mem_of_expA_mem`. -/
+lemma exists_nhds_commute_of_commute_expA :
+    ∃ U ∈ 𝓝 (0 : A), ∀ X ∈ U, ∀ Y : A, Commute Y (expA F X) → Commute Y X := by
+  obtain ⟨U, hU, h⟩ := exists_nhds_mem_of_expA_mem F (A := A)
+  refine ⟨U, hU, fun X hX Y hY => ?_⟩
+  have hmem := h X hX (Subalgebra.centralizer F {Y}) (by
+    rw [Subalgebra.mem_centralizer_iff]
+    rintro _ rfl
+    exact hY.eq)
+  rw [Subalgebra.mem_centralizer_iff] at hmem
+  exact hmem Y rfl
 
 /-- Near `0`, `e^X` lies in the subalgebra `F[X]` (a closed subspace; the exponential series
 converges there, `expA_hasSum`). -/

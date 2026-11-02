@@ -14,8 +14,8 @@ import GSpinGGP.Foundations.Representations
   (separation by locally constant functions, `ae_eq_zero_of_integral_isLocallyConstant`, and
   continuity on the regular set);
 * `jHat_add_eq`: `ĵ(O, X + Y) = ĵ(O, X)` for `X` regular and `Y ∈ 𝔤` with `b(Y, N) = 0` for every
-  nilpotent `N ∈ 𝔤` (e.g. `Y` central in `𝔤` and `b` a trace form), when translation by `Y`
-  preserves the regular set.  Proof: `Z ↦ ĵ(O, Z + Y)` represents `f ↦ μ_O((f(· − Y))^)`, and
+  nilpotent `N ∈ 𝔤` (e.g. `Y` central in `𝔤` and `b` a trace form), when `Z + Y` is regular
+  iff `Z` is, at points `X` of an open set of regular elements.  Proof: `Z ↦ ĵ(O, Z + Y)` represents `f ↦ μ_O((f(· − Y))^)`, and
   `(f(· − Y))^ = ψ(b(Y, ·)) f̂` is `f̂` on the nilpotent orbit `O`.
 
 These hold over any `p`-adic field; the measure-theoretic hypotheses on `𝔤` (local compactness,
@@ -74,7 +74,8 @@ theorem NontrivialAddChar.map_zero (ψ : NontrivialAddChar F) : ψ 0 = 1 := by
   rw [AddChar.map_zero_eq_one, Circle.coe_one]
 
 /-- **`ĵ(O, ·)` is invariant under translation by `Y`** with `b(Y, N) = 0` for every nilpotent
-`N ∈ 𝔤`, at regular points (on an open set of regular elements stable under `· + Y`). -/
+`N ∈ 𝔤`, at every point `X` of an open set of regular elements, when `Z + Y` is regular iff `Z`
+is. -/
 theorem jHat_add_eq {G : Subgroup Aˣ} {𝔤 : LieSubalgebra F A} {b : LinearMap.BilinForm F A}
     {ψ : NontrivialAddChar F} (O : NilOrbit G 𝔤)
     [T2Space ↥𝔤] [IsTopologicalAddGroup ↥𝔤] [MeasurableAdd ↥𝔤]
