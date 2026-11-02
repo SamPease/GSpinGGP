@@ -333,42 +333,42 @@ theorem isSplitFamily_extFamily {w : ℤ → V} {h : ℕ → V} {ν : K} {k s : 
   obtain hi' | hi' | hi' : |i| ≤ k ∨ (k : ℤ) < i ∨ i < -k := by rw [abs_le]; omega
   all_goals obtain hj' | hj' | hj' : |j| ≤ k ∨ (k : ℤ) < j ∨ j < -k := by rw [abs_le]; omega
   all_goals simp only [extFamily]
-  · rw [if_pos hi', if_pos hj', hw i j hi' hj']
+  · rw [ite_eq_left hi', ite_eq_left hj', hw i j hi' hj']
   · have hj1 : ¬ |j| ≤ k := by rw [abs_le]; omega
-    rw [if_pos hi', if_neg hj1, if_pos (by omega), map_smul, hwh i hi' _ (by omega), smul_zero,
-      if_neg (by rw [abs_le] at hi'; omega)]
+    rw [ite_eq_left hi', ite_eq_right hj1, ite_eq_left (by omega), map_smul, hwh i hi' _ (by omega), smul_zero,
+      ite_eq_right (by rw [abs_le] at hi'; omega)]
   · have hj1 : ¬ |j| ≤ k := by rw [abs_le]; omega
-    rw [if_pos hi', if_neg hj1, if_neg (by omega), hwh i hi' _ (by omega),
-      if_neg (by rw [abs_le] at hi'; omega)]
+    rw [ite_eq_left hi', ite_eq_right hj1, ite_eq_right (by omega), hwh i hi' _ (by omega),
+      ite_eq_right (by rw [abs_le] at hi'; omega)]
   · have hi1 : ¬ |i| ≤ k := by rw [abs_le]; omega
-    rw [if_neg hi1, if_pos (by omega), if_pos hj', hsymm, map_smul, LinearMap.smul_apply,
-      hwh j hj' _ (by omega), smul_zero, if_neg (by rw [abs_le] at hj'; omega)]
+    rw [ite_eq_right hi1, ite_eq_left (by omega), ite_eq_left hj', hsymm, map_smul,
+      hwh j hj' _ (by omega), smul_zero, ite_eq_right (by rw [abs_le] at hj'; omega)]
   · have hi1 : ¬ |i| ≤ k := by rw [abs_le]; omega
     have hj1 : ¬ |j| ≤ k := by rw [abs_le]; omega
-    rw [if_neg hi1, if_pos (by omega), if_neg hj1, if_pos (by omega), map_smul, map_smul,
-      LinearMap.smul_apply, hh _ _ (by omega) (by omega), if_neg (by omega), if_neg (by omega)]
+    rw [ite_eq_right hi1, ite_eq_left (by omega), ite_eq_right hj1, ite_eq_left (by omega), map_smul, map_smul,
+      LinearMap.smul_apply, hh _ _ (by omega) (by omega), ite_eq_right (by omega), ite_eq_right (by omega)]
     simp
   · have hi1 : ¬ |i| ≤ k := by rw [abs_le]; omega
     have hj1 : ¬ |j| ≤ k := by rw [abs_le]; omega
-    rw [if_neg hi1, if_pos (by omega), if_neg hj1, if_neg (by omega), map_smul,
+    rw [ite_eq_right hi1, ite_eq_left (by omega), ite_eq_right hj1, ite_eq_right (by omega), map_smul,
       LinearMap.smul_apply, hh _ _ (by omega) (by omega)]
     by_cases hij : i + j = 0
-    · rw [if_pos (by omega), if_pos hij, smul_eq_mul, mul_one]
-    · rw [if_neg (by omega), if_neg hij, smul_zero]
+    · rw [ite_eq_left (by omega), ite_eq_left hij, smul_eq_mul, mul_one]
+    · rw [ite_eq_right (by omega), ite_eq_right hij, smul_zero]
   · have hi1 : ¬ |i| ≤ k := by rw [abs_le]; omega
-    rw [if_neg hi1, if_neg (by omega), if_pos hj', hsymm, hwh j hj' _ (by omega),
-      if_neg (by rw [abs_le] at hj'; omega)]
+    rw [ite_eq_right hi1, ite_eq_right (by omega), ite_eq_left hj', hsymm, hwh j hj' _ (by omega),
+      ite_eq_right (by rw [abs_le] at hj'; omega)]
   · have hi1 : ¬ |i| ≤ k := by rw [abs_le]; omega
     have hj1 : ¬ |j| ≤ k := by rw [abs_le]; omega
-    rw [if_neg hi1, if_neg (by omega), if_neg hj1, if_pos (by omega), map_smul,
+    rw [ite_eq_right hi1, ite_eq_right (by omega), ite_eq_right hj1, ite_eq_left (by omega), map_smul,
       hh _ _ (by omega) (by omega)]
     by_cases hij : i + j = 0
-    · rw [if_pos (by omega), if_pos hij, smul_eq_mul, mul_one]
-    · rw [if_neg (by omega), if_neg hij, smul_zero]
+    · rw [ite_eq_left (by omega), ite_eq_left hij, smul_eq_mul, mul_one]
+    · rw [ite_eq_right (by omega), ite_eq_right hij, smul_zero]
   · have hi1 : ¬ |i| ≤ k := by rw [abs_le]; omega
     have hj1 : ¬ |j| ≤ k := by rw [abs_le]; omega
-    rw [if_neg hi1, if_neg (by omega), if_neg hj1, if_neg (by omega),
-      hh _ _ (by omega) (by omega), if_neg (by omega), if_neg (by omega)]
+    rw [ite_eq_right hi1, ite_eq_right (by omega), ite_eq_right hj1, ite_eq_right (by omega),
+      hh _ _ (by omega) (by omega), ite_eq_right (by omega), ite_eq_right (by omega)]
 
 end Extend
 
