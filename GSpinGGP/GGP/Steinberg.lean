@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Literature.GSpin
 import GSpinGGP.GGP.CentralizerSign
+import GSpinGGP.GGP.PairBlock
 import GSpinGGP.GGP.IsometryDet
 import GSpinGGP.GGP.TorusTransfer
 
@@ -180,23 +181,12 @@ theorem negFixedSub_eq_eigenspace (x : GSpin Q) :
   ext v
   simp [negFixedSub, Module.End.mem_eigenspace_iff, add_eq_zero_iff_eq_neg]
 
-theorem isIsom_specP (g : GSpin Q) : IsIsom (bform Q) (specP Q g : V →ₗ[K] V) :=
-  fun u v => bform_specP g u v
-
 theorem det_restrict_eq {W : Type*} [AddCommGroup W] [Module K W] {f f' : W →ₗ[K] W}
     {E E' : Submodule K W} (hf : f = f') (hE : E = E') (h : Set.MapsTo f E E)
     (h' : Set.MapsTo f' E' E') : LinearMap.det (f.restrict h) = LinearMap.det (f'.restrict h') := by
   subst hf hE; rfl
 
-theorem commute_toLinearMap {g x : GSpin Q} (h : Commute (specP Q g) (specP Q x)) :
-    Commute (specP Q x : V →ₗ[K] V) (specP Q g : V →ₗ[K] V) :=
-  LinearMap.ext fun v => congrArg (fun e : V ≃ₗ[K] V => e v) h.eq.symm
-
 /-! ### Reflections in eigenvectors of `P(x)` at `±1` -/
-
-theorem polar_specP (g : GSpin Q) (u v : V) :
-    QuadraticMap.polar Q (specP Q g u) (specP Q g v) = QuadraticMap.polar Q u v := by
-  simp only [QuadraticMap.polar, ← map_add, specP_isometry]
 
 /-- `E₁ ⊥ E₋₁`. -/
 theorem polar_eq_zero_of_mem_eigenspace {x : GSpin Q} {u v : V}
@@ -337,20 +327,17 @@ theorem exists_gspin_list_prod :
 
 /-- **Pair blocks are sign-trivial**: an element of `GSpin(V)` whose image commutes with `P(x)` and
 is the identity on `E₁ ⊕ E₋₁` commutes with `x` (over an algebraically closed field).
-
-**Status: `sorry`, own derivation (no literature input).** Proof sketch: `π = P(g)` acts on each
-`E_μ ⊕ E_{μ⁻¹}` (`μ ≠ ±1`) as `(A, A^{-*})` with `A ∈ GL(E_μ)`. Eichler transvections `E_{u,w}`
-(`u ∈ E_μ`, `w ∈ E_{μ⁻¹}`, `polar(u, w) = 0`; Tau Ceti `TauCeti.QuadraticMap.transvection`) commute
-with `P(x)` and are squares, `E_{u,w} = E_{u,w/2}²`; so are the torus elements `(d, d⁻¹)` of a hyperbolic
-pair `e ∈ E_μ`, `f ∈ E_{μ⁻¹}` (take `√d`). These generate the blocks, and squares are sign-trivial
-(`CentralizerSign.signTrivial_sq`), as are products (`CentralizerSign.SignTrivial.mul`). -/
+Proved in `PairBlock.commute_of_fix`: the elements `1 + s ι(u) ι(w)` (`u ∈ E_μ`, `w ∈ E_{μ⁻¹}`)
+commute with `x` and realize every invertible endomorphism of `E_μ`, so `g` agrees with a product
+of them up to a scalar. -/
 theorem commute_of_fix [CharZero K] [IsAlgClosed K] [FiniteDimensional K V]
     (hQ : IsNondeg Q) (x : GSpin Q) (hx : Module.End.IsSemisimple (specP Q x : V →ₗ[K] V))
     (g : GSpin Q) (hc : Commute (specP Q g) (specP Q x))
     (h1 : ∀ v ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) 1, specP Q g v = v)
     (h2 : ∀ v ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) (-1), specP Q g v = v) :
     Commute g x := by
-  sorry
+  classical
+  exact PairBlock.commute_of_fix hQ hx g hc h1 h2
 
 /-- **The sign is `det P(g)|_{W₋₁}`**, over an algebraically closed field: for `P(g)` commuting
 with a semisimple `x̄ = P(x)`, `g` commutes with `x` iff `det P(g)|_{W₋₁} = 1`. -/
