@@ -965,20 +965,25 @@ theorem indicator_mem_testFunctions [T2Space G] {V : Set G} (hVc : IsCompact V)
 variable [T2Space G] [LocallyCompactSpace G] [TotallyDisconnectedSpace G] [MeasurableSpace G]
   [BorelSpace G]
 
-/-- Separation lemma, for a general outer regular measure finite on compacts: on a totally
-disconnected, locally compact, σ-compact group, a locally integrable `θ` with `∫ θ f = 0` for all
-test functions `f` vanishes almost everywhere.
-
-σ-compactness is needed: for a non-σ-compact group Haar measure is not σ-finite and "locally
-null" no longer implies "null" (it holds for `GSpin(F)`, a closed subgroup of `GL_N(F)`). -/
-theorem ae_eq_zero_of_integral_testFunctions' [SigmaCompactSpace G] {μ : Measure G}
-    [IsFiniteMeasureOnCompacts μ] [μ.OuterRegular] {θ : G → ℂ} (hθ : LocallyIntegrable θ μ)
-    (h : ∀ f ∈ testFunctions G, ∫ g, θ g * f g ∂μ = 0) : θ =ᵐ[μ] 0 := by
+omit [Group G] [TopologicalSpace G] [T2Space G] [LocallyCompactSpace G] [TotallyDisconnectedSpace G]
+  [MeasurableSpace G] [BorelSpace G] in
+/-- **Separation by locally constant functions**: on a totally disconnected, locally compact,
+σ-compact Hausdorff space, for an outer regular measure finite on compacts, a locally integrable
+`θ` with `∫ θ f = 0` for all locally constant compactly supported `f` vanishes almost everywhere. -/
+theorem ae_eq_zero_of_integral_isLocallyConstant {X : Type*} [TopologicalSpace X] [T2Space X]
+    [LocallyCompactSpace X] [TotallyDisconnectedSpace X] [MeasurableSpace X] [BorelSpace X]
+    [SigmaCompactSpace X] {μ : Measure X} [IsFiniteMeasureOnCompacts μ] [μ.OuterRegular]
+    {θ : X → ℂ} (hθ : LocallyIntegrable θ μ)
+    (h : ∀ f : X → ℂ, IsLocallyConstant f → HasCompactSupport f → ∫ g, θ g * f g ∂μ = 0) :
+    θ =ᵐ[μ] 0 := by
   -- step 1: `∫_V θ = 0` for compact open `V`
-  have hVint : ∀ V : Set G, IsCompact V → IsClopen V → ∫ g in V, θ g ∂μ = 0 := by
+  have hVint : ∀ V : Set X, IsCompact V → IsClopen V → ∫ g in V, θ g ∂μ = 0 := by
     intro V hVc hVo
-    have := h _ (indicator_mem_testFunctions hVc hVo)
-    have heq : (fun g => θ g * V.indicator (1 : G → ℂ) g) = V.indicator θ := by
+    have := h (V.indicator (1 : X → ℂ)) (by
+      rw [← LocallyConstant.coe_charFn ℂ hVo]
+      exact (LocallyConstant.charFn ℂ hVo).isLocallyConstant)
+      (HasCompactSupport.intro' hVc hVc.isClosed fun x hx => Set.indicator_of_notMem hx _)
+    have heq : (fun g => θ g * V.indicator (1 : X → ℂ) g) = V.indicator θ := by
       funext g
       by_cases hg : g ∈ V <;> simp [hg]
     rw [heq, integral_indicator hVo.isClosed.measurableSet] at this
@@ -990,10 +995,10 @@ theorem ae_eq_zero_of_integral_testFunctions' [SigmaCompactSpace G] {μ : Measur
     K.exists_isOpen_lt_of_lt _
       (ENNReal.lt_add_right hμK.ne (ENNReal.inv_ne_zero.2 (ENNReal.natCast_ne_top n)))
   choose U hKU hUo hUμ using hU
-  have hV : ∀ n, ∃ V : Set G, IsCompact V ∧ IsClopen V ∧ K ⊆ V ∧ V ⊆ U n := fun n =>
+  have hV : ∀ n, ∃ V : Set X, IsCompact V ∧ IsClopen V ∧ K ⊆ V ∧ V ⊆ U n := fun n =>
     exists_isCompact_isClopen_between hK (hUo n) (hKU n)
   choose V hVc hVo hKV hVU using hV
-  set W : ℕ → Set G := fun n => ⋂ i ∈ Finset.range (n + 1), V i with hWdef
+  set W : ℕ → Set X := fun n => ⋂ i ∈ Finset.range (n + 1), V i with hWdef
   have hWo : ∀ n, IsClopen (W n) := fun n => isClopen_biInter_finset fun i _ => hVo i
   have hWV : ∀ n, ∀ i ≤ n, W n ⊆ V i := fun n i hi =>
     Set.biInter_subset_of_mem (Finset.mem_range.2 (Nat.lt_succ_of_le hi))
@@ -1020,10 +1025,22 @@ theorem ae_eq_zero_of_integral_testFunctions' [SigmaCompactSpace G] {μ : Measur
         _ = μ (U n) - μ K := measure_sdiff (hKU n) hK.measurableSet.nullMeasurableSet hμK.ne
         _ ≤ (n : ℝ≥0∞)⁻¹ := (ENNReal.sub_lt_of_lt_add (measure_mono (hKU n)) (by rw [add_comm]; exact hUμ n)).le
     exact le_antisymm (ge_of_tendsto' ENNReal.tendsto_inv_nat_nhds_zero hle) bot_le
-  have hae : (⋂ n, W n : Set G) =ᵐ[μ] K := by
+  have hae : (⋂ n, W n : Set X) =ᵐ[μ] K := by
     refine (ae_eq_set.2 ⟨hnull, ?_⟩)
     rw [Set.sdiff_eq_empty.2 hKW, measure_empty]
   rw [← setIntegral_congr_set hae, h0]
+
+
+/-- Separation lemma, for a general outer regular measure finite on compacts: on a totally
+disconnected, locally compact, σ-compact group, a locally integrable `θ` with `∫ θ f = 0` for all
+test functions `f` vanishes almost everywhere (`ae_eq_zero_of_integral_isLocallyConstant`).
+
+σ-compactness is needed: for a non-σ-compact group Haar measure is not σ-finite and "locally
+null" no longer implies "null" (it holds for `GSpin(F)`, a closed subgroup of `GL_N(F)`). -/
+theorem ae_eq_zero_of_integral_testFunctions' [SigmaCompactSpace G] {μ : Measure G}
+    [IsFiniteMeasureOnCompacts μ] [μ.OuterRegular] {θ : G → ℂ} (hθ : LocallyIntegrable θ μ)
+    (h : ∀ f ∈ testFunctions G, ∫ g, θ g * f g ∂μ = 0) : θ =ᵐ[μ] 0 :=
+  ae_eq_zero_of_integral_isLocallyConstant hθ fun f hf hc => h f ⟨hf, hc⟩
 
 /-- Separation lemma for Haar measure: on a totally disconnected, locally
 compact, σ-compact group (e.g. `GSpin(F)` for `p`-adic `F`), a locally integrable `θ` with

@@ -1092,9 +1092,11 @@ small (central in `𝔤_t`), `θ(t' e^X) = θ(t e^{X+Y})`, and `ĵ(O, X + Y) = �
 the same coefficients, while `O_{t'} = O_t`.  Missing inputs: (1) germ expansions at `t e^Y`
 derived from those at `t` for `Y` central only in `𝔤_t` (`germ_eq_germ_of_translate` covers
 translation by central elements of `G`); (2) the invariance `ĵ(O, X + Y) = ĵ(O, X)` for such `Y`;
-(3) `O_{t'} = O_t`: proved, `orbitChoice_heq_of_torusOf_eq`.  For (2), `b(Y, N) = 0` is
-`bilin_eq_zero_of_commute_of_isNilpotent`; what is missing is the uniqueness of the function
-representing `μ_O(f̂)` on the regular set.  For (1), writing `t' = t e^Y` needs a logarithm near `1`
+(3) `O_{t'} = O_t`: proved, `orbitChoice_heq_of_torusOf_eq`.  (2) is `jHat_add_eq` (with
+`bilin_eq_zero_of_commute_of_isNilpotent`), applied to `𝔥 = 𝔤_t`; what is missing there is its
+hypotheses for `𝔤_t`: `IsSelfDual` for `b|_{𝔤_t}`, the topological and measure-theoretic instances on
+`𝔤_t` (local compactness, total disconnectedness, σ-compactness, outer regularity), an open set of
+regular elements of `𝔤_t` around `X`, and `X + Y` regular iff `X` is.  For (1), writing `t' = t e^Y` needs a logarithm near `1`
 in `C(W) × C(V)` and `e^Y e^X = e^{X+Y}` for commuting `X, Y`.
 Literature: Waldspurger 2010 (Compositio 146; arXiv:0902.1875, §7.3, Proposition (i), proof in §7.6–7.7)
 states this local constancy for quasi-characters of `SO(W)` and of `SO(V)` separately, with his orbit
