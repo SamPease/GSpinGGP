@@ -117,13 +117,33 @@ by Lemma~\ref{steinberg_pair_blocks}.
 \begin{lemma}[Pair blocks]
 \label{steinberg_pair_blocks}
 \lean{GSpinGGP.Steinberg.commute_of_fix}
+\leanok
+\uses{steinberg_rank_one}
 Over an algebraically closed field of characteristic $0$, let $\bar x=P(x)$ be semisimple, and let $P(g)$ commute with
 $\bar x$ and be the identity on $W_{+1}\oplus W_{-1}$. Then $g$ commutes with $x$.
 \end{lemma}
 \begin{proof}
-Not yet formalized. $P(g)$ acts on each $E_\mu\oplus E_{\mu^{-1}}$ ($\mu\neq\pm1$) as $(A,A^{-*})$ with $A\in\mathrm{GL}(E_\mu)$.
-Eichler transvections $E_{u,w}$ ($u\in E_\mu$, $w\in E_{\mu^{-1}}$) and the torus elements of hyperbolic pairs
-commute with $\bar x$, are squares of such elements, and generate these blocks; the sign of a square is $(\pm1)^2=1$.
+\leanok
+Induction over the eigenvalues $\mu\neq\pm1$ of $\bar x$. $P(g)$ preserves $E_\mu$; by Lemma~\ref{steinberg_rank_one} some
+$\gamma$ commuting with $x$ agrees with $P(g)$ on $E_\mu$ and is the identity on all $E_\nu$, $\nu\neq\mu,\mu^{-1}$.
+Then $P(\gamma^{-1}g)$ is the identity on $E_\mu$, hence on $E_{\mu^{-1}}$ (the two are perfectly paired and $P(\gamma^{-1}g)$ is an
+isometry). At the end $P(g')=1$, so $g'$ is a scalar.
+\end{proof}
+
+\begin{lemma}[Rank-one lifts]
+\label{steinberg_rank_one}
+\lean{GSpinGGP.PairBlock.realizes_of_det_ne_zero}
+\leanok
+Let $\bar x=P(x)$ be semisimple over an algebraically closed field, $\mu^2\neq1$, $\mu\neq0$. Every $A\in\mathrm{GL}(E_\mu)$ is
+$P(\gamma)|_{E_\mu}$ for some $\gamma\in\GSpin(V)$ commuting with $x$ and acting trivially on every $E_\nu$, $\nu\neq\mu,\mu^{-1}$.
+\end{lemma}
+\begin{proof}
+\leanok
+For isotropic $u,w$ and $1+s\,\mathrm{polar}(u,w)\neq0$, the element $\ell=1+s\,uw\in C(V)$ lies in $\GSpin(V)$ with
+$P(\ell)v=v+s\,\mathrm{polar}(w,v)\,u-t\,\mathrm{polar}(u,v)\,w$, $t=s/(1+s\,\mathrm{polar}(u,w))$. For $u\in E_\mu$, $w\in E_{\mu^{-1}}$
+it commutes with $x$ ($xu=\mu ux$, $xw=\mu^{-1}wx$), and on $E_\mu$ it is $v\mapsto v+s\,\mathrm{polar}(w,v)\,u$. With a basis of $E_\mu$
+and the dual basis of $E_{\mu^{-1}}$, these give all transvections and all elementary diagonal matrices, which generate
+$\mathrm{GL}(E_\mu)$.
 \end{proof}
 
 \begin{theorem}[Regular nilpotent orbits and quasi-splitness]

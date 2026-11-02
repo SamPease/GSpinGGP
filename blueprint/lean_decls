@@ -167,3 +167,4 @@ GSpinGGP.Sanity.NilpotentOrbit.jHat_regOrbit_split
 GSpinGGP.Sanity.NilpotentOrbit.jHat_regOrbit_elliptic
 GSpinGGP.torusTransfer_clauses
 GSpinGGP.stablyConjG_diag_of_psiU
+GSpinGGP.PairBlock.realizes_of_det_ne_zero
