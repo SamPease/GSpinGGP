@@ -30,8 +30,12 @@ variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 /-- **(a) Harish-Chandra.** The regular semisimple set `G_reg(F)` of `G = GSpin(W) × GSpin(V)` is
 open in `G(F)` and its complement has Haar measure zero (it is the non-vanishing locus of a
 nonzero polynomial function, the coefficient of `t^{rk G}` in `det(t − (1 − Ad g))`, on the
-connected group `G`). Thesis §2.1; Harish-Chandra, *Harmonic analysis on reductive p-adic groups*
-(LNM 162, 1970) (section unverified); BP Astérisque 418, §1.
+connected group `G`). Thesis §2.1; BP Astérisque 418, §1. Exact ingredient: Harish-Chandra,
+*Harmonic analysis on reductive p-adic groups* (notes by G. van Dijk), LNM 162 (1970), Part V §3,
+p. 54 (also Introduction, p. 2): for `G` the `F`-points of a connected reductive group, with
+`det(t − 1 + Ad(x)) = D(x) t^ℓ + …` (`ℓ = rank G`), the set `G' = {D ≠ 0}` is open and dense in `G`
+and its complement has Haar measure zero. What remains here is the identification of `G'` with
+`regularSet` (semisimple with abelian centralizer in `𝔤`) in characteristic `0`.
 
 Its role in this project: two representatives of the character distribution that are continuous on
 `G_reg(F)` agree on `G_reg(F)` (open, conull), so `characterOn π (regularSet …)` is canonical there.

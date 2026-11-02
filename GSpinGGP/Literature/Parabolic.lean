@@ -28,8 +28,10 @@ noncomputable section
 namespace GSpinGGP
 
 /-- **The integration formula for `G = P K`** (Knapp, *Lie Groups Beyond an Introduction*, 2nd ed.,
-Thm 8.32, number unverified, stated there for Lie groups; Bourbaki, *Intégration* VII §2 no. 9,
-Prop. 13, number unverified; for a reductive `p`-adic group, `P` parabolic and `K` a good maximal
+Thm 8.32, number unverified, stated there for Lie groups; Bourbaki, *Integration* II, Ch. VII §2 no. 9,
+Prop. 13, p. VII.49 (for closed subgroups `X`, `Y` with `XY` open and `X ∩ Y` compact, the restriction
+of a left Haar measure of `G` to `XY` is, up to a constant, the image of `μ_X ⊗ Δ_G^{-1}μ_Y` under
+`(x, y) ↦ xy⁻¹`; checked); for a reductive `p`-adic group, `P` parabolic and `K` a good maximal
 compact subgroup: Casselman, *Introduction to the theory of admissible representations of
 `p`-adic reductive groups* (unpublished notes), §3.1, number unverified).  Stated here in the
 generality of the abstract argument below, which is what the sources prove.

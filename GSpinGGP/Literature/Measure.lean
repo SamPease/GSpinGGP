@@ -259,8 +259,10 @@ theorem isWeilMeasure_of_subsingleton [Subsingleton S] (ι : S →* Γ) (ν : Me
 
 end Sanity
 
-/-- **Weil's quotient-measure formula** (Bourbaki, *Intégration* VII §2 no. 6,
-Thm 3, number unverified; Folland, *A Course in Abstract Harmonic Analysis*, Thm 2.49, number
+/-- **Weil's quotient-measure formula** (Bourbaki, *Integration* II, Ch. VII §2: no. 2, Prop. 4(b)
+and Def. 1, p. VII.31 — a measure `μ` on `X` with `δ(ξ)μ = Δ_H(ξ)μ` for `ξ ∈ H` is `λ^♯` for exactly
+one measure `λ = μ/β` on `X/H`, i.e. `∫_X f dμ = ∫_{X/H} ∫_H f(xξ) dβ(ξ) dλ`; and no. 6, Thm 3: for
+`μ`, `β` Haar this `λ` is `G`-invariant, and unique up to a constant, when `Δ_G|_H = Δ_H`; Folland, *A Course in Abstract Harmonic Analysis*, Thm 2.49, number
 unverified — Folland states it for left cosets `Γ/S` and left Haar measures, the right-coset form
 here is the same theorem applied to `γ ↦ γ⁻¹`).
 
@@ -275,7 +277,7 @@ used: `Γ = G(F)/A_G(F)` and `S = H(F)/A_{G,H}(F)` (Thesis §7.1).
 
 Uniqueness is over *all* measures on the Borel σ-algebra: any `m'` satisfying the formula
 integrates every nonnegative `C_c` function on the quotient (each is a fibre integral, Bourbaki
-loc. cit. no. 2, number unverified) to the same finite value as `m`, hence is finite on compacts, hence Radon
+loc. cit. no. 2, Prop. 4) to the same finite value as `m`, hence is finite on compacts, hence Radon
 (second countability), hence equal to `m` by the Riesz uniqueness theorem. -/
 axiom weil_quotient {S Γ : Type*}
     [Group Γ] [TopologicalSpace Γ] [IsTopologicalGroup Γ] [LocallyCompactSpace Γ] [T2Space Γ]

@@ -42,7 +42,9 @@ namespace GSpinGGP
 `F ≅ F^`, and for the Haar measure self-dual with respect to this identification the Fourier
 inversion formula holds; Weil, *Basic Number Theory*, Ch. II §5 (for a finite-dimensional
 `F`-vector space `V`, `Y ↦ ψ(⟨·, Y⟩)` identifies the algebraic dual `V'` with the Pontryagin
-dual `V^`) and Ch. VII §2 (self-dual measures); theorem numbers not checked against the books.
+dual `V^`; Ch. II §5, Thm 3, p. 40, for any non-discrete locally compact field) and Ch. VII §2,
+p. 105 (dual measure, Fourier inversion `Φ(g) = ∫ Φ*(g*) ⟨−g, g*⟩ dα*`, and the unique self-dual
+Haar measure for a given identification of `G` with `G*`).
 Thesis §2.4; BP Astérisque 418 §1.6.)
 
 Statement: let `F` be a `p`-adic field, `V` a finite-dimensional `F`-vector space with its
