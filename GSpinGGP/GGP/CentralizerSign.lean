@@ -69,6 +69,37 @@ theorem exists_conj_eq_smul (hQ : IsNondeg Q) {g x : GSpin Q}
     rw [mul_comm (cliffordNorm Q (L g)), mul_assoc, mul_inv_cancel, mul_one] at hN
     exact mul_eq_right.mp hN.symm
 
+/-- For an eigenvector `v` of `P(x)` with eigenvalue `ε`: `x v = ε v x` in `C(V)`. -/
+theorem mul_ι_of_specP_eq_smul (x : GSpin Q) {v : V} {ε : K} (hv : specP Q x v = ε • v) :
+    ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * ι Q v =
+      algebraMap K (CliffordAlgebra Q) ε * (ι Q v * ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) := by
+  have h := ι_specP x v
+  rw [hv, map_smul, Algebra.smul_def] at h
+  have h2 := congrArg (· * ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) h
+  simp only [mul_assoc, Units.inv_mul, mul_one] at h2
+  rw [← h2]
+
+/-- For a list of eigenvectors `w` of `P(x)` with eigenvalues `ε w`, the product `∏ w` satisfies
+`x (∏ w) = (∏ ε w) (∏ w) x`. -/
+theorem mul_prod_ι_of_specP_eq_smul (x : GSpin Q) (ε : V → K) :
+    ∀ (l : List V), (∀ w ∈ l, specP Q x w = ε w • w) →
+      ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * (l.map (ι Q)).prod =
+        algebraMap K (CliffordAlgebra Q) (l.map ε).prod *
+          ((l.map (ι Q)).prod * ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q))
+  | [], _ => by simp
+  | w :: t, h => by
+    have hw := mul_ι_of_specP_eq_smul x (h w (by simp))
+    have ht := mul_prod_ι_of_specP_eq_smul x ε t (fun w' hw' => h w' (by simp [hw']))
+    set X := ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)
+    set P := (t.map (ι Q)).prod
+    simp only [List.map_cons, List.prod_cons, map_mul]
+    calc X * (ι Q w * P) = (X * ι Q w) * P := (mul_assoc _ _ _).symm
+      _ = algebraMap K _ (ε w) * (ι Q w * (X * P)) := by rw [hw]; simp only [mul_assoc]
+      _ = algebraMap K _ (ε w) * (ι Q w * (algebraMap K _ (t.map ε).prod * (P * X))) := by
+          rw [ht]
+      _ = algebraMap K _ (ε w) * algebraMap K _ (t.map ε).prod * (ι Q w * P * X) := by
+          rw [Algebra.left_comm]; simp only [mul_assoc]
+
 end CentralizerSign
 
 end GSpinGGP
