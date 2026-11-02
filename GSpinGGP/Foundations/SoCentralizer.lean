@@ -14,8 +14,6 @@ Lie algebra of endomorphisms that are skew for the bilinear form `b` (Mathlib's
 kernel the scalars (Thesis Prop. 5.1.3.1). So the centralizer of `X ∈ gspin(V)` has dimension
 `1 + dim so(V)_{adV X}` (`finrank_lieCentralizer_gspin`).
 
-* `isNilpotent_of_mul_sub_mul_eq_self`: in a finite-dimensional algebra over a field of
-  characteristic `0`, `hX − Xh = X` forces `X` nilpotent.
 * `finrank_soCent_le_of_chain`: an upper bound for `dim so(V)_N` when `N` has a long Jordan chain.
 -/
 
@@ -27,51 +25,12 @@ attribute [local instance 100] LieRing.ofAssociativeRing LieAlgebra.ofAssociativ
 
 namespace GSpinGGP
 
-/-! ## Eigenvectors of an inner derivation -/
-
-section Nilpotent
-
-variable {A : Type*} [Ring A]
-
-/-- In a finite-dimensional algebra over a field of characteristic `0`, an eigenvector `X` of
-`ad h` with eigenvalue `1` is nilpotent: `X^p` is an eigenvector with eigenvalue `p` unless it
-vanishes, and `ad h` has finitely many eigenvalues. -/
-theorem isNilpotent_of_mul_sub_mul_eq_self (K : Type*) [Field K] [CharZero K] [Algebra K A]
-    [FiniteDimensional K A] {h X : A} (hX : h * X - X * h = X) : IsNilpotent X := by
-  by_contra hn
-  let D : Module.End K A := LinearMap.mulLeft K h - LinearMap.mulRight K h
-  have hDX : ∀ Y, D Y = h * Y - Y * h := fun Y => rfl
-  have hD : ∀ p : ℕ, D (X ^ p) = (p : K) • X ^ p := by
-    intro p
-    induction p with
-    | zero => simp [hDX]
-    | succ p ih =>
-      have e : D (X ^ (p + 1)) = D (X ^ p) * X + X ^ p * D X := by
-        simp only [hDX, pow_succ]; noncomm_ring
-      rw [e, ih, hDX X, hX, smul_mul_assoc, ← pow_succ, Nat.cast_succ, add_smul, one_smul]
-  have hev : ∀ p : ℕ, D.HasEigenvalue (p : K) := fun p =>
-    Module.End.hasEigenvalue_of_hasEigenvector
-      (Module.End.hasEigenvector_iff.2 ⟨Module.End.mem_eigenspace_iff.2 (hD p), fun h0 => hn ⟨p, h0⟩⟩)
-  exact Set.infinite_range_of_injective (Nat.cast_injective (R := K))
-    ((Module.End.finite_hasEigenvalue D).subset (by rintro _ ⟨p, rfl⟩; exact hev p))
-
-end Nilpotent
-
 /-! ## `adV : gspin(V) → so(V)` -/
 
 section AdV
 
 variable {K : Type*} [Field K] [Invertible (2 : K)]
 variable {V : Type*} [AddCommGroup V] [Module K V]
-
-/-- `adV` is linear in `X`. -/
-def adVLin (Q : QuadraticForm K V) : CliffordAlgebra Q →ₗ[K] Module.End K V where
-  toFun := adV Q
-  map_add' X Y := by ext v; simp [adV, add_mul, mul_add, sub_add_sub_comm]
-  map_smul' c X := by ext v; simp [adV, smul_sub]
-
-@[simp] theorem adVLin_apply (Q : QuadraticForm K V) (X : CliffordAlgebra Q) :
-    adVLin Q X = adV Q X := rfl
 
 /-- `adV(ι a ι b) v = polar(b, v) a − polar(a, v) b`. -/
 theorem adV_ι_mul_ι (Q : QuadraticForm K V) (a b v : V) :
@@ -81,7 +40,7 @@ theorem adV_ι_mul_ι (Q : QuadraticForm K V) (a b v : V) :
   rw [ι_adV (ι_mul_ι_mem_gspin Q a b), ι_mul_ι_commutator]
 
 theorem adV_algebraMap (Q : QuadraticForm K V) (r : K) : adV Q (algebraMap K _ r) = 0 := by
-  ext v; simp [adV, Algebra.commutes]
+  ext v; simp [adV_apply, Algebra.commutes]
 
 /-- `adV` is a Lie algebra map on `gspin(V)`. -/
 theorem adV_commutator {Q : QuadraticForm K V} {X Y : CliffordAlgebra Q} (hX : X ∈ gspin Q)
@@ -118,7 +77,7 @@ end AdV
 
 section Centralizer
 
-variable {K : Type*} [NontriviallyNormedField K] [Invertible (2 : K)]
+variable {K : Type*} [Field K] [Invertible (2 : K)]
 variable {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
 
 /-- **`dim gspin(V)_X = 1 + dim so(V)_{adV X}`** (Thesis Prop. 5.1.3.1: `gspin(V) = so(V) ⊕ K`).
@@ -132,20 +91,22 @@ theorem finrank_lieCentralizer_gspin {Q : QuadraticForm K V} (hQ : IsNondeg Q)
     intro ⟨Y, hY⟩
     obtain ⟨hYg, hYX⟩ := mem_lieCentralizer.mp hY
     have := adV_commutator hYg hX
-    rw [hYX, sub_self, show adV Q 0 = 0 from map_zero (adVLin Q)] at this
+    rw [hYX, sub_self, show adV Q 0 = 0 from map_zero (adV Q)] at this
     exact (sub_eq_zero.mp this.symm)
   let φ : lieCentralizer (gspin Q) X →ₗ[K] soCent Q (adV Q X) :=
     { toFun := fun Y => ⟨adV Q Y, mem_soCent.2 ⟨bform_adV (mem_lieCentralizer.mp Y.2).1, hcomm Y⟩⟩
-      map_add' := fun Y Z => Subtype.ext (map_add (adVLin Q) Y.1 Z.1)
-      map_smul' := fun c Y => Subtype.ext (map_smul (adVLin Q) c Y.1) }
+      map_add' := fun Y Z => Subtype.ext (map_add (adV Q) Y.1 Z.1)
+      map_smul' := fun c Y => Subtype.ext (map_smul (adV Q) c Y.1) }
   have hsurj : Function.Surjective φ := by
     rintro ⟨M, hM⟩
     obtain ⟨hMs, hMN⟩ := mem_soCent.mp hM
-    obtain ⟨Y, hYspan, hY⟩ := exists_mem_span_commutator_eq hQ M hMs
+    obtain ⟨Y, hYq, hY⟩ := exists_mem_quadratic_commutator_eq hQ M hMs
     have hYg : Y ∈ gspin Q := by
-      refine Submodule.span_le.2 ?_ hYspan
-      rintro _ ⟨p, rfl⟩
-      exact ι_mul_ι_mem_gspin Q p.1 p.2
+      refine quadraticLieSubalgebra_toSubmodule_le_of_bivector_mem Q (P := (gspin Q).toSubmodule)
+        (fun a b => ?_) hYq
+      rw [bivector_def]
+      exact (gspin Q).smul_mem _ (Submodule.sub_mem (gspin Q).toSubmodule
+        (ι_mul_ι_mem_gspin Q a b) (ι_mul_ι_mem_gspin Q b a))
     have hYM : adV Q Y = M := by
       ext v; apply ι_injective Q; rw [ι_adV hYg, hY]
     have hC : Y * X - X * Y ∈ gspin Q := by

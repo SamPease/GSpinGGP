@@ -107,17 +107,6 @@ section Flag
 
 variable {V : Type*} [AddCommGroup V] [Module F V] [Module.Finite F V]
 
-theorem lieAlg_adV_add (Q : QuadraticForm F V) (X Y : CliffordAlgebra Q) (v : V) :
-    adV Q (X + Y) v = adV Q X v + adV Q Y v := by
-  simp [adV, add_mul, mul_add, sub_add_sub_comm]
-
-theorem lieAlg_adV_smul (Q : QuadraticForm F V) (c : F) (X : CliffordAlgebra Q) (v : V) :
-    adV Q (c • X) v = c • adV Q X v := by
-  simp [adV, smul_sub]
-
-theorem lieAlg_adV_zero (Q : QuadraticForm F V) (v : V) : adV Q 0 v = 0 := by
-  simp [adV]
-
 /-- **`𝔫_F = Lie(N_F)`**, the nilpotent radical of the parabolic subalgebra stabilizing an
 isotropic flag `0 = Z_0 ⊂ Z_1 ⊂ … ⊂ Z_k` (Thesis §5.1.2, §5.2): the `X ∈ so(V)` with
 `X Z_{i+1} ⊆ Z_i` and `X (Z_k^⊥) ⊆ Z_k` (the Lie-algebra form of `flagUnipSO`). -/
@@ -130,16 +119,16 @@ def lieFlagUnip {Q : QuadraticForm F V} (Fl : IsotropicFlag Q) :
     rintro X Y ⟨hX0, hX1, hX2⟩ ⟨hY0, hY1, hY2⟩
     refine ⟨(soSub Q).add_mem hX0 hY0, fun i v hv => ?_, fun v hv => ?_⟩
     · have e : adV Q (X + Y) v = adV Q X v + adV Q Y v := by
-        simp [adV, add_mul, mul_add, sub_add_sub_comm]
+        rw [map_add, LinearMap.add_apply]
       rw [e]; exact add_mem (hX1 i v hv) (hY1 i v hv)
     · have e : adV Q (X + Y) v = adV Q X v + adV Q Y v := by
-        simp [adV, add_mul, mul_add, sub_add_sub_comm]
+        rw [map_add, LinearMap.add_apply]
       rw [e]; exact add_mem (hX2 v hv) (hY2 v hv)
-  zero_mem' := ⟨(soSub Q).zero_mem, fun i v _ => by simp [adV], fun v _ => by simp [adV]⟩
+  zero_mem' := ⟨(soSub Q).zero_mem, fun i v _ => by simp, fun v _ => by simp⟩
   smul_mem' := by
     rintro c X ⟨hX0, hX1, hX2⟩
     have e : ∀ v, adV Q (c • X) v = c • adV Q X v := fun v => by
-      simp [adV, smul_sub]
+      rw [map_smul, LinearMap.smul_apply]
     refine ⟨(soSub Q).smul_mem c hX0, fun i v hv => ?_, fun v hv => ?_⟩
     · rw [e]; exact Submodule.smul_mem _ c (hX1 i v hv)
     · rw [e]; exact Submodule.smul_mem _ c (hX2 v hv)
@@ -153,13 +142,13 @@ def lieFlagStab {Q : QuadraticForm F V} (Fl : IsotropicFlag Q) :
     rintro X Y ⟨hX0, hX1⟩ ⟨hY0, hY1⟩
     refine ⟨(soSub Q).add_mem hX0 hY0, fun i v hv => ?_⟩
     have e : adV Q (X + Y) v = adV Q X v + adV Q Y v := by
-      simp [adV, add_mul, mul_add, sub_add_sub_comm]
+      rw [map_add, LinearMap.add_apply]
     rw [e]; exact add_mem (hX1 i v hv) (hY1 i v hv)
-  zero_mem' := ⟨(soSub Q).zero_mem, fun i v _ => by simp [adV]⟩
+  zero_mem' := ⟨(soSub Q).zero_mem, fun i v _ => by simp⟩
   smul_mem' := by
     rintro c X ⟨hX0, hX1⟩
     refine ⟨(soSub Q).smul_mem c hX0, fun i v hv => ?_⟩
-    have e : adV Q (c • X) v = c • adV Q X v := by simp [adV, smul_sub]
+    have e : adV Q (c • X) v = c • adV Q X v := by rw [map_smul, LinearMap.smul_apply]
     rw [e]; exact Submodule.smul_mem _ c (hX1 i v hv)
 
 end Flag
@@ -367,13 +356,13 @@ def lieTorus (T : Subgroup ↥(GSpin d.QW)) : Submodule F (CliffordAlgebra d.QW)
     rintro X Y ⟨hX0, hX1, hX2⟩ ⟨hY0, hY1, hY2⟩
     refine ⟨(soSub d.QW).add_mem hX0 hY0, fun t ht => ?_, fun w hw => ?_⟩
     · rw [mul_add, add_mul, hX1 t ht, hY1 t ht]
-    · rw [lieAlg_adV_add, hX2 w hw, hY2 w hw, add_zero]
-  zero_mem' := ⟨(soSub d.QW).zero_mem, fun _ _ => by simp, fun w _ => lieAlg_adV_zero _ w⟩
+    · rw [map_add, LinearMap.add_apply, hX2 w hw, hY2 w hw, add_zero]
+  zero_mem' := ⟨(soSub d.QW).zero_mem, fun _ _ => by simp, fun w _ => by simp⟩
   smul_mem' := by
     rintro c X ⟨hX0, hX1, hX2⟩
     refine ⟨(soSub d.QW).smul_mem c hX0, fun t ht => ?_, fun w hw => ?_⟩
     · rw [mul_smul_comm, smul_mul_assoc, hX1 t ht]
-    · rw [lieAlg_adV_smul, hX2 w hw, smul_zero]
+    · rw [map_smul, LinearMap.smul_apply, hX2 w hw, smul_zero]
 
 instance instMeasurableSpaceLieTorus (T : Subgroup ↥(GSpin d.QW)) :
     MeasurableSpace ↥(d.lieTorus T) := borel _

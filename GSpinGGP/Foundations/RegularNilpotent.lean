@@ -13,7 +13,8 @@ space `Z_k(ν) = ⟨ν⟩ ⊕ H^k` of Thesis (5.2.1)). The element
 `w_l ↦ ± w_{l+1}` (`w_k ↦ 0`), killing `⟨w⟩^⊥`: one Jordan block on `⟨w⟩`. It is nilpotent in
 `C(V)`, since `[h, X] = X` for `h = (2ν)⁻¹ Σ_j j ι(w_j) ι(w_{-j})`, which acts on `w_l` by `l`.
 When `V = ⟨w⟩ ⊕ ⟨w⟩^⊥` with `dim ⟨w⟩^⊥ ≤ 1`, its centralizer in `gspin(V)` has dimension at most
-`dim V − k` (`finrank_lieCentralizer_regNil_le`), which is the rank of `gspin(V)`.
+`dim V − k` (`finrank_lieCentralizer_regNil_le`). These hypotheses force `dim V ∈ {2k+1, 2k+2}`,
+so `dim V − k = ⌊dim V/2⌋ + 1`, the rank of `gspin(V)`.
 -/
 
 noncomputable section
@@ -24,6 +25,36 @@ attribute [local instance 100] LieRing.ofAssociativeRing LieAlgebra.ofAssociativ
 
 namespace GSpinGGP
 
+/-! ## Eigenvectors of an inner derivation -/
+
+section Nilpotent
+
+variable {A : Type*} [Ring A]
+
+/-- In a finite-dimensional algebra over a field of characteristic `0`, an eigenvector `X` of
+`ad h` with eigenvalue `1` is nilpotent: `X^p` is an eigenvector with eigenvalue `p` unless it
+vanishes, and `ad h` has finitely many eigenvalues. -/
+theorem isNilpotent_of_mul_sub_mul_eq_self (K : Type*) [Field K] [CharZero K] [Algebra K A]
+    [FiniteDimensional K A] {h X : A} (hX : h * X - X * h = X) : IsNilpotent X := by
+  by_contra hn
+  let D : Module.End K A := LinearMap.mulLeft K h - LinearMap.mulRight K h
+  have hDX : ∀ Y, D Y = h * Y - Y * h := fun Y => rfl
+  have hD : ∀ p : ℕ, D (X ^ p) = (p : K) • X ^ p := by
+    intro p
+    induction p with
+    | zero => simp [hDX]
+    | succ p ih =>
+      have e : D (X ^ (p + 1)) = D (X ^ p) * X + X ^ p * D X := by
+        simp only [hDX, pow_succ]; noncomm_ring
+      rw [e, ih, hDX X, hX, smul_mul_assoc, ← pow_succ, Nat.cast_succ, add_smul, one_smul]
+  have hev : ∀ p : ℕ, D.HasEigenvalue (p : K) := fun p =>
+    Module.End.hasEigenvalue_of_hasEigenvector
+      (Module.End.hasEigenvector_iff.2 ⟨Module.End.mem_eigenspace_iff.2 (hD p), fun h0 => hn ⟨p, h0⟩⟩)
+  exact Set.infinite_range_of_injective (Nat.cast_injective (R := K))
+    ((Module.End.finite_hasEigenvalue D).subset (by rintro _ ⟨p, rfl⟩; exact hev p))
+
+end Nilpotent
+
 section Commutator
 
 variable {K : Type*} [Field K] [Invertible (2 : K)]
@@ -31,7 +62,7 @@ variable {V : Type*} [AddCommGroup V] [Module K V]
 
 omit [Invertible (2 : K)] in
 /-- `[Σ cᵢ ι(aᵢ) ι(bᵢ), ι v] = ι(Σ cᵢ (polar(bᵢ, v) aᵢ − polar(aᵢ, v) bᵢ))`. -/
-theorem sum_ι_mul_ι_commutator (Q : QuadraticForm K V) {ι' : Type*} (s : Finset ι') (c : ι' → K)
+private theorem sum_ι_mul_ι_commutator (Q : QuadraticForm K V) {ι' : Type*} (s : Finset ι') (c : ι' → K)
     (a b : ι' → V) (v : V) :
     (∑ i ∈ s, c i • (ι Q (a i) * ι Q (b i))) * ι Q v - ι Q v * ∑ i ∈ s, c i • (ι Q (a i) * ι Q (b i)) =
       ι Q (∑ i ∈ s, c i • (QuadraticMap.polar Q (b i) v • a i - QuadraticMap.polar Q (a i) v • b i)) := by
@@ -95,7 +126,7 @@ theorem adV_regNil_of_orthogonal {v : V} (hv : ∀ j : ℤ, |j| ≤ k → bform 
   simp
 
 omit [Invertible (2 : K)] in
-theorem sum_range_ite_intCast_eq {M : Type*} [AddCommMonoid M] (x : M) (k : ℕ) (a : ℤ) :
+private theorem sum_range_ite_intCast_eq {M : Type*} [AddCommMonoid M] (x : M) (k : ℕ) (a : ℤ) :
     ∑ i ∈ Finset.range k, (if (i : ℤ) = a then x else 0) = if 0 ≤ a ∧ a < k then x else 0 := by
   split_ifs with h
   · rw [Finset.sum_eq_single a.toNat (fun i _ hi => ite_eq_right (by omega))
@@ -246,7 +277,7 @@ end Model
 
 section Centralizer
 
-variable {K : Type*} [NontriviallyNormedField K] [Invertible (2 : K)]
+variable {K : Type*} [Field K] [Invertible (2 : K)]
 variable {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
 variable {Q : QuadraticForm K V} {w : ℤ → V} {ν : K} {k : ℕ}
 
@@ -260,7 +291,7 @@ theorem finrank_lieCentralizer_regNil_le (hQ : IsNondeg Q) (hw : IsSplitFamily Q
         = ⊤)
     (hperp : finrank K ((bform Q).orthogonal
       (Submodule.span K (Set.range fun i : Fin (2 * k + 1) => w ((i : ℤ) - k)))) ≤ 1) :
-    finrank K (lieCentralizer (gspin Q) (regNil Q w ν k)) ≤ finrank K V - (k + 1) + 1 := by
+    finrank K (lieCentralizer (gspin Q) (regNil Q w ν k)) ≤ finrank K V - k := by
   set N := adV Q (regNil Q w ν k)
   have hε : ∀ i : Fin (2 * k + 1), ∃ ε : K, ε ≠ 0 ∧ (N ^ (i : ℕ)) (w (-k)) = ε • w ((i : ℤ) - k) :=
     fun i => adV_regNil_pow_w hw hν (by omega)
@@ -291,6 +322,8 @@ theorem finrank_lieCentralizer_regNil_le (hQ : IsNondeg Q) (hw : IsSplitFamily Q
   rw [finrank_lieCentralizer_gspin hQ regNil_mem_gspin]
   have h2 : (2 * k + 1 + 1) / 2 = k + 1 := by omega
   rw [h2] at h
+  have hdim := hli.fintype_card_le_finrank
+  rw [Fintype.card_fin] at hdim
   omega
 
 end Centralizer
