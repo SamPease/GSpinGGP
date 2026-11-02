@@ -61,7 +61,7 @@ include hP hN hμ0 hne hu hu' hw hw' huw hspan
 /-- On a hyperbolic pair of joint eigenvectors `u`, `w` spanning `V` (`P u = μ u`, `N u = c u`,
 `P w = μ⁻¹ w`, `N w = −c w`, `(μ, c) ≠ (μ⁻¹, −c)`, `b(u, w) ≠ 0`): `u`, `w` are isotropic and the
 joint eigenspaces for `(μ, c)`, `(μ⁻¹, −c)` are the lines `K u`, `K w`. -/
-theorem pair_facts :
+private theorem pair_facts :
     bform Q u u = 0 ∧ bform Q w w = 0 ∧
     (∀ x, P x = μ • x → N x = c • x → ∃ t : K, x = t • u) ∧
     (∀ x, P x = μ⁻¹ • x → N x = (-c) • x → ∃ t : K, x = t • w) := by
@@ -148,7 +148,7 @@ theorem soCent_inf_eq_span_wedge :
 
 omit hP hN hμ0 hne hu hu' hw hw' huw hspan in
 omit [Invertible (2 : K)] in
-theorem pow_apply_of_eq_smul {f : Module.End K V} {x : V} {r : K} (hx : f x = r • x) (k : ℕ) :
+private theorem pow_apply_of_eq_smul {f : Module.End K V} {x : V} {r : K} (hx : f x = r • x) (k : ℕ) :
     (f ^ k) x = r ^ k • x := by
   induction k with
   | zero => simp
@@ -224,19 +224,6 @@ def JointClauses (Q : QuadraticForm K V) (P N : Module.End K V) (ℓ : ℕ) : Pr
   (finrank K ↥(soCent Q P ⊓ soCent Q N) = ℓ → ∀ h : Module.End K V, IsomCent.IsIsom (bform Q) h →
     IsNilpotent (h - 1) → Commute P h → Commute N h → h = 1)
 
-omit [Invertible (2 : K)] in
-theorem isNilpotent_restrict {U : Submodule K V} {M : Module.End K V} (hM : IsNilpotent M)
-    (hMU : Set.MapsTo M U U) : IsNilpotent (M.restrict hMU) := by
-  obtain ⟨k, hk⟩ := hM
-  have key : ∀ (n : ℕ) (x : U), (((M.restrict hMU) ^ n) x : V) = (M ^ n) x := by
-    intro n
-    induction n with
-    | zero => intro x; rfl
-    | succ n ih =>
-      intro x
-      rw [pow_succ, Module.End.mul_apply, ih, pow_succ, Module.End.mul_apply]; rfl
-  exact ⟨k, LinearMap.ext fun x => Subtype.ext (by rw [key, hk]; rfl)⟩
-
 end Clauses
 
 section Transfer
@@ -270,7 +257,7 @@ theorem commute_of_restrict_inf
 
 omit horth in
 /-- An endomorphism preserving `U` and `U'` is determined by its restrictions. -/
-theorem ext_of_restrict {A B : Module.End K V} (hAU : Set.MapsTo A U U) (hAU' : Set.MapsTo A U' U')
+private theorem ext_of_restrict {A B : Module.End K V} (hAU : Set.MapsTo A U U) (hAU' : Set.MapsTo A U' U')
     (hBU : Set.MapsTo B U U) (hBU' : Set.MapsTo B U' U')
     (h1 : A.restrict hAU = B.restrict hBU) (h2 : A.restrict hAU' = B.restrict hBU') : A = B := by
   refine LinearMap.ext fun v => ?_
@@ -320,8 +307,8 @@ theorem jointClauses_of_split [FiniteDimensional K V]
   · rw [hsplit, (ab₁.2 (commute_of_restrict_inf horth h hXU hXU' hYU hYU' hab)),
       (ab₂.2 (commute_of_restrict_inf horth' h.symm hXU' hXU hYU' hYU hab))]
   · obtain ⟨e₁, e₂⟩ := heq he
-    have n₁ := nil₁ e₁ _ (hres M hMC).1 (isNilpotent_restrict hnil _)
-    have n₂ := nil₂ e₂ _ (hres M hMC).2 (isNilpotent_restrict hnil _)
+    have n₁ := nil₁ e₁ _ (hres M hMC).1 (Module.End.isNilpotent.restrict _ hnil)
+    have n₂ := nil₂ e₂ _ (hres M hMC).2 (Module.End.isNilpotent.restrict _ hnil)
     refine ext_of_restrict h (hM M hMC) (hM' M hMC) (fun x _ => zero_mem _) (fun x _ => zero_mem _)
       (n₁.trans ?_) (n₂.trans ?_) <;> rfl
   · obtain ⟨e₁, e₂⟩ := heq he
@@ -330,10 +317,10 @@ theorem jointClauses_of_split [FiniteDimensional K V]
     have hsU' : Set.MapsTo ⇑(g - 1 : Module.End K V) U' U' := fun x hx => sub_mem (gU' hx) hx
     have hnilU : IsNilpotent (g.restrict gU - 1) := by
       rw [show g.restrict gU - 1 = (g - 1).restrict hsU from LinearMap.ext fun _ => rfl]
-      exact isNilpotent_restrict hnil hsU
+      exact Module.End.isNilpotent.restrict hsU hnil
     have hnilU' : IsNilpotent (g.restrict gU' - 1) := by
       rw [show g.restrict gU' - 1 = (g - 1).restrict hsU' from LinearMap.ext fun _ => rfl]
-      exact isNilpotent_restrict hnil hsU'
+      exact Module.End.isNilpotent.restrict hsU' hnil
     have g₁ := uni₁ e₁ _ (fun x y => by simp only [bform_comp_subtype]; exact hg x y) hnilU
       (LinearMap.restrict_commute hXg _ _) (LinearMap.restrict_commute hYg _ _)
     have g₂ := uni₂ e₂ _ (fun x y => by simp only [bform_comp_subtype]; exact hg x y) hnilU'
@@ -417,7 +404,7 @@ theorem isSemisimple_of_isIsom_of_finrank_le_two (hQ : IsNondeg Q) (hn : finrank
 
 omit [Invertible (2 : K)] in
 /-- A unipotent semisimple endomorphism is `1`. -/
-theorem eq_one_of_isNilpotent_sub_one {h : Module.End K V} (hss : h.IsSemisimple)
+private theorem eq_one_of_isNilpotent_sub_one {h : Module.End K V} (hss : h.IsSemisimple)
     (hnil : IsNilpotent (h - 1)) : h = 1 := by
   have : (h - 1).IsSemisimple :=
     Module.End.IsSemisimple.sub_of_commute (Commute.one_right h) hss Module.End.isSemisimple_id
@@ -425,7 +412,7 @@ theorem eq_one_of_isNilpotent_sub_one {h : Module.End K V} (hss : h.IsSemisimple
 
 omit [Invertible (2 : K)] [IsAlgClosed K] in
 /-- Elements of a subspace of dimension `≤ 1` commute. -/
-theorem commute_of_mem_finrank_le_one {S : Submodule K (Module.End K V)}
+private theorem commute_of_mem_finrank_le_one {S : Submodule K (Module.End K V)}
     (h1 : finrank K S ≤ 1) {M₁ M₂ : Module.End K V} (h₁ : M₁ ∈ S) (h₂ : M₂ ∈ S) :
     Commute M₁ M₂ := by
   by_cases h0 : M₁ = 0
@@ -436,7 +423,7 @@ theorem commute_of_mem_finrank_le_one {S : Submodule K (Module.End K V)}
 /-- **The four clauses for `so(V)`** (`P = ±1`, `N = 0`): `dim so(V) ≥ ⌊n/2⌋`, with equality iff
 `so(V)` is abelian (iff `n ≤ 2`); then `so(V)` has no nonzero nilpotent element and the only
 unipotent isometry is `1`. -/
-theorem so_clauses [CharZero K] (hQ : IsNondeg Q) :
+private theorem so_clauses [CharZero K] (hQ : IsNondeg Q) :
     finrank K V / 2 ≤ finrank K (soCent Q 1) ∧
     (finrank K (soCent Q 1) = finrank K V / 2 ↔
       ∀ M₁ ∈ soCent Q 1, ∀ M₂ ∈ soCent Q 1, Commute M₁ M₂) ∧
@@ -496,8 +483,8 @@ theorem so_clauses [CharZero K] (hQ : IsNondeg Q) :
     rw [map_add, map_smul, map_smul, ha, ha', haa, ha0, neg_zero, zero_smul, zero_smul,
       smul_zero, smul_zero, add_zero, LinearMap.zero_apply]
 
-/-- **The four clauses on a paired piece** `V = span(u) ⊕ span(w)`, with `u_i` joint eigenvectors
-for `(μ, c)`, `w_j` for `(μ⁻¹, −c)`, `(μ, c) ≠ (μ⁻¹, −c)`, `b(w_j, u_k) = δ_{jk}`: bound `d`. -/
+/-- **The four clauses on a paired piece**: `V` spanned by `u_i` (joint eigenvectors for `(μ, c)`)
+and `w_j` (for `(μ⁻¹, −c)`), `w_j` for `(μ⁻¹, −c)`, `(μ, c) ≠ (μ⁻¹, −c)`, `b(w_j, u_k) = δ_{jk}`: bound `d`. -/
 theorem jointClauses_pair {P N : Module.End K V} (hP : IsIsom (bform Q) P)
     (hN : IsSkew (bform Q) N) {μ c : K} (hμ0 : μ ≠ 0) (hne : μ⁻¹ ≠ μ ∨ c ≠ 0) {d : ℕ}
     (hd : 1 ≤ d) (u w : Fin d → V) (hu : ∀ i, P (u i) = μ • u i) (hu' : ∀ i, N (u i) = c • u i)
@@ -556,22 +543,6 @@ theorem jointClauses_scalar [CharZero K] (hQ : IsNondeg Q) {P N : Module.End K V
   unfold JointClauses
   rw [e]
   exact ⟨l, ab, nil, fun he h hi hnil _ _ => uni he h hi hnil⟩
-
-omit [IsAlgClosed K] in
-/-- An isometry preserving `U` preserves `U^⊥`. -/
-theorem mapsTo_orthogonal_of_isIsom (hQ : IsNondeg Q) {g : Module.End K V}
-    (hg : IsIsom (bform Q) g) {U : Submodule K V} (hgU : Set.MapsTo g U U) :
-    Set.MapsTo g ((bform Q).orthogonal U) ((bform Q).orthogonal U) := by
-  have hinj : Function.Injective (g.restrict hgU) := fun x y hxy =>
-    Subtype.ext (IsIsom.injective hQ hg (congrArg Subtype.val hxy))
-  have hsurj := LinearMap.injective_iff_surjective.1 hinj
-  intro y hy
-  refine LinearMap.BilinForm.mem_orthogonal_iff.2 fun x hx => ?_
-  obtain ⟨x', hx'⟩ := hsurj ⟨x, hx⟩
-  have hx'' : g x' = x := congrArg Subtype.val hx'
-  change bform Q x (g y) = 0
-  rw [← hx'', hg]
-  exact (LinearMap.BilinForm.mem_orthogonal_iff.1 hy) _ x'.2
 
 end Base
 
@@ -690,7 +661,7 @@ private theorem jointClauses_aux (n : ℕ) : ∀ {V : Type u} [AddCommGroup V] [
           mapsTo_eigenspace_of_commute hNg (-c) e' he'.2⟩)
     have hPU := hUmaps P (Commute.refl P) hc
     have hNU := hUmaps N hc.symm (Commute.refl N)
-    have hPU' := mapsTo_orthogonal_of_isIsom hQ hP hPU
+    have hPU' := mapsTo_orthogonal_of_isometry hQ hP hPU
     have hNU' := mapsTo_orthogonal_of_skew hN hNU
     have hpair := jointClauses_pair (Q := Q.comp U.subtype) (P := P.restrict hPU)
       (N := N.restrict hNU) (fun x y => by simp only [bform_comp_subtype]; exact hP x y)
@@ -708,18 +679,6 @@ private theorem jointClauses_aux (n : ℕ) : ∀ {V : Type u} [AddCommGroup V] [
           ← Set.range_comp, ← Set.range_comp]
         exact hUspan)
     -- the complement, by induction
-    have hdU : finrank K U = finrank K E + finrank K E := by
-      have hinf : E ⊓ E' = ⊥ := by
-        rw [eq_bot_iff]
-        intro x ⟨hx, hx'⟩
-        rw [Submodule.mem_bot]
-        by_contra hx0
-        obtain ⟨y, hy, hyb⟩ := h2 x hx' hx0
-        exact hyb (hisoE x hx y hy)
-      have := Submodule.finrank_sup_add_finrank_inf_eq E E'
-      rw [hinf, finrank_bot, add_zero, hdim] at this
-      exact this
-    have hd := Submodule.finrank_add_eq_of_isCompl hcompl
     have hinf : E ⊓ E' = ⊥ := by
       rw [eq_bot_iff]
       intro x ⟨hx, hx'⟩
@@ -727,6 +686,11 @@ private theorem jointClauses_aux (n : ℕ) : ∀ {V : Type u} [AddCommGroup V] [
       by_contra hx0
       obtain ⟨y, hy, hyb⟩ := h2 x hx' hx0
       exact hyb (hisoE x hx y hy)
+    have hdU : finrank K U = finrank K E + finrank K E := by
+      have := Submodule.finrank_sup_add_finrank_inf_eq E E'
+      rw [hinf, finrank_bot, add_zero, hdim] at this
+      exact this
+    have hd := Submodule.finrank_add_eq_of_isCompl hcompl
     have hev' : Even (finrank K ↥(Module.End.eigenspace (P.restrict hPU') (-1))) := by
       set F := P.eigenspace (-1)
       -- `F = (F ⊓ U) ⊕ (F ⊓ U')`
@@ -805,7 +769,7 @@ private theorem jointClauses_aux (n : ℕ) : ∀ {V : Type u} [AddCommGroup V] [
       (fun M hM => mapsTo_orthogonal_of_skew (mem_soCent.1 hM.1).1
         (hUmaps M (mem_soCent.1 hM.1).2.symm (mem_soCent.1 hM.2).2.symm))
       (fun g hg hPg hNg => ⟨hUmaps g hPg hNg,
-        mapsTo_orthogonal_of_isIsom hQ hg (hUmaps g hPg hNg)⟩) hpair hrec
+        mapsTo_orthogonal_of_isometry hQ hg (hUmaps g hPg hNg)⟩) hpair hrec
     have : finrank K E + finrank K U' / 2 = n / 2 := by omega
     rwa [this] at hcomb
   · -- only self-paired joint eigenvalues: `N = 0` and `P = ±1` on its eigenspaces

@@ -88,6 +88,28 @@ theorem mapsTo_orthogonal_of_skew {M : Module.End K V}
     rwa [bform_comm Q x]
 
 omit horth in
+/-- An isometry preserving `U` preserves `U^⊥`. -/
+theorem mapsTo_orthogonal_of_isometry [FiniteDimensional K V] (hQ : IsNondeg Q)
+    {g : Module.End K V} (hg : ∀ u v, bform Q (g u) (g v) = bform Q u v)
+    (hgU : Set.MapsTo g U U) :
+    Set.MapsTo g ((bform Q).orthogonal U) ((bform Q).orthogonal U) := by
+  have hginj : Function.Injective g := by
+    rw [← LinearMap.ker_eq_bot, LinearMap.ker_eq_bot']
+    intro x hx
+    refine hQ.1 x fun y => ?_
+    rw [← hg, hx, map_zero, LinearMap.zero_apply]
+  have hinj : Function.Injective (g.restrict hgU) := fun x y hxy =>
+    Subtype.ext (hginj (congrArg Subtype.val hxy))
+  have hsurj := LinearMap.injective_iff_surjective.1 hinj
+  intro y hy
+  refine LinearMap.BilinForm.mem_orthogonal_iff.2 fun x hx => ?_
+  obtain ⟨x', hx'⟩ := hsurj ⟨x, hx⟩
+  have hx'' : g x' = x := congrArg Subtype.val hx'
+  change bform Q x (g y) = 0
+  rw [← hx'', hg]
+  exact (LinearMap.BilinForm.mem_orthogonal_iff.1 hy) _ x'.2
+
+omit horth in
 theorem restrict_mem_soCent (hXU : Set.MapsTo X U U) {M : Module.End K V} (hM : M ∈ soCent Q X)
     (hMU : Set.MapsTo M U U) : M.restrict hMU ∈ soCent (Q.comp U.subtype) (X.restrict hXU) := by
   rw [mem_soCent] at hM ⊢
