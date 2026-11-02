@@ -1,0 +1,10 @@
+GSpinGGP.dixmier_commutant_scalar
+GSpinGGP.emoryTakeda_mult_le_one
+GSpinGGP.exists_isSelfDual
+GSpinGGP.finite_H1_torusBar
+GSpinGGP.germ_unique
+GSpinGGP.hc_character_exists
+GSpinGGP.hc_character_isQuasiCharacter
+GSpinGGP.hc_regular_open_dense_conull
+GSpinGGP.integral_eq_mul_integral_compact_integral
+GSpinGGP.rodier_germ_one

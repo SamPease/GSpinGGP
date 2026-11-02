@@ -275,7 +275,9 @@ def TwistIdx {d : GGPData F} (IF : InnerFormSystem d) (x : ↥(GSpin d.QW))
 galoisienne*, Comment. Math. Helv. 39 (1964), Thm. 6.1: for `k` locally compact of characteristic `0`
 and `A` a `k`-group of type (ALA), `H¹(k, A)` is finite; in particular `H¹(k, G)` is finite for `G`
 linear algebraic over `k`. Also Serre, *Cohomologie galoisienne*, III §4.3, Thm. 4.)  Applied to `L = S_x`, whose `F̄`-points
-with their Galois action are `torusBarFbar d x` (`P` is defined over `F`).  Stated for
+with their Galois action are `torusBarFbar d x` (`P` is defined over `F`; Galois stability of
+`torusBarFbar d x` is proved, `galGL_mem_torusBarFbar`; that it is the group of `F̄`-points of an
+`F`-group is not formalized).  Stated for
 `x ∈ Γ(G,H)`, where `S_x` is a torus. -/
 axiom finite_H1_torusBar (d : GGPData F) (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) :
     Finite (H1 (d.torusBarFbar x))

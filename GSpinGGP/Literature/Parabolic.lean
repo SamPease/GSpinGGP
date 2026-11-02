@@ -27,14 +27,12 @@ noncomputable section
 
 namespace GSpinGGP
 
-/-- **The integration formula for `G = P K`** (Knapp, *Lie Groups Beyond an Introduction*, 2nd ed.,
-Thm 8.32, number unverified, stated there for Lie groups; Bourbaki, *Integration* II, Ch. VII §2 no. 9,
-Prop. 13, p. VII.49 (for closed subgroups `X`, `Y` with `XY` open and `X ∩ Y` compact, the restriction
-of a left Haar measure of `G` to `XY` is, up to a constant, the image of `μ_X ⊗ Δ_G^{-1}μ_Y` under
-`(x, y) ↦ xy⁻¹`; checked); for a reductive `p`-adic group, `P` parabolic and `K` a good maximal
-compact subgroup: Casselman, *Introduction to the theory of admissible representations of
-`p`-adic reductive groups* (unpublished notes), §3.1, number unverified).  Stated here in the
-generality of the abstract argument below, which is what the sources prove.
+/-- **The integration formula for `G = P K`** (Bourbaki, *Integration* II, Ch. VII §2 no. 9,
+Prop. 13 and its Corollary, formula (23), p. VII.49: for closed subgroups `X`, `Y` of `G` with `XY`
+open, `X ∩ Y` compact and `X × Y → XY` open, `∫_{XY} f dμ_G = a ∫_{X × Y} f(xy) Δ_G(y) Δ_Y(y)⁻¹
+dμ_X dμ_Y`; checked). Here `X = P`, `Y = K` compact, so `Δ_G = Δ_K = 1` on `K` and `P ∩ K` is
+compact; `XY = G`, and second countability gives the openness hypothesis. So the statement below is
+Bourbaki's in its generality (not an adaptation).
 
 Let `G` be a locally compact, Hausdorff, second countable group, `P` a closed subgroup and `K` a
 compact subgroup with `G = P K`.  Then for left Haar measures `dx`, `dp` on `G`, `P` and the Haar
@@ -51,8 +49,7 @@ unimodular), and such a measure is unique up to a positive scalar (the modular f
 Only continuous compactly supported `f` are claimed (as for `weil_quotient`); the constant
 absorbs the normalizations of the three Haar measures.  `dp` is *left* Haar measure on `P`; this
 matters when `P` is not unimodular (checked by hand on `ℚ_p ⋊ ℚ_p^×` with `P = ℚ_p ⋊ p^ℤ`,
-`K = ℤ_p^×`: `c = 1`).  The stated generality (locally compact, second countable `G`) goes beyond
-Knapp's Lie-group theorem; the abstract argument above covers it. -/
+`K = ℤ_p^×`: `c = 1`). -/
 axiom integral_eq_mul_integral_compact_integral {G : Type*}
     [Group G] [TopologicalSpace G] [IsTopologicalGroup G] [LocallyCompactSpace G] [T2Space G]
     [SecondCountableTopology G] [MeasurableSpace G] [BorelSpace G]

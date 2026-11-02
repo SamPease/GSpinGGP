@@ -22,11 +22,12 @@ written out inline.
 
 ## Contents
 * (a) `hc_regular_open_dense_conull` — Harish-Chandra's `G' = {D ≠ 0}` is open, dense and conull
-  (`hcDisc`, `hcRank`);
+  (`hcDisc`);
 * instances `T2Space ↥d.G`, `LocallyCompactSpace ↥d.G` (theorems of LocalGroups, made instances
   here because `F` is recoverable from `d`);
-* (b) `hc_character_exists`, theorem `hc_character` — `θ_π` is a function, locally constant on
-  `G_reg(F)` (Harish-Chandra's regularity theorem; Bernstein's admissibility);
+* (b) `hc_character_exists` — `θ_π` is a function, continuous on Harish-Chandra's `G' = {D ≠ 0}`
+  (Harish-Chandra's regularity theorem; Bernstein's admissibility); the form on `G_reg(F)` is
+  `hc_character` in `GGP/Germs.lean`;
 * (c) `hc_character_isQuasiCharacter` — `θ_π` is a quasi-character (HC local character expansion;
   BP Prop 4.1.1(i), Thesis Prop 4.1.1.1);
 * (d) `germ_unique` — uniqueness of the local expansion (linear independence of the `ĵ(O,·)`,
@@ -90,36 +91,34 @@ variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
 /-! ## (a) The regular set (Harish-Chandra) -/
 
-/-- `rank G` for `G = GSpin(W) × GSpin(V)`: a maximal torus of `GSpin(n)` has dimension
-`⌊n/2⌋ + 1` (a maximal torus of `Spin(n)` times the central `𝔾_m`), so
-`rank G = (⌊m/2⌋ + 1) + (⌊(m + 2r + 1)/2⌋ + 1)` with `dim W = m`, `dim V = m + 2r + 1`. -/
-def hcRank (d : GGPData F) : ℕ := (d.m / 2 + 1) + ((d.m + 2 * d.r + 1) / 2 + 1)
-
 open Classical in
 /-- Harish-Chandra's discriminant `D(x)`: the coefficient of `t^ℓ`, `ℓ = rank G`, in
 `det(t − 1 + Ad(x))`, i.e. in the characteristic polynomial of `1 − Ad(x)` on
-`𝔤 = gspin(W) × gspin(V)` (`0` if `𝔤` is not `Ad(x)`-stable, which does not happen). -/
+`𝔤 = gspin(W) × gspin(V)` (`0` if `𝔤` is not `Ad(x)`-stable, which does not happen). The rank is
+the intrinsic `lieRank 𝔤` (the minimal dimension of a centralizer `𝔤_X`, which is the dimension of a
+Cartan subalgebra), not a formula in `dim W`, `dim V`. -/
 def hcDisc (d : GGPData F) (x : ↥d.G) : F :=
   if h : ∀ X ∈ d.lie.toSubmodule, conjAd F (x : d.ambientˣ) X ∈ d.lie.toSubmodule then
     (LinearMap.charpoly (1 - (conjAd F (x : d.ambientˣ)).toLinearEquiv.toLinearMap.restrict h)).coeff
-      (hcRank d)
+      (lieRank d.lie)
   else 0
 
 /-- **Harish-Chandra: the regular set is open, dense and conull.** Harish-Chandra, *Harmonic
 analysis on reductive p-adic groups* (notes by G. van Dijk), LNM 162 (1970), Part V §3, p. 54
-(also Introduction, p. 2): let `G` be a connected reductive linear algebraic group over a `p`-adic
+(the Introduction, p. 2, writes `det(t + 1 − Ad(x))` instead; the coefficient changes by the sign
+`(−1)^{dim 𝔤 − ℓ}`, so `G'` is the same): let `G` be a connected reductive linear algebraic group over a `p`-adic
 field and `G` its group of rational points. For `x ∈ G` write
 `det(t − 1 + Ad(x)) = D(x) t^ℓ + …` (terms of higher degree), `ℓ = rank G`; then
 `G' = {x ∈ G : D(x) ≠ 0}` is an open and dense subset of `G`, whose complement has Haar measure
 zero. Specialized to the connected reductive group `G = GSpin(W) × GSpin(V)` (Lie algebra
-`gspin(W) × gspin(V)`, `D = hcDisc`, `ℓ = hcRank`). -/
+`gspin(W) × gspin(V)`, `D = hcDisc`, `ℓ = lieRank 𝔤`). -/
 axiom hc_regular_open_dense_conull (d : GGPData F) :
     IsOpen {x : ↥d.G | hcDisc d x ≠ 0} ∧ Dense {x : ↥d.G | hcDisc d x ≠ 0} ∧
       (Measure.haar : Measure ↥d.G) {x : ↥d.G | hcDisc d x ≠ 0}ᶜ = 0
 
 /-- **(b) Harish-Chandra's regularity theorem.** For an irreducible tempered unitary
 representation `π` of `G(F)`, the distribution `f ↦ tr π(f)` on `C_c^∞(G(F))` is given by a locally
-integrable function which is locally constant on `G_reg(F)`.
+integrable function which is locally constant on `G' = {D ≠ 0}`.
 
 Sources:
 * Bernstein, *All reductive p-adic groups are tame*, Funct. Anal. Appl. 8 (1974), 91–93, Thm 1.
@@ -132,20 +131,17 @@ Sources:
   irreducible `π` is a locally summable function on `G`, locally constant on
   `G' = {x : D_G(x) ≠ 0}`.
 
-Harish-Chandra's `G'` (`D_G(x)` is the coefficient of `t^ℓ` in `det(t − Ad(x) + 1)`, with
-`ℓ = rank G`) is the set of regular semisimple elements. In characteristic `0` it equals
-`regularSet` (semisimple with abelian centralizer in `𝔤`): for semisimple `x`, `𝔤_x` is reductive
-of rank `ℓ`, so it is abelian iff `dim 𝔤_x = ℓ`. Only continuity on `G_reg(F)` is stated here,
-which is weaker than local constancy. Thesis Ch. 1, BP §2.1 / Prop 4.1.1(i). -/
-axiom hc_character_exists (d : GGPData F) (π : UnitaryRep ↥d.G) (hπ : IsTempered π) :
-    ∃ θ : ↥d.G → ℂ, IsCharacterOf π θ ∧ ContinuousOn θ (regularSet d.G d.lie)
+Harish-Chandra's `G'` is `{x | hcDisc d x ≠ 0}` (as in `hc_regular_open_dense_conull`), and the
+conclusion is stated on that set, verbatim; its identification with `regularSet` is a separate
+theorem (`hcDisc_ne_zero_iff_mem_regularSet`, GGP/Germs). Only continuity on `G'` is stated, which is
+weaker than local constancy. Thesis Ch. 1, BP §2.1 / Prop 4.1.1(i).
 
-/-- `θ_π = characterOn π (regularSet d.G d.lie)` (Triple's `charG d π`) represents the character
-of `π` and is continuous on `G_reg(F)` (from `hc_character_exists`). -/
-theorem hc_character (d : GGPData F) (π : UnitaryRep ↥d.G) (hπ : IsTempered π) :
-    IsCharacterOf π (characterOn π (regularSet d.G d.lie)) ∧
-      ContinuousOn (characterOn π (regularSet d.G d.lie)) (regularSet d.G d.lie) :=
-  characterOn_spec π _ (hc_character_exists d π hπ)
+One step of the chain is not covered by an exact citation yet: for a topologically irreducible
+unitary `π`, the smooth vectors `π^∞` form an (algebraically) irreducible admissible representation,
+and its character `f ↦ tr π^∞(f)` is `traceOf π` (the trace on `π^K`). Bernstein's Thm 1 gives
+admissibility; the irreducibility of `π^∞` is standard but its source is still to be pinned down. -/
+axiom hc_character_exists (d : GGPData F) (π : UnitaryRep ↥d.G) (hπ : IsTempered π) :
+    ∃ θ : ↥d.G → ℂ, IsCharacterOf π θ ∧ ContinuousOn θ {x : ↥d.G | hcDisc d x ≠ 0}
 
 /-! ## (c) Characters are quasi-characters -/
 
