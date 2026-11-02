@@ -14,6 +14,7 @@ import GSpinGGP.Foundations.LocalGroups
 * `commute_of_commute_exp`: on an injectivity domain of `exp`, `Y` commutes with everything
   commuting with `exp Y` (so the local inverse `L(c)` commutes with the commutant of `c`);
 * `eventually_map_expA`: `φ(e^X) = e^{φ X}` near `0` for linear maps preserving powers;
+* `stabSubalgebra`, `expA_ad_eq`: `e^{ad Y} = Ad(e^Y)` near `0` in `End(A)`;
 * `exists_logA`: a local logarithm `log`, continuous at `1`, with `e^{log u} = u` near `1`
   (no logarithm series: the local inverse of `exp` on `End(F^d)` restricted to `A`).
 -/
@@ -208,5 +209,66 @@ theorem exists_logA : ∃ log : A → A, ContinuousAt log 1 ∧ log 1 = 0 ∧
   rwa [lmulPiInv_lmulPi, lmulPiInv_lmulPi] at this
 
 end Log
+
+/-- The endomorphisms of `M` preserving the submodule `p`, as a subalgebra of `End(M)`. -/
+def stabSubalgebra {R M : Type*} [CommRing R] [AddCommGroup M] [Module R M] (p : Submodule R M) :
+    Subalgebra R (Module.End R M) where
+  carrier := {f | ∀ v ∈ p, f v ∈ p}
+  mul_mem' hf hg v hv := hf _ (hg v hv)
+  add_mem' hf hg v hv := p.add_mem (hf v hv) (hg v hv)
+  algebraMap_mem' c v hv := by
+    simpa [Module.algebraMap_end_apply] using p.smul_mem c hv
+
+theorem mem_stabSubalgebra {R M : Type*} [CommRing R] [AddCommGroup M] [Module R M]
+    {p : Submodule R M} {f : Module.End R M} : f ∈ stabSubalgebra p ↔ ∀ v ∈ p, f v ∈ p :=
+  Iff.rfl
+
+section Ad
+
+variable {F} {B : Type*} [Ring B] [Algebra F B]
+
+/-- Right multiplication as a linear map `B → End(B)`. -/
+def mulRightₗ : B →ₗ[F] Module.End F B := (LinearMap.mul F B).flip
+
+omit [PAdicField F] in
+theorem mulRightₗ_apply (a : B) : mulRightₗ (F := F) a = LinearMap.mulRight F a := rfl
+
+variable [Module.Finite F B] [TopologicalSpace B] [IsModuleTopology F B]
+
+variable (F) in
+/-- **`e^{ad Y} = Ad(e^Y)`** for `Y` near `0`, in `End(B)` with its module topology:
+`ad Y = L_Y − R_Y` with commuting `L_Y`, `R_Y`, and `e^{L_Y} = L_{e^Y}`, `e^{−R_Y} = R_{e^{−Y}}`. -/
+theorem expA_ad_eq [TopologicalSpace (Module.End F B)] [IsModuleTopology F (Module.End F B)] :
+    ∀ᶠ Y in 𝓝 (0 : B), expA F (LinearMap.mulLeft F Y - LinearMap.mulRight F Y) =
+      LinearMap.mulLeft F (expA F Y) * LinearMap.mulRight F (expA F (-Y)) := by
+  letI := isTopologicalRing_of_moduleTopology F B
+  letI := isTopologicalRing_of_moduleTopology F (Module.End F B)
+  obtain ⟨UB, hUB, hadd⟩ := expA_add_of_commute F (A := Module.End F B)
+  have hl := eventually_map_expA (F := F) (A := B) (B := Module.End F B)
+    (Algebra.lmul F B).toLinearMap (fun X n => map_pow (Algebra.lmul F B) X n)
+  have hr := eventually_map_expA (F := F) (A := B) (B := Module.End F B) mulRightₗ
+    (fun X n => by rw [mulRightₗ_apply, mulRightₗ_apply, LinearMap.pow_mulRight])
+  have hcl : Continuous ((Algebra.lmul F B).toLinearMap : B → Module.End F B) :=
+    IsModuleTopology.continuous_of_linearMap _
+  have hcr : Continuous (mulRightₗ (F := F) : B → Module.End F B) :=
+    IsModuleTopology.continuous_of_linearMap _
+  have h1 : (fun Y : B => (Algebra.lmul F B).toLinearMap Y) ⁻¹' UB ∈ 𝓝 (0 : B) :=
+    hcl.continuousAt.preimage_mem_nhds (by rwa [map_zero])
+  have h2 : (fun Y : B => -mulRightₗ (F := F) Y) ⁻¹' UB ∈ 𝓝 (0 : B) :=
+    hcr.neg.continuousAt.preimage_mem_nhds (by simpa using hUB)
+  have hr' : ∀ᶠ Y in 𝓝 (0 : B), mulRightₗ (F := F) (expA F (-Y)) = expA F (mulRightₗ (-Y)) :=
+    (continuous_neg.tendsto' (0 : B) 0 neg_zero).eventually hr
+  filter_upwards [hl, hr', h1, h2] with Y hlY hrY h1Y h2Y
+  have hc : Commute (LinearMap.mulLeft F Y) (-LinearMap.mulRight F Y) :=
+    (LinearMap.commute_mulLeft_right Y Y).neg_right
+  have h1Y' : LinearMap.mulLeft F Y ∈ UB := h1Y
+  have h2Y' : -LinearMap.mulRight F Y ∈ UB := h2Y
+  rw [sub_eq_add_neg, hadd _ h1Y' _ h2Y' hc]
+  congr 1
+  · exact hlY.symm
+  · rw [mulRightₗ_apply, map_neg, mulRightₗ_apply] at hrY
+    exact hrY.symm
+
+end Ad
 
 end GSpinGGP

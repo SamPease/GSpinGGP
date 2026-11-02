@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import Mathlib
+import TauCeti.RingTheory.Adjoin.Unit
 
 /-!
 # Local fields and unbundled linear groups
@@ -284,6 +285,40 @@ instance lieSubalgebraBorelSpace {R A : Type*} [CommRing R] [Ring A] [Algebra R 
 
 /-! ## 3. Algebraic notions (Thesis §2.1) -/
 
+section MulRight
+
+variable {K : Type*} [Field K]
+
+open Polynomial in
+/-- If left multiplication by `a` is semisimple, so is right multiplication by `a` (both are
+annihilated by the squarefree minimal polynomial of `L_a`). -/
+theorem isSemisimple_mulRight_of_mulLeft {A : Type*} [Ring A] [Algebra K A] [FiniteDimensional K A]
+    {a : A} (ha : Module.End.IsSemisimple (LinearMap.mulLeft K a)) :
+    Module.End.IsSemisimple (LinearMap.mulRight K a) := by
+  refine Module.End.isSemisimple_of_squarefree_aeval_eq_zero ha.minpoly_squarefree ?_
+  have hpa : aeval a (minpoly K (LinearMap.mulLeft K a)) = 0 := by
+    have h1 : aeval (Algebra.lmul K A a) (minpoly K (LinearMap.mulLeft K a)) =
+        Algebra.lmul K A (aeval a (minpoly K (LinearMap.mulLeft K a))) :=
+      aeval_algHom_apply (Algebra.lmul K A) a _
+    have h2 : aeval (LinearMap.mulLeft K a) (minpoly K (LinearMap.mulLeft K a)) = 0 :=
+      minpoly.aeval K _
+    have h3 := congrArg (fun f : Module.End K A => f 1) (h1.symm.trans h2)
+    simpa using h3
+  have hR : ∀ q : K[X], aeval (LinearMap.mulRight K a) q = LinearMap.mulRight K (aeval a q) := by
+    intro q
+    induction q using Polynomial.induction_on' with
+    | add p q hp hq =>
+      rw [map_add, map_add, hp, hq]
+      ext z; simp [mul_add]
+    | monomial k c =>
+      ext z
+      simp only [aeval_monomial, Module.End.mul_apply, Module.algebraMap_end_apply,
+        LinearMap.mulRight_apply, LinearMap.pow_mulRight, Algebra.smul_def,
+        mul_assoc, Algebra.commutes]
+  rw [hR, hpa, LinearMap.mulRight_zero_eq_zero]
+
+end MulRight
+
 section Algebraic
 
 variable (F) {A : Type*} [Ring A] [Algebra F A]
@@ -358,6 +393,67 @@ def weylDiscLie (𝔤 : LieSubalgebra F A) (X : A) : ℝ :=
   else 0
 
 end Algebraic
+
+/-! ### Semisimplicity of inverses, products and sums -/
+
+section Semisimple
+
+variable {A : Type*} [Ring A] [Algebra F A]
+
+/-- An element of `F[u]` is semisimple if `u` is. -/
+theorem isSS_of_mem_adjoin [PerfectField F] [FiniteDimensional F A] {u Y : A} (hu : IsSS F u)
+    (hY : Y ∈ Algebra.adjoin F {u}) : IsSS F Y := by
+  have hmem : Algebra.lmul F A Y ∈ Algebra.adjoin F {Algebra.lmul F A u} := by
+    rw [← AlgHom.map_adjoin_singleton]
+    exact Subalgebra.mem_map.mpr ⟨_, hY, rfl⟩
+  exact Module.End.IsSemisimple.of_mem_adjoin_singleton hu hmem
+
+/-- The inverse of a semisimple unit is semisimple (it lies in `F[u]`). -/
+theorem isSS_coe_inv [PerfectField F] [FiniteDimensional F A] {u : Aˣ} (hu : IsSS F (u : A)) :
+    IsSS F ((u⁻¹ : Aˣ) : A) :=
+  isSS_of_mem_adjoin hu (TauCeti.Units.coe_inv_mem_adjoin u (IsIntegral.of_finite F (u : A)))
+
+/-- The product of commuting semisimple elements is semisimple. -/
+theorem isSS_mul_of_commute [PerfectField F] [FiniteDimensional F A] {a c : A} (h : Commute a c)
+    (ha : IsSS F a) (hc : IsSS F c) : IsSS F (a * c) := by
+  unfold IsSS at *
+  rw [LinearMap.mulLeft_mul]
+  exact Module.End.IsSemisimple.mul_of_commute (h.map (Algebra.lmul F A)) ha hc
+
+/-- The sum of commuting semisimple elements is semisimple. -/
+theorem isSS_add_of_commute [PerfectField F] [FiniteDimensional F A] {a c : A} (h : Commute a c)
+    (ha : IsSS F a) (hc : IsSS F c) : IsSS F (a + c) := by
+  unfold IsSS at *
+  rw [show LinearMap.mulLeft F (a + c) = LinearMap.mulLeft F a + LinearMap.mulLeft F c from
+    LinearMap.ext fun w => add_mul a c w]
+  exact Module.End.IsSemisimple.add_of_commute (h.map (Algebra.lmul F A)) ha hc
+
+/-- **Translation by a central semisimple element preserves regularity**: if `Y` is semisimple and
+commutes with every element of `𝔥`, then `Z + Y` is regular semisimple in `𝔥` iff `Z` is, for
+`Z ∈ 𝔥` (same centralizer in `𝔥`; sums of commuting semisimple elements are semisimple). -/
+theorem isRegularSS_add_iff_of_central [PerfectField F] [FiniteDimensional F A]
+    {𝔥 : LieSubalgebra F A} {Y : A} (hY : IsSS F Y) (hc : ∀ W ∈ 𝔥, Commute W Y) {Z : A}
+    (hZ : Z ∈ 𝔥) : IsRegularSS 𝔥 (Z + Y) ↔ IsRegularSS 𝔥 Z := by
+  have hC : lieCentralizer 𝔥 (Z + Y) = lieCentralizer 𝔥 Z := by
+    ext W
+    rw [mem_lieCentralizer, mem_lieCentralizer]
+    refine and_congr_right fun hW => ?_
+    rw [add_mul, mul_add, (hc W hW).eq]
+    exact add_left_inj _
+  have hnY : IsSS F (-Y) := by
+    unfold IsSS at *
+    rw [show LinearMap.mulLeft F (-Y) = (-1 : F) • LinearMap.mulLeft F Y from
+      LinearMap.ext fun w => by simp]
+    exact Module.End.IsSemisimple_smul _ hY
+  have hZY : Commute Z Y := hc Z hZ
+  unfold IsRegularSS
+  rw [hC]
+  refine and_congr_left fun _ => ⟨fun h => ?_, fun h => isSS_add_of_commute hZY h hY⟩
+  have := isSS_add_of_commute ((hZY.add_left (Commute.refl Y)).neg_right) h hnY
+  rwa [add_neg_cancel_right] at this
+
+end Semisimple
+
 
 /-! ### The elliptic regular set (Thesis §2.5) -/
 
@@ -864,11 +960,7 @@ lemma exists_nhds_expA_mem_adjoin :
 `X`). -/
 lemma exists_nhds_isSS_expA : ∃ U ∈ 𝓝 (0 : A), ∀ X ∈ U, IsSS F X → IsSS F (expA F X) := by
   obtain ⟨U, hU, h⟩ := exists_nhds_expA_mem_adjoin F (A := A)
-  refine ⟨U, hU, fun X hX hss => ?_⟩
-  have hmem : Algebra.lmul F A (expA F X) ∈ Algebra.adjoin F {Algebra.lmul F A X} := by
-    rw [← AlgHom.map_adjoin_singleton]
-    exact Subalgebra.mem_map.mpr ⟨_, h X hX, rfl⟩
-  exact Module.End.IsSemisimple.of_mem_adjoin_singleton hss hmem
+  exact ⟨U, hU, fun X hX hss => isSS_of_mem_adjoin hss (h X hX)⟩
 
 variable {F}
 
@@ -930,36 +1022,11 @@ lemma continuous_rmulPi : Continuous (rmulPi F : A → VA →L[F] VA) :=
 
 variable {F}
 
-/-- If `x` is semisimple (left multiplication), so is right multiplication by `x`: it is
-annihilated by the (squarefree) minimal polynomial of `x`. -/
-lemma isSemisimple_mulRight {x : A} (hx : IsSS F x) :
-    Module.End.IsSemisimple (LinearMap.mulRight F x) := by
-  set p := minpoly F (LinearMap.mulLeft F x)
-  have hsq : Squarefree p := hx.minpoly_squarefree
-  have hpx : Polynomial.aeval x p = 0 := by
-    have h1 : Polynomial.aeval (Algebra.lmul F A x) p = Algebra.lmul F A (Polynomial.aeval x p) :=
-      Polynomial.aeval_algHom_apply (Algebra.lmul F A) x p
-    have h2 : Polynomial.aeval (LinearMap.mulLeft F x) p = 0 := minpoly.aeval F _
-    have h3 := congrArg (fun f : Module.End F A => f 1) (h1.symm.trans h2)
-    simpa using h3
-  have hR : ∀ q : Polynomial F, Polynomial.aeval (LinearMap.mulRight F x) q =
-      LinearMap.mulRight F (Polynomial.aeval x q) := by
-    intro q
-    induction q using Polynomial.induction_on' with
-    | add p q hp hq => simp only [map_add, hp, hq]; ext; simp [mul_add]
-    | monomial n c =>
-      simp only [Polynomial.aeval_monomial, LinearMap.pow_mulRight]
-      ext w
-      simp [Algebra.smul_def, mul_assoc, Algebra.commutes]
-  refine Module.End.isSemisimple_of_squarefree_aeval_eq_zero hsq ?_
-  rw [hR, hpx]
-  ext; simp
-
 /-- `ad x = L_x - R_x` is semisimple for semisimple `x`. -/
 lemma isSemisimple_ad {x : A} (hx : IsSS F x) :
     Module.End.IsSemisimple (LinearMap.mulLeft F x - LinearMap.mulRight F x) :=
   Module.End.IsSemisimple.sub_of_commute (LinearMap.commute_mulLeft_right x x) hx
-    (isSemisimple_mulRight hx)
+    (isSemisimple_mulRight_of_mulLeft hx)
 
 /-- Semisimplicity is invariant under conjugation by a linear equivalence. -/
 lemma isSemisimple_conj {M₁ M₂ : Type*} [AddCommGroup M₁] [Module F M₁] [AddCommGroup M₂]
@@ -1052,13 +1119,7 @@ theorem exists_nhds_isRegularSS_mul_expA (𝔤 : LieSubalgebra F A) {x : A} (hx 
   refine ⟨U₁ ∩ U₂ ∩ U₃, inter_mem (inter_mem hU₁ hU₂) hU₃, fun X hX hXc hreg => ⟨?_, ?_⟩⟩
   · have hxX : Commute x X := (mem_lieCentralizer.mp hXc).2
     have hxe : Commute x (expA F X) := commute_expA_of_commute hxX
-    have hcomm : Commute (LinearMap.mulLeft F x) (LinearMap.mulLeft F (expA F X)) := by
-      change LinearMap.mulLeft F x * LinearMap.mulLeft F (expA F X) =
-        LinearMap.mulLeft F (expA F X) * LinearMap.mulLeft F x
-      ext w; simp [← mul_assoc, hxe.eq]
-    have := Module.End.IsSemisimple.mul_of_commute hcomm hx (h₁ X hX.1.1 hreg.1)
-    unfold IsSS
-    rwa [LinearMap.mulLeft_mul]
+    exact isSS_mul_of_commute hxe hx (h₁ X hX.1.1 hreg.1)
   · refine isLieAbelian_of_le ?_ hreg.2
     intro Y hY
     rw [mem_lieCentralizer] at hY

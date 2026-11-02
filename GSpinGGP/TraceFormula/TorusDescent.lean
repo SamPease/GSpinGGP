@@ -10,7 +10,6 @@ import GSpinGGP.Foundations.Determinant
 import GSpinGGP.GGP.IsometrySemisimple
 import GSpinGGP.GGP.GSpinSemisimple
 import GSpinGGP.TraceFormula.ThetaF
-import GSpinGGP.Foundations.GSpinExp
 import GSpinGGP.TraceFormula.JHatSelfDual
 
 /-!

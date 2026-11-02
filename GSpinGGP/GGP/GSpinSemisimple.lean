@@ -31,33 +31,6 @@ namespace GSpinGGP
 
 variable {K : Type*} [Field K]
 
-/-- If left multiplication by `a` is semisimple, so is right multiplication by `a` (both are
-annihilated by the squarefree minimal polynomial of `L_a`). -/
-theorem isSemisimple_mulRight_of_mulLeft {A : Type*} [Ring A] [Algebra K A] [FiniteDimensional K A]
-    {a : A} (ha : Module.End.IsSemisimple (LinearMap.mulLeft K a)) :
-    Module.End.IsSemisimple (LinearMap.mulRight K a) := by
-  refine Module.End.isSemisimple_of_squarefree_aeval_eq_zero ha.minpoly_squarefree ?_
-  have hpa : aeval a (minpoly K (LinearMap.mulLeft K a)) = 0 := by
-    have h1 : aeval (Algebra.lmul K A a) (minpoly K (LinearMap.mulLeft K a)) =
-        Algebra.lmul K A (aeval a (minpoly K (LinearMap.mulLeft K a))) :=
-      aeval_algHom_apply (Algebra.lmul K A) a _
-    have h2 : aeval (LinearMap.mulLeft K a) (minpoly K (LinearMap.mulLeft K a)) = 0 :=
-      minpoly.aeval K _
-    have h3 := congrArg (fun f : Module.End K A => f 1) (h1.symm.trans h2)
-    simpa using h3
-  have hR : ∀ q : K[X], aeval (LinearMap.mulRight K a) q = LinearMap.mulRight K (aeval a q) := by
-    intro q
-    induction q using Polynomial.induction_on' with
-    | add p q hp hq =>
-      rw [map_add, map_add, hp, hq]
-      ext z; simp [mul_add]
-    | monomial k c =>
-      ext z
-      simp only [aeval_monomial, Module.End.mul_apply, Module.algebraMap_end_apply,
-        LinearMap.mulRight_apply, LinearMap.pow_mulRight, Algebra.smul_def,
-        mul_assoc, Algebra.commutes]
-  rw [hR, hpa, LinearMap.mulRight_zero_eq_zero]
-
 variable [CharZero K] [Invertible (2 : K)] {V : Type*} [AddCommGroup V] [Module K V]
   [FiniteDimensional K V]
 
