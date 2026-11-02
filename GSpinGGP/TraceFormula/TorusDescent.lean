@@ -1028,6 +1028,13 @@ derived from those at `t` for `Y` central only in `𝔤_t` (`germ_eq_germ_of_tra
 translation by central elements of `G`); (2) the invariance `ĵ(O, X + Y) = ĵ(O, X)` for such `Y`;
 (3) `O_{t'} = O_t`, i.e. `orbitChoice_heq_of_eq` from `G_{t'} = G_t`, `𝔤_{t'} = 𝔤_t`
 (`commute_iff_of_torusOf_eq`, `commute_lie_iff_of_torusOf_eq`) and `W'_{t'} = W'_t`.
+Literature: Waldspurger 2010 (Compositio 146; arXiv:0902.1875, §7.3, Proposition (i), proof in §7.6–7.7)
+states this local constancy for quasi-characters of `SO(W)` and of `SO(V)` separately, with his orbit
+choices and tori `T` with `A_T = 1`; the proof rests on `ĵ(O_t, ·)` being locally invariant under
+translation by the centre of `𝔤_t(F)` (§7.6).  Here the group is `GSpin(W) × GSpin(V)`, `θ` is a
+quasi-character of the product evaluated at `diag(t)`, and `T` contains the central `A_{G,H}`, so this
+is an adaptation, not a citation.  Beuzart-Plessis (Astérisque 418, Prop 4.5.1) only gives the
+vanishing, limit, boundedness and descent properties of the averaged `c_θ`.
 Status: SORRY (own work, GSpin input). -/
 theorem continuousOn_germ_of_mem_QC {χ : CentralCharOn d} {θ : ↥d.G → ℂ}
     (hθ : θ ∈ QC d χ) (T : Subgroup ↥(GSpin d.QW)) :
