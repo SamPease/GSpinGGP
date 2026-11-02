@@ -20,7 +20,8 @@ kernel the scalars (Thesis Prop. 5.1.3.1). So the centralizer of `X ∈ gspin(V)
 
 * `finrank_soCent_le_of_chain`: an upper bound for `dim so(V)_N` when `N` has a long Jordan chain.
 * `soCentMat`, `soCentMat_toMatrix`: the same in matrix form, and `finrank_soCentMat_map`: its
-  dimension does not change under extension of scalars.
+  dimension does not change under extension of scalars; `soCentMat_map_eq_span`: over an
+  extension it is spanned by its `F`-points (`matrixBaseChangeEquiv`: `K ⊗ Mat_n(F) ≃ Mat_n(K)`).
 -/
 
 noncomputable section
@@ -816,22 +817,31 @@ theorem soCentMat_eq_ker {R : Type*} [CommRing R] (J A : Matrix n n R) :
     soCentMatMap, LinearMap.coe_mk, AddHom.coe_mk, Prod.mk_eq_zero, Matrix.mul_neg]
   rw [← eq_neg_iff_add_eq_zero, sub_eq_zero, eq_comm (a := B * A)]
 
+/-- `K ⊗[F] Mat_n(F) ≃ Mat_n(K)`, `K`-linearly: `a ⊗ M ↦ a • M.map (algebraMap F K)`. -/
+def matrixBaseChangeEquiv (F K : Type*) [Field F] [Field K] [Algebra F K] :
+    K ⊗[F] Matrix n n F ≃ₗ[K] Matrix n n K :=
+  { (matrixEquivTensor n F K).symm.toLinearEquiv with
+    map_smul' := fun c x => by
+      change (matrixEquivTensor n F K).symm (c • x) = c • (matrixEquivTensor n F K).symm x
+      induction x using TensorProduct.inductionOn with
+      | tmul a M =>
+        rw [TensorProduct.smul_tmul', matrixEquivTensor_apply_symm, matrixEquivTensor_apply_symm,
+          smul_smul, smul_eq_mul]
+      | add x y hx hy => rw [smul_add, map_add, hx, hy, map_add, smul_add] }
+
+@[simp]
+theorem matrixBaseChangeEquiv_tmul (F K : Type*) [Field F] [Field K] [Algebra F K] (a : K)
+    (M : Matrix n n F) :
+    matrixBaseChangeEquiv (n := n) F K (a ⊗ₜ M) = a • M.map (algebraMap F K) :=
+  matrixEquivTensor_apply_symm _ _ _ _ _
+
 /-- **`dim so(J)_A` is unchanged by extension of scalars.** -/
 theorem finrank_soCentMat_map {F K : Type*} [Field F] [Field K] [Algebra F K]
     (J A : Matrix n n F) :
     Module.finrank K (soCentMat (J.map (algebraMap F K)) (A.map (algebraMap F K))) =
       Module.finrank F (soCentMat J A) := by
   set f := soCentMatMap J A
-  -- `K ⊗ Mat_n(F) ≅ Mat_n(K)`, `K`-linearly
-  let e1 : K ⊗[F] Matrix n n F ≃ₗ[K] Matrix n n K :=
-    { (matrixEquivTensor n F K).symm.toLinearEquiv with
-      map_smul' := fun c x => by
-        show (matrixEquivTensor n F K).symm (c • x) = c • (matrixEquivTensor n F K).symm x
-        induction x using TensorProduct.inductionOn with
-        | tmul a M =>
-          rw [TensorProduct.smul_tmul', matrixEquivTensor_apply_symm, matrixEquivTensor_apply_symm,
-            smul_smul, smul_eq_mul]
-        | add x y hx hy => rw [smul_add, map_add, hx, hy, map_add, smul_add] }
+  let e1 := matrixBaseChangeEquiv (n := n) F K
   let e2 : K ⊗[F] (Matrix n n F × Matrix n n F) ≃ₗ[K] Matrix n n K × Matrix n n K :=
     (TensorProduct.prodRight F K K _ _).trans (e1.prodCongr e1)
   set g := soCentMatMap (J.map (algebraMap F K)) (A.map (algebraMap F K))
@@ -857,6 +867,36 @@ theorem finrank_soCentMat_map {F K : Type*} [Field F] [Field K] [Algebra F K]
     simp
   rw [soCentMat_eq_ker, soCentMat_eq_ker, hker, LinearEquiv.finrank_map_eq]
   exact (LinearMap.tensorKerEquiv K K f).finrank_eq.symm.trans Module.finrank_baseChange
+
+/-- **`so(J)_A` over `K` is spanned by `so(J)_A` over `F`.** -/
+theorem soCentMat_map_eq_span {F K : Type*} [Field F] [Field K] [Algebra F K]
+    (J A : Matrix n n F) :
+    soCentMat (J.map (algebraMap F K)) (A.map (algebraMap F K)) =
+      Submodule.span K ((fun M : Matrix n n F => M.map (algebraMap F K)) '' soCentMat J A) := by
+  set φ := algebraMap F K
+  have hle : Submodule.span K ((fun M : Matrix n n F => M.map φ) '' soCentMat J A) ≤
+      soCentMat (J.map φ) (A.map φ) := by
+    refine Submodule.span_le.2 ?_
+    rintro _ ⟨M, hM, rfl⟩
+    rw [SetLike.mem_coe, soCentMat_eq_ker, LinearMap.mem_ker] at hM ⊢
+    have h1 := congrArg (fun p : Matrix n n F × Matrix n n F => p.1.map φ) hM
+    have h2 := congrArg (fun p : Matrix n n F × Matrix n n F => p.2.map φ) hM
+    simp only [soCentMatMap, LinearMap.coe_mk, AddHom.coe_mk, Prod.fst_zero, Prod.snd_zero,
+      Matrix.map_zero _ (map_zero φ)] at h1 h2
+    simp only [soCentMatMap, LinearMap.coe_mk, AddHom.coe_mk, Prod.mk_eq_zero]
+    rw [← Matrix.transpose_map]
+    simp only [← RingHom.mapMatrix_apply, ← map_mul, ← map_add, ← map_sub] at h1 h2 ⊢
+    exact ⟨h1, h2⟩
+  refine (Submodule.eq_of_le_of_finrank_le hle ?_).symm
+  let b := Module.finBasis F (soCentMat J A)
+  have hli : LinearIndependent K fun i => ((b i : Matrix n n F)).map φ := by
+    have h1 := Module.Flat.linearIndependent_one_tmul (S := K)
+      (b.linearIndependent.map' (soCentMat J A).subtype (Submodule.ker_subtype _))
+    have h2 := h1.map' (matrixBaseChangeEquiv (n := n) F K).toLinearMap (LinearEquiv.ker _)
+    simpa [Function.comp_def, matrixBaseChangeEquiv_tmul] using h2
+  rw [finrank_soCentMat_map, Module.finrank_eq_card_basis b, ← finrank_span_eq_card hli]
+  exact Submodule.finrank_mono (Submodule.span_mono (by
+    rintro _ ⟨i, rfl⟩; exact ⟨_, (b i).2, rfl⟩))
 
 end Matrix
 
