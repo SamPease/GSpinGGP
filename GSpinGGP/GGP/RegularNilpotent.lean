@@ -241,14 +241,17 @@ section Side
 variable {K : Type*} [Field K] [CharZero K] [Invertible (2 : K)]
 variable {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
 
+omit [CharZero K] [FiniteDimensional K V] in
 /-- `P(y)` is an isometry. -/
 theorem bform_specP_specP {Q : QuadraticForm K V} (y : GSpin Q) (u v : V) :
     bform Q (specP Q y u) (specP Q y v) = bform Q u v := bform_specP y u v
 
+omit [CharZero K] [FiniteDimensional K V] in
 theorem mem_fixedSub_iff' {Q : QuadraticForm K V} (y : GSpin Q) (v : V) :
     v ∈ fixedSub y ↔ (specP Q y : Module.End K V) v = v := by
   simp [fixedSub, sub_eq_zero]
 
+omit [CharZero K] in
 /-- **Dimension of `gspin(V)_{y,Y}` through the fixed space `A = W'_y`**: for `Y ∈ gspin(V)_y`,
 `dim gspin(V)_{y,Y} = dim so(A)_{adV Y|_A} + dim (so(V)_{P y, adV Y} killing A) + 1`. -/
 theorem finrank_lieCentralizer_fixed {Q : QuadraticForm K V} (hQ : IsNondeg Q) (y : GSpin Q)
@@ -305,6 +308,7 @@ theorem le_finrank_lieCentralizer_fixed {Q : QuadraticForm K V} (hQ : IsNondeg Q
   have := le_finrank_soCent (isNondeg_comp_subtype_of_isCompl hc) hNs
   omega
 
+omit [CharZero K] in
 /-- **Upper bound** for `dim gspin(V)_{y,Y}`: `≤ dim so(A)_{adV Y|_A} + dim (so(V)_{P y} killing A) + 1`. -/
 theorem finrank_lieCentralizer_fixed_le {Q : QuadraticForm K V} (hQ : IsNondeg Q) (y : GSpin Q)
     (hc : IsCompl (fixedSub y) ((bform Q).orthogonal (fixedSub y))) {Y : CliffordAlgebra Q}
@@ -324,6 +328,104 @@ theorem finrank_lieCentralizer_fixed_le {Q : QuadraticForm K V} (hQ : IsNondeg Q
   omega
 
 end Side
+
+/-! ## The two sides of `G_x`: `W'_x ⊂ W` and `V'_x = W'_x ⊕ Z ⊂ V` -/
+
+section GGPSides
+
+variable {K : Type*} [Field K] [Invertible (2 : K)] (d : GGPData K)
+
+theorem specP_incl_apply (x : GSpin d.QW) (w : Fin d.m → K) (z : d.Z) :
+    specP d.QV (d.incl x) (w, z) = (specP d.QW x w, z) := by
+  have e : ((w, z) : d.V) = (w, 0) + (0, z) := by simp
+  rw [e, map_add, d.specP_incl_inl, d.specP_incl_inr]; simp
+
+theorem mem_fixedSub_incl (x : GSpin d.QW) (v : d.V) :
+    v ∈ fixedSub (d.incl x) ↔ v.1 ∈ fixedSub x := by
+  rw [mem_fixedSub_iff', mem_fixedSub_iff']
+  obtain ⟨w, z⟩ := v
+  simp only [LinearEquiv.coe_coe, specP_incl_apply, Prod.mk.injEq, and_true]
+
+theorem fixedSub_inf_movedSub_incl (x : GSpin d.QW) (h : fixedSub x ⊓ movedSub x = ⊥) :
+    fixedSub (d.incl x) ⊓ movedSub (d.incl x) = ⊥ := by
+  rw [eq_bot_iff]
+  intro v hv
+  obtain ⟨hf, hm⟩ := Submodule.mem_inf.mp hv
+  obtain ⟨u, rfl⟩ := LinearMap.mem_range.mp hm
+  rw [Submodule.mem_bot]
+  set m : Fin d.m → K := specP d.QW x u.1 - u.1
+  have hu : (((specP d.QV (d.incl x) : d.V →ₗ[K] d.V) - LinearMap.id : d.V →ₗ[K] d.V) u) =
+      (m, 0) := by
+    obtain ⟨w, z⟩ := u
+    simp [specP_incl_apply, m]
+  rw [hu] at hf ⊢
+  have h1 : m ∈ fixedSub x ⊓ movedSub x :=
+    ⟨(mem_fixedSub_incl d x (m, 0)).mp hf, LinearMap.mem_range.mpr ⟨u.1, by simp [m]⟩⟩
+  rw [h, Submodule.mem_bot] at h1
+  simp [h1]
+
+/-- **The moved part of `V` is that of `W`**: an element of `so(V)_{P(x)}` killing `V'_x` is
+`(w, z) ↦ (M' w, 0)` with `M' ∈ so(W)_{P(x)}` killing `W'_x`. So if the latter commute, so do the
+former. -/
+theorem commute_movedPart_incl (x : GSpin d.QW)
+    (hW : ∀ M₁ ∈ soCent d.QW (specP d.QW x : Module.End K (Fin d.m → K)) ⊓ killSub (fixedSub x),
+      ∀ M₂ ∈ soCent d.QW (specP d.QW x : Module.End K (Fin d.m → K)) ⊓ killSub (fixedSub x),
+        M₁ * M₂ = M₂ * M₁) :
+    ∀ M₁ ∈ soCent d.QV (specP d.QV (d.incl x) : Module.End K d.V) ⊓ killSub (fixedSub (d.incl x)),
+      ∀ M₂ ∈ soCent d.QV (specP d.QV (d.incl x) : Module.End K d.V) ⊓
+        killSub (fixedSub (d.incl x)), M₁ * M₂ = M₂ * M₁ := by
+  have hZnd := isNondeg_splitOddForm d.r d.ν.ne_zero
+  -- the restriction to `W`
+  have key : ∀ M ∈ soCent d.QV (specP d.QV (d.incl x) : Module.End K d.V) ⊓
+      killSub (fixedSub (d.incl x)),
+      (∀ v, M v = ((M (v.1, 0)).1, 0)) ∧
+      (LinearMap.fst K _ _ ∘ₗ M ∘ₗ LinearMap.inl K _ _) ∈
+        soCent d.QW (specP d.QW x : Module.End K (Fin d.m → K)) ⊓ killSub (fixedSub x) := by
+    intro M hM
+    obtain ⟨hMg, hMk⟩ := Submodule.mem_inf.mp hM
+    obtain ⟨hMs, hMc⟩ := mem_soCent.mp hMg
+    have hz : ∀ z : d.Z, ((0 : Fin d.m → K), z) ∈ fixedSub (d.incl x) := fun z =>
+      (mem_fixedSub_incl d x (0, z)).mpr (Submodule.zero_mem _)
+    have h2 : ∀ v, (M v).2 = 0 := by
+      intro v
+      refine (isNondeg_iff _).mp hZnd _ fun z => ?_
+      have := hMs (0, z) v
+      rw [hMk _ (hz z), map_zero, LinearMap.zero_apply, bform_prod] at this
+      simp only [map_zero, LinearMap.zero_apply, zero_add] at this
+      rw [bform_comm]; linear_combination this
+    have hv : ∀ v, M v = ((M (v.1, 0)).1, 0) := by
+      intro v
+      have e : v = (v.1, 0) + (0, v.2) := by simp
+      conv_lhs => rw [e, map_add, hMk _ (hz _), add_zero]
+      exact Prod.ext rfl (h2 _)
+    refine ⟨hv, Submodule.mem_inf.mpr ⟨mem_soCent.2 ⟨fun a b => ?_, ?_⟩, fun a ha => ?_⟩⟩
+    · have := hMs (a, 0) (b, 0)
+      rw [hv (a, 0), hv (b, 0), bform_prod, bform_prod] at this
+      simpa using this
+    · refine LinearMap.ext fun w => ?_
+      show (M (specP d.QW x w, 0)).1 = specP d.QW x ((M (w, 0)).1)
+      have := congrArg (fun T : Module.End K d.V => T (w, 0)) hMc
+      simp only [Module.End.mul_apply, LinearEquiv.coe_coe] at this
+      rw [specP_incl_apply] at this
+      conv_rhs at this => rw [hv (w, 0)]
+      rw [specP_incl_apply] at this
+      exact congrArg Prod.fst this
+    · show (M (a, 0)).1 = 0
+      rw [hMk _ ((mem_fixedSub_incl d x (a, 0)).mpr ha), Prod.fst_zero]
+  intro M₁ hM₁ M₂ hM₂
+  obtain ⟨hv₁, h₁⟩ := key M₁ hM₁
+  obtain ⟨hv₂, h₂⟩ := key M₂ hM₂
+  have hc := hW _ h₁ _ h₂
+  refine LinearMap.ext fun v => ?_
+  have := congrArg (fun T : Module.End K (Fin d.m → K) => T v.1) hc
+  simp only [Module.End.mul_apply, LinearMap.comp_apply, LinearMap.inl_apply,
+    LinearMap.fst_apply] at this
+  simp only [Module.End.mul_apply]
+  rw [hv₂ v, hv₁, hv₁ v, hv₂]
+  simp only [this]
+  exact (hv₂ ((M₁ (v.1, 0)).1, 0)).symm
+
+end GGPSides
 
 /-! ## Regular nilpotent orbits and quasi-splitness -/
 
