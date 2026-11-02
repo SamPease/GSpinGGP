@@ -92,24 +92,32 @@ section GSpin
 
 variable {V : Type*} [AddCommGroup V] [Module F V] [FiniteDimensional F V] [Invertible (2 : F)]
 
+/-- **The semisimple part of `x ∈ gspin(V)` lies in `gspin(V)`**: if `s ∈ F[x]` has `L_s` semisimple
+and `x − s` nilpotent, then `s ∈ gspin(V)` (`s` is even as a polynomial in `x`; `[s, ι V] ⊆ ι V`
+because `ad s` is a polynomial in `ad x`). -/
+theorem mem_gspin_of_mem_adjoin {Q : QuadraticForm F V} {x s : CliffordAlgebra Q}
+    (hx : x ∈ gspin Q) (hs : s ∈ Algebra.adjoin F {x})
+    (hss : Module.End.IsSemisimple (LinearMap.mulLeft F s)) (hn : IsNilpotent (x - s)) :
+    s ∈ gspin Q := by
+  have hadj : Algebra.adjoin F {x} ≤ CliffordAlgebra.even Q :=
+    Algebra.adjoin_le (Set.singleton_subset_iff.2 hx.1)
+  have hW : Set.MapsTo (LieAlgebra.ad F _ x) (LinearMap.range (CliffordAlgebra.ι Q))
+      (LinearMap.range (CliffordAlgebra.ι Q)) := by
+    rintro _ ⟨v, rfl⟩
+    exact hx.2 v
+  exact ⟨hadj hs, fun v => mapsTo_of_mem_adjoin_singleton hW
+    (LieAlgebra.ad_mem_adjoin_of_isSemisimple_mulLeft hs hss hn) ⟨v, rfl⟩⟩
+
 /-- **Jordan decomposition in `gspin(V)`**: `x ∈ gspin(V)` has a Jordan decomposition `x = s + n`
-(`s, n ∈ F[x]`, `L_s` semisimple, `n` nilpotent) with both parts in `gspin(V)` (`s` is even as a
-polynomial in `x`; `[s, ι V] ⊆ ι V` because `ad s` is a polynomial in `ad x`). -/
+(`s, n ∈ F[x]`, `L_s` semisimple, `n` nilpotent) with both parts in `gspin(V)`
+(`mem_gspin_of_mem_adjoin`). -/
 theorem exists_jordan_gspin {Q : QuadraticForm F V} {x : CliffordAlgebra Q} (hx : x ∈ gspin Q) :
     ∃ s ∈ Algebra.adjoin F {x}, ∃ n ∈ Algebra.adjoin F {x},
       Module.End.IsSemisimple (LinearMap.mulLeft F s) ∧ IsNilpotent n ∧ x = s + n ∧
       s ∈ gspin Q ∧ n ∈ gspin Q := by
   obtain ⟨s, hs, n, hn, hss, hnil, rfl⟩ := exists_jordan_algebra (F := F) x
-  have hadj : Algebra.adjoin F {s + n} ≤ CliffordAlgebra.even Q :=
-    Algebra.adjoin_le (Set.singleton_subset_iff.2 hx.1)
-  have hW : Set.MapsTo (LieAlgebra.ad F _ (s + n)) (LinearMap.range (CliffordAlgebra.ι Q))
-      (LinearMap.range (CliffordAlgebra.ι Q)) := by
-    rintro _ ⟨v, rfl⟩
-    exact hx.2 v
   have hsg : s ∈ gspin Q :=
-    ⟨hadj hs, fun v => mapsTo_of_mem_adjoin_singleton hW
-      (LieAlgebra.ad_mem_adjoin_of_isSemisimple_mulLeft hs hss (by rwa [add_sub_cancel_left]))
-      ⟨v, rfl⟩⟩
+    mem_gspin_of_mem_adjoin hx hs hss (by rwa [add_sub_cancel_left])
   refine ⟨s, hs, n, hn, hss, hnil, rfl, hsg, ?_⟩
   have := (gspin Q).sub_mem hx hsg
   rwa [add_sub_cancel_left] at this
