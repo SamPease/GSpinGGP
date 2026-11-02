@@ -586,7 +586,181 @@ private theorem jointClauses_aux (n : ℕ) : ∀ {V : Type u} [AddCommGroup V] [
   | _ n ih =>
   intro V _ _ _ Q P N hn hQ hP hssP hN hssN hc hev
   by_cases hA : ∃ μ c : K, P.eigenspace μ ⊓ N.eigenspace c ≠ ⊥ ∧ (μ⁻¹ ≠ μ ∨ c ≠ 0)
-  · sorry
+  · -- split off `U = E ⊕ E'`, `E = E_{(μ,c)}`, `E' = E_{(μ⁻¹,−c)}`
+    obtain ⟨μ, c, hE0, hne⟩ := hA
+    set E := P.eigenspace μ ⊓ N.eigenspace c
+    set E' := P.eigenspace μ⁻¹ ⊓ N.eigenspace (-c)
+    have hsym : ∀ x y, bform Q x y = bform Q y x := bform_comm Q
+    have hB : (bform Q).IsSymm := ⟨hsym⟩
+    have h2K : (2 : K) ≠ 0 := two_ne_zero
+    have hμ0 : μ ≠ 0 := ne_zero_of_hasEigenvalue (B := bform Q) hQ hP
+      (Module.End.hasEigenvalue_iff.2 fun h => hE0 (by simp only [E, h, bot_inf_eq]))
+    have hμμ : μ⁻¹ ≠ μ → μ * μ ≠ 1 := fun h h1 => h (inv_eq_of_mul_eq_one_right h1)
+    have hisoE : ∀ x ∈ E, ∀ y ∈ E, bform Q x y = 0 := by
+      intro x hx y hy
+      rcases hne with h | h
+      · exact bform_eigen_eq_zero (B := bform Q) hP (hμμ h) hx.1 hy.1
+      · exact bform_eigen_eq_zero_of_skew hN (by rw [← two_mul]; exact mul_ne_zero h2K h) hx.2 hy.2
+    have hisoE' : ∀ x ∈ E', ∀ y ∈ E', bform Q x y = 0 := by
+      intro x hx y hy
+      rcases hne with h | h
+      · have hii : μ⁻¹ * μ⁻¹ ≠ 1 := by
+          rw [← mul_inv]; exact fun h1 => hμμ h (inv_eq_one.1 h1)
+        exact bform_eigen_eq_zero (B := bform Q) hP hii hx.1 hy.1
+      · have hcc : -c + -c ≠ 0 := by
+          rw [← two_mul]; exact mul_ne_zero h2K (neg_ne_zero.2 h)
+        exact bform_eigen_eq_zero_of_skew hN hcc hx.2 hy.2
+    have hexv : ∀ x : V, x ≠ 0 → ∃ v, bform Q x v ≠ 0 := fun x hx0 => by
+      by_contra h; push Not at h; exact hx0 (hQ.1 x h)
+    have h1 : ∀ x ∈ E, x ≠ 0 → ∃ y ∈ E', bform Q y x ≠ 0 := by
+      intro x hx hx0
+      obtain ⟨v, hv⟩ := hexv x hx0
+      obtain ⟨y, hy, hyv⟩ := exists_joint_eigen_pair hP hssP hN hssN hc hx.1 hx.2 v
+      exact ⟨y, hy, by rw [hsym, hyv]; exact hv⟩
+    have h2 : ∀ y ∈ E', y ≠ 0 → ∃ x ∈ E, bform Q y x ≠ 0 := by
+      intro y hy hy0
+      obtain ⟨v, hv⟩ := hexv y hy0
+      obtain ⟨x, hx, hxv⟩ := exists_joint_eigen_pair hP hssP hN hssN hc hy.1 hy.2 v
+      rw [inv_inv, neg_neg] at hx
+      exact ⟨x, hx, by rw [hxv]; exact hv⟩
+    obtain ⟨hdim, u, w, huE, hwE', hwu⟩ := exists_dual_family (B := bform Q) h1 h2
+    have hd1 : 1 ≤ finrank K E := Submodule.one_le_finrank_iff.2 hE0
+    have hli : ∀ v : Fin (finrank K E) → V, (∀ j k, bform Q (w j) (v k) = if j = k then 1 else 0) ∨
+        (∀ j k, bform Q (u j) (v k) = if j = k then 1 else 0) → LinearIndependent K v := by
+      intro v hv
+      rw [Fintype.linearIndependent_iff]
+      intro a ha j
+      rcases hv with hv | hv
+      · have := congrArg (bform Q (w j)) ha
+        simpa [map_sum, map_smul, hv, Finset.sum_ite_eq] using this
+      · have := congrArg (bform Q (u j)) ha
+        simpa [map_sum, map_smul, hv, Finset.sum_ite_eq] using this
+    have hwu' : ∀ j k, bform Q (u j) (w k) = if j = k then 1 else 0 := fun j k => by
+      rw [hsym, hwu]; exact if_congr eq_comm rfl rfl
+    have hspanE : Submodule.span K (Set.range u) = E := by
+      refine Submodule.eq_of_le_of_finrank_eq (Submodule.span_le.2 ?_) ?_
+      · rintro _ ⟨i, rfl⟩; exact huE i
+      · rw [finrank_span_eq_card (hli u (Or.inl hwu)), Fintype.card_fin]
+    have hspanE' : Submodule.span K (Set.range w) = E' := by
+      refine Submodule.eq_of_le_of_finrank_eq (Submodule.span_le.2 ?_) ?_
+      · rintro _ ⟨i, rfl⟩; exact hwE' i
+      · rw [finrank_span_eq_card (hli w (Or.inr hwu')), Fintype.card_fin, hdim]
+    set U := E ⊔ E'
+    have hUspan : Submodule.span K (Set.range u ∪ Set.range w) = U := by
+      rw [Submodule.span_union, hspanE, hspanE']
+    set U' := (bform Q).orthogonal U
+    have horth : ∀ x ∈ U, ∀ y ∈ U', bform Q x y = 0 := fun x hx y hy =>
+      (LinearMap.BilinForm.mem_orthogonal_iff.1 hy) x hx
+    have horth' : ∀ y ∈ U', ∀ x ∈ U, bform Q y x = 0 := fun y hy x hx =>
+      bform_orth' horth ⟨y, hy⟩ ⟨x, hx⟩
+    have hdisj : Disjoint U U' := by
+      rw [Submodule.disjoint_def]
+      intro z hz hz'
+      obtain ⟨e, he, e', he', rfl⟩ := Submodule.mem_sup.1 hz
+      have he0 : e = 0 := by
+        by_contra hne0
+        obtain ⟨y, hy, hyb⟩ := h1 e he hne0
+        apply hyb
+        have := horth' _ hz' y (Submodule.mem_sup_right hy)
+        rw [hsym, map_add, hisoE' y hy e' he', add_zero] at this
+        exact this
+      have he0' : e' = 0 := by
+        by_contra hne0
+        obtain ⟨x, hx, hxb⟩ := h2 e' he' hne0
+        apply hxb
+        have := horth' _ hz' x (Submodule.mem_sup_left hx)
+        rw [hsym, map_add, hisoE x hx e he, zero_add] at this
+        rwa [hsym]
+      rw [he0, he0', add_zero]
+    have hcompl : IsCompl U U' :=
+      LinearMap.BilinForm.isCompl_orthogonal_of_restrict_nondegenerate hB.isRefl
+        (LinearMap.BilinForm.nondegenerate_restrict_of_disjoint_orthogonal _ hB.isRefl hdisj)
+    have hUmaps : ∀ g : Module.End K V, Commute P g → Commute N g → Set.MapsTo g U U := by
+      intro g hPg hNg x hx
+      obtain ⟨e, he, e', he', rfl⟩ := Submodule.mem_sup.1 hx
+      rw [map_add]
+      exact add_mem (Submodule.mem_sup_left ⟨mapsTo_eigenspace_of_commute hPg μ e he.1,
+          mapsTo_eigenspace_of_commute hNg c e he.2⟩)
+        (Submodule.mem_sup_right ⟨mapsTo_eigenspace_of_commute hPg μ⁻¹ e' he'.1,
+          mapsTo_eigenspace_of_commute hNg (-c) e' he'.2⟩)
+    have hPU := hUmaps P (Commute.refl P) hc
+    have hNU := hUmaps N hc.symm (Commute.refl N)
+    have hPU' := mapsTo_orthogonal_of_isIsom hQ hP hPU
+    have hNU' := mapsTo_orthogonal_of_skew hN hNU
+    have hpair := jointClauses_pair (Q := Q.comp U.subtype) (P := P.restrict hPU)
+      (N := N.restrict hNU) (fun x y => by simp only [bform_comp_subtype]; exact hP x y)
+      (fun x y => by simp only [bform_comp_subtype]; exact hN x y) hμ0 hne hd1
+      (fun i => ⟨u i, Submodule.mem_sup_left (huE i)⟩)
+      (fun j => ⟨w j, Submodule.mem_sup_right (hwE' j)⟩)
+      (fun i => Subtype.ext (Module.End.mem_eigenspace_iff.1 (huE i).1))
+      (fun i => Subtype.ext (Module.End.mem_eigenspace_iff.1 (huE i).2))
+      (fun j => Subtype.ext (Module.End.mem_eigenspace_iff.1 (hwE' j).1))
+      (fun j => Subtype.ext (Module.End.mem_eigenspace_iff.1 (hwE' j).2))
+      (fun i k => by rw [bform_comp_subtype]; exact hisoE _ (huE i) _ (huE k))
+      (fun j k => by rw [bform_comp_subtype]; exact hwu j k) (by
+        apply Submodule.map_injective_of_injective U.injective_subtype
+        rw [Submodule.map_span, Submodule.map_top, Submodule.range_subtype, Set.image_union,
+          ← Set.range_comp, ← Set.range_comp]
+        exact hUspan)
+    -- the complement, by induction
+    have hdU : finrank K U = finrank K E + finrank K E := by
+      have hinf : E ⊓ E' = ⊥ := by
+        rw [eq_bot_iff]
+        intro x ⟨hx, hx'⟩
+        rw [Submodule.mem_bot]
+        by_contra hx0
+        obtain ⟨y, hy, hyb⟩ := h2 x hx' hx0
+        exact hyb (hisoE x hx y hy)
+      have := Submodule.finrank_sup_add_finrank_inf_eq E E'
+      rw [hinf, finrank_bot, add_zero, hdim] at this
+      exact this
+    have hd := Submodule.finrank_add_eq_of_isCompl hcompl
+    have hev' : Even (finrank K ↥(Module.End.eigenspace (P.restrict hPU') (-1) ⊓
+        Module.End.eigenspace (N.restrict hNU') 0)) := by
+      have hle : P.eigenspace (-1) ⊓ N.eigenspace 0 ≤ U' := by
+        intro z hz
+        refine LinearMap.BilinForm.mem_orthogonal_iff.2 fun x hx => ?_
+        change bform Q x z = 0
+        obtain ⟨e, he, e', he', rfl⟩ := Submodule.mem_sup.1 hx
+        have hc0 : μ ≠ -1 ∨ c ≠ 0 := by
+          rcases hne with h | h
+          · exact Or.inl fun hm => h (by rw [hm]; norm_num)
+          · exact Or.inr h
+        rw [map_add, LinearMap.add_apply]
+        rcases hc0 with h | h
+        · rw [bform_eigen_eq_zero (B := bform Q) hP (by
+              rw [mul_neg_one]; exact fun h' => h (neg_eq_iff_eq_neg.1 h')) he.1 hz.1,
+            bform_eigen_eq_zero (B := bform Q) hP (by
+              rw [mul_neg_one]; exact fun h' => h (by
+                rw [← inv_inv μ, neg_eq_iff_eq_neg.1 h', inv_neg, inv_one])) he'.1 hz.1,
+            add_zero]
+        · rw [bform_eigen_eq_zero_of_skew hN (by rwa [add_zero]) he.2 hz.2,
+            bform_eigen_eq_zero_of_skew hN (by rw [add_zero]; exact neg_ne_zero.2 h) he'.2 hz.2,
+            add_zero]
+      have heq : Module.End.eigenspace (P.restrict hPU') (-1) ⊓
+          Module.End.eigenspace (N.restrict hNU') 0 =
+          (P.eigenspace (-1) ⊓ N.eigenspace 0).comap U'.subtype := by
+        rw [Submodule.comap_inf]
+        congr 1
+        · exact Module.End.genEigenspace_restrict P U' 1 (-1) hPU'
+        · exact Module.End.genEigenspace_restrict N U' 1 0 hNU'
+      rw [heq, (Submodule.comapSubtypeEquivOfLe hle).finrank_eq]
+      exact hev
+    have hrec := ih (finrank K U') (by omega) (Q.comp U'.subtype) (P.restrict hPU')
+      (N.restrict hNU') rfl (isNondeg_comp_subtype horth' hQ hcompl.symm)
+      (fun x y => by simp only [bform_comp_subtype]; exact hP x y)
+      (hssP.restrict ((Module.End.mem_invtSubmodule _).2 hPU'))
+      (fun x y => by simp only [bform_comp_subtype]; exact hN x y)
+      (hssN.restrict ((Module.End.mem_invtSubmodule _).2 hNU'))
+      (LinearMap.restrict_commute hc _ _) hev'
+    have hcomb := jointClauses_of_split horth hcompl hPU hPU' hNU hNU'
+      (fun M hM => hUmaps M (mem_soCent.1 hM.1).2.symm (mem_soCent.1 hM.2).2.symm)
+      (fun M hM => mapsTo_orthogonal_of_skew (mem_soCent.1 hM.1).1
+        (hUmaps M (mem_soCent.1 hM.1).2.symm (mem_soCent.1 hM.2).2.symm))
+      (fun g hg hPg hNg => ⟨hUmaps g hPg hNg,
+        mapsTo_orthogonal_of_isIsom hQ hg (hUmaps g hPg hNg)⟩) hpair hrec
+    have : finrank K E + finrank K U' / 2 = n / 2 := by omega
+    rwa [this] at hcomb
   · -- only self-paired joint eigenvalues: `N = 0` and `P = ±1` on its eigenspaces
     push Not at hA
     have hjoint : ∀ c : K, N.eigenspace c ≠ ⊥ → ∃ μ, P.eigenspace μ ⊓ N.eigenspace c ≠ ⊥ := by
