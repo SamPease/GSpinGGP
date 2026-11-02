@@ -85,6 +85,27 @@ $D^G(x)=|\det(1-\Ad x)|_{\mathfrak g/\mathfrak g_x}|_F$ (Thesis \S2.1), computed
 trailing coefficient of the characteristic polynomial of $1-\Ad x$ on $\mathfrak g$.
 \end{definition}
 
+\begin{literature}[Harish-Chandra's regular set]
+\label{LIT-hc_regular_open_dense_conull}
+\lean{GSpinGGP.hc_regular_open_dense_conull}
+\leanok
+\uses{G, GGPData, GSpin, gspin}
+For $x\in G(F)$ write $\det(t-1+\Ad(x))=D(x)t^\ell+\dots$ (terms of higher degree), $\ell=\operatorname{rank}G$. Then $G'=\{x: D(x)\neq0\}$ is open and dense in $G(F)$ and its complement has Haar measure zero.
+
+\assumedfrom{\cite{HC70}, Part V \S3, p.~54 (also Introduction, p.~2), for $G$ connected reductive; here $G=\GSpin(W)\times\GSpin(V)$, $\ell=(\lfloor m/2\rfloor+1)+(\lfloor (m+2r+1)/2\rfloor+1)$}
+\end{literature}
+
+\begin{theorem}[$G'=\Greg(F)$]
+\label{hcDisc_ne_zero_iff_mem_regularSet}
+\lean{GSpinGGP.hcDisc_ne_zero_iff_mem_regularSet}
+\leanok
+\uses{G, GGPData, gspin}
+In characteristic $0$, $D(x)\neq0$ if and only if $x$ is semisimple with abelian centralizer in $\mathfrak g$.
+\end{theorem}
+\begin{proof}
+Not yet formalized. For $x$ regular semisimple, $1-\Ad x$ is semisimple with kernel the Cartan subalgebra $\mathfrak g_x$ of dimension $\ell$. Conversely, if $D(x)\neq0$ and $x=su$, then $\mathfrak g_s$ is a Cartan subalgebra, $Z_G(s)^0$ a maximal torus, and $u=1$. Needs the rank of $\GSpin$ and Cartan subalgebra facts.
+\end{proof}
+
 \begin{theorem}[The regular set]
 \label{hc_regularSet_open_conull}
 \lean{GSpinGGP.hc_regularSet_open_conull}
@@ -93,7 +114,9 @@ trailing coefficient of the characteristic polynomial of $1-\Ad x$ on $\mathfrak
 The regular semisimple set $\Greg(F)$ is open in $G(F)$ and its complement has Haar measure zero.
 \end{theorem}
 \begin{proof}
-Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{HC70}; \cite{BP}, \S1; Thesis \S2.1}
+\leanok
+\uses{LIT-hc_regular_open_dense_conull, hcDisc_ne_zero_iff_mem_regularSet}
+Harish-Chandra's theorem and the identification $G'=\Greg(F)$.
 \end{proof}
 
 \begin{literature}[Harish-Chandra's regularity theorem]

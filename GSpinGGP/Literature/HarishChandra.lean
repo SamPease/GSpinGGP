@@ -21,6 +21,8 @@ Since `GGP/Triple.lean` is in the same layer and not visible here, the character
 written out inline.
 
 ## Contents
+* (a) `hc_regular_open_dense_conull` — Harish-Chandra's `G' = {D ≠ 0}` is open, dense and conull
+  (`hcDisc`, `hcRank`);
 * instances `T2Space ↥d.G`, `LocallyCompactSpace ↥d.G` (theorems of LocalGroups, made instances
   here because `F` is recoverable from `d`);
 * (b) `hc_character_exists`, theorem `hc_character` — `θ_π` is a function, locally constant on
@@ -37,8 +39,8 @@ Not needed as an axiom: BP Prop 4.5.1(i) (`c_θ(x) = 0` if `G_x` is not quasi-sp
 `0` off `NilReg` by definition (`germ_of_not_mem`), and `NilReg(𝔤_x) = ∅ ↔ G_x` not quasi-split
 is a GSpin fact (`GGP/Centralizers.lean`).
 
-Two former entries of this file are not verbatim in the literature and are now `sorry` theorems in
-`GGP/Germs.lean`: `hc_regularSet_open_conull` and `bp_germ_transfer`.
+`GGP/Germs.lean` derives `hc_regularSet_open_conull` from (a) and the identification of `G'` with
+`regularSet`; `bp_germ_transfer` (not verbatim in the literature) is a `sorry` theorem there.
 -/
 
 open MeasureTheory Topology Filter
@@ -84,6 +86,35 @@ open HarishChandra
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
 /-! ## (b) Characters -/
+
+/-! ## (a) The regular set (Harish-Chandra) -/
+
+/-- `rank G` for `G = GSpin(W) × GSpin(V)`: a maximal torus of `GSpin(n)` has dimension
+`⌊n/2⌋ + 1` (a maximal torus of `Spin(n)` times the central `𝔾_m`), so
+`rank G = (⌊m/2⌋ + 1) + (⌊(m + 2r + 1)/2⌋ + 1)` with `dim W = m`, `dim V = m + 2r + 1`. -/
+def hcRank (d : GGPData F) : ℕ := (d.m / 2 + 1) + ((d.m + 2 * d.r + 1) / 2 + 1)
+
+open Classical in
+/-- Harish-Chandra's discriminant `D(x)`: the coefficient of `t^ℓ`, `ℓ = rank G`, in
+`det(t − 1 + Ad(x))`, i.e. in the characteristic polynomial of `1 − Ad(x)` on
+`𝔤 = gspin(W) × gspin(V)` (`0` if `𝔤` is not `Ad(x)`-stable, which does not happen). -/
+def hcDisc (d : GGPData F) (x : ↥d.G) : F :=
+  if h : ∀ X ∈ d.lie.toSubmodule, conjAd F (x : d.ambientˣ) X ∈ d.lie.toSubmodule then
+    (LinearMap.charpoly (1 - (conjAd F (x : d.ambientˣ)).toLinearEquiv.toLinearMap.restrict h)).coeff
+      (hcRank d)
+  else 0
+
+/-- **Harish-Chandra: the regular set is open, dense and conull.** Harish-Chandra, *Harmonic
+analysis on reductive p-adic groups* (notes by G. van Dijk), LNM 162 (1970), Part V §3, p. 54
+(also Introduction, p. 2): let `G` be a connected reductive linear algebraic group over a `p`-adic
+field and `G` its group of rational points. For `x ∈ G` write
+`det(t − 1 + Ad(x)) = D(x) t^ℓ + …` (terms of higher degree), `ℓ = rank G`; then
+`G' = {x ∈ G : D(x) ≠ 0}` is an open and dense subset of `G`, whose complement has Haar measure
+zero. Specialized to the connected reductive group `G = GSpin(W) × GSpin(V)` (Lie algebra
+`gspin(W) × gspin(V)`, `D = hcDisc`, `ℓ = hcRank`). -/
+axiom hc_regular_open_dense_conull (d : GGPData F) :
+    IsOpen {x : ↥d.G | hcDisc d x ≠ 0} ∧ Dense {x : ↥d.G | hcDisc d x ≠ 0} ∧
+      (Measure.haar : Measure ↥d.G) {x : ↥d.G | hcDisc d x ≠ 0}ᶜ = 0
 
 /-- **(b) Harish-Chandra's regularity theorem.** For an irreducible tempered unitary
 representation `π` of `G(F)`, the distribution `f ↦ tr π(f)` on `C_c^∞(G(F))` is given by a locally

@@ -29,6 +29,8 @@ GSpinGGP.LitTF.haar_G_isMulRightInvariant
 GSpinGGP.weil_quotient
 GSpinGGP.integral_eq_mul_integral_compact_integral
 GSpinGGP.weylDisc
+GSpinGGP.hc_regular_open_dense_conull
+GSpinGGP.hcDisc_ne_zero_iff_mem_regularSet
 GSpinGGP.hc_regularSet_open_conull
 GSpinGGP.hc_character_exists
 GSpinGGP.charG

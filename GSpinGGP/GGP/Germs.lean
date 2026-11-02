@@ -7,10 +7,10 @@ import GSpinGGP.Literature.HarishChandra
 /-!
 # The regular set and the transfer of germs
 
-Two statements about `G = GSpin(W) × GSpin(V)` that are not verbatim in the literature: the
-regular set is open and conull, and germs are preserved under transfer to inner forms
-(BP Astérisque 418, (12.1.2), which is stated for pure inner forms). They are `sorry` theorems
-with proof sketches.
+The regular set of `G = GSpin(W) × GSpin(V)` is open and conull (from Harish-Chandra's theorem
+`hc_regular_open_dense_conull` and the identification of his regular set with `regularSet`, a
+`sorry` theorem), and germs are preserved under transfer to inner forms (BP Astérisque 418,
+(12.1.2), which is stated for pure inner forms; a `sorry` theorem with a proof sketch).
 -/
 
 open MeasureTheory Topology Filter
@@ -27,28 +27,38 @@ open HarishChandra
 
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
-/-- **(a) Harish-Chandra.** The regular semisimple set `G_reg(F)` of `G = GSpin(W) × GSpin(V)` is
-open in `G(F)` and its complement has Haar measure zero (it is the non-vanishing locus of a
-nonzero polynomial function, the coefficient of `t^{rk G}` in `det(t − (1 − Ad g))`, on the
-connected group `G`). Thesis §2.1; BP Astérisque 418, §1. Exact ingredient: Harish-Chandra,
-*Harmonic analysis on reductive p-adic groups* (notes by G. van Dijk), LNM 162 (1970), Part V §3,
-p. 54 (also Introduction, p. 2): for `G` the `F`-points of a connected reductive group, with
-`det(t − 1 + Ad(x)) = D(x) t^ℓ + …` (`ℓ = rank G`), the set `G' = {D ≠ 0}` is open and dense in `G`
-and its complement has Haar measure zero. What remains here is the identification of `G'` with
-`regularSet` (semisimple with abelian centralizer in `𝔤`) in characteristic `0`.
+/-- **Harish-Chandra's regular set is the regular semisimple set** (characteristic `0`):
+`D(x) ≠ 0` (`hcDisc`) iff `x` is semisimple with abelian centralizer in `𝔤` (`regularSet`).
+Proof sketch. (⇐) For `x` regular semisimple, `1 − Ad x` is semisimple with kernel `𝔤_x`. The algebra
+`𝔤_x` is reductive (centralizer of a semisimple element) and abelian, so it is a Cartan subalgebra of
+dimension `ℓ = rank G`. Hence `0` is a root of multiplicity exactly `ℓ` of `det(t − (1 − Ad x))`, and
+the coefficient of `t^ℓ` is `±det(1 − Ad x)|_{𝔤/𝔤_x} ≠ 0`. (⇒) `D(x) ≠ 0` says the generalized
+`1`-eigenspace of `Ad x` has dimension `≤ ℓ`. For `x = su` (Jordan decomposition) that eigenspace is
+`𝔤_s`, which contains a Cartan subalgebra, so `𝔤_s` is one and `s` is regular. Then `Z_G(s)⁰` is a
+maximal torus, so the unipotent `u ∈ Z_G(s)⁰` is `1`: `x = s` is semisimple and `𝔤_x = 𝔤_s` is
+abelian. Missing in the project: maximal tori of `G` have dimension `hcRank d`, and the
+Cartan-subalgebra facts above (cf. `lieRank`).
+Status: SORRY (structure theory of `GSpin`). -/
+theorem hcDisc_ne_zero_iff_mem_regularSet (d : GGPData F) (x : ↥d.G) :
+    hcDisc d x ≠ 0 ↔ x ∈ regularSet d.G d.lie := by
+  sorry
+
+/-- **The regular semisimple set `G_reg(F)` of `G = GSpin(W) × GSpin(V)` is open in `G(F)` and its
+complement has Haar measure zero** (Thesis §2.1; BP Astérisque 418, §1). From Harish-Chandra's
+theorem `hc_regular_open_dense_conull` (LNM 162, Part V §3, p. 54) and the identification of his
+`G' = {D ≠ 0}` with `regularSet` (`hcDisc_ne_zero_iff_mem_regularSet`).
 
 Its role in this project: two representatives of the character distribution that are continuous on
 `G_reg(F)` agree on `G_reg(F)` (open, conull), so `characterOn π (regularSet …)` is canonical there.
-Stated for the Haar measure `Measure.haar` used in `IsCharacterOf`.
-
-**Status: `sorry`, not a literature axiom** (the statement is not verbatim in a source). Not a
-statement of the literature in this form. It follows because `G_reg(F)` is the non-vanishing locus
-of a nonzero polynomial function on `G`, and the zero set of such a function has Haar measure zero.
--/
+Stated for the Haar measure `Measure.haar` used in `IsCharacterOf`. -/
 theorem hc_regularSet_open_conull (d : GGPData F) :
     IsOpen (regularSet d.G d.lie) ∧
       (Measure.haar : Measure ↥d.G) (regularSet d.G d.lie)ᶜ = 0 := by
-  sorry
+  have h := hc_regular_open_dense_conull d
+  have hset : {x : ↥d.G | hcDisc d x ≠ 0} = regularSet d.G d.lie :=
+    Set.ext (hcDisc_ne_zero_iff_mem_regularSet d)
+  rw [hset] at h
+  exact ⟨h.1, h.2.2⟩
 
 /-- **(e) Beuzart-Plessis (12.1.2)** (Thesis (6.1.2)), for the inner twists of `GSpin`.
 Let `G` be quasi-split, `τ` an inner twist (`G_α = (d.twist τ).G`), `θ` a *stable*
