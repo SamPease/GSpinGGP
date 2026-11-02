@@ -608,39 +608,10 @@ theorem continuousOn_deltaGGP_rpow (T : Subgroup ↥(GSpin d.QW)) (s : ℝ) :
   filter_upwards [(isOpen_torusNat d T).mem_nhds ⟨hx, hT⟩] with t ht
   simp only [Function.comp_apply, hΔ t ht]
 
-/-- `𝔤 = gspin(W) × gspin(V)` is `Ad(G)`-stable. -/
-theorem lie_conj_stable (d : GGPData F) (t : ↥d.G) :
-    ∀ X ∈ d.lie.toSubmodule, conjAd F (t : d.ambientˣ) X ∈ d.lie.toSubmodule := fun _ hX =>
-  ⟨conj_mem_gspin d.QW (d.fst t) hX.1, conj_mem_gspin d.QV (d.snd t) hX.2⟩
-
-/-- `1 − Ad(t)` on `𝔤`. -/
-abbrev oneSubAd (d : GGPData F) (t : ↥d.G) : d.lie.toSubmodule →ₗ[F] d.lie.toSubmodule :=
-  1 - (conjAd F (t : d.ambientˣ)).toLinearEquiv.toLinearMap.restrict (lie_conj_stable d t)
-
 theorem weylDisc_eq_oneSubAd (d : GGPData F) (t : ↥d.G) :
     weylDisc d.lie (t : d.ambientˣ) = absF (LinearMap.charpoly (oneSubAd d t)).trailingCoeff := by
   rw [weylDisc, dite_eq_left (lie_conj_stable d t)]
 
-/-- `1 − Ad g` is semisimple on `𝔤` for semisimple `g ∈ G(F)`. -/
-theorem isSemisimple_oneSubAd (g : ↥d.G) (hg : IsSS F ((g : d.ambientˣ) : d.ambient)) :
-    Module.End.IsSemisimple (oneSubAd d g) := by
-  set a : d.ambient := ((g : d.ambientˣ) : d.ambient)
-  set ai : d.ambient := (((g : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient)
-  have hAd : Module.End.IsSemisimple (LinearMap.mulLeft F a * LinearMap.mulRight F ai) :=
-    isSemisimple_conj_of_mulLeft hg
-  have hp' : ∀ X ∈ d.lie.toSubmodule,
-      (LinearMap.mulLeft F a * LinearMap.mulRight F ai) X ∈ d.lie.toSubmodule := fun X hX => by
-    have := lie_conj_stable d g X hX
-    simpa [mul_assoc] using this
-  have hp : d.lie.toSubmodule ∈ Module.End.invtSubmodule
-      (LinearMap.mulLeft F a * LinearMap.mulRight F ai) :=
-    (Module.End.mem_invtSubmodule _).mpr hp'
-  have hres := hAd.restrict hp
-  have heq : (conjAd F (g : d.ambientˣ)).toLinearEquiv.toLinearMap.restrict (lie_conj_stable d g) =
-      (LinearMap.mulLeft F a * LinearMap.mulRight F ai).restrict hp' :=
-    LinearMap.ext fun X => Subtype.ext (mul_assoc _ _ _)
-  rw [oneSubAd, heq]
-  exact Module.End.IsSemisimple.sub_of_commute (Commute.one_left _) Module.End.isSemisimple_id hres
 
 
 omit [PAdicField F] in

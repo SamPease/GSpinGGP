@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Literature.HarishChandra
+import GSpinGGP.Foundations.Determinant
 
 /-!
 # The regular set and the transfer of germs
@@ -27,31 +28,140 @@ open HarishChandra
 
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
-/-- **Harish-Chandra's regular set is the regular semisimple set** (characteristic `0`):
-`D(x) ≠ 0` (`hcDisc`) iff `x` is semisimple with abelian centralizer in `𝔤` (`regularSet`).
-Proof sketch. (⇐) For `x` regular semisimple, `1 − Ad x` is semisimple with kernel `𝔤_x`. The algebra
-`𝔤_x` is reductive (centralizer of a semisimple element) and abelian, so it is a Cartan subalgebra of
-dimension `ℓ = rank G`. Hence `0` is a root of multiplicity exactly `ℓ` of `det(t − (1 − Ad x))`, and
-the coefficient of `t^ℓ` is `±det(1 − Ad x)|_{𝔤/𝔤_x} ≠ 0`. (⇒) `D(x) ≠ 0` says the generalized
-`1`-eigenspace of `Ad x` has dimension `≤ ℓ`. For `x = su` (Jordan decomposition) that eigenspace is
+/-- `𝔤 = gspin(W) × gspin(V)` is `Ad(G)`-stable. -/
+theorem lie_conj_stable (d : GGPData F) (t : ↥d.G) :
+    ∀ X ∈ d.lie.toSubmodule, conjAd F (t : d.ambientˣ) X ∈ d.lie.toSubmodule := fun _ hX =>
+  ⟨conj_mem_gspin d.QW (d.fst t) hX.1, conj_mem_gspin d.QV (d.snd t) hX.2⟩
+
+/-- `1 − Ad(t)` on `𝔤`. -/
+abbrev oneSubAd (d : GGPData F) (t : ↥d.G) : d.lie.toSubmodule →ₗ[F] d.lie.toSubmodule :=
+  1 - (conjAd F (t : d.ambientˣ)).toLinearEquiv.toLinearMap.restrict (lie_conj_stable d t)
+
+/-- `1 − Ad g` is semisimple on `𝔤` for semisimple `g ∈ G(F)`. -/
+theorem isSemisimple_oneSubAd (d : GGPData F) (g : ↥d.G) (hg : IsSS F ((g : d.ambientˣ) : d.ambient)) :
+    Module.End.IsSemisimple (oneSubAd d g) := by
+  set a : d.ambient := ((g : d.ambientˣ) : d.ambient)
+  set ai : d.ambient := (((g : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient)
+  have hAd : Module.End.IsSemisimple (LinearMap.mulLeft F a * LinearMap.mulRight F ai) :=
+    isSemisimple_conj_of_mulLeft hg
+  have hp' : ∀ X ∈ d.lie.toSubmodule,
+      (LinearMap.mulLeft F a * LinearMap.mulRight F ai) X ∈ d.lie.toSubmodule := fun X hX => by
+    have := lie_conj_stable d g X hX
+    simpa [mul_assoc] using this
+  have hp : d.lie.toSubmodule ∈ Module.End.invtSubmodule
+      (LinearMap.mulLeft F a * LinearMap.mulRight F ai) :=
+    (Module.End.mem_invtSubmodule _).mpr hp'
+  have hres := hAd.restrict hp
+  have heq : (conjAd F (g : d.ambientˣ)).toLinearEquiv.toLinearMap.restrict (lie_conj_stable d g) =
+      (LinearMap.mulLeft F a * LinearMap.mulRight F ai).restrict hp' :=
+    LinearMap.ext fun X => Subtype.ext (mul_assoc _ _ _)
+  rw [oneSubAd, heq]
+  exact Module.End.IsSemisimple.sub_of_commute (Commute.one_left _) Module.End.isSemisimple_id hres
+
+/-- **The centralizer of a regular semisimple element has the dimension of the rank**: for
+`x ∈ G_reg(F)` (semisimple, `𝔤_x` abelian), `dim 𝔤_x = lieRank 𝔤 = min_{X ∈ 𝔤} dim 𝔤_X`.
+Proof sketch. `G_x⁰` is connected reductive (centralizer of a semisimple element, characteristic
+`0`) with abelian Lie algebra `𝔤_x`, hence a torus; it contains a maximal torus through `x`, so it
+is one, and `dim 𝔤_x = rank G`. On the Lie algebra side, the centralizer of a regular semisimple
+`X ∈ 𝔤` is a Cartan subalgebra of dimension `rank G`, and `dim 𝔤_X ≥ rank G` for every `X ∈ 𝔤`
+(over `F̄`, by upper semicontinuity of `dim 𝔤_X` and density of the regular semisimple set), so
+`lieRank 𝔤 = rank G`.  Missing in the project: Cartan subalgebras of reductive Lie algebras.
+Status: SORRY (structure theory of reductive Lie algebras). -/
+theorem finrank_lieCentralizer_eq_lieRank (d : GGPData F) {x : ↥d.G}
+    (hx : x ∈ regularSet d.G d.lie) :
+    Module.finrank F ↥(lieCentralizer d.lie ((x : d.ambientˣ) : d.ambient)) = lieRank d.lie := by
+  sorry
+
+/-- **Regular semisimple elements lie in Harish-Chandra's `G'`**: `D(x) ≠ 0` for
+`x ∈ G_reg(F)`. `N = 1 − Ad x` is semisimple on `𝔤`, so `𝔤 = ker N ⊕ im N` with `ker N = 𝔤_x`;
+the characteristic polynomial of `N` is `t^{dim 𝔤_x}` times a polynomial with nonzero constant
+term `± det (N|_{im N})`, and `dim 𝔤_x = lieRank 𝔤` (`finrank_lieCentralizer_eq_lieRank`). -/
+theorem hcDisc_ne_zero_of_mem_regularSet (d : GGPData F) {x : ↥d.G}
+    (hx : x ∈ regularSet d.G d.lie) : hcDisc d x ≠ 0 := by
+  obtain ⟨N, hNdef⟩ : ∃ N, N = oneSubAd d x := ⟨_, rfl⟩
+  have hss : Module.End.IsSemisimple N := hNdef ▸ isSemisimple_oneSubAd d x hx.1
+  have hcompl : IsCompl (LinearMap.ker N) (LinearMap.range N) := by
+    refine (Submodule.isCompl_iff_disjoint _ _ ?_).2 (disjoint_ker_range_of_isSemisimple hss)
+    have := LinearMap.finrank_range_add_finrank_ker N
+    omega
+  have hC : ∀ v ∈ LinearMap.range N, N v ∈ LinearMap.range N := by
+    rintro _ ⟨w, rfl⟩
+    exact ⟨N w, rfl⟩
+  have htc := trailingCoeff_charpoly_of_isCompl hcompl rfl hC
+  have hdeg := natTrailingDegree_charpoly_of_isCompl hcompl rfl hC
+  -- `ker N = 𝔤_x`
+  obtain ⟨a, ha⟩ : ∃ a : d.ambient, a = ((x : d.ambientˣ) : d.ambient) := ⟨_, rfl⟩
+  obtain ⟨ai, hai'⟩ : ∃ ai : d.ambient, ai = (((x : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient) :=
+    ⟨_, rfl⟩
+  have hia : ai * a = 1 := by rw [ha, hai']; exact Units.inv_mul _
+  have hai : a * ai = 1 := by rw [ha, hai']; exact Units.mul_inv _
+  have hN : ∀ X : d.lie.toSubmodule, ((N X : d.lie.toSubmodule) : d.ambient) =
+      (X : d.ambient) - a * X * ai := fun X => by rw [hNdef, ha, hai']; rfl
+  have hmap : (LinearMap.ker N).map d.lie.toSubmodule.subtype =
+      (lieCentralizer d.lie a).toSubmodule := by
+    ext X
+    simp only [Submodule.mem_map, LinearMap.mem_ker, Submodule.subtype_apply]
+    change _ ↔ X ∈ lieCentralizer d.lie a
+    rw [mem_lieCentralizer]
+    constructor
+    · rintro ⟨Y, hY, rfl⟩
+      have h0 := congrArg Subtype.val hY
+      rw [hN, ZeroMemClass.coe_zero, sub_eq_zero] at h0
+      refine ⟨Y.2, ?_⟩
+      calc a * Y = a * Y * ai * a := by rw [mul_assoc _ ai, hia, mul_one]
+        _ = Y * a := by rw [← h0]
+    · rintro ⟨hX, hXa⟩
+      refine ⟨⟨X, hX⟩, Subtype.ext ?_, rfl⟩
+      rw [hN, ZeroMemClass.coe_zero, sub_eq_zero]
+      change X = a * X * ai
+      rw [hXa, mul_assoc, hai, mul_one]
+  have hker : Module.finrank F ↥(LinearMap.ker N) =
+      Module.finrank F ↥(lieCentralizer d.lie a) := by
+    rw [(Submodule.equivMapOfInjective d.lie.toSubmodule.subtype
+      d.lie.toSubmodule.injective_subtype (LinearMap.ker N)).finrank_eq]
+    change Module.finrank F ↥((LinearMap.ker N).map d.lie.toSubmodule.subtype) = _
+    rw [hmap]
+    rfl
+  have hker' : Module.finrank F ↥(LinearMap.ker N) =
+      Module.finrank F ↥(lieCentralizer d.lie ((x : d.ambientˣ) : d.ambient)) := by
+    rw [← ha]; exact hker
+  have key : (LinearMap.charpoly N).coeff (lieRank d.lie) ≠ 0 := by
+    rw [← finrank_lieCentralizer_eq_lieRank d hx, ← hker', ← hdeg]
+    change (LinearMap.charpoly N).trailingCoeff ≠ 0
+    rw [htc.2]
+    exact mul_ne_zero (pow_ne_zero _ (neg_ne_zero.mpr one_ne_zero)) htc.1
+  rw [hNdef] at key
+  unfold hcDisc
+  rw [dite_eq_left (lie_conj_stable d x)]
+  exact key
+
+/-- **Harish-Chandra's `G'` consists of regular semisimple elements**: `D(x) ≠ 0` implies `x`
+semisimple with `𝔤_x` abelian. Proof sketch. `D(x) ≠ 0` says the generalized `1`-eigenspace of
+`Ad x` on `𝔤` has dimension `≤ ℓ = lieRank 𝔤`. For `x = su` (Jordan decomposition) that eigenspace is
 `𝔤_s`, which contains a Cartan subalgebra, so `𝔤_s` is one and `s` is regular. Then `Z_G(s)⁰` is a
 maximal torus, so the unipotent `u ∈ Z_G(s)⁰` is `1`: `x = s` is semisimple and `𝔤_x = 𝔤_s` is
-abelian. Missing in the project: `lieRank 𝔤` is the dimension of a Cartan subalgebra, and the
-Cartan-subalgebra facts above.
+abelian. Missing in the project: the Jordan decomposition in `G(F)` and the Cartan-subalgebra facts
+above (as for `finrank_lieCentralizer_eq_lieRank`).
 Status: SORRY (structure theory of `GSpin`). -/
-theorem hcDisc_ne_zero_iff_mem_regularSet (d : GGPData F) (x : ↥d.G) :
-    hcDisc d x ≠ 0 ↔ x ∈ regularSet d.G d.lie := by
+theorem mem_regularSet_of_hcDisc_ne_zero (d : GGPData F) {x : ↥d.G} (hx : hcDisc d x ≠ 0) :
+    x ∈ regularSet d.G d.lie := by
   sorry
+
+/-- **Harish-Chandra's regular set is the regular semisimple set** (characteristic `0`):
+`D(x) ≠ 0` (`hcDisc`) iff `x` is semisimple with abelian centralizer in `𝔤` (`regularSet`). -/
+theorem hcDisc_ne_zero_iff_mem_regularSet (d : GGPData F) (x : ↥d.G) :
+    hcDisc d x ≠ 0 ↔ x ∈ regularSet d.G d.lie :=
+  ⟨mem_regularSet_of_hcDisc_ne_zero d, hcDisc_ne_zero_of_mem_regularSet d⟩
 
 /-- `θ_π = characterOn π (regularSet d.G d.lie)` (Triple's `charG d π`) represents the character
 of `π` and is continuous on `G_reg(F)`: Harish-Chandra's theorem (`hc_character_exists`) gives
-continuity on `G' = {D ≠ 0}`, which contains `regularSet` (`hcDisc_ne_zero_iff_mem_regularSet`). -/
+continuity on `G' = {D ≠ 0}`, which contains `regularSet` (`hcDisc_ne_zero_of_mem_regularSet`). -/
 theorem hc_character (d : GGPData F) (π : UnitaryRep ↥d.G) (hπ : IsTempered π) :
     IsCharacterOf π (characterOn π (regularSet d.G d.lie)) ∧
       ContinuousOn (characterOn π (regularSet d.G d.lie)) (regularSet d.G d.lie) := by
   obtain ⟨θ, hθ, hcont⟩ := hc_character_exists d π hπ
   exact characterOn_spec π _ ⟨θ, hθ,
-    hcont.mono fun x hx => (hcDisc_ne_zero_iff_mem_regularSet d x).2 hx⟩
+    hcont.mono fun _ hx => hcDisc_ne_zero_of_mem_regularSet d hx⟩
 
 /-- **The regular semisimple set `G_reg(F)` of `G = GSpin(W) × GSpin(V)` is open in `G(F)` and its
 complement has Haar measure zero** (Thesis §2.1; BP Astérisque 418, §1). From Harish-Chandra's

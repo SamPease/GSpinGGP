@@ -888,31 +888,6 @@ section GspinMaps
 variable {K : Type*} [Field K] [Invertible (2 : K)] {W₁ W₂ : Type*} [AddCommGroup W₁] [Module K W₁]
   [AddCommGroup W₂] [Module K W₂]
 
-/-- `gspin(V)` is stable under conjugation by `GSpin(V)` (copy of `conj_mem_gspin` of
-`TraceFormula/ThetaF`, which `Main` does not import). -/
-theorem conj_mem_gspin_ofGSpin (Q : QuadraticForm K W₁) (g : GSpin Q) {X : CliffordAlgebra Q}
-    (hX : X ∈ gspin Q) :
-    ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * X *
-      (((g : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∈ gspin Q := by
-  obtain ⟨hX0, hX⟩ := hX
-  set u : (CliffordAlgebra Q)ˣ := (g : (CliffordAlgebra Q)ˣ)
-  have hg := g.2
-  refine ⟨?_, fun v => ?_⟩
-  · exact Subalgebra.mul_mem _ (Subalgebra.mul_mem _ hg.1 hX0) (g⁻¹ : GSpin Q).2.1
-  · obtain ⟨w, hw⟩ := hg.2.2 v
-    have hv : ι Q v = (u : CliffordAlgebra Q) * ι Q w * ((u⁻¹ : (CliffordAlgebra Q)ˣ) :
-        CliffordAlgebra Q) := by
-      rw [hw]
-      simp [u, mul_assoc]
-    obtain ⟨t, ht⟩ := hX w
-    obtain ⟨r, hr⟩ := hg.2.1 t
-    refine ⟨r, ?_⟩
-    rw [hr, hv, Ring.lie_def]
-    rw [Ring.lie_def] at ht
-    rw [ht]
-    simp only [mul_sub, sub_mul, mul_assoc, Units.inv_mul_cancel_left]
-    rfl
-
 /-- `C(φ)` maps `gspin` to `gspin` for an isometry `φ`. -/
 theorem map_mem_gspin {Q₁ : QuadraticForm K W₁} {Q₂ : QuadraticForm K W₂}
     (φ : Q₁.IsometryEquiv Q₂) {X : CliffordAlgebra Q₁} (hX : X ∈ gspin Q₁) :
@@ -1072,14 +1047,14 @@ theorem psiPair_map_gspin (hg₁ : g₁ ∈ GSpin (Q₁'.baseChange (AlgebraicCl
   apply le_antisymm
   · rintro _ ⟨p, hp, rfl⟩
     rw [LinearEquiv.coe_coe, psiPair_apply]
-    exact ⟨conj_mem_gspin_ofGSpin _ ⟨g₁, hg₁⟩ (map_mem_gspin φ₁ hp.1),
-      conj_mem_gspin_ofGSpin _ ⟨g₂, hg₂⟩ (map_mem_gspin φ₂ hp.2)⟩
+    exact ⟨conj_mem_gspin _ ⟨g₁, hg₁⟩ (map_mem_gspin φ₁ hp.1),
+      conj_mem_gspin _ ⟨g₂, hg₂⟩ (map_mem_gspin φ₂ hp.2)⟩
   · intro q hq
     refine ⟨(psiPair φ₁ φ₂ g₁ g₂).symm q, ?_, (psiPair φ₁ φ₂ g₁ g₂).apply_symm_apply q⟩
     rw [psiPair_symm_apply]
     refine ⟨map_mem_gspin φ₁.symm ?_, map_mem_gspin φ₂.symm ?_⟩
-    · simpa using conj_mem_gspin_ofGSpin _ (⟨g₁, hg₁⟩⁻¹ : GSpin _) hq.1
-    · simpa using conj_mem_gspin_ofGSpin _ (⟨g₂, hg₂⟩⁻¹ : GSpin _) hq.2
+    · simpa using conj_mem_gspin _ (⟨g₁, hg₁⟩⁻¹ : GSpin _) hq.1
+    · simpa using conj_mem_gspin _ (⟨g₂, hg₂⟩⁻¹ : GSpin _) hq.2
 
 /-- `ψ` intertwines `1 − Ad(u)` and `1 − Ad(u')` when `ψ(u) = u'` componentwise. -/
 theorem psiPair_intertwine (u₁ : (CliffordAlgebra Q₁)ˣ) (u₂ : (CliffordAlgebra Q₂)ˣ)
@@ -2532,36 +2507,10 @@ theorem orbitChoice_mem_nilReg_of_exists (d : GGPData F) (x : ↥(GSpin d.QW))
   rw [e]
   exact h.choose_spec.1
 
-open CliffordAlgebra in
-/-- Conjugation by `GSpin(V)` preserves `gspin(V)` (same proof as `conj_mem_gspin` of
-`TraceFormula/ThetaF`, which `Main` does not import). -/
-private theorem conj_mem_gspin' {V : Type*} [AddCommGroup V] [Module F V] (Q : QuadraticForm F V)
-    (g : GSpin Q) {X : CliffordAlgebra Q} (hX : X ∈ gspin Q) :
-    ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * X *
-      (((g : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∈ gspin Q := by
-  obtain ⟨hX0, hX⟩ := hX
-  set u : (CliffordAlgebra Q)ˣ := (g : (CliffordAlgebra Q)ˣ)
-  have hg := g.2
-  refine ⟨?_, fun v => ?_⟩
-  · exact Subalgebra.mul_mem _ (Subalgebra.mul_mem _ hg.1 hX0) (g⁻¹ : GSpin Q).2.1
-  · obtain ⟨w, hw⟩ := hg.2.2 v
-    have hv : ι Q v = (u : CliffordAlgebra Q) * ι Q w * ((u⁻¹ : (CliffordAlgebra Q)ˣ) :
-        CliffordAlgebra Q) := by
-      rw [hw]
-      simp [u, mul_assoc]
-    obtain ⟨t, ht⟩ := hX w
-    obtain ⟨r, hr⟩ := hg.2.1 t
-    refine ⟨r, ?_⟩
-    rw [hr, hv, Ring.lie_def]
-    rw [Ring.lie_def] at ht
-    rw [ht]
-    simp only [mul_sub, sub_mul, mul_assoc, Units.inv_mul_cancel_left]
-    rfl
-
 /-- Conjugation by `G(F)` preserves `𝔤`. -/
 theorem conj_mem_lie_of_mem_G (d : GGPData F) {g : d.ambientˣ} (hg : g ∈ d.G) {Y : d.ambient}
     (hY : Y ∈ d.lie) : (g : d.ambient) * Y * (↑g⁻¹ : d.ambient) ∈ d.lie :=
-  ⟨conj_mem_gspin' d.QW (d.fst ⟨g, hg⟩) hY.1, conj_mem_gspin' d.QV (d.snd ⟨g, hg⟩) hY.2⟩
+  ⟨conj_mem_gspin d.QW (d.fst ⟨g, hg⟩) hY.1, conj_mem_gspin d.QV (d.snd ⟨g, hg⟩) hY.2⟩
 
 /-- `dim 𝔤_{gXg⁻¹} = dim 𝔤_X` when conjugation by `g` and `g⁻¹` preserves `𝔤`. -/
 theorem finrank_lieCentralizer_conj {A : Type*} [Ring A] [Algebra F A] (𝔤 : LieSubalgebra F A)

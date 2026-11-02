@@ -1,6 +1,7 @@
 import GSpinGGP.Foundations.LocalGroups
 import GSpinGGP.Foundations.Representations
 import GSpinGGP.Foundations.GSpin
+import GSpinGGP.Foundations.Determinant
 
 /-!
 # GGP-specific assembly: multiplicities, packets, `Γ(G,H)`, `m_geom`, the multiplicity formula
@@ -722,20 +723,6 @@ theorem detIm_ne_zero {K : Type*} [Field K] [Module K V] [FiniteDimensional K V]
     exact Subtype.ext (Submodule.disjoint_def.mp hf _ h1 u.2)
   exact (LinearEquiv.ofInjectiveEndo g hinj).isUnit_det'.ne_zero
 
-omit [NontriviallyNormedField F] [PAdicField F] in
-/-- A semisimple endomorphism has `ker f ∩ Im f = 0`. -/
-theorem disjoint_ker_range_of_isSemisimple {K : Type*} [Field K] [Module K V]
-    {f : Module.End K V} (hf : f.IsSemisimple) : Disjoint (LinearMap.ker f) (LinearMap.range f) := by
-  obtain ⟨q, hq, hc⟩ := Module.End.isSemisimple_iff.mp hf (LinearMap.ker f)
-    ((Module.End.mem_invtSubmodule f).mpr fun v hv => by
-      simp only [Submodule.mem_comap, LinearMap.mem_ker] at hv ⊢; simp [hv])
-  have hrange : LinearMap.range f ≤ q := by
-    rintro _ ⟨v, rfl⟩
-    obtain ⟨k, hk, c, hc', rfl⟩ := Submodule.mem_sup.mp (hc.codisjoint.eq_top ▸ Submodule.mem_top :
-      v ∈ LinearMap.ker f ⊔ q)
-    rw [map_add, LinearMap.mem_ker.mp hk, zero_add]
-    exact (Module.End.mem_invtSubmodule f).mp hq hc'
-  exact hc.disjoint.mono_right hrange
 
 end DeltaAux
 

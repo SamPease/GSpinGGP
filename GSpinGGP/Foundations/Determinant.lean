@@ -9,8 +9,9 @@ import Mathlib
 
 * `continuous_det_of_continuous_repr`, `continuous_det_restrict_of_continuous`: continuity of
   `x ↦ det (f x)` and `x ↦ det (f x|_C)`;
-* `trailingCoeff_charpoly_of_isCompl`: for `E = ker f ⊕ C` with `C` stable, the trailing
-  coefficient of the characteristic polynomial of `f` is `± det (f|_C)`, and `det (f|_C) ≠ 0`.
+* `trailingCoeff_charpoly_of_isCompl`, `natTrailingDegree_charpoly_of_isCompl`: for
+  `E = ker f ⊕ C` with `C` stable, the trailing coefficient of the characteristic polynomial of `f`
+  is `± det (f|_C)`, `det (f|_C) ≠ 0`, and it sits in degree `dim ker f`.
 -/
 
 open Filter Topology
@@ -101,5 +102,51 @@ theorem continuous_det_restrict_of_continuous {K : Type*} [Field K] [Topological
   simp_rw [h]
   exact (IsModuleTopology.continuous_of_linearMap (b.coord i ∘ₗ ψ)).comp (hN c)
 
+
+/-- If `E = L ⊕ C` with `L = ker f` and `C` stable under `f`, then
+`charpoly f = t^{dim L} · charpoly (f|_C)`, and `t^{dim L}` is the exact power of `t` dividing it. -/
+theorem natTrailingDegree_charpoly_of_isCompl {K E : Type*} [Field K] [AddCommGroup E]
+    [Module K E] [FiniteDimensional K E] {f : Module.End K E} {L C : Submodule K E}
+    (hcompl : IsCompl L C) (hker : LinearMap.ker f = L) (hC : ∀ x ∈ C, f x ∈ C) :
+    (LinearMap.charpoly f).natTrailingDegree = Module.finrank K L := by
+  have hL : ∀ x ∈ L, f x ∈ L := fun x hx => by
+    rw [← hker, LinearMap.mem_ker] at hx ⊢
+    rw [hx, map_zero]
+  obtain ⟨e, he⟩ : ∃ e : (L × C) ≃ₗ[K] E, ∀ q : L × C, e q = (q.1 : E) + (q.2 : E) :=
+    ⟨Submodule.prodEquivOfIsCompl L C hcompl, Submodule.coe_prodEquivOfIsCompl' L C hcompl⟩
+  have hφ : e.symm.conj f = (f.restrict hL).prodMap (f.restrict hC) := by
+    refine LinearMap.ext fun q => e.injective ?_
+    show e (e.symm (f (e q))) = _
+    rw [LinearEquiv.apply_symm_apply, he, he, map_add]
+    simp [LinearMap.coe_restrict_apply]
+  have hzL : f.restrict hL = 0 := by
+    refine LinearMap.ext fun X => Subtype.ext ?_
+    have hX : (X : E) ∈ LinearMap.ker f := hker ▸ X.2
+    rw [LinearMap.mem_ker] at hX
+    simpa [LinearMap.coe_restrict_apply] using hX
+  have hdet0 := (trailingCoeff_charpoly_of_isCompl hcompl hker hC).1
+  have hc0 : (LinearMap.charpoly (f.restrict hC)).coeff 0 ≠ 0 := by
+    intro h
+    have := LinearMap.det_eq_sign_charpoly_coeff (f.restrict hC)
+    rw [h, mul_zero] at this
+    exact hdet0 this
+  have hne : LinearMap.charpoly (f.restrict hC) ≠ 0 := (LinearMap.charpoly_monic _).ne_zero
+  rw [← LinearEquiv.charpoly_conj e.symm f, hφ, LinearMap.charpoly_prodMap, hzL,
+    LinearMap.charpoly_zero, mul_comm, Polynomial.natTrailingDegree_mul_X_pow hne,
+    Polynomial.natTrailingDegree_eq_zero.mpr (Or.inr hc0), zero_add]
+
+/-- A semisimple endomorphism has `ker f ∩ Im f = 0`. -/
+theorem disjoint_ker_range_of_isSemisimple {K V : Type*} [Field K] [AddCommGroup V] [Module K V]
+    {f : Module.End K V} (hf : f.IsSemisimple) : Disjoint (LinearMap.ker f) (LinearMap.range f) := by
+  obtain ⟨q, hq, hc⟩ := Module.End.isSemisimple_iff.mp hf (LinearMap.ker f)
+    ((Module.End.mem_invtSubmodule f).mpr fun v hv => by
+      simp only [Submodule.mem_comap, LinearMap.mem_ker] at hv ⊢; simp [hv])
+  have hrange : LinearMap.range f ≤ q := by
+    rintro _ ⟨v, rfl⟩
+    obtain ⟨k, hk, c, hc', rfl⟩ := Submodule.mem_sup.mp (hc.codisjoint.eq_top ▸ Submodule.mem_top :
+      v ∈ LinearMap.ker f ⊔ q)
+    rw [map_add, LinearMap.mem_ker.mp hk, zero_add]
+    exact (Module.End.mem_invtSubmodule f).mp hq hc'
+  exact hc.disjoint.mono_right hrange
 
 end GSpinGGP
