@@ -1,4 +1,6 @@
 import GSpinGGP.GGP.IsometryCentralizer
+import TauCeti.LinearAlgebra.Eigenspace.BaseChange
+import TauCeti.LinearAlgebra.BilinearForm.BaseChange
 
 /-!
 # Determinants of isometries on paired subspaces
@@ -191,6 +193,100 @@ theorem det_eq_det_one_mul_det_neg_one (hB : B.IsSymm) (hnd : B.Nondegenerate)
   rw [hprod, hT, hTU, ← hsplit, hfilt, hrest, mul_one, Finset.prod_pair h1]
 
 end Eigen
+
+section BaseChange
+
+open TensorProduct
+
+/-- The determinant of a restriction commutes with extension of scalars to a field. -/
+theorem det_restrict_baseChange {L : Type*} [Field L] [Algebra K L] [FiniteDimensional K V]
+    (f : V →ₗ[K] V) {E : Submodule K V} (hf : Set.MapsTo f E E)
+    (hf' : Set.MapsTo (f.baseChange L) (E.baseChange L) (E.baseChange L)) :
+    LinearMap.det ((f.baseChange L).restrict hf') =
+      algebraMap K L (LinearMap.det (f.restrict hf)) := by
+  have hinj : Function.Injective (E.subtype.baseChange L) :=
+    Module.Flat.lTensor_preserves_injective_linearMap (M := L) E.subtype E.injective_subtype
+  let e : L ⊗[K] E ≃ₗ[L] E.baseChange L := LinearEquiv.ofInjective _ hinj
+  have hcomm : (f.baseChange L).restrict hf' =
+      (e : L ⊗[K] E →ₗ[L] E.baseChange L) ∘ₗ (f.restrict hf).baseChange L ∘ₗ
+        (e.symm : E.baseChange L →ₗ[L] L ⊗[K] E) := by
+    refine LinearMap.ext fun y => ?_
+    obtain ⟨z, rfl⟩ := e.surjective y
+    simp only [LinearMap.comp_apply, LinearEquiv.coe_coe, LinearEquiv.symm_apply_apply]
+    apply Subtype.ext
+    change f.baseChange L (E.subtype.baseChange L z) =
+      E.subtype.baseChange L ((f.restrict hf).baseChange L z)
+    rw [← LinearMap.comp_apply (f.baseChange L), ← LinearMap.baseChange_comp,
+      ← LinearMap.comp_apply (E.subtype.baseChange L), ← LinearMap.baseChange_comp]
+    rfl
+  rw [hcomm, LinearMap.det_conj, LinearMap.det_baseChange]
+
+theorem det_restrict_congr {W : Type*} [AddCommGroup W] [Module K W] (f : W →ₗ[K] W)
+    {E E' : Submodule K W} (h : E = E') (hf : Set.MapsTo f E E) (hf' : Set.MapsTo f E' E') :
+    LinearMap.det (f.restrict hf) = LinearMap.det (f.restrict hf') := by
+  subst h; rfl
+
+/-- An isometry stays an isometry after extension of scalars. -/
+theorem IsIsom.baseChange (L : Type*) [Field L] [Algebra K L] {h : V →ₗ[K] V}
+    (hh : IsIsom B h) : IsIsom (B.baseChange L) (h.baseChange L) := by
+  intro u v
+  induction u using TensorProduct.induction_on with
+  | zero => simp
+  | tmul a x =>
+    induction v using TensorProduct.induction_on with
+    | zero => simp
+    | tmul b y => simp [LinearMap.BilinForm.baseChange_tmul, hh x y]
+    | add v w hv hw => simp only [map_add, LinearMap.add_apply] at hv hw ⊢; rw [hv, hw]
+  | add u w hu hw => simp only [map_add, LinearMap.add_apply] at hu hw ⊢; rw [hu, hw]
+
+/-- Over a perfect field, semisimplicity survives extension of scalars to the algebraic closure
+(squarefree polynomials stay squarefree). -/
+theorem isSemisimple_baseChange_algebraicClosure [PerfectField K] [FiniteDimensional K V]
+    {f : Module.End K V} (hf : f.IsSemisimple) :
+    Module.End.IsSemisimple (f.baseChange (AlgebraicClosure K)) := by
+  have hsep : (minpoly K f).Separable :=
+    PerfectField.separable_iff_squarefree.2 hf.minpoly_squarefree
+  refine Module.End.isSemisimple_of_squarefree_aeval_eq_zero
+    (hsep.map (f := algebraMap K (AlgebraicClosure K))).squarefree ?_
+  rw [Polynomial.aeval_map_algebraMap]
+  have : f.baseChange (AlgebraicClosure K) =
+      Module.End.baseChangeHom K (AlgebraicClosure K) V f := rfl
+  rw [this, Polynomial.aeval_algHom_apply, minpoly.aeval, map_zero]
+
+open Module.End in
+/-- **`det h = det (h|_{E₁}) · det (h|_{E₋₁})`** over any field of characteristic `0`, for an
+isometry `h` commuting with a semisimple isometry `X` of a nondegenerate symmetric form: base
+change to `K̄` and `det_eq_det_one_mul_det_neg_one`. -/
+theorem det_eq_det_one_mul_det_neg_one_of_charZero [CharZero K] [FiniteDimensional K V]
+    (hB : B.IsSymm) (hnd : B.Nondegenerate) {X : Module.End K V} (hX : IsIsom B X)
+    (hss : X.IsSemisimple) {h : Module.End K V} (hi : IsIsom B h) (hc : Commute X h) :
+    LinearMap.det h = LinearMap.det (h.restrict (mapsTo_eigenspace_of_commute hc 1)) *
+      LinearMap.det (h.restrict (mapsTo_eigenspace_of_commute hc (-1))) := by
+  set L := AlgebraicClosure K
+  have hcL : Commute (X.baseChange L) (h.baseChange L) := by
+    change X.baseChange L * h.baseChange L = h.baseChange L * X.baseChange L
+    rw [Module.End.mul_eq_comp, Module.End.mul_eq_comp, ← LinearMap.baseChange_comp,
+      ← LinearMap.baseChange_comp]
+    exact congrArg (LinearMap.baseChange L) hc.eq
+  have key := det_eq_det_one_mul_det_neg_one (B := B.baseChange L)
+    (LinearMap.BilinForm.isSymm_iff.2
+      (LinearMap.BilinForm.IsSymm.baseChange L (LinearMap.BilinForm.isSymm_iff.1 hB)))
+    (LinearMap.BilinForm.Nondegenerate.baseChange (A := L) hnd) (hX.baseChange L) (isSemisimple_baseChange_algebraicClosure hss)
+    (hi.baseChange L) hcL
+  have hE : ∀ μ : K, (X.eigenspace μ).baseChange L =
+      Module.End.eigenspace (X.baseChange L) (algebraMap K L μ) :=
+    fun μ => (eigenspace_baseChange_of_flat X μ).symm
+  apply (algebraMap K L).injective
+  rw [map_mul, ← LinearMap.det_baseChange, key,
+    ← det_restrict_baseChange h (mapsTo_eigenspace_of_commute hc 1)
+      (by rw [hE, map_one]; exact mapsTo_eigenspace_of_commute hcL 1),
+    ← det_restrict_baseChange h (mapsTo_eigenspace_of_commute hc (-1))
+      (by rw [hE, map_neg, map_one]; exact mapsTo_eigenspace_of_commute hcL (-1))]
+  congr 1
+  · exact det_restrict_congr _ (by rw [hE, map_one]) _ _
+  · exact det_restrict_congr _ (by rw [hE, map_neg, map_one]) _ _
+
+end BaseChange
 
 end IsomCent
 

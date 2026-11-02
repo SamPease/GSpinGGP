@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.GGP.TorusTransfer
 import GSpinGGP.GGP.IsometryCentralizer
+import GSpinGGP.GGP.IsometryDet
 import GSpinGGP.GGP.Descent
 import TauCeti.LinearAlgebra.TensorProduct.Kernel
 
@@ -124,15 +125,8 @@ omit [Module.Finite F V] in
 /-- Semisimplicity survives base change to `F̄` (characteristic `0`: squarefree polynomials stay
 squarefree). -/
 theorem isSemisimple_baseChange {f : Module.End F V} [Module.Finite F V]
-    (hf : f.IsSemisimple) : Module.End.IsSemisimple (f.baseChange (AlgebraicClosure F)) := by
-  have hsep : (minpoly F f).Separable :=
-    PerfectField.separable_iff_squarefree.2 hf.minpoly_squarefree
-  refine Module.End.isSemisimple_of_squarefree_aeval_eq_zero
-    (hsep.map (f := algebraMap F (AlgebraicClosure F))).squarefree ?_
-  rw [Polynomial.aeval_map_algebraMap]
-  have : f.baseChange (AlgebraicClosure F) =
-      Module.End.baseChangeHom F (AlgebraicClosure F) V f := rfl
-  rw [this, Polynomial.aeval_algHom_apply, minpoly.aeval, map_zero]
+    (hf : f.IsSemisimple) : Module.End.IsSemisimple (f.baseChange (AlgebraicClosure F)) :=
+  IsomCent.isSemisimple_baseChange_algebraicClosure hf
 
 end Semisimple
 
