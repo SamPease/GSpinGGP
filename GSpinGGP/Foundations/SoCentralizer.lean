@@ -375,6 +375,55 @@ theorem commute_iff_adV {Q : QuadraticForm K V} (hQ : IsNondeg Q) (g : GSpin Q)
   · intro h
     exact commute_of_lift hQ g h hA fun v => (ι_adV hA v).symm
 
+/-- `adV` maps `gspin(V)_{g,Y}` into `so(V)_{P(g)} ⊓ so(V)_{adV Y}`. -/
+theorem adV_mem_soCent_inf {Q : QuadraticForm K V} (hQ : IsNondeg Q) (g : GSpin Q)
+    {Y : CliffordAlgebra Q} (hYg : Y ∈ gspin Q) {Z : CliffordAlgebra Q}
+    (hZ : Z ∈ lieCentralizer (lieCentralizer (gspin Q)
+      ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) Y) :
+    adV Q Z ∈ soCent Q (specP Q g : Module.End K V) ⊓ soCent Q (adV Q Y) := by
+  obtain ⟨hZ', hYZ⟩ := mem_lieCentralizer.mp hZ
+  obtain ⟨hZg, hxZ⟩ := mem_lieCentralizer.mp hZ'
+  have hc := adV_commutator hZg hYg
+  rw [← hYZ, sub_self, map_zero, eq_comm, sub_eq_zero] at hc
+  exact Submodule.mem_inf.mpr
+    ⟨mem_soCent.2 ⟨bform_adV hZg, ((commute_iff_adV hQ g hZg).mp hxZ).symm⟩,
+      mem_soCent.2 ⟨bform_adV hZg, hc⟩⟩
+
+/-- Every element of `so(V)_{P(g)} ⊓ so(V)_{adV Y}` is `adV Z` for some `Z ∈ gspin(V)_{g,Y}`. -/
+theorem exists_mem_lieCentralizer_lieCentralizer_adV_eq {Q : QuadraticForm K V} (hQ : IsNondeg Q)
+    (g : GSpin Q) {Y : CliffordAlgebra Q} (hYg : Y ∈ gspin Q) {M : Module.End K V}
+    (hM : M ∈ soCent Q (specP Q g : Module.End K V) ⊓ soCent Q (adV Q Y)) :
+    ∃ Z ∈ lieCentralizer (lieCentralizer (gspin Q)
+      ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) Y, adV Q Z = M := by
+  obtain ⟨hMg, hMN⟩ := Submodule.mem_inf.mp hM
+  obtain ⟨hMs, hMgc⟩ := mem_soCent.mp hMg
+  obtain ⟨-, hMNc⟩ := mem_soCent.mp hMN
+  obtain ⟨Z, hZg, rfl⟩ := exists_mem_gspin_adV_eq hQ M hMs
+  have hZY : Z * Y = Y * Z := commute_of_adV_commute hQ hZg hYg hMNc
+  have hxZ := (commute_iff_adV hQ g hZg).mpr hMgc.symm
+  exact ⟨Z, mem_lieCentralizer.mpr ⟨mem_lieCentralizer.mpr ⟨hZg, hxZ⟩, hZY.symm⟩, rfl⟩
+
+/-- `gspin(V)_{g,Y}` is abelian iff `so(V)_{P(g)} ⊓ so(V)_{adV Y}` is. -/
+theorem isLieAbelian_lieCentralizer_gspin_iff {Q : QuadraticForm K V} (hQ : IsNondeg Q)
+    (g : GSpin Q) {Y : CliffordAlgebra Q} (hYg : Y ∈ gspin Q) :
+    IsLieAbelian (lieCentralizer (lieCentralizer (gspin Q)
+      ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) Y) ↔
+    ∀ M₁ ∈ soCent Q (specP Q g : Module.End K V) ⊓ soCent Q (adV Q Y),
+      ∀ M₂ ∈ soCent Q (specP Q g : Module.End K V) ⊓ soCent Q (adV Q Y), Commute M₁ M₂ := by
+  rw [isLieAbelian_iff_forall_commute]
+  constructor
+  · intro hab M₁ h₁ M₂ h₂
+    obtain ⟨Z₁, hZ₁, rfl⟩ := exists_mem_lieCentralizer_lieCentralizer_adV_eq hQ g hYg h₁
+    obtain ⟨Z₂, hZ₂, rfl⟩ := exists_mem_lieCentralizer_lieCentralizer_adV_eq hQ g hYg h₂
+    have := adV_commutator (mem_lieCentralizer.mp (mem_lieCentralizer.mp hZ₁).1).1
+      (mem_lieCentralizer.mp (mem_lieCentralizer.mp hZ₂).1).1
+    rw [hab _ hZ₁ _ hZ₂, sub_self, map_zero, eq_comm, sub_eq_zero] at this
+    exact this
+  · intro hab Z₁ h₁ Z₂ h₂
+    exact commute_of_adV_commute hQ (mem_lieCentralizer.mp (mem_lieCentralizer.mp h₁).1).1
+      (mem_lieCentralizer.mp (mem_lieCentralizer.mp h₂).1).1
+      (hab _ (adV_mem_soCent_inf hQ g hYg h₁) _ (adV_mem_soCent_inf hQ g hYg h₂)).eq
+
 /-- **`dim gspin(V)_{g,Y} = 1 + dim so(V)_{P(g), adV Y}`** for `g ∈ GSpin(V)` and `Y ∈ gspin(V)`:
 `adV` maps the joint centralizer onto the joint centralizer of `P(g)` and `adV Y` in `so(V)`
 (`commute_iff_adV`, `commute_of_adV_commute`), with kernel the scalars. -/
@@ -387,29 +436,15 @@ theorem finrank_lieCentralizer_lieCentralizer_gspin {Q : QuadraticForm K V} (hQ 
   have hmem : ∀ {Z}, Z ∈ lieCentralizer (lieCentralizer (gspin Q) x) Y ↔
       Z ∈ gspin Q ∧ x * Z = Z * x ∧ Y * Z = Z * Y := by
     intro Z; rw [mem_lieCentralizer, mem_lieCentralizer, and_assoc]
-  have hYcomm : ∀ {Z}, Z ∈ gspin Q → Y * Z = Z * Y → adV Q Z * adV Q Y = adV Q Y * adV Q Z := by
-    intro Z hZ h
-    have := adV_commutator hZ hY
-    rw [← h, sub_self, map_zero] at this
-    exact sub_eq_zero.mp this.symm
   let φ : lieCentralizer (lieCentralizer (gspin Q) x) Y →ₗ[K]
       ↥(soCent Q (specP Q g : Module.End K V) ⊓ soCent Q (adV Q Y)) :=
-    { toFun := fun Z => ⟨adV Q Z, by
-        obtain ⟨hZ, hx, hYZ⟩ := hmem.mp Z.2
-        refine Submodule.mem_inf.mpr ⟨mem_soCent.2 ⟨bform_adV hZ, ?_⟩,
-          mem_soCent.2 ⟨bform_adV hZ, hYcomm hZ hYZ⟩⟩
-        exact ((commute_iff_adV hQ g hZ).mp hx).symm⟩
+    { toFun := fun Z => ⟨adV Q Z, adV_mem_soCent_inf hQ g hY Z.2⟩
       map_add' := fun Y Z => Subtype.ext (map_add (adV Q) Y.1 Z.1)
       map_smul' := fun c Y => Subtype.ext (map_smul (adV Q) c Y.1) }
   have hsurj : Function.Surjective φ := by
     rintro ⟨M, hM⟩
-    obtain ⟨hMg, hMN⟩ := Submodule.mem_inf.mp hM
-    obtain ⟨hMs, hMgc⟩ := mem_soCent.mp hMg
-    obtain ⟨-, hMNc⟩ := mem_soCent.mp hMN
-    obtain ⟨Z, hZg, hZM⟩ := exists_mem_gspin_adV_eq hQ M hMs
-    have hZY : Z * Y = Y * Z := commute_of_adV_commute hQ hZg hY (by rw [hZM]; exact hMNc)
-    have hxZ : x * Z = Z * x := (commute_iff_adV hQ g hZg).mpr (by rw [hZM]; exact hMgc.symm)
-    exact ⟨⟨Z, hmem.mpr ⟨hZg, hxZ, hZY.symm⟩⟩, Subtype.ext hZM⟩
+    obtain ⟨Z, hZ, hZM⟩ := exists_mem_lieCentralizer_lieCentralizer_adV_eq hQ g hY hM
+    exact ⟨⟨Z, hZ⟩, Subtype.ext hZM⟩
   have hker : finrank K (LinearMap.ker φ) = 1 := by
     have h1 : (1 : CliffordAlgebra Q) ∈ lieCentralizer (lieCentralizer (gspin Q) x) Y :=
       hmem.mpr ⟨one_mem_gspin Q, by rw [one_mul, mul_one], by rw [one_mul, mul_one]⟩

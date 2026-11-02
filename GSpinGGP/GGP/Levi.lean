@@ -274,17 +274,8 @@ omit [PAdicField F] in
 theorem isLieAbelian_lieCentralizer_iff {A : Type*} [Ring A] [Algebra F A]
     (𝔤 : LieSubalgebra F A) (x : A) :
     IsLieAbelian ↥(lieCentralizer 𝔤 x) ↔
-      ∀ X ∈ lieCentralizer 𝔤 x, ∀ Y ∈ lieCentralizer 𝔤 x, X * Y = Y * X := by
-  constructor
-  · intro h X hX Y hY
-    have := h.trivial ⟨X, hX⟩ ⟨Y, hY⟩
-    have := congrArg Subtype.val this
-    rw [LieSubalgebra.coe_bracket, Ring.lie_def] at this
-    exact sub_eq_zero.mp this
-  · intro h
-    refine ⟨fun X Y => Subtype.ext ?_⟩
-    rw [LieSubalgebra.coe_bracket, Ring.lie_def]
-    exact sub_eq_zero.mpr (h X X.2 Y Y.2)
+      ∀ X ∈ lieCentralizer 𝔤 x, ∀ Y ∈ lieCentralizer 𝔤 x, X * Y = Y * X :=
+  isLieAbelian_iff_forall_commute
 
 theorem mem_lieCentralizer_alg (Φ : GGPIso d d') (x X : d.ambient) :
     X ∈ lieCentralizer d.lie x ↔ Φ.alg X ∈ lieCentralizer d'.lie (Φ.alg x) := by

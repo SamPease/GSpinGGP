@@ -369,6 +369,25 @@ lemma mem_lieCentralizer {K : Type*} [Field K] [Algebra K A] {𝔤 : LieSubalgeb
   change X ∈ 𝔤 ∧ X ∈ Subalgebra.centralizer K {x} ↔ _
   simp [Subalgebra.mem_centralizer_iff, eq_comm]
 
+/-- `𝔤_Y = 𝔤 ∩ ker (ad Y)`. -/
+theorem lieCentralizer_toSubmodule_eq {K : Type*} [Field K] [Algebra K A]
+    (𝔤 : LieSubalgebra K A) (Y : A) :
+    (lieCentralizer 𝔤 Y).toSubmodule = 𝔤.toSubmodule ⊓ LinearMap.ker (LieAlgebra.ad K A Y) := by
+  letI := LieRing.ofAssociativeRing (A := A)
+  ext X
+  rw [LieSubalgebra.mem_toSubmodule, mem_lieCentralizer, Submodule.mem_inf, LinearMap.mem_ker,
+    LieAlgebra.ad_apply, Ring.lie_def, sub_eq_zero, LieSubalgebra.mem_toSubmodule]
+
+/-- A Lie subalgebra of an associative algebra is abelian iff its elements commute. -/
+theorem isLieAbelian_iff_forall_commute {K : Type*} [Field K] [Algebra K A]
+    {𝔤 : LieSubalgebra K A} : IsLieAbelian 𝔤 ↔ ∀ X₁ ∈ 𝔤, ∀ X₂ ∈ 𝔤, X₁ * X₂ = X₂ * X₁ :=
+  ⟨fun h X₁ h₁ X₂ h₂ => by
+    have := congrArg Subtype.val (h.trivial ⟨X₁, h₁⟩ ⟨X₂, h₂⟩)
+    rwa [LieSubalgebra.coe_bracket, Ring.lie_def, ZeroMemClass.coe_zero, sub_eq_zero] at this,
+   fun h => ⟨fun X₁ X₂ => Subtype.ext (by
+    rw [LieSubalgebra.coe_bracket, Ring.lie_def, ZeroMemClass.coe_zero, sub_eq_zero]
+    exact h _ X₁.2 _ X₂.2)⟩⟩
+
 /-- The centralizer `G_x = Z_G(x)` of `x` in `G` (Thesis §2.1). -/
 def grpCentralizer (G : Subgroup Aˣ) (x : Aˣ) : Subgroup Aˣ :=
   G ⊓ Subgroup.centralizer {x}
@@ -414,6 +433,20 @@ end Algebraic
 section Semisimple
 
 variable {A : Type*} [Ring A] [Algebra F A]
+
+/-- Semisimplicity is preserved by algebra homomorphisms: `p(a) = 0` with `p` squarefree gives
+`p(φ a) = 0`.  Used for `x ↦ incl x`, `C(W) → C(V)`. -/
+theorem isSS_algHom {A B : Type*} [Ring A] [Algebra F A] [FiniteDimensional F A] [Ring B]
+    [Algebra F B] (φ : A →ₐ[F] B) {a : A} (ha : IsSS F a) : IsSS F (φ a) := by
+  set p := minpoly F (LinearMap.mulLeft F a)
+  have hsq : Squarefree p := Module.End.IsSemisimple.minpoly_squarefree ha
+  have h0 : Polynomial.aeval (Algebra.lmul F A a) p = 0 := minpoly.aeval F _
+  rw [Polynomial.aeval_algHom_apply] at h0
+  have h1 : Polynomial.aeval a p = 0 :=
+    Algebra.lmul_injective (R := F) (h0.trans (map_zero _).symm)
+  have h3 : Polynomial.aeval (Algebra.lmul F B (φ a)) p = 0 := by
+    rw [Polynomial.aeval_algHom_apply, Polynomial.aeval_algHom_apply, h1, map_zero, map_zero]
+  exact Module.End.isSemisimple_of_squarefree_aeval_eq_zero hsq h3
 
 /-- An element of `F[u]` is semisimple if `u` is. -/
 theorem isSS_of_mem_adjoin [PerfectField F] [FiniteDimensional F A] {u Y : A} (hu : IsSS F u)
