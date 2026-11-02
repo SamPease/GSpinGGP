@@ -2,7 +2,7 @@ import GSpinGGP.GGP.Triple
 import GSpinGGP.TraceFormula.Spine
 import GSpinGGP.GGP.Germs
 import GSpinGGP.GGP.Centralizers
-import GSpinGGP.GGP.RegularNilpotent
+import GSpinGGP.GGP.RegularNilpotentConverse
 import GSpinGGP.GGP.KottwitzSign
 import GSpinGGP.GGP.Hilbert90
 import GSpinGGP.GGP.TwistDescent

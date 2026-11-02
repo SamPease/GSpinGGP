@@ -1307,6 +1307,26 @@ theorem ι_adV {Q : QuadraticForm K V} {X : CliffordAlgebra Q} (hX : X ∈ gspin
   rw [Ring.lie_def] at hw
   rw [adV_apply, ← hw, ιInv_ι]
 
+/-- `adV X` is nilpotent if `X ∈ gspin(V)` is: `ι((adV X)^j v) = (L_X − R_X)^j (ι v)`, and
+`L_X − R_X` is nilpotent (a difference of commuting nilpotents). -/
+theorem isNilpotent_adV {Q : QuadraticForm K V} {X : CliffordAlgebra Q} (hX : X ∈ gspin Q)
+    (hn : IsNilpotent X) : IsNilpotent (adV Q X) := by
+  set D : Module.End K (CliffordAlgebra Q) := LinearMap.mulLeft K X - LinearMap.mulRight K X
+  obtain ⟨k, hk⟩ : IsNilpotent D :=
+    (LinearMap.commute_mulLeft_right X X).isNilpotent_sub
+      ((LinearMap.isNilpotent_mulLeft_iff K X).2 hn)
+      ((LinearMap.isNilpotent_mulRight_iff K X).2 hn)
+  have h : ∀ j v, ι Q ((adV Q X ^ j) v) = (D ^ j) (ι Q v) := by
+    intro j
+    induction j with
+    | zero => simp
+    | succ j ih =>
+      intro v
+      rw [pow_succ', Module.End.mul_apply, ι_adV hX, ih, pow_succ', Module.End.mul_apply]
+      rfl
+  refine ⟨k, LinearMap.ext fun v => CliffordAlgebra.ι_injective Q ?_⟩
+  rw [h, hk, LinearMap.zero_apply, LinearMap.zero_apply, map_zero]
+
 /-- `adV X` is skew for the bilinear form of `Q`, for `X ∈ gspin(V)` (Thesis Prop. 5.1.3.1). -/
 theorem bform_adV {Q : QuadraticForm K V} {X : CliffordAlgebra Q} (hX : X ∈ gspin Q) (u w : V) :
     bform Q (adV Q X u) w = -bform Q u (adV Q X w) := by

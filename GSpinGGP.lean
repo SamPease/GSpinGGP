@@ -29,6 +29,7 @@ import GSpinGGP.GGP.SemisimpleRank
 import GSpinGGP.GGP.JointCentralizer
 import GSpinGGP.GGP.JointRank
 import GSpinGGP.GGP.LieRank
+import GSpinGGP.GGP.RegularNilpotentConverse
 import GSpinGGP.GGP.RegularRank
 import GSpinGGP.GGP.Centralizers
 import GSpinGGP.Literature.TraceFormula
