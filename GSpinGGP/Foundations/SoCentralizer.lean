@@ -479,6 +479,46 @@ theorem isCompl_orthogonal_ker_sub_one {Q : QuadraticForm K V} (hQ : IsNondeg Q)
   have heq := Submodule.eq_of_le_of_finrank_eq hle hdim.symm
   rwa [← heq]
 
+/-- Every skew endomorphism is `adV Z` for some `Z ∈ gspin(V)` (Thesis Prop. 5.1.3.1). -/
+theorem exists_mem_gspin_adV_eq {Q : QuadraticForm K V} (hQ : IsNondeg Q) (M : Module.End K V)
+    (hMs : ∀ u w, bform Q (M u) w = -bform Q u (M w)) : ∃ Z ∈ gspin Q, adV Q Z = M := by
+  obtain ⟨Z, hZq, hZ⟩ := exists_mem_quadratic_commutator_eq hQ M hMs
+  have hZg : Z ∈ gspin Q := by
+    refine quadraticLieSubalgebra_toSubmodule_le_of_bivector_mem Q (P := (gspin Q).toSubmodule)
+      (fun a b => ?_) hZq
+    rw [bivector_def]
+    exact (gspin Q).smul_mem _ (Submodule.sub_mem (gspin Q).toSubmodule
+      (ι_mul_ι_mem_gspin Q a b) (ι_mul_ι_mem_gspin Q b a))
+  exact ⟨Z, hZg, by ext v; apply ι_injective Q; rw [ι_adV hZg, hZ]⟩
+
+/-- **A `gspin`-level abelian moved part gives an `so`-level one**: if elements of `gspin(V)_y`
+acting trivially on `ι(A)`, `A = W'_y`, commute, then so do the elements of `so(V)_{P y}` killing
+`A`. -/
+theorem commute_of_movedPart {Q : QuadraticForm K V} (hQ : IsNondeg Q) (y : GSpin Q)
+    (H : ∀ X ∈ lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q),
+      ∀ Y ∈ lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q),
+      (∀ v ∈ fixedSub y, ⁅X, ι Q v⁆ = 0) → (∀ v ∈ fixedSub y, ⁅Y, ι Q v⁆ = 0) → ⁅X, Y⁆ = 0) :
+    ∀ M₁ ∈ soCent Q (specP Q y : Module.End K V) ⊓ killSub (fixedSub y),
+      ∀ M₂ ∈ soCent Q (specP Q y : Module.End K V) ⊓ killSub (fixedSub y), M₁ * M₂ = M₂ * M₁ := by
+  have lift : ∀ M ∈ soCent Q (specP Q y : Module.End K V) ⊓ killSub (fixedSub y),
+      ∃ Z ∈ lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q),
+        adV Q Z = M ∧ ∀ v ∈ fixedSub y, ⁅Z, ι Q v⁆ = 0 := by
+    intro M hM
+    obtain ⟨hMg, hMk⟩ := Submodule.mem_inf.mp hM
+    obtain ⟨hMs, hMc⟩ := mem_soCent.mp hMg
+    obtain ⟨Z, hZg, hZM⟩ := exists_mem_gspin_adV_eq hQ M hMs
+    refine ⟨Z, mem_lieCentralizer.mpr ⟨hZg, (commute_iff_adV hQ y hZg).mpr (by rw [hZM]; exact hMc.symm)⟩,
+      hZM, fun v hv => ?_⟩
+    rw [Ring.lie_def, ← ι_adV hZg, hZM, hMk v hv, map_zero]
+  intro M₁ hM₁ M₂ hM₂
+  obtain ⟨Z₁, hZ₁, hZM₁, h₁⟩ := lift M₁ hM₁
+  obtain ⟨Z₂, hZ₂, hZM₂, h₂⟩ := lift M₂ hM₂
+  have h := H Z₁ hZ₁ Z₂ hZ₂ h₁ h₂
+  rw [Ring.lie_def] at h
+  have := adV_commutator (mem_lieCentralizer.mp hZ₁).1 (mem_lieCentralizer.mp hZ₂).1
+  rw [h, map_zero, hZM₁, hZM₂] at this
+  exact sub_eq_zero.mp this.symm
+
 end Fixed
 
 /-! ## An upper bound from a Jordan chain -/
