@@ -483,6 +483,47 @@ theorem finrank_lieCentralizer_lieCentralizer_lie (d : GGPData K) (a Y : d.ambie
       finrank K ↥(lieCentralizer (lieCentralizer (gspin d.QV) a.2) Y.2).toSubmodule
   rw [h, (Submodule.prodEquiv _ _).finrank_eq, Module.finrank_prod]
 
+/-- **A regular element of one side**: if `(A, q|_A)` (`A = W'_y`) is quasi-split, some nilpotent
+`X ∈ gspin(V)_y` (an explicit `regNil` on `A`, or `0` if `A = 0`) has
+`dim gspin(V)_{y,X} ≤ ⌊dim A/2⌋ + dim (so(V)_{P y} killing A) + 1`. -/
+theorem exists_side_regNil [CharZero K] {V : Type*} [AddCommGroup V] [Module K V]
+    [FiniteDimensional K V] {Q : QuadraticForm K V} (hQ : IsNondeg Q) (y : GSpin Q)
+    (hc : IsCompl (fixedSub y) ((bform Q).orthogonal (fixedSub y)))
+    (hqs : IsQuasiSplitQF (Q.comp (fixedSub y).subtype)) :
+    ∃ X ∈ lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q),
+      IsNilpotent X ∧
+      finrank K (lieCentralizer (lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) :
+        CliffordAlgebra Q)) X) ≤ finrank K (fixedSub y) / 2 +
+          finrank K ↥(soCent Q (specP Q y : Module.End K V) ⊓ killSub (fixedSub y)) + 1 := by
+  have hQA : IsNondeg (Q.comp (fixedSub y).subtype) := isNondeg_comp_subtype_of_isCompl hc
+  by_cases hpos : 0 < finrank K (fixedSub y)
+  · obtain ⟨w, ν, k, hν, hw, hdim⟩ := exists_isSplitFamily_of_quasiSplit hQA hqs hpos
+    set X := regNil Q (fun j => (w j : V)) ν k
+    have hw' : IsSplitFamily Q (fun j => (w j : V)) ν k := fun i j hi hj => by
+      rw [← bform_comp_subtype]; exact hw i j hi hj
+    have hXm : X ∈ lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) :=
+      mem_lieCentralizer.mpr ⟨regNil_mem_gspin, commute_regNil y (fun j => (w j).2) ν k⟩
+    have h : ∀ a ∈ (fixedSub y), adV Q X a ∈ (fixedSub y) := fun a ha => by
+      rw [show a = ((⟨a, ha⟩ : (fixedSub y)) : V) from rfl, adV_regNil_subtype w ν k ⟨a, ha⟩]
+      exact Submodule.coe_mem _
+    have hr : (adV Q X).restrict h = adV (Q.comp (fixedSub y).subtype) (regNil (Q.comp (fixedSub y).subtype) w ν k) :=
+      LinearMap.ext fun a => Subtype.ext (adV_regNil_subtype w ν k a)
+    have h1 := finrank_lieCentralizer_fixed_le hQ y hc hXm h
+    rw [hr] at h1
+    have h2 := finrank_soCent_regNil_le hQA hw hν hdim
+    have h3 := (linearIndependent_isSplitFamily hw hν).fintype_card_le_finrank
+    rw [Fintype.card_fin] at h3
+    exact ⟨X, hXm, isNilpotent_regNil hw' hν, by omega⟩
+  · have h0 : finrank K (fixedSub y) = 0 := by omega
+    have hXm : (0 : CliffordAlgebra Q) ∈
+        lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) :=
+      Submodule.zero_mem (lieCentralizer (gspin Q) _).toSubmodule
+    have h : ∀ a ∈ (fixedSub y), adV Q 0 a ∈ (fixedSub y) := fun a _ => by rw [map_zero]; exact Submodule.zero_mem _
+    have h1 := finrank_lieCentralizer_fixed_le hQ y hc hXm h
+    have h2 := Submodule.finrank_le (soCent (Q.comp (fixedSub y).subtype) ((adV Q 0).restrict h))
+    rw [Module.finrank_linearMap, h0, mul_zero] at h2
+    exact ⟨0, hXm, IsNilpotent.zero, by omega⟩
+
 end CentralizerNilReg
 
 /-! ## Regular nilpotent orbits and quasi-splitness -/
