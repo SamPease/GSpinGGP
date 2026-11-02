@@ -8,7 +8,8 @@ import GSpinGGP.Foundations.SoCentralizer
 # Splitting `so(V)_X` along orthogonal decompositions
 
 For `V = U ⊥ U'` with `U`, `U'` stable under `X` and under every element of `so(V)_X`,
-`so(V)_X ≅ so(U)_X × so(U')_X` (`finrank_soCent_eq_add`).
+`so(V)_X ≅ so(U)_X × so(U')_X` (`finrank_soCent_eq_add`); more generally for the joint centralizer
+`so(V)_X ⊓ so(V)_Y` (`finrank_soCent_inf_eq_add`).
 -/
 
 noncomputable section
@@ -90,18 +91,27 @@ theorem restrict_mem_soCent (hXU : Set.MapsTo X U U) {M : Module.End K V} (hM : 
     LinearMap.ext fun u => ?_⟩
   exact Subtype.ext (congrArg (fun F : Module.End K V => F u) hM.2)
 
-/-- **Splitting `so(V)_X` along an orthogonal decomposition** `V = U ⊥ U'` preserved by `X` and by
-every element of `so(V)_X`: `dim so(V)_X = dim so(U)_X + dim so(U')_X`. -/
-theorem finrank_soCent_eq_add [FiniteDimensional K V] (h : IsCompl U U')
-    (hXU : Set.MapsTo X U U) (hXU' : Set.MapsTo X U' U')
-    (hM : ∀ M ∈ soCent Q X, Set.MapsTo M U U) (hM' : ∀ M ∈ soCent Q X, Set.MapsTo M U' U') :
-    finrank K (soCent Q X) = finrank K (soCent (Q.comp U.subtype) (X.restrict hXU)) +
-      finrank K (soCent (Q.comp U'.subtype) (X.restrict hXU')) := by
-  let e : soCent Q X ≃ₗ[K] soCent (Q.comp U.subtype) (X.restrict hXU) ×
-      soCent (Q.comp U'.subtype) (X.restrict hXU') :=
-    { toFun := fun M => (⟨_, restrict_mem_soCent hXU M.2 (hM M M.2)⟩,
-        ⟨_, restrict_mem_soCent hXU' M.2 (hM' M M.2)⟩)
-      invFun := fun p => ⟨sumEnd h p.1 p.2, sumEnd_mem_soCent horth h hXU hXU' p.1.2 p.2.2⟩
+/-- **Splitting the joint centralizer** `so(V)_{X,Y} = so(V)_X ⊓ so(V)_Y` along `V = U ⊥ U'`
+preserved by `X`, `Y` and every element of `so(V)_{X,Y}`. -/
+theorem finrank_soCent_inf_eq_add [FiniteDimensional K V] {Y : Module.End K V} (h : IsCompl U U')
+    (hXU : Set.MapsTo X U U) (hXU' : Set.MapsTo X U' U') (hYU : Set.MapsTo Y U U)
+    (hYU' : Set.MapsTo Y U' U') (hM : ∀ M ∈ soCent Q X ⊓ soCent Q Y, Set.MapsTo M U U)
+    (hM' : ∀ M ∈ soCent Q X ⊓ soCent Q Y, Set.MapsTo M U' U') :
+    finrank K ↥(soCent Q X ⊓ soCent Q Y) =
+      finrank K ↥(soCent (Q.comp U.subtype) (X.restrict hXU) ⊓
+        soCent (Q.comp U.subtype) (Y.restrict hYU)) +
+      finrank K ↥(soCent (Q.comp U'.subtype) (X.restrict hXU') ⊓
+        soCent (Q.comp U'.subtype) (Y.restrict hYU')) := by
+  let e : ↥(soCent Q X ⊓ soCent Q Y) ≃ₗ[K]
+      ↥(soCent (Q.comp U.subtype) (X.restrict hXU) ⊓ soCent (Q.comp U.subtype) (Y.restrict hYU)) ×
+      ↥(soCent (Q.comp U'.subtype) (X.restrict hXU') ⊓
+        soCent (Q.comp U'.subtype) (Y.restrict hYU')) :=
+    { toFun := fun M => (⟨_, restrict_mem_soCent hXU M.2.1 (hM M M.2),
+          restrict_mem_soCent hYU M.2.2 (hM M M.2)⟩,
+        ⟨_, restrict_mem_soCent hXU' M.2.1 (hM' M M.2),
+          restrict_mem_soCent hYU' M.2.2 (hM' M M.2)⟩)
+      invFun := fun p => ⟨sumEnd h p.1 p.2, sumEnd_mem_soCent horth h hXU hXU' p.1.2.1 p.2.2.1,
+        sumEnd_mem_soCent horth h hYU hYU' p.1.2.2 p.2.2.2⟩
       map_add' := fun _ _ => rfl
       map_smul' := fun _ _ => rfl
       left_inv := fun M => by
@@ -115,6 +125,17 @@ theorem finrank_soCent_eq_add [FiniteDimensional K V] (h : IsCompl U U')
         · exact sumEnd_left h _ _ u
         · exact sumEnd_right h _ _ u }
   rw [e.finrank_eq, Module.finrank_prod]
+
+/-- **Splitting `so(V)_X` along an orthogonal decomposition** `V = U ⊥ U'` preserved by `X` and by
+every element of `so(V)_X`: `dim so(V)_X = dim so(U)_X + dim so(U')_X`. -/
+theorem finrank_soCent_eq_add [FiniteDimensional K V] (h : IsCompl U U')
+    (hXU : Set.MapsTo X U U) (hXU' : Set.MapsTo X U' U')
+    (hM : ∀ M ∈ soCent Q X, Set.MapsTo M U U) (hM' : ∀ M ∈ soCent Q X, Set.MapsTo M U' U') :
+    finrank K (soCent Q X) = finrank K (soCent (Q.comp U.subtype) (X.restrict hXU)) +
+      finrank K (soCent (Q.comp U'.subtype) (X.restrict hXU')) := by
+  have := finrank_soCent_inf_eq_add horth h hXU hXU' hXU hXU'
+    (by simpa only [inf_idem] using hM) (by simpa only [inf_idem] using hM')
+  rwa [inf_idem, inf_idem, inf_idem] at this
 
 theorem isNondeg_comp_subtype (hQ : IsNondeg Q) (h : IsCompl U U') :
     IsNondeg (Q.comp U.subtype) := by

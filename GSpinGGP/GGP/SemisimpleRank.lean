@@ -197,6 +197,42 @@ theorem finrank_soCent_one_of_le_two [FiniteDimensional K V] (hQ : IsNondeg Q)
         exact Submodule.smul_mem _ r hJ
     rw [this, finrank_span_singleton hJne]
 
+/-- **`dim so(V) ≥ dim V − 1`**: in an anisotropic orthogonal basis `e`, the wedges `e₀ ∧ eᵢ`,
+`i ≥ 1`, are independent (`(e₀ ∧ eᵢ) e₀ = −b(e₀,e₀) eᵢ`). -/
+theorem le_finrank_soCent_one [FiniteDimensional K V] (hQ : IsNondeg Q) :
+    finrank K V - 1 ≤ finrank K (soCent Q 1) := by
+  obtain ⟨e, he⟩ :=
+    LinearMap.BilinForm.exists_orthogonal_basis (QuadraticForm.associated_isSymm (S := K) Q)
+  have hani := LinearMap.BilinForm.iIsOrtho.not_isOrtho_basis_self_of_nondegenerate he hQ
+  rcases Nat.eq_zero_or_pos (finrank K V) with h0 | hpos
+  · rw [h0]; exact Nat.zero_le _
+  set i₀ : Fin (finrank K V) := ⟨0, hpos⟩
+  let f : Fin (finrank K V - 1) → soCent Q 1 := fun i =>
+    ⟨IsomCent.wedge (bform Q) (e i₀) (e ⟨i + 1, by omega⟩),
+      mem_soCent.2 ⟨IsomCent.isSkew_wedge ⟨bform_comm Q⟩ _ _, by rw [mul_one, one_mul]⟩⟩
+  have hf : LinearIndependent K f := by
+    rw [Fintype.linearIndependent_iff]
+    intro c hc i
+    have key : ∀ x : Fin (finrank K V - 1),
+        IsomCent.wedge (bform Q) (e i₀) (e ⟨x + 1, by omega⟩) (e i₀) =
+          -bform Q (e i₀) (e i₀) • e ⟨x + 1, by omega⟩ := by
+      intro x
+      have h0 : bform Q (e ⟨x + 1, by omega⟩) (e i₀) = 0 := he (by simp [i₀, Fin.ext_iff])
+      rw [IsomCent.wedge_apply, h0, zero_smul, zero_sub, neg_smul]
+    have h := congrArg (fun M : soCent Q 1 => e.coord ⟨i + 1, by omega⟩
+      ((M : Module.End K V) (e i₀))) hc
+    simp only [f, Submodule.coe_sum, Submodule.coe_smul, LinearMap.sum_apply,
+      LinearMap.smul_apply, key, ZeroMemClass.coe_zero, LinearMap.zero_apply, map_zero, map_sum,
+      map_smul, Basis.coord_apply, Basis.repr_self, Finsupp.single_apply, Fin.mk.injEq,
+      Nat.add_right_cancel_iff, Fin.val_inj, smul_eq_mul, mul_ite, mul_one, mul_zero] at h
+    rw [Finset.sum_ite_eq'] at h
+    simp only [Finset.mem_univ, ite_true] at h
+    have h' := mul_eq_zero.1 h
+    rcases h' with h' | h'
+    · exact h'
+    · exact absurd (neg_eq_zero.1 h') (hani i₀)
+  simpa using hf.fintype_card_le_finrank
+
 /-- If `so(V)` is abelian, `dim V ≤ 2`. -/
 theorem finrank_le_two_of_commute [CharZero K] [IsAlgClosed K] [FiniteDimensional K V]
     (hQ : IsNondeg Q) (hab : ∀ M₁ ∈ soCent Q 1, ∀ M₂ ∈ soCent Q 1, Commute M₁ M₂) :
