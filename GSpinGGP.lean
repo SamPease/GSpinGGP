@@ -4,6 +4,7 @@ import GSpinGGP.Foundations.GSpin
 import GSpinGGP.Foundations.QuadraticForms
 import GSpinGGP.Foundations.GSpinLipschitz
 import GSpinGGP.GGP.CentralizerSign
+import GSpinGGP.GGP.IsometryDet
 import GSpinGGP.Foundations.LocalFieldBridge
 import GSpinGGP.Foundations.PAdicQuadraticForms
 import GSpinGGP.Literature.Measure
