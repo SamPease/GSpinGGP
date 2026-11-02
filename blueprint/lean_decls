@@ -127,6 +127,7 @@ GSpinGGP.aestronglyMeasurable_torusFn_of_mem_QC
 GSpinGGP.isOpen_torusNat
 GSpinGGP.isSS_of_isSemisimple_specP_baseChange
 GSpinGGP.continuousOn_gammaIntegrand_of_mem_QC
+GSpinGGP.continuousOn_weylDisc_germ_of_mem_QC
 GSpinGGP.germ_bound_of_mem_QC
 GSpinGGP.bp_integrable_deltaGGP_rpow
 GSpinGGP.isTorusIntegrable_of_mem_QC

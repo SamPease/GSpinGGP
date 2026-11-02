@@ -50,7 +50,20 @@ Write $x=s+n$ (Jordan--Chevalley decomposition of left multiplication, $s,n\in K
 For $\theta\in\QC(G,\chi)$, the integrand of $m_{\mathrm{geom},s}$ is continuous on $T_\natural$.
 \end{lemma}
 \begin{proof}
-Not yet formalized. On $T_\natural$ the centralizers are constant, $D^G$ and $\Delta$ are continuous, and the germs are locally constant: $\hat{j}(\mathcal O,X+Y)=\hat{j}(\mathcal O,X)$ for $Y$ central in $\mathfrak g_t$.
+\leanok
+\uses{continuousOn_weylDisc_germ_of_mem_QC, isOpen_torusNat}
+The integrand is the product of $D^G(t)^{1/2}c_{\theta,\mathcal O_t}(t)$ (next lemma) and $\Delta(t)^{s-1/2}$. On $T_\natural$, $W''_t=W''_x$ ($P(t)$ is $1$ on $W'_x$ and preserves $W''_x$, and dimensions agree), so $\Delta(t)=|\det(P(t)-1)|_{W''_x}|_F$, continuous and nonzero; and $|\cdot|_F$ is locally constant on $F^\times$.
+\end{proof}
+
+\begin{lemma}[Continuity of the normalized germs]
+\label{continuousOn_weylDisc_germ_of_mem_QC}
+\lean{GSpinGGP.continuousOn_weylDisc_germ_of_mem_QC}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, IsGammaElt, QC, germ, gspin, orbitChoice, weylDisc}
+For $\theta\in\QC(G,\chi)$, $t\mapsto D^G(t)^{1/2}c_{\theta,\mathcal O_t}(t)$ is continuous on $T_\natural$.
+\end{lemma}
+\begin{proof}
+Not yet formalized. On $T_\natural$ the centralizers $G_t$, $\mathfrak g_t$ are those of $x$ (over $\bar F$ by the centralizer theorem, then exponentiate), so $D^G(t)$ is the absolute value of a fixed coefficient of the characteristic polynomial of $1-\mathrm{Ad}\,t$, continuous. The germs are locally constant: $\hat{j}(\mathcal O,X+Y)=\hat{j}(\mathcal O,X)$ for $Y$ central in $\mathfrak g_t$, and $\mathcal O_{t'}=\mathcal O_t$.
 \end{proof}
 
 \begin{lemma}[Boundedness of germs]

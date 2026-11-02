@@ -518,19 +518,201 @@ theorem isOpen_torusNat (T : Subgroup ↥(GSpin d.QW)) :
   · rw [hTT]; exact hx.2.1
   · rw [hTT]; exact hx.2.2
 
-/-- **The integrand of `m_{geom,s}` is continuous on `T_♮`** (Thesis Prop 12.1.1(i)).  Why: on
-`T_♮` the subspaces `W'_t = W'_T`, `W''_t = W''_T` and the centralizers `G_t`, `𝔤_t` are constant,
-so `D^G(t) = |det(1 − Ad t)|_{𝔤/𝔤_T}|` and `Δ(t) = |det(P(t) − 1)|_{W''_T}|` are continuous; and
-`t ↦ c_{θ,O_t}(t)` is locally constant: for `t' = t e^Y` with `Y ∈ Lie T` small (central in
-`𝔤_t`), `θ(t' e^X) = θ(t e^{X+Y})`, and `ĵ(O, X + Y) = ĵ(O, X)` on `𝔤_{t,reg}` (`b(Y, N) = 0`
-for `N` nilpotent commuting with `Y`), so the expansion at `t` is one at `t'` with the same
-coefficients, while `O_{t'} = O_t` (`OrbitSpec d t' = OrbitSpec d t`).
+/-! ### Continuity of the integrand on `T_♮` -/
+
+open scoped Pointwise in
+omit [PAdicField F] in
+/-- `|u|_F = 1` for `‖u‖ = 1`: multiplication by `u` preserves the closed unit ball. -/
+theorem absF_eq_one_of_norm_eq_one [LocallyCompactSpace F] {u : F} (hu : ‖u‖ = 1) :
+    absF u = 1 := by
+  let _ : MeasurableSpace F := borel F
+  have : BorelSpace F := ⟨rfl⟩
+  have : ProperSpace F := .of_nontriviallyNormedField_of_weaklyLocallyCompactSpace F
+  have hu0 : u ≠ 0 := by rintro rfl; simp at hu
+  set μ : Measure F := Measure.addHaar
+  have hs : u • Metric.closedBall (0 : F) 1 = Metric.closedBall 0 1 := by
+    rw [smul_closedBall u (0 : F) zero_le_one, smul_zero, hu, mul_one]
+  have h := absF_haar μ hu0 (Metric.closedBall 0 1)
+  rw [hs] at h
+  have hpos := Metric.measure_closedBall_pos μ (0 : F) zero_lt_one
+  have hfin := (isCompact_closedBall (0 : F) 1).measure_lt_top (μ := μ)
+  have h1 : ENNReal.ofReal (absF u) = 1 := (ENNReal.mul_eq_right hpos.ne' hfin.ne).mp h.symm
+  rwa [ENNReal.ofReal_eq_one] at h1
+
+omit [PAdicField F] in
+/-- `|a|_F` only depends on `‖a‖`. -/
+theorem absF_eq_of_norm_eq [LocallyCompactSpace F] {a b : F} (ha : a ≠ 0) (h : ‖b‖ = ‖a‖) :
+    absF b = absF a := by
+  have hb : b = a * (b / a) := by field_simp
+  rw [hb, absF_mul, absF_eq_one_of_norm_eq_one (u := b / a) ?_, mul_one]
+  rw [norm_div, h, div_self (norm_ne_zero_iff.mpr ha)]
+
+omit [PAdicField F] in
+/-- Over an ultrametric local field, `|·|_F` is locally constant on `F^×`. -/
+theorem continuousAt_absF [LocallyCompactSpace F] [IsUltrametricDist F] {a : F} (ha : a ≠ 0) :
+    ContinuousAt absF a := by
+  have hpos : 0 < ‖a‖ := norm_pos_iff.mpr ha
+  refine (continuousAt_const (y := absF a)).congr ?_
+  filter_upwards [Metric.ball_mem_nhds a hpos] with b hb
+  rw [Metric.mem_ball, dist_eq_norm] at hb
+  refine (absF_eq_of_norm_eq ha ?_).symm
+  have := IsUltrametricDist.norm_add_eq_max_of_norm_ne_norm (ne_of_gt hb)
+  rwa [add_sub_cancel, max_eq_left hb.le] at this
+
+omit [PAdicField F] in
+/-- The determinant of a pointwise continuous family of endomorphisms of a finite-dimensional
+normed space is continuous. -/
+theorem continuous_det_of_continuous_apply [CompleteSpace F] {X : Type*} [TopologicalSpace X]
+    {U : Type*} [NormedAddCommGroup U] [NormedSpace F U] [FiniteDimensional F U]
+    (f : X → U →ₗ[F] U) (hf : ∀ v, Continuous fun x => f x v) :
+    Continuous fun x => LinearMap.det (f x) := by
+  classical
+  let b := Module.finBasis F U
+  simp_rw [← LinearMap.det_toMatrix b]
+  refine Continuous.matrix_det (continuous_matrix fun i j => ?_)
+  simp only [LinearMap.toMatrix_apply]
+  exact (LinearMap.continuous_of_finiteDimensional (b.coord i)).comp (hf (b j))
+
+/-- **`Δ(t)^{s−1/2}` is continuous on `T_♮`** (part of Thesis Prop 12.1.1(i)).  For `x ∈ T_♮`
+(so `T = T_x`) and `t ∈ T_♮`: `W'_t = W'_x`, and `W''_t ⊆ W''_x` (`P(t)` is `1` on `W'_x` and
+preserves `W''_x`; `W = W'_x ⊕ W''_x` as `P(x)` is semisimple), so `W''_t = W''_x` by
+dimension.  Hence `Δ(t) = |det (P(t) − 1)|_{W''_x}|_F`, a continuous function of `t`, nonzero at
+`x` (`W'_x ∩ W''_x = 0`), and `|·|_F` is locally constant on `F^×`. -/
+theorem continuousOn_deltaGGP_rpow (T : Subgroup ↥(GSpin d.QW)) (s : ℝ) :
+    ContinuousOn (fun t : ↥T => ((deltaGGP d (t : ↥(GSpin d.QW)) ^ (s - 1 / 2) : ℝ) : ℂ))
+      {t : ↥T | d.IsGammaElt (t : ↥(GSpin d.QW)) ∧ d.torusOf (t : ↥(GSpin d.QW)) = T} := by
+  rw [(isOpen_torusNat d T).continuousOn_iff]
+  rintro t₀ ⟨hx, hT⟩
+  set x : ↥(GSpin d.QW) := (t₀ : ↥(GSpin d.QW)) with hxdef
+  have hmemT : ∀ t : ↥T, (t : ↥(GSpin d.QW)) ∈ d.torusOf x := fun t => hT.symm ▸ t.2
+  set U := movedSub x with hUdef
+  set P : ↥T → Module.End F (Fin d.m → F) :=
+    fun t => (specP d.QW (t : ↥(GSpin d.QW)) : (Fin d.m → F) →ₗ[F] (Fin d.m → F)) with hPdef
+  have hPx : P t₀ = (specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)) := rfl
+  -- `P(t)` commutes with `P(x)`, so preserves `U = W''_x`
+  have hcomm : ∀ t : ↥T, Commute (P t₀ - 1) (P t - 1) := fun t => by
+    have hc : Commute x (t : ↥(GSpin d.QW)) :=
+      (Subgroup.mem_centralizer_singleton_iff.mp (hmemT t).1).symm
+    have hc' : Commute (P t₀) (P t) :=
+      Steinberg.commute_toLinearMap ((hc.map (specP d.QW)).symm)
+    exact (hc'.sub_right (Commute.one_right _)).sub_left (Commute.one_left _)
+  have hmaps : ∀ t : ↥T, ∀ u ∈ U, (P t - 1) u ∈ U := by
+    rintro t _ ⟨w, rfl⟩
+    exact ⟨(P t - 1) w, LinearMap.congr_fun (hcomm t).eq w⟩
+  set g : ↥T → U →ₗ[F] U := fun t => (P t - 1).restrict (hmaps t) with hgdef
+  -- `W = W'_x ⊕ W''_x`
+  have hss : Module.End.IsSemisimple (P t₀ - 1) :=
+    Module.End.IsSemisimple.sub_of_commute (Commute.one_right _)
+      (isSemisimple_specP_of_isSS d.QW x hx.1) Module.End.isSemisimple_id
+  have hdisj : Disjoint (fixedSub x) U := disjoint_ker_range_of_isSemisimple hss
+  have hrn := LinearMap.finrank_range_add_finrank_ker (P t₀ - 1)
+  have hcompl : IsCompl (fixedSub x) U := by
+    refine (Submodule.isCompl_iff_disjoint _ _ ?_).2 hdisj
+    have e1 : Module.finrank F (fixedSub x) = Module.finrank F (LinearMap.ker (P t₀ - 1)) := rfl
+    have e2 : Module.finrank F U = Module.finrank F (LinearMap.range (P t₀ - 1)) := rfl
+    omega
+  -- on `T_♮`, `W''_t = W''_x` and `Δ(t) = |det g(t)|`
+  have hΔ : ∀ t : ↥T, d.IsGammaElt (t : ↥(GSpin d.QW)) ∧ d.torusOf (t : ↥(GSpin d.QW)) = T →
+      deltaGGP d (t : ↥(GSpin d.QW)) = absF (LinearMap.det (g t)) := by
+    rintro t ⟨-, hTt⟩
+    have hfix : fixedSub (t : ↥(GSpin d.QW)) = fixedSub x := by
+      apply le_antisymm
+      · intro v hv
+        have hxt : x ∈ d.torusOf (t : ↥(GSpin d.QW)) := hTt.symm ▸ t₀.2
+        have := hxt.2 v hv
+        simpa [fixedSub, sub_eq_zero] using this
+      · intro v hv
+        have := (hmemT t).2 v hv
+        simpa [fixedSub, sub_eq_zero] using this
+    have hle : movedSub (t : ↥(GSpin d.QW)) ≤ U := by
+      rintro _ ⟨v, rfl⟩
+      have hv : v ∈ fixedSub x ⊔ U := hcompl.sup_eq_top ▸ Submodule.mem_top
+      obtain ⟨a, ha, u, hu, rfl⟩ := Submodule.mem_sup.mp hv
+      have ha' : (P t - 1) a = 0 := by
+        have := (hmemT t).2 a ha
+        simp only [LinearMap.sub_apply, Module.End.one_apply, sub_eq_zero]
+        exact this
+      show (P t - 1) (a + u) ∈ U
+      rw [map_add, ha', zero_add]
+      exact hmaps t u hu
+    have hrnt := LinearMap.finrank_range_add_finrank_ker (P t - 1)
+    have heq : movedSub (t : ↥(GSpin d.QW)) = U := by
+      refine Submodule.eq_of_le_of_finrank_eq hle ?_
+      change Module.finrank F (LinearMap.range (P t - 1)) = Module.finrank F (LinearMap.range (P t₀ - 1))
+      have h1 : Module.finrank F (LinearMap.ker (P t - 1)) =
+          Module.finrank F (LinearMap.ker (P t₀ - 1)) := by
+        change Module.finrank F (fixedSub (t : ↥(GSpin d.QW))) = Module.finrank F (fixedSub x)
+        rw [hfix]
+      have := hrnt.trans hrn.symm
+      rw [h1] at this
+      exact Nat.add_right_cancel this
+    unfold deltaGGP
+    congr 1
+    exact Steinberg.det_restrict_eq rfl heq _ _
+  -- continuity of `t ↦ det g(t)`
+  have hPc : ∀ v, Continuous fun t : ↥T => P t v := fun v => by
+    have hn : Continuous fun t : ↥T => ((t : ↥(GSpin d.QW)) : (CliffordAlgebra d.QW)ˣ) :=
+      continuous_subtype_val.comp continuous_subtype_val
+    show Continuous fun t : ↥T => specP d.QW (t : ↥(GSpin d.QW)) v
+    simp only [specP_apply_eq]
+    exact (IsModuleTopology.continuous_of_linearMap (CliffordAlgebra.ιInv d.QW)).comp
+      ((Units.continuous_val.comp hn).mul (continuous_const.mul (Units.continuous_coe_inv.comp hn)))
+  have hdet : Continuous fun t => LinearMap.det (g t) := by
+    refine continuous_det_of_continuous_apply g fun u => ?_
+    refine Continuous.subtype_mk ?_ _
+    show Continuous fun t => (P t - 1) (u : Fin d.m → F)
+    simp only [LinearMap.sub_apply, Module.End.one_apply]
+    exact (hPc u).sub continuous_const
+  -- `det g(x) ≠ 0`
+  have hdet0 : LinearMap.det (g t₀) ≠ 0 := by
+    rw [Ne, LinearMap.det_eq_zero_iff_ker_ne_bot, not_not, eq_bot_iff]
+    intro u hu
+    rw [LinearMap.mem_ker] at hu
+    have hu' : (P t₀ - 1) (u : Fin d.m → F) = 0 := congrArg Subtype.val hu
+    have : (u : Fin d.m → F) ∈ fixedSub x ⊓ U := ⟨LinearMap.mem_ker.mpr hu', u.2⟩
+    rw [hdisj.eq_bot, Submodule.mem_bot] at this
+    exact (Submodule.mem_bot F).mpr (Subtype.ext this)
+  -- conclude
+  have hpos : 0 < absF (LinearMap.det (g t₀)) := absF_pos hdet0
+  have hcont : ContinuousAt (fun a : F => ((absF a ^ (s - 1 / 2) : ℝ) : ℂ))
+      (LinearMap.det (g t₀)) :=
+    Complex.continuous_ofReal.continuousAt.comp
+      ((Real.continuousAt_rpow_const _ _ (Or.inl hpos.ne')).comp (continuousAt_absF hdet0))
+  refine (ContinuousAt.comp (f := fun t => LinearMap.det (g t)) hcont hdet.continuousAt).congr ?_
+  filter_upwards [(isOpen_torusNat d T).mem_nhds ⟨hx, hT⟩] with t ht
+  simp only [Function.comp_apply, hΔ t ht]
+
+/-- **`D^G(t)^{1/2} c_{θ,O_t}(t)` is continuous on `T_♮`** (Thesis Prop 12.1.1(i)).  Proof sketch:
+on `T_♮` the centralizers `G_t`, `𝔤_t` are those of `x ∈ T_♮` (`T = T_x`): over `F̄`,
+`Z(t̄) = Z(x̄)` (`GGPData.commute_bc_iff_of_torusOf_eq` and its `V`-version), and `𝔤_t = 𝔤_x`
+follows by exponentiating (`MovedPart.exists_nhds_expA_mem_GSpin`,
+`exists_nhds_commute_of_commute_expA`).  So `1 − Ad t` is semisimple with kernel `𝔤_x` of constant
+dimension `r`, and `D^G(t) = |c_r(t)|_F` with `c_r(t)` the coefficient of `X^r` in the
+characteristic polynomial of `1 − Ad t` on `𝔤`, continuous and nonzero; hence `D^G` is
+continuous on `T_♮`.  And `t ↦ c_{θ,O_t}(t)` is locally constant: for `t' = t e^Y` with
+`Y ∈ Lie T` small (central in `𝔤_t`), `θ(t' e^X) = θ(t e^{X+Y})`, and `ĵ(O, X + Y) = ĵ(O, X)` on
+`𝔤_{t,reg}` (`b(Y, N) = 0` for `N` nilpotent commuting with `Y`), so the expansion at `t` is one
+at `t'` with the same coefficients, while `O_{t'} = O_t` (`OrbitSpec d t' = OrbitSpec d t`).
 Status: SORRY (own work, GSpin input). -/
+theorem continuousOn_weylDisc_germ_of_mem_QC {χ : CentralCharOn d} {θ : ↥d.G → ℂ}
+    (hθ : θ ∈ QC d χ) (T : Subgroup ↥(GSpin d.QW)) :
+    ContinuousOn (fun t : ↥T => (Real.sqrt (weylDisc d.lie (d.diag (t : ↥(GSpin d.QW)) :
+        d.ambientˣ)) : ℂ) * germ d.G d.lie d.bilin ψ θ (d.diag (t : ↥(GSpin d.QW)))
+          (orbitChoice d (t : ↥(GSpin d.QW))))
+      {t : ↥T | d.IsGammaElt (t : ↥(GSpin d.QW)) ∧ d.torusOf (t : ↥(GSpin d.QW)) = T} := by
+  sorry
+
+/-- **The integrand of `m_{geom,s}` is continuous on `T_♮`** (Thesis Prop 12.1.1(i)): it is the
+product of `D^G(t)^{1/2} c_{θ,O_t}(t)` (`continuousOn_weylDisc_germ_of_mem_QC`) and `Δ(t)^{s−1/2}`
+(`continuousOn_deltaGGP_rpow`) there. -/
 theorem continuousOn_gammaIntegrand_of_mem_QC {χ : CentralCharOn d} {θ : ↥d.G → ℂ}
     (hθ : θ ∈ QC d χ) (T : Subgroup ↥(GSpin d.QW)) (s : ℝ) :
     ContinuousOn (fun t : ↥T => gammaIntegrand ψ d θ T s (t : ↥(GSpin d.QW)))
       {t : ↥T | d.IsGammaElt (t : ↥(GSpin d.QW)) ∧ d.torusOf (t : ↥(GSpin d.QW)) = T} := by
-  sorry
+  refine ((continuousOn_weylDisc_germ_of_mem_QC ψ d hθ T).mul
+    (continuousOn_deltaGGP_rpow d T s)).congr fun t ht => ?_
+  have ht' : d.IsGammaElt (t : ↥(GSpin d.QW)) ∧ d.torusOf (t : ↥(GSpin d.QW)) = T := ht
+  simp only [gammaIntegrand, ht', and_self, ↓reduceIte, Pi.mul_apply]
 
 end Inputs
 
