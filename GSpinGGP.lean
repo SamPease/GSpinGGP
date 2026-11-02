@@ -6,6 +6,8 @@ import GSpinGGP.Foundations.ExpLocal
 import GSpinGGP.TraceFormula.JHatSelfDual
 import GSpinGGP.Foundations.Representations
 import GSpinGGP.Foundations.GSpin
+import GSpinGGP.Foundations.SoCentralizer
+import GSpinGGP.Foundations.RegularNilpotent
 import GSpinGGP.Foundations.QuadraticForms
 import GSpinGGP.Foundations.GSpinLipschitz
 import GSpinGGP.GGP.CentralizerSign

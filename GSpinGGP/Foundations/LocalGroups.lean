@@ -360,12 +360,13 @@ variable {F}
 /-- The centralizer `𝔤_x = {X ∈ 𝔤 | xX = Xx}`. For a unit `x` this is the Lie algebra
 `Lie(G_x)` of the centralizer (fixed points of `Ad x`); for `x = X ∈ 𝔤` it is `Z_𝔤(X)`
 (Thesis §2.1). -/
-def lieCentralizer (𝔤 : LieSubalgebra F A) (x : A) : LieSubalgebra F A :=
-  𝔤 ⊓ lieSubalgebraOfSubalgebra F A (Subalgebra.centralizer F {x})
+def lieCentralizer {K : Type*} [Field K] [Algebra K A] (𝔤 : LieSubalgebra K A) (x : A) :
+    LieSubalgebra K A :=
+  𝔤 ⊓ lieSubalgebraOfSubalgebra K A (Subalgebra.centralizer K {x})
 
-lemma mem_lieCentralizer {𝔤 : LieSubalgebra F A} {x X : A} :
+lemma mem_lieCentralizer {K : Type*} [Field K] [Algebra K A] {𝔤 : LieSubalgebra K A} {x X : A} :
     X ∈ lieCentralizer 𝔤 x ↔ X ∈ 𝔤 ∧ x * X = X * x := by
-  change X ∈ 𝔤 ∧ X ∈ Subalgebra.centralizer F {x} ↔ _
+  change X ∈ 𝔤 ∧ X ∈ Subalgebra.centralizer K {x} ↔ _
   simp [Subalgebra.mem_centralizer_iff, eq_comm]
 
 /-- The centralizer `G_x = Z_G(x)` of `x` in `G` (Thesis §2.1). -/
