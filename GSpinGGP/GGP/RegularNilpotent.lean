@@ -234,6 +234,97 @@ theorem exists_hyp_of_quasiSplit_odd {Q : QuadraticForm K V} (hQ : IsNondeg Q)
 
 end Witt
 
+/-! ## Centralizers of `Y ∈ gspin(V)_y`: the fixed part and the moved part -/
+
+section Side
+
+variable {K : Type*} [Field K] [CharZero K] [Invertible (2 : K)]
+variable {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
+
+/-- `P(y)` is an isometry. -/
+theorem bform_specP_specP {Q : QuadraticForm K V} (y : GSpin Q) (u v : V) :
+    bform Q (specP Q y u) (specP Q y v) = bform Q u v := bform_specP y u v
+
+theorem mem_fixedSub_iff' {Q : QuadraticForm K V} (y : GSpin Q) (v : V) :
+    v ∈ fixedSub y ↔ (specP Q y : Module.End K V) v = v := by
+  simp [fixedSub, sub_eq_zero]
+
+/-- **Dimension of `gspin(V)_{y,Y}` through the fixed space `A = W'_y`**: for `Y ∈ gspin(V)_y`,
+`dim gspin(V)_{y,Y} = dim so(A)_{adV Y|_A} + dim (so(V)_{P y, adV Y} killing A) + 1`. -/
+theorem finrank_lieCentralizer_fixed {Q : QuadraticForm K V} (hQ : IsNondeg Q) (y : GSpin Q)
+    (hc : IsCompl (fixedSub y) ((bform Q).orthogonal (fixedSub y))) {Y : CliffordAlgebra Q}
+    (hY : Y ∈ lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) :
+    ∃ h : ∀ a ∈ fixedSub y, adV Q Y a ∈ fixedSub y,
+      finrank K (lieCentralizer (lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) :
+        CliffordAlgebra Q)) Y) =
+      finrank K (soCent (Q.comp (fixedSub y).subtype) ((adV Q Y).restrict h)) +
+        finrank K ↥(soCent Q (specP Q y : Module.End K V) ⊓ soCent Q (adV Q Y) ⊓
+          killSub (fixedSub y)) + 1 := by
+  obtain ⟨hYg, hYc⟩ := mem_lieCentralizer.mp hY
+  have hNg : adV Q Y * (specP Q y : Module.End K V) = (specP Q y : Module.End K V) * adV Q Y :=
+    ((commute_iff_adV hQ y hYg).mp hYc).symm
+  have hgB : ∀ b ∈ (bform Q).orthogonal (fixedSub y),
+      (specP Q y : Module.End K V) b ∈ (bform Q).orthogonal (fixedSub y) := by
+    intro b hb a ha
+    have ha' := (mem_fixedSub_iff' y a).mp ha
+    change bform Q a (specP Q y b) = 0
+    rw [← ha']; change bform Q (specP Q y a) (specP Q y b) = 0
+    rw [bform_specP_specP]; exact hb a ha
+  have e := finrank_soCent_inf_eq hc (mem_fixedSub_iff' y) hgB (bform_adV hYg) hNg
+  exact ⟨_, by rw [finrank_lieCentralizer_lieCentralizer_gspin hQ y hYg, e]⟩
+
+/-- **Lower bound** for `dim gspin(V)_{y,Y}` when the moved part is abelian (the elements of
+`so(V)_{P y}` killing `A` commute): `≥ ⌊dim A/2⌋ + dim (so(V)_{P y} killing A) + 1`. -/
+theorem le_finrank_lieCentralizer_fixed {Q : QuadraticForm K V} (hQ : IsNondeg Q) (y : GSpin Q)
+    (hc : IsCompl (fixedSub y) ((bform Q).orthogonal (fixedSub y)))
+    (hab : ∀ M₁ ∈ soCent Q (specP Q y : Module.End K V) ⊓ killSub (fixedSub y),
+      ∀ M₂ ∈ soCent Q (specP Q y : Module.End K V) ⊓ killSub (fixedSub y), M₁ * M₂ = M₂ * M₁)
+    {Y : CliffordAlgebra Q}
+    (hY : Y ∈ lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) :
+    finrank K (fixedSub y) / 2 +
+        finrank K ↥(soCent Q (specP Q y : Module.End K V) ⊓ killSub (fixedSub y)) + 1 ≤
+      finrank K (lieCentralizer (lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) :
+        CliffordAlgebra Q)) Y) := by
+  obtain ⟨h, e⟩ := finrank_lieCentralizer_fixed hQ y hc hY
+  obtain ⟨hYg, hYc⟩ := mem_lieCentralizer.mp hY
+  have hNg : adV Q Y * (specP Q y : Module.End K V) = (specP Q y : Module.End K V) * adV Q Y :=
+    ((commute_iff_adV hQ y hYg).mp hYc).symm
+  have hgB : ∀ b ∈ (bform Q).orthogonal (fixedSub y),
+      (specP Q y : Module.End K V) b ∈ (bform Q).orthogonal (fixedSub y) := by
+    intro b hb a ha
+    have ha' := (mem_fixedSub_iff' y a).mp ha
+    change bform Q a (specP Q y b) = 0
+    rw [← ha']; change bform Q (specP Q y a) (specP Q y b) = 0
+    rw [bform_specP_specP]; exact hb a ha
+  rw [e, soCent_inf_killSub_eq hc (mem_fixedSub_iff' y) hgB (bform_adV hYg) hNg hab]
+  have hNs : ∀ a b, bform (Q.comp (fixedSub y).subtype) ((adV Q Y).restrict h a) b =
+      -bform (Q.comp (fixedSub y).subtype) a ((adV Q Y).restrict h b) := by
+    intro a b
+    rw [bform_comp_subtype, bform_comp_subtype]
+    exact bform_adV hYg a b
+  have := le_finrank_soCent (isNondeg_comp_subtype_of_isCompl hc) hNs
+  omega
+
+/-- **Upper bound** for `dim gspin(V)_{y,Y}`: `≤ dim so(A)_{adV Y|_A} + dim (so(V)_{P y} killing A) + 1`. -/
+theorem finrank_lieCentralizer_fixed_le {Q : QuadraticForm K V} (hQ : IsNondeg Q) (y : GSpin Q)
+    (hc : IsCompl (fixedSub y) ((bform Q).orthogonal (fixedSub y))) {Y : CliffordAlgebra Q}
+    (hY : Y ∈ lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q))
+    (h : ∀ a ∈ fixedSub y, adV Q Y a ∈ fixedSub y) :
+    finrank K (lieCentralizer (lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) :
+        CliffordAlgebra Q)) Y) ≤
+      finrank K (soCent (Q.comp (fixedSub y).subtype) ((adV Q Y).restrict h)) +
+        finrank K ↥(soCent Q (specP Q y : Module.End K V) ⊓ killSub (fixedSub y)) + 1 := by
+  obtain ⟨h', e⟩ := finrank_lieCentralizer_fixed hQ y hc hY
+  rw [e]
+  have hle := Submodule.finrank_mono (show soCent Q (specP Q y : Module.End K V) ⊓
+      soCent Q (adV Q Y) ⊓ killSub (fixedSub y) ≤
+      soCent Q (specP Q y : Module.End K V) ⊓ killSub (fixedSub y) from
+    fun M hM => Submodule.mem_inf.mpr ⟨(Submodule.mem_inf.mp (Submodule.mem_inf.mp hM).1).1,
+      (Submodule.mem_inf.mp hM).2⟩)
+  omega
+
+end Side
+
 /-! ## Regular nilpotent orbits and quasi-splitness -/
 
 section NilReg
