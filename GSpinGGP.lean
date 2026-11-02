@@ -25,6 +25,7 @@ import GSpinGGP.Literature.NilpotentOrbits
 import GSpinGGP.GGP.RegularNilpotent
 import GSpinGGP.Foundations.SoSplit
 import GSpinGGP.Foundations.MatrixBaseChange
+import GSpinGGP.Foundations.JordanAlgebra
 import GSpinGGP.GGP.SemisimpleRank
 import GSpinGGP.GGP.JointCentralizer
 import GSpinGGP.GGP.JointRank
