@@ -12,7 +12,7 @@ space `Z_k(ν) = ⟨ν⟩ ⊕ H^k` of Thesis (5.2.1)). The element
 `X = (2ν)⁻¹ Σ_{0 ≤ i < k} ι(w_{i+1}) ι(w_{-i})` of `gspin(V)` acts on `V` by
 `w_l ↦ ± w_{l+1}` (`w_k ↦ 0`), killing `⟨w⟩^⊥`: one Jordan block on `⟨w⟩`. It is nilpotent in
 `C(V)`, since `[h, X] = X` for `h = (2ν)⁻¹ Σ_j j ι(w_j) ι(w_{-j})`, which acts on `w_l` by `l`.
-When `V = ⟨w⟩ ⊕ ⟨w⟩^⊥` with `dim ⟨w⟩^⊥ ≤ 1`, its centralizer in `gspin(V)` has dimension at most
+When `dim V ≤ 2k + 2` (so `V = ⟨w⟩ ⊕ ⟨w⟩^⊥` with `dim ⟨w⟩^⊥ ≤ 1`), its centralizer in `gspin(V)` has dimension at most
 `dim V − k` (`finrank_lieCentralizer_regNil_le`). These hypotheses force `dim V ∈ {2k+1, 2k+2}`,
 so `dim V − k = ⌊dim V/2⌋ + 1`, the rank of `gspin(V)`.
 -/
@@ -273,6 +273,39 @@ theorem adV_regNil_mem_span {u : V}
       exact Submodule.zero_mem _
   exact hle hu
 
+/-- `⟨w⟩` is nondegenerate, so `V = ⟨w⟩ ⊕ ⟨w⟩^⊥`. -/
+theorem span_sup_orthogonal_isSplitFamily [FiniteDimensional K V] (hQ : IsNondeg Q) :
+    Submodule.span K (Set.range fun i : Fin (2 * k + 1) => w ((i : ℤ) - k)) ⊔
+      (bform Q).orthogonal (Submodule.span K (Set.range fun i : Fin (2 * k + 1) => w ((i : ℤ) - k)))
+        = ⊤ := by
+  set U := Submodule.span K (Set.range fun i : Fin (2 * k + 1) => w ((i : ℤ) - k))
+  have hinf : U ⊓ (bform Q).orthogonal U = ⊥ := by
+    rw [eq_bot_iff]
+    rintro x ⟨hxU, hxperp⟩
+    obtain ⟨c, rfl⟩ := (Submodule.mem_span_range_iff_exists_fun K).mp hxU
+    rw [Submodule.mem_bot]
+    have hc : ∀ j : Fin (2 * k + 1), c j = 0 := by
+      intro j
+      have hj := j.2
+      have h := hxperp (w (k - j)) (Submodule.subset_span ⟨⟨2 * k - j, by omega⟩, by
+        simp only; congr 1; push_cast [Nat.cast_sub (by omega : (j : ℕ) ≤ 2 * k)]; ring⟩)
+      change bform Q (w (k - j)) (∑ i, c i • w ((i : ℤ) - k)) = 0 at h
+      rw [map_sum, Finset.sum_eq_single j] at h
+      · rw [map_smul, smul_eq_mul, hw _ _ (abs_le.2 ⟨by omega, by omega⟩)
+          (abs_le.2 ⟨by omega, by omega⟩), ite_eq_left (by ring)] at h
+        exact (mul_eq_zero.mp h).resolve_right hν
+      · intro i _ hij
+        have hi := i.2
+        rw [map_smul, smul_eq_mul, hw _ _ (abs_le.2 ⟨by omega, by omega⟩)
+          (abs_le.2 ⟨by omega, by omega⟩), ite_eq_right (fun h' => hij (Fin.ext (by omega))), mul_zero]
+      · simp
+    simp [hc]
+  apply Submodule.eq_top_of_finrank_eq
+  have := Submodule.finrank_sup_add_finrank_inf_eq U ((bform Q).orthogonal U)
+  rw [hinf, finrank_bot, add_zero, LinearMap.BilinForm.finrank_orthogonal hQ] at this
+  have := Submodule.finrank_le U
+  omega
+
 end Model
 
 section Centralizer
@@ -282,16 +315,18 @@ variable {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
 variable {Q : QuadraticForm K V} {w : ℤ → V} {ν : K} {k : ℕ}
 
 /-- **The centralizer of `X` in `gspin(V)` has dimension `≤ dim V − k`** when
-`V = ⟨w⟩ ⊕ ⟨w⟩^⊥` with `dim ⟨w⟩^⊥ ≤ 1` (`finrank_lieCentralizer_gspin` and the Jordan chain
+`dim V ≤ 2k + 2`, i.e. `V = ⟨w⟩ ⊕ ⟨w⟩^⊥` with `dim ⟨w⟩^⊥ ≤ 1` (`finrank_lieCentralizer_gspin` and the Jordan chain
 `w_{-k} ↦ … ↦ w_k` of length `2k + 1`, `finrank_soCent_le_of_chain`). -/
 theorem finrank_lieCentralizer_regNil_le (hQ : IsNondeg Q) (hw : IsSplitFamily Q w ν k)
-    (hν : ν ≠ 0)
-    (hsup : Submodule.span K (Set.range fun i : Fin (2 * k + 1) => w ((i : ℤ) - k)) ⊔
-      (bform Q).orthogonal (Submodule.span K (Set.range fun i : Fin (2 * k + 1) => w ((i : ℤ) - k)))
-        = ⊤)
-    (hperp : finrank K ((bform Q).orthogonal
-      (Submodule.span K (Set.range fun i : Fin (2 * k + 1) => w ((i : ℤ) - k)))) ≤ 1) :
+    (hν : ν ≠ 0) (hdim : finrank K V ≤ 2 * k + 2) :
     finrank K (lieCentralizer (gspin Q) (regNil Q w ν k)) ≤ finrank K V - k := by
+  have hsup := span_sup_orthogonal_isSplitFamily hw hν hQ
+  have hU : finrank K (Submodule.span K (Set.range fun i : Fin (2 * k + 1) => w ((i : ℤ) - k))) =
+      2 * k + 1 := by
+    rw [finrank_span_eq_card (linearIndependent_isSplitFamily hw hν), Fintype.card_fin]
+  have hperp : finrank K ((bform Q).orthogonal
+      (Submodule.span K (Set.range fun i : Fin (2 * k + 1) => w ((i : ℤ) - k)))) ≤ 1 := by
+    rw [LinearMap.BilinForm.finrank_orthogonal hQ, hU]; omega
   set N := adV Q (regNil Q w ν k)
   have hε : ∀ i : Fin (2 * k + 1), ∃ ε : K, ε ≠ 0 ∧ (N ^ (i : ℕ)) (w (-k)) = ε • w ((i : ℤ) - k) :=
     fun i => adV_regNil_pow_w hw hν (by omega)
