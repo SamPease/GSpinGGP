@@ -192,6 +192,159 @@ theorem commute_toLinearMap {g x : GSpin Q} (h : Commute (specP Q g) (specP Q x)
     Commute (specP Q x : V →ₗ[K] V) (specP Q g : V →ₗ[K] V) :=
   LinearMap.ext fun v => congrArg (fun e : V ≃ₗ[K] V => e v) h.eq.symm
 
+/-! ### Reflections in eigenvectors of `P(x)` at `±1` -/
+
+theorem polar_specP (g : GSpin Q) (u v : V) :
+    QuadraticMap.polar Q (specP Q g u) (specP Q g v) = QuadraticMap.polar Q u v := by
+  simp only [QuadraticMap.polar, ← map_add, specP_isometry]
+
+/-- `E₁ ⊥ E₋₁`. -/
+theorem polar_eq_zero_of_mem_eigenspace {x : GSpin Q} {u v : V}
+    (hu : u ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) 1)
+    (hv : v ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) (-1)) :
+    QuadraticMap.polar Q u v = 0 := by
+  rw [Module.End.mem_eigenspace_iff] at hu hv
+  have h := polar_specP x u v
+  rw [LinearEquiv.coe_coe] at hu hv
+  rw [hu, hv, one_smul, neg_one_smul, QuadraticMap.polar_neg_right] at h
+  have h2 : (2 : K) * QuadraticMap.polar Q u v = 0 := by linear_combination -h
+  exact (mul_eq_zero.1 h2).resolve_left (Invertible.ne_zero (2 : K))
+
+/-- The reflection in an eigenvector of `P(x)` with eigenvalue `ε = ±1` commutes with `P(x)`. -/
+theorem quadReflection_comm {x : GSpin Q} {u : V} {ε : K} (hε : ε * ε = 1)
+    (hu : u ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) ε) :
+    (specP Q x : V →ₗ[K] V) * quadReflection Q u = quadReflection Q u * (specP Q x : V →ₗ[K] V) := by
+  rw [Module.End.mem_eigenspace_iff, LinearEquiv.coe_coe] at hu
+  refine LinearMap.ext fun v => ?_
+  have hp : QuadraticMap.polar Q u (specP Q x v) = ε * QuadraticMap.polar Q u v := by
+    have h := polar_specP x u v
+    rw [hu, QuadraticMap.polar_smul_left, smul_eq_mul] at h
+    calc QuadraticMap.polar Q u (specP Q x v) = (ε * ε) * QuadraticMap.polar Q u (specP Q x v) := by
+          rw [hε, one_mul]
+      _ = ε * QuadraticMap.polar Q u v := by rw [← h]; ring
+  simp only [Module.End.mul_apply, quadReflection_apply, map_sub, map_smul, LinearEquiv.coe_coe,
+    hu, hp, smul_smul]
+  congr 2
+  ring
+
+/-- A product of reflections in vectors `polar`-orthogonal to `v` fixes `v`. -/
+theorem list_prod_quadReflection_apply_of_polar {v : V} :
+    ∀ l : List V, (∀ u ∈ l, QuadraticMap.polar Q u v = 0) →
+      (l.map (quadReflection Q)).prod v = v
+  | [], _ => rfl
+  | u :: t, h => by
+    rw [List.map_cons, List.prod_cons, Module.End.mul_apply,
+      list_prod_quadReflection_apply_of_polar t fun w hw => h w (List.mem_cons_of_mem _ hw),
+      quadReflection_apply, h u List.mem_cons_self, zero_smul, smul_zero, sub_zero]
+
+/-- A product of reflections in vectors commuting with `P(x)` (eigenvalues `±1`) commutes with
+`P(x)`. -/
+theorem list_prod_quadReflection_comm {x : GSpin Q} :
+    ∀ l : List V, (∀ u ∈ l, u ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) 1 ∨
+        u ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) (-1)) →
+      Commute (specP Q x : V →ₗ[K] V) (l.map (quadReflection Q)).prod
+  | [], _ => Commute.one_right _
+  | u :: t, h => by
+    rw [List.map_cons, List.prod_cons]
+    refine Commute.mul_right ?_
+      (list_prod_quadReflection_comm t fun w hw => h w (List.mem_cons_of_mem _ hw))
+    rcases h u List.mem_cons_self with hu | hu
+    · exact quadReflection_comm (one_mul 1) hu
+    · exact quadReflection_comm (by ring) hu
+
+/-- **Cartan–Dieudonné on a nondegenerate subspace.** An isometry `σ` of `V` preserving a
+nondegenerate subspace `E` agrees on `E` with a product of reflections of `V` in anisotropic vectors
+of `E`, and `det σ|_E = (-1)^{#reflections}`. -/
+theorem exists_reflections_eq_on [FiniteDimensional K V] (E : Submodule K V)
+    (hE : ∀ u ∈ E, (∀ w ∈ E, bform Q u w = 0) → u = 0) (σ : V ≃ₗ[K] V)
+    (hσ : ∀ v, Q (σ v) = Q v) (hmaps : ∀ v ∈ E, σ v ∈ E) :
+    ∃ l : List V, (∀ u ∈ l, u ∈ E ∧ Q u ≠ 0) ∧
+      (∀ y ∈ E, (l.map (quadReflection Q)).prod y = σ y) ∧
+      LinearMap.det ((σ : V →ₗ[K] V).restrict hmaps) = (-1) ^ l.length := by
+  classical
+  let Q₁ : QuadraticForm K E := Q.comp E.subtype
+  have hb : ∀ u w : E, bform Q₁ u w = bform Q u w := fun u w => by
+    simp [Q₁, bform, QuadraticMap.associated_comp]
+  have hQ₁ : Q₁.Nondegenerate := by
+    refine (isNondeg_iff_nondegenerate Q₁).1 ⟨fun u hu => ?_, fun w hw => ?_⟩
+    · exact Subtype.ext (hE u u.2 fun w hw => by simpa [hb] using hu ⟨w, hw⟩)
+    · refine Subtype.ext (hE w w.2 fun u hu => ?_)
+      rw [bform_comm]
+      simpa [hb] using hw ⟨u, hu⟩
+  let f := (σ : V →ₗ[K] V).restrict hmaps
+  have hinj : Function.Injective f := fun a b h =>
+    Subtype.ext (σ.injective (congrArg Subtype.val h))
+  let σ₁ : E ≃ₗ[K] E := LinearEquiv.ofInjectiveEndo f hinj
+  have hσ₁ : σ₁ ∈ TauCeti.QuadraticMap.orthogonalGroup Q₁ := fun y => hσ y
+  obtain ⟨l, hl, -, hprod⟩ :=
+    TauCeti.QuadraticMap.exists_reflectionOrthogonal_list_prod_eq Q₁ hQ₁ ⟨σ₁, hσ₁⟩
+  have key : ∀ l : List (TauCeti.QuadraticMap.orthogonalGroup Q₁),
+      (∀ r ∈ l, ∃ (v : E) (_ : Invertible (Q₁ v)),
+        TauCeti.QuadraticMap.reflectionOrthogonal Q₁ v = r) →
+      ∃ m : List V, (∀ u ∈ m, u ∈ E ∧ Q u ≠ 0) ∧ m.length = l.length ∧
+        (∀ y : E, (m.map (quadReflection Q)).prod (y : V) =
+          (((l.prod : TauCeti.QuadraticMap.orthogonalGroup Q₁) : E ≃ₗ[K] E) y : V)) ∧
+        LinearEquiv.det ((l.prod : TauCeti.QuadraticMap.orthogonalGroup Q₁) : E ≃ₗ[K] E) =
+          (-1) ^ l.length := by
+    intro l
+    induction l with
+    | nil => exact fun _ => ⟨[], by simp, rfl, fun y => rfl, by simp⟩
+    | cons r t ih =>
+      intro h
+      obtain ⟨v, hinv, rfl⟩ := h r List.mem_cons_self
+      obtain ⟨m, hm1, hm2, hm3, hm4⟩ := ih fun r' hr' => h r' (List.mem_cons_of_mem _ hr')
+      refine ⟨(v : V) :: m, ?_, by simp [hm2], fun y => ?_, ?_⟩
+      · intro u hu
+        rcases List.mem_cons.1 hu with rfl | hu
+        · exact ⟨v.2, (isUnit_of_invertible (Q₁ v)).ne_zero⟩
+        · exact hm1 u hu
+      · rw [List.map_cons, List.prod_cons, Module.End.mul_apply, hm3, List.prod_cons,
+          Subgroup.coe_mul, LinearEquiv.mul_apply, TauCeti.QuadraticMap.coe_reflectionOrthogonal,
+          TauCeti.QuadraticMap.reflection_apply, quadReflection_apply]
+        simp only [smul_smul, invOf_eq_inv]
+        rfl
+      · rw [List.prod_cons, Subgroup.coe_mul, map_mul, hm4,
+          TauCeti.QuadraticMap.coe_reflectionOrthogonal, TauCeti.QuadraticMap.det_reflection,
+          List.length_cons, pow_succ']
+  obtain ⟨m, hm1, hm2, hm3, hm4⟩ := key l hl
+  refine ⟨m, hm1, fun y hy => ?_, ?_⟩
+  · rw [hm3 ⟨y, hy⟩, hprod]; rfl
+  · have : f = ((σ₁ : E ≃ₗ[K] E) : E →ₗ[K] E) := rfl
+    rw [show (σ : V →ₗ[K] V).restrict hmaps = f from rfl, this, ← LinearEquiv.coe_det,
+      show σ₁ = ((l.prod : TauCeti.QuadraticMap.orthogonalGroup Q₁) : E ≃ₗ[K] E) by rw [hprod],
+      hm4, hm2]
+    simp
+
+/-- An even product of anisotropic vectors lies in `GSpin(V)` and lifts the product of the
+reflections. -/
+theorem exists_gspin_list_prod :
+    ∀ l : List V, (∀ u ∈ l, Q u ≠ 0) → Even l.length →
+      ∃ y : GSpin Q, ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) = (l.map (ι Q)).prod ∧
+        (specP Q y : V →ₗ[K] V) = (l.map (quadReflection Q)).prod
+  | [], _, _ => ⟨1, by simp, by simp; rfl⟩
+  | [_], _, h => by simp at h
+  | a :: b :: t, hl, h => by
+    obtain ⟨y, hy1, hy2⟩ := exists_gspin_list_prod t
+      (fun u hu => hl u (by simp [hu])) (by simpa [Nat.even_add_one] using h)
+    have ha := hl a (by simp)
+    have hb := hl b (by simp)
+    refine ⟨gspinPair Q ha hb * y, ?_, ?_⟩
+    · simp only [List.map_cons, List.prod_cons, ← hy1, ← mul_assoc]
+      rfl
+    · simp only [List.map_cons, List.prod_cons, ← hy2, ← mul_assoc, ← specP_gspinPair Q ha hb,
+        map_mul]
+      rfl
+
+/-- **Pair blocks are sign-trivial**: an element of `GSpin(V)` whose image commutes with `P(x)` and
+is the identity on `E₁ ⊕ E₋₁` commutes with `x` (over an algebraically closed field). -/
+theorem commute_of_fix [CharZero K] [IsAlgClosed K] [FiniteDimensional K V]
+    (hQ : IsNondeg Q) (x : GSpin Q) (hx : Module.End.IsSemisimple (specP Q x : V →ₗ[K] V))
+    (g : GSpin Q) (hc : Commute (specP Q g) (specP Q x))
+    (h1 : ∀ v ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) 1, specP Q g v = v)
+    (h2 : ∀ v ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) (-1), specP Q g v = v) :
+    Commute g x := by
+  sorry
+
 /-- **The sign is `det P(g)|_{W₋₁}`**, over an algebraically closed field: for `P(g)` commuting
 with a semisimple `x̄ = P(x)`, `g` commutes with `x` iff `det P(g)|_{W₋₁} = 1`. -/
 theorem commute_iff_det_negFixedSub [CharZero K] [IsAlgClosed K] [FiniteDimensional K V]
@@ -199,7 +352,118 @@ theorem commute_iff_det_negFixedSub [CharZero K] [IsAlgClosed K] [FiniteDimensio
     (hc : Commute (specP Q g) (specP Q x)) :
     Commute g x ↔ LinearMap.det ((specP Q g : V →ₗ[K] V).restrict
       (mapsTo_eigenspace_of_commute (commute_toLinearMap hc) (-1))) = 1 := by
-  sorry
+  classical
+  have hB : (bform Q).IsSymm := ⟨fun u v => bform_comm Q u v⟩
+  have hcl := commute_toLinearMap hc
+  have hE1 : ∀ u ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) 1,
+      (∀ w ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) 1, bform Q u w = 0) → u = 0 := by
+    have h := (pairing_eigenspace hB hQ (isIsom_specP x) hx 1).2
+    rwa [inv_one] at h
+  have hEm : ∀ u ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) (-1),
+      (∀ w ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) (-1), bform Q u w = 0) → u = 0 := by
+    have h := (pairing_eigenspace hB hQ (isIsom_specP x) hx (-1)).2
+    rwa [inv_neg, inv_one] at h
+  -- Cartan–Dieudonné on `E₁` and on `E₋₁`
+  obtain ⟨l₁, hl₁, hp₁, hd₁⟩ := exists_reflections_eq_on _ hE1 (specP Q g) (specP_isometry g)
+    (mapsTo_eigenspace_of_commute hcl 1)
+  obtain ⟨l₂, hl₂, hp₂, hd₂⟩ := exists_reflections_eq_on _ hEm (specP Q g) (specP_isometry g)
+    (mapsTo_eigenspace_of_commute hcl (-1))
+  have hdetσ := det_eq_det_one_mul_det_neg_one hB hQ (isIsom_specP x) hx (isIsom_specP g) hcl
+  rw [det_specP, hd₁, hd₂, ← pow_add] at hdetσ
+  have heven : Even (l₁ ++ l₂).length := by
+    rw [List.length_append]
+    exact (neg_one_pow_eq_one_iff_even (by norm_num)).1 hdetσ.symm
+  obtain ⟨y, hy1, hy2⟩ := exists_gspin_list_prod (l₁ ++ l₂) (fun u hu => by
+    rcases List.mem_append.1 hu with h | h
+    exacts [(hl₁ u h).2, (hl₂ u h).2]) heven
+  -- `P(y)` agrees with `P(g)` on `E₁` and `E₋₁`
+  have hfix1 : ∀ v ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) 1, specP Q y v = specP Q g v := by
+    intro v hv
+    show (specP Q y : V →ₗ[K] V) v = _
+    rw [hy2, List.map_append, List.prod_append, Module.End.mul_apply,
+      list_prod_quadReflection_apply_of_polar l₂ fun u hu => by
+        rw [QuadraticMap.polar_comm]; exact polar_eq_zero_of_mem_eigenspace hv (hl₂ u hu).1,
+      hp₁ v hv]
+  have hfix2 : ∀ v ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) (-1), specP Q y v = specP Q g v := by
+    intro v hv
+    show (specP Q y : V →ₗ[K] V) v = _
+    rw [hy2, List.map_append, List.prod_append, Module.End.mul_apply, hp₂ v hv]
+    exact list_prod_quadReflection_apply_of_polar l₁ fun u hu =>
+      polar_eq_zero_of_mem_eigenspace (hl₁ u hu).1 (mapsTo_eigenspace_of_commute hcl (-1) v hv)
+  have hπ : ∀ ε : K, (∀ v ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) ε, specP Q y v = specP Q g v) →
+      ∀ v ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) ε, specP Q (y⁻¹ * g) v = v := by
+    intro ε h v hv
+    apply (specP Q y).injective
+    rw [← LinearEquiv.mul_apply, ← map_mul, mul_inv_cancel_left, h v hv]
+  have hyx : Commute (specP Q y) (specP Q x) := by
+    rw [Commute, SemiconjBy]
+    apply LinearEquiv.toLinearMap_injective
+    rw [LinearEquiv.coe_toLinearMap_mul, LinearEquiv.coe_toLinearMap_mul, hy2]
+    exact (list_prod_quadReflection_comm (l₁ ++ l₂) fun u hu => by
+      rcases List.mem_append.1 hu with h | h
+      exacts [Or.inl (hl₁ u h).1, Or.inr (hl₂ u h).1]).eq.symm
+  have hπx : Commute (y⁻¹ * g) x := by
+    refine commute_of_fix hQ x hx _ ?_ (hπ 1 hfix1) (hπ (-1) hfix2)
+    rw [map_mul, map_inv]
+    exact hyx.inv_left.mul_left hc
+  -- the sign of `y`
+  set ε : V → K := fun v => if specP Q x v = v then 1 else -1
+  have hεpos : ∀ w ∈ l₁, specP Q x w = w ∧ ε w = 1 := by
+    intro w hw
+    have h1 := Module.End.mem_eigenspace_iff.1 (hl₁ w hw).1
+    rw [LinearEquiv.coe_coe, one_smul] at h1
+    exact ⟨h1, if_pos h1⟩
+  have hεneg : ∀ w ∈ l₂, specP Q x w = -w ∧ ε w = -1 := by
+    intro w hw
+    have h1 := Module.End.mem_eigenspace_iff.1 (hl₂ w hw).1
+    rw [LinearEquiv.coe_coe, neg_one_smul] at h1
+    refine ⟨h1, if_neg fun he => (hl₂ w hw).2 ?_⟩
+    have h2 : (2 : K) • w = 0 := by
+      rw [two_smul]; nth_rewrite 1 [← he]; rw [h1, neg_add_cancel]
+    rw [(smul_eq_zero.1 h2).resolve_left (Invertible.ne_zero (2 : K)), map_zero]
+  have hε : ∀ w ∈ l₁ ++ l₂, specP Q x w = ε w • w := by
+    intro w hw
+    rcases List.mem_append.1 hw with h | h
+    · rw [(hεpos w h).2, one_smul]; exact (hεpos w h).1
+    · rw [(hεneg w h).2, neg_one_smul]; exact (hεneg w h).1
+  have hprodε : ((l₁ ++ l₂).map ε).prod = (-1) ^ l₂.length := by
+    have e1 : (l₁.map ε).prod = 1 := by
+      rw [List.prod_eq_pow_length _ 1 fun a ha => ?_, one_pow]
+      obtain ⟨w, hw, rfl⟩ := List.mem_map.1 ha
+      exact (hεpos w hw).2
+    have e2 : (l₂.map ε).prod = (-1) ^ l₂.length := by
+      rw [List.prod_eq_pow_length _ (-1) fun a ha => ?_, List.length_map]
+      obtain ⟨w, hw, rfl⟩ := List.mem_map.1 ha
+      exact (hεneg w hw).2
+    rw [List.map_append, List.prod_append, e1, e2, one_mul]
+  have hsign := mul_prod_ι_of_specP_eq_smul x ε (l₁ ++ l₂) hε
+  rw [hprodε, ← hy1] at hsign
+  rw [hd₂]
+  have hiff : Commute g x ↔ Commute y x := by
+    constructor
+    · intro h
+      have : y = g * (y⁻¹ * g)⁻¹ := by group
+      rw [this]; exact h.mul_left hπx.inv_left
+    · intro h
+      have : g = y * (y⁻¹ * g) := by group
+      rw [this]; exact h.mul_left hπx
+  have hcomm : Commute y x ↔ ((y * x : GSpin Q) : (CliffordAlgebra Q)ˣ).val =
+      ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) :=
+    ⟨fun h => congrArg (fun z : GSpin Q => ((z : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) h,
+      fun h => Subtype.ext (Units.ext h)⟩
+  rw [hiff, hcomm, hsign]
+  constructor
+  · intro h
+    have := congrArg (· * ((((y * x : GSpin Q) : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) :
+      CliffordAlgebra Q)) h
+    simp only [Units.mul_inv] at this
+    rw [show ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * ((x : (CliffordAlgebra Q)ˣ) :
+        CliffordAlgebra Q) = ((y * x : GSpin Q) : (CliffordAlgebra Q)ˣ).val from rfl, mul_assoc,
+      Units.mul_inv, mul_one] at this
+    exact algebraMap_injective Q (this.symm.trans (map_one _).symm)
+  · intro h
+    rw [h, map_one, one_mul]
+    rfl
 
 /-- **Centralizers of semisimple elements**, the explicit form: proof of
 `steinberg_centralizer_connected`. -/
