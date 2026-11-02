@@ -11,7 +11,7 @@ If `Ad(g) ∘ C(φ)` carries `x̄` to `ȳ` and is defined over `F` on the centra
 
 noncomputable section
 
-open CliffordAlgebra Module
+open CliffordAlgebra Module Polynomial
 open scoped TensorProduct
 
 namespace GSpinGGP
@@ -344,6 +344,181 @@ theorem continuous_of_bcUnits_eq
   exact Continuous.subtype_mk (Continuous.subtype_mk hc1 _) _
 
 end Continuity
+
+section Aeval
+
+variable (φ : (Q₁.baseChange (AlgebraicClosure F)).IsometryEquiv (Q₂.baseChange (AlgebraicClosure F)))
+  (g : (CliffordAlgebra (Q₂.baseChange (AlgebraicClosure F)))ˣ)
+
+theorem psiA_algebraMap (a : F) :
+    psiA φ g (algebraMap F _ a) = algebraMap F _ a := by
+  rw [psiA, IsScalarTower.algebraMap_apply F (AlgebraicClosure F), AlgHom.commutes,
+    ← IsScalarTower.algebraMap_apply, ← Algebra.commutes, mul_assoc, Units.mul_inv, mul_one]
+
+theorem psiA_add (a b : CliffordAlgebra (Q₁.baseChange (AlgebraicClosure F))) :
+    psiA φ g (a + b) = psiA φ g a + psiA φ g b := by
+  simp only [psiA, map_add, mul_add, add_mul]
+
+theorem psiA_aeval (z : CliffordAlgebra (Q₁.baseChange (AlgebraicClosure F))) (p : F[X]) :
+    psiA φ g (aeval z p) = aeval (psiA φ g z) p := by
+  induction p using Polynomial.induction_on with
+  | C a => rw [aeval_C, aeval_C, psiA_algebraMap]
+  | add p q hp hq => rw [map_add, map_add, psiA_add, hp, hq]
+  | monomial n a ih =>
+    rw [pow_succ, ← mul_assoc, map_mul (aeval z), psiA_mul, ih, aeval_X,
+      map_mul (aeval (psiA φ g z)) (C a * X ^ n) X, aeval_X]
+
+theorem bcHom_aeval {V : Type*} [AddCommGroup V] [Module F V] (Q : QuadraticForm F V)
+    (z : CliffordAlgebra Q) (p : F[X]) :
+    bcHom Q (aeval z p) = aeval (bcHom Q z) p := by
+  induction p using Polynomial.induction_on with
+  | C a =>
+    rw [aeval_C, aeval_C, bcHom_algebraMap, ← IsScalarTower.algebraMap_apply]
+  | add p q hp hq => rw [map_add, map_add, map_add, hp, hq]
+  | monomial n a ih =>
+    rw [pow_succ, ← mul_assoc, map_mul (aeval z), map_mul, ih, aeval_X,
+      map_mul (aeval (bcHom Q z)) (C a * X ^ n) X, aeval_X]
+
+/-- `p(L_x) = L_{p(x)}` for left multiplication. -/
+theorem aeval_mulLeft {A : Type*} [Ring A] [Algebra F A] (a : A) (p : F[X]) :
+    aeval (LinearMap.mulLeft F a) p = LinearMap.mulLeft F (aeval a p) := by
+  induction p using Polynomial.induction_on' with
+  | add p q hp hq =>
+    rw [map_add, map_add, hp, hq]
+    ext z; simp [add_mul]
+  | monomial n c =>
+    ext z
+    simp only [Polynomial.aeval_monomial, Module.End.mul_apply, Module.algebraMap_end_apply,
+      LinearMap.pow_mulLeft, LinearMap.mulLeft_apply]
+    rw [Algebra.smul_def, mul_assoc]
+
+/-- **Semisimplicity transfers along the transport**: if `s̄ = Ad(g) C(φ)(t̄)` and `t` is
+semisimple, so is `s`. -/
+theorem isSS_of_psiA [Module.Finite F V₁] {t : CliffordAlgebra Q₁} {s : CliffordAlgebra Q₂}
+    (hs : bcHom Q₂ s = psiA φ g (bcHom Q₁ t)) (ht : IsSS F t) : IsSS F s := by
+  set p := minpoly F (LinearMap.mulLeft F t)
+  have ht0 : aeval t p = 0 := by
+    have h : aeval (LinearMap.mulLeft F t) p = 0 := minpoly.aeval F _
+    rw [aeval_mulLeft] at h
+    simpa using LinearMap.congr_fun h 1
+  have hs0 : aeval s p = 0 := by
+    apply bcHom_injective Q₂
+    rw [bcHom_aeval, hs, ← psiA_aeval, ← bcHom_aeval, ht0, map_zero, map_zero]
+    simp [psiA]
+  apply Module.End.isSemisimple_of_squarefree_aeval_eq_zero ht.minpoly_squarefree
+  rw [aeval_mulLeft, hs0]
+  ext; simp
+
+end Aeval
+
+section Regular
+
+variable {φ : (Q₁.baseChange (AlgebraicClosure F)).IsometryEquiv (Q₂.baseChange (AlgebraicClosure F))}
+  {g : (CliffordAlgebra (Q₂.baseChange (AlgebraicClosure F)))ˣ}
+
+theorem psiU_injective : Function.Injective (psiU φ g) := fun a b h => by
+  have := congrArg (psiU φ.symm (cliffUnits φ.symm g⁻¹)) h
+  rwa [psiU_symm_psiU, psiU_symm_psiU] at this
+
+theorem commute_psiU_iff (u v : (CliffordAlgebra (Q₁.baseChange (AlgebraicClosure F)))ˣ) :
+    Commute (psiU φ g u) (psiU φ g v) ↔ Commute u v :=
+  ⟨fun h => psiU_injective (by rw [map_mul, map_mul, h.eq]), fun h => h.map _⟩
+
+theorem commute_iff_bcUnits {V : Type*} [AddCommGroup V] [Module F V] {Q : QuadraticForm F V}
+    (a b : GSpin Q) :
+    Commute a b ↔ Commute (bcUnits Q (a : (CliffordAlgebra Q)ˣ)) (bcUnits Q (b : (CliffordAlgebra Q)ˣ)) :=
+  ⟨fun h => (h.map (GSpin Q).subtype).map _, fun h => Subtype.ext (bcUnits_injective Q (by
+    rw [Subgroup.coe_mul, Subgroup.coe_mul, map_mul, map_mul]; exact h.eq))⟩
+
+/-- **Centralizers correspond under the transport**: if `ψ = Ad(g) C(φ)` sends `x̄ ↦ ȳ` and
+`t̄ ↦ s̄`, and `Z(t̄) = Z(x̄)` in `GSpin(Q₁)(F̄)`, then `Z(s) = Z(y)` in `GSpin(Q₂)(F)`. -/
+theorem commute_iff_of_psiU (hg : g ∈ GSpin (Q₂.baseChange (AlgebraicClosure F)))
+    {x t : GSpin Q₁} {y s : GSpin Q₂}
+    (hy : psiU φ g (bcUnits Q₁ (x : (CliffordAlgebra Q₁)ˣ)) = bcUnits Q₂ (y : (CliffordAlgebra Q₂)ˣ))
+    (hs : psiU φ g (bcUnits Q₁ (t : (CliffordAlgebra Q₁)ˣ)) = bcUnits Q₂ (s : (CliffordAlgebra Q₂)ˣ))
+    (hc : ∀ z ∈ GSpin (Q₁.baseChange (AlgebraicClosure F)),
+      Commute z (bcUnits Q₁ (t : (CliffordAlgebra Q₁)ˣ)) ↔
+        Commute z (bcUnits Q₁ (x : (CliffordAlgebra Q₁)ˣ)))
+    (a : GSpin Q₂) : Commute a s ↔ Commute a y := by
+  have hw : psiU φ.symm (cliffUnits φ.symm g⁻¹) (bcUnits Q₂ (a : (CliffordAlgebra Q₂)ˣ)) ∈
+      GSpin (Q₁.baseChange (AlgebraicClosure F)) := by
+    rw [psiU_eq]
+    have hg' := cliffUnits_mem_GSpin φ.symm ((GSpin _).inv_mem hg)
+    exact (GSpin _).mul_mem ((GSpin _).mul_mem hg' (cliffUnits_mem_GSpin φ.symm
+      (bcUnits_mem_GSpin Q₂ a))) ((GSpin _).inv_mem hg')
+  have hwa := psiU_psiU_symm φ g (bcUnits Q₂ (a : (CliffordAlgebra Q₂)ˣ))
+  rw [commute_iff_bcUnits, commute_iff_bcUnits, ← hwa, ← hs, ← hy, commute_psiU_iff,
+    commute_psiU_iff]
+  exact hc _ hw
+
+theorem mem_fixedSub_iff_bcUnits {V : Type*} [AddCommGroup V] [Module F V] {Q : QuadraticForm F V}
+    (b : GSpin Q) (v : V) :
+    v ∈ fixedSub b ↔ ((bcUnits Q (b : (CliffordAlgebra Q)ˣ) : (CliffordAlgebra (Q.baseChange (AlgebraicClosure F)))ˣ) :
+        CliffordAlgebra (Q.baseChange (AlgebraicClosure F))) * ι _ ((1 : AlgebraicClosure F) ⊗ₜ[F] v) =
+        ι _ ((1 : AlgebraicClosure F) ⊗ₜ[F] v) * ((bcUnits Q (b : (CliffordAlgebra Q)ˣ) : (CliffordAlgebra (Q.baseChange (AlgebraicClosure F)))ˣ) :
+        CliffordAlgebra (Q.baseChange (AlgebraicClosure F))) := by
+  rw [bcUnits_commute_ι_iff, LinearMap.baseChange_tmul]
+  simp only [fixedSub, LinearMap.mem_ker, LinearMap.sub_apply, LinearMap.id_apply, sub_eq_zero]
+  constructor
+  · intro h; rw [h]
+  · intro h; exact Module.Flat.tensorProduct_mk_injective F V (AlgebraicClosure F) h
+
+/-- `t̄` commutes with `ι(u)` iff `u ∈ W'_t ⊗ F̄`. -/
+theorem commute_ι_iff_mem_baseChange {V : Type*} [AddCommGroup V] [Module F V]
+    {Q : QuadraticForm F V} (b : GSpin Q) (u : AlgebraicClosure F ⊗[F] V) :
+    ((bcUnits Q (b : (CliffordAlgebra Q)ˣ) : (CliffordAlgebra (Q.baseChange (AlgebraicClosure F)))ˣ) :
+        CliffordAlgebra (Q.baseChange (AlgebraicClosure F))) * ι _ u = ι _ u * ((bcUnits Q (b : (CliffordAlgebra Q)ˣ) : (CliffordAlgebra (Q.baseChange (AlgebraicClosure F)))ˣ) :
+        CliffordAlgebra (Q.baseChange (AlgebraicClosure F))) ↔
+      u ∈ (fixedSub b).baseChange (AlgebraicClosure F) := by
+  rw [bcUnits_commute_ι_iff, fixedSub, ← LinearMap.ker_baseChange_of_flat, LinearMap.mem_ker,
+    LinearMap.baseChange_sub, LinearMap.baseChange_id, LinearMap.sub_apply, LinearMap.id_apply,
+    sub_eq_zero]
+
+/-- **Fixed spaces correspond under the transport**: if `ψ` sends `x̄ ↦ ȳ`, `t̄ ↦ s̄` and
+`W'_t = W'_x`, then `W'_s = W'_y`. -/
+theorem fixedSub_eq_of_psiU (hg : g ∈ GSpin (Q₂.baseChange (AlgebraicClosure F)))
+    {x t : GSpin Q₁} {y s : GSpin Q₂}
+    (hy : psiU φ g (bcUnits Q₁ (x : (CliffordAlgebra Q₁)ˣ)) = bcUnits Q₂ (y : (CliffordAlgebra Q₂)ˣ))
+    (hs : psiU φ g (bcUnits Q₁ (t : (CliffordAlgebra Q₁)ˣ)) = bcUnits Q₂ (s : (CliffordAlgebra Q₂)ˣ))
+    (hE : fixedSub t = fixedSub x) : fixedSub s = fixedSub y := by
+  ext v
+  rw [mem_fixedSub_iff_bcUnits, mem_fixedSub_iff_bcUnits]
+  obtain ⟨u0, hu0⟩ := hg.2.2 ((1 : AlgebraicClosure F) ⊗ₜ[F] v)
+  set W := ι (Q₂.baseChange (AlgebraicClosure F)) ((1 : AlgebraicClosure F) ⊗ₜ[F] v)
+  have hψ : psiA φ g (ι _ (φ.symm u0)) = W := by
+    rw [psiA_ι, φ.apply_symm_apply, hu0]
+    simp only [mul_assoc, Units.mul_inv, mul_one]
+    rw [← mul_assoc, Units.mul_inv, one_mul]
+  have key : ∀ (b : GSpin Q₁) (c : GSpin Q₂), psiU φ g (bcUnits Q₁ (b : (CliffordAlgebra Q₁)ˣ)) =
+      bcUnits Q₂ (c : (CliffordAlgebra Q₂)ˣ) →
+      (((bcUnits Q₂ (c : (CliffordAlgebra Q₂)ˣ) : (CliffordAlgebra _)ˣ) : CliffordAlgebra _) * W =
+        W * ((bcUnits Q₂ (c : (CliffordAlgebra Q₂)ˣ) : (CliffordAlgebra _)ˣ) : CliffordAlgebra _) ↔
+      u0 ∈ φ.toLinearEquiv.toLinearMap.range ∧ φ.symm u0 ∈ (fixedSub b).baseChange
+        (AlgebraicClosure F)) := by
+    intro b c hbc
+    have hc := congrArg Units.val hbc
+    rw [coe_psiU] at hc
+    rw [← hc, ← hψ, ← psiA_mul, ← psiA_mul, (psiA_injective φ g).eq_iff,
+      commute_ι_iff_mem_baseChange]
+    exact ⟨fun h => ⟨⟨φ.symm u0, φ.apply_symm_apply u0⟩, h⟩, fun h => h.2⟩
+  rw [key t s hs, key x y hy, hE]
+
+/-- **The torus `T_s` is `T_y`** when `ψ` sends `x̄ ↦ ȳ`, `t̄ ↦ s̄`, the centralizers of `t̄`
+and `x̄` agree and `W'_t = W'_x`. -/
+theorem torusSub_eq_of_psiU (hg : g ∈ GSpin (Q₂.baseChange (AlgebraicClosure F)))
+    {x t : GSpin Q₁} {y s : GSpin Q₂}
+    (hy : psiU φ g (bcUnits Q₁ (x : (CliffordAlgebra Q₁)ˣ)) = bcUnits Q₂ (y : (CliffordAlgebra Q₂)ˣ))
+    (hs : psiU φ g (bcUnits Q₁ (t : (CliffordAlgebra Q₁)ˣ)) = bcUnits Q₂ (s : (CliffordAlgebra Q₂)ˣ))
+    (hc : ∀ z ∈ GSpin (Q₁.baseChange (AlgebraicClosure F)),
+      Commute z (bcUnits Q₁ (t : (CliffordAlgebra Q₁)ˣ)) ↔
+        Commute z (bcUnits Q₁ (x : (CliffordAlgebra Q₁)ˣ)))
+    (hE : fixedSub t = fixedSub x) : torusSub Q₂ s = torusSub Q₂ y := by
+  ext a
+  simp only [torusSub, Subgroup.mem_inf, Subgroup.mem_centralizer_singleton_iff,
+    fixedSub_eq_of_psiU hg hy hs hE]
+  rw [show a * s = s * a ↔ a * y = y * a from commute_iff_of_psiU hg hy hs hc a]
+
+end Regular
 
 end TorusTransfer
 end GSpinGGP

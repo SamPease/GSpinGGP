@@ -2083,26 +2083,6 @@ end Clause6
 
 end TorusNat
 
-/-- **The remaining clauses of Thesis Prop. 6.6.1(ii)** for the transport `e` of `T_x(F)` to
-`T_y(F)`, i.e. any `e` with `ē(t) = Ad(g) C(φ_α)(t̄)` for a `g` witnessing `x ∼ y`
-(`TorusTransfer.transportEquiv`): `e` matches the regular parts
-`T_{x,♮} ↔ T_{y,♮}`. Route (own work): on `T_{x,♮}` the centralizers of `t̄` and `x̄` in
-`GSpin(W)(F̄)` agree (`GGPData.commute_bc_iff_of_torusOf_eq`), and `e` is the restriction of
-`Ad(g) ∘ C(φ_α)`, which carries them onto the centralizers of `ē(t)` and `ȳ`. -/
-theorem torusTransfer_clauses (IF : InnerFormSystem d) (α : IF.Idx)
-    (x : ↥(GSpin d.QW)) (y : ↥(GSpin (IF.data α).QW)) (hx : d.IsGammaElt x)
-    (hy : (IF.data α).IsGammaElt y) (hxy : d.StronglyStablyConjW (IF.twist α) x y)
-    {g : (CliffordAlgebra ((IF.data α).QW.baseChange (AlgebraicClosure F)))ˣ}
-    (e : ↥(d.torusOf x) ≃* ↥((IF.data α).torusOf y))
-    (he : ∀ t : ↥(d.torusOf x), bcUnits (IF.data α).QW
-      (((e t : ↥((IF.data α).torusOf y)) : ↥(GSpin (IF.data α).QW)) : (CliffordAlgebra _)ˣ) =
-        TorusTransfer.psiU (IF.twist α).φ g
-          (bcUnits d.QW ((t : ↥(GSpin d.QW)) : (CliffordAlgebra d.QW)ˣ))) :
-      (∀ t : ↥(d.torusOf x),
-        (d.IsGammaElt t ∧ d.torusOf t = d.torusOf x ↔
-          (IF.data α).IsGammaElt (e t) ∧ (IF.data α).torusOf (e t) = (IF.data α).torusOf y)) :=
-  sorry
-
 /-- **Thesis Prop. 6.6.1(ii), the torus isomorphism** (own work): the clauses of `TorusTransfer`
 other than `Δ`, `D^G`, together with: every `t ∈ T_x(F)` is stably conjugate to `e(t)` (in `G`,
 through `ψ_α`).  Proved: with `g` the `W`-component of the conjugating element in `hxy`,
@@ -2112,8 +2092,10 @@ they commute with `y` and fix `W'_y`; the inverse comes from `g⁻¹` and `φ_α
 scalars and sends `x ↦ y`; it and its inverse are continuous, being restrictions of `F`-linear
 maps `C(W) → C(W_α)` (`TorusTransfer.continuous_of_bcUnits_eq`); `t` and `e(t)` are stably
 conjugate in `G` (`stablyConjG_diag_of_psiU`); every `t ∈ T_{x,♮}` is strongly stably conjugate to
-`e(t)` (`stronglyStablyConjW_of_torusOf_eq`).  The matching of the regular parts is
-`torusTransfer_clauses`. -/
+`e(t)` (`stronglyStablyConjW_of_torusOf_eq`); and `e` matches `T_{x,♮}` with `T_{y,♮}`: on the regular
+parts the centralizers of `t̄` and `x̄` agree over `F̄`, `Ad(g) ∘ C(φ_α)` carries centralizers, fixed
+spaces and semisimplicity across (`TorusTransfer.torusSub_eq_of_psiU`, `isSS_of_psiA`), and the
+inverse transport gives the converse. -/
 theorem exists_torusTransfer_core (IF : InnerFormSystem d) (α : IF.Idx)
     (x : ↥(GSpin d.QW)) (y : ↥(GSpin (IF.data α).QW)) (hx : d.IsGammaElt x)
     (hy : (IF.data α).IsGammaElt y) (hxy : d.StronglyStablyConjW (IF.twist α) x y) :
@@ -2135,7 +2117,60 @@ theorem exists_torusTransfer_core (IF : InnerFormSystem d) (α : IF.Idx)
         TorusTransfer.psiU (IF.twist α).φ g
           (bcUnits d.QW ((t : ↥(GSpin d.QW)) : (CliffordAlgebra d.QW)ˣ)) :=
     TorusTransfer.bcUnits_transportEquiv hg hrat hconj
-  have c5 := torusTransfer_clauses IF α x y hx hy hxy e he
+  have hyc : TorusTransfer.psiU (IF.twist α).φ g (bcUnits d.QW (x : (CliffordAlgebra d.QW)ˣ)) =
+      bcUnits (IF.data α).QW (y : (CliffordAlgebra _)ˣ) := hconj
+  have hcomm : ∀ {V' : Type} [AddCommGroup V'] [Module F V'] {Q' : QuadraticForm F V'}
+      {a b : GSpin Q'} (z : GSpin (Q'.baseChange (AlgebraicClosure F))),
+      (Commute z (bcGSpin Q' a) ↔ Commute z (bcGSpin Q' b)) →
+      (Commute (z : (CliffordAlgebra _)ˣ) (bcUnits Q' (a : (CliffordAlgebra Q')ˣ)) ↔
+        Commute (z : (CliffordAlgebra _)ˣ) (bcUnits Q' (b : (CliffordAlgebra Q')ˣ))) := by
+    intro V' _ _ Q' a b z h
+    constructor
+    · intro h1; exact congrArg Subtype.val (h.mp (Subtype.ext h1.eq)).eq
+    · intro h1; exact congrArg Subtype.val (h.mpr (Subtype.ext h1.eq)).eq
+  have c5 : ∀ t : ↥(d.torusOf x),
+      (d.IsGammaElt t ∧ d.torusOf t = d.torusOf x ↔
+        (IF.data α).IsGammaElt (e t) ∧ (IF.data α).torusOf (e t) = (IF.data α).torusOf y) := by
+    intro t
+    constructor
+    · rintro ⟨ht, hT⟩
+      have hs := (he t).symm
+      have hT' : (IF.data α).torusOf (e t) = (IF.data α).torusOf y :=
+        TorusTransfer.torusSub_eq_of_psiU hg hyc hs
+          (fun z hz => hcomm ⟨z, hz⟩ (d.commute_bc_iff_of_torusOf_eq hx ht t.2 hT ⟨z, hz⟩))
+          (d.fixedSub_eq_of_torusOf_eq t.2 hT)
+      have hs' : bcHom (IF.data α).QW (((e t : ↥(GSpin (IF.data α).QW)) :
+          (CliffordAlgebra (IF.data α).QW)ˣ) : CliffordAlgebra (IF.data α).QW) =
+          TorusTransfer.psiA (IF.twist α).φ g (bcHom d.QW (((t : ↥(GSpin d.QW)) :
+            (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW)) := by
+        have := congrArg Units.val (he t)
+        rwa [TorusTransfer.coe_psiU] at this
+      refine ⟨⟨TorusTransfer.isSS_of_psiA _ _ hs' ht.1, ?_, ?_⟩, hT'⟩
+      · rw [hT']; exact hy.2.1
+      · rw [hT']; exact hy.2.2
+    · rintro ⟨hst, hT2⟩
+      have hg' := TorusTransfer.mem_GSpin_symm (φ := (IF.twist α).φ) (Q₁ := d.QW) hg
+      have hx' := TorusTransfer.psiU_symm_bcUnits hyc
+      have ht' : TorusTransfer.psiU (IF.twist α).φ.symm (cliffUnits (IF.twist α).φ.symm g⁻¹)
+          (bcUnits (IF.data α).QW (((e t : ↥(GSpin (IF.data α).QW)) : (CliffordAlgebra _)ˣ))) =
+          bcUnits d.QW ((t : ↥(GSpin d.QW)) : (CliffordAlgebra d.QW)ˣ) := by
+        rw [he t, TorusTransfer.psiU_symm_psiU]
+      have hT : d.torusOf t = d.torusOf x :=
+        TorusTransfer.torusSub_eq_of_psiU hg' hx' ht'
+          (fun z hz => hcomm ⟨z, hz⟩
+            ((IF.data α).commute_bc_iff_of_torusOf_eq hy hst (e t).2 hT2 ⟨z, hz⟩))
+          ((IF.data α).fixedSub_eq_of_torusOf_eq (e t).2 hT2)
+      have ht'' : bcHom d.QW (((t : ↥(GSpin d.QW)) : (CliffordAlgebra d.QW)ˣ) :
+          CliffordAlgebra d.QW) = TorusTransfer.psiA (IF.twist α).φ.symm
+            (cliffUnits (IF.twist α).φ.symm g⁻¹) (bcHom (IF.data α).QW
+              (((e t : ↥(GSpin (IF.data α).QW)) : (CliffordAlgebra (IF.data α).QW)ˣ) :
+                CliffordAlgebra (IF.data α).QW)) := by
+        have := congrArg Units.val ht'
+        rw [TorusTransfer.coe_psiU] at this
+        exact this.symm
+      refine ⟨⟨TorusTransfer.isSS_of_psiA _ _ ht'' hst.1, ?_, ?_⟩, hT⟩
+      · rw [hT]; exact hx.2.1
+      · rw [hT]; exact hx.2.2
   have c6 : ∀ t : ↥(d.torusOf x), d.IsGammaElt t → d.torusOf t = d.torusOf x →
       d.StronglyStablyConjW (IF.twist α) t (e t) := fun t ht hT =>
     stronglyStablyConjW_of_torusOf_eq IF α x y hx hxy hg hconj hrat t (e t) (he t) ht hT
