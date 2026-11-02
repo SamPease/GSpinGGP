@@ -115,6 +115,18 @@ theorem regNilH_commutator (v : V) :
         QuadraticMap.polar Q (w (j + 1)) v • w (-(j + 1)))) := by
   rw [regNilH, sum_ι_mul_ι_commutator]
 
+omit [Invertible (2 : K)] in
+theorem polar_comp_subtype (Q : QuadraticForm K V) (A : Submodule K V) (a b : A) :
+    QuadraticMap.polar (Q.comp A.subtype) a b = QuadraticMap.polar Q a b := by
+  simp [QuadraticMap.polar]
+
+/-- `regNil` built from vectors of a subspace `A` acts on `A` as `regNil` of `(A, q|_A)`. -/
+theorem adV_regNil_subtype {A : Submodule K V} (w' : ℤ → A) (ν : K) (k : ℕ) (a : A) :
+    adV Q (regNil Q (fun j => (w' j : V)) ν k) a =
+      (adV (Q.comp A.subtype) (regNil (Q.comp A.subtype) w' ν k) a : V) := by
+  rw [adV_regNil, adV_regNil]
+  simp [polar_comp_subtype]
+
 /-- `adV X` kills `⟨w⟩^⊥`. -/
 theorem adV_regNil_of_orthogonal {v : V} (hv : ∀ j : ℤ, |j| ≤ k → bform Q (w j) v = 0) :
     adV Q (regNil Q w ν k) v = 0 := by
@@ -378,12 +390,12 @@ variable {K : Type*} [Field K] [Invertible (2 : K)]
 variable {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
 variable {Q : QuadraticForm K V} {w : ℤ → V} {ν : K} {k : ℕ}
 
-/-- **The centralizer of `X` in `gspin(V)` has dimension `≤ dim V − k`** when
-`dim V ≤ 2k + 2`, i.e. `V = ⟨w⟩ ⊕ ⟨w⟩^⊥` with `dim ⟨w⟩^⊥ ≤ 1` (`finrank_lieCentralizer_gspin` and the Jordan chain
-`w_{-k} ↦ … ↦ w_k` of length `2k + 1`, `finrank_soCent_le_of_chain`). -/
-theorem finrank_lieCentralizer_regNil_le (hQ : IsNondeg Q) (hw : IsSplitFamily Q w ν k)
+/-- **`dim so(V)_{adV X} ≤ dim V − (k + 1)`** when `dim V ≤ 2k + 2`, i.e. `V = ⟨w⟩ ⊕ ⟨w⟩^⊥` with
+`dim ⟨w⟩^⊥ ≤ 1` (the Jordan chain `w_{-k} ↦ … ↦ w_k` of length `2k + 1`,
+`finrank_soCent_le_of_chain`). -/
+theorem finrank_soCent_regNil_le (hQ : IsNondeg Q) (hw : IsSplitFamily Q w ν k)
     (hν : ν ≠ 0) (hdim : finrank K V ≤ 2 * k + 2) :
-    finrank K (lieCentralizer (gspin Q) (regNil Q w ν k)) ≤ finrank K V - k := by
+    finrank K (soCent Q (adV Q (regNil Q w ν k))) ≤ finrank K V - (k + 1) := by
   have hsup := span_sup_orthogonal_isSplitFamily hw hν hQ
   have hU : finrank K (Submodule.span K (Set.range fun i : Fin (2 * k + 1) => w ((i : ℤ) - k))) =
       2 * k + 1 := by
@@ -418,13 +430,47 @@ theorem finrank_lieCentralizer_regNil_le (hQ : IsNondeg Q) (hw : IsSplitFamily Q
     exact (linearIndependent_isSplitFamily hw hν).units_smul fun i => Units.mk0 (ε i) (hε0 i)
   have h := finrank_soCent_le_of_chain hQ (bform_adV regNil_mem_gspin) (w (-k)) (2 * k + 1) hli
     (by rw [hspan]; exact hsup) (by rw [hspan]; exact hperp)
-  rw [finrank_lieCentralizer_gspin hQ regNil_mem_gspin]
   have h2 : (2 * k + 1 + 1) / 2 = k + 1 := by omega
-  rw [h2] at h
-  have hdim := hli.fintype_card_le_finrank
-  rw [Fintype.card_fin] at hdim
+  rwa [h2] at h
+
+/-- **The centralizer of `X` in `gspin(V)` has dimension `≤ dim V − k`** when `dim V ≤ 2k + 2`
+(`finrank_lieCentralizer_gspin`, `finrank_soCent_regNil_le`). -/
+theorem finrank_lieCentralizer_regNil_le (hQ : IsNondeg Q) (hw : IsSplitFamily Q w ν k)
+    (hν : ν ≠ 0) (hdim : finrank K V ≤ 2 * k + 2) :
+    finrank K (lieCentralizer (gspin Q) (regNil Q w ν k)) ≤ finrank K V - k := by
+  rw [finrank_lieCentralizer_gspin hQ regNil_mem_gspin]
+  have h := finrank_soCent_regNil_le hQ hw hν hdim
+  have hge := (linearIndependent_isSplitFamily hw hν).fintype_card_le_finrank
+  rw [Fintype.card_fin] at hge
   omega
 
 end Centralizer
+
+section Commute
+
+variable {K : Type*} [Field K] [Invertible (2 : K)]
+
+/-- `y ∈ GSpin(V)` commutes with `regNil` built from vectors fixed by `P(y)`. -/
+theorem commute_regNil {V : Type*} [AddCommGroup V] [Module K V] {Q : QuadraticForm K V}
+    (y : GSpin Q) {w : ℤ → V} (hw : ∀ j, w j ∈ fixedSub y) (ν : K) (k : ℕ) :
+    ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * regNil Q w ν k =
+      regNil Q w ν k * ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) := by
+  set u : CliffordAlgebra Q := ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)
+  have hι : ∀ j, u * ι Q (w j) = ι Q (w j) * u := by
+    intro j
+    have hfix : specP Q y (w j) = w j := by
+      have := LinearMap.mem_ker.mp (hw j)
+      simpa [sub_eq_zero] using this
+    have e := ι_specP y (w j)
+    rw [hfix] at e
+    calc u * ι Q (w j) = u * ι Q (w j) * ((((y : (CliffordAlgebra Q)ˣ))⁻¹ : (CliffordAlgebra Q)ˣ) :
+          CliffordAlgebra Q) * u := by simp [u, mul_assoc]
+      _ = ι Q (w j) * u := by rw [← e]
+  unfold regNil
+  rw [Finset.mul_sum, Finset.sum_mul]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [mul_smul_comm, smul_mul_assoc, ← mul_assoc, hι, mul_assoc, hι, ← mul_assoc]
+
+end Commute
 
 end GSpinGGP

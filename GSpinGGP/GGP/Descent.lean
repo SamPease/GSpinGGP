@@ -1123,20 +1123,6 @@ theorem incl_injective : Function.Injective d.incl := by
     exact (algebraMap F (CliffordAlgebra d.QV)).injective (this.trans (map_one _).symm)
   rw [Subgroup.mem_bot, show c = 1 from Units.ext hc, map_one]
 
-/-- `P(incl a)(w, z) = (P(a) w, z)`. -/
-theorem specP_incl_apply (a : GSpin d.QW) (w : Fin d.m → F) (z : d.Z) :
-    specP d.QV (d.incl a) (w, z) = (specP d.QW a w, z) := by
-  rw [show ((w, z) : d.V) = (w, 0) + (0, z) by simp, map_add, specP_incl_inl, specP_incl_inr]
-  simp
-
-/-- `V'_x = W'_x ⊕ Z`: `(w, z)` is fixed by `x` iff `w` is. -/
-theorem mem_fixedSub_incl_iff (a : GSpin d.QW) (w : Fin d.m → F) (z : d.Z) :
-    ((w, z) : d.V) ∈ fixedSub (d.incl a) ↔ w ∈ fixedSub a := by
-  simp only [fixedSub, LinearMap.mem_ker, LinearMap.sub_apply, LinearMap.id_apply, sub_eq_zero]
-  change specP d.QV (d.incl a) (w, z) = (w, z) ↔ specP d.QW a w = w
-  rw [specP_incl_apply, Prod.mk.injEq]
-  simp
-
 /-- `P(s)` preserves `W = Z^⊥` when it fixes `Z` pointwise. -/
 theorem specP_snd_eq_zero_of_fix_Z {s : GSpin d.QV} (hZ : ∀ z : d.Z, specP d.QV s (0, z) = (0, z))
     (w : Fin d.m → F) : (specP d.QV s (w, 0)).2 = 0 := by

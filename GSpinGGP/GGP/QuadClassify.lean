@@ -382,15 +382,6 @@ theorem isNondeg_of_prod_right [FiniteDimensional K V₁] [FiniteDimensional K V
 
 variable [FiniteDimensional K V]
 
-/-- `W = W'_y ⊕ W''_y` for semisimple `y`. -/
-theorem isCompl_fixedSub_movedSub {F : Type*} [Field F] [Invertible (2 : F)] {V : Type*}
-    [AddCommGroup V] [Module F V] [FiniteDimensional F V] {Q : QuadraticForm F V} (y : GSpin Q)
-    (hdisj : fixedSub y ⊓ movedSub y = ⊥) : IsCompl (fixedSub y) (movedSub y) := by
-  refine (Submodule.isCompl_iff_disjoint _ _ ?_).2 (disjoint_iff.2 hdisj)
-  have := LinearMap.finrank_range_add_finrank_ker ((specP Q y : V →ₗ[F] V) - LinearMap.id)
-  unfold fixedSub movedSub
-  omega
-
 /-- **`dim W''_y ≠ 1`**: on a line `W''_y` the isometry `P(y)` would act by a scalar `c`, so
 `det P(y) = c`; `det P(y) = 1` then forces `c = 1`, i.e. `W''_y ⊆ W'_y`. -/
 theorem finrank_movedSub_ne_one {Q : QuadraticForm K V} (y : GSpin Q)
