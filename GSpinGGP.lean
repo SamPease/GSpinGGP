@@ -24,6 +24,7 @@ import GSpinGGP.Literature.GSpin
 import GSpinGGP.Literature.NilpotentOrbits
 import GSpinGGP.GGP.RegularNilpotent
 import GSpinGGP.Foundations.SoSplit
+import GSpinGGP.Foundations.MatrixBaseChange
 import GSpinGGP.Foundations.JordanAlgebra
 import GSpinGGP.GGP.SemisimpleRank
 import GSpinGGP.GGP.JointCentralizer
@@ -31,6 +32,7 @@ import GSpinGGP.GGP.JointRank
 import GSpinGGP.GGP.LieRank
 import GSpinGGP.GGP.RegularNilpotentConverse
 import GSpinGGP.GGP.RegularRank
+import GSpinGGP.GGP.JointRankDescent
 import GSpinGGP.GGP.Centralizers
 import GSpinGGP.Literature.TraceFormula
 import GSpinGGP.TraceFormula.StronglyCuspidal
