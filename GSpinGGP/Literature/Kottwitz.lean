@@ -271,9 +271,10 @@ def TwistIdx {d : GGPData F} (IF : InnerFormSystem d) (x : ↥(GSpin d.QW))
 
 /-! ## §2 Cited results -/
 
-/-- **Finiteness of `H¹(F, S_x)`** (Borel–Serre; Serre, *Cohomologie galoisienne*, III §4.3,
-Thm. 4: for a linear algebraic group `L` over a `p`-adic field, `H¹(F, L)` is finite; for a torus
-this is also Tate–Nakayama, Serre loc. cit. II §5.8).  Applied to `L = S_x`, whose `F̄`-points
+/-- **Finiteness of `H¹(F, S_x)`** (Borel–Serre, *Théorèmes de finitude en cohomologie
+galoisienne*, Comment. Math. Helv. 39 (1964), Thm. 6.1: for `k` locally compact of characteristic `0`
+and `A` a `k`-group of type (ALA), `H¹(k, A)` is finite; in particular `H¹(k, G)` is finite for `G`
+linear algebraic over `k`. Also Serre, *Cohomologie galoisienne*, III §4.3, Thm. 4.)  Applied to `L = S_x`, whose `F̄`-points
 with their Galois action are `torusBarFbar d x` (`P` is defined over `F`).  Stated for
 `x ∈ Γ(G,H)`, where `S_x` is a torus. -/
 axiom finite_H1_torusBar (d : GGPData F) (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) :
