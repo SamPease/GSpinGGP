@@ -24,6 +24,7 @@ GSpinGGP.emoryTakeda_mult_le_one
 GSpinGGP.UnitaryRep
 GSpinGGP.IsTempered
 GSpinGGP.mult
+GSpinGGP.dixmier_commutant_scalar
 GSpinGGP.schur_central
 GSpinGGP.LitTF.haar_G_isMulRightInvariant
 GSpinGGP.weil_quotient

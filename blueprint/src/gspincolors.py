@@ -8,7 +8,8 @@ which then look like unproved statements. This package keeps the standard colour
 * literature results (the `literature` environment): their own fill and border;
 * proved results whose ancestors are all proved or literature results, with at least one literature
   ancestor: "proved, modulo the literature";
-* `\\mathlibok` nodes are described as available in Mathlib or Tau Ceti.
+* `\\mathlibok` nodes (available in Mathlib or Tau Ceti, restated here) get a slate grey fill;
+* all borders are drawn bold, so the border colours are easier to read.
 
 Dark green fill still means fully formalized: no `sorry` and no literature assumption anywhere
 below the node.
@@ -18,6 +19,7 @@ from plastexdepgraph.Packages.depgraph import item_kind
 LITERATURE_FILL = '#E3D3F5'
 LITERATURE_BORDER = '#7E57C2'
 MOD_LITERATURE_FILL = '#F6D66B'
+LIBRARY_FILL = '#C5CBD3'
 
 
 def ProcessOptions(options, document):
@@ -25,6 +27,7 @@ def ProcessOptions(options, document):
     colors['literature'] = (LITERATURE_FILL, 'Lavender')
     colors['literature_border'] = (LITERATURE_BORDER, 'Purple')
     colors['mod_literature'] = (MOD_LITERATURE_FILL, 'Gold')
+    colors['library'] = (LIBRARY_FILL, 'Slate grey')
 
     std_colorizer = document.userdata['dep_graph']['colorizer']
     std_fillcolorizer = document.userdata['dep_graph']['fillcolorizer']
@@ -50,12 +53,19 @@ def ProcessOptions(options, document):
     def fillcolorizer(node) -> str:
         if is_literature(node):
             return LITERATURE_FILL
+        if node.userdata.get('mathlibok'):
+            return LIBRARY_FILL
         if node.userdata.get('proved_mod_literature'):
             return MOD_LITERATURE_FILL
         return std_fillcolorizer(node)
 
+    def stylerizer(node) -> str:
+        # Bold borders, so that border colours (statement status) are easier to tell apart.
+        return 'filled,bold' if fillcolorizer(node) else 'bold'
+
     document.userdata['dep_graph']['colorizer'] = colorizer
     document.userdata['dep_graph']['fillcolorizer'] = fillcolorizer
+    document.userdata['dep_graph']['stylerizer'] = stylerizer
 
     def make_legend() -> None:
         legend = document.userdata['dep_graph']['legend']
@@ -65,6 +75,8 @@ def ProcessOptions(options, document):
         legend.extend([
             ('Lavender background, purple border',
              'a result <em>assumed from the literature</em> (a Lean axiom citing its source)'),
+            ('Slate grey background',
+             'available in Mathlib or Tau Ceti and restated here (proved from the library)'),
             ('Gold background',
              'the <em>proof</em> of this result is formalized, and everything below it is formalized '
              'or assumed from the literature (no unproved steps, but it rests on the literature)'),

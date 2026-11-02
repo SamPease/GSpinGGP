@@ -34,24 +34,40 @@ where $\pi^\infty$ is the space of smooth vectors (Thesis \S5.5).
 \end{definition}
 
 \begin{literature}[Schur's lemma]
+\label{LIT-dixmier_commutant_scalar}
+\lean{GSpinGGP.dixmier_commutant_scalar}
+\leanok
+\uses{UnitaryRep}
+For a continuous unitary representation of a topological group with no closed invariant subspaces other than $0$ and the
+whole space, every bounded operator commuting with the group is a scalar.
+
+\assumedfrom{\cite{Dixmier}, 13.1.4 (i)$\Rightarrow$(ii)}
+\end{literature}
+
+\begin{theorem}[The centre acts by a character]
 \label{LIT-schur_central}
 \lean{GSpinGGP.schur_central}
 \leanok
-\uses{UnitaryRep}
-In an irreducible unitary representation of a topological group, the centre acts by a character.
+\uses{UnitaryRep, LIT-dixmier_commutant_scalar}
+In an irreducible unitary representation of a topological group, the centre acts by a character (Thesis \S3.1.2).
+\end{theorem}
+\begin{proof}
+\leanok
+A central element's operator commutes with the whole group, so it is a scalar by Lemma~\ref{LIT-dixmier_commutant_scalar}.
+\end{proof}
 
-\assumedfrom{\cite{Dixmier}; Thesis \S3.1.2}
-\end{literature}
-
-\begin{literature}[$G(F)$ is unimodular]
+\begin{theorem}[$G(F)$ is unimodular]
 \label{LIT-haar_G_isMulRightInvariant}
 \lean{GSpinGGP.LitTF.haar_G_isMulRightInvariant}
 \leanok
 \uses{G, GGPData, GSpin}
 The Haar measure of $G(F)=\GSpin(W)(F)\times\GSpin(V)(F)$ (and of every inner form) is right invariant.
-
-\assumedfrom{Bourbaki, \emph{Groupes et alg\`ebres de Lie} III \S3; \cite{BP}, \S1.6; Thesis \S2.4}
-\end{literature}
+\end{theorem}
+\begin{proof}
+Not yet formalized. Bourbaki, \emph{Lie Groups and Lie Algebras} III \S3 no.~16, Prop.~55 and Cor.: the modular function is
+$(\operatorname{mod}\det\operatorname{Ad})^{-1}$. On $\gspin(U)=\mathfrak{so}(U)\oplus F$, $\operatorname{Ad} g$ acts as $\Lambda^2P(g)$ on
+$\mathfrak{so}(U)\cong\Lambda^2U$, of determinant $\det P(g)^{\dim U-1}=1$, and trivially on $F$.
+\end{proof}
 
 \begin{literature}[Weil's quotient-measure formula]
 \label{LIT-weil_quotient}
