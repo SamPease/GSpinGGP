@@ -31,7 +31,7 @@ where `ι` is the closed embedding `H/A_{G,H} ↪ G/A_G`. The Haar measure on
 * `IsWeilMeasure.integral_complex`: the formula for `ℂ`-valued `φ ∈ C_c(Γ)`;
 * `isWeilMeasure_of_subsingleton` (sanity): for trivial `S` the Weil measure is the pushforward
   of `ν`;
-* **axiom** `weil_quotient` (existence and uniqueness; Bourbaki, Folland), and its corollary
+* **axiom** `weil_quotient` (existence and uniqueness; Bourbaki), and its corollary
   `IsWeilMeasure.unique`;
 * `CosetSpace.exists_isCompact_image_superset` (compact sets lift) and
   `IsWeilMeasure.isFiniteMeasureOnCompacts` (a Weil measure is finite on compacts, proved from
@@ -262,8 +262,7 @@ end Sanity
 /-- **Weil's quotient-measure formula** (Bourbaki, *Integration* II, Ch. VII §2: no. 2, Prop. 4(b)
 and Def. 1, p. VII.31 — a measure `μ` on `X` with `δ(ξ)μ = Δ_H(ξ)μ` for `ξ ∈ H` is `λ^♯` for exactly
 one measure `λ = μ/β` on `X/H`, i.e. `∫_X f dμ = ∫_{X/H} ∫_H f(xξ) dβ(ξ) dλ`; and no. 6, Thm 3: for
-`μ`, `β` Haar this `λ` is `G`-invariant, and unique up to a constant, when `Δ_G|_H = Δ_H`; Folland, *A Course in Abstract Harmonic Analysis*, Thm 2.49, number
-unverified — Folland states it for left cosets `Γ/S` and left Haar measures, the right-coset form
+`μ`, `β` Haar this `λ` is `G`-invariant, and unique up to a constant, when `Δ_G|_H = Δ_H`. The right-coset form
 here is the same theorem applied to `γ ↦ γ⁻¹`).
 
 Let `Γ` and `S` be locally compact, Hausdorff, second countable topological groups with their

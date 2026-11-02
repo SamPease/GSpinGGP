@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import GSpinGGP.TraceFormula.Interface
 import GSpinGGP.TraceFormula.DeltaIntegrability
 import GSpinGGP.TraceFormula.TorusDescent
+import GSpinGGP.GGP.Germs
 
 /-!
 # `m_geom` on quasi-characters: Thesis Prop 12.1.1
