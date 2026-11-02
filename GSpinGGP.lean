@@ -39,6 +39,7 @@ import GSpinGGP.GGP.IsometryCentralizer
 import GSpinGGP.GGP.TorusCommute
 import GSpinGGP.GGP.MovedCentralizer
 import GSpinGGP.GGP.IsometrySemisimple
+import GSpinGGP.GGP.GSpinSemisimple
 import GSpinGGP.GGP.TorusTransport
 import GSpinGGP.GGP.Levi
 import GSpinGGP.TraceFormula.Basic

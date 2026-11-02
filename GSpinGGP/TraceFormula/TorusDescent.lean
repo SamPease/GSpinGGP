@@ -7,6 +7,7 @@ import GSpinGGP.TraceFormula.GermTranslate
 import GSpinGGP.GGP.MovedCentralizer
 import GSpinGGP.Foundations.RankSemicontinuity
 import GSpinGGP.GGP.IsometrySemisimple
+import GSpinGGP.GGP.GSpinSemisimple
 
 /-!
 # Measurability of the integrand of `m_{geom,s}` on `T(F)/A_{G,H}(F)`
@@ -370,27 +371,6 @@ theorem commute_of_mem_torusOf_of_movedPart {x t : ↥(GSpin d.QW)}
   have h2 := (hc _ hcU.2 _ h1).eq
   rw [mul_smul_comm, smul_mul_assoc] at h2
   exact smul_right_injective _ hc0 h2
-
-/-- **`x ∈ GSpin(V)` is semisimple if `P(x)` is** (over a field of characteristic `0`; the
-hypothesis is semisimplicity over `K̄`, equivalent to that over `K` by
-`IsomCent.isSemisimple_baseChange_algebraicClosure` and its converse).  Converse of
-`isSemisimple_specP_of_isSS`.  Proof sketch: `P : GSpin(V) → SO(V)` is a central extension by
-`ker P = 𝔾_m`.  Let `x = x_s x_u` be the Jordan decomposition of `x` in the algebraic group
-`GSpin(V)`; it is respected by every representation, in particular by `P` and by left
-multiplication on `C(V)`.  As `P(x)` is semisimple, `P(x_u) = 1`, so `x_u ∈ 𝔾_m` is a unipotent
-scalar, i.e. `x_u = 1`; hence `x = x_s` acts semisimply on `C(V)`.  Elementary alternative over
-`K̄`: diagonalize `P(x)` in a basis of `V_{K̄}` of isotropic pairs `(e_i, f_i)` (eigenvalues
-`λ_i, λ_i⁻¹`) and anisotropic `±1`-eigenvectors; then `x ι(v) x⁻¹ = ι(P(x) v)` makes the monomials
-in this basis eigenvectors of `Ad(x)`, and `x` lies in the commutative subalgebra they generate
-together with the idempotents `e_i f_i`, on which it acts diagonally.
-Status: SORRY (own work, Clifford algebra). -/
-theorem isSS_of_isSemisimple_specP_baseChange {K V : Type*} [Field K] [CharZero K]
-    [Invertible (2 : K)] [AddCommGroup V] [Module K V] [FiniteDimensional K V]
-    {Q : QuadraticForm K V} (hQ : IsNondeg Q) (x : GSpin Q)
-    (hx : Module.End.IsSemisimple ((specP Q x : V →ₗ[K] V).baseChange (AlgebraicClosure K))) :
-    Module.End.IsSemisimple
-      (LinearMap.mulLeft K (((x : (CliffordAlgebra Q)ˣ)) : CliffordAlgebra Q)) := by
-  sorry
 
 /-- **Elements of `T_x` are semisimple** for `x ∈ Γ(G,H)` (Thesis §6.5: `T_x` is a torus).
 Over `F̄`, `X = P(x)` is semisimple and the moved part of its Lie centralizer is abelian
