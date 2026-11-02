@@ -21,7 +21,8 @@ import Mathlib.FieldTheory.IsAlgClosed.AlgebraicClosure
   (`exists_isSplitFamily_of_quasiSplit`, `exists_hyp_of_quasiSplit_odd`, `exists_wittData_W`).
 * Regular nilpotent orbits (Thesis §5.1.4): `nilReg_nonempty_of_quasiSplit`,
   `exists_regularNil_inOrbitNu` (Luo's orbit `O_ν`, via `isInOrbitNu_regNil`),
-  `nilReg_centralizer_nonempty_of_quasiSplit`. The converses are in `GGP.RegularNilpotentConverse`.
+  `nilReg_centralizer_nonempty_of_quasiSplit`. The `⇒` directions and the
+  iff statements are in `GGP.RegularNilpotentConverse`.
 -/
 
 noncomputable section

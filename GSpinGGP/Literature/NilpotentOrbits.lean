@@ -41,12 +41,15 @@ axiom jantzen_finrank_soCentMat_ge {K : Type*} [Field K] [IsAlgClosed K] [CharZe
 /-- **Regular nilpotent elements of `so(V)` have partition `[n]` (`n` odd) or `[n − 1, 1]`
 (`n` even)** (Jantzen 2004, §6.3, p. 64, last paragraph: for `G = SO(V, φ)` with `dim V ≥ 3`, the
 regular nilpotent orbit in `so(V, φ)` consists of the nilpotent elements with partition `[2n + 1]`
-when `dim V = 2n + 1`, and of those with partition `[2n − 1, 1]` when `dim V = 2n`. Jantzen leaves the
-deduction from §3.2 (5) to the reader and gives a second proof in the Remark after §6.4.)
+when `dim V = 2n + 1`, and of those with partition `[2n − 1, 1]` when `dim V = 2n`. Jantzen
+leaves the deduction from §3.2 (5) to the reader and gives a second proof in the Remark after
+§6.4, p. 65. Chapter 6 assumes `G ⊂ GL(V)` connected reductive, which `SO(V, φ)` is; partitions
+are `GL(V)`-invariant, so working with `SO` rather than `O` does not affect the conclusion.)
 
 Hypothesis. Jantzen calls `X` regular nilpotent if its orbit is dense in the nilpotent cone, and
 shows in §6.3 that a nilpotent `X` is regular iff `dim G_X` is minimal among nilpotent elements
-(by §2.1 (6)). In characteristic `0`, `dim G_X = dim g_X` (§2.2, condition (iii)), so `hreg`
+(by §2.1 (6)). In characteristic `0`, `Lie(G_X) = g_X` (§2.2, condition (iii)), and
+`dim G_X = dim Lie(G_X)` (standard for algebraic groups), so `hreg`
 (`dim g_X` minimal among nilpotent `Y ∈ g`) says that `X` is regular nilpotent.
 
 Conclusion. The partition of a nilpotent `X` is the list of its Jordan block sizes (§1.1, §1.6),

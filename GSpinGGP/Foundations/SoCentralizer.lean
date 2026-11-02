@@ -18,7 +18,10 @@ kernel the scalars (Thesis Prop. 5.1.3.1). So the centralizer of `X ∈ gspin(V)
   `commute_of_isLieAbelian_lieCentralizer`: the same for the centralizer of `g ∈ GSpin(V)`, with
   `so(V)_{P(g)}`; `commute_of_lift`: a lift of `M ∈ so(V)_{P(g)}` commutes with `g`.
 
-* `finrank_soCent_le_of_chain`: an upper bound for `dim so(V)_N` when `N` has a long Jordan chain.
+* `finrank_soCent_le_of_chain`: an upper bound for `dim so(V)_N` when `N` has a long Jordan chain;
+  `isTotallyIsotropic_span_pow`: the upper half of a Jordan chain of a skew `N` is totally isotropic.
+* `linearIndependent_pow_apply`, `exists_pow_apply_ne_zero_of_isNilpotent`: Jordan chains of a
+  nilpotent endomorphism.
 * `soCentMat`, `soCentMat_toMatrix`: the same in matrix form, and `finrank_soCentMat_map`: its
   dimension does not change under extension of scalars; `soCentMat_map_eq_span`: over an
   extension it is spanned by its `F`-points (`matrixBaseChangeEquiv`: `K ⊗ Mat_n(F) ≃ Mat_n(K)`).
@@ -794,9 +797,7 @@ theorem isTotallyIsotropic_span_pow {Q : QuadraticForm K V} {N : Module.End K V}
   have hgen : ∀ i j : ℕ, bform Q ((N ^ (a + i)) v) ((N ^ (a + j)) v) = 0 := by
     intro i j
     rw [bform_pow_skew hN (a + j), ← Module.End.mul_apply, ← pow_add]
-    obtain ⟨c, hc⟩ : ∃ c, a + j + (a + i) = c + (m + 1) := ⟨a + j + (a + i) - (m + 1), by omega⟩
-    have h0 : (N ^ (c + (m + 1))) v = 0 := by rw [pow_add, Module.End.mul_apply, hm, map_zero]
-    rw [hc, h0, map_zero, LinearMap.zero_apply, mul_zero]
+    rw [Module.End.pow_map_zero_of_le (by omega) hm, map_zero, LinearMap.zero_apply, mul_zero]
   have h1 : ∀ i : Fin l, S ≤ LinearMap.ker (bform Q ((N ^ (a + i)) v)) := fun i =>
     Submodule.span_le.2 <| by rintro _ ⟨j, rfl⟩; exact hgen i j
   intro u hu
@@ -835,8 +836,7 @@ theorem linearIndependent_pow_apply {f : Module.End K V} {v : V} {m : ℕ}
         LinearMap.ker (f ^ (m + 1)) := Submodule.span_le.2 <| by
       rintro _ ⟨i, rfl⟩
       rw [SetLike.mem_coe, LinearMap.mem_ker, ← Module.End.mul_apply, ← pow_add, ← e]
-      obtain ⟨c, hc⟩ : ∃ c, m + 1 + i + 1 = c + (m + 1 + 1) := ⟨i, by omega⟩
-      rw [hc, pow_add, Module.End.mul_apply, hm', map_zero]
+      exact Module.End.pow_map_zero_of_le (by omega) hm'
     exact hle hv
 
 /-- For `f` nilpotent and `f^m v ≠ 0` there is a Jordan chain through `v` of length at least
@@ -848,12 +848,9 @@ theorem exists_pow_apply_ne_zero_of_isNilpotent {f : Module.End K V} (hf : IsNil
   have ex : ∃ k, (f ^ (k + 1)) v = 0 := by
     obtain ⟨n, hn⟩ := hf
     exact ⟨n, by rw [pow_succ, hn, zero_mul, LinearMap.zero_apply]⟩
-  have hkill : ∀ k, (f ^ (k + 1)) v = 0 → ∀ j, k + 1 ≤ j → (f ^ j) v = 0 := fun k hk j hj => by
-    obtain ⟨c, rfl⟩ : ∃ c, j = c + (k + 1) := ⟨j - (k + 1), by omega⟩
-    rw [pow_add, Module.End.mul_apply, hk, map_zero]
   refine ⟨Nat.find ex, ?_, ?_, Nat.find_spec ex⟩
   · by_contra hlt
-    exact hm (hkill _ (Nat.find_spec ex) m (by omega))
+    exact hm (Module.End.pow_map_zero_of_le (by omega) (Nat.find_spec ex))
   · rcases Nat.eq_zero_or_eq_succ_pred (Nat.find ex) with h0 | hs
     · rw [h0, pow_zero, Module.End.one_apply]
       rintro rfl

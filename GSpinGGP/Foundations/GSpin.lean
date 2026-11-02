@@ -1307,23 +1307,19 @@ theorem ι_adV {Q : QuadraticForm K V} {X : CliffordAlgebra Q} (hX : X ∈ gspin
   rw [Ring.lie_def] at hw
   rw [adV_apply, ← hw, ιInv_ι]
 
-/-- `adV X` is nilpotent if `X ∈ gspin(V)` is: `ι((adV X)^j v) = (L_X − R_X)^j (ι v)`, and
-`L_X − R_X` is nilpotent (a difference of commuting nilpotents). -/
+/-- `adV X` is nilpotent for nilpotent `X ∈ gspin(V)`: `ι((adV X)^j v) = (ad X)^j (ι v)`, and
+`ad X` is nilpotent (Mathlib's `LieAlgebra.ad_nilpotent_of_nilpotent`). -/
 theorem isNilpotent_adV {Q : QuadraticForm K V} {X : CliffordAlgebra Q} (hX : X ∈ gspin Q)
     (hn : IsNilpotent X) : IsNilpotent (adV Q X) := by
-  set D : Module.End K (CliffordAlgebra Q) := LinearMap.mulLeft K X - LinearMap.mulRight K X
-  obtain ⟨k, hk⟩ : IsNilpotent D :=
-    (LinearMap.commute_mulLeft_right X X).isNilpotent_sub
-      ((LinearMap.isNilpotent_mulLeft_iff K X).2 hn)
-      ((LinearMap.isNilpotent_mulRight_iff K X).2 hn)
-  have h : ∀ j v, ι Q ((adV Q X ^ j) v) = (D ^ j) (ι Q v) := by
+  obtain ⟨k, hk⟩ := LieAlgebra.ad_nilpotent_of_nilpotent (R := K) hn
+  have h : ∀ j v, ι Q ((adV Q X ^ j) v) = (LieAlgebra.ad K _ X ^ j) (ι Q v) := by
     intro j
     induction j with
-    | zero => simp
+    | zero => intro v; rfl
     | succ j ih =>
       intro v
-      rw [pow_succ', Module.End.mul_apply, ι_adV hX, ih, pow_succ', Module.End.mul_apply]
-      rfl
+      rw [pow_succ', Module.End.mul_apply, ι_adV hX, ih, pow_succ', Module.End.mul_apply,
+        LieAlgebra.ad_apply, Ring.lie_def]
   refine ⟨k, LinearMap.ext fun v => CliffordAlgebra.ι_injective Q ?_⟩
   rw [h, hk, LinearMap.zero_apply, LinearMap.zero_apply, map_zero]
 

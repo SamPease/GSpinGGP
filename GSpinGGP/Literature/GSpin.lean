@@ -28,8 +28,9 @@ Galois cohomology `H¹` is **not** modelled.
   Cartan–Dieudonné `cartan_dieudonne_even` in `Foundations/QuadraticForms`).
 * (d) Steinberg's connectedness of centralizers, in concrete form —
   `steinberg_centralizer_connected` (`IsSS`-version `steinberg_centralizer_connected'`).
-* (e) Regular nilpotent orbits exist iff quasi-split (Waldspurger) —
-  `nilReg_nonempty_iff_quasiSplit`, and the GGP-centralizer versions
+* (e) Regular nilpotent orbits exist iff quasi-split (Waldspurger) — now theorems in
+  `GGP/RegularNilpotent` and `GGP/RegularNilpotentConverse` (from Jantzen's results in
+  `Literature/NilpotentOrbits`): `nilReg_nonempty_iff_quasiSplit`, and the GGP-centralizer versions
   `nilReg_centralizer_nonempty_imp` (unconditional, one direction) and
   `nilReg_centralizer_nonempty_iff` (both directions, under a torus hypothesis on the moved part:
   the statement without that hypothesis is false, see the docstring).
