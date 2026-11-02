@@ -23,6 +23,8 @@ import GSpinGGP.GGP.Germs
 import GSpinGGP.Literature.GSpin
 import GSpinGGP.Literature.NilpotentOrbits
 import GSpinGGP.GGP.RegularNilpotent
+import GSpinGGP.Foundations.SoSplit
+import GSpinGGP.GGP.SemisimpleRank
 import GSpinGGP.GGP.Centralizers
 import GSpinGGP.Literature.TraceFormula
 import GSpinGGP.TraceFormula.StronglyCuspidal
