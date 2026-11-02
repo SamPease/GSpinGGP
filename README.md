@@ -41,13 +41,13 @@ satisfying the stability, transfer and genericity hypotheses, which is all the p
 
 As of November 2026:
 
-- The project builds with 46 declarations containing `sorry`. The main theorem `local_ggp`
-  depends on 34 of them: 7 are the analytic core of the local trace formula (Thesis Ch. 8–12,
-  e.g. convergence of the distribution `J` and its spectral expansion), 17 are published results
+- The project builds with 45 declarations containing `sorry`. The main theorem `local_ggp`
+  depends on 32 of them: 7 are the analytic core of the local trace formula (Thesis Ch. 8–12,
+  e.g. convergence of the distribution `J` and its spectral expansion), 15 are published results
   that the dissertation adapts to general spin groups (see below), the rest smaller lemmas.
 - Results from the literature are assumed as `axiom`s in `GSpinGGP/Literature/`, each with a
   docstring citing its source. Only statements that appear in a source, specialized to general spin
-  groups with the source's hypotheses checked, are axioms. `local_ggp` uses 10 of the 12.
+  groups with the source's hypotheses checked, are axioms. `local_ggp` uses 11 of the 12.
   Where the dissertation adapts a published result (stated for orthogonal or unitary groups, groups
   with compact centre, pure inner forms, …) or combines several, the statement is a theorem with
   `sorry`, and its docstring names the exact ingredients and sketches the argument.

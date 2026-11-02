@@ -308,6 +308,70 @@ theorem span_sup_orthogonal_isSplitFamily [FiniteDimensional K V] (hQ : IsNondeg
 
 end Model
 
+/-! ## Extending a split family by hyperbolic pairs -/
+
+section Extend
+
+variable {K : Type*} [Field K] [Invertible (2 : K)]
+variable {V : Type*} [AddCommGroup V] [Module K V] {Q : QuadraticForm K V}
+
+/-- Extend `w_{-k..k}` by hyperbolic pairs `h_a, h_{2s-1-a}` (`b(h_a, h_b) = δ_{a+b+1, 2s}`):
+`w_{k+1+a} = ν h_a`, `w_{-(k+1+a)} = h_{2s-1-a}` for `a < s`. -/
+def extFamily (w : ℤ → V) (h : ℕ → V) (ν : K) (k s : ℕ) : ℤ → V := fun j =>
+  if |j| ≤ k then w j else if 0 < j then ν • h (j - k - 1).toNat else h (2 * s + j + k).toNat
+
+theorem isSplitFamily_extFamily {w : ℤ → V} {h : ℕ → V} {ν : K} {k s : ℕ}
+    (hw : IsSplitFamily Q w ν k)
+    (hh : ∀ a b : ℕ, a < 2 * s → b < 2 * s →
+      bform Q (h a) (h b) = if a + b + 1 = 2 * s then 1 else 0)
+    (hwh : ∀ j : ℤ, |j| ≤ k → ∀ a : ℕ, a < 2 * s → bform Q (w j) (h a) = 0) :
+    IsSplitFamily Q (extFamily w h ν k s) ν (k + s) := by
+  have hsymm : ∀ x y, bform Q x y = bform Q y x := fun x y => QuadraticMap.associated_isSymm K Q x y
+  intro i j hi hj
+  rw [abs_le] at hi hj
+  push_cast at hi hj
+  obtain hi' | hi' | hi' : |i| ≤ k ∨ (k : ℤ) < i ∨ i < -k := by rw [abs_le]; omega
+  all_goals obtain hj' | hj' | hj' : |j| ≤ k ∨ (k : ℤ) < j ∨ j < -k := by rw [abs_le]; omega
+  all_goals simp only [extFamily]
+  · rw [ite_eq_left hi', ite_eq_left hj', hw i j hi' hj']
+  · have hj1 : ¬ |j| ≤ k := by rw [abs_le]; omega
+    rw [ite_eq_left hi', ite_eq_right hj1, ite_eq_left (by omega), map_smul, hwh i hi' _ (by omega), smul_zero,
+      ite_eq_right (by rw [abs_le] at hi'; omega)]
+  · have hj1 : ¬ |j| ≤ k := by rw [abs_le]; omega
+    rw [ite_eq_left hi', ite_eq_right hj1, ite_eq_right (by omega), hwh i hi' _ (by omega),
+      ite_eq_right (by rw [abs_le] at hi'; omega)]
+  · have hi1 : ¬ |i| ≤ k := by rw [abs_le]; omega
+    rw [ite_eq_right hi1, ite_eq_left (by omega), ite_eq_left hj', hsymm, map_smul,
+      hwh j hj' _ (by omega), smul_zero, ite_eq_right (by rw [abs_le] at hj'; omega)]
+  · have hi1 : ¬ |i| ≤ k := by rw [abs_le]; omega
+    have hj1 : ¬ |j| ≤ k := by rw [abs_le]; omega
+    rw [ite_eq_right hi1, ite_eq_left (by omega), ite_eq_right hj1, ite_eq_left (by omega), map_smul, map_smul,
+      LinearMap.smul_apply, hh _ _ (by omega) (by omega), ite_eq_right (by omega), ite_eq_right (by omega)]
+    simp
+  · have hi1 : ¬ |i| ≤ k := by rw [abs_le]; omega
+    have hj1 : ¬ |j| ≤ k := by rw [abs_le]; omega
+    rw [ite_eq_right hi1, ite_eq_left (by omega), ite_eq_right hj1, ite_eq_right (by omega), map_smul,
+      LinearMap.smul_apply, hh _ _ (by omega) (by omega)]
+    by_cases hij : i + j = 0
+    · rw [ite_eq_left (by omega), ite_eq_left hij, smul_eq_mul, mul_one]
+    · rw [ite_eq_right (by omega), ite_eq_right hij, smul_zero]
+  · have hi1 : ¬ |i| ≤ k := by rw [abs_le]; omega
+    rw [ite_eq_right hi1, ite_eq_right (by omega), ite_eq_left hj', hsymm, hwh j hj' _ (by omega),
+      ite_eq_right (by rw [abs_le] at hj'; omega)]
+  · have hi1 : ¬ |i| ≤ k := by rw [abs_le]; omega
+    have hj1 : ¬ |j| ≤ k := by rw [abs_le]; omega
+    rw [ite_eq_right hi1, ite_eq_right (by omega), ite_eq_right hj1, ite_eq_left (by omega), map_smul,
+      hh _ _ (by omega) (by omega)]
+    by_cases hij : i + j = 0
+    · rw [ite_eq_left (by omega), ite_eq_left hij, smul_eq_mul, mul_one]
+    · rw [ite_eq_right (by omega), ite_eq_right hij, smul_zero]
+  · have hi1 : ¬ |i| ≤ k := by rw [abs_le]; omega
+    have hj1 : ¬ |j| ≤ k := by rw [abs_le]; omega
+    rw [ite_eq_right hi1, ite_eq_right (by omega), ite_eq_right hj1, ite_eq_right (by omega),
+      hh _ _ (by omega) (by omega), ite_eq_right (by omega), ite_eq_right (by omega)]
+
+end Extend
+
 section Centralizer
 
 variable {K : Type*} [Field K] [Invertible (2 : K)]

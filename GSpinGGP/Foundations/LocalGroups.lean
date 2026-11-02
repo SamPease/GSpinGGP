@@ -1192,6 +1192,49 @@ quasi-split. -/
 def NilReg (G : Subgroup Aˣ) (𝔤 : LieSubalgebra F A) : Set (NilOrbit G 𝔤) :=
   {O | IsRegularNil 𝔤 (Quotient.out O).1}
 
+/-- `dim 𝔤_{gXg⁻¹} = dim 𝔤_X` when conjugation by `g` and `g⁻¹` preserves `𝔤`. -/
+theorem finrank_lieCentralizer_conj (𝔤 : LieSubalgebra F A)
+    (g : Aˣ) (hg : ∀ Y ∈ 𝔤, (g : A) * Y * (↑g⁻¹ : A) ∈ 𝔤)
+    (hg' : ∀ Y ∈ 𝔤, (↑g⁻¹ : A) * Y * (g : A) ∈ 𝔤) (X : A) :
+    Module.finrank F ↥(lieCentralizer 𝔤 ((g : A) * X * (↑g⁻¹ : A))) =
+      Module.finrank F ↥(lieCentralizer 𝔤 X) := by
+  set φ := conjAd F g
+  have hmap : (lieCentralizer 𝔤 X).toSubmodule.map φ.toLinearEquiv.toLinearMap =
+      (lieCentralizer 𝔤 ((g : A) * X * (↑g⁻¹ : A))).toSubmodule := by
+    ext Z
+    rw [Submodule.mem_map_equiv, LieSubalgebra.mem_toSubmodule, LieSubalgebra.mem_toSubmodule,
+      mem_lieCentralizer, mem_lieCentralizer]
+    have hs : φ.toLinearEquiv.symm Z = (↑g⁻¹ : A) * Z * (g : A) := rfl
+    rw [hs]
+    constructor
+    · rintro ⟨hZ, hc⟩
+      refine ⟨by simpa [mul_assoc] using hg _ hZ, ?_⟩
+      have := congrArg (fun T => (g : A) * T * (↑g⁻¹ : A)) hc
+      simpa [mul_assoc] using this
+    · rintro ⟨hZ, hc⟩
+      refine ⟨hg' _ hZ, ?_⟩
+      have := congrArg (fun T => (↑g⁻¹ : A) * T * (g : A)) hc
+      simpa [mul_assoc] using this
+  show Module.finrank F ↥(lieCentralizer 𝔤 ((g : A) * X * (↑g⁻¹ : A))).toSubmodule =
+    Module.finrank F ↥(lieCentralizer 𝔤 X).toSubmodule
+  rw [← hmap]
+  exact ((φ.toLinearEquiv.submoduleMap (lieCentralizer 𝔤 X).toSubmodule).finrank_eq).symm
+
+/-- The orbit of a regular nilpotent element is a regular orbit (regularity is invariant under
+conjugation by `G`, when `G` preserves `𝔤`). -/
+theorem mk_mem_nilReg_of_isRegularNil (G : Subgroup Aˣ)
+    (𝔤 : LieSubalgebra F A) (hG : ∀ g ∈ G, ∀ Y ∈ 𝔤, (g : A) * Y * (↑g⁻¹ : A) ∈ 𝔤)
+    (X : {X : A // X ∈ 𝔤 ∧ IsNilpotent X}) (hX : IsRegularNil 𝔤 X.1) :
+    Quotient.mk (nilSetoid G 𝔤) X ∈ NilReg G 𝔤 := by
+  show IsRegularNil 𝔤 (Quotient.out (Quotient.mk (nilSetoid G 𝔤) X)).1
+  obtain ⟨g, hgG, hgX⟩ := Quotient.exact (Quotient.out_eq (Quotient.mk (nilSetoid G 𝔤) X))
+  obtain ⟨hmem, hnil⟩ := (Quotient.out (Quotient.mk (nilSetoid G 𝔤) X)).2
+  refine ⟨hmem, hnil, ?_⟩
+  have hg' : ∀ Y ∈ 𝔤, (↑g⁻¹ : A) * Y * (g : A) ∈ 𝔤 := fun Y hY => by
+    simpa using hG g⁻¹ (G.inv_mem hgG) Y hY
+  rw [← finrank_lieCentralizer_conj 𝔤 g (hG g hgG) hg', hgX]
+  exact hX.2.2
+
 end Nilpotent
 
 /-! ## 6. Harmonic analysis on `𝔤` (Thesis §2.4; BP §1.6, §1.8) -/
