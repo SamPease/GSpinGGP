@@ -192,7 +192,7 @@ $x\mapsto y$, carrying $T_{x,\natural}$ onto $T_{y,\natural}$ with every $t$ sta
 \end{lemma}
 \begin{proof}
 \leanok
-\uses{gspin, isSemisimple_specP_baseChange, lieAbelian_specP_baseChange, stablyConjG_diag_of_psiU}
+\uses{isSemisimple_specP_baseChange, lieAbelian_specP_baseChange, stablyConjG_diag_of_psiU}
 The values of $t\mapsto gC(\varphi_\alpha)(t)g^{-1}$ are Galois-fixed, hence rational
 (Galois descent); they commute with $y$ and fix $W'_y$. The inverse comes from $g^{-1}$ and $\varphi_\alpha^{-1}$. Scalars are central and $x\mapsto y$ by the choice of $g$. $e$ and $e^{-1}$ are restrictions of $F$-linear maps $C(W)\to C(W_\alpha)$, hence continuous. Stable conjugacy in $G$ is Lemma~\ref{stablyConjG_diag_of_psiU}. On $T_{x,\natural}$ the centralizers of $\bar t$ and $\bar x$ in $\GSpin(W)(\Fbar)$ and $\GSpin(V)(\Fbar)$ agree (by the centralizer theorem, Theorem~\ref{steinberg_centralizer_connected}, and the commutativity of the Lie algebra of $S_t$); hence the rationality clauses for $x$ give those for $t$, and $\Ad(g)\circ C(\varphi_\alpha)$ carries centralizers, fixed spaces and semisimplicity, so $T_{x,\natural}$ and $T_{y,\natural}$ correspond.
 \end{proof}
@@ -206,7 +206,6 @@ If $\bar s=\Ad(g)C(\varphi_\alpha)(\bar t)$ with $g\in\GSpin(W_\alpha)(\Fbar)$, 
 \end{lemma}
 \begin{proof}
 \leanok
-\uses{gspin}
 On $V$ conjugate by the image of $g$ under $W_{\alpha,\Fbar}\subseteq V_{\alpha,\Fbar}$: the two compositions $C(W)\to C(V_{\alpha,\Fbar})$ agree on $W$.
 \end{proof}
 
@@ -402,7 +401,7 @@ This replaces the Kottwitz-sign cancellation of Thesis \S6.7 after (6.7.6).
 \end{theorem}
 \begin{proof}
 \leanok
-\uses{InnerTwist, LIT-finite_H1_torusBar, existsUnique_twistIdx, exists_twistIdx_kottwitzSign_neg, gspin, kottwitzSign, kottwitzSign_twistIdx_mul, n_alpha, n_alpha_eq_card_twistIdx, padic_quadratic_classes, torusBarFbar_commute}
+\uses{InnerTwist, LIT-finite_H1_torusBar, existsUnique_twistIdx, exists_twistIdx_kottwitzSign_neg, kottwitzSign, kottwitzSign_twistIdx_mul, n_alpha, n_alpha_eq_card_twistIdx, padic_quadratic_classes, torusBarFbar_commute}
 The sum equals $\sum_{\beta\in H^1(F,S_x)}e(G_{q_x(\beta)})$. If $x$ is central this is $e(G)=1$. Otherwise the
 sign is a character of the finite group $H^1(F,S_x)$ taking the value $-1$, so the sum vanishes.
 \end{proof}

@@ -25,7 +25,20 @@ The integrand is invariant under $A_{G,H}(F)$ (germs are translation invariant),
 $T_\natural=\{t\in T: t\in\Gamma(G,H),\ T_t=T\}$ is open in $T(F)$ (Thesis \S6.5).
 \end{lemma}
 \begin{proof}
-Not yet formalized. Near $t_0\in T_\natural$ the rank of $P(t)-1$ cannot drop, so $W'_t=W'_{t_0}$, and $P(t)|_{W''}$ stays regular.
+\leanok
+\uses{InnerTwist, gspin, isSS_of_isSemisimple_specP_baseChange, lieAbelian_specP_baseChange}
+Let $x=t_0\in T_\natural$, so $T=T_x$, and $t\in T$ near $x$. The kernel dimension of a continuous family of linear maps is upper semicontinuous. Since $W'_x\subseteq W'_t=\ker(v\mapsto t\iota(v)-\iota(v)t)$, this gives $W'_t=W'_x$. Likewise the moved part $\mathfrak l_t$ of $\mathfrak g_t$ contains $\mathfrak l_x$ (for $Z\in\mathfrak l_x$ and small $c\neq0$, $e^{cZ}\in T_x$ commutes with $t$), so $\mathfrak l_t=\mathfrak l_x$ is abelian. The element $t$ is semisimple (elements of $T_x$ are, by the next lemma), so Steinberg's description of centralizers gives $T_t\subseteq T_x$, and $T_x\subseteq T_t$ because $T_x$ is commutative.
+\end{proof}
+
+\begin{lemma}[Semisimplicity in $\mathrm{GSpin}$]
+\label{isSS_of_isSemisimple_specP_baseChange}
+\lean{GSpinGGP.isSS_of_isSemisimple_specP_baseChange}
+\leanok
+\uses{GSpin}
+Over a field of characteristic $0$, $x\in\mathrm{GSpin}(V)$ is semisimple (acts semisimply on $C(V)$) if $P(x)\in\mathrm{SO}(V)$ is semisimple.
+\end{lemma}
+\begin{proof}
+Not yet formalized. $P$ is a central extension by $\mathbb G_m$, so the unipotent part of $x$ lies in $\mathbb G_m$ and is trivial. It is used for $t\in T_x$, $x\in\Gamma(G,H)$, whose image $P(t)$ is semisimple (proved: $P(t)$ is scalar on the eigenlines of $P(x)$ and an isometry of the nondegenerate plane $E_{-1}$).
 \end{proof}
 
 \begin{lemma}[Continuity on $T_\natural$]

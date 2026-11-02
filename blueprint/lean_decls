@@ -125,6 +125,7 @@ GSpinGGP.thm_9_1_1_ell
 GSpinGGP.exists_virtual_spectral_ell
 GSpinGGP.aestronglyMeasurable_torusFn_of_mem_QC
 GSpinGGP.isOpen_torusNat
+GSpinGGP.isSS_of_isSemisimple_specP_baseChange
 GSpinGGP.continuousOn_gammaIntegrand_of_mem_QC
 GSpinGGP.germ_bound_of_mem_QC
 GSpinGGP.bp_integrable_deltaGGP_rpow

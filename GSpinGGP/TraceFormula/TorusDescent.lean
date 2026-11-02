@@ -6,6 +6,7 @@ import GSpinGGP.TraceFormula.Interface
 import GSpinGGP.TraceFormula.GermTranslate
 import GSpinGGP.GGP.MovedCentralizer
 import GSpinGGP.Foundations.RankSemicontinuity
+import GSpinGGP.GGP.IsometrySemisimple
 
 /-!
 # Measurability of the integrand of `m_{geom,s}` on `T(F)/A_{G,H}(F)`
@@ -370,18 +371,60 @@ theorem commute_of_mem_torusOf_of_movedPart {x t : ↥(GSpin d.QW)}
   rw [mul_smul_comm, smul_mul_assoc] at h2
   exact smul_right_injective _ hc0 h2
 
+/-- **`x ∈ GSpin(V)` is semisimple if `P(x)` is** (over a field of characteristic `0`; the
+hypothesis is semisimplicity over `K̄`, equivalent to that over `K` by
+`IsomCent.isSemisimple_baseChange_algebraicClosure` and its converse).  Converse of
+`isSemisimple_specP_of_isSS`.  Proof sketch: `P : GSpin(V) → SO(V)` is a central extension by
+`ker P = 𝔾_m`.  Let `x = x_s x_u` be the Jordan decomposition of `x` in the algebraic group
+`GSpin(V)`; it is respected by every representation, in particular by `P` and by left
+multiplication on `C(V)`.  As `P(x)` is semisimple, `P(x_u) = 1`, so `x_u ∈ 𝔾_m` is a unipotent
+scalar, i.e. `x_u = 1`; hence `x = x_s` acts semisimply on `C(V)`.  Elementary alternative over
+`K̄`: diagonalize `P(x)` in a basis of `V_{K̄}` of isotropic pairs `(e_i, f_i)` (eigenvalues
+`λ_i, λ_i⁻¹`) and anisotropic `±1`-eigenvectors; then `x ι(v) x⁻¹ = ι(P(x) v)` makes the monomials
+in this basis eigenvectors of `Ad(x)`, and `x` lies in the commutative subalgebra they generate
+together with the idempotents `e_i f_i`, on which it acts diagonally.
+Status: SORRY (own work, Clifford algebra). -/
+theorem isSS_of_isSemisimple_specP_baseChange {K V : Type*} [Field K] [CharZero K]
+    [Invertible (2 : K)] [AddCommGroup V] [Module K V] [FiniteDimensional K V]
+    {Q : QuadraticForm K V} (hQ : IsNondeg Q) (x : GSpin Q)
+    (hx : Module.End.IsSemisimple ((specP Q x : V →ₗ[K] V).baseChange (AlgebraicClosure K))) :
+    Module.End.IsSemisimple
+      (LinearMap.mulLeft K (((x : (CliffordAlgebra Q)ˣ)) : CliffordAlgebra Q)) := by
+  sorry
+
 /-- **Elements of `T_x` are semisimple** for `x ∈ Γ(G,H)` (Thesis §6.5: `T_x` is a torus).
-Proof sketch: over `F̄`, `X = P(x)` is semisimple and the moved part of its Lie centralizer is
-abelian (`lieAbelian_specP_baseChange`), so its eigenspaces `E_μ`, `μ ≠ ±1`, are lines and
-`dim E₋₁ ≤ 2` (`IsomCent.finrank_eigenspace_le_one`, `IsomCent.finrank_eigenspace_neg_one_le_two`).
-`P(t)` commutes with `X`, is `1` on `E₁ = W'_x ⊗ F̄`, scalar on each line `E_μ`, and on `E₋₁` an
-isometry of determinant `1` (`Steinberg.commute_iff`), i.e. an element of `SO(2)(F̄) ≅ 𝔾_m`; so
-`P(t)` is semisimple.  Then `t` is semisimple in `C(W)`: `ker P = 𝔾_m` is a central torus, so the
-unipotent part of `t` (Jordan decomposition in `GSpin(W)`) is trivial.
-Status: SORRY (own work). -/
+Over `F̄`, `X = P(x)` is semisimple and the moved part of its Lie centralizer is abelian
+(`lieAbelian_specP_baseChange`); `P(t)` is an isometry commuting with `X` and fixing
+`ker (X − 1) = W'_x ⊗ F̄`, hence semisimple (`IsomCent.isSemisimple_of_commute_of_lieAbelian`:
+`P(t)` is scalar on the eigenlines of `X` and an isometry of the nondegenerate plane `E₋₁`).
+Then `t` is semisimple by `isSS_of_isSemisimple_specP_baseChange`. -/
 theorem isSS_of_mem_torusOf {x t : ↥(GSpin d.QW)} (hx : d.IsGammaElt x) (ht : t ∈ d.torusOf x) :
     IsSS F (((t : (CliffordAlgebra d.QW)ˣ)) : CliffordAlgebra d.QW) := by
-  sorry
+  refine isSS_of_isSemisimple_specP_baseChange d.nondeg t ?_
+  have hQ := isNondeg_baseChange _ d.nondeg
+  have hB : (bform (d.QW.baseChange (AlgebraicClosure F))).IsSymm := ⟨fun u v => bform_comm _ u v⟩
+  rw [← specP_bcGSpin]
+  have hxss : Module.End.IsSemisimple (specP _ (bcGSpin d.QW x) :
+      AlgebraicClosure F ⊗[F] (Fin d.m → F) →ₗ[AlgebraicClosure F] _) := by
+    rw [specP_bcGSpin]
+    exact isSemisimple_baseChange (isSemisimple_specP_of_isSS d.QW x hx.1)
+  have hL : IsomCent.LieAbelian (bform (d.QW.baseChange (AlgebraicClosure F)))
+      (specP _ (bcGSpin d.QW x) :
+        AlgebraicClosure F ⊗[F] (Fin d.m → F) →ₗ[AlgebraicClosure F] _) := by
+    rw [specP_bcGSpin]
+    exact lieAbelian_specP_baseChange x hx
+  have htx : Commute t x := Subgroup.mem_centralizer_singleton_iff.mp ht.1
+  have hc : Commute (specP _ (bcGSpin d.QW x)) (specP _ (bcGSpin d.QW t)) :=
+    ((htx.symm.map (bcGSpin d.QW)).map (specP _))
+  refine IsomCent.isSemisimple_of_commute_of_lieAbelian hB hQ (Steinberg.isIsom_specP _) hxss hL
+    (Steinberg.isIsom_specP _) (Steinberg.commute_toLinearMap hc.symm) fun z hz => ?_
+  have hle : fixedSub x ≤ fixedSub t := fun v hv => by
+    have := ht.2 v hv
+    simpa [fixedSub, sub_eq_zero] using this
+  rw [GGPData.eigenspace_bc_one] at hz
+  have hz' := Submodule.baseChange_mono (AlgebraicClosure F) hle hz
+  rw [← GGPData.eigenspace_bc_one, Module.End.mem_eigenspace_iff, one_smul] at hz'
+  exact hz'
 
 /-- **`T_♮` is open in `T(F)`** (Thesis §6.5: `T_♮` is Zariski open in `T`).  For `x = t₀ ∈ T_♮`
 (so `T = T_x`) and `t ∈ T` near `x`:
