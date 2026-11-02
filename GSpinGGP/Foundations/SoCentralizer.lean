@@ -82,6 +82,19 @@ section Centralizer
 variable {K : Type*} [Field K] [Invertible (2 : K)]
 variable {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
 
+/-- **`adV` maps `gspin(V)` onto `so(V)`**: every `b`-skew `M` is `adV Y` for some `Y ∈ gspin(V)`
+(a combination of bivectors, Tau Ceti's `soEquivQuadratic`). -/
+theorem exists_mem_gspin_adV_eq {Q : QuadraticForm K V} (hQ : IsNondeg Q) (M : Module.End K V)
+    (hMs : ∀ u w, bform Q (M u) w = -bform Q u (M w)) : ∃ Y ∈ gspin Q, adV Q Y = M := by
+  obtain ⟨Y, hYq, hY⟩ := exists_mem_quadratic_commutator_eq hQ M hMs
+  have hYg : Y ∈ gspin Q := by
+    refine quadraticLieSubalgebra_toSubmodule_le_of_bivector_mem Q (P := (gspin Q).toSubmodule)
+      (fun a b => ?_) hYq
+    rw [bivector_def]
+    exact (gspin Q).smul_mem _ (Submodule.sub_mem (gspin Q).toSubmodule
+      (ι_mul_ι_mem_gspin Q a b) (ι_mul_ι_mem_gspin Q b a))
+  exact ⟨Y, hYg, by ext v; apply ι_injective Q; rw [ι_adV hYg, hY]⟩
+
 /-- **`dim gspin(V)_X = 1 + dim so(V)_{adV X}`** (Thesis Prop. 5.1.3.1: `gspin(V) = so(V) ⊕ K`).
 `Y ↦ adV Y` maps `gspin(V)_X` onto `so(V)_{adV X}` with kernel the scalars: a lift `Y` of
 `M ∈ so(V)_{adV X}` has `[Y, X]` scalar and traceless on `C(V)`, hence `0`. -/
@@ -102,15 +115,7 @@ theorem finrank_lieCentralizer_gspin {Q : QuadraticForm K V} (hQ : IsNondeg Q)
   have hsurj : Function.Surjective φ := by
     rintro ⟨M, hM⟩
     obtain ⟨hMs, hMN⟩ := mem_soCent.mp hM
-    obtain ⟨Y, hYq, hY⟩ := exists_mem_quadratic_commutator_eq hQ M hMs
-    have hYg : Y ∈ gspin Q := by
-      refine quadraticLieSubalgebra_toSubmodule_le_of_bivector_mem Q (P := (gspin Q).toSubmodule)
-        (fun a b => ?_) hYq
-      rw [bivector_def]
-      exact (gspin Q).smul_mem _ (Submodule.sub_mem (gspin Q).toSubmodule
-        (ι_mul_ι_mem_gspin Q a b) (ι_mul_ι_mem_gspin Q b a))
-    have hYM : adV Q Y = M := by
-      ext v; apply ι_injective Q; rw [ι_adV hYg, hY]
+    obtain ⟨Y, hYg, hYM⟩ := exists_mem_gspin_adV_eq hQ M hMs
     have hC : Y * X - X * Y ∈ gspin Q := by
       have := (gspin Q).lie_mem hYg hX; rwa [Ring.lie_def] at this
     obtain ⟨r, hr⟩ := eq_algebraMap_of_adV_eq_zero hQ hC (by rw [adV_commutator hYg hX, hYM, hMN, sub_self])

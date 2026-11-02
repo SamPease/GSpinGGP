@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.GGP.SemisimpleRank
 import GSpinGGP.GGP.RegularNilpotent
-import GSpinGGP.GGP.TorusCommute
 
 /-!
 # The rank of `gspin(V)`
@@ -14,11 +13,11 @@ For a nondegenerate quadratic space `V` of dimension `n` over a field of charact
 
 The lower bound is `le_lieRank_gspin`. For the upper bound we build a skew `Z` with
 `dim so(V)_Z ≤ ⌊n/2⌋` (`exists_skew_finrank_soCent_le`): split off an anisotropic orthogonal plane
-`P = ⟨e, f⟩`, take `Z = c J ⊕ Z'` with `J = wedge(e, f)` (so `J² = −b(e,e) b(f,f)` on `P`) and `Z'`
+`P = ⟨a, b⟩`, take `Z = c J ⊕ Z'` with `J = wedge(a, b)` (so `J² = −q(a) q(b)` on `P`) and `Z'`
 given by induction on `P^⊥`, and choose `c` so that `c² J²` is not an eigenvalue of `Z'²`. Then
 `P` is an eigenspace of `Z²`, every element of `so(V)_Z` preserves it, and
 `dim so(V)_Z = dim so(P)_Z + dim so(P^⊥)_{Z'} ≤ 1 + ⌊(n-2)/2⌋`. A lift of `Z` to `gspin(V)`
-(`exists_lift_skew`) has centralizer of dimension `dim so(V)_Z + 1`.
+(`exists_mem_gspin_adV_eq`) has centralizer of dimension `dim so(V)_Z + 1`.
 -/
 
 noncomputable section
@@ -32,7 +31,7 @@ universe u
 variable {K : Type*} [Field K] [Invertible (2 : K)] [CharZero K]
 
 /-- **A skew endomorphism with small centralizer**: every nondegenerate `V` of dimension `n` has
-a `b`-skew `Z` with `dim so(V)_Z ≤ ⌊n/2⌋`. -/
+a `b`-skew `Z` (i.e. `Z ∈ so(V) = soCent Q 1`) with `dim so(V)_Z ≤ ⌊n/2⌋`. -/
 theorem exists_skew_finrank_soCent_le (n : ℕ) : ∀ {V : Type u} [AddCommGroup V] [Module K V]
     [FiniteDimensional K V] (Q : QuadraticForm K V), finrank K V = n → IsNondeg Q →
     ∃ Z : Module.End K V, Z ∈ soCent Q 1 ∧ finrank K (soCent Q Z) ≤ n / 2 := by
@@ -175,16 +174,15 @@ variable {V : Type*} [AddCommGroup V] [Module F V] [FiniteDimensional F V]
 theorem lieRank_gspin_le {Q : QuadraticForm F V} (hQ : IsNondeg Q) :
     lieRank (gspin Q) ≤ finrank F V / 2 + 1 := by
   obtain ⟨Z, hZ, hle⟩ := exists_skew_finrank_soCent_le _ Q rfl hQ
-  obtain ⟨Y, hYg, hY⟩ := exists_lift_skew hQ Z (mem_soCent.1 hZ).1
-  have hadV : adV Q Y = Z :=
-    LinearMap.ext fun v => CliffordAlgebra.ι_injective Q (by rw [ι_adV hYg, hY])
+  obtain ⟨Y, hYg, hadV⟩ := exists_mem_gspin_adV_eq hQ Z (mem_soCent.1 hZ).1
   calc lieRank (gspin Q) ≤ finrank F (lieCentralizer (gspin Q) Y) :=
         ciInf_le' (fun X : gspin Q => finrank F (lieCentralizer (gspin Q) (X : CliffordAlgebra Q)))
           ⟨Y, hYg⟩
     _ = finrank F (soCent Q (adV Q Y)) + 1 := finrank_lieCentralizer_gspin hQ hYg
     _ ≤ finrank F V / 2 + 1 := by rw [hadV]; omega
 
-/-- **`rank gspin(V) = ⌊dim V/2⌋ + 1`.** -/
+/-- **`rank gspin(V) = ⌊dim V/2⌋ + 1`**, the absolute rank (dimension of a Cartan subalgebra)
+of `GSpin(V)`: `le_antisymm` of `lieRank_gspin_le` and `le_lieRank_gspin`. -/
 theorem lieRank_gspin {Q : QuadraticForm F V} (hQ : IsNondeg Q) :
     lieRank (gspin Q) = finrank F V / 2 + 1 :=
   le_antisymm (lieRank_gspin_le hQ) (le_lieRank_gspin hQ)
