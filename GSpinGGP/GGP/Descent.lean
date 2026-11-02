@@ -1,3 +1,4 @@
+import GSpinGGP.Foundations.SoCentralizer
 import GSpinGGP.GGP.Triple
 import GSpinGGP.GGP.Centralizers
 import GSpinGGP.GGP.Germs
@@ -44,36 +45,6 @@ section SO
 
 variable {K : Type*} [Field K] [Invertible (2 : K)]
 variable {V : Type*} [AddCommGroup V] [Module K V]
-
-/-- The trace `x ↦ tr(L_x)` of left multiplication on `C(V)`. -/
-abbrev cliffTrace [Module.Finite K V] (Q : QuadraticForm K V) (x : CliffordAlgebra Q) : K :=
-  LinearMap.trace K _ (LinearMap.mulLeft K x)
-
-omit [Invertible (2 : K)] in
-theorem cliffTrace_add [Module.Finite K V] (Q : QuadraticForm K V) (x y : CliffordAlgebra Q) :
-    cliffTrace Q (x + y) = cliffTrace Q x + cliffTrace Q y := by
-  have e : LinearMap.mulLeft K (x + y) = LinearMap.mulLeft K x + LinearMap.mulLeft K y := by
-    ext z; simp [add_mul]
-  simp only [cliffTrace, e, map_add]
-
-omit [Invertible (2 : K)] in
-theorem cliffTrace_smul [Module.Finite K V] (Q : QuadraticForm K V) (c : K) (x : CliffordAlgebra Q) :
-    cliffTrace Q (c • x) = c * cliffTrace Q x := by
-  have e : LinearMap.mulLeft K (c • x) = c • LinearMap.mulLeft K x := by
-    ext z; simp
-  simp only [cliffTrace, e, map_smul, smul_eq_mul]
-
-theorem cliffTrace_one [Module.Finite K V] (Q : QuadraticForm K V) :
-    cliffTrace Q 1 = (finrank K (CliffordAlgebra Q) : K) := by
-  simp only [cliffTrace, LinearMap.mulLeft_one]
-  exact LinearMap.trace_id K _
-
-omit [Invertible (2 : K)] in
-theorem cliffTrace_commutator [Module.Finite K V] (Q : QuadraticForm K V) (x y : CliffordAlgebra Q) :
-    cliffTrace Q (x * y - y * x) = 0 := by
-  rw [sub_eq_add_neg, cliffTrace_add, ← neg_one_smul K (y * x), cliffTrace_smul,
-    show cliffTrace Q (x * y) = cliffTrace Q (y * x) from trace_mulLeft_comm Q x y]
-  ring
 
 /-- `so(V) ⊆ gspin(V)`: the elements of `gspin(V)` whose left multiplication on `C(V)` is
 traceless.  This is the image of `∧²V` (spanned by the commutators `[ι a, ι b]`), i.e. the Lie
