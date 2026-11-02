@@ -9,7 +9,7 @@ import GSpinGGP.GGP.Steinberg
 # `dim so(V)_X = ⌊dim V / 2⌋` over any field of characteristic `0`
 
 `finrank_soCent_of_commute` (algebraically closed fields) descends to any field `F` of
-characteristic `0` (`finrank_soCent_of_commute'`): in a basis, `so(V)_X` is the matrix space
+characteristic `0` (`finrank_soCent_of_commute_of_charZero`): in a basis, `so(V)_X` is the matrix space
 `so(J)_A`, whose dimension does not change over `F̄` (`finrank_soCentMat_map`); over `F̄` the
 matrix `A` stays a semisimple isometry of determinant `1` (its minimal polynomial is separable), and
 `so(J)_A` stays abelian, being spanned by `so(J)_A(F)`.
@@ -30,12 +30,10 @@ theorem bform_toQuadraticMap {Φ : Matrix (Fin n) (Fin n) K} (hΦ : Φ.transpose
     (u w : Fin n → K) :
     bform (LinearMap.BilinMap.toQuadraticMap (Matrix.toLinearMap₂' K Φ)) u w =
       Matrix.toLinearMap₂' K Φ u w := by
-  have hs : Matrix.toLinearMap₂' K Φ w u = Matrix.toLinearMap₂' K Φ u w := by
+  have hs : ∀ x y, Matrix.toLinearMap₂' K Φ x y = Matrix.toLinearMap₂' K Φ y x := fun x y => by
     rw [Matrix.toLinearMap₂'_apply', Matrix.toLinearMap₂'_apply', Matrix.dotProduct_mulVec,
       ← Matrix.mulVec_transpose, hΦ, dotProduct_comm]
-  rw [bform, QuadraticMap.associated_toQuadraticMap, hs, ← two_smul K]
-  simp only [Module.End.smul_def]
-  simpa using inv_mul_cancel_left₀ (Invertible.ne_zero (2 : K)) (Matrix.toLinearMap₂' K Φ u w)
+  exact LinearMap.congr_fun₂ (QuadraticMap.associated_left_inverse (S := K) (h := hs)) u w
 
 /-- **Matrix form of `finrank_soCent_of_commute`.** Over an algebraically closed field of
 characteristic `0`, let `Φ` be symmetric with `det Φ ≠ 0` and `X` with `Xᵀ Φ X = Φ`, `det X = 1`,
@@ -111,7 +109,7 @@ variable {V : Type*} [AddCommGroup V] [Module F V] [FiniteDimensional F V]
 
 /-- **`dim so(V)_X = ⌊dim V/2⌋` over any field of characteristic `0`**: `X` a semisimple isometry
 of the nondegenerate form `Q` with `det X = 1` and `so(V)_X` abelian. -/
-theorem finrank_soCent_of_commute' {Q : QuadraticForm F V} (hQ : IsNondeg Q)
+theorem finrank_soCent_of_commute_of_charZero {Q : QuadraticForm F V} (hQ : IsNondeg Q)
     {X : Module.End F V} (hX : IsomCent.IsIsom (bform Q) X) (hss : X.IsSemisimple)
     (hdet : LinearMap.det X = 1) (hab : ∀ M₁ ∈ soCent Q X, ∀ M₂ ∈ soCent Q X, Commute M₁ M₂) :
     finrank F (soCent Q X) = finrank F V / 2 := by
@@ -169,7 +167,7 @@ theorem finrank_lieCentralizer_gspin_of_isLieAbelian {Q : QuadraticForm F V} (hQ
       (lieCentralizer (gspin Q) ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q))) :
     finrank F (lieCentralizer (gspin Q) ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) =
       finrank F V / 2 + 1 := by
-  rw [finrank_lieCentralizer_gspin_unit hQ g, finrank_soCent_of_commute' hQ
+  rw [finrank_lieCentralizer_gspin_unit hQ g, finrank_soCent_of_commute_of_charZero hQ
     (fun x y => bform_specP g x y) (isSemisimple_specP_of_isSS Q g hss) (det_specP g)
     (commute_of_isLieAbelian_lieCentralizer hQ g hab)]
 

@@ -20,7 +20,8 @@ kernel the scalars (Thesis Prop. 5.1.3.1). So the centralizer of `X ∈ gspin(V)
 
 * `finrank_soCent_le_of_chain`: an upper bound for `dim so(V)_N` when `N` has a long Jordan chain.
 * `soCentMat`, `soCentMat_toMatrix`: the same in matrix form, and `finrank_soCentMat_map`: its
-  dimension does not change under extension of scalars.
+  dimension does not change under extension of scalars; `soCentMat_map_eq_span`: over an
+  extension it is spanned by its `F`-points (`matrixBaseChangeEquiv`: `K ⊗ Mat_n(F) ≃ Mat_n(K)`).
 -/
 
 noncomputable section
@@ -465,6 +466,7 @@ def matrixBaseChangeEquiv (F K : Type*) [Field F] [Field K] [Algebra F K] :
           smul_smul, smul_eq_mul]
       | add x y hx hy => rw [smul_add, map_add, hx, hy, map_add, smul_add] }
 
+@[simp]
 theorem matrixBaseChangeEquiv_tmul (F K : Type*) [Field F] [Field K] [Algebra F K] (a : K)
     (M : Matrix n n F) :
     matrixBaseChangeEquiv (n := n) F K (a ⊗ₜ M) = a • M.map (algebraMap F K) :=
