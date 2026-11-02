@@ -38,10 +38,6 @@ theorem sumEnd_right (h : IsCompl U U') (A : Module.End K U) (A' : Module.End K 
 
 variable [Invertible (2 : K)]
 
-theorem bform_comp_subtype (Q : QuadraticForm K V) (U : Submodule K V) (u w : U) :
-    bform (Q.comp U.subtype) u w = bform Q u w := by
-  simp [bform]
-
 variable {Q : QuadraticForm K V} {X : Module.End K V}
 variable (horth : ∀ u ∈ U, ∀ w ∈ U', bform Q u w = 0)
 include horth
