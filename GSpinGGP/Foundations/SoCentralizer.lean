@@ -448,6 +448,37 @@ theorem soCent_inf_killSub_eq {Q : QuadraticForm K V} {g N : Module.End K V} {A 
       rw [this, mul_add, add_mul, h1, h2]
     exact Submodule.mem_inf.mpr ⟨Submodule.mem_inf.mpr ⟨hMg, mem_soCent.2 ⟨hMs, hMN⟩⟩, hMk⟩
 
+/-- The restriction of `q` to `A` is nondegenerate when `V = A ⊥ A^⊥`. -/
+theorem isNondeg_comp_subtype_of_isCompl {Q : QuadraticForm K V} {A : Submodule K V}
+    (hA : IsCompl A ((bform Q).orthogonal A)) : IsNondeg (Q.comp A.subtype) := by
+  have h := (LinearMap.BilinForm.restrict_nondegenerate_iff_isCompl_orthogonal
+    (B := bform Q) (W := A)
+    (LinearMap.IsSymm.isRefl (QuadraticForm.associated_isSymm (S := K) Q))).2 hA
+  have e : bform (Q.comp A.subtype) = (bform Q).restrict A := by
+    ext a b; exact bform_comp_subtype Q A a b
+  unfold IsNondeg; rw [e]; exact h
+
+/-- For an isometry `g` of a nondegenerate space with `V = ker(g − 1) ⊕ im(g − 1)`, the fixed space
+`A = ker(g − 1)` satisfies `V = A ⊥ A^⊥` (and `A^⊥ = im(g − 1)`). -/
+theorem isCompl_orthogonal_ker_sub_one {Q : QuadraticForm K V} (hQ : IsNondeg Q)
+    {g : Module.End K V} (hg : ∀ u v, bform Q (g u) (g v) = bform Q u v)
+    (hc : IsCompl (LinearMap.ker (g - 1)) (LinearMap.range (g - 1))) :
+    IsCompl (LinearMap.ker (g - 1)) ((bform Q).orthogonal (LinearMap.ker (g - 1))) := by
+  have hle : LinearMap.range (g - 1) ≤ (bform Q).orthogonal (LinearMap.ker (g - 1)) := by
+    rintro _ ⟨y, rfl⟩ u hu
+    have hu' : g u = u := by
+      have := LinearMap.mem_ker.mp hu
+      simpa [sub_eq_zero] using this
+    change bform Q u ((g - 1) y) = 0
+    rw [LinearMap.sub_apply, map_sub, ← hu', hg, hu', Module.End.one_apply, sub_self]
+  have hdim : finrank K ((bform Q).orthogonal (LinearMap.ker (g - 1))) =
+      finrank K (LinearMap.range (g - 1)) := by
+    rw [LinearMap.BilinForm.finrank_orthogonal hQ]
+    have := Submodule.finrank_add_eq_of_isCompl hc
+    omega
+  have heq := Submodule.eq_of_le_of_finrank_eq hle hdim.symm
+  rwa [← heq]
+
 end Fixed
 
 /-! ## An upper bound from a Jordan chain -/

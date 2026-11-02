@@ -115,6 +115,18 @@ theorem regNilH_commutator (v : V) :
         QuadraticMap.polar Q (w (j + 1)) v • w (-(j + 1)))) := by
   rw [regNilH, sum_ι_mul_ι_commutator]
 
+omit [Invertible (2 : K)] in
+theorem polar_comp_subtype (Q : QuadraticForm K V) (A : Submodule K V) (a b : A) :
+    QuadraticMap.polar (Q.comp A.subtype) a b = QuadraticMap.polar Q a b := by
+  simp [QuadraticMap.polar]
+
+/-- `regNil` built from vectors of a subspace `A` acts on `A` as `regNil` of `(A, q|_A)`. -/
+theorem adV_regNil_subtype {A : Submodule K V} (w' : ℤ → A) (ν : K) (k : ℕ) (a : A) :
+    adV Q (regNil Q (fun j => (w' j : V)) ν k) a =
+      (adV (Q.comp A.subtype) (regNil (Q.comp A.subtype) w' ν k) a : V) := by
+  rw [adV_regNil, adV_regNil]
+  simp [polar_comp_subtype]
+
 /-- `adV X` kills `⟨w⟩^⊥`. -/
 theorem adV_regNil_of_orthogonal {v : V} (hv : ∀ j : ℤ, |j| ≤ k → bform Q (w j) v = 0) :
     adV Q (regNil Q w ν k) v = 0 := by
