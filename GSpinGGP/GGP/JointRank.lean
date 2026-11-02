@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import GSpinGGP.GGP.JointCentralizer
 import GSpinGGP.GGP.SemisimpleRank
 import GSpinGGP.GGP.IsometrySemisimple
+import GSpinGGP.GGP.IsometryDet
 
 /-!
 # The joint centralizer of a commuting semisimple isometry and skew map
@@ -47,8 +48,8 @@ theorem not_commute_wedge_dual {d : ℕ} (hd : 2 ≤ d) (u w : Fin d → V)
       (wedge (bform Q) (u ⟨1, by omega⟩) (w ⟨0, by omega⟩)) := by
   intro h
   have h1 := LinearMap.congr_fun h.eq (u ⟨1, by omega⟩)
-  simp only [Module.End.mul_apply, wedge_apply, map_sub, map_smul, huu, hwu, Fin.mk.injEq,
-    zero_smul, sub_zero, if_true, one_smul, smul_zero] at h1
+  simp only [Module.End.mul_apply, wedge_apply, map_smul, huu, hwu, Fin.mk.injEq,
+    zero_smul, sub_zero, ite_true, one_smul] at h1
   simp at h1
   exact hu1 h1.symm
 
@@ -58,8 +59,8 @@ variable (hP : IsIsom (bform Q) P) (hN : IsSkew (bform Q) N) {μ c : K} (hμ0 : 
 include hP hN hμ0 hne hu hu' hw hw' huw hspan
 
 /-- On a hyperbolic pair of joint eigenvectors `u`, `w` spanning `V` (`P u = μ u`, `N u = c u`,
-`P w = μ⁻¹ w`, `N w = −c w`, `(μ, c) ≠ (μ⁻¹, −c)`, `b(u, w) ≠ 0`): `u`, `w` are isotropic and the joint
-eigenspaces for `(μ, c)`, `(μ⁻¹, −c)` are the lines `K u`, `K w`. -/
+`P w = μ⁻¹ w`, `N w = −c w`, `(μ, c) ≠ (μ⁻¹, −c)`, `b(u, w) ≠ 0`): `u`, `w` are isotropic and the
+joint eigenspaces for `(μ, c)`, `(μ⁻¹, −c)` are the lines `K u`, `K w`. -/
 theorem pair_facts :
     bform Q u u = 0 ∧ bform Q w w = 0 ∧
     (∀ x, P x = μ • x → N x = c • x → ∃ t : K, x = t • u) ∧
@@ -231,7 +232,9 @@ theorem isNilpotent_restrict {U : Submodule K V} {M : Module.End K V} (hM : IsNi
     intro n
     induction n with
     | zero => intro x; rfl
-    | succ n ih => intro x; rw [pow_succ, Module.End.mul_apply, ih, pow_succ, Module.End.mul_apply]; rfl
+    | succ n ih =>
+      intro x
+      rw [pow_succ, Module.End.mul_apply, ih, pow_succ, Module.End.mul_apply]; rfl
   exact ⟨k, LinearMap.ext fun x => Subtype.ext (by rw [key, hk]; rfl)⟩
 
 end Clauses
@@ -370,7 +373,7 @@ theorem exists_isotropic_pair (hQ : IsNondeg Q) (h2 : finrank K V = 2) :
       h10]; linear_combination ht'
   · simp only [map_sub, map_smul, LinearMap.sub_apply, LinearMap.smul_apply, smul_eq_mul, h01,
       h10]; linear_combination ht'
-  · simp only [map_add, map_sub, map_smul, LinearMap.add_apply, LinearMap.sub_apply,
+  · simp only [map_add, map_sub, map_smul, LinearMap.add_apply,
       LinearMap.smul_apply, smul_eq_mul, h01, h10]
     intro h
     exact mul_ne_zero h2K ha (by linear_combination h + ht')
@@ -412,6 +415,7 @@ theorem isSemisimple_of_isIsom_of_finrank_le_two (hQ : IsNondeg Q) (hn : finrank
         exact he (hQ.1 e fun y => hcon y trivial))
     exact this
 
+omit [Invertible (2 : K)] in
 /-- A unipotent semisimple endomorphism is `1`. -/
 theorem eq_one_of_isNilpotent_sub_one {h : Module.End K V} (hss : h.IsSemisimple)
     (hnil : IsNilpotent (h - 1)) : h = 1 := by
@@ -419,6 +423,7 @@ theorem eq_one_of_isNilpotent_sub_one {h : Module.End K V} (hss : h.IsSemisimple
     Module.End.IsSemisimple.sub_of_commute (Commute.one_right h) hss Module.End.isSemisimple_id
   exact sub_eq_zero.1 (Module.End.eq_zero_of_isNilpotent_isSemisimple hnil this)
 
+omit [Invertible (2 : K)] [IsAlgClosed K] in
 /-- Elements of a subspace of dimension `≤ 1` commute. -/
 theorem commute_of_mem_finrank_le_one {S : Submodule K (Module.End K V)}
     (h1 : finrank K S ≤ 1) {M₁ M₂ : Module.End K V} (h₁ : M₁ ∈ S) (h₂ : M₂ ∈ S) :
@@ -491,8 +496,8 @@ theorem so_clauses [CharZero K] (hQ : IsNondeg Q) :
     rw [map_add, map_smul, map_smul, ha, ha', haa, ha0, neg_zero, zero_smul, zero_smul,
       smul_zero, smul_zero, add_zero, LinearMap.zero_apply]
 
-/-- **The four clauses on a paired piece** `V = span(u) ⊕ span(w)`, with `u_i` joint eigenvectors for
-`(μ, c)`, `w_j` for `(μ⁻¹, −c)`, `(μ, c) ≠ (μ⁻¹, −c)`, `b(w_j, u_k) = δ_{jk}`: bound `d`. -/
+/-- **The four clauses on a paired piece** `V = span(u) ⊕ span(w)`, with `u_i` joint eigenvectors
+for `(μ, c)`, `w_j` for `(μ⁻¹, −c)`, `(μ, c) ≠ (μ⁻¹, −c)`, `b(w_j, u_k) = δ_{jk}`: bound `d`. -/
 theorem jointClauses_pair {P N : Module.End K V} (hP : IsIsom (bform Q) P)
     (hN : IsSkew (bform Q) N) {μ c : K} (hμ0 : μ ≠ 0) (hne : μ⁻¹ ≠ μ ∨ c ≠ 0) {d : ℕ}
     (hd : 1 ≤ d) (u w : Fin d → V) (hu : ∀ i, P (u i) = μ • u i) (hu' : ∀ i, N (u i) = c • u i)
@@ -507,15 +512,15 @@ theorem jointClauses_pair {P N : Module.End K V} (hP : IsIsom (bform Q) P)
       (Module.End.mem_eigenspace_iff.2 (hw' j))
   have hlow := le_finrank_of_wedge_dual u w huu hwu hmemC
   have hu0 : ∀ i, u i ≠ 0 := fun i h => by
-    have := hwu i i; rw [h, map_zero, if_pos rfl] at this; exact zero_ne_one this
+    have := hwu i i; rw [h, map_zero, ite_eq_left_iff.mpr (fun h => absurd rfl h)] at this; exact zero_ne_one this
   -- `d = 1`: the hyperbolic pair
   have hone : d = 1 → soCent Q P ⊓ soCent Q N = K ∙ wedge (bform Q) (u ⟨0, by omega⟩)
       (w ⟨0, by omega⟩) ∧ _ := fun hd1 => by
     subst hd1
     have hsp : Submodule.span K {u 0, w 0} = ⊤ := by
-      rw [← hspan]; congr 1; ext x; simp [Fin.forall_fin_one, Set.mem_range, eq_comm]
+      rw [← hspan]; congr 1; ext x; simp [Set.mem_range, eq_comm]
     have huw : bform Q (u 0) (w 0) ≠ 0 := by
-      rw [bform_comm Q, hwu 0 0, if_pos rfl]; exact one_ne_zero
+      rw [bform_comm Q, hwu 0 0]; simp
     exact ⟨soCent_inf_eq_span_wedge hP hN hμ0 hne (hu 0) (hu' 0) (hw 0) (hw' 0) huw hsp,
       pair_nilpotent_unipotent hP hN hμ0 hne (hu 0) (hu' 0) (hw 0) (hw' 0) huw hsp⟩
   refine ⟨le_trans (Nat.le_mul_self d) hlow, ⟨fun he => ?_, fun hab => ?_⟩, fun he => ?_,
@@ -576,11 +581,11 @@ universe u
 
 variable {K : Type*} [Field K] [Invertible (2 : K)] [CharZero K] [IsAlgClosed K]
 
-/-- Induction form of `jointClauses`, with `dim (E₋₁(P) ∩ ker N)` even in place of `det P = 1`. -/
+/-- Induction form of `jointClauses`, with `dim E₋₁(P)` even in place of `det P = 1`. -/
 private theorem jointClauses_aux (n : ℕ) : ∀ {V : Type u} [AddCommGroup V] [Module K V]
     [FiniteDimensional K V] (Q : QuadraticForm K V) (P N : Module.End K V), finrank K V = n →
     IsNondeg Q → IsIsom (bform Q) P → P.IsSemisimple → IsSkew (bform Q) N → N.IsSemisimple →
-    Commute N P → Even (finrank K ↥(P.eigenspace (-1) ⊓ N.eigenspace 0)) →
+    Commute N P → Even (finrank K ↥(P.eigenspace (-1))) →
     JointClauses Q P N (n / 2) := by
   induction n using Nat.strong_induction_on with
   | _ n ih =>
@@ -715,37 +720,79 @@ private theorem jointClauses_aux (n : ℕ) : ∀ {V : Type u} [AddCommGroup V] [
       rw [hinf, finrank_bot, add_zero, hdim] at this
       exact this
     have hd := Submodule.finrank_add_eq_of_isCompl hcompl
-    have hev' : Even (finrank K ↥(Module.End.eigenspace (P.restrict hPU') (-1) ⊓
-        Module.End.eigenspace (N.restrict hNU') 0)) := by
-      have hle : P.eigenspace (-1) ⊓ N.eigenspace 0 ≤ U' := by
-        intro z hz
-        refine LinearMap.BilinForm.mem_orthogonal_iff.2 fun x hx => ?_
-        change bform Q x z = 0
-        obtain ⟨e, he, e', he', rfl⟩ := Submodule.mem_sup.1 hx
-        have hc0 : μ ≠ -1 ∨ c ≠ 0 := by
-          rcases hne with h | h
-          · exact Or.inl fun hm => h (by rw [hm]; norm_num)
-          · exact Or.inr h
-        rw [map_add, LinearMap.add_apply]
-        rcases hc0 with h | h
-        · rw [bform_eigen_eq_zero (B := bform Q) hP (by
-              rw [mul_neg_one]; exact fun h' => h (neg_eq_iff_eq_neg.1 h')) he.1 hz.1,
-            bform_eigen_eq_zero (B := bform Q) hP (by
-              rw [mul_neg_one]; exact fun h' => h (by
-                rw [← inv_inv μ, neg_eq_iff_eq_neg.1 h', inv_neg, inv_one])) he'.1 hz.1,
-            add_zero]
-        · rw [bform_eigen_eq_zero_of_skew hN (by rwa [add_zero]) he.2 hz.2,
-            bform_eigen_eq_zero_of_skew hN (by rw [add_zero]; exact neg_ne_zero.2 h) he'.2 hz.2,
-            add_zero]
-      have heq : Module.End.eigenspace (P.restrict hPU') (-1) ⊓
-          Module.End.eigenspace (N.restrict hNU') 0 =
-          (P.eigenspace (-1) ⊓ N.eigenspace 0).comap U'.subtype := by
-        rw [Submodule.comap_inf]
-        congr 1
-        · exact Module.End.genEigenspace_restrict P U' 1 (-1) hPU'
-        · exact Module.End.genEigenspace_restrict N U' 1 0 hNU'
-      rw [heq, (Submodule.comapSubtypeEquivOfLe hle).finrank_eq]
-      exact hev
+    have hinf : E ⊓ E' = ⊥ := by
+      rw [eq_bot_iff]
+      intro x ⟨hx, hx'⟩
+      rw [Submodule.mem_bot]
+      by_contra hx0
+      obtain ⟨y, hy, hyb⟩ := h2 x hx' hx0
+      exact hyb (hisoE x hx y hy)
+    have hev' : Even (finrank K ↥(Module.End.eigenspace (P.restrict hPU') (-1))) := by
+      set F := P.eigenspace (-1)
+      -- `F = (F ⊓ U) ⊕ (F ⊓ U')`
+      have hFsplit : finrank K ↥(F ⊓ U) + finrank K ↥(F ⊓ U') = finrank K F := by
+        have hsup : (F ⊓ U) ⊔ (F ⊓ U') = F := by
+          refine le_antisymm (sup_le inf_le_left inf_le_left) fun x hx => ?_
+          obtain ⟨y, y', rfl, -⟩ := Submodule.existsUnique_add_of_isCompl hcompl x
+          have hPx := Module.End.mem_eigenspace_iff.1 hx
+          rw [map_add] at hPx
+          have hy : P y = (-1 : K) • (y : V) ∧ P y' = (-1 : K) • (y' : V) := by
+            have e1 : (P y : V) - (-1 : K) • (y : V) ∈ U := sub_mem (hPU y.2) (U.smul_mem _ y.2)
+            have e2 : (P y' : V) - (-1 : K) • (y' : V) ∈ U' :=
+              sub_mem (hPU' y'.2) (U'.smul_mem _ y'.2)
+            have e3 : ((P y : V) - (-1 : K) • (y : V)) +
+                ((P y' : V) - (-1 : K) • (y' : V)) = 0 := by
+              linear_combination (norm := module) hPx
+            have := Submodule.disjoint_def.1 hcompl.1 _ e1 (by
+              rw [eq_neg_of_add_eq_zero_left e3]; exact neg_mem e2)
+            refine ⟨sub_eq_zero.1 this, sub_eq_zero.1 ?_⟩
+            rw [this, zero_add] at e3; exact e3
+          exact Submodule.mem_sup.2 ⟨y, ⟨Module.End.mem_eigenspace_iff.2 hy.1, y.2⟩, y',
+            ⟨Module.End.mem_eigenspace_iff.2 hy.2, y'.2⟩, rfl⟩
+        have hdis : (F ⊓ U) ⊓ (F ⊓ U') = ⊥ := by
+          rw [eq_bot_iff]
+          exact fun x hx => Submodule.disjoint_def.1 hcompl.1 x hx.1.2 hx.2.2 ▸ zero_mem _
+        have := Submodule.finrank_sup_add_finrank_inf_eq (F ⊓ U) (F ⊓ U')
+        rw [hsup, hdis, finrank_bot, add_zero] at this
+        exact this.symm
+      have hFU' : finrank K ↥(Module.End.eigenspace (P.restrict hPU') (-1)) =
+          finrank K ↥(F ⊓ U') := by
+        have heq : Module.End.eigenspace (P.restrict hPU') (-1) = F.comap U'.subtype :=
+          Module.End.genEigenspace_restrict P U' 1 (-1) hPU'
+        have h2' : F.comap U'.subtype = (F ⊓ U').comap U'.subtype := by
+          ext x; simp
+        rw [heq, h2']
+        exact (Submodule.comapSubtypeEquivOfLe inf_le_right).finrank_eq
+      have hFU : Even (finrank K ↥(F ⊓ U)) := by
+        by_cases hm : μ = -1
+        · have hle : U ≤ F := sup_le (fun x hx => by have := hx.1; rwa [hm] at this)
+            (fun x hx => by have := hx.1; rwa [hm, inv_neg, inv_one] at this)
+          rw [inf_eq_right.2 hle, hdU]
+          exact ⟨_, rfl⟩
+        · have hbot : F ⊓ U = ⊥ := by
+            rw [eq_bot_iff]
+            intro x ⟨hxF, hxU⟩
+            obtain ⟨e, he, e', he', rfl⟩ := Submodule.mem_sup.1 hxU
+            have hPx := Module.End.mem_eigenspace_iff.1 hxF
+            rw [map_add, Module.End.mem_eigenspace_iff.1 he.1,
+              Module.End.mem_eigenspace_iff.1 he'.1] at hPx
+            have hmem : (μ + 1) • e ∈ E ⊓ E' := by
+              have h' : (μ + 1) • e = -((μ⁻¹ + 1) • e') := by
+                linear_combination (norm := module) hPx
+              exact ⟨E.smul_mem _ he, h' ▸ E'.neg_mem (E'.smul_mem _ he')⟩
+            rw [hinf, Submodule.mem_bot, smul_eq_zero] at hmem
+            have he0 : e = 0 := hmem.resolve_left fun h => hm (by linear_combination h)
+            have hmi : μ⁻¹ ≠ -1 := fun h => hm (by rw [← inv_inv μ, h, inv_neg, inv_one])
+            rw [he0] at hPx
+            have h3 : (μ⁻¹ + 1) • e' = 0 := by linear_combination (norm := module) hPx
+            have he0' : e' = 0 := (smul_eq_zero.1 h3).resolve_left fun h => hmi (by
+              linear_combination h)
+            rw [he0, he0', add_zero]
+            exact zero_mem _
+          rw [hbot, finrank_bot]; exact ⟨0, rfl⟩
+      rw [hFU']
+      have := hFsplit ▸ hev
+      exact (Nat.even_add.1 this).1 hFU
     have hrec := ih (finrank K U') (by omega) (Q.comp U'.subtype) (P.restrict hPU')
       (N.restrict hNU') rfl (isNondeg_comp_subtype horth' hQ hcompl.symm)
       (fun x y => by simp only [bform_comp_subtype]; exact hP x y)
@@ -767,7 +814,7 @@ private theorem jointClauses_aux (n : ℕ) : ∀ {V : Type u} [AddCommGroup V] [
       intro c hcne
       set E := N.eigenspace c
       have hE : ∀ x ∈ E, P x ∈ E := mapsTo_eigenspace_of_commute hc c
-      haveI : Nontrivial E := Submodule.nontrivial_iff_ne_bot.2 hcne
+      have : Nontrivial E := Submodule.nontrivial_iff_ne_bot.2 hcne
       obtain ⟨μ, hμ⟩ := Module.End.exists_eigenvalue (P.restrict hE)
       obtain ⟨z, hz, hz0⟩ := Submodule.exists_mem_ne_zero_of_ne_bot
         (Module.End.hasEigenvalue_iff.1 hμ)
@@ -833,10 +880,30 @@ private theorem jointClauses_aux (n : ℕ) : ∀ {V : Type u} [AddCommGroup V] [
       (fun M hM => (hmaps M (mem_soCent.1 hM.1).2.symm).2)
       (fun g _ hg _ => hmaps g hg) c₁ c₂
     have hd := Submodule.finrank_add_eq_of_isCompl hcompl
-    rw [hN0, inf_top_eq] at hev
     obtain ⟨k, hk⟩ := hev
     have : finrank K E₁ / 2 + finrank K E₂ / 2 = n / 2 := by omega
     rwa [this] at hcomb
+
+/-- **The joint centralizer of a commuting semisimple isometry and skew map.** Over an algebraically
+closed field of characteristic `0`, let `P` be a semisimple isometry of the nondegenerate form `Q`
+with `det P = 1` and `N` a semisimple skew map commuting with `P`. Then
+`C = so(V)_P ⊓ so(V)_N` has `dim C ≥ ⌊dim V/2⌋`, with equality iff `C` is abelian; and then `C` has
+no nonzero nilpotent element and the only unipotent isometry commuting with `P` and `N` is `1`. -/
+theorem jointClauses {V : Type u} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
+    {Q : QuadraticForm K V} {P N : Module.End K V} (hQ : IsNondeg Q) (hP : IsIsom (bform Q) P)
+    (hssP : P.IsSemisimple) (hN : IsSkew (bform Q) N) (hssN : N.IsSemisimple) (hc : Commute N P)
+    (hdet : LinearMap.det P = 1) : JointClauses Q P N (finrank K V / 2) := by
+  refine jointClauses_aux _ Q P N rfl hQ hP hssP hN hssN hc ?_
+  have hd := IsomCent.det_eq_det_one_mul_det_neg_one (B := bform Q) ⟨bform_comm Q⟩ hQ hP hssP hP
+    (Commute.refl P)
+  have h1 : P.restrict (mapsTo_eigenspace_of_commute (Commute.refl P) 1) = LinearMap.id :=
+    LinearMap.ext fun z => Subtype.ext (by
+      rw [LinearMap.coe_restrict_apply, Module.End.mem_eigenspace_iff.1 z.2, one_smul]; rfl)
+  have h2 : P.restrict (mapsTo_eigenspace_of_commute (Commute.refl P) (-1)) =
+      (-1 : K) • LinearMap.id :=
+    LinearMap.ext fun z => Subtype.ext (Module.End.mem_eigenspace_iff.1 z.2)
+  rw [h1, h2, LinearMap.det_id, LinearMap.det_smul, LinearMap.det_id, one_mul, mul_one, hdet] at hd
+  exact (neg_one_pow_eq_one_iff_even (by norm_num)).1 hd.symm
 
 end Main
 

@@ -26,6 +26,7 @@ import GSpinGGP.GGP.RegularNilpotent
 import GSpinGGP.Foundations.SoSplit
 import GSpinGGP.GGP.SemisimpleRank
 import GSpinGGP.GGP.JointCentralizer
+import GSpinGGP.GGP.JointRank
 import GSpinGGP.GGP.LieRank
 import GSpinGGP.GGP.RegularRank
 import GSpinGGP.GGP.Centralizers
