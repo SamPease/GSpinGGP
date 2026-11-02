@@ -157,19 +157,14 @@ theorem eq_zero_of_eigen {μ : K} (h : μ * μ ≠ 1) {u : V}
   rw [← QuadraticMap.associated_eq_self_apply K Q u]
   exact IsomCent.bform_eigen_eq_zero (Steinberg.isIsom_specP x) h hu hu
 
-theorem specP_eq_smul_of_mem {μ : K} {u : V}
-    (hu : u ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) μ) : specP Q x u = μ • u := by
-  rw [Module.End.mem_eigenspace_iff] at hu
-  exact hu
-
 /-- `x` commutes with `ι(u) ι(w)` for `u ∈ E_μ`, `w ∈ E_ν`, `μ ν = 1`. -/
 theorem commute_ι_mul_ι {μ ν : K} (h : μ * ν = 1) {u w : V}
     (hu : u ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) μ)
     (hw : w ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) ν) :
     ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * (ι Q u * ι Q w) =
       ι Q u * ι Q w * ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) := by
-  have h1 := CentralizerSign.mul_ι_of_specP_eq_smul x (specP_eq_smul_of_mem x hu)
-  have h2 := CentralizerSign.mul_ι_of_specP_eq_smul x (specP_eq_smul_of_mem x hw)
+  have h1 := CentralizerSign.mul_ι_of_specP_eq_smul x (Module.End.mem_eigenspace_iff.mp hu)
+  have h2 := CentralizerSign.mul_ι_of_specP_eq_smul x (Module.End.mem_eigenspace_iff.mp hw)
   rw [← mul_assoc, h1, ← Algebra.smul_def, smul_mul_assoc, mul_assoc, h2, ← Algebra.smul_def,
     mul_smul_comm, smul_smul, h, one_smul]
   simp only [mul_assoc]
@@ -353,9 +348,6 @@ theorem specP_inv_fix {γ : GSpin Q} {v : V} (h : specP Q γ v = v) : specP Q γ
   conv_lhs => rw [← h]
   rw [← LinearEquiv.mul_apply, ← map_mul, inv_mul_cancel, map_one]; rfl
 
-theorem commute_specP {γ : GSpin Q} (h : Commute γ x) : Commute (specP Q γ) (specP Q x) :=
-  h.map (specP Q)
-
 /-- **Pair blocks are sign-trivial**: if `P(g)` commutes with the semisimple `P(x)` and is the
 identity on `E₁` and `E₋₁`, then `g` commutes with `x` (over an algebraically closed field). -/
 theorem commute_of_fix [CharZero K] (hQ : IsNondeg Q)
@@ -427,7 +419,7 @@ theorem commute_of_fix [CharZero K] (hQ : IsNondeg Q)
         rw [this, ← LinearEquiv.mul_apply, ← map_mul, inv_mul_cancel, map_one]; rfl
       have hc' : Commute (specP Q g') (specP Q x) := by
         rw [hg', map_mul, map_inv]
-        exact (commute_specP hγx).inv_left.mul_left hc
+        exact (hγx.map (specP Q)).inv_left.mul_left hc
       have hfix : ∀ ν, ν ≠ μ → ν ≠ μ⁻¹ → ∀ v ∈ Eig x ν, specP Q g v = v →
           specP Q g' v = v := by
         intro ν h1ν h2ν v hv hgv

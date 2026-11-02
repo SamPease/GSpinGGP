@@ -1,6 +1,7 @@
 import Mathlib
 import TauCeti.LinearAlgebra.CliffordAlgebra.Vectors
 import TauCeti.LinearAlgebra.CliffordAlgebra.Functoriality
+import TauCeti.LinearAlgebra.BilinearForm.BaseChange
 
 /-!
 # Quadratic spaces, general spin groups, GGP triples, inner twists, Whittaker data
@@ -3836,6 +3837,13 @@ variable {K : Type*} [Field K] [Invertible (2 : K)]
 /-- `2` is invertible in `K̄`. -/
 instance invertibleTwoAlgebraicClosure : Invertible (2 : AlgebraicClosure K) :=
   (Invertible.map (algebraMap K (AlgebraicClosure K)) 2).copy 2 (map_ofNat _ 2).symm
+
+/-- A nondegenerate form stays nondegenerate over `K̄` (Tau Ceti `Nondegenerate.baseChange`). -/
+theorem isNondeg_baseChange {V : Type*} [AddCommGroup V] [Module K V] (Q : QuadraticForm K V)
+    (hQ : IsNondeg Q) : IsNondeg (Q.baseChange (AlgebraicClosure K)) := by
+  unfold IsNondeg bform at *
+  rw [QuadraticForm.associated_baseChange]
+  exact hQ.baseChange (AlgebraicClosure K)
 
 /-- The basis of `K̄ ⊗ K^m` coming from the standard basis of `K^m`. -/
 def bcBasis (K : Type*) [Field K] (m : ℕ) :

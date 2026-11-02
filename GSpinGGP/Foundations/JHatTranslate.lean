@@ -61,18 +61,6 @@ theorem eqOn_of_isJHat {G : Subgroup Aˣ} {𝔤 : LieSubalgebra F A} {b : Linear
     simpa [sub_eq_zero] using hX
   exact Measure.eqOn_open_of_ae_eq (ae_restrict_of_ae hae') hU (hj.1.mono hUreg) (hj'.1.mono hUreg)
 
-omit [PAdicField F] in
-/-- `ψ(a + b) = ψ(a) ψ(b)`. -/
-theorem NontrivialAddChar.map_add (ψ : NontrivialAddChar F) (a c : F) : ψ (a + c) = ψ a * ψ c := by
-  show ((ψ.toAddChar (a + c) : Circle) : ℂ) = ((ψ.toAddChar a : Circle) : ℂ) * (ψ.toAddChar c : Circle)
-  rw [AddChar.map_add_eq_mul, Circle.coe_mul]
-
-omit [PAdicField F] in
-/-- `ψ(0) = 1`. -/
-theorem NontrivialAddChar.map_zero (ψ : NontrivialAddChar F) : ψ 0 = 1 := by
-  show ((ψ.toAddChar 0 : Circle) : ℂ) = 1
-  rw [AddChar.map_zero_eq_one, Circle.coe_one]
-
 /-- **`ĵ(O, ·)` is invariant under translation by `Y`** with `b(Y, N) = 0` for every nilpotent
 `N ∈ 𝔤`, at every point `X` of an open set of regular elements, when `Z + Y` is regular iff `Z`
 is. -/

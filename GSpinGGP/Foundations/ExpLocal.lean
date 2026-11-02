@@ -11,7 +11,6 @@ import GSpinGGP.Foundations.LocalGroups
 * `exists_localInverse_exp`: in a complete normed algebra over a nontrivially normed field of
   characteristic `0` in which the exponential series has positive radius (any `p`-adic or real
   Banach algebra), `exp` has a continuous local inverse `L` at `1`, injective domain included;
-* `exp_units_conj_of_mem_ball`: `exp(g x g⁻¹) = g exp(x) g⁻¹` without a `ℚ`-normed structure;
 * `commute_of_commute_exp`: on an injectivity domain of `exp`, `Y` commutes with everything
   commuting with `exp Y` (so the local inverse `L(c)` commutes with the commutant of `c`);
 * `eventually_map_expA`: `φ(e^X) = e^{φ X}` near `0` for linear maps preserving powers;
@@ -58,27 +57,6 @@ open NormedSpace
 
 variable {𝕂 E : Type*} [NontriviallyNormedField 𝕂] [CharZero 𝕂] [NormedRing E] [NormedAlgebra 𝕂 E]
   [CompleteSpace E]
-
-/-- `exp(g x g⁻¹) = g exp(x) g⁻¹` when the exponential series of `x` converges. -/
-theorem exp_units_conj_of_mem_ball (g : Eˣ) {x : E}
-    (hx : x ∈ Metric.eball (0 : E) (expSeries 𝕂 E).radius) :
-    exp ((g : E) * x * ↑g⁻¹) = (g : E) * exp x * ↑g⁻¹ := by
-  have h := expSeries_hasSum_exp_of_mem_ball' (𝕂 := 𝕂) x hx
-  have hc : Continuous fun a : E => (g : E) * a * ↑g⁻¹ :=
-    (continuous_const.mul continuous_id).mul continuous_const
-  have h' := h.map ((AddMonoidHom.mulLeft (g : E)).comp (AddMonoidHom.mulRight (↑g⁻¹ : E))) (by
-    simpa [Function.comp_def, mul_assoc] using hc)
-  have e : ∀ n : ℕ, (AddMonoidHom.mulLeft (g : E)).comp (AddMonoidHom.mulRight (↑g⁻¹ : E))
-      (((n.factorial : 𝕂)⁻¹) • x ^ n) = ((n.factorial : 𝕂)⁻¹) • ((g : E) * x * ↑g⁻¹) ^ n := by
-    intro n
-    simp only [AddMonoidHom.comp_apply, AddMonoidHom.coe_mulLeft, AddMonoidHom.coe_mulRight]
-    rw [Units.conj_pow]
-    simp only [smul_mul_assoc, mul_smul_comm, mul_assoc]
-  simp only [Function.comp_def, e] at h'
-  calc exp ((g : E) * x * ↑g⁻¹) = ∑' n : ℕ, ((n.factorial : 𝕂)⁻¹) • ((g : E) * x * ↑g⁻¹) ^ n :=
-        congrFun (exp_eq_tsum 𝕂) _
-    _ = _ := h'.tsum_eq
-    _ = (g : E) * exp x * ↑g⁻¹ := by simp [mul_assoc]
 
 /-- **Local inverse of `exp` at `1`** (inverse function theorem): there are open `s ∋ 0` (inside the
 ball of convergence) and `t ∋ 1` and `L : E → E`, continuous at `1` with `L 1 = 0`, such that
@@ -139,8 +117,16 @@ theorem commute_of_commute_exp {s : Set E} (hs : IsOpen s)
   have hginv : Ring.inverse (1 + ε • z) = ↑g⁻¹ := by rw [← hgv, Ring.inverse_unit]
   rw [hginv, ← hgv] at hεs
   have hgc : Commute (g : E) (exp Y) := by rw [hgv]; exact (Commute.one_left _).add_left (hz.smul_left ε)
+  -- conjugation by `g` is a continuous ring homomorphism, so it commutes with `exp`
+  set φ := MulSemiringAction.toRingHom (ConjAct Eˣ) E (ConjAct.toConjAct g)
+  have hφ : ∀ x : E, φ x = (g : E) * x * ↑g⁻¹ := fun x => by
+    simp [φ, ConjAct.units_smul_def]
+  have hφc : Continuous φ := by
+    rw [show (φ : E → E) = fun x => (g : E) * x * ↑g⁻¹ from funext hφ]
+    fun_prop
   have hexp : exp ((g : E) * Y * ↑g⁻¹) = exp Y := by
-    rw [exp_units_conj_of_mem_ball g (hsr hY), hgc.eq, mul_assoc, Units.mul_inv, mul_one]
+    rw [← hφ, ← map_exp_of_mem_ball (𝕂 := 𝕂) φ hφc Y (hsr hY), hφ, hgc.eq, mul_assoc,
+      Units.mul_inv, mul_one]
   have hYeq := hinj hεs hY hexp
   have h3 : (g : E) * Y = Y * g := by
     calc (g : E) * Y = (g : E) * Y * ↑g⁻¹ * g := by rw [mul_assoc _ (↑g⁻¹ : E), Units.inv_mul, mul_one]

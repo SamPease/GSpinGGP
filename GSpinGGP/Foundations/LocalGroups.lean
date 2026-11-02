@@ -114,6 +114,17 @@ def toFun (ψ : NontrivialAddChar F) (t : F) : ℂ := ((ψ.toAddChar t : Circle)
 
 instance : CoeFun (NontrivialAddChar F) (fun _ ↦ F → ℂ) := ⟨toFun⟩
 
+/-- `ψ(a + b) = ψ(a) ψ(b)`. -/
+theorem map_add (ψ : NontrivialAddChar F) (a c : F) : ψ (a + c) = ψ a * ψ c := by
+  change ((ψ.toAddChar (a + c) : Circle) : ℂ) =
+    ((ψ.toAddChar a : Circle) : ℂ) * (ψ.toAddChar c : Circle)
+  rw [AddChar.map_add_eq_mul, Circle.coe_mul]
+
+/-- `ψ(0) = 1`. -/
+theorem map_zero (ψ : NontrivialAddChar F) : ψ 0 = 1 := by
+  change ((ψ.toAddChar 0 : Circle) : ℂ) = 1
+  rw [AddChar.map_zero_eq_one, Circle.coe_one]
+
 end NontrivialAddChar
 
 /-! ## 2. Topology of the ambient algebra -/

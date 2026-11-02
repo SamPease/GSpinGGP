@@ -332,9 +332,8 @@ theorem mem_movedLieSub {U : Submodule F (Fin d.m → F)} {Z : CliffordAlgebra d
 
 /-- **Elements of the moved part of `𝔤_x` commute with `T_x(F)`**: if `T_x(F)` is commutative,
 `Z ∈ gspin(W)` commutes with `x` and with `ι(W'_x)`, and `t ∈ T_x`, then `Z` commutes with `t`.
-For `c ≠ 0` small, `e^{cZ} ∈ T_x(F)` (`MovedPart.exists_nhds_expA_mem_GSpin`), so it commutes
-with `t`, and near `0` the centralizer of `e^{cZ}` is that of `cZ`
-(`exists_nhds_commute_of_commute_expA`). -/
+`Z` has the commutant of some `g ∈ GSpin(W)(F)` (`exists_gspin_commute_iff`), which lies in
+`T_x(F)` (`mem_torusOf_of_commute`) and so commutes with `t`. -/
 theorem commute_of_mem_torusOf_of_movedPart {x t : ↥(GSpin d.QW)}
     (hcomm : ∀ a ∈ d.torusOf x, ∀ b ∈ d.torusOf x, Commute a b) (ht : t ∈ d.torusOf x)
     {Z : CliffordAlgebra d.QW} (hZ : Z ∈ gspin d.QW)
@@ -343,37 +342,11 @@ theorem commute_of_mem_torusOf_of_movedPart {x t : ↥(GSpin d.QW)}
     (hZf : ∀ v ∈ fixedSub x, CliffordAlgebra.ι d.QW v * Z = Z * CliffordAlgebra.ι d.QW v) :
     ((t : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) * Z =
       Z * ((t : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) := by
-  obtain ⟨U, hU, hG⟩ := MovedPart.exists_nhds_expA_mem_GSpin (F := F) d.QW
-  obtain ⟨U', hU', hc⟩ := exists_nhds_commute_of_commute_expA F (A := CliffordAlgebra d.QW)
-  have hlim : Tendsto (fun c : F => c • Z) (𝓝[≠] 0) (𝓝 0) := by
-    have : Continuous (fun c : F => c • Z) := continuous_id.smul continuous_const
-    simpa using (this.tendsto 0).mono_left nhdsWithin_le_nhds
-  obtain ⟨c, hcU, hc0⟩ := ((hlim.eventually (inter_mem hU hU')).and self_mem_nhdsWithin).exists
-  obtain ⟨g, hg⟩ := hG _ hcU.1 ((gspin d.QW).smul_mem c hZ)
-  have hgT : g ∈ d.torusOf x := by
-    refine ⟨?_, fun w hw => ?_⟩
-    · show g ∈ Subgroup.centralizer {x}
-      rw [Subgroup.mem_centralizer_singleton_iff]
-      have hxc : Commute ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) (c • Z) :=
-        Commute.smul_right hZx c
-      have := commute_expA_of_commute (F := F) hxc
-      rw [← hg] at this
-      exact Subtype.ext (Units.ext this.eq.symm)
-    · apply CliffordAlgebra.ι_injective d.QW
-      rw [ι_specP]
-      have hwc : Commute (CliffordAlgebra.ι d.QW w) (c • Z) := Commute.smul_right (hZf w hw) c
-      have := (commute_expA_of_commute (F := F) hwc).eq
-      rw [← hg] at this
-      rw [← this, mul_assoc, Units.mul_inv, mul_one]
-  have h1 : Commute ((t : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) (expA F (c • Z)) := by
-    have := congrArg (fun k : ↥(GSpin d.QW) =>
-      (((k : (CliffordAlgebra d.QW)ˣ)) : CliffordAlgebra d.QW)) (hcomm g hgT t ht).eq
-    simp only [Subgroup.coe_mul, Units.val_mul] at this
-    rw [hg] at this
-    exact this.symm
-  have h2 := (hc _ hcU.2 _ h1).eq
-  rw [mul_smul_comm, smul_mul_assoc] at h2
-  exact smul_right_injective _ hc0 h2
+  obtain ⟨g, hg⟩ := exists_gspin_commute_iff d.QW hZ
+  have hgT : g ∈ d.torusOf x :=
+    mem_torusOf_of_commute d ((hg _).mpr hZx) fun w hw => (hg _).mpr (hZf w hw)
+  exact (hg _).mp (congrArg (fun k : ↥(GSpin d.QW) =>
+    ((k : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW)) (hcomm t ht g hgT).eq)
 
 /-- **Elements of `T_x` are semisimple** for `x ∈ Γ(G,H)` (Thesis §6.5: `T_x` is a torus).
 Over `F̄`, `X = P(x)` is semisimple and the moved part of its Lie centralizer is abelian
@@ -575,18 +548,6 @@ theorem continuous_det_of_continuous_repr {K : Type*} [Field K] [TopologicalSpac
   simp only [LinearMap.toMatrix_apply]
   exact hf (b j) i
 
-omit [PAdicField F] in
-/-- The determinant of a pointwise continuous family of endomorphisms of a finite-dimensional
-normed space is continuous. -/
-theorem continuous_det_of_continuous_apply [CompleteSpace F] {X : Type*} [TopologicalSpace X]
-    {U : Type*} [NormedAddCommGroup U] [NormedSpace F U] [FiniteDimensional F U]
-    (f : X → U →ₗ[F] U) (hf : ∀ v, Continuous fun x => f x v) :
-    Continuous fun x => LinearMap.det (f x) := by
-  classical
-  let b := Module.finBasis F U
-  exact continuous_det_of_continuous_repr b f fun v i =>
-    (LinearMap.continuous_of_finiteDimensional (b.coord i)).comp (hf v)
-
 omit [NontriviallyNormedField F] [PAdicField F] in
 /-- If `E = L ⊕ C` with `L = ker f` and `C` stable under `f`, then `f|_C` is invertible and the
 trailing coefficient of the characteristic polynomial of `f` is `± det (f|_C)`. -/
@@ -669,7 +630,8 @@ theorem continuous_det_restrict_of_continuous {K : Type*} [Field K] [Topological
   simp_rw [h]
   exact (IsModuleTopology.continuous_of_linearMap (b.coord i ∘ₗ ψ)).comp (hN c)
 
-/-- **`Δ(t)^{s−1/2}` is continuous on `T_♮`** (part of Thesis Prop 12.1.1(i)).  For `x ∈ T_♮`
+/-- **`Δ(t)^{s−1/2}` is continuous on `T_♮`** (used in the proof of Thesis Prop 12.1.1(i)).
+For `x ∈ T_♮`
 (so `T = T_x`) and `t ∈ T_♮`: `W'_t = W'_x`, and `W''_t ⊆ W''_x` (`P(t)` is `1` on `W'_x` and
 preserves `W''_x`; `W = W'_x ⊕ W''_x` as `P(x)` is semisimple), so `W''_t = W''_x` by
 dimension.  Hence `Δ(t) = |det (P(t) − 1)|_{W''_x}|_F`, a continuous function of `t`, nonzero at
@@ -754,7 +716,9 @@ theorem continuousOn_deltaGGP_rpow (T : Subgroup ↥(GSpin d.QW)) (s : ℝ) :
     exact (IsModuleTopology.continuous_of_linearMap (CliffordAlgebra.ιInv d.QW)).comp
       ((Units.continuous_val.comp hn).mul (continuous_const.mul (Units.continuous_coe_inv.comp hn)))
   have hdet : Continuous fun t => LinearMap.det (g t) := by
-    refine continuous_det_of_continuous_apply g fun u => ?_
+    refine ContinuousLinearMap.continuous_det.comp
+      (f := fun t => LinearMap.toContinuousLinearMap (g t)) (continuous_clm_apply.2 fun u => ?_)
+    show Continuous fun t => g t u
     refine Continuous.subtype_mk ?_ _
     show Continuous fun t => (P t - 1) (u : Fin d.m → F)
     simp only [LinearMap.sub_apply, Module.End.one_apply]
@@ -818,7 +782,7 @@ theorem isSemisimple_oneSubAd (g : ↥d.G) (hg : IsSS F ((g : d.ambientˣ) : d.a
 omit [PAdicField F] in
 /-- **Equal centralizers in `GSpin` give equal centralizers in `gspin`**: if `a, b ∈ GSpin(V)` have
 the same centralizer in `GSpin(V)(F)`, then `X ∈ gspin(V)` commutes with `a` iff with `b`
-(exponentiate: `e^{cX} ∈ GSpin(V)(F)` for small `c ≠ 0`, `exists_nhds_commute_of_commute_expA`). -/
+(`X` has the commutant of some `g ∈ GSpin(V)(F)`, `exists_gspin_commute_iff`). -/
 theorem commute_gspin_of_commute_iff [PAdicField F] {V : Type*} [AddCommGroup V] [Module F V]
     [Module.Finite F V] {Q : QuadraticForm F V} {a b : GSpin Q}
     (h : ∀ g : GSpin Q, Commute g a → Commute g b) {X : CliffordAlgebra Q} (hX : X ∈ gspin Q)
@@ -826,25 +790,10 @@ theorem commute_gspin_of_commute_iff [PAdicField F] {V : Type*} [AddCommGroup V]
       X * ((a : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) :
     ((b : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * X =
       X * ((b : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) := by
-  obtain ⟨U, hU, hG⟩ := MovedPart.exists_nhds_expA_mem_GSpin (F := F) Q
-  obtain ⟨U', hU', hc⟩ := exists_nhds_commute_of_commute_expA F (A := CliffordAlgebra Q)
-  have hlim : Tendsto (fun c : F => c • X) (𝓝[≠] 0) (𝓝 0) := by
-    have : Continuous (fun c : F => c • X) := continuous_id.smul continuous_const
-    simpa using (this.tendsto 0).mono_left nhdsWithin_le_nhds
-  obtain ⟨c, hcU, hc0⟩ := ((hlim.eventually (inter_mem hU hU')).and self_mem_nhdsWithin).exists
-  obtain ⟨g, hg⟩ := hG _ hcU.1 ((gspin Q).smul_mem c hX)
-  have hga : Commute g a := by
-    have := commute_expA_of_commute (F := F) (Commute.smul_right hXa c)
-    rw [← hg] at this
-    exact Subtype.ext (Units.ext this.eq.symm)
-  have hgb := h g hga
-  have h1 : Commute ((b : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) (expA F (c • X)) := by
-    rw [← hg]
-    exact (congrArg (fun k : GSpin Q => ((k : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q))
-      hgb.eq).symm
-  have h2 := (hc _ hcU.2 _ h1).eq
-  rw [mul_smul_comm, smul_mul_assoc] at h2
-  exact smul_right_injective _ hc0 h2
+  obtain ⟨g, hg⟩ := exists_gspin_commute_iff Q hX
+  have hgb := h g (Subtype.ext (Units.ext ((hg _).mpr hXa).eq.symm))
+  exact (hg _).mp (congrArg (fun k : GSpin Q => ((k : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q))
+    hgb.eq).symm
 
 /-- Commutation in `GSpin(V)(F)` can be tested over `F̄`. -/
 theorem commute_iff_commute_bcGSpin {V : Type*} [AddCommGroup V] [Module F V]
@@ -904,7 +853,8 @@ theorem continuous_sub_conj_diag (v : d.ambient) :
   · exact hval.prodMk (hmap.comp hval)
   · exact hvali.prodMk (hmap.comp hvali)
 
-/-- **`D^G` is continuous on `T_♮`** (part of Thesis Prop 12.1.1(i)).  Fix `x ∈ T_♮` (so
+/-- **`D^G` is continuous on `T_♮`** (used in the proof of Thesis Prop 12.1.1(i)).
+Fix `x ∈ T_♮` (so
 `T = T_x`), `N_t = 1 − Ad(t)` on `𝔤`, `L = ker N_x = 𝔤_x` and `C = im N_x`.  As `N_x` is
 semisimple, `𝔤 = L ⊕ C`, and both are `N_t`-stable for `t ∈ T` (`N_t` commutes with `N_x`).  For
 `t ∈ T_♮`, `ker N_t = 𝔤_t = 𝔤_x = L` (`commute_lie_iff_of_torusOf_eq`), so
@@ -1354,7 +1304,8 @@ theorem continuousOn_germ_of_mem_QC {χ : CentralCharOn d} {θ : ↥d.G → ℂ}
   have htx : (t : ↥(GSpin d.QW)) ∈ d.torusOf (t₀ : ↥(GSpin d.QW)) := hT.symm ▸ t.2
   exact hgerm t ht htx (hT'.trans hT.symm) _ hYN (he.trans (by rw [hudef]))
 
-/-- **`D^G(t)^{1/2} c_{θ,O_t}(t)` is continuous on `T_♮`** (Thesis Prop 12.1.1(i)): from
+/-- **`D^G(t)^{1/2} c_{θ,O_t}(t)` is continuous on `T_♮`** (used in the proof of Thesis
+Prop 12.1.1(i)): from
 `continuousOn_weylDisc_torusNat` and `continuousOn_germ_of_mem_QC`. -/
 theorem continuousOn_weylDisc_germ_of_mem_QC {χ : CentralCharOn d} {θ : ↥d.G → ℂ}
     (hθ : θ ∈ QC d χ) (T : Subgroup ↥(GSpin d.QW)) :
@@ -1366,7 +1317,8 @@ theorem continuousOn_weylDisc_germ_of_mem_QC {χ : CentralCharOn d} {θ : ↥d.G
     (Real.continuous_sqrt.comp_continuousOn (continuousOn_weylDisc_torusNat d T))).mul
     (continuousOn_germ_of_mem_QC ψ d hθ T)
 
-/-- **The integrand of `m_{geom,s}` is continuous on `T_♮`** (Thesis Prop 12.1.1(i)): it is the
+/-- **The integrand of `m_{geom,s}` is continuous on `T_♮`** (used in the proof of Thesis
+Prop 12.1.1(i)): it is the
 product of `D^G(t)^{1/2} c_{θ,O_t}(t)` (`continuousOn_weylDisc_germ_of_mem_QC`) and `Δ(t)^{s−1/2}`
 (`continuousOn_deltaGGP_rpow`) there. -/
 theorem continuousOn_gammaIntegrand_of_mem_QC {χ : CentralCharOn d} {θ : ↥d.G → ℂ}

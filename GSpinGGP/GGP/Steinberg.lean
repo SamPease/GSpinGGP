@@ -18,7 +18,7 @@ Over an algebraically closed field this is `commute_iff_det_negFixedSub`; it des
 of characteristic `0` by base change (`commute_iff`). The `W₊₁` condition then comes for free, since
 `det P(g) = det P(g)|_{W₊₁} · det P(g)|_{W₋₁}` (`IsomCent.det_eq_det_one_mul_det_neg_one_of_charZero`).
 
-* `isNondeg_baseChange`, `isSemisimple_specP_of_isSS`, `bcGSpin`, `specP_bcGSpin`: base change of
+* `isSemisimple_specP_of_isSS`, `bcGSpin`, `specP_bcGSpin`: base change of
   `GSpin(V)` along `K → K̄`, over any field.
 -/
 
@@ -34,26 +34,6 @@ namespace GSpinGGP
 section BaseChange
 
 variable {K : Type*} [Field K] [Invertible (2 : K)] {V : Type*} [AddCommGroup V] [Module K V]
-
-/-- A nondegenerate form stays nondegenerate over `K̄` (the Gram determinant is unchanged). -/
-theorem isNondeg_baseChange [Module.Finite K V] (Q : QuadraticForm K V) (hQ : IsNondeg Q) :
-    IsNondeg (Q.baseChange (AlgebraicClosure K)) := by
-  unfold IsNondeg bform at *
-  set b := Module.Free.chooseBasis K V
-  rw [QuadraticForm.associated_baseChange,
-    LinearMap.BilinForm.nondegenerate_iff_det_ne_zero (b.baseChange (AlgebraicClosure K))]
-  rw [LinearMap.BilinForm.nondegenerate_iff_det_ne_zero b] at hQ
-  have : LinearMap.BilinForm.toMatrix (b.baseChange (AlgebraicClosure K))
-      (LinearMap.BilinForm.baseChange (AlgebraicClosure K) (QuadraticMap.associated Q)) =
-      (algebraMap K (AlgebraicClosure K)).mapMatrix
-        (LinearMap.BilinForm.toMatrix b (QuadraticMap.associated Q)) := by
-    ext i j
-    rw [LinearMap.BilinForm.toMatrix_apply, RingHom.mapMatrix_apply, Matrix.map_apply,
-      LinearMap.BilinForm.toMatrix_apply, Module.Basis.baseChange_apply,
-      Module.Basis.baseChange_apply, LinearMap.BilinForm.baseChange_tmul, mul_one,
-      Algebra.smul_def, mul_one]
-  rw [this, ← RingHom.map_det]
-  exact (map_ne_zero _).2 hQ
 
 /-- Base change `GSpin(Q)(K) → GSpin(Q)(K̄)`. -/
 def bcGSpin (Q : QuadraticForm K V) : GSpin Q →* GSpin (Q.baseChange (AlgebraicClosure K)) where
