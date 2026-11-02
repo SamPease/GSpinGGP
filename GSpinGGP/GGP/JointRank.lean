@@ -491,6 +491,83 @@ theorem so_clauses [CharZero K] (hQ : IsNondeg Q) :
     rw [map_add, map_smul, map_smul, ha, ha', haa, ha0, neg_zero, zero_smul, zero_smul,
       smul_zero, smul_zero, add_zero, LinearMap.zero_apply]
 
+/-- **The four clauses on a paired piece** `V = span(u) ⊕ span(w)`, with `u_i` joint eigenvectors for
+`(μ, c)`, `w_j` for `(μ⁻¹, −c)`, `(μ, c) ≠ (μ⁻¹, −c)`, `b(w_j, u_k) = δ_{jk}`: bound `d`. -/
+theorem jointClauses_pair {P N : Module.End K V} (hP : IsIsom (bform Q) P)
+    (hN : IsSkew (bform Q) N) {μ c : K} (hμ0 : μ ≠ 0) (hne : μ⁻¹ ≠ μ ∨ c ≠ 0) {d : ℕ}
+    (hd : 1 ≤ d) (u w : Fin d → V) (hu : ∀ i, P (u i) = μ • u i) (hu' : ∀ i, N (u i) = c • u i)
+    (hw : ∀ j, P (w j) = μ⁻¹ • w j) (hw' : ∀ j, N (w j) = (-c) • w j)
+    (huu : ∀ i k, bform Q (u i) (u k) = 0)
+    (hwu : ∀ j k, bform Q (w j) (u k) = if j = k then 1 else 0)
+    (hspan : Submodule.span K (Set.range u ∪ Set.range w) = ⊤) :
+    JointClauses Q P N d := by
+  have hmemC : ∀ i j, wedge (bform Q) (u i) (w j) ∈ soCent Q P ⊓ soCent Q N := fun i j =>
+    wedge_mem_soCent_inf hP hN hμ0 (Module.End.mem_eigenspace_iff.2 (hu i))
+      (Module.End.mem_eigenspace_iff.2 (hu' i)) (Module.End.mem_eigenspace_iff.2 (hw j))
+      (Module.End.mem_eigenspace_iff.2 (hw' j))
+  have hlow := le_finrank_of_wedge_dual u w huu hwu hmemC
+  have hu0 : ∀ i, u i ≠ 0 := fun i h => by
+    have := hwu i i; rw [h, map_zero, if_pos rfl] at this; exact zero_ne_one this
+  -- `d = 1`: the hyperbolic pair
+  have hone : d = 1 → soCent Q P ⊓ soCent Q N = K ∙ wedge (bform Q) (u ⟨0, by omega⟩)
+      (w ⟨0, by omega⟩) ∧ _ := fun hd1 => by
+    subst hd1
+    have hsp : Submodule.span K {u 0, w 0} = ⊤ := by
+      rw [← hspan]; congr 1; ext x; simp [Fin.forall_fin_one, Set.mem_range, eq_comm]
+    have huw : bform Q (u 0) (w 0) ≠ 0 := by
+      rw [bform_comm Q, hwu 0 0, if_pos rfl]; exact one_ne_zero
+    exact ⟨soCent_inf_eq_span_wedge hP hN hμ0 hne (hu 0) (hu' 0) (hw 0) (hw' 0) huw hsp,
+      pair_nilpotent_unipotent hP hN hμ0 hne (hu 0) (hu' 0) (hw 0) (hw' 0) huw hsp⟩
+  refine ⟨le_trans (Nat.le_mul_self d) hlow, ⟨fun he => ?_, fun hab => ?_⟩, fun he => ?_,
+    fun he => ?_⟩
+  · intro M₁ h₁ M₂ h₂
+    exact commute_of_mem_finrank_le_one (by nlinarith) h₁ h₂
+  · have hd1 : d = 1 := by
+      by_contra hne1
+      exact not_commute_wedge_dual (Q := Q) (by omega) u w huu hwu (hu0 _)
+        (hab _ (hmemC _ _) _ (hmemC _ _))
+    obtain ⟨hC, -⟩ := hone hd1
+    subst hd1
+    rw [hC, finrank_span_singleton]
+    intro h0
+    have := LinearMap.congr_fun h0 (u 0)
+    rw [wedge_apply, huu, zero_smul, sub_zero, LinearMap.zero_apply, smul_eq_zero] at this
+    rcases this with h | h
+    · rw [hwu] at h; simp at h
+    · exact hu0 _ h
+  · have hd1 : d = 1 := by nlinarith
+    exact (hone hd1).2.1
+  · have hd1 : d = 1 := by nlinarith
+    exact (hone hd1).2.2
+
+/-- **The four clauses when `P` and `N` are scalars** (`P = ε`, `N = c`): the joint centralizer is
+`so(V)`, with bound `⌊dim V/2⌋`. -/
+theorem jointClauses_scalar [CharZero K] (hQ : IsNondeg Q) {P N : Module.End K V} {ε c : K}
+    (hP : ∀ v, P v = ε • v) (hN : ∀ v, N v = c • v) :
+    JointClauses Q P N (finrank K V / 2) := by
+  have e : soCent Q P ⊓ soCent Q N = soCent Q 1 := by
+    rw [soCent_of_scalar hP, soCent_of_scalar hN, inf_idem]
+  obtain ⟨l, ab, nil, uni⟩ := so_clauses hQ
+  unfold JointClauses
+  rw [e]
+  exact ⟨l, ab, nil, fun he h hi hnil _ _ => uni he h hi hnil⟩
+
+omit [IsAlgClosed K] in
+/-- An isometry preserving `U` preserves `U^⊥`. -/
+theorem mapsTo_orthogonal_of_isIsom (hQ : IsNondeg Q) {g : Module.End K V}
+    (hg : IsIsom (bform Q) g) {U : Submodule K V} (hgU : Set.MapsTo g U U) :
+    Set.MapsTo g ((bform Q).orthogonal U) ((bform Q).orthogonal U) := by
+  have hinj : Function.Injective (g.restrict hgU) := fun x y hxy =>
+    Subtype.ext (IsIsom.injective hQ hg (congrArg Subtype.val hxy))
+  have hsurj := LinearMap.injective_iff_surjective.1 hinj
+  intro y hy
+  refine LinearMap.BilinForm.mem_orthogonal_iff.2 fun x hx => ?_
+  obtain ⟨x', hx'⟩ := hsurj ⟨x, hx⟩
+  have hx'' : g x' = x := congrArg Subtype.val hx'
+  change bform Q x (g y) = 0
+  rw [← hx'', hg]
+  exact (LinearMap.BilinForm.mem_orthogonal_iff.1 hy) _ x'.2
+
 end Base
 
 end GSpinGGP
