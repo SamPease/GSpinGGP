@@ -168,13 +168,6 @@ theorem ι_adV_pow {Q : QuadraticForm F V} {Y : CliffordAlgebra Q} (hY : Y ∈ g
     rw [pow_succ', Module.End.mul_apply, ι_adV hY, ih, pow_succ', Module.End.mul_apply,
       LieAlgebra.ad_apply, Ring.lie_def]
 
-/-- `adV Y` is nilpotent for nilpotent `Y ∈ gspin(V)`. -/
-theorem isNilpotent_adV {Q : QuadraticForm F V} {Y : CliffordAlgebra Q} (hY : Y ∈ gspin Q)
-    (hn : IsNilpotent Y) : IsNilpotent (adV Q Y) := by
-  obtain ⟨k, hk⟩ := LieAlgebra.ad_nilpotent_of_nilpotent (R := F) hn
-  refine ⟨k, LinearMap.ext fun v => ι_injective Q ?_⟩
-  rw [ι_adV_pow hY, hk, LinearMap.zero_apply, LinearMap.zero_apply, map_zero]
-
 /-- `adV Y` is semisimple for `Y ∈ gspin(V)` with `L_Y` semisimple on `C(V)` (`adV Y` is the
 restriction of `ad Y` to `ι V`). -/
 theorem isSemisimple_adV {Q : QuadraticForm F V}
