@@ -530,11 +530,7 @@ theorem continuousOn_deltaGGP_rpow (T : Subgroup ↥(GSpin d.QW)) (s : ℝ) :
       (isSemisimple_specP_of_isSS d.QW x hx.1) Module.End.isSemisimple_id
   have hdisj : Disjoint (fixedSub x) U := disjoint_ker_range_of_isSemisimple hss
   have hrn := LinearMap.finrank_range_add_finrank_ker (P t₀ - 1)
-  have hcompl : IsCompl (fixedSub x) U := by
-    refine (Submodule.isCompl_iff_disjoint _ _ ?_).2 hdisj
-    have e1 : Module.finrank F (fixedSub x) = Module.finrank F (LinearMap.ker (P t₀ - 1)) := rfl
-    have e2 : Module.finrank F U = Module.finrank F (LinearMap.range (P t₀ - 1)) := rfl
-    omega
+  have hcompl : IsCompl (fixedSub x) U := isCompl_ker_range_of_isSemisimple hss
   -- on `T_♮`, `W''_t = W''_x` and `Δ(t) = |det g(t)|`
   have hΔ : ∀ t : ↥T, d.IsGammaElt (t : ↥(GSpin d.QW)) ∧ d.torusOf (t : ↥(GSpin d.QW)) = T →
       deltaGGP d (t : ↥(GSpin d.QW)) = absF (LinearMap.det (g t)) := by
@@ -735,13 +731,8 @@ theorem continuousOn_weylDisc_torusNat (T : Subgroup ↥(GSpin d.QW)) :
   -- `𝔤 = L ⊕ C`, both `N_t`-stable
   obtain ⟨L, hLdef⟩ : ∃ L, L = LinearMap.ker (N t₀) := ⟨_, rfl⟩
   obtain ⟨C, hCdef⟩ : ∃ C, C = LinearMap.range (N t₀) := ⟨_, rfl⟩
-  have hdisj : Disjoint L C := by
-    rw [hLdef, hCdef]; exact disjoint_ker_range_of_isSemisimple hss
   have hcompl : IsCompl L C := by
-    refine (Submodule.isCompl_iff_disjoint _ _ ?_).2 hdisj
-    have := LinearMap.finrank_range_add_finrank_ker (N t₀)
-    rw [hLdef, hCdef]
-    omega
+    rw [hLdef, hCdef]; exact isCompl_ker_range_of_isSemisimple hss
   have hL : ∀ t, ∀ X ∈ L, N t X ∈ L := fun t X hX => by
     rw [hLdef, LinearMap.mem_ker] at hX ⊢
     rw [← Module.End.mul_apply, ← (hcomm t).eq, Module.End.mul_apply, hX, map_zero]
@@ -879,10 +870,7 @@ theorem restrictForm_lieCentralizer_nondegenerate (g : ↥d.G)
   have hai : a * ai = 1 := Units.mul_inv _
   set N := oneSubAd d g
   have hss := isSemisimple_oneSubAd d g hg
-  have hcompl : IsCompl (LinearMap.ker N) (LinearMap.range N) := by
-    refine (Submodule.isCompl_iff_disjoint _ _ ?_).2 (disjoint_ker_range_of_isSemisimple hss)
-    have := LinearMap.finrank_range_add_finrank_ker N
-    omega
+  have hcompl := isCompl_ker_range_of_isSemisimple hss
   have hN : ∀ X : d.lie.toSubmodule, ((N X : d.lie.toSubmodule) : d.ambient) =
       (X : d.ambient) - a * X * ai := fun X => rfl
   have hL : ∀ Z : ↥(lieCentralizer d.lie a),

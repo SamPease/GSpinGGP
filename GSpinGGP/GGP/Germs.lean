@@ -65,7 +65,7 @@ Proof sketch. `G_x⁰` is connected reductive (centralizer of a semisimple eleme
 is one, and `dim 𝔤_x = rank G`. On the Lie algebra side, the centralizer of a regular semisimple
 `X ∈ 𝔤` is a Cartan subalgebra of dimension `rank G`, and `dim 𝔤_X ≥ rank G` for every `X ∈ 𝔤`
 (over `F̄`, by upper semicontinuity of `dim 𝔤_X` and density of the regular semisimple set), so
-`lieRank 𝔤 = rank G`.  Missing in the project: Cartan subalgebras of reductive Lie algebras.
+`lieRank 𝔤 = rank G` (regular semisimple elements exist in `𝔤(F)`, `F` being infinite).  Missing in the project: Cartan subalgebras of reductive Lie algebras.
 Status: SORRY (structure theory of reductive Lie algebras). -/
 theorem finrank_lieCentralizer_eq_lieRank (d : GGPData F) {x : ↥d.G}
     (hx : x ∈ regularSet d.G d.lie) :
@@ -73,22 +73,16 @@ theorem finrank_lieCentralizer_eq_lieRank (d : GGPData F) {x : ↥d.G}
   sorry
 
 /-- **Regular semisimple elements lie in Harish-Chandra's `G'`**: `D(x) ≠ 0` for
-`x ∈ G_reg(F)`. `N = 1 − Ad x` is semisimple on `𝔤`, so `𝔤 = ker N ⊕ im N` with `ker N = 𝔤_x`;
-the characteristic polynomial of `N` is `t^{dim 𝔤_x}` times a polynomial with nonzero constant
-term `± det (N|_{im N})`, and `dim 𝔤_x = lieRank 𝔤` (`finrank_lieCentralizer_eq_lieRank`). -/
+`x ∈ G_reg(F)`. `N = 1 − Ad x` is semisimple on `𝔤`, so the exact power of `t` dividing its
+characteristic polynomial is `t^{dim ker N}` (Mathlib `finrank_maxGenEigenspace_zero_eq`), with
+`ker N = 𝔤_x` and `dim 𝔤_x = lieRank 𝔤` (`finrank_lieCentralizer_eq_lieRank`). -/
 theorem hcDisc_ne_zero_of_mem_regularSet (d : GGPData F) {x : ↥d.G}
     (hx : x ∈ regularSet d.G d.lie) : hcDisc d x ≠ 0 := by
   obtain ⟨N, hNdef⟩ : ∃ N, N = oneSubAd d x := ⟨_, rfl⟩
   have hss : Module.End.IsSemisimple N := hNdef ▸ isSemisimple_oneSubAd d x hx.1
-  have hcompl : IsCompl (LinearMap.ker N) (LinearMap.range N) := by
-    refine (Submodule.isCompl_iff_disjoint _ _ ?_).2 (disjoint_ker_range_of_isSemisimple hss)
-    have := LinearMap.finrank_range_add_finrank_ker N
-    omega
-  have hC : ∀ v ∈ LinearMap.range N, N v ∈ LinearMap.range N := by
-    rintro _ ⟨w, rfl⟩
-    exact ⟨N w, rfl⟩
-  have htc := trailingCoeff_charpoly_of_isCompl hcompl rfl hC
-  have hdeg := natTrailingDegree_charpoly_of_isCompl hcompl rfl hC
+  have hdeg : (LinearMap.charpoly N).natTrailingDegree = Module.finrank F ↥(LinearMap.ker N) := by
+    rw [← LinearMap.finrank_maxGenEigenspace_zero_eq,
+      hss.isFinitelySemisimple.maxGenEigenspace_eq_eigenspace, Module.End.eigenspace_zero]
   -- `ker N = 𝔤_x`
   obtain ⟨a, ha⟩ : ∃ a : d.ambient, a = ((x : d.ambientˣ) : d.ambient) := ⟨_, rfl⟩
   obtain ⟨ai, hai'⟩ : ∃ ai : d.ambient, ai = (((x : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient) :=
@@ -128,8 +122,7 @@ theorem hcDisc_ne_zero_of_mem_regularSet (d : GGPData F) {x : ↥d.G}
   have key : (LinearMap.charpoly N).coeff (lieRank d.lie) ≠ 0 := by
     rw [← finrank_lieCentralizer_eq_lieRank d hx, ← hker', ← hdeg]
     change (LinearMap.charpoly N).trailingCoeff ≠ 0
-    rw [htc.2]
-    exact mul_ne_zero (pow_ne_zero _ (neg_ne_zero.mpr one_ne_zero)) htc.1
+    exact Polynomial.trailingCoeff_nonzero_iff_nonzero.mpr (LinearMap.charpoly_monic N).ne_zero
   rw [hNdef] at key
   unfold hcDisc
   rw [dite_eq_left (lie_conj_stable d x)]

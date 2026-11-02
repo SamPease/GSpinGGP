@@ -2507,11 +2507,6 @@ theorem orbitChoice_mem_nilReg_of_exists (d : GGPData F) (x : ↥(GSpin d.QW))
   rw [e]
   exact h.choose_spec.1
 
-/-- Conjugation by `G(F)` preserves `𝔤`. -/
-theorem conj_mem_lie_of_mem_G (d : GGPData F) {g : d.ambientˣ} (hg : g ∈ d.G) {Y : d.ambient}
-    (hY : Y ∈ d.lie) : (g : d.ambient) * Y * (↑g⁻¹ : d.ambient) ∈ d.lie :=
-  ⟨conj_mem_gspin d.QW (d.fst ⟨g, hg⟩) hY.1, conj_mem_gspin d.QV (d.snd ⟨g, hg⟩) hY.2⟩
-
 /-- `dim 𝔤_{gXg⁻¹} = dim 𝔤_X` when conjugation by `g` and `g⁻¹` preserves `𝔤`. -/
 theorem finrank_lieCentralizer_conj {A : Type*} [Ring A] [Algebra F A] (𝔤 : LieSubalgebra F A)
     (g : Aˣ) (hg : ∀ Y ∈ 𝔤, (g : A) * Y * (↑g⁻¹ : A) ∈ 𝔤)
@@ -2638,7 +2633,7 @@ theorem exists_orbitSpec_one_of_even (d : GGPData F) (hqs : d.IsQuasiSplit)
   refine ⟨Quotient.mk _ ⟨X, hX1, hX.2.1⟩, ?_, ⟨X, hX1⟩, ⟨hX.2.1, rfl⟩, hspec⟩
   refine mk_mem_nilReg_of_isRegularNil _ _ (fun g hg Y hY => ?_) _ (by show IsRegularNil _ X; rw [hL]; exact hX)
   rw [hL] at hY ⊢
-  exact conj_mem_lie_of_mem_G d (Subgroup.mem_inf.mp hg).1 hY
+  exact lie_conj_stable d ⟨_, (Subgroup.mem_inf.mp hg).1⟩ _ hY
 
 /-- A regular orbit satisfying `OrbitSpec d 1` exists: where Luo's recipe imposes no condition, by
 `nilReg_one_nonempty`; otherwise by `exists_orbitSpec_one_of_even`. -/
