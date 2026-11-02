@@ -293,13 +293,7 @@ instance isFiniteMeasureOnCompacts_weilMeasureHG : IsFiniteMeasureOnCompacts d.w
 
 end GGPData
 
-/-! ### `Ad(G)`-stability of `𝔤` and conjugation stability of `G_reg` -/
-
-section GSpinAd
-
-variable {K : Type*} [Field K] [Invertible (2 : K)] {V : Type*} [AddCommGroup V] [Module K V]
-
-end GSpinAd
+/-! ### Conjugation stability of `G_reg` -/
 
 namespace GGPData
 

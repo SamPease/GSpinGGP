@@ -4227,4 +4227,40 @@ end CentralCharOn
 
 end CentralChar
 
+/-! ## `Ad(GSpin)`-stability of `gspin` -/
+
+section GSpinAd
+
+variable {K : Type*} [Field K] [Invertible (2 : K)] {V : Type*} [AddCommGroup V] [Module K V]
+
+open CliffordAlgebra in
+/-- `gspin(V)` is stable under conjugation by `GSpin(V)` (Thesis Prop. 5.1.3.1: it is the Lie
+algebra of `GSpin(V)`): for `g ∈ GSpin(V)` and `X ∈ gspin(V)`, `g X g⁻¹` is even and
+`[g X g⁻¹, v] = g [X, g⁻¹ v g] g⁻¹ ∈ V`. -/
+theorem conj_mem_gspin (Q : QuadraticForm K V) (g : GSpin Q) {X : CliffordAlgebra Q}
+    (hX : X ∈ gspin Q) :
+    ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * X *
+      (((g : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∈ gspin Q := by
+  obtain ⟨hX0, hX⟩ := hX
+  set u : (CliffordAlgebra Q)ˣ := (g : (CliffordAlgebra Q)ˣ)
+  have hg := g.2
+  refine ⟨?_, fun v => ?_⟩
+  · exact Subalgebra.mul_mem _ (Subalgebra.mul_mem _ hg.1 hX0) (g⁻¹ : GSpin Q).2.1
+  · obtain ⟨w, hw⟩ := hg.2.2 v
+    -- `ι v = u ι w u⁻¹`
+    have hv : ι Q v = (u : CliffordAlgebra Q) * ι Q w * ((u⁻¹ : (CliffordAlgebra Q)ˣ) :
+        CliffordAlgebra Q) := by
+      rw [hw]
+      simp [u, mul_assoc]
+    obtain ⟨t, ht⟩ := hX w
+    obtain ⟨r, hr⟩ := hg.2.1 t
+    refine ⟨r, ?_⟩
+    rw [hr, hv, Ring.lie_def]
+    rw [Ring.lie_def] at ht
+    rw [ht]
+    simp only [mul_sub, sub_mul, mul_assoc, Units.inv_mul_cancel_left]
+    rfl
+
+end GSpinAd
+
 end GSpinGGP
