@@ -1019,6 +1019,72 @@ theorem continuousOn_weylDisc_torusNat (T : Subgroup ↥(GSpin d.QW)) :
   filter_upwards [(isOpen_torusNat d T).mem_nhds ⟨hx, hT⟩] with t ht
   exact (hW t ht).symm
 
+/-- `G_{diag t} = G_{diag x}` for `t ∈ T_{x,♮}` (`commute_iff_of_torusOf_eq`, componentwise). -/
+theorem grpCentralizer_diag_eq_of_torusOf_eq {x t : GSpin d.QW} (hx : d.IsGammaElt x)
+    (ht : d.IsGammaElt t) (htx : t ∈ d.torusOf x) (hT : d.torusOf t = d.torusOf x) :
+    grpCentralizer d.G (d.diag t : d.ambientˣ) = grpCentralizer d.G (d.diag x : d.ambientˣ) := by
+  obtain ⟨hW, hV⟩ := commute_iff_of_torusOf_eq d hx ht htx hT
+  have key : ∀ (g : ↥d.G) (a : GSpin d.QW), Commute (g : d.ambientˣ) (d.diag a : d.ambientˣ) ↔
+      Commute (d.fst g) a ∧ Commute (d.snd g) (d.incl a) := by
+    intro g a
+    have e1 : ∀ (u v : GSpin d.QW), Commute u v ↔
+        Commute ((u : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) (v : (CliffordAlgebra d.QW)ˣ) :=
+      fun u v => ⟨fun h => congrArg (fun k : GSpin d.QW => ((k : (CliffordAlgebra d.QW)ˣ) :
+        CliffordAlgebra d.QW)) h.eq, fun h => Subtype.ext (Units.ext h.eq)⟩
+    have e2 : ∀ (u v : GSpin d.QV), Commute u v ↔
+        Commute ((u : (CliffordAlgebra d.QV)ˣ) : CliffordAlgebra d.QV) (v : (CliffordAlgebra d.QV)ˣ) :=
+      fun u v => ⟨fun h => congrArg (fun k : GSpin d.QV => ((k : (CliffordAlgebra d.QV)ˣ) :
+        CliffordAlgebra d.QV)) h.eq, fun h => Subtype.ext (Units.ext h.eq)⟩
+    rw [e1, e2]
+    have hg : (((g : d.ambientˣ)) : d.ambient) =
+        ((((d.fst g : GSpin d.QW) : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW),
+          (((d.snd g : GSpin d.QV) : (CliffordAlgebra d.QV)ˣ) : CliffordAlgebra d.QV)) := rfl
+    constructor
+    · intro h
+      have h' := congrArg (fun k : d.ambientˣ => (k : d.ambient)) h.eq
+      simp only [Units.val_mul, hg, coe_diag_eq, Prod.mk_mul_mk, Prod.mk.injEq] at h'
+      exact ⟨h'.1, h'.2⟩
+    · rintro ⟨h1, h2⟩
+      refine Units.ext ?_
+      simp only [Units.val_mul, hg, coe_diag_eq, Prod.mk_mul_mk, h1.eq, h2.eq]
+  ext g
+  simp only [grpCentralizer, Subgroup.mem_inf, Subgroup.mem_centralizer_iff, Set.mem_singleton_iff,
+    forall_eq]
+  refine ⟨fun ⟨hg, h⟩ => ⟨hg, ?_⟩, fun ⟨hg, h⟩ => ⟨hg, ?_⟩⟩
+  · have := (key ⟨g, hg⟩ t).mp h.symm
+    exact ((key ⟨g, hg⟩ x).mpr ⟨(hW _).mp this.1, (hV _).mp this.2⟩).symm
+  · have := (key ⟨g, hg⟩ x).mp h.symm
+    exact ((key ⟨g, hg⟩ t).mpr ⟨(hW _).mpr this.1, (hV _).mpr this.2⟩).symm
+
+/-- `𝔤_{diag t} = 𝔤_{diag x}` for `t ∈ T_{x,♮}`. -/
+theorem lieCentralizer_diag_eq_of_torusOf_eq {x t : GSpin d.QW} (hx : d.IsGammaElt x)
+    (ht : d.IsGammaElt t) (htx : t ∈ d.torusOf x) (hT : d.torusOf t = d.torusOf x) :
+    lieCentralizer d.lie ((d.diag t : d.ambientˣ) : d.ambient) =
+      lieCentralizer d.lie ((d.diag x : d.ambientˣ) : d.ambient) := by
+  refine LieSubalgebra.ext _ _ fun X => ?_
+  rw [mem_lieCentralizer, mem_lieCentralizer]
+  exact ⟨fun h => ⟨h.1, (commute_lie_iff_of_torusOf_eq d hx ht htx hT h.1).mp h.2⟩,
+    fun h => ⟨h.1, (commute_lie_iff_of_torusOf_eq d hx ht htx hT h.1).mpr h.2⟩⟩
+
+/-- **The chosen orbits agree on `T_♮`**: `O_t` and `O_x` correspond for `t ∈ T_{x,♮}` (equal
+centralizers, and `OrbitSpec` only depends on `W'_t = W'_x`). -/
+theorem orbitChoice_heq_of_torusOf_eq {x t : GSpin d.QW} (hx : d.IsGammaElt x)
+    (ht : d.IsGammaElt t) (htx : t ∈ d.torusOf x) (hT : d.torusOf t = d.torusOf x) :
+    HEq (orbitChoice d t) (orbitChoice d x) := by
+  refine orbitChoice_heq_of_eq d (grpCentralizer_diag_eq_of_torusOf_eq d hx ht htx hT)
+    (lieCentralizer_diag_eq_of_torusOf_eq d hx ht htx hT) ?_
+  funext X
+  unfold OrbitSpec
+  rw [d.fixedSub_eq_of_torusOf_eq htx hT]
+
+/-- **`b(Y, N) = 0`** for the trace form `b` of `C(W) × C(V)`, `N` nilpotent commuting with `Y`
+(`YN` is nilpotent, so left multiplication by it has trace `0`). -/
+theorem bilin_eq_zero_of_commute_of_isNilpotent {Y N : d.ambient} (hc : Commute Y N)
+    (hN : IsNilpotent N) : d.bilin Y N = 0 := by
+  rw [GGPData.bilin_apply]
+  have hYN : IsNilpotent (Y * N) := hc.isNilpotent_mul_left hN
+  exact LinearMap.isNilpotent_trace_of_isNilpotent (hYN.map (Algebra.lmul F d.ambient)) |>.eq_zero
+
 /-- **The germ term is continuous on `T_♮`** (Thesis Prop 12.1.1(i)): for `θ ∈ QC(G(F), χ)`,
 `t ↦ c_{θ,O_t}(t)` is locally constant on `T_♮`.  Proof sketch: for `t' = t e^Y` with `Y ∈ Lie T`
 small (central in `𝔤_t`), `θ(t' e^X) = θ(t e^{X+Y})`, and `ĵ(O, X + Y) = ĵ(O, X)` on `𝔤_{t,reg}`
@@ -1026,8 +1092,10 @@ small (central in `𝔤_t`), `θ(t' e^X) = θ(t e^{X+Y})`, and `ĵ(O, X + Y) = �
 the same coefficients, while `O_{t'} = O_t`.  Missing inputs: (1) germ expansions at `t e^Y`
 derived from those at `t` for `Y` central only in `𝔤_t` (`germ_eq_germ_of_translate` covers
 translation by central elements of `G`); (2) the invariance `ĵ(O, X + Y) = ĵ(O, X)` for such `Y`;
-(3) `O_{t'} = O_t`, i.e. `orbitChoice_heq_of_eq` from `G_{t'} = G_t`, `𝔤_{t'} = 𝔤_t`
-(`commute_iff_of_torusOf_eq`, `commute_lie_iff_of_torusOf_eq`) and `W'_{t'} = W'_t`.
+(3) `O_{t'} = O_t`: proved, `orbitChoice_heq_of_torusOf_eq`.  For (2), `b(Y, N) = 0` is
+`bilin_eq_zero_of_commute_of_isNilpotent`; what is missing is the uniqueness of the function
+representing `μ_O(f̂)` on the regular set.  For (1), writing `t' = t e^Y` needs a logarithm near `1`
+in `C(W) × C(V)` and `e^Y e^X = e^{X+Y}` for commuting `X, Y`.
 Literature: Waldspurger 2010 (Compositio 146; arXiv:0902.1875, §7.3, Proposition (i), proof in §7.6–7.7)
 states this local constancy for quasi-characters of `SO(W)` and of `SO(V)` separately, with his orbit
 choices and tori `T` with `A_T = 1`; the proof rests on `ĵ(O_t, ·)` being locally invariant under
