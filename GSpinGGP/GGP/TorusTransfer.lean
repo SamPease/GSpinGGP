@@ -98,10 +98,13 @@ section CliffordBC
 
 open CliffordAlgebra
 
-variable {V : Type*} [AddCommGroup V] [Module F V] (Q : QuadraticForm F V)
+/-! Base change of `C(Q)` and `GSpin(Q)` along `K → K̄`, over any field with `2` invertible. -/
+
+variable {K : Type*} [Field K] [Invertible (2 : K)]
+  {V : Type*} [AddCommGroup V] [Module K V] (Q : QuadraticForm K V)
 
 theorem bcHom_mem_evenOdd_zero {X : CliffordAlgebra Q} (hX : X ∈ evenOdd Q 0) :
-    bcHom Q X ∈ evenOdd (Q.baseChange (AlgebraicClosure F)) 0 := by
+    bcHom Q X ∈ evenOdd (Q.baseChange (AlgebraicClosure K)) 0 := by
   induction X, hX using even_induction with
   | algebraMap r => rw [bcHom_algebraMap]; exact SetLike.algebraMap_mem_graded _ _
   | add x y hx hy ihx ihy => rw [map_add]; exact Submodule.add_mem _ ihx ihy
@@ -110,7 +113,7 @@ theorem bcHom_mem_evenOdd_zero {X : CliffordAlgebra Q} (hX : X ∈ evenOdd Q 0) 
     exact zero_add (0 : ZMod 2) ▸ SetLike.mul_mem_graded (ι_mul_ι_mem_evenOdd_zero _ _ _) ih
 
 theorem bcHom_mem_evenOdd_one {X : CliffordAlgebra Q} (hX : X ∈ evenOdd Q 1) :
-    bcHom Q X ∈ evenOdd (Q.baseChange (AlgebraicClosure F)) 1 := by
+    bcHom Q X ∈ evenOdd (Q.baseChange (AlgebraicClosure K)) 1 := by
   induction X, hX using odd_induction with
   | ι v => rw [bcHom_ι]; exact ι_mem_evenOdd_one _ _
   | add x y hx hy ihx ihy => rw [map_add]; exact Submodule.add_mem _ ihx ihy
@@ -119,20 +122,56 @@ theorem bcHom_mem_evenOdd_one {X : CliffordAlgebra Q} (hX : X ∈ evenOdd Q 1) :
     exact zero_add (1 : ZMod 2) ▸ SetLike.mul_mem_graded (ι_mul_ι_mem_evenOdd_zero _ _ _) ih
 
 /-- Evenness descends along base change. -/
-theorem mem_even_of_bcHom {X : CliffordAlgebra Q} (hX : bcHom Q X ∈ even (Q.baseChange (AlgebraicClosure F))) :
+theorem mem_even_of_bcHom {X : CliffordAlgebra Q} (hX : bcHom Q X ∈ even (Q.baseChange (AlgebraicClosure K))) :
     X ∈ even Q := by
   rw [← Subalgebra.mem_toSubmodule, even_toSubmodule] at hX ⊢
   have htop : X ∈ evenOdd Q 0 ⊔ evenOdd Q 1 := by
     rw [(evenOdd_isCompl Q).sup_eq_top]; trivial
   obtain ⟨a, ha, b, hb, rfl⟩ := Submodule.mem_sup.1 htop
-  have hb' : bcHom Q b ∈ evenOdd (Q.baseChange (AlgebraicClosure F)) 0 := by
+  have hb' : bcHom Q b ∈ evenOdd (Q.baseChange (AlgebraicClosure K)) 0 := by
     have := Submodule.sub_mem _ hX (bcHom_mem_evenOdd_zero Q ha)
     rwa [map_add, add_sub_cancel_left] at this
   have h0 : bcHom Q b = 0 :=
-    (Submodule.disjoint_def.1 (evenOdd_isCompl (Q.baseChange (AlgebraicClosure F))).disjoint) _ hb'
+    (Submodule.disjoint_def.1 (evenOdd_isCompl (Q.baseChange (AlgebraicClosure K))).disjoint) _ hb'
       (bcHom_mem_evenOdd_one Q hb)
   rw [show b = 0 from bcHom_injective Q (h0.trans (map_zero _).symm), add_zero]
   exact ha
+
+/-- `t ι(w) t⁻¹ = ι(P(t)_{K̄} w)` for `t ∈ GSpin(Q)(K)`. -/
+theorem bcUnits_conj_ι' (t : GSpin Q) (w : (AlgebraicClosure K) ⊗[K] V) :
+    ((bcUnits Q (t : (CliffordAlgebra Q)ˣ) : (CliffordAlgebra _)ˣ) : CliffordAlgebra _) *
+      ι (Q.baseChange (AlgebraicClosure K)) w *
+      (((bcUnits Q (t : (CliffordAlgebra Q)ˣ))⁻¹ : (CliffordAlgebra _)ˣ) : CliffordAlgebra _) =
+    ι (Q.baseChange (AlgebraicClosure K)) ((specP Q t : V →ₗ[K] V).baseChange (AlgebraicClosure K) w) := by
+  induction w using TensorProduct.inductionOn with
+  | tmul z v =>
+    rw [LinearMap.baseChange_tmul, ← ofBaseChange_tmul_ι, ← ofBaseChange_tmul_ι,
+      LinearEquiv.coe_coe, ι_specP]
+    show ofBaseChange (AlgebraicClosure K) Q (1 ⊗ₜ ((t : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) *
+      ofBaseChange (AlgebraicClosure K) Q (z ⊗ₜ ι Q v) * ofBaseChange (AlgebraicClosure K) Q
+        (1 ⊗ₜ (((t : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) = _
+    rw [← map_mul, ← map_mul, Algebra.TensorProduct.tmul_mul_tmul,
+      Algebra.TensorProduct.tmul_mul_tmul, one_mul, mul_one]
+  | add a b ha hb => rw [map_add, mul_add, add_mul, ha, hb, map_add, map_add]
+
+/-- Base change maps `GSpin(Q)(K)` into `GSpin(Q)(K̄)`. -/
+theorem bcUnits_mem_GSpin (t : GSpin Q) :
+    bcUnits Q (t : (CliffordAlgebra Q)ˣ) ∈ GSpin (Q.baseChange (AlgebraicClosure K)) := by
+  have h0 : ((t : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∈ evenOdd Q 0 := by
+    rw [← even_toSubmodule]; exact t.2.1
+  refine ⟨?_, fun w => ⟨_, (bcUnits_conj_ι' Q t w).symm⟩, fun w => ?_⟩
+  · rw [← Subalgebra.mem_toSubmodule, even_toSubmodule]; exact bcHom_mem_evenOdd_zero Q h0
+  · have := bcUnits_conj_ι' Q t⁻¹ w
+    rw [Subgroup.coe_inv, map_inv, inv_inv] at this
+    exact ⟨_, this.symm⟩
+
+end CliffordBC
+
+section CliffordBCGalois
+
+open CliffordAlgebra
+
+variable {V : Type*} [AddCommGroup V] [Module F V] (Q : QuadraticForm F V)
 
 /-- `σ(ι(w)) = ι((σ ⊗ 1) w)`. -/
 theorem galC_ι' (σ : GalF F) (w : (AlgebraicClosure F) ⊗[F] V) :
@@ -181,35 +220,7 @@ theorem mem_GSpin_of_bcUnits {b : (CliffordAlgebra Q)ˣ}
     rw [map_mul, map_mul]
     exact this
 
-/-- `t ι(w) t⁻¹ = ι(P(t)_{F̄} w)` for `t ∈ GSpin(Q)(F)`. -/
-theorem bcUnits_conj_ι' (t : GSpin Q) (w : (AlgebraicClosure F) ⊗[F] V) :
-    ((bcUnits Q (t : (CliffordAlgebra Q)ˣ) : (CliffordAlgebra _)ˣ) : CliffordAlgebra _) *
-      ι (Q.baseChange (AlgebraicClosure F)) w *
-      (((bcUnits Q (t : (CliffordAlgebra Q)ˣ))⁻¹ : (CliffordAlgebra _)ˣ) : CliffordAlgebra _) =
-    ι (Q.baseChange (AlgebraicClosure F)) ((specP Q t : V →ₗ[F] V).baseChange (AlgebraicClosure F) w) := by
-  induction w using TensorProduct.inductionOn with
-  | tmul z v =>
-    rw [LinearMap.baseChange_tmul, ← ofBaseChange_tmul_ι, ← ofBaseChange_tmul_ι,
-      LinearEquiv.coe_coe, ι_specP]
-    show ofBaseChange (AlgebraicClosure F) Q (1 ⊗ₜ ((t : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) *
-      ofBaseChange (AlgebraicClosure F) Q (z ⊗ₜ ι Q v) * ofBaseChange (AlgebraicClosure F) Q
-        (1 ⊗ₜ (((t : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) = _
-    rw [← map_mul, ← map_mul, Algebra.TensorProduct.tmul_mul_tmul,
-      Algebra.TensorProduct.tmul_mul_tmul, one_mul, mul_one]
-  | add a b ha hb => rw [map_add, mul_add, add_mul, ha, hb, map_add, map_add]
-
-/-- Base change maps `GSpin(Q)(F)` into `GSpin(Q)(F̄)`. -/
-theorem bcUnits_mem_GSpin (t : GSpin Q) :
-    bcUnits Q (t : (CliffordAlgebra Q)ˣ) ∈ GSpin (Q.baseChange (AlgebraicClosure F)) := by
-  have h0 : ((t : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∈ evenOdd Q 0 := by
-    rw [← even_toSubmodule]; exact t.2.1
-  refine ⟨?_, fun w => ⟨_, (bcUnits_conj_ι' Q t w).symm⟩, fun w => ?_⟩
-  · rw [← Subalgebra.mem_toSubmodule, even_toSubmodule]; exact bcHom_mem_evenOdd_zero Q h0
-  · have := bcUnits_conj_ι' Q t⁻¹ w
-    rw [Subgroup.coe_inv, map_inv, inv_inv] at this
-    exact ⟨_, this.symm⟩
-
-end CliffordBC
+end CliffordBCGalois
 
 section KerBC
 

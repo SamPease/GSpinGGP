@@ -911,29 +911,6 @@ theorem det_rangeRestr_baseChange (A : M →ₗ[K] M) :
 
 end RangeDet
 
-section BCConj
-
-variable {V : Type*} [AddCommGroup V] [Module F V]
-
-/-- `t ι(w) t⁻¹ = ι(P(t)_{F̄} w)` in `C(Q_{F̄})`, for `t ∈ GSpin(Q)(F)`. -/
-theorem bcUnits_conj_ι (Q : QuadraticForm F V) (t : GSpin Q) (w : AlgebraicClosure F ⊗[F] V) :
-    ((bcUnits Q (t : (CliffordAlgebra Q)ˣ) : (CliffordAlgebra _)ˣ) : CliffordAlgebra _) *
-      ι (Q.baseChange (AlgebraicClosure F)) w *
-      (((bcUnits Q (t : (CliffordAlgebra Q)ˣ))⁻¹ : (CliffordAlgebra _)ˣ) : CliffordAlgebra _) =
-    ι (Q.baseChange (AlgebraicClosure F))
-      ((specP Q t : V →ₗ[F] V).baseChange (AlgebraicClosure F) w) := by
-  induction w using TensorProduct.inductionOn with
-  | tmul z v =>
-    rw [LinearMap.baseChange_tmul, ← ofBaseChange_tmul_ι, ← ofBaseChange_tmul_ι, LinearEquiv.coe_coe,
-      ι_specP]
-    show ofBaseChange (AlgebraicClosure F) Q (1 ⊗ₜ ((t : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) *
-      ofBaseChange (AlgebraicClosure F) Q (z ⊗ₜ ι Q v) * ofBaseChange (AlgebraicClosure F) Q
-        (1 ⊗ₜ (((t : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) = _
-    rw [← map_mul, ← map_mul, Algebra.TensorProduct.tmul_mul_tmul,
-      Algebra.TensorProduct.tmul_mul_tmul, one_mul, mul_one]
-  | add a b ha hb => rw [map_add, mul_add, add_mul, ha, hb, map_add, map_add]
-
-end BCConj
 
 /-- If `g C(φ)(t_{F̄}) g⁻¹ = t'_{F̄}`, then `H = P(g) ∘ φ` intertwines `P(t)_{F̄}` and `P(t')_{F̄}`
 (own work, elementary; the first step of the proof of `deltaGGP_eq_of_stablyConjVia`). -/
@@ -964,10 +941,10 @@ theorem specP_baseChange_intertwine (τ : InnerTwist d.QW) (t : ↥(GSpin d.QW))
         CliffordAlgebra.map τ.φ.toIsometry (ι _
           ((specP d.QW t : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange (AlgebraicClosure F) u)) := by
       rw [map_apply_ι]; rfl
-    rw [e1, e2, ← bcUnits_conj_ι, map_mul, map_mul]
+    rw [e1, e2, ← TorusTransfer.bcUnits_conj_ι', map_mul, map_mul]
     rfl
   apply ι_injective (τ.Q'.baseChange (AlgebraicClosure F))
-  rw [← bcUnits_conj_ι, ← hinv, ← h, ι_specP, ι_specP, ← hU]
+  rw [← TorusTransfer.bcUnits_conj_ι', ← hinv, ← h, ι_specP, ι_specP, ← hU]
   simp only [Units.val_mul, mul_assoc, Units.inv_mul_cancel_left]
 
 end EndElemDelta
@@ -2073,7 +2050,8 @@ end EndElemGal
 left and right multiplication by `x` are commuting semisimple operators on `C(W)`, so conjugation
 `v ↦ x v x⁻¹` is semisimple and so is its restriction to `ι(W)`, which is `P(x)`; semisimplicity
 over `F` of characteristic `0` survives base change to `F̄` (squarefree minimal polynomial).
-Proved: `isSemisimple_specP_of_isSS`, `isSemisimple_baseChange` (`GGP/TorusCommute.lean`). -/
+Proved: `isSemisimple_specP_of_isSS` (`GGP/Steinberg.lean`), `isSemisimple_baseChange`
+(`GGP/TorusCommute.lean`). -/
 theorem isSemisimple_specP_baseChange (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) :
     Module.End.IsSemisimple
       ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange (AlgebraicClosure F)) :=

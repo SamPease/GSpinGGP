@@ -100,6 +100,59 @@ theorem mul_prod_ι_of_specP_eq_smul (x : GSpin Q) (ε : V → K) :
       _ = algebraMap K _ (ε w) * algebraMap K _ (t.map ε).prod * (ι Q w * P * X) := by
           rw [Algebra.left_comm]; simp only [mul_assoc]
 
+/-! ### Sign-trivial rotations -/
+
+/-- `σ ∈ SO(V)` is *sign-trivial* for `x` if every lift of `σ` to `GSpin(V)` commutes with `x`. -/
+def SignTrivial (x : GSpin Q) (σ : V ≃ₗ[K] V) : Prop :=
+  ∀ g : GSpin Q, specP Q g = σ → Commute g x
+
+/-- Lifts differ by scalars, so one lift commuting with `x` makes `σ` sign-trivial. -/
+theorem signTrivial_of_lift (hQ : IsNondeg Q) {x g : GSpin Q} (hg : Commute g x) :
+    SignTrivial x (specP Q g) := by
+  intro g' hg'
+  have hker : g' * g⁻¹ ∈ (specP Q).ker := by
+    rw [MonoidHom.mem_ker, map_mul, map_inv, hg', mul_inv_cancel]
+  rw [ker_specP hQ] at hker
+  obtain ⟨c, hc⟩ := hker
+  have hcomm : Commute (scalarGSpin Q c) x := by
+    refine Subtype.ext (Units.ext ?_)
+    simp [scalarGSpin, Algebra.commutes]
+  have : g' = scalarGSpin Q c * g := by rw [hc]; group
+  rw [this]
+  exact hcomm.mul_left hg
+
+/-- Sign-triviality is multiplicative, given a lift of the second factor. -/
+theorem SignTrivial.mul {x : GSpin Q} {σ τ : V ≃ₗ[K] V} (hσ : SignTrivial x σ)
+    (hτ : SignTrivial x τ) (hlift : ∃ h : GSpin Q, specP Q h = τ) : SignTrivial x (σ * τ) := by
+  obtain ⟨h, hh⟩ := hlift
+  intro g hg
+  have h1 : specP Q (g * h⁻¹) = σ := by
+    rw [map_mul, map_inv, hg, hh, mul_inv_cancel_right]
+  have : g = (g * h⁻¹) * h := by group
+  rw [this]
+  exact (hσ _ h1).mul_left (hτ h hh)
+
+/-- **Squares are sign-trivial**: if `P(b)` commutes with `P(x)`, then `P(b)²` is sign-trivial
+(the sign of `b` is `±1` and squares to `1`). -/
+theorem signTrivial_sq (hQ : IsNondeg Q) {x b : GSpin Q} (hb : Commute (specP Q b) (specP Q x)) :
+    SignTrivial x (specP Q b ^ 2) := by
+  obtain ⟨c, hc2, hc⟩ := exists_conj_eq_smul hQ hb
+  have hcb : Commute (scalarGSpin Q c) b := by
+    refine Subtype.ext (Units.ext ?_)
+    simp [scalarGSpin, Algebra.commutes]
+  have hb2 : Commute (b ^ 2) x := by
+    have hbx : b * x = scalarGSpin Q c * x * b := by
+      rw [← hc]; group
+    rw [Commute, SemiconjBy, pow_two]
+    calc b * b * x = b * (scalarGSpin Q c * x * b) := by rw [mul_assoc, hbx]
+      _ = scalarGSpin Q c * (b * x) * b := by
+          rw [← mul_assoc, ← mul_assoc, ← hcb.eq]; group
+      _ = scalarGSpin Q c * (scalarGSpin Q c * x * b) * b := by rw [hbx]
+      _ = scalarGSpin Q (c ^ 2) * x * (b * b) := by rw [map_pow, pow_two]; group
+      _ = x * (b * b) := by rw [hc2, map_one, one_mul]
+  rw [← map_pow]
+  exact signTrivial_of_lift hQ hb2
+
 end CentralizerSign
 
 end GSpinGGP

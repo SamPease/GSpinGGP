@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Literature.GSpin
+import GSpinGGP.GGP.Steinberg
 
 /-!
 # Centralizers and regular nilpotent orbits in `GSpin`
@@ -58,8 +59,8 @@ theorem steinberg_centralizer_connected {K : Type*} [Field K] [CharZero K]
       (∃ h : ∀ v ∈ fixedSub x, (specP Q g : V →ₗ[K] V) v ∈ fixedSub x,
         LinearMap.det ((specP Q g : V →ₗ[K] V).restrict h) = 1) ∧
       (∃ h : ∀ v ∈ negFixedSub x, (specP Q g : V →ₗ[K] V) v ∈ negFixedSub x,
-        LinearMap.det ((specP Q g : V →ₗ[K] V).restrict h) = 1) := by
-  sorry
+        LinearMap.det ((specP Q g : V →ₗ[K] V).restrict h) = 1) :=
+  Steinberg.commute_iff hQ x hx g
 
 /-- `steinberg_centralizer_connected` for a normed field (e.g. `p`-adic `F`), with the hypothesis
 phrased by `IsSS` (Foundations/LocalGroups), and the conclusion in terms of `grpCentralizer`. -/
