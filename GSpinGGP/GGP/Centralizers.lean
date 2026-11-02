@@ -44,8 +44,8 @@ connected, with determinant one), so
 via `Q.baseChange`); semisimplicity is that of left multiplication on `C(V)` (definitionally
 `IsSS`, which needs a normed field — see `steinberg_centralizer_connected'`).
 
-**Status: proved, with no literature input** (`Steinberg.commute_iff`, `GGP/Steinberg.lean`), from
-the one remaining `sorry` `Steinberg.commute_of_fix` (elements acting trivially on `W₊₁ ⊕ W₋₁`). The
+**Status: proved, with no literature input** and no `sorry` (`Steinberg.commute_iff`,
+`GGP/Steinberg.lean`; the pair-block step is `PairBlock.commute_of_fix`). The
 proof computes the sign `c` in `g x g⁻¹ = c x` as `det P(g)|_{W₋₁}`, instead of going through
 Steinberg's connectedness theorem. -/
 theorem steinberg_centralizer_connected {K : Type*} [Field K] [CharZero K]

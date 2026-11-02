@@ -36,12 +36,22 @@ the coefficient of `t^ℓ` is `±det(1 − Ad x)|_{𝔤/𝔤_x} ≠ 0`. (⇒) `D
 `1`-eigenspace of `Ad x` has dimension `≤ ℓ`. For `x = su` (Jordan decomposition) that eigenspace is
 `𝔤_s`, which contains a Cartan subalgebra, so `𝔤_s` is one and `s` is regular. Then `Z_G(s)⁰` is a
 maximal torus, so the unipotent `u ∈ Z_G(s)⁰` is `1`: `x = s` is semisimple and `𝔤_x = 𝔤_s` is
-abelian. Missing in the project: maximal tori of `G` have dimension `hcRank d`, and the
-Cartan-subalgebra facts above (cf. `lieRank`).
+abelian. Missing in the project: `lieRank 𝔤` is the dimension of a Cartan subalgebra, and the
+Cartan-subalgebra facts above.
 Status: SORRY (structure theory of `GSpin`). -/
 theorem hcDisc_ne_zero_iff_mem_regularSet (d : GGPData F) (x : ↥d.G) :
     hcDisc d x ≠ 0 ↔ x ∈ regularSet d.G d.lie := by
   sorry
+
+/-- `θ_π = characterOn π (regularSet d.G d.lie)` (Triple's `charG d π`) represents the character
+of `π` and is continuous on `G_reg(F)`: Harish-Chandra's theorem (`hc_character_exists`) gives
+continuity on `G' = {D ≠ 0}`, which contains `regularSet` (`hcDisc_ne_zero_iff_mem_regularSet`). -/
+theorem hc_character (d : GGPData F) (π : UnitaryRep ↥d.G) (hπ : IsTempered π) :
+    IsCharacterOf π (characterOn π (regularSet d.G d.lie)) ∧
+      ContinuousOn (characterOn π (regularSet d.G d.lie)) (regularSet d.G d.lie) := by
+  obtain ⟨θ, hθ, hcont⟩ := hc_character_exists d π hπ
+  exact characterOn_spec π _ ⟨θ, hθ,
+    hcont.mono fun x hx => (hcDisc_ne_zero_iff_mem_regularSet d x).2 hx⟩
 
 /-- **The regular semisimple set `G_reg(F)` of `G = GSpin(W) × GSpin(V)` is open in `G(F)` and its
 complement has Haar measure zero** (Thesis §2.1; BP Astérisque 418, §1). From Harish-Chandra's
