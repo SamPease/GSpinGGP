@@ -13,7 +13,7 @@ import GSpinGGP.GGP.LieRank
   quasi-split (Thesis §5.1.4), from `lieRank_gspin` and Jantzen's description of regular nilpotent
   elements of `so(V)` over `F̄` (`jantzen_regularNil_partition`).
 * `isQuasiSplitQF_of_finrank_soCent_eq`: the core: a nilpotent skew `N` with
-  `dim so(V)_N = ⌊dim V/2⌋` forces `V` quasi-split; `isQuasiSplitQF_fixedSub_of_le`: the same for
+  `dim so(V)_N = ⌊dim V/2⌋` forces `V` quasi-split; `isQuasiSplitQF_fixedSub_of_forall_finrank_le`: the same for
   the fixed space `W'_y` when `X ∈ gspin(V)_y` minimizes `dim gspin(V)_{y,·}`.
 * `nilReg_nonempty_iff_quasiSplit`, and the GGP-centralizer versions
   `nilReg_centralizer_nonempty_imp` and `nilReg_centralizer_nonempty_iff`.
@@ -91,12 +91,12 @@ theorem isQuasiSplitQF_of_finrank_soCent_eq {Q : QuadraticForm K V} (hQ : IsNond
     obtain ⟨r, hr⟩ := ho
     omega
 
-/-- **One side of `𝔤_y`**: if a nilpotent `X ∈ gspin(V)_y` minimizes `dim gspin(V)_{y,·}`, then the
+/-- **The fixed-space factor**: if a nilpotent `X ∈ gspin(V)_y` minimizes `dim gspin(V)_{y,·}`, then the
 fixed space `A = W'_y` is quasi-split. Changing the `A`-component of `X` to any skew `M`
 (`exists_lieCentralizer_fixed_swap`) shows `dim so(A)_{adV X|_A} ≤ dim so(A)_M`, so it equals
 `⌊dim A/2⌋` (`exists_skew_finrank_soCent_le`, `le_finrank_soCent`), and
 `isQuasiSplitQF_of_finrank_soCent_eq` applies. -/
-theorem isQuasiSplitQF_fixedSub_of_le {Q : QuadraticForm K V} (hQ : IsNondeg Q) (y : GSpin Q)
+theorem isQuasiSplitQF_fixedSub_of_forall_finrank_le {Q : QuadraticForm K V} (hQ : IsNondeg Q) (y : GSpin Q)
     (hc : IsCompl (fixedSub y) ((bform Q).orthogonal (fixedSub y))) {X : CliffordAlgebra Q}
     (hXm : X ∈ lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q))
     (hXn : IsNilpotent X)
@@ -170,7 +170,7 @@ regular nilpotent `X` minimizes `dim 𝔤_{x,·}`, so each component `X_i` minim
 depending only on `adV Y` on `A^⊥`) `+ 1` with `A` the fixed space (`finrank_lieCentralizer_fixed`,
 `soCent_inf_killSub_congr`), and the `A`-component can be changed to any skew `M`
 (`exists_lieCentralizer_fixed_swap`); so `adV X_i|_A` is a nilpotent of minimal centralizer
-dimension in `so(A)`, and `A` is quasi-split (`isQuasiSplitQF_fixedSub_of_le`, which rests on Jantzen
+dimension in `so(A)`, and `A` is quasi-split (`isQuasiSplitQF_fixedSub_of_forall_finrank_le`, which rests on Jantzen
 2004 §6.3). For `V`, `A = W'_x ⊕ Z` (`QVfixIso`). The literature (Waldspurger 2001, Ch. I) treats the
 orthogonal factors one at a time; this GGP form is not stated there. -/
 theorem nilReg_centralizer_nonempty_imp (d : GGPData F) (x : GSpin d.QW)
@@ -206,12 +206,12 @@ theorem nilReg_centralizer_nonempty_imp (d : GGPData F) (x : GSpin d.QW)
   have hX1n : IsNilpotent X.1 := hXn.map (RingHom.fst _ _)
   have hX2n : IsNilpotent X.2 := hXn.map (RingHom.snd _ _)
   have hW : IsQuasiSplitQF (d.QW.comp (fixedSub x).subtype) := by
-    refine isQuasiSplitQF_fixedSub_of_le d.nondeg x hcW hX1 hX1n fun Y hY => ?_
+    refine isQuasiSplitQF_fixedSub_of_forall_finrank_le d.nondeg x hcW hX1 hX1n fun Y hY => ?_
     have := hmin (Y, X.2) ((hmem _).2 ⟨hY, hX2⟩)
     rw [finrank_lieCentralizer_lieCentralizer_lie, finrank_lieCentralizer_lieCentralizer_lie] at this
     exact Nat.le_of_add_le_add_right this
   have hV : IsQuasiSplitQF (d.QV.comp (fixedSub (d.incl x)).subtype) := by
-    refine isQuasiSplitQF_fixedSub_of_le d.nondeg_QV (d.incl x) hcV hX2 hX2n fun Y hY => ?_
+    refine isQuasiSplitQF_fixedSub_of_forall_finrank_le d.nondeg_QV (d.incl x) hcV hX2 hX2n fun Y hY => ?_
     have := hmin (X.1, Y) ((hmem _).2 ⟨hX1, hY⟩)
     rw [finrank_lieCentralizer_lieCentralizer_lie, finrank_lieCentralizer_lieCentralizer_lie] at this
     exact Nat.le_of_add_le_add_left this
