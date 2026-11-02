@@ -5,6 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import GSpinGGP.Foundations.RegularNilpotent
 import GSpinGGP.Literature.NilpotentOrbits
 import GSpinGGP.GGP.QuadClassify
+import GSpinGGP.GGP.WittParity
+import GSpinGGP.GGP.Levi
 import Mathlib.FieldTheory.IsAlgClosed.AlgebraicClosure
 
 /-!
@@ -15,6 +17,11 @@ import Mathlib.FieldTheory.IsAlgClosed.AlgebraicClosure
   of `dim so(V)_N` under extension of scalars (`finrank_soCentMat_map`).
 * `le_lieRank_gspin`: hence `lieRank gspin(V) ≥ ⌊dim V/2⌋ + 1` (`finrank_lieCentralizer_gspin`).
 * `isRegularNil_regNil`: the explicit element `regNil` is regular nilpotent.
+* Witt theory: split families of maximal size in quasi-split spaces
+  (`exists_isSplitFamily_of_quasiSplit`, `exists_hyp_of_quasiSplit_odd`, `exists_wittData_W`).
+* Regular nilpotent orbits (Thesis §5.1.4): `nilReg_nonempty_of_quasiSplit`,
+  `exists_regularNil_inOrbitNu` (Luo's orbit `O_ν`, via `isInOrbitNu_regNil`), and the `sorry`s
+  `quasiSplit_of_nilReg_nonempty`, `nilReg_centralizer_nonempty_imp`, `nilReg_centralizer_nonempty_iff`.
 -/
 
 noncomputable section
@@ -134,8 +141,8 @@ variable {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
 /-- **A quasi-split space contains a split family of maximal size** (Witt decomposition): if
 `dim V > 0` and the anisotropic kernel has dimension `≤ 2`, there are `w_{-k..k}` with
 `b(w_i, w_j) = ν δ_{i+j,0}`, `ν ≠ 0`, and `dim V ≤ 2k + 2`. From `V ≅ H^s ⊥ V_an`: the hyperbolic
-pairs of `H^s` around an anisotropic vector of `V_an`, or (for `V_an = 0`) around `h₀ + h_{2s-1}`
-with the remaining `s − 1` pairs. -/
+pairs of `H^s` around an anisotropic vector of `V_an` (`k = s`), or (for `V_an = 0`) around
+`h₀ + h_{2s-1}` with the remaining `s − 1` pairs (`k = s − 1`). -/
 theorem exists_isSplitFamily_of_quasiSplit {Q : QuadraticForm K V} (hQ : IsNondeg Q)
     (hqs : IsQuasiSplitQF Q) (hpos : 0 < finrank K V) :
     ∃ (w : ℤ → V) (ν : K) (k : ℕ), ν ≠ 0 ∧ IsSplitFamily Q w ν k ∧ finrank K V ≤ 2 * k + 2 := by
@@ -265,13 +272,15 @@ theorem nilReg_nonempty_of_quasiSplit {V : Type*} [AddCommGroup V] [Module F V]
 
 /-- **Regular nilpotent orbits exist only if `GSpin(V)` is quasi-split** (Thesis §5.1.4).
 
-**Status: `sorry`, not a literature axiom.** Sketch: a regular nilpotent `X` of `gspin(V)` has
-`dim so(V)_{adV X} = ⌊dim V/2⌋` (`finrank_lieCentralizer_gspin`, `le_lieRank_gspin`); over `F̄` it is
-regular nilpotent in `so(V)`, so it has Jordan type `[n]` or `[n−1, 1]` (Jantzen 2004 §6.3 for
-`SO(V, φ)`, `n = dim V ≥ 3`; `n ≤ 2` is always quasi-split); the rank of `(adV X)^{n-2}` does not change
-under `F ⊂ F̄`, so `N = adV X` has a vector `v` with `N^{n-2} v ≠ 0`; then
-`span(N^j v : j > (n − 2)/2)` is totally isotropic of dimension `⌊(n−1)/2⌋`
-(`b(N^i v, N^j v) = ± b(v, N^{i+j} v) = 0` for `i + j ≥ n − 1`), so `n ≤ 2 w(V) + 2`. -/
+**Status: `sorry`, not a literature axiom.** Sketch (`n = dim V ≥ 3`; `n ≤ 2` is always
+quasi-split): `lieRank gspin(V) = ⌊n/2⌋ + 1` (`le_lieRank_gspin`, and a regular semisimple element of
+`so(V)` has centralizer of dimension `⌊n/2⌋`; one exists as `F` is infinite), so a regular nilpotent
+`X` has `dim so(V)_{adV X} = ⌊n/2⌋` (`finrank_lieCentralizer_gspin`), also over `F̄`
+(`finrank_soCentMat_map`). Then `N = adV X` is regular nilpotent in `so(V_{F̄})`, of Jordan type `[n]`
+or `[n−1, 1]` (Jantzen 2004 §6.3 for `SO(V, φ)`). Let `m = n − 1` (`n` odd) or `n − 2` (`n` even);
+`N^m ≠ 0` (a rank condition, so also over `F`): pick `v` with `N^m v ≠ 0`. Then
+`span(N^j v : ⌈n/2⌉ ≤ j ≤ m)` is totally isotropic (`b(N^i v, N^j v) = ± b(v, N^{i+j} v)` and
+`N^{i+j} = 0` for `i + j ≥ n`, resp. `≥ n − 1`), of dimension `⌊(n−1)/2⌋`, so `n ≤ 2 w(V) + 2`. -/
 theorem quasiSplit_of_nilReg_nonempty {V : Type*} [AddCommGroup V] [Module F V]
     [FiniteDimensional F V] (Q : QuadraticForm F V) (hQ : IsNondeg Q)
     (h : (NilReg (GSpin Q) (gspin Q)).Nonempty) : IsQuasiSplitQF Q := by
@@ -441,16 +450,140 @@ theorem nilReg_centralizer_nonempty_iff (d : GGPData F) (x : GSpin d.QW)
 hyperbolic pairs `h_0, …, h_{2s-1}`, a vector `u` with `q(u) = −ν` and an anisotropic `d₀`, all
 mutually orthogonal (`W ≅ ⟨b⟩ ⊥ ⟨−ν⟩ ⊥ H^s`).
 
-**Status: `sorry`** (quadratic forms only). Sketch: `V = W ⊥ Z` is odd and quasi-split, hence split,
-`V ≅ ⟨b⟩ ⊥ H^{s+1+r}`; also `V ≅ W ⊥ ⟨ν⟩ ⊥ H^r`. Witt cancellation of `H^r` and adding `⟨−ν⟩`
-(`⟨ν⟩ ⊥ ⟨−ν⟩ ≅ H`) give `W ⊥ H ≅ ⟨b⟩ ⊥ ⟨−ν⟩ ⊥ H^{s+1}`, and cancelling `H` gives the claim. -/
+Proof: `W ≅ H^t ⊥ A` with `A` anisotropic of dimension `0` or `2`. If `A = 0`, take
+`u = h₀ − (ν/2) h_{2t-1}`, `d₀ = h₀ + (ν/2) h_{2t-1}`. If `A` is a plane: `V = W ⊥ Z` is odd and
+quasi-split, so `V ≅ H^{s+r+1} ⊥ ⟨b⟩`; also `V ≅ H^{s+r} ⊥ (A ⊥ ⟨ν⟩)` (`Z ≅ H^r ⊥ ⟨ν⟩`,
+`splitOddIso`), so Witt cancellation gives `A ⊥ ⟨ν⟩ ≅ H ⊥ ⟨b⟩`, which is isotropic; as `A` is
+anisotropic, `A` represents `−ν`, and `d₀` spans the orthogonal of `u` in `A`. -/
 theorem exists_wittData_W (d : GGPData F) (hqs : d.IsQuasiSplit) (s : ℕ) (hm : d.m = 2 * s + 2) :
     ∃ (h : ℕ → Fin d.m → F) (u d₀ : Fin d.m → F), (∀ i j : ℕ, i < 2 * s → j < 2 * s →
       bform d.QW (h i) (h j) = if i + j + 1 = 2 * s then 1 else 0) ∧
       d.QW u = -(d.ν : F) ∧ d.QW d₀ ≠ 0 ∧ bform d.QW u d₀ = 0 ∧
       (∀ j : ℕ, j < 2 * s → bform d.QW u (h j) = 0) ∧
       (∀ j : ℕ, j < 2 * s → bform d.QW d₀ (h j) = 0) := by
-  sorry
+  have hν : (d.ν : F) ≠ 0 := d.ν.ne_zero
+  obtain ⟨ka, Qa, hani, ⟨I⟩, hdimW⟩ := witt_decomposition d.QW d.nondeg
+  set t := wittIndex d.QW with ht
+  have hqW := hqs.1
+  unfold IsQuasiSplitQF at hqW
+  rw [Module.finrank_fin_fun] at hdimW hqW
+  let J := I.symm
+  have hJ : ∀ x y, bform d.QW (J x) (J y) = bform (hypForm F t) x.1 y.1 + bform Qa x.2 y.2 :=
+    fun x y => (bform_isometry J.toIsometry x y).trans (bform_prod _ _ x y)
+  have hJQ : ∀ x, d.QW (J x) = hypForm F t x.1 + Qa x.2 := fun x => by
+    rw [QuadraticMap.IsometryEquiv.map_app, QuadraticMap.prod_apply]
+  let h' : ℕ → Fin d.m → F := fun a => if ha : a < 2 * t then J (Pi.single ⟨a, ha⟩ 1, 0) else 0
+  have hh' : ∀ a b : ℕ, a < 2 * t → b < 2 * t →
+      bform d.QW (h' a) (h' b) = if a + b + 1 = 2 * t then 1 else 0 := by
+    intro a b ha hb
+    simp only [h', dite_eq_left ha, dite_eq_left hb]
+    rw [hJ, bform_hypForm_single]
+    simp
+  rcases (by omega : ka = 0 ∨ ka = 2) with hka | hka
+  · -- `W` hyperbolic: use the pair `h'_0, h'_{2t-1}`
+    have hts : t = s + 1 := by omega
+    set c : F := -(d.ν : F) / 2
+    let u := h' 0 + c • h' (2 * t - 1)
+    let d₀ := h' 0 - c • h' (2 * t - 1)
+    have hQb : ∀ x, bform d.QW x x = d.QW x := fun x => QuadraticMap.associated_eq_self_apply F d.QW x
+    have hsymm : ∀ x y, bform d.QW x y = bform d.QW y x :=
+      fun x y => QuadraticMap.associated_isSymm F d.QW x y
+    have b00 := hh' 0 0 (by omega) (by omega)
+    have b01 := hh' 0 (2 * t - 1) (by omega) (by omega)
+    have b10 := hh' (2 * t - 1) 0 (by omega) (by omega)
+    have b11 := hh' (2 * t - 1) (2 * t - 1) (by omega) (by omega)
+    rw [ite_eq_right (by omega)] at b00 b11
+    rw [ite_eq_left (by omega)] at b01 b10
+    refine ⟨fun a => h' (a + 1), u, d₀, fun i j hi hj => ?_, ?_, ?_, ?_, fun j hj => ?_,
+      fun j hj => ?_⟩
+    · rw [hh' _ _ (by omega) (by omega)]; congr 1; apply propext; omega
+    · rw [← hQb]
+      simp only [u, map_add, map_smul, LinearMap.add_apply, LinearMap.smul_apply, smul_eq_mul,
+        b00, b01, b10, b11, c]
+      field_simp; ring
+    · rw [← hQb]
+      simp only [d₀, map_sub, map_smul, LinearMap.sub_apply, LinearMap.smul_apply, smul_eq_mul,
+        b00, b01, b10, b11, c]
+      intro h0; apply hν; linear_combination h0
+    · simp only [u, d₀, map_add, map_sub, map_smul, LinearMap.add_apply,
+        LinearMap.smul_apply, smul_eq_mul, b00, b01, b10, b11]
+      ring
+    · simp only [u, map_add, map_smul, LinearMap.add_apply, LinearMap.smul_apply, smul_eq_mul]
+      rw [hh' _ _ (by omega) (by omega), hh' _ _ (by omega) (by omega), ite_eq_right (by omega),
+        ite_eq_right (by omega)]; ring
+    · simp only [d₀, map_sub, map_smul, LinearMap.sub_apply, LinearMap.smul_apply, smul_eq_mul]
+      rw [hh' _ _ (by omega) (by omega), hh' _ _ (by omega) (by omega), ite_eq_right (by omega),
+        ite_eq_right (by omega)]; ring
+  · -- `W = H^s ⊥ A`, `A` an anisotropic plane; `A` represents `−ν` because `V` is split
+    have hts : t = s := by omega
+    subst hka
+    have hQb : ∀ x, bform Qa x x = Qa x := fun x => QuadraticMap.associated_eq_self_apply F Qa x
+    -- `A ⊥ ⟨ν⟩` is isotropic: Witt cancellation against `V ≅ H^{s+r+1} ⊥ ⟨b⟩`
+    obtain ⟨kb, Qb, -, ⟨IV⟩, hdimV⟩ := witt_decomposition d.QV d.nondeg_QV
+    have hqV := hqs.2
+    unfold IsQuasiSplitQF at hqV
+    have hn : finrank F d.V = 2 * s + 2 + (2 * d.r + 1) := by
+      rw [Module.finrank_prod, Module.finrank_fin_fun, Module.finrank_fin_fun, hm]
+    have hwV : wittIndex d.QV = s + d.r + 1 := by omega
+    let Qν : QuadraticForm F (Fin (2 * 0 + 1) → F) := splitOddForm 0 (d.ν : F)
+    let I' : ((hypForm F s).prod Qa).IsometryEquiv d.QW := hts ▸ I.symm
+    let L1 : ((hypForm F (s + d.r)).prod (Qa.prod Qν)).IsometryEquiv d.QV :=
+      (((LeviAux.hypAddEquiv s d.r).symm.prod (QuadraticMap.IsometryEquiv.refl _)).trans
+        (QuadraticMap.IsometryEquiv.prodProdProdComm _ _ _ _)).trans
+        (I'.prod (LeviAux.splitOddIso d.r hν))
+    let IV' : d.QV.IsometryEquiv ((hypForm F (s + d.r + 1)).prod Qb) := hwV ▸ IV
+    let L2 : d.QV.IsometryEquiv ((hypForm F (s + d.r)).prod ((hypForm F 1).prod Qb)) :=
+      (IV'.trans ((LeviAux.hypAddEquiv (s + d.r) 1).symm.prod (QuadraticMap.IsometryEquiv.refl Qb))).trans
+        (WittParity.assocIso _ _ _)
+    obtain ⟨E⟩ := witt_cancellation _ _ _ ⟨L1.trans L2⟩
+    set y := E.symm (Pi.single 0 1, 0)
+    have hy0 : y ≠ 0 := fun h0 => by
+      have := congrArg E h0
+      rw [QuadraticMap.IsometryEquiv.apply_symm_apply, map_zero, Prod.mk_eq_zero] at this
+      simpa using congrFun this.1 0
+    have hyQ : (Qa.prod Qν) y = 0 := by
+      rw [QuadraticMap.IsometryEquiv.map_app, QuadraticMap.prod_apply, map_zero, add_zero,
+        ← QuadraticMap.associated_eq_self_apply F, ← bform, bform_hypForm_single]
+      simp
+    rcases hyd : y with ⟨x, τ⟩
+    rw [hyd] at hy0 hyQ
+    rw [QuadraticMap.prod_apply] at hyQ
+    have hτQ : Qν τ = (d.ν : F) * τ 0 ^ 2 := by
+      simp only [Qν, LeviAux.splitOddForm_apply, sq]
+      rw [Finset.sum_eq_single 0 (fun i _ hi => absurd (Fin.ext (by have := i.2; omega)) hi)
+        (by simp)]
+      rw [show (0 : Fin (2 * 0 + 1)).rev = 0 from Fin.ext (by simp)]
+    have hτ0 : τ 0 ≠ 0 := by
+      intro h0
+      have hτ : τ = 0 := funext fun i => by
+        rw [show i = 0 from Fin.ext (by have := i.2; omega), h0]; rfl
+      rw [hτ, map_zero, add_zero] at hyQ
+      exact hy0 (by rw [hani x hyQ, hτ]; rfl)
+    set x' := (τ 0)⁻¹ • x
+    have hx' : Qa x' = -(d.ν : F) := by
+      rw [hτQ] at hyQ
+      have hx : Qa x = -(d.ν : F) * τ 0 ^ 2 := by linear_combination hyQ
+      rw [QuadraticMap.map_smul, smul_eq_mul, hx]
+      field_simp
+    have hQa : IsNondeg Qa := QuadClassify.isNondeg_of_prod_right
+      ((QuadClassify.DiscRel.of_isometryEquiv I).isNondeg d.nondeg)
+    have hx'0 : x' ≠ 0 := fun h0 => by
+      rw [h0, map_zero] at hx'; exact hν (neg_eq_zero.mp hx'.symm)
+    have hperp : finrank F ((bform Qa).orthogonal (F ∙ x')) = 1 := by
+      rw [LinearMap.BilinForm.finrank_orthogonal hQa, finrank_span_singleton hx'0,
+        Module.finrank_fin_fun]
+    obtain ⟨y0, hy0mem, hy0ne⟩ := Submodule.exists_mem_ne_zero_of_ne_bot
+      (p := (bform Qa).orthogonal (F ∙ x')) (fun hb => by
+      rw [hb, finrank_bot] at hperp; exact zero_ne_one hperp)
+    have hxy : bform Qa x' y0 = 0 := hy0mem x' (Submodule.mem_span_singleton_self _)
+    refine ⟨h', J (0, x'), J (0, y0), fun i j hi hj => ?_, ?_, ?_, ?_, fun j hj => ?_,
+      fun j hj => ?_⟩
+    · rw [hh' _ _ (by omega) (by omega), hts]
+    · rw [hJQ]; simp [hx']
+    · rw [hJQ]; simp only [map_zero, zero_add]; exact fun h0 => hy0ne (hani y0 h0)
+    · rw [hJ]; simp [hxy]
+    · simp only [h', dite_eq_left (show j < 2 * t by omega)]; rw [hJ]; simp
+    · simp only [h', dite_eq_left (show j < 2 * t by omega)]; rw [hJ]; simp
 
 /-- **Luo's orbit `O_ν` exists in the GGP situation** (Waldspurger, *Compositio* 146 (2010),
 §7.1; Luo, *A local trace formula for the local Gan–Gross–Prasad conjecture for special
@@ -467,8 +600,8 @@ What the sources give, and what is packaged here. The sources classify `Nil_reg(
 quasi-split even-dimensional `U` by the classes `ν' ∈ 𝒩^U` such that `U ≅ ⟨a⟩ ⊕ ⟨ν'⟩ ⊕ H^{k}`,
 the orbit `O_{ν'}` being the orbit of a regular nilpotent of `so(U₁)`, `U₁ = ⟨ν'⟩ ⊕ H^k`, extended
 by `0` on `⟨a⟩`; it is a regular orbit of `so(U)` (Jordan type `(dim U − 1, 1)`), and lifts to
-`gspin(U) = so(U) ⊕ F` with centralizer of dimension `rank so(U) + 1 = rank gspin(U)`. The axiom
-also contains the elementary (Witt-theory) fact that the relevant class is in `𝒩`:
+`gspin(U) = so(U) ⊕ F` with centralizer of dimension `rank so(U) + 1 = rank gspin(U)`. The proof
+also uses the elementary (Witt-theory) fact that the relevant class is in `𝒩`:
 `dim V` even ⇒ `W` odd and quasi-split, hence split, `W = ⟨a⟩ ⊕ W₁` with `W₁` hyperbolic, so
 `V = ⟨a⟩ ⊕ (W₁ ⊕ Z)` and `W₁ ⊕ Z ≅ ⟨ν⟩ ⊕ H^{k+r}`; `dim W = 2m' ≥ 4` ⇒ `V` odd quasi-split,
 hence `V ≅ ⟨b⟩ ⊕ H^{m'+r}`, and Witt cancellation of `H^r ⊕ ⟨ν⟩` against `⟨ν⟩ ⊕ ⟨−ν⟩ ≅ H` gives
@@ -481,7 +614,7 @@ All hypotheses are explicit binders; for `toyData`
 classification. `ν ≠ 0` (it is a unit) is what makes `U₁ ≠ 0`, so the clause
 `(ad X)^{dim U₁ − 1} ≠ 0` on `U₁` is satisfiable.
 
-**Status: proved**, except the second Witt-theory step (`exists_wittData_W`). The element is
+**Status: proved.** The element is
 `regNil` on a split family built from `Z` and the hyperbolic part of `W` (first case) or from
 `exists_wittData_W` (second case); it is regular nilpotent (`isRegularNil_regNil`) and lies in `O_ν`
 (`isInOrbitNu_regNil`). -/

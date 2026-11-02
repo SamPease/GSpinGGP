@@ -2553,7 +2553,7 @@ theorem isRegularNil_lie_mk (d : GGPData F) {a : CliffordAlgebra d.QW} {b : Clif
 `≥ 4`** (Luo §7.1).  From
 `exists_regularNil_inOrbitNu` (Luo's orbit `O_ν` exists in `gspin(V)`, resp. `O_{−ν}` in
 `gspin(W)`: Waldspurger 2010 §7.1, Luo §2.1), paired with a regular nilpotent of the other factor
-(`nilReg_nonempty_iff_quasiSplit`); the pair is regular in `𝔤` (`isRegularNil_lie_mk`), and its
+(`nilReg_nonempty_of_quasiSplit`); the pair is regular in `𝔤` (`isRegularNil_lie_mk`), and its
 orbit is regular (`mk_mem_nilReg_of_isRegularNil`).  At `x = 1`, `W'_1 = W`, `V'_1 = V` and
 `𝔤_1 = 𝔤`.  This is not a consequence of `nilReg_nonempty_iff_quasiSplit` /
 `nilReg_centralizer_nonempty_iff` alone, which only give *some* regular orbit. -/
@@ -2621,7 +2621,7 @@ theorem exists_orbitSpec_one (d : GGPData F) (hqs : d.IsQuasiSplit) :
 
 /-- **The orbit `O_1` is regular** for quasi-split `G` (own work, after Luo §7.1:
 Luo's recipe applied to `(G'_1, H'_1) = (G, H)` selects a regular nilpotent orbit of `𝔤`, which
-exists since `G` is quasi-split, `nilReg_nonempty_iff_quasiSplit`).  Needed to apply Rodier's
+exists since `G` is quasi-split, `nilReg_nonempty_of_quasiSplit`).  Needed to apply Rodier's
 theorem to `c_{θ, O_1}(1)`. -/
 theorem orbitChoice_one_mem_nilReg (d : GGPData F) (hqs : d.IsQuasiSplit) :
     orbitChoice d 1 ∈ NilReg (grpCentralizer d.G ((d.diag 1 : d.G) : d.ambientˣ))
