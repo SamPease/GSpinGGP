@@ -18,7 +18,8 @@ on `C(V)`, as in `IsSS`). Then
 
 * `le_finrank_lieCentralizer_gspin_of_isSemisimple`: `⌊dim V/2⌋ + 1 ≤ dim gspin(V)_{g,Y}`;
 * `finrank_lieCentralizer_gspin_eq_iff_isLieAbelian`: equality iff `gspin(V)_{g,Y}` is abelian;
-* `eq_zero_of_isNilpotent_mem_lieCentralizer_gspin`: in case of equality, its only nilpotent element is `0`.
+* `eq_zero_of_isNilpotent_mem_lieCentralizer_gspin`: in case of equality, its only nilpotent
+  element is `0`.
 
 For `𝔤 = gspin(W) × gspin(V)` and semisimple `g ∈ G(F)` the same holds for `𝔤_{g,Z}` with
 `ℓ = (⌊dim W/2⌋ + 1) + (⌊dim V/2⌋ + 1)` (`lieClauses`). With the Jordan decomposition in `𝔤_g` and
@@ -26,9 +27,10 @@ upper semicontinuity of `dim ker (ad Z)^D`, this shows that the regular semisimp
 open (`isOpen_setOf_isRegularSS_lieCentralizer`).
 
 Group version: if the generalized `1`-eigenspace of `Ad x` on `𝔤` (`x ∈ G(F)`) has dimension `≤ ℓ`,
-then `x` is regular semisimple (`mem_regularSet_of_finrank_ker_le`). It uses the multiplicative Jordan
-decomposition (`exists_jordan_G`), `ker (1 − Ad x)^k = ker (ad x)^k` (`ker_one_sub_conjAd_pow`), and
-the unipotent clause of `JointClauses` lifted to `G(F)` (`eq_one_of_isNilpotent_sub_one_of_lieClauses`): when `dim 𝔤_{g,Z} = ℓ`, the only unipotent element
+then `x` is regular semisimple (`mem_regularSet_of_finrank_ker_le`). It uses the multiplicative
+Jordan decomposition (`exists_jordan_G`), `ker (1 − Ad x)^k = ker (ad x)^k`
+(`ker_one_sub_conjAd_pow`), and the unipotent clause of `JointClauses` lifted to `G(F)`
+(`eq_one_of_isNilpotent_sub_one_of_lieClauses`): when `dim 𝔤_{g,Z} = ℓ`, the only unipotent element
 of `G(F)` commuting with `g` and `Z` is `1`.
 -/
 
@@ -45,39 +47,21 @@ section Unipotent
 variable {K : Type*} [Field K] [Invertible (2 : K)] {V : Type*} [AddCommGroup V] [Module K V]
 
 open Polynomial in
-/-- **`P(h)` is unipotent when `h ∈ GSpin(V)` is** (`h − 1` nilpotent): `ι ∘ (P(h) − 1)^k = (Ad h − 1)^k ∘ ι`
-(`ι_aeval_specP`) and `Ad h − 1 = L_{h−1} R_{h⁻¹} + R_{h⁻¹−1}` is nilpotent. -/
-theorem isNilpotent_specP_sub_one {Q : QuadraticForm K V} (h : GSpin Q)
+/-- **`P(h)` is unipotent when `h ∈ GSpin(V)` is** (`h − 1` nilpotent): `ι ∘ (P(h) − 1)^k =
+(Ad h − 1)^k ∘ ι` (`ι_aeval_specP`) and `Ad h − 1` is nilpotent (`isNilpotent_conj_sub_conj`,
+`s = 1`). -/
+theorem isNilpotent_specP_sub_one [FiniteDimensional K V] {Q : QuadraticForm K V} (h : GSpin Q)
     (hn : IsNilpotent (((h : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1)) :
     IsNilpotent ((specP Q h : Module.End K V) - 1) := by
-  set a : CliffordAlgebra Q := ((h : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)
-  set ai : CliffordAlgebra Q := (((h : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) :
-    CliffordAlgebra Q)
-  have hb : IsNilpotent (ai - 1) := by
-    simpa using Units.isNilpotent_inv_sub_inv (x := (h : (CliffordAlgebra Q)ˣ)) (s := 1)
-      (Commute.one_right _) (by simpa using hn)
-  set c := LinearMap.mulLeft K a * LinearMap.mulRight K ai
-  have hc1 : c - 1 = LinearMap.mulLeft K (a - 1) * LinearMap.mulRight K ai +
-      LinearMap.mulRight K (ai - 1) := by
-    refine LinearMap.ext fun y => ?_
-    simp only [c, LinearMap.sub_apply, LinearMap.add_apply, Module.End.mul_apply,
-      LinearMap.mulLeft_apply, LinearMap.mulRight_apply, Module.End.one_apply]
-    noncomm_ring
-  have hRR : Commute (LinearMap.mulRight K ai) (LinearMap.mulRight K (ai - 1)) :=
-    LinearMap.ext fun y => by
-      simp only [Module.End.mul_apply, LinearMap.mulRight_apply, mul_assoc, mul_sub, sub_mul,
-        mul_one]
-  have hcn : IsNilpotent (c - 1) := by
-    rw [hc1]
-    exact ((LinearMap.commute_mulLeft_right _ _).mul_left hRR).isNilpotent_add
-      ((LinearMap.commute_mulLeft_right _ _).isNilpotent_mul_right
-        (hn.map (Algebra.lmul K (CliffordAlgebra Q))))
-      (LinearMap.isNilpotent_mulRight_iff K (ai - 1) |>.mpr hb)
-  obtain ⟨k, hk⟩ := hcn
+  have h1 := (isNilpotent_conj_sub_conj (F := K) (x := (h : (CliffordAlgebra Q)ˣ)) (s := 1)
+    (by rw [Units.val_one]; exact Subalgebra.one_mem _) (by rwa [Units.val_one])).1
+  rw [inv_one, Units.val_one, LinearMap.mulLeft_one, LinearMap.mulRight_one, ← Module.End.one_eq_id,
+    mul_one] at h1
+  obtain ⟨k, hk⟩ := h1
   refine ⟨k, LinearMap.ext fun v => ι_injective Q ?_⟩
-  have h1 := ι_aeval_specP h ((X - 1) ^ k) v
-  simp only [map_pow, map_sub, aeval_X, map_one] at h1
-  rw [h1, hk, LinearMap.zero_apply, LinearMap.zero_apply, map_zero]
+  have h2 := ι_aeval_specP h ((X - 1) ^ k) v
+  simp only [map_pow, map_sub, aeval_X, map_one] at h2
+  rw [h2, hk, LinearMap.zero_apply, LinearMap.zero_apply, map_zero]
 
 end Unipotent
 
@@ -198,14 +182,18 @@ private theorem factor_hyps {Z : d.ambient}
     (hZ : Z ∈ lieCentralizer d.lie ((g : d.ambientˣ) : d.ambient)) (hs : IsSS F Z) :
     IsSS F ((d.fst g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) ∧
       IsSS F ((d.snd g : (CliffordAlgebra d.QV)ˣ) : CliffordAlgebra d.QV) ∧
-      Z.1 ∈ lieCentralizer (gspin d.QW) ((d.fst g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) ∧
-      Z.2 ∈ lieCentralizer (gspin d.QV) ((d.snd g : (CliffordAlgebra d.QV)ˣ) : CliffordAlgebra d.QV) ∧
+      Z.1 ∈ lieCentralizer (gspin d.QW)
+        ((d.fst g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) ∧
+      Z.2 ∈ lieCentralizer (gspin d.QV)
+        ((d.snd g : (CliffordAlgebra d.QV)ˣ) : CliffordAlgebra d.QV) ∧
       IsSS F Z.1 ∧ IsSS F Z.2 := by
   obtain ⟨⟨hZW, hZV⟩, hZa⟩ := mem_lieCentralizer.mp hZ
-  exact ⟨isSS_algHom (AlgHom.fst F (CliffordAlgebra d.QW) (CliffordAlgebra d.QV)) hg, isSS_algHom (AlgHom.snd F (CliffordAlgebra d.QW) (CliffordAlgebra d.QV)) hg,
+  exact ⟨isSS_algHom (AlgHom.fst F (CliffordAlgebra d.QW) (CliffordAlgebra d.QV)) hg,
+    isSS_algHom (AlgHom.snd F (CliffordAlgebra d.QW) (CliffordAlgebra d.QV)) hg,
     mem_lieCentralizer.mpr ⟨hZW, congrArg Prod.fst hZa⟩,
     mem_lieCentralizer.mpr ⟨hZV, congrArg Prod.snd hZa⟩,
-    isSS_algHom (AlgHom.fst F (CliffordAlgebra d.QW) (CliffordAlgebra d.QV)) hs, isSS_algHom (AlgHom.snd F (CliffordAlgebra d.QW) (CliffordAlgebra d.QV)) hs⟩
+    isSS_algHom (AlgHom.fst F (CliffordAlgebra d.QW) (CliffordAlgebra d.QV)) hs,
+    isSS_algHom (AlgHom.snd F (CliffordAlgebra d.QW) (CliffordAlgebra d.QV)) hs⟩
 
 omit [CompleteSpace F] in
 /-- **The clauses for `𝔤_{g,Z}`**, `g ∈ G(F)` and `Z ∈ 𝔤_g` semisimple: `ℓ ≤ dim 𝔤_{g,Z}`; equality
@@ -326,9 +314,11 @@ theorem isOpen_setOf_isRegularSS_lieCentralizer :
   have hsZ : Commute (Z : d.ambient) s := Algebra.commute_of_mem_adjoin_self hs
   have hsn : Commute s n := Algebra.commute_of_mem_adjoin_singleton_of_commute hn hsZ.symm
   have hfst : s.1 ∈ Algebra.adjoin F {(Z : d.ambient).1} :=
-    AlgHom.map_adjoin_singleton (AlgHom.fst F (CliffordAlgebra d.QW) (CliffordAlgebra d.QV)) _ ▸ Subalgebra.mem_map.mpr ⟨s, hs, rfl⟩
+    AlgHom.map_adjoin_singleton (AlgHom.fst F (CliffordAlgebra d.QW) (CliffordAlgebra d.QV)) _ ▸
+      Subalgebra.mem_map.mpr ⟨s, hs, rfl⟩
   have hsnd : s.2 ∈ Algebra.adjoin F {(Z : d.ambient).2} :=
-    AlgHom.map_adjoin_singleton (AlgHom.snd F (CliffordAlgebra d.QW) (CliffordAlgebra d.QV)) _ ▸ Subalgebra.mem_map.mpr ⟨s, hs, rfl⟩
+    AlgHom.map_adjoin_singleton (AlgHom.snd F (CliffordAlgebra d.QW) (CliffordAlgebra d.QV)) _ ▸
+      Subalgebra.mem_map.mpr ⟨s, hs, rfl⟩
   obtain ⟨k, hk⟩ := hnil
   have hn1 : IsNilpotent ((Z : d.ambient).1 - s.1) :=
     ⟨k, by rw [hZsn, Prod.fst_add, add_sub_cancel_left, ← Prod.pow_fst, hk, Prod.fst_zero]⟩
@@ -373,22 +363,23 @@ theorem exists_jordan_G (x : ↥d.G) :
       IsSS F ((s : d.ambientˣ) : d.ambient) ∧
       IsNilpotent (((x : d.ambientˣ) : d.ambient) - ((s : d.ambientˣ) : d.ambient)) := by
   set a : d.ambient := ((x : d.ambientˣ) : d.ambient)
-  obtain ⟨s, hs, n, -, hss, hnil, hasn⟩ := exists_jordan_algebra (F := F) a
-  have hn : IsNilpotent (a - s) := by rwa [hasn, add_sub_cancel_left]
-  obtain ⟨s, rfl⟩ := IsUnit.of_isNilpotent_sub (x : d.ambientˣ).isUnit
-    (Algebra.commute_of_mem_adjoin_self hs) hn
+  obtain ⟨s, hs, hss, hn⟩ := exists_jordan_unit (F := F) (x : d.ambientˣ)
   have hxG := x.2
   simp only [GGPData.G, Subgroup.mem_comap, Subgroup.mem_prod] at hxG
   have hsG : s ∈ d.G := by
     simp only [GGPData.G, Subgroup.mem_comap, Subgroup.mem_prod]
     exact ⟨mem_GSpin_of_mem_adjoin hxG.1
-        (AlgHom.map_adjoin_singleton (AlgHom.fst F (CliffordAlgebra d.QW) (CliffordAlgebra d.QV)) a ▸ Subalgebra.mem_map.mpr ⟨s, hs, rfl⟩)
+        (AlgHom.map_adjoin_singleton
+          (AlgHom.fst F (CliffordAlgebra d.QW) (CliffordAlgebra d.QV)) a ▸
+          Subalgebra.mem_map.mpr ⟨s, hs, rfl⟩)
         (isSS_algHom (AlgHom.fst F (CliffordAlgebra d.QW) (CliffordAlgebra d.QV)) hss)
         (by
           change IsNilpotent (a.1 - (s : d.ambient).1)
           simpa using hn.map (AlgHom.fst F (CliffordAlgebra d.QW) (CliffordAlgebra d.QV))),
       mem_GSpin_of_mem_adjoin hxG.2
-        (AlgHom.map_adjoin_singleton (AlgHom.snd F (CliffordAlgebra d.QW) (CliffordAlgebra d.QV)) a ▸ Subalgebra.mem_map.mpr ⟨s, hs, rfl⟩)
+        (AlgHom.map_adjoin_singleton
+          (AlgHom.snd F (CliffordAlgebra d.QW) (CliffordAlgebra d.QV)) a ▸
+          Subalgebra.mem_map.mpr ⟨s, hs, rfl⟩)
         (isSS_algHom (AlgHom.snd F (CliffordAlgebra d.QW) (CliffordAlgebra d.QV)) hss)
         (by
           change IsNilpotent (a.2 - (s : d.ambient).2)
@@ -396,9 +387,9 @@ theorem exists_jordan_G (x : ↥d.G) :
   exact ⟨⟨s, hsG⟩, hs, hss, hn⟩
 
 /-- **Small generalized fixed space implies regular semisimple** (`x ∈ G(F)`): if the generalized
-`1`-eigenspace `𝔤 ∩ ker (1 − Ad x)^D` of `Ad x` on `𝔤` has dimension `≤ ℓ`
-(`D = dim C(W) × C(V)`; `ℓ = lieRankNat d`), then `x` is regular semisimple. Proof: for the
-Jordan decomposition `x = s + n` (`s ∈ F[x]`), `s` is a unit in `G(F)` (`mem_GSpin_of_mem_adjoin`) and
+`1`-eigenspace `𝔤 ∩ ker (1 − Ad x)^D` of `Ad x` on `𝔤` has dimension `≤ ℓ` (`D = dim C(W) × C(V)`;
+`ℓ = lieRankNat d`), then `x` is regular semisimple. Proof: for the Jordan decomposition `x = s + n`
+(`s ∈ F[x]`), `s` is a unit in `G(F)` (`exists_jordan_G`) and
 `𝔤_s ⊆ ker (ad x)^D = ker (1 − Ad x)^D`, so `dim 𝔤_s = ℓ` (`lieClauses` with `Z = 0`) and `𝔤_s` is
 abelian; the unipotent `u = s⁻¹x ∈ G(F)` commutes with `s`, so `u = 1`
 (`eq_one_of_isNilpotent_sub_one_of_lieClauses`) and `x = s`. -/
@@ -420,7 +411,8 @@ theorem mem_regularSet_of_finrank_ker_le (x : ↥d.G)
   have hle : finrank F (lieCentralizer d.lie (s : d.ambient)) ≤ lieRankNat d := by
     refine le_trans ?_ hx
     have hlie : finrank F (lieCentralizer d.lie (s : d.ambient)) =
-        finrank F ↥(d.lie.toSubmodule ⊓ LinearMap.ker (LieAlgebra.ad F d.ambient (s : d.ambient))) :=
+        finrank F ↥(d.lie.toSubmodule ⊓
+          LinearMap.ker (LieAlgebra.ad F d.ambient (s : d.ambient))) :=
       by rw [← lieCentralizer_toSubmodule_eq]; rfl
     rw [hlie]
     refine Submodule.finrank_mono (inf_le_inf_left _ ?_)
