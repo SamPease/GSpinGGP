@@ -59,17 +59,6 @@ theorem aeval_conj_ι {Q : QuadraticForm K V} (x : GSpin Q) (q : K[X]) (v : V) :
   | monomial k a =>
     simp only [aeval_monomial, Module.End.mul_apply, Module.algebraMap_end_apply, map_smul, hpow]
 
-omit [CharZero K] [Invertible (2 : K)] in
-/-- `L_a R_b` and `L_{a'} R_{b'}` commute when `a, a'` and `b, b'` do. -/
-theorem commute_mulLeft_mul_mulRight {A : Type*} [Ring A] [Algebra K A] {a a' b b' : A}
-    (ha : Commute a a') (hb : Commute b b') :
-    Commute (LinearMap.mulLeft K a * LinearMap.mulRight K b)
-      (LinearMap.mulLeft K a' * LinearMap.mulRight K b') := by
-  refine LinearMap.ext fun z => ?_
-  simp only [Module.End.mul_apply, LinearMap.mulLeft_apply, LinearMap.mulRight_apply]
-  simp only [mul_assoc]
-  rw [show b' * b = b * b' from hb.eq.symm, ← mul_assoc a, ← mul_assoc a', ha.eq]
-
 /-- **`x ∈ GSpin(V)` is semisimple if `P(x)` is** (over a field of characteristic `0`; the
 hypothesis is semisimplicity over `K̄`, equivalent to that over `K`).  Converse of
 `isSemisimple_specP_of_isSS`.  See the module docstring for the proof. -/
