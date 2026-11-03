@@ -51,6 +51,7 @@ import GSpinGGP.GGP.Triple
 import GSpinGGP.GGP.Descent
 import GSpinGGP.GGP.TwistDescent
 import GSpinGGP.GGP.ConjCocycle
+import GSpinGGP.GGP.GaloisTorus
 import GSpinGGP.GGP.TwistPlane
 import GSpinGGP.GGP.TwistTorus
 import GSpinGGP.GGP.TwistPlaneCocycle
