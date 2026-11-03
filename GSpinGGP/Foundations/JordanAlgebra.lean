@@ -143,47 +143,57 @@ theorem Units.adjoin_inv (x : Aˣ) :
   · exact TauCeti.Units.coe_inv_mem_adjoin x (IsIntegral.of_finite F _)
   · simpa using TauCeti.Units.coe_inv_mem_adjoin x⁻¹ (IsIntegral.of_finite F _)
 
+omit [PerfectField F] in
+/-- **`Ad x − Ad s` is nilpotent and commutes with `Ad s`** (`Ad y = L_y R_{y⁻¹}`), for units `x`,
+`s` with `s ∈ F[x]` and `x − s` nilpotent: `Ad x − Ad s = L_{x−s} R_{x⁻¹} + L_s R_{x⁻¹−s⁻¹}`, a sum of
+commuting nilpotents. -/
+theorem isNilpotent_conj_sub_conj {x s : Aˣ} (hs : (s : A) ∈ Algebra.adjoin F {(x : A)})
+    (hn : IsNilpotent ((x : A) - s)) :
+    IsNilpotent (LinearMap.mulLeft F (x : A) * LinearMap.mulRight F ((x⁻¹ : Aˣ) : A) -
+        LinearMap.mulLeft F (s : A) * LinearMap.mulRight F ((s⁻¹ : Aˣ) : A)) ∧
+      Commute (LinearMap.mulLeft F (x : A) * LinearMap.mulRight F ((x⁻¹ : Aˣ) : A) -
+        LinearMap.mulLeft F (s : A) * LinearMap.mulRight F ((s⁻¹ : Aˣ) : A))
+        (LinearMap.mulLeft F (s : A) * LinearMap.mulRight F ((s⁻¹ : Aˣ) : A)) := by
+  set B := Algebra.adjoin F {(x : A)}
+  have hxB : (x : A) ∈ B := Algebra.self_mem_adjoin_singleton F _
+  have hxiB : ((x⁻¹ : Aˣ) : A) ∈ B := TauCeti.Units.coe_inv_mem_adjoin x (IsIntegral.of_finite F _)
+  have hsiB : ((s⁻¹ : Aˣ) : A) ∈ B := Units.inv_mem_adjoin_of_mem_adjoin hs
+  have hcB : ∀ {p q : A}, p ∈ B → q ∈ B → Commute p q := commute_of_mem_adjoin_singleton
+  set t₁ := LinearMap.mulLeft F ((x : A) - s) * LinearMap.mulRight F ((x⁻¹ : Aˣ) : A)
+  set t₂ := LinearMap.mulLeft F (s : A) *
+    LinearMap.mulRight F (((x⁻¹ : Aˣ) : A) - ((s⁻¹ : Aˣ) : A))
+  have hxs : (x : A) - s ∈ B := Subalgebra.sub_mem _ hxB hs
+  have hxsi : ((x⁻¹ : Aˣ) : A) - ((s⁻¹ : Aˣ) : A) ∈ B := Subalgebra.sub_mem _ hxiB hsiB
+  have hTC : LinearMap.mulLeft F (x : A) * LinearMap.mulRight F ((x⁻¹ : Aˣ) : A) -
+      LinearMap.mulLeft F (s : A) * LinearMap.mulRight F ((s⁻¹ : Aˣ) : A) = t₁ + t₂ := by
+    refine LinearMap.ext fun a => ?_
+    simp only [t₁, t₂, LinearMap.sub_apply, LinearMap.add_apply, Module.End.mul_apply,
+      LinearMap.mulLeft_apply, LinearMap.mulRight_apply]
+    noncomm_ring
+  have hn₁ : IsNilpotent t₁ :=
+    (LinearMap.commute_mulLeft_right _ _).isNilpotent_mul_right
+      (hn.map (Algebra.lmul F A))
+  have hn₂ : IsNilpotent t₂ :=
+    (LinearMap.commute_mulLeft_right _ _).isNilpotent_mul_left
+      ((LinearMap.isNilpotent_mulRight_iff F _).mpr
+        (Units.isNilpotent_inv_sub_inv (hcB hxB hs) hn))
+  rw [hTC]
+  exact ⟨(commute_mulLeft_mul_mulRight (hcB hxs hs) (hcB hxiB hxsi)).isNilpotent_add hn₁ hn₂,
+    (commute_mulLeft_mul_mulRight (hcB hxs hs) (hcB hxiB hsiB)).add_left
+      (commute_mulLeft_mul_mulRight (hcB hs hs) (hcB hxsi hsiB))⟩
+
 /-- **`Ad s` is a polynomial in `Ad x`** (`Ad y = L_y R_{y⁻¹}`), for units `x`, `s` with `s ∈ F[x]`,
 `L_s` semisimple and `x − s` nilpotent: `Ad s` is semisimple and `Ad x − Ad s` is nilpotent and
-commutes with it, so `Ad s` is the semisimple part of `Ad x`. -/
+commutes with it (`isNilpotent_conj_sub_conj`), so `Ad s` is the semisimple part of `Ad x`. -/
 theorem conj_mem_adjoin_of_isSemisimple_mulLeft {x s : Aˣ}
     (hs : (s : A) ∈ Algebra.adjoin F {(x : A)})
     (hss : Module.End.IsSemisimple (LinearMap.mulLeft F (s : A)))
     (hn : IsNilpotent ((x : A) - s)) :
     LinearMap.mulLeft F (s : A) * LinearMap.mulRight F ((s⁻¹ : Aˣ) : A) ∈
       Algebra.adjoin F {LinearMap.mulLeft F (x : A) * LinearMap.mulRight F ((x⁻¹ : Aˣ) : A)} := by
-  set B := Algebra.adjoin F {(x : A)}
-  have hxB : (x : A) ∈ B := Algebra.self_mem_adjoin_singleton F _
-  have hxiB : ((x⁻¹ : Aˣ) : A) ∈ B := TauCeti.Units.coe_inv_mem_adjoin x (IsIntegral.of_finite F _)
-  have hsiB : ((s⁻¹ : Aˣ) : A) ∈ B := Units.inv_mem_adjoin_of_mem_adjoin hs
-  have hcB : ∀ {p q : A}, p ∈ B → q ∈ B → Commute p q := commute_of_mem_adjoin_singleton
-  set T := LinearMap.mulLeft F (x : A) * LinearMap.mulRight F ((x⁻¹ : Aˣ) : A)
-  set C := LinearMap.mulLeft F (s : A) * LinearMap.mulRight F ((s⁻¹ : Aˣ) : A)
-  set t₁ := LinearMap.mulLeft F ((x : A) - s) * LinearMap.mulRight F ((x⁻¹ : Aˣ) : A)
-  set t₂ := LinearMap.mulLeft F (s : A) *
-    LinearMap.mulRight F (((x⁻¹ : Aˣ) : A) - ((s⁻¹ : Aˣ) : A))
-  have hxs : (x : A) - s ∈ B := Subalgebra.sub_mem _ hxB hs
-  have hxsi : ((x⁻¹ : Aˣ) : A) - ((s⁻¹ : Aˣ) : A) ∈ B := Subalgebra.sub_mem _ hxiB hsiB
-  have hTC : T - C = t₁ + t₂ := by
-    refine LinearMap.ext fun a => ?_
-    simp only [T, C, t₁, t₂, LinearMap.sub_apply, LinearMap.add_apply, Module.End.mul_apply,
-      LinearMap.mulLeft_apply, LinearMap.mulRight_apply]
-    noncomm_ring
-  have hn₁ : IsNilpotent t₁ :=
-    (LinearMap.commute_mulLeft_right _ _).isNilpotent_mul_right
-      (hn.map (Algebra.lmul F A))
-  have hn₂ : IsNilpotent t₂ := by
-    obtain ⟨k, hk⟩ := Units.isNilpotent_inv_sub_inv (hcB hxB hs) hn
-    exact (LinearMap.commute_mulLeft_right _ _).isNilpotent_mul_left
-      ⟨k, by rw [LinearMap.pow_mulRight, hk, LinearMap.mulRight_zero_eq_zero]⟩
-  have hnil : IsNilpotent (T - C) := by
-    rw [hTC]
-    exact (commute_mulLeft_mul_mulRight (hcB hxs hs) (hcB hxiB hxsi)).isNilpotent_add hn₁ hn₂
-  have hc : Commute (T - C) C := by
-    rw [hTC]
-    exact (commute_mulLeft_mul_mulRight (hcB hxs hs) (hcB hxiB hsiB)).add_left
-      (commute_mulLeft_mul_mulRight (hcB hs hs) (hcB hxsi hsiB))
-  obtain ⟨n₀, hn₀, s₀, hs₀, hnil₀, hss₀, hx₀⟩ := Module.End.exists_isNilpotent_isSemisimple (f := T)
+  obtain ⟨hnil, hc⟩ := isNilpotent_conj_sub_conj hs hn
+  obtain ⟨n₀, hn₀, s₀, hs₀, hnil₀, hss₀, hx₀⟩ := Module.End.exists_isNilpotent_isSemisimple
+    (f := LinearMap.mulLeft F (x : A) * LinearMap.mulRight F ((x⁻¹ : Aˣ) : A))
   obtain ⟨-, hseq⟩ := Module.End.isNilpotent_isSemisimple_unique hnil₀ hss₀ hnil
     (isSemisimple_conj_of_mulLeft hss) (commute_of_mem_adjoin_singleton hn₀ hs₀) hc
     (by rw [← hx₀, sub_add_cancel])
