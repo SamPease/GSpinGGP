@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.GGP.GaloisTorus
 import GSpinGGP.GGP.TwistDescent
+import GSpinGGP.GGP.TorusTransfer
 
 /-!
 # The cocycle of a strongly stably conjugate element
@@ -116,5 +117,57 @@ theorem glOf_galIso {m : ℕ} {Q₁ Q₂ : QuadraticForm F (Fin m → F)} (σ : 
   Units.ext (toMatrix_of_galV_comm σ _ _ (fun w => galIso_galV σ ψ w))
 
 end GalIso
+
+section Strong
+
+open TorusTransfer
+
+variable {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V₁] [AddCommGroup V₂] [Module F V₂]
+  {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂}
+
+theorem map_symm_map (ψ : (Q₁.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb))
+    (a : CliffordAlgebra (Q₁.baseChange Kb)) :
+    CliffordAlgebra.map ψ.symm.toIsometry (CliffordAlgebra.map ψ.toIsometry a) = a :=
+  (CliffordAlgebra.equivOfIsometry ψ).symm_apply_apply a
+
+/-- `Ad(g) ∘ C(φ) = C(P(g) ∘ φ)`. -/
+theorem psiA_eq_map (φ : (Q₁.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb))
+    (g : GSpin (Q₂.baseChange Kb)) (a : CliffordAlgebra (Q₁.baseChange Kb)) :
+    psiA φ (g : (CliffordAlgebra _)ˣ) a = CliffordAlgebra.map (φ.trans (specPIso g)).toIsometry a := by
+  rw [psiA, ← map_specPIso_apply]
+  show _ = CliffordAlgebra.map ((specPIso g).toIsometry.comp φ.toIsometry) a
+  rw [← CliffordAlgebra.map_comp_map]
+  rfl
+
+/-- **The strong condition as a fixed-point condition**: if `Ad(g) ∘ C(φ)` is defined over `F` on
+the centralizer of `x`, then with `ψ = P(g) ∘ φ` the isometry `a_σ = ψ⁻¹ ∘ σψ` acts trivially (through
+`C(a_σ)`) on every element of `GSpin(Q₁)(F̄)` commuting with `x`. -/
+theorem map_galIso_trans_symm_of_ratAt (φ : (Q₁.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb))
+    (g : GSpin (Q₂.baseChange Kb)) {x : (CliffordAlgebra Q₁)ˣ}
+    (hrat : RatAt φ (g : (CliffordAlgebra _)ˣ) x) (σ : GalF F)
+    {w : (CliffordAlgebra (Q₁.baseChange Kb))ˣ} (hw : w ∈ GSpin (Q₁.baseChange Kb))
+    (hwx : Commute w (bcUnits Q₁ x)) :
+    CliffordAlgebra.map ((galIso σ (φ.trans (specPIso g))).trans
+      (φ.trans (specPIso g)).symm).toIsometry (w : CliffordAlgebra _) = w := by
+  set ψ := φ.trans (specPIso g)
+  set z := galCU Q₁ σ⁻¹ w
+  have hz : z ∈ GSpin (Q₁.baseChange Kb) := galCU_mem_GSpin Q₁ σ⁻¹ hw
+  have hzx : Commute z (bcUnits Q₁ x) := by
+    have h1 := hwx.map (galCU Q₁ σ⁻¹)
+    have h2 : galCU Q₁ σ⁻¹ (bcUnits Q₁ x) = bcUnits Q₁ x :=
+      Units.ext (galC_bcHom Q₁ σ⁻¹ (x : CliffordAlgebra Q₁))
+    rwa [h2] at h1
+  have hσz : galC Q₁ σ (z : CliffordAlgebra _) = w := by
+    rw [coe_galCU, galC_galC, mul_inv_cancel, galC_one]
+  have key : galC Q₂ σ (psiA φ (g : (CliffordAlgebra _)ˣ) z) =
+      psiA φ (g : (CliffordAlgebra _)ˣ) (galC Q₁ σ (z : CliffordAlgebra _)) := hrat σ z hz hzx
+  rw [psiA_eq_map, psiA_eq_map, galC_map, hσz] at key
+  calc CliffordAlgebra.map ((galIso σ ψ).trans ψ.symm).toIsometry (w : CliffordAlgebra _)
+      = CliffordAlgebra.map ψ.symm.toIsometry
+          (CliffordAlgebra.map (galIso σ ψ).toIsometry (w : CliffordAlgebra _)) := by
+        rw [← AlgHom.comp_apply, CliffordAlgebra.map_comp_map]; rfl
+    _ = w := by rw [key, map_symm_map]
+
+end Strong
 
 end GSpinGGP
