@@ -34,8 +34,8 @@ Galois cohomology `H¹` is **not** modelled.
   `nilReg_centralizer_nonempty_imp` (unconditional, one direction; proved) and
   `nilReg_centralizer_nonempty_iff` (both directions, under a torus hypothesis on the moved part:
   the statement without that hypothesis is false, see the docstring).
-  Existence of Luo's orbit `O_ν` for a GGP datum — `exists_regularNil_inOrbitNu` (this axiom
-  reads `adV` and `IsInOrbitNu` from `GGP/Triple`, hence that import).
+  Existence of Luo's orbit `O_ν` for a GGP datum — `exists_regularNil_inOrbitNu`, also a theorem
+  (`GGP/RegularNilpotent`).
 * (f) Multiplicity at most one (Emory–Takeda + reduction; Yan) — `emoryTakeda_mult_le_one`.
 -/
 
