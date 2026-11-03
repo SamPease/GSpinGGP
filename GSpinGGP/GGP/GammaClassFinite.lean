@@ -9,7 +9,7 @@ import GSpinGGP.GGP.ConjCocycle
 # Finitely many conjugacy classes of the tori `T_x`
 
 The tori `T_x`, `x ∈ Γ(G,H)`, fall into finitely many `GSpin(W)(F)`-conjugacy classes
-(`GGPData.finite_gammaClass_of_conj`), by the twisting argument of Serre, *Cohomologie galoisienne*,
+(`finite_gammaClass`), by the twisting argument of Serre, *Cohomologie galoisienne*,
 I §5: tori `S_y(F̄)` of the same type (`dim W''_y`) are conjugate under `SO(W)(F̄)`
 (`exists_conj_torusBarFbar`); the conjugator gives a class in `H¹(F, N_x)` (`conjCocycle`), finite by
 Borel–Serre (`finite_H1_normalizerBar`); equal classes give an `F`-rational conjugator
@@ -31,31 +31,23 @@ namespace GGPData
 
 variable {d : GGPData F}
 
-/-- `P` commutes with the Galois action: the matrix of `P(σ g)` is `σ` of that of `P(g)`. -/
-theorem specMatFbar_galGS (σ : GalF F) (g : GSpin (d.QW.baseChange Kb)) :
-    specMatFbar d.QW (galGS d.QW σ g) = galGL d.m σ (specMatFbar d.QW g) := by
-  apply Units.ext
-  rw [coe_specMatFbar, coe_galGL, coe_specMatFbar]
-  exact toMatrix_of_galV_comm σ _ _ fun w => specP_galGS d.QW σ g w
-
 theorem isGalStable_range_specMatFbar : IsGalStable (F := F) (specMatFbar d.QW).range := by
   rintro σ _ ⟨g, rfl⟩
   exact ⟨_, specMatFbar_galGS σ g⟩
-
-theorem isGalStable_torusBarFbar (x : GSpin d.QW) : IsGalStable (F := F) (d.torusBarFbar x) :=
-  galGL_mem_torusBarFbar x
 
 /-- **Tori of the same type are conjugate over `F̄`**: for `x, y ∈ Γ(G,H)` with
 `dim W''_x = dim W''_y`, some `g ∈ SO(W)(F̄)` conjugates `S_x(F̄)` to `S_y(F̄)`.
 
 **Status: `sorry`** (own work, standard). Sketch: over `F̄`, `P(x)` is semisimple with
-`ker (P(x) − 1) = W'_x ⊗ F̄`, and `S_x(F̄)` is the identity component of its centralizer in
-`SO(W''_x ⊗ F̄)` extended by `1` on `W'_x ⊗ F̄` (`T_x` is a maximal torus of `GSpin(W''_x)`, so
-`S_x(F̄)` is a maximal torus of `SO(W''_x)(F̄)`).  `W'_x ⊗ F̄ ≅ W'_y ⊗ F̄` and
+`ker (P(x) − 1) = W'_x ⊗ F̄`; `W''_x` is even-dimensional (`det P(x) = 1`), and the commutativity of
+`T_x` in `IsGammaElt` (with Zariski density of `T_x(F)`) forces the eigenvalues `λ ≠ ±1` of `P(x)` on
+`W''_x` to be simple and `dim ker (P(x) + 1) ∈ {0, 2}`.  So the centralizer of `P(x)` in
+`SO(W''_x ⊗ F̄)` is a maximal torus, and `S_x(F̄)` is that torus extended by `1` on `W'_x ⊗ F̄`
+(`P(T_x(F̄))` has index `≤ 2` in it and a torus is divisible).  `W'_x ⊗ F̄ ≅ W'_y ⊗ F̄` and
 `W''_x ⊗ F̄ ≅ W''_y ⊗ F̄` (quadratic spaces over an algebraically closed field are classified by their
 dimension), and maximal tori of `SO(W''_y)(F̄)` are conjugate; gluing gives an isometry of
-`W ⊗ F̄`, adjusted to determinant `1` by a reflection in `W'_y` (or in a hyperbolic plane of `W''_y`,
-which normalizes the torus); `P` is onto `SO(W)(F̄)` (`gspin_specP_surjective_SO`). -/
+`W ⊗ F̄`, adjusted to determinant `1` by a reflection in `W'_y` (or, if `W'_y = 0`, by a reflection in
+the plane spanned by a weight pair of `S_y`, which normalizes the torus); `P` is onto `SO(W)(F̄)` (`gspin_specP_surjective_SO`). -/
 theorem exists_conj_torusBarFbar (x y : GSpin d.QW) (hx : d.IsGammaElt x) (hy : d.IsGammaElt y)
     (hdim : Module.finrank F (movedSub x) = Module.finrank F (movedSub y)) :
     ∃ g ∈ (specMatFbar d.QW).range,
@@ -99,10 +91,19 @@ theorem exists_conj_torusOf_of_H1 {x y y' : GSpin d.QW} {g g' : GL (Fin d.m) Kb}
   refine ⟨t, torusOf_eq_map_conj_of_torusBarFbar ?_⟩
   rw [ht, ← hg'S, hconj, hgS]
 
-/-- **`Γ(G,H)` meets finitely many conjugacy classes of tori**, from Borel–Serre finiteness of
-`H¹(F, N_x)` (`finite_H1_normalizerBar`) and the conjugacy over `F̄` of tori of the same type
-(`exists_conj_torusBarFbar`). -/
-theorem finite_gammaClass' : Finite (GammaClass d) := by
+end GGPData
+
+open GGPData in
+/-- **`Γ(G,H)` meets finitely many conjugacy classes of tori** (used implicitly in Thesis §6.5,
+(6.5.3)).  Twisting argument: tori `S_y` of the same type `dim W''_y` are conjugate over `F̄`
+(`GGPData.exists_conj_torusBarFbar`, a `sorry` with sketch); the conjugator defines a class in
+`H¹(F, N_{SO(W)}(S_x))`, a finite set by Borel–Serre, *Théorèmes de finitude en cohomologie
+galoisienne*, Comment. Math. Helv. 39 (1964), Thm. 6.1 (`finite_H1_normalizerBar`); tori with equal
+classes are `GSpin(W)(F)`-conjugate (`GGPData.exists_conj_torusOf_of_H1`).  (Borel–Serre's Cor. 6.5,
+finiteness of conjugacy classes of maximal tori, is the direct statement but needs algebraic tori,
+not formalized here.)  Consistent with `toyD_subsingleton_gammaClass` (`Sanity/Witnesses.lean`) and
+`subsingleton_gammaClass` (`TraceFormula/Lie.lean`). -/
+theorem finite_gammaClass (d : GGPData F) : Finite (GammaClass d) := by
   -- types `k = dim W''_y` and a representative of each
   let Ty := {k : Fin (d.m + 1) // ∃ y, d.IsGammaElt y ∧ Module.finrank F (movedSub y) = k}
   let rep : Ty → GSpin d.QW := fun k => Classical.choose k.2
@@ -125,7 +126,7 @@ theorem finite_gammaClass' : Finite (GammaClass d) := by
     exists_conj_torusBarFbar (rep k) (yOf T) (hrep k).1 (hyOf T).1 (hdim k T hT)
   have hN : ∀ (k : Ty) (T : d.GammaTorus) (hT : kOf T = k) (σ : GalF F),
       (g k T hT)⁻¹ * galGL d.m σ (g k T hT) ∈ d.normalizerBar (rep k) := fun k T hT σ =>
-    ⟨inv_mul_galGL_mem_normalizer (isGalStable_torusBarFbar _) (isGalStable_torusBarFbar _)
+    ⟨inv_mul_galGL_mem_normalizer (galGL_mem_torusBarFbar _) (galGL_mem_torusBarFbar _)
       (hgS k T hT) σ, inv_mul_galGL_mem isGalStable_range_specMatFbar (hgA k T hT) σ⟩
   let φ : (k : Ty) → (T : d.GammaTorus) → kOf T = k → H1 (d.normalizerBar (rep k)) :=
     fun k T hT => H1.mk (conjCocycle (g k T hT) (hN k T hT))
@@ -148,6 +149,5 @@ theorem finite_gammaClass' : Finite (GammaClass d) := by
   rw [← Quot.out_eq c₁, ← Quot.out_eq c₂]
   exact (Quot.sound hc).symm
 
-end GGPData
 
 end GSpinGGP

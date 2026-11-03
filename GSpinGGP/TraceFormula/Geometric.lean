@@ -345,7 +345,7 @@ Proof route: `Γ(G,H)` is a finite union of the images of the `T(F)`, `T ∈ �
 The germ `c_{θ,O_t}(t)` only depends on `θ` on the regular elements near `t`
 (`hasGermExpansion_congr_regularSet`, uniqueness of the expansion), so it vanishes when `θ = 0` on
 `Ω ∩ G_reg(F)`; then every `m_{geom,s}(θ)` vanishes.
-Status: **proved** from `finite_gammaClass` (`MGeom.lean`, SORRY), the compactness of `T(F)/A_{G,H}(F)`
+Status: **proved** from `finite_gammaClass` (`GGP/GammaClassFinite.lean`), the compactness of `T(F)/A_{G,H}(F)`
 (part of `IsGammaElt`), the cited `hc_exists_invariantClopen_superset` and germ uniqueness
 (`germ_eq_zero_of_eqOn_zero_of_mem`).  Only the representatives `T = (Quot.out c).1` of the
 finitely many classes enter `m_{geom,s}`, so no conjugation is needed. -/

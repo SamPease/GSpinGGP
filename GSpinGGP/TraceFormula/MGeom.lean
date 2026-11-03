@@ -196,18 +196,6 @@ SORRY; the `QCfin` forms are then proved by linearity (submodules `qcGood`, `qcL
 
 section Convergence
 
-/-- **`Γ(G,H)` meets finitely many conjugacy classes of tori** (used implicitly in Thesis §6.5,
-(6.5.3)).  Proved by the twisting argument (`GGPData.finite_gammaClass'`): tori `S_y` of the same
-type `dim W''_y` are conjugate over `F̄` (`GGPData.exists_conj_torusBarFbar`, a `sorry` with sketch);
-the conjugator defines a class in `H¹(F, N_{SO(W)}(S_x))`, a finite set by Borel–Serre, *Théorèmes
-de finitude en cohomologie galoisienne*, Comment. Math. Helv. 39 (1964), Thm. 6.1
-(`finite_H1_normalizerBar`); tori with equal classes are `GSpin(W)(F)`-conjugate (Galois descent).
-(Borel–Serre's Cor. 6.5, finiteness of conjugacy classes of maximal tori, is the direct statement
-but needs algebraic tori, not formalized here.)  Consistent with `toyD_subsingleton_gammaClass`
-(`Sanity/Witnesses.lean`) and `subsingleton_gammaClass` (`TraceFormula/Lie.lean`). -/
-theorem finite_gammaClass : Finite (GammaClass d) :=
-  GGPData.finite_gammaClass'
-
 /-- **Local boundedness of `(D^G)^{1/2} c_{θ,O}` on `T_♮`** (BP Astérisque 418, Prop 4.5.1: for
 `θ ∈ QC(G(F))`, `(D^G)^{1/2} c_θ` is locally bounded on `G(F)`; same proof for the individual
 `c_{θ,O}`, `O ∈ Nil_reg(𝔤_x)`; Thesis Prop 12.1.1(i), proof of (12.1.2)).  The bound is global
