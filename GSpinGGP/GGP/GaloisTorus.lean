@@ -5,6 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import GSpinGGP.Literature.Kottwitz
 import GSpinGGP.GGP.TorusCommute
 import GSpinGGP.GGP.MovedCentralizer
+import GSpinGGP.GGP.Steinberg
+import GSpinGGP.GGP.TwistDescent
 
 /-!
 # The Galois action on `S_x(F̄)`
@@ -17,6 +19,8 @@ The Galois action on `F̄ ⊗ V` (`galV`), on `C(V)_{F̄}` (`galC`) and on `GSpi
 noncomputable section
 
 open scoped Classical
+
+set_option linter.unusedSectionVars false
 
 namespace GSpinGGP
 
@@ -241,5 +245,118 @@ theorem galGL_mem_torusBarFbar (x : ↥(GSpin d.QW)) (σ : GalF F) :
   apply Units.ext
   rw [coe_specMatFbar, coe_galGL, coe_specMatFbar]
   exact toMatrix_of_galV_comm σ _ _ fun w => specP_galGS d.QW σ g w
+
+/-! ### `T_y` from `S_y(F̄)` -/
+
+/-- `P(t)` over `F̄` fixes `U ⊗ F̄` iff `P(t)` fixes `U`. -/
+theorem specP_bcGSpin_fixes_iff (t : GSpin d.QW) (U : Submodule F (Fin d.m → F)) :
+    (∀ w ∈ U.baseChange (AlgebraicClosure F),
+        specP (d.QW.baseChange (AlgebraicClosure F)) (bcGSpin d.QW t) w = w) ↔
+      ∀ v ∈ U, specP d.QW t v = v := by
+  have hP : ∀ w, specP (d.QW.baseChange (AlgebraicClosure F)) (bcGSpin d.QW t) w =
+      ((specP d.QW t : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange (AlgebraicClosure F)) w :=
+    fun w => LinearMap.congr_fun (specP_bcGSpin d.QW t) w
+  constructor
+  · intro h v hv
+    have h1 := h (1 ⊗ₜ v) (Submodule.tmul_mem_baseChange_of_mem 1 hv)
+    rw [hP, LinearMap.baseChange_tmul] at h1
+    exact Module.Flat.tensorProduct_mk_injective F (Fin d.m → F) (AlgebraicClosure F) (by simpa using h1)
+  · intro h w hw
+    rw [hP]
+    rw [Submodule.baseChange_eq_span] at hw
+    induction hw using Submodule.span_induction with
+    | mem x hx =>
+      obtain ⟨v, hv, rfl⟩ := hx
+      simp [LinearMap.baseChange_tmul, h v hv]
+    | zero => simp
+    | add x y _ _ hx hy => rw [map_add, hx, hy]
+    | smul a x _ hx => rw [map_smul, hx]
+
+/-- **`T_y = P⁻¹(S_y(F̄)) ∩ GSpin(W)(F)`**: `t ∈ T_y` iff `P(t)`, over `F̄`, lies in `S_y(F̄)`.
+(`⇐`: two elements of `GSpin(W)(F̄)` with the same image under `P` differ by a central scalar,
+`ker_specP`.) -/
+theorem mem_torusOf_iff (y t : GSpin d.QW) :
+    t ∈ d.torusOf y ↔ specMatFbar d.QW (bcGSpin d.QW t) ∈ d.torusBarFbar y := by
+  rw [GGPData.torusOf, Subgroup.mem_inf, Subgroup.mem_centralizer_singleton_iff]
+  constructor
+  · rintro ⟨hc, hf⟩
+    refine ⟨bcGSpin d.QW t, ⟨?_, (specP_bcGSpin_fixes_iff t _).2 hf⟩, rfl⟩
+    have := congrArg (fun g : GSpin d.QW => bcUnits d.QW (g : (CliffordAlgebra d.QW)ˣ)) hc
+    simp only [Subgroup.coe_mul, map_mul] at this
+    unfold Commute SemiconjBy
+    exact this
+  · rintro ⟨g, ⟨hgc, hgf⟩, hgt⟩
+    -- `P(bc t) = P(g)`
+    have hP : specP _ (bcGSpin d.QW t) = specP _ g := by
+      have := hgt.symm
+      simp only [specMatFbar, MonoidHom.coe_comp, Function.comp_apply] at this
+      exact (MulEquiv.injective _ ((Units.map_injective
+        (LinearMap.toMatrixAlgEquiv (bcBasis F d.m)).injective) this))
+    obtain ⟨c, hc⟩ : bcGSpin d.QW t * g⁻¹ ∈ (scalarGSpin _).range := by
+      rw [← ker_specP (isNondeg_baseChange _ d.nondeg), MonoidHom.mem_ker, map_mul, map_inv, hP,
+        mul_inv_cancel]
+    have ht : bcGSpin d.QW t = scalarGSpin _ c * g := by rw [hc, inv_mul_cancel_right]
+    refine ⟨?_, (specP_bcGSpin_fixes_iff t _).1 fun w hw => by
+      rw [hP]; exact hgf w hw⟩
+    apply bcGSpin_injective d.QW
+    have hcen := Subgroup.mem_center_iff.mp
+      (scalarGSpin_mem_center (d.QW.baseChange (AlgebraicClosure F)) c)
+    have hgy : g * bcGSpin d.QW y = bcGSpin d.QW y * g := Subtype.ext hgc.eq
+    rw [map_mul, map_mul, ht, mul_assoc, hgy, ← mul_assoc, ← hcen, mul_assoc]
+
+/-- The matrix of `P(t)` over `F̄` is that of `P(t)` mapped to `F̄`. -/
+theorem coe_specMatFbar_bcGSpin (t : GSpin d.QW) :
+    ((specMatFbar d.QW (bcGSpin d.QW t) : GL (Fin d.m) (AlgebraicClosure F)) :
+        Matrix (Fin d.m) (Fin d.m) (AlgebraicClosure F)) =
+      (LinearMap.toMatrix' (specP d.QW t : (Fin d.m → F) →ₗ[F] (Fin d.m → F))).map
+        (algebraMap F (AlgebraicClosure F)) := by
+  rw [coe_specMatFbar, specP_bcGSpin]
+  ext i j
+  simp [LinearMap.toMatrix_apply, bcBasis, LinearMap.toMatrix'_apply, Algebra.algebraMap_eq_smul_one]
+
+/-- **Rational points of `SO(W)`**: a Galois-fixed element of `P(GSpin(W)(F̄)) ⊆ GL_m(F̄)` is the
+image of some `t ∈ GSpin(W)(F)` (its entries lie in `F`, `TwistDescent.exists_map_of_fixed`; it is an
+isometry of determinant `1`; `gspin_specP_surjective_SO`). -/
+theorem exists_specMatFbar_bcGSpin_eq {h : GL (Fin d.m) (AlgebraicClosure F)}
+    (hA : h ∈ (specMatFbar d.QW).range) (hfix : ∀ σ : GalF F, galGL d.m σ h = h) :
+    ∃ t : GSpin d.QW, specMatFbar d.QW (bcGSpin d.QW t) = h := by
+  obtain ⟨g, rfl⟩ := hA
+  set X : Matrix (Fin d.m) (Fin d.m) (AlgebraicClosure F) :=
+    ((specMatFbar d.QW g : GL (Fin d.m) (AlgebraicClosure F)) :
+      Matrix (Fin d.m) (Fin d.m) (AlgebraicClosure F))
+  obtain ⟨N, hN⟩ := TwistDescent.exists_map_of_fixed X fun σ => by
+    have := congrArg (fun u : GL (Fin d.m) (AlgebraicClosure F) =>
+      (u : Matrix (Fin d.m) (Fin d.m) (AlgebraicClosure F))) (hfix σ)
+    simpa [coe_galGL] using this
+  have hinj : Function.Injective (fun M : Matrix (Fin d.m) (Fin d.m) F =>
+      M.map (algebraMap F (AlgebraicClosure F))) :=
+    Matrix.map_injective (algebraMap F (AlgebraicClosure F)).injective
+  have hgram : N.transpose * d.QW.toMatrix' * N = d.QW.toMatrix' := hinj <| by
+    simp only [Matrix.map_mul, Matrix.transpose_map, hN]
+    exact TwistDescent.gram_specMatFbar d.QW g
+  have hdet : N.det = 1 := (algebraMap F (AlgebraicClosure F)).injective <| by
+    rw [RingHom.map_det, RingHom.mapMatrix_apply, hN, map_one]
+    exact TwistDescent.det_specMatFbar d.QW g
+  have hu : IsUnit (LinearMap.toMatrix (Pi.basisFun F (Fin d.m)) (Pi.basisFun F (Fin d.m))
+      (Matrix.toLin' N)).det := by
+    rw [LinearMap.toMatrix_eq_toMatrix', LinearMap.toMatrix'_toLin', hdet]
+    exact isUnit_one
+  set φ := LinearEquiv.ofIsUnitDet hu
+  have hφ : ∀ v, d.QW (φ v) = d.QW v := by
+    have hcomp : d.QW.comp (Matrix.toLin' N) = d.QW := by
+      apply QuadraticForm.toMatrix'_injective
+      rw [QuadraticForm.toMatrix'_comp, LinearMap.toMatrix'_toLin', hgram]
+    intro v
+    simpa [φ, LinearEquiv.ofIsUnitDet] using congrArg (fun q : QuadraticForm F _ => q v) hcomp
+  have hφdet : LinearMap.det (φ : (Fin d.m → F) →ₗ[F] (Fin d.m → F)) = 1 := by
+    show LinearMap.det (Matrix.toLin' N) = 1
+    rw [LinearMap.det_toLin', hdet]
+  obtain ⟨t, ht⟩ := gspin_specP_surjective_SO d.QW d.nondeg φ hφ hφdet
+  refine ⟨t, Units.ext ?_⟩
+  rw [coe_specMatFbar_bcGSpin, ht]
+  show _ = X
+  rw [← hN]
+  congr 1
+  exact LinearMap.toMatrix'_toLin' N
 
 end GSpinGGP
