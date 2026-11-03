@@ -105,6 +105,20 @@ theorem isNondeg_iff_nondegenerate {V : Type*} [AddCommGroup V] [Module K V] (Q 
     IsNondeg Q ↔ Q.Nondegenerate :=
   QuadraticMap.nondegenerate_associated_iff (Q := Q)
 
+/-- The bilinear form of `H^n` on the standard basis: `b(e_i, e_j) = [i + j + 1 = 2n]`. -/
+theorem bform_hypForm_single (n : ℕ) (i j : Fin (2 * n)) :
+    bform (hypForm K n) (Pi.single i 1) (Pi.single j 1) =
+      if (i : ℕ) + (j : ℕ) + 1 = 2 * n then 1 else 0 := by
+  have hT : (hypMatrix K n).transpose = hypMatrix K n := by
+    ext a b; simp only [Matrix.transpose_apply, hypMatrix]; congr 1; apply propext; omega
+  unfold hypForm Matrix.toQuadraticForm'
+  dsimp only [bform, QuadraticMap.associated]
+  rw [QuadraticMap.associated_left_inverse]
+  · simp [Matrix.toLinearMap₂'_apply', Matrix.mulVec_single, hypMatrix]
+  · intro x y
+    simp only [Matrix.toLinearMap₂'_apply']
+    rw [Matrix.dotProduct_mulVec, dotProduct_comm, ← Matrix.mulVec_transpose, hT]
+
 section Witt
 
 /-- The `N`-component `n ↦ e(0, n).2` of an isometry `Z₁ ⊥ N₁ ≅ Z₂ ⊥ N₂` between orthogonal sums

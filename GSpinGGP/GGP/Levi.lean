@@ -274,17 +274,8 @@ omit [PAdicField F] in
 theorem isLieAbelian_lieCentralizer_iff {A : Type*} [Ring A] [Algebra F A]
     (𝔤 : LieSubalgebra F A) (x : A) :
     IsLieAbelian ↥(lieCentralizer 𝔤 x) ↔
-      ∀ X ∈ lieCentralizer 𝔤 x, ∀ Y ∈ lieCentralizer 𝔤 x, X * Y = Y * X := by
-  constructor
-  · intro h X hX Y hY
-    have := h.trivial ⟨X, hX⟩ ⟨Y, hY⟩
-    have := congrArg Subtype.val this
-    rw [LieSubalgebra.coe_bracket, Ring.lie_def] at this
-    exact sub_eq_zero.mp this
-  · intro h
-    refine ⟨fun X Y => Subtype.ext ?_⟩
-    rw [LieSubalgebra.coe_bracket, Ring.lie_def]
-    exact sub_eq_zero.mpr (h X X.2 Y Y.2)
+      ∀ X ∈ lieCentralizer 𝔤 x, ∀ Y ∈ lieCentralizer 𝔤 x, X * Y = Y * X :=
+  isLieAbelian_iff_forall_commute
 
 theorem mem_lieCentralizer_alg (Φ : GGPIso d d') (x X : d.ambient) :
     X ∈ lieCentralizer d.lie x ↔ Φ.alg X ∈ lieCentralizer d'.lie (Φ.alg x) := by
@@ -1743,7 +1734,7 @@ the left Haar measure is `|a|⁻¹ d^×a dx` and `μ(E p⁻¹) = |b| μ(E)` for 
 `δ_P(b, y) = |b| = |det Ad(p)|_𝔲|`, the normalization for which `δ_P^{1/2}` makes the induction
 unitary.  Status: proved from `integral_K_mul_right` (the integration formula for `G = P K`,
 literature axiom `integral_eq_mul_integral_compact_integral`, and the unimodularity of `G(F)`,
-`haar_G_isMulRightInvariant`, a `sorry` theorem derived from Bourbaki's criterion); the convention for `δ_P` is the one for which the proof
+`GGPData.isMulRightInvariant_haar_G`); the convention for `δ_P` is the one for which the proof
 goes through, so no convention is assumed. -/
 theorem preInner_rightTrans (g : ↥d.G) (f₁ f₂ : D.Pre) :
     D.preInner (D.rightTransLin g f₁) (D.rightTransLin g f₂) = D.preInner f₁ f₂ := by

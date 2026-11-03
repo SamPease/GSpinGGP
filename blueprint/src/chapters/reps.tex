@@ -58,15 +58,17 @@ A central element's operator commutes with the whole group, so it is a scalar by
 
 \begin{theorem}[$G(F)$ is unimodular]
 \label{LIT-haar_G_isMulRightInvariant}
-\lean{GSpinGGP.LitTF.haar_G_isMulRightInvariant}
+\lean{GSpinGGP.GGPData.isMulRightInvariant_haar_G}
 \leanok
 \uses{G, GGPData, GSpin}
 The Haar measure of $G(F)=\GSpin(W)(F)\times\GSpin(V)(F)$ (and of every inner form) is right invariant.
 \end{theorem}
 \begin{proof}
-Not yet formalized. Bourbaki, \emph{Lie Groups and Lie Algebras} III \S3 no.~16, Prop.~55 and Cor.: the modular function is
-$(\operatorname{mod}\det\operatorname{Ad})^{-1}$. On $\gspin(U)=\mathfrak{so}(U)\oplus F$, $\operatorname{Ad} g$ acts as $\Lambda^2P(g)$ on
-$\mathfrak{so}(U)\cong\Lambda^2U$, of determinant $\det P(g)^{\dim U-1}=1$, and trivially on $F$.
+\leanok
+The modular character $\Delta$ is a homomorphism to $\mathbb{R}_{>0}$, trivial on the centre and invariant under continuous
+involutive automorphisms. Conjugation by an anisotropic vector $w$ on one factor is a continuous involutive automorphism sending $uw$ to
+$q(u)q(w)(uw)^{-1}$, so $\Delta(uw)^2=1$ and $\Delta(uw)=1$. Scalars and products $uw$ of anisotropic vectors generate
+$\GSpin(U)(F)$ (Cartan--Dieudonn\'e), so $\Delta=1$. (The thesis takes unimodularity as standard, \S2.1.)
 \end{proof}
 
 \begin{literature}[Weil's quotient-measure formula]

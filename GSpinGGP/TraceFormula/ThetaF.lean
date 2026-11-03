@@ -269,7 +269,7 @@ instance locallyCompactSpace_AG : LocallyCompactSpace ↥d.AG :=
 /-! ### The Haar measure on `G(F)/A_G(F)` is right invariant; the Weil measure -/
 
 /-- The Haar measure on `G(F)/A_G(F)` is right invariant: from the unimodularity of
-`G(F)` (`haar_G_isMulRightInvariant`) because `A_G(F)` is closed and central
+`G(F)` (`isMulRightInvariant_haar_G`) because `A_G(F)` is closed and central
 (`isMulRightInvariant_haar_quotient_of_le_center`; Thesis §2.4, §7.1). -/
 instance isMulRightInvariant_haar_GmodAG :
     (Measure.haar : Measure d.GmodAG).IsMulRightInvariant :=
@@ -293,7 +293,13 @@ instance isFiniteMeasureOnCompacts_weilMeasureHG : IsFiniteMeasureOnCompacts d.w
 
 end GGPData
 
-/-! ### Conjugation stability of `G_reg` -/
+/-! ### `Ad(G)`-stability of `𝔤` and conjugation stability of `G_reg` -/
+
+section GSpinAd
+
+variable {K : Type*} [Field K] [Invertible (2 : K)] {V : Type*} [AddCommGroup V] [Module K V]
+
+end GSpinAd
 
 namespace GGPData
 

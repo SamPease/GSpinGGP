@@ -2,6 +2,7 @@ import GSpinGGP.GGP.Triple
 import GSpinGGP.TraceFormula.Spine
 import GSpinGGP.GGP.Germs
 import GSpinGGP.GGP.Centralizers
+import GSpinGGP.GGP.RegularNilpotentConverse
 import GSpinGGP.GGP.KottwitzSign
 import GSpinGGP.GGP.Hilbert90
 import GSpinGGP.GGP.TwistDescent
@@ -887,6 +888,7 @@ section GspinMaps
 
 variable {K : Type*} [Field K] [Invertible (2 : K)] {W₁ W₂ : Type*} [AddCommGroup W₁] [Module K W₁]
   [AddCommGroup W₂] [Module K W₂]
+
 
 /-- `C(φ)` maps `gspin` to `gspin` for an isometry `φ`. -/
 theorem map_mem_gspin {Q₁ : QuadraticForm K W₁} {Q₂ : QuadraticForm K W₂}
@@ -2507,48 +2509,11 @@ theorem orbitChoice_mem_nilReg_of_exists (d : GGPData F) (x : ↥(GSpin d.QW))
   rw [e]
   exact h.choose_spec.1
 
-/-- `dim 𝔤_{gXg⁻¹} = dim 𝔤_X` when conjugation by `g` and `g⁻¹` preserves `𝔤`. -/
-theorem finrank_lieCentralizer_conj {A : Type*} [Ring A] [Algebra F A] (𝔤 : LieSubalgebra F A)
-    (g : Aˣ) (hg : ∀ Y ∈ 𝔤, (g : A) * Y * (↑g⁻¹ : A) ∈ 𝔤)
-    (hg' : ∀ Y ∈ 𝔤, (↑g⁻¹ : A) * Y * (g : A) ∈ 𝔤) (X : A) :
-    finrank F ↥(lieCentralizer 𝔤 ((g : A) * X * (↑g⁻¹ : A))) =
-      finrank F ↥(lieCentralizer 𝔤 X) := by
-  set φ := conjAd F g
-  have hmap : (lieCentralizer 𝔤 X).toSubmodule.map φ.toLinearEquiv.toLinearMap =
-      (lieCentralizer 𝔤 ((g : A) * X * (↑g⁻¹ : A))).toSubmodule := by
-    ext Z
-    rw [Submodule.mem_map_equiv, LieSubalgebra.mem_toSubmodule, LieSubalgebra.mem_toSubmodule,
-      mem_lieCentralizer, mem_lieCentralizer]
-    have hs : φ.toLinearEquiv.symm Z = (↑g⁻¹ : A) * Z * (g : A) := rfl
-    rw [hs]
-    constructor
-    · rintro ⟨hZ, hc⟩
-      refine ⟨by simpa [mul_assoc] using hg _ hZ, ?_⟩
-      have := congrArg (fun T => (g : A) * T * (↑g⁻¹ : A)) hc
-      simpa [mul_assoc] using this
-    · rintro ⟨hZ, hc⟩
-      refine ⟨hg' _ hZ, ?_⟩
-      have := congrArg (fun T => (↑g⁻¹ : A) * T * (g : A)) hc
-      simpa [mul_assoc] using this
-  show finrank F ↥(lieCentralizer 𝔤 ((g : A) * X * (↑g⁻¹ : A))).toSubmodule =
-    finrank F ↥(lieCentralizer 𝔤 X).toSubmodule
-  rw [← hmap]
-  exact ((φ.toLinearEquiv.submoduleMap (lieCentralizer 𝔤 X).toSubmodule).finrank_eq).symm
 
-/-- The orbit of a regular nilpotent element is a regular orbit (regularity is invariant under
-conjugation by `G`, when `G` preserves `𝔤`). -/
-theorem mk_mem_nilReg_of_isRegularNil {A : Type*} [Ring A] [Algebra F A] (G : Subgroup Aˣ)
-    (𝔤 : LieSubalgebra F A) (hG : ∀ g ∈ G, ∀ Y ∈ 𝔤, (g : A) * Y * (↑g⁻¹ : A) ∈ 𝔤)
-    (X : {X : A // X ∈ 𝔤 ∧ IsNilpotent X}) (hX : IsRegularNil 𝔤 X.1) :
-    Quotient.mk (nilSetoid G 𝔤) X ∈ NilReg G 𝔤 := by
-  show IsRegularNil 𝔤 (Quotient.out (Quotient.mk (nilSetoid G 𝔤) X)).1
-  obtain ⟨g, hgG, hgX⟩ := Quotient.exact (Quotient.out_eq (Quotient.mk (nilSetoid G 𝔤) X))
-  obtain ⟨hmem, hnil⟩ := (Quotient.out (Quotient.mk (nilSetoid G 𝔤) X)).2
-  refine ⟨hmem, hnil, ?_⟩
-  have hg' : ∀ Y ∈ 𝔤, (↑g⁻¹ : A) * Y * (g : A) ∈ 𝔤 := fun Y hY => by
-    simpa using hG g⁻¹ (G.inv_mem hgG) Y hY
-  rw [← finrank_lieCentralizer_conj 𝔤 g (hG g hgG) hg', hgX]
-  exact hX.2.2
+/-- Conjugation by `G(F)` preserves `𝔤`. -/
+theorem conj_mem_lie_of_mem_G (d : GGPData F) {g : d.ambientˣ} (hg : g ∈ d.G) {Y : d.ambient}
+    (hY : Y ∈ d.lie) : (g : d.ambient) * Y * (↑g⁻¹ : d.ambient) ∈ d.lie :=
+  ⟨conj_mem_gspin d.QW (d.fst ⟨g, hg⟩) hY.1, conj_mem_gspin d.QV (d.snd ⟨g, hg⟩) hY.2⟩
 
 /-- `𝔤_{(a,b)} = gspin(W)_a × gspin(V)_b`. -/
 theorem finrank_lieCentralizer_lie (d : GGPData F) (X : d.ambient) :
@@ -2585,10 +2550,10 @@ theorem isRegularNil_lie_mk (d : GGPData F) {a : CliffordAlgebra d.QW} {b : Clif
     · exact ciInf_le (OrderBot.bddBelow _) (⟨(a, b), haL, hbL⟩ : ↥d.lie)
 
 /-- **A regular orbit satisfying Luo's condition exists at `x = 1` when `dim V` or `dim W` is even
-`≥ 4`** (Luo §7.1).  From the literature axiom
+`≥ 4`** (Luo §7.1).  From
 `exists_regularNil_inOrbitNu` (Luo's orbit `O_ν` exists in `gspin(V)`, resp. `O_{−ν}` in
 `gspin(W)`: Waldspurger 2010 §7.1, Luo §2.1), paired with a regular nilpotent of the other factor
-(`nilReg_nonempty_iff_quasiSplit`); the pair is regular in `𝔤` (`isRegularNil_lie_mk`), and its
+(`nilReg_nonempty_of_quasiSplit`); the pair is regular in `𝔤` (`isRegularNil_lie_mk`), and its
 orbit is regular (`mk_mem_nilReg_of_isRegularNil`).  At `x = 1`, `W'_1 = W`, `V'_1 = V` and
 `𝔤_1 = 𝔤`.  This is not a consequence of `nilReg_nonempty_iff_quasiSplit` /
 `nilReg_centralizer_nonempty_iff` alone, which only give *some* regular orbit. -/
@@ -2613,7 +2578,7 @@ theorem exists_orbitSpec_one_of_even (d : GGPData F) (hqs : d.IsQuasiSplit)
     · have hV' := hV
       rw [hfix, Submodule.prod_top, finrank_top] at hV'
       obtain ⟨b, hb, hbν⟩ := hV1 hV'.1 hV'.2
-      obtain ⟨O, hO⟩ := (nilReg_nonempty_iff_quasiSplit d.QW d.nondeg).mpr hqs.1
+      obtain ⟨O, hO⟩ := nilReg_nonempty_of_quasiSplit d.QW d.nondeg hqs.1
       refine ⟨((Quotient.out O).1, b), isRegularNil_lie_mk d hO hb, ?_⟩
       unfold OrbitSpec
       rw [ite_eq_left_of_eq_true _ _ (eq_true hV), hfix, Submodule.prod_top]
@@ -2622,7 +2587,7 @@ theorem exists_orbitSpec_one_of_even (d : GGPData F) (hqs : d.IsQuasiSplit)
       have hW' := hW
       rw [hfix, finrank_top, Module.finrank_fin_fun] at hW'
       obtain ⟨a, ha, haν⟩ := hW1 hW'.1 hW'.2
-      obtain ⟨O, hO⟩ := (nilReg_nonempty_iff_quasiSplit d.QV d.nondeg_QV).mpr hqs.2
+      obtain ⟨O, hO⟩ := nilReg_nonempty_of_quasiSplit d.QV d.nondeg_QV hqs.2
       refine ⟨(a, (Quotient.out O).1), isRegularNil_lie_mk d ha hO, ?_⟩
       unfold OrbitSpec
       rw [ite_eq_right_of_eq_false _ _ (eq_false hV), ite_eq_left_of_eq_true _ _ (eq_true hW), hfix]
@@ -2656,7 +2621,7 @@ theorem exists_orbitSpec_one (d : GGPData F) (hqs : d.IsQuasiSplit) :
 
 /-- **The orbit `O_1` is regular** for quasi-split `G` (own work, after Luo §7.1:
 Luo's recipe applied to `(G'_1, H'_1) = (G, H)` selects a regular nilpotent orbit of `𝔤`, which
-exists since `G` is quasi-split, `nilReg_nonempty_iff_quasiSplit`).  Needed to apply Rodier's
+exists since `G` is quasi-split, `nilReg_nonempty_of_quasiSplit`).  Needed to apply Rodier's
 theorem to `c_{θ, O_1}(1)`. -/
 theorem orbitChoice_one_mem_nilReg (d : GGPData F) (hqs : d.IsQuasiSplit) :
     orbitChoice d 1 ∈ NilReg (grpCentralizer d.G ((d.diag 1 : d.G) : d.ambientˣ))

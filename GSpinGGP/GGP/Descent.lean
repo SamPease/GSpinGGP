@@ -1,3 +1,4 @@
+import GSpinGGP.Foundations.SoCentralizer
 import GSpinGGP.GGP.Triple
 import GSpinGGP.GGP.Centralizers
 import GSpinGGP.GGP.Germs
@@ -44,36 +45,6 @@ section SO
 
 variable {K : Type*} [Field K] [Invertible (2 : K)]
 variable {V : Type*} [AddCommGroup V] [Module K V]
-
-/-- The trace `x ↦ tr(L_x)` of left multiplication on `C(V)`. -/
-abbrev cliffTrace [Module.Finite K V] (Q : QuadraticForm K V) (x : CliffordAlgebra Q) : K :=
-  LinearMap.trace K _ (LinearMap.mulLeft K x)
-
-omit [Invertible (2 : K)] in
-theorem cliffTrace_add [Module.Finite K V] (Q : QuadraticForm K V) (x y : CliffordAlgebra Q) :
-    cliffTrace Q (x + y) = cliffTrace Q x + cliffTrace Q y := by
-  have e : LinearMap.mulLeft K (x + y) = LinearMap.mulLeft K x + LinearMap.mulLeft K y := by
-    ext z; simp [add_mul]
-  simp only [cliffTrace, e, map_add]
-
-omit [Invertible (2 : K)] in
-theorem cliffTrace_smul [Module.Finite K V] (Q : QuadraticForm K V) (c : K) (x : CliffordAlgebra Q) :
-    cliffTrace Q (c • x) = c * cliffTrace Q x := by
-  have e : LinearMap.mulLeft K (c • x) = c • LinearMap.mulLeft K x := by
-    ext z; simp
-  simp only [cliffTrace, e, map_smul, smul_eq_mul]
-
-theorem cliffTrace_one [Module.Finite K V] (Q : QuadraticForm K V) :
-    cliffTrace Q 1 = (finrank K (CliffordAlgebra Q) : K) := by
-  simp only [cliffTrace, LinearMap.mulLeft_one]
-  exact LinearMap.trace_id K _
-
-omit [Invertible (2 : K)] in
-theorem cliffTrace_commutator [Module.Finite K V] (Q : QuadraticForm K V) (x y : CliffordAlgebra Q) :
-    cliffTrace Q (x * y - y * x) = 0 := by
-  rw [sub_eq_add_neg, cliffTrace_add, ← neg_one_smul K (y * x), cliffTrace_smul,
-    show cliffTrace Q (x * y) = cliffTrace Q (y * x) from trace_mulLeft_comm Q x y]
-  ring
 
 /-- `so(V) ⊆ gspin(V)`: the elements of `gspin(V)` whose left multiplication on `C(V)` is
 traceless.  This is the image of `∧²V` (spanned by the commutators `[ι a, ι b]`), i.e. the Lie
@@ -190,8 +161,8 @@ theorem specP_map_apply_of_orth (f : Q₁ →qᵢ Q₂) (hf : IsNondeg Q₁) (g 
     (hu : ∀ w, QuadraticMap.polar Q₂ (f w) u = 0) :
     specP Q₂ (GSpin.map f hf g) u = u := by
   apply ι_injective Q₂
-  have h0 : ((g : (CliffordAlgebra Q₁)ˣ) : CliffordAlgebra Q₁) ∈ evenOdd Q₁ 0 := by
-    rw [← even_toSubmodule]; exact g.2.1
+  have h0 : ((g : (CliffordAlgebra Q₁)ˣ) : CliffordAlgebra Q₁) ∈ evenOdd Q₁ 0 :=
+    mem_evenOdd_zero_of_mem_GSpin g
   rw [ι_specP, GSpin.coe_map_inv, GSpin.coe_map, map_even_commute_ι f h0 hu, mul_assoc,
     ← map_mul, Units.mul_inv, map_one, mul_one]
 
@@ -409,20 +380,6 @@ theorem centralizer_eq_map_sup (hQ : IsNondeg Q) (f : Q' →qᵢ Q) (hf : IsNond
   · refine sup_le ?_ inf_le_left
     rintro _ ⟨g', rfl⟩
     exact Subgroup.mem_centralizer_singleton_iff.mpr (map_commute_of_range f hf hrange g')
-
-/-- Semisimplicity is preserved by algebra homomorphisms: `p(a) = 0` with `p` squarefree gives
-`p(φ a) = 0`.  Used for `x ↦ incl x`, `C(W) → C(V)`. -/
-theorem isSS_algHom {A B : Type*} [Ring A] [Algebra F A] [FiniteDimensional F A] [Ring B]
-    [Algebra F B] (φ : A →ₐ[F] B) {a : A} (ha : IsSS F a) : IsSS F (φ a) := by
-  set p := minpoly F (LinearMap.mulLeft F a)
-  have hsq : Squarefree p := Module.End.IsSemisimple.minpoly_squarefree ha
-  have h0 : Polynomial.aeval (Algebra.lmul F A a) p = 0 := minpoly.aeval F _
-  rw [Polynomial.aeval_algHom_apply] at h0
-  have h1 : Polynomial.aeval a p = 0 :=
-    Algebra.lmul_injective (R := F) (h0.trans (map_zero _).symm)
-  have h3 : Polynomial.aeval (Algebra.lmul F B (φ a)) p = 0 := by
-    rw [Polynomial.aeval_algHom_apply, Polynomial.aeval_algHom_apply, h1, map_zero, map_zero]
-  exact Module.End.isSemisimple_of_squarefree_aeval_eq_zero hsq h3
 
 /-- For a semisimple endomorphism `D`, `D² w = 0 ⇒ D w = 0`. -/
 theorem apply_eq_zero_of_sq_of_isSemisimple {M : Type*} [AddCommGroup M] [Module F M]
@@ -1151,20 +1108,6 @@ theorem incl_injective : Function.Injective d.incl := by
       RingHom.toMonoidHom_eq_coe, MonoidHom.coe_ofClass, OneMemClass.coe_one, Units.val_one] at this
     exact (algebraMap F (CliffordAlgebra d.QV)).injective (this.trans (map_one _).symm)
   rw [Subgroup.mem_bot, show c = 1 from Units.ext hc, map_one]
-
-/-- `P(incl a)(w, z) = (P(a) w, z)`. -/
-theorem specP_incl_apply (a : GSpin d.QW) (w : Fin d.m → F) (z : d.Z) :
-    specP d.QV (d.incl a) (w, z) = (specP d.QW a w, z) := by
-  rw [show ((w, z) : d.V) = (w, 0) + (0, z) by simp, map_add, specP_incl_inl, specP_incl_inr]
-  simp
-
-/-- `V'_x = W'_x ⊕ Z`: `(w, z)` is fixed by `x` iff `w` is. -/
-theorem mem_fixedSub_incl_iff (a : GSpin d.QW) (w : Fin d.m → F) (z : d.Z) :
-    ((w, z) : d.V) ∈ fixedSub (d.incl a) ↔ w ∈ fixedSub a := by
-  simp only [fixedSub, LinearMap.mem_ker, LinearMap.sub_apply, LinearMap.id_apply, sub_eq_zero]
-  change specP d.QV (d.incl a) (w, z) = (w, z) ↔ specP d.QW a w = w
-  rw [specP_incl_apply, Prod.mk.injEq]
-  simp
 
 /-- `P(s)` preserves `W = Z^⊥` when it fixes `Z` pointwise. -/
 theorem specP_snd_eq_zero_of_fix_Z {s : GSpin d.QV} (hZ : ∀ z : d.Z, specP d.QV s (0, z) = (0, z))

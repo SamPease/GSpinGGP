@@ -319,17 +319,33 @@ theorem isSemisimple_mulRight_of_mulLeft {A : Type*} [Ring A] [Algebra K A] [Fin
     simpa using h3
   rw [aeval_mulRight, hpa, LinearMap.mulRight_zero_eq_zero]
 
-/-- **`Ad(u) = L_u R_{u⁻¹}` is semisimple** for a unit `u` with `L_u` semisimple (`u⁻¹ ∈ K[u]`). -/
-theorem isSemisimple_conj_of_mulLeft [PerfectField K] {A : Type*} [Ring A] [Algebra K A]
+/-- `L_a R_b` and `L_{a'} R_{b'}` commute when `a, a'` and `b, b'` do. -/
+theorem commute_mulLeft_mul_mulRight {A : Type*} [Ring A] [Algebra K A] {a a' b b' : A}
+    (ha : Commute a a') (hb : Commute b b') :
+    Commute (LinearMap.mulLeft K a * LinearMap.mulRight K b)
+      (LinearMap.mulLeft K a' * LinearMap.mulRight K b') := by
+  refine LinearMap.ext fun z => ?_
+  simp only [Module.End.mul_apply, LinearMap.mulLeft_apply, LinearMap.mulRight_apply]
+  simp only [mul_assoc]
+  rw [show b' * b = b * b' from hb.eq.symm, ← mul_assoc a, ← mul_assoc a', ha.eq]
+
+/-- If `L_u` is semisimple for a unit `u`, so is `L_{u⁻¹}` (`u⁻¹ ∈ K[u]`). -/
+theorem isSemisimple_mulLeft_inv [PerfectField K] {A : Type*} [Ring A] [Algebra K A]
     [FiniteDimensional K A] {u : Aˣ} (hu : Module.End.IsSemisimple (LinearMap.mulLeft K (u : A))) :
-    Module.End.IsSemisimple
-      (LinearMap.mulLeft K (u : A) * LinearMap.mulRight K ((u⁻¹ : Aˣ) : A)) := by
+    Module.End.IsSemisimple (LinearMap.mulLeft K ((u⁻¹ : Aˣ) : A)) := by
   have hmem : Algebra.lmul K A ((u⁻¹ : Aˣ) : A) ∈ Algebra.adjoin K {Algebra.lmul K A (u : A)} := by
     rw [← AlgHom.map_adjoin_singleton]
     exact Subalgebra.mem_map.mpr
       ⟨_, TauCeti.Units.coe_inv_mem_adjoin u (IsIntegral.of_finite K (u : A)), rfl⟩
-  exact Module.End.IsSemisimple.mul_of_commute (LinearMap.commute_mulLeft_right _ _) hu
-    (isSemisimple_mulRight_of_mulLeft (Module.End.IsSemisimple.of_mem_adjoin_singleton hu hmem))
+  exact Module.End.IsSemisimple.of_mem_adjoin_singleton hu hmem
+
+/-- **`Ad(u) = L_u R_{u⁻¹}` is semisimple** for a unit `u` with `L_u` semisimple (`u⁻¹ ∈ K[u]`). -/
+theorem isSemisimple_conj_of_mulLeft [PerfectField K] {A : Type*} [Ring A] [Algebra K A]
+    [FiniteDimensional K A] {u : Aˣ} (hu : Module.End.IsSemisimple (LinearMap.mulLeft K (u : A))) :
+    Module.End.IsSemisimple
+      (LinearMap.mulLeft K (u : A) * LinearMap.mulRight K ((u⁻¹ : Aˣ) : A)) :=
+  Module.End.IsSemisimple.mul_of_commute (LinearMap.commute_mulLeft_right _ _) hu
+    (isSemisimple_mulRight_of_mulLeft (isSemisimple_mulLeft_inv hu))
 
 end MulRight
 
@@ -355,6 +371,12 @@ def conjAd (g : Aˣ) : A ≃ₐ[F] A where
 Lie algebra elements (Thesis §2.1, `G_ss`, `𝔤_ss`). -/
 def IsSS (x : A) : Prop := Module.End.IsSemisimple (LinearMap.mulLeft F x)
 
+/-- `0` is semisimple. -/
+theorem isSS_zero : IsSS F (0 : A) := by
+  unfold IsSS
+  rw [LinearMap.mulLeft_zero_eq_zero]
+  exact Module.End.isSemisimple_zero
+
 variable {F}
 
 /-- The centralizer `𝔤_x = {X ∈ 𝔤 | xX = Xx}`. For a unit `x` this is the Lie algebra
@@ -368,6 +390,55 @@ lemma mem_lieCentralizer {K : Type*} [Field K] [Algebra K A] {𝔤 : LieSubalgeb
     X ∈ lieCentralizer 𝔤 x ↔ X ∈ 𝔤 ∧ x * X = X * x := by
   change X ∈ 𝔤 ∧ X ∈ Subalgebra.centralizer K {x} ↔ _
   simp [Subalgebra.mem_centralizer_iff, eq_comm]
+
+/-- `𝔤_0 = 𝔤`. -/
+@[simp] theorem lieCentralizer_zero {K : Type*} [Field K] [Algebra K A] (𝔤 : LieSubalgebra K A) :
+    lieCentralizer 𝔤 0 = 𝔤 := by
+  ext X
+  simp [mem_lieCentralizer]
+
+/-- `𝔤_Y = 𝔤 ∩ ker (ad Y)`. -/
+theorem lieCentralizer_toSubmodule_eq {K : Type*} [Field K] [Algebra K A]
+    (𝔤 : LieSubalgebra K A) (Y : A) :
+    (lieCentralizer 𝔤 Y).toSubmodule = 𝔤.toSubmodule ⊓ LinearMap.ker (LieAlgebra.ad K A Y) := by
+  letI := LieRing.ofAssociativeRing (A := A)
+  ext X
+  rw [LieSubalgebra.mem_toSubmodule, mem_lieCentralizer, Submodule.mem_inf, LinearMap.mem_ker,
+    LieAlgebra.ad_apply, Ring.lie_def, sub_eq_zero, LieSubalgebra.mem_toSubmodule]
+
+/-- **`ker (1 − Ad a)^k = ker (ad a)^k`** for a unit `a`: `1 − Ad a = −R_{a⁻¹} ∘ ad a`, where
+`R_{a⁻¹}` is invertible and commutes with `ad a`. -/
+theorem ker_one_sub_conjAd_pow (a : Aˣ) (k : ℕ) :
+    LinearMap.ker ((1 - (conjAd F a).toLinearEquiv.toLinearMap) ^ k) =
+      LinearMap.ker (LieAlgebra.ad F A (a : A) ^ k) := by
+  set R : Module.End F A := -LinearMap.mulRight F ((a⁻¹ : Aˣ) : A)
+  have he : 1 - (conjAd F a).toLinearEquiv.toLinearMap = R * LieAlgebra.ad F A (a : A) := by
+    refine LinearMap.ext fun y => ?_
+    simp only [R, LinearMap.sub_apply, Module.End.one_apply, Module.End.mul_apply,
+      LinearMap.neg_apply, LinearMap.mulRight_apply, LieAlgebra.ad_apply, Ring.lie_def, sub_mul,
+      mul_assoc, Units.mul_inv, mul_one]
+    change y - (a : A) * y * ((a⁻¹ : Aˣ) : A) = _
+    rw [mul_assoc]
+    abel
+  have hc : Commute R (LieAlgebra.ad F A (a : A)) := by
+    refine Commute.neg_left (LinearMap.ext fun y => ?_)
+    simp only [Module.End.mul_apply, LinearMap.mulRight_apply, LieAlgebra.ad_apply, Ring.lie_def,
+      sub_mul, mul_assoc, Units.mul_inv, Units.inv_mul, mul_one]
+  have hu : IsUnit R := ⟨⟨R, -LinearMap.mulRight F (a : A),
+    LinearMap.ext fun y => by simp [R, mul_assoc],
+    LinearMap.ext fun y => by simp [R, mul_assoc]⟩, rfl⟩
+  rw [he, hc.mul_pow, Module.End.mul_eq_comp, LinearMap.ker_comp_of_ker_eq_bot]
+  exact LinearMap.ker_eq_bot.mpr ((Module.End.isUnit_iff _).mp (hu.pow k)).1
+
+/-- A Lie subalgebra of an associative algebra is abelian iff its elements commute. -/
+theorem isLieAbelian_iff_forall_commute {K : Type*} [Field K] [Algebra K A]
+    {𝔤 : LieSubalgebra K A} : IsLieAbelian 𝔤 ↔ ∀ X₁ ∈ 𝔤, ∀ X₂ ∈ 𝔤, X₁ * X₂ = X₂ * X₁ :=
+  ⟨fun h X₁ h₁ X₂ h₂ => by
+    have := congrArg Subtype.val (h.trivial ⟨X₁, h₁⟩ ⟨X₂, h₂⟩)
+    rwa [LieSubalgebra.coe_bracket, Ring.lie_def, ZeroMemClass.coe_zero, sub_eq_zero] at this,
+   fun h => ⟨fun X₁ X₂ => Subtype.ext (by
+    rw [LieSubalgebra.coe_bracket, Ring.lie_def, ZeroMemClass.coe_zero, sub_eq_zero]
+    exact h _ X₁.2 _ X₂.2)⟩⟩
 
 /-- The centralizer `G_x = Z_G(x)` of `x` in `G` (Thesis §2.1). -/
 def grpCentralizer (G : Subgroup Aˣ) (x : Aˣ) : Subgroup Aˣ :=
@@ -414,6 +485,20 @@ end Algebraic
 section Semisimple
 
 variable {A : Type*} [Ring A] [Algebra F A]
+
+/-- Semisimplicity is preserved by algebra homomorphisms: `p(a) = 0` with `p` squarefree gives
+`p(φ a) = 0`.  Used for `x ↦ incl x`, `C(W) → C(V)`. -/
+theorem isSS_algHom {A B : Type*} [Ring A] [Algebra F A] [FiniteDimensional F A] [Ring B]
+    [Algebra F B] (φ : A →ₐ[F] B) {a : A} (ha : IsSS F a) : IsSS F (φ a) := by
+  set p := minpoly F (LinearMap.mulLeft F a)
+  have hsq : Squarefree p := Module.End.IsSemisimple.minpoly_squarefree ha
+  have h0 : Polynomial.aeval (Algebra.lmul F A a) p = 0 := minpoly.aeval F _
+  rw [Polynomial.aeval_algHom_apply] at h0
+  have h1 : Polynomial.aeval a p = 0 :=
+    Algebra.lmul_injective (R := F) (h0.trans (map_zero _).symm)
+  have h3 : Polynomial.aeval (Algebra.lmul F B (φ a)) p = 0 := by
+    rw [Polynomial.aeval_algHom_apply, Polynomial.aeval_algHom_apply, h1, map_zero, map_zero]
+  exact Module.End.isSemisimple_of_squarefree_aeval_eq_zero hsq h3
 
 /-- An element of `F[u]` is semisimple if `u` is. -/
 theorem isSS_of_mem_adjoin [PerfectField F] [FiniteDimensional F A] {u Y : A} (hu : IsSS F u)
@@ -1191,6 +1276,49 @@ def IsRegularNil (𝔤 : LieSubalgebra F A) (X : A) : Prop :=
 quasi-split. -/
 def NilReg (G : Subgroup Aˣ) (𝔤 : LieSubalgebra F A) : Set (NilOrbit G 𝔤) :=
   {O | IsRegularNil 𝔤 (Quotient.out O).1}
+
+/-- `dim 𝔤_{gXg⁻¹} = dim 𝔤_X` when conjugation by `g` and `g⁻¹` preserves `𝔤`. -/
+theorem finrank_lieCentralizer_conj (𝔤 : LieSubalgebra F A)
+    (g : Aˣ) (hg : ∀ Y ∈ 𝔤, (g : A) * Y * (↑g⁻¹ : A) ∈ 𝔤)
+    (hg' : ∀ Y ∈ 𝔤, (↑g⁻¹ : A) * Y * (g : A) ∈ 𝔤) (X : A) :
+    Module.finrank F ↥(lieCentralizer 𝔤 ((g : A) * X * (↑g⁻¹ : A))) =
+      Module.finrank F ↥(lieCentralizer 𝔤 X) := by
+  set φ := conjAd F g
+  have hmap : (lieCentralizer 𝔤 X).toSubmodule.map φ.toLinearEquiv.toLinearMap =
+      (lieCentralizer 𝔤 ((g : A) * X * (↑g⁻¹ : A))).toSubmodule := by
+    ext Z
+    rw [Submodule.mem_map_equiv, LieSubalgebra.mem_toSubmodule, LieSubalgebra.mem_toSubmodule,
+      mem_lieCentralizer, mem_lieCentralizer]
+    have hs : φ.toLinearEquiv.symm Z = (↑g⁻¹ : A) * Z * (g : A) := rfl
+    rw [hs]
+    constructor
+    · rintro ⟨hZ, hc⟩
+      refine ⟨by simpa [mul_assoc] using hg _ hZ, ?_⟩
+      have := congrArg (fun T => (g : A) * T * (↑g⁻¹ : A)) hc
+      simpa [mul_assoc] using this
+    · rintro ⟨hZ, hc⟩
+      refine ⟨hg' _ hZ, ?_⟩
+      have := congrArg (fun T => (↑g⁻¹ : A) * T * (g : A)) hc
+      simpa [mul_assoc] using this
+  show Module.finrank F ↥(lieCentralizer 𝔤 ((g : A) * X * (↑g⁻¹ : A))).toSubmodule =
+    Module.finrank F ↥(lieCentralizer 𝔤 X).toSubmodule
+  rw [← hmap]
+  exact ((φ.toLinearEquiv.submoduleMap (lieCentralizer 𝔤 X).toSubmodule).finrank_eq).symm
+
+/-- The orbit of a regular nilpotent element is a regular orbit (regularity is invariant under
+conjugation by `G`, when `G` preserves `𝔤`). -/
+theorem mk_mem_nilReg_of_isRegularNil (G : Subgroup Aˣ)
+    (𝔤 : LieSubalgebra F A) (hG : ∀ g ∈ G, ∀ Y ∈ 𝔤, (g : A) * Y * (↑g⁻¹ : A) ∈ 𝔤)
+    (X : {X : A // X ∈ 𝔤 ∧ IsNilpotent X}) (hX : IsRegularNil 𝔤 X.1) :
+    Quotient.mk (nilSetoid G 𝔤) X ∈ NilReg G 𝔤 := by
+  show IsRegularNil 𝔤 (Quotient.out (Quotient.mk (nilSetoid G 𝔤) X)).1
+  obtain ⟨g, hgG, hgX⟩ := Quotient.exact (Quotient.out_eq (Quotient.mk (nilSetoid G 𝔤) X))
+  obtain ⟨hmem, hnil⟩ := (Quotient.out (Quotient.mk (nilSetoid G 𝔤) X)).2
+  refine ⟨hmem, hnil, ?_⟩
+  have hg' : ∀ Y ∈ 𝔤, (↑g⁻¹ : A) * Y * (g : A) ∈ 𝔤 := fun Y hY => by
+    simpa using hG g⁻¹ (G.inv_mem hgG) Y hY
+  rw [← finrank_lieCentralizer_conj 𝔤 g (hG g hgG) hg', hgX]
+  exact hX.2.2
 
 end Nilpotent
 
