@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.GGP.GaloisTorus
 import GSpinGGP.GGP.TwistDescent
-import GSpinGGP.GGP.TorusTransfer
+import GSpinGGP.GGP.TorusTransport
 
 /-!
 # The cocycle of a strongly stably conjugate element
@@ -97,11 +97,6 @@ open TorusTransfer
 
 variable {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V₁] [AddCommGroup V₂] [Module F V₂]
   {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂}
-
-theorem map_symm_map (ψ : (Q₁.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb))
-    (a : CliffordAlgebra (Q₁.baseChange Kb)) :
-    CliffordAlgebra.map ψ.symm.toIsometry (CliffordAlgebra.map ψ.toIsometry a) = a :=
-  (CliffordAlgebra.equivOfIsometry ψ).symm_apply_apply a
 
 /-- `Ad(g) ∘ C(φ) = C(P(g) ∘ φ)`. -/
 theorem psiA_eq_map (φ : (Q₁.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb))
