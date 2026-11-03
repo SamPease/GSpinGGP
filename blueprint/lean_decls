@@ -79,6 +79,7 @@ GSpinGGP.isSemisimple_specP_baseChange
 GSpinGGP.lieAbelian_specP_baseChange
 GSpinGGP.torusBarFbar_commute
 GSpinGGP.finite_H1_torusBar
+GSpinGGP.finite_H1_normalizerBar
 GSpinGGP.n_alpha_eq_card_twistIdx
 GSpinGGP.kottwitzSign_twistIdx_mul
 GSpinGGP.exists_twistIdx_not_isometric

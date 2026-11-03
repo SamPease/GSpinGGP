@@ -295,16 +295,20 @@ theorem torusBarFbar_commute (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) :
   d.torusBarFbar_commute_of x (isSemisimple_specP_baseChange x hx.1)
     (lieAbelian_specP_baseChange x hx)
 
+/-- `P` commutes with the Galois action: the matrix of `P(σ g)` is `σ` of that of `P(g)`. -/
+theorem specMatFbar_galGS (σ : GalF F) (g : GSpin (d.QW.baseChange (AlgebraicClosure F))) :
+    specMatFbar d.QW (galGS d.QW σ g) = galGL d.m σ (specMatFbar d.QW g) := by
+  apply Units.ext
+  rw [coe_specMatFbar, coe_galGL, coe_specMatFbar]
+  exact toMatrix_of_galV_comm σ _ _ fun w => specP_galGS d.QW σ g w
+
 /-- **`S_x(F̄)` is Galois-stable** (own work, elementary): `σ` acts on `GSpin(W)(F̄)` by `galC`,
 fixes `x` and `W'_x ⊗ F̄` (both are defined over `F`), and `P` is defined over `F`, so the matrix of
 `P(σ g)` is `σ` applied to that of `P(g)`. -/
 theorem galGL_mem_torusBarFbar (x : ↥(GSpin d.QW)) (σ : GalF F) :
     ∀ s ∈ d.torusBarFbar x, galGL d.m σ s ∈ d.torusBarFbar x := by
   rintro s ⟨g, hg, rfl⟩
-  refine ⟨_, galGS_mem_torusFbar x σ hg, ?_⟩
-  apply Units.ext
-  rw [coe_specMatFbar, coe_galGL, coe_specMatFbar]
-  exact toMatrix_of_galV_comm σ _ _ fun w => specP_galGS d.QW σ g w
+  exact ⟨_, galGS_mem_torusFbar x σ hg, specMatFbar_galGS σ g⟩
 
 /-! ### `T_y` from `S_y(F̄)` -/
 
