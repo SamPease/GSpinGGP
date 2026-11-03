@@ -32,8 +32,11 @@ The index set of $\Gamma(G,H)$: $\GSpin(W)(F)$-conjugacy classes of the tori $T_
 $\Gamma(G,H)$ meets finitely many conjugacy classes of tori (Thesis \S6.5).
 \end{lemma}
 \begin{proof}
-Not yet formalized. $T_x$ is determined by $W''_x$ (finitely many up to $\SO(W)$, by Witt) and a maximal torus
-of $\SO(W''_x)$, of which there are finitely many conjugacy classes over a $p$-adic field.
+\uses{LIT-finite_H1_normalizerBar}
+Twisting argument (Serre, \emph{Cohomologie galoisienne} I \S5). Tori $S_y$ with the same $\dim W''_y$ are conjugate
+under $\SO(W)(\bar F)$ (not yet formalized: maximal tori over $\bar F$ are conjugate); a conjugator $g$ gives the
+cocycle $\sigma\mapsto g^{-1}\sigma(g)$ in $N_x=N_{\SO(W)}(S_x)$, and $H^1(F,N_x)$ is finite. Equal classes give a
+Galois-fixed, hence rational, conjugator in $\SO(W)(F)$, which lifts to $\GSpin(W)(F)$ and conjugates the tori.
 \end{proof}
 
 \begin{definition}[The function $\Delta$]
@@ -341,6 +344,16 @@ $S_x(\Fbar)$ consists of the isometries of determinant $1$ commuting with the se
 For $x\in\Gamma(G,H)$, $H^1(F,S_x)$ is finite.
 
 \assumedfrom{\cite{SerreCG}, III \S4.3 Thm.~4 (Borel--Serre); Tate--Nakayama}
+\end{literature}
+
+\begin{literature}[Finiteness of $H^1(F,N_x)$]
+\label{LIT-finite_H1_normalizerBar}
+\lean{GSpinGGP.finite_H1_normalizerBar}
+\leanok
+\uses{GGPData, GSpin, IsGammaElt}
+For $x\in\Gamma(G,H)$, $H^1(F,N_x)$ is finite, $N_x=N_{\SO(W)}(S_x)$.
+
+\assumedfrom{Borel--Serre, \emph{Th\'eor\`emes de finitude en cohomologie galoisienne}, Comment.\ Math.\ Helv.\ 39 (1964), Thm.~6.1}
 \end{literature}
 
 \begin{lemma}[Thesis Prop.~6.6.1(iii)]

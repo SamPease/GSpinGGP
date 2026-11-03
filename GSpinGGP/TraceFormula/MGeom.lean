@@ -6,6 +6,7 @@ import GSpinGGP.TraceFormula.Interface
 import GSpinGGP.TraceFormula.DeltaIntegrability
 import GSpinGGP.TraceFormula.TorusDescent
 import GSpinGGP.GGP.Germs
+import GSpinGGP.GGP.GammaClassFinite
 
 /-!
 # `m_geom` on quasi-characters: Thesis Prop 12.1.1
@@ -196,22 +197,16 @@ SORRY; the `QCfin` forms are then proved by linearity (submodules `qcGood`, `qcL
 section Convergence
 
 /-- **`Γ(G,H)` meets finitely many conjugacy classes of tori** (used implicitly in Thesis §6.5,
-(6.5.3)).  `T_x = P^{-1}(Z_{SO(W''_x)}(x̄)^0)` (extended by `1` on `W'_x`) is determined by the
-nondegenerate subspace `W''_x` (finitely many up to `SO(W)(F)`, Witt) and the maximal torus
-`Z_{SO(W''_x)}(x̄)^0` of `SO(W''_x)` (finitely many `SO(W''_x)(F)`-conjugacy classes, Borel–Serre
-1964, Cor. 6.5).
-
-Exact ingredient: Borel–Serre, *Théorèmes de finitude en cohomologie galoisienne*, Comment. Math.
-Helv. 39 (1964), Corollaire 6.5: for a linear algebraic group `G` over a field `k` as in their
-Thm 6.2 (perfect, finitely many extensions of each degree; e.g. a `p`-adic field), the maximal
-tori of `G` defined over `k` form finitely many `G(k)`-conjugacy classes.  It applies to
-`SO(W''_x)`.  The reduction to it (finitely many `W''_x` up to `SO(W)(F)` by Witt; the stabilizer
-of `W''` maps onto `SO(W'')(F)`; `GSpin(W)(F) → SO(W)(F)` is onto) is not in the source, and
-algebraic tori are not formalized here, so this stays a `sorry`.  Consistent with
-`toyD_subsingleton_gammaClass` (`Sanity/Witnesses.lean`) and `subsingleton_gammaClass`
-(`TraceFormula/Lie.lean`), proved outright. -/
-theorem finite_gammaClass : Finite (GammaClass d) := by
-  sorry
+(6.5.3)).  Proved by the twisting argument (`GGPData.finite_gammaClass'`): tori `S_y` of the same
+type `dim W''_y` are conjugate over `F̄` (`GGPData.exists_conj_torusBarFbar`, a `sorry` with sketch);
+the conjugator defines a class in `H¹(F, N_{SO(W)}(S_x))`, a finite set by Borel–Serre, *Théorèmes
+de finitude en cohomologie galoisienne*, Comment. Math. Helv. 39 (1964), Thm. 6.1
+(`finite_H1_normalizerBar`); tori with equal classes are `GSpin(W)(F)`-conjugate (Galois descent).
+(Borel–Serre's Cor. 6.5, finiteness of conjugacy classes of maximal tori, is the direct statement
+but needs algebraic tori, not formalized here.)  Consistent with `toyD_subsingleton_gammaClass`
+(`Sanity/Witnesses.lean`) and `subsingleton_gammaClass` (`TraceFormula/Lie.lean`). -/
+theorem finite_gammaClass : Finite (GammaClass d) :=
+  GGPData.finite_gammaClass'
 
 /-- **Local boundedness of `(D^G)^{1/2} c_{θ,O}` on `T_♮`** (BP Astérisque 418, Prop 4.5.1: for
 `θ ∈ QC(G(F))`, `(D^G)^{1/2} c_θ` is locally bounded on `G(F)`; same proof for the individual
