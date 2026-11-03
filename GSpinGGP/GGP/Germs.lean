@@ -4,13 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Literature.HarishChandra
 import GSpinGGP.Foundations.Determinant
+import GSpinGGP.GGP.LieRegular
 
 /-!
 # The regular set and the transfer of germs
 
 The regular set of `G = GSpin(W) × GSpin(V)` is open and conull (from Harish-Chandra's theorem
-`hc_regular_open_dense_conull` and the identification of his regular set with `regularSet`, a
-`sorry` theorem), and germs are preserved under transfer to inner forms (BP Astérisque 418,
+`hc_regular_open_dense_conull` and the identification of his regular set with `regularSet`,
+`hcDisc_ne_zero_iff_mem_regularSet`), and germs are preserved under transfer to inner forms (BP Astérisque 418,
 (12.1.2), which is stated for pure inner forms; a `sorry` theorem with a proof sketch).
 -/
 
@@ -58,19 +59,79 @@ theorem isSemisimple_oneSubAd (d : GGPData F) (g : ↥d.G) (hg : IsSS F ((g : d.
   rw [oneSubAd, heq]
   exact Module.End.IsSemisimple.sub_of_commute (Commute.one_left _) Module.End.isSemisimple_id hres
 
+/-- `𝔤_{(a,b)} = gspin(W)_a × gspin(V)_b`. -/
+theorem finrank_lieCentralizer_lie (d : GGPData F) (X : d.ambient) :
+    Module.finrank F ↥(lieCentralizer d.lie X) =
+      Module.finrank F ↥(lieCentralizer (gspin d.QW) X.1) +
+        Module.finrank F ↥(lieCentralizer (gspin d.QV) X.2) := by
+  have h : (lieCentralizer d.lie X).toSubmodule =
+      (lieCentralizer (gspin d.QW) X.1).toSubmodule.prod (lieCentralizer (gspin d.QV) X.2).toSubmodule := by
+    ext Y
+    simp only [LieSubalgebra.mem_toSubmodule, Submodule.mem_prod, mem_lieCentralizer, Prod.ext_iff,
+      Prod.fst_mul, Prod.snd_mul]
+    exact ⟨fun ⟨⟨h1, h2⟩, h3, h4⟩ => ⟨⟨h1, h3⟩, h2, h4⟩, fun ⟨⟨h1, h3⟩, h2, h4⟩ => ⟨⟨h1, h2⟩, h3, h4⟩⟩
+  show Module.finrank F ↥(lieCentralizer d.lie X).toSubmodule =
+    Module.finrank F ↥(lieCentralizer (gspin d.QW) X.1).toSubmodule +
+      Module.finrank F ↥(lieCentralizer (gspin d.QV) X.2).toSubmodule
+  rw [h, (Submodule.prodEquiv _ _).finrank_eq, Module.finrank_prod]
+
+/-- `rank 𝔤 = rank gspin(W) + rank gspin(V)`. -/
+theorem lieRank_lie (d : GGPData F) :
+    lieRank d.lie = lieRank (gspin d.QW) + lieRank (gspin d.QV) := by
+  have : Nonempty ↥d.lie := ⟨0⟩
+  apply le_antisymm
+  · obtain ⟨a, ha⟩ := Nat.sInf_mem (Set.range_nonempty
+      fun X : gspin d.QW => Module.finrank F (lieCentralizer (gspin d.QW) (X : CliffordAlgebra d.QW)))
+    obtain ⟨b, hb⟩ := Nat.sInf_mem (Set.range_nonempty
+      fun X : gspin d.QV => Module.finrank F (lieCentralizer (gspin d.QV) (X : CliffordAlgebra d.QV)))
+    refine (ciInf_le (OrderBot.bddBelow _) (⟨((a : CliffordAlgebra d.QW), (b : CliffordAlgebra d.QV)),
+      a.2, b.2⟩ : ↥d.lie)).trans_eq ?_
+    rw [finrank_lieCentralizer_lie]
+    exact congrArg₂ (· + ·) ha hb
+  · refine le_ciInf fun Y => ?_
+    rw [finrank_lieCentralizer_lie]
+    exact add_le_add (ciInf_le (OrderBot.bddBelow _) (⟨(Y : d.ambient).1, Y.2.1⟩ : ↥(gspin d.QW)))
+      (ciInf_le (OrderBot.bddBelow _) (⟨(Y : d.ambient).2, Y.2.2⟩ : ↥(gspin d.QV)))
+
+/-- If `𝔤_{(a,b)}` is abelian, so are `gspin(W)_a` and `gspin(V)_b`. -/
+theorem isLieAbelian_lieCentralizer_fst_snd (d : GGPData F) {X : d.ambient}
+    (hab : IsLieAbelian (lieCentralizer d.lie X)) :
+    IsLieAbelian (lieCentralizer (gspin d.QW) X.1) ∧
+      IsLieAbelian (lieCentralizer (gspin d.QV) X.2) := by
+  constructor
+  · refine ⟨fun Y₁ Y₂ => Subtype.ext ?_⟩
+    obtain ⟨h₁, c₁⟩ := mem_lieCentralizer.mp Y₁.2
+    obtain ⟨h₂, c₂⟩ := mem_lieCentralizer.mp Y₂.2
+    have m : ∀ Y ∈ lieCentralizer (gspin d.QW) X.1, ((Y, 0) : d.ambient) ∈ lieCentralizer d.lie X :=
+      fun Y hY => mem_lieCentralizer.2 ⟨⟨(mem_lieCentralizer.mp hY).1, zero_mem _⟩,
+        Prod.ext (mem_lieCentralizer.mp hY).2 (by simp)⟩
+    have := congrArg (fun Z : lieCentralizer d.lie X => (Z : d.ambient).1)
+      (hab.trivial ⟨_, m _ Y₁.2⟩ ⟨_, m _ Y₂.2⟩)
+    simpa [LieSubalgebra.coe_bracket, Ring.lie_def] using this
+  · refine ⟨fun Y₁ Y₂ => Subtype.ext ?_⟩
+    have m : ∀ Y ∈ lieCentralizer (gspin d.QV) X.2, ((0, Y) : d.ambient) ∈ lieCentralizer d.lie X :=
+      fun Y hY => mem_lieCentralizer.2 ⟨⟨zero_mem _, (mem_lieCentralizer.mp hY).1⟩,
+        Prod.ext (by simp) (mem_lieCentralizer.mp hY).2⟩
+    have := congrArg (fun Z : lieCentralizer d.lie X => (Z : d.ambient).2)
+      (hab.trivial ⟨_, m _ Y₁.2⟩ ⟨_, m _ Y₂.2⟩)
+    simpa [LieSubalgebra.coe_bracket, Ring.lie_def] using this
+
 /-- **The centralizer of a regular semisimple element has the dimension of the rank**: for
-`x ∈ G_reg(F)` (semisimple, `𝔤_x` abelian), `dim 𝔤_x = lieRank 𝔤 = min_{X ∈ 𝔤} dim 𝔤_X`.
-Proof sketch. `G_x⁰` is connected reductive (centralizer of a semisimple element, characteristic
-`0`) with abelian Lie algebra `𝔤_x`, hence a torus; it contains a maximal torus through `x`, so it
-is one, and `dim 𝔤_x = rank G`. On the Lie algebra side, the centralizer of a regular semisimple
-`X ∈ 𝔤` is a Cartan subalgebra of dimension `rank G`, and `dim 𝔤_X ≥ rank G` for every `X ∈ 𝔤`
-(over `F̄`, by upper semicontinuity of `dim 𝔤_X` and density of the regular semisimple set), so
-`lieRank 𝔤 = rank G` (regular semisimple elements exist in `𝔤(F)`, `F` being infinite).  Missing in the project: Cartan subalgebras of reductive Lie algebras.
-Status: SORRY (structure theory of reductive Lie algebras). -/
+`x ∈ G_reg(F)` (semisimple, `𝔤_x` abelian), `dim 𝔤_x = lieRank 𝔤 = min_{X ∈ 𝔤} dim 𝔤_X`. Both sides
+split over `𝔤 = gspin(W) × gspin(V)`; on each factor the centralizer of a regular semisimple
+`g ∈ GSpin(U)` has dimension `⌊dim U/2⌋ + 1` (`finrank_lieCentralizer_gspin_of_isLieAbelian`),
+which is `rank gspin(U)` (`lieRank_gspin`). -/
 theorem finrank_lieCentralizer_eq_lieRank (d : GGPData F) {x : ↥d.G}
     (hx : x ∈ regularSet d.G d.lie) :
     Module.finrank F ↥(lieCentralizer d.lie ((x : d.ambientˣ) : d.ambient)) = lieRank d.lie := by
-  sorry
+  obtain ⟨hss, hab⟩ := hx
+  have hssW := isSS_algHom (AlgHom.fst F _ _) hss
+  have hssV := isSS_algHom (AlgHom.snd F _ _) hss
+  obtain ⟨habW, habV⟩ := isLieAbelian_lieCentralizer_fst_snd d hab
+  rw [finrank_lieCentralizer_lie, lieRank_lie, lieRank_gspin d.nondeg, lieRank_gspin d.nondeg_QV]
+  exact congrArg₂ (· + ·)
+    (finrank_lieCentralizer_gspin_of_isLieAbelian d.nondeg (d.fst x) hssW habW)
+    (finrank_lieCentralizer_gspin_of_isLieAbelian d.nondeg_QV (d.snd x) hssV habV)
 
 /-- **Regular semisimple elements lie in Harish-Chandra's `G'`**: `D(x) ≠ 0` for
 `x ∈ G_reg(F)`. `N = 1 − Ad x` is semisimple on `𝔤`, so the exact power of `t` dividing its
@@ -129,16 +190,49 @@ theorem hcDisc_ne_zero_of_mem_regularSet (d : GGPData F) {x : ↥d.G}
   exact key
 
 /-- **Harish-Chandra's `G'` consists of regular semisimple elements**: `D(x) ≠ 0` implies `x`
-semisimple with `𝔤_x` abelian. Proof sketch. `D(x) ≠ 0` says the generalized `1`-eigenspace of
-`Ad x` on `𝔤` has dimension `≤ ℓ = lieRank 𝔤`. For `x = su` (Jordan decomposition) that eigenspace is
-`𝔤_s`, which contains a Cartan subalgebra, so `𝔤_s` is one and `s` is regular. Then `Z_G(s)⁰` is a
-maximal torus, so the unipotent `u ∈ Z_G(s)⁰` is `1`: `x = s` is semisimple and `𝔤_x = 𝔤_s` is
-abelian. Missing in the project: the Jordan decomposition in `G(F)` and the Cartan-subalgebra facts
-above (as for `finrank_lieCentralizer_eq_lieRank`).
-Status: SORRY (structure theory of `GSpin`). -/
+semisimple with `𝔤_x` abelian.  The coefficient of `t^ℓ` (`ℓ = lieRank 𝔤 = lieRankNat d`,
+`lieRank_lie`, `lieRank_gspin`) of the characteristic polynomial of `N = 1 − Ad x` on `𝔤` is nonzero,
+so the generalized kernel of `N` has dimension `≤ ℓ` (Mathlib `finrank_maxGenEigenspace_zero_eq`);
+that kernel is `𝔤 ∩ ker (1 − Ad x)^D`, and `mem_regularSet_of_finrank_ker_le` (Jordan decomposition
+in `G(F)` and the rank clauses for `GSpin`) concludes. -/
 theorem mem_regularSet_of_hcDisc_ne_zero (d : GGPData F) {x : ↥d.G} (hx : hcDisc d x ≠ 0) :
     x ∈ regularSet d.G d.lie := by
-  sorry
+  have hℓ : lieRank d.lie = lieRankNat d := by
+    rw [lieRank_lie, lieRank_gspin d.nondeg, lieRank_gspin d.nondeg_QV]
+    rfl
+  set T : Module.End F d.ambient := 1 - (conjAd F (x : d.ambientˣ)).toLinearEquiv.toLinearMap
+  set N := oneSubAd d x
+  have hcoeff : (LinearMap.charpoly N).coeff (lieRank d.lie) ≠ 0 := by
+    unfold hcDisc at hx
+    rwa [dite_eq_left (lie_conj_stable d x)] at hx
+  have hle : Module.finrank F ↥(Module.End.maxGenEigenspace N 0) ≤ lieRankNat d := by
+    rw [LinearMap.finrank_maxGenEigenspace_zero_eq, ← hℓ]
+    exact Polynomial.natTrailingDegree_le_of_ne_zero hcoeff
+  set D := Module.finrank F d.ambient
+  -- `N = T|_𝔤`, so `N^k v = T^k v` on `𝔤`
+  have hT : ∀ X ∈ d.lie.toSubmodule, T X ∈ d.lie.toSubmodule := fun X hX =>
+    d.lie.toSubmodule.sub_mem hX (lie_conj_stable d x X hX)
+  have hN : N = T.restrict hT := LinearMap.ext fun v => rfl
+  have hpow : ∀ (k : ℕ) (v : d.lie.toSubmodule), (((N ^ k) v : d.lie.toSubmodule) : d.ambient) =
+      (T ^ k) (v : d.ambient) := fun k v => by
+    rw [hN, Module.End.pow_restrict]
+    rfl
+  have hDle : Module.finrank F d.lie.toSubmodule ≤ D := Submodule.finrank_le _
+  have hmax : Module.End.maxGenEigenspace N 0 = LinearMap.ker (N ^ D) := by
+    rw [Module.End.maxGenEigenspace_eq_genEigenspace_finrank, Module.End.genEigenspace_nat,
+      zero_smul, sub_zero, Module.End.ker_pow_eq_ker_pow_finrank_of_le hDle]
+  have hmap : (LinearMap.ker (N ^ D)).map d.lie.toSubmodule.subtype =
+      d.lie.toSubmodule ⊓ LinearMap.ker (T ^ D) := by
+    ext X
+    simp only [Submodule.mem_map, LinearMap.mem_ker, Submodule.subtype_apply, Submodule.mem_inf]
+    constructor
+    · rintro ⟨v, hv, rfl⟩
+      exact ⟨v.2, by rw [← hpow, hv]; rfl⟩
+    · rintro ⟨hX, hT⟩
+      exact ⟨⟨X, hX⟩, Subtype.ext (by rw [hpow]; exact hT), rfl⟩
+  apply mem_regularSet_of_finrank_ker_le d x
+  rw [← hmap, Submodule.finrank_map_subtype_eq, ← hmax]
+  exact hle
 
 /-- **Harish-Chandra's regular set is the regular semisimple set** (characteristic `0`):
 `D(x) ≠ 0` (`hcDisc`) iff `x` is semisimple with abelian centralizer in `𝔤` (`regularSet`). -/
