@@ -6,6 +6,7 @@ import GSpinGGP.Foundations.ExpLocal
 import GSpinGGP.TraceFormula.JHatSelfDual
 import GSpinGGP.Foundations.Representations
 import GSpinGGP.Foundations.GSpin
+import GSpinGGP.Foundations.HypPlane
 import GSpinGGP.Foundations.SoCentralizer
 import GSpinGGP.Foundations.RegularNilpotent
 import GSpinGGP.Foundations.QuadraticForms
@@ -50,6 +51,7 @@ import GSpinGGP.GGP.Triple
 import GSpinGGP.GGP.Descent
 import GSpinGGP.GGP.TwistDescent
 import GSpinGGP.GGP.TwistPlane
+import GSpinGGP.GGP.TwistTorus
 import GSpinGGP.GGP.QuadClassify
 import GSpinGGP.GGP.WittParity
 import GSpinGGP.GGP.TorusTransfer

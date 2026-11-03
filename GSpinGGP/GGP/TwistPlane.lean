@@ -62,6 +62,19 @@ theorem blockDiag_map {S : Type*} [CommRing S] (f : R →+* S) (A : Matrix (Fin 
   simp only [blockDiag, Matrix.coe_reindexAlgEquiv, map_apply, reindex_apply, submatrix_apply]
   rcases e.symm i with a | a <;> rcases e.symm j with b | b <;> simp
 
+/-- The block-diagonal matrix acts blockwise. -/
+theorem blockDiag_mulVec_inl (A : Matrix (Fin 2) (Fin 2) R) (C : Matrix κ κ R)
+    (y : Fin m → R) (i : Fin 2) :
+    (blockDiag e A C *ᵥ y) (e (Sum.inl i)) = (A *ᵥ fun j => y (e (Sum.inl j))) i := by
+  rw [blockDiag, Matrix.coe_reindexAlgEquiv, reindex_apply, submatrix_mulVec_equiv]
+  simp [fromBlocks_mulVec, Function.comp_def]
+
+theorem blockDiag_mulVec_inr (A : Matrix (Fin 2) (Fin 2) R) (C : Matrix κ κ R)
+    (y : Fin m → R) (j : κ) :
+    (blockDiag e A C *ᵥ y) (e (Sum.inr j)) = (C *ᵥ fun k => y (e (Sum.inr k))) j := by
+  rw [blockDiag, Matrix.coe_reindexAlgEquiv, reindex_apply, submatrix_mulVec_equiv]
+  simp [fromBlocks_mulVec, Function.comp_def]
+
 /-- `blockDiag e N 1` as a unit. -/
 def blockDiagGL (N : GL (Fin 2) R) : GL (Fin m) R where
   val := blockDiag e N 1
