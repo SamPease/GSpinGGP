@@ -18,9 +18,10 @@ For an isotropic flag `Z₁ ⊂ ⋯ ⊂ Z_k` of a nondegenerate quadratic space 
    (`exists_cochar_lift`, from the surjectivity of `GSpin → SO`).
 3. **A Levi decomposition** (`exists_levi_decomp`; Thesis §5.1.2: `P = M ⋉ N`): every `p ∈ P_F` is
    `m y`, where `P(m)` is the graded part `gr P(p)` of `P(p)` (`grEnd`: the block-diagonal part in
-   the basis `bᵢ`; an isometry of determinant `1`, as `gr P(p)⁻¹ P(p)` is unipotent) and `P(y)` is
-   trivial on the graded pieces.  Then `m` commutes with `T` up to a central scalar
-   (`exists_mul_eq_scalar_mul`).
+   the basis `bᵢ`; an isometry of determinant `1`, as `gr P(p)⁻¹ P(p)` is unipotent) and
+   `y ∈ K^× · N_F` (`P(y)` is trivial on the graded pieces).  Since `P(m)` commutes with `λ(τ)`,
+   `m` commutes with `T` up to a central scalar
+   (`exists_mul_eq_scalarGSpin_mul_of_isHomog`).
 
 The contraction of `P_F` by `T` is in `GGP/Contraction.lean`.
 -/
@@ -334,7 +335,8 @@ theorem IsFlagSplitting.mem_flagWt_iff (hs : IsFlagSplitting F b wt) {w : ℤ} {
   · exact Submodule.smul_mem _ _ (F.flagWt_anti (by omega) (hs.mem i))
 
 variable (b wt) in
-/-- `x` is homogeneous of weight `w`: its coordinates of weight `≠ w` vanish. -/
+/-- `x` is homogeneous of weight `w`: its coordinates of weight `≠ w` vanish, i.e. `x` lies in the
+span of the `bᵢ` with `wtᵢ = w`. -/
 def IsHomog (x : V) (w : ℤ) : Prop := ∀ i, wt i ≠ w → b.repr x i = 0
 
 theorem IsFlagSplitting.mem_flagWt_of_isHomog (hs : IsFlagSplitting F b wt) {x : V} {w : ℤ}
@@ -374,15 +376,15 @@ omit [Invertible (2 : K)] in
 theorem isHomog_grEnd (A : V →ₗ[K] V) (j : ι) : IsHomog b wt (grEnd b wt A (b j)) (wt j) :=
   fun i hi => by simp [repr_grEnd, hi]
 
-/-- `A` maps every `V_{≥w}` into itself. -/
-def PresFil (F : IsotropicFlag Q) (A : V →ₗ[K] V) : Prop := ∀ w, ∀ v ∈ flagWt F w, A v ∈ flagWt F w
+/-- `A` maps every step `V_{≥w}` of a filtration into itself. -/
+def PresFil (Vf : ℤ → Submodule K V) (A : V →ₗ[K] V) : Prop := ∀ w, ∀ v ∈ Vf w, A v ∈ Vf w
 
 /-- `A` raises weights: `A V_{≥w} ⊆ V_{≥w+1}`. -/
-def RaisesFil (F : IsotropicFlag Q) (A : V →ₗ[K] V) : Prop :=
-  ∀ w, ∀ v ∈ flagWt F w, A v ∈ flagWt F (w + 1)
+def RaisesFil (Vf : ℤ → Submodule K V) (A : V →ₗ[K] V) : Prop :=
+  ∀ w, ∀ v ∈ Vf w, A v ∈ Vf (w + 1)
 
 theorem IsFlagSplitting.raisesFil_of_basis (hs : IsFlagSplitting F b wt) {A : V →ₗ[K] V}
-    (hA : ∀ j, A (b j) ∈ flagWt F (wt j + 1)) : RaisesFil F A := by
+    (hA : ∀ j, A (b j) ∈ flagWt F (wt j + 1)) : RaisesFil (flagWt F) A := by
   intro w v hv
   rw [← b.sum_repr v, map_sum]
   refine sum_mem fun j _ => ?_
@@ -391,7 +393,7 @@ theorem IsFlagSplitting.raisesFil_of_basis (hs : IsFlagSplitting F b wt) {A : V 
   · rw [map_smul]; exact Submodule.smul_mem _ _ (F.flagWt_anti (by omega) (hA j))
 
 theorem IsFlagSplitting.presFil_of_basis (hs : IsFlagSplitting F b wt) {A : V →ₗ[K] V}
-    (hA : ∀ j, A (b j) ∈ flagWt F (wt j)) : PresFil F A := by
+    (hA : ∀ j, A (b j) ∈ flagWt F (wt j)) : PresFil (flagWt F) A := by
   intro w v hv
   rw [← b.sum_repr v, map_sum]
   refine sum_mem fun j _ => ?_
@@ -400,11 +402,11 @@ theorem IsFlagSplitting.presFil_of_basis (hs : IsFlagSplitting F b wt) {A : V �
   · rw [map_smul]; exact Submodule.smul_mem _ _ (F.flagWt_anti (by omega) (hA j))
 
 theorem IsFlagSplitting.presFil_grEnd (hs : IsFlagSplitting F b wt) (A : V →ₗ[K] V) :
-    PresFil F (grEnd b wt A) :=
+    PresFil (flagWt F) (grEnd b wt A) :=
   hs.presFil_of_basis fun j => hs.mem_flagWt_of_isHomog (isHomog_grEnd A j)
 
 theorem IsFlagSplitting.raisesFil_sub_grEnd (hs : IsFlagSplitting F b wt) {A : V →ₗ[K] V}
-    (hA : PresFil F A) : RaisesFil F (A - grEnd b wt A) := by
+    (hA : PresFil (flagWt F) A) : RaisesFil (flagWt F) (A - grEnd b wt A) := by
   refine hs.raisesFil_of_basis fun j => hs.mem_flagWt_iff.2 fun i hi => ?_
   rw [LinearMap.sub_apply, map_sub, Finsupp.sub_apply, repr_grEnd]
   rcases lt_or_eq_of_le (Int.lt_add_one_iff.mp hi) with hi | hi
@@ -414,7 +416,8 @@ theorem IsFlagSplitting.raisesFil_sub_grEnd (hs : IsFlagSplitting F b wt) {A : V
 /-- Uniqueness of the graded part: a degree-preserving `M` with `A − M` raising weights is
 `gr A`. -/
 theorem IsFlagSplitting.grEnd_eq (hs : IsFlagSplitting F b wt) {A M : V →ₗ[K] V}
-    (hM : ∀ j, IsHomog b wt (M (b j)) (wt j)) (hAM : RaisesFil F (A - M)) : grEnd b wt A = M := by
+    (hM : ∀ j, IsHomog b wt (M (b j)) (wt j)) (hAM : RaisesFil (flagWt F) (A - M)) :
+    grEnd b wt A = M := by
   refine b.ext fun j => b.repr.injective (Finsupp.ext fun i => ?_)
   rw [repr_grEnd]
   split_ifs with hi
@@ -422,20 +425,49 @@ theorem IsFlagSplitting.grEnd_eq (hs : IsFlagSplitting F b wt) {A M : V →ₗ[K
     rwa [LinearMap.sub_apply, map_sub, Finsupp.sub_apply, sub_eq_zero] at h
   · exact (hM j i hi).symm
 
-theorem PresFil.comp {A B : V →ₗ[K] V} (hA : PresFil F A) (hB : PresFil F B) : PresFil F (A ∘ₗ B) :=
+section Fil
+
+variable {Vf : ℤ → Submodule K V}
+
+omit [Invertible (2 : K)] in
+theorem PresFil.comp {A B : V →ₗ[K] V} (hA : PresFil Vf A) (hB : PresFil Vf B) :
+    PresFil Vf (A ∘ₗ B) :=
   fun w v hv => hA w _ (hB w v hv)
 
-theorem RaisesFil.comp_presFil {A B : V →ₗ[K] V} (hA : RaisesFil F A) (hB : PresFil F B) :
-    RaisesFil F (A ∘ₗ B) := fun w v hv => hA w _ (hB w v hv)
+omit [Invertible (2 : K)] in
+theorem RaisesFil.comp_presFil {A B : V →ₗ[K] V} (hA : RaisesFil Vf A) (hB : PresFil Vf B) :
+    RaisesFil Vf (A ∘ₗ B) := fun w v hv => hA w _ (hB w v hv)
 
-theorem PresFil.comp_raisesFil {A B : V →ₗ[K] V} (hA : PresFil F A) (hB : RaisesFil F B) :
-    RaisesFil F (A ∘ₗ B) := fun w v hv => hA (w + 1) _ (hB w v hv)
+omit [Invertible (2 : K)] in
+theorem PresFil.comp_raisesFil {A B : V →ₗ[K] V} (hA : PresFil Vf A) (hB : RaisesFil Vf B) :
+    RaisesFil Vf (A ∘ₗ B) := fun w v hv => hA (w + 1) _ (hB w v hv)
 
-theorem RaisesFil.add {A B : V →ₗ[K] V} (hA : RaisesFil F A) (hB : RaisesFil F B) :
-    RaisesFil F (A + B) := fun w v hv => add_mem (hA w v hv) (hB w v hv)
+omit [Invertible (2 : K)] in
+theorem RaisesFil.add {A B : V →ₗ[K] V} (hA : RaisesFil Vf A) (hB : RaisesFil Vf B) :
+    RaisesFil Vf (A + B) := fun w v hv => add_mem (hA w v hv) (hB w v hv)
+
+omit [Invertible (2 : K)] in
+/-- An endomorphism raising a filtration `Vf a = ⊤ ⊇ ⋯ ⊇ Vf (a + n) = ⊥` is nilpotent. -/
+theorem RaisesFil.isNilpotent {A : V →ₗ[K] V} (hA : RaisesFil Vf A) {a : ℤ} {n : ℕ}
+    (htop : Vf a = ⊤) (hbot : Vf (a + n) = ⊥) : IsNilpotent A := by
+  refine ⟨n, LinearMap.ext fun v => ?_⟩
+  have key : ∀ k : ℕ, ∀ v, (A ^ k) v ∈ Vf (a + k) := by
+    intro k
+    induction k with
+    | zero => intro v; rw [Nat.cast_zero, add_zero, htop]; trivial
+    | succ k ih =>
+      intro v
+      rw [pow_succ', Module.End.mul_apply]
+      have := hA _ _ (ih v)
+      rwa [show a + k + 1 = a + ↑(k + 1) by push_cast; ring] at this
+  have := key n v
+  rw [hbot] at this
+  simpa using this
+
+end Fil
 
 theorem IsFlagSplitting.grEnd_comp (hs : IsFlagSplitting F b wt) {A B : V →ₗ[K] V}
-    (hA : PresFil F A) (hB : PresFil F B) :
+    (hA : PresFil (flagWt F) A) (hB : PresFil (flagWt F) B) :
     grEnd b wt (A ∘ₗ B) = grEnd b wt A ∘ₗ grEnd b wt B := by
   refine hs.grEnd_eq (fun j i hi => ?_) ?_
   · have hBj := isHomog_grEnd (b := b) (wt := wt) B j
@@ -458,35 +490,24 @@ theorem IsFlagSplitting.grEnd_id (hs : IsFlagSplitting F b wt) :
     classical
     simp [show j ≠ i from fun h => hi (h ▸ rfl)]) (fun w v _ => by simp)
 
-/-- A weight-raising endomorphism is nilpotent. -/
-theorem RaisesFil.isNilpotent {A : V →ₗ[K] V} (hA : RaisesFil F A) : IsNilpotent A := by
-  refine ⟨2 * F.len + 1, LinearMap.ext fun v => ?_⟩
-  have key : ∀ k : ℕ, ∀ v, (A ^ k) v ∈ flagWt F (-(F.len : ℤ) + k) := by
-    intro k
-    induction k with
-    | zero => intro v; rw [F.flagWt_eq_top (by simp)]; trivial
-    | succ k ih =>
-      intro v
-      rw [pow_succ', Module.End.mul_apply]
-      have := hA _ _ (ih v)
-      rwa [show -(F.len : ℤ) + k + 1 = -(F.len : ℤ) + ↑(k + 1) by push_cast; ring] at this
-  have := key (2 * F.len + 1) v
-  rw [F.flagWt_eq_bot (by push_cast; omega)] at this
-  simpa using this
-
-/-- `det (1 + N) = 1` for a weight-raising `N`. -/
-theorem RaisesFil.det_id_add [FiniteDimensional K V] {N : V →ₗ[K] V} (hN : RaisesFil F N) :
-    LinearMap.det (LinearMap.id + N) = 1 := by
-  have hn : IsNilpotent (-N) := hN.isNilpotent.neg
+omit [Invertible (2 : K)] in
+/-- `det (1 + N) = 1` for a nilpotent endomorphism `N`. -/
+theorem _root_.LinearMap.det_id_add_of_isNilpotent [FiniteDimensional K V] {N : V →ₗ[K] V}
+    (hN : IsNilpotent N) : LinearMap.det (LinearMap.id + N) = 1 := by
   have h := LinearMap.eval_charpoly (-N) (1 : K)
-  rw [hn.charpoly_eq_X_pow_finrank, Polynomial.eval_pow, Polynomial.eval_X, one_pow] at h
+  rw [hN.neg.charpoly_eq_X_pow_finrank, Polynomial.eval_pow, Polynomial.eval_X, one_pow] at h
   rw [h, map_one, sub_neg_eq_add]
   rfl
 
+/-- An endomorphism raising the weight filtration of a flag is nilpotent. -/
+theorem RaisesFil.isNilpotent_flagWt {A : V →ₗ[K] V} (hA : RaisesFil (flagWt F) A) :
+    IsNilpotent A :=
+  hA.isNilpotent (a := -(F.len : ℤ)) (n := 2 * F.len + 1) (F.flagWt_eq_top le_rfl)
+    (F.flagWt_eq_bot (by push_cast; omega))
 
 /-- The graded part of an isometry preserving the filtration is an isometry. -/
 theorem IsFlagSplitting.bform_grEnd (hs : IsFlagSplitting F b wt) {A : V →ₗ[K] V}
-    (hA : PresFil F A) (hiso : ∀ x y, bform Q (A x) (A y) = bform Q x y) (x y : V) :
+    (hA : PresFil (flagWt F) A) (hiso : ∀ x y, bform Q (A x) (A y) = bform Q x y) (x y : V) :
     bform Q (grEnd b wt A x) (grEnd b wt A y) = bform Q x y := by
   have key : ∀ i j, bform Q (grEnd b wt A (b i)) (grEnd b wt A (b j)) = bform Q (b i) (b j) := by
     intro i j
@@ -510,7 +531,8 @@ theorem IsFlagSplitting.bform_grEnd (hs : IsFlagSplitting F b wt) {A : V →ₗ[
     (F₂ := bform Q) b key
   exact congr($this x y)
 
-/-- `T` acts diagonally on the splitting basis by weights: `λ(τ) bᵢ = τ^{wtᵢ} bᵢ`. -/
+/-- The cocharacter `λ(τ)`, diagonal in the splitting basis: `λ(τ) bᵢ = τ^{wtᵢ} bᵢ` (meaningful for
+`τ ≠ 0`). -/
 def cochar (b : Basis ι K V) (wt : ι → ℤ) (τ : K) : V →ₗ[K] V :=
   b.constr K fun i => τ ^ wt i • b i
 
@@ -528,7 +550,6 @@ theorem cochar_mul (τ σ : K) :
 omit [Invertible (2 : K)] [Fintype ι] in
 theorem cochar_one : cochar b wt (1 : K) = LinearMap.id :=
   b.ext fun i => by rw [cochar_basis, one_zpow, one_smul, LinearMap.id_apply]
-
 
 theorem IsFlagSplitting.bform_cochar (hs : IsFlagSplitting F b wt) {τ : K} (hτ : τ ≠ 0)
     (x y : V) : bform Q (cochar b wt τ x) (cochar b wt τ y) = bform Q x y := by
@@ -558,10 +579,10 @@ theorem IsFlagSplitting.det_cochar [FiniteDimensional K V] (hs : IsFlagSplitting
     | insert a s ha ih => rw [Finset.prod_insert ha, Finset.sum_insert ha, ih, zpow_add₀ hτ]
   rw [this, Matrix.det_diagonal, hprod, hs.sum_wt, zpow_zero]
 
-
-/-- An invertible endomorphism preserving `b` with determinant `1` is `P(g)` for some `g ∈ GSpin(V)`
-(`gspin_specP_surjective_SO`). -/
-theorem exists_specP_eq [FiniteDimensional K V] (hQ : IsNondeg Q) {A B : V →ₗ[K] V}
+/-- An invertible endomorphism preserving `bform Q` with determinant `1` is `P(g)` for some
+`g ∈ GSpin(V)` (`gspin_specP_surjective_SO`). -/
+theorem exists_specP_eq_of_det_eq_one [FiniteDimensional K V] (hQ : IsNondeg Q)
+    {A B : V →ₗ[K] V}
     (hAB : A ∘ₗ B = LinearMap.id) (hBA : B ∘ₗ A = LinearMap.id)
     (hiso : ∀ x y, bform Q (A x) (A y) = bform Q x y) (hdet : LinearMap.det A = 1) :
     ∃ g : GSpin Q, (specP Q g : V →ₗ[K] V) = A := by
@@ -575,24 +596,26 @@ theorem exists_specP_eq [FiniteDimensional K V] (hQ : IsNondeg Q) {A B : V →�
 theorem IsFlagSplitting.exists_cochar_lift [FiniteDimensional K V] (hQ : IsNondeg Q)
     (hs : IsFlagSplitting F b wt) {τ : K} (hτ : τ ≠ 0) :
     ∃ T : GSpin Q, ∀ i, specP Q T (b i) = τ ^ wt i • b i := by
-  obtain ⟨T, hT⟩ := exists_specP_eq hQ
+  obtain ⟨T, hT⟩ := exists_specP_eq_of_det_eq_one hQ
     (by rw [cochar_mul τ τ⁻¹, mul_inv_cancel₀ hτ, cochar_one])
     (by rw [cochar_mul τ⁻¹ τ, inv_mul_cancel₀ hτ, cochar_one])
     (hs.bform_cochar hτ) (hs.det_cochar hτ)
   exact ⟨T, fun i => by rw [← cochar_basis, ← hT]; rfl⟩
 
-/-- **Levi decomposition of `P_F`** (Thesis §5.1.2: `P = M ⋉ N`): every `p ∈ P_F` is `m y`, where
-`P(m)` preserves the weight of each `bⱼ` (`P(m)` is the graded part of `P(p)`, so `m` lies in the
-Levi subgroup, which centralizes the cocharacter `λ` modulo scalars) and `P(y)` is trivial on the
-graded pieces of the weight filtration. -/
+/-- **Levi decomposition of `P_F`** (Thesis §5.1.2: `P = M N`): every `p ∈ P_F` is `m y`, where
+`P(m)` preserves the weight of each `bⱼ` (`P(m)` is the graded part of `P(p)`, so it commutes with
+`λ(τ)`, and `m` lies in the Levi subgroup) and `P(y)`, `P(y⁻¹)` are trivial on the graded pieces of
+the weight filtration, i.e. `y ∈ K^× · N_F`.  The decomposition is unique up to `K^×`. -/
 theorem IsFlagSplitting.exists_levi_decomp [FiniteDimensional K V] (hQ : IsNondeg Q)
     (hs : IsFlagSplitting F b wt) {p : GSpin Q} (hp : p ∈ flagStab F) :
     ∃ m y : GSpin Q, p = m * y ∧ (∀ j, IsHomog b wt (specP Q m (b j)) (wt j)) ∧
-      RaisesFil F ((specP Q y : V →ₗ[K] V) - LinearMap.id) := by
+      RaisesFil (flagWt F) ((specP Q y : V →ₗ[K] V) - LinearMap.id) ∧
+      RaisesFil (flagWt F) ((specP Q y⁻¹ : V →ₗ[K] V) - LinearMap.id) := by
   set A : V →ₗ[K] V := (specP Q p : V →ₗ[K] V)
   set B : V →ₗ[K] V := (specP Q p⁻¹ : V →ₗ[K] V)
-  have hA : PresFil F A := fun w v hv => flagStab_mapsTo_flagWt hp w hv
-  have hB : PresFil F B := fun w v hv => flagStab_mapsTo_flagWt ((flagStab F).inv_mem hp) w hv
+  have hA : PresFil (flagWt F) A := fun w v hv => flagStab_mapsTo_flagWt hp w hv
+  have hB : PresFil (flagWt F) B := fun w v hv =>
+    flagStab_mapsTo_flagWt ((flagStab F).inv_mem hp) w hv
   have hAB : A ∘ₗ B = LinearMap.id := by
     ext v; exact specP_inv_apply_apply p v
   have hBA : B ∘ₗ A = LinearMap.id := by
@@ -605,17 +628,20 @@ theorem IsFlagSplitting.exists_levi_decomp [FiniteDimensional K V] (hQ : IsNonde
     rw [← hs.grEnd_comp hB hA, hBA, hs.grEnd_id]
   -- `gr(B) ∘ A = 1 + N` with `N` raising weights
   set N := grEnd b wt B ∘ₗ (A - grEnd b wt A)
-  have hN : RaisesFil F N := (hs.presFil_grEnd B).comp_raisesFil (hs.raisesFil_sub_grEnd hA)
+  have hN : RaisesFil (flagWt F) N :=
+    (hs.presFil_grEnd B).comp_raisesFil (hs.raisesFil_sub_grEnd hA)
   have hBA' : grEnd b wt B ∘ₗ A = LinearMap.id + N := by
     change _ = _ + grEnd b wt B ∘ₗ (A - grEnd b wt A)
     rw [LinearMap.comp_sub, hgBA]; abel
   have hdetB : LinearMap.det (grEnd b wt B) = 1 := by
     have := congr_arg LinearMap.det hBA'
-    rwa [LinearMap.det_comp, det_specP, mul_one, hN.det_id_add] at this
+    rwa [LinearMap.det_comp, det_specP, mul_one,
+      LinearMap.det_id_add_of_isNilpotent hN.isNilpotent_flagWt] at this
   have hdetA : LinearMap.det (grEnd b wt A) = 1 := by
     have := congr_arg LinearMap.det hgAB
     rwa [LinearMap.det_comp, hdetB, mul_one, LinearMap.det_id] at this
-  obtain ⟨m, hm⟩ := exists_specP_eq hQ hgAB hgBA (hs.bform_grEnd hA (bform_specP p)) hdetA
+  obtain ⟨m, hm⟩ :=
+    exists_specP_eq_of_det_eq_one hQ hgAB hgBA (hs.bform_grEnd hA (bform_specP p)) hdetA
   have hmB : (specP Q m⁻¹ : V →ₗ[K] V) = grEnd b wt B := by
     have h1 : (specP Q m : V →ₗ[K] V) ∘ₗ (specP Q m⁻¹ : V →ₗ[K] V) = LinearMap.id := by
       ext v; exact specP_inv_apply_apply m v
@@ -624,13 +650,19 @@ theorem IsFlagSplitting.exists_levi_decomp [FiniteDimensional K V] (hQ : IsNonde
       _ = grEnd b wt B ∘ₗ ((specP Q m : V →ₗ[K] V) ∘ₗ (specP Q m⁻¹ : V →ₗ[K] V)) := by
           rw [hm]; rfl
       _ = grEnd b wt B := by rw [h1]; rfl
-  refine ⟨m, m⁻¹ * p, by group, fun j => by rw [← LinearEquiv.coe_coe, hm]; exact isHomog_grEnd A j,
-    ?_⟩
-  have : (specP Q (m⁻¹ * p) : V →ₗ[K] V) = grEnd b wt B ∘ₗ A := by
-    rw [← hmB, map_mul]; rfl
-  rw [this, hBA', add_sub_cancel_left]
-  exact hN
-
+  refine ⟨m, m⁻¹ * p, by group,
+    fun j => by rw [← LinearEquiv.coe_coe, hm]; exact isHomog_grEnd A j, ?_, ?_⟩
+  · have : (specP Q (m⁻¹ * p) : V →ₗ[K] V) = grEnd b wt B ∘ₗ A := by
+      rw [← hmB, map_mul]; rfl
+    rw [this, hBA', add_sub_cancel_left]
+    exact hN
+  · -- `P(y⁻¹) − 1 = B ∘ (gr A − A)`
+    have : (specP Q (m⁻¹ * p)⁻¹ : V →ₗ[K] V) - LinearMap.id = -(B ∘ₗ (A - grEnd b wt A)) := by
+      have h : (specP Q (m⁻¹ * p)⁻¹ : V →ₗ[K] V) = B ∘ₗ grEnd b wt A := by
+        rw [mul_inv_rev, inv_inv, map_mul, ← hm]; rfl
+      rw [h, LinearMap.comp_sub, hBA]; abel
+    rw [this]
+    exact fun w v hv => neg_mem (hB.comp_raisesFil (hs.raisesFil_sub_grEnd hA) w v hv)
 
 omit [Invertible (2 : K)] [Fintype ι] in
 theorem repr_cochar (τ : K) (x : V) (i : ι) :
@@ -656,9 +688,12 @@ theorem cochar_comp_of_isHomog {M : V →ₗ[K] V} (hM : ∀ j, IsHomog b wt (M 
 
 omit [Fintype ι] in
 /-- A lift `m ∈ GSpin(V)` of a weight-preserving isometry commutes with a lift `T` of the
-cocharacter up to a central scalar (`ker P = G_m`). -/
-theorem exists_mul_eq_scalar_mul [FiniteDimensional K V] (hQ : IsNondeg Q) {τ : K} {T m : GSpin Q}
-    (hT : ∀ i, specP Q T (b i) = τ ^ wt i • b i) (hm : ∀ j, IsHomog b wt (specP Q m (b j)) (wt j)) :
+cocharacter up to a central scalar, as `P(m)` commutes with `λ(τ)` and `ker P = G_m`.  (For `m` in
+the Levi subgroup the scalar is in fact `1`; the weaker form suffices here.) -/
+theorem exists_mul_eq_scalarGSpin_mul_of_isHomog [FiniteDimensional K V] (hQ : IsNondeg Q)
+    {τ : K} {T m : GSpin Q}
+    (hT : ∀ i, specP Q T (b i) = τ ^ wt i • b i)
+    (hm : ∀ j, IsHomog b wt (specP Q m (b j)) (wt j)) :
     ∃ s : Kˣ, T * m = scalarGSpin Q s * (m * T) := by
   have hTc : (specP Q T : V →ₗ[K] V) = cochar b wt τ :=
     b.ext fun i => by rw [cochar_basis]; exact hT i
