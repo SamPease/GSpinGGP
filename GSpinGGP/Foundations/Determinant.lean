@@ -10,7 +10,9 @@ import Mathlib
 * `continuous_det_of_continuous_repr`, `continuous_det_restrict_of_continuous`: continuity of
   `x ↦ det (f x)` and `x ↦ det (f x|_C)`;
 * `trailingCoeff_charpoly_of_isCompl`: for `E = ker f ⊕ C` with `C` stable, the trailing
-  coefficient of the characteristic polynomial of `f` is `± det (f|_C)`, and `det (f|_C) ≠ 0`.
+  coefficient of the characteristic polynomial of `f` is `± det (f|_C)`, and `det (f|_C) ≠ 0`;
+* `disjoint_ker_range_of_isSemisimple`, `isCompl_ker_range_of_isSemisimple`: `E = ker f ⊕ im f` for
+  semisimple `f`.
 -/
 
 open Filter Topology
@@ -101,5 +103,27 @@ theorem continuous_det_restrict_of_continuous {K : Type*} [Field K] [Topological
   simp_rw [h]
   exact (IsModuleTopology.continuous_of_linearMap (b.coord i ∘ₗ ψ)).comp (hN c)
 
+/-- A semisimple endomorphism has `ker f ∩ Im f = 0`. -/
+theorem disjoint_ker_range_of_isSemisimple {K V : Type*} [Field K] [AddCommGroup V] [Module K V]
+    {f : Module.End K V} (hf : f.IsSemisimple) : Disjoint (LinearMap.ker f) (LinearMap.range f) := by
+  obtain ⟨q, hq, hc⟩ := Module.End.isSemisimple_iff.mp hf (LinearMap.ker f)
+    ((Module.End.mem_invtSubmodule f).mpr fun v hv => by
+      simp only [Submodule.mem_comap, LinearMap.mem_ker] at hv ⊢; simp [hv])
+  have hrange : LinearMap.range f ≤ q := by
+    rintro _ ⟨v, rfl⟩
+    obtain ⟨k, hk, c, hc', rfl⟩ := Submodule.mem_sup.mp (hc.codisjoint.eq_top ▸ Submodule.mem_top :
+      v ∈ LinearMap.ker f ⊔ q)
+    rw [map_add, LinearMap.mem_ker.mp hk, zero_add]
+    exact (Module.End.mem_invtSubmodule f).mp hq hc'
+  exact hc.disjoint.mono_right hrange
+
+
+/-- A semisimple endomorphism of a finite-dimensional space has `E = ker f ⊕ im f`. -/
+theorem isCompl_ker_range_of_isSemisimple {K V : Type*} [Field K] [AddCommGroup V] [Module K V]
+    [FiniteDimensional K V] {f : Module.End K V} (hf : f.IsSemisimple) :
+    IsCompl (LinearMap.ker f) (LinearMap.range f) := by
+  refine (Submodule.isCompl_iff_disjoint _ _ ?_).2 (disjoint_ker_range_of_isSemisimple hf)
+  have := LinearMap.finrank_range_add_finrank_ker f
+  omega
 
 end GSpinGGP

@@ -2598,7 +2598,7 @@ theorem exists_orbitSpec_one_of_even (d : GGPData F) (hqs : d.IsQuasiSplit)
   refine ⟨Quotient.mk _ ⟨X, hX1, hX.2.1⟩, ?_, ⟨X, hX1⟩, ⟨hX.2.1, rfl⟩, hspec⟩
   refine mk_mem_nilReg_of_isRegularNil _ _ (fun g hg Y hY => ?_) _ (by show IsRegularNil _ X; rw [hL]; exact hX)
   rw [hL] at hY ⊢
-  exact conj_mem_lie_of_mem_G d (Subgroup.mem_inf.mp hg).1 hY
+  exact lie_conj_stable d ⟨_, (Subgroup.mem_inf.mp hg).1⟩ _ hY
 
 /-- A regular orbit satisfying `OrbitSpec d 1` exists: where Luo's recipe imposes no condition, by
 `nilReg_one_nonempty`; otherwise by `exists_orbitSpec_one_of_even`. -/
