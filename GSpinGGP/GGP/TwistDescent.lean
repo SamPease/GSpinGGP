@@ -184,21 +184,33 @@ theorem map_galF_mul {n : ℕ} (σ : GalF F) (A B : Matrix (Fin n) (Fin n) Kb) :
   Matrix.map_mul (f := (σ : Kb →+* Kb))
 
 
+/-- The `F`-isometry `Q₁ ≃ Q₂` given by a rational matrix `N` with `Nᵀ G₂ N = G₁` and
+`det N ≠ 0`; its underlying map is `Matrix.toLin' N` (`coe_isometryEquivOfMatrix`). -/
+def isometryEquivOfMatrix {m : ℕ} {Q₁ Q₂ : QuadraticForm F (Fin m → F)}
+    (N : Matrix (Fin m) (Fin m) F) (hdet : N.det ≠ 0)
+    (hN : Nᵀ * Q₂.toMatrix' * N = Q₁.toMatrix') : Q₁.IsometryEquiv Q₂ where
+  toLinearEquiv := Matrix.toLinearEquiv (Pi.basisFun F (Fin m)) N (Ne.isUnit hdet)
+  map_app' v := by
+    have hcomp : Q₂.comp (Matrix.toLin' N) = Q₁ := by
+      apply QuadraticForm.toMatrix'_injective
+      rw [QuadraticForm.toMatrix'_comp, LinearMap.toMatrix'_toLin', hN]
+    have := congrArg (fun q : QuadraticForm F (Fin m → F) => q v) hcomp
+    simpa [Matrix.toLinearEquiv_apply, Matrix.toLin_eq_toLin'] using this
+
+theorem coe_isometryEquivOfMatrix {m : ℕ} {Q₁ Q₂ : QuadraticForm F (Fin m → F)}
+    (N : Matrix (Fin m) (Fin m) F) (hdet : N.det ≠ 0)
+    (hN : Nᵀ * Q₂.toMatrix' * N = Q₁.toMatrix') :
+    ((isometryEquivOfMatrix N hdet hN).toLinearEquiv : (Fin m → F) →ₗ[F] (Fin m → F)) =
+      Matrix.toLin' N := by
+  ext v
+  simp [isometryEquivOfMatrix, Matrix.toLinearEquiv_apply, Matrix.toLin_eq_toLin']
+
 /-- A rational matrix `N` with `Nᵀ G₂ N = G₁` and `det N ≠ 0` gives an `F`-isometry
 `Q₁ ≃ Q₂`. -/
 theorem nonempty_isometryEquiv_of_matrix {m : ℕ} {Q₁ Q₂ : QuadraticForm F (Fin m → F)}
     (N : Matrix (Fin m) (Fin m) F) (hdet : N.det ≠ 0)
-    (hN : Nᵀ * Q₂.toMatrix' * N = Q₁.toMatrix') : Nonempty (Q₁.IsometryEquiv Q₂) := by
-  have hcomp : Q₂.comp (Matrix.toLin' N) = Q₁ := by
-    apply QuadraticForm.toMatrix'_injective
-    rw [QuadraticForm.toMatrix'_comp, LinearMap.toMatrix'_toLin', hN]
-  have hu : IsUnit (LinearMap.toMatrix (Pi.basisFun F (Fin m)) (Pi.basisFun F (Fin m))
-      (Matrix.toLin' N)).det := by
-    rw [LinearMap.toMatrix_eq_toMatrix', LinearMap.toMatrix'_toLin']
-    exact Ne.isUnit hdet
-  refine ⟨{ toLinearEquiv := LinearEquiv.ofIsUnitDet hu, map_app' := fun v => ?_ }⟩
-  have := congrArg (fun q : QuadraticForm F (Fin m → F) => q v) hcomp
-  simpa [LinearEquiv.ofIsUnitDet] using this
+    (hN : Nᵀ * Q₂.toMatrix' * N = Q₁.toMatrix') : Nonempty (Q₁.IsometryEquiv Q₂) :=
+  ⟨isometryEquivOfMatrix N hdet hN⟩
 
 /-- **Uniqueness of the twisted form** (Galois descent).  Let `S ⊆ O(Q)(F̄)` and let `a, b` be
 cohomologous `S`-valued cocycles, `a` the cocycle of an `F̄`-isometry `Q ≃ Q₁` and `b` that of
