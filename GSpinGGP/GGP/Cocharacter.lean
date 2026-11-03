@@ -376,13 +376,6 @@ omit [Invertible (2 : K)] in
 theorem isHomog_grEnd (A : V →ₗ[K] V) (j : ι) : IsHomog b wt (grEnd b wt A (b j)) (wt j) :=
   fun i hi => by simp [repr_grEnd, hi]
 
-/-- `A` maps every step `V_{≥w}` of a filtration into itself. -/
-def PresFil (Vf : ℤ → Submodule K V) (A : V →ₗ[K] V) : Prop := ∀ w, ∀ v ∈ Vf w, A v ∈ Vf w
-
-/-- `A` raises weights: `A V_{≥w} ⊆ V_{≥w+1}`. -/
-def RaisesFil (Vf : ℤ → Submodule K V) (A : V →ₗ[K] V) : Prop :=
-  ∀ w, ∀ v ∈ Vf w, A v ∈ Vf (w + 1)
-
 theorem IsFlagSplitting.raisesFil_of_basis (hs : IsFlagSplitting F b wt) {A : V →ₗ[K] V}
     (hA : ∀ j, A (b j) ∈ flagWt F (wt j + 1)) : RaisesFil (flagWt F) A := by
   intro w v hv
@@ -424,47 +417,6 @@ theorem IsFlagSplitting.grEnd_eq (hs : IsFlagSplitting F b wt) {A M : V →ₗ[K
   · have h := hs.mem_flagWt_iff.1 (hAM _ _ (hs.mem j)) i (by omega)
     rwa [LinearMap.sub_apply, map_sub, Finsupp.sub_apply, sub_eq_zero] at h
   · exact (hM j i hi).symm
-
-section Fil
-
-variable {Vf : ℤ → Submodule K V}
-
-omit [Invertible (2 : K)] in
-theorem PresFil.comp {A B : V →ₗ[K] V} (hA : PresFil Vf A) (hB : PresFil Vf B) :
-    PresFil Vf (A ∘ₗ B) :=
-  fun w v hv => hA w _ (hB w v hv)
-
-omit [Invertible (2 : K)] in
-theorem RaisesFil.comp_presFil {A B : V →ₗ[K] V} (hA : RaisesFil Vf A) (hB : PresFil Vf B) :
-    RaisesFil Vf (A ∘ₗ B) := fun w v hv => hA w _ (hB w v hv)
-
-omit [Invertible (2 : K)] in
-theorem PresFil.comp_raisesFil {A B : V →ₗ[K] V} (hA : PresFil Vf A) (hB : RaisesFil Vf B) :
-    RaisesFil Vf (A ∘ₗ B) := fun w v hv => hA (w + 1) _ (hB w v hv)
-
-omit [Invertible (2 : K)] in
-theorem RaisesFil.add {A B : V →ₗ[K] V} (hA : RaisesFil Vf A) (hB : RaisesFil Vf B) :
-    RaisesFil Vf (A + B) := fun w v hv => add_mem (hA w v hv) (hB w v hv)
-
-omit [Invertible (2 : K)] in
-/-- An endomorphism raising a filtration `Vf a = ⊤ ⊇ ⋯ ⊇ Vf (a + n) = ⊥` is nilpotent. -/
-theorem RaisesFil.isNilpotent {A : V →ₗ[K] V} (hA : RaisesFil Vf A) {a : ℤ} {n : ℕ}
-    (htop : Vf a = ⊤) (hbot : Vf (a + n) = ⊥) : IsNilpotent A := by
-  refine ⟨n, LinearMap.ext fun v => ?_⟩
-  have key : ∀ k : ℕ, ∀ v, (A ^ k) v ∈ Vf (a + k) := by
-    intro k
-    induction k with
-    | zero => intro v; rw [Nat.cast_zero, add_zero, htop]; trivial
-    | succ k ih =>
-      intro v
-      rw [pow_succ', Module.End.mul_apply]
-      have := hA _ _ (ih v)
-      rwa [show a + k + 1 = a + ↑(k + 1) by push_cast; ring] at this
-  have := key n v
-  rw [hbot] at this
-  simpa using this
-
-end Fil
 
 theorem IsFlagSplitting.grEnd_comp (hs : IsFlagSplitting F b wt) {A B : V →ₗ[K] V}
     (hA : PresFil (flagWt F) A) (hB : PresFil (flagWt F) B) :

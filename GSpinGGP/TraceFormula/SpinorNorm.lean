@@ -332,7 +332,7 @@ theorem exists_planeIdempotent {Q : QuadraticForm F V} (hQ : IsHypPlane Q) :
       _ = r • (1 : CliffordAlgebra Q) := by rw [h'']
   · intro g
     obtain ⟨α, β, hab⟩ := exists_eq_smul_one_add_smul_of_even e he _
-      (by rw [← even_toSubmodule]; exact g.2.1)
+      (mem_evenOdd_zero_of_mem_GSpin g)
     refine ⟨α + β * r, ?_⟩
     rw [hab, ← hω]
     calc (α • (1 : CliffordAlgebra Q) + β • ω) * ε = α • ε + β • (ω * ε) := by
@@ -340,7 +340,7 @@ theorem exists_planeIdempotent {Q : QuadraticForm F V} (hQ : IsHypPlane Q) :
       _ = (α + β * r) • ε := by rw [hωε, add_smul, mul_smul]
   · intro g
     obtain ⟨α, β, hab⟩ := exists_eq_smul_one_add_smul_of_even e he _
-      (by rw [← even_toSubmodule]; exact g.2.1)
+      (mem_evenOdd_zero_of_mem_GSpin g)
     refine ⟨α + β * (-r), ?_⟩
     rw [hab, ← hω]
     calc (α • (1 : CliffordAlgebra Q) + β • ω) * (1 - ε) = α • (1 - ε) + β • (ω * (1 - ε)) := by
@@ -408,10 +408,10 @@ theorem exists_specP_eq_smul_of_isHypPlane {Q : QuadraticForm F V} (hQ : IsHypPl
   have hvω' : ι Q v * ω = (-c) • ι Q v := by rw [hvω, hωv', neg_smul]
   -- `g = α + βω`, `g⁻¹ = α' + β'ω`
   obtain ⟨α, β, hab⟩ := exists_eq_smul_one_add_smul_of_even e he _
-    (by rw [← even_toSubmodule]; exact g.2.1)
+    (mem_evenOdd_zero_of_mem_GSpin g)
   obtain ⟨α', β', hab'⟩ := exists_eq_smul_one_add_smul_of_even e he
     ((((g : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q))
-    (by rw [← even_toSubmodule]; exact (g⁻¹ : GSpin Q).2.1)
+    (mem_evenOdd_zero_of_mem_GSpin (g⁻¹ : GSpin Q))
   have hgv : ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * ι Q v = (α + β * c) • ι Q v := by
     rw [hab, ← hω, add_mul, smul_mul_assoc, smul_mul_assoc, one_mul, hωv', smul_smul, add_smul]
   have hvg : ι Q v * ((((g : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) =
