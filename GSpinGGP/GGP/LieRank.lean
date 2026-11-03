@@ -20,6 +20,9 @@ given by induction on `P^⊥`, and choose `c` so that `c² J²` is not an eigenv
 `P` is an eigenspace of `Z²`, every element of `so(V)_Z` preserves it, and
 `dim so(V)_Z = dim so(P)_Z + dim so(P^⊥)_{Z'} ≤ 1 + ⌊(n-2)/2⌋`. A lift of `Z` to `gspin(V)`
 (`exists_mem_gspin_adV_eq`) has centralizer of dimension `dim so(V)_Z + 1`.
+
+The last section describes centralizers in `𝔤 = gspin(W) × gspin(V)` factorwise
+(`mem_lieCentralizer_lieCentralizer_lie`, `finrank_lieCentralizer_lieCentralizer_lie`).
 -/
 
 noncomputable section

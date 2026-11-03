@@ -4,16 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Literature.HarishChandra
 import GSpinGGP.Foundations.Determinant
-import GSpinGGP.GGP.RegularRank
-import GSpinGGP.GGP.LieRank
 import GSpinGGP.GGP.LieRegular
 
 /-!
 # The regular set and the transfer of germs
 
 The regular set of `G = GSpin(W) × GSpin(V)` is open and conull (from Harish-Chandra's theorem
-`hc_regular_open_dense_conull` and the identification of his regular set with `regularSet`, a
-`sorry` theorem), and germs are preserved under transfer to inner forms (BP Astérisque 418,
+`hc_regular_open_dense_conull` and the identification of his regular set with `regularSet`,
+`hcDisc_ne_zero_iff_mem_regularSet`), and germs are preserved under transfer to inner forms (BP Astérisque 418,
 (12.1.2), which is stated for pure inner forms; a `sorry` theorem with a proof sketch).
 -/
 
@@ -211,26 +209,18 @@ theorem mem_regularSet_of_hcDisc_ne_zero (d : GGPData F) {x : ↥d.G} (hx : hcDi
     rw [LinearMap.finrank_maxGenEigenspace_zero_eq, ← hℓ]
     exact Polynomial.natTrailingDegree_le_of_ne_zero hcoeff
   set D := Module.finrank F d.ambient
-  -- `N^k v = T^k v` on `𝔤`
+  -- `N = T|_𝔤`, so `N^k v = T^k v` on `𝔤`
+  have hT : ∀ X ∈ d.lie.toSubmodule, T X ∈ d.lie.toSubmodule := fun X hX =>
+    d.lie.toSubmodule.sub_mem hX (lie_conj_stable d x X hX)
+  have hN : N = T.restrict hT := LinearMap.ext fun v => rfl
   have hpow : ∀ (k : ℕ) (v : d.lie.toSubmodule), (((N ^ k) v : d.lie.toSubmodule) : d.ambient) =
-      (T ^ k) (v : d.ambient) := by
-    intro k
-    induction k with
-    | zero => intro v; rfl
-    | succ k ih =>
-      intro v
-      rw [pow_succ', pow_succ', Module.End.mul_apply, Module.End.mul_apply, ← ih]
-      rfl
-  -- `maxGenEigenspace N 0 = ker N^D`
+      (T ^ k) (v : d.ambient) := fun k v => by
+    rw [hN, Module.End.pow_restrict]
+    rfl
   have hDle : Module.finrank F d.lie.toSubmodule ≤ D := Submodule.finrank_le _
   have hmax : Module.End.maxGenEigenspace N 0 = LinearMap.ker (N ^ D) := by
-    apply le_antisymm
-    · rw [Module.End.maxGenEigenspace_eq_genEigenspace_finrank]
-      refine ((Module.End.genEigenspace N 0).monotone (Nat.cast_le.mpr hDle)).trans ?_
-      rw [Module.End.genEigenspace_nat, zero_smul, sub_zero]
-    · intro v hv
-      rw [Module.End.mem_maxGenEigenspace]
-      exact ⟨D, by rw [zero_smul, sub_zero]; exact hv⟩
+    rw [Module.End.maxGenEigenspace_eq_genEigenspace_finrank, Module.End.genEigenspace_nat,
+      zero_smul, sub_zero, Module.End.ker_pow_eq_ker_pow_finrank_of_le hDle]
   have hmap : (LinearMap.ker (N ^ D)).map d.lie.toSubmodule.subtype =
       d.lie.toSubmodule ⊓ LinearMap.ker (T ^ D) := by
     ext X
