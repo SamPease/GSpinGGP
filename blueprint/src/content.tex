@@ -27,8 +27,10 @@ and definitions. Results are attributed as follows.
     intended argument.
   \item \textbf{Assumed from the literature}: a ``Literature'' environment, with an
     ``Assumed from'' line giving the source. These are Lean \texttt{axiom}s; they have no proof
-    paragraph, and are never proved in this project. Several are adapted to general spin groups from
-    statements for unitary or special orthogonal groups.
+    paragraph, and are never proved in this project. Each is a published statement, specialized to the groups and
+    fields used here, with the source's hypotheses checked; results the sources prove only for other groups
+    (unitary, special orthogonal, \dots) and that are adapted here are stated as theorems instead (proved, or
+    left open with a proof sketch), and their proof paragraphs list the ingredients.
   \item \textbf{Definitions}: real Lean definitions (never axiomatized).
 \end{itemize}
 Where a Lean statement deliberately differs from the dissertation, its node says so in one line.
