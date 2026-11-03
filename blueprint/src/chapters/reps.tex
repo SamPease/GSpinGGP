@@ -113,6 +113,41 @@ For $x\in G(F)$ write $\det(t-1+\Ad(x))=D(x)t^\ell+\dots$ (terms of higher degre
 \assumedfrom{\cite{HC70}, Part V \S3, p.~54 (also Introduction, p.~2), for $G$ connected reductive; here $G=\GSpin(W)\times\GSpin(V)$, $\ell=(\lfloor m/2\rfloor+1)+(\lfloor (m+2r+1)/2\rfloor+1)$}
 \end{literature}
 
+\begin{lemma}[Centralizers of regular elements]
+\label{finrank_lieCentralizer_eq_lieRank}
+\lean{GSpinGGP.finrank_lieCentralizer_eq_lieRank}
+\leanok
+\uses{G, GGPData, gspin}
+For $x\in\Greg(F)$, $\dim\mathfrak g_x=\operatorname{rank}\mathfrak g=\min_{X\in\mathfrak g}\dim\mathfrak g_X$.
+\end{lemma}
+\begin{proof}
+Not yet formalized. $G_x^0$ is a torus containing a maximal torus through $x$, so $\dim\mathfrak g_x=\operatorname{rank}G$; centralizers of regular semisimple $X\in\mathfrak g$ are Cartan subalgebras of dimension $\operatorname{rank}G$, and $\dim\mathfrak g_X\ge\operatorname{rank}G$ for all $X$. Needs Cartan subalgebras of reductive Lie algebras.
+\end{proof}
+
+\begin{lemma}[$\Greg(F)\subseteq G'$]
+\label{hcDisc_ne_zero_of_mem_regularSet}
+\lean{GSpinGGP.hcDisc_ne_zero_of_mem_regularSet}
+\leanok
+\uses{G, GGPData, gspin}
+For $x\in\Greg(F)$, $D(x)\neq0$.
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{GSpin, finrank_lieCentralizer_eq_lieRank}
+$N=1-\Ad x$ is semisimple on $\mathfrak g$, so $\mathfrak g=\ker N\oplus\operatorname{im}N$ with $\ker N=\mathfrak g_x$; the characteristic polynomial of $N$ is $t^{\dim\mathfrak g_x}$ times a polynomial with nonzero constant term $\pm\det(N|_{\operatorname{im}N})$, and $\dim\mathfrak g_x=\ell$.
+\end{proof}
+
+\begin{lemma}[$G'\subseteq\Greg(F)$]
+\label{mem_regularSet_of_hcDisc_ne_zero}
+\lean{GSpinGGP.mem_regularSet_of_hcDisc_ne_zero}
+\leanok
+\uses{G, GGPData, gspin}
+If $D(x)\neq0$ then $x$ is semisimple with abelian centralizer in $\mathfrak g$.
+\end{lemma}
+\begin{proof}
+Not yet formalized. If $x=su$, then $\mathfrak g_s$ is a Cartan subalgebra, $Z_G(s)^0$ a maximal torus, and $u=1$. Needs the Jordan decomposition and Cartan subalgebra facts.
+\end{proof}
+
 \begin{theorem}[$G'=\Greg(F)$]
 \label{hcDisc_ne_zero_iff_mem_regularSet}
 \lean{GSpinGGP.hcDisc_ne_zero_iff_mem_regularSet}
@@ -121,7 +156,9 @@ For $x\in G(F)$ write $\det(t-1+\Ad(x))=D(x)t^\ell+\dots$ (terms of higher degre
 In characteristic $0$, $D(x)\neq0$ if and only if $x$ is semisimple with abelian centralizer in $\mathfrak g$.
 \end{theorem}
 \begin{proof}
-Not yet formalized. For $x$ regular semisimple, $1-\Ad x$ is semisimple with kernel the Cartan subalgebra $\mathfrak g_x$ of dimension $\ell$. Conversely, if $D(x)\neq0$ and $x=su$, then $\mathfrak g_s$ is a Cartan subalgebra, $Z_G(s)^0$ a maximal torus, and $u=1$. Needs the rank of $\GSpin$ and Cartan subalgebra facts.
+\leanok
+\uses{hcDisc_ne_zero_of_mem_regularSet, mem_regularSet_of_hcDisc_ne_zero}
+The two inclusions above.
 \end{proof}
 
 \begin{theorem}[The regular set]

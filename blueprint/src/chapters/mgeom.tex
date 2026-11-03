@@ -89,7 +89,20 @@ Fix $x\in T_\natural$ and let $N_t=1-\mathrm{Ad}(t)$ on $\mathfrak g$, $L=\ker N
 For $\theta\in\QC(G,\chi)$, $t\mapsto c_{\theta,\mathcal O_t}(t)$ is continuous (locally constant) on $T_\natural$.
 \end{lemma}
 \begin{proof}
-Not yet formalized. For $t'=te^Y$ with $Y\in\mathrm{Lie}\,T$ small, the expansion at $t$ is one at $t'$: this needs germ expansions transported along $Y$ central only in $\mathfrak g_t$, the invariance $\hat{j}(\mathcal O,X+Y)=\hat{j}(\mathcal O,X)$, and $\mathcal O_{t'}=\mathcal O_t$ (equal centralizers, proved).
+\leanok
+\uses{InnerTwist, IsQuasiCharacter, LIT-exists_isSelfDual, LIT-germ_unique, isOpen_regularSS_lieCentralizer, isOpen_torusNat, isSemisimple_specP_baseChange, jHat, lieAbelian_specP_baseChange, weylDisc}
+Near $t_0\in T_\natural$ write $t=t_0e^Y$ with $Y=\log(t_0^{-1}t)$ small (a local logarithm from the inverse function theorem). $Y$ lies in $\mathfrak g$, is semisimple and central in $\mathfrak g_{t_0}=\mathfrak g_t$, so $\theta(te^X)=\theta(t_0e^{X+Y})=\sum c_{\mathcal O}\hat{j}(\mathcal O,X+Y)=\sum c_{\mathcal O}\hat{j}(\mathcal O,X)$: the trace form is nondegenerate on $\mathfrak g_{t_0}$, $b(Y,N)=0$ for nilpotent $N\in\mathfrak g_{t_0}$, and the regular set of $\mathfrak g_{t_0}$ is open. The expansion at $t_0$ is one at $t$, and $\mathcal O_t=\mathcal O_{t_0}$.
+\end{proof}
+
+\begin{lemma}[The regular set of $\mathfrak g_x$ is open]
+\label{isOpen_regularSS_lieCentralizer}
+\lean{GSpinGGP.isOpen_regularSS_lieCentralizer}
+\leanok
+\uses{G, GGPData, gspin}
+For semisimple $x\in G(F)$, the regular semisimple elements of $\mathfrak g_x$ form an open subset.
+\end{lemma}
+\begin{proof}
+Not yet formalized. $\mathfrak g_x$ is reductive, and its regular semisimple set is the nonvanishing locus of the coefficient of $t^{r}$ in $\det(t-\operatorname{ad}Z)$, $r$ the rank.
 \end{proof}
 
 \begin{lemma}[Boundedness of germs]

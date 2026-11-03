@@ -2,7 +2,7 @@
 Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import GSpinGGP.GGP.TwistDescent
+import GSpinGGP.GGP.Hilbert90
 
 /-!
 # Conjugator cocycles and Galois descent of conjugacy
@@ -12,7 +12,7 @@ Then `σ ↦ g⁻¹ σ(g)` is a continuous `1`-cocycle with values in the normal
 (`conjCocycle`; Serre, *Cohomologie galoisienne*, I §5.3).  If `g, g'` lie in a Galois-stable
 subgroup `A` and their cocycles are cohomologous in `N_A(S)`, then `g' S g'⁻¹` and `g S g⁻¹` are
 conjugate by a Galois-fixed element of `A` (`exists_fixed_conj_of_rel`), i.e. by an element of
-`A ∩ GL_m(F)` (`TwistDescent.exists_map_of_fixed`).
+`A` with `F`-rational entries (`TwistDescent.exists_map_of_fixed`).
 -/
 
 noncomputable section
@@ -36,9 +36,7 @@ theorem galGL_mul_apply (σ τ : GalF F) (g : GL (Fin m) Kb) :
 
 theorem galGL_inv_apply (σ : GalF F) (g : GL (Fin m) Kb) :
     galGL m σ⁻¹ (galGL m σ g) = g := by
-  rw [← galGL_mul_apply, inv_mul_cancel]
-  ext i j
-  simp [coe_galGL]
+  rw [← galGL_mul_apply, inv_mul_cancel, galGL_one]
 
 /-- A Galois-stable subgroup: `σ(S) ⊆ S` for every `σ` (hence `σ(S) = S`). -/
 def IsGalStable (S : Subgroup (GL (Fin m) Kb)) : Prop :=
@@ -78,12 +76,16 @@ theorem inv_mul_galGL_mem_normalizer {S S' : Subgroup (GL (Fin m) Kb)}
   intro h
   have e : g⁻¹ * galGL m σ g * h * (g⁻¹ * galGL m σ g)⁻¹ =
       g⁻¹ * galGL m σ (g * galGL m σ⁻¹ h * g⁻¹) * g := by
-    have h1 : galGL m (1 : GalF F) h = h := by ext i j; simp [coe_galGL]
-    rw [map_mul, map_mul, map_inv, ← galGL_mul_apply, mul_inv_cancel, h1]
+    rw [map_mul, map_mul, map_inv, ← galGL_mul_apply, mul_inv_cancel, galGL_one]
     simp only [mul_inv_rev, inv_inv, mul_assoc]
   rw [e, ← hconj, hS'.mem_iff, hconj]
   simp only [mul_assoc, inv_mul_cancel_left, inv_mul_cancel, mul_one]
   exact (hS.mem_iff _ _).symm
+
+/-- `g⁻¹ σ(g) ∈ A` for `g` in a Galois-stable subgroup `A`. -/
+theorem inv_mul_galGL_mem {A : Subgroup (GL (Fin m) Kb)} (hA : IsGalStable (F := F) A)
+    {g : GL (Fin m) Kb} (hg : g ∈ A) (σ : GalF F) : g⁻¹ * galGL m σ g ∈ A :=
+  A.mul_mem (A.inv_mem hg) (hA σ g hg)
 
 /-- **The conjugator cocycle** `σ ↦ g⁻¹ σ(g)`, with values in any subgroup `N` containing them. -/
 def conjCocycle {N : Subgroup (GL (Fin m) Kb)} (g : GL (Fin m) Kb)
@@ -103,7 +105,9 @@ theorem conjCocycle_toFun {N : Subgroup (GL (Fin m) Kb)} (g : GL (Fin m) Kb)
 
 /-- **Galois descent of conjugacy.** If the conjugator cocycles of `g, g' ∈ A` are cohomologous in
 `N ≤ N_A(S)`, then `h = g c g'⁻¹ ∈ A` (`c ∈ N` the coboundary) is Galois-fixed and conjugates
-`g' S g'⁻¹` to `g S g⁻¹`. -/
+`g' S g'⁻¹` to `g S g⁻¹`.  (For `H¹(F, N)` to be the cohomology of an `F`-group, `N` should be
+Galois-stable, e.g. `N_A(S)` for `A`, `S` Galois-stable: `inv_mul_galGL_mem_normalizer`,
+`inv_mul_galGL_mem`.) -/
 theorem exists_fixed_conj_of_rel {A S N : Subgroup (GL (Fin m) Kb)} (hN : N ≤ Subgroup.normalizer (S : Set (GL (Fin m) Kb)) ⊓ A)
     {g g' : GL (Fin m) Kb} (hgA : g ∈ A) (hg'A : g' ∈ A)
     (hg : ∀ σ : GalF F, g⁻¹ * galGL m σ g ∈ N) (hg' : ∀ σ : GalF F, g'⁻¹ * galGL m σ g' ∈ N)

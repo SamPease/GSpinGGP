@@ -38,14 +38,6 @@ variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
 
 local notation "Kb" => AlgebraicClosure F
 
-/-- A quadratic form on `R^n` (`2` invertible) is determined by its matrix. -/
-theorem toMatrix'_injective {R : Type*} [CommRing R] [Invertible (2 : R)] {n : ℕ}
-    {Q₁ Q₂ : QuadraticForm R (Fin n → R)} (h : Q₁.toMatrix' = Q₂.toMatrix') : Q₁ = Q₂ := by
-  have h' : QuadraticMap.associated (R := R) Q₁ = QuadraticMap.associated (R := R) Q₂ :=
-    (LinearMap.toMatrix₂' R).injective h
-  rw [← QuadraticMap.toQuadraticMap_associated R Q₁, ← QuadraticMap.toQuadraticMap_associated R Q₂]
-  exact congrArg _ h'
-
 /-- The matrix in `bcBasis` of an endomorphism is the `toMatrix'` of its coordinate version. -/
 theorem toMatrix_bc {m : ℕ} (f : (Kb ⊗[F] (Fin m → F)) →ₗ[Kb] (Kb ⊗[F] (Fin m → F))) :
     LinearMap.toMatrix (bcBasis F m) (bcBasis F m) f =
@@ -71,7 +63,7 @@ theorem isometry_iff_matrix {m : ℕ} (Q Q' : QuadraticForm F (Fin m → F))
     simp only [InnerTwistAux.qbar, QuadraticMap.comp_apply, LinearMap.comp_apply,
       LinearEquiv.coe_coe, LinearEquiv.symm_apply_apply, h]
   · intro h v
-    have h2 := toMatrix'_injective h
+    have h2 := QuadraticForm.toMatrix'_injective h
     have := congrArg (fun q : QuadraticForm Kb (Fin m → Kb) => q (e v)) h2
     have he : (InnerTwistAux.bcE (K := F) m).symm (e v) = v := e.symm_apply_apply v
     simpa only [g, InnerTwistAux.qbar, QuadraticMap.comp_apply, LinearMap.comp_apply,
@@ -109,6 +101,17 @@ theorem coe_glOf_inv {m : ℕ} {Q Q' : QuadraticForm F (Fin m → F)}
     (φ : (Q.baseChange Kb).IsometryEquiv (Q'.baseChange Kb)) :
     (((glOf φ)⁻¹ : GL (Fin m) Kb) : Matrix (Fin m) (Fin m) Kb) =
       LinearMap.toMatrix (bcBasis F m) (bcBasis F m) φ.toLinearEquiv.symm.toLinearMap := rfl
+
+/-- `det(Φ⁻¹ σ(Φ)) = 1` for the matrix `Φ` of the isometry of an inner twist (`InnerTwist.cocycle`
+in matrices). -/
+theorem det_glOf_inv_mul_galGL {m : ℕ} {Q : QuadraticForm F (Fin m → F)} (τ : InnerTwist Q)
+    (σ : GalF F) :
+    (((glOf τ.φ)⁻¹ * galGL m σ (glOf τ.φ) : GL (Fin m) Kb) : Matrix (Fin m) (Fin m) Kb).det = 1 := by
+  have h := τ.cocycle σ
+  rw [← LinearMap.det_toMatrix (bcBasis F m), LinearMap.toMatrix_comp _ (bcBasis F m),
+    toMatrix_galoisConj] at h
+  rw [Units.val_mul, coe_galGL, coe_glOf, coe_glOf_inv]
+  exact h
 
 /-- The Gram relation satisfied by the matrix of an isometry. -/
 theorem gram_glOf {m : ℕ} {Q Q' : QuadraticForm F (Fin m → F)}
@@ -187,7 +190,7 @@ theorem nonempty_isometryEquiv_of_matrix {m : ℕ} {Q₁ Q₂ : QuadraticForm F 
     (N : Matrix (Fin m) (Fin m) F) (hdet : N.det ≠ 0)
     (hN : Nᵀ * Q₂.toMatrix' * N = Q₁.toMatrix') : Nonempty (Q₁.IsometryEquiv Q₂) := by
   have hcomp : Q₂.comp (Matrix.toLin' N) = Q₁ := by
-    apply toMatrix'_injective
+    apply QuadraticForm.toMatrix'_injective
     rw [QuadraticForm.toMatrix'_comp, LinearMap.toMatrix'_toLin', hN]
   have hu : IsUnit (LinearMap.toMatrix (Pi.basisFun F (Fin m)) (Pi.basisFun F (Fin m))
       (Matrix.toLin' N)).det := by
@@ -258,18 +261,6 @@ theorem nonempty_isometryEquiv_of_rel {m : ℕ} {Q : QuadraticForm F (Fin m → 
     exact (Matrix.isUnits_det_units Ψ).ne_zero h1.symm
   exact nonempty_isometryEquiv_of_matrix N hdet hNG
 
-/-- The quadratic form `v ↦ vᵀ N v` of a symmetric matrix has Gram matrix `N`. -/
-theorem toMatrix'_ofSymm {n : ℕ} (N : Matrix (Fin n) (Fin n) F) (hN : Nᵀ = N) :
-    QuadraticForm.toMatrix' (LinearMap.BilinMap.toQuadraticMap
-      (Matrix.toLinearMap₂' F N : (Fin n → F) →ₗ[F] (Fin n → F) →ₗ[F] F)) = N := by
-  have hsym : ∀ x y : Fin n → F, (Matrix.toLinearMap₂' F N : (Fin n → F) →ₗ[F] (Fin n → F) →ₗ[F] F) x y =
-      (Matrix.toLinearMap₂' F N : (Fin n → F) →ₗ[F] (Fin n → F) →ₗ[F] F) y x := by
-    intro x y
-    rw [Matrix.toLinearMap₂'_apply', Matrix.toLinearMap₂'_apply', Matrix.dotProduct_mulVec,
-      ← Matrix.mulVec_transpose, hN, dotProduct_comm]
-  rw [QuadraticForm.toMatrix', QuadraticMap.associated_left_inverse F hsym]
-  exact (LinearMap.toMatrix₂' F).apply_symm_apply N
-
 /-- **Existence of the twisted form** (Galois descent, given a splitting of the cocycle in
 `GL_m(F̄)`).  Let `S ⊆ SO(Q)(F̄)` and `a` an `S`-valued cocycle with `a_σ = M⁻¹ σ(M)`.  Then the
 form with Gram matrix `M⁻ᵀ G M⁻¹` is rational, nondegenerate, of the discriminant of `Q`, and `a`
@@ -311,8 +302,8 @@ theorem exists_twist_of_split {m : ℕ} {Q : QuadraticForm F (Fin m → F)}
     dsimp only
     rw [Matrix.transpose_map, hN, Matrix.transpose_mul, Matrix.transpose_mul, hGs,
       Matrix.transpose_transpose, Matrix.mul_assoc]
-  set Q'' : QuadraticForm F (Fin m → F) := LinearMap.BilinMap.toQuadraticMap (Matrix.toLinearMap₂' F N : (Fin _ → F) →ₗ[F] (Fin _ → F) →ₗ[F] F)
-  have hQ'' : Q''.toMatrix' = N := toMatrix'_ofSymm N hNs
+  set Q'' : QuadraticForm F (Fin m → F) := N.toQuadraticForm'
+  have hQ'' : Q''.toMatrix' = N := Matrix.toMatrix'_toQuadraticForm' hNs
   obtain ⟨c, hc⟩ := exists_eq_of_fixed (Y : Matrix (Fin m) (Fin m) Kb).det fun σ => by
     have h1 := (σ : Kb →+* Kb).map_det (Y : Matrix (Fin m) (Fin m) Kb)
     have h2 : (σ : Kb →+* Kb).mapMatrix (Y : Matrix (Fin m) (Fin m) Kb) =
