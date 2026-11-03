@@ -7,16 +7,15 @@ import GSpinGGP.Foundations.Representations
 import GSpinGGP.Foundations.GSpin
 
 /-!
-# Cited inputs of the local trace formula: unimodularity and the quasi-character `θ_f`
+# Cited inputs of the local trace formula: the quasi-character `θ_f`
 
-Two results from the
-literature that the trace-formula part of the proof (Thesis Ch. 7–12) uses as black
-boxes, stated as `axiom`s about the concrete groups `d.G = GSpin(W) × GSpin(V)` of a
-`d : GGPData F` over a `p`-adic field `F`. Both quantify over *all* `d`, so they apply to the
-inner forms `d.twist τ` as well; neither assumes quasi-splitness.
+Results from the literature that the trace-formula part of the proof (Thesis Ch. 7–12) uses as
+black boxes, stated about the concrete groups `d.G = GSpin(W) × GSpin(V)` of a `d : GGPData F` over
+a `p`-adic field `F` (as `axiom`s, or as `sorry` theorems where the statement is adapted). They
+quantify over *all* `d`, so they apply to the inner forms `d.twist τ` as well; none assumes
+quasi-splitness. (The unimodularity of `G(F)` is proved: `GGPData.isMulRightInvariant_haar_G`,
+`TraceFormula/Basic.lean`.)
 
-* (a) `haar_G_isMulRightInvariant` — `G(F)` is unimodular (connected reductive group; a `sorry`
-  theorem: derived from Bourbaki's criterion, see its docstring);
 * (b) `bp_thetaF_exists` — for `f₀ ∈ C_c^∞(G(F))` strongly cuspidal, the invariant distribution
   `f' ↦ ∫_{G(F)/A_G(F)} ∫_{G(F)} f₀(x⁻¹gx) f'(g) dg dx` is represented by a locally integrable
   function `θ` which is locally constant on `G_reg(F)` and is a quasi-character
@@ -84,38 +83,6 @@ same `borel _` instance). -/
 instance instMeasurableSpaceGmodAG (d : GGPData F) : MeasurableSpace (↥d.G ⧸ d.AG) := borel _
 
 instance instBorelSpaceGmodAG (d : GGPData F) : BorelSpace (↥d.G ⧸ d.AG) := ⟨rfl⟩
-
-/-! ## (a) Unimodularity of `G(F)` -/
-
-/-- **(a) `G(F)` is unimodular.** The group of `F`-points of a connected reductive group over a
-local field is unimodular: its modular character is `|det Ad(g)|_F`, and `det Ad` is a character
-of `G` trivial on the derived group and on the (central) connected centre, hence trivial.
-Here `G = GSpin(W) × GSpin(V)`.
-
-Exact ingredient (checked): Bourbaki, *Lie Groups and Lie Algebras*, Ch. III §3 no. 16, Prop. 55 and
-its Corollary: for a finite-dimensional Lie group `G` over a locally compact field `K` (ultrametric
-allowed), the modular function is `Δ_G(g) = (mod det Ad g)⁻¹`, so `G` is unimodular iff
-`mod det Ad g = 1` for all `g`. Also Thesis §2.4; BP Astérisque 418, §1.6.
-
-**Status: `sorry`, not a literature axiom** (the statement is derived, not verbatim). Remaining
-steps: `G(F)` is an `F`-Lie group (not formalized here), and `det Ad g = 1` on
-`G = GSpin(W) × GSpin(V)`: on `gspin(U) = so(U) ⊕ F`, `Ad g` is trivial on `F` and acts on
-`so(U) ≅ Λ²U` as `Λ² P(g)`, of determinant `det P(g)^{dim U − 1} = 1`.
-
-Stated for Mathlib's left Haar measure `Measure.haar` on `↥d.G` (the one used in
-`IsCharacterOf` and the trace formula); quantified over every `d`, so it also covers the inner
-forms `d.twist τ`. Used for the Weil quotient measure on `H(F)\G(F)/A_G(F)`:
-right invariance on `G(F)/A_G(F)` follows from this *because `A_G` is central*. -/
-theorem haar_G_isMulRightInvariant (d : GGPData F) :
-    (Measure.haar : Measure ↥d.G).IsMulRightInvariant := by
-  sorry
-
-attribute [instance] haar_G_isMulRightInvariant
-
-/-- The same for an inner form `d.twist τ` (see `t2Space_twist_G` for why it is separate). -/
-instance haar_twist_G_isMulRightInvariant (d : GGPData F) (τ : InnerTwist d.QW) :
-    (Measure.haar : Measure ↥(d.twist τ).G).IsMulRightInvariant :=
-  haar_G_isMulRightInvariant (d.twist τ)
 
 end LitTF
 

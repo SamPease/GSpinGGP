@@ -26,7 +26,7 @@ GSpinGGP.IsTempered
 GSpinGGP.mult
 GSpinGGP.dixmier_commutant_scalar
 GSpinGGP.schur_central
-GSpinGGP.LitTF.haar_G_isMulRightInvariant
+GSpinGGP.GGPData.isMulRightInvariant_haar_G
 GSpinGGP.weil_quotient
 GSpinGGP.integral_eq_mul_integral_compact_integral
 GSpinGGP.weylDisc
