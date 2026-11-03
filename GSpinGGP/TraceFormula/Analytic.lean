@@ -91,18 +91,6 @@ theorem modularCharacter_eq_one_of_mem (E : Subgroup G₀) (hEo : IsOpen (E : Se
   rw [Measure.modularCharacterFun_eq_haarScalarFactor μ k]
   exact_mod_cast h1
 
-/-- The modular character is trivial on central elements. -/
-theorem modularCharacter_eq_one_of_central (a : G₀) (ha : ∀ y : G₀, y * a = a * y) :
-    Measure.modularCharacter a = 1 := by
-  borelize G₀
-  have e : (fun y : G₀ => y * a) = fun y => a * y := funext ha
-  have hmap : Measure.map (· * a) (Measure.haar : Measure G₀) = Measure.haar := by
-    rw [e]
-    exact map_mul_left_eq_self (Measure.haar : Measure G₀) a
-  show Measure.modularCharacterFun a = 1
-  rw [Measure.modularCharacterFun_eq_haarScalarFactor (Measure.haar : Measure G₀) a]
-  simp only [hmap, Measure.haarScalarFactor_self]
-
 /-- The modular character is locally constant if there is a compact open subgroup. -/
 theorem isLocallyConstant_modularCharacter (E : Subgroup G₀) (hEo : IsOpen (E : Set G₀))
     (hEc : IsCompact (E : Set G₀)) :

@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import GSpinGGP.Foundations.LocalGroups
 import GSpinGGP.Foundations.Representations
 import GSpinGGP.Foundations.GSpin
+import GSpinGGP.TraceFormula.Basic
 
 /-!
 # Cited inputs of the local trace formula: unimodularity and the quasi-character `θ_f`
@@ -15,15 +16,15 @@ boxes, stated as `axiom`s about the concrete groups `d.G = GSpin(W) × GSpin(V)`
 `d : GGPData F` over a `p`-adic field `F`. Both quantify over *all* `d`, so they apply to the
 inner forms `d.twist τ` as well; neither assumes quasi-splitness.
 
-* (a) `haar_G_isMulRightInvariant` — `G(F)` is unimodular (connected reductive group; a `sorry`
-  theorem: derived from Bourbaki's criterion, see its docstring);
+* (a) `haar_G_isMulRightInvariant` — `G(F)` is unimodular (connected reductive group; proved in
+  `TraceFormula/Basic.lean`, see its docstring);
 * (b) `bp_thetaF_exists` — for `f₀ ∈ C_c^∞(G(F))` strongly cuspidal, the invariant distribution
   `f' ↦ ∫_{G(F)/A_G(F)} ∫_{G(F)} f₀(x⁻¹gx) f'(g) dg dx` is represented by a locally integrable
   function `θ` which is locally constant on `G_reg(F)` and is a quasi-character
   (BP Thm 5.5.1(ii),(iv) + Weyl integration, Prop 5.6.1(ii); Thesis Thm 4.7.1, Prop 4.8.1).
 
-Since `TraceFormula/Basic.lean` and `Literature/HarishChandra.lean` are in the same layer and not
-visible here, the orbital pairing and strong cuspidality are written out inline with the L1 names
+`TraceFormula/Basic.lean` is imported only for the proof of (a). Since `Literature/HarishChandra.lean`
+is not visible here, the orbital pairing and strong cuspidality are written out inline with the L1 names
 (`whittB`, `whittU`, `IsProperFlagPair`, `↥d.G ⧸ d.AG`, `testFunctions`, `regularSet`,
 `IsQuasiCharacter`), and the topological instances on `↥d.G` are redeclared (under names in the
 namespace `GSpinGGP.LitTF`, so they do not clash with `HarishChandra`'s).
@@ -97,18 +98,18 @@ its Corollary: for a finite-dimensional Lie group `G` over a locally compact fie
 allowed), the modular function is `Δ_G(g) = (mod det Ad g)⁻¹`, so `G` is unimodular iff
 `mod det Ad g = 1` for all `g`. Also Thesis §2.4; BP Astérisque 418, §1.6.
 
-**Status: `sorry`, not a literature axiom** (the statement is derived, not verbatim). Remaining
-steps: `G(F)` is an `F`-Lie group (not formalized here), and `det Ad g = 1` on
-`G = GSpin(W) × GSpin(V)`: on `gspin(U) = so(U) ⊕ F`, `Ad g` is trivial on `F` and acts on
-`so(U) ≅ Λ²U` as `Λ² P(g)`, of determinant `det P(g)^{dim U − 1} = 1`.
+**Status: proved** (`GGPData.isMulRightInvariant_haar_G`, `TraceFormula/Basic.lean`), not by the
+Lie-group criterion above but directly: the modular character is invariant under continuous
+automorphisms and trivial on the centre, conjugation by an anisotropic vector on one factor inverts
+`u w` up to a central scalar, and scalars and products `u w` generate each factor (Cartan–Dieudonné).
 
 Stated for Mathlib's left Haar measure `Measure.haar` on `↥d.G` (the one used in
 `IsCharacterOf` and the trace formula); quantified over every `d`, so it also covers the inner
 forms `d.twist τ`. Used for the Weil quotient measure on `H(F)\G(F)/A_G(F)`:
 right invariance on `G(F)/A_G(F)` follows from this *because `A_G` is central*. -/
 theorem haar_G_isMulRightInvariant (d : GGPData F) :
-    (Measure.haar : Measure ↥d.G).IsMulRightInvariant := by
-  sorry
+    (Measure.haar : Measure ↥d.G).IsMulRightInvariant :=
+  d.isMulRightInvariant_haar_G
 
 attribute [instance] haar_G_isMulRightInvariant
 
