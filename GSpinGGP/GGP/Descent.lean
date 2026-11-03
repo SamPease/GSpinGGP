@@ -161,8 +161,8 @@ theorem specP_map_apply_of_orth (f : Q₁ →qᵢ Q₂) (hf : IsNondeg Q₁) (g 
     (hu : ∀ w, QuadraticMap.polar Q₂ (f w) u = 0) :
     specP Q₂ (GSpin.map f hf g) u = u := by
   apply ι_injective Q₂
-  have h0 : ((g : (CliffordAlgebra Q₁)ˣ) : CliffordAlgebra Q₁) ∈ evenOdd Q₁ 0 := by
-    rw [← even_toSubmodule]; exact g.2.1
+  have h0 : ((g : (CliffordAlgebra Q₁)ˣ) : CliffordAlgebra Q₁) ∈ evenOdd Q₁ 0 :=
+    mem_evenOdd_zero_of_mem_GSpin g
   rw [ι_specP, GSpin.coe_map_inv, GSpin.coe_map, map_even_commute_ι f h0 hu, mul_assoc,
     ← map_mul, Units.mul_inv, map_one, mul_one]
 

@@ -60,70 +60,13 @@ namespace GSpinGGP
 
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
-/-! ### The modular character on a group with a compact open subgroup -/
+/-! ### An integral inequality
+
+(The modular-character lemmas used here, `modularCharacter_eq_one_of_mem`,
+`exists_lowerBound_modularCharacter`, `modularCharacter_eq_one_of_central`, are in
+`TraceFormula/Basic.lean`.) -/
 
 section ModularCharacter
-
-variable {G₀ : Type*} [Group G₀] [TopologicalSpace G₀] [IsTopologicalGroup G₀]
-  [LocallyCompactSpace G₀]
-
-/-- The modular character is trivial on a compact open subgroup `E` (right translation by
-`k ∈ E` maps `E`, a set of finite positive Haar measure, to itself). -/
-theorem modularCharacter_eq_one_of_mem (E : Subgroup G₀) (hEo : IsOpen (E : Set G₀))
-    (hEc : IsCompact (E : Set G₀)) (k : G₀) (hk : k ∈ E) : Measure.modularCharacter k = 1 := by
-  borelize G₀
-  set μ : Measure G₀ := Measure.haar
-  have hcl : closure (E : Set G₀) = E := (Subgroup.isClosed_of_isOpen E hEo).closure_eq
-  have h := Measure.measure_isMulInvariant_eq_smul_of_isCompact_closure
-    (Measure.map (· * k) μ) μ (s := (E : Set G₀)) (by rw [hcl]; exact hEc)
-  have hpre : (· * k) ⁻¹' (E : Set G₀) = E := by
-    ext x
-    simp only [Set.mem_preimage, SetLike.mem_coe]
-    exact ⟨fun hx => by simpa using E.mul_mem hx (E.inv_mem hk), fun hx => E.mul_mem hx hk⟩
-  rw [Measure.map_apply (measurable_mul_const k) hEo.measurableSet, hpre] at h
-  have hpos : μ E ≠ 0 := (hEo.measure_pos μ ⟨1, E.one_mem⟩).ne'
-  have htop : μ E ≠ ⊤ := hEc.measure_lt_top.ne
-  have h1 : ((Measure.haarScalarFactor (Measure.map (· * k) μ) μ : NNReal) : ENNReal) = 1 := by
-    rw [ENNReal.smul_def, smul_eq_mul] at h
-    have h' : 1 * μ E = _ * μ E := (one_mul (μ E)).trans h
-    exact ((ENNReal.mul_left_inj hpos htop).mp h').symm
-  show Measure.modularCharacterFun k = 1
-  rw [Measure.modularCharacterFun_eq_haarScalarFactor μ k]
-  exact_mod_cast h1
-
-/-- The modular character is trivial on central elements. -/
-theorem modularCharacter_eq_one_of_central (a : G₀) (ha : ∀ y : G₀, y * a = a * y) :
-    Measure.modularCharacter a = 1 := by
-  borelize G₀
-  have e : (fun y : G₀ => y * a) = fun y => a * y := funext ha
-  have hmap : Measure.map (· * a) (Measure.haar : Measure G₀) = Measure.haar := by
-    rw [e]
-    exact map_mul_left_eq_self (Measure.haar : Measure G₀) a
-  show Measure.modularCharacterFun a = 1
-  rw [Measure.modularCharacterFun_eq_haarScalarFactor (Measure.haar : Measure G₀) a]
-  simp only [hmap, Measure.haarScalarFactor_self]
-
-/-- The modular character is locally constant if there is a compact open subgroup. -/
-theorem isLocallyConstant_modularCharacter (E : Subgroup G₀) (hEo : IsOpen (E : Set G₀))
-    (hEc : IsCompact (E : Set G₀)) :
-    IsLocallyConstant (fun p : G₀ => (Measure.modularCharacter p : ℝ)) := by
-  rw [IsLocallyConstant.iff_exists_open]
-  intro x
-  refine ⟨(fun y => x⁻¹ * y) ⁻¹' (E : Set G₀),
-    hEo.preimage (continuous_const.mul continuous_id), by simp, fun y hy => ?_⟩
-  have e : y = x * (x⁻¹ * y) := by group
-  rw [e, map_mul, modularCharacter_eq_one_of_mem E hEo hEc _ hy, mul_one]
-
-/-- On a compact set, the modular character is bounded below by a positive constant (if there
-is a compact open subgroup). -/
-theorem exists_lowerBound_modularCharacter (E : Subgroup G₀) (hEo : IsOpen (E : Set G₀))
-    (hEc : IsCompact (E : Set G₀)) (S : Set G₀) (hS : IsCompact S) :
-    ∃ m : ℝ, 0 < m ∧ ∀ p ∈ S, m ≤ (Measure.modularCharacter p : ℝ) := by
-  rcases S.eq_empty_or_nonempty with rfl | hne
-  · exact ⟨1, one_pos, by simp⟩
-  obtain ⟨p0, -, hmin⟩ :=
-    hS.exists_isMinOn hne (isLocallyConstant_modularCharacter E hEo hEc).continuous.continuousOn
-  exact ⟨_, by exact_mod_cast Measure.modularCharacterFun_pos p0, fun p hp => hmin hp⟩
 
 /-- If `c ≤ φ` with `c > 0` on a finite nonzero measure space, then
 `((μ X)⁻¹ ∫ φ dμ)⁻¹ ≤ c⁻¹` (the left side is `0` when `φ` is not integrable). -/

@@ -158,7 +158,13 @@ $\mathrm{GL}(E_\mu)$.
 $\Nilreg(\gspin(V))\neq\emptyset$ iff $\GSpin(V)$ is quasi-split, i.e.\ $\dim V-2w(V)\le 2$.
 \end{theorem}
 \begin{proof}
-Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{Wal01}, Ch.~I; \cite{Wal10}, \S7.1; \cite{Luo}, \S2.1; Thesis \S5.1.4}
+\leanok
+$\Leftarrow$: a split family $w_{-k},\dots,w_k$ with $\dim V\le 2k+2$ gives the explicit regular nilpotent
+$\sum_i\iota(w_{i+1})\iota(w_{-i})/2\nu$, whose centralizer has dimension $\lfloor\dim V/2\rfloor+1$, the rank (Jantzen 2004, \S7.11).
+$\Rightarrow$: for a regular nilpotent $X$, $N=\mathrm{ad}_V X$ has $\dim\mathfrak{so}(V)_N=\lfloor n/2\rfloor$ (the rank of $\gspin(V)$ is
+$\lfloor n/2\rfloor+1$), so over $\bar F$ it is regular nilpotent of partition $[n]$ or $[n-1,1]$ (Jantzen 2004, \S6.3); hence
+$N^{m}\neq0$ with $m=n-1$ or $n-2$, and the upper half of a Jordan chain of $N$ is a totally isotropic subspace of dimension
+$\lfloor(n-1)/2\rfloor$. Ingredients: \ingredients{\cite{Wal01}, Ch.~I; \cite{Luo}, \S2.1; Jantzen 2004, \S6.3, \S7.11; Thesis \S5.1.4}
 \end{proof}
 
 \section{GGP triples}
@@ -259,7 +265,13 @@ For semisimple $x\in\GSpin(W)(F)$ embedded diagonally in $G$, with $W'_x=\ker(P(
 $V'_x = W'_x\oplus Z$: if $\Nilreg(\mathfrak g_x)\ne\emptyset$ then $W'_x$ and $V'_x$ are quasi-split.
 \end{theorem}
 \begin{proof}
-Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{Wal01}, Ch.~I applied to the factors of $G_x$; \cite{BP}, Prop.~4.5.1(i)}
+\leanok
+\uses{nilReg_nonempty_iff_quasiSplit}
+$\mathfrak g_x=\gspin(W)_x\times\gspin(V)_x$, and a regular nilpotent $X$ minimizes the centralizer dimension in each
+factor separately. In a factor with fixed space $A$, $\dim\gspin_{y,Y}=\dim\mathfrak{so}(A)_{\mathrm{ad}_V Y|_A}+c+1$ where $c$ depends only
+on $\mathrm{ad}_V Y$ on $A^\perp$, and the $A$-component of $Y$ can be replaced by any skew map of $A$. So $\mathrm{ad}_V X|_A$ is a nilpotent of
+minimal centralizer dimension $\lfloor\dim A/2\rfloor$ in $\mathfrak{so}(A)$, and $A$ is quasi-split as in
+Theorem~\ref{nilReg_nonempty_iff_quasiSplit} (Jantzen 2004, \S6.3). Not verbatim in the literature. Ingredients: \ingredients{\cite{Wal01}, Ch.~I applied to the factors of $G_x$; \cite{BP}, Prop.~4.5.1(i); Jantzen 2004, \S6.3}
 \end{proof}
 
 \begin{theorem}[Regular nilpotent orbits of GGP centralizers]
@@ -272,7 +284,11 @@ to $\Gamma(G,H)$): $\Nilreg(\mathfrak g_x)\neq\emptyset$ iff $W'_x$ and $V'_x=W'
 quasi-split.
 \end{theorem}
 \begin{proof}
-Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{Wal01}, Ch.~I; \cite{Wal10}, \S7.1}
+\leanok
+\uses{nilReg_centralizer_nonempty_imp}
+$\Rightarrow$ is Theorem~\ref{nilReg_centralizer_nonempty_imp}. $\Leftarrow$: the pair of explicit regular nilpotents of $\gspin(W'_x)$ and
+$\gspin(V'_x)$ is regular nilpotent in $\mathfrak g_x$, because with an abelian moved part the moved contribution to
+$\dim\mathfrak g_{x,Y}$ is the same for every $Y$. Not verbatim in the literature. Ingredients: \ingredients{\cite{Wal01}, Ch.~I; \cite{Wal10}, \S7.1}
 \end{proof}
 
 \begin{literature}[Multiplicity at most one]

@@ -35,35 +35,50 @@ section LowerBound
 variable {K : Type*} [Field K] [CharZero K] [Invertible (2 : K)]
 variable {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
 
+omit [CharZero K] in
+/-- **Transport of a skew endomorphism to the algebraic closure**: for `N` skew for `bform Q`
+(`Q` nondegenerate), the matrices of `bform Q` and `N` in a basis, mapped to `K̄`, are an invertible
+symmetric `Φ` and a `Φ`-skew `A` with `dim so(Φ)_A = dim so(V)_N` (`finrank_soCentMat_map`) and
+`A^m = 0 ↔ N^m = 0`. -/
+theorem exists_algebraicClosure_soCentMat {Q : QuadraticForm K V} (hQ : IsNondeg Q)
+    {N : Module.End K V} (hN : ∀ u w, bform Q (N u) w = -bform Q u (N w)) :
+    ∃ Φ A : Matrix (Fin (finrank K V)) (Fin (finrank K V)) (AlgebraicClosure K),
+      Φ.transpose = Φ ∧ Φ.det ≠ 0 ∧ A ∈ skewAdjointMatricesSubmodule Φ ∧
+      finrank (AlgebraicClosure K) (soCentMat Φ A) = finrank K (soCent Q N) ∧
+      ∀ m, A ^ m = 0 ↔ N ^ m = 0 := by
+  have hNmem : N ∈ soCent Q N := mem_soCent.2 ⟨hN, rfl⟩
+  have hsymm : ∀ x y, bform Q x y = bform Q y x := fun x y => QuadraticMap.associated_isSymm K Q x y
+  let b := Module.finBasis K V
+  set J := LinearMap.toMatrix₂ b b (bform Q)
+  set A := LinearMap.toMatrix b b N
+  let φ := algebraMap K (AlgebraicClosure K)
+  have hA : A ∈ soCentMat J A := by
+    rw [soCentMat_toMatrix]; exact Submodule.mem_map_of_mem hNmem
+  have hJ : J.transpose = J := by
+    ext i j; simp [J, LinearMap.toMatrix₂_apply, hsymm]
+  have hdet : J.det ≠ 0 := (LinearMap.nondegenerate_iff_det_ne_zero b).1 hQ
+  refine ⟨J.map φ, A.map φ, ?_, ?_, ?_, ?_, fun m => ?_⟩
+  · rw [← Matrix.transpose_map, hJ]
+  · rw [← RingHom.mapMatrix_apply, ← RingHom.map_det]; exact (map_ne_zero φ).2 hdet
+  · have hsk := (Submodule.mem_inf.mp hA).1
+    rw [mem_skewAdjointMatricesSubmodule, Matrix.IsSkewAdjoint, Matrix.IsAdjointPair] at hsk ⊢
+    rw [← Matrix.transpose_map]
+    simp only [← RingHom.mapMatrix_apply, ← map_mul, ← map_neg, hsk]
+  · rw [finrank_soCentMat_map, soCentMat_toMatrix, LinearEquiv.finrank_map_eq]
+  · rw [← RingHom.mapMatrix_apply, ← map_pow, LinearMap.toMatrix_pow,
+      map_eq_zero_iff _ (Matrix.map_injective φ.injective), LinearEquiv.map_eq_zero_iff]
+
 /-- **`dim so(V)_N ≥ ⌊dim V/2⌋`** for every skew `N` (Thesis §5.1.4; the rank of `SO(V)`). For
 `dim V ≥ 3` this is Jantzen's bound over the algebraic closure, transported by
-`finrank_soCentMat_map`; for `dim V ≤ 2` it is checked directly. -/
+`exists_algebraicClosure_soCentMat`; for `dim V ≤ 2` it is checked directly. -/
 theorem le_finrank_soCent {Q : QuadraticForm K V} (hQ : IsNondeg Q) {N : Module.End K V}
     (hN : ∀ u w, bform Q (N u) w = -bform Q u (N w)) :
     finrank K V / 2 ≤ finrank K (soCent Q N) := by
   have hNmem : N ∈ soCent Q N := mem_soCent.2 ⟨hN, rfl⟩
-  have hsymm : ∀ x y, bform Q x y = bform Q y x := fun x y => QuadraticMap.associated_isSymm K Q x y
   by_cases hn : 3 ≤ finrank K V
-  · set n := finrank K V
-    let b := Module.finBasis K V
-    set J := LinearMap.toMatrix₂ b b (bform Q)
-    set A := LinearMap.toMatrix b b N
-    have e : finrank K (soCent Q N) = finrank K (soCentMat J A) := by
-      rw [soCentMat_toMatrix, LinearEquiv.finrank_map_eq]
-    have hA : A ∈ soCentMat J A := by
-      rw [soCentMat_toMatrix]; exact Submodule.mem_map_of_mem hNmem
-    have hJ : J.transpose = J := by
-      ext i j; simp [J, LinearMap.toMatrix₂_apply, hsymm]
-    have hdet : J.det ≠ 0 := (LinearMap.nondegenerate_iff_det_ne_zero b).1 hQ
-    let φ := algebraMap K (AlgebraicClosure K)
-    rw [e, ← finrank_soCentMat_map (K := AlgebraicClosure K)]
-    refine jantzen_finrank_soCentMat_ge hn (J.map φ) ?_ ?_ (A.map φ) ?_
-    · rw [← Matrix.transpose_map, hJ]
-    · rw [← RingHom.mapMatrix_apply, ← RingHom.map_det]; exact (map_ne_zero φ).2 hdet
-    · have hsk := (Submodule.mem_inf.mp hA).1
-      rw [mem_skewAdjointMatricesSubmodule, Matrix.IsSkewAdjoint, Matrix.IsAdjointPair] at hsk ⊢
-      rw [← Matrix.transpose_map]
-      simp only [← RingHom.mapMatrix_apply, ← map_mul, ← map_neg, hsk]
+  · obtain ⟨Φ, A, hΦ, hdet, hA, he, -⟩ := exists_algebraicClosure_soCentMat hQ hN
+    rw [← he]
+    exact jantzen_finrank_soCentMat_ge hn Φ hΦ hdet A hA
   · interval_cases h : finrank K V
     · simp
     · simp

@@ -87,22 +87,7 @@ theorem commute_soCentMat_map {F K : Type*} [Field F] [Field K] [Algebra F K] {n
       ∀ M₂ ∈ soCentMat (J.map (algebraMap F K)) (A.map (algebraMap F K)), Commute M₁ M₂ := by
   intro M₁ h₁ M₂ h₂
   rw [soCentMat_map_eq_span] at h₁ h₂
-  induction h₁ using Submodule.span_induction with
-  | mem x hx =>
-    induction h₂ using Submodule.span_induction with
-    | mem y hy =>
-      obtain ⟨M, hM, rfl⟩ := hx
-      obtain ⟨N, hN, rfl⟩ := hy
-      have := congrArg (fun P : Matrix (Fin n) (Fin n) F => P.map (algebraMap F K))
-        (hab M hM N hN).eq
-      simp only [← RingHom.mapMatrix_apply, map_mul] at this
-      exact this
-    | zero => exact Commute.zero_right _
-    | add y z _ _ hy hz => exact hy.add_right hz
-    | smul c y _ hy => exact hy.smul_right c
-  | zero => exact Commute.zero_left _
-  | add x y _ _ hx hy => exact hx.add_left hy
-  | smul c x _ hx => exact hx.smul_left c
+  exact commute_of_mem_span_map hab h₁ h₂
 
 variable {F : Type*} [Field F] [CharZero F] [Invertible (2 : F)]
 variable {V : Type*} [AddCommGroup V] [Module F V] [FiniteDimensional F V]
@@ -144,17 +129,7 @@ theorem finrank_soCent_of_commute_of_charZero {Q : QuadraticForm F V} (hQ : IsNo
   · rw [← RingHom.mapMatrix_apply, ← RingHom.map_det]; exact (map_ne_zero φ).2 hJd
   · rw [← Matrix.transpose_map]
     simp only [← RingHom.mapMatrix_apply, ← map_mul, hAJA]
-  · -- the minimal polynomial of `X` is separable, so it stays squarefree over `K`
-    have hsep : (minpoly F X).Separable :=
-      PerfectField.separable_iff_squarefree.2 hss.minpoly_squarefree
-    refine Module.End.isSemisimple_of_squarefree_aeval_eq_zero
-      (p := (minpoly F X).map φ) (hsep.map).squarefree ?_
-    have hA : Polynomial.aeval A (minpoly F X) = 0 := by
-      rw [← LinearMap.minpoly_toMatrix b X]; exact minpoly.aeval F A
-    rw [show Matrix.toLin' (A.map φ) = Matrix.toLinAlgEquiv' (A.map φ) from rfl,
-      Polynomial.aeval_algHom_apply, Polynomial.aeval_map_algebraMap,
-      show A.map φ = (Algebra.ofId F K).mapMatrix A from rfl, Polynomial.aeval_algHom_apply, hA,
-      map_zero, map_zero]
+  · exact isSemisimple_toLin'_map (isSemisimple_toLin'_toMatrix b hss)
   · rw [← RingHom.mapMatrix_apply, ← RingHom.map_det, LinearMap.det_toMatrix, hdet, map_one]
 
 /-- **The centralizer of a regular semisimple `g ∈ GSpin(V)` has dimension `⌊dim V/2⌋ + 1`**, the

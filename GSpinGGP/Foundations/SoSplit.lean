@@ -9,7 +9,8 @@ import GSpinGGP.Foundations.SoCentralizer
 
 For `V = U ⊥ U'` with `U`, `U'` stable under `X` and under every element of `so(V)_X`,
 `so(V)_X ≅ so(U)_X × so(U')_X` (`finrank_soCent_eq_add`); more generally for the joint centralizer
-`so(V)_X ⊓ so(V)_Y` (`finrank_soCent_inf_eq_add`).
+`so(V)_X ⊓ so(V)_Y` (`finrank_soCent_inf_eq_add`). `exists_lieCentralizer_fixed_swap`: the
+component of `Y ∈ gspin(V)_y` on the fixed space `W'_y` can be replaced by any skew map.
 -/
 
 noncomputable section
@@ -82,6 +83,28 @@ theorem mapsTo_orthogonal_of_skew {M : Module.End K V}
     have h0 : bform Q (M x) w = 0 := (LinearMap.BilinForm.mem_orthogonal_iff.1 hw) _ (hMU hx)
     rw [hM, bform_comm Q x, neg_eq_zero] at h0
     rwa [bform_comm Q x]
+
+omit horth in
+/-- An isometry preserving `U` preserves `U^⊥`. -/
+theorem mapsTo_orthogonal_of_isometry [FiniteDimensional K V] (hQ : IsNondeg Q)
+    {g : Module.End K V} (hg : ∀ u v, bform Q (g u) (g v) = bform Q u v)
+    (hgU : Set.MapsTo g U U) :
+    Set.MapsTo g ((bform Q).orthogonal U) ((bform Q).orthogonal U) := by
+  have hginj : Function.Injective g := by
+    rw [← LinearMap.ker_eq_bot, LinearMap.ker_eq_bot']
+    intro x hx
+    refine hQ.1 x fun y => ?_
+    rw [← hg, hx, map_zero, LinearMap.zero_apply]
+  have hinj : Function.Injective (g.restrict hgU) := fun x y hxy =>
+    Subtype.ext (hginj (congrArg Subtype.val hxy))
+  have hsurj := LinearMap.injective_iff_surjective.1 hinj
+  intro y hy
+  refine LinearMap.BilinForm.mem_orthogonal_iff.2 fun x hx => ?_
+  obtain ⟨x', hx'⟩ := hsurj ⟨x, hx⟩
+  have hx'' : g x' = x := congrArg Subtype.val hx'
+  change bform Q x (g y) = 0
+  rw [← hx'', hg]
+  exact (LinearMap.BilinForm.mem_orthogonal_iff.1 hy) _ x'.2
 
 omit horth in
 theorem restrict_mem_soCent (hXU : Set.MapsTo X U U) {M : Module.End K V} (hM : M ∈ soCent Q X)
@@ -175,5 +198,67 @@ theorem soCent_of_scalar {c : K} (hX : ∀ v, X v = c • v) : soCent Q X = soCe
 
 
 end Small
+
+section FixedSwap
+
+variable {K : Type*} [Field K] [Invertible (2 : K)]
+variable {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
+
+/-- **Changing the fixed-space component of `Y ∈ gspin(V)_y`**: for any skew `M` on `A = W'_y`
+there is `Y' ∈ gspin(V)_y` with `dim gspin(V)_{y,Y'} − dim so(A)_M = dim gspin(V)_{y,Y} −
+dim so(A)_{adV Y|_A}`. It is constructed as a lift of `adV Y' = M ⊕ adV Y|_{A^⊥}` (`sumEnd`), so
+the part killing `A` is unchanged (`finrank_lieCentralizer_fixed`, `soCent_inf_killSub_congr`). -/
+theorem exists_lieCentralizer_fixed_swap {Q : QuadraticForm K V} (hQ : IsNondeg Q) (y : GSpin Q)
+    (hc : IsCompl (fixedSub y) ((bform Q).orthogonal (fixedSub y))) {Y : CliffordAlgebra Q}
+    (hY : Y ∈ lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q))
+    (h : ∀ a ∈ fixedSub y, adV Q Y a ∈ fixedSub y) {M : Module.End K (fixedSub y)}
+    (hM : ∀ u w, bform (Q.comp (fixedSub y).subtype) (M u) w =
+      -bform (Q.comp (fixedSub y).subtype) u (M w)) :
+    ∃ Y' ∈ lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q),
+      finrank K (lieCentralizer (lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) :
+        CliffordAlgebra Q)) Y') +
+        finrank K (soCent (Q.comp (fixedSub y).subtype) ((adV Q Y).restrict h)) =
+      finrank K (lieCentralizer (lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) :
+        CliffordAlgebra Q)) Y) +
+        finrank K (soCent (Q.comp (fixedSub y).subtype) M) := by
+  obtain ⟨hYg, hYc⟩ := mem_lieCentralizer.mp hY
+  have hNs := bform_adV hYg
+  have hNg : adV Q Y * (specP Q y : Module.End K V) = (specP Q y : Module.End K V) * adV Q Y :=
+    ((commute_iff_adV hQ y hYg).mp hYc).symm
+  have horth : ∀ u ∈ fixedSub y, ∀ w ∈ (bform Q).orthogonal (fixedSub y), bform Q u w = 0 :=
+    fun u hu w hw => hw u hu
+  have hgA : Set.MapsTo (specP Q y : Module.End K V) (fixedSub y) (fixedSub y) := fun a ha => by
+    rw [SetLike.mem_coe, (mem_fixedSub_iff y a).1 ha]; exact ha
+  have hgB : Set.MapsTo (specP Q y : Module.End K V) ((bform Q).orthogonal (fixedSub y))
+      ((bform Q).orthogonal (fixedSub y)) := fun b hb => specP_mem_orthogonal_fixedSub y hb
+  have hNB := mapsTo_orthogonal_of_skew hNs (fun a ha => h a ha)
+  have hMmem : M ∈ soCent (Q.comp (fixedSub y).subtype)
+      ((specP Q y : Module.End K V).restrict hgA) := by
+    have hr : (specP Q y : Module.End K V).restrict hgA = 1 :=
+      LinearMap.ext fun a => Subtype.ext ((mem_fixedSub_iff y a).1 a.2)
+    exact mem_soCent.2 ⟨hM, by rw [hr, mul_one, one_mul]⟩
+  have hNmem : (adV Q Y).restrict hNB ∈ soCent (Q.comp ((bform Q).orthogonal (fixedSub y)).subtype)
+      ((specP Q y : Module.End K V).restrict hgB) := by
+    refine mem_soCent.2 ⟨fun u w => ?_, LinearMap.ext fun b => Subtype.ext ?_⟩
+    · simp only [bform_comp_subtype, LinearMap.restrict_coe_apply]; exact hNs _ _
+    · exact congrArg (fun T : Module.End K V => T (b : V)) hNg
+  set N' := sumEnd hc M ((adV Q Y).restrict hNB)
+  obtain ⟨Y', hY'm, hY'⟩ := exists_mem_lieCentralizer_adV_eq hQ y
+    (sumEnd_mem_soCent horth hc hgA hgB hMmem hNmem)
+  obtain ⟨h1, e1⟩ := finrank_lieCentralizer_fixed hQ y hc hY'm
+  obtain ⟨h0, e0⟩ := finrank_lieCentralizer_fixed hQ y hc hY
+  have hres : (adV Q Y').restrict h1 = M := by
+    ext a; simp only [LinearMap.restrict_coe_apply, hY', N', sumEnd_left]
+  have hkill : soCent Q (specP Q y : Module.End K V) ⊓ soCent Q (adV Q Y') ⊓ killSub (fixedSub y) =
+      soCent Q (specP Q y : Module.End K V) ⊓ soCent Q (adV Q Y) ⊓ killSub (fixedSub y) :=
+    soCent_inf_killSub_congr hc (fun a ha => h1 a ha) (fun a ha => h a ha) fun b hb => by
+      rw [hY', show b = ((⟨b, hb⟩ : (bform Q).orthogonal (fixedSub y)) : V) from rfl, sumEnd_right]
+      rfl
+  have hr0 : (adV Q Y).restrict h0 = (adV Q Y).restrict h := rfl
+  refine ⟨Y', hY'm, ?_⟩
+  rw [e1, e0, hres, hkill, hr0]
+  omega
+
+end FixedSwap
 
 end GSpinGGP

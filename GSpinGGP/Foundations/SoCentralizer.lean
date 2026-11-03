@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Foundations.GSpin
 import GSpinGGP.Foundations.LocalGroups
+import GSpinGGP.Foundations.MatrixBaseChange
 
 /-!
 # Centralizers in `so(V)` and `gspin(V)`
@@ -18,10 +19,17 @@ kernel the scalars (Thesis Prop. 5.1.3.1). So the centralizer of `X ∈ gspin(V)
   `commute_of_isLieAbelian_lieCentralizer`: the same for the centralizer of `g ∈ GSpin(V)`, with
   `so(V)_{P(g)}`; `commute_of_lift`: a lift of `M ∈ so(V)_{P(g)}` commutes with `g`.
 
-* `finrank_soCent_le_of_chain`: an upper bound for `dim so(V)_N` when `N` has a long Jordan chain.
-* `soCentMat`, `soCentMat_toMatrix`: the same in matrix form, and `finrank_soCentMat_map`: its
-  dimension does not change under extension of scalars; `soCentMat_map_eq_span`: over an
-  extension it is spanned by its `F`-points (`matrixBaseChangeEquiv`: `K ⊗ Mat_n(F) ≃ Mat_n(K)`).
+* `finrank_lieCentralizer_fixed`: `dim gspin(V)_{y,Y}` through the fixed space `A = W'_y`;
+  `soCent_inf_killSub_congr`: the part killing `A` only sees `adV Y` on `A^⊥` (so the
+  `A`-component of `Y` can be changed freely: `exists_lieCentralizer_fixed_swap` in `SoSplit`).
+* `finrank_soCent_le_of_chain`: an upper bound for `dim so(V)_N` when `N` has a long Jordan chain;
+  `isTotallyIsotropic_span_pow`: the upper half of a Jordan chain of a skew `N` is totally isotropic.
+* `linearIndependent_pow_apply`, `exists_pow_apply_ne_zero_of_isNilpotent`: Jordan chains of a
+  nilpotent endomorphism.
+* `soCentMat`, `soCentMat_toMatrix`: the same in matrix form; `ker_jointMatMap`: `so(J)_A ⊓ so(J)_C`
+  is the kernel of a linear map of matrices. So `finrank_soCentMat_map`: its dimension does not
+  change under extension of scalars; `soCentMat_map_eq_span`: over an extension it is spanned by
+  its `F`-points.
 -/
 
 noncomputable section
@@ -367,6 +375,55 @@ theorem commute_iff_adV {Q : QuadraticForm K V} (hQ : IsNondeg Q) (g : GSpin Q)
   · intro h
     exact commute_of_lift hQ g h hA fun v => (ι_adV hA v).symm
 
+/-- `adV` maps `gspin(V)_{g,Y}` into `so(V)_{P(g)} ⊓ so(V)_{adV Y}`. -/
+theorem adV_mem_soCent_inf {Q : QuadraticForm K V} (hQ : IsNondeg Q) (g : GSpin Q)
+    {Y : CliffordAlgebra Q} (hYg : Y ∈ gspin Q) {Z : CliffordAlgebra Q}
+    (hZ : Z ∈ lieCentralizer (lieCentralizer (gspin Q)
+      ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) Y) :
+    adV Q Z ∈ soCent Q (specP Q g : Module.End K V) ⊓ soCent Q (adV Q Y) := by
+  obtain ⟨hZ', hYZ⟩ := mem_lieCentralizer.mp hZ
+  obtain ⟨hZg, hxZ⟩ := mem_lieCentralizer.mp hZ'
+  have hc := adV_commutator hZg hYg
+  rw [← hYZ, sub_self, map_zero, eq_comm, sub_eq_zero] at hc
+  exact Submodule.mem_inf.mpr
+    ⟨mem_soCent.2 ⟨bform_adV hZg, ((commute_iff_adV hQ g hZg).mp hxZ).symm⟩,
+      mem_soCent.2 ⟨bform_adV hZg, hc⟩⟩
+
+/-- Every element of `so(V)_{P(g)} ⊓ so(V)_{adV Y}` is `adV Z` for some `Z ∈ gspin(V)_{g,Y}`. -/
+theorem exists_mem_lieCentralizer_lieCentralizer_adV_eq {Q : QuadraticForm K V} (hQ : IsNondeg Q)
+    (g : GSpin Q) {Y : CliffordAlgebra Q} (hYg : Y ∈ gspin Q) {M : Module.End K V}
+    (hM : M ∈ soCent Q (specP Q g : Module.End K V) ⊓ soCent Q (adV Q Y)) :
+    ∃ Z ∈ lieCentralizer (lieCentralizer (gspin Q)
+      ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) Y, adV Q Z = M := by
+  obtain ⟨hMg, hMN⟩ := Submodule.mem_inf.mp hM
+  obtain ⟨hMs, hMgc⟩ := mem_soCent.mp hMg
+  obtain ⟨-, hMNc⟩ := mem_soCent.mp hMN
+  obtain ⟨Z, hZg, rfl⟩ := exists_mem_gspin_adV_eq hQ M hMs
+  have hZY : Z * Y = Y * Z := commute_of_adV_commute hQ hZg hYg hMNc
+  have hxZ := (commute_iff_adV hQ g hZg).mpr hMgc.symm
+  exact ⟨Z, mem_lieCentralizer.mpr ⟨mem_lieCentralizer.mpr ⟨hZg, hxZ⟩, hZY.symm⟩, rfl⟩
+
+/-- `gspin(V)_{g,Y}` is abelian iff `so(V)_{P(g)} ⊓ so(V)_{adV Y}` is. -/
+theorem isLieAbelian_lieCentralizer_gspin_iff {Q : QuadraticForm K V} (hQ : IsNondeg Q)
+    (g : GSpin Q) {Y : CliffordAlgebra Q} (hYg : Y ∈ gspin Q) :
+    IsLieAbelian (lieCentralizer (lieCentralizer (gspin Q)
+      ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) Y) ↔
+    ∀ M₁ ∈ soCent Q (specP Q g : Module.End K V) ⊓ soCent Q (adV Q Y),
+      ∀ M₂ ∈ soCent Q (specP Q g : Module.End K V) ⊓ soCent Q (adV Q Y), Commute M₁ M₂ := by
+  rw [isLieAbelian_iff_forall_commute]
+  constructor
+  · intro hab M₁ h₁ M₂ h₂
+    obtain ⟨Z₁, hZ₁, rfl⟩ := exists_mem_lieCentralizer_lieCentralizer_adV_eq hQ g hYg h₁
+    obtain ⟨Z₂, hZ₂, rfl⟩ := exists_mem_lieCentralizer_lieCentralizer_adV_eq hQ g hYg h₂
+    have := adV_commutator (mem_lieCentralizer.mp (mem_lieCentralizer.mp hZ₁).1).1
+      (mem_lieCentralizer.mp (mem_lieCentralizer.mp hZ₂).1).1
+    rw [hab _ hZ₁ _ hZ₂, sub_self, map_zero, eq_comm, sub_eq_zero] at this
+    exact this
+  · intro hab Z₁ h₁ Z₂ h₂
+    exact commute_of_adV_commute hQ (mem_lieCentralizer.mp (mem_lieCentralizer.mp h₁).1).1
+      (mem_lieCentralizer.mp (mem_lieCentralizer.mp h₂).1).1
+      (hab _ (adV_mem_soCent_inf hQ g hYg h₁) _ (adV_mem_soCent_inf hQ g hYg h₂)).eq
+
 /-- **`dim gspin(V)_{g,Y} = 1 + dim so(V)_{P(g), adV Y}`** for `g ∈ GSpin(V)` and `Y ∈ gspin(V)`:
 `adV` maps the joint centralizer onto the joint centralizer of `P(g)` and `adV Y` in `so(V)`
 (`commute_iff_adV`, `commute_of_adV_commute`), with kernel the scalars. -/
@@ -379,29 +436,15 @@ theorem finrank_lieCentralizer_lieCentralizer_gspin {Q : QuadraticForm K V} (hQ 
   have hmem : ∀ {Z}, Z ∈ lieCentralizer (lieCentralizer (gspin Q) x) Y ↔
       Z ∈ gspin Q ∧ x * Z = Z * x ∧ Y * Z = Z * Y := by
     intro Z; rw [mem_lieCentralizer, mem_lieCentralizer, and_assoc]
-  have hYcomm : ∀ {Z}, Z ∈ gspin Q → Y * Z = Z * Y → adV Q Z * adV Q Y = adV Q Y * adV Q Z := by
-    intro Z hZ h
-    have := adV_commutator hZ hY
-    rw [← h, sub_self, map_zero] at this
-    exact sub_eq_zero.mp this.symm
   let φ : lieCentralizer (lieCentralizer (gspin Q) x) Y →ₗ[K]
       ↥(soCent Q (specP Q g : Module.End K V) ⊓ soCent Q (adV Q Y)) :=
-    { toFun := fun Z => ⟨adV Q Z, by
-        obtain ⟨hZ, hx, hYZ⟩ := hmem.mp Z.2
-        refine Submodule.mem_inf.mpr ⟨mem_soCent.2 ⟨bform_adV hZ, ?_⟩,
-          mem_soCent.2 ⟨bform_adV hZ, hYcomm hZ hYZ⟩⟩
-        exact ((commute_iff_adV hQ g hZ).mp hx).symm⟩
+    { toFun := fun Z => ⟨adV Q Z, adV_mem_soCent_inf hQ g hY Z.2⟩
       map_add' := fun Y Z => Subtype.ext (map_add (adV Q) Y.1 Z.1)
       map_smul' := fun c Y => Subtype.ext (map_smul (adV Q) c Y.1) }
   have hsurj : Function.Surjective φ := by
     rintro ⟨M, hM⟩
-    obtain ⟨hMg, hMN⟩ := Submodule.mem_inf.mp hM
-    obtain ⟨hMs, hMgc⟩ := mem_soCent.mp hMg
-    obtain ⟨-, hMNc⟩ := mem_soCent.mp hMN
-    obtain ⟨Z, hZg, hZM⟩ := exists_mem_gspin_adV_eq hQ M hMs
-    have hZY : Z * Y = Y * Z := commute_of_adV_commute hQ hZg hY (by rw [hZM]; exact hMNc)
-    have hxZ : x * Z = Z * x := (commute_iff_adV hQ g hZg).mpr (by rw [hZM]; exact hMgc.symm)
-    exact ⟨⟨Z, hmem.mpr ⟨hZg, hxZ, hZY.symm⟩⟩, Subtype.ext hZM⟩
+    obtain ⟨Z, hZ, hZM⟩ := exists_mem_lieCentralizer_lieCentralizer_adV_eq hQ g hY hM
+    exact ⟨⟨Z, hZ⟩, Subtype.ext hZM⟩
   have hker : finrank K (LinearMap.ker φ) = 1 := by
     have h1 : (1 : CliffordAlgebra Q) ∈ lieCentralizer (lieCentralizer (gspin Q) x) Y :=
       hmem.mpr ⟨one_mem_gspin Q, by rw [one_mul, mul_one], by rw [one_mul, mul_one]⟩
@@ -659,6 +702,39 @@ theorem finrank_lieCentralizer_fixed {Q : QuadraticForm K V} (hQ : IsNondeg Q) (
   have e := finrank_soCent_inf_eq hc (mem_fixedSub_iff y) hgB (bform_adV hYg) hNg
   exact ⟨_, by rw [finrank_lieCentralizer_lieCentralizer_gspin hQ y hYg, e]⟩
 
+omit [FiniteDimensional K V] in
+/-- A skew `M` killing `A` maps `V` into `A^⊥`. -/
+theorem mem_orthogonal_of_mem_killSub {Q : QuadraticForm K V} {A : Submodule K V}
+    {M : Module.End K V} (hMs : ∀ u w, bform Q (M u) w = -bform Q u (M w)) (hMA : M ∈ killSub A)
+    (v : V) : M v ∈ (bform Q).orthogonal A := by
+  intro a ha
+  change bform Q a (M v) = 0
+  have hsymm : ∀ x y, bform Q x y = bform Q y x := fun x y => QuadraticMap.associated_isSymm K Q x y
+  rw [hsymm, hMs, hsymm, hMA a ha, map_zero, LinearMap.zero_apply, neg_zero]
+
+omit [FiniteDimensional K V] in
+/-- **The part of `so(V)_{g,N}` killing `A` only sees `N` on `A^⊥`**: if `N`, `N'` preserve `A`
+and agree on `A^⊥ = B`, with `V = A ⊕ B`, the two parts coincide. -/
+theorem soCent_inf_killSub_congr {Q : QuadraticForm K V} {g N N' : Module.End K V}
+    {A : Submodule K V} (hA : IsCompl A ((bform Q).orthogonal A)) (hNA : ∀ a ∈ A, N a ∈ A)
+    (hN'A : ∀ a ∈ A, N' a ∈ A) (hNN' : ∀ b ∈ (bform Q).orthogonal A, N b = N' b) :
+    soCent Q g ⊓ soCent Q N ⊓ killSub A = soCent Q g ⊓ soCent Q N' ⊓ killSub A := by
+  have key : ∀ {N N' : Module.End K V}, (∀ a ∈ A, N a ∈ A) → (∀ a ∈ A, N' a ∈ A) →
+      (∀ b ∈ (bform Q).orthogonal A, N b = N' b) →
+      soCent Q g ⊓ soCent Q N ⊓ killSub A ≤ soCent Q g ⊓ soCent Q N' ⊓ killSub A := by
+    intro N N' hNA hN'A hNN' M hM
+    obtain ⟨⟨hMg, hMN⟩, hMA⟩ := hM
+    obtain ⟨hMs, hMN⟩ := mem_soCent.1 hMN
+    refine ⟨⟨hMg, mem_soCent.2 ⟨hMs, ?_⟩⟩, hMA⟩
+    ext v
+    obtain ⟨a, ha, b, hb, rfl⟩ := Submodule.mem_sup.1 (hA.sup_eq_top ▸ Submodule.mem_top (x := v))
+    have hMb := mem_orthogonal_of_mem_killSub hMs hMA b
+    have hb' := congrArg (fun T : Module.End K V => T b) hMN
+    simp only [Module.End.mul_apply] at hb' ⊢
+    rw [map_add, map_add, map_add, map_add, hMA _ (hN'A a ha), hMA a ha, map_zero, ← hNN' b hb,
+      ← hNN' _ hMb, hb']
+  exact le_antisymm (key hNA hN'A hNN') (key hN'A hNA fun b hb => (hNN' b hb).symm)
+
 /-- **Upper bound** for `dim gspin(V)_{y,Y}`: `≤ dim so(A)_{adV Y|_A} + dim (so(V)_{P y} killing A) + 1`. -/
 theorem finrank_lieCentralizer_fixed_le {Q : QuadraticForm K V} (hQ : IsNondeg Q) (y : GSpin Q)
     (hc : IsCompl (fixedSub y) ((bform Q).orthogonal (fixedSub y))) {Y : CliffordAlgebra Q}
@@ -783,7 +859,79 @@ theorem finrank_soCent_le_of_chain {Q : QuadraticForm K V} (hQ : IsNondeg Q) {N 
   rw [LinearMap.BilinForm.finrank_orthogonal hQ, hE] at h1
   exact h1
 
+omit [FiniteDimensional K V] in
+/-- **The upper half of a Jordan chain of a skew `N` is totally isotropic**: if `N^(m+1) v = 0` and
+`m + 1 ≤ 2a`, then `b(N^(a+i) v, N^(a+j) v) = ± b(v, N^(2a+i+j) v) = 0`. -/
+theorem isTotallyIsotropic_span_pow {Q : QuadraticForm K V} {N : Module.End K V}
+    (hN : ∀ u w, bform Q (N u) w = -bform Q u (N w)) {v : V} {m a : ℕ}
+    (hm : (N ^ (m + 1)) v = 0) (ha : m + 1 ≤ 2 * a) (l : ℕ) :
+    IsTotallyIsotropic Q (Submodule.span K (Set.range fun i : Fin l => (N ^ (a + i)) v)) := by
+  set S := Submodule.span K (Set.range fun i : Fin l => (N ^ (a + i)) v)
+  have hgen : ∀ i j : ℕ, bform Q ((N ^ (a + i)) v) ((N ^ (a + j)) v) = 0 := by
+    intro i j
+    rw [bform_pow_skew hN (a + j), ← Module.End.mul_apply, ← pow_add]
+    rw [Module.End.pow_map_zero_of_le (by omega) hm, map_zero, LinearMap.zero_apply, mul_zero]
+  have h1 : ∀ i : Fin l, S ≤ LinearMap.ker (bform Q ((N ^ (a + i)) v)) := fun i =>
+    Submodule.span_le.2 <| by rintro _ ⟨j, rfl⟩; exact hgen i j
+  intro u hu
+  have h2 : S ≤ LinearMap.ker ((bform Q).flip u) :=
+    Submodule.span_le.2 <| by rintro _ ⟨i, rfl⟩; exact h1 i hu
+  rw [← QuadraticMap.associated_eq_self_apply K Q u]
+  exact h2 hu
+
 end Chain
+
+/-! ## Jordan chains of a nilpotent endomorphism -/
+
+section JordanChain
+
+variable {K : Type*} [Field K]
+variable {V : Type*} [AddCommGroup V] [Module K V]
+
+/-- **A Jordan chain is linearly independent**: if `f^m v ≠ 0` and `f^(m+1) v = 0`, then
+`v, f v, …, f^m v` are linearly independent. -/
+theorem linearIndependent_pow_apply {f : Module.End K V} {v : V} {m : ℕ}
+    (hm : (f ^ m) v ≠ 0) (hm' : (f ^ (m + 1)) v = 0) :
+    LinearIndependent K fun i : Fin (m + 1) => (f ^ (i : ℕ)) v := by
+  induction m generalizing v with
+  | zero =>
+    change LinearIndependent K fun i : Fin 1 => (f ^ (i : ℕ)) v
+    exact linearIndependent_unique_iff.2 (by simpa using hm)
+  | succ m ih =>
+    have e : ∀ j, (f ^ (j + 1)) v = (f ^ j) (f v) := fun j => by
+      rw [pow_succ, Module.End.mul_apply]
+    rw [linearIndependent_finSucc]
+    have ht : Fin.tail (fun i : Fin (m + 2) => (f ^ (i : ℕ)) v) =
+        fun i : Fin (m + 1) => (f ^ (i : ℕ)) (f v) := funext fun i => e i
+    rw [ht]
+    refine ⟨ih (by rwa [← e]) (by rwa [← e]), fun hv => hm ?_⟩
+    have hle : Submodule.span K (Set.range fun i : Fin (m + 1) => (f ^ (i : ℕ)) (f v)) ≤
+        LinearMap.ker (f ^ (m + 1)) := Submodule.span_le.2 <| by
+      rintro _ ⟨i, rfl⟩
+      rw [SetLike.mem_coe, LinearMap.mem_ker, ← Module.End.mul_apply, ← pow_add, ← e]
+      exact Module.End.pow_map_zero_of_le (by omega) hm'
+    exact hle hv
+
+/-- For `f` nilpotent and `f^m v ≠ 0` there is a Jordan chain through `v` of length at least
+`m + 1`: some `k ≥ m` with `f^k v ≠ 0` and `f^(k+1) v = 0`. -/
+theorem exists_pow_apply_ne_zero_of_isNilpotent {f : Module.End K V} (hf : IsNilpotent f)
+    {v : V} {m : ℕ} (hm : (f ^ m) v ≠ 0) :
+    ∃ k, m ≤ k ∧ (f ^ k) v ≠ 0 ∧ (f ^ (k + 1)) v = 0 := by
+  classical
+  have ex : ∃ k, (f ^ (k + 1)) v = 0 := by
+    obtain ⟨n, hn⟩ := hf
+    exact ⟨n, by rw [pow_succ, hn, zero_mul, LinearMap.zero_apply]⟩
+  refine ⟨Nat.find ex, ?_, ?_, Nat.find_spec ex⟩
+  · by_contra hlt
+    exact hm (Module.End.pow_map_zero_of_le (by omega) (Nat.find_spec ex))
+  · rcases Nat.eq_zero_or_eq_succ_pred (Nat.find ex) with h0 | hs
+    · rw [h0, pow_zero, Module.End.one_apply]
+      rintro rfl
+      exact hm (map_zero _)
+    · rw [hs]
+      exact Nat.find_min ex (by omega)
+
+end JordanChain
 
 /-! ## Matrices, and extension of scalars -/
 
@@ -817,86 +965,54 @@ theorem soCentMat_eq_ker {R : Type*} [CommRing R] (J A : Matrix n n R) :
     soCentMatMap, LinearMap.coe_mk, AddHom.coe_mk, Prod.mk_eq_zero, Matrix.mul_neg]
   rw [← eq_neg_iff_add_eq_zero, sub_eq_zero, eq_comm (a := B * A)]
 
-/-- `K ⊗[F] Mat_n(F) ≃ Mat_n(K)`, `K`-linearly: `a ⊗ M ↦ a • M.map (algebraMap F K)`. -/
-def matrixBaseChangeEquiv (F K : Type*) [Field F] [Field K] [Algebra F K] :
-    K ⊗[F] Matrix n n F ≃ₗ[K] Matrix n n K :=
-  { (matrixEquivTensor n F K).symm.toLinearEquiv with
-    map_smul' := fun c x => by
-      change (matrixEquivTensor n F K).symm (c • x) = c • (matrixEquivTensor n F K).symm x
-      induction x using TensorProduct.inductionOn with
-      | tmul a M =>
-        rw [TensorProduct.smul_tmul', matrixEquivTensor_apply_symm, matrixEquivTensor_apply_symm,
-          smul_smul, smul_eq_mul]
-      | add x y hx hy => rw [smul_add, map_add, hx, hy, map_add, smul_add] }
+/-- `B ↦ (Bᵀ J + J B, B A − A B, B C − C B)`, whose kernel is `so(J)_A ⊓ so(J)_C`. -/
+def jointMatMap {R : Type*} [CommRing R] (J A C : Matrix n n R) :
+    Matrix n n R →ₗ[R] (Fin 3 → Matrix n n R) where
+  toFun B := ![B.transpose * J + J * B, B * A - A * B, B * C - C * B]
+  map_add' B B' := by
+    funext i; fin_cases i <;>
+      simp [Matrix.transpose_add, add_mul, mul_add, sub_eq_add_neg, neg_add] <;> abel
+  map_smul' c B := by
+    funext i; fin_cases i <;> simp [Matrix.transpose_smul, smul_sub, smul_add]
 
-@[simp]
-theorem matrixBaseChangeEquiv_tmul (F K : Type*) [Field F] [Field K] [Algebra F K] (a : K)
-    (M : Matrix n n F) :
-    matrixBaseChangeEquiv (n := n) F K (a ⊗ₜ M) = a • M.map (algebraMap F K) :=
-  matrixEquivTensor_apply_symm _ _ _ _ _
+theorem ker_jointMatMap {R : Type*} [CommRing R] (J A C : Matrix n n R) :
+    LinearMap.ker (jointMatMap J A C) = soCentMat J A ⊓ soCentMat J C := by
+  ext B
+  simp only [LinearMap.mem_ker, Submodule.mem_inf, soCentMat_eq_ker, soCentMatMap,
+    LinearMap.coe_mk, AddHom.coe_mk, jointMatMap, Prod.mk_eq_zero]
+  constructor
+  · intro h
+    have h0 := congrFun h 0
+    have h1 := congrFun h 1
+    have h2 := congrFun h 2
+    simp at h0 h1 h2
+    exact ⟨⟨h0, h1⟩, h0, h2⟩
+  · rintro ⟨⟨h0, h1⟩, -, h2⟩
+    funext i; fin_cases i <;> simp [h0, h1, h2]
+
+theorem jointMatMap_map {R S : Type*} [CommRing R] [CommRing S] (φ : R →+* S)
+    (J A C M : Matrix n n R) (i : Fin 3) :
+    jointMatMap (J.map φ) (A.map φ) (C.map φ) (M.map φ) i = (jointMatMap J A C M i).map φ := by
+  fin_cases i <;>
+    simp [jointMatMap, ← Matrix.transpose_map, ← RingHom.mapMatrix_apply, map_mul, map_add,
+      map_sub] <;>
+    rfl
 
 /-- **`dim so(J)_A` is unchanged by extension of scalars.** -/
 theorem finrank_soCentMat_map {F K : Type*} [Field F] [Field K] [Algebra F K]
     (J A : Matrix n n F) :
     Module.finrank K (soCentMat (J.map (algebraMap F K)) (A.map (algebraMap F K))) =
       Module.finrank F (soCentMat J A) := by
-  set f := soCentMatMap J A
-  let e1 := matrixBaseChangeEquiv (n := n) F K
-  let e2 : K ⊗[F] (Matrix n n F × Matrix n n F) ≃ₗ[K] Matrix n n K × Matrix n n K :=
-    (TensorProduct.prodRight F K K _ _).trans (e1.prodCongr e1)
-  set g := soCentMatMap (J.map (algebraMap F K)) (A.map (algebraMap F K))
-  have hcomm : ∀ x, g (e1 x) = e2 (f.baseChange K x) := by
-    intro x
-    induction x using TensorProduct.inductionOn with
-    | tmul a M =>
-      show g ((matrixEquivTensor n F K).symm (a ⊗ₜ M)) =
-        ((matrixEquivTensor n F K).symm (a ⊗ₜ (f M).1), (matrixEquivTensor n F K).symm (a ⊗ₜ (f M).2))
-      rw [matrixEquivTensor_apply_symm, matrixEquivTensor_apply_symm, matrixEquivTensor_apply_symm]
-      simp only [g, f, soCentMatMap, LinearMap.coe_mk, AddHom.coe_mk, Matrix.transpose_smul,
-        Matrix.smul_mul, Matrix.mul_smul, ← smul_add, ← smul_sub]
-      rw [← Matrix.transpose_map]
-      simp only [← RingHom.mapMatrix_apply, map_add, map_sub, map_mul]
-    | add x y hx hy => rw [map_add, map_add, hx, hy, map_add, map_add]
-  have hg : g = e2.toLinearMap ∘ₗ f.baseChange K ∘ₗ e1.symm.toLinearMap := by
-    ext y : 1
-    simp only [LinearMap.coe_comp, LinearEquiv.coe_coe, Function.comp_apply, ← hcomm,
-      LinearEquiv.apply_symm_apply]
-  have hker : LinearMap.ker g = (LinearMap.ker (f.baseChange K)).map e1.toLinearMap := by
-    ext y
-    rw [Submodule.mem_map_equiv, LinearMap.mem_ker, LinearMap.mem_ker, hg]
-    simp
-  rw [soCentMat_eq_ker, soCentMat_eq_ker, hker, LinearEquiv.finrank_map_eq]
-  exact (LinearMap.tensorKerEquiv K K f).finrank_eq.symm.trans Module.finrank_baseChange
+  have h := finrank_ker_map_matrix _ _ (jointMatMap_map (algebraMap F K) J A A)
+  rwa [ker_jointMatMap, ker_jointMatMap, inf_idem, inf_idem] at h
 
 /-- **`so(J)_A` over `K` is spanned by `so(J)_A` over `F`.** -/
 theorem soCentMat_map_eq_span {F K : Type*} [Field F] [Field K] [Algebra F K]
     (J A : Matrix n n F) :
     soCentMat (J.map (algebraMap F K)) (A.map (algebraMap F K)) =
       Submodule.span K ((fun M : Matrix n n F => M.map (algebraMap F K)) '' soCentMat J A) := by
-  set φ := algebraMap F K
-  have hle : Submodule.span K ((fun M : Matrix n n F => M.map φ) '' soCentMat J A) ≤
-      soCentMat (J.map φ) (A.map φ) := by
-    refine Submodule.span_le.2 ?_
-    rintro _ ⟨M, hM, rfl⟩
-    rw [SetLike.mem_coe, soCentMat_eq_ker, LinearMap.mem_ker] at hM ⊢
-    have h1 := congrArg (fun p : Matrix n n F × Matrix n n F => p.1.map φ) hM
-    have h2 := congrArg (fun p : Matrix n n F × Matrix n n F => p.2.map φ) hM
-    simp only [soCentMatMap, LinearMap.coe_mk, AddHom.coe_mk, Prod.fst_zero, Prod.snd_zero,
-      Matrix.map_zero _ (map_zero φ)] at h1 h2
-    simp only [soCentMatMap, LinearMap.coe_mk, AddHom.coe_mk, Prod.mk_eq_zero]
-    rw [← Matrix.transpose_map]
-    simp only [← RingHom.mapMatrix_apply, ← map_mul, ← map_add, ← map_sub] at h1 h2 ⊢
-    exact ⟨h1, h2⟩
-  refine (Submodule.eq_of_le_of_finrank_le hle ?_).symm
-  let b := Module.finBasis F (soCentMat J A)
-  have hli : LinearIndependent K fun i => ((b i : Matrix n n F)).map φ := by
-    have h1 := Module.Flat.linearIndependent_one_tmul (S := K)
-      (b.linearIndependent.map' (soCentMat J A).subtype (Submodule.ker_subtype _))
-    have h2 := h1.map' (matrixBaseChangeEquiv (n := n) F K).toLinearMap (LinearEquiv.ker _)
-    simpa [Function.comp_def, matrixBaseChangeEquiv_tmul] using h2
-  rw [finrank_soCentMat_map, Module.finrank_eq_card_basis b, ← finrank_span_eq_card hli]
-  exact Submodule.finrank_mono (Submodule.span_mono (by
-    rintro _ ⟨i, rfl⟩; exact ⟨_, (b i).2, rfl⟩))
+  have h := ker_map_matrix_eq_span _ _ (jointMatMap_map (algebraMap F K) J A A)
+  rwa [ker_jointMatMap, ker_jointMatMap, inf_idem, inf_idem] at h
 
 end Matrix
 

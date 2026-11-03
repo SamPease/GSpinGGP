@@ -591,6 +591,18 @@ theorem ι_specP {Q : QuadraticForm K V} (g : GSpin Q) (v : V) :
       (((g : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) :=
   ι_conjV g.2 v
 
+/-- `g ι(v) = ι(P(g) v) g` for `g ∈ GSpin(V)`. -/
+theorem mul_ι_eq_ι_specP_mul {Q : QuadraticForm K V} (g : GSpin Q) (v : V) :
+    ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * ι Q v =
+      ι Q ((specP Q g : V →ₗ[K] V) v) * ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) := by
+  rw [LinearEquiv.coe_coe, ι_specP, mul_assoc, Units.inv_mul, mul_one]
+
+omit [Invertible (2 : K)] in
+/-- Elements of `GSpin(V)` are even. -/
+theorem mem_evenOdd_zero_of_mem_GSpin {Q : QuadraticForm K V} (g : GSpin Q) :
+    ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∈ evenOdd Q 0 := by
+  rw [← even_toSubmodule]; exact g.2.1
+
 /-- `P(g)` is an isometry of `(V, q)` (Thesis §5.1.2). -/
 theorem specP_isometry {Q : QuadraticForm K V} (g : GSpin Q) (v : V) :
     Q (specP Q g v) = Q v := by
@@ -750,8 +762,8 @@ theorem det_specP [Module.Finite K V] {Q : QuadraticForm K V} (g : GSpin Q) :
           _ = ω * (ι Q m₁ * ι Q m₂) := by rw [hs, map_one, one_mul]
       rw [mul_assoc _ x, ih, ← mul_assoc, mul_assoc (ι Q m₁), e1]
       simp only [mul_assoc]
-  have hg0 : ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∈ evenOdd Q 0 := by
-    rw [← even_toSubmodule]; exact g.2.1
+  have hg0 : ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∈ evenOdd Q 0 :=
+    mem_evenOdd_zero_of_mem_GSpin g
   have hconj : ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * ω *
       (((g : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) = ω := by
     rw [hcomm _ hg0, mul_assoc, Units.mul_inv, mul_one]
@@ -806,8 +818,8 @@ theorem ker_specP [Module.Finite K V] {Q : QuadraticForm K V} (hQ : IsNondeg Q) 
       change ι Q v = _ at h
       conv_lhs => rw [h]
       rw [mul_assoc, Units.inv_mul, mul_one]
-    have h0 : ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∈ evenOdd Q 0 := by
-      rw [← even_toSubmodule]; exact g.2.1
+    have h0 : ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∈ evenOdd Q 0 :=
+      mem_evenOdd_zero_of_mem_GSpin g
     obtain ⟨r, hr⟩ := eq_algebraMap_of_commute_ι hQ h0 hcomm
     have hr0 : r ≠ 0 := by
       rintro rfl
@@ -890,10 +902,10 @@ algebra.  (For a hyperbolic plane `GSpin(V)` is a split torus `G_m²`, for an an
 theorem isComm_GSpin_of_finrank_eq_two [Module.Finite K V] {Q : QuadraticForm K V}
     (hV : finrank K V = 2) (g h : GSpin Q) : g * h = h * g := by
   obtain ⟨e, he⟩ := exists_orthogonal_basis_fin_two Q hV
-  have hg : ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∈ evenOdd Q 0 := by
-    rw [← even_toSubmodule]; exact g.2.1
-  have hh : ((h : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∈ evenOdd Q 0 := by
-    rw [← even_toSubmodule]; exact h.2.1
+  have hg : ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∈ evenOdd Q 0 :=
+    mem_evenOdd_zero_of_mem_GSpin g
+  have hh : ((h : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∈ evenOdd Q 0 :=
+    mem_evenOdd_zero_of_mem_GSpin h
   obtain ⟨a, b, hab⟩ := exists_eq_smul_one_add_smul_of_even e he _ hg
   obtain ⟨c, d, hcd⟩ := exists_eq_smul_one_add_smul_of_even e he _ hh
   apply Subtype.ext; apply Units.ext
@@ -1306,6 +1318,22 @@ theorem ι_adV {Q : QuadraticForm K V} {X : CliffordAlgebra Q} (hX : X ∈ gspin
   obtain ⟨w, hw⟩ := hX.2 v
   rw [Ring.lie_def] at hw
   rw [adV_apply, ← hw, ιInv_ι]
+
+/-- `adV X` is nilpotent for nilpotent `X ∈ gspin(V)`: `ι((adV X)^j v) = (ad X)^j (ι v)`, and
+`ad X` is nilpotent (Mathlib's `LieAlgebra.ad_nilpotent_of_nilpotent`). -/
+theorem isNilpotent_adV {Q : QuadraticForm K V} {X : CliffordAlgebra Q} (hX : X ∈ gspin Q)
+    (hn : IsNilpotent X) : IsNilpotent (adV Q X) := by
+  obtain ⟨k, hk⟩ := LieAlgebra.ad_nilpotent_of_nilpotent (R := K) hn
+  have h : ∀ j v, ι Q ((adV Q X ^ j) v) = (LieAlgebra.ad K _ X ^ j) (ι Q v) := by
+    intro j
+    induction j with
+    | zero => intro v; rfl
+    | succ j ih =>
+      intro v
+      rw [pow_succ', Module.End.mul_apply, ι_adV hX, ih, pow_succ', Module.End.mul_apply,
+        LieAlgebra.ad_apply, Ring.lie_def]
+  refine ⟨k, LinearMap.ext fun v => CliffordAlgebra.ι_injective Q ?_⟩
+  rw [h, hk, LinearMap.zero_apply, LinearMap.zero_apply, map_zero]
 
 /-- `adV X` is skew for the bilinear form of `Q`, for `X ∈ gspin(V)` (Thesis Prop. 5.1.3.1). -/
 theorem bform_adV {Q : QuadraticForm K V} {X : CliffordAlgebra Q} (hX : X ∈ gspin Q) (u w : V) :
@@ -2018,6 +2046,45 @@ theorem exists_adapted_basis [Module.Finite K V] (hanti : Antitone Vf) (N : ℕ)
     by_contra hne
     exact hxa (hv' (Finsupp.mem_support_iff.mpr hne))
 
+/-! ### Maps preserving or raising a filtration -/
+
+/-- `A` maps every step `V_{≥w}` of a filtration into itself. -/
+def PresFil (Vf : ℤ → Submodule K V) (A : V →ₗ[K] V) : Prop := ∀ w, ∀ v ∈ Vf w, A v ∈ Vf w
+
+/-- `A` raises weights: `A V_{≥w} ⊆ V_{≥w+1}`. -/
+def RaisesFil (Vf : ℤ → Submodule K V) (A : V →ₗ[K] V) : Prop :=
+  ∀ w, ∀ v ∈ Vf w, A v ∈ Vf (w + 1)
+
+theorem PresFil.comp {A B : V →ₗ[K] V} (hA : PresFil Vf A) (hB : PresFil Vf B) :
+    PresFil Vf (A ∘ₗ B) :=
+  fun w v hv => hA w _ (hB w v hv)
+
+theorem RaisesFil.comp_presFil {A B : V →ₗ[K] V} (hA : RaisesFil Vf A) (hB : PresFil Vf B) :
+    RaisesFil Vf (A ∘ₗ B) := fun w v hv => hA w _ (hB w v hv)
+
+theorem PresFil.comp_raisesFil {A B : V →ₗ[K] V} (hA : PresFil Vf A) (hB : RaisesFil Vf B) :
+    RaisesFil Vf (A ∘ₗ B) := fun w v hv => hA (w + 1) _ (hB w v hv)
+
+theorem RaisesFil.add {A B : V →ₗ[K] V} (hA : RaisesFil Vf A) (hB : RaisesFil Vf B) :
+    RaisesFil Vf (A + B) := fun w v hv => add_mem (hA w v hv) (hB w v hv)
+
+/-- An endomorphism raising a filtration `Vf a = ⊤ ⊇ ⋯ ⊇ Vf (a + n) = ⊥` is nilpotent. -/
+theorem RaisesFil.isNilpotent {A : V →ₗ[K] V} (hA : RaisesFil Vf A) {a : ℤ} {n : ℕ}
+    (htop : Vf a = ⊤) (hbot : Vf (a + n) = ⊥) : IsNilpotent A := by
+  refine ⟨n, LinearMap.ext fun v => ?_⟩
+  have key : ∀ k : ℕ, ∀ v, (A ^ k) v ∈ Vf (a + k) := by
+    intro k
+    induction k with
+    | zero => intro v; rw [Nat.cast_zero, add_zero, htop]; trivial
+    | succ k ih =>
+      intro v
+      rw [pow_succ', Module.End.mul_apply]
+      have := hA _ _ (ih v)
+      rwa [show a + k + 1 = a + ↑(k + 1) by push_cast; ring] at this
+  have := key n v
+  rw [hbot] at this
+  simpa using this
+
 end WeightFiltration
 
 section FlagWeights
@@ -2238,7 +2305,7 @@ omit [Invertible (2 : K)] in
 `≥ m + w + 1`. -/
 theorem contractLeft_polar_mem_wtFil {x : CliffordAlgebra Q} (hx0 : x ∈ evenOdd Q 0)
     {P : V →ₗ[K] V} (hPx : ∀ v, x * ι Q v = ι Q (P v) * x)
-    (hP : ∀ w, ∀ v ∈ Vf w, P v - v ∈ Vf (w + 1)) {m : ℤ} (hxm : x ∈ wtFil Q Vf m)
+    (hP : RaisesFil Vf (P - LinearMap.id)) {m : ℤ} (hxm : x ∈ wtFil Q Vf m)
     {w : ℤ} {v : V} (hv : v ∈ Vf w) :
     contractLeft (QuadraticMap.polarBilin Q v) x ∈ wtFil Q Vf (m + w + 1) := by
   rw [← ι_mul_sub_involute_mul, involute_eq_of_mem_even hx0, hPx, ← sub_mul, ← map_sub,
@@ -2252,7 +2319,7 @@ theorem exists_sub_algebraMap_mem_wtFil [Module.Finite K V] (hQ : IsNondeg Q) {N
     (hV : IsWtFil Q Vf N) (hdual : ∀ w, (bform Q).orthogonal (Vf (w + 1)) ≤ Vf (-w))
     {x : CliffordAlgebra Q} (hx0 : x ∈ evenOdd Q 0)
     {P : V →ₗ[K] V} (hPx : ∀ v, x * ι Q v = ι Q (P v) * x)
-    (hP : ∀ w, ∀ v ∈ Vf w, P v - v ∈ Vf (w + 1)) {m : ℤ} (hxm : x ∈ wtFil Q Vf m) :
+    (hP : RaisesFil Vf (P - LinearMap.id)) {m : ℤ} (hxm : x ∈ wtFil Q Vf m) :
     ∃ c : K, x - algebraMap K _ c ∈ wtFil Q Vf (m + 1) := by
   classical
   obtain ⟨s, b, wt, hb, hcoord⟩ := exists_adapted_basis hV.anti (N + 1)
@@ -2294,7 +2361,7 @@ theorem exists_sub_algebraMap_mem_wtFil_one [Module.Finite K V] (hQ : IsNondeg Q
     (hV : IsWtFil Q Vf N) (hdual : ∀ w, (bform Q).orthogonal (Vf (w + 1)) ≤ Vf (-w))
     {x : CliffordAlgebra Q} (hx0 : x ∈ evenOdd Q 0)
     {P : V →ₗ[K] V} (hPx : ∀ v, x * ι Q v = ι Q (P v) * x)
-    (hP : ∀ w, ∀ v ∈ Vf w, P v - v ∈ Vf (w + 1)) :
+    (hP : RaisesFil Vf (P - LinearMap.id)) :
     ∃ c : K, x - algebraMap K _ c ∈ wtFil Q Vf 1 := by
   have hup : ∀ k : ℕ, x ∈ wtFil Q Vf (-k) → x ∈ wtFil Q Vf 0 := by
     intro k
@@ -2318,7 +2385,7 @@ theorem sub_one_mem_wtFil_one [Module.Finite K V] (hQ : IsNondeg Q) {N : ℕ}
     (hV : IsWtFil Q Vf N) (hdual : ∀ w, (bform Q).orthogonal (Vf (w + 1)) ≤ Vf (-w))
     {x : CliffordAlgebra Q} (hx0 : x ∈ evenOdd Q 0)
     {P : V →ₗ[K] V} (hPx : ∀ v, x * ι Q v = ι Q (P v) * x)
-    (hP : ∀ w, ∀ v ∈ Vf w, P v - v ∈ Vf (w + 1)) (hx : IsNilpotent (x - 1)) :
+    (hP : RaisesFil Vf (P - LinearMap.id)) (hx : IsNilpotent (x - 1)) :
     x - 1 ∈ wtFil Q Vf 1 := by
   obtain ⟨c, hc⟩ := exists_sub_algebraMap_mem_wtFil_one hQ hV hdual hx0 hPx hP
   have hcomm : Commute (x - 1) (x - algebraMap K _ c) :=
@@ -2347,6 +2414,24 @@ theorem IsotropicFlag.isWtFil (F : IsotropicFlag Q) : IsWtFil Q (flagWt F) F.len
   top _ ha := F.flagWt_eq_top ha
   bot _ ha := F.flagWt_eq_bot ha
 
+/-- An element `y ∈ K^×·N_F` with `y − 1` nilpotent is `1` plus positive weight. -/
+theorem sub_one_mem_wtFil_of_mem_flagUnipSO [Module.Finite K V] (hQ : IsNondeg Q) {y : GSpin Q}
+    (hy : y ∈ flagUnipSO F)
+    (hy' : IsNilpotent (((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1)) :
+    ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1 ∈ wtFil Q (flagWt F) 1 :=
+  sub_one_mem_wtFil_one hQ F.isWtFil (F.orthogonal_flagWt_le hQ)
+    (mem_evenOdd_zero_of_mem_GSpin y)
+    (P := (specP Q y : V →ₗ[K] V)) (mul_ι_eq_ι_specP_mul y) (F.specP_sub_mem_flagWt hy) hy'
+
+/-- An element of `K^× · N_F` (`P(g)` trivial on the graded pieces) is a scalar plus positive
+weight. -/
+theorem exists_sub_algebraMap_mem_wtFil_of_raisesFil [Module.Finite K V] (hQ : IsNondeg Q)
+    {g : GSpin Q} (hg : RaisesFil (flagWt F) ((specP Q g : V →ₗ[K] V) - LinearMap.id)) :
+    ∃ c : K, ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - algebraMap K _ c ∈
+      wtFil Q (flagWt F) 1 :=
+  exists_sub_algebraMap_mem_wtFil_one hQ F.isWtFil (F.orthogonal_flagWt_le hQ)
+    (mem_evenOdd_zero_of_mem_GSpin g) (P := (specP Q g : V →ₗ[K] V)) (mul_ι_eq_ι_specP_mul g) hg
+
 /-- **The lift of the unipotent radical** (finite-dimensional nondegenerate case): for
 `g, h ∈ K^×·N_F` with `g − 1`, `h − 1` nilpotent, `gh − 1` is nilpotent.  Both `g − 1` and
 `h − 1` have positive weight for the weight filtration of `C(V)` attached to the flag. -/
@@ -2355,19 +2440,8 @@ theorem isNilpotent_mul_sub_one_of_flagUnipSO_of_nondeg [Module.Finite K V] (hQ 
     (hg' : IsNilpotent (((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1))
     (hh' : IsNilpotent (((h : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1)) :
     IsNilpotent ((((g * h : GSpin Q) : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1) := by
-  have hone : ∀ y : GSpin Q, y ∈ flagUnipSO F →
-      IsNilpotent (((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1) →
-      ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1 ∈ wtFil Q (flagWt F) 1 := by
-    intro y hy hy'
-    have hx0 : ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∈ evenOdd Q 0 := by
-      have := y.2.1
-      rw [← Subalgebra.mem_toSubmodule, even_toSubmodule] at this
-      exact this
-    refine sub_one_mem_wtFil_one hQ F.isWtFil (F.orthogonal_flagWt_le hQ) hx0
-      (P := (specP Q y : V →ₗ[K] V)) (fun v => ?_) (F.specP_sub_mem_flagWt hy) hy'
-    rw [LinearEquiv.coe_coe, ι_specP, mul_assoc, Units.inv_mul, mul_one]
-  have h1 := hone g hg hg'
-  have h2 := hone h hh hh'
+  have h1 := sub_one_mem_wtFil_of_mem_flagUnipSO hQ hg hg'
+  have h2 := sub_one_mem_wtFil_of_mem_flagUnipSO hQ hh hh'
   have e : (((g * h : GSpin Q) : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1 =
       (((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1) *
         (((h : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1) +
@@ -2554,10 +2628,8 @@ theorem isNilpotent_mul_sub_one_of_flagUnipSO_of_finite {F : IsotropicFlag Q}
       IsNilpotent (((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1) →
       π ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1 ∈ wtFil Q0 Vf0 1 := by
     intro y hy hy'
-    have hx0 : ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∈ evenOdd Q 0 := by
-      have := y.2.1
-      rw [← Subalgebra.mem_toSubmodule, even_toSubmodule] at this
-      exact this
+    have hx0 : ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∈ evenOdd Q 0 :=
+      mem_evenOdd_zero_of_mem_GSpin y
     have hPR : ∀ r ∈ R, specP Q y r ∈ R := by
       intro r hr
       rw [LinearMap.mem_ker]
@@ -2575,8 +2647,8 @@ theorem isNilpotent_mul_sub_one_of_flagUnipSO_of_finite {F : IsotropicFlag Q}
         rw [map_apply_ι]
         exact congrArg _ (hp_left u).symm
       have hcomm : ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * ι Q (u : V) =
-          ι Q (specP Q y u) * ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) := by
-        rw [ι_specP, mul_assoc, Units.inv_mul, mul_one]
+          ι Q (specP Q y u) * ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) :=
+        mul_ι_eq_ι_specP_mul y u
       rw [e]
       change π _ * π _ = _
       rw [← map_mul, hcomm, map_mul, map_apply_ι]
@@ -2783,10 +2855,8 @@ theorem specP_sub_mem_of_mem_range {U : Submodule K V} {g : GSpin Q}
   set b : CliffordAlgebra Q :=
     (((g : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)
   have hab : a * b = 1 := Units.mul_inv _
-  have ha0 : a ∈ evenOdd Q 0 := by
-    have := g.2.1
-    rw [← Subalgebra.mem_toSubmodule, even_toSubmodule] at this
-    exact this
+  have ha0 : a ∈ evenOdd Q 0 :=
+    mem_evenOdd_zero_of_mem_GSpin g
   have hc := ι_mul_sub_involute_mul_mem_range hg v
   rw [involute_eq_of_mem_even ha0] at hc
   have e : ι Q (specP Q g v - v) = -((ι Q v * a - a * ι Q v) * b) := by
@@ -3016,6 +3086,12 @@ def flagUnip {Q : QuadraticForm K V} (F : IsotropicFlag Q) : Subgroup (GSpin Q) 
 
 theorem flagUnip_le_flagUnipSO {Q : QuadraticForm K V} (F : IsotropicFlag Q) :
     flagUnip F ≤ flagUnipSO F := fun _ hg => ⟨hg.1, hg.2.1, hg.2.2.1⟩
+
+/-- An element of `N_F` is `1` plus positive weight (this uses that `u − 1` is nilpotent). -/
+theorem sub_one_mem_wtFil_of_mem_flagUnip [Module.Finite K V] {Q : QuadraticForm K V}
+    (hQ : IsNondeg Q) {F : IsotropicFlag Q} {u : GSpin Q} (hu : u ∈ flagUnip F) :
+    ((u : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1 ∈ wtFil Q (flagWt F) 1 :=
+  sub_one_mem_wtFil_of_mem_flagUnipSO hQ (flagUnip_le_flagUnipSO F hu) hu.2.2.2
 
 /-- `N_F` is normalized by `P_F` (Thesis §5.2: `N` is the unipotent radical of `P`). -/
 theorem flagUnip_conj {Q : QuadraticForm K V} {F : IsotropicFlag Q} {c n : GSpin Q}
@@ -3283,8 +3359,8 @@ theorem specP_incl_inr (a : GSpin d.QW) (z : d.Z) :
   apply ι_injective d.QV
   have hu : ∀ w, QuadraticMap.polar d.QV (QuadraticMap.Isometry.inl d.QW d.QZ w) (0, z) = 0 :=
     fun w => by simp
-  have h0 : ((a : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) ∈ evenOdd d.QW 0 := by
-    rw [← even_toSubmodule]; exact a.2.1
+  have h0 : ((a : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) ∈ evenOdd d.QW 0 :=
+    mem_evenOdd_zero_of_mem_GSpin a
   have e2 : ((((d.incl a : GSpin d.QV) : (CliffordAlgebra d.QV)ˣ)⁻¹ : (CliffordAlgebra d.QV)ˣ) :
       CliffordAlgebra d.QV) = CliffordAlgebra.map (QuadraticMap.Isometry.inl d.QW d.QZ)
         (((a⁻¹ : GSpin d.QW) : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) := by
