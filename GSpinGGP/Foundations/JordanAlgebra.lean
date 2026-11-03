@@ -17,9 +17,10 @@ that `ad x` preserves (`mapsTo_of_mem_adjoin_singleton`). For `x ∈ gspin(V)` b
 `gspin(V)` (`exists_jordan_gspin`).
 
 For a unit `x`, `s` is a unit, and `Ad s = L_s R_{s⁻¹}` is the semisimple part of
-`Ad x = L_x R_{x⁻¹}`, hence a polynomial in `Ad x` (`conj_mem_adjoin_of_isSemisimple_mulLeft`).
+`Ad x = L_x R_{x⁻¹}` (`Ad x − Ad s` is nilpotent and commutes with `Ad s`), hence a polynomial in
+`Ad x` (`conj_mem_adjoin_of_isSemisimple_mulLeft`).
 For `x ∈ GSpin(V)` this gives the multiplicative Jordan decomposition `x = s u` in `GSpin(V)`
-(`exists_jordan_GSpin`).
+(`exists_mul_jordan_GSpin`).
 -/
 
 noncomputable section
@@ -97,51 +98,54 @@ theorem mapsTo_of_mem_adjoin_singleton {R M : Type*} [CommSemiring R] [AddCommMo
 
 section Units
 
-omit [PerfectField F] [FiniteDimensional F A] in
-/-- Elements of `F[x]` commute. -/
-theorem commute_of_mem_adjoin_singleton {x p q : A} (hp : p ∈ Algebra.adjoin F {x})
-    (hq : q ∈ Algebra.adjoin F {x}) : Commute p q :=
+/-- Elements of `R[x]` commute. -/
+theorem commute_of_mem_adjoin_singleton {R B : Type*} [CommSemiring R] [Semiring B] [Algebra R B]
+    {x p q : B} (hp : p ∈ Algebra.adjoin R {x}) (hq : q ∈ Algebra.adjoin R {x}) : Commute p q :=
   Algebra.commute_of_mem_adjoin_singleton_of_commute hq
     (Algebra.commute_of_mem_adjoin_self hp).symm
 
-omit [PerfectField F] [FiniteDimensional F A] in
-/-- If `x` is a unit, `s ∈ F[x]` and `x − s` is nilpotent, then `s` is a unit. -/
-theorem isUnit_of_mem_adjoin_of_isNilpotent_sub {x s : A} (hx : IsUnit x)
-    (hs : s ∈ Algebra.adjoin F {x}) (hn : IsNilpotent (x - s)) : IsUnit s := by
-  have h := (neg_sub x s ▸ hn.neg).isUnit_add_left_of_commute hx
-    ((Algebra.commute_of_mem_adjoin_self hs).symm.sub_left (Commute.refl x))
+/-- If `x` is a unit and `x − s` is nilpotent and commutes with `x`, then `s` is a unit. -/
+theorem IsUnit.of_isNilpotent_sub {R : Type*} [Ring R] {x s : R} (hx : IsUnit x)
+    (hc : Commute x s) (hn : IsNilpotent (x - s)) : IsUnit s := by
+  have h := (neg_sub x s ▸ hn.neg).isUnit_add_left_of_commute hx (hc.symm.sub_left (Commute.refl x))
   rwa [add_sub_cancel] at h
 
-omit [PerfectField F] in
-/-- For units `x`, `s` with `s ∈ F[x]` and `x − s` nilpotent, `s⁻¹ ∈ F[x⁻¹]` and `x⁻¹ − s⁻¹` is
+/-- If `x`, `s` are commuting units with `x − s` nilpotent, then `x⁻¹ − s⁻¹ = x⁻¹(s − x)s⁻¹` is
 nilpotent. -/
-theorem inv_mem_adjoin_and_isNilpotent_sub {x s : Aˣ} (hs : (s : A) ∈ Algebra.adjoin F {(x : A)})
-    (hn : IsNilpotent ((x : A) - s)) :
-    ((s⁻¹ : Aˣ) : A) ∈ Algebra.adjoin F {((x⁻¹ : Aˣ) : A)} ∧
-      IsNilpotent (((x⁻¹ : Aˣ) : A) - ((s⁻¹ : Aˣ) : A)) := by
-  have hxi : ((x⁻¹ : Aˣ) : A) ∈ Algebra.adjoin F {(x : A)} :=
-    TauCeti.Units.coe_inv_mem_adjoin x (IsIntegral.of_finite F _)
-  have hsi : ((s⁻¹ : Aˣ) : A) ∈ Algebra.adjoin F {(x : A)} :=
-    Algebra.adjoin_le (Set.singleton_subset_iff.2 hs)
-      (TauCeti.Units.coe_inv_mem_adjoin s (IsIntegral.of_finite F _))
-  have hle : Algebra.adjoin F {(x : A)} ≤ Algebra.adjoin F {((x⁻¹ : Aˣ) : A)} := by
-    refine Algebra.adjoin_le (Set.singleton_subset_iff.2 ?_)
-    simpa using TauCeti.Units.coe_inv_mem_adjoin x⁻¹ (IsIntegral.of_finite F _)
-  refine ⟨hle hsi, ?_⟩
-  have hsx : (s : A) - x ∈ Algebra.adjoin F {(x : A)} :=
-    Subalgebra.sub_mem _ hs (Algebra.self_mem_adjoin_singleton F _)
-  have h : ((x⁻¹ : Aˣ) : A) - ((s⁻¹ : Aˣ) : A) =
-      ((x⁻¹ : Aˣ) : A) * (((s : A) - x) * ((s⁻¹ : Aˣ) : A)) := by
+theorem Units.isNilpotent_inv_sub_inv {R : Type*} [Ring R] {x s : Rˣ} (hc : Commute (x : R) s)
+    (hn : IsNilpotent ((x : R) - s)) :
+    IsNilpotent (((x⁻¹ : Rˣ) : R) - ((s⁻¹ : Rˣ) : R)) := by
+  have h : ((x⁻¹ : Rˣ) : R) - ((s⁻¹ : Rˣ) : R) =
+      ((x⁻¹ : Rˣ) : R) * (((s : R) - x) * ((s⁻¹ : Rˣ) : R)) := by
     rw [sub_mul, Units.mul_inv, mul_sub, mul_one, ← mul_assoc, Units.inv_mul, one_mul]
   rw [h]
-  have hn' : IsNilpotent ((s : A) - x) := by rw [← neg_sub]; exact hn.neg
-  exact (commute_of_mem_adjoin_singleton hxi
-    (Subalgebra.mul_mem _ hsx hsi)).isNilpotent_mul_left
-      ((commute_of_mem_adjoin_singleton hsx hsi).isNilpotent_mul_right hn')
+  have hn' : IsNilpotent ((s : R) - x) := by rw [← neg_sub]; exact hn.neg
+  have hsx : Commute ((s : R) - x) ((s⁻¹ : Rˣ) : R) :=
+    ((Commute.refl (s : R)).sub_left hc).units_inv_right
+  have hxi : Commute ((x⁻¹ : Rˣ) : R) (((s : R) - x) * ((s⁻¹ : Rˣ) : R)) :=
+    ((hc.sub_right (Commute.refl (x : R))).mul_right hc.units_inv_right).units_inv_left
+  exact hxi.isNilpotent_mul_left (hsx.isNilpotent_mul_right hn')
+
+omit [PerfectField F] in
+/-- For units `x`, `s` with `s ∈ F[x]`: `s⁻¹ ∈ F[x]`. -/
+theorem Units.inv_mem_adjoin_of_mem_adjoin {x s : Aˣ}
+    (hs : (s : A) ∈ Algebra.adjoin F {(x : A)}) :
+    ((s⁻¹ : Aˣ) : A) ∈ Algebra.adjoin F {(x : A)} :=
+  Algebra.adjoin_le (Set.singleton_subset_iff.2 hs)
+    (TauCeti.Units.coe_inv_mem_adjoin s (IsIntegral.of_finite F _))
+
+omit [PerfectField F] in
+/-- For a unit `x`, `F[x] = F[x⁻¹]`. -/
+theorem Units.adjoin_inv (x : Aˣ) :
+    Algebra.adjoin F {((x⁻¹ : Aˣ) : A)} = Algebra.adjoin F {(x : A)} := by
+  refine le_antisymm (Algebra.adjoin_le (Set.singleton_subset_iff.2 ?_))
+    (Algebra.adjoin_le (Set.singleton_subset_iff.2 ?_))
+  · exact TauCeti.Units.coe_inv_mem_adjoin x (IsIntegral.of_finite F _)
+  · simpa using TauCeti.Units.coe_inv_mem_adjoin x⁻¹ (IsIntegral.of_finite F _)
 
 /-- **`Ad s` is a polynomial in `Ad x`** (`Ad y = L_y R_{y⁻¹}`), for units `x`, `s` with `s ∈ F[x]`,
-`L_s` semisimple and `x − s` nilpotent: `Ad x = Ad s + (Ad x − Ad s)` is the Jordan decomposition of
-`Ad x`. -/
+`L_s` semisimple and `x − s` nilpotent: `Ad s` is semisimple and `Ad x − Ad s` is nilpotent and
+commutes with it, so `Ad s` is the semisimple part of `Ad x`. -/
 theorem conj_mem_adjoin_of_isSemisimple_mulLeft {x s : Aˣ}
     (hs : (s : A) ∈ Algebra.adjoin F {(x : A)})
     (hss : Module.End.IsSemisimple (LinearMap.mulLeft F (s : A)))
@@ -151,19 +155,8 @@ theorem conj_mem_adjoin_of_isSemisimple_mulLeft {x s : Aˣ}
   set B := Algebra.adjoin F {(x : A)}
   have hxB : (x : A) ∈ B := Algebra.self_mem_adjoin_singleton F _
   have hxiB : ((x⁻¹ : Aˣ) : A) ∈ B := TauCeti.Units.coe_inv_mem_adjoin x (IsIntegral.of_finite F _)
-  have hsiB : ((s⁻¹ : Aˣ) : A) ∈ B :=
-    Algebra.adjoin_le (Set.singleton_subset_iff.2 hs)
-      (TauCeti.Units.coe_inv_mem_adjoin s (IsIntegral.of_finite F _))
-  -- operators `L_p R_q` with `p, q ∈ F[x]` commute
-  have hcomm : ∀ p ∈ B, ∀ q ∈ B, ∀ p' ∈ B, ∀ q' ∈ B,
-      Commute (LinearMap.mulLeft F p * LinearMap.mulRight F q)
-        (LinearMap.mulLeft F p' * LinearMap.mulRight F q') := by
-    intro p hp q hq p' hp' q' hq'
-    refine LinearMap.ext fun a => ?_
-    simp only [Module.End.mul_apply, LinearMap.mulLeft_apply, LinearMap.mulRight_apply]
-    simp only [← mul_assoc]
-    rw [(commute_of_mem_adjoin_singleton hp hp').eq, mul_assoc (p' * p * a) q' q,
-      (commute_of_mem_adjoin_singleton hq' hq).eq, ← mul_assoc]
+  have hsiB : ((s⁻¹ : Aˣ) : A) ∈ B := Units.inv_mem_adjoin_of_mem_adjoin hs
+  have hcB : ∀ {p q : A}, p ∈ B → q ∈ B → Commute p q := commute_of_mem_adjoin_singleton
   set T := LinearMap.mulLeft F (x : A) * LinearMap.mulRight F ((x⁻¹ : Aˣ) : A)
   set C := LinearMap.mulLeft F (s : A) * LinearMap.mulRight F ((s⁻¹ : Aˣ) : A)
   set t₁ := LinearMap.mulLeft F ((x : A) - s) * LinearMap.mulRight F ((x⁻¹ : Aˣ) : A)
@@ -180,21 +173,20 @@ theorem conj_mem_adjoin_of_isSemisimple_mulLeft {x s : Aˣ}
     (LinearMap.commute_mulLeft_right _ _).isNilpotent_mul_right
       (hn.map (Algebra.lmul F A))
   have hn₂ : IsNilpotent t₂ := by
-    obtain ⟨k, hk⟩ := (inv_mem_adjoin_and_isNilpotent_sub hs hn).2
+    obtain ⟨k, hk⟩ := Units.isNilpotent_inv_sub_inv (hcB hxB hs) hn
     exact (LinearMap.commute_mulLeft_right _ _).isNilpotent_mul_left
       ⟨k, by rw [LinearMap.pow_mulRight, hk, LinearMap.mulRight_zero_eq_zero]⟩
   have hnil : IsNilpotent (T - C) := by
     rw [hTC]
-    exact (hcomm _ hxs _ hxiB _ hs _ hxsi).isNilpotent_add hn₁ hn₂
+    exact (commute_mulLeft_mul_mulRight (hcB hxs hs) (hcB hxiB hxsi)).isNilpotent_add hn₁ hn₂
   have hc : Commute (T - C) C := by
     rw [hTC]
-    exact (hcomm _ hxs _ hxiB _ hs _ hsiB).add_left (hcomm _ hs _ hxsi _ hs _ hsiB)
+    exact (commute_mulLeft_mul_mulRight (hcB hxs hs) (hcB hxiB hsiB)).add_left
+      (commute_mulLeft_mul_mulRight (hcB hs hs) (hcB hxsi hsiB))
   obtain ⟨n₀, hn₀, s₀, hs₀, hnil₀, hss₀, hx₀⟩ := Module.End.exists_isNilpotent_isSemisimple (f := T)
-  have hc₀ : Commute n₀ s₀ :=
-    Algebra.commute_of_mem_adjoin_singleton_of_commute hs₀
-      (Algebra.commute_of_mem_adjoin_self hn₀).symm
   obtain ⟨-, hseq⟩ := Module.End.isNilpotent_isSemisimple_unique hnil₀ hss₀ hnil
-    (isSemisimple_conj_of_mulLeft hss) hc₀ hc (by rw [← hx₀, sub_add_cancel])
+    (isSemisimple_conj_of_mulLeft hss) (commute_of_mem_adjoin_singleton hn₀ hs₀) hc
+    (by rw [← hx₀, sub_add_cancel])
   rwa [hseq] at hs₀
 
 end Units
@@ -296,36 +288,37 @@ theorem mem_GSpin_of_mem_adjoin {Q : QuadraticForm F V} {x s : (CliffordAlgebra 
       (conj_mem_adjoin_of_isSemisimple_mulLeft ht hts htn) ⟨v, rfl⟩
     rwa [Module.End.mul_apply, LinearMap.mulRight_apply, LinearMap.mulLeft_apply,
       ← mul_assoc] at h
-  obtain ⟨hsi, hni⟩ := inv_mem_adjoin_and_isNilpotent_sub hs hn
-  have hmem : Algebra.lmul F (CliffordAlgebra Q) ((s⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∈
-      Algebra.adjoin F {Algebra.lmul F (CliffordAlgebra Q) (s : CliffordAlgebra Q)} := by
-    rw [← AlgHom.map_adjoin_singleton]
-    exact Subalgebra.mem_map.mpr
-      ⟨_, TauCeti.Units.coe_inv_mem_adjoin s (IsIntegral.of_finite F _), rfl⟩
-  have hssi := Module.End.IsSemisimple.of_mem_adjoin_singleton hss hmem
+  have hsi : ((s⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∈
+      Algebra.adjoin F {((x⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)} := by
+    rw [Units.adjoin_inv]; exact Units.inv_mem_adjoin_of_mem_adjoin hs
+  have hni := Units.isNilpotent_inv_sub_inv (commute_of_mem_adjoin_singleton
+    (Algebra.self_mem_adjoin_singleton F _) hs) hn
+  have hssi := isSemisimple_mulLeft_inv hss
   refine ⟨Algebra.adjoin_le (Set.singleton_subset_iff.2 hx.1) hs, hW hx.2.1 hs hss hn, fun v => ?_⟩
   simpa using hW ((GSpin Q).inv_mem hx).2.1 hsi hssi hni v
 
-/-- **Multiplicative Jordan decomposition in `GSpin(V)`**: `x = s u` with `s, u ∈ GSpin(V)`
-commuting, `s ∈ F[x]` with `L_s` semisimple, and `u − 1` nilpotent. -/
-theorem exists_jordan_GSpin {Q : QuadraticForm F V} {x : (CliffordAlgebra Q)ˣ} (hx : x ∈ GSpin Q) :
-    ∃ s ∈ GSpin Q, ∃ u ∈ GSpin Q, x = s * u ∧ Commute s u ∧
+/-- **Multiplicative Jordan decomposition in `GSpin(V)`**: `x = s u` with `s, u ∈ GSpin(V) ∩ F[x]`
+(so they commute), `L_s` semisimple and `u − 1` nilpotent. -/
+theorem exists_mul_jordan_GSpin {Q : QuadraticForm F V} {x : (CliffordAlgebra Q)ˣ}
+    (hx : x ∈ GSpin Q) :
+    ∃ s ∈ GSpin Q, ∃ u ∈ GSpin Q, x = s * u ∧
       (s : CliffordAlgebra Q) ∈ Algebra.adjoin F {(x : CliffordAlgebra Q)} ∧
+      (u : CliffordAlgebra Q) ∈ Algebra.adjoin F {(x : CliffordAlgebra Q)} ∧
       Module.End.IsSemisimple (LinearMap.mulLeft F (s : CliffordAlgebra Q)) ∧
       IsNilpotent ((u : CliffordAlgebra Q) - 1) := by
   obtain ⟨s, hs, n, -, hss, hnil, hxsn⟩ := exists_jordan_algebra (F := F) (x : CliffordAlgebra Q)
   have hn : IsNilpotent ((x : CliffordAlgebra Q) - s) := by rwa [hxsn, add_sub_cancel_left]
-  obtain ⟨s, rfl⟩ := isUnit_of_mem_adjoin_of_isNilpotent_sub x.isUnit hs hn
+  have hcs : Commute (x : CliffordAlgebra Q) s := Algebra.commute_of_mem_adjoin_self hs
+  obtain ⟨s, rfl⟩ := IsUnit.of_isNilpotent_sub x.isUnit hcs hn
   have hsG := mem_GSpin_of_mem_adjoin hx hs hss hn
-  have hc : Commute s x := Units.ext (Algebra.commute_of_mem_adjoin_self hs).symm.eq
-  refine ⟨s, hsG, s⁻¹ * x, (GSpin Q).mul_mem ((GSpin Q).inv_mem hsG) hx, by group,
-    (Commute.refl s).inv_right.mul_right hc, hs, hss, ?_⟩
+  refine ⟨s, hsG, s⁻¹ * x, (GSpin Q).mul_mem ((GSpin Q).inv_mem hsG) hx, by group, hs,
+    Subalgebra.mul_mem _ (Units.inv_mem_adjoin_of_mem_adjoin hs)
+      (Algebra.self_mem_adjoin_singleton F _), hss, ?_⟩
   have h : ((s⁻¹ * x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1 =
       ((s⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * ((x : CliffordAlgebra Q) - s) := by
     rw [mul_sub, Units.inv_mul, Units.val_mul]
   rw [h]
-  exact (((Algebra.commute_of_mem_adjoin_self hs).symm.sub_right
-    (Commute.refl _)).units_inv_left).isNilpotent_mul_left hn
+  exact ((hcs.symm.sub_right (Commute.refl _)).units_inv_left).isNilpotent_mul_left hn
 
 omit [PerfectField F] [FiniteDimensional F V] in
 /-- `ι((adV Y)^k v) = (ad Y)^k (ι v)` for `Y ∈ gspin(V)`. -/

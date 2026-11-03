@@ -319,17 +319,33 @@ theorem isSemisimple_mulRight_of_mulLeft {A : Type*} [Ring A] [Algebra K A] [Fin
     simpa using h3
   rw [aeval_mulRight, hpa, LinearMap.mulRight_zero_eq_zero]
 
-/-- **`Ad(u) = L_u R_{u⁻¹}` is semisimple** for a unit `u` with `L_u` semisimple (`u⁻¹ ∈ K[u]`). -/
-theorem isSemisimple_conj_of_mulLeft [PerfectField K] {A : Type*} [Ring A] [Algebra K A]
+/-- `L_a R_b` and `L_{a'} R_{b'}` commute when `a, a'` and `b, b'` do. -/
+theorem commute_mulLeft_mul_mulRight {A : Type*} [Ring A] [Algebra K A] {a a' b b' : A}
+    (ha : Commute a a') (hb : Commute b b') :
+    Commute (LinearMap.mulLeft K a * LinearMap.mulRight K b)
+      (LinearMap.mulLeft K a' * LinearMap.mulRight K b') := by
+  refine LinearMap.ext fun z => ?_
+  simp only [Module.End.mul_apply, LinearMap.mulLeft_apply, LinearMap.mulRight_apply]
+  simp only [mul_assoc]
+  rw [show b' * b = b * b' from hb.eq.symm, ← mul_assoc a, ← mul_assoc a', ha.eq]
+
+/-- If `L_u` is semisimple for a unit `u`, so is `L_{u⁻¹}` (`u⁻¹ ∈ K[u]`). -/
+theorem isSemisimple_mulLeft_inv [PerfectField K] {A : Type*} [Ring A] [Algebra K A]
     [FiniteDimensional K A] {u : Aˣ} (hu : Module.End.IsSemisimple (LinearMap.mulLeft K (u : A))) :
-    Module.End.IsSemisimple
-      (LinearMap.mulLeft K (u : A) * LinearMap.mulRight K ((u⁻¹ : Aˣ) : A)) := by
+    Module.End.IsSemisimple (LinearMap.mulLeft K ((u⁻¹ : Aˣ) : A)) := by
   have hmem : Algebra.lmul K A ((u⁻¹ : Aˣ) : A) ∈ Algebra.adjoin K {Algebra.lmul K A (u : A)} := by
     rw [← AlgHom.map_adjoin_singleton]
     exact Subalgebra.mem_map.mpr
       ⟨_, TauCeti.Units.coe_inv_mem_adjoin u (IsIntegral.of_finite K (u : A)), rfl⟩
-  exact Module.End.IsSemisimple.mul_of_commute (LinearMap.commute_mulLeft_right _ _) hu
-    (isSemisimple_mulRight_of_mulLeft (Module.End.IsSemisimple.of_mem_adjoin_singleton hu hmem))
+  exact Module.End.IsSemisimple.of_mem_adjoin_singleton hu hmem
+
+/-- **`Ad(u) = L_u R_{u⁻¹}` is semisimple** for a unit `u` with `L_u` semisimple (`u⁻¹ ∈ K[u]`). -/
+theorem isSemisimple_conj_of_mulLeft [PerfectField K] {A : Type*} [Ring A] [Algebra K A]
+    [FiniteDimensional K A] {u : Aˣ} (hu : Module.End.IsSemisimple (LinearMap.mulLeft K (u : A))) :
+    Module.End.IsSemisimple
+      (LinearMap.mulLeft K (u : A) * LinearMap.mulRight K ((u⁻¹ : Aˣ) : A)) :=
+  Module.End.IsSemisimple.mul_of_commute (LinearMap.commute_mulLeft_right _ _) hu
+    (isSemisimple_mulRight_of_mulLeft (isSemisimple_mulLeft_inv hu))
 
 end MulRight
 
