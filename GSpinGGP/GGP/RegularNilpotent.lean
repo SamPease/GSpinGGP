@@ -286,54 +286,6 @@ section CentralizerNilReg
 
 variable {K : Type*} [Field K] [Invertible (2 : K)]
 
-/-- `𝔤_{a,Y} = gspin(W)_{a₁,Y₁} × gspin(V)_{a₂,Y₂}`. -/
-theorem mem_lieCentralizer_lieCentralizer_lie (d : GGPData K) {a Y X : d.ambient} :
-    X ∈ lieCentralizer (lieCentralizer d.lie a) Y ↔
-      X.1 ∈ lieCentralizer (lieCentralizer (gspin d.QW) a.1) Y.1 ∧
-        X.2 ∈ lieCentralizer (lieCentralizer (gspin d.QV) a.2) Y.2 := by
-  have hl : ∀ Z : d.ambient, Z ∈ d.lie ↔ Z.1 ∈ gspin d.QW ∧ Z.2 ∈ gspin d.QV := fun Z => Iff.rfl
-  simp only [mem_lieCentralizer, hl, Prod.ext_iff, Prod.fst_mul, Prod.snd_mul]
-  tauto
-
-/-- `𝔤_{a,Y}` is abelian iff both factors are. -/
-theorem isLieAbelian_lieCentralizer_lieCentralizer_lie_iff (d : GGPData K) {a Y : d.ambient} :
-    IsLieAbelian (lieCentralizer (lieCentralizer d.lie a) Y) ↔
-      IsLieAbelian (lieCentralizer (lieCentralizer (gspin d.QW) a.1) Y.1) ∧
-        IsLieAbelian (lieCentralizer (lieCentralizer (gspin d.QV) a.2) Y.2) := by
-  rw [isLieAbelian_iff_forall_commute, isLieAbelian_iff_forall_commute,
-    isLieAbelian_iff_forall_commute]
-  have h0W : (0 : CliffordAlgebra d.QW) ∈ lieCentralizer (lieCentralizer (gspin d.QW) a.1) Y.1 :=
-    zero_mem _
-  have h0V : (0 : CliffordAlgebra d.QV) ∈ lieCentralizer (lieCentralizer (gspin d.QV) a.2) Y.2 :=
-    zero_mem _
-  constructor
-  · intro h
-    refine ⟨fun X₁ h₁ X₂ h₂ => ?_, fun X₁ h₁ X₂ h₂ => ?_⟩
-    · have := h (X₁, 0) ((mem_lieCentralizer_lieCentralizer_lie d).2 ⟨h₁, h0V⟩) (X₂, 0)
-        ((mem_lieCentralizer_lieCentralizer_lie d).2 ⟨h₂, h0V⟩)
-      exact congrArg Prod.fst this
-    · have := h (0, X₁) ((mem_lieCentralizer_lieCentralizer_lie d).2 ⟨h0W, h₁⟩) (0, X₂)
-        ((mem_lieCentralizer_lieCentralizer_lie d).2 ⟨h0W, h₂⟩)
-      exact congrArg Prod.snd this
-  · rintro ⟨hW, hV⟩ X₁ h₁ X₂ h₂
-    rw [mem_lieCentralizer_lieCentralizer_lie] at h₁ h₂
-    exact Prod.ext (hW _ h₁.1 _ h₂.1) (hV _ h₁.2 _ h₂.2)
-
-/-- `𝔤_{a,Y} = gspin(W)_{a₁,Y₁} × gspin(V)_{a₂,Y₂}`. -/
-theorem finrank_lieCentralizer_lieCentralizer_lie (d : GGPData K) (a Y : d.ambient) :
-    finrank K (lieCentralizer (lieCentralizer d.lie a) Y) =
-      finrank K (lieCentralizer (lieCentralizer (gspin d.QW) a.1) Y.1) +
-        finrank K (lieCentralizer (lieCentralizer (gspin d.QV) a.2) Y.2) := by
-  have h : (lieCentralizer (lieCentralizer d.lie a) Y).toSubmodule =
-      (lieCentralizer (lieCentralizer (gspin d.QW) a.1) Y.1).toSubmodule.prod
-        (lieCentralizer (lieCentralizer (gspin d.QV) a.2) Y.2).toSubmodule := by
-    ext Z
-    exact mem_lieCentralizer_lieCentralizer_lie d
-  show finrank K ↥(lieCentralizer (lieCentralizer d.lie a) Y).toSubmodule =
-    finrank K ↥(lieCentralizer (lieCentralizer (gspin d.QW) a.1) Y.1).toSubmodule +
-      finrank K ↥(lieCentralizer (lieCentralizer (gspin d.QV) a.2) Y.2).toSubmodule
-  rw [h, (Submodule.prodEquiv _ _).finrank_eq, Module.finrank_prod]
-
 /-- **A regular element of one side**: if `(A, q|_A)` (`A = W'_y`) is quasi-split, some nilpotent
 `X ∈ gspin(V)_y` (an explicit `regNil` on `A`, or `0` if `A = 0`) has
 `dim gspin(V)_{y,X} ≤ ⌊dim A/2⌋ + dim (so(V)_{P y} killing A) + 1`. -/

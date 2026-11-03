@@ -909,21 +909,14 @@ theorem restrictForm_lieCentralizer_nondegenerate (g : ↥d.G)
     LinearMap.trace_mul_comm, Module.End.mul_eq_comp, ← LinearMap.mulLeft_mul, ← GGPData.bilin_apply]
   exact this
 
-/-- **The regular semisimple set of `𝔤_g` is open** for semisimple `g ∈ G(F)`.
-Sketch: `𝔤_g` is reductive (centralizer of a semisimple element, characteristic `0`), and in a
-reductive Lie algebra of rank `r` the regular semisimple elements are those where the coefficient
-of `T^r` in `det(T − ad Z)` does not vanish, a polynomial condition (Harish-Chandra's regular set
-`𝔤'`); `IsRegularSS` (semisimple in `C(W) × C(V)` with abelian centralizer in `𝔤_g`) is that
-condition, as `𝔤_g = Lie(G_g)` is the Lie algebra of a reductive group acting algebraically on
-`C(W) × C(V)`, so its centre acts semisimply and semisimplicity in `𝔤_g` (Jordan decomposition)
-agrees with semisimplicity in `C(W) × C(V)`.  This is the Lie algebra
-analogue of `hc_regularSet_open_conull`; the identification is not formalized.
-Status: SORRY (structure of reductive Lie algebras). -/
+/-- **The regular semisimple set of `𝔤_g` is open** for semisimple `g ∈ G(F)`
+(`isOpen_setOf_isRegularSS_lieCentralizer`: semicontinuity of `dim ker (ad Z)^D`, the Jordan
+decomposition in `𝔤_g` and the rank clauses for `GSpin`). -/
 theorem isOpen_regularSS_lieCentralizer (g : ↥d.G)
     (hg : IsSS F ((g : d.ambientˣ) : d.ambient)) :
     IsOpen {Z : ↥(lieCentralizer d.lie ((g : d.ambientˣ) : d.ambient)) |
-      IsRegularSS (lieCentralizer d.lie ((g : d.ambientˣ) : d.ambient)) (Z : d.ambient)} := by
-  sorry
+      IsRegularSS (lieCentralizer d.lie ((g : d.ambientˣ) : d.ambient)) (Z : d.ambient)} :=
+  isOpen_setOf_isRegularSS_lieCentralizer d g hg
 
 /-- `expA` on `C(W) × C(V)` is computed componentwise near `0`. -/
 theorem eventually_expA_ambient :
@@ -1097,7 +1090,7 @@ the proof of Thesis Prop 12.1.1(i)): for `θ ∈ QC(G(F), χ)`,
 Literature: Waldspurger 2010 (Compositio 146; arXiv:0902.1875, §7.3, Proposition (i), proof in
 §7.6–7.7) proves this local constancy for quasi-characters of `SO(W)` and of `SO(V)` separately; here
 the group is `GSpin(W) × GSpin(V)` and the argument is carried out directly.  The openness of the
-regular set of `𝔤_{t₀}` is `isOpen_regularSS_lieCentralizer` (not yet formalized). -/
+regular set of `𝔤_{t₀}` is `isOpen_regularSS_lieCentralizer`. -/
 theorem continuousOn_germ_of_mem_QC {χ : CentralCharOn d} {θ : ↥d.G → ℂ}
     (hθ : θ ∈ QC d χ) (T : Subgroup ↥(GSpin d.QW)) :
     ContinuousOn (fun t : ↥T => germ d.G d.lie d.bilin ψ θ (d.diag (t : ↥(GSpin d.QW)))

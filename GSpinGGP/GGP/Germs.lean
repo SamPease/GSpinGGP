@@ -6,6 +6,7 @@ import GSpinGGP.Literature.HarishChandra
 import GSpinGGP.Foundations.Determinant
 import GSpinGGP.GGP.RegularRank
 import GSpinGGP.GGP.LieRank
+import GSpinGGP.GGP.LieRegular
 
 /-!
 # The regular set and the transfer of germs
@@ -191,16 +192,57 @@ theorem hcDisc_ne_zero_of_mem_regularSet (d : GGPData F) {x : ↥d.G}
   exact key
 
 /-- **Harish-Chandra's `G'` consists of regular semisimple elements**: `D(x) ≠ 0` implies `x`
-semisimple with `𝔤_x` abelian. Proof sketch. `D(x) ≠ 0` says the generalized `1`-eigenspace of
-`Ad x` on `𝔤` has dimension `≤ ℓ = lieRank 𝔤`. For `x = su` (Jordan decomposition) that eigenspace is
-`𝔤_s`, which contains a Cartan subalgebra, so `𝔤_s` is one and `s` is regular. Then `Z_G(s)⁰` is a
-maximal torus, so the unipotent `u ∈ Z_G(s)⁰` is `1`: `x = s` is semisimple and `𝔤_x = 𝔤_s` is
-abelian. Missing in the project: the Jordan decomposition in `G(F)` and the Cartan-subalgebra facts
-above (as for `finrank_lieCentralizer_eq_lieRank`).
-Status: SORRY (structure theory of `GSpin`). -/
+semisimple with `𝔤_x` abelian.  The coefficient of `t^ℓ` (`ℓ = lieRank 𝔤 = lieRankNat d`,
+`lieRank_lie`, `lieRank_gspin`) of the characteristic polynomial of `N = 1 − Ad x` on `𝔤` is nonzero,
+so the generalized kernel of `N` has dimension `≤ ℓ` (Mathlib `finrank_maxGenEigenspace_zero_eq`);
+that kernel is `𝔤 ∩ ker (1 − Ad x)^D`, and `mem_regularSet_of_finrank_ker_le` (Jordan decomposition
+in `G(F)` and the rank clauses for `GSpin`) concludes. -/
 theorem mem_regularSet_of_hcDisc_ne_zero (d : GGPData F) {x : ↥d.G} (hx : hcDisc d x ≠ 0) :
     x ∈ regularSet d.G d.lie := by
-  sorry
+  have hℓ : lieRank d.lie = lieRankNat d := by
+    rw [lieRank_lie, lieRank_gspin d.nondeg, lieRank_gspin d.nondeg_QV]
+    rfl
+  set T : Module.End F d.ambient := 1 - (conjAd F (x : d.ambientˣ)).toLinearEquiv.toLinearMap
+  set N := oneSubAd d x
+  have hcoeff : (LinearMap.charpoly N).coeff (lieRank d.lie) ≠ 0 := by
+    unfold hcDisc at hx
+    rwa [dite_eq_left (lie_conj_stable d x)] at hx
+  have hle : Module.finrank F ↥(Module.End.maxGenEigenspace N 0) ≤ lieRankNat d := by
+    rw [LinearMap.finrank_maxGenEigenspace_zero_eq, ← hℓ]
+    exact Polynomial.natTrailingDegree_le_of_ne_zero hcoeff
+  set D := Module.finrank F d.ambient
+  -- `N^k v = T^k v` on `𝔤`
+  have hpow : ∀ (k : ℕ) (v : d.lie.toSubmodule), (((N ^ k) v : d.lie.toSubmodule) : d.ambient) =
+      (T ^ k) (v : d.ambient) := by
+    intro k
+    induction k with
+    | zero => intro v; rfl
+    | succ k ih =>
+      intro v
+      rw [pow_succ', pow_succ', Module.End.mul_apply, Module.End.mul_apply, ← ih]
+      rfl
+  -- `maxGenEigenspace N 0 = ker N^D`
+  have hDle : Module.finrank F d.lie.toSubmodule ≤ D := Submodule.finrank_le _
+  have hmax : Module.End.maxGenEigenspace N 0 = LinearMap.ker (N ^ D) := by
+    apply le_antisymm
+    · rw [Module.End.maxGenEigenspace_eq_genEigenspace_finrank]
+      refine ((Module.End.genEigenspace N 0).monotone (Nat.cast_le.mpr hDle)).trans ?_
+      rw [Module.End.genEigenspace_nat, zero_smul, sub_zero]
+    · intro v hv
+      rw [Module.End.mem_maxGenEigenspace]
+      exact ⟨D, by rw [zero_smul, sub_zero]; exact hv⟩
+  have hmap : (LinearMap.ker (N ^ D)).map d.lie.toSubmodule.subtype =
+      d.lie.toSubmodule ⊓ LinearMap.ker (T ^ D) := by
+    ext X
+    simp only [Submodule.mem_map, LinearMap.mem_ker, Submodule.subtype_apply, Submodule.mem_inf]
+    constructor
+    · rintro ⟨v, hv, rfl⟩
+      exact ⟨v.2, by rw [← hpow, hv]; rfl⟩
+    · rintro ⟨hX, hT⟩
+      exact ⟨⟨X, hX⟩, Subtype.ext (by rw [hpow]; exact hT), rfl⟩
+  apply mem_regularSet_of_finrank_ker_le d x
+  rw [← hmap, Submodule.finrank_map_subtype_eq, ← hmax]
+  exact hle
 
 /-- **Harish-Chandra's regular set is the regular semisimple set** (characteristic `0`):
 `D(x) ≠ 0` (`hcDisc`) iff `x` is semisimple with abelian centralizer in `𝔤` (`regularSet`). -/

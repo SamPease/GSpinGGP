@@ -102,7 +102,8 @@ Near $t_0\in T_\natural$ write $t=t_0e^Y$ with $Y=\log(t_0^{-1}t)$ small (a loca
 For semisimple $x\in G(F)$, the regular semisimple elements of $\mathfrak g_x$ form an open subset.
 \end{lemma}
 \begin{proof}
-Not yet formalized. $\mathfrak g_x$ is reductive, and its regular semisimple set is the nonvanishing locus of the coefficient of $t^{r}$ in $\det(t-\operatorname{ad}Z)$, $r$ the rank.
+\leanok
+Near a regular semisimple $Z_0$, $\dim\ker(\operatorname{ad}Z)^D\le\dim\ker(\operatorname{ad}Z_0)^D=\dim\mathfrak g_{x,Z_0}=\ell$ (semicontinuity of the rank). For the Jordan decomposition $Z=s+n$ in $\mathfrak g_x$, $\mathfrak g_{x,s}\subseteq\ker(\operatorname{ad}Z)^D$, so $\dim\mathfrak g_{x,s}=\ell$; by the rank clauses for $\GSpin$ (the pair version of the bound $\dim\mathfrak{so}(V)_N\ge\lfloor\dim V/2\rfloor$), $\mathfrak g_{x,s}$ is then abelian and its only nilpotent element is $0$, so $n=0$ and $Z=s$ is regular semisimple.
 \end{proof}
 
 \begin{lemma}[Boundedness of germs]
