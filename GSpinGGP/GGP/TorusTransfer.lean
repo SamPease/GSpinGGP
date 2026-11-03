@@ -157,8 +157,8 @@ theorem bcUnits_conj_ι' (t : GSpin Q) (w : (AlgebraicClosure K) ⊗[K] V) :
 /-- Base change maps `GSpin(Q)(K)` into `GSpin(Q)(K̄)`. -/
 theorem bcUnits_mem_GSpin (t : GSpin Q) :
     bcUnits Q (t : (CliffordAlgebra Q)ˣ) ∈ GSpin (Q.baseChange (AlgebraicClosure K)) := by
-  have h0 : ((t : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∈ evenOdd Q 0 := by
-    rw [← even_toSubmodule]; exact t.2.1
+  have h0 : ((t : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∈ evenOdd Q 0 :=
+    mem_evenOdd_zero_of_mem_GSpin t
   refine ⟨?_, fun w => ⟨_, (bcUnits_conj_ι' Q t w).symm⟩, fun w => ?_⟩
   · rw [← Subalgebra.mem_toSubmodule, even_toSubmodule]; exact bcHom_mem_evenOdd_zero Q h0
   · have := bcUnits_conj_ι' Q t⁻¹ w
