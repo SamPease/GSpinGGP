@@ -12,7 +12,13 @@ import GSpinGGP.GGP.Steinberg
 
 For an `F̄`-isometry `ψ : W_{F̄} ≃ W'_{F̄}`, its Galois conjugate `σψ = σ ∘ ψ ∘ σ⁻¹` (`galIso`) is again an
 isometry, with matrix `σ(Ψ)` (`glOf_galIso`), and `C(ψ)` intertwines the Galois actions on the Clifford
-algebras up to replacing `ψ` by `σψ` (`galC_map`).  Own work, elementary.
+algebras up to replacing `ψ` by `σψ` (`galC_map`, in `GGP/GaloisTorus`).
+
+For strong stable conjugacy (Thesis §6.1) through `Ad(g) ∘ C(φ)`, put `ψ = P(g) ∘ φ` and
+`a_σ = ψ⁻¹ ∘ σψ`: the rationality clause says that `C(a_σ)` fixes the centralizer of `x` pointwise
+(`map_galIso_trans_symm_of_ratAt`), and then `a_σ` is the identity on an odd-dimensional `W'_x ⊗ F̄`
+(`galIso_trans_symm_eq_self_of_odd`).  These give the cocycle of Thesis Prop. 6.6.1(iii).
+Own work, elementary.
 -/
 
 noncomputable section
@@ -30,60 +36,6 @@ section GalIso
 
 variable {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V₁] [AddCommGroup V₂] [Module F V₂]
 
-/-- `C(ψ)` intertwines the Galois actions when `ψ'` is the Galois conjugate of `ψ`. -/
-theorem galC_map_of_galV {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂} (σ : GalF F)
-    (ψ ψ' : (Q₁.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb))
-    (h : ∀ w, galV σ (ψ w) = ψ' (galV σ w)) (a : CliffordAlgebra (Q₁.baseChange Kb)) :
-    galC Q₂ σ (CliffordAlgebra.map ψ.toIsometry a) =
-      CliffordAlgebra.map ψ'.toIsometry (galC Q₁ σ a) := by
-  induction a using CliffordAlgebra.induction with
-  | algebraMap r => simp only [AlgHom.commutes, galC_algebraMap]
-  | ι x => rw [map_apply_ι, galC_ι, galC_ι, map_apply_ι]; exact congrArg _ (h x)
-  | mul a b ha hb => rw [map_mul, map_mul, ha, hb, map_mul, map_mul]
-  | add a b ha hb => rw [map_add, map_add, ha, hb, map_add, map_add]
-
-/-- `q_{F̄}(σ w) = σ(q_{F̄}(w))`. -/
-theorem baseChange_galV (Q : QuadraticForm F V₁) (σ : GalF F) (w : Kb ⊗[F] V₁) :
-    Q.baseChange Kb (galV σ w) = σ (Q.baseChange Kb w) := by
-  apply (algebraMap Kb (CliffordAlgebra (Q.baseChange Kb))).injective
-  rw [← ι_sq_scalar, ← galC_algebraMap Q σ, ← ι_sq_scalar, map_mul, galC_ι]
-
-/-- The Galois conjugate `σψ = σ ∘ ψ ∘ σ⁻¹` of an `F̄`-isometry, as an `F̄`-isometry. -/
-def galIso {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂} (σ : GalF F)
-    (ψ : (Q₁.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb)) :
-    (Q₁.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb) where
-  toFun w := galV σ (ψ (galV σ⁻¹ w))
-  invFun w := galV σ (ψ.symm (galV σ⁻¹ w))
-  left_inv w := by simp only [galV_inv_galV, QuadraticMap.IsometryEquiv.symm_apply_apply,
-    galV_galV_inv]
-  right_inv w := by simp only [galV_inv_galV, QuadraticMap.IsometryEquiv.apply_symm_apply,
-    galV_galV_inv]
-  map_add' w w' := by simp only [map_add]
-  map_smul' c w := by
-    rw [galV_smul, map_smul, galV_smul, RingHom.id_apply]
-    congr 1
-    exact AlgEquiv.apply_symm_apply σ c
-  map_app' w := by
-    change Q₂.baseChange Kb (galV σ (ψ (galV σ⁻¹ w))) = _
-    rw [baseChange_galV, QuadraticMap.IsometryEquiv.map_app, ← baseChange_galV, galV_galV_inv]
-
-theorem galIso_apply {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂} (σ : GalF F)
-    (ψ : (Q₁.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb)) (w : Kb ⊗[F] V₁) :
-    galIso σ ψ w = galV σ (ψ (galV σ⁻¹ w)) := rfl
-
-theorem galIso_galV {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂} (σ : GalF F)
-    (ψ : (Q₁.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb)) (w : Kb ⊗[F] V₁) :
-    galIso σ ψ (galV σ w) = galV σ (ψ w) := by
-  rw [galIso_apply, galV_inv_galV]
-
-/-- `σ(C(ψ) a) = C(σψ)(σ a)`. -/
-theorem galC_map {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂} (σ : GalF F)
-    (ψ : (Q₁.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb))
-    (a : CliffordAlgebra (Q₁.baseChange Kb)) :
-    galC Q₂ σ (CliffordAlgebra.map ψ.toIsometry a) =
-      CliffordAlgebra.map (galIso σ ψ).toIsometry (galC Q₁ σ a) :=
-  galC_map_of_galV σ ψ _ (fun w => (galIso_galV σ ψ w).symm) a
-
 /-- The matrix of `σψ` is `σ` applied to the matrix of `ψ`. -/
 theorem glOf_galIso {m : ℕ} {Q₁ Q₂ : QuadraticForm F (Fin m → F)} (σ : GalF F)
     (ψ : (Q₁.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb)) :
@@ -98,15 +50,6 @@ open TorusTransfer
 
 variable {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V₁] [AddCommGroup V₂] [Module F V₂]
   {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂}
-
-/-- `Ad(g) ∘ C(φ) = C(P(g) ∘ φ)`. -/
-theorem psiA_eq_map (φ : (Q₁.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb))
-    (g : GSpin (Q₂.baseChange Kb)) (a : CliffordAlgebra (Q₁.baseChange Kb)) :
-    psiA φ (g : (CliffordAlgebra _)ˣ) a = CliffordAlgebra.map (φ.trans (specPIso g)).toIsometry a := by
-  rw [psiA, ← map_specPIso_apply]
-  show _ = CliffordAlgebra.map ((specPIso g).toIsometry.comp φ.toIsometry) a
-  rw [← CliffordAlgebra.map_comp_map]
-  rfl
 
 /-- **The strong condition as a fixed-point condition**: if `Ad(g) ∘ C(φ)` is defined over `F` on
 the centralizer of `x`, then with `ψ = P(g) ∘ φ` the isometry `a_σ = ψ⁻¹ ∘ σψ` acts trivially (through
@@ -146,19 +89,6 @@ open TorusTransfer Steinberg IsomCent
 variable {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V₁] [AddCommGroup V₂] [Module F V₂]
   {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂}
 
-/-- `dim_{F̄} E₁(P(x)_{F̄}) = dim_F W'_x`. -/
-theorem finrank_eigenspace_one_bcGSpin [FiniteDimensional F V₁] (x : GSpin Q₁) :
-    Module.finrank Kb (Module.End.eigenspace (specP _ (bcGSpin Q₁ x) : Kb ⊗[F] V₁ →ₗ[Kb] _) 1) =
-      Module.finrank F (fixedSub x) := by
-  have h : Module.End.eigenspace (specP _ (bcGSpin Q₁ x) : Kb ⊗[F] V₁ →ₗ[Kb] _) 1 =
-      LinearMap.ker (((specP Q₁ x : V₁ →ₗ[F] V₁) - LinearMap.id).baseChange Kb) := by
-    rw [specP_bcGSpin, Module.End.eigenspace_def, LinearMap.baseChange_sub, LinearMap.baseChange_id]
-    simp only [one_smul]
-    rfl
-  rw [h, fixedSub]
-  exact (LinearMap.tensorKerEquiv Kb Kb _).finrank_eq.symm.trans Module.finrank_baseChange
-
-set_option maxHeartbeats 1000000 in
 /-- **Odd-dimensional fixed spaces are fixed by the cocycle.**  Let `Ad(g) ∘ C(φ)` satisfy the
 rationality clause of strong stable conjugacy at a semisimple `x`, put `ψ = P(g) ∘ φ` and
 `a_σ = ψ⁻¹ ∘ σψ`, and assume `det a_σ = 1`.  If `dim W'_x` is odd, then `a_σ` is the identity on
@@ -228,12 +158,12 @@ theorem galIso_trans_symm_eq_self_of_odd [FiniteDimensional F V₁] (hQ₁ : IsN
     simp only [mul_assoc, Units.inv_mul, mul_one]
   -- `a` is a scalar `c`, `c² = 1`, on `E`
   have hdimE : Module.finrank Kb E = Module.finrank F (fixedSub x) :=
-    finrank_eigenspace_one_bcGSpin x
+    GGPData.finrank_eigenspace_bc_one Q₁ x
   have hBsymm : (bform (Q₁.baseChange Kb)).IsSymm := ⟨fun u v => bform_comm (Q₁.baseChange Kb) u v⟩
   have hpair := (pairing_eigenspace hBsymm hQL (isIsom_specP (bcGSpin Q₁ x)) hsemiL 1).2
   rw [inv_one] at hpair
   obtain ⟨c, hc2, hcE⟩ : ∃ c : Kb, c * c = 1 ∧ ∀ v ∈ E, a v = c • v := by
-    rcases hodd with ⟨k, hk⟩
+    obtain ⟨k, hk⟩ := id hodd
     rcases Nat.lt_or_ge (Module.finrank Kb E) 3 with hlt | hge
     · -- `E` is a line
       have h1 : Module.finrank Kb E = 1 := by omega
@@ -278,12 +208,12 @@ theorem galIso_trans_symm_eq_self_of_odd [FiniteDimensional F V₁] (hQ₁ : IsN
   have hdetc : ∀ R : Module.End Kb E, (∀ v : E, (R v : Kb ⊗[F] V₁) = c • (v : Kb ⊗[F] V₁)) →
       LinearMap.det R = c ^ Module.finrank Kb E := by
     intro R hR
-    haveI : Module.Free Kb E := Module.Free.of_divisionRing Kb E
-    haveI : Module.Finite Kb E := FiniteDimensional.finiteDimensional_submodule E
+    have : Module.Free Kb E := Module.Free.of_divisionRing Kb E
+    have : Module.Finite Kb E := FiniteDimensional.finiteDimensional_submodule E
     have : R = c • LinearMap.id := LinearMap.ext fun v => Subtype.ext (by simp [hR])
     rw [this, LinearMap.det_smul, LinearMap.det_id, mul_one]
   rw [hdetc _ (fun v => by
-    rw [LinearMap.restrict_coe_apply]; exact (hau v).symm.trans (hcE v v.2)), hdimE] at hdet1
+    rw [LinearMap.restrict_apply]; exact (hau v).symm.trans (hcE v v.2)), hdimE] at hdet1
   obtain ⟨k, hk⟩ := hodd
   have hc1 : c = 1 := by
     rw [hk, pow_succ, pow_mul, sq, hc2, one_pow, one_mul] at hdet1

@@ -223,6 +223,66 @@ theorem galGS_mem_torusFbar (x : ↥(GSpin d.QW)) (σ : GalF F)
   · have hw' := galV_mem_baseChange σ⁻¹ _ hw
     rw [← galV_galV_inv σ w, specP_galGS, hg.2 _ hw']
 
+section GalIso
+
+variable {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V₁] [AddCommGroup V₂] [Module F V₂]
+
+/-- `C(ψ)` intertwines the Galois actions when `ψ'` is the Galois conjugate of `ψ`. -/
+theorem galC_map_of_galV {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂} (σ : GalF F)
+    (ψ ψ' : (Q₁.baseChange (AlgebraicClosure F)).IsometryEquiv (Q₂.baseChange (AlgebraicClosure F)))
+    (h : ∀ w, galV σ (ψ w) = ψ' (galV σ w)) (a : CliffordAlgebra (Q₁.baseChange (AlgebraicClosure F))) :
+    galC Q₂ σ (CliffordAlgebra.map ψ.toIsometry a) =
+      CliffordAlgebra.map ψ'.toIsometry (galC Q₁ σ a) := by
+  induction a using CliffordAlgebra.induction with
+  | algebraMap r => simp only [AlgHom.commutes, galC_algebraMap]
+  | ι x => rw [map_apply_ι, galC_ι, galC_ι, map_apply_ι]; exact congrArg _ (h x)
+  | mul a b ha hb => rw [map_mul, map_mul, ha, hb, map_mul, map_mul]
+  | add a b ha hb => rw [map_add, map_add, ha, hb, map_add, map_add]
+
+/-- `q_{F̄}(σ w) = σ(q_{F̄}(w))`. -/
+theorem baseChange_galV (Q : QuadraticForm F V₁) (σ : GalF F) (w : AlgebraicClosure F ⊗[F] V₁) :
+    Q.baseChange (AlgebraicClosure F) (galV σ w) = σ (Q.baseChange (AlgebraicClosure F) w) := by
+  apply (algebraMap (AlgebraicClosure F) (CliffordAlgebra (Q.baseChange (AlgebraicClosure F)))).injective
+  rw [← ι_sq_scalar, ← galC_algebraMap Q σ, ← ι_sq_scalar, map_mul, galC_ι]
+
+/-- The Galois conjugate `σψ = σ ∘ ψ ∘ σ⁻¹` of an `F̄`-isometry, as an `F̄`-isometry. -/
+def galIso {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂} (σ : GalF F)
+    (ψ : (Q₁.baseChange (AlgebraicClosure F)).IsometryEquiv (Q₂.baseChange (AlgebraicClosure F))) :
+    (Q₁.baseChange (AlgebraicClosure F)).IsometryEquiv (Q₂.baseChange (AlgebraicClosure F)) where
+  toFun w := galV σ (ψ (galV σ⁻¹ w))
+  invFun w := galV σ (ψ.symm (galV σ⁻¹ w))
+  left_inv w := by simp only [galV_inv_galV, QuadraticMap.IsometryEquiv.symm_apply_apply,
+    galV_galV_inv]
+  right_inv w := by simp only [galV_inv_galV, QuadraticMap.IsometryEquiv.apply_symm_apply,
+    galV_galV_inv]
+  map_add' w w' := by simp only [map_add]
+  map_smul' c w := by
+    rw [galV_smul, map_smul, galV_smul, RingHom.id_apply]
+    congr 1
+    exact AlgEquiv.apply_symm_apply σ c
+  map_app' w := by
+    change Q₂.baseChange (AlgebraicClosure F) (galV σ (ψ (galV σ⁻¹ w))) = _
+    rw [baseChange_galV, QuadraticMap.IsometryEquiv.map_app, ← baseChange_galV, galV_galV_inv]
+
+theorem galIso_apply {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂} (σ : GalF F)
+    (ψ : (Q₁.baseChange (AlgebraicClosure F)).IsometryEquiv (Q₂.baseChange (AlgebraicClosure F))) (w : AlgebraicClosure F ⊗[F] V₁) :
+    galIso σ ψ w = galV σ (ψ (galV σ⁻¹ w)) := rfl
+
+theorem galIso_galV {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂} (σ : GalF F)
+    (ψ : (Q₁.baseChange (AlgebraicClosure F)).IsometryEquiv (Q₂.baseChange (AlgebraicClosure F))) (w : AlgebraicClosure F ⊗[F] V₁) :
+    galIso σ ψ (galV σ w) = galV σ (ψ w) := by
+  rw [galIso_apply, galV_inv_galV]
+
+/-- `σ(C(ψ) a) = C(σψ)(σ a)`. -/
+theorem galC_map {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂} (σ : GalF F)
+    (ψ : (Q₁.baseChange (AlgebraicClosure F)).IsometryEquiv (Q₂.baseChange (AlgebraicClosure F)))
+    (a : CliffordAlgebra (Q₁.baseChange (AlgebraicClosure F))) :
+    galC Q₂ σ (CliffordAlgebra.map ψ.toIsometry a) =
+      CliffordAlgebra.map (galIso σ ψ).toIsometry (galC Q₁ σ a) :=
+  galC_map_of_galV σ ψ _ (fun w => (galIso_galV σ ψ w).symm) a
+
+end GalIso
+
 end EndElemGal
 
 /-- **`S_x(F̄)` is commutative** for `x ∈ Γ(G,H)` (own work).  Proved from

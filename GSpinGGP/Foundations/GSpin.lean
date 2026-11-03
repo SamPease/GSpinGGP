@@ -1060,7 +1060,7 @@ omit [Invertible (2 : K)] in
     (((gspinPair Q hu hw : GSpin Q) : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) =
       ι Q u * ι Q w := rfl
 
-/-- **An isometry preserving products of two anisotropic vectors of a subspace is `±1` there**: if
+/-- **A linear map preserving products of two anisotropic vectors of a subspace is `±1` there**: if
 `p` is nondegenerate of dimension `≥ 3`, `T p ⊆ p` and `ι(Tu) ι(Tw) = ι u ι w` for anisotropic
 `u, w ∈ p`, then `T = c` on `p` with `c² = 1`. -/
 theorem exists_smul_of_ι_mul_ι_eq {p : Submodule K V} [Module.Finite K p] (hp : 3 ≤ finrank K p)
