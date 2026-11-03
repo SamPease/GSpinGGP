@@ -26,7 +26,7 @@ $T_\natural=\{t\in T: t\in\Gamma(G,H),\ T_t=T\}$ is open in $T(F)$ (Thesis \S6.5
 \end{lemma}
 \begin{proof}
 \leanok
-\uses{InnerTwist, gspin, isSS_of_isSemisimple_specP_baseChange, lieAbelian_specP_baseChange}
+\uses{InnerTwist, gspin, isSS_of_isSemisimple_specP_baseChange, lieAbelian_specP_baseChange, steinberg_sign}
 Let $x=t_0\in T_\natural$, so $T=T_x$, and $t\in T$ near $x$. The kernel dimension of a continuous family of linear maps is upper semicontinuous. Since $W'_x\subseteq W'_t=\ker(v\mapsto t\iota(v)-\iota(v)t)$, this gives $W'_t=W'_x$. Likewise the moved part $\mathfrak l_t$ of $\mathfrak g_t$ contains $\mathfrak l_x$ (for $Z\in\mathfrak l_x$ and small $c\neq0$, $e^{cZ}\in T_x$ commutes with $t$), so $\mathfrak l_t=\mathfrak l_x$ is abelian. The element $t$ is semisimple (elements of $T_x$ are, by the next lemma), so Steinberg's description of centralizers gives $T_t\subseteq T_x$, and $T_x\subseteq T_t$ because $T_x$ is commutative.
 \end{proof}
 
@@ -77,7 +77,7 @@ $t\mapsto D^G(t)$ is continuous on $T_\natural$.
 \end{lemma}
 \begin{proof}
 \leanok
-\uses{InnerTwist, isOpen_torusNat, isSemisimple_specP_baseChange, lieAbelian_specP_baseChange}
+\uses{InnerTwist, isOpen_torusNat, isSemisimple_specP_baseChange, lieAbelian_specP_baseChange, steinberg_sign}
 Fix $x\in T_\natural$ and let $N_t=1-\mathrm{Ad}(t)$ on $\mathfrak g$, $L=\ker N_x=\mathfrak g_x$, $C=\mathrm{im}\,N_x$. As $N_x$ is semisimple, $\mathfrak g=L\oplus C$, and both are $N_t$-stable for $t\in T$. On $T_\natural$ the centralizers in $G(F)$ of $t$ and $x$ agree (by the centralizer theorem over $\bar F$), hence so do the Lie centralizers (exponentiate), so $\ker N_t=L$, $N_t|_C$ is invertible and $D^G(t)=|\det(N_t|_C)|_F$, continuous in $t$.
 \end{proof}
 
@@ -90,7 +90,7 @@ For $\theta\in\QC(G,\chi)$, $t\mapsto c_{\theta,\mathcal O_t}(t)$ is continuous 
 \end{lemma}
 \begin{proof}
 \leanok
-\uses{InnerTwist, IsQuasiCharacter, LIT-exists_isSelfDual, LIT-germ_unique, isOpen_regularSS_lieCentralizer, isOpen_torusNat, isSemisimple_specP_baseChange, jHat, lieAbelian_specP_baseChange, weylDisc}
+\uses{InnerTwist, IsQuasiCharacter, LIT-exists_isSelfDual, LIT-germ_unique, isOpen_regularSS_lieCentralizer, isOpen_torusNat, isSemisimple_specP_baseChange, jHat, lieAbelian_specP_baseChange, steinberg_sign, weylDisc}
 Near $t_0\in T_\natural$ write $t=t_0e^Y$ with $Y=\log(t_0^{-1}t)$ small (a local logarithm from the inverse function theorem). $Y$ lies in $\mathfrak g$, is semisimple and central in $\mathfrak g_{t_0}=\mathfrak g_t$, so $\theta(te^X)=\theta(t_0e^{X+Y})=\sum c_{\mathcal O}\hat{j}(\mathcal O,X+Y)=\sum c_{\mathcal O}\hat{j}(\mathcal O,X)$: the trace form is nondegenerate on $\mathfrak g_{t_0}$, $b(Y,N)=0$ for nilpotent $N\in\mathfrak g_{t_0}$, and the regular set of $\mathfrak g_{t_0}$ is open. The expansion at $t_0$ is one at $t$, and $\mathcal O_t=\mathcal O_{t_0}$.
 \end{proof}
 
@@ -103,6 +103,7 @@ For semisimple $x\in G(F)$, the regular semisimple elements of $\mathfrak g_x$ f
 \end{lemma}
 \begin{proof}
 \leanok
+\uses{GSpin}
 Near a regular semisimple $Z_0$, $\dim\ker(\operatorname{ad}Z)^D\le\dim\ker(\operatorname{ad}Z_0)^D=\dim\mathfrak g_{x,Z_0}=\ell$ (semicontinuity of the rank). For the Jordan decomposition $Z=s+n$ in $\mathfrak g_x$, $\mathfrak g_{x,s}\subseteq\ker(\operatorname{ad}Z)^D$, so $\dim\mathfrak g_{x,s}=\ell$; by the rank clauses for $\GSpin$ (the pair version of the bound $\dim\mathfrak{so}(V)_N\ge\lfloor\dim V/2\rfloor$), $\mathfrak g_{x,s}$ is then abelian and its only nilpotent element is $0$, so $n=0$ and $Z=s$ is regular semisimple.
 \end{proof}
 
