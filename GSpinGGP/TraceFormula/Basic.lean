@@ -718,18 +718,11 @@ theorem map_inl_mem_wtFil_zero (x : CliffordAlgebra d.QW) :
   | mul x y hx hy => rw [map_mul]; simpa using mul_mem_wtFil hx hy
   | add x y hx hy => rw [map_add]; exact add_mem hx hy
 
-/-- For `n ∈ N`, `n − 1` has positive weight (Foundations/GSpin `sub_one_mem_wtFil_one`). -/
+/-- For `n ∈ N`, `n − 1` has positive weight (`sub_one_mem_wtFil_of_mem_flagUnip`). -/
 theorem coe_sub_one_mem_wtFil_one {n : GSpin d.QV} (hn : n ∈ d.N) :
     ((n : (CliffordAlgebra d.QV)ˣ) : CliffordAlgebra d.QV) - 1 ∈
-      wtFil d.QV (flagWt d.flag) 1 := by
-  have hx0 : ((n : (CliffordAlgebra d.QV)ˣ) : CliffordAlgebra d.QV) ∈ evenOdd d.QV 0 := by
-    have := n.2.1
-    rw [← Subalgebra.mem_toSubmodule, even_toSubmodule] at this
-    exact this
-  refine sub_one_mem_wtFil_one d.nondeg_QV d.flag.isWtFil
-    (d.flag.orthogonal_flagWt_le d.nondeg_QV) hx0 (P := (specP d.QV n : d.V →ₗ[F] d.V))
-    (fun v => ?_) (d.flag.specP_sub_mem_flagWt (flagUnip_le_flagUnipSO _ hn)) hn.2.2.2
-  rw [LinearEquiv.coe_coe, ι_specP, mul_assoc, Units.inv_mul, mul_one]
+      wtFil d.QV (flagWt d.flag) 1 :=
+  sub_one_mem_wtFil_of_mem_flagUnip d.nondeg_QV hn
 
 /-- **Traces do not see `N`**: for `x ∈ C(W)` and `n ∈ N`, `tr(L_{x n}) = tr(L_x)`, because
 `x (n − 1)` has positive weight, hence is nilpotent. -/
@@ -964,11 +957,11 @@ theorem isClosed_incl_range_mul_N_of_finrank_eq_two
     ext b
     constructor
     · rintro ⟨_, ⟨a, rfl⟩, n, hn, rfl⟩
-      have ha0 : ((a : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) ∈ evenOdd d.QW 0 := by
-        have := a.2.1; rwa [← Subalgebra.mem_toSubmodule, even_toSubmodule] at this
+      have ha0 : ((a : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) ∈ evenOdd d.QW 0 :=
+        mem_evenOdd_zero_of_mem_GSpin a
       have hai0 : (((a : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) :
-          CliffordAlgebra d.QW) ∈ evenOdd d.QW 0 := by
-        have := (a⁻¹ : GSpin d.QW).2.1; rwa [← Subalgebra.mem_toSubmodule, even_toSubmodule] at this
+          CliffordAlgebra d.QW) ∈ evenOdd d.QW 0 :=
+        mem_evenOdd_zero_of_mem_GSpin (a⁻¹ : GSpin d.QW)
       have hv : bv (d.incl a * n) = Cm ((a : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) *
           ((n : (CliffordAlgebra d.QV)ˣ) : CliffordAlgebra d.QV) := rfl
       have hi : bi (d.incl a * n) = (((n : (CliffordAlgebra d.QV)ˣ)⁻¹ : (CliffordAlgebra d.QV)ˣ) :

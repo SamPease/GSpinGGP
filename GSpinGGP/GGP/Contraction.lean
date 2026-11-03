@@ -17,8 +17,8 @@ lift `T` of the cocharacter `λ(τ) : bᵢ ↦ τ^{wtᵢ} bᵢ` (`0 < |τ| < 1`)
 1. conjugation by `T^k` multiplies a monomial `ι(b_{i₁})⋯ι(b_{iₘ})` by `τ^{k(wt_{i₁}+⋯+wt_{iₘ})}`,
    so it contracts every element of positive weight to `0` (`tendsto_gConj_pow_bMonSpan`);
 2. an element `y ∈ K^× · N_F` is a scalar `c` plus positive weight
-   (`exists_sub_algebraMap_mem_wtFil_of_raisesFil`), with `c = 1` on `N_F`
-   (`sub_one_mem_wtFil_of_mem_flagUnip`: this uses that `u − 1` is nilpotent, a condition in
+   (`exists_sub_algebraMap_mem_wtFil_of_raisesFil`, in `Foundations/GSpin.lean`), with `c = 1` on
+   `N_F` (`sub_one_mem_wtFil_of_mem_flagUnip`: this uses that `u − 1` is nilpotent, a condition in
    the definition of `N_F` in `GSpin(V)`), so `T^k y T^{-k} → c`
    (`tendsto_gConj_pow_of_sub_mem_wtFil`);
 3. consequently (`exists_tendsto_conj_flagStab`): up to central scalars, `T^k (p u) T^{-k}` converges
@@ -201,29 +201,6 @@ theorem tendsto_gConj_pow_bMonSpan {τ : K} (hτ0 : τ ≠ 0) (hτ : ‖τ‖ < 
   | smul r x _ hx => simpa [gConj_smul] using hx.const_smul r
 
 end Normed
-
-section ScalarPart
-
-variable {K : Type*} [Field K] [Invertible (2 : K)]
-variable {V : Type*} [AddCommGroup V] [Module K V] [Module.Finite K V] {Q : QuadraticForm K V}
-
-/-- An element of `K^× · N_F` (`P(g)` trivial on the graded pieces) is a scalar plus positive
-weight. -/
-theorem exists_sub_algebraMap_mem_wtFil_of_raisesFil (hQ : IsNondeg Q) {F : IsotropicFlag Q}
-    {g : GSpin Q} (hg : RaisesFil (flagWt F) ((specP Q g : V →ₗ[K] V) - LinearMap.id)) :
-    ∃ c : K, ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - algebraMap K _ c ∈
-      wtFil Q (flagWt F) 1 :=
-  exists_sub_algebraMap_mem_wtFil_one hQ F.isWtFil (F.orthogonal_flagWt_le hQ)
-    (mem_evenOdd_zero_of_mem_GSpin g) (P := (specP Q g : V →ₗ[K] V)) (mul_ι_eq_ι_specP_mul g)
-    (fun w v hv => by simpa using hg w v hv)
-
-/-- An element of `N_F` is `1` plus positive weight. -/
-theorem sub_one_mem_wtFil_of_mem_flagUnip (hQ : IsNondeg Q) {F : IsotropicFlag Q}
-    {u : GSpin Q} (hu : u ∈ flagUnip F) :
-    ((u : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1 ∈ wtFil Q (flagWt F) 1 :=
-  sub_one_mem_wtFil_of_mem_flagUnipSO hQ (flagUnip_le_flagUnipSO F hu) hu.2.2.2
-
-end ScalarPart
 
 /-- A sequence of units whose values and inverses converge converges in `Mˣ`. -/
 theorem _root_.Units.exists_tendsto_of_tendsto_val_of_tendsto_inv {M : Type*} [Monoid M]
