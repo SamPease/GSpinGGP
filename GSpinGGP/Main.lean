@@ -2532,21 +2532,6 @@ theorem conj_mem_lie_of_mem_G (d : GGPData F) {g : d.ambientˣ} (hg : g ∈ d.G)
     (hY : Y ∈ d.lie) : (g : d.ambient) * Y * (↑g⁻¹ : d.ambient) ∈ d.lie :=
   ⟨conj_mem_gspin d.QW (d.fst ⟨g, hg⟩) hY.1, conj_mem_gspin d.QV (d.snd ⟨g, hg⟩) hY.2⟩
 
-/-- `𝔤_{(a,b)} = gspin(W)_a × gspin(V)_b`. -/
-theorem finrank_lieCentralizer_lie (d : GGPData F) (X : d.ambient) :
-    finrank F ↥(lieCentralizer d.lie X) =
-      finrank F ↥(lieCentralizer (gspin d.QW) X.1) + finrank F ↥(lieCentralizer (gspin d.QV) X.2) := by
-  have h : (lieCentralizer d.lie X).toSubmodule =
-      (lieCentralizer (gspin d.QW) X.1).toSubmodule.prod (lieCentralizer (gspin d.QV) X.2).toSubmodule := by
-    ext Y
-    simp only [LieSubalgebra.mem_toSubmodule, Submodule.mem_prod, mem_lieCentralizer, Prod.ext_iff,
-      Prod.fst_mul, Prod.snd_mul]
-    exact ⟨fun ⟨⟨h1, h2⟩, h3, h4⟩ => ⟨⟨h1, h3⟩, h2, h4⟩, fun ⟨⟨h1, h3⟩, h2, h4⟩ => ⟨⟨h1, h2⟩, h3, h4⟩⟩
-  show finrank F ↥(lieCentralizer d.lie X).toSubmodule =
-    finrank F ↥(lieCentralizer (gspin d.QW) X.1).toSubmodule +
-      finrank F ↥(lieCentralizer (gspin d.QV) X.2).toSubmodule
-  rw [h, (Submodule.prodEquiv _ _).finrank_eq, Module.finrank_prod]
-
 /-- A pair of regular nilpotent elements is regular nilpotent in `𝔤 = gspin(W) ⊕ gspin(V)`
 (`Nil_reg` of a product is the product). -/
 theorem isRegularNil_lie_mk (d : GGPData F) {a : CliffordAlgebra d.QW} {b : CliffordAlgebra d.QV}
@@ -2615,7 +2600,7 @@ theorem exists_orbitSpec_one_of_even (d : GGPData F) (hqs : d.IsQuasiSplit)
   refine ⟨Quotient.mk _ ⟨X, hX1, hX.2.1⟩, ?_, ⟨X, hX1⟩, ⟨hX.2.1, rfl⟩, hspec⟩
   refine mk_mem_nilReg_of_isRegularNil _ _ (fun g hg Y hY => ?_) _ (by show IsRegularNil _ X; rw [hL]; exact hX)
   rw [hL] at hY ⊢
-  exact lie_conj_stable d ⟨_, (Subgroup.mem_inf.mp hg).1⟩ _ hY
+  exact conj_mem_lie_of_mem_G d (Subgroup.mem_inf.mp hg).1 hY
 
 /-- A regular orbit satisfying `OrbitSpec d 1` exists: where Luo's recipe imposes no condition, by
 `nilReg_one_nonempty`; otherwise by `exists_orbitSpec_one_of_even`. -/

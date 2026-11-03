@@ -113,6 +113,15 @@ For $x\in G(F)$ write $\det(t-1+\Ad(x))=D(x)t^\ell+\dots$ (terms of higher degre
 \assumedfrom{\cite{HC70}, Part V \S3, p.~54 (also Introduction, p.~2), for $G$ connected reductive; here $G=\GSpin(W)\times\GSpin(V)$, $\ell=(\lfloor m/2\rfloor+1)+(\lfloor (m+2r+1)/2\rfloor+1)$}
 \end{literature}
 
+\begin{literature}[Centralizers in $\mathfrak{so}(V)$ have dimension at least the rank]
+\label{LIT-jantzen_finrank_soCentMat_ge}
+\lean{GSpinGGP.jantzen_finrank_soCentMat_ge}
+\leanok
+Over an algebraically closed field of characteristic $0$, for $n\ge3$ and $X\in\mathfrak{so}_n$, $\dim\mathfrak{so}_n(X)\ge\lfloor n/2\rfloor$.
+
+\assumedfrom{\cite{Jantzen}, \S7.11, Remark, and \S7.13}
+\end{literature}
+
 \begin{lemma}[Centralizers of regular elements]
 \label{finrank_lieCentralizer_eq_lieRank}
 \lean{GSpinGGP.finrank_lieCentralizer_eq_lieRank}
@@ -121,7 +130,9 @@ For $x\in G(F)$ write $\det(t-1+\Ad(x))=D(x)t^\ell+\dots$ (terms of higher degre
 For $x\in\Greg(F)$, $\dim\mathfrak g_x=\operatorname{rank}\mathfrak g=\min_{X\in\mathfrak g}\dim\mathfrak g_X$.
 \end{lemma}
 \begin{proof}
-Not yet formalized. $G_x^0$ is a torus containing a maximal torus through $x$, so $\dim\mathfrak g_x=\operatorname{rank}G$; centralizers of regular semisimple $X\in\mathfrak g$ are Cartan subalgebras of dimension $\operatorname{rank}G$, and $\dim\mathfrak g_X\ge\operatorname{rank}G$ for all $X$. Needs Cartan subalgebras of reductive Lie algebras.
+\leanok
+\uses{LIT-jantzen_finrank_soCentMat_ge}
+Both sides split over $\mathfrak g=\gspin(W)\times\gspin(V)$. For $g\in\GSpin(U)$, $\gspin(U)_g\cong F\oplus\mathfrak{so}(U)_{P(g)}$; if $g$ is semisimple with $\gspin(U)_g$ abelian then, over $\bar F$, the eigenvalues $\mu\ne\pm1$ of $P(g)$ are simple and pair off, $\dim E_{\pm1}\le2$, $\dim E_{-1}$ is even, and $\dim\mathfrak{so}(U)_{P(g)}=\lfloor\dim U/2\rfloor$ by induction over orthogonal splittings; the dimension descends to $F$. Finally $\operatorname{rank}\gspin(U)=\lfloor\dim U/2\rfloor+1$: Jantzen's lower bound \cite{Jantzen}, and an explicit skew element $\sum c_iJ_i$ on orthogonal planes.
 \end{proof}
 
 \begin{lemma}[$\Greg(F)\subseteq G'$]
