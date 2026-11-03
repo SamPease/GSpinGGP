@@ -366,6 +366,35 @@ For $G$ quasi-split and $x\in\Gamma(G,H)$, $\beta\mapsto e(G_{q_x(\beta)})$ is m
 Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{Kot83}; \cite{BP}, \S12.1, (12.1.6), via Tate--Nakayama}
 \end{proof}
 
+\begin{lemma}[A twist into the other form: the plane case]
+\label{exists_twistIdx_not_isometric_of_hasTwistPlane}
+\lean{GSpinGGP.TwistPlane.exists_twistIdx_not_isometric_of_hasTwistPlane}
+\leanok
+\uses{GGPData, GSpin, InnerFormSystem, InnerTwist}
+If $W''_x$ contains an $x$-stable anisotropic plane $\Pi$ on which $x$ has determinant $1$, some $\beta\in H^1(F,S_x)$
+twists $W$ into a form $W_{q_x(\beta)}\not\cong W$.
+\end{lemma}
+\begin{proof}
+\leanok
+Over $\bar F$ the plane is hyperbolic with hyperbolic pair $f,f'$; $\mathrm{SO}(\Pi)(\bar F)$ is the split torus scaling $f,f'$
+by $t^{-1},t$, lifted to $\mathrm{GSpin}$ by $ff'+t\,f'f$, which commutes with $x$ and fixes $W'_x$, so it lies in $S_x$.
+Twisting $\Pi$ into the other binary form of its discriminant gives a cocycle with these values; the twisted form is
+not isometric to $W$ by Witt cancellation.
+\end{proof}
+
+\begin{lemma}[A twist into the other form: no twisting plane]
+\label{exists_twistIdx_not_isometric_of_not_hasTwistPlane}
+\lean{GSpinGGP.exists_twistIdx_not_isometric_of_not_hasTwistPlane}
+\leanok
+\uses{GGPData, GSpin, InnerFormSystem, InnerTwist, IsGammaElt, IsQuasiSplit}
+For $G$ quasi-split and $x\in\Gamma(G,H)$ not central such that $W''_x$ contains no such plane (all irreducible factors of
+$x|_{W''_x}$ have degree $\ge4$), some $\beta\in H^1(F,S_x)$ twists $W$ into a form $W_{q_x(\beta)}\not\cong W$.
+\end{lemma}
+\begin{proof}
+Not yet formalized. By \cite{BP} (12.1.6), or directly: the Hasse invariant of a transfer $\operatorname{Tr}_{E_0/F}(c\,h)$ changes for
+$c\notin N(E^\times)$ because corestriction $\mathrm{Br}(E_0)[2]\to\mathrm{Br}(F)[2]$ is an isomorphism \cite{Kot83}.
+\end{proof}
+
 \begin{lemma}[A twist into the other form]
 \label{exists_twistIdx_not_isometric}
 \lean{GSpinGGP.exists_twistIdx_not_isometric}
@@ -374,7 +403,9 @@ Not verbatim in the literature (adapted from, or derived from, published results
 For $G$ quasi-split and $x\in\Gamma(G,H)$ not central, some $\beta\in H^1(F,S_x)$ twists $W$ into a form $W_{q_x(\beta)}\not\cong W$.
 \end{lemma}
 \begin{proof}
-Not yet formalized. By \cite{BP} (12.1.6) the map $H^1(F,S_x)\to\mathrm{Br}_2(F)$ is onto once the inverse image of $S_x$ in the double cover of $\mathrm{SO}(W)\times\mathrm{SO}(V)$ is connected (its character group is torsion free); a class with nontrivial image twists $W''_x$ into the other form of its dimension and discriminant \cite{Kot83}.
+\leanok
+\uses{exists_twistIdx_not_isometric_of_hasTwistPlane, exists_twistIdx_not_isometric_of_not_hasTwistPlane}
+Case split on whether $W''_x$ contains an $x$-stable anisotropic plane of determinant $1$.
 \end{proof}
 
 \begin{lemma}[The sign takes the value $-1$]

@@ -82,6 +82,8 @@ GSpinGGP.finite_H1_torusBar
 GSpinGGP.n_alpha_eq_card_twistIdx
 GSpinGGP.kottwitzSign_twistIdx_mul
 GSpinGGP.exists_twistIdx_not_isometric
+GSpinGGP.TwistPlane.exists_twistIdx_not_isometric_of_hasTwistPlane
+GSpinGGP.exists_twistIdx_not_isometric_of_not_hasTwistPlane
 GSpinGGP.exists_twistIdx_kottwitzSign_neg
 GSpinGGP.signed_count
 GSpinGGP.stable_rearrangement_pos
