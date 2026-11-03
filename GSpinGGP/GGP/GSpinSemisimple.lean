@@ -12,15 +12,15 @@ Over a field of characteristic `0`, `x ∈ GSpin(V)` acts semisimply on `C(V)` a
 `P(x) ∈ SO(V)` is semisimple (`isSS_of_isSemisimple_specP_baseChange`); the converse is
 `isSemisimple_specP_of_isSS`.
 
-Proof.  Write `x = s + n` (additive Jordan–Chevalley decomposition of left multiplication by `x`,
-`exists_jordan_algebra`), with `s, n ∈ K[x]`, `s` semisimple and `n`
-nilpotent; `s` is a unit.  Conjugation `c_x = L_x R_{x⁻¹}` on `C(V)` is then
-`c_s + N` with `c_s = L_s R_{s⁻¹}` semisimple, `N` nilpotent and commuting with `c_s`
-(`isNilpotent_conj_sub_conj`); by uniqueness of the decomposition `N` is a polynomial `q(c_x)`
-(`conj_mem_adjoin_of_isSemisimple_mulLeft`).  On `ι(V)`, `c_x` acts as `P(x)`, so
-`N ∘ ι = ι ∘ q(P(x))` (`ι_aeval_specP`); `q(P(x))` is nilpotent and (over `K̄`) semisimple, hence `0`.  So
-`x ι(v) x⁻¹ = s ι(v) s⁻¹`: the even element `s⁻¹ x` commutes with `ι(V)`, hence is a scalar `r`
-(`eq_algebraMap_of_commute_ι`), and `x = r s` is semisimple.
+Proof. Write `x = s + n` (additive Jordan–Chevalley decomposition of left multiplication by `x`,
+`exists_jordan_unit`), with `s, n ∈ K[x]`, `s` semisimple and `n` nilpotent; `s` is a unit.
+Conjugation `c_x = L_x R_{x⁻¹}` on `C(V)` is then `c_s + N` with `c_s = L_s R_{s⁻¹}` semisimple, `N`
+nilpotent and commuting with `c_s` (`isNilpotent_conj_sub_conj`); by uniqueness of the decomposition
+`c_s`, hence `N = c_x − c_s`, is a polynomial in `c_x` (`conj_mem_adjoin_of_isSemisimple_mulLeft`).
+On `ι(V)`, `c_x` acts as `P(x)`, so `N ∘ ι = ι ∘ q(P(x))` (`ι_aeval_specP`); `q(P(x))` is nilpotent
+and (over `K̄`) semisimple, hence `0`. So `x ι(v) x⁻¹ = s ι(v) s⁻¹`: the even element `s⁻¹ x`
+commutes with `ι(V)`, hence is a scalar `r` (`eq_algebraMap_of_commute_ι`), and `x = r s` is
+semisimple.
 -/
 
 noncomputable section
@@ -47,10 +47,8 @@ theorem isSS_of_isSemisimple_specP_baseChange {Q : QuadraticForm K V} (hQ : IsNo
   set xU : Aˣ := (x : (CliffordAlgebra Q)ˣ)
   set X : A := (xU : A)
   set B := Algebra.adjoin K {X}
-  -- Jordan decomposition `X = s + n` in `K[X]`; `s` is a unit
-  obtain ⟨s, hsB, n, -, hLs, hnil, hXsn⟩ := exists_jordan_algebra (F := K) X
-  have hn : IsNilpotent (X - s) := by rwa [hXsn, add_sub_cancel_left]
-  obtain ⟨sU, rfl⟩ := IsUnit.of_isNilpotent_sub xU.isUnit (Algebra.commute_of_mem_adjoin_self hsB) hn
+  -- Jordan decomposition `X = s + (X − s)` in `K[X]`; `s` is a unit
+  obtain ⟨sU, hsB, hLs, hn⟩ := exists_jordan_unit (F := K) xU
   set s : A := (sU : A)
   set si : A := ((sU⁻¹ : Aˣ) : A)
   set xi : A := ((xU⁻¹ : Aˣ) : A)

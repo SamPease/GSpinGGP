@@ -16,9 +16,9 @@ so it preserves every subspace
 that `ad x` preserves (`mapsTo_of_mem_adjoin_singleton`). For `x ∈ gspin(V)` both parts lie in
 `gspin(V)` (`exists_jordan_gspin`).
 
-For a unit `x`, `s` is a unit, and `Ad s = L_s R_{s⁻¹}` is the semisimple part of
-`Ad x = L_x R_{x⁻¹}` (`Ad x − Ad s` is nilpotent and commutes with `Ad s`), hence a polynomial in
-`Ad x` (`conj_mem_adjoin_of_isSemisimple_mulLeft`).
+For a unit `x`, `s` is a unit (`exists_jordan_unit`), and `Ad s = L_s R_{s⁻¹}` is the semisimple
+part of `Ad x = L_x R_{x⁻¹}` (`Ad x − Ad s` is nilpotent and commutes with `Ad s`), hence a
+polynomial in `Ad x` (`conj_mem_adjoin_of_isSemisimple_mulLeft`).
 For `x ∈ GSpin(V)` this gives the multiplicative Jordan decomposition `x = s u` in `GSpin(V)`
 (`exists_mul_jordan_GSpin`).
 -/
@@ -143,10 +143,20 @@ theorem Units.adjoin_inv (x : Aˣ) :
   · exact TauCeti.Units.coe_inv_mem_adjoin x (IsIntegral.of_finite F _)
   · simpa using TauCeti.Units.coe_inv_mem_adjoin x⁻¹ (IsIntegral.of_finite F _)
 
+/-- **Jordan decomposition of a unit**: `x = s + (x − s)` with `s` a unit in `F[x]`, `L_s`
+semisimple and `x − s` nilpotent. -/
+theorem exists_jordan_unit (x : Aˣ) :
+    ∃ s : Aˣ, (s : A) ∈ Algebra.adjoin F {(x : A)} ∧
+      Module.End.IsSemisimple (LinearMap.mulLeft F (s : A)) ∧ IsNilpotent ((x : A) - s) := by
+  obtain ⟨s, hs, n, -, hss, hnil, hxsn⟩ := exists_jordan_algebra (F := F) (x : A)
+  have hn : IsNilpotent ((x : A) - s) := by rwa [hxsn, add_sub_cancel_left]
+  obtain ⟨s, rfl⟩ := IsUnit.of_isNilpotent_sub x.isUnit (Algebra.commute_of_mem_adjoin_self hs) hn
+  exact ⟨s, hs, hss, hn⟩
+
 omit [PerfectField F] in
 /-- **`Ad x − Ad s` is nilpotent and commutes with `Ad s`** (`Ad y = L_y R_{y⁻¹}`), for units `x`,
-`s` with `s ∈ F[x]` and `x − s` nilpotent: `Ad x − Ad s = L_{x−s} R_{x⁻¹} + L_s R_{x⁻¹−s⁻¹}`, a sum of
-commuting nilpotents. -/
+`s` with `s ∈ F[x]` and `x − s` nilpotent: `Ad x − Ad s = L_{x−s} R_{x⁻¹} + L_s R_{x⁻¹−s⁻¹}`, a sum
+of commuting nilpotents. -/
 theorem isNilpotent_conj_sub_conj {x s : Aˣ} (hs : (s : A) ∈ Algebra.adjoin F {(x : A)})
     (hn : IsNilpotent ((x : A) - s)) :
     IsNilpotent (LinearMap.mulLeft F (x : A) * LinearMap.mulRight F ((x⁻¹ : Aˣ) : A) -
@@ -316,10 +326,8 @@ theorem exists_mul_jordan_GSpin {Q : QuadraticForm F V} {x : (CliffordAlgebra Q)
       (u : CliffordAlgebra Q) ∈ Algebra.adjoin F {(x : CliffordAlgebra Q)} ∧
       Module.End.IsSemisimple (LinearMap.mulLeft F (s : CliffordAlgebra Q)) ∧
       IsNilpotent ((u : CliffordAlgebra Q) - 1) := by
-  obtain ⟨s, hs, n, -, hss, hnil, hxsn⟩ := exists_jordan_algebra (F := F) (x : CliffordAlgebra Q)
-  have hn : IsNilpotent ((x : CliffordAlgebra Q) - s) := by rwa [hxsn, add_sub_cancel_left]
+  obtain ⟨s, hs, hss, hn⟩ := exists_jordan_unit (F := F) x
   have hcs : Commute (x : CliffordAlgebra Q) s := Algebra.commute_of_mem_adjoin_self hs
-  obtain ⟨s, rfl⟩ := IsUnit.of_isNilpotent_sub x.isUnit hcs hn
   have hsG := mem_GSpin_of_mem_adjoin hx hs hss hn
   refine ⟨s, hsG, s⁻¹ * x, (GSpin Q).mul_mem ((GSpin Q).inv_mem hsG) hx, by group, hs,
     Subalgebra.mul_mem _ (Units.inv_mem_adjoin_of_mem_adjoin hs)
