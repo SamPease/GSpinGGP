@@ -506,6 +506,14 @@ theorem eigenspace_bc_one {V' : Type*} [AddCommGroup V'] [Module F V']
   rw [specP_bcGSpin, Steinberg.fixedSub_eq_eigenspace,
     ← Module.End.eigenspace_baseChange_of_flat, map_one]
 
+/-- `dim_{F̄} E₁(P(x)_{F̄}) = dim_F W'_x`. -/
+theorem finrank_eigenspace_bc_one {V' : Type*} [AddCommGroup V'] [Module F V'] [FiniteDimensional F V']
+    (Q : QuadraticForm F V') (x : GSpin Q) :
+    Module.finrank (AlgebraicClosure F) (Module.End.eigenspace (specP _ (bcGSpin Q x) :
+        AlgebraicClosure F ⊗[F] V' →ₗ[AlgebraicClosure F] _) 1) = Module.finrank F (fixedSub x) := by
+  rw [eigenspace_bc_one, fixedSub, ← LinearMap.ker_baseChange_of_flat]
+  exact (LinearMap.tensorKerEquiv _ _ _).finrank_eq.symm.trans Module.finrank_baseChange
+
 end GGPData
 
 section TorusNat

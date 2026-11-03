@@ -319,6 +319,15 @@ theorem psiA_mul (a b : CliffordAlgebra (Q₁.baseChange (AlgebraicClosure F))) 
     psiA φ g (a * b) = psiA φ g a * psiA φ g b := by
   simp only [psiA, map_mul, mul_assoc, Units.inv_mul_cancel_left]
 
+/-- `Ad(g) ∘ C(φ) = C(P(g) ∘ φ)`. -/
+theorem psiA_eq_map (φ : (Q₁.baseChange (AlgebraicClosure F)).IsometryEquiv (Q₂.baseChange (AlgebraicClosure F)))
+    (g : GSpin (Q₂.baseChange (AlgebraicClosure F))) (a : CliffordAlgebra (Q₁.baseChange (AlgebraicClosure F))) :
+    psiA φ (g : (CliffordAlgebra _)ˣ) a = CliffordAlgebra.map (φ.trans (specPIso g)).toIsometry a := by
+  rw [psiA, ← map_specPIso_apply]
+  show _ = CliffordAlgebra.map ((specPIso g).toIsometry.comp φ.toIsometry) a
+  rw [← CliffordAlgebra.map_comp_map]
+  rfl
+
 theorem psiA_injective : Function.Injective (psiA φ g) := by
   intro a b h
   have h' : CliffordAlgebra.map φ.toIsometry a = CliffordAlgebra.map φ.toIsometry b := by
