@@ -17,8 +17,8 @@ lift `T` of the cocharacter `λ(τ) : bᵢ ↦ τ^{wtᵢ} bᵢ` (`0 < |τ| < 1`)
 1. conjugation by `T^k` multiplies a monomial `ι(b_{i₁})⋯ι(b_{iₘ})` by `τ^{k(wt_{i₁}+⋯+wt_{iₘ})}`,
    so it contracts every element of positive weight to `0` (`tendsto_gConj_pow_bMonSpan`);
 2. an element `y ∈ K^× · N_F` is a scalar `c` plus positive weight
-   (`exists_sub_algebraMap_mem_wtFil_of_raisesFil`), with `c = 1` on `N_F`
-   (`sub_one_mem_wtFil_of_mem_flagUnip`: this uses that `u − 1` is nilpotent, a condition in
+   (`exists_sub_algebraMap_mem_wtFil_of_raisesFil`, in `Foundations/GSpin.lean`), with `c = 1` on
+   `N_F` (`sub_one_mem_wtFil_of_mem_flagUnip`: this uses that `u − 1` is nilpotent, a condition in
    the definition of `N_F` in `GSpin(V)`), so `T^k y T^{-k} → c`
    (`tendsto_gConj_pow_of_sub_mem_wtFil`);
 3. consequently (`exists_tendsto_conj_flagStab`): up to central scalars, `T^k (p u) T^{-k}` converges

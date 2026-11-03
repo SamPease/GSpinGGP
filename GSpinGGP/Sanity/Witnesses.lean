@@ -533,8 +533,7 @@ theorem toy_whittU_eq_one (FW : IsotropicFlag (toyData (K := K)).QW)
   obtain ⟨hW, hV⟩ := hu
   have h1 : (((toyData (K := K)).fst u : (CliffordAlgebra (toyData (K := K)).QW)ˣ) :
       CliffordAlgebra (toyData (K := K)).QW) = 1 := eq_one_of_scalar_of_isNilpotent (toy_cliffW_scalar _) (by exact hW.2.2.2)
-  have hev := (((toyData (K := K)).snd u : GSpin _)).2.1
-  rw [← Subalgebra.mem_toSubmodule, even_toSubmodule] at hev
+  have hev := mem_evenOdd_zero_of_mem_GSpin ((toyData (K := K)).snd u)
   have h2 : (((toyData (K := K)).snd u : (CliffordAlgebra (toyData (K := K)).QV)ˣ) :
       CliffordAlgebra (toyData (K := K)).QV) = 1 := eq_one_of_scalar_of_isNilpotent (toy_cliffV_even_scalar _ hev) (by exact hV.2.2.2)
   apply Subtype.ext
@@ -1120,11 +1119,8 @@ theorem toy_gspinW_mem_range (g : GSpin (toyData (K := K)).QW) :
 
 /-- Every element of `GSpin(V)`, `V` a line, is a scalar. -/
 theorem toy_gspinV_mem_range (g : GSpin (toyData (K := K)).QV) :
-    g ∈ (scalarGSpin (toyData (K := K)).QV).range := by
-  refine mem_range_scalarGSpin_of_scalar g (toy_cliffV_even_scalar _ ?_)
-  have hev := g.2.1
-  rw [← Subalgebra.mem_toSubmodule, even_toSubmodule] at hev
-  exact hev
+    g ∈ (scalarGSpin (toyData (K := K)).QV).range :=
+  mem_range_scalarGSpin_of_scalar g (toy_cliffV_even_scalar _ (mem_evenOdd_zero_of_mem_GSpin g))
 
 theorem scalarGSpin_range_le_splitCentral {V : Type*} [AddCommGroup V] [Module K V]
     (Q : QuadraticForm K V) : (scalarGSpin Q).range ≤ splitCentralGSpin Q := by

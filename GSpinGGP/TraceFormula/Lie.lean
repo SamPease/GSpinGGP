@@ -789,9 +789,7 @@ theorem finrank_W (hV : IsHypPlane d.QV) : finrank F (Fin d.m → F) = 1 := by
 
 theorem gspinW_scalar (hV : IsHypPlane d.QV) (g : GSpin d.QW) :
     ∃ c, ((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) = algebraMap F _ c := by
-  have hev := g.2.1
-  rw [← Subalgebra.mem_toSubmodule, even_toSubmodule] at hev
-  exact even_scalar_of_finrank_one (finrank_W hV) hev
+  exact even_scalar_of_finrank_one (finrank_W hV) (mem_evenOdd_zero_of_mem_GSpin g)
 
 theorem gspinW_mem_range (hV : IsHypPlane d.QV) (g : GSpin d.QW) :
     g ∈ (scalarGSpin d.QW).range :=
@@ -804,11 +802,8 @@ theorem gspinW_comm (hV : IsHypPlane d.QV) (a b : GSpin d.QW) : a * b = b * a :=
 /-- Both components even (true for `G(F)` and for `𝔤`). -/
 def IsEvenPair (a : d.ambient) : Prop := a.1 ∈ evenOdd d.QW 0 ∧ a.2 ∈ evenOdd d.QV 0
 
-theorem isEvenPair_G (g : ↥d.G) : IsEvenPair ((g : d.ambientˣ) : d.ambient) := by
-  have h1 := (d.fst g).2.1
-  have h2 := (d.snd g).2.1
-  rw [← Subalgebra.mem_toSubmodule, even_toSubmodule] at h1 h2
-  exact ⟨h1, h2⟩
+theorem isEvenPair_G (g : ↥d.G) : IsEvenPair ((g : d.ambientˣ) : d.ambient) :=
+  ⟨mem_evenOdd_zero_of_mem_GSpin (d.fst g), mem_evenOdd_zero_of_mem_GSpin (d.snd g)⟩
 
 theorem isEvenPair_lie {X : d.ambient} (hX : X ∈ d.lie) : IsEvenPair X := by
   obtain ⟨h1, h2⟩ := hX
