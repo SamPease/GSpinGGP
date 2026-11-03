@@ -1291,10 +1291,56 @@ theorem map_mul_right_mul_eq {Q : Type*} [Group Q] [MeasurableSpace Q] [Measurab
   rw [e, ← Measure.map_map (measurable_mul_const b) (measurable_mul_const a), ha, hb]
 
 
-section ModularCentral
+section ModularCharacter
 
 variable {G₀ : Type*} [Group G₀] [TopologicalSpace G₀] [IsTopologicalGroup G₀]
   [LocallyCompactSpace G₀]
+
+/-- The modular character is trivial on a compact open subgroup `E` (right translation by
+`k ∈ E` maps `E`, a set of finite positive Haar measure, to itself). -/
+theorem modularCharacter_eq_one_of_mem (E : Subgroup G₀) (hEo : IsOpen (E : Set G₀))
+    (hEc : IsCompact (E : Set G₀)) (k : G₀) (hk : k ∈ E) : Measure.modularCharacter k = 1 := by
+  borelize G₀
+  set μ : Measure G₀ := Measure.haar
+  have hcl : closure (E : Set G₀) = E := (Subgroup.isClosed_of_isOpen E hEo).closure_eq
+  have h := Measure.measure_isMulInvariant_eq_smul_of_isCompact_closure
+    (Measure.map (· * k) μ) μ (s := (E : Set G₀)) (by rw [hcl]; exact hEc)
+  have hpre : (· * k) ⁻¹' (E : Set G₀) = E := by
+    ext x
+    simp only [Set.mem_preimage, SetLike.mem_coe]
+    exact ⟨fun hx => by simpa using E.mul_mem hx (E.inv_mem hk), fun hx => E.mul_mem hx hk⟩
+  rw [Measure.map_apply (measurable_mul_const k) hEo.measurableSet, hpre] at h
+  have hpos : μ E ≠ 0 := (hEo.measure_pos μ ⟨1, E.one_mem⟩).ne'
+  have htop : μ E ≠ ⊤ := hEc.measure_lt_top.ne
+  have h1 : ((Measure.haarScalarFactor (Measure.map (· * k) μ) μ : NNReal) : ENNReal) = 1 := by
+    rw [ENNReal.smul_def, smul_eq_mul] at h
+    have h' : 1 * μ E = _ * μ E := (one_mul (μ E)).trans h
+    exact ((ENNReal.mul_left_inj hpos htop).mp h').symm
+  show Measure.modularCharacterFun k = 1
+  rw [Measure.modularCharacterFun_eq_haarScalarFactor μ k]
+  exact_mod_cast h1
+
+/-- The modular character is locally constant if there is a compact open subgroup. -/
+theorem isLocallyConstant_modularCharacter (E : Subgroup G₀) (hEo : IsOpen (E : Set G₀))
+    (hEc : IsCompact (E : Set G₀)) :
+    IsLocallyConstant (fun p : G₀ => (Measure.modularCharacter p : ℝ)) := by
+  rw [IsLocallyConstant.iff_exists_open]
+  intro x
+  refine ⟨(fun y => x⁻¹ * y) ⁻¹' (E : Set G₀),
+    hEo.preimage (continuous_const.mul continuous_id), by simp, fun y hy => ?_⟩
+  have e : y = x * (x⁻¹ * y) := by group
+  rw [e, map_mul, modularCharacter_eq_one_of_mem E hEo hEc _ hy, mul_one]
+
+/-- On a compact set, the modular character is bounded below by a positive constant (if there
+is a compact open subgroup). -/
+theorem exists_lowerBound_modularCharacter (E : Subgroup G₀) (hEo : IsOpen (E : Set G₀))
+    (hEc : IsCompact (E : Set G₀)) (S : Set G₀) (hS : IsCompact S) :
+    ∃ m : ℝ, 0 < m ∧ ∀ p ∈ S, m ≤ (Measure.modularCharacter p : ℝ) := by
+  rcases S.eq_empty_or_nonempty with rfl | hne
+  · exact ⟨1, one_pos, by simp⟩
+  obtain ⟨p0, -, hmin⟩ :=
+    hS.exists_isMinOn hne (isLocallyConstant_modularCharacter E hEo hEc).continuous.continuousOn
+  exact ⟨_, by exact_mod_cast Measure.modularCharacterFun_pos p0, fun p hp => hmin hp⟩
 
 /-- The modular character is trivial on central elements. -/
 theorem modularCharacter_eq_one_of_central (a : G₀) (ha : ∀ y : G₀, y * a = a * y) :
@@ -1308,7 +1354,7 @@ theorem modularCharacter_eq_one_of_central (a : G₀) (ha : ∀ y : G₀, y * a 
   rw [Measure.modularCharacterFun_eq_haarScalarFactor (Measure.haar : Measure G₀) a]
   simp only [hmap, Measure.haarScalarFactor_self]
 
-end ModularCentral
+end ModularCharacter
 
 section ModularInvolution
 
@@ -1830,31 +1876,20 @@ theorem modularCharacter_mk_diagToH (a : GSpin d.QW) :
     · exact modularCharacter_mk_diagToH_gspinPair hu hw
   exact congr($hχ a)
 
-/-- Conjugation by an anisotropic `w ∈ W` on the `GSpin(W)` factor of `G`. -/
-def conjιGW {w : Fin d.m → F} (hw : d.QW w ≠ 0) : d.G →* d.G :=
-  d.pair.comp (((conjιGSpin d.QW hw).prodMap (MonoidHom.id _)).comp (d.fst.prod d.snd))
-
-/-- Conjugation by an anisotropic `w ∈ V` on the `GSpin(V)` factor of `G`. -/
+/-- Conjugation by an anisotropic `w ∈ V` on the `GSpin(V)` factor of `G` (for `w ∈ W`, `conjιG`
+conjugates both factors). -/
 def conjιGV {w : d.V} (hw : d.QV w ≠ 0) : d.G →* d.G :=
   d.pair.comp (((MonoidHom.id _).prodMap (conjιGSpin d.QV hw)).comp (d.fst.prod d.snd))
-
-theorem continuous_conjιGW {w : Fin d.m → F} (hw : d.QW w ≠ 0) : Continuous (conjιGW hw) :=
-  d.continuous_pair.comp (((continuous_conjιGSpin _).comp d.continuous_fst).prodMk
-    d.continuous_snd)
 
 theorem continuous_conjιGV {w : d.V} (hw : d.QV w ≠ 0) : Continuous (conjιGV hw) :=
   d.continuous_pair.comp (d.continuous_fst.prodMk
     ((continuous_conjιGSpin _).comp d.continuous_snd))
 
-theorem conjιGW_conjιGW {w : Fin d.m → F} (hw : d.QW w ≠ 0) (g : d.G) :
-    conjιGW hw (conjιGW hw g) = g :=
-  d.G_ext (conjιGSpin_conjιGSpin _ _) rfl
-
 theorem conjιGV_conjιGV {w : d.V} (hw : d.QV w ≠ 0) (g : d.G) :
     conjιGV hw (conjιGV hw g) = g :=
   d.G_ext rfl (conjιGSpin_conjιGSpin _ _)
 
-/-- `(c, 1)` and `(1, c)` are central in `G` for scalars `c`. -/
+/-- `Δ(c, c') = 1` for scalars `c`, `c'` (they are central in `G`). -/
 theorem modularCharacter_pair_scalarGSpin (c c' : Fˣ) :
     Measure.modularCharacter (d.pair (scalarGSpin d.QW c, scalarGSpin d.QV c')) = 1 :=
   modularCharacter_eq_one_of_central _ fun y => d.G_ext
@@ -1874,11 +1909,11 @@ theorem modularCharacter_pair_one_scalarGSpin (c : Fˣ) :
   rwa [map_one] at h
 
 /-- **`G(F)` is unimodular** (`G = GSpin(W) × GSpin(V)`): `Δ_G = 1`.  The modular character is a
-homomorphism, invariant under continuous automorphisms and trivial on the centre.  Conjugation by an
+homomorphism, invariant under continuous involutive automorphisms and trivial on the centre.  Conjugation by an
 anisotropic `w` on one factor is a continuous involutive automorphism mapping `uw` to
 `q(u)q(w) (uw)⁻¹` (`conjιGSpin_gspinPair`), so `Δ(uw) = 1`; the scalars are central; and scalars
 and products `u w` generate each factor (`closure_scalarGSpin_gspinPair`, from Cartan–Dieudonné).
-The thesis argues through `Δ_G(g) = |det Ad(g)|_F` (Bourbaki) and `det Ad(g) = 1` (Thesis §2.4). -/
+The thesis takes the unimodularity of `G(F)` as standard (Thesis §2.1). -/
 theorem modularCharacter_G (g : d.G) : Measure.modularCharacter g = 1 := by
   have hW : (Measure.modularCharacter.comp (d.pair.comp (MonoidHom.inl _ _)) :
       GSpin d.QW →* NNReal) = 1 := by
@@ -1887,15 +1922,15 @@ theorem modularCharacter_G (g : d.G) : Measure.modularCharacter g = 1 := by
     · show Measure.modularCharacter (d.pair (scalarGSpin d.QW c, 1)) = 1
       exact d.modularCharacter_pair_scalarGSpin_one c
     · show Measure.modularCharacter (d.pair (gspinPair d.QW hu hw, 1)) = 1
-      refine modularCharacter_eq_one_of_involutive_eq_mul_inv (conjιGW hw) (continuous_conjιGW hw)
-        (conjιGW_conjιGW hw)
+      refine modularCharacter_eq_one_of_involutive_eq_mul_inv (conjιG hw) (continuous_conjιG hw)
+        (conjιG_conjιG hw)
         (z := d.pair (scalarGSpin d.QW (Units.mk0 (d.QW u * d.QW w) (mul_ne_zero hu hw)), 1))
         (d.modularCharacter_pair_scalarGSpin_one _) ?_
       refine d.G_ext ?_ ?_
       · show conjιGSpin d.QW hw (gspinPair d.QW hu hw) = _
         rw [conjιGSpin_gspinPair, map_mul, map_inv, fst_pair, fst_pair]
-      · show (1 : GSpin d.QV) = _
-        rw [map_mul, map_inv, snd_pair, snd_pair, inv_one, mul_one]
+      · show conjιGSpin d.QV _ (1 : GSpin d.QV) = _
+        rw [map_one, map_mul, map_inv, snd_pair, snd_pair, inv_one, mul_one]
   have hV : (Measure.modularCharacter.comp (d.pair.comp (MonoidHom.inr _ _)) :
       GSpin d.QV →* NNReal) = 1 := by
     refine MonoidHom.eq_of_eqOn_dense (closure_scalarGSpin_gspinPair d.nondeg_QV) ?_
@@ -1918,9 +1953,18 @@ theorem modularCharacter_G (g : d.G) : Measure.modularCharacter g = 1 := by
   have h2 : Measure.modularCharacter (d.pair (1, d.snd g)) = 1 := DFunLike.congr_fun hV (d.snd g)
   rw [← e, map_mul, h1, h2, one_mul]
 
-/-- **`G(F)` is unimodular**: its left Haar measure is right invariant (`modularCharacter_G`). -/
-theorem isMulRightInvariant_haar_G : (Measure.haar : Measure ↥d.G).IsMulRightInvariant :=
+/-- **`G(F)` is unimodular**: its left Haar measure is right invariant (`modularCharacter_G`).
+Stated for Mathlib's left Haar measure `Measure.haar` on `↥d.G` (the one used in `IsCharacterOf`
+and the trace formula); quantified over every `d`, so it also covers the inner forms `d.twist τ`.
+Used for the Weil quotient measure on `H(F)\G(F)/A_G(F)`: right invariance on `G(F)/A_G(F)` follows
+because `A_G` is central. -/
+instance isMulRightInvariant_haar_G : (Measure.haar : Measure ↥d.G).IsMulRightInvariant :=
   ⟨fun g => map_mul_right_haar_eq_self_of_modularCharacter_eq_one (d.modularCharacter_G g)⟩
+
+/-- The same for an inner form `d.twist τ` (instance search does not see through `d.twist τ`). -/
+instance isMulRightInvariant_haar_twist_G (τ : InnerTwist d.QW) :
+    (Measure.haar : Measure ↥(d.twist τ).G).IsMulRightInvariant :=
+  (d.twist τ).isMulRightInvariant_haar_G
 
 end LeviInvolution
 

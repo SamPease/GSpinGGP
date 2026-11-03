@@ -1734,7 +1734,7 @@ the left Haar measure is `|a|⁻¹ d^×a dx` and `μ(E p⁻¹) = |b| μ(E)` for 
 `δ_P(b, y) = |b| = |det Ad(p)|_𝔲|`, the normalization for which `δ_P^{1/2}` makes the induction
 unitary.  Status: proved from `integral_K_mul_right` (the integration formula for `G = P K`,
 literature axiom `integral_eq_mul_integral_compact_integral`, and the unimodularity of `G(F)`,
-`haar_G_isMulRightInvariant`); the convention for `δ_P` is the one for which the proof
+`GGPData.isMulRightInvariant_haar_G`); the convention for `δ_P` is the one for which the proof
 goes through, so no convention is assumed. -/
 theorem preInner_rightTrans (g : ↥d.G) (f₁ f₂ : D.Pre) :
     D.preInner (D.rightTransLin g f₁) (D.rightTransLin g f₂) = D.preInner f₁ f₂ := by
