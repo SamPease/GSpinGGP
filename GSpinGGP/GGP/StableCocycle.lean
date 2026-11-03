@@ -139,32 +139,6 @@ theorem map_galIso_trans_symm_of_ratAt (φ : (Q₁.baseChange Kb).IsometryEquiv 
 
 end Strong
 
-namespace Steinberg
-
-open IsomCent
-
-variable {K : Type*} [Field K] [Invertible (2 : K)] {V : Type*} [AddCommGroup V] [Module K V]
-  {Q : QuadraticForm K V}
-
-/-- **Elements commuting with `x` have determinant `1` on `W₊₁`**, over an algebraically closed
-field: if `g` commutes with `x` and `P(x)` is semisimple, `det P(g)|_{E₁(P x)} = 1`. -/
-theorem det_restrict_one_eq_one_of_commute [CharZero K] [IsAlgClosed K] [FiniteDimensional K V]
-    (hQ : IsNondeg Q) (x : GSpin Q) (hx : Module.End.IsSemisimple (specP Q x : V →ₗ[K] V))
-    (g : GSpin Q) (hgx : Commute g x) :
-    ∃ hc : Commute (specP Q g) (specP Q x), LinearMap.det ((specP Q g : V →ₗ[K] V).restrict
-      (mapsTo_eigenspace_of_commute (commute_toLinearMap hc) 1)) = 1 := by
-  have hc : Commute (specP Q g) (specP Q x) := by
-    rw [Commute, SemiconjBy, ← map_mul, ← map_mul, hgx.eq]
-  refine ⟨hc, ?_⟩
-  have hB : (bform Q).IsSymm := ⟨fun u v => bform_comm Q u v⟩
-  have hn := (commute_iff_det_negFixedSub hQ x hx g hc).1 hgx
-  have hdet := det_eq_det_one_mul_det_neg_one_of_charZero hB hQ (isIsom_specP x) hx
-    (isIsom_specP g) (commute_toLinearMap hc)
-  rw [hn, mul_one, det_specP] at hdet
-  exact hdet.symm
-
-end Steinberg
-
 section OddFixed
 
 open TorusTransfer Steinberg IsomCent
