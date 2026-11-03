@@ -623,6 +623,27 @@ theorem specP_mul_apply {Q : QuadraticForm K V} (g h : GSpin Q) (v : V) :
     specP Q (g * h) v = specP Q g (specP Q h v) := by
   rw [map_mul]; rfl
 
+
+/-- `P(g)` as an isometry of `(V, q)`. -/
+def specPIso {Q : QuadraticForm K V} (g : GSpin Q) : Q.IsometryEquiv Q where
+  toLinearEquiv := specP Q g
+  map_app' := specP_isometry g
+
+@[simp]
+theorem specPIso_apply {Q : QuadraticForm K V} (g : GSpin Q) (v : V) :
+    specPIso g v = specP Q g v := rfl
+
+/-- `C(P(g))` is conjugation by `g`. -/
+theorem map_specPIso_apply {Q : QuadraticForm K V} (g : GSpin Q) (a : CliffordAlgebra Q) :
+    CliffordAlgebra.map (specPIso g).toIsometry a =
+      ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * a *
+        (((g : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) := by
+  induction a using CliffordAlgebra.induction with
+  | algebraMap r => simp [Algebra.commutes, mul_assoc]
+  | ι x => rw [CliffordAlgebra.map_apply_ι]; exact ι_specP g x
+  | mul a b ha hb => rw [map_mul, ha, hb]; simp only [mul_assoc, Units.inv_mul_cancel_left]
+  | add a b ha hb => rw [map_add, ha, hb, mul_add, add_mul]
+
 theorem specP_inv_apply_apply {Q : QuadraticForm K V} (g : GSpin Q) (v : V) :
     specP Q g (specP Q g⁻¹ v) = v := by
   rw [← specP_mul_apply, mul_inv_cancel, map_one]; rfl
@@ -957,33 +978,36 @@ theorem exists_dual_of_notMem {p : Submodule K V} {x : V} (hx : x ∉ p) :
   rw [hp] at this
   exact this
 
-/-- If `ι x ι u ι v ∈ ι(V)` for all `v`, `u ≠ 0` and `dim V ≥ 3`, then `x ∈ K u`. -/
-theorem mem_span_of_ι_mul_ι_mul_ι_mem [Module.Finite K V] (hV : 3 ≤ finrank K V)
-    {Q : QuadraticForm K V} {x u : V} (hu : u ≠ 0)
-    (h : ∀ v, ι Q x * ι Q u * ι Q v ∈ LinearMap.range (ι Q)) : x ∈ K ∙ u := by
+/-- If `ι x ι u ι v ∈ ι(V)` for all `v ∈ p`, where `x, u ∈ p`, `u ≠ 0` and `dim p ≥ 3`, then `x ∈ K u`. -/
+theorem mem_span_of_ι_mul_ι_mul_ι_mem {p : Submodule K V} [Module.Finite K p]
+    (hp : 3 ≤ finrank K p) {Q : QuadraticForm K V} {x u : V} (hxp : x ∈ p) (hup : u ∈ p)
+    (hu : u ≠ 0) (h : ∀ v ∈ p, ι Q x * ι Q u * ι Q v ∈ LinearMap.range (ι Q)) : x ∈ K ∙ u := by
   by_contra hx
-  -- `x, u` independent; pick `v ∉ span {x, u}`
-  have hlt : Submodule.span K {x, u} ≠ ⊤ := by
-    intro htop
+  have hle : Submodule.span K {x, u} ≤ p := by
+    rw [Submodule.span_le]; intro z hz
+    rcases hz with rfl | rfl
+    · exact hxp
+    · exact hup
+  have hlt : Submodule.span K {x, u} ≠ p := by
+    intro hsp
     have h1 : finrank K (Submodule.span K ({x, u} : Set V)) ≤ 2 := by
       classical
       have := finrank_span_finset_le_card (R := K) ({x, u} : Finset V)
       rw [Finset.coe_insert, Finset.coe_singleton] at this
       exact this.trans Finset.card_le_two
-    rw [htop, finrank_top] at h1
+    rw [hsp] at h1
     omega
-  obtain ⟨v, hv⟩ : ∃ v, v ∉ Submodule.span K {x, u} := by
+  obtain ⟨v, hvp, hv⟩ : ∃ v ∈ p, v ∉ Submodule.span K {x, u} := by
     by_contra hall; push Not at hall
-    exact hlt (eq_top_iff.mpr fun v _ => hall v)
+    exact hlt (le_antisymm hle hall)
   obtain ⟨d, hdv, hd⟩ := exists_dual_of_notMem hv
   have hdx : d x = 0 := hd x (Submodule.subset_span (by simp))
   have hdu : d u = 0 := hd u (Submodule.subset_span (by simp))
-  obtain ⟨y, hy⟩ := h v
+  obtain ⟨y, hy⟩ := h v hvp
   have h1 := congrArg (CliffordAlgebra.contractLeft d) hy
   rw [contractLeft_ι, mul_assoc, contractLeft_ι_mul, contractLeft_ι_mul, contractLeft_ι, hdx, hdu,
     zero_smul, zero_sub, zero_smul, zero_sub, mul_neg, neg_neg, ← Algebra.commutes,
     ← Algebra.smul_def] at h1
-  -- so `ι x ι u` is a scalar
   have h1' : d v • (ι Q x * ι Q u) = algebraMap K _ (d y) := by rw [h1, mul_smul_comm]
   have hxu : ι Q x * ι Q u = algebraMap K _ ((d v)⁻¹ * d y) := by
     rw [map_mul, ← h1', ← Algebra.smul_def, smul_smul, inv_mul_cancel₀ hdv, one_smul]
@@ -1029,68 +1053,64 @@ def gspinPair (Q : QuadraticForm K V) {u w : V} (hu : Q u ≠ 0) (hw : Q w ≠ 0
           ι_mul_ι_mul_ι, ← map_smul]
         exact LinearMap.mem_range_self _ _⟩
 
+
 omit [Invertible (2 : K)] in
 /-- The underlying Clifford element of `gspinPair`. -/
 @[simp] theorem coe_gspinPair (Q : QuadraticForm K V) {u w : V} (hu : Q u ≠ 0) (hw : Q w ≠ 0) :
     (((gspinPair Q hu hw : GSpin Q) : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) =
       ι Q u * ι Q w := rfl
 
-/-- A central element of `GSpin(V)`, `dim V ≥ 3`, acts on `V` by a scalar. -/
-theorem specP_eq_smul_of_mem_center [Module.Finite K V] (hV : 3 ≤ finrank K V)
-    {Q : QuadraticForm K V} (hQ : IsNondeg Q) {b : GSpin Q} (hb : ∀ y : GSpin Q, b * y = y * b) :
-    ∃ c : K, ∀ v, specP Q b v = c • v := by
+/-- **An isometry preserving products of two anisotropic vectors of a subspace is `±1` there**: if
+`p` is nondegenerate of dimension `≥ 3`, `T p ⊆ p` and `ι(Tu) ι(Tw) = ι u ι w` for anisotropic
+`u, w ∈ p`, then `T = c` on `p` with `c² = 1`. -/
+theorem exists_smul_of_ι_mul_ι_eq {p : Submodule K V} [Module.Finite K p] (hp : 3 ≤ finrank K p)
+    {Q : QuadraticForm K V} (hnd : IsNondeg (Q.comp p.subtype)) {T : V →ₗ[K] V}
+    (hTp : ∀ v ∈ p, T v ∈ p)
+    (hT : ∀ u ∈ p, ∀ w ∈ p, Q u ≠ 0 → Q w ≠ 0 → ι Q (T u) * ι Q (T w) = ι Q u * ι Q w) :
+    ∃ c : K, c * c = 1 ∧ ∀ v ∈ p, T v = c • v := by
   classical
-  set n := finrank K V
-  obtain ⟨e, he⟩ : ∃ e : Basis (Fin n) K V, (bform Q).IsOrthoᵢ e :=
-    LinearMap.BilinForm.exists_orthogonal_basis (QuadraticForm.associated_isSymm (S := K) Q)
-  have hQe : ∀ i, Q (e i) ≠ 0 := by
+  set n := finrank K p
+  set Qp := Q.comp p.subtype
+  obtain ⟨e, he⟩ : ∃ e : Basis (Fin n) K p, (bform Qp).IsOrthoᵢ e :=
+    LinearMap.BilinForm.exists_orthogonal_basis (QuadraticForm.associated_isSymm (S := K) Qp)
+  have hQe : ∀ i, Q (e i : V) ≠ 0 := by
     intro i hi
     apply e.ne_zero i
-    rw [isNondeg_iff] at hQ
-    apply hQ
-    have h0 : (bform Q (e i) : V →ₗ[K] K) = 0 := by
+    rw [isNondeg_iff] at hnd
+    apply hnd
+    have h0 : (bform Qp (e i) : p →ₗ[K] K) = 0 := by
       refine e.ext fun j => ?_
       by_cases hij : i = j
       · subst hij
-        rw [LinearMap.zero_apply, bform, QuadraticMap.associated_eq_self_apply, hi]
+        rw [LinearMap.zero_apply, bform, QuadraticMap.associated_eq_self_apply]
+        exact hi
       · exact he hij
     intro y; rw [h0, LinearMap.zero_apply]
-  set T : V →ₗ[K] V := (specP Q b : V →ₗ[K] V)
-  set B : CliffordAlgebra Q := ((b : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)
-  set Bi : CliffordAlgebra Q := (((b : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) :
-    CliffordAlgebra Q)
-  have hBBi : B * Bi = 1 := Units.mul_inv _
-  have hTv : ∀ v, ι Q (T v) = B * ι Q v * Bi := fun v => ι_specP b v
-  -- `ι(T eᵢ) ι(T eⱼ) = ι eᵢ ι eⱼ`
-  have hT : ∀ i j, ι Q (T (e i)) * ι Q (T (e j)) = ι Q (e i) * ι Q (e j) := by
-    intro i j
-    have hc := congrArg (fun y : GSpin Q => ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q))
-      (hb (gspinPair Q (hQe i) (hQe j)))
-    simp only [Subgroup.coe_mul, Units.val_mul, coe_gspinPair] at hc
-    change B * (ι Q (e i) * ι Q (e j)) = ι Q (e i) * ι Q (e j) * B at hc
-    rw [hTv, hTv, show B * ι Q (e i) * Bi * (B * ι Q (e j) * Bi) =
-      B * ι Q (e i) * (Bi * B) * ι Q (e j) * Bi by simp only [mul_assoc], Units.inv_mul, mul_one,
-      mul_assoc B, hc, mul_assoc, hBBi, mul_one]
-  have hT' : ∀ i v, ι Q (T (e i)) * ι Q (T v) = ι Q (e i) * ι Q v := by
+  have hTe : ∀ i j, ι Q (T (e i)) * ι Q (T (e j)) = ι Q (e i : V) * ι Q (e j : V) :=
+    fun i j => hT _ (e i).2 _ (e j).2 (hQe i) (hQe j)
+  have hT' : ∀ i, ∀ v ∈ p, ι Q (T (e i)) * ι Q (T v) = ι Q (e i : V) * ι Q v := by
+    intro i v hv
+    have : (LinearMap.mulLeft K (ι Q (T (e i)))) ∘ₗ ι Q ∘ₗ T ∘ₗ p.subtype =
+        (LinearMap.mulLeft K (ι Q (e i : V))) ∘ₗ ι Q ∘ₗ p.subtype := e.ext fun j => by
+      simpa using hTe i j
+    exact congr($this ⟨v, hv⟩)
+  have hspan : ∀ i, T (e i) ∈ K ∙ (e i : V) := by
     intro i
-    have : (LinearMap.mulLeft K (ι Q (T (e i)))) ∘ₗ ι Q ∘ₗ T =
-        (LinearMap.mulLeft K (ι Q (e i))) ∘ₗ ι Q := e.ext fun j => by simpa using hT i j
-    exact fun v => congr($this v)
-  have hspan : ∀ i, T (e i) ∈ K ∙ e i := by
-    intro i
-    refine mem_span_of_ι_mul_ι_mul_ι_mem (Q := Q) hV (e.ne_zero i) fun v => ⟨Q (T (e i)) • T v, ?_⟩
-    rw [map_smul, Algebra.smul_def, ← ι_sq_scalar, mul_assoc, hT', mul_assoc]
+    refine mem_span_of_ι_mul_ι_mul_ι_mem (Q := Q) hp (hTp _ (e i).2) (e i).2
+      (fun h => hQe i (by rw [h, map_zero])) fun v hv => ⟨Q (T (e i)) • T v, ?_⟩
+    rw [map_smul, Algebra.smul_def, ← ι_sq_scalar, mul_assoc, hT' i v hv, mul_assoc]
   choose μ hμ using fun i => Submodule.mem_span_singleton.mp (hspan i)
-  have hne : ∀ i j, ι Q (e i) * ι Q (e j) ≠ 0 := fun i j =>
+  have hne : ∀ i j, ι Q (e i : V) * ι Q (e j : V) ≠ 0 := fun i j =>
     (gspinPair Q (hQe i) (hQe j) : (CliffordAlgebra Q)ˣ).ne_zero
   have hμμ : ∀ i j, μ i * μ j = 1 := by
     intro i j
-    have h := hT i j
+    have h := hTe i j
     rw [← hμ, ← hμ, map_smul, map_smul, smul_mul_smul_comm] at h
-    have : (μ i * μ j - 1) • (ι Q (e i) * ι Q (e j)) = 0 := by rw [sub_smul, h, one_smul, sub_self]
+    have : (μ i * μ j - 1) • (ι Q (e i : V) * ι Q (e j : V)) = 0 := by
+      rw [sub_smul, h, one_smul, sub_self]
     exact sub_eq_zero.mp ((smul_eq_zero.mp this).resolve_right (hne i j))
   have hμ0 : ∀ i, μ i ≠ 0 := fun i h => by simpa [h] using hμμ i i
-  refine ⟨μ ⟨0, by omega⟩, fun v => ?_⟩
+  refine ⟨μ ⟨0, by omega⟩, hμμ _ _, fun v hv => ?_⟩
   have hall : ∀ j, μ j = μ ⟨0, by omega⟩ := by
     intro j
     obtain ⟨k, hk1, hk2⟩ : ∃ k : Fin n, k ≠ j ∧ k ≠ ⟨0, by omega⟩ := by
@@ -1099,12 +1119,40 @@ theorem specP_eq_smul_of_mem_center [Module.Finite K V] (hV : 3 ≤ finrank K V)
           fun h => by simp [Fin.ext_iff] at h⟩
       · exact ⟨⟨1, by omega⟩, fun h => hj (by rw [← h]),
           fun h => by simp [Fin.ext_iff] at h⟩
-    have h1 := hμμ j k
-    have h2 := hμμ ⟨0, by omega⟩ k
-    exact mul_right_cancel₀ (hμ0 k) (h1.trans h2.symm)
-  have : T = μ ⟨0, by omega⟩ • LinearMap.id := e.ext fun j => by
-    rw [← hμ, hall j]; rfl
-  exact congr($this v)
+    exact mul_right_cancel₀ (hμ0 k) ((hμμ j k).trans (hμμ ⟨0, by omega⟩ k).symm)
+  have : T ∘ₗ p.subtype = (μ ⟨0, by omega⟩ • LinearMap.id) ∘ₗ p.subtype :=
+    e.ext fun j => by
+      simp only [LinearMap.comp_apply, Submodule.subtype_apply, LinearMap.smul_apply,
+        LinearMap.id_apply]
+      rw [← hμ, hall j]
+  exact congr($this ⟨v, hv⟩)
+
+/-- A central element of `GSpin(V)`, `dim V ≥ 3`, acts on `V` by a scalar. -/
+theorem specP_eq_smul_of_mem_center [Module.Finite K V] (hV : 3 ≤ finrank K V)
+    {Q : QuadraticForm K V} (hQ : IsNondeg Q) {b : GSpin Q} (hb : ∀ y : GSpin Q, b * y = y * b) :
+    ∃ c : K, ∀ v, specP Q b v = c • v := by
+  have hnd : IsNondeg (Q.comp (⊤ : Submodule K V).subtype) := by
+    rw [isNondeg_iff] at hQ ⊢
+    intro x hx
+    have : (x : V) = 0 := hQ _ fun y => by
+      simpa [bform, QuadraticMap.associated_comp] using hx ⟨y, trivial⟩
+    exact Subtype.ext this
+  obtain ⟨c, -, hc⟩ := exists_smul_of_ι_mul_ι_eq (p := ⊤) (by rwa [finrank_top]) hnd
+    (T := (specP Q b : V →ₗ[K] V)) (fun _ _ => trivial) fun u _ w _ hu hw => by
+      set B : CliffordAlgebra Q := ((b : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)
+      set Bi : CliffordAlgebra Q :=
+        (((b : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)
+      have hBBi : B * Bi = 1 := Units.mul_inv _
+      have hc := congrArg (fun y : GSpin Q => ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q))
+        (hb (gspinPair Q hu hw))
+      simp only [Subgroup.coe_mul, Units.val_mul, coe_gspinPair] at hc
+      change B * (ι Q u * ι Q w) = ι Q u * ι Q w * B at hc
+      show ι Q (specP Q b u) * ι Q (specP Q b w) = _
+      rw [ι_specP, ι_specP,
+        show B * ι Q u * Bi * (B * ι Q w * Bi) = B * ι Q u * (Bi * B) * ι Q w * Bi by
+          simp only [mul_assoc], Units.inv_mul, mul_one, mul_assoc B, hc, mul_assoc, hBBi,
+        mul_one]
+  exact ⟨c, fun v => hc v trivial⟩
 
 
 omit [Invertible (2 : K)] in

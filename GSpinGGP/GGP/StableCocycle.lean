@@ -11,8 +11,7 @@ import GSpinGGP.GGP.TorusTransfer
 
 For an `F̄`-isometry `ψ : W_{F̄} ≃ W'_{F̄}`, its Galois conjugate `σψ = σ ∘ ψ ∘ σ⁻¹` (`galIso`) is again an
 isometry, with matrix `σ(Ψ)` (`glOf_galIso`), and `C(ψ)` intertwines the Galois actions on the Clifford
-algebras up to replacing `ψ` by `σψ` (`galC_map`).  Conjugation by `g ∈ GSpin(V)` is `C(P(g))`
-(`map_specPIso_apply`).  Own work, elementary.
+algebras up to replacing `ψ` by `σψ` (`galC_map`).  Own work, elementary.
 -/
 
 noncomputable section
@@ -21,32 +20,6 @@ namespace GSpinGGP
 
 open CliffordAlgebra TwistDescent
 open scoped TensorProduct
-
-section SpecPIso
-
-variable {K : Type*} [Field K] [Invertible (2 : K)] {V : Type*} [AddCommGroup V] [Module K V]
-
-/-- `P(g)` as an isometry of `(V, q)`. -/
-def specPIso {Q : QuadraticForm K V} (g : GSpin Q) : Q.IsometryEquiv Q where
-  toLinearEquiv := specP Q g
-  map_app' := specP_isometry g
-
-@[simp]
-theorem specPIso_apply {Q : QuadraticForm K V} (g : GSpin Q) (v : V) :
-    specPIso g v = specP Q g v := rfl
-
-/-- `C(P(g))` is conjugation by `g`. -/
-theorem map_specPIso_apply {Q : QuadraticForm K V} (g : GSpin Q) (a : CliffordAlgebra Q) :
-    CliffordAlgebra.map (specPIso g).toIsometry a =
-      ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * a *
-        (((g : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) := by
-  induction a using CliffordAlgebra.induction with
-  | algebraMap r => simp [Algebra.commutes, mul_assoc]
-  | ι x => rw [map_apply_ι]; exact ι_specP g x
-  | mul a b ha hb => rw [map_mul, ha, hb]; simp only [mul_assoc, Units.inv_mul_cancel_left]
-  | add a b ha hb => rw [map_add, ha, hb, mul_add, add_mul]
-
-end SpecPIso
 
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
