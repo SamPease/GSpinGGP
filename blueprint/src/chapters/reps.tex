@@ -156,7 +156,8 @@ $N=1-\Ad x$ is semisimple on $\mathfrak g$, so $\mathfrak g=\ker N\oplus\operato
 If $D(x)\neq0$ then $x$ is semisimple with abelian centralizer in $\mathfrak g$.
 \end{lemma}
 \begin{proof}
-Not yet formalized. If $x=su$, then $\mathfrak g_s$ is a Cartan subalgebra, $Z_G(s)^0$ a maximal torus, and $u=1$. Needs the Jordan decomposition and Cartan subalgebra facts.
+\leanok
+$D(x)\neq0$ says the generalized $1$-eigenspace of $\Ad x$ on $\mathfrak g$ has dimension $\le\ell$. For the Jordan decomposition $x=su$ in $G(F)$, $\mathfrak g_s$ lies in it, so $\dim\mathfrak g_s\le\ell$; the rank clauses for $\GSpin$ give $\dim\mathfrak g_s=\ell$, $\mathfrak g_s$ abelian, and the only unipotent element of $G(F)$ commuting with $s$ is $1$, so $u=1$ and $x=s$ is regular semisimple.
 \end{proof}
 
 \begin{theorem}[$G'=\Greg(F)$]

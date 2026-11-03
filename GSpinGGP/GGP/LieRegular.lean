@@ -3,7 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.GGP.JointRankDescent
-import GSpinGGP.GGP.RegularNilpotent
+import GSpinGGP.GGP.LieRank
 import GSpinGGP.Foundations.JordanAlgebra
 import GSpinGGP.Foundations.RankSemicontinuity
 
