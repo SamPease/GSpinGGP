@@ -314,6 +314,7 @@ theorem coe_specMatFbar_bcGSpin (t : GSpin d.QW) :
   ext i j
   simp [LinearMap.toMatrix_apply, bcBasis, LinearMap.toMatrix'_apply, Algebra.algebraMap_eq_smul_one]
 
+open Matrix in
 /-- **Rational points of `SO(W)`**: a Galois-fixed element of `P(GSpin(W)(F̄)) ⊆ GL_m(F̄)` is the
 image of some `t ∈ GSpin(W)(F)` (its entries lie in `F`, `TwistDescent.exists_map_of_fixed`; it is an
 isometry of determinant `1`; `gspin_specP_surjective_SO`). -/
@@ -331,32 +332,23 @@ theorem exists_specMatFbar_bcGSpin_eq {h : GL (Fin d.m) (AlgebraicClosure F)}
   have hinj : Function.Injective (fun M : Matrix (Fin d.m) (Fin d.m) F =>
       M.map (algebraMap F (AlgebraicClosure F))) :=
     Matrix.map_injective (algebraMap F (AlgebraicClosure F)).injective
-  have hgram : N.transpose * d.QW.toMatrix' * N = d.QW.toMatrix' := hinj <| by
+  have hgram : Nᵀ * d.QW.toMatrix' * N = d.QW.toMatrix' := hinj <| by
     simp only [Matrix.map_mul, Matrix.transpose_map, hN]
     exact TwistDescent.gram_specMatFbar d.QW g
   have hdet : N.det = 1 := (algebraMap F (AlgebraicClosure F)).injective <| by
     rw [RingHom.map_det, RingHom.mapMatrix_apply, hN, map_one]
     exact TwistDescent.det_specMatFbar d.QW g
-  have hu : IsUnit (LinearMap.toMatrix (Pi.basisFun F (Fin d.m)) (Pi.basisFun F (Fin d.m))
-      (Matrix.toLin' N)).det := by
-    rw [LinearMap.toMatrix_eq_toMatrix', LinearMap.toMatrix'_toLin', hdet]
-    exact isUnit_one
-  set φ := LinearEquiv.ofIsUnitDet hu
-  have hφ : ∀ v, d.QW (φ v) = d.QW v := by
-    have hcomp : d.QW.comp (Matrix.toLin' N) = d.QW := by
-      apply QuadraticForm.toMatrix'_injective
-      rw [QuadraticForm.toMatrix'_comp, LinearMap.toMatrix'_toLin', hgram]
-    intro v
-    simpa [φ, LinearEquiv.ofIsUnitDet] using congrArg (fun q : QuadraticForm F _ => q v) hcomp
+  set e := TwistDescent.isometryEquivOfMatrix N (by rw [hdet]; exact one_ne_zero) hgram
+  set φ := e.toLinearEquiv
+  have hφ : ∀ v, d.QW (φ v) = d.QW v := e.map_app
+  have hφl : (φ : (Fin d.m → F) →ₗ[F] (Fin d.m → F)) = Matrix.toLin' N :=
+    TwistDescent.coe_isometryEquivOfMatrix N _ hgram
   have hφdet : LinearMap.det (φ : (Fin d.m → F) →ₗ[F] (Fin d.m → F)) = 1 := by
-    show LinearMap.det (Matrix.toLin' N) = 1
-    rw [LinearMap.det_toLin', hdet]
+    rw [hφl, LinearMap.det_toLin', hdet]
   obtain ⟨t, ht⟩ := gspin_specP_surjective_SO d.QW d.nondeg φ hφ hφdet
   refine ⟨t, Units.ext ?_⟩
   rw [coe_specMatFbar_bcGSpin, ht]
   show _ = X
-  rw [← hN]
-  congr 1
-  exact LinearMap.toMatrix'_toLin' N
+  rw [← hN, hφl, LinearMap.toMatrix'_toLin']
 
 end GSpinGGP
