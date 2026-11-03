@@ -45,19 +45,20 @@ whole space, every bounded operator commuting with the group is a scalar.
 \end{literature}
 
 \begin{theorem}[The centre acts by a character]
-\label{LIT-schur_central}
+\label{schur_central}
 \lean{GSpinGGP.schur_central}
 \leanok
-\uses{UnitaryRep, LIT-dixmier_commutant_scalar}
+\uses{UnitaryRep}
 In an irreducible unitary representation of a topological group, the centre acts by a character (Thesis \S3.1.2).
 \end{theorem}
 \begin{proof}
 \leanok
+\uses{LIT-dixmier_commutant_scalar}
 A central element's operator commutes with the whole group, so it is a scalar by Lemma~\ref{LIT-dixmier_commutant_scalar}.
 \end{proof}
 
 \begin{theorem}[$G(F)$ is unimodular]
-\label{LIT-haar_G_isMulRightInvariant}
+\label{isMulRightInvariant_haar_G}
 \lean{GSpinGGP.GGPData.isMulRightInvariant_haar_G}
 \leanok
 \uses{G, GGPData, GSpin}
@@ -65,6 +66,7 @@ The Haar measure of $G(F)=\GSpin(W)(F)\times\GSpin(V)(F)$ (and of every inner fo
 \end{theorem}
 \begin{proof}
 \leanok
+\uses{H, N, cartan_dieudonne_even}
 The modular character $\Delta$ is a homomorphism to $\mathbb{R}_{>0}$, trivial on the centre and invariant under continuous
 involutive automorphisms. Conjugation by an anisotropic vector $w$ on one factor is a continuous involutive automorphism sending $uw$ to
 $q(u)q(w)(uw)^{-1}$, so $\Delta(uw)^2=1$ and $\Delta(uw)=1$. Scalars and products $uw$ of anisotropic vectors generate
@@ -122,6 +124,17 @@ Over an algebraically closed field of characteristic $0$, for $n\ge3$ and $X\in\
 \assumedfrom{\cite{Jantzen}, \S7.11, Remark, and \S7.13}
 \end{literature}
 
+\begin{literature}[Regular nilpotents of $\mathfrak{so}(V)$: Jordan type]
+\label{LIT-jantzen_regularNil_partition}
+\lean{GSpinGGP.jantzen_regularNil_partition}
+\leanok
+Over an algebraically closed field of characteristic $0$, for $n\ge3$, a nilpotent $X\in\mathfrak{so}_n$ whose centralizer has
+minimal dimension among nilpotent elements has partition $[n]$ ($n$ odd) or $[n-1,1]$ ($n$ even): $X^{n-1}\neq0$, resp.\
+$X^{n-2}\neq0=X^{n-1}$.
+
+\assumedfrom{\cite{Jantzen}, \S6.3 (regular $\Leftrightarrow$ minimal centralizer dimension; partitions of the regular orbit)}
+\end{literature}
+
 \begin{lemma}[Centralizers of regular elements]
 \label{finrank_lieCentralizer_eq_lieRank}
 \lean{GSpinGGP.finrank_lieCentralizer_eq_lieRank}
@@ -131,7 +144,7 @@ For $x\in\Greg(F)$, $\dim\mathfrak g_x=\operatorname{rank}\mathfrak g=\min_{X\in
 \end{lemma}
 \begin{proof}
 \leanok
-\uses{LIT-jantzen_finrank_soCentMat_ge}
+\uses{GSpin, LIT-jantzen_finrank_soCentMat_ge}
 Both sides split over $\mathfrak g=\gspin(W)\times\gspin(V)$. For $g\in\GSpin(U)$, $\gspin(U)_g\cong F\oplus\mathfrak{so}(U)_{P(g)}$; if $g$ is semisimple with $\gspin(U)_g$ abelian then, over $\bar F$, the eigenvalues $\mu\ne\pm1$ of $P(g)$ are simple and pair off, $\dim E_{\pm1}\le2$, $\dim E_{-1}$ is even, and $\dim\mathfrak{so}(U)_{P(g)}=\lfloor\dim U/2\rfloor$ by induction over orthogonal splittings; the dimension descends to $F$. Finally $\operatorname{rank}\gspin(U)=\lfloor\dim U/2\rfloor+1$: Jantzen's lower bound \cite{Jantzen}, and an explicit skew element $\sum c_iJ_i$ on orthogonal planes.
 \end{proof}
 
@@ -157,6 +170,7 @@ If $D(x)\neq0$ then $x$ is semisimple with abelian centralizer in $\mathfrak g$.
 \end{lemma}
 \begin{proof}
 \leanok
+\uses{GSpin, LIT-jantzen_finrank_soCentMat_ge}
 $D(x)\neq0$ says the generalized $1$-eigenspace of $\Ad x$ on $\mathfrak g$ has dimension $\le\ell$. For the Jordan decomposition $x=su$ in $G(F)$, $\mathfrak g_s$ lies in it, so $\dim\mathfrak g_s\le\ell$; the rank clauses for $\GSpin$ give $\dim\mathfrak g_s=\ell$, $\mathfrak g_s$ abelian, and the only unipotent element of $G(F)$ commuting with $s$ is $1$, so $u=1$ and $x=s$ is regular semisimple.
 \end{proof}
 

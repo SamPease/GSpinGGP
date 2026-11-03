@@ -76,7 +76,7 @@ $\mgeom(\sum_i\theta_{\pi_i})=\sum_i\mgeom(\theta_{\pi_i})$ (Thesis Prop.~12.1.1
 \end{proposition}
 \begin{proof}
 \leanok
-\uses{CentralCharOn, GammaClass, IsGammaElt, IsQuasiCharacter, LIT-germ_unique, QC, charG_mem_QC, deltaGGP, germ, gspin, jHat, mGeom_add, mult, orbitChoice, LIT-schur_central, tendsto_mGeomS, weylDisc}
+\uses{CentralCharOn, GammaClass, IsGammaElt, IsQuasiCharacter, LIT-germ_unique, QC, charG_mem_QC, deltaGGP, germ, gspin, jHat, mGeom_add, mult, orbitChoice, schur_central, tendsto_mGeomS, weylDisc}
 Each $\theta_{\pi_i}$ lies in $\QC(G,\eta_i)$ for its central character $\eta_i$, and $\mgeom$ is linear on the
 span of these spaces (Chapter~\ref{chap:mgeom}).
 \end{proof}
@@ -192,7 +192,7 @@ $x\mapsto y$, carrying $T_{x,\natural}$ onto $T_{y,\natural}$ with every $t$ sta
 \end{lemma}
 \begin{proof}
 \leanok
-\uses{isSemisimple_specP_baseChange, lieAbelian_specP_baseChange, stablyConjG_diag_of_psiU}
+\uses{isSemisimple_specP_baseChange, lieAbelian_specP_baseChange, stablyConjG_diag_of_psiU, steinberg_sign}
 The values of $t\mapsto gC(\varphi_\alpha)(t)g^{-1}$ are Galois-fixed, hence rational
 (Galois descent); they commute with $y$ and fix $W'_y$. The inverse comes from $g^{-1}$ and $\varphi_\alpha^{-1}$. Scalars are central and $x\mapsto y$ by the choice of $g$. $e$ and $e^{-1}$ are restrictions of $F$-linear maps $C(W)\to C(W_\alpha)$, hence continuous. Stable conjugacy in $G$ is Lemma~\ref{stablyConjG_diag_of_psiU}. On $T_{x,\natural}$ the centralizers of $\bar t$ and $\bar x$ in $\GSpin(W)(\Fbar)$ and $\GSpin(V)(\Fbar)$ agree (by the centralizer theorem, Theorem~\ref{steinberg_centralizer_connected}, and the commutativity of the Lie algebra of $S_t$); hence the rationality clauses for $x$ give those for $t$, and $\Ad(g)\circ C(\varphi_\alpha)$ carries centralizers, fixed spaces and semisimplicity, so $T_{x,\natural}$ and $T_{y,\natural}$ correspond.
 \end{proof}
@@ -376,6 +376,7 @@ twists $W$ into a form $W_{q_x(\beta)}\not\cong W$.
 \end{lemma}
 \begin{proof}
 \leanok
+\uses{padic_quadratic_classes, witt_cancellation}
 Over $\bar F$ the plane is hyperbolic with hyperbolic pair $f,f'$; $\mathrm{SO}(\Pi)(\bar F)$ is the split torus scaling $f,f'$
 by $t^{-1},t$, lifted to $\mathrm{GSpin}$ by $ff'+t\,f'f$, which commutes with $x$ and fixes $W'_x$, so it lies in $S_x$.
 Twisting $\Pi$ into the other binary form of its discriminant gives a cocycle with these values; the twisted form is
@@ -463,7 +464,7 @@ Under the same hypotheses, \[ \sum_\alpha\mgeom(\theta_\alpha)=\lim_{s\to0^+}\in
 \end{proposition}
 \begin{proof}
 \leanok
-\uses{CentralCharOn, IsTempered, QC, UnitaryRep, charG_mem_QC, mult, padic_quadratic_classes, LIT-schur_central, stable_rearrangement_pos, tendsto_mGeomS}
+\uses{CentralCharOn, IsTempered, QC, UnitaryRep, charG_mem_QC, mult, padic_quadratic_classes, schur_central, stable_rearrangement_pos, tendsto_mGeomS}
 The rearrangement at $s>0$, and the finite sum over $\alpha$ commutes with the limit.
 \end{proof}
 
@@ -519,7 +520,7 @@ satisfies Luo's condition at $x=1$ (\cite{Luo} \S7.1).
 \end{lemma}
 \begin{proof}
 \leanok
-\uses{exists_regularNil_inOrbitNu, nilReg_nonempty_iff_quasiSplit}
+\uses{LIT-jantzen_finrank_soCentMat_ge, exists_regularNil_inOrbitNu, witt_decomposition}
 Luo's orbit in the even factor, paired with a regular nilpotent of the other factor.
 \end{proof}
 
