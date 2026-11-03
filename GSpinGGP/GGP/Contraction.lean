@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.GGP.Cocharacter
+import TauCeti.Topology.Algebra.Module.ModuleTopology
 
 /-!
 # Contraction of a flag stabilizer by a cocharacter
@@ -206,19 +207,6 @@ section ScalarPart
 variable {K : Type*} [Field K] [Invertible (2 : K)]
 variable {V : Type*} [AddCommGroup V] [Module K V] [Module.Finite K V] {Q : QuadraticForm K V}
 
-omit [Invertible (2 : K)] [Module.Finite K V] in
-theorem mem_evenOdd_zero_of_mem_GSpin (g : GSpin Q) :
-    ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∈ evenOdd Q 0 := by
-  have := g.2.1
-  rw [← Subalgebra.mem_toSubmodule, even_toSubmodule] at this
-  exact this
-
-omit [Module.Finite K V] in
-theorem mul_ι_eq_ι_specP_mul (g : GSpin Q) (v : V) :
-    ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * ι Q v =
-      ι Q ((specP Q g : V →ₗ[K] V) v) * ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) := by
-  rw [LinearEquiv.coe_coe, ι_specP, mul_assoc, Units.inv_mul, mul_one]
-
 /-- An element of `K^× · N_F` (`P(g)` trivial on the graded pieces) is a scalar plus positive
 weight. -/
 theorem exists_sub_algebraMap_mem_wtFil_of_raisesFil (hQ : IsNondeg Q) {F : IsotropicFlag Q}
@@ -233,15 +221,13 @@ theorem exists_sub_algebraMap_mem_wtFil_of_raisesFil (hQ : IsNondeg Q) {F : Isot
 theorem sub_one_mem_wtFil_of_mem_flagUnip (hQ : IsNondeg Q) {F : IsotropicFlag Q}
     {u : GSpin Q} (hu : u ∈ flagUnip F) :
     ((u : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1 ∈ wtFil Q (flagWt F) 1 :=
-  sub_one_mem_wtFil_one hQ F.isWtFil (F.orthogonal_flagWt_le hQ) (mem_evenOdd_zero_of_mem_GSpin u)
-    (P := (specP Q u : V →ₗ[K] V)) (mul_ι_eq_ι_specP_mul u)
-    (F.specP_sub_mem_flagWt ⟨hu.1, hu.2.1, hu.2.2.1⟩) hu.2.2.2
+  sub_one_mem_wtFil_of_mem_flagUnipSO hQ (flagUnip_le_flagUnipSO F hu) hu.2.2.2
 
 end ScalarPart
 
 /-- A sequence of units whose values and inverses converge converges in `Mˣ`. -/
-theorem _root_.Units.exists_tendsto_of_tendsto_val {M : Type*} [Monoid M] [TopologicalSpace M]
-    [ContinuousMul M] [T2Space M] {ι : Type*} {l : Filter ι} [l.NeBot] {f : ι → Mˣ} {a b : M}
+theorem _root_.Units.exists_tendsto_of_tendsto_val_of_tendsto_inv {M : Type*} [Monoid M]
+    [TopologicalSpace M] [ContinuousMul M] [T2Space M] {ι : Type*} {l : Filter ι} [l.NeBot] {f : ι → Mˣ} {a b : M}
     (ha : Tendsto (fun k => (f k : M)) l (𝓝 a))
     (hb : Tendsto (fun k => (((f k)⁻¹ : Mˣ) : M)) l (𝓝 b)) :
     ∃ L : Mˣ, (L : M) = a ∧ Tendsto f l (𝓝 L) := by
@@ -257,6 +243,7 @@ variable {K : Type*} [NontriviallyNormedField K] [Invertible (2 : K)]
 variable {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V] {Q : QuadraticForm K V}
 
 omit [FiniteDimensional K V] in
+/-- If `x − c` has weight `≥ 1`, then `T^k x T^{-k} → c`. -/
 theorem tendsto_gConj_pow_of_sub_mem_wtFil {F : IsotropicFlag Q} {n : Type*} [Fintype n]
     {b : Basis n K V} {wt : n → ℤ} (hs : IsFlagSplitting F b wt) {τ : K} (hτ0 : τ ≠ 0)
     (hτ : ‖τ‖ < 1) {T : GSpin Q} (hT : ∀ i, specP Q T (b i) = τ ^ wt i • b i)
@@ -266,7 +253,6 @@ theorem tendsto_gConj_pow_of_sub_mem_wtFil {F : IsotropicFlag Q} {n : Type*} [Fi
   have h := (tendsto_gConj_pow_bMonSpan hτ0 hτ hT (wtFil_le_bMonSpan hs 1 hx)).add_const
     (algebraMap K (CliffordAlgebra Q) c)
   simpa [gConj_sub, gConj_algebraMap] using h
-
 
 /-- **Contraction of `P_F` by a cocharacter** (Thesis §5.1.2: `P = M N`, and the split centre of `M`
 contracts `N`).  There is `T ∈ GSpin(V)` such that for every `p ∈ P_F`, after correction by central
@@ -306,8 +292,7 @@ theorem exists_tendsto_conj_flagStab (hQ : IsNondeg Q) (F : IsotropicFlag Q) :
   obtain ⟨c, hc⟩ := exists_sub_algebraMap_mem_wtFil_of_raisesFil hQ hy
   obtain ⟨c', hc'⟩ := exists_sub_algebraMap_mem_wtFil_of_raisesFil hQ hy'
   set C := CliffordAlgebra Q
-  have : T2Space C := T2Space.of_injective_continuous (Module.finBasis K C).equivFun.injective
-    (IsModuleTopology.continuous_of_linearMap (R := K) (Module.finBasis K C).equivFun.toLinearMap)
+  have : T2Space C := TauCeti.ModuleTopology.t2Space (Module.finBasis K C)
   -- weight `≥ 0` membership of the factors
   have h0 : ∀ {x : C} {a : K}, x - algebraMap K C a ∈ wtFil Q (flagWt F) 1 →
       x ∈ wtFil Q (flagWt F) 0 := fun {x a} h => by
@@ -336,7 +321,7 @@ theorem exists_tendsto_conj_flagStab (hQ : IsNondeg Q) (F : IsotropicFlag Q) :
       exact add_mem (wtFil_anti (by norm_num) (mul_mem_wtFil hu1' (h0 hc'))) hc'
     have hA := tendsto_gConj_pow_of_sub_mem_wtFil hs hτ hτ1 hT hyu
     have hB := tendsto_gConj_pow_of_sub_mem_wtFil hs hτ hτ1 hT huy
-    refine Units.exists_tendsto_of_tendsto_val
+    refine Units.exists_tendsto_of_tendsto_val_of_tendsto_inv
       (b := algebraMap K C c' * (((m⁻¹ : GSpin Q) : Cˣ) : C)) ?_ ?_
     · simp_rw [hq]
       exact (hA.const_mul _).congr fun k => by

@@ -150,8 +150,8 @@ theorem IsInvariantClopen.AG_mul_mem_iff {Ω : Set ↥d.G} (hΩ : IsInvariantClo
 
 variable (d)
 
-/-- **Invariant clopen sets are saturated along unipotent radicals** (complete invariance, BP §3.1:
-the semisimple part of `p u` is conjugate to that of `p`).  For `p ∈ P(F)` and `u ∈ U(F)`, a
+/-- **Invariant clopen sets are saturated along unipotent radicals** (only invariance and `Ω` open
+and closed are used, not complete invariance as in BP §3.1).  For `p ∈ P(F)` and `u ∈ U(F)`, a
 cocharacter of the split centre of a Levi subgroup `M` of `P` contracting `U`, lifted to `GSpin`
 (`exists_tendsto_conj_flagStab`, factor by factor), gives `a_k ∈ A_G(F)` and `C_k ∈ G(F)` with
 `a_k C_k (p u) C_k⁻¹ → L` for a limit `L` independent of `u` (so also `a_k C_k p C_k⁻¹ → L`).  As

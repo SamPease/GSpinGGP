@@ -591,6 +591,19 @@ theorem ι_specP {Q : QuadraticForm K V} (g : GSpin Q) (v : V) :
       (((g : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) :=
   ι_conjV g.2 v
 
+/-- `g ι(v) = ι(P(g) v) g` for `g ∈ GSpin(V)`. -/
+theorem mul_ι_eq_ι_specP_mul {Q : QuadraticForm K V} (g : GSpin Q) (v : V) :
+    ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * ι Q v =
+      ι Q ((specP Q g : V →ₗ[K] V) v) * ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) := by
+  rw [LinearEquiv.coe_coe, ι_specP, mul_assoc, Units.inv_mul, mul_one]
+
+/-- Elements of `GSpin(V)` are even. -/
+theorem mem_evenOdd_zero_of_mem_GSpin {Q : QuadraticForm K V} (g : GSpin Q) :
+    ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∈ evenOdd Q 0 := by
+  have := g.2.1
+  rw [← Subalgebra.mem_toSubmodule, even_toSubmodule] at this
+  exact this
+
 /-- `P(g)` is an isometry of `(V, q)` (Thesis §5.1.2). -/
 theorem specP_isometry {Q : QuadraticForm K V} (g : GSpin Q) (v : V) :
     Q (specP Q g v) = Q v := by
@@ -2363,6 +2376,15 @@ theorem IsotropicFlag.isWtFil (F : IsotropicFlag Q) : IsWtFil Q (flagWt F) F.len
   top _ ha := F.flagWt_eq_top ha
   bot _ ha := F.flagWt_eq_bot ha
 
+/-- An element `y ∈ K^×·N_F` with `y − 1` nilpotent is `1` plus positive weight. -/
+theorem sub_one_mem_wtFil_of_mem_flagUnipSO [Module.Finite K V] (hQ : IsNondeg Q) {y : GSpin Q}
+    (hy : y ∈ flagUnipSO F)
+    (hy' : IsNilpotent (((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1)) :
+    ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1 ∈ wtFil Q (flagWt F) 1 :=
+  sub_one_mem_wtFil_one hQ F.isWtFil (F.orthogonal_flagWt_le hQ)
+    (mem_evenOdd_zero_of_mem_GSpin y)
+    (P := (specP Q y : V →ₗ[K] V)) (mul_ι_eq_ι_specP_mul y) (F.specP_sub_mem_flagWt hy) hy'
+
 /-- **The lift of the unipotent radical** (finite-dimensional nondegenerate case): for
 `g, h ∈ K^×·N_F` with `g − 1`, `h − 1` nilpotent, `gh − 1` is nilpotent.  Both `g − 1` and
 `h − 1` have positive weight for the weight filtration of `C(V)` attached to the flag. -/
@@ -2371,19 +2393,8 @@ theorem isNilpotent_mul_sub_one_of_flagUnipSO_of_nondeg [Module.Finite K V] (hQ 
     (hg' : IsNilpotent (((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1))
     (hh' : IsNilpotent (((h : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1)) :
     IsNilpotent ((((g * h : GSpin Q) : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1) := by
-  have hone : ∀ y : GSpin Q, y ∈ flagUnipSO F →
-      IsNilpotent (((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1) →
-      ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1 ∈ wtFil Q (flagWt F) 1 := by
-    intro y hy hy'
-    have hx0 : ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∈ evenOdd Q 0 := by
-      have := y.2.1
-      rw [← Subalgebra.mem_toSubmodule, even_toSubmodule] at this
-      exact this
-    refine sub_one_mem_wtFil_one hQ F.isWtFil (F.orthogonal_flagWt_le hQ) hx0
-      (P := (specP Q y : V →ₗ[K] V)) (fun v => ?_) (F.specP_sub_mem_flagWt hy) hy'
-    rw [LinearEquiv.coe_coe, ι_specP, mul_assoc, Units.inv_mul, mul_one]
-  have h1 := hone g hg hg'
-  have h2 := hone h hh hh'
+  have h1 := sub_one_mem_wtFil_of_mem_flagUnipSO hQ hg hg'
+  have h2 := sub_one_mem_wtFil_of_mem_flagUnipSO hQ hh hh'
   have e : (((g * h : GSpin Q) : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1 =
       (((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1) *
         (((h : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1) +
