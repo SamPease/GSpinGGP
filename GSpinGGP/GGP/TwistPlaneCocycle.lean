@@ -26,10 +26,6 @@ variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
 
 local notation "Kb" => AlgebraicClosure F
 
-omit [PAdicField F] in
-theorem galGL_mul (m : ℕ) (σ τ : GalF F) (g : GL (Fin m) Kb) :
-    galGL m (σ * τ) g = galGL m σ (galGL m τ g) :=
-  Units.ext (by ext i j; rfl)
 
 /-- `W''_x` contains an `x`-stable anisotropic plane `Π ⊥ W'_x` on which `P(x)` has determinant
 `1`, in rational coordinates `B` adapted to `W = Π ⊥ Π^⊥`. -/

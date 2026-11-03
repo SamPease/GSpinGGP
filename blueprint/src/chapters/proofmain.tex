@@ -371,7 +371,7 @@ Not verbatim in the literature (adapted from, or derived from, published results
 \lean{GSpinGGP.TwistPlane.exists_twistIdx_not_isometric_of_hasTwistPlane}
 \leanok
 \uses{GGPData, GSpin, InnerFormSystem, InnerTwist}
-If $W''_x$ contains an $x$-stable anisotropic plane $\Pi$ on which $x$ has determinant $1$, some $\beta\in H^1(F,S_x)$
+If $W''_x$ contains an $x$-stable anisotropic plane $\Pi$ on which $P(x)$ has determinant $1$, some $\beta\in H^1(F,S_x)$
 twists $W$ into a form $W_{q_x(\beta)}\not\cong W$.
 \end{lemma}
 \begin{proof}
@@ -387,12 +387,12 @@ not isometric to $W$ by Witt cancellation.
 \lean{GSpinGGP.exists_twistIdx_not_isometric_of_not_hasTwistPlane}
 \leanok
 \uses{GGPData, GSpin, InnerFormSystem, InnerTwist, IsGammaElt, IsQuasiSplit}
-For $G$ quasi-split and $x\in\Gamma(G,H)$ not central such that $W''_x$ contains no such plane (all irreducible factors of
-$x|_{W''_x}$ have degree $\ge4$), some $\beta\in H^1(F,S_x)$ twists $W$ into a form $W_{q_x(\beta)}\not\cong W$.
+For $G$ quasi-split and $x\in\Gamma(G,H)$ not central such that $W''_x$ contains no such plane (hence all irreducible factors of
+$P(x)|_{W''_x}$ have degree $\ge4$), some $\beta\in H^1(F,S_x)$ twists $W$ into a form $W_{q_x(\beta)}\not\cong W$.
 \end{lemma}
 \begin{proof}
 Not yet formalized. By \cite{BP} (12.1.6), or directly: the Hasse invariant of a transfer $\operatorname{Tr}_{E_0/F}(c\,h)$ changes for
-$c\notin N(E^\times)$ because corestriction $\mathrm{Br}(E_0)[2]\to\mathrm{Br}(F)[2]$ is an isomorphism \cite{Kot83}.
+$c\notin N(E^\times)$ because corestriction $\mathrm{Br}(E_0)[2]\to\mathrm{Br}(F)[2]$ is an isomorphism \cite{SerreLF}; the sign is then \cite{Kot83}.
 \end{proof}
 
 \begin{lemma}[A twist into the other form]

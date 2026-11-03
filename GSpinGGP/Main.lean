@@ -1779,15 +1779,16 @@ theorem galGL_mem_torusBarFbar (x : ↥(GSpin d.QW)) (σ : GalF F) :
 /-- **Statement (S) when `W''_x` has no `x`-stable twisting plane** (the case left open by
 `TwistPlane.exists_twistIdx_not_isometric_of_hasTwistPlane`).  For `G` quasi-split and `x ∈ Γ(G,H)`
 not central without `TwistPlane.HasTwistPlane d x`, some `β ∈ H¹(F, S_x)` has `W_{q_x(β)} ≇ W`.
-Then `−1` is not an eigenvalue of `P(x)` on `W''_x` with a `2`-dimensional eigenspace and no
+Then `−1` is not an eigenvalue of `P(x)` on `W''_x` and no
 irreducible factor of `P(x)|_{W''_x}` is a self-reciprocal quadratic, so `W''_x` is a sum of
 `x`-stable pieces `U = E` with `E/E₀` quadratic, `[E₀ : F] ≥ 2`, `S_x ⊇ R_{E₀/F}(E¹)`, and the
 twists of `U` by `H¹(F, R_{E₀/F}(E¹)) = E₀^×/N(E^×)` are the transfers `Tr_{E₀/F}(c · h)`.
 
-Route (own work): BP Astérisque 418, (12.1.6) (with `Ḡ = SO(W) × SO(V)` quasi-split, `S_x`
-anisotropic, `S~_x` connected as `X*(S_x) + ℤ r`, `2r = Σ tᵢ`, is torsion free), or directly: the Hasse
-invariant of `Tr_{E₀/F}(c · h)` differs from that of `Tr_{E₀/F}(h)` for `c ∉ N(E^×)` because
-corestriction `Br(E₀)[2] → Br(F)[2]` is an isomorphism; then Witt cancellation and Kottwitz 1983.
+Route (own work): BP Astérisque 418, (12.1.6) (`Ḡ = SO(W) × SO(V)` quasi-split, `S_x` anisotropic,
+and `S~_x` connected, since `X*(S~_x) = X*(S_x) + ℤ r`, `2r = Σ tᵢ`, is torsion free), or directly:
+the Hasse invariant of `Tr_{E₀/F}(c · h)` differs from that of `Tr_{E₀/F}(h)` for `c ∉ N(E^×)`
+because corestriction `Br(E₀)[2] → Br(F)[2]` is an isomorphism (local class field theory, Serre,
+*Local Fields*); then Witt cancellation.
 Not verbatim in a source, so it is a `sorry`. -/
 theorem exists_twistIdx_not_isometric_of_not_hasTwistPlane (hqs : d.IsQuasiSplit)
     (IF : InnerFormSystem d) (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) (hc : ¬ IsCentralW d x)
