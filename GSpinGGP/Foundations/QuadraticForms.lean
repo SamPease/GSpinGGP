@@ -358,4 +358,38 @@ theorem cartan_dieudonne_even [FiniteDimensional K V] (Q : QuadraticForm K V)
 
 end CartanDieudonne
 
+
+section MatrixForm
+
+/-! ### Quadratic forms of matrices
+
+Round trip between a form `Q` on `R^n` and its Gram matrix `Q.toMatrix'`, through Mathlib's
+`Matrix.toQuadraticForm'` (`x ↦ xᵀ M x`). -/
+
+variable {R : Type*} [CommRing R] [Invertible (2 : R)] {n : Type*} [Fintype n] [DecidableEq n]
+
+/-- The form of the Gram matrix of `Q` is `Q`. -/
+theorem _root_.QuadraticForm.toMatrix'_toQuadraticForm' (Q : QuadraticForm R (n → R)) :
+    Q.toMatrix'.toQuadraticForm' = Q := by
+  rw [Matrix.toQuadraticForm', QuadraticForm.toMatrix', Matrix.toLinearMap₂'_toMatrix',
+    QuadraticMap.toQuadraticMap_associated]
+
+/-- A quadratic form on `R^n` is determined by its Gram matrix. -/
+theorem _root_.QuadraticForm.toMatrix'_injective :
+    Function.Injective (QuadraticForm.toMatrix' : QuadraticForm R (n → R) → Matrix n n R) :=
+  fun Q₁ Q₂ h => by
+    rw [← QuadraticForm.toMatrix'_toQuadraticForm' Q₁, h, QuadraticForm.toMatrix'_toQuadraticForm']
+
+/-- The Gram matrix of the form of a symmetric matrix is the matrix. -/
+theorem _root_.Matrix.toMatrix'_toQuadraticForm' {N : Matrix n n R} (hN : N.IsSymm) :
+    N.toQuadraticForm'.toMatrix' = N := by
+  have hsym : ∀ x y : n → R, Matrix.toLinearMap₂' R N x y = Matrix.toLinearMap₂' R N y x := by
+    intro x y
+    rw [Matrix.toLinearMap₂'_apply', Matrix.toLinearMap₂'_apply', Matrix.dotProduct_mulVec,
+      ← Matrix.mulVec_transpose, hN.eq, dotProduct_comm]
+  rw [Matrix.toQuadraticForm', QuadraticForm.toMatrix', QuadraticMap.associated_left_inverse R hsym]
+  exact (LinearMap.toMatrix₂' R).apply_symm_apply N
+
+end MatrixForm
+
 end GSpinGGP

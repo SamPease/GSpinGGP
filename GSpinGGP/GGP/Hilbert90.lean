@@ -32,6 +32,17 @@ theorem galGL_one (g : GL (Fin m) (AlgebraicClosure F)) : galGL m (1 : GalF F) g
   ext i j
   simp [coe_galGL]
 
+/-- The entries of a matrix over `F̄` lie in a finite extension, so `σ ↦ σ(X)` only depends on
+the restriction of `σ` to it (as in `GalCocycle.continuous'`). -/
+theorem exists_finite_fixing_matrix {n : Type*} [Finite n] (X : Matrix n n (AlgebraicClosure F)) :
+    ∃ E : IntermediateField F (AlgebraicClosure F), FiniteDimensional F E ∧
+      ∀ σ τ : GalF F, (∀ x ∈ E, σ x = τ x) → X.map σ = X.map τ := by
+  refine ⟨IntermediateField.adjoin F (Set.range fun p : n × n => X p.1 p.2),
+    IntermediateField.finiteDimensional_adjoin fun x _ => Algebra.IsIntegral.isIntegral x,
+    fun σ τ h => ?_⟩
+  ext i j
+  exact h _ (IntermediateField.subset_adjoin _ _ ⟨(i, j), rfl⟩)
+
 /-- `a_1 = 1` for a cocycle (from `a_1 = a_1 · 1(a_1)`). -/
 theorem GalCocycle.toFun_one (a : GalCocycle S) : a.toFun 1 = 1 := by
   have h := a.cocycle' 1 1
