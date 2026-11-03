@@ -15,6 +15,10 @@ is hyperbolic, with a hyperbolic pair `f, f'`; `SO(Π)(F̄)` is the split torus 
 `t⁻¹, t`, and its lift `h(t) = f f' + t f' f` (`Foundations/HypPlane.lean`) commutes with `x` and
 fixes `W'_x`.  Hence every `B⁻¹ (R ⊕ 1) B` with `R ∈ SO(Q₂)(F̄)` lies in `S_x(F̄)`
 (`conj_blockDiagGL_mem_torusBarFbar`).
+
+This needs an `x`-stable plane in `W''_x`: a `2`-dimensional `−1`-eigenspace or a self-reciprocal
+quadratic factor of `P(x)|_{W''_x}`.  When every irreducible factor has degree `≥ 4` there is none
+(an element `B⁻¹ (R ⊕ 1) B` of `S_x(F̄)` forces `Π_{F̄}` to be spanned by eigenlines of `x`).
 -/
 
 noncomputable section
@@ -117,35 +121,7 @@ theorem splitIso_apply (hB : Q.toMatrix' = (B : Matrix (Fin m) (Fin m) F)ᵀ * b
 
 end Split
 
-/-- An isometry preserves the polar form. -/
-theorem _root_.QuadraticMap.IsometryEquiv.polar_map {R M₁ M₂ N : Type*} [CommRing R]
-    [AddCommGroup M₁] [AddCommGroup M₂] [AddCommGroup N] [Module R M₁] [Module R M₂] [Module R N]
-    {Q₁ : QuadraticMap R M₁ N} {Q₂ : QuadraticMap R M₂ N} (f : Q₁.IsometryEquiv Q₂) (x y : M₁) :
-    QuadraticMap.polar Q₂ (f x) (f y) = QuadraticMap.polar Q₁ x y := by
-  simp only [QuadraticMap.polar, ← map_add, QuadraticMap.IsometryEquiv.map_app]
 
-/-- The block-diagonal matrix acts blockwise. -/
-theorem blockDiag_mulVec_inl {R : Type*} [CommRing R] {m : ℕ} {κ : Type*} [Fintype κ]
-    [DecidableEq κ] (e : Fin 2 ⊕ κ ≃ Fin m) (A : Matrix (Fin 2) (Fin 2) R) (C : Matrix κ κ R)
-    (y : Fin m → R) (i : Fin 2) :
-    (blockDiag e A C *ᵥ y) (e (Sum.inl i)) = (A *ᵥ fun j => y (e (Sum.inl j))) i := by
-  rw [blockDiag, Matrix.coe_reindexAlgEquiv, reindex_apply, submatrix_mulVec_equiv]
-  simp [fromBlocks_mulVec, Function.comp_def]
-
-theorem blockDiag_mulVec_inr {R : Type*} [CommRing R] {m : ℕ} {κ : Type*} [Fintype κ]
-    [DecidableEq κ] (e : Fin 2 ⊕ κ ≃ Fin m) (A : Matrix (Fin 2) (Fin 2) R) (C : Matrix κ κ R)
-    (y : Fin m → R) (j : κ) :
-    (blockDiag e A C *ᵥ y) (e (Sum.inr j)) = (C *ᵥ fun k => y (e (Sum.inr k))) j := by
-  rw [blockDiag, Matrix.coe_reindexAlgEquiv, reindex_apply, submatrix_mulVec_equiv]
-  simp [fromBlocks_mulVec, Function.comp_def]
-
-
-/-- `A.toQuadraticForm' (P v) = (Pᵀ A P).toQuadraticForm' v`. -/
-theorem toQuadraticForm'_mulVec {R : Type*} [CommRing R] {n : Type*} [Fintype n] [DecidableEq n]
-    (A P : Matrix n n R) (v : n → R) :
-    A.toQuadraticForm' (P *ᵥ v) = (Pᵀ * A * P).toQuadraticForm' v := by
-  rw [Matrix.toQuadraticForm'_apply, Matrix.toQuadraticForm'_apply, ← mulVec_mulVec,
-    ← mulVec_mulVec, Matrix.dotProduct_mulVec v Pᵀ, vecMul_transpose]
 
 /-- The coordinates of a base-changed endomorphism. -/
 theorem bcE_baseChange {m : ℕ} (L : (Fin m → F) →ₗ[F] (Fin m → F)) (w : Kb ⊗[F] (Fin m → F)) :
@@ -169,7 +145,8 @@ theorem bcE_baseChange {m : ℕ} (L : (Fin m → F) →ₗ[F] (Fin m → F)) (w 
 /-- **The plane twist lies in `S_x`.**  In the coordinates of `exists_planeTwist`, suppose `P(x)`
 is block-diagonal, `B P(x) = (A ⊕ C) B` with `A ∈ SO(Q₂)(F)`, and `W'_x ⊆ Π^⊥` (the
 `Π`-coordinates of a fixed vector vanish).  Then `B⁻¹ (R ⊕ 1) B ∈ S_x(F̄)` for every
-`R ∈ SO(Q₂)(F̄)`. -/
+`R ∈ SO(Q₂)(F̄)`.  (`hA` follows from `hx`, `hB` and `P(x)` being an isometry; it is kept as a
+hypothesis for convenience.) -/
 theorem conj_blockDiagGL_mem_torusBarFbar {d : GGPData F} (x : GSpin d.QW) {κ : Type*}
     [Fintype κ] [DecidableEq κ] (e : Fin 2 ⊕ κ ≃ Fin d.m) (B : GL (Fin d.m) F)
     {Q₂ : QuadraticForm F (Fin 2 → F)} (hQ₂ : IsNondeg Q₂) {G₃ : Matrix κ κ F}
@@ -195,7 +172,7 @@ theorem conj_blockDiagGL_mem_torusBarFbar {d : GGPData F} (x : GSpin d.QW) {κ :
         (RingHom.map_det _ _).symm]
     exact (map_ne_zero _).2 ((InnerTwistAux.isNondeg_iff_discr'_ne_zero Q₂).1 hQ₂)
   obtain ⟨f₀, hf₀0, hf₀⟩ := QuadClassify.exists_isotropic_of_isSquare q₂ (IsAlgClosed.isSquare _)
-  obtain ⟨f₀', hf₀', hp₀⟩ := exists_hyp_pair_of_isotropic hq₂ hf₀0 hf₀
+  obtain ⟨f₀', hf₀', hp₀⟩ := exists_hyperbolicPair_of_isotropic hq₂ hf₀0 hf₀
   have hdim : Module.finrank Kb (Fin 2 → Kb) = 2 := Module.finrank_fin_fun Kb
   -- `R` and `A` are the split torus in the pair `f₀, f₀'`
   have hRiso : ∀ v, q₂ (Matrix.toLin' (R : Matrix (Fin 2) (Fin 2) Kb) v) = q₂ v := fun v => by
@@ -217,7 +194,7 @@ theorem conj_blockDiagGL_mem_torusBarFbar {d : GGPData F} (x : GSpin d.QW) {κ :
   have hf' : d.QW.baseChange Kb f' = 0 := by
     rw [hf'def, QuadraticMap.IsometryEquiv.map_app]; simpa using hf₀'
   have hp : QuadraticMap.polar (d.QW.baseChange Kb) f f' = 1 := by
-    rw [hfdef, hf'def, QuadraticMap.IsometryEquiv.polar_map, QuadraticMap.polar_prod, hp₀]
+    rw [hfdef, hf'def, QuadraticMap.IsometryEquiv.polar_apply, QuadraticMap.polar_prod, hp₀]
     simp
   -- `Ψ` intertwines `P(x)` with `A ⊕ C`
   have hΨx : ∀ w, Ψ ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb w) =
@@ -253,8 +230,8 @@ theorem conj_blockDiagGL_mem_torusBarFbar {d : GGPData F} (x : GSpin d.QW) {κ :
       QuadraticMap.polar (d.QW.baseChange Kb) f w = 0 ∧
         QuadraticMap.polar (d.QW.baseChange Kb) f' w = 0 := fun w hw => by
     have h1 : w = Ψ.symm (Ψ w) := (Ψ.symm_apply_apply w).symm
-    rw [h1, hfdef, hf'def, QuadraticMap.IsometryEquiv.polar_map,
-      QuadraticMap.IsometryEquiv.polar_map, QuadraticMap.polar_prod, QuadraticMap.polar_prod,
+    rw [h1, hfdef, hf'def, QuadraticMap.IsometryEquiv.polar_apply,
+      QuadraticMap.IsometryEquiv.polar_apply, QuadraticMap.polar_prod, QuadraticMap.polar_prod,
       hΨfix w hw]
     simp
   -- `x` scales the pair by `s⁻¹, s`
@@ -280,11 +257,11 @@ theorem conj_blockDiagGL_mem_torusBarFbar {d : GGPData F} (x : GSpin d.QW) {κ :
     have hpol : ∀ g₀ : Fin 2 → Kb, QuadraticMap.polar (d.QW.baseChange Kb) (Ψ.symm (g₀, 0)) w =
         QuadraticMap.polar q₂ g₀ (Ψ w).1 := fun g₀ => by
       conv_lhs => rw [hw]
-      rw [QuadraticMap.IsometryEquiv.polar_map, QuadraticMap.polar_prod]
+      rw [QuadraticMap.IsometryEquiv.polar_apply, QuadraticMap.polar_prod]
       simp only [QuadraticMap.polar_zero_left, add_zero]
       rfl
     rw [specP_hypGSpin, hfdef, hf'def, hpol, hpol,
-      apply_eq_of_smul_hyp_pair hdim hf₀ hf₀' hp₀ _ hRf hRf']
+      apply_eq_of_smul_hyperbolicPair hdim hf₀ hf₀' hp₀ _ hRf hRf']
     simp only [map_add, map_smul, Ψ.apply_symm_apply, Prod.smul_mk, smul_zero]
     refine Prod.ext ?_ ?_ <;> simp
   -- the matrix of `P(h(t))`
