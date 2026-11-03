@@ -250,6 +250,13 @@ def torusBarFbar (x : ↥(GSpin d.QW)) : Subgroup (GL (Fin d.m) (AlgebraicClosur
 
 end GGPData
 
+/-- `N_x(F̄) = N_{SO(W)(F̄)}(S_x(F̄))`: the normalizer of `S_x(F̄)` in `P(GSpin(W)(F̄)) = SO(W)(F̄)`,
+as a subgroup of `GL_m(F̄)`. -/
+def GGPData.normalizerBar (d : GGPData F) (x : ↥(GSpin d.QW)) :
+    Subgroup (GL (Fin d.m) (AlgebraicClosure F)) :=
+  Subgroup.normalizer (d.torusBarFbar x : Set (GL (Fin d.m) (AlgebraicClosure F))) ⊓
+    (specMatFbar d.QW).range
+
 /-- `a` is the cocycle of the twist `W ⇝ W'`: `a_σ = φ⁻¹ ∘ σφ` for some `F̄`-isometry
 `φ : W_{F̄} ≃ W'_{F̄}` (matrices in the rational basis; same convention as
 `InnerTwist.cocycle`).  So the class of `a` in `H¹(F, O(W))` is the class of the quadratic space
@@ -281,5 +288,18 @@ with their Galois action are `torusBarFbar d x` (`P` is defined over `F`; Galois
 `x ∈ Γ(G,H)`, where `S_x` is a torus. -/
 axiom finite_H1_torusBar (d : GGPData F) (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) :
     Finite (H1 (d.torusBarFbar x))
+
+/-- **Finiteness of `H¹(F, N_x)`**, `N_x = N_{SO(W)}(S_x)` (Borel–Serre, *Théorèmes de finitude en
+cohomologie galoisienne*, Comment. Math. Helv. 39 (1964), Thm. 6.1: for `k` locally compact of
+characteristic `0` and `A` a `k`-group of type (ALA), `H¹(k, A)` is finite; in particular `H¹(k, G)`
+is finite for `G` linear algebraic over `k`.)  Applied to the linear algebraic `F`-group
+`N_x = N_{SO(W)}(S_x)` (the normalizer of the `F`-torus `S_x` in `SO(W)`), whose `F̄`-points with
+their Galois action are `normalizerBar d x` (Galois stability of `S_x(F̄)` and of `SO(W)(F̄)` is
+proved, `galGL_mem_torusBarFbar`, `isGalStable_range_specMatFbar`; that it is the group of `F̄`-points
+of an `F`-group is not formalized).  Stated for `x ∈ Γ(G,H)`, where `S_x` is a torus.  (`N_x/S_x` is
+not finite in general: `Z_{SO(W)}(S_x)` contains `SO(W'_x)`; so this does not follow from
+`finite_H1_torusBar`.) -/
+axiom finite_H1_normalizerBar (d : GGPData F) (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) :
+    Finite (H1 (d.normalizerBar x))
 
 end GSpinGGP
