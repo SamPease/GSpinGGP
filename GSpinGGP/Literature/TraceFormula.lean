@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import GSpinGGP.Foundations.LocalGroups
 import GSpinGGP.Foundations.Representations
 import GSpinGGP.Foundations.GSpin
+import GSpinGGP.GGP.Unimodular
 
 /-!
 # Cited inputs of the local trace formula: unimodularity and the quasi-character `θ_f`
@@ -15,8 +16,7 @@ boxes, stated as `axiom`s about the concrete groups `d.G = GSpin(W) × GSpin(V)`
 `d : GGPData F` over a `p`-adic field `F`. Both quantify over *all* `d`, so they apply to the
 inner forms `d.twist τ` as well; neither assumes quasi-splitness.
 
-* (a) `haar_G_isMulRightInvariant` — `G(F)` is unimodular (connected reductive group; a `sorry`
-  theorem: derived from Bourbaki's criterion, see its docstring);
+* (a) `haar_G_isMulRightInvariant` — `G(F)` is unimodular (proved, `GGP/Unimodular.lean`);
 * (b) `bp_thetaF_exists` — for `f₀ ∈ C_c^∞(G(F))` strongly cuspidal, the invariant distribution
   `f' ↦ ∫_{G(F)/A_G(F)} ∫_{G(F)} f₀(x⁻¹gx) f'(g) dg dx` is represented by a locally integrable
   function `θ` which is locally constant on `G_reg(F)` and is a quasi-character
@@ -87,28 +87,18 @@ instance instBorelSpaceGmodAG (d : GGPData F) : BorelSpace (↥d.G ⧸ d.AG) := 
 
 /-! ## (a) Unimodularity of `G(F)` -/
 
-/-- **(a) `G(F)` is unimodular.** The group of `F`-points of a connected reductive group over a
-local field is unimodular: its modular character is `|det Ad(g)|_F`, and `det Ad` is a character
-of `G` trivial on the derived group and on the (central) connected centre, hence trivial.
-Here `G = GSpin(W) × GSpin(V)`.
-
-Exact ingredient (checked): Bourbaki, *Lie Groups and Lie Algebras*, Ch. III §3 no. 16, Prop. 55 and
-its Corollary: for a finite-dimensional Lie group `G` over a locally compact field `K` (ultrametric
-allowed), the modular function is `Δ_G(g) = (mod det Ad g)⁻¹`, so `G` is unimodular iff
-`mod det Ad g = 1` for all `g`. Also Thesis §2.4; BP Astérisque 418, §1.6.
-
-**Status: `sorry`, not a literature axiom** (the statement is derived, not verbatim). Remaining
-steps: `G(F)` is an `F`-Lie group (not formalized here), and `det Ad g = 1` on
-`G = GSpin(W) × GSpin(V)`: on `gspin(U) = so(U) ⊕ F`, `Ad g` is trivial on `F` and acts on
-`so(U) ≅ Λ²U` as `Λ² P(g)`, of determinant `det P(g)^{dim U − 1} = 1`.
-
-Stated for Mathlib's left Haar measure `Measure.haar` on `↥d.G` (the one used in
-`IsCharacterOf` and the trace formula); quantified over every `d`, so it also covers the inner
-forms `d.twist τ`. Used for the Weil quotient measure on `H(F)\G(F)/A_G(F)`:
-right invariance on `G(F)/A_G(F)` follows from this *because `A_G` is central*. -/
+/-- **(a) `G(F)` is unimodular** (Thesis §2.4; BP Astérisque 418, §1.6): the left Haar measure
+`Measure.haar` on `↥d.G` (the one used in `IsCharacterOf` and the trace formula) is right invariant.
+Proved, without Lie theory: the modular character is a positive character of `G(F)` trivial on the
+centre, hence trivial (`GGPData.monoidHom_G_eq_one`, by Cartan–Dieudonné; `GGP/Unimodular.lean`).
+Quantified over every `d`, so it also covers the inner forms `d.twist τ`. Used for the Weil quotient
+measure on `H(F)\G(F)/A_G(F)`: right invariance on `G(F)/A_G(F)` follows from this *because `A_G` is
+central*. -/
 theorem haar_G_isMulRightInvariant (d : GGPData F) :
-    (Measure.haar : Measure ↥d.G).IsMulRightInvariant := by
-  sorry
+    (Measure.haar : Measure ↥d.G).IsMulRightInvariant :=
+  isMulRightInvariant_haar_of_modularCharacter fun g =>
+    d.monoidHom_G_eq_one Measure.modularCharacter
+      (fun _ hz => modularCharacter_eq_one_of_mem_center hz) g
 
 attribute [instance] haar_G_isMulRightInvariant
 

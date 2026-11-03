@@ -13,6 +13,7 @@ import GSpinGGP.Foundations.GSpinLipschitz
 import GSpinGGP.GGP.CentralizerSign
 import GSpinGGP.GGP.IsometryDet
 import GSpinGGP.GGP.PairBlock
+import GSpinGGP.GGP.Unimodular
 import GSpinGGP.GGP.Steinberg
 import GSpinGGP.Foundations.LocalFieldBridge
 import GSpinGGP.Foundations.PAdicQuadraticForms

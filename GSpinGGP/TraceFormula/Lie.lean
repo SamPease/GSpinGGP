@@ -716,21 +716,9 @@ variable {K : Type*} [Field K] [Invertible (2 : K)]
 /-- Even elements of the Clifford algebra of a line are scalars. -/
 theorem even_scalar_of_finrank_one {V : Type*} [AddCommGroup V] [Module K V]
     {Q : QuadraticForm K V} (hV : finrank K V = 1) {x : CliffordAlgebra Q}
-    (hx : x ∈ evenOdd Q 0) : ∃ c, x = algebraMap K _ c := by
-  obtain ⟨e, -, he⟩ := finrank_eq_one_iff'.mp hV
-  choose co hco using he
-  have hι : ∀ u : V, ι Q u = co u • ι Q e := fun u => by rw [← map_smul, hco]
-  induction x, hx using even_induction with
-  | algebraMap r => exact ⟨r, rfl⟩
-  | add x y _ _ hx hy =>
-    obtain ⟨a, rfl⟩ := hx; obtain ⟨b, rfl⟩ := hy; exact ⟨a + b, (map_add _ _ _).symm⟩
-  | ι_mul_ι_mul m₁ m₂ x _ hx =>
-    obtain ⟨c, rfl⟩ := hx
-    refine ⟨co m₁ * co m₂ * Q e * c, ?_⟩
-    rw [hι m₁, hι m₂, smul_mul_smul_comm, ι_sq_scalar, smul_mul_assoc, ← map_mul,
-      Algebra.smul_def, ← map_mul]
-    congr 1
-    ring
+    (hx : x ∈ evenOdd Q 0) : ∃ c, x = algebraMap K _ c :=
+  haveI := Module.finite_of_finrank_eq_succ hV
+  even_eq_algebraMap_of_finrank_le_one hV.le hx
 
 /-- Even elements of the Clifford algebra of a plane commute (`C⁺(V) = K ⊕ K e₀e₁`). -/
 theorem even_comm_of_finrank_two {V : Type*} [AddCommGroup V] [Module K V] [Module.Finite K V]
