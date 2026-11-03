@@ -6,6 +6,7 @@ import GSpinGGP.GGP.RegularNilpotentConverse
 import GSpinGGP.GGP.KottwitzSign
 import GSpinGGP.GGP.Hilbert90
 import GSpinGGP.GGP.TwistDescent
+import GSpinGGP.GGP.TwistPlaneCocycle
 import GSpinGGP.GGP.WittParity
 import GSpinGGP.GGP.TorusCommute
 import GSpinGGP.GGP.TorusTransport
@@ -1775,22 +1776,38 @@ theorem galGL_mem_torusBarFbar (x : ↥(GSpin d.QW)) (σ : GalF F) :
   rw [coe_specMatFbar, coe_galGL, coe_specMatFbar]
   exact toMatrix_of_galV_comm σ _ _ fun w => specP_galGS d.QW σ g w
 
-/-- **Some class of `H¹(F, S_x)` twists `W` into a non-isometric form** (statement (S) for
-`U = W''_x`; Thesis Prop 6.5.1(iv), first half).  For `G` quasi-split and `x ∈ Γ(G,H)` not central,
-some `β ∈ H¹(F, S_x)` has `W_{q_x(β)} ≇ W`.
+/-- **Statement (S) when `W''_x` has no `x`-stable twisting plane** (the case left open by
+`TwistPlane.exists_twistIdx_not_isometric_of_hasTwistPlane`).  For `G` quasi-split and `x ∈ Γ(G,H)`
+not central without `TwistPlane.HasTwistPlane d x`, some `β ∈ H¹(F, S_x)` has `W_{q_x(β)} ≇ W`.
+Then `−1` is not an eigenvalue of `P(x)` on `W''_x` and no
+irreducible factor of `P(x)|_{W''_x}` is a self-reciprocal quadratic, so `W''_x` is a sum of
+`x`-stable pieces `U = E` with `E/E₀` quadratic, `[E₀ : F] ≥ 2`, `S_x ⊇ R_{E₀/F}(E¹)`, and the
+twists of `U` by `H¹(F, R_{E₀/F}(E¹)) = E₀^×/N(E^×)` are the transfers `Tr_{E₀/F}(c · h)`.
 
-Route (own work): with `Ḡ = SO(W) × SO(V)` quasi-split and `S_x` anisotropic, BP Astérisque 418,
-(12.1.6) says that `H¹(F, S_x) → Br₂(F)` is onto iff the inverse image `S~_x` of `S_x` in the
-canonical double cover `Ḡ~` is a torus.  Here `Ḡ~ = SO(U_ev) × Spin(U_odd)` (Luo §8.1), and
-`S~_x` is connected: its character group is `X*(S_x) + ℤ r` with `2r = Σ t_i`, which is torsion
-free because `t_1, …, t_k` is a basis of `X*(S_x)` and `k ≥ 1` (`W''_x ≠ 0`, as `x` is not
-central).  A class with nontrivial image in `Br₂(F)` twists `W''_x`, hence `W` (Witt
-cancellation), into the other form of its dimension and discriminant (Kottwitz 1983: the sign of
-`SO(W_α)` is `(−1)^{rk_F − rk_F}`).  Not verbatim in a source, so it is a `sorry`. -/
-theorem exists_twistIdx_not_isometric (hqs : d.IsQuasiSplit) (IF : InnerFormSystem d)
-    (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) (hc : ¬ IsCentralW d x) :
+Route (own work): BP Astérisque 418, (12.1.6) (`Ḡ = SO(W) × SO(V)` quasi-split, `S_x` anisotropic,
+and `S~_x` connected, since `X*(S~_x) = X*(S_x) + ℤ r`, `2r = Σ tᵢ`, is torsion free), or directly:
+the Hasse invariant of `Tr_{E₀/F}(c · h)` differs from that of `Tr_{E₀/F}(h)` for `c ∉ N(E^×)`
+because corestriction `Br(E₀)[2] → Br(F)[2]` is an isomorphism (local class field theory, Serre,
+*Local Fields*); then Witt cancellation.
+Not verbatim in a source, so it is a `sorry`. -/
+theorem exists_twistIdx_not_isometric_of_not_hasTwistPlane (hqs : d.IsQuasiSplit)
+    (IF : InnerFormSystem d) (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) (hc : ¬ IsCentralW d x)
+    (hP : ¬ TwistPlane.HasTwistPlane d x) :
     ∃ β α, TwistIdx IF x β α ∧ ¬ Nonempty (d.QW.IsometryEquiv (IF.twist α).Q') :=
   sorry
+
+/-- **Some class of `H¹(F, S_x)` twists `W` into a non-isometric form** (statement (S) for
+`U = W''_x`; Thesis Prop 6.5.1(iv), first half).  For `G` quasi-split and `x ∈ Γ(G,H)` not central,
+some `β ∈ H¹(F, S_x)` has `W_{q_x(β)} ≇ W`.  If `W''_x` contains an `x`-stable anisotropic plane on
+which `P(x)` has determinant `1` (`TwistPlane.HasTwistPlane`), the twist of that plane by its
+norm-one torus does it (`TwistPlane.exists_twistIdx_not_isometric_of_hasTwistPlane`, proved);
+otherwise `exists_twistIdx_not_isometric_of_not_hasTwistPlane`. -/
+theorem exists_twistIdx_not_isometric (hqs : d.IsQuasiSplit) (IF : InnerFormSystem d)
+    (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) (hc : ¬ IsCentralW d x) :
+    ∃ β α, TwistIdx IF x β α ∧ ¬ Nonempty (d.QW.IsometryEquiv (IF.twist α).Q') := by
+  by_cases hP : TwistPlane.HasTwistPlane d x
+  · exact TwistPlane.exists_twistIdx_not_isometric_of_hasTwistPlane IF x hP
+  · exact exists_twistIdx_not_isometric_of_not_hasTwistPlane hqs IF x hx hc hP
 
 /-- **Surjectivity of the Kottwitz sign on `H¹(F, S_x)`** (Thesis Prop 6.5.1(iv)): for `G`
 quasi-split and `x ∈ Γ(G,H)` not central, some `β ∈ H¹(F, S_x)` has `e(G_{q_x(β)}) = -1`.

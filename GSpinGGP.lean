@@ -52,6 +52,7 @@ import GSpinGGP.GGP.Descent
 import GSpinGGP.GGP.TwistDescent
 import GSpinGGP.GGP.TwistPlane
 import GSpinGGP.GGP.TwistTorus
+import GSpinGGP.GGP.TwistPlaneCocycle
 import GSpinGGP.GGP.QuadClassify
 import GSpinGGP.GGP.WittParity
 import GSpinGGP.GGP.TorusTransfer

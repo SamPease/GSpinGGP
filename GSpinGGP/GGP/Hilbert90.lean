@@ -43,6 +43,11 @@ theorem exists_finite_fixing_matrix {n : Type*} [Finite n] (X : Matrix n n (Alge
   ext i j
   exact h _ (IntermediateField.subset_adjoin _ _ ⟨(i, j), rfl⟩)
 
+/-- `Γ_F` acts on `GL_m(F̄)`: `(στ)(g) = σ(τ(g))`. -/
+theorem galGL_mul (σ τ : GalF F) (g : GL (Fin m) (AlgebraicClosure F)) :
+    galGL m (σ * τ) g = galGL m σ (galGL m τ g) :=
+  Units.ext (by ext i j; rfl)
+
 /-- `a_1 = 1` for a cocycle (from `a_1 = a_1 · 1(a_1)`). -/
 theorem GalCocycle.toFun_one (a : GalCocycle S) : a.toFun 1 = 1 := by
   have h := a.cocycle' 1 1
