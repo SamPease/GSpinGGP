@@ -93,7 +93,7 @@ commutes with $\bar x$ and $\det P(g)|_{W_{+1}} = \det P(g)|_{W_{-1}} = 1$. (Cha
 \end{theorem}
 \begin{proof}
 \leanok
-\uses{steinberg_sign, cartan_dieudonne_even}
+\uses{InnerTwist, steinberg_sign}
 Own derivation, with no literature input; it replaces the appeal to \cite{Steinberg}, Thm.~8.1.
 If $P(g)$ commutes with $\bar x$, then $gxg^{-1}=c\,x$ with $c=\pm1$ (the commutator lies in $\ker P$, and the Clifford
 norm gives $c^2=1$). By base change to $\bar K$ it suffices to show $c=\det P(g)|_{W_{-1}}$ there
@@ -106,12 +106,13 @@ are paired perfectly, so $P(g)$ has determinant $1$ on their sum.
 \label{steinberg_sign}
 \lean{GSpinGGP.Steinberg.commute_iff_det_negFixedSub}
 \leanok
-\uses{steinberg_pair_blocks}
+\uses{GSpin}
 Over an algebraically closed field of characteristic $0$, let $x\in\GSpin(V)$ with $\bar x=P(x)$ semisimple, and let $P(g)$
 commute with $\bar x$. Then $g$ commutes with $x$ iff $\det P(g)|_{W_{-1}}=1$.
 \end{lemma}
 \begin{proof}
 \leanok
+\uses{steinberg_pair_blocks}
 Cartan--Dieudonn\'e on the nondegenerate spaces $W_{+1}$ and $W_{-1}$ writes $P(g)|_{W_{\pm1}}$ as products of reflections
 in vectors $u_i\in W_{+1}$, $w_j\in W_{-1}$; their number is even, and $y=\prod u_i\prod w_j\in\GSpin(V)$. Since $xv=\pm vx$
 for $v\in W_{\pm1}$, $xy=(-1)^{\#\{w_j\}}yx$, and $(-1)^{\#\{w_j\}}=\det P(g)|_{W_{-1}}$. Finally $y^{-1}g$ commutes with $x$
@@ -122,12 +123,13 @@ by Lemma~\ref{steinberg_pair_blocks}.
 \label{steinberg_pair_blocks}
 \lean{GSpinGGP.Steinberg.commute_of_fix}
 \leanok
-\uses{steinberg_rank_one}
+\uses{GSpin}
 Over an algebraically closed field of characteristic $0$, let $\bar x=P(x)$ be semisimple, and let $P(g)$ commute with
 $\bar x$ and be the identity on $W_{+1}\oplus W_{-1}$. Then $g$ commutes with $x$.
 \end{lemma}
 \begin{proof}
 \leanok
+\uses{steinberg_rank_one}
 Induction over the eigenvalues $\mu\neq\pm1$ of $\bar x$. $P(g)$ preserves $E_\mu$; by Lemma~\ref{steinberg_rank_one} some
 $\gamma$ commuting with $x$ agrees with $P(g)$ on $E_\mu$ and is the identity on all $E_\nu$, $\nu\neq\mu,\mu^{-1}$.
 Then $P(\gamma^{-1}g)$ is the identity on $E_\mu$, hence on $E_{\mu^{-1}}$ (the two are perfectly paired and $P(\gamma^{-1}g)$ is an
@@ -138,6 +140,7 @@ isometry). At the end $P(g')=1$, so $g'$ is a scalar.
 \label{steinberg_rank_one}
 \lean{GSpinGGP.PairBlock.realizes_of_det_ne_zero}
 \leanok
+\uses{GSpin}
 Let $\bar x=P(x)$ be semisimple over an algebraically closed field, $\mu^2\neq1$, $\mu\neq0$. Every $A\in\mathrm{GL}(E_\mu)$ is
 $P(\gamma)|_{E_\mu}$ for some $\gamma\in\GSpin(V)$ commuting with $x$ and acting trivially on every $E_\nu$, $\nu\neq\mu,\mu^{-1}$.
 \end{lemma}
@@ -159,12 +162,13 @@ $\Nilreg(\gspin(V))\neq\emptyset$ iff $\GSpin(V)$ is quasi-split, i.e.\ $\dim V-
 \end{theorem}
 \begin{proof}
 \leanok
+\uses{LIT-jantzen_finrank_soCentMat_ge, LIT-jantzen_regularNil_partition, witt_decomposition}
 $\Leftarrow$: a split family $w_{-k},\dots,w_k$ with $\dim V\le 2k+2$ gives the explicit regular nilpotent
-$\sum_i\iota(w_{i+1})\iota(w_{-i})/2\nu$, whose centralizer has dimension $\lfloor\dim V/2\rfloor+1$, the rank (Jantzen 2004, \S7.11).
+$\sum_i\iota(w_{i+1})\iota(w_{-i})/2\nu$, whose centralizer has dimension $\lfloor\dim V/2\rfloor+1$, the rank (Lemma~\ref{LIT-jantzen_finrank_soCentMat_ge}).
 $\Rightarrow$: for a regular nilpotent $X$, $N=\mathrm{ad}_V X$ has $\dim\mathfrak{so}(V)_N=\lfloor n/2\rfloor$ (the rank of $\gspin(V)$ is
-$\lfloor n/2\rfloor+1$), so over $\bar F$ it is regular nilpotent of partition $[n]$ or $[n-1,1]$ (Jantzen 2004, \S6.3); hence
+$\lfloor n/2\rfloor+1$), so over $\bar F$ it is regular nilpotent of partition $[n]$ or $[n-1,1]$ (Lemma~\ref{LIT-jantzen_regularNil_partition}); hence
 $N^{m}\neq0$ with $m=n-1$ or $n-2$, and the upper half of a Jordan chain of $N$ is a totally isotropic subspace of dimension
-$\lfloor(n-1)/2\rfloor$. Ingredients: \ingredients{\cite{Wal01}, Ch.~I; \cite{Luo}, \S2.1; Jantzen 2004, \S6.3, \S7.11; Thesis \S5.1.4}
+$\lfloor(n-1)/2\rfloor$ (Thesis \S5.1.4).
 \end{proof}
 
 \section{GGP triples}
@@ -253,7 +257,12 @@ one Jordan block on $U_1=d_0^\perp\cong\langle\nu\rangle\oplus H^k$). If $\dim W
 some regular nilpotent $X\in\gspin(W)$ has image in $\mathcal O_{-\nu}$.
 \end{theorem}
 \begin{proof}
-Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{Wal10}, \S7.1; \cite{Luo}, \S2.1, \S7.1; \cite{Wal01}, Ch.~I; Thesis \S5.1.4}
+\leanok
+\uses{GSpin, LIT-jantzen_finrank_soCentMat_ge, witt_cancellation, witt_decomposition}
+By Witt theory the relevant class is $\nu$: if $\dim V$ is even, $W$ is odd and quasi-split, hence $W=\langle a\rangle\oplus W_1$ with $W_1$
+hyperbolic and $V=\langle a\rangle\oplus(W_1\oplus Z)$, $W_1\oplus Z\cong\langle\nu\rangle\oplus H^{k}$; if $\dim W=2m'\ge4$, Witt cancellation gives
+$W\cong\langle b\rangle\oplus\langle-\nu\rangle\oplus H^{m'-1}$. On the resulting split family the explicit element
+$\sum_i\iota(w_{i+1})\iota(w_{-i})/2\nu$ is regular nilpotent and lies in $\mathcal O_{\pm\nu}$ (\cite{Luo}, \S7.1; Thesis \S5.1.4).
 \end{proof}
 
 \begin{theorem}[Germs vanish off quasi-split centralizers]
@@ -266,12 +275,12 @@ $V'_x = W'_x\oplus Z$: if $\Nilreg(\mathfrak g_x)\ne\emptyset$ then $W'_x$ and $
 \end{theorem}
 \begin{proof}
 \leanok
-\uses{nilReg_nonempty_iff_quasiSplit}
+\uses{LIT-jantzen_finrank_soCentMat_ge, LIT-jantzen_regularNil_partition}
 $\mathfrak g_x=\gspin(W)_x\times\gspin(V)_x$, and a regular nilpotent $X$ minimizes the centralizer dimension in each
 factor separately. In a factor with fixed space $A$, $\dim\gspin_{y,Y}=\dim\mathfrak{so}(A)_{\mathrm{ad}_V Y|_A}+c+1$ where $c$ depends only
 on $\mathrm{ad}_V Y$ on $A^\perp$, and the $A$-component of $Y$ can be replaced by any skew map of $A$. So $\mathrm{ad}_V X|_A$ is a nilpotent of
 minimal centralizer dimension $\lfloor\dim A/2\rfloor$ in $\mathfrak{so}(A)$, and $A$ is quasi-split as in
-Theorem~\ref{nilReg_nonempty_iff_quasiSplit} (Jantzen 2004, \S6.3). Not verbatim in the literature. Ingredients: \ingredients{\cite{Wal01}, Ch.~I applied to the factors of $G_x$; \cite{BP}, Prop.~4.5.1(i); Jantzen 2004, \S6.3}
+Theorem~\ref{nilReg_nonempty_iff_quasiSplit} (Lemma~\ref{LIT-jantzen_regularNil_partition}).
 \end{proof}
 
 \begin{theorem}[Regular nilpotent orbits of GGP centralizers]
@@ -285,10 +294,10 @@ quasi-split.
 \end{theorem}
 \begin{proof}
 \leanok
-\uses{nilReg_centralizer_nonempty_imp}
+\uses{LIT-jantzen_finrank_soCentMat_ge, nilReg_centralizer_nonempty_imp, witt_decomposition}
 $\Rightarrow$ is Theorem~\ref{nilReg_centralizer_nonempty_imp}. $\Leftarrow$: the pair of explicit regular nilpotents of $\gspin(W'_x)$ and
 $\gspin(V'_x)$ is regular nilpotent in $\mathfrak g_x$, because with an abelian moved part the moved contribution to
-$\dim\mathfrak g_{x,Y}$ is the same for every $Y$. Not verbatim in the literature. Ingredients: \ingredients{\cite{Wal01}, Ch.~I; \cite{Wal10}, \S7.1}
+$\dim\mathfrak g_{x,Y}$ is the same for every $Y$.
 \end{proof}
 
 \begin{literature}[Multiplicity at most one]
