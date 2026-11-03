@@ -18,6 +18,7 @@ Over an algebraically closed field this is `commute_iff_det_negFixedSub`; it des
 of characteristic `0` by base change (`commute_iff`). The `W₊₁` condition then comes for free, since
 `det P(g) = det P(g)|_{W₊₁} · det P(g)|_{W₋₁}` (`IsomCent.det_eq_det_one_mul_det_neg_one_of_charZero`).
 
+* `ι_aeval_specP`: `ι ∘ q(P(x)) = q(Ad x) ∘ ι`.
 * `isSemisimple_specP_of_isSS`, `bcGSpin`, `specP_bcGSpin`: base change of
   `GSpin(V)` along `K → K̄`, over any field.
 -/
@@ -52,6 +53,33 @@ theorem specP_bcGSpin (Q : QuadraticForm K V) (t : GSpin Q) :
     rw [LinearEquiv.coe_coe, ι_specP]
     exact TorusTransfer.bcUnits_conj_ι' Q t w
 
+open Polynomial in
+/-- `ι ∘ q(P(x)) = q(Ad x) ∘ ι` for every polynomial `q`, where `Ad x = L_x R_{x⁻¹}` on `C(V)`. -/
+theorem ι_aeval_specP {Q : QuadraticForm K V} (x : GSpin Q) (q : K[X]) (v : V) :
+    ι Q (aeval (specP Q x : V →ₗ[K] V) q v) =
+      aeval (LinearMap.mulLeft K ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) *
+        LinearMap.mulRight K (((x : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) :
+          CliffordAlgebra Q)) q (ι Q v) := by
+  set c := LinearMap.mulLeft K ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) *
+    LinearMap.mulRight K (((x : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)
+  have hint : ∀ v, ι Q (specP Q x v) = c (ι Q v) := fun v => by
+    rw [ι_specP]
+    simp only [c, Module.End.mul_apply, LinearMap.mulLeft_apply, LinearMap.mulRight_apply,
+      mul_assoc]
+  have hpow : ∀ (n : ℕ) v, ι Q (((specP Q x : V →ₗ[K] V) ^ n) v) = (c ^ n) (ι Q v) := by
+    intro n
+    induction n with
+    | zero => intro v; simp
+    | succ n ih =>
+      intro v
+      rw [pow_succ', pow_succ', Module.End.mul_apply, Module.End.mul_apply, LinearEquiv.coe_coe,
+        hint, ih]
+  induction q using Polynomial.induction_on' generalizing v with
+  | add p q hp hq => simp only [map_add, LinearMap.add_apply, hp, hq]
+  | monomial n b =>
+    rw [aeval_monomial, aeval_monomial, Module.End.mul_apply, Module.End.mul_apply,
+      Module.algebraMap_end_apply, Module.algebraMap_end_apply, map_smul, hpow]
+
 section Semisimple
 
 variable [Module.Finite K V] [PerfectField K]
@@ -63,37 +91,11 @@ theorem isSemisimple_specP_of_isSS (Q : QuadraticForm K V) (x : GSpin Q)
     (hx : Module.End.IsSemisimple
       (LinearMap.mulLeft K (((x : (CliffordAlgebra Q)ˣ)) : CliffordAlgebra Q))) :
     Module.End.IsSemisimple (specP Q x : V →ₗ[K] V) := by
-  set a : CliffordAlgebra Q := (((x : (CliffordAlgebra Q)ˣ)) : CliffordAlgebra Q) with ha
-  set ai : CliffordAlgebra Q :=
-    ((((x : (CliffordAlgebra Q)ˣ))⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) with hai
-  -- `c = L_a R_{a⁻¹}` is semisimple
-  have hc : Module.End.IsSemisimple (LinearMap.mulLeft K a * LinearMap.mulRight K ai) :=
-    isSemisimple_conj_of_mulLeft hx
-  -- `ι ∘ P(x) = c ∘ ι`, so the minimal polynomial of `c` kills `P(x)`
-  set c := LinearMap.mulLeft K a * LinearMap.mulRight K ai
-  have hint : ∀ v, ι Q (specP Q x v) = c (ι Q v) := fun v => by
-    rw [ι_specP]
-    simp only [c, Module.End.mul_apply, LinearMap.mulLeft_apply, LinearMap.mulRight_apply, ha,
-      hai, mul_assoc]
-  have hpow : ∀ (n : ℕ) v, ι Q (((specP Q x : V →ₗ[K] V) ^ n) v) = (c ^ n) (ι Q v) := by
-    intro n
-    induction n with
-    | zero => intro v; simp
-    | succ n ih =>
-      intro v
-      rw [pow_succ', pow_succ', Module.End.mul_apply, Module.End.mul_apply, LinearEquiv.coe_coe,
-        hint, ih]
-  have hint' : ∀ (q : K[X]) v, ι Q (aeval (specP Q x : V →ₗ[K] V) q v) = aeval c q (ι Q v) := by
-    intro q
-    induction q using Polynomial.induction_on' with
-    | add p q hp hq => intro v; simp only [map_add, LinearMap.add_apply, hp, hq]
-    | monomial n b =>
-      intro v
-      rw [aeval_monomial, aeval_monomial, Module.End.mul_apply, Module.End.mul_apply,
-        Module.algebraMap_end_apply, Module.algebraMap_end_apply, map_smul, hpow]
+  -- `Ad x = L_x R_{x⁻¹}` is semisimple and `ι ∘ q(P(x)) = q(Ad x) ∘ ι`
+  have hc := isSemisimple_conj_of_mulLeft hx
   refine Module.End.isSemisimple_of_squarefree_aeval_eq_zero hc.minpoly_squarefree ?_
   refine LinearMap.ext fun v => ι_injective Q ?_
-  rw [hint', minpoly.aeval, LinearMap.zero_apply, LinearMap.zero_apply, map_zero]
+  rw [ι_aeval_specP, minpoly.aeval, LinearMap.zero_apply, LinearMap.zero_apply, map_zero]
 
 end Semisimple
 

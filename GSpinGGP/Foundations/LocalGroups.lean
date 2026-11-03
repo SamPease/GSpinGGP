@@ -371,6 +371,12 @@ def conjAd (g : Aˣ) : A ≃ₐ[F] A where
 Lie algebra elements (Thesis §2.1, `G_ss`, `𝔤_ss`). -/
 def IsSS (x : A) : Prop := Module.End.IsSemisimple (LinearMap.mulLeft F x)
 
+/-- `0` is semisimple. -/
+theorem isSS_zero : IsSS F (0 : A) := by
+  unfold IsSS
+  rw [LinearMap.mulLeft_zero_eq_zero]
+  exact Module.End.isSemisimple_zero
+
 variable {F}
 
 /-- The centralizer `𝔤_x = {X ∈ 𝔤 | xX = Xx}`. For a unit `x` this is the Lie algebra
@@ -385,6 +391,12 @@ lemma mem_lieCentralizer {K : Type*} [Field K] [Algebra K A] {𝔤 : LieSubalgeb
   change X ∈ 𝔤 ∧ X ∈ Subalgebra.centralizer K {x} ↔ _
   simp [Subalgebra.mem_centralizer_iff, eq_comm]
 
+/-- `𝔤_0 = 𝔤`. -/
+@[simp] theorem lieCentralizer_zero {K : Type*} [Field K] [Algebra K A] (𝔤 : LieSubalgebra K A) :
+    lieCentralizer 𝔤 0 = 𝔤 := by
+  ext X
+  simp [mem_lieCentralizer]
+
 /-- `𝔤_Y = 𝔤 ∩ ker (ad Y)`. -/
 theorem lieCentralizer_toSubmodule_eq {K : Type*} [Field K] [Algebra K A]
     (𝔤 : LieSubalgebra K A) (Y : A) :
@@ -393,6 +405,30 @@ theorem lieCentralizer_toSubmodule_eq {K : Type*} [Field K] [Algebra K A]
   ext X
   rw [LieSubalgebra.mem_toSubmodule, mem_lieCentralizer, Submodule.mem_inf, LinearMap.mem_ker,
     LieAlgebra.ad_apply, Ring.lie_def, sub_eq_zero, LieSubalgebra.mem_toSubmodule]
+
+/-- **`ker (1 − Ad a)^k = ker (ad a)^k`** for a unit `a`: `1 − Ad a = −R_{a⁻¹} ∘ ad a`, where
+`R_{a⁻¹}` is invertible and commutes with `ad a`. -/
+theorem ker_one_sub_conjAd_pow (a : Aˣ) (k : ℕ) :
+    LinearMap.ker ((1 - (conjAd F a).toLinearEquiv.toLinearMap) ^ k) =
+      LinearMap.ker (LieAlgebra.ad F A (a : A) ^ k) := by
+  set R : Module.End F A := -LinearMap.mulRight F ((a⁻¹ : Aˣ) : A)
+  have he : 1 - (conjAd F a).toLinearEquiv.toLinearMap = R * LieAlgebra.ad F A (a : A) := by
+    refine LinearMap.ext fun y => ?_
+    simp only [R, LinearMap.sub_apply, Module.End.one_apply, Module.End.mul_apply,
+      LinearMap.neg_apply, LinearMap.mulRight_apply, LieAlgebra.ad_apply, Ring.lie_def, sub_mul,
+      mul_assoc, Units.mul_inv, mul_one]
+    change y - (a : A) * y * ((a⁻¹ : Aˣ) : A) = _
+    rw [mul_assoc]
+    abel
+  have hc : Commute R (LieAlgebra.ad F A (a : A)) := by
+    refine Commute.neg_left (LinearMap.ext fun y => ?_)
+    simp only [Module.End.mul_apply, LinearMap.mulRight_apply, LieAlgebra.ad_apply, Ring.lie_def,
+      sub_mul, mul_assoc, Units.mul_inv, Units.inv_mul, mul_one]
+  have hu : IsUnit R := ⟨⟨R, -LinearMap.mulRight F (a : A),
+    LinearMap.ext fun y => by simp [R, mul_assoc],
+    LinearMap.ext fun y => by simp [R, mul_assoc]⟩, rfl⟩
+  rw [he, hc.mul_pow, Module.End.mul_eq_comp, LinearMap.ker_comp_of_ker_eq_bot]
+  exact LinearMap.ker_eq_bot.mpr ((Module.End.isUnit_iff _).mp (hu.pow k)).1
 
 /-- A Lie subalgebra of an associative algebra is abelian iff its elements commute. -/
 theorem isLieAbelian_iff_forall_commute {K : Type*} [Field K] [Algebra K A]
