@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import GSpinGGP.TraceFormula.MGeom
 import GSpinGGP.TraceFormula.StronglyCuspidal
 import GSpinGGP.TraceFormula.InvariantSets
+import GSpinGGP.GGP.Contraction
 
 /-!
 # Elliptic isolation and cutting quasi-characters
@@ -33,7 +34,7 @@ Cor 5.7.2(i)).
   `Ω` containing the elliptic set) (see §1).
 * `exists_scusp_cut` uses no surjectivity statement: `f₁ = 1_Ω f` works directly
   (`indicator_mem_scuspTestFn`, `isThetaF_indicator`), from the elementary fact that an invariant
-  clopen set is saturated along unipotent radicals (`mem_mul_parabolicU_iff`, SORRY).
+  clopen set is saturated along unipotent radicals (`mem_mul_parabolicU_iff`).
 -/
 
 noncomputable section
@@ -150,18 +151,44 @@ theorem IsInvariantClopen.AG_mul_mem_iff {Ω : Set ↥d.G} (hΩ : IsInvariantClo
 variable (d)
 
 /-- **Invariant clopen sets are saturated along unipotent radicals** (complete invariance, BP §3.1:
-the semisimple part of `p u` is conjugate to that of `p`).  For `p = m u₀ ∈ P(F) = M(F) U(F)` and
-`u ∈ U(F)`, conjugating `p u = m (u₀ u)` by `a ∈ A_M(F)` contracting `U` gives `m (a u₀ u a⁻¹) → m`,
-so `m` lies in the closure of the class of `p u` and of `p`; `Ω` closed gives "⇒" (for `pu` and
-for `p`), `Ω` open and invariant gives "⇐".  For a flag pair whose `U` is trivial there is nothing
-to prove.  Status: SORRY (own work, PROVE: needs a Levi decomposition `P = M U` of the flag
-stabilizers `GGPData.whittB` and a contracting cocharacter of `A_M`, lifted from `SO` to `GSpin`;
-neither is formalized yet). -/
+the semisimple part of `p u` is conjugate to that of `p`).  For `p ∈ P(F)` and `u ∈ U(F)`, a
+cocharacter of the split centre of a Levi subgroup `M` of `P` contracting `U`, lifted to `GSpin`
+(`exists_tendsto_conj_flagStab`, factor by factor), gives `a_k ∈ A_G(F)` and `C_k ∈ G(F)` with
+`a_k C_k (p u) C_k⁻¹ → L` for a limit `L` independent of `u` (so also `a_k C_k p C_k⁻¹ → L`).  As
+`Ω` is invariant and `A_G(F)`-stable, `a_k C_k x C_k⁻¹ ∈ Ω ↔ x ∈ Ω`; `Ω` closed gives `L ∈ Ω` from
+`p ∈ Ω` (or `p u ∈ Ω`), and `Ω` open then gives `p u ∈ Ω` (or `p ∈ Ω`). -/
 theorem mem_mul_parabolicU_iff {Ω : Set ↥d.G} (hΩ : IsInvariantClopen d Ω)
     (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV) {p : ↥d.G}
     (hp : p ∈ d.parabolicP FW FV) {u : ↥d.G} (hu : u ∈ d.parabolicU FW FV) :
     p * u ∈ Ω ↔ p ∈ Ω := by
-  sorry
+  obtain ⟨TW, hTW⟩ := exists_tendsto_conj_flagStab d.nondeg FW
+  obtain ⟨TV, hTV⟩ := exists_tendsto_conj_flagStab d.nondeg_QV FV
+  obtain ⟨sW, LW, hW⟩ := hTW _ hp.1
+  obtain ⟨sV, LV, hV⟩ := hTV _ hp.2
+  set C : ℕ → ↥d.G := fun k => d.pair (TW ^ k, TV ^ k)
+  set a : ℕ → ↥d.AG := fun k => ⟨d.scalarPair (sW ^ k)⁻¹ (sV ^ k)⁻¹, d.scalarPair_mem_AG _ _⟩
+  have hmem : ∀ (k : ℕ) (x : ↥d.G), (a k : ↥d.G) * (C k * x * (C k)⁻¹) ∈ Ω ↔ x ∈ Ω := fun k x =>
+    (hΩ.AG_mul_mem_iff _ _).trans (hΩ.conj_mem_iff _ _)
+  have hlim : ∀ x ∈ d.parabolicU FW FV,
+      Tendsto (fun k => (a k : ↥d.G) * (C k * (p * x) * (C k)⁻¹)) atTop (𝓝 (d.pair (LW, LV))) := by
+    intro x hx
+    refine ((d.continuous_pair.tendsto _).comp ((hW _ hx.1).prodMk_nhds (hV _ hx.2))).congr
+      fun k => d.G_ext ?_ ?_ <;>
+    simp [C, a, GGPData.scalarPair, map_inv, d.fst_pair, d.snd_pair]
+  have h1 := hlim 1 (d.parabolicU FW FV).one_mem
+  have hu' := hlim u hu
+  rw [mul_one] at h1
+  constructor
+  · intro hpu
+    have hL : d.pair (LW, LV) ∈ Ω :=
+      hΩ.2.1.mem_of_tendsto hu' (Eventually.of_forall fun k => (hmem k _).2 hpu)
+    obtain ⟨k, hk⟩ := (h1.eventually (hΩ.1.mem_nhds hL)).exists
+    exact (hmem k p).1 hk
+  · intro hpΩ
+    have hL : d.pair (LW, LV) ∈ Ω :=
+      hΩ.2.1.mem_of_tendsto h1 (Eventually.of_forall fun k => (hmem k _).2 hpΩ)
+    obtain ⟨k, hk⟩ := (hu'.eventually (hΩ.1.mem_nhds hL)).exists
+    exact (hmem k _).1 hk
 
 /-- BP Cor 5.7.2(i) (`LitTF.bp_scusp_surj_ell`) in the vocabulary of `Basic.lean`/`ThetaF.lean`. -/
 theorem exists_bpOmega : ∃ Ω : Set ↥d.G, IsInvariantClopen d Ω ∧ d.ellRegSet ⊆ Ω ∧
