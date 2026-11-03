@@ -166,7 +166,8 @@ $\Nilreg(\gspin(V))\neq\emptyset$ iff $\GSpin(V)$ is quasi-split, i.e.\ $\dim V-
 $\Leftarrow$: a split family $w_{-k},\dots,w_k$ with $\dim V\le 2k+2$ gives the explicit regular nilpotent
 $\sum_i\iota(w_{i+1})\iota(w_{-i})/2\nu$, whose centralizer has dimension $\lfloor\dim V/2\rfloor+1$, the rank (Lemma~\ref{LIT-jantzen_finrank_soCentMat_ge}).
 $\Rightarrow$: for a regular nilpotent $X$, $N=\mathrm{ad}_V X$ has $\dim\mathfrak{so}(V)_N=\lfloor n/2\rfloor$ (the rank of $\gspin(V)$ is
-$\lfloor n/2\rfloor+1$), so over $\bar F$ it is regular nilpotent of partition $[n]$ or $[n-1,1]$ (Lemma~\ref{LIT-jantzen_regularNil_partition}); hence
+$\lfloor n/2\rfloor+1$), so over $\bar F$ it has minimal centralizer dimension among nilpotents (Lemma~\ref{LIT-jantzen_finrank_soCentMat_ge}), hence
+partition $[n]$ or $[n-1,1]$ (Lemma~\ref{LIT-jantzen_regularNil_partition}); hence
 $N^{m}\neq0$ with $m=n-1$ or $n-2$, and the upper half of a Jordan chain of $N$ is a totally isotropic subspace of dimension
 $\lfloor(n-1)/2\rfloor$ (Thesis \S5.1.4).
 \end{proof}
@@ -262,7 +263,8 @@ some regular nilpotent $X\in\gspin(W)$ has image in $\mathcal O_{-\nu}$.
 By Witt theory the relevant class is $\nu$: if $\dim V$ is even, $W$ is odd and quasi-split, hence $W=\langle a\rangle\oplus W_1$ with $W_1$
 hyperbolic and $V=\langle a\rangle\oplus(W_1\oplus Z)$, $W_1\oplus Z\cong\langle\nu\rangle\oplus H^{k}$; if $\dim W=2m'\ge4$, Witt cancellation gives
 $W\cong\langle b\rangle\oplus\langle-\nu\rangle\oplus H^{m'-1}$. On the resulting split family the explicit element
-$\sum_i\iota(w_{i+1})\iota(w_{-i})/2\nu$ is regular nilpotent and lies in $\mathcal O_{\pm\nu}$ (\cite{Luo}, \S7.1; Thesis \S5.1.4).
+$\sum_i\iota(w_{i+1})\iota(w_{-i})/2\nu$ is regular nilpotent (its centralizer has dimension the rank, Lemma~\ref{LIT-jantzen_finrank_soCentMat_ge}) and lies in
+$\mathcal O_{\nu}$, resp.\ $\mathcal O_{-\nu}$, by a direct computation (these are the classes used in \cite{Luo}, \S7.1; Thesis \S5.1.4).
 \end{proof}
 
 \begin{theorem}[Germs vanish off quasi-split centralizers]
@@ -280,7 +282,7 @@ $\mathfrak g_x=\gspin(W)_x\times\gspin(V)_x$, and a regular nilpotent $X$ minimi
 factor separately. In a factor with fixed space $A$, $\dim\gspin_{y,Y}=\dim\mathfrak{so}(A)_{\mathrm{ad}_V Y|_A}+c+1$ where $c$ depends only
 on $\mathrm{ad}_V Y$ on $A^\perp$, and the $A$-component of $Y$ can be replaced by any skew map of $A$. So $\mathrm{ad}_V X|_A$ is a nilpotent of
 minimal centralizer dimension $\lfloor\dim A/2\rfloor$ in $\mathfrak{so}(A)$, and $A$ is quasi-split as in
-Theorem~\ref{nilReg_nonempty_iff_quasiSplit} (Lemma~\ref{LIT-jantzen_regularNil_partition}).
+Theorem~\ref{nilReg_nonempty_iff_quasiSplit} (Lemmas~\ref{LIT-jantzen_finrank_soCentMat_ge} and~\ref{LIT-jantzen_regularNil_partition}).
 \end{proof}
 
 \begin{theorem}[Regular nilpotent orbits of GGP centralizers]
