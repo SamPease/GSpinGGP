@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Literature.Kottwitz
 import GSpinGGP.GGP.Centralizers
+import GSpinGGP.GGP.ConjCocycle
 
 /-!
 # Galois descent for twisted quadratic forms
@@ -101,6 +102,23 @@ theorem coe_glOf_inv {m : ℕ} {Q Q' : QuadraticForm F (Fin m → F)}
     (φ : (Q.baseChange Kb).IsometryEquiv (Q'.baseChange Kb)) :
     (((glOf φ)⁻¹ : GL (Fin m) Kb) : Matrix (Fin m) (Fin m) Kb) =
       LinearMap.toMatrix (bcBasis F m) (bcBasis F m) φ.toLinearEquiv.symm.toLinearMap := rfl
+
+/-- The matrix of a composite isometry. -/
+theorem glOf_trans {m : ℕ} {Q₁ Q₂ Q₃ : QuadraticForm F (Fin m → F)}
+    (e : (Q₁.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb))
+    (e' : (Q₂.baseChange Kb).IsometryEquiv (Q₃.baseChange Kb)) :
+    glOf (e.trans e') = glOf e' * glOf e :=
+  Units.ext (LinearMap.toMatrix_comp _ _ _ _ _)
+
+/-- The matrix of the inverse isometry. -/
+theorem glOf_symm {m : ℕ} {Q₁ Q₂ : QuadraticForm F (Fin m → F)}
+    (e : (Q₁.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb)) : glOf e.symm = (glOf e)⁻¹ :=
+  Units.ext rfl
+
+/-- The matrix of `P(g)`. -/
+theorem glOf_specPIso {m : ℕ} {Q : QuadraticForm F (Fin m → F)} (g : GSpin (Q.baseChange Kb)) :
+    glOf (specPIso g) = specMatFbar Q g :=
+  Units.ext rfl
 
 /-- `det(Φ⁻¹ σ(Φ)) = 1` for the matrix `Φ` of the isometry of an inner twist (`InnerTwist.cocycle`
 in matrices). -/
@@ -397,6 +415,14 @@ theorem det_specMatFbar {m : ℕ} (Q : QuadraticForm F (Fin m → F)) (g : GSpin
     ((specMatFbar Q g : GL (Fin m) Kb) : Matrix (Fin m) (Fin m) Kb).det = 1 := by
   rw [coe_specMatFbar, LinearMap.det_toMatrix]
   exact det_specP g
+
+/-- `det a_σ = 1` for `ψ = P(g) ∘ φ` and an inner twist `φ`. -/
+theorem det_glOf_trans_specPIso {m : ℕ} {Q : QuadraticForm F (Fin m → F)} (τ : InnerTwist Q)
+    (g : GSpin (τ.Q'.baseChange Kb)) (σ : GalF F) :
+    (((glOf (τ.φ.trans (specPIso g)))⁻¹ * galGL m σ (glOf (τ.φ.trans (specPIso g))) :
+      GL (Fin m) Kb) : Matrix (Fin m) (Fin m) Kb).det = 1 := by
+  rw [glOf_trans, glOf_specPIso, det_inv_mul_galGL_mul σ _ _ (det_specMatFbar _ g)]
+  exact det_glOf_inv_mul_galGL τ σ
 
 /-- `S_x(F̄) ⊆ O(W)(F̄)`, in matrix form. -/
 theorem gram_mem_torusBarFbar (d : GGPData F) (x : GSpin d.QW) :
