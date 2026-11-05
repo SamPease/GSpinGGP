@@ -190,6 +190,52 @@ theorem finite_conj_torusOf {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x) :
   obtain ⟨τ, -, hτ⟩ := hscal t ht
   exact Set.mem_iUnion.2 ⟨τ, t, ht, rfl, hτ⟩
 
+/-- **`W(T_x)` is finite**, for `x ∈ Γ(G,H)`: `n ↦ n x n⁻¹` is injective on `N(T_x)/Z(T_x)`
+(`commute_torusOf_of_commute`) with values in the finite set of `finite_conj_torusOf`. -/
+theorem finite_weylQuot {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x) :
+    Finite (↥(Subgroup.normalizer (d.torusOf x : Set ↥(GSpin d.QW))) ⧸
+      (Subgroup.centralizer (d.torusOf x : Set ↥(GSpin d.QW))).subgroupOf
+        (Subgroup.normalizer (d.torusOf x : Set ↥(GSpin d.QW)))) := by
+  have hfin := (finite_conj_torusOf hx).to_subtype
+  let φ : ↥(Subgroup.normalizer (d.torusOf x : Set ↥(GSpin d.QW))) →
+      {t : ↥(GSpin d.QW) | t ∈ d.torusOf x ∧ ∃ g : ↥(GSpin (d.QW.baseChange Kb)),
+        g * bcGSpin d.QW x * g⁻¹ = bcGSpin d.QW t} := fun n =>
+    ⟨n * x * (n : ↥(GSpin d.QW))⁻¹, (n.2 x).1 (d.self_mem_torusOf x),
+      bcGSpin d.QW n, by rw [map_mul, map_mul, map_inv]⟩
+  refine Finite.of_injective (Quotient.lift φ fun a b hab => ?_) fun a b hab => ?_
+  · have hab' := QuotientGroup.leftRel_apply.mp hab
+    rw [Subgroup.mem_subgroupOf, Subgroup.mem_centralizer_iff] at hab'
+    apply Subtype.ext
+    have hc := hab' x (d.self_mem_torusOf x)
+    simp only [Subgroup.coe_mul, Subgroup.coe_inv] at hc
+    show (a : ↥(GSpin d.QW)) * x * (a : ↥(GSpin d.QW))⁻¹ = (b : ↥(GSpin d.QW)) * x * (b : ↥(GSpin d.QW))⁻¹
+    symm
+    calc (b : ↥(GSpin d.QW)) * x * (b : ↥(GSpin d.QW))⁻¹ =
+        a * (((a : ↥(GSpin d.QW))⁻¹ * b) * x) * (b : ↥(GSpin d.QW))⁻¹ := by group
+      _ = a * (x * ((a : ↥(GSpin d.QW))⁻¹ * b)) * (b : ↥(GSpin d.QW))⁻¹ := by rw [hc]
+      _ = _ := by group
+  · induction a using Quotient.inductionOn
+    induction b using Quotient.inductionOn
+    rename_i a b
+    apply Quotient.sound
+    refine QuotientGroup.leftRel_apply.mpr ?_
+    rw [Subgroup.mem_subgroupOf, Subgroup.mem_centralizer_iff]
+    have h := congrArg Subtype.val hab
+    simp only [Quotient.lift_mk, φ] at h
+    have hc : Commute ((a : ↥(GSpin d.QW))⁻¹ * b) x := by
+      change _ * _ = _ * _
+      calc ((a : ↥(GSpin d.QW))⁻¹ * b) * x =
+          (a : ↥(GSpin d.QW))⁻¹ * (b * x * (b : ↥(GSpin d.QW))⁻¹) * b := by group
+        _ = x * ((a : ↥(GSpin d.QW))⁻¹ * b) := by rw [← h]; group
+    intro t ht
+    exact ((commute_torusOf_of_commute hx hc ht).eq).symm
+
+/-- `|W(T_x)| ≥ 1` for `x ∈ Γ(G,H)`. -/
+theorem weylCardOf_pos {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x) :
+    0 < weylCardOf d (d.torusOf x) := by
+  have := finite_weylQuot hx
+  exact Nat.card_pos
+
 end GGPData
 
 end GSpinGGP
