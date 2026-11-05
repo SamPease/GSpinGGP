@@ -44,6 +44,7 @@ import GSpinGGP.TraceFormula.DeltaIntegrability
 import GSpinGGP.TraceFormula.EllipticRepresentations
 import GSpinGGP.TraceFormula.LieAlgebra
 import GSpinGGP.Literature.Kottwitz
+import GSpinGGP.Literature.Kottwitz1986
 import GSpinGGP.GGP.KottwitzDelta
 import GSpinGGP.GGP.KottwitzSign
 import GSpinGGP.GGP.Hilbert90
