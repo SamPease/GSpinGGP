@@ -227,6 +227,20 @@ theorem galIso_trans_symm_eq_self_of_odd [FiniteDimensional F V₁] (hQ₁ : IsN
     exact hdet1
   rw [hcE w hw, hc1, one_smul]
 
+/-- If `ψ` is rational on `p` (`ψ(1 ⊗ a) = 1 ⊗ θ(a)`), then `a_σ = ψ⁻¹ ∘ σψ` is the identity on
+`p ⊗ F̄`. -/
+theorem galIso_trans_symm_eq_self_of_tmul (ψ : (Q₁.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb))
+    {p : Submodule F V₁} (θ : p → V₂) (hψ : ∀ a : p, ψ (1 ⊗ₜ (a : V₁)) = 1 ⊗ₜ θ a) (σ : GalF F)
+    {w : Kb ⊗[F] V₁} (hw : w ∈ p.baseChange Kb) : (galIso σ ψ).trans ψ.symm w = w := by
+  have hle : p.baseChange Kb ≤ LinearMap.eqLocus
+      ((galIso σ ψ).trans ψ.symm).toLinearEquiv.toLinearMap LinearMap.id := by
+    rw [Submodule.baseChange_eq_span, Submodule.span_le]
+    rintro _ ⟨a, ha, rfl⟩
+    change ψ.symm (galIso σ ψ (1 ⊗ₜ a)) = 1 ⊗ₜ a
+    rw [galIso_apply, galV_tmul, map_one, hψ ⟨a, ha⟩, galV_tmul, map_one, ← hψ ⟨a, ha⟩,
+      ψ.symm_apply_apply]
+  exact hle hw
+
 end OddFixed
 
 section Torus

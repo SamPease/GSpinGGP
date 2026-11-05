@@ -137,6 +137,12 @@ theorem polar_eq_zero_of_mem_eigenspace {x : GSpin Q} {u v : V}
   have h2 : (2 : K) * QuadraticMap.polar Q u v = 0 := by linear_combination -h
   exact (mul_eq_zero.1 h2).resolve_left (Invertible.ne_zero (2 : K))
 
+/-- A reflection in a vector of `W'_x` fixes `W''_x`. -/
+theorem quadReflection_of_mem_movedSub {x : GSpin Q} {u b : V} (hu : u ∈ fixedSub x)
+    (hb : b ∈ movedSub x) : quadReflection Q u b = b := by
+  rw [quadReflection_apply, polar_eq_two_mul_bform, fixedSub_orthogonal_movedSub x u hu b hb,
+    mul_zero, zero_smul, smul_zero, sub_zero]
+
 /-- The reflection in an eigenvector of `P(x)` with eigenvalue `ε = ±1` commutes with `P(x)`. -/
 theorem quadReflection_comm {x : GSpin Q} {u : V} {ε : K} (hε : ε * ε = 1)
     (hu : u ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) ε) :
