@@ -172,6 +172,49 @@ theorem galC_map_of_lift {Q : QuadraticForm F V} {Q₁ : QuadraticForm F V₁}
     rw [h, QuadraticMap.IsometryEquiv.apply_symm_apply]
   rw [galC_map, map_isometryEquiv_congr e, map_trans_apply, map_specPIso_apply]
 
+/-- Twists by `F̄`-isometries whose matrix has Galois-fixed determinant have the same
+discriminant. -/
+theorem sameDisc_of_det_glOf_fixed {m : ℕ} {Q₁ Q₂ : QuadraticForm F (Fin m → F)}
+    (ψ : (Q₁.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb))
+    (h : ∀ σ : GalF F, σ ((glOf ψ : Matrix (Fin m) (Fin m) Kb).det) =
+      (glOf ψ : Matrix (Fin m) (Fin m) Kb).det) : SameDisc Q₁ Q₂ := by
+  obtain ⟨c, hc⟩ := (InfiniteGalois.mem_range_algebraMap_iff_fixed _).2 h
+  have hX : IsUnit (glOf ψ : Matrix (Fin m) (Fin m) Kb).det :=
+    (Matrix.isUnit_iff_isUnit_det _).1 (glOf ψ).isUnit
+  have hc0 : c ≠ 0 := by
+    rintro rfl; rw [map_zero] at hc; exact hX.ne_zero hc.symm
+  have hg := congrArg Matrix.det (gram_glOf ψ)
+  have e₁ : (Q₁.toMatrix'.map (algebraMap F Kb)).det = algebraMap F Kb Q₁.toMatrix'.det :=
+    (RingHom.map_det _ _).symm
+  have e₂ : (Q₂.toMatrix'.map (algebraMap F Kb)).det = algebraMap F Kb Q₂.toMatrix'.det :=
+    (RingHom.map_det _ _).symm
+  rw [Matrix.det_mul, Matrix.det_mul, Matrix.det_transpose, e₁, e₂, ← hc] at hg
+  refine ⟨c⁻¹, inv_ne_zero hc0, (algebraMap F Kb).injective ?_⟩
+  simp only [QuadraticForm.discr']
+  rw [map_mul, map_pow, map_inv₀, ← hg]
+  field_simp [(map_ne_zero (algebraMap F Kb)).2 hc0]
+
+/-- If `t` lifts `φ⁻¹ ∘ σφ`, the matrix of `σφ` is that of `φ` times `P(t)`. -/
+theorem glOf_galIso_of_lift {m : ℕ} {Q Q₁ : QuadraticForm F (Fin m → F)}
+    (φ : (Q.baseChange Kb).IsometryEquiv (Q₁.baseChange Kb)) (σ : GalF F)
+    (t : GSpin (Q.baseChange Kb)) (h : ∀ w, specP _ t w = φ.symm (galIso σ φ w)) :
+    glOf (galIso σ φ) = glOf φ * specMatFbar Q t := by
+  rw [← glOf_specPIso, ← glOf_trans]
+  refine glOf_congr fun w => ?_
+  change galIso σ φ w = φ (specP _ t w)
+  rw [h, QuadraticMap.IsometryEquiv.apply_symm_apply]
+
+/-- `σ(φ₂ ∘ φ₁⁻¹) = σφ₂ ∘ (σφ₁)⁻¹`. -/
+theorem galIso_symm_trans {V V₁ V₂ : Type*} [AddCommGroup V] [Module F V] [AddCommGroup V₁]
+    [Module F V₁] [AddCommGroup V₂] [Module F V₂] {Q : QuadraticForm F V}
+    {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂}
+    (φ₁ : (Q.baseChange Kb).IsometryEquiv (Q₁.baseChange Kb))
+    (φ₂ : (Q.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb)) (σ : GalF F) (w : Kb ⊗[F] V₁) :
+    galIso σ (φ₁.symm.trans φ₂) w = galIso σ φ₂ ((galIso σ φ₁).symm w) := by
+  change galV σ (φ₂ (φ₁.symm (galV σ⁻¹ w))) =
+    galV σ (φ₂ (galV σ⁻¹ (galV σ (φ₁.symm (galV σ⁻¹ w)))))
+  rw [galV_inv_galV]
+
 /-- **Twists with equal obstructions are isometric.** Let `φᵢ : U_{F̄} ≅ Uᵢ_{F̄}` (`i = 1, 2`) and
 let `t`, `s` be continuous lifts to `GSpin(U)(F̄)` of their cocycles `σ ↦ φᵢ⁻¹ ∘ σφᵢ` with equal
 obstructions `t_σ σ(t_τ) t_{στ}⁻¹ = s_σ σ(s_τ) s_{στ}⁻¹`. Then `U₁ ≅ U₂` over `F`.
