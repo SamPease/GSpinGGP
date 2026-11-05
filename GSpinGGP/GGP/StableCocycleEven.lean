@@ -351,7 +351,8 @@ theorem exists_isStableIso_of_isometry (τ : InnerTwist d.QW) {x : GSpin d.QW} (
     intro a
     change ψ (specP _ k (1 ⊗ₜ (a : Fin d.m → F))) = _
     rw [hk, rmap_tmul_of_mem hc ψ θ₁ a.2, ψ.apply_symm_apply]
-  refine ⟨(specPIso k).trans ψ, hmap', fun σ => ?_⟩
+  refine ⟨(specPIso k).trans ψ, hmap', fun σ => ?_, by
+    rw [det_glOf_specPIso_trans, ← hψ, det_glOf_trans_specPIso_eq]⟩
   refine inv_mul_galGL_glOf_mem_torusBarFbar d x _ hmap' σ ?_ fun w hw =>
     galIso_trans_symm_eq_self_of_tmul _ (fun a => θ₁ a) hrat σ hw
   rw [glOf_trans, glOf_specPIso, det_inv_mul_galGL_mul_right σ _ _ (det_specMatFbar _ k)]

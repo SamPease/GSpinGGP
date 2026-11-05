@@ -424,6 +424,19 @@ theorem det_glOf_trans_specPIso {m : ℕ} {Q : QuadraticForm F (Fin m → F)} (�
   rw [glOf_trans, glOf_specPIso, det_inv_mul_galGL_mul σ _ _ (det_specMatFbar _ g)]
   exact det_glOf_inv_mul_galGL τ σ
 
+/-- Composing with `P(g)` does not change the determinant of the matrix of an isometry. -/
+theorem det_glOf_trans_specPIso_eq {m : ℕ} {Q Q' : QuadraticForm F (Fin m → F)}
+    (e : (Q.baseChange Kb).IsometryEquiv (Q'.baseChange Kb)) (g : GSpin (Q'.baseChange Kb)) :
+    ((glOf (e.trans (specPIso g)) : GL (Fin m) Kb) : Matrix (Fin m) (Fin m) Kb).det =
+      ((glOf e : GL (Fin m) Kb) : Matrix (Fin m) (Fin m) Kb).det := by
+  rw [glOf_trans, glOf_specPIso, Units.val_mul, Matrix.det_mul, det_specMatFbar, one_mul]
+
+theorem det_glOf_specPIso_trans {m : ℕ} {Q Q' : QuadraticForm F (Fin m → F)}
+    (g : GSpin (Q.baseChange Kb)) (e : (Q.baseChange Kb).IsometryEquiv (Q'.baseChange Kb)) :
+    ((glOf ((specPIso g).trans e) : GL (Fin m) Kb) : Matrix (Fin m) (Fin m) Kb).det =
+      ((glOf e : GL (Fin m) Kb) : Matrix (Fin m) (Fin m) Kb).det := by
+  rw [glOf_trans, glOf_specPIso, Units.val_mul, Matrix.det_mul, det_specMatFbar, mul_one]
+
 /-- `S_x(F̄) ⊆ O(W)(F̄)`, in matrix form. -/
 theorem gram_mem_torusBarFbar (d : GGPData F) (x : GSpin d.QW) :
     ∀ s ∈ d.torusBarFbar x, (s : Matrix (Fin d.m) (Fin d.m) Kb)ᵀ *

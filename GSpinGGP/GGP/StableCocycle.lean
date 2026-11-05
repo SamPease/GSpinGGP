@@ -356,12 +356,16 @@ variable (d : GGPData F)
 `x` to `y`, and `a_σ = ψ⁻¹ ∘ σψ` lies in `S_x(F̄)` for every `σ`.  Then `σ ↦ a_σ` is a cocycle of
 `Γ_F` in `S_x` (`IsStableIso.cocycle`) whose image in `H¹(F, SO(W))` is `α`
 (`IsStableIso.twistIdx`).  The thesis's cocycle `g⁻¹ c_{α,σ} σ(g)` takes values in `T_x`; this is its
-image in `S_x = T_x/A_{G,H}`, as in `n_alpha_eq_card_twistIdx`. -/
+image in `S_x = T_x/A_{G,H}`, as in `n_alpha_eq_card_twistIdx`.  The last clause,
+`det ψ = det φ_α` (in rational coordinates), makes `ψ ∘ φ_α⁻¹` proper; since `det a_σ = 1` it only
+fixes a sign, and every `P(g) ∘ φ_α` satisfies it. -/
 def IsStableIso (τ : InnerTwist d.QW) (x : GSpin d.QW) (y : GSpin (d.twist τ).QW)
     (ψ : (d.QW.baseChange Kb).IsometryEquiv (τ.Q'.baseChange Kb)) : Prop :=
   CliffordAlgebra.map ψ.toIsometry (bcUnits d.QW (x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra _) =
       bcUnits τ.Q' (y : (CliffordAlgebra τ.Q')ˣ) ∧
-    ∀ σ : GalF F, (glOf ψ)⁻¹ * galGL d.m σ (glOf ψ) ∈ d.torusBarFbar x
+    (∀ σ : GalF F, (glOf ψ)⁻¹ * galGL d.m σ (glOf ψ) ∈ d.torusBarFbar x) ∧
+    ((glOf ψ : GL (Fin d.m) Kb) : Matrix (Fin d.m) (Fin d.m) Kb).det =
+      ((glOf τ.φ : GL (Fin d.m) Kb) : Matrix (Fin d.m) (Fin d.m) Kb).det
 
 variable {d}
 
@@ -369,7 +373,7 @@ variable {d}
 def IsStableIso.cocycle {τ : InnerTwist d.QW} {x : GSpin d.QW} {y : GSpin (d.twist τ).QW}
     {ψ : (d.QW.baseChange Kb).IsometryEquiv (τ.Q'.baseChange Kb)} (h : d.IsStableIso τ x y ψ) :
     GalCocycle (d.torusBarFbar x) :=
-  conjCocycle (glOf ψ) h.2
+  conjCocycle (glOf ψ) h.2.1
 
 /-- The class of the cocycle of `y` maps to `α` in `H¹(F, SO(W))`. -/
 theorem IsStableIso.twistIdx (IF : InnerFormSystem d) {α : IF.Idx} {x : GSpin d.QW}
@@ -393,7 +397,7 @@ theorem exists_isStableIso_of_odd (τ : InnerTwist d.QW) {x : GSpin d.QW} (hx : 
       bcUnits τ.Q' (y : (CliffordAlgebra τ.Q')ˣ) := by
     rw [← psiA_eq_map]
     exact congrArg Units.val hconj
-  refine ⟨τ.φ.trans (specPIso g'), hmap, fun σ => ?_⟩
+  refine ⟨τ.φ.trans (specPIso g'), hmap, fun σ => ?_, det_glOf_trans_specPIso_eq _ _⟩
   have hdet := det_glOf_trans_specPIso τ g' σ
   refine inv_mul_galGL_glOf_mem_torusBarFbar d x _ hmap σ hdet fun w hw => ?_
   have hdet' : LinearMap.det (((galIso σ (τ.φ.trans (specPIso g'))).trans
