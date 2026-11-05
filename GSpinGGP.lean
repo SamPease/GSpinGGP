@@ -53,6 +53,7 @@ import GSpinGGP.GGP.TwistDescent
 import GSpinGGP.GGP.ConjCocycle
 import GSpinGGP.GGP.GaloisTorus
 import GSpinGGP.GGP.StableCocycle
+import GSpinGGP.GGP.StableCocycleEven
 import GSpinGGP.GGP.GammaClassFinite
 import GSpinGGP.GGP.TwistPlane
 import GSpinGGP.GGP.TwistTorus

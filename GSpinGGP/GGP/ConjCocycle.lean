@@ -55,6 +55,17 @@ theorem det_inv_mul_galGL_mul (σ : GalF F) (S Φ : GL (Fin m) Kb)
     map_one]
   ring
 
+/-- `det(Ψ⁻¹ σ(Ψ))` is unchanged when `Ψ` is multiplied on the right by a matrix of determinant `1`. -/
+theorem det_inv_mul_galGL_mul_right (σ : GalF F) (Φ S : GL (Fin m) Kb)
+    (hS : (S : Matrix (Fin m) (Fin m) Kb).det = 1) :
+    (((Φ * S)⁻¹ * galGL m σ (Φ * S) : GL (Fin m) Kb) : Matrix (Fin m) (Fin m) Kb).det =
+      ((Φ⁻¹ * galGL m σ Φ : GL (Fin m) Kb) : Matrix (Fin m) (Fin m) Kb).det := by
+  have hSi : ((S⁻¹ : GL (Fin m) Kb) : Matrix (Fin m) (Fin m) Kb).det = 1 := by
+    rw [Matrix.coe_units_inv, Matrix.det_nonsing_inv, hS, Ring.inverse_one]
+  simp only [_root_.mul_inv_rev, map_mul, Units.val_mul, Matrix.det_mul, hSi, det_galGL σ S, hS,
+    map_one]
+  ring
+
 /-- A Galois-stable subgroup: `σ(S) ⊆ S` for every `σ` (hence `σ(S) = S`). -/
 def IsGalStable (S : Subgroup (GL (Fin m) Kb)) : Prop :=
   ∀ σ : GalF F, ∀ s ∈ S, galGL m σ s ∈ S
