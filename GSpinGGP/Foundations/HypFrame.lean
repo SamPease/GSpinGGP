@@ -11,7 +11,8 @@ complement `W` (`IsHypFrame`). Every vector splits as
 `v = w + Σ (polar(v, fⱼ) eⱼ + polar(v, eⱼ) fⱼ)` with `w ∈ W` (`IsHypFrame.proj_mem`).
 
 * `hypTorus W e f`: the split torus of the frame, the automorphisms fixing `W` pointwise and
-  scaling `eᵢ, fᵢ` by `tᵢ, tᵢ⁻¹`.
+  scaling `eᵢ, fᵢ` by `tᵢ, tᵢ⁻¹` (a subgroup of `GL(V)`; when `2` is invertible the `eᵢ, fᵢ` are
+  isotropic and it is the usual split torus of `SO(Q)` attached to the frame).
 * `IsHypFrame.mem_hypTorus_of_commute`: an isometry fixing `W` and commuting with a regular element
   of the torus (`tᵢ ≠ 1`, `tᵢ` distinct, `tᵢ tⱼ ≠ 1`) lies in the torus.
 * `hypTorus_map_conj`: an automorphism carrying one frame to another conjugates their tori.
@@ -72,20 +73,18 @@ theorem proj_mem (hF : IsHypFrame Q W e f) (v : V) : v - frameSum Q e f v ∈ W 
   intro i
   simp only [frameSum, polar_sub_left, hF.polar_sum_e, hF.polar_sum_f, sub_self, and_self]
 
-theorem frameSum_add_proj (v : V) : frameSum Q e f v + (v - frameSum Q e f v) = v :=
-  add_sub_cancel _ _
 
 /-- Linear maps agreeing on `W` and on the frame are equal. -/
 theorem linearMap_ext (hF : IsHypFrame Q W e f) {g h : V →ₗ[K] V} (hW : ∀ w ∈ W, g w = h w)
     (he : ∀ i, g (e i) = h (e i)) (hf : ∀ i, g (f i) = h (f i)) : g = h := by
   ext v
-  rw [← frameSum_add_proj (Q := Q) (e := e) (f := f) v, map_add, map_add, hW _ (hF.proj_mem v)]
+  rw [← add_sub_cancel (frameSum Q e f v) v, map_add, map_add, hW _ (hF.proj_mem v)]
   simp [frameSum, map_sum, he, hf]
 
 end IsHypFrame
 
-/-- The split torus of a frame: automorphisms fixing `W` pointwise and scaling `eᵢ, fᵢ` by
-`tᵢ, tᵢ⁻¹`. -/
+/-- The split torus of a frame, as a subgroup of `GL(V)`: automorphisms fixing `W` pointwise and
+scaling `eᵢ, fᵢ` by `tᵢ, tᵢ⁻¹`. -/
 def hypTorus (W : Submodule K V) {n : ℕ} (e f : Fin n → V) : Subgroup (V ≃ₗ[K] V) where
   carrier := {h | (∀ w ∈ W, h w = w) ∧
     ∃ t : Fin n → Kˣ, ∀ i, h (e i) = (t i : K) • e i ∧ h (f i) = (((t i)⁻¹ : Kˣ) : K) • f i}
@@ -120,7 +119,7 @@ theorem apply_eq_of_scale (hkW : ∀ w ∈ W, k w = w)
     (hF : IsHypFrame Q W e f) (v : V) :
     k v = (v - frameSum Q e f v) + ∑ j, (((t j : K) * polar Q v (f j)) • e j +
       ((((t j)⁻¹ : Kˣ) : K) * polar Q v (e j)) • f j) := by
-  conv_lhs => rw [← frameSum_add_proj (Q := Q) (e := e) (f := f) v]
+  conv_lhs => rw [← add_sub_cancel (frameSum Q e f v) v]
   rw [map_add, hkW _ (hF.proj_mem v), add_comm]
   simp only [frameSum, map_sum, map_add, map_smul, (ht _).1, (ht _).2, smul_smul, mul_comm]
 
@@ -168,7 +167,7 @@ theorem eigen_of_scale (hkW : ∀ w ∈ W, k w = w)
     exact mul_right_cancel₀ hj h
 
 /-- An isometry `h` fixing `W` and commuting with a *regular* element `k` of the torus
-(`tᵢ ≠ 1`, the `tᵢ` distinct, `tᵢ tⱼ ≠ 1`) lies in the torus. -/
+(`tᵢ ≠ 1`, the `tᵢ` distinct, `tᵢ tⱼ ≠ 1`, in particular `tᵢ² ≠ 1`) lies in the torus. -/
 theorem mem_hypTorus_of_commute (hF : IsHypFrame Q W e f) {k h : V ≃ₗ[K] V}
     (hkW : ∀ w ∈ W, k w = w)
     (ht : ∀ i, k (e i) = (t i : K) • e i ∧ k (f i) = (((t i)⁻¹ : Kˣ) : K) • f i)
@@ -281,8 +280,9 @@ namespace IsHypFrame
 
 variable {Q : QuadraticForm K V} {W W₁ W₂ : Submodule K V} {n : ℕ} {e f e₁ f₁ e₂ f₂ : Fin n → V}
 
+variable (K) in
 /-- The span of a frame. -/
-abbrev span (K : Type*) [Field K] [Module K V] (e f : Fin n → V) : Submodule K V := Submodule.span K (Set.range (Sum.elim e f))
+abbrev span (e f : Fin n → V) : Submodule K V := Submodule.span K (Set.range (Sum.elim e f))
 
 theorem linearIndependent (hF : IsHypFrame Q W e f) : LinearIndependent K (Sum.elim e f) := by
   rw [Fintype.linearIndependent_iff]
@@ -413,7 +413,8 @@ theorem mem_iff_of_polar (hF₁ : IsHypFrame Q W₁ e₁ f₁) (hF₂ : IsHypFra
   simp only [hF₁.mem_iff, hF₂.mem_iff, ← he, ← hf, hpol]
 
 omit [Invertible (2 : K)] [FiniteDimensional K V] in
-theorem polar_isometryEquiv (g : Q.IsometryEquiv Q) (x y : V) : polar Q (g x) (g y) = polar Q x y := by
+theorem polar_isometryEquiv (g : Q.IsometryEquiv Q) (x y : V) :
+    polar Q (g x) (g y) = polar Q x y := by
   simp only [polar, ← map_add, g.map_app]
 
 /-- **Frames of the same size have conjugate tori under `SO(Q)`**: an isometry of determinant `1`
@@ -470,7 +471,8 @@ theorem exists_conj_hypTorus (hQ : (polarBilin Q).SeparatingLeft) (hF₁ : IsHyp
   have hg'Q : ∀ v, Q (g' v) = Q v := fun v => (hrQ _).trans (g.map_app v)
   have hg'pol : ∀ x y, polar Q (g' x) (g' y) = polar Q x y := fun x y => by
     simp only [polar, ← map_add, hg'Q]
-  have hF₂' : IsHypFrame Q W₂ (Function.update e₂ 0 (f₂ 0)) (Function.update f₂ 0 (e₂ 0)) := hF₂.swap 0
+  have hF₂' : IsHypFrame Q W₂ (Function.update e₂ 0 (f₂ 0)) (Function.update f₂ 0 (e₂ 0)) :=
+    hF₂.swap 0
   have hge' : ∀ i, g' (e₁ i) = Function.update e₂ 0 (f₂ 0) i := fun i => by
     change r (g (e₁ i)) = _
     rw [hge, hr]
