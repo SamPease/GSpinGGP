@@ -230,6 +230,48 @@ theorem map_mem_even {V V₁ : Type*} [AddCommGroup V] [Module F V] [AddCommGrou
     exact zero_add (0 : ZMod 2) ▸
       SetLike.mul_mem_graded (CliffordAlgebra.ι_mul_ι_mem_evenOdd_zero _ _ _) ih
 
+/-- **Twists with equal obstructions have isomorphic Clifford subalgebras**: the quotient
+`w_σ = s_σ t_σ⁻¹` of the lifts, transported by `C(φ₁)`, is a cocycle in `GSpin(Q₁)(F̄)` twisting
+`C(ψ)`, `ψ = φ₂ ∘ φ₁⁻¹` (`nonempty_algEquiv_of_twist`). -/
+theorem nonempty_algEquiv_of_galObstruction_eq {m : ℕ} {Q Q₁ Q₂ : QuadraticForm F (Fin m → F)}
+    (φ₁ : (Q.baseChange Kb).IsometryEquiv (Q₁.baseChange Kb))
+    (φ₂ : (Q.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb))
+    (t s : GalF F → GSpin (Q.baseChange Kb)) (ht : IsGalContinuous t) (hs : IsGalContinuous s)
+    (hta : ∀ σ w, specP _ (t σ) w = φ₁.symm (galIso σ φ₁ w))
+    (hsb : ∀ σ w, specP _ (s σ) w = φ₂.symm (galIso σ φ₂ w))
+    (hscal : ∀ σ τ, galObstruction Q t σ τ ∈ (scalarGSpin (Q.baseChange Kb)).range)
+    (hobs : galObstruction Q t = galObstruction Q s)
+    (C₁ : Subalgebra F (CliffordAlgebra Q₁)) (C₂ : Subalgebra F (CliffordAlgebra Q₂))
+    [IsSimpleRing C₁] [IsArtinianRing C₁]
+    (hC₁ : ∀ g ∈ GSpin (Q₁.baseChange Kb),
+      (g : CliffordAlgebra (Q₁.baseChange Kb)) ∈ bcSub Q₁ C₁)
+    (hΘ₁ : ∀ y ∈ bcSub Q₁ C₁, CliffordAlgebra.map (φ₁.symm.trans φ₂).toIsometry y ∈ bcSub Q₂ C₂)
+    (hΘ₂ : ∀ y ∈ bcSub Q₂ C₂,
+      CliffordAlgebra.map (φ₁.symm.trans φ₂).symm.toIsometry y ∈ bcSub Q₁ C₁) :
+    Nonempty (C₁ ≃ₐ[F] C₂) := by
+  classical
+  -- `w_σ = s_σ t_σ⁻¹` is a cocycle for the action twisted by `t`
+  let w : GalF F → GSpin (Q.baseChange Kb) := fun σ => s σ * (t σ)⁻¹
+  have hw : ∀ σ τ, w (σ * τ) = w σ * (t σ * galGS Q σ (w τ) * (t σ)⁻¹) := by
+    intro σ τ
+    set l := galObstruction Q t σ τ with hl
+    have hcen : ∀ g, g * l = l * g := by
+      obtain ⟨c, hc⟩ := hscal σ τ
+      rw [hl, ← hc]; exact Subgroup.mem_center_iff.1 (scalarGSpin_mem_center _ c)
+    have e1 : t σ * galGS Q σ (t τ) = l * t (σ * τ) := by
+      simp only [hl, galObstruction]; group
+    have e2 : s σ * galGS Q σ (s τ) = l * s (σ * τ) := by
+      rw [hl, hobs]; simp only [galObstruction]; group
+    calc w (σ * τ) = s (σ * τ) * (t (σ * τ))⁻¹ := rfl
+      _ = l * s (σ * τ) * (t (σ * τ))⁻¹ * l⁻¹ := by
+          have := hcen (s (σ * τ) * (t (σ * τ))⁻¹)
+          rw [show l * s (σ * τ) * (t (σ * τ))⁻¹ * l⁻¹ =
+            (l * (s (σ * τ) * (t (σ * τ))⁻¹)) * l⁻¹ by group, ← this]
+          group
+      _ = (s σ * galGS Q σ (s τ)) * (t σ * galGS Q σ (t τ))⁻¹ := by rw [e1, e2]; group
+      _ = _ := by simp only [w, galGS_mul, galGS_inv]; group
+  sorry
+
 /-- **Twists with equal obstructions are isometric.** Let `φᵢ : U_{F̄} ≅ Uᵢ_{F̄}` (`i = 1, 2`) and
 let `t`, `s` be continuous lifts to `GSpin(U)(F̄)` of their cocycles `σ ↦ φᵢ⁻¹ ∘ σφᵢ` with equal
 obstructions `t_σ σ(t_τ) t_{στ}⁻¹ = s_σ σ(s_τ) s_{στ}⁻¹`. Then `U₁ ≅ U₂` over `F`.
