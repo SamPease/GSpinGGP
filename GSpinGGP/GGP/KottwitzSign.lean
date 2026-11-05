@@ -88,7 +88,7 @@ theorem kottwitzSign_twistIdx_mul {d : GGPData F} (hqs : d.IsQuasiSplit) (IF : I
   have rel_of {u : GalCocycle (d.torusBarFbar x)} {Q : QuadraticForm F (Fin d.m → F)}
       (hu : IsTwistBy d.QW Q u.toFun) (h : Nonempty (d.QW.IsometryEquiv Q)) :
       GalCocycle.DRel u one :=
-    GalCocycle.DRel.of_isometryEquiv hu h1 (h.map fun e => e.symm)
+    GalCocycle.DRel.of_isometryEquiv d.nondeg hu h1 (h.map fun e => e.symm)
   have sgn (δ : IF.Idx) : kottwitzSign d (IF.twist δ) =
       if Nonempty (d.QW.IsometryEquiv (IF.twist δ).Q') then 1 else -1 := by
     split_ifs with h
@@ -131,7 +131,7 @@ theorem kottwitzSign_twistIdx_mul {d : GGPData F} (hqs : d.IsQuasiSplit) (IF : I
       · exact absurd h C'
       · exact h
     have hac : GalCocycle.DRel (mul a (GalCocycle.invOf hx a)) (mul c (GalCocycle.invOf hx a)) :=
-      ((Da.symm.trans (GalCocycle.DRel.of_isometryEquiv ha' hc' hαγ)).trans Dc).mul_right hx _
+      ((Da.symm.trans (GalCocycle.DRel.of_isometryEquiv (IF.twist γ).nondeg' ha' hc' hαγ)).trans Dc).mul_right hx _
     have hb1 : GalCocycle.DRel b one := by
       refine ((GalCocycle.DRel.of_toFun_eq (funext fun σ => ?_)).trans hac.symm).trans
         (GalCocycle.DRel.of_toFun_eq (funext fun σ => ?_))

@@ -31,6 +31,8 @@ open scoped TensorProduct
 
 namespace GSpinGGP
 
+open TwistDescent
+
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
 local notation "Kb" => AlgebraicClosure F
@@ -185,6 +187,61 @@ theorem nonempty_isometryEquiv_of_gspinCocycle [FiniteDimensional F V₁] {Q₁ 
   sorry
 
 end Generic
+
+section Reflection
+
+
+variable {V : Type*} [AddCommGroup V] [Module F V]
+
+theorem polar_baseChange_galV (Q : QuadraticForm F V) (σ : GalF F) (a b : Kb ⊗[F] V) :
+    polar (Q.baseChange Kb) (galV σ a) (galV σ b) = σ (polar (Q.baseChange Kb) a b) := by
+  simp only [polar, ← map_add, baseChange_galV, map_sub]
+
+/-- A nondegenerate form on a nonzero space has an anisotropic vector. -/
+theorem exists_apply_ne_zero_of_isNondeg {m : ℕ} {Q : QuadraticForm F (Fin m → F)} (hQ : IsNondeg Q)
+    (hm : m ≠ 0) : ∃ u, Q u ≠ 0 := by
+  by_contra h
+  push Not at h
+  have h0 := hQ.1 (Pi.single ⟨0, Nat.pos_of_ne_zero hm⟩ 1) fun b => by
+    have h2 := polar_eq_two_mul_bform Q (Pi.single ⟨0, Nat.pos_of_ne_zero hm⟩ 1) b
+    rw [QuadraticMap.polar, h, h, h, sub_zero, sub_zero] at h2
+    exact (mul_eq_zero.1 h2.symm).resolve_left two_ne_zero
+  exact one_ne_zero (congrFun h0 ⟨0, Nat.pos_of_ne_zero hm⟩ ▸ (Pi.single_eq_same _ _).symm)
+
+/-- **A rational reflection, over `F̄`**: an isometry of `Q_{F̄}` of determinant `−1` whose matrix
+is Galois-fixed. -/
+theorem exists_galFixed_det_neg_one {m : ℕ} {Q : QuadraticForm F (Fin m → F)} (hQ : IsNondeg Q)
+    (hm : m ≠ 0) :
+    ∃ r : (Q.baseChange Kb).IsometryEquiv (Q.baseChange Kb),
+      (∀ σ, galGL m σ (glOf r) = glOf r) ∧ (glOf r : Matrix (Fin m) (Fin m) Kb).det = -1 := by
+  obtain ⟨u, hu⟩ := exists_apply_ne_zero_of_isNondeg hQ hm
+  set v : Kb ⊗[F] (Fin m → F) := (1 : Kb) ⊗ₜ u
+  have hv : Q.baseChange Kb v = algebraMap F Kb (Q u) := by
+    simp [v, QuadraticForm.baseChange_tmul, Algebra.algebraMap_eq_smul_one]
+  have hv0 : Q.baseChange Kb v ≠ 0 := by
+    rw [hv]; exact (map_ne_zero _).2 hu
+  have := invertibleOfNonzero hv0
+  let R := TauCeti.QuadraticMap.reflection (Q.baseChange Kb) v
+  let r : (Q.baseChange Kb).IsometryEquiv (Q.baseChange Kb) :=
+    ⟨R, fun w => TauCeti.QuadraticMap.reflection_mem_orthogonalGroup _ v w⟩
+  have hR : ∀ w, R w = w - (⅟(Q.baseChange Kb v) * polar (Q.baseChange Kb) v w) • v :=
+    TauCeti.QuadraticMap.reflection_apply _ v
+  have hgalv : ∀ σ : GalF F, galV σ v = v := fun σ => by simp [v, galV_tmul]
+  refine ⟨r, fun σ => ?_, ?_⟩
+  · rw [← glOf_galIso]
+    refine glOf_congr fun w => ?_
+    show galV σ (R (galV σ⁻¹ w)) = R w
+    have hpol : σ (polar (Q.baseChange Kb) v (galV σ⁻¹ w)) = polar (Q.baseChange Kb) v w := by
+      rw [← polar_baseChange_galV, hgalv, galV_galV_inv]
+    have hinv : σ (⅟(Q.baseChange Kb v)) = ⅟(Q.baseChange Kb v) := by
+      rw [invOf_eq_inv, map_inv₀, hv, AlgEquiv.commutes]
+    rw [hR, hR, map_sub, galV_smul, galV_galV_inv, hgalv, map_mul, hpol, hinv]
+  · rw [coe_glOf, LinearMap.det_toMatrix]
+    show LinearMap.det (R : (Kb ⊗[F] (Fin m → F)) →ₗ[Kb] _) = -1
+    rw [← LinearEquiv.coe_det, TauCeti.QuadraticMap.det_reflection]
+    rfl
+
+end Reflection
 
 namespace GalCocycle
 
@@ -347,10 +404,80 @@ theorem DRel.of_rel {a b : GalCocycle (d.torusBarFbar x)} (h : Rel a b) : DRel a
     (ht.2 σ).1) (galGS_mem_torusFbar x σ hg)
   exact ⟨t, _, ht, this.1, this.2.symm⟩
 
-theorem DRel.of_isometryEquiv {Q₁ Q₂ : QuadraticForm F (Fin d.m → F)}
+/-- An element of `GSpin(W)(F̄)` whose image lies in `S_x(F̄)` lies in `T_x(F̄)`. -/
+theorem mem_torusFbar_of_specMatFbar_mem {g : GSpin (d.QW.baseChange Kb)}
+    (hg : specMatFbar d.QW g ∈ d.torusBarFbar x) : g ∈ d.torusFbar x := by
+  obtain ⟨s, hs, hsg⟩ := hg
+  obtain ⟨c, hc⟩ := mem_range_scalarGSpin_of_specMatFbar (d := d)
+    (g := s⁻¹ * g) (by rw [map_mul, map_inv, hsg, inv_mul_cancel])
+  have : g = s * scalarGSpin _ c := by rw [hc, mul_inv_cancel_left]
+  rw [this]
+  exact Subgroup.mul_mem _ hs (scalarGSpin_mem_torusFbar c)
+
+/-- The determinant of an `F̄`-isometry of `W` is `±1`. -/
+theorem det_glOf_eq_one_or {e : (d.QW.baseChange Kb).IsometryEquiv (d.QW.baseChange Kb)} :
+    ((glOf e : Matrix (Fin d.m) (Fin d.m) Kb).det = 1) ∨
+      ((glOf e : Matrix (Fin d.m) (Fin d.m) Kb).det = -1) := by
+  have hQL := isNondeg_baseChange d.QW d.nondeg
+  have hB : (bform (d.QW.baseChange Kb)).SeparatingLeft := fun w hw => hQL.1 w hw
+  have hi : TauCeti.BilinForm.IsIsometry (bform (d.QW.baseChange Kb))
+      (e.toLinearEquiv : (Kb ⊗[F] (Fin d.m → F)) →ₗ[Kb] _) :=
+    fun u v => bform_isometry (e.toIsometry) u v
+  have hsq := hi.det_sq_eq_one (Module.Free.chooseBasis Kb _)
+    (mem_nonZeroDivisors_of_ne_zero ((LinearMap.separatingLeft_iff_det_ne_zero _).mp hB))
+  rw [coe_glOf, LinearMap.det_toMatrix]
+  exact mul_self_eq_one_iff.1 ((_root_.sq _).symm.trans hsq)
+
+/-- **(A)**: cocycles of isometric twists are `DRel`-related. With `ψ_a, ψ_b` the isometries of the
+twists (one of them corrected by a rational reflection so that `ψ_a⁻¹ ψ_b` is proper), a lift `h` of
+`ψ_a⁻¹ ψ_b` to `GSpin(W)(F̄)` conjugates any lift of `a` to a lift of `b` with the same
+obstruction. -/
+theorem DRel.of_isometryEquiv {Q₁ Q₂ : QuadraticForm F (Fin d.m → F)} (hQ₂ : IsNondeg Q₂)
     {a b : GalCocycle (d.torusBarFbar x)} (ha : IsTwistBy d.QW Q₁ a.toFun)
-    (hb : IsTwistBy d.QW Q₂ b.toFun) (h : Nonempty (Q₁.IsometryEquiv Q₂)) : DRel a b :=
-  sorry
+    (hb : IsTwistBy d.QW Q₂ b.toFun) (h : Nonempty (Q₁.IsometryEquiv Q₂)) : DRel a b := by
+  obtain ⟨e⟩ := h
+  obtain ⟨φ₁, hφ₁⟩ := (isTwistBy_iff _ _ _).1 (isTwistBy_of_isometryEquiv e ha)
+  obtain ⟨φ₂, hφ₂⟩ := (isTwistBy_iff _ _ _).1 hb
+  -- arrange `det (ψ_a⁻¹ ψ_b) = 1`
+  obtain ⟨ψ, hψb, hdet⟩ : ∃ ψ : (d.QW.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb),
+      (∀ σ, b.toFun σ = (glOf ψ)⁻¹ * galGL d.m σ (glOf ψ)) ∧
+        (glOf (ψ.trans φ₁.symm) : Matrix (Fin d.m) (Fin d.m) Kb).det = 1 := by
+    rcases det_glOf_eq_one_or (e := φ₂.trans φ₁.symm) with h1 | h1
+    · exact ⟨φ₂, hφ₂, h1⟩
+    have hm : d.m ≠ 0 := by
+      rintro hm0
+      rw [Matrix.det_eq_one_of_card_eq_zero (by simp [hm0])] at h1
+      exact absurd h1 (by norm_num)
+    obtain ⟨r, hr, hrdet⟩ := exists_galFixed_det_neg_one hQ₂ hm
+    refine ⟨φ₂.trans r, fun σ => ?_, ?_⟩
+    · rw [hφ₂, glOf_trans, mul_inv_rev, map_mul, hr, mul_assoc, inv_mul_cancel_left]
+    · have e1 : glOf ((φ₂.trans r).trans φ₁.symm) = (glOf φ₁)⁻¹ * (glOf r * glOf φ₂) := by
+        rw [glOf_trans, glOf_trans, glOf_symm]
+      have e2 : glOf (φ₂.trans φ₁.symm) = (glOf φ₁)⁻¹ * glOf φ₂ := by rw [glOf_trans, glOf_symm]
+      rw [e2, Units.val_mul, Matrix.det_mul] at h1
+      rw [e1, Units.val_mul, Units.val_mul, Matrix.det_mul, Matrix.det_mul, hrdet]
+      linear_combination -h1
+  -- lift `c = ψ_a⁻¹ ψ` to `GSpin(W)(F̄)`
+  set c := ψ.trans φ₁.symm
+  have hcdet : LinearMap.det (c.toLinearEquiv : (Kb ⊗[F] (Fin d.m → F)) →ₗ[Kb] _) = 1 := by
+    rw [← LinearMap.det_toMatrix (bcBasis F d.m), ← coe_glOf, hdet]
+  obtain ⟨k, hk⟩ := gspin_specP_surjective_SO _ (isNondeg_baseChange _ d.nondeg) c.toLinearEquiv
+    c.map_app hcdet
+  have hkM : specMatFbar d.QW k = (glOf φ₁)⁻¹ * glOf ψ := by
+    rw [← glOf_specPIso, glOf_congr (e' := c) (fun w => by
+      show specP _ k w = c w
+      rw [hk]; rfl), glOf_trans, glOf_symm]
+  obtain ⟨t, ht⟩ := exists_isLift a
+  have hbk : ∀ σ, b.toFun σ =
+      (specMatFbar d.QW k)⁻¹ * a.toFun σ * galGL d.m σ (specMatFbar d.QW k) := fun σ => by
+    rw [hψb, hkM, hφ₁, map_mul, map_inv]
+    group
+  have hmem : ∀ σ, galConj d.QW k t σ ∈ d.torusFbar x := fun σ =>
+    mem_torusFbar_of_specMatFbar_mem (by
+      rw [galConj, map_mul, map_mul, map_inv, specMatFbar_galGS, (ht.2 σ).2, ← hbk]
+      exact b.mem' σ)
+  have hl := ht.conj hbk hmem
+  exact ⟨t, _, ht, hl.1, hl.2.symm⟩
 
 theorem DRel.isometryEquiv {Q₁ Q₂ : QuadraticForm F (Fin d.m → F)}
     {a b : GalCocycle (d.torusBarFbar x)} (ha : IsTwistBy d.QW Q₁ a.toFun)
