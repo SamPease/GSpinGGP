@@ -34,62 +34,62 @@ namespace TwistPlane
 
 section Block
 
-variable {R : Type*} [CommRing R] {κ : Type*} [Fintype κ] [DecidableEq κ] {m : ℕ}
-  (e : Fin 2 ⊕ κ ≃ Fin m)
+variable {R : Type*} [CommRing R] {κ : Type*} [Fintype κ] [DecidableEq κ] {m n : ℕ}
+  (e : Fin n ⊕ κ ≃ Fin m)
 
-/-- The block-diagonal matrix `A ⊕ C` in the coordinates `e : Fin 2 ⊕ κ ≃ Fin m`. -/
-def blockDiag (A : Matrix (Fin 2) (Fin 2) R) (C : Matrix κ κ R) : Matrix (Fin m) (Fin m) R :=
+/-- The block-diagonal matrix `A ⊕ C` in the coordinates `e : Fin n ⊕ κ ≃ Fin m`. -/
+def blockDiag (A : Matrix (Fin n) (Fin n) R) (C : Matrix κ κ R) : Matrix (Fin m) (Fin m) R :=
   Matrix.reindexAlgEquiv R R e (fromBlocks A 0 0 C)
 
-theorem blockDiag_mul (A A' : Matrix (Fin 2) (Fin 2) R) (C C' : Matrix κ κ R) :
+theorem blockDiag_mul (A A' : Matrix (Fin n) (Fin n) R) (C C' : Matrix κ κ R) :
     blockDiag e A C * blockDiag e A' C' = blockDiag e (A * A') (C * C') := by
   simp [blockDiag, fromBlocks_multiply]
 
-theorem blockDiag_transpose (A : Matrix (Fin 2) (Fin 2) R) (C : Matrix κ κ R) :
+theorem blockDiag_transpose (A : Matrix (Fin n) (Fin n) R) (C : Matrix κ κ R) :
     (blockDiag e A C)ᵀ = blockDiag e Aᵀ Cᵀ := by
   simp [blockDiag, Matrix.coe_reindexAlgEquiv, fromBlocks_transpose]
 
-theorem blockDiag_one : blockDiag e (1 : Matrix (Fin 2) (Fin 2) R) (1 : Matrix κ κ R) = 1 := by
+theorem blockDiag_one : blockDiag e (1 : Matrix (Fin n) (Fin n) R) (1 : Matrix κ κ R) = 1 := by
   simp [blockDiag, fromBlocks_one]
 
-theorem det_blockDiag (A : Matrix (Fin 2) (Fin 2) R) (C : Matrix κ κ R) :
+theorem det_blockDiag (A : Matrix (Fin n) (Fin n) R) (C : Matrix κ κ R) :
     (blockDiag e A C).det = A.det * C.det := by
   simp [blockDiag, Matrix.coe_reindexAlgEquiv, det_fromBlocks_zero₂₁]
 
-theorem blockDiag_map {S : Type*} [CommRing S] (f : R →+* S) (A : Matrix (Fin 2) (Fin 2) R)
+theorem blockDiag_map {S : Type*} [CommRing S] (f : R →+* S) (A : Matrix (Fin n) (Fin n) R)
     (C : Matrix κ κ R) : (blockDiag e A C).map f = blockDiag e (A.map f) (C.map f) := by
   ext i j
   simp only [blockDiag, Matrix.coe_reindexAlgEquiv, map_apply, reindex_apply, submatrix_apply]
   rcases e.symm i with a | a <;> rcases e.symm j with b | b <;> simp
 
 /-- The block-diagonal matrix acts blockwise. -/
-theorem blockDiag_mulVec_inl (A : Matrix (Fin 2) (Fin 2) R) (C : Matrix κ κ R)
-    (y : Fin m → R) (i : Fin 2) :
+theorem blockDiag_mulVec_inl (A : Matrix (Fin n) (Fin n) R) (C : Matrix κ κ R)
+    (y : Fin m → R) (i : Fin n) :
     (blockDiag e A C *ᵥ y) (e (Sum.inl i)) = (A *ᵥ fun j => y (e (Sum.inl j))) i := by
   rw [blockDiag, Matrix.coe_reindexAlgEquiv, reindex_apply, submatrix_mulVec_equiv]
   simp [fromBlocks_mulVec, Function.comp_def]
 
-theorem blockDiag_mulVec_inr (A : Matrix (Fin 2) (Fin 2) R) (C : Matrix κ κ R)
+theorem blockDiag_mulVec_inr (A : Matrix (Fin n) (Fin n) R) (C : Matrix κ κ R)
     (y : Fin m → R) (j : κ) :
     (blockDiag e A C *ᵥ y) (e (Sum.inr j)) = (C *ᵥ fun k => y (e (Sum.inr k))) j := by
   rw [blockDiag, Matrix.coe_reindexAlgEquiv, reindex_apply, submatrix_mulVec_equiv]
   simp [fromBlocks_mulVec, Function.comp_def]
 
 /-- `blockDiag e N 1` as a unit. -/
-def blockDiagGL (N : GL (Fin 2) R) : GL (Fin m) R where
+def blockDiagGL (N : GL (Fin n) R) : GL (Fin m) R where
   val := blockDiag e N 1
-  inv := blockDiag e (N⁻¹ : GL (Fin 2) R) 1
+  inv := blockDiag e (N⁻¹ : GL (Fin n) R) 1
   val_inv := by rw [blockDiag_mul, Units.mul_inv, one_mul, blockDiag_one]
   inv_val := by rw [blockDiag_mul, Units.inv_mul, one_mul, blockDiag_one]
 
-theorem coe_blockDiagGL (N : GL (Fin 2) R) :
+theorem coe_blockDiagGL (N : GL (Fin n) R) :
     ((blockDiagGL e N : GL (Fin m) R) : Matrix (Fin m) (Fin m) R) = blockDiag e N 1 := rfl
 
-theorem blockDiagGL_mul (N N' : GL (Fin 2) R) :
+theorem blockDiagGL_mul (N N' : GL (Fin n) R) :
     blockDiagGL e (N * N') = blockDiagGL e N * blockDiagGL e N' := by
   ext1; simp [coe_blockDiagGL, blockDiag_mul]
 
-theorem blockDiagGL_inv (N : GL (Fin 2) R) : blockDiagGL e N⁻¹ = (blockDiagGL e N)⁻¹ := by
+theorem blockDiagGL_inv (N : GL (Fin n) R) : blockDiagGL e N⁻¹ = (blockDiagGL e N)⁻¹ := by
   rw [eq_inv_iff_mul_eq_one, ← blockDiagGL_mul, inv_mul_cancel]
   ext1; simp [coe_blockDiagGL, blockDiag_one]
 
@@ -102,32 +102,33 @@ variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
 
 local notation "Kb" => AlgebraicClosure F
 
-/-- **Twisting an anisotropic plane.**  Suppose that in rational coordinates `B`, `Q` is the
-orthogonal sum of an anisotropic binary form `Q₂` and a form with Gram matrix `G₃`.  Then there is
+/-- **Twisting a block.**  Suppose that in rational coordinates `B`, `Q` is the orthogonal sum of a
+form `Q₂` on `F^n` and a form with Gram matrix `G₃`, and that `Q₂'` has the discriminant of `Q₂` but
+is not isometric to it.  Then there is
 a form `Q'` of the same discriminant, not isometric to `Q`, and an `F̄`-isometry `Q_{F̄} ≃ Q'_{F̄}`
 with matrix `X` whose cocycle `X⁻¹ σ(X)` is `B⁻¹ (R_σ ⊕ 1) B` with `R_σ ∈ SO(Q₂)(F̄)`, and which
 only depends on the restriction of `σ` to a finite extension. -/
-theorem exists_planeTwist {m : ℕ} {Q : QuadraticForm F (Fin m → F)} (hQ : IsNondeg Q)
-    {κ : Type*} [Fintype κ] [DecidableEq κ] (e : Fin 2 ⊕ κ ≃ Fin m) (B : GL (Fin m) F)
-    {Q₂ : QuadraticForm F (Fin 2 → F)} (hQ₂ : IsNondeg Q₂) (haniso : ∀ v, Q₂ v = 0 → v = 0)
+theorem exists_blockTwist {m : ℕ} {Q : QuadraticForm F (Fin m → F)} (hQ : IsNondeg Q)
+    {κ : Type*} [Fintype κ] [DecidableEq κ] {n : ℕ} (e : Fin n ⊕ κ ≃ Fin m) (B : GL (Fin m) F)
+    {Q₂ : QuadraticForm F (Fin n → F)} (hQ₂ : IsNondeg Q₂) {Q₂' : QuadraticForm F (Fin n → F)}
+    (hnd' : IsNondeg Q₂') (hdr : QuadClassify.DiscRel Q₂ Q₂') (hniso : ¬ Nonempty (Q₂.IsometryEquiv Q₂'))
     (G₃ : Matrix κ κ F) (hG₃ : G₃.IsSymm)
     (hB : Q.toMatrix' = (B : Matrix (Fin m) (Fin m) F)ᵀ * blockDiag e Q₂.toMatrix' G₃ * B) :
     ∃ (Q' : QuadraticForm F (Fin m → F)) (X : GL (Fin m) Kb),
       IsNondeg Q' ∧ SameDisc Q Q' ∧ ¬ Nonempty (Q.IsometryEquiv Q') ∧
       (X : Matrix (Fin m) (Fin m) Kb)ᵀ * Q'.toMatrix'.map (algebraMap F Kb) * X =
         Q.toMatrix'.map (algebraMap F Kb) ∧
-      (∀ σ : GalF F, ∃ R : GL (Fin 2) Kb,
-        (R : Matrix (Fin 2) (Fin 2) Kb)ᵀ * Q₂.toMatrix'.map (algebraMap F Kb) * R =
-          Q₂.toMatrix'.map (algebraMap F Kb) ∧ (R : Matrix (Fin 2) (Fin 2) Kb).det = 1 ∧
+      (∀ σ : GalF F, ∃ R : GL (Fin n) Kb,
+        (R : Matrix (Fin n) (Fin n) Kb)ᵀ * Q₂.toMatrix'.map (algebraMap F Kb) * R =
+          Q₂.toMatrix'.map (algebraMap F Kb) ∧ (R : Matrix (Fin n) (Fin n) Kb).det = 1 ∧
         X⁻¹ * galGL m σ X = (Units.map (algebraMap F Kb).mapMatrix.toMonoidHom B)⁻¹ *
           blockDiagGL e R * Units.map (algebraMap F Kb).mapMatrix.toMonoidHom B) ∧
       ∃ E : IntermediateField F Kb, FiniteDimensional F E ∧
         ∀ σ τ : GalF F, (∀ x ∈ E, σ x = τ x) → galGL m σ X = galGL m τ X := by
   classical
-  obtain ⟨Q₂', hnd', hdr, hniso⟩ := WittParity.exists_other_class_plane hQ₂ haniso
   have hsd' := (QuadClassify.sameDisc_iff_discRel _ _).2 hdr
   obtain ⟨τ, rfl⟩ := exists_innerTwist_of_sameDisc hQ₂ hnd' hsd'
-  set N : GL (Fin 2) Kb := TwistDescent.glOf τ.φ with hNdef
+  set N : GL (Fin n) Kb := TwistDescent.glOf τ.φ with hNdef
   have hN := TwistDescent.gram_glOf τ.φ
   set Bb : GL (Fin m) Kb := Units.map (algebraMap F Kb).mapMatrix.toMonoidHom B with hBbdef
   set D := blockDiag e Q₂.toMatrix' G₃ with hDdef
@@ -149,7 +150,7 @@ theorem exists_planeTwist {m : ℕ} {Q : QuadraticForm F (Fin m → F)} (hQ : Is
   have hQd : Q.discr' ≠ 0 := (PAdicQuadAux.isNondeg_iff_discr'_ne_zero Q).1 hQ
   have hgalBb : ∀ σ : GalF F, galGL m σ Bb = Bb := fun σ => by
     ext i j; simp [coe_galGL, hBbdef]
-  have hgalbd : ∀ σ : GalF F, galGL m σ (blockDiagGL e N) = blockDiagGL e (galGL 2 σ N) :=
+  have hgalbd : ∀ σ : GalF F, galGL m σ (blockDiagGL e N) = blockDiagGL e (galGL n σ N) :=
     fun σ => by
       ext1
       rw [coe_galGL, coe_blockDiagGL, coe_blockDiagGL, coe_galGL]
@@ -164,7 +165,7 @@ theorem exists_planeTwist {m : ℕ} {Q : QuadraticForm F (Fin m → F)} (hQ : Is
     have hBt : IsUnit (B : Matrix (Fin m) (Fin m) F)ᵀ.det := by
       rw [det_transpose]; exact (Matrix.isUnits_det_units B)
     -- `Pᵀ (A ⊕ C) P ≅ A ⊕ C ≅ A ⊥ C`
-    have hcong : ∀ A : Matrix (Fin 2) (Fin 2) F,
+    have hcong : ∀ A : Matrix (Fin n) (Fin n) F,
         ((B : Matrix (Fin m) (Fin m) F)ᵀ * blockDiag e A G₃ * B).toQuadraticForm'.IsometryEquiv
           (A.toQuadraticForm'.prod G₃.toQuadraticForm') := fun A => by
       have h := Matrix.isometryEquivCongr hBt (blockDiag e A G₃)
@@ -204,43 +205,67 @@ theorem exists_planeTwist {m : ℕ} {Q : QuadraticForm F (Fin m → F)} (hQ : Is
     simp only [Matrix.mul_assoc]
   · -- the cocycle
     intro σ
-    refine ⟨N⁻¹ * galGL 2 σ N, ?_, TwistDescent.det_glOf_inv_mul_galGL τ σ, ?_⟩
-    · have hσ : ((galGL 2 σ N : GL (Fin 2) Kb) : Matrix (Fin 2) (Fin 2) Kb)ᵀ *
-          τ.Q'.toMatrix'.map (algebraMap F Kb) * (galGL 2 σ N : GL (Fin 2) Kb) =
+    refine ⟨N⁻¹ * galGL n σ N, ?_, TwistDescent.det_glOf_inv_mul_galGL τ σ, ?_⟩
+    · have hσ : ((galGL n σ N : GL (Fin n) Kb) : Matrix (Fin n) (Fin n) Kb)ᵀ *
+          τ.Q'.toMatrix'.map (algebraMap F Kb) * (galGL n σ N : GL (Fin n) Kb) =
           Q₂.toMatrix'.map (algebraMap F Kb) := by
         have := congrArg (Matrix.map · σ) hN
         simp only [TwistDescent.map_galF_mul, Matrix.transpose_map,
           TwistDescent.map_algebraMap_fixed] at this
         rw [coe_galGL]; exact this
-      have hN' : ((N⁻¹ : GL (Fin 2) Kb) : Matrix (Fin 2) (Fin 2) Kb)ᵀ *
-          Q₂.toMatrix'.map (algebraMap F Kb) * (N⁻¹ : GL (Fin 2) Kb) =
+      have hN' : ((N⁻¹ : GL (Fin n) Kb) : Matrix (Fin n) (Fin n) Kb)ᵀ *
+          Q₂.toMatrix'.map (algebraMap F Kb) * (N⁻¹ : GL (Fin n) Kb) =
           τ.Q'.toMatrix'.map (algebraMap F Kb) := by
-        have h1 : ((N⁻¹ : GL (Fin 2) Kb) : Matrix (Fin 2) (Fin 2) Kb)ᵀ *
-            (N : Matrix (Fin 2) (Fin 2) Kb)ᵀ = 1 := by
+        have h1 : ((N⁻¹ : GL (Fin n) Kb) : Matrix (Fin n) (Fin n) Kb)ᵀ *
+            (N : Matrix (Fin n) (Fin n) Kb)ᵀ = 1 := by
           rw [← Matrix.transpose_mul, Units.mul_inv, Matrix.transpose_one]
-        have h2 : (N : Matrix (Fin 2) (Fin 2) Kb) * ((N⁻¹ : GL (Fin 2) Kb) : Matrix _ _ Kb) = 1 :=
+        have h2 : (N : Matrix (Fin n) (Fin n) Kb) * ((N⁻¹ : GL (Fin n) Kb) : Matrix _ _ Kb) = 1 :=
           Units.mul_inv N
         rw [← hN]
-        calc _ = (((N⁻¹ : GL (Fin 2) Kb) : Matrix (Fin 2) (Fin 2) Kb)ᵀ *
-              (N : Matrix (Fin 2) (Fin 2) Kb)ᵀ) * τ.Q'.toMatrix'.map (algebraMap F Kb) *
-              ((N : Matrix (Fin 2) (Fin 2) Kb) * ((N⁻¹ : GL (Fin 2) Kb) : Matrix _ _ Kb)) := by
+        calc _ = (((N⁻¹ : GL (Fin n) Kb) : Matrix (Fin n) (Fin n) Kb)ᵀ *
+              (N : Matrix (Fin n) (Fin n) Kb)ᵀ) * τ.Q'.toMatrix'.map (algebraMap F Kb) *
+              ((N : Matrix (Fin n) (Fin n) Kb) * ((N⁻¹ : GL (Fin n) Kb) : Matrix _ _ Kb)) := by
                 simp only [Matrix.mul_assoc]; rfl
           _ = _ := by rw [h1, h2, Matrix.one_mul, Matrix.mul_one]
       rw [Units.val_mul, Matrix.transpose_mul]
-      calc _ = ((galGL 2 σ N : GL (Fin 2) Kb) : Matrix (Fin 2) (Fin 2) Kb)ᵀ *
-            (((N⁻¹ : GL (Fin 2) Kb) : Matrix (Fin 2) (Fin 2) Kb)ᵀ *
-              Q₂.toMatrix'.map (algebraMap F Kb) * (N⁻¹ : GL (Fin 2) Kb)) *
-            (galGL 2 σ N : GL (Fin 2) Kb) := by simp only [Matrix.mul_assoc]
+      calc _ = ((galGL n σ N : GL (Fin n) Kb) : Matrix (Fin n) (Fin n) Kb)ᵀ *
+            (((N⁻¹ : GL (Fin n) Kb) : Matrix (Fin n) (Fin n) Kb)ᵀ *
+              Q₂.toMatrix'.map (algebraMap F Kb) * (N⁻¹ : GL (Fin n) Kb)) *
+            (galGL n σ N : GL (Fin n) Kb) := by simp only [Matrix.mul_assoc]
         _ = _ := by rw [hN', hσ]
     · rw [map_mul, map_mul, map_inv, hgalBb, hgalbd, blockDiagGL_mul, blockDiagGL_inv]
       group
-  · obtain ⟨E, hE, hEf⟩ := exists_finite_fixing_matrix (N : Matrix (Fin 2) (Fin 2) Kb)
+  · obtain ⟨E, hE, hEf⟩ := exists_finite_fixing_matrix (N : Matrix (Fin n) (Fin n) Kb)
     refine ⟨E, hE, fun σ τ' h => ?_⟩
-    have hNστ : galGL 2 σ N = galGL 2 τ' N :=
+    have hNστ : galGL n σ N = galGL n τ' N :=
       Units.ext (by rw [coe_galGL, coe_galGL]; exact hEf σ τ' h)
     rw [map_mul, map_mul, map_mul, map_mul, map_inv, map_inv, hgalBb, hgalBb, hgalbd, hgalbd,
       hNστ]
 
+
+/-- **Twisting an anisotropic plane.**  Suppose that in rational coordinates `B`, `Q` is the
+orthogonal sum of an anisotropic binary form `Q₂` and a form with Gram matrix `G₃`.  Then there is
+a form `Q'` of the same discriminant, not isometric to `Q`, and an `F̄`-isometry `Q_{F̄} ≃ Q'_{F̄}`
+with matrix `X` whose cocycle `X⁻¹ σ(X)` is `B⁻¹ (R_σ ⊕ 1) B` with `R_σ ∈ SO(Q₂)(F̄)`, and which
+only depends on the restriction of `σ` to a finite extension. -/
+theorem exists_planeTwist {m : ℕ} {Q : QuadraticForm F (Fin m → F)} (hQ : IsNondeg Q)
+    {κ : Type*} [Fintype κ] [DecidableEq κ] (e : Fin 2 ⊕ κ ≃ Fin m) (B : GL (Fin m) F)
+    {Q₂ : QuadraticForm F (Fin 2 → F)} (hQ₂ : IsNondeg Q₂) (haniso : ∀ v, Q₂ v = 0 → v = 0)
+    (G₃ : Matrix κ κ F) (hG₃ : G₃.IsSymm)
+    (hB : Q.toMatrix' = (B : Matrix (Fin m) (Fin m) F)ᵀ * blockDiag e Q₂.toMatrix' G₃ * B) :
+    ∃ (Q' : QuadraticForm F (Fin m → F)) (X : GL (Fin m) Kb),
+      IsNondeg Q' ∧ SameDisc Q Q' ∧ ¬ Nonempty (Q.IsometryEquiv Q') ∧
+      (X : Matrix (Fin m) (Fin m) Kb)ᵀ * Q'.toMatrix'.map (algebraMap F Kb) * X =
+        Q.toMatrix'.map (algebraMap F Kb) ∧
+      (∀ σ : GalF F, ∃ R : GL (Fin 2) Kb,
+        (R : Matrix (Fin 2) (Fin 2) Kb)ᵀ * Q₂.toMatrix'.map (algebraMap F Kb) * R =
+          Q₂.toMatrix'.map (algebraMap F Kb) ∧ (R : Matrix (Fin 2) (Fin 2) Kb).det = 1 ∧
+        X⁻¹ * galGL m σ X = (Units.map (algebraMap F Kb).mapMatrix.toMonoidHom B)⁻¹ *
+          blockDiagGL e R * Units.map (algebraMap F Kb).mapMatrix.toMonoidHom B) ∧
+      ∃ E : IntermediateField F Kb, FiniteDimensional F E ∧
+        ∀ σ τ : GalF F, (∀ x ∈ E, σ x = τ x) → galGL m σ X = galGL m τ X := by
+  obtain ⟨Q₂', hnd', hdr, hniso⟩ := WittParity.exists_other_class_plane hQ₂ haniso
+  exact exists_blockTwist hQ e B hQ₂ hnd' hdr hniso G₃ hG₃ hB
 
 end PAdic
 

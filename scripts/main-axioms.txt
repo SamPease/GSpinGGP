@@ -1,6 +1,7 @@
 GSpinGGP.dixmier_commutant_scalar
 GSpinGGP.emoryTakeda_mult_le_one
 GSpinGGP.exists_isSelfDual
+GSpinGGP.exists_rel_torusBar_of_fixerBar
 GSpinGGP.finite_H1_normalizerBar
 GSpinGGP.finite_H1_torusBar
 GSpinGGP.germ_unique
