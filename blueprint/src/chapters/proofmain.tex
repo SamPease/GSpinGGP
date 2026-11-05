@@ -465,9 +465,9 @@ Twist the block $W''_x$ into the other form of its dimension and discriminant; t
 \cite{Kot86} Lemma 10.2 it is cohomologous to one in $S_x$; Witt cancellation.
 \end{proof}
 
-\begin{lemma}[A twist into the other form: no twisting plane]
-\label{exists_twistIdx_not_isometric_of_not_hasTwistPlane}
-\lean{GSpinGGP.exists_twistIdx_not_isometric_of_not_hasTwistPlane}
+\begin{lemma}[A twist into the other form, for $x\in\Gamma(G,H)$]
+\label{exists_twistIdx_not_isometric_of_isGammaElt}
+\lean{GSpinGGP.exists_twistIdx_not_isometric_of_isGammaElt}
 \leanok
 \uses{GGPData, GSpin, InnerFormSystem, InnerTwist, IsGammaElt, IsQuasiSplit}
 For $x\in\Gamma(G,H)$ not central, some $\beta\in H^1(F,S_x)$ twists $W$ into a form $W_{q_x(\beta)}\not\cong W$.
@@ -487,8 +487,8 @@ For $G$ quasi-split and $x\in\Gamma(G,H)$ not central, some $\beta\in H^1(F,S_x)
 \end{lemma}
 \begin{proof}
 \leanok
-\uses{exists_twistIdx_not_isometric_of_hasTwistPlane, exists_twistIdx_not_isometric_of_not_hasTwistPlane}
-Case split on whether $W''_x$ contains an $x$-stable anisotropic plane of determinant $1$.
+\uses{exists_twistIdx_not_isometric_of_isGammaElt}
+Lemma~\ref{exists_twistIdx_not_isometric_of_isGammaElt}.
 \end{proof}
 
 \begin{lemma}[The sign takes the value $-1$]

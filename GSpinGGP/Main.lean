@@ -1515,8 +1515,8 @@ theorem existsUnique_twistIdx (IF : InnerFormSystem d) (x : ↥(GSpin d.QW))
 line, and if it is a plane it is anisotropic.  Route: `W''_x` is `P(x)`-stable with
 `W''_x ∩ W'_x = 0`; on a line `P(x)` would be `−1`, so `det P(x) = −1`, contradicting `det_specP`;
 on a hyperbolic plane with hyperbolic pair `f, f'`, the isometries `f ↦ t f`, `f' ↦ t⁻¹ f'`,
-`1` on `W'_x` (`t ∈ F^×`) lift to `GSpin(W)(F)` (products of two vectors of `W''_x`, which commute
-with `x` since `SO(W''_x)` acts trivially on the even Clifford algebra of a plane), hence lie in
+`1` on `W'_x` (`t ∈ F^×`) lift to `GSpin(W)(F)` (units of `C⁺(W''_x)`, which commute with `x` since
+`x ∈ F^× · C⁺(W''_x)` (`ker_specP`) and `C⁺` of a plane is commutative), hence lie in
 `T_x(F)`, and their images under `P` are unbounded, contradicting compactness of `T_x(F)/A(F)`
 (`IsGammaElt`). -/
 theorem orthogonal_fixedSub_of_isGammaElt (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) :
@@ -1525,18 +1525,14 @@ theorem orthogonal_fixedSub_of_isGammaElt (x : ↥(GSpin d.QW)) (hx : d.IsGammaE
         (d.QW.comp ((bform d.QW).orthogonal (fixedSub x)).subtype).Anisotropic) :=
   sorry
 
-/-- **Statement (S) when `W''_x` has no `x`-stable twisting plane** (the case left open by
-`TwistPlane.exists_twistIdx_not_isometric_of_hasTwistPlane`).  For `x ∈ Γ(G,H)` not central, some
-`β ∈ H¹(F, S_x)` has `W_{q_x(β)} ≇ W` (`hqs`, `hP` are not needed).  Proof: `W''_x ≠ 0` (else
-`P(x) = 1` and `x` is a scalar, `ker_specP`), so by `orthogonal_fixedSub_of_isGammaElt` it has
-dimension `≥ 3` or is an anisotropic plane, and `exists_twistIdx_not_isometric_of_moved` applies
-(Kottwitz 1986, Lemma 10.2, for the anisotropic maximal torus `S_x` of `SO(W''_x)`). -/
-theorem exists_twistIdx_not_isometric_of_not_hasTwistPlane (hqs : d.IsQuasiSplit)
-    (IF : InnerFormSystem d) (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) (hc : ¬ IsCentralW d x)
-    (hP : ¬ TwistPlane.HasTwistPlane d x) :
+/-- **Statement (S)** (Thesis Prop 6.5.1(iv), first half): for `x ∈ Γ(G,H)` not central, some
+`β ∈ H¹(F, S_x)` has `W_{q_x(β)} ≇ W`.  Proof: `W''_x ≠ 0` (else `P(x) = 1` and `x` is a scalar,
+`ker_specP`), so by `orthogonal_fixedSub_of_isGammaElt` it has dimension `≥ 3` or is an anisotropic
+plane, and `exists_twistIdx_not_isometric_of_moved` applies (Kottwitz 1986, Lemma 10.2, for the
+anisotropic maximal torus `S_x` of `SO(W''_x)`). -/
+theorem exists_twistIdx_not_isometric_of_isGammaElt (IF : InnerFormSystem d) (x : ↥(GSpin d.QW))
+    (hx : d.IsGammaElt x) (hc : ¬ IsCentralW d x) :
     ∃ β α, TwistIdx IF x β α ∧ ¬ Nonempty (d.QW.IsometryEquiv (IF.twist α).Q') := by
-  have _ := hqs
-  have _ := hP
   obtain ⟨h1, h2⟩ := orthogonal_fixedSub_of_isGammaElt x hx
   refine exists_twistIdx_not_isometric_of_moved IF hx ?_
   have h0 : finrank F ↥((bform d.QW).orthogonal (fixedSub x)) ≠ 0 := by
@@ -1562,16 +1558,13 @@ theorem exists_twistIdx_not_isometric_of_not_hasTwistPlane (hqs : d.IsQuasiSplit
 
 /-- **Some class of `H¹(F, S_x)` twists `W` into a non-isometric form** (statement (S) for
 `U = W''_x`; Thesis Prop 6.5.1(iv), first half).  For `G` quasi-split and `x ∈ Γ(G,H)` not central,
-some `β ∈ H¹(F, S_x)` has `W_{q_x(β)} ≇ W`.  If `W''_x` contains an `x`-stable anisotropic plane on
-which `P(x)` has determinant `1` (`TwistPlane.HasTwistPlane`), the twist of that plane by its
-norm-one torus does it (`TwistPlane.exists_twistIdx_not_isometric_of_hasTwistPlane`, proved);
-otherwise `exists_twistIdx_not_isometric_of_not_hasTwistPlane`. -/
+some `β ∈ H¹(F, S_x)` has `W_{q_x(β)} ≇ W` (`exists_twistIdx_not_isometric_of_isGammaElt`; `hqs` is
+not needed, and is kept for the callers). -/
 theorem exists_twistIdx_not_isometric (hqs : d.IsQuasiSplit) (IF : InnerFormSystem d)
     (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) (hc : ¬ IsCentralW d x) :
     ∃ β α, TwistIdx IF x β α ∧ ¬ Nonempty (d.QW.IsometryEquiv (IF.twist α).Q') := by
-  by_cases hP : TwistPlane.HasTwistPlane d x
-  · exact TwistPlane.exists_twistIdx_not_isometric_of_hasTwistPlane IF x hP
-  · exact exists_twistIdx_not_isometric_of_not_hasTwistPlane hqs IF x hx hc hP
+  have _ := hqs
+  exact exists_twistIdx_not_isometric_of_isGammaElt IF x hx hc
 
 /-- **Surjectivity of the Kottwitz sign on `H¹(F, S_x)`** (Thesis Prop 6.5.1(iv)): for `G`
 quasi-split and `x ∈ Γ(G,H)` not central, some `β ∈ H¹(F, S_x)` has `e(G_{q_x(β)}) = -1`.

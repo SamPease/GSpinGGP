@@ -76,8 +76,8 @@ theorem bcE_toLin {m : ℕ} (M : Matrix (Fin m) (Fin m) Kb) (w : Kb ⊗[F] (Fin 
     InnerTwistAux.bcE m (Matrix.toLin (bcBasis F m) (bcBasis F m) M w) =
       M *ᵥ InnerTwistAux.bcE m w := by
   ext i
-  simp [InnerTwistAux.bcE, Matrix.toLin_apply, Module.Basis.equivFun_apply, Matrix.mulVec, dotProduct,
-    Finsupp.single_apply]
+  simpa [Module.Basis.equivFun_apply] using
+    congrArg (fun f => f i) (Matrix.repr_toLin (bcBasis F m) (bcBasis F m) M w)
 
 open TwistPlane in
 /-- **`B⁻¹ (R ⊕ 1) B ∈ (SO(W)_{W'_x})(F̄)`** for block coordinates `B` (`Q = Bᵀ (Q₂ ⊕ G₃) B`) in which

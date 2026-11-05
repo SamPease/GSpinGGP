@@ -27,16 +27,6 @@ namespace GSpinGGP
 
 variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
 
-/-- A second class of the dimension and discriminant: in dimension `≥ 3`, or for an anisotropic
-plane (`WittParity.exists_other_class`, `exists_other_class_plane`). -/
-theorem exists_other_class_of {n : ℕ} {P : QuadraticForm F (Fin n → F)} (hP : IsNondeg P)
-    (hn : 3 ≤ n ∨ (n = 2 ∧ P.Anisotropic)) :
-    ∃ P' : QuadraticForm F (Fin n → F), IsNondeg P' ∧ QuadClassify.DiscRel P P' ∧
-      ¬ Nonempty (P.IsometryEquiv P') := by
-  rcases hn with h | ⟨rfl, ha⟩
-  · exact WittParity.exists_other_class hP (Or.inl h)
-  · exact WittParity.exists_other_class_plane hP ha
-
 /-- **Statement (S) for `W''_x` of dimension `≥ 3` or an anisotropic plane** (Thesis Prop. 6.5.1(iv),
 first half; own work, from Kottwitz 1986, Lemma 10.2): for `x ∈ Γ(G,H)`, if `W''_x = (W'_x)^⊥` has
 dimension `≥ 3` or is an anisotropic plane, some `β ∈ H¹(F, S_x)` has `W_{q_x(β)} ≇ W`. -/
@@ -68,7 +58,7 @@ theorem exists_twistIdx_not_isometric_of_moved {d : GGPData F} (IF : InnerFormSy
     · refine Or.inr ⟨h, fun v hv => ?_⟩
       have := ha _ hv
       exact (finBasis F U).equivFun.symm.injective (this.trans (map_zero _).symm)
-  obtain ⟨Q₂', hnd', hdr, hniso⟩ := exists_other_class_of hQ₂ hn'
+  obtain ⟨Q₂', hnd', hdr, hniso⟩ := WittParity.exists_other_class_of hQ₂ hn'
   obtain ⟨Q', X, hnd, hsd, hniso', hgram, hcoc, E, hE, hEX⟩ :=
     TwistPlane.exists_blockTwist d.nondeg e B hQ₂ hnd' hdr hniso G₃ hG₃ hB
   let c : GalCocycle (d.fixerBar x) :=
