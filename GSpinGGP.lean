@@ -13,7 +13,7 @@ import GSpinGGP.Foundations.RegularNilpotent
 import GSpinGGP.Foundations.QuadraticForms
 import GSpinGGP.Foundations.GSpinLipschitz
 import GSpinGGP.GGP.CentralizerSign
-import GSpinGGP.GGP.IsometryDet
+import GSpinGGP.Foundations.IsometryDet
 import GSpinGGP.GGP.PairBlock
 import GSpinGGP.GGP.Steinberg
 import GSpinGGP.Foundations.LocalFieldBridge
@@ -28,8 +28,8 @@ import GSpinGGP.GGP.RegularNilpotent
 import GSpinGGP.Foundations.SoSplit
 import GSpinGGP.Foundations.MatrixBaseChange
 import GSpinGGP.Foundations.JordanAlgebra
-import GSpinGGP.GGP.SemisimpleRank
-import GSpinGGP.GGP.JointCentralizer
+import GSpinGGP.Foundations.SemisimpleRank
+import GSpinGGP.Foundations.JointCentralizer
 import GSpinGGP.GGP.JointRank
 import GSpinGGP.GGP.LieRank
 import GSpinGGP.GGP.RegularNilpotentConverse
@@ -60,7 +60,7 @@ import GSpinGGP.GGP.StableCocycleClass
 import GSpinGGP.GGP.StableCocycleSurj
 import GSpinGGP.GGP.TorusCentral
 import GSpinGGP.GGP.TwistIncl
-import GSpinGGP.GGP.EigenFrame
+import GSpinGGP.Foundations.EigenFrame
 import GSpinGGP.GGP.TorusFrame
 import GSpinGGP.GGP.GammaClassFinite
 import GSpinGGP.GGP.TwistPlane
@@ -71,10 +71,10 @@ import GSpinGGP.GGP.WittParity
 import GSpinGGP.GGP.TorusTransfer
 import GSpinGGP.GGP.Cocharacter
 import GSpinGGP.GGP.Contraction
-import GSpinGGP.GGP.IsometryCentralizer
+import GSpinGGP.Foundations.IsometryCentralizer
 import GSpinGGP.GGP.TorusCommute
 import GSpinGGP.GGP.MovedCentralizer
-import GSpinGGP.GGP.IsometrySemisimple
+import GSpinGGP.Foundations.IsometrySemisimple
 import GSpinGGP.GGP.GSpinSemisimple
 import GSpinGGP.GGP.TorusTransport
 import GSpinGGP.GGP.Levi

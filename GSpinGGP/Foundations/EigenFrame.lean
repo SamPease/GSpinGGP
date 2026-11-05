@@ -1,6 +1,6 @@
 import GSpinGGP.Foundations.HypFrame
 import GSpinGGP.Foundations.Determinant
-import GSpinGGP.GGP.IsometryDet
+import GSpinGGP.Foundations.IsometryDet
 import TauCeti.LinearAlgebra.QuadraticForm.SepClosed
 
 /-!
