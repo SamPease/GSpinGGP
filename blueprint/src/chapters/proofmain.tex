@@ -478,19 +478,38 @@ sign is a character of the finite group $H^1(F,S_x)$ taking the value $-1$, so t
 \end{proof}
 
 \section{Rearrangement and the atom}
+\begin{lemma}[The torus-class count]
+\label{torusClass_count}
+\lean{GSpinGGP.torusClass_count}
+\uses{GammaClass, InnerFormSystem, InnerTwist, IsGammaElt, IsQuasiSplit, StablyConjG, n_alpha}
+Let $f$ be a function of the tori $T_x$, $x\in\Gamma(G,H)$, with $f(T_x)=f(T_{x'})$ whenever $x,x'$ are
+strongly stably conjugate to a common $y\in\Gamma(G_\beta,H_\beta)$, and $f=0$ on non-quasi-split tori. Then
+\[ \sum_{[T']\in\Gamma(G_\alpha,H_\alpha)/\sim}|W(T')|^{-1}f(T_{x(T')})=\sum_{[T]\in\Gamma(G,H)/\sim}|W(T)|^{-1}
+\frac{n_\alpha(x_T)}{n_1(x_T)}f(T), \]
+where $x(T')$ is strongly stably conjugate to a generator of $T'$ ($f(T_{x(T')}) := 0$ if there is none).
+\end{lemma}
+\begin{proof}
+Not yet formalized. Regroup by stable classes; $n_\alpha(x)=|q_x^{-1}(\alpha)|$, and the rational classes of
+tori over $\alpha$ are the orbits of $(N_x/S_x)(F)$ on $q_x^{-1}(\alpha)\subseteq H^1(F,S_x)$, with
+stabilizers $W(T')$ (orbit--stabilizer).
+\end{proof}
+
 \begin{lemma}[The stable rearrangement at $s>0$]
 \label{stable_rearrangement_pos}
 \lean{GSpinGGP.stable_rearrangement_pos}
 \leanok
 \uses{G, GGPData, GSpin, GammaClass, InnerFormSystem, InnerTwist, IsGammaElt, IsQuasiSplit, StablyConjG, TemperedPacketFamily, TorusTransfer, charG, deltaGGP, germ, gspin, kottwitzSign, n_alpha, orbitChoice, signedCount, weylDisc}
-Given germ transfer, vanishing of the non-quasi-split classes, and Prop.~6.6.1(i),(ii): for $s>0$,
+Given germ transfer and Prop.~6.6.1(i),(ii): for $s>0$,
 \[ \sum_\alpha m_{\mathrm{geom},s}(\theta_\alpha)=\int_{\Gamma(G,H)}\frac{\sum_\alpha e(G_\alpha)n_\alpha(x)}{n_1(x)}
 c_{\theta_1}(x)D^G(x)^{1/2}\Delta(x)^{s-1/2}\,dx \] (Thesis (6.7.2)--(6.7.5) before the limit).
 \end{lemma}
 \begin{proof}
-Not yet formalized. At fixed $s>0$ the integrals converge absolutely; $y\mapsto x$ is a measure-preserving
-injection $\Gamma^{qd}_{\mathrm{stab}}(G_\alpha,H_\alpha)\hookrightarrow\Gamma^{qd}_{\mathrm{stab}}(G,H)$, and
-(TRANS) gives $c_{\theta_\alpha}(y)=e(G_\alpha)c_{\theta_1}(x)$.
+\leanok
+\uses{torusClass_count, orbitChoice_mem_nilReg_of_qd}
+Torus by torus: non-quasi-split tori contribute $0$; a quasi-split torus $T_y$ of $G_\alpha$ has
+$\int_{T_y/A}=e(G_\alpha)\int_{T_x/A}$ for $x\sim_{\mathrm{stab}}y$ (the torus transfer identifies the
+probability Haar measures, $D^G$ and $\Delta$; germ transfer at the regular orbits $\mathcal O_x$,
+$\mathcal O_y$); regroup with the torus-class count; the stable weight is constant on $T_{x,\natural}$.
 \end{proof}
 
 \begin{proposition}[Thesis (6.7.5)]
