@@ -311,6 +311,26 @@ theorem quadReflection_eq (Q : QuadraticForm K V) (v : V) [Invertible (Q v)] :
   ext y
   simp [quadReflection, TauCeti.QuadraticMap.reflection_apply, invOf_eq_inv, smul_smul]
 
+omit [Invertible (2 : K)] in
+theorem quadReflection_mem {Q : QuadraticForm K V} {p : Submodule K V} {u v : V} (hu : u ∈ p)
+    (hv : v ∈ p) : quadReflection Q u v ∈ p := by
+  rw [quadReflection_apply]
+  exact p.sub_mem hv (p.smul_mem _ (p.smul_mem _ hu))
+
+omit [Invertible (2 : K)] in
+theorem quadReflection_isometry {Q : QuadraticForm K V} {u : V} (hQu : Q u ≠ 0) (v : V) :
+    Q (quadReflection Q u v) = Q v := by
+  have := invertibleOfNonzero hQu
+  rw [← quadReflection_eq]
+  exact TauCeti.QuadraticMap.reflection_mem_orthogonalGroup Q u v
+
+omit [Invertible (2 : K)] in
+theorem det_quadReflection [FiniteDimensional K V] {Q : QuadraticForm K V} {u : V} (hQu : Q u ≠ 0) :
+    LinearMap.det (quadReflection Q u) = -1 := by
+  have := invertibleOfNonzero hQu
+  rw [← quadReflection_eq, ← LinearEquiv.coe_det, TauCeti.QuadraticMap.det_reflection]
+  rfl
+
 /-- Group an even-length product into consecutive pairs. -/
 theorem exists_pairs_prod {M W : Type*} [Monoid M] (f : W → M) :
     ∀ (l : List M), Even l.length → (∀ x ∈ l, ∃ w, f w = x) →
