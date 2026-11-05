@@ -43,7 +43,10 @@ theorem exists_twistIdx_not_isometric_of_moved {d : GGPData F} (IF : InnerFormSy
   have horth : ∀ u ∈ U, ∀ u' ∈ fixedSub x, bform d.QW u u' = 0 := fun u hu u' hu' => by
     rw [QuadraticMap.associated_isSymm]
     exact hu u' hu'
-  obtain ⟨κ, _, _, e, B, G₃, hG₃, hB, hfix⟩ := TwistPlane.exists_blockCoords d.QW hcW.symm horth
+  obtain ⟨e, B, hB, hfix⟩ := TwistPlane.exists_blockCoords d.QW hcW.symm horth
+  set G₃ := QuadraticForm.toMatrix' ((d.QW.comp (fixedSub x).subtype).comp
+    (finBasis F (fixedSub x)).equivFun.symm.toLinearMap)
+  have hG₃ : G₃.IsSymm := QuadraticForm.isSymm_toMatrix' _
   set Q₂ := (d.QW.comp U.subtype).comp (finBasis F U).equivFun.symm.toLinearMap with hQ₂def
   have hQ₂ : IsNondeg Q₂ := by
     have hd := (PAdicQuadAux.isNondeg_iff_discr'_ne_zero d.QW).1 d.nondeg
