@@ -172,6 +172,43 @@ theorem exists_bcHom_of_mem_bcSub (C : Subalgebra F (CliffordAlgebra Q)) {N : �
   rw [map_smul C.val, bcHom_smul, map_smul (bcSub Q C).val, ← hf, algebraMap_smul]
   exact congrArg _ (coe_bcSubBasis Q C b i).symm
 
+theorem bcSub_top : bcSub Q ⊤ = ⊤ := by
+  refine eq_top_iff.2 fun z _ => ?_
+  refine ⟨CliffordAlgebra.toBaseChange Kb Q z, ?_, CliffordAlgebra.ofBaseChange_toBaseChange _ _ _⟩
+  induction CliffordAlgebra.toBaseChange Kb Q z using TensorProduct.inductionOn with
+  | tmul k c => exact Subalgebra.tmul_mem_baseChange (Algebra.mem_top) k
+  | add x y hx hy => exact Subalgebra.add_mem _ hx hy
+
+/-- `F̄ ⊗ C⁺(Q)` is the even part of `C(Q_{F̄})`. -/
+theorem mem_bcSub_even_iff {z : CliffordAlgebra (Q.baseChange Kb)} :
+    z ∈ bcSub Q (CliffordAlgebra.even Q) ↔ z ∈ CliffordAlgebra.even (Q.baseChange Kb) := by
+  rw [show z ∈ CliffordAlgebra.even (Q.baseChange Kb) ↔
+      z ∈ CliffordAlgebra.evenOdd (Q.baseChange Kb) 0 by
+    rw [← Subalgebra.mem_toSubmodule, CliffordAlgebra.even_toSubmodule],
+    ← CliffordAlgebra.toBaseChange_mem_baseChange_evenOdd_iff]
+  constructor
+  · rintro ⟨y, ⟨t, rfl⟩, rfl⟩
+    change CliffordAlgebra.toBaseChange Kb Q (CliffordAlgebra.ofBaseChange Kb Q
+      (Algebra.TensorProduct.map (AlgHom.id Kb Kb) (CliffordAlgebra.even Q).val t)) ∈ _
+    rw [CliffordAlgebra.toBaseChange_ofBaseChange]
+    induction t using TensorProduct.inductionOn with
+    | tmul k c =>
+      rw [Algebra.TensorProduct.map_tmul]
+      exact Submodule.tmul_mem_baseChange_of_mem k (by
+        rw [← CliffordAlgebra.even_toSubmodule]; exact c.2)
+    | add x y hx hy => rw [map_add]; exact Submodule.add_mem _ hx hy
+  · intro h
+    refine ⟨CliffordAlgebra.toBaseChange Kb Q z, ?_,
+      CliffordAlgebra.ofBaseChange_toBaseChange _ _ _⟩
+    obtain ⟨t, ht⟩ := Submodule.toBaseChange_surjective' Kb _ h
+    rw [← ht]
+    clear ht
+    induction t using TensorProduct.inductionOn with
+    | tmul k c =>
+      exact Subalgebra.tmul_mem_baseChange (by
+        rw [← Subalgebra.mem_toSubmodule, CliffordAlgebra.even_toSubmodule]; exact c.2) k
+    | add x y hx hy => rw [map_add]; exact Subalgebra.add_mem _ hx hy
+
 end BaseChangeSub
 
 section Descent
