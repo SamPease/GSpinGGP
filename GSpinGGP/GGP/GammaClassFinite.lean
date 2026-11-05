@@ -64,7 +64,7 @@ theorem exists_conj_torusBarFbar (x y : GSpin d.QW) (hx : d.IsGammaElt x) (hy : 
     have := hfix x; have := hfix y; omega
   subst hn
   obtain ⟨g, hgQ, hgdet, hgT⟩ :=
-    IsHypFrame.exists_conj_hypTorus polarBilin_nondegenerate.1 hF₁ hF₂
+    IsHypFrame.exists_conj_hypTorus polarBilin_baseChange_nondegenerate.1 hF₁ hF₂
   obtain ⟨γ, hγ⟩ := gspin_specP_surjective_SO _ (isNondeg_baseChange _ d.nondeg) g hgQ hgdet
   refine ⟨specMatFbar d.QW γ, ⟨γ, rfl⟩, ?_⟩
   rw [torusBarFbar_eq_map, torusBarFbar_eq_map, specMatFbar_eq_matGL_comp, MonoidHom.comp_apply,
