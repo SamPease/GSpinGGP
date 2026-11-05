@@ -17,6 +17,7 @@ import GSpinGGP.GGP.TwistIncl
 import GSpinGGP.GGP.StableCocycleSurj
 import GSpinGGP.GGP.OrbitSpecQd
 import GSpinGGP.GGP.TorusIntegral
+import GSpinGGP.GGP.TwistMoved
 
 /-!
 # The main theorem: the local GGP conjecture for general spin groups
@@ -1510,38 +1511,60 @@ theorem existsUnique_twistIdx (IF : InnerFormSystem d) (x : ↥(GSpin d.QW))
   have hu := IF.classify (IF.twist α).Q' (IF.twist α).nondeg' (IF.twist α).sameDisc
   exact hu.unique ⟨e⟩ ⟨QuadraticMap.IsometryEquiv.refl _⟩
 
-/-- **Statement (S) when `W''_x` has no `x`-stable twisting plane** (the case left open by
-`TwistPlane.exists_twistIdx_not_isometric_of_hasTwistPlane`).  For `G` quasi-split and `x ∈ Γ(G,H)`
-not central without `TwistPlane.HasTwistPlane d x`, some `β ∈ H¹(F, S_x)` has `W_{q_x(β)} ≇ W`.
-Then `−1` is not an eigenvalue of `P(x)` on `W''_x` and no
-irreducible factor of `P(x)|_{W''_x}` is a self-reciprocal quadratic, so `W''_x` is a sum of
-`x`-stable pieces `U = E` with `E/E₀` quadratic, `[E₀ : F] ≥ 2`, `S_x ⊇ R_{E₀/F}(E¹)`, and the
-twists of `U` by `H¹(F, R_{E₀/F}(E¹)) = E₀^×/N(E^×)` are the transfers `Tr_{E₀/F}(c · h)`.
-
-Route (own work): BP Astérisque 418, (12.1.6) (`Ḡ = SO(W) × SO(V)` quasi-split, `S_x` anisotropic,
-and `S~_x` connected, since `X*(S~_x) = X*(S_x) + ℤ r`, `2r = Σ tᵢ`, is torsion free), or directly:
-the Hasse invariant of `Tr_{E₀/F}(c · h)` differs from that of `Tr_{E₀/F}(h)` for `c ∉ N(E^×)`
-because corestriction `Br(E₀)[2] → Br(F)[2]` is an isomorphism (local class field theory, Serre,
-*Local Fields*); then Witt cancellation.
-Not verbatim in a source, so it is a `sorry`. -/
-theorem exists_twistIdx_not_isometric_of_not_hasTwistPlane (hqs : d.IsQuasiSplit)
-    (IF : InnerFormSystem d) (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) (hc : ¬ IsCentralW d x)
-    (hP : ¬ TwistPlane.HasTwistPlane d x) :
-    ∃ β α, TwistIdx IF x β α ∧ ¬ Nonempty (d.QW.IsometryEquiv (IF.twist α).Q') :=
+/-- **The moved space `W''_x = (W'_x)^⊥` of `x ∈ Γ(G,H)`** (own work, elementary): it is not a
+line, and if it is a plane it is anisotropic.  Route: `W''_x` is `P(x)`-stable with
+`W''_x ∩ W'_x = 0`; on a line `P(x)` would be `−1`, so `det P(x) = −1`, contradicting `det_specP`;
+on a hyperbolic plane with hyperbolic pair `f, f'`, the isometries `f ↦ t f`, `f' ↦ t⁻¹ f'`,
+`1` on `W'_x` (`t ∈ F^×`) lift to `GSpin(W)(F)` (units of `C⁺(W''_x)`, which commute with `x` since
+`x ∈ F^× · C⁺(W''_x)` (`ker_specP`) and `C⁺` of a plane is commutative), hence lie in
+`T_x(F)`, and their images under `P` are unbounded, contradicting compactness of `T_x(F)/A(F)`
+(`IsGammaElt`). -/
+theorem orthogonal_fixedSub_of_isGammaElt (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) :
+    finrank F ↥((bform d.QW).orthogonal (fixedSub x)) ≠ 1 ∧
+      (finrank F ↥((bform d.QW).orthogonal (fixedSub x)) = 2 →
+        (d.QW.comp ((bform d.QW).orthogonal (fixedSub x)).subtype).Anisotropic) :=
   sorry
+
+/-- **Statement (S)** (Thesis Prop 6.5.1(iv), first half): for `x ∈ Γ(G,H)` not central, some
+`β ∈ H¹(F, S_x)` has `W_{q_x(β)} ≇ W`.  Proof: `W''_x ≠ 0` (else `P(x) = 1` and `x` is a scalar,
+`ker_specP`), so by `orthogonal_fixedSub_of_isGammaElt` it has dimension `≥ 3` or is an anisotropic
+plane, and `exists_twistIdx_not_isometric_of_moved` applies (Kottwitz 1986, Lemma 10.2, for the
+anisotropic maximal torus `S_x` of `SO(W''_x)`). -/
+theorem exists_twistIdx_not_isometric_of_isGammaElt (IF : InnerFormSystem d) (x : ↥(GSpin d.QW))
+    (hx : d.IsGammaElt x) (hc : ¬ IsCentralW d x) :
+    ∃ β α, TwistIdx IF x β α ∧ ¬ Nonempty (d.QW.IsometryEquiv (IF.twist α).Q') := by
+  obtain ⟨h1, h2⟩ := orthogonal_fixedSub_of_isGammaElt x hx
+  refine exists_twistIdx_not_isometric_of_moved IF hx ?_
+  have h0 : finrank F ↥((bform d.QW).orthogonal (fixedSub x)) ≠ 0 := by
+    intro h0
+    apply hc
+    have hbot := Submodule.finrank_eq_zero.mp h0
+    have hdisj := fixedSub_inf_movedSub_of_isSS x hx.1
+    have hcW := isCompl_fixedSub_orthogonal d.nondeg x hdisj
+    rw [hbot] at hcW
+    have htop : fixedSub x = ⊤ := by
+      have := hcW.sup_eq_top
+      rwa [sup_bot_eq] at this
+    have hP1 : specP d.QW x = 1 := by
+      refine LinearEquiv.ext fun v => ?_
+      have hv : v ∈ fixedSub x := htop ▸ Submodule.mem_top
+      exact (d.mem_fixedSub_iff).mp hv
+    have hker : x ∈ (specP d.QW).ker := hP1
+    rw [ker_specP d.nondeg] at hker
+    exact hker
+  rcases Nat.lt_or_ge (finrank F ↥((bform d.QW).orthogonal (fixedSub x))) 3 with hlt | hge
+  · exact Or.inr ⟨by omega, h2 (by omega)⟩
+  · exact Or.inl hge
 
 /-- **Some class of `H¹(F, S_x)` twists `W` into a non-isometric form** (statement (S) for
 `U = W''_x`; Thesis Prop 6.5.1(iv), first half).  For `G` quasi-split and `x ∈ Γ(G,H)` not central,
-some `β ∈ H¹(F, S_x)` has `W_{q_x(β)} ≇ W`.  If `W''_x` contains an `x`-stable anisotropic plane on
-which `P(x)` has determinant `1` (`TwistPlane.HasTwistPlane`), the twist of that plane by its
-norm-one torus does it (`TwistPlane.exists_twistIdx_not_isometric_of_hasTwistPlane`, proved);
-otherwise `exists_twistIdx_not_isometric_of_not_hasTwistPlane`. -/
+some `β ∈ H¹(F, S_x)` has `W_{q_x(β)} ≇ W` (`exists_twistIdx_not_isometric_of_isGammaElt`; `hqs` is
+not needed, and is kept for the callers). -/
 theorem exists_twistIdx_not_isometric (hqs : d.IsQuasiSplit) (IF : InnerFormSystem d)
     (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) (hc : ¬ IsCentralW d x) :
     ∃ β α, TwistIdx IF x β α ∧ ¬ Nonempty (d.QW.IsometryEquiv (IF.twist α).Q') := by
-  by_cases hP : TwistPlane.HasTwistPlane d x
-  · exact TwistPlane.exists_twistIdx_not_isometric_of_hasTwistPlane IF x hP
-  · exact exists_twistIdx_not_isometric_of_not_hasTwistPlane hqs IF x hx hc hP
+  have _ := hqs
+  exact exists_twistIdx_not_isometric_of_isGammaElt IF x hx hc
 
 /-- **Surjectivity of the Kottwitz sign on `H¹(F, S_x)`** (Thesis Prop 6.5.1(iv)): for `G`
 quasi-split and `x ∈ Γ(G,H)` not central, some `β ∈ H¹(F, S_x)` has `e(G_{q_x(β)}) = -1`.
