@@ -61,17 +61,6 @@ def InnerTwist.symm {m : ℕ} {Q : QuadraticForm F (Fin m → F)} (hQ : IsNondeg
 theorem GGPData.twist_symm (d : GGPData F) (τ : InnerTwist d.QW) :
     (d.twist τ).twist (τ.symm d.nondeg) = d := rfl
 
-omit [NontriviallyNormedField F] [PAdicField F] in
-/-- Isometries with the same values are equal. -/
-theorem isometryEquiv_ext {R V₁ V₂ : Type*} [CommRing R] [AddCommGroup V₁] [Module R V₁]
-    [AddCommGroup V₂] [Module R V₂] {Q₁ : QuadraticForm R V₁} {Q₂ : QuadraticForm R V₂}
-    {e e' : Q₁.IsometryEquiv Q₂} (h : ∀ v, e v = e' v) : e = e' := by
-  obtain ⟨e, he⟩ := e
-  obtain ⟨e', he'⟩ := e'
-  have : e = e' := LinearEquiv.ext h
-  subst this
-  rfl
-
 /-- **Symmetry of strong stable conjugacy**: strong stable conjugacy of `y ∈ GSpin(Q₂)(F)` with `x`
 through `φ⁻¹` gives strong stable conjugacy of `x` with `y` through `φ` (witness `C(φ)(g⁻¹)`;
 `TorusTransfer.ratAt_symm`). -/
@@ -94,7 +83,7 @@ theorem StronglyStablyConjVia.of_symm {V₁ V₂ : Type*} [AddCommGroup V₁] [M
 equal). -/
 theorem GGPData.twistV_symm (d : GGPData F) (τ : InnerTwist d.QW) :
     (d.twist τ).twistV (τ.symm d.nondeg) = (d.twistV τ).symm :=
-  isometryEquiv_ext fun _ => rfl
+  DFunLike.ext _ _ fun _ => rfl
 
 /-- **Strong stable conjugacy through the inverse twist**: if `y ∈ GSpin(W_α)` is strongly stably
 conjugate to `x ∈ GSpin(W)` in the datum `d_α` through `τ.symm`, then `x` is strongly stably
