@@ -124,6 +124,28 @@ theorem galC_mem_bcSub (C : Subalgebra F (CliffordAlgebra Q)) (σ : GalF F)
   | tmul k c => simp
   | add x y hx hy => simp only [map_add, hx, hy]
 
+/-- The Galois action `galC` on `F̄ ⊗ C`. -/
+def bcSubAction (C : Subalgebra F (CliffordAlgebra Q)) {N : ℕ} (b : Module.Basis (Fin N) F C) :
+    GalAlgAction F (bcSub Q C) (bcSubBasis Q C b) where
+  act σ := (galC Q σ).restrict (bcSub Q C) (bcSub Q C) fun _ hz => galC_mem_bcSub Q C σ hz
+  act_mul σ τ z := Subtype.ext (galC_galC Q σ τ z).symm
+  act_smul σ c z := Subtype.ext (by
+    change galC Q σ (c • (z : CliffordAlgebra (Q.baseChange Kb))) = σ c • galC Q σ z
+    rw [Algebra.smul_def, map_mul, galC_algebraMap, ← Algebra.smul_def])
+  act_basis σ i := Subtype.ext (by
+    change galC Q σ (bcSubBasis Q C b i : CliffordAlgebra (Q.baseChange Kb)) = _
+    rw [coe_bcSubBasis, galC_bcHom])
+
+/-- `C → F̄ ⊗ C`, `c ↦ 1 ⊗ c`. -/
+def bcSubIncl (C : Subalgebra F (CliffordAlgebra Q)) : C →ₐ[F] bcSub Q C :=
+  (((bcSubHom Q C).restrictScalars F).comp Algebra.TensorProduct.includeRight).codRestrict
+    ((bcSub Q C).restrictScalars F) fun c => by
+      rw [← range_bcSubHom]; exact ⟨(1 : Kb) ⊗ₜ c, rfl⟩
+
+theorem coe_bcSubIncl (C : Subalgebra F (CliffordAlgebra Q)) (c : C) :
+    (bcSubIncl Q C c : CliffordAlgebra (Q.baseChange Kb)) = bcHom Q (c : CliffordAlgebra Q) :=
+  rfl
+
 end BaseChangeSub
 
 end GSpinGGP
