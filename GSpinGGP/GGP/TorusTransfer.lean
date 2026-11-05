@@ -388,5 +388,55 @@ theorem exists_transport {x : (CliffordAlgebra Q₁)ˣ} (hg : g ∈ GSpin (Q₂.
 
 end Psi
 
+section Trans
+
+variable {V₁ V₂ V₃ : Type*} [AddCommGroup V₁] [Module F V₁] [AddCommGroup V₂] [Module F V₂]
+  [AddCommGroup V₃] [Module F V₃] {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂}
+  {Q₃ : QuadraticForm F V₃}
+
+/-- `C(φ₂ ∘ φ₁) = C(φ₂) ∘ C(φ₁)` on units. -/
+theorem cliffUnits_trans
+    (φ₁ : (Q₁.baseChange (AlgebraicClosure F)).IsometryEquiv (Q₂.baseChange (AlgebraicClosure F)))
+    (φ₂ : (Q₂.baseChange (AlgebraicClosure F)).IsometryEquiv (Q₃.baseChange (AlgebraicClosure F)))
+    (u : (CliffordAlgebra (Q₁.baseChange (AlgebraicClosure F)))ˣ) :
+    cliffUnits (φ₁.trans φ₂) u = cliffUnits φ₂ (cliffUnits φ₁ u) :=
+  Units.ext (AlgHom.congr_fun (CliffordAlgebra.map_comp_map φ₂.toIsometry φ₁.toIsometry) u).symm
+
+/-- **Strong stable conjugacy composes**: if `x ∼ y` through `φ₁` and `y ∼ z` through `φ₂`, then
+`x ∼ z` through `φ₂ ∘ φ₁`, with conjugating element `g₂ · C(φ₂)(g₁)`. -/
+theorem StronglyStablyConjVia.trans
+    {φ₁ : (Q₁.baseChange (AlgebraicClosure F)).IsometryEquiv (Q₂.baseChange (AlgebraicClosure F))}
+    {φ₂ : (Q₂.baseChange (AlgebraicClosure F)).IsometryEquiv (Q₃.baseChange (AlgebraicClosure F))}
+    {x : (CliffordAlgebra Q₁)ˣ} {y : (CliffordAlgebra Q₂)ˣ} {z : (CliffordAlgebra Q₃)ˣ}
+    (h₁ : StronglyStablyConjVia φ₁ x y) (h₂ : StronglyStablyConjVia φ₂ y z) :
+    StronglyStablyConjVia (φ₁.trans φ₂) x z := by
+  obtain ⟨g₁, hg₁, e₁, r₁⟩ := h₁
+  obtain ⟨g₂, hg₂, e₂, r₂⟩ := h₂
+  have hconj : ∀ u, (g₂ * cliffUnits φ₂ g₁) * cliffUnits (φ₁.trans φ₂) u *
+      (g₂ * cliffUnits φ₂ g₁)⁻¹ = g₂ * cliffUnits φ₂ (g₁ * cliffUnits φ₁ u * g₁⁻¹) * g₂⁻¹ :=
+    fun u => by rw [cliffUnits_trans]; simp only [map_mul, map_inv]; group
+  refine ⟨g₂ * cliffUnits φ₂ g₁, Subgroup.mul_mem _ hg₂ (cliffUnits_mem_GSpin φ₂ hg₁), ?_,
+    fun σ w hw hwx => ?_⟩
+  · rw [hconj, e₁, e₂]
+  · set w' := g₁ * cliffUnits φ₁ w * g₁⁻¹
+    have hw' : w' ∈ GSpin (Q₂.baseChange (AlgebraicClosure F)) :=
+      Subgroup.mul_mem _ (Subgroup.mul_mem _ hg₁ (cliffUnits_mem_GSpin φ₁ hw))
+        (Subgroup.inv_mem _ hg₁)
+    have hw'y : Commute w' (bcUnits Q₂ y) := by
+      rw [← e₁]
+      exact (hwx.map (cliffUnits φ₁)).map (MulAut.conj g₁).toMonoidHom
+    have h1 : galC Q₂ σ ((w' : (CliffordAlgebra (Q₂.baseChange (AlgebraicClosure F)))ˣ) :
+        CliffordAlgebra (Q₂.baseChange (AlgebraicClosure F))) = _ := r₁ σ w hw hwx
+    rw [hconj, r₂ σ w' hw' hw'y, h1]
+    simp only [Units.val_mul, mul_inv_rev, map_mul]
+    rw [show CliffordAlgebra.map (φ₁.trans φ₂).toIsometry =
+      (CliffordAlgebra.map φ₂.toIsometry).comp (CliffordAlgebra.map φ₁.toIsometry) from
+      (CliffordAlgebra.map_comp_map φ₂.toIsometry φ₁.toIsometry).symm, AlgHom.comp_apply]
+    rw [← map_inv (cliffUnits φ₂) g₁]
+    simp only [mul_assoc]
+    rfl
+
+end Trans
+
 end TorusTransfer
 end GSpinGGP
