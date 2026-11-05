@@ -174,4 +174,88 @@ theorem exists_bcHom_of_mem_bcSub (C : Subalgebra F (CliffordAlgebra Q)) {N : �
 
 end BaseChangeSub
 
+section Descent
+
+set_option hygiene false in
+local notation "Kb" => AlgebraicClosure F
+
+variable {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V₁] [AddCommGroup V₂] [Module F V₂]
+  {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂}
+
+/-- **An inner twist split by Hilbert 90 descends.** Let `Θ : C(Q₁)_{F̄} ≅ C(Q₂)_{F̄}` carry
+`F̄ ⊗ C₁` onto `F̄ ⊗ C₂` and satisfy `σ(Θ z) = Θ(v_σ σ(z) v_σ⁻¹)` for a continuous cocycle `v` in
+`(F̄ ⊗ C₁)ˣ`, with `C₁` simple. Then `C₁ ≅ C₂` over `F`: with `v_σ = u⁻¹ σ(u)` (Hilbert 90,
+`exists_units_eq_inv_mul_act`), `z ↦ Θ(u⁻¹ z u)` is Galois-equivariant. -/
+theorem nonempty_algEquiv_of_twist (C₁ : Subalgebra F (CliffordAlgebra Q₁))
+    (C₂ : Subalgebra F (CliffordAlgebra Q₂)) [IsSimpleRing C₁] [IsArtinianRing C₁] {N₁ N₂ : ℕ}
+    (b₁ : Module.Basis (Fin N₁) F C₁) (b₂ : Module.Basis (Fin N₂) F C₂)
+    (Θ : CliffordAlgebra (Q₁.baseChange Kb) ≃ₐ[Kb] CliffordAlgebra (Q₂.baseChange Kb))
+    (hΘ₁ : ∀ y ∈ bcSub Q₁ C₁, Θ y ∈ bcSub Q₂ C₂) (hΘ₂ : ∀ y ∈ bcSub Q₂ C₂, Θ.symm y ∈ bcSub Q₁ C₁)
+    (v : GalF F → (bcSub Q₁ C₁)ˣ) (hv : ∃ E : IntermediateField F Kb, FiniteDimensional F E ∧
+      ∀ σ τ : GalF F, (∀ x ∈ E, σ x = τ x) → v σ = v τ)
+    (hcoc : ∀ σ τ, (v (σ * τ) : CliffordAlgebra (Q₁.baseChange Kb)) =
+      (v σ : CliffordAlgebra (Q₁.baseChange Kb)) * galC Q₁ σ (v τ : CliffordAlgebra _))
+    (hΘv : ∀ σ z, galC Q₂ σ (Θ z) = Θ ((v σ : CliffordAlgebra (Q₁.baseChange Kb)) *
+      galC Q₁ σ z * (((v σ)⁻¹ : (bcSub Q₁ C₁)ˣ) : CliffordAlgebra (Q₁.baseChange Kb)))) :
+    Nonempty (C₁ ≃ₐ[F] C₂) := by
+  classical
+  obtain ⟨u, hu⟩ := exists_units_eq_inv_mul_act (bcSubAction Q₁ C₁ b₁) (bcSubIncl Q₁ C₁) b₁
+    (fun i => Subtype.ext (by rw [coe_bcSubIncl, coe_bcSubBasis])) v hv
+    (fun σ τ => Subtype.ext (hcoc σ τ))
+  set U : CliffordAlgebra (Q₁.baseChange Kb) := ((u : bcSub Q₁ C₁) : CliffordAlgebra (Q₁.baseChange Kb))
+  set Ui : CliffordAlgebra (Q₁.baseChange Kb) := (((u⁻¹ : (bcSub Q₁ C₁)ˣ) : bcSub Q₁ C₁) :
+    CliffordAlgebra (Q₁.baseChange Kb))
+  have hUUi : U * Ui = 1 := congrArg Subtype.val u.mul_inv
+  have hUiU : Ui * U = 1 := congrArg Subtype.val u.inv_mul
+  have hv' : ∀ σ, (v σ : CliffordAlgebra (Q₁.baseChange Kb)) = Ui * galC Q₁ σ U := fun σ =>
+    congrArg Subtype.val (hu σ)
+  have hgU : ∀ σ, galC Q₁ σ U * galC Q₁ σ Ui = 1 := fun σ => by rw [← map_mul, hUUi, map_one]
+  have hgUi : ∀ σ, galC Q₁ σ Ui * galC Q₁ σ U = 1 := fun σ => by rw [← map_mul, hUiU, map_one]
+  have hvinv : ∀ σ, (((v σ)⁻¹ : (bcSub Q₁ C₁)ˣ) : CliffordAlgebra (Q₁.baseChange Kb)) =
+      galC Q₁ σ Ui * U := fun σ => by
+    have h1 : (v σ : CliffordAlgebra (Q₁.baseChange Kb)) *
+        (((v σ)⁻¹ : (bcSub Q₁ C₁)ˣ) : CliffordAlgebra (Q₁.baseChange Kb)) = 1 :=
+      congrArg Subtype.val (v σ).mul_inv
+    calc (((v σ)⁻¹ : (bcSub Q₁ C₁)ˣ) : CliffordAlgebra (Q₁.baseChange Kb))
+        = (galC Q₁ σ Ui * U * (v σ : CliffordAlgebra (Q₁.baseChange Kb))) *
+            (((v σ)⁻¹ : (bcSub Q₁ C₁)ˣ) : CliffordAlgebra (Q₁.baseChange Kb)) := by
+          rw [hv', show galC Q₁ σ Ui * U * (Ui * galC Q₁ σ U) = 1 by
+            rw [mul_assoc, ← mul_assoc U, hUUi, one_mul, hgUi], one_mul]
+      _ = galC Q₁ σ Ui * U := by rw [mul_assoc, h1, mul_one]
+  -- `Φ z = Θ(u⁻¹ z u)` is Galois-equivariant
+  let Φ : CliffordAlgebra (Q₁.baseChange Kb) → CliffordAlgebra (Q₂.baseChange Kb) :=
+    fun z => Θ (Ui * z * U)
+  have hΦ : ∀ σ z, galC Q₂ σ (Φ z) = Φ (galC Q₁ σ z) := fun σ z => by
+    simp only [Φ]
+    rw [hΘv, hv', hvinv, map_mul (galC Q₁ σ), map_mul (galC Q₁ σ)]
+    congr 1
+    calc Ui * galC Q₁ σ U * (galC Q₁ σ Ui * galC Q₁ σ z * galC Q₁ σ U) * (galC Q₁ σ Ui * U)
+        = Ui * (galC Q₁ σ U * galC Q₁ σ Ui) * galC Q₁ σ z *
+            (galC Q₁ σ U * galC Q₁ σ Ui) * U := by noncomm_ring
+      _ = Ui * galC Q₁ σ z * U := by rw [hgU, mul_one, mul_one]
+  have hΦmul : ∀ x y, Φ (x * y) = Φ x * Φ y := fun x y => by
+    simp only [Φ, ← map_mul]
+    congr 1
+    calc Ui * (x * y) * U = Ui * x * (U * Ui) * y * U := by rw [hUUi, mul_one]; noncomm_ring
+      _ = Ui * x * U * (Ui * y * U) := by noncomm_ring
+  have hΦinj : Function.Injective Φ := fun x y h => by
+    have h' := Θ.injective h
+    calc x = U * (Ui * x * U) * Ui := by
+          rw [← mul_assoc, ← mul_assoc, hUUi, one_mul, mul_assoc, hUUi, mul_one]
+      _ = U * (Ui * y * U) * Ui := by rw [h']
+      _ = y := by rw [← mul_assoc, ← mul_assoc, hUUi, one_mul, mul_assoc, hUUi, mul_one]
+  have hUmem : U ∈ bcSub Q₁ C₁ := (u : bcSub Q₁ C₁).2
+  have hUimem : Ui ∈ bcSub Q₁ C₁ := ((u⁻¹ : (bcSub Q₁ C₁)ˣ) : bcSub Q₁ C₁).2
+  have hbc : ∀ c : C₁, bcHom Q₁ (c : CliffordAlgebra Q₁) ∈ bcSub Q₁ C₁ := fun c =>
+    (bcSubIncl Q₁ C₁ c).2
+  -- the image of `C₁` lies in `C₂`
+  have hex : ∀ c : C₁, ∃ c' ∈ C₂, bcHom Q₂ c' = Φ (bcHom Q₁ (c : CliffordAlgebra Q₁)) :=
+    fun c => exists_bcHom_of_mem_bcSub Q₂ C₂ b₂
+      (hΘ₁ _ (Subalgebra.mul_mem _ (Subalgebra.mul_mem _ hUimem (hbc c)) hUmem))
+      (fun σ => by rw [hΦ, galC_bcHom])
+  choose g hgC hg using hex
+  sorry
+
+end Descent
+
 end GSpinGGP
