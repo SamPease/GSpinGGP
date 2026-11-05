@@ -254,7 +254,50 @@ theorem nonempty_algEquiv_of_twist (C₁ : Subalgebra F (CliffordAlgebra Q₁))
       (hΘ₁ _ (Subalgebra.mul_mem _ (Subalgebra.mul_mem _ hUimem (hbc c)) hUmem))
       (fun σ => by rw [hΦ, galC_bcHom])
   choose g hgC hg using hex
-  sorry
+  have hcoe : ∀ c d : C₁, ((c * d : C₁) : CliffordAlgebra Q₁) = c * d := fun _ _ => rfl
+  have hscal : ∀ k : Kb, Φ (algebraMap Kb _ k) = algebraMap Kb _ k := fun k => by
+    simp only [Φ]
+    rw [← Algebra.commutes, mul_assoc, hUiU, mul_one, AlgEquiv.commutes]
+  let f : C₁ →ₐ[F] C₂ :=
+    { toFun := fun c => ⟨g c, hgC c⟩
+      map_one' := Subtype.ext (bcHom_injective Q₂ (by
+        rw [hg, OneMemClass.coe_one, map_one, show (1 : CliffordAlgebra (Q₁.baseChange Kb)) =
+          algebraMap Kb _ 1 from (map_one _).symm, hscal, map_one, OneMemClass.coe_one,
+          map_one]))
+      map_mul' := fun c d => Subtype.ext (bcHom_injective Q₂ (by
+        change bcHom Q₂ (g (c * d)) = bcHom Q₂ (g c * g d)
+        rw [map_mul, hg, hg, hg, hcoe, map_mul, hΦmul]))
+      map_zero' := Subtype.ext (bcHom_injective Q₂ (by
+        change bcHom Q₂ (g 0) = bcHom Q₂ 0
+        rw [hg]; simp [Φ]))
+      map_add' := fun c d => Subtype.ext (bcHom_injective Q₂ (by
+        change bcHom Q₂ (g (c + d)) = bcHom Q₂ (g c + g d)
+        rw [map_add, hg, hg, hg]; simp [Φ, mul_add, add_mul]))
+      commutes' := fun r => Subtype.ext (bcHom_injective Q₂ (by
+        change bcHom Q₂ (g (algebraMap F C₁ r)) = bcHom Q₂ (algebraMap F (CliffordAlgebra Q₂) r)
+        rw [hg, show ((algebraMap F C₁ r : C₁) : CliffordAlgebra Q₁) =
+          algebraMap F (CliffordAlgebra Q₁) r from rfl, bcHom_algebraMap, bcHom_algebraMap,
+          hscal])) }
+  refine ⟨AlgEquiv.ofBijective f ⟨fun c d h => ?_, fun c' => ?_⟩⟩
+  · have h1 : bcHom Q₂ (g c) = bcHom Q₂ (g d) := congrArg (fun x : C₂ => bcHom Q₂ x) h
+    rw [hg, hg] at h1
+    exact Subtype.ext (bcHom_injective Q₁ (hΦinj h1))
+  · set y := U * Θ.symm (bcHom Q₂ (c' : CliffordAlgebra Q₂)) * Ui
+    have hΦy : Φ y = bcHom Q₂ (c' : CliffordAlgebra Q₂) := by
+      simp only [Φ, y]
+      rw [show Ui * (U * Θ.symm (bcHom Q₂ ↑c') * Ui) * U = Θ.symm (bcHom Q₂ ↑c') by
+        rw [← mul_assoc, ← mul_assoc, hUiU, one_mul, mul_assoc, hUiU, mul_one],
+        AlgEquiv.apply_symm_apply]
+    have hymem : y ∈ bcSub Q₁ C₁ :=
+      Subalgebra.mul_mem _ (Subalgebra.mul_mem _ hUmem
+        (hΘ₂ _ (bcSubIncl Q₂ C₂ c').2)) hUimem
+    obtain ⟨c, hc, hcy⟩ := exists_bcHom_of_mem_bcSub Q₁ C₁ b₁ hymem fun σ => hΦinj (by
+      rw [← hΦ, hΦy, galC_bcHom])
+    refine ⟨⟨c, hc⟩, Subtype.ext (bcHom_injective Q₂ ?_)⟩
+    change bcHom Q₂ (g ⟨c, hc⟩) = _
+    rw [hg]
+    change Φ (bcHom Q₁ c) = _
+    rw [hcy, hΦy]
 
 end Descent
 
