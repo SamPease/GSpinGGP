@@ -208,7 +208,8 @@ theorem finite_weylQuot {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x) :
     apply Subtype.ext
     have hc := hab' x (d.self_mem_torusOf x)
     simp only [Subgroup.coe_mul, Subgroup.coe_inv] at hc
-    show (a : ↥(GSpin d.QW)) * x * (a : ↥(GSpin d.QW))⁻¹ = (b : ↥(GSpin d.QW)) * x * (b : ↥(GSpin d.QW))⁻¹
+    show (a : ↥(GSpin d.QW)) * x * (a : ↥(GSpin d.QW))⁻¹ =
+      (b : ↥(GSpin d.QW)) * x * (b : ↥(GSpin d.QW))⁻¹
     symm
     calc (b : ↥(GSpin d.QW)) * x * (b : ↥(GSpin d.QW))⁻¹ =
         a * (((a : ↥(GSpin d.QW))⁻¹ * b) * x) * (b : ↥(GSpin d.QW))⁻¹ := by group
