@@ -144,6 +144,32 @@ theorem exists_units_eq_inv_mul_act (G : GalAlgAction F Ā e) (ι : A →ₐ[F] 
     by_cases hk : k = j
     · subst hk; simp
     · simp [Pi.single_eq_of_ne hk]
+  -- the `β_j` span `Ā` over `F̄`
+  have hcomb : ∀ y : Fin N → AlgebraicClosure F, ∑ j, y j • (Mi *ᵥ Pi.single j 1) = Mi *ᵥ y := by
+    intro y; ext i
+    simp [Matrix.mulVec, dotProduct, Finset.sum_apply, mul_comm]
+  have hspan : ∀ z : Ā, z = ∑ j, (Mm *ᵥ e.equivFun z) j • β j := by
+    intro z
+    apply e.equivFun.injective
+    rw [map_sum]
+    simp only [map_smul, hβc]
+    rw [hcomb, Matrix.mulVec_mulVec, hMM', Matrix.one_mulVec]
+  -- twisted-fixed vectors have rational coordinates in the basis `β`
+  have hrat : ∀ z, (∀ σ, G.act σ z = z * v σ) → ∀ j, ∃ f : F,
+      algebraMap F (AlgebraicClosure F) f = (Mm *ᵥ e.equivFun z) j := by
+    intro z hz j
+    refine (InfiniteGalois.mem_range_algebraMap_iff_fixed _).2 fun σ => ?_
+    have hx : (fun i => σ (e.equivFun z i)) = Mi.map σ *ᵥ (Mm *ᵥ e.equivFun z) := by
+      rw [Matrix.mulVec_mulVec, ← hrv]
+      have h1 := GalAlgAction.repr_mul (e := e) z (v σ : Ā)
+      rw [← hz σ] at h1
+      funext i
+      exact (G.repr_act σ z i).symm.trans (congrFun h1 i)
+    have h3 : σ ((Mm *ᵥ e.equivFun z) j) =
+        (Mm.map σ *ᵥ (fun i => σ (e.equivFun z i))) j := by
+      simp [Matrix.mulVec, dotProduct, map_sum]
+    rw [h3, hx, Matrix.mulVec_mulVec, ← Matrix.map_mul, hMM,
+      Matrix.map_one _ (map_zero σ) (map_one σ), Matrix.one_mulVec]
   sorry
 
 end GSpinGGP
