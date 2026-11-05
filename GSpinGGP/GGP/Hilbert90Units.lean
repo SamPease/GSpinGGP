@@ -170,6 +170,59 @@ theorem exists_units_eq_inv_mul_act (G : GalAlgAction F Ā e) (ι : A →ₐ[F] 
       simp [Matrix.mulVec, dotProduct, map_sum]
     rw [h3, hx, Matrix.mulVec_mulVec, ← Matrix.map_mul, hMM,
       Matrix.map_one _ (map_zero σ) (map_one σ), Matrix.one_mulVec]
+  -- `ι(A)` is Galois-fixed
+  have hιfix : ∀ σ a, G.act σ (ι a) = ι a := by
+    intro σ a
+    rw [← b.sum_repr a, map_sum, map_sum]
+    refine Finset.sum_congr rfl fun i _ => ?_
+    rw [map_smul, hb, ← algebraMap_smul (AlgebraicClosure F) (b.repr a i) (e i), G.act_smul,
+      G.act_basis, AlgEquiv.commutes]
+  -- `B = {z : σ(z) = z v_σ}` as a left `A`-module
+  letI : Module A Ā := Module.compHom Ā ι.toRingHom
+  have : IsScalarTower F A Ā := ⟨fun c a z => by
+    change ι (c • a) * z = c • (ι a * z)
+    rw [map_smul, smul_mul_assoc]⟩
+  let B : Submodule A Ā :=
+    { carrier := {z | ∀ σ, G.act σ z = z * v σ}
+      add_mem' := fun {x y} hx hy σ => by rw [map_add, hx σ, hy σ, add_mul]
+      zero_mem' := fun σ => by rw [map_zero, zero_mul]
+      smul_mem' := fun a z hz σ => by
+        change G.act σ (ι a * z) = ι a * z * v σ
+        rw [map_mul, hιfix, hz σ, mul_assoc] }
+  let βB : Fin N → B := fun j => ⟨β j, fun σ => hβB σ j⟩
+  have hli : LinearIndependent F βB := by
+    rw [Fintype.linearIndependent_iff]
+    intro g hg
+    have h0 : ∑ j, (algebraMap F (AlgebraicClosure F) (g j)) • β j = 0 := by
+      have := congrArg Subtype.val hg
+      simpa [βB, algebraMap_smul] using this
+    have h1 := congrArg e.equivFun h0
+    rw [map_sum, map_zero] at h1
+    simp only [map_smul, hβc] at h1
+    rw [hcomb] at h1
+    have h2 : (fun j => algebraMap F (AlgebraicClosure F) (g j)) = 0 := by
+      rw [← Matrix.one_mulVec (fun j => algebraMap F (AlgebraicClosure F) (g j)), ← hMM,
+        ← Matrix.mulVec_mulVec, h1, Matrix.mulVec_zero]
+    intro j
+    exact (algebraMap F (AlgebraicClosure F)).injective (by simpa using congrFun h2 j)
+  have hsp : ⊤ ≤ Submodule.span F (Set.range βB) := by
+    rintro ⟨z, hz⟩ -
+    choose f hf using hrat z hz
+    have : (⟨z, hz⟩ : B) = ∑ j, f j • βB j := by
+      apply Subtype.ext
+      show z = ((∑ j, f j • βB j : B) : Ā)
+      conv_lhs => rw [hspan z]
+      simp only [Submodule.coe_sum, Submodule.coe_smul, βB]
+      refine Finset.sum_congr rfl fun j _ => ?_
+      rw [← hf, algebraMap_smul]
+      rfl
+    rw [this]
+    exact Submodule.sum_mem _ fun j _ => Submodule.smul_mem _ _ (Submodule.subset_span ⟨j, rfl⟩)
+  let bB := Module.Basis.mk hli hsp
+  have : FiniteDimensional F B := Module.Finite.of_basis bB
+  have : FiniteDimensional F A := Module.Finite.of_basis b
+  obtain ⟨f⟩ := nonempty_linearEquiv_of_finrank_eq (F := F) (A := A) (M := A) (N := B)
+    (by rw [Module.finrank_eq_card_basis b, Module.finrank_eq_card_basis bB])
   sorry
 
 end GSpinGGP
