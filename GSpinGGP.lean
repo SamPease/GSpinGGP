@@ -53,6 +53,7 @@ import GSpinGGP.Literature.Localization
 import GSpinGGP.Literature.Parabolic
 import GSpinGGP.TraceFormula.InvariantSets
 import GSpinGGP.GGP.Triple
+import GSpinGGP.GGP.TorusIntegral
 import GSpinGGP.GGP.Descent
 import GSpinGGP.GGP.TwistDescent
 import GSpinGGP.GGP.ConjCocycle
