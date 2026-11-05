@@ -8,6 +8,7 @@ import GSpinGGP.Foundations.Representations
 import GSpinGGP.Foundations.GSpin
 import GSpinGGP.Foundations.HypPlane
 import GSpinGGP.Foundations.HypFrame
+import GSpinGGP.Foundations.SimpleAlgebraModule
 import GSpinGGP.Foundations.SoCentralizer
 import GSpinGGP.Foundations.RegularNilpotent
 import GSpinGGP.Foundations.QuadraticForms
@@ -46,6 +47,7 @@ import GSpinGGP.Literature.Kottwitz
 import GSpinGGP.GGP.KottwitzDelta
 import GSpinGGP.GGP.KottwitzSign
 import GSpinGGP.GGP.Hilbert90
+import GSpinGGP.GGP.Hilbert90Units
 import GSpinGGP.Literature.Localization
 import GSpinGGP.Literature.Parabolic
 import GSpinGGP.TraceFormula.InvariantSets

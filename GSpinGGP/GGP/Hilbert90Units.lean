@@ -41,7 +41,11 @@ structure GalAlgAction (F : Type) [NontriviallyNormedField F] [PAdicField F] (Ā
   act_smul : ∀ σ (c : AlgebraicClosure F) z, act σ (c • z) = σ c • act σ z
   act_basis : ∀ σ i, act σ (e i) = e i
 
-variable {Ā : Type*} [Ring Ā] [Algebra (AlgebraicClosure F) Ā] [Algebra F Ā] [IsScalarTower F (AlgebraicClosure F) Ā] {N : ℕ} {e : Module.Basis (Fin N) (AlgebraicClosure F) Ā}
+set_option hygiene false in
+local notation "Kb" => AlgebraicClosure F
+
+variable {Ā : Type*} [Ring Ā] [Algebra Kb Ā] [Algebra F Ā] [IsScalarTower F Kb Ā] {N : ℕ}
+  {e : Module.Basis (Fin N) Kb Ā}
   {A : Type*} [Ring A] [Algebra F A] [IsSimpleRing A] [IsArtinianRing A]
 
 namespace GalAlgAction
@@ -55,8 +59,8 @@ theorem repr_act (σ : GalF F) (z : Ā) (i : Fin N) : e.repr (G.act σ z) i = σ
   rw [← map_sum (e.repr), e.repr_sum_self]
 
 /-- The matrix of right multiplication by `w`. -/
-def rmat (w : Ā) : Matrix (Fin N) (Fin N) (AlgebraicClosure F) :=
-  LinearMap.toMatrix e e (LinearMap.mulRight (AlgebraicClosure F) w)
+def rmat (w : Ā) : Matrix (Fin N) (Fin N) Kb :=
+  LinearMap.toMatrix e e (LinearMap.mulRight Kb w)
 
 theorem rmat_mul (w₁ w₂ : Ā) : rmat (e := e) (w₁ * w₂) = rmat (e := e) w₂ * rmat (e := e) w₁ := by
   rw [rmat, rmat, rmat, ← LinearMap.toMatrix_mul]
@@ -84,7 +88,7 @@ end GalAlgAction
 /-- **Hilbert 90 for `Āˣ`.** -/
 theorem exists_units_eq_inv_mul_act (G : GalAlgAction F Ā e) (ι : A →ₐ[F] Ā)
     (b : Module.Basis (Fin N) F A) (hb : ∀ i, ι (b i) = e i)
-    (v : GalF F → Āˣ) (hv : ∃ E : IntermediateField F (AlgebraicClosure F), FiniteDimensional F E ∧
+    (v : GalF F → Āˣ) (hv : ∃ E : IntermediateField F Kb, FiniteDimensional F E ∧
       ∀ σ τ : GalF F, (∀ x ∈ E, σ x = τ x) → v σ = v τ)
     (hcoc : ∀ σ τ, (v (σ * τ) : Ā) = v σ * G.act σ (v τ)) :
     ∃ u : Āˣ, ∀ σ, (v σ : Ā) = (u⁻¹ : Āˣ) * G.act σ u := by
@@ -95,11 +99,11 @@ theorem exists_units_eq_inv_mul_act (G : GalAlgAction F Ā e) (ι : A →ₐ[F] 
     apply Units.inv_eq_of_mul_eq_one_right
     rw [hcoc, mul_assoc, ← mul_assoc (G.act σ _), ← map_mul, Units.mul_inv, map_one, one_mul,
       Units.mul_inv]
-  let a : GalF F → GL (Fin N) (AlgebraicClosure F) := fun σ =>
+  let a : GalF F → GL (Fin N) Kb := fun σ =>
     ⟨GalAlgAction.rmat (e := e) (((v σ)⁻¹ : Āˣ) : Ā), GalAlgAction.rmat (e := e) (v σ : Ā),
       by rw [← GalAlgAction.rmat_mul, Units.mul_inv, GalAlgAction.rmat_one],
       by rw [← GalAlgAction.rmat_mul, Units.inv_mul, GalAlgAction.rmat_one]⟩
-  let c : GalCocycle (⊤ : Subgroup (GL (Fin N) (AlgebraicClosure F))) :=
+  let c : GalCocycle (⊤ : Subgroup (GL (Fin N) Kb)) :=
     { toFun := a
       mem' := fun _ => trivial
       cocycle' := fun σ τ => Units.ext (by
@@ -111,20 +115,21 @@ theorem exists_units_eq_inv_mul_act (G : GalAlgAction F Ā e) (ι : A →ₐ[F] 
   obtain ⟨M, hM⟩ := hilbert90_GL c
   -- `ρ(v_σ) = σ(M)⁻¹ M`
   have hrv : ∀ σ, GalAlgAction.rmat (e := e) (v σ : Ā) =
-      (((M⁻¹ : GL (Fin N) (AlgebraicClosure F)) : Matrix (Fin N) (Fin N) (AlgebraicClosure F)).map σ) * (M : Matrix (Fin N) (Fin N) (AlgebraicClosure F)) := by
+      (((M⁻¹ : GL (Fin N) Kb) : Matrix (Fin N) (Fin N) Kb).map σ) *
+        (M : Matrix (Fin N) (Fin N) Kb) := by
     intro σ
-    have h := congrArg (fun g : GL (Fin N) (AlgebraicClosure F) =>
-      ((g⁻¹ : GL (Fin N) (AlgebraicClosure F)) : Matrix (Fin N) (Fin N) (AlgebraicClosure F))) (hM σ)
+    have h := congrArg (fun g : GL (Fin N) Kb =>
+      ((g⁻¹ : GL (Fin N) Kb) : Matrix (Fin N) (Fin N) Kb)) (hM σ)
     simp only [_root_.mul_inv_rev, inv_inv, Units.val_mul, ← map_inv, coe_galGL] at h
     exact h
-  have hMM : (M : Matrix (Fin N) (Fin N) (AlgebraicClosure F)) *
-      ((M⁻¹ : GL (Fin N) (AlgebraicClosure F)) : Matrix (Fin N) (Fin N) (AlgebraicClosure F)) = 1 := by
+  have hMM : (M : Matrix (Fin N) (Fin N) Kb) *
+      ((M⁻¹ : GL (Fin N) Kb) : Matrix (Fin N) (Fin N) Kb) = 1 := by
     rw [← Units.val_mul, mul_inv_cancel, Units.val_one]
-  have hMM' : ((M⁻¹ : GL (Fin N) (AlgebraicClosure F)) : Matrix (Fin N) (Fin N) (AlgebraicClosure F)) *
-      (M : Matrix (Fin N) (Fin N) (AlgebraicClosure F)) = 1 := by
+  have hMM' : ((M⁻¹ : GL (Fin N) Kb) : Matrix (Fin N) (Fin N) Kb) *
+      (M : Matrix (Fin N) (Fin N) Kb) = 1 := by
     rw [← Units.val_mul, inv_mul_cancel, Units.val_one]
-  set Mi : Matrix (Fin N) (Fin N) (AlgebraicClosure F) := ((M⁻¹ : GL (Fin N) _) : Matrix (Fin N) (Fin N) (AlgebraicClosure F))
-  set Mm : Matrix (Fin N) (Fin N) (AlgebraicClosure F) := (M : Matrix (Fin N) (Fin N) (AlgebraicClosure F))
+  set Mi : Matrix (Fin N) (Fin N) Kb := ((M⁻¹ : GL (Fin N) Kb) : Matrix (Fin N) (Fin N) Kb)
+  set Mm : Matrix (Fin N) (Fin N) Kb := (M : Matrix (Fin N) (Fin N) Kb)
   -- the twisted-fixed vectors `β_j` (coordinates: the columns of `M⁻¹`)
   let β : Fin N → Ā := fun j => e.equivFun.symm (Mi *ᵥ Pi.single j 1)
   have hβc : ∀ j, e.equivFun (β j) = Mi *ᵥ Pi.single j 1 := fun j =>
@@ -156,7 +161,7 @@ theorem exists_units_eq_inv_mul_act (G : GalAlgAction F Ā e) (ι : A →ₐ[F] 
     rw [hcomb, Matrix.mulVec_mulVec, hMM', Matrix.one_mulVec]
   -- twisted-fixed vectors have rational coordinates in the basis `β`
   have hrat : ∀ z, (∀ σ, G.act σ z = z * v σ) → ∀ j, ∃ f : F,
-      algebraMap F (AlgebraicClosure F) f = (Mm *ᵥ e.equivFun z) j := by
+      algebraMap F Kb f = (Mm *ᵥ e.equivFun z) j := by
     intro z hz j
     refine (InfiniteGalois.mem_range_algebraMap_iff_fixed _).2 fun σ => ?_
     have hx : (fun i => σ (e.equivFun z i)) = Mi.map σ *ᵥ (Mm *ᵥ e.equivFun z) := by
@@ -175,10 +180,10 @@ theorem exists_units_eq_inv_mul_act (G : GalAlgAction F Ā e) (ι : A →ₐ[F] 
     intro σ a
     rw [← b.sum_repr a, map_sum, map_sum]
     refine Finset.sum_congr rfl fun i _ => ?_
-    rw [map_smul, hb, ← algebraMap_smul (AlgebraicClosure F) (b.repr a i) (e i), G.act_smul,
+    rw [map_smul, hb, ← algebraMap_smul Kb (b.repr a i) (e i), G.act_smul,
       G.act_basis, AlgEquiv.commutes]
   -- `B = {z : σ(z) = z v_σ}` as a left `A`-module
-  letI : Module A Ā := Module.compHom Ā ι.toRingHom
+  let _ : Module A Ā := Module.compHom Ā ι.toRingHom
   have : IsScalarTower F A Ā := ⟨fun c a z => by
     change ι (c • a) * z = c • (ι a * z)
     rw [map_smul, smul_mul_assoc]⟩
@@ -193,18 +198,18 @@ theorem exists_units_eq_inv_mul_act (G : GalAlgAction F Ā e) (ι : A →ₐ[F] 
   have hli : LinearIndependent F βB := by
     rw [Fintype.linearIndependent_iff]
     intro g hg
-    have h0 : ∑ j, (algebraMap F (AlgebraicClosure F) (g j)) • β j = 0 := by
+    have h0 : ∑ j, (algebraMap F Kb (g j)) • β j = 0 := by
       have := congrArg Subtype.val hg
       simpa [βB, algebraMap_smul] using this
     have h1 := congrArg e.equivFun h0
     rw [map_sum, map_zero] at h1
     simp only [map_smul, hβc] at h1
     rw [hcomb] at h1
-    have h2 : (fun j => algebraMap F (AlgebraicClosure F) (g j)) = 0 := by
-      rw [← Matrix.one_mulVec (fun j => algebraMap F (AlgebraicClosure F) (g j)), ← hMM,
+    have h2 : (fun j => algebraMap F Kb (g j)) = 0 := by
+      rw [← Matrix.one_mulVec (fun j => algebraMap F Kb (g j)), ← hMM,
         ← Matrix.mulVec_mulVec, h1, Matrix.mulVec_zero]
     intro j
-    exact (algebraMap F (AlgebraicClosure F)).injective (by simpa using congrFun h2 j)
+    exact (algebraMap F Kb).injective (by simpa using congrFun h2 j)
   have hsp : ⊤ ≤ Submodule.span F (Set.range βB) := by
     rintro ⟨z, hz⟩ -
     choose f hf using hrat z hz
@@ -212,7 +217,7 @@ theorem exists_units_eq_inv_mul_act (G : GalAlgAction F Ā e) (ι : A →ₐ[F] 
       apply Subtype.ext
       show z = ((∑ j, f j • βB j : B) : Ā)
       conv_lhs => rw [hspan z]
-      simp only [Submodule.coe_sum, Submodule.coe_smul, βB]
+      simp only [Submodule.coe_sum, βB]
       refine Finset.sum_congr rfl fun j _ => ?_
       rw [← hf, algebraMap_smul]
       rfl
@@ -223,6 +228,35 @@ theorem exists_units_eq_inv_mul_act (G : GalAlgAction F Ā e) (ι : A →ₐ[F] 
   have : FiniteDimensional F A := Module.Finite.of_basis b
   obtain ⟨f⟩ := nonempty_linearEquiv_of_finrank_eq (F := F) (A := A) (M := A) (N := B)
     (by rw [Module.finrank_eq_card_basis b, Module.finrank_eq_card_basis bB])
-  sorry
+  -- `u = f(1)`, `B = A u`
+  set u : Ā := (f 1 : Ā)
+  have hfu : ∀ x : A, (f x : Ā) = ι x * u := fun x => by
+    have : f x = x • f 1 := by rw [← map_smul, smul_eq_mul, mul_one]
+    rw [this]
+    rfl
+  -- a left inverse of `u`
+  set c := Mm *ᵥ e.equivFun (1 : Ā)
+  set y : Ā := ∑ j, c j • ι (f.symm (βB j))
+  have hyu : y * u = 1 := by
+    rw [Finset.sum_mul]
+    conv_rhs => rw [hspan 1]
+    refine Finset.sum_congr rfl fun j _ => ?_
+    rw [smul_mul_assoc, ← hfu, LinearEquiv.apply_symm_apply]
+  -- so `u` is a unit (`Ā` is finite-dimensional over `F̄`)
+  have : FiniteDimensional Kb Ā := Module.Finite.of_basis e
+  have hinj : Function.Injective (LinearMap.mulLeft Kb u) := by
+    intro w₁ w₂ h
+    have h' : u * w₁ = u * w₂ := h
+    calc w₁ = y * u * w₁ := by rw [hyu, one_mul]
+      _ = y * u * w₂ := by rw [mul_assoc, h', ← mul_assoc]
+      _ = w₂ := by rw [hyu, one_mul]
+  obtain ⟨w, hw⟩ := (LinearMap.injective_iff_surjective.1 hinj) 1
+  have huw : u * w = 1 := hw
+  have hyw : y = w := by
+    calc y = y * (u * w) := by rw [huw, mul_one]
+      _ = w := by rw [← mul_assoc, hyu, one_mul]
+  refine ⟨⟨u, y, hyw ▸ huw, hyu⟩, fun σ => ?_⟩
+  show (v σ : Ā) = y * G.act σ u
+  rw [(f 1).2 σ, ← mul_assoc, hyu, one_mul]
 
 end GSpinGGP
