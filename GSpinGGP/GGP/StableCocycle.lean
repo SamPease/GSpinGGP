@@ -241,6 +241,39 @@ theorem galIso_trans_symm_eq_self_of_tmul (ψ : (Q₁.baseChange Kb).IsometryEqu
       ψ.symm_apply_apply]
   exact hle hw
 
+/-- `ψ = P(g) ∘ e` and `e` have cocycles of the same determinant. -/
+theorem det_galIso_trans_specPIso [FiniteDimensional F V₁] [FiniteDimensional F V₂]
+    (e : (Q₁.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb)) (g : GSpin (Q₂.baseChange Kb))
+    (σ : GalF F) :
+    LinearMap.det ((galIso σ (e.trans (specPIso g))).trans (e.trans (specPIso g)).symm :
+        Kb ⊗[F] V₁ →ₗ[Kb] Kb ⊗[F] V₁) =
+      LinearMap.det ((galIso σ e).trans e.symm : Kb ⊗[F] V₁ →ₗ[Kb] Kb ⊗[F] V₁) := by
+  set M : (Kb ⊗[F] V₂) →ₗ[Kb] (Kb ⊗[F] V₂) := (specP _ (g⁻¹ * galGS Q₂ σ g)).toLinearMap
+  have key : ((galIso σ (e.trans (specPIso g))).trans (e.trans (specPIso g)).symm :
+      Kb ⊗[F] V₁ →ₗ[Kb] Kb ⊗[F] V₁) =
+      ((e.symm.toLinearEquiv : (Kb ⊗[F] V₂) →ₗ[Kb] _) ∘ₗ M ∘ₗ
+        (e.toLinearEquiv : (Kb ⊗[F] V₁) →ₗ[Kb] _)) ∘ₗ
+        ((galIso σ e).trans e.symm : Kb ⊗[F] V₁ →ₗ[Kb] Kb ⊗[F] V₁) := by
+    refine LinearMap.ext fun w => ?_
+    change (e.trans (specPIso g)).symm (galV σ (specP _ g (e (galV σ⁻¹ w)))) =
+      e.symm (specP _ (g⁻¹ * galGS Q₂ σ g) (e (e.symm (galV σ (e (galV σ⁻¹ w))))))
+    rw [e.apply_symm_apply, map_mul, LinearEquiv.mul_apply, ← specP_galGS]
+    change e.symm (specP _ g⁻¹ _) = _
+    rfl
+  have hc : LinearMap.det ((e.symm.toLinearEquiv : (Kb ⊗[F] V₂) →ₗ[Kb] _) ∘ₗ M ∘ₗ
+      (e.toLinearEquiv : (Kb ⊗[F] V₁) →ₗ[Kb] _)) = LinearMap.det M :=
+    LinearMap.det_conj M e.symm.toLinearEquiv
+  have hM : LinearMap.det M = 1 := det_specP _
+  rw [key, LinearMap.det_comp, hc, hM, one_mul]
+
+/-- The cocycle of an inner twist has determinant `1`. -/
+theorem det_galIso_trans_symm_innerTwist {m : ℕ} {Q : QuadraticForm F (Fin m → F)} (τ : InnerTwist Q)
+    (σ : GalF F) :
+    LinearMap.det ((galIso σ τ.φ).trans τ.φ.symm : Kb ⊗[F] (Fin m → F) →ₗ[Kb] _) = 1 := by
+  have h := det_glOf_inv_mul_galGL τ σ
+  rw [← glOf_galIso, ← glOf_symm, ← glOf_trans, coe_glOf, LinearMap.det_toMatrix] at h
+  exact h
+
 end OddFixed
 
 section Torus
@@ -365,8 +398,8 @@ theorem exists_isStableIso_of_odd (τ : InnerTwist d.QW) {x : GSpin d.QW} (hx : 
   refine inv_mul_galGL_glOf_mem_torusBarFbar d x _ hmap σ hdet fun w hw => ?_
   have hdet' : LinearMap.det (((galIso σ (τ.φ.trans (specPIso g'))).trans
       (τ.φ.trans (specPIso g')).symm).toLinearEquiv : Kb ⊗[F] (Fin d.m → F) →ₗ[Kb] _) = 1 := by
-    rw [← glOf_galIso, ← glOf_symm, ← glOf_trans, coe_glOf, LinearMap.det_toMatrix] at hdet
-    exact hdet
+    rw [det_galIso_trans_specPIso]
+    exact det_galIso_trans_symm_innerTwist τ σ
   rw [← GGPData.eigenspace_bc_one] at hw
   exact galIso_trans_symm_eq_self_of_odd d.nondeg τ.φ g' hxss hrat σ hdet' hodd hw
 
