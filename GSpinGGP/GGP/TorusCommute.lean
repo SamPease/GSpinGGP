@@ -3,8 +3,8 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.GGP.TorusTransfer
-import GSpinGGP.GGP.IsometryCentralizer
-import GSpinGGP.GGP.IsometryDet
+import GSpinGGP.Foundations.IsometryCentralizer
+import GSpinGGP.Foundations.IsometryDet
 import GSpinGGP.GGP.Descent
 import GSpinGGP.GGP.Steinberg
 import TauCeti.LinearAlgebra.TensorProduct.Kernel

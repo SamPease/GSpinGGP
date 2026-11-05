@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import GSpinGGP.Literature.GSpin
 import GSpinGGP.GGP.CentralizerSign
 import GSpinGGP.GGP.PairBlock
-import GSpinGGP.GGP.IsometryDet
+import GSpinGGP.Foundations.IsometryDet
 import GSpinGGP.GGP.TorusTransfer
 
 /-!

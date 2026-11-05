@@ -1,6 +1,9 @@
-import GSpinGGP.GGP.IsometryCentralizer
+import GSpinGGP.Foundations.IsometryCentralizer
 import TauCeti.LinearAlgebra.Eigenspace.BaseChange
 import TauCeti.LinearAlgebra.BilinearForm.BaseChange
+import Mathlib.FieldTheory.IsAlgClosed.AlgebraicClosure
+import Mathlib.LinearAlgebra.Charpoly.BaseChange
+import Mathlib.LinearAlgebra.Matrix.FiniteDimensional
 
 /-!
 # Determinants of isometries on paired subspaces

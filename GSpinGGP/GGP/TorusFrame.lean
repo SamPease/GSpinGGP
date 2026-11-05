@@ -1,5 +1,5 @@
 import GSpinGGP.GGP.GaloisTorus
-import GSpinGGP.GGP.EigenFrame
+import GSpinGGP.Foundations.EigenFrame
 import GSpinGGP.Foundations.HypPlane
 
 /-!
