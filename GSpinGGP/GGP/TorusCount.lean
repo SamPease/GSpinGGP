@@ -23,6 +23,30 @@ namespace GSpinGGP
 
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
+/-- **A conjugate of a unit by a scalar multiple**: in a finite-dimensional algebra, if
+`g u g⁻¹ = c • u` for a unit `u`, then `c ^ dim A = 1` (compare the determinants of left
+multiplication). -/
+theorem pow_finrank_eq_one_of_conj_eq_smul {K A : Type*} [Field K] [Ring A] [Algebra K A]
+    [FiniteDimensional K A] {u g : Aˣ} {c : K}
+    (h : ((g * u * g⁻¹ : Aˣ) : A) = c • (u : A)) : c ^ Module.finrank K A = 1 := by
+  have hdet : ∀ v : Aˣ, LinearMap.det (LinearMap.mulLeft K (v : A)) *
+      LinearMap.det (LinearMap.mulLeft K ((v⁻¹ : Aˣ) : A)) = 1 := fun v => by
+    rw [← LinearMap.det_comp, ← LinearMap.mulLeft_mul, Units.mul_inv, LinearMap.mulLeft_one,
+      LinearMap.det_id]
+  have h1 : LinearMap.det (LinearMap.mulLeft K ((g * u * g⁻¹ : Aˣ) : A)) =
+      LinearMap.det (LinearMap.mulLeft K (u : A)) := by
+    rw [Units.val_mul, Units.val_mul, LinearMap.mulLeft_mul, LinearMap.mulLeft_mul,
+      LinearMap.det_comp, LinearMap.det_comp]
+    linear_combination LinearMap.det (LinearMap.mulLeft K (u : A)) * hdet g
+  have h2 : LinearMap.det (LinearMap.mulLeft K (c • (u : A))) =
+      c ^ Module.finrank K A * LinearMap.det (LinearMap.mulLeft K (u : A)) := by
+    rw [show LinearMap.mulLeft K (c • (u : A)) = c • LinearMap.mulLeft K (u : A) by
+      ext; simp [smul_mul_assoc], LinearMap.det_smul]
+  rw [h, h2] at h1
+  have hu : LinearMap.det (LinearMap.mulLeft K (u : A)) ≠ 0 := fun h0 => by
+    have := hdet u; rw [h0, zero_mul] at this; exact zero_ne_one this
+  exact (mul_eq_right₀ hu).1 h1
+
 namespace GGPData
 
 variable {d : GGPData F}
