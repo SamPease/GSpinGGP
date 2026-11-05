@@ -2,7 +2,19 @@
 Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import Mathlib
+import Mathlib.Algebra.DirectSum.LinearMap
+import Mathlib.Algebra.Module.StablyFree.Basic
+import Mathlib.LinearAlgebra.BilinearForm.Properties
+import Mathlib.LinearAlgebra.Charpoly.ToMatrix
+import Mathlib.LinearAlgebra.Eigenspace.Minpoly
+import Mathlib.LinearAlgebra.Eigenspace.Semisimple
+import Mathlib.Order.CompletePartialOrder
+import Mathlib.RingTheory.Coalgebra.IsFrobenius
+import Mathlib.RingTheory.Flat.TorsionFree
+import Mathlib.RingTheory.Henselian
+import Mathlib.RingTheory.HopfAlgebra.Basic
+import Mathlib.RingTheory.RegularLocalRing.Defs
+import Mathlib.RingTheory.SimpleRing.Principal
 import TauCeti.LinearAlgebra.Matrix.Block
 
 /-!
@@ -798,13 +810,13 @@ theorem LieAbelian.of_restrict (hss : X.IsSemisimple) (U : Submodule K V)
       Commute (X.restrict hXU) (Y.restrict (fun u _ => h u)) := by
     intro Y h hY
     refine LinearMap.ext fun u => Subtype.ext ?_
-    simp only [Module.End.mul_apply, LinearMap.restrict_coe_apply]
+    simp only [Module.End.mul_apply, LinearMap.coe_restrict_apply]
     rw [← Module.End.mul_apply X Y, hY.eq, Module.End.mul_apply]
   have hfix : ∀ (Y : Module.End K V) (h : ∀ v, Y v ∈ U), (∀ z ∈ X.eigenspace 1, Y z = 0) →
       ∀ z ∈ Module.End.eigenspace (X.restrict hXU) 1, Y.restrict (fun u _ => h u) z = 0 := by
     intro Y h hY z hz
     apply Subtype.ext
-    rw [LinearMap.restrict_coe_apply, Submodule.coe_zero]
+    rw [LinearMap.coe_restrict_apply, Submodule.coe_zero]
     apply hY
     rw [Module.End.mem_eigenspace_iff, one_smul] at hz ⊢
     exact congrArg Subtype.val hz
@@ -820,7 +832,7 @@ theorem LieAbelian.of_restrict (hss : X.IsSemisimple) (U : Submodule K V)
     by_cases hμ : μ = 1
     · subst hμ; rw [hf₁ w hw, hf₂ w hw, map_zero, map_zero]
     · have := congrArg Subtype.val (LinearMap.congr_fun key ⟨w, hU μ hμ hw⟩)
-      simpa [Module.End.mul_apply, LinearMap.restrict_coe_apply] using this
+      simpa [Module.End.mul_apply, LinearMap.coe_restrict_apply] using this
 
 end Group
 

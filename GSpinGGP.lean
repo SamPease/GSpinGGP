@@ -28,8 +28,8 @@ import GSpinGGP.GGP.RegularNilpotent
 import GSpinGGP.Foundations.SoSplit
 import GSpinGGP.Foundations.MatrixBaseChange
 import GSpinGGP.Foundations.JordanAlgebra
-import GSpinGGP.GGP.SemisimpleRank
-import GSpinGGP.GGP.JointCentralizer
+import GSpinGGP.Foundations.SemisimpleRank
+import GSpinGGP.Foundations.JointCentralizer
 import GSpinGGP.GGP.JointRank
 import GSpinGGP.GGP.LieRank
 import GSpinGGP.GGP.RegularNilpotentConverse
