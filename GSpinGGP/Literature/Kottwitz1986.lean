@@ -65,15 +65,17 @@ end GGPData
 /-- **Fundamental tori** (Kottwitz, *Stable trace formula: elliptic singular terms*, Math. Ann. 275
 (1986), §10, Lemma 10.2, p. 397: for `F` `p`-adic or real and `G` a connected reductive group over
 `F`, "Let `T` be a fundamental torus of `G`. Then `H¹(F,T) → H¹(F,G)` is surjective"; a maximal
-`F`-torus is *fundamental* if the dimension of its split component is as small as possible).
+`F`-torus is *fundamental* if the dimension of its split component is as small as possible; "in
+the `p`-adic case fundamental tori are elliptic").
 
 Applied to `G = SO(W)_{W'_x} ≅ SO(W''_x)` (connected reductive), with `F̄`-points
 `fixerBar d x`, and `T = S_x`, with `F̄`-points `torusBarFbar d x ⊆ fixerBar d x`
 (`torusBarFbar_le_fixerBar`), for `x ∈ Γ(G,H)`:
 * `S_x` is a maximal torus of `SO(W)_{W'_x}`: it is `Z_{SO(W''_x)}(x̄'')`, the centralizer of the
-  semisimple element `x̄'' = P(x)|_{W''_x}` (connected, as the image of the connected `T_x`,
-  Steinberg; abelian for `x ∈ Γ(G,H)`), and the centralizer of a semisimple element contains a
-  maximal torus;
+  semisimple element `x̄'' = P(x)|_{W''_x}` (connected, `SO(E₋₁) × ∏ GL(E_λ)` since `x̄''` has no
+  eigenvalue `1`; equal to `P(T_x(F̄))` since `P(g)` commuting with `x̄` gives `g x g⁻¹ = ±x`, with
+  sign `+1` on the connected group; abelian for `x ∈ Γ(G,H)`), and the centralizer of a semisimple
+  element contains a maximal torus;
 * `S_x` is anisotropic (`S_x(F) = T_x(F)/A_{G,H}(F)` is compact, `IsGammaElt`), so its split
   component is trivial, of the smallest possible dimension `0`: `S_x` is fundamental.
 The statement is written in cocycles: every continuous cocycle `c` with values in
