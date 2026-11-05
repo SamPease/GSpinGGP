@@ -12,7 +12,9 @@ import Mathlib
 * `trailingCoeff_charpoly_of_isCompl`: for `E = ker f ⊕ C` with `C` stable, the trailing
   coefficient of the characteristic polynomial of `f` is `± det (f|_C)`, and `det (f|_C) ≠ 0`;
 * `disjoint_ker_range_of_isSemisimple`, `isCompl_ker_range_of_isSemisimple`: `E = ker f ⊕ im f` for
-  semisimple `f`.
+  semisimple `f`;
+* `pow_finrank_eq_one_of_conj_eq_smul`: if `g u g⁻¹ = c • u` for units of a finite-dimensional
+  algebra, then `c ^ dim = 1` (by the norm).
 -/
 
 open Filter Topology
@@ -125,5 +127,15 @@ theorem isCompl_ker_range_of_isSemisimple {K V : Type*} [Field K] [AddCommGroup 
   refine (Submodule.isCompl_iff_disjoint _ _ ?_).2 (disjoint_ker_range_of_isSemisimple hf)
   have := LinearMap.finrank_range_add_finrank_ker f
   omega
+
+/-- **A conjugate of a unit by a scalar multiple**: in a finite-dimensional algebra, if
+`g u g⁻¹ = c • u` for a unit `u`, then `c ^ dim A = 1` (apply `Algebra.norm`). -/
+theorem pow_finrank_eq_one_of_conj_eq_smul {K A : Type*} [Field K] [Ring A] [Algebra K A]
+    [FiniteDimensional K A] {u g : Aˣ} {c : K}
+    (h : ((g * u * g⁻¹ : Aˣ) : A) = c • (u : A)) : c ^ Module.finrank K A = 1 := by
+  have := congrArg (Algebra.norm K) h
+  rw [Algebra.smul_def, map_mul, Algebra.norm_algebraMap, Units.val_mul, Units.val_mul,
+    map_mul, map_mul, mul_right_comm, ← map_mul, Units.mul_inv, map_one, one_mul] at this
+  exact (mul_eq_right₀ ((u.isUnit.map (Algebra.norm K)).ne_zero)).1 this.symm
 
 end GSpinGGP

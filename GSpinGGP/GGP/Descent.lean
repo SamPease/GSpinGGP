@@ -581,17 +581,13 @@ theorem exists_scalarPair_of_specP_eq {g g' : d.G}
     (h1 : specP d.QW (d.fst g) = specP d.QW (d.fst g'))
     (h2 : specP d.QV (d.snd g) = specP d.QV (d.snd g')) :
     ∃ c₁ c₂ : Kˣ, g = g' * d.scalarPair c₁ c₂ := by
-  obtain ⟨c₁, hc₁⟩ : (d.fst g')⁻¹ * d.fst g ∈ (scalarGSpin d.QW).range := by
-    rw [← ker_specP d.nondeg, MonoidHom.mem_ker, map_mul, map_inv, h1, inv_mul_cancel]
-  obtain ⟨c₂, hc₂⟩ : (d.snd g')⁻¹ * d.snd g ∈ (scalarGSpin d.QV).range := by
-    rw [← ker_specP d.nondeg_QV, MonoidHom.mem_ker, map_mul, map_inv, h2, inv_mul_cancel]
+  obtain ⟨c₁, hc₁⟩ := exists_eq_mul_scalarGSpin_of_specP_eq d.nondeg h1
+  obtain ⟨c₂, hc₂⟩ := exists_eq_mul_scalarGSpin_of_specP_eq d.nondeg_QV h2
   refine ⟨c₁, c₂, d.G_ext ?_ ?_⟩
   · rw [map_mul, scalarPair, fst_pair]
-    show d.fst g = d.fst g' * scalarGSpin d.QW c₁
-    rw [hc₁, mul_inv_cancel_left]
+    exact hc₁
   · rw [map_mul, scalarPair, snd_pair]
-    show d.snd g = d.snd g' * scalarGSpin d.QV c₂
-    rw [hc₂, mul_inv_cancel_left]
+    exact hc₂
 
 /-- The conjugation action of `G(F)` on the ambient
 algebra `C(W) × C(V)` (in particular on `𝔤⁰`) depends only on the image of `g` in
