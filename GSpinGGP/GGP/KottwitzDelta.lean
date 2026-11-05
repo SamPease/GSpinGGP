@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.GGP.TorusFrame
 import GSpinGGP.GGP.StableCocycleSurj
+import GSpinGGP.GGP.CliffordDescent
+import TauCeti.LinearAlgebra.CliffordAlgebra.Functoriality
 
 /-!
 # The connecting map `H¹(F, S_x) → H²(F, F̄^×)`, concretely
@@ -20,9 +22,11 @@ For `x ∈ Γ(G,H)` the exact sequence `1 → F̄^× → T_x(F̄) → S_x(F̄) �
   `φ_a⁻¹ ι⁻¹ φ_b`).
 * `DRel.isometryEquiv`: conversely `DRel a b` gives `W_α ≅ W_β`, from
   `nonempty_isometryEquiv_of_galObstruction_eq` (two twists of `U` whose cocycles have continuous
-  lifts to `GSpin(U)(F̄)` with equal obstructions are isometric; own work, by descent of the
-  Clifford algebra and the classification of quadratic forms over `F` by rank, discriminant and
-  Clifford invariant).
+  lifts to `GSpin(U)(F̄)` with equal obstructions are isometric): the twist of `C(ψ)` by the
+  quotient of the lifts is split by Hilbert 90 for the units of `C(U₁)` or `C⁺(U₁)`
+  (`exists_units_eq_inv_mul_act`), so `C(U₁) ≅ C(U₂)` (resp. `C⁺`) over `F`
+  (`nonempty_algEquiv_of_twist`), and Tau Ceti's classification by rank, discriminant and Clifford
+  invariant applies (`nonempty_isometryEquiv_of_cliffordAlgEquiv`).
 -/
 
 noncomputable section
@@ -37,27 +41,6 @@ open TwistDescent
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
 local notation "Kb" => AlgebraicClosure F
-
-/-- `t : Γ_F → X` is continuous: it factors through `Gal(E/F)` for a finite extension `E`. -/
-def IsGalContinuous {X : Type*} (t : GalF F → X) : Prop :=
-  ∃ E : IntermediateField F Kb, FiniteDimensional F E ∧
-    ∀ σ τ : GalF F, (∀ e ∈ E, σ e = τ e) → t σ = t τ
-
-omit [PAdicField F] in
-theorem IsGalContinuous.mul {G : Type*} [Mul G] {t s : GalF F → G} (ht : IsGalContinuous t)
-    (hs : IsGalContinuous s) : IsGalContinuous (t * s) := by
-  obtain ⟨E₁, h₁, he₁⟩ := ht
-  obtain ⟨E₂, h₂, he₂⟩ := hs
-  refine ⟨E₁ ⊔ E₂, inferInstance, fun σ τ h => ?_⟩
-  simp only [Pi.mul_apply]
-  rw [he₁ σ τ fun e he => h e (le_sup_left (a := E₁) he),
-    he₂ σ τ fun e he => h e (le_sup_right (a := E₁) he)]
-
-omit [PAdicField F] in
-theorem IsGalContinuous.inv {G : Type*} [Inv G] {t : GalF F → G} (ht : IsGalContinuous t) :
-    IsGalContinuous t⁻¹ := by
-  obtain ⟨E, hE, h⟩ := ht
-  exact ⟨E, hE, fun σ τ hστ => by simp only [Pi.inv_apply, h σ τ hστ]⟩
 
 section Generic
 
@@ -149,30 +132,227 @@ theorem galObstruction_mul_central (t μ : GalF F → GSpin (Q.baseChange Kb))
         rw [← e1]; group
     _ = _ := by rw [← e2]; group
 
-/-- **Twists with equal obstructions are isometric.** Let `φᵢ : U_{F̄} ≅ Uᵢ_{F̄}` (`i = 1, 2`) and
-let `t`, `s` be continuous lifts to `GSpin(U)(F̄)` of their cocycles `σ ↦ φᵢ⁻¹ ∘ σφᵢ` with equal
-obstructions `t_σ σ(t_τ) t_{στ}⁻¹ = s_σ σ(s_τ) s_{στ}⁻¹`. Then `U₁ ≅ U₂` over `F`.
+end Generic
 
-Own work (the connecting map `H¹(F, SO(U)) → H²(F, F̄^×)` of
-`1 → F̄^× → GSpin(U) → SO(U) → 1` on twists, without `H²`): `σ ↦ s_σ t_σ⁻¹`, transported by
-`C(φ₁)`, is a `1`-cocycle in `GSpin(U₁)(F̄)` lifting the cocycle of `φ₂ φ₁⁻¹`; Hilbert 90 for the
-units of the Clifford algebra `C(U₁)` (or of `C⁺(U₁)`, whichever is central simple) shows the
-twisted algebra, which is `C(U₂)` (resp. `C⁺(U₂)`), is isomorphic to `C(U₁)` (resp. `C⁺(U₁)`). So `U₁`, `U₂`
-have the same rank, discriminant and Clifford invariant, and are isometric by the classification of
-quadratic forms over `p`-adic fields (Tau Ceti's
-`RegularFormClass.eq_iff_rank_eq_and_signedDiscr_eq_and_cliffordInvariant_eq`). -/
-theorem nonempty_isometryEquiv_of_galObstruction_eq [FiniteDimensional F V] (hQ : IsNondeg Q)
-    {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂}
+section Twist
+
+open TorusTransfer
+
+variable {V V₁ : Type*} [AddCommGroup V] [Module F V] [AddCommGroup V₁] [Module F V₁]
+
+/-- If `t` lifts `φ⁻¹ ∘ σφ`, then `σ(C(φ) z) = C(φ)(t σ(z) t⁻¹)`. -/
+theorem galC_map_of_lift {Q : QuadraticForm F V} {Q₁ : QuadraticForm F V₁}
+    (φ : (Q.baseChange Kb).IsometryEquiv (Q₁.baseChange Kb)) (σ : GalF F)
+    (t : GSpin (Q.baseChange Kb)) (h : ∀ w, specP _ t w = φ.symm (galIso σ φ w))
+    (z : CliffordAlgebra (Q.baseChange Kb)) :
+    galC Q₁ σ (CliffordAlgebra.map φ.toIsometry z) = CliffordAlgebra.map φ.toIsometry
+      (((t : (CliffordAlgebra (Q.baseChange Kb))ˣ) : CliffordAlgebra (Q.baseChange Kb)) *
+        galC Q σ z * (((t : (CliffordAlgebra (Q.baseChange Kb))ˣ)⁻¹ :
+          (CliffordAlgebra (Q.baseChange Kb))ˣ) : CliffordAlgebra (Q.baseChange Kb))) := by
+  have e : ∀ w, galIso σ φ w = ((specPIso t).trans φ) w := fun w => by
+    change galIso σ φ w = φ (specP _ t w)
+    rw [h, QuadraticMap.IsometryEquiv.apply_symm_apply]
+  rw [galC_map, map_isometryEquiv_congr e, map_trans_apply, map_specPIso_apply]
+
+/-- Twists by `F̄`-isometries whose matrix has Galois-fixed determinant have the same
+discriminant. -/
+theorem sameDisc_of_det_glOf_fixed {m : ℕ} {Q₁ Q₂ : QuadraticForm F (Fin m → F)}
+    (ψ : (Q₁.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb))
+    (h : ∀ σ : GalF F, σ ((glOf ψ : Matrix (Fin m) (Fin m) Kb).det) =
+      (glOf ψ : Matrix (Fin m) (Fin m) Kb).det) : SameDisc Q₁ Q₂ := by
+  obtain ⟨c, hc⟩ := (InfiniteGalois.mem_range_algebraMap_iff_fixed _).2 h
+  have hX : IsUnit (glOf ψ : Matrix (Fin m) (Fin m) Kb).det :=
+    (Matrix.isUnit_iff_isUnit_det _).1 (glOf ψ).isUnit
+  have hc0 : c ≠ 0 := by
+    rintro rfl; rw [map_zero] at hc; exact hX.ne_zero hc.symm
+  have hg := congrArg Matrix.det (gram_glOf ψ)
+  have e₁ : (Q₁.toMatrix'.map (algebraMap F Kb)).det = algebraMap F Kb Q₁.toMatrix'.det :=
+    (RingHom.map_det _ _).symm
+  have e₂ : (Q₂.toMatrix'.map (algebraMap F Kb)).det = algebraMap F Kb Q₂.toMatrix'.det :=
+    (RingHom.map_det _ _).symm
+  rw [Matrix.det_mul, Matrix.det_mul, Matrix.det_transpose, e₁, e₂, ← hc] at hg
+  refine ⟨c⁻¹, inv_ne_zero hc0, (algebraMap F Kb).injective ?_⟩
+  simp only [QuadraticForm.discr']
+  rw [map_mul, map_pow, map_inv₀, ← hg]
+  field_simp [(map_ne_zero (algebraMap F Kb)).2 hc0]
+
+/-- If `t` lifts `φ⁻¹ ∘ σφ`, the matrix of `σφ` is that of `φ` times `P(t)`. -/
+theorem glOf_galIso_of_lift {m : ℕ} {Q Q₁ : QuadraticForm F (Fin m → F)}
+    (φ : (Q.baseChange Kb).IsometryEquiv (Q₁.baseChange Kb)) (σ : GalF F)
+    (t : GSpin (Q.baseChange Kb)) (h : ∀ w, specP _ t w = φ.symm (galIso σ φ w)) :
+    glOf (galIso σ φ) = glOf φ * specMatFbar Q t := by
+  rw [← glOf_specPIso, ← glOf_trans]
+  refine glOf_congr fun w => ?_
+  change galIso σ φ w = φ (specP _ t w)
+  rw [h, QuadraticMap.IsometryEquiv.apply_symm_apply]
+
+/-- **Twists with equal obstructions have isomorphic Clifford subalgebras**: the quotient
+`w_σ = s_σ t_σ⁻¹` of the lifts, transported by `C(φ₁)`, is a cocycle in `GSpin(Q₁)(F̄)` twisting
+`C(ψ)`, `ψ = φ₂ ∘ φ₁⁻¹` (`nonempty_algEquiv_of_twist`). -/
+theorem nonempty_algEquiv_of_galObstruction_eq {m : ℕ} {Q Q₁ Q₂ : QuadraticForm F (Fin m → F)}
     (φ₁ : (Q.baseChange Kb).IsometryEquiv (Q₁.baseChange Kb))
     (φ₂ : (Q.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb))
     (t s : GalF F → GSpin (Q.baseChange Kb)) (ht : IsGalContinuous t) (hs : IsGalContinuous s)
     (hta : ∀ σ w, specP _ (t σ) w = φ₁.symm (galIso σ φ₁ w))
     (hsb : ∀ σ w, specP _ (s σ) w = φ₂.symm (galIso σ φ₂ w))
-    (hobs : galObstruction Q t = galObstruction Q s) :
-    Nonempty (Q₁.IsometryEquiv Q₂) :=
-  sorry
+    (hscal : ∀ σ τ, galObstruction Q t σ τ ∈ (scalarGSpin (Q.baseChange Kb)).range)
+    (hobs : galObstruction Q t = galObstruction Q s)
+    (C₁ : Subalgebra F (CliffordAlgebra Q₁)) (C₂ : Subalgebra F (CliffordAlgebra Q₂))
+    [IsSimpleRing C₁]
+    (hC₁ : ∀ g ∈ GSpin (Q₁.baseChange Kb),
+      (g : CliffordAlgebra (Q₁.baseChange Kb)) ∈ bcSub Q₁ C₁)
+    (hΘ₁ : ∀ y ∈ bcSub Q₁ C₁, CliffordAlgebra.map (φ₁.symm.trans φ₂).toIsometry y ∈ bcSub Q₂ C₂)
+    (hΘ₂ : ∀ y ∈ bcSub Q₂ C₂,
+      CliffordAlgebra.map (φ₁.symm.trans φ₂).symm.toIsometry y ∈ bcSub Q₁ C₁) :
+    Nonempty (C₁ ≃ₐ[F] C₂) := by
+  classical
+  -- `w_σ = s_σ t_σ⁻¹` is a cocycle for the action twisted by `t`
+  let w : GalF F → GSpin (Q.baseChange Kb) := fun σ => s σ * (t σ)⁻¹
+  have hw : ∀ σ τ, w (σ * τ) = w σ * (t σ * galGS Q σ (w τ) * (t σ)⁻¹) := by
+    intro σ τ
+    set l := galObstruction Q t σ τ with hl
+    have hcen : ∀ g, g * l = l * g := by
+      obtain ⟨c, hc⟩ := hscal σ τ
+      rw [hl, ← hc]; exact Subgroup.mem_center_iff.1 (scalarGSpin_mem_center _ c)
+    have e1 : t σ * galGS Q σ (t τ) = l * t (σ * τ) := by
+      simp only [hl, galObstruction]; group
+    have e2 : s σ * galGS Q σ (s τ) = l * s (σ * τ) := by
+      rw [hl, hobs]; simp only [galObstruction]; group
+    calc w (σ * τ) = s (σ * τ) * (t (σ * τ))⁻¹ := rfl
+      _ = l * s (σ * τ) * (t (σ * τ))⁻¹ * l⁻¹ := by
+          have := hcen (s (σ * τ) * (t (σ * τ))⁻¹)
+          rw [show l * s (σ * τ) * (t (σ * τ))⁻¹ * l⁻¹ =
+            (l * (s (σ * τ) * (t (σ * τ))⁻¹)) * l⁻¹ by group, ← this]
+          group
+      _ = (s σ * galGS Q σ (s τ)) * (t σ * galGS Q σ (t τ))⁻¹ := by rw [e1, e2]; group
+      _ = _ := by simp only [w, galGS_mul, galGS_inv]; group
+  -- transport to `C(Q₁)` by `C(φ₁)`
+  let Vu : GSpin (Q.baseChange Kb) → (bcSub Q₁ C₁)ˣ := fun g =>
+    { val := ⟨_, hC₁ _ (cliffUnits_mem_GSpin φ₁ g.2)⟩
+      inv := ⟨_, hC₁ _ (Subgroup.inv_mem _ (cliffUnits_mem_GSpin φ₁ g.2))⟩
+      val_inv := Subtype.ext (Units.mul_inv _)
+      inv_val := Subtype.ext (Units.inv_mul _) }
+  have hVu : ∀ g : GSpin (Q.baseChange Kb), ((Vu g : bcSub Q₁ C₁) :
+      CliffordAlgebra (Q₁.baseChange Kb)) = CliffordAlgebra.map φ₁.toIsometry
+        ((g : (CliffordAlgebra (Q.baseChange Kb))ˣ) : CliffordAlgebra (Q.baseChange Kb)) :=
+    fun _ => rfl
+  have hVui : ∀ g : GSpin (Q.baseChange Kb), (((Vu g)⁻¹ : (bcSub Q₁ C₁)ˣ) :
+      CliffordAlgebra (Q₁.baseChange Kb)) = CliffordAlgebra.map φ₁.toIsometry
+        (((g : (CliffordAlgebra (Q.baseChange Kb))ˣ)⁻¹ : (CliffordAlgebra (Q.baseChange Kb))ˣ) :
+          CliffordAlgebra (Q.baseChange Kb)) :=
+    fun _ => rfl
+  have hwc : IsGalContinuous w := hs.mul ht.inv
+  obtain ⟨E, hE, hEw⟩ := hwc
+  refine nonempty_algEquiv_of_twist C₁ C₂ (Module.finBasis F C₁) (Module.finBasis F C₂)
+    (CliffordAlgebra.equivOfIsometry (φ₁.symm.trans φ₂)) hΘ₁ (fun y hy => ?_) (fun σ => Vu (w σ))
+    ⟨E, hE, fun σ τ h => congrArg Vu (hEw σ τ h)⟩ (fun σ τ => ?_) (fun σ z => ?_)
+  · rw [CliffordAlgebra.equivOfIsometry_symm]; exact hΘ₂ y hy
+  · rw [hVu, hVu, hVu, galC_map_of_lift φ₁ σ (t σ) (hta σ), ← map_mul]
+    congr 1
+    exact congrArg (fun g : GSpin (Q.baseChange Kb) =>
+      ((g : (CliffordAlgebra (Q.baseChange Kb))ˣ) : CliffordAlgebra (Q.baseChange Kb))) (hw σ τ)
+  · set T : CliffordAlgebra (Q.baseChange Kb) := ((t σ : (CliffordAlgebra (Q.baseChange Kb))ˣ) :
+      CliffordAlgebra (Q.baseChange Kb))
+    set Ti : CliffordAlgebra (Q.baseChange Kb) := (((t σ : (CliffordAlgebra (Q.baseChange Kb))ˣ)⁻¹ :
+      (CliffordAlgebra (Q.baseChange Kb))ˣ) : CliffordAlgebra (Q.baseChange Kb))
+    set S : CliffordAlgebra (Q.baseChange Kb) := ((s σ : (CliffordAlgebra (Q.baseChange Kb))ˣ) :
+      CliffordAlgebra (Q.baseChange Kb))
+    set Si : CliffordAlgebra (Q.baseChange Kb) := (((s σ : (CliffordAlgebra (Q.baseChange Kb))ˣ)⁻¹ :
+      (CliffordAlgebra (Q.baseChange Kb))ˣ) : CliffordAlgebra (Q.baseChange Kb))
+    have hTiT : Ti * T = 1 := Units.inv_mul _
+    have key : galC Q σ (CliffordAlgebra.map φ₁.symm.toIsometry z) =
+        Ti * CliffordAlgebra.map φ₁.symm.toIsometry (galC Q₁ σ z) * T := by
+      have h1 := galC_map_of_lift φ₁ σ (t σ) (hta σ) (CliffordAlgebra.map φ₁.symm.toIsometry z)
+      rw [map_map_symm] at h1
+      rw [h1, map_symm_map, ← mul_assoc, ← mul_assoc, hTiT, one_mul, mul_assoc, hTiT, mul_one]
+    have hw1 : ((w σ : (CliffordAlgebra (Q.baseChange Kb))ˣ) : CliffordAlgebra (Q.baseChange Kb)) =
+        S * Ti := rfl
+    have hw2 : (((w σ : (CliffordAlgebra (Q.baseChange Kb))ˣ)⁻¹ :
+        (CliffordAlgebra (Q.baseChange Kb))ˣ) :
+        CliffordAlgebra (Q.baseChange Kb)) = T * Si := by
+      simp only [w, Subgroup.coe_mul, Subgroup.coe_inv, mul_inv_rev, inv_inv, Units.val_mul]
+      rfl
+    rw [CliffordAlgebra.equivOfIsometry_apply, CliffordAlgebra.equivOfIsometry_apply,
+      map_trans_apply, map_trans_apply, galC_map_of_lift φ₂ σ (s σ) (hsb σ), key, hVu, hVui,
+      map_mul (CliffordAlgebra.map φ₁.symm.toIsometry),
+      map_mul (CliffordAlgebra.map φ₁.symm.toIsometry), map_symm_map, map_symm_map, hw1, hw2]
+    simp only [mul_assoc]
+    rfl
 
-end Generic
+/-- **Twists with equal obstructions are isometric.** Let `φᵢ : U_{F̄} ≅ Uᵢ_{F̄}` (`i = 1, 2`) and
+let `t`, `s` be continuous lifts to `GSpin(U)(F̄)` of their cocycles `σ ↦ φᵢ⁻¹ ∘ σφᵢ` with equal
+obstructions `t_σ σ(t_τ) t_{στ}⁻¹ = s_σ σ(s_τ) s_{στ}⁻¹`. Then `U₁ ≅ U₂` over `F`. (The hypotheses
+that `U₁`, `U₂` are nondegenerate and that the obstructions are scalars are automatic: `Uᵢ ≅ U` over
+`F̄`, and the obstruction lies in `ker P`; they are assumed to keep the proof short.)
+
+Own work (the connecting map `H¹(F, SO(U)) → H²(F, F̄^×)` of
+`1 → F̄^× → GSpin(U) → SO(U) → 1` on twists, without `H²`): `σ ↦ s_σ t_σ⁻¹`, transported by
+`C(φ₁)`, is a `1`-cocycle in `GSpin(U₁)(F̄)` lifting the cocycle of `φ₂ φ₁⁻¹`; Hilbert 90 for the
+units of the Clifford algebra `C(U₁)` (or of `C⁺(U₁)`, whichever is central simple) shows the
+twisted algebra, which is `C(U₂)` (resp. `C⁺(U₂)`), is isomorphic to `C(U₁)` (resp. `C⁺(U₁)`). So
+`U₁`, `U₂` have the same rank, discriminant and Clifford invariant, and are isometric by the
+classification of quadratic forms over `p`-adic fields (Tau Ceti's
+`RegularFormClass.eq_iff_rank_eq_and_signedDiscr_eq_and_cliffordInvariant_eq`). -/
+theorem nonempty_isometryEquiv_of_galObstruction_eq {m : ℕ}
+    {Q Q₁ Q₂ : QuadraticForm F (Fin m → F)} (hQ : IsNondeg Q) (hQ₁ : IsNondeg Q₁)
+    (hQ₂ : IsNondeg Q₂)
+    (φ₁ : (Q.baseChange Kb).IsometryEquiv (Q₁.baseChange Kb))
+    (φ₂ : (Q.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb))
+    (t s : GalF F → GSpin (Q.baseChange Kb)) (ht : IsGalContinuous t) (hs : IsGalContinuous s)
+    (hta : ∀ σ w, specP _ (t σ) w = φ₁.symm (galIso σ φ₁ w))
+    (hsb : ∀ σ w, specP _ (s σ) w = φ₂.symm (galIso σ φ₂ w))
+    (hscal : ∀ σ τ, galObstruction Q t σ τ ∈ (scalarGSpin (Q.baseChange Kb)).range)
+    (hobs : galObstruction Q t = galObstruction Q s) :
+    Nonempty (Q₁.IsometryEquiv Q₂) := by
+  classical
+  -- equal discriminants: `det` of the matrix of `ψ` is Galois-fixed
+  have hdetinv : ∀ X : GL (Fin m) Kb,
+      ((X⁻¹ : GL (Fin m) Kb) : Matrix (Fin m) (Fin m) Kb).det *
+        (X : Matrix (Fin m) (Fin m) Kb).det = 1 :=
+    fun X => by rw [← Matrix.det_mul, ← Units.val_mul, inv_mul_cancel, Units.val_one,
+      Matrix.det_one]
+  have hd : SameDisc Q₁ Q₂ := sameDisc_of_det_glOf_fixed (φ₁.symm.trans φ₂) fun σ => by
+    have h1 : σ ((glOf (φ₁.symm.trans φ₂) : Matrix (Fin m) (Fin m) Kb).det) =
+        ((galGL m σ (glOf (φ₁.symm.trans φ₂)) : GL (Fin m) Kb) :
+          Matrix (Fin m) (Fin m) Kb).det := by
+      rw [coe_galGL]; exact RingHom.map_det (σ : Kb →+* Kb) _
+    have hψ : glOf (φ₁.symm.trans φ₂) = glOf φ₂ * (glOf φ₁)⁻¹ := by rw [glOf_trans, glOf_symm]
+    rw [h1, ← glOf_galIso, glOf_congr (e' := (galIso σ φ₁).symm.trans (galIso σ φ₂))
+      (galIso_symm_trans φ₁ φ₂ σ), glOf_trans, glOf_symm,
+      glOf_galIso_of_lift φ₁ σ (t σ) (hta σ), glOf_galIso_of_lift φ₂ σ (s σ) (hsb σ), hψ,
+      mul_inv_rev]
+    simp only [Units.val_mul, Matrix.det_mul, det_specMatFbar, mul_one]
+    have ht1 := hdetinv (specMatFbar Q (t σ))
+    rw [det_specMatFbar, mul_one] at ht1
+    rw [ht1, one_mul]
+  rcases Nat.even_or_odd m with hm | hm
+  · -- even dimension: the full Clifford algebras
+    have hn₁ := (isNondeg_iff_nondegenerate Q₁).1 hQ₁
+    have hm' : Even (Module.finrank F (Fin m → F)) := by rwa [Module.finrank_fin_fun]
+    have hs₁ := CliffordAlgebra.isSimpleRing_of_even_finrank hn₁ hm'
+    have : IsSimpleRing (⊤ : Subalgebra F (CliffordAlgebra Q₁)) :=
+      IsSimpleRing.of_ringEquiv
+        (Subalgebra.topEquiv (R := F) (A := CliffordAlgebra Q₁)).symm.toRingEquiv hs₁
+    obtain ⟨e⟩ := nonempty_algEquiv_of_galObstruction_eq φ₁ φ₂ t s ht hs hta hsb hscal hobs
+      ⊤ ⊤ (fun g _ => by rw [bcSub_top]; trivial) (fun y _ => by rw [bcSub_top]; trivial)
+      (fun y _ => by rw [bcSub_top]; trivial)
+    exact nonempty_isometryEquiv_of_cliffordAlgEquiv hQ₁ hQ₂ hd
+      (Or.inl ⟨hm, ⟨(Subalgebra.topEquiv.symm.trans e).trans Subalgebra.topEquiv⟩⟩)
+  · -- odd dimension: the even Clifford algebras
+    have hn₁ := (isNondeg_iff_nondegenerate Q₁).1 hQ₁
+    have hm' : Odd (Module.finrank F (Fin m → F)) := by rwa [Module.finrank_fin_fun]
+    have := TauCeti.CliffordAlgebra.isSimpleRing_even_of_odd_finrank hn₁ hm'
+    obtain ⟨e⟩ := nonempty_algEquiv_of_galObstruction_eq φ₁ φ₂ t s ht hs hta hsb hscal hobs
+      (CliffordAlgebra.even Q₁) (CliffordAlgebra.even Q₂)
+      (fun g hg => (mem_bcSub_even_iff Q₁).2 hg.1)
+      (fun y hy => (mem_bcSub_even_iff Q₂).2
+        (CliffordAlgebra.map_mem_even _ ((mem_bcSub_even_iff Q₁).1 hy)))
+      (fun y hy => (mem_bcSub_even_iff Q₁).2
+        (CliffordAlgebra.map_mem_even _ ((mem_bcSub_even_iff Q₂).1 hy)))
+    exact nonempty_isometryEquiv_of_cliffordAlgEquiv hQ₁ hQ₂ hd (Or.inr ⟨hm, ⟨e⟩⟩)
+
+end Twist
+
 
 namespace GalCocycle
 
@@ -424,15 +604,16 @@ theorem specP_apply_of_specMatFbar_eq {Q' : QuadraticForm F (Fin d.m → F)} {σ
 
 /-- **(B)**: `DRel`-related cocycles are cocycles of isometric twists
 (`nonempty_isometryEquiv_of_galObstruction_eq`). -/
-theorem DRel.isometryEquiv {Q₁ Q₂ : QuadraticForm F (Fin d.m → F)}
-    {a b : GalCocycle (d.torusBarFbar x)} (ha : IsTwistBy d.QW Q₁ a.toFun)
+theorem DRel.isometryEquiv {Q₁ Q₂ : QuadraticForm F (Fin d.m → F)} (hQ₁ : IsNondeg Q₁)
+    (hQ₂ : IsNondeg Q₂) {a b : GalCocycle (d.torusBarFbar x)} (ha : IsTwistBy d.QW Q₁ a.toFun)
     (hb : IsTwistBy d.QW Q₂ b.toFun) (h : DRel a b) : Nonempty (Q₁.IsometryEquiv Q₂) := by
   obtain ⟨t, s, ht, hs, he⟩ := h
   obtain ⟨φ₁, hφ₁⟩ := (isTwistBy_iff _ _ _).1 ha
   obtain ⟨φ₂, hφ₂⟩ := (isTwistBy_iff _ _ _).1 hb
-  exact nonempty_isometryEquiv_of_galObstruction_eq d.QW d.nondeg φ₁ φ₂ t s ht.1 hs.1
+  exact nonempty_isometryEquiv_of_galObstruction_eq d.nondeg hQ₁ hQ₂ φ₁ φ₂ t s ht.1 hs.1
     (fun σ => specP_apply_of_specMatFbar_eq ((ht.2 σ).2.trans (hφ₁ σ)))
-    (fun σ => specP_apply_of_specMatFbar_eq ((hs.2 σ).2.trans (hφ₂ σ))) he
+    (fun σ => specP_apply_of_specMatFbar_eq ((hs.2 σ).2.trans (hφ₂ σ)))
+    (ht.obstruction_mem) he
 
 end GalCocycle
 

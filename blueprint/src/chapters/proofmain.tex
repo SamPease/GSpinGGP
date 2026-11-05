@@ -395,14 +395,19 @@ of $W$, the sign is multiplicative.
 \lean{GSpinGGP.nonempty_isometryEquiv_of_galObstruction_eq}
 \leanok
 \uses{GSpin}
-If the cocycles of $\varphi_i\colon U_{\bar F}\cong U_{i,\bar F}$ have continuous lifts to $\mathrm{GSpin}(U)(\bar F)$ with
-equal obstructions, then $U_1\cong U_2$ over $F$.
+Let $U,U_1,U_2$ be nondegenerate. If the cocycles of $\varphi_i\colon U_{\bar F}\cong U_{i,\bar F}$ have continuous lifts to
+$\mathrm{GSpin}(U)(\bar F)$ with equal (scalar) obstructions, then $U_1\cong U_2$ over $F$.
 \end{lemma}
 \begin{proof}
-Own work; not yet formalized. The quotient of the lifts is a $1$-cocycle in $\mathrm{GSpin}(U_1)(\bar F)$ lifting the
-cocycle of $\varphi_2\varphi_1^{-1}$. Hilbert 90 for the units of the Clifford algebra (or its even part, whichever is
-central simple) shows the twisted algebra is isomorphic to the untwisted one, so $U_1,U_2$ have the same Clifford
-invariant, rank and discriminant, hence are isometric over the $p$-adic field $F$.
+\leanok
+\uses{padic_quadratic_classes}
+Own work. The quotient $v_\sigma=\varphi_1 s_\sigma t_\sigma^{-1}\varphi_1^{-1}$ of the lifts is a $1$-cocycle in
+$\mathrm{GSpin}(U_1)(\bar F)$, and $C(\psi)$, $\psi=\varphi_2\varphi_1^{-1}$, satisfies $\sigma(C(\psi)z)=C(\psi)(v_\sigma\sigma(z)v_\sigma^{-1})$.
+Hilbert 90 for the units of the central simple algebra $C(U_1)$ (even dimension) or $C^+(U_1)$ (odd dimension), deduced from
+Hilbert 90 for $\mathrm{GL}_N$ and the fact that modules of equal dimension over a simple algebra are isomorphic, gives
+$v_\sigma=u^{-1}\sigma(u)$; then $z\mapsto C(\psi)(u^{-1}zu)$ is Galois-equivariant and descends to $C(U_1)\cong C(U_2)$ (resp.
+$C^+$). The discriminants agree since $\det\psi$ is Galois-fixed, so $U_1\cong U_2$ by the classification of quadratic forms over
+$F$ by rank, discriminant and Clifford invariant.
 \end{proof}
 
 \begin{lemma}[A twist into the other form: the plane case]

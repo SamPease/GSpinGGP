@@ -60,9 +60,10 @@ theorem kottwitzSign_twistIdx_mul {d : GGPData F} (hqs : d.IsQuasiSplit) (IF : I
   have hcab : GalCocycle.DRel c (mul a b) := GalCocycle.DRel.of_toFun_eq (funext hc)
   -- `W_u ≅ W` iff `u` is `DRel`-related to the trivial cocycle
   have iso_of {u u' : GalCocycle (d.torusBarFbar x)} {Q : QuadraticForm F (Fin d.m → F)}
-      (hu : IsTwistBy d.QW Q u.toFun) (h : GalCocycle.DRel u' one) (h' : GalCocycle.DRel u u') :
+      (hQ : IsNondeg Q) (hu : IsTwistBy d.QW Q u.toFun) (h : GalCocycle.DRel u' one)
+      (h' : GalCocycle.DRel u u') :
       Nonempty (d.QW.IsometryEquiv Q) :=
-    GalCocycle.DRel.isometryEquiv h1 hu (h'.trans h).symm
+    GalCocycle.DRel.isometryEquiv d.nondeg hQ h1 hu (h'.trans h).symm
   have rel_of {u : GalCocycle (d.torusBarFbar x)} {Q : QuadraticForm F (Fin d.m → F)}
       (hu : IsTwistBy d.QW Q u.toFun) (h : Nonempty (d.QW.IsometryEquiv Q)) :
       GalCocycle.DRel u one :=
@@ -83,7 +84,8 @@ theorem kottwitzSign_twistIdx_mul {d : GGPData F} (hqs : d.IsQuasiSplit) (IF : I
   · -- `c ~ b`
     have hcb : GalCocycle.DRel c' b' :=
       ((Dc.trans hcab).trans (mul_one' ((Da.symm.trans (rel_of ha' A))))).trans Db.symm
-    obtain ⟨e⟩ := GalCocycle.DRel.isometryEquiv hc' hb' hcb
+    obtain ⟨e⟩ :=
+      GalCocycle.DRel.isometryEquiv (IF.twist γ).nondeg' (IF.twist β).nondeg' hc' hb' hcb
     have : Nonempty (d.QW.IsometryEquiv (IF.twist γ).Q') ↔
         Nonempty (d.QW.IsometryEquiv (IF.twist β).Q') :=
       ⟨fun ⟨f⟩ => ⟨f.trans e⟩, fun ⟨f⟩ => ⟨f.trans e.symm⟩⟩
@@ -94,7 +96,8 @@ theorem kottwitzSign_twistIdx_mul {d : GGPData F} (hqs : d.IsQuasiSplit) (IF : I
     have hca : GalCocycle.DRel c' a' :=
       (((Dc.trans hcab).trans hba).trans (mul_one' ((Db.symm.trans (rel_of hb' B))))).trans
         Da.symm
-    obtain ⟨e⟩ := GalCocycle.DRel.isometryEquiv hc' ha' hca
+    obtain ⟨e⟩ :=
+      GalCocycle.DRel.isometryEquiv (IF.twist γ).nondeg' (IF.twist α).nondeg' hc' ha' hca
     have : Nonempty (d.QW.IsometryEquiv (IF.twist γ).Q') ↔
         Nonempty (d.QW.IsometryEquiv (IF.twist α).Q') :=
       ⟨fun ⟨f⟩ => ⟨f.trans e⟩, fun ⟨f⟩ => ⟨f.trans e.symm⟩⟩
@@ -118,6 +121,6 @@ theorem kottwitzSign_twistIdx_mul {d : GGPData F} (hqs : d.IsQuasiSplit) (IF : I
         rw [hc, (hcomm _ (a.mem' σ) _ (b.mem' σ)).eq, mul_inv_cancel_right]
       · show a.toFun σ * (a.toFun σ)⁻¹ = 1
         exact mul_inv_cancel _
-    exact B (iso_of hb' hb1 Db)
+    exact B (iso_of (IF.twist β).nondeg' hb' hb1 Db)
 
 end GSpinGGP
