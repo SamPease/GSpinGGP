@@ -97,7 +97,20 @@ theorem ratAt_symm (hg : g ∈ GSpin (Q₂.baseChange (AlgebraicClosure F))) {x 
   rw [h]
   exact (psiA_symm_psiA φ g _).symm
 
+/-- **Strong stable conjugacy is symmetric**: for rational `x ∈ GSpin(Q₁)(F)`, `x ∼ y` through `φ`
+gives `y ∼ x` through `φ⁻¹` (transitivity: `StronglyStablyConjVia.trans`, in `TorusTransfer`;
+for `φ, φ'` with the same underlying map use `DFunLike.ext φ φ' h ▸ _`). -/
+theorem StronglyStablyConjVia.symm {x : GSpin Q₁} {y : (CliffordAlgebra Q₂)ˣ}
+    (h : StronglyStablyConjVia φ (x : (CliffordAlgebra Q₁)ˣ) y) :
+    StronglyStablyConjVia φ.symm y (x : (CliffordAlgebra Q₁)ˣ) := by
+  obtain ⟨g, hg, hconj, hrat⟩ := h
+  refine ⟨cliffUnits φ.symm g⁻¹, cliffUnits_mem_GSpin φ.symm ((GSpin _).inv_mem hg), ?_,
+    ratAt_symm hg hrat hconj⟩
+  rw [← hconj]
+  exact psiU_symm_psiU φ g _
+
 end Inverse
+
 
 section Hom
 
