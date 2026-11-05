@@ -48,6 +48,8 @@ import GSpinGGP.Literature.Kottwitz1986
 import GSpinGGP.GGP.KottwitzDelta
 import GSpinGGP.GGP.KottwitzSign
 import GSpinGGP.GGP.Hilbert90
+import GSpinGGP.GGP.Hilbert90Units
+import GSpinGGP.GGP.CliffordDescent
 import GSpinGGP.Literature.Localization
 import GSpinGGP.Literature.Parabolic
 import GSpinGGP.TraceFormula.InvariantSets

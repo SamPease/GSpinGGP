@@ -300,6 +300,17 @@ theorem galIso_galV {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂} 
     galIso σ ψ (galV σ w) = galV σ (ψ w) := by
   rw [galIso_apply, galV_inv_galV]
 
+/-- `σ(φ₂ ∘ φ₁⁻¹) = σφ₂ ∘ (σφ₁)⁻¹`. -/
+theorem galIso_symm_trans {V₃ : Type*} [AddCommGroup V₃] [Module F V₃] {Q : QuadraticForm F V₃}
+    {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂}
+    (φ₁ : (Q.baseChange (AlgebraicClosure F)).IsometryEquiv (Q₁.baseChange (AlgebraicClosure F)))
+    (φ₂ : (Q.baseChange (AlgebraicClosure F)).IsometryEquiv (Q₂.baseChange (AlgebraicClosure F)))
+    (σ : GalF F) (w : AlgebraicClosure F ⊗[F] V₁) :
+    galIso σ (φ₁.symm.trans φ₂) w = galIso σ φ₂ ((galIso σ φ₁).symm w) := by
+  change galV σ (φ₂ (φ₁.symm (galV σ⁻¹ w))) =
+    galV σ (φ₂ (galV σ⁻¹ (galV σ (φ₁.symm (galV σ⁻¹ w)))))
+  rw [galV_inv_galV]
+
 /-- `σ(C(ψ) a) = C(σψ)(σ a)`. -/
 theorem galC_map {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂} (σ : GalF F)
     (ψ : (Q₁.baseChange (AlgebraicClosure F)).IsometryEquiv (Q₂.baseChange (AlgebraicClosure F)))

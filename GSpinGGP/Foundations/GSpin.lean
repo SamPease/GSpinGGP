@@ -4178,6 +4178,13 @@ theorem bcHom_algebraMap (Q : QuadraticForm K V) (c : K) :
   rw [Algebra.algebraMap_eq_smul_one, ← TensorProduct.smul_tmul,
     CliffordAlgebra.ofBaseChange_tmul_one, Algebra.smul_def, mul_one]
 
+/-- Base change is `K`-linear. -/
+theorem bcHom_smul (Q : QuadraticForm K V) (f : K) (x : CliffordAlgebra Q) :
+    bcHom Q (f • x) = f • bcHom Q x := by
+  rw [Algebra.smul_def, map_mul, bcHom_algebraMap, Algebra.smul_def,
+    IsScalarTower.algebraMap_apply K (AlgebraicClosure K)
+      (CliffordAlgebra (Q.baseChange (AlgebraicClosure K)))]
+
 /-- The Galois action `σ ⊗ 1` on `C(Q_{K̄}) ≅ K̄ ⊗ C(Q)`. -/
 def galC (Q : QuadraticForm K V) (σ : AlgebraicClosure K ≃ₐ[K] AlgebraicClosure K) :
     CliffordAlgebra (Q.baseChange (AlgebraicClosure K)) →+*
