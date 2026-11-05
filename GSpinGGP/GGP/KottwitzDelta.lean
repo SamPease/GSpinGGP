@@ -61,6 +61,7 @@ theorem IsGalContinuous.inv {G : Type*} [Inv G] {t : GalF F → G} (ht : IsGalCo
 section Generic
 
 variable {V : Type*} [AddCommGroup V] [Module F V] (Q : QuadraticForm F V)
+variable {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V₁] [AddCommGroup V₂] [Module F V₂]
 
 /-- The obstruction `t_σ σ(t_τ) t_{στ}⁻¹` of a family `t` in `GSpin(V)(F̄)` to being a cocycle. -/
 def galObstruction (t : GalF F → GSpin (Q.baseChange Kb)) (σ τ : GalF F) :
@@ -169,20 +170,26 @@ theorem galObstruction_mul_central (t μ : GalF F → GSpin (Q.baseChange Kb))
         rw [← e1]; group
     _ = _ := by rw [← e2]; group
 
-variable {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V₁] [AddCommGroup V₂] [Module F V₂]
+/-- **Twists with equal obstructions are isometric.** Let `φᵢ : U_{F̄} ≅ Uᵢ_{F̄}` (`i = 1, 2`) and
+let `t`, `s` be continuous lifts to `GSpin(U)(F̄)` of their cocycles `σ ↦ φᵢ⁻¹ ∘ σφᵢ` with equal
+obstructions `t_σ σ(t_τ) t_{στ}⁻¹ = s_σ σ(s_τ) s_{στ}⁻¹`. Then `U₁ ≅ U₂` over `F`.
 
-/-- **A twist whose cocycle lifts to `GSpin` is trivial.** If `ψ : U_{F̄} ≅ U'_{F̄}` and its cocycle
-`σ ↦ ψ⁻¹ ∘ σψ` is `P(v_σ)` for a continuous `1`-cocycle `v` in `GSpin(U)(F̄)`, then `U ≅ U'` over
-`F`. (Own work: `v` twists `C(U)` into `C(U')` by inner automorphisms; Hilbert 90 for the units of
-`C(U)` or `C⁺(U)` shows the twisted algebra is isomorphic to the untwisted one, so `U`, `U'` have the
-same Clifford invariant; they have the same rank and discriminant, so they are isometric by the
-classification of quadratic forms over `F`.) -/
-theorem nonempty_isometryEquiv_of_gspinCocycle [FiniteDimensional F V₁] {Q₁ : QuadraticForm F V₁}
-    {Q₂ : QuadraticForm F V₂} (hQ₁ : IsNondeg Q₁)
-    (ψ : (Q₁.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb))
-    (v : GalF F → GSpin (Q₁.baseChange Kb)) (hv : IsGalContinuous v)
-    (hcoc : ∀ σ τ, v (σ * τ) = v σ * galGS Q₁ σ (v τ))
-    (hlift : ∀ σ w, specP _ (v σ) w = ψ.symm (galIso σ ψ w)) :
+Own work (the injectivity of the connecting map `H¹(F, SO(U)) → H²(F, F̄^×)` of
+`1 → F̄^× → GSpin(U) → SO(U) → 1` on twists, without `H²`): `σ ↦ s_σ t_σ⁻¹`, transported by
+`C(φ₁)`, is a `1`-cocycle in `GSpin(U₁)(F̄)` lifting the cocycle of `φ₂ φ₁⁻¹`; Hilbert 90 for the
+units of the Clifford algebra `C(U₁)` (or of `C⁺(U₁)`, whichever is central simple) shows the twisted
+algebra, which is `C(U₂)` (resp. `C⁺(U₂)`), is isomorphic to `C(U₁)` (resp. `C⁺(U₁)`). So `U₁`, `U₂`
+have the same rank, discriminant and Clifford invariant, and are isometric by the classification of
+quadratic forms over `p`-adic fields (Tau Ceti's
+`RegularFormClass.eq_iff_rank_eq_and_signedDiscr_eq_and_cliffordInvariant_eq`). -/
+theorem nonempty_isometryEquiv_of_galObstruction_eq [FiniteDimensional F V] (hQ : IsNondeg Q)
+    {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂}
+    (φ₁ : (Q.baseChange Kb).IsometryEquiv (Q₁.baseChange Kb))
+    (φ₂ : (Q.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb))
+    (t s : GalF F → GSpin (Q.baseChange Kb)) (ht : IsGalContinuous t) (hs : IsGalContinuous s)
+    (hta : ∀ σ w, specP _ (t σ) w = φ₁.symm (galIso σ φ₁ w))
+    (hsb : ∀ σ w, specP _ (s σ) w = φ₂.symm (galIso σ φ₂ w))
+    (hobs : galObstruction Q t = galObstruction Q s) :
     Nonempty (Q₁.IsometryEquiv Q₂) :=
   sorry
 
@@ -388,7 +395,8 @@ theorem IsLift.conj {a b : GalCocycle (d.torusBarFbar x)} {t : GalF F → GSpin 
     (ht : IsLift a t) {h : GSpin (d.QW.baseChange Kb)}
     (hb : ∀ σ, b.toFun σ = (specMatFbar d.QW h)⁻¹ * a.toFun σ * galGL d.m σ (specMatFbar d.QW h))
     (hbmem : ∀ σ, galConj d.QW h t σ ∈ d.torusFbar x) :
-    IsLift b (galConj d.QW h t) ∧ galObstruction d.QW (galConj d.QW h t) = galObstruction d.QW t := by
+    IsLift b (galConj d.QW h t) ∧
+      galObstruction d.QW (galConj d.QW h t) = galObstruction d.QW t := by
   refine ⟨⟨isGalContinuous_galConj d.QW h ht.1, fun σ => ⟨hbmem σ, ?_⟩⟩, ?_⟩
   · rw [hb, GSpinGGP.galConj, map_mul, map_mul, map_inv, specMatFbar_galGS, (ht.2 σ).2]
   · ext1 σ; ext1 τ
@@ -479,10 +487,25 @@ theorem DRel.of_isometryEquiv {Q₁ Q₂ : QuadraticForm F (Fin d.m → F)} (hQ�
   have hl := ht.conj hbk hmem
   exact ⟨t, _, ht, hl.1, hl.2.symm⟩
 
+/-- A lift of the cocycle `σ ↦ φ⁻¹ σ(φ)`, in matrices, acts as `φ⁻¹ ∘ σφ`. -/
+theorem specP_apply_of_specMatFbar_eq {Q' : QuadraticForm F (Fin d.m → F)} {σ : GalF F}
+    {g : GSpin (d.QW.baseChange Kb)} {φ : (d.QW.baseChange Kb).IsometryEquiv (Q'.baseChange Kb)}
+    (h : specMatFbar d.QW g = (glOf φ)⁻¹ * galGL d.m σ (glOf φ)) (w : Kb ⊗[F] (Fin d.m → F)) :
+    specP _ g w = φ.symm (galIso σ φ w) :=
+  apply_eq_of_glOf_eq (e := specPIso g) (e' := (galIso σ φ).trans φ.symm)
+    (by rw [glOf_specPIso, h, glOf_trans, glOf_symm, glOf_galIso]) w
+
+/-- **(B)**: `DRel`-related cocycles are cocycles of isometric twists
+(`nonempty_isometryEquiv_of_galObstruction_eq`). -/
 theorem DRel.isometryEquiv {Q₁ Q₂ : QuadraticForm F (Fin d.m → F)}
     {a b : GalCocycle (d.torusBarFbar x)} (ha : IsTwistBy d.QW Q₁ a.toFun)
-    (hb : IsTwistBy d.QW Q₂ b.toFun) (h : DRel a b) : Nonempty (Q₁.IsometryEquiv Q₂) :=
-  sorry
+    (hb : IsTwistBy d.QW Q₂ b.toFun) (h : DRel a b) : Nonempty (Q₁.IsometryEquiv Q₂) := by
+  obtain ⟨t, s, ht, hs, he⟩ := h
+  obtain ⟨φ₁, hφ₁⟩ := (isTwistBy_iff _ _ _).1 ha
+  obtain ⟨φ₂, hφ₂⟩ := (isTwistBy_iff _ _ _).1 hb
+  exact nonempty_isometryEquiv_of_galObstruction_eq d.QW d.nondeg φ₁ φ₂ t s ht.1 hs.1
+    (fun σ => specP_apply_of_specMatFbar_eq ((ht.2 σ).2.trans (hφ₁ σ)))
+    (fun σ => specP_apply_of_specMatFbar_eq ((hs.2 σ).2.trans (hφ₂ σ))) he
 
 end GalCocycle
 

@@ -8,8 +8,10 @@ import GSpinGGP.GGP.WittParity
 /-!
 # Multiplicativity of the Kottwitz sign on `H¹(F, S_x)`
 
-A `sorry` theorem. Its exact ingredients (BP Astérisque 418, (12.1.6), for
-`SO(W) × SO(V)`; Kottwitz 1983) are listed in the docstring.
+`kottwitzSign_twistIdx_mul` (BP *Astérisque* 418, (12.1.6), with the sign of Kottwitz 1983),
+proved without Brauer groups from `GalCocycle.DRel` (`GGP/KottwitzDelta.lean`): the sign of `G_α` is
+`1` exactly when `W_α ≅ W`, and isometry of twists is the relation "lifts to `T_x(F̄)` with equal
+obstructions", which is compatible with products.
 -/
 
 noncomputable section
@@ -131,7 +133,8 @@ theorem kottwitzSign_twistIdx_mul {d : GGPData F} (hqs : d.IsQuasiSplit) (IF : I
       · exact absurd h C'
       · exact h
     have hac : GalCocycle.DRel (mul a (GalCocycle.invOf hx a)) (mul c (GalCocycle.invOf hx a)) :=
-      ((Da.symm.trans (GalCocycle.DRel.of_isometryEquiv (IF.twist γ).nondeg' ha' hc' hαγ)).trans Dc).mul_right hx _
+      ((Da.symm.trans (GalCocycle.DRel.of_isometryEquiv (IF.twist γ).nondeg' ha' hc' hαγ)).trans
+        Dc).mul_right hx _
     have hb1 : GalCocycle.DRel b one := by
       refine ((GalCocycle.DRel.of_toFun_eq (funext fun σ => ?_)).trans hac.symm).trans
         (GalCocycle.DRel.of_toFun_eq (funext fun σ => ?_))
