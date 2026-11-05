@@ -16,6 +16,7 @@ Galois-fixed `F̄`-basis of `Ā` (`Ā = F̄ ⊗ A`). Then every continuous `1`-c
 Proof (own work, standard): the twisted fixed vectors `B = {z : σ(z) = z v_σ}` form a left
 `A`-module; in coordinates, Hilbert 90 for `GL_N` (`hilbert90_GL`, applied to the matrices of right
 multiplication by `v_σ⁻¹`) shows that `B` has `F`-dimension `N = dim A` and spans `Ā` over `F̄`.
+(`exists_rmat_eq`, `exists_twisted_basis`)
 Since `A` is simple, `B ≅ A` (Tau Ceti `IsSimpleRing.nonempty_linearEquiv_of_finrank_eq`), so
 `B = A u`; then `Ā = Ā u`,
 `u` is a unit, and `σ(u) = u v_σ`.
@@ -142,7 +143,7 @@ theorem exists_rmat_eq (G : GalAlgAction F Ā e) (v : GalF F → Āˣ) (hv : IsG
 
 /-- **The twisted-fixed basis.** There is an `F̄`-basis `β` of `Ā` of vectors with
 `σ(β_j) = β_j v_σ`, in which every twisted-fixed vector has coordinates in `F`. -/
-theorem exists_twistedBasis (G : GalAlgAction F Ā e) (v : GalF F → Āˣ) (hv : IsGalContinuous v)
+theorem exists_twisted_basis (G : GalAlgAction F Ā e) (v : GalF F → Āˣ) (hv : IsGalContinuous v)
     (hcoc : ∀ σ τ, (v (σ * τ) : Ā) = v σ * G.act σ (v τ)) :
     ∃ (β : Fin N → Ā) (c : Ā → Fin N → Kb), (∀ σ j, G.act σ (β j) = β j * v σ) ∧
       (∀ z, z = ∑ j, c z j • β j) ∧
@@ -217,7 +218,7 @@ theorem exists_units_eq_inv_mul_act (G : GalAlgAction F Ā e) (ι : A →ₐ[F] 
     (hcoc : ∀ σ τ, (v (σ * τ) : Ā) = v σ * G.act σ (v τ)) :
     ∃ u : Āˣ, ∀ σ, (v σ : Ā) = (u⁻¹ : Āˣ) * G.act σ u := by
   classical
-  obtain ⟨β, c, hβB, hspan, hrat, hind⟩ := exists_twistedBasis G v hv hcoc
+  obtain ⟨β, c, hβB, hspan, hrat, hind⟩ := exists_twisted_basis G v hv hcoc
   -- `ι(A)` is Galois-fixed
   have hιfix : ∀ σ a, G.act σ (ι a) = ι a := by
     intro σ a
