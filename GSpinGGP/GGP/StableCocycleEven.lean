@@ -18,8 +18,8 @@ commuting with `P(x)` and trivial on the `-1`-eigenspace of `P(x)`; if `det R = 
 reflection of `W'_x` fixes the sign of `det R`.
 
 `GGPData.exists_isStableIso_of_isometry`: if `y` is stably conjugate to `x` and `W'_x ≅ W'_y` over `F`,
-then some `ψ` computes the class of `y` in `H¹(F, S_x)` (Thesis Prop. 6.6.1(iii), proof).  Own work,
-elementary.
+then some `ψ` computes the class of `y` in `H¹(F, S_x)` (a step toward the map `y ↦ [a]` of Thesis
+Prop. 6.6.1(iii)).  Own work, elementary.
 -/
 
 noncomputable section
@@ -33,38 +33,6 @@ variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
 local notation "Kb" => AlgebraicClosure F
 
-
-section Isometry
-
-variable {K V : Type*} [Field K] [Invertible (2 : K)] [AddCommGroup V] [Module K V]
-  [FiniteDimensional K V] {Q : QuadraticForm K V}
-
-omit [FiniteDimensional K V] in
-/-- An isometry of a nondegenerate form is injective. -/
-theorem injective_of_isometry (hQ : IsNondeg Q) {f : V →ₗ[K] V} (hf : ∀ w, Q (f w) = Q w) :
-    Function.Injective f := by
-  rw [← LinearMap.ker_eq_bot, LinearMap.ker_eq_bot']
-  intro w hw
-  refine hQ.1 w fun z => ?_
-  rw [← bform_isometry (⟨f, hf⟩ : Q →qᵢ Q) w z]
-  change bform Q (f w) (f z) = 0
-  rw [hw, map_zero, LinearMap.zero_apply]
-
-/-- An isometry of a nondegenerate form has determinant `±1`. -/
-theorem det_mul_self_of_isometry (hQ : IsNondeg Q) {f : V →ₗ[K] V} (hf : ∀ w, Q (f w) = Q w) :
-    LinearMap.det f * LinearMap.det f = 1 := by
-  have hi : IsomCent.IsIsom (bform Q) f := fun u v => bform_isometry (⟨f, hf⟩ : Q →qᵢ Q) u v
-  have hsymm : ∀ u w, bform Q u w = bform Q w u := fun u w => bform_comm Q u w
-  have h := IsomCent.det_mul_det_of_pairing (E := ⊤) (E' := ⊤) hi (fun _ _ => trivial)
-    (fun _ _ => trivial) (fun w _ hw => hQ.1 w fun u => by rw [hsymm]; exact hw u trivial)
-    (fun u _ hu => hQ.1 u fun w => hu w trivial)
-  have e : LinearMap.det (f.restrict (fun _ _ => trivial : Set.MapsTo f (⊤ : Submodule K V) ⊤)) =
-      LinearMap.det f := by
-    rw [← LinearMap.det_conj _ (Submodule.topEquiv : (⊤ : Submodule K V) ≃ₗ[K] V)]
-    congr 1
-  rwa [e] at h
-
-end Isometry
 
 namespace WitnessChange
 
@@ -97,46 +65,9 @@ theorem apply_specP_bcGSpin (ψ : (Q₁.baseChange Kb).IsometryEquiv (Q₂.baseC
       CliffordAlgebra.map ψ.toIsometry (ι _ w) * ((Y⁻¹ : (CliffordAlgebra _)ˣ) : CliffordAlgebra _)
   rw [map_mul, map_mul, h, hinv]
 
-omit [PAdicField F] in
-/-- Two `F̄`-linear maps out of `F̄ ⊗ V` agree if they agree on `1 ⊗ v`. -/
-theorem baseChange_hom_ext {M : Type*} [AddCommGroup M] [Module Kb M]
-    {f g : (Kb ⊗[F] V₁) →ₗ[Kb] M} (h : ∀ v, f (1 ⊗ₜ v) = g (1 ⊗ₜ v)) : f = g := by
-  ext w
-  induction w using TensorProduct.inductionOn with
-  | tmul a v =>
-    have e : (a ⊗ₜ[F] v : Kb ⊗[F] V₁) = a • (1 ⊗ₜ v) := by rw [TensorProduct.smul_tmul', smul_eq_mul, mul_one]
-    rw [e, map_smul, map_smul, h]
-  | add u w hu hw => rw [map_add, map_add, hu, hw]
-
-/-- A map `f` with `f ∘ P = f` kills the `-1`-eigenvectors of `P_{F̄}`. -/
-theorem baseChange_apply_eq_zero_of_neg {M : Type*} [AddCommGroup M] [Module F M]
-    {P : V₁ →ₗ[F] V₁} {w : Kb ⊗[F] V₁} (hw : P.baseChange Kb w = -w) (f : V₁ →ₗ[F] M)
-    (hf : f ∘ₗ P = f) : f.baseChange Kb w = 0 := by
-  have h1 : f.baseChange Kb w = -f.baseChange Kb w := by
-    conv_lhs => rw [← hf, LinearMap.baseChange_comp, LinearMap.comp_apply, hw]
-    rw [map_neg]
-  have h2 : (2 : Kb) • f.baseChange Kb w = 0 := by rw [two_smul]; nth_rewrite 1 [h1]; abel
-  exact (smul_eq_zero.1 h2).resolve_left two_ne_zero
-
-/-- If `ψ` is rational on `p` (`ψ(1 ⊗ a) = 1 ⊗ θ(a)`), then `a_σ = ψ⁻¹ ∘ σψ` is the identity on
-`p ⊗ F̄`. -/
-theorem galIso_trans_symm_eq_self_of_tmul (ψ : (Q₁.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb))
-    {p : Submodule F V₁} (θ : p → V₂) (hψ : ∀ a : p, ψ (1 ⊗ₜ (a : V₁)) = 1 ⊗ₜ θ a) (σ : GalF F)
-    {w : Kb ⊗[F] V₁} (hw : w ∈ p.baseChange Kb) : (galIso σ ψ).trans ψ.symm w = w := by
-  have hle : p.baseChange Kb ≤ LinearMap.eqLocus
-      ((galIso σ ψ).trans ψ.symm).toLinearEquiv.toLinearMap LinearMap.id := by
-    rw [Submodule.baseChange_eq_span, Submodule.span_le]
-    rintro _ ⟨a, ha, rfl⟩
-    change ψ.symm (galIso σ ψ (1 ⊗ₜ a)) = 1 ⊗ₜ a
-    rw [galIso_apply, galV_tmul, map_one, hψ ⟨a, ha⟩, galV_tmul, map_one, ← hψ ⟨a, ha⟩,
-      ψ.symm_apply_apply]
-  exact hle hw
-
 section Rmap
 
 variable {x : GSpin Q₁} (hc : IsCompl (fixedSub x) (movedSub x))
-
-theorem sub_mem_movedSub (v : V₁) : specP Q₁ x v - v ∈ movedSub x := ⟨v, rfl⟩
 
 /-- The projection of `V₁ = W'_x ⊕ W''_x` onto `W'_x` is `P(x)`-invariant. -/
 theorem projectionOnto_specP (v : V₁) :
@@ -251,31 +182,6 @@ theorem rmap_isometry (ψ : (Q₁.baseChange Kb).IsometryEquiv (Q₂.baseChange 
     QuadraticForm.baseChange_tmul, QuadraticForm.baseChange_tmul, QuadraticForm.baseChange_tmul, hθQ,
     hv, QuadraticMap.map_add Q₁, polar_eq_two_mul_bform, h0', mul_zero, add_zero, add_smul]
 
-omit [PAdicField F] in
-theorem quadReflection_mem {p : Submodule F V₁} {u v : V₁} (hu : u ∈ p) (hv : v ∈ p) :
-    quadReflection Q₁ u v ∈ p := by
-  rw [quadReflection_apply]
-  exact p.sub_mem hv (p.smul_mem _ (p.smul_mem _ hu))
-
-theorem quadReflection_of_mem_movedSub {u b : V₁} (hu : u ∈ fixedSub x) (hb : b ∈ movedSub x) :
-    quadReflection Q₁ u b = b := by
-  rw [quadReflection_apply, polar_eq_two_mul_bform, fixedSub_orthogonal_movedSub x u hu b hb,
-    mul_zero, zero_smul, smul_zero, sub_zero]
-
-omit [PAdicField F] in
-theorem quadReflection_isometry {u : V₁} (hQu : Q₁ u ≠ 0) (v : V₁) :
-    Q₁ (quadReflection Q₁ u v) = Q₁ v := by
-  have := invertibleOfNonzero hQu
-  rw [← quadReflection_eq]
-  exact TauCeti.QuadraticMap.reflection_mem_orthogonalGroup Q₁ u v
-
-omit [PAdicField F] in
-theorem det_quadReflection [FiniteDimensional F V₁] {u : V₁} (hQu : Q₁ u ≠ 0) :
-    LinearMap.det (quadReflection Q₁ u) = -1 := by
-  have := invertibleOfNonzero hQu
-  rw [← quadReflection_eq, ← LinearEquiv.coe_det, TauCeti.QuadraticMap.det_reflection]
-  rfl
-
 /-- The reflection in `u ∈ W'_x`, restricted to `W'_x`. -/
 def reflFix {u : V₁} (hu : u ∈ fixedSub x) : fixedSub x →ₗ[F] fixedSub x :=
   (quadReflection Q₁ u).restrict fun _ hv => quadReflection_mem hu hv
@@ -288,7 +194,7 @@ theorem projection_quadReflection {u : V₁} (hu : u ∈ fixedSub x) (v : V₁) 
     exact Submodule.projection_apply_mem hc.symm v
   have e : quadReflection Q₁ u v = quadReflection Q₁ u ((fixedSub x).projection (movedSub x) hc v) +
       (v - (fixedSub x).projection (movedSub x) hc v) := by
-    rw [← quadReflection_of_mem_movedSub hu hb, ← map_add, add_sub_cancel]
+    rw [← Steinberg.quadReflection_of_mem_movedSub hu hb, ← map_add, add_sub_cancel]
   rw [e, map_add, Submodule.projection_apply_of_mem_left hc
       (quadReflection_mem hu (Submodule.projection_apply_mem hc v)),
     Submodule.projection_apply_of_mem_right hc hb, add_zero]
@@ -306,7 +212,7 @@ theorem rmap_comp_reflFix (ψ : (Q₁.baseChange Kb).IsometryEquiv (Q₂.baseCha
     rw [Submodule.coe_projectionOnto_apply, projection_quadReflection hc hu]
     rfl)
   rw [LinearMap.comp_apply, LinearMap.baseChange_tmul, rmap_tmul, rmap_tmul, LinearMap.comp_apply,
-    hpo, projection_quadReflection hc hu, ← map_sub, quadReflection_of_mem_movedSub hu hb]
+    hpo, projection_quadReflection hc hu, ← map_sub, Steinberg.quadReflection_of_mem_movedSub hu hb]
 
 /-- **The lift `k` of `R`**: if `det R = 1`, then `R = P(k)` with `k ∈ GSpin(V₁)(F̄)` commuting with `x`
 (Steinberg: `R` commutes with `P(x)` and is trivial on its `-1`-eigenspace). -/
@@ -321,7 +227,8 @@ theorem exists_gspin_rmap [FiniteDimensional F V₁] (hQ₁ : IsNondeg Q₁)
   have hQL : IsNondeg (Q₁.baseChange Kb) := isNondeg_baseChange Q₁ hQ₁
   have hiso := rmap_isometry hc ψ θ h hθ hθQ
   obtain ⟨e, he⟩ : ∃ e : (Kb ⊗[F] V₁) ≃ₗ[Kb] (Kb ⊗[F] V₁), ∀ w, e w = rmap hc ψ θ w :=
-    ⟨LinearEquiv.ofInjectiveEndo _ (injective_of_isometry hQL hiso), fun _ => rfl⟩
+    ⟨LinearEquiv.ofInjectiveEndo _ (TauCeti.BilinForm.IsIsometry.injective (fun w hw => hQL.1 w hw)
+      (fun u v => bform_isometry (⟨rmap hc ψ θ, hiso⟩ : Q₁.baseChange Kb →qᵢ Q₁.baseChange Kb) u v)), fun _ => rfl⟩
   have he' : (e : (Kb ⊗[F] V₁) →ₗ[Kb] (Kb ⊗[F] V₁)) = rmap hc ψ θ := LinearMap.ext he
   obtain ⟨k, hk⟩ := gspin_specP_surjective_SO (Q₁.baseChange Kb) hQL e
     (fun w => by rw [he]; exact hiso w) (by rw [he']; exact hdet)
@@ -357,16 +264,18 @@ open WitnessChange
 
 variable {d : GGPData F}
 
-/-- **Change of witness** (Thesis Prop. 6.6.1(iii), proof, the case where `a_σ` is not known to be
-trivial on `W'_x`): if `y` is stably conjugate to `x` through `ψ = P(g) ∘ φ_α` and `W'_x ≅ W'_y` over `F`,
+/-- **Change of witness** (a step toward the map `y ↦ [a]` of Thesis Prop. 6.6.1(iii), for the case
+where `a_σ` is not known to be trivial on `W'_x`): if `y` is stably conjugate to `x` (on the `W`-factor)
+through `ψ = P(g) ∘ φ_α` and `W'_x ≅ W'_y` over `F`,
 then `ψ' = ψ ∘ P(k)` for a suitable `k ∈ GSpin(W)(F̄)` commuting with `x` is rational on `W'_x`, so its
 cocycle lies in `S_x`.  (`P(k) = ψ⁻¹ ∘ θ` on `W'_x ⊗ F̄`, identity on `W''_x ⊗ F̄`, after composing `θ`
 with a reflection of `W'_x` if needed to make `det P(k) = 1`.) -/
 theorem exists_isStableIso_of_isometry (τ : InnerTwist d.QW) {x : GSpin d.QW} (hx : d.IsGammaElt x)
-    {y : GSpin (d.twist τ).QW} (hxy : d.StablyConjG τ (d.diag x) ((d.twist τ).diag y))
+    {y : GSpin (d.twist τ).QW}
+    (hxy : StablyConjVia τ.φ (x : (CliffordAlgebra d.QW)ˣ) (y : (CliffordAlgebra τ.Q')ˣ))
     (θ : (d.QW.comp (fixedSub x).subtype).IsometryEquiv (τ.Q'.comp (fixedSub y).subtype)) :
     ∃ ψ, d.IsStableIso τ x y ψ := by
-  obtain ⟨g, hg, hconj⟩ := hxy.1
+  obtain ⟨g, hg, hconj⟩ := hxy
   set g' : GSpin (τ.Q'.baseChange Kb) := ⟨g, hg⟩
   have hmap : CliffordAlgebra.map (τ.φ.trans (specPIso g')).toIsometry
       (bcUnits d.QW (x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra _) =
@@ -387,8 +296,15 @@ theorem exists_isStableIso_of_isometry (τ : InnerTwist d.QW) {x : GSpin d.QW} (
       (∀ a, τ.Q' (θ₁ a) = d.QW a) ∧ LinearMap.det (rmap hc ψ θ₁) = 1 := by
     by_cases h1 : LinearMap.det (rmap hc ψ θ₀) = 1
     · exact ⟨θ₀, hθ, hθQ, h1⟩
+    have hsq : LinearMap.det (rmap hc ψ θ₀) ^ 2 = 1 := by
+      have hB : (bform (d.QW.baseChange Kb)).SeparatingLeft := fun w hw => hQL.1 w hw
+      have hi : TauCeti.BilinForm.IsIsometry (bform (d.QW.baseChange Kb)) (rmap hc ψ θ₀) :=
+        fun u v => bform_isometry (⟨_, rmap_isometry hc ψ θ₀ hmap hθ hθQ⟩ :
+          d.QW.baseChange Kb →qᵢ d.QW.baseChange Kb) u v
+      exact hi.det_sq_eq_one (Module.Free.chooseBasis Kb _)
+        (mem_nonZeroDivisors_of_ne_zero ((LinearMap.separatingLeft_iff_det_ne_zero _).mp hB))
     have hm1 : LinearMap.det (rmap hc ψ θ₀) = -1 :=
-      (mul_self_eq_one_iff.1 (det_mul_self_of_isometry hQL (rmap_isometry hc ψ θ₀ hmap hθ hθQ))).resolve_left h1
+      (mul_self_eq_one_iff.1 ((sq _).symm.trans hsq)).resolve_left h1
     -- `W'_x ≠ 0` (else `R = id`), so it has an anisotropic vector
     obtain ⟨u, hu, hQu⟩ : ∃ u ∈ fixedSub x, d.QW u ≠ 0 := by
       by_contra hcon
@@ -401,11 +317,12 @@ theorem exists_isStableIso_of_isometry (τ : InnerTwist d.QW) {x : GSpin d.QW} (
           sub_zero, sub_zero] at h2
         exact (mul_eq_zero.1 h2.symm).resolve_left two_ne_zero
       apply h1
-      have hid : rmap hc ψ θ₀ = LinearMap.id := baseChange_hom_ext fun v => by
+      have hid : rmap hc ψ θ₀ = LinearMap.id := by
+        refine baseChange_hom_ext fun v => ?_
+        change rmap hc ψ θ₀ (1 ⊗ₜ v) = 1 ⊗ₜ v
         rw [rmap_tmul, hzero ((fixedSub x).projectionOnto (movedSub x) hc v), map_zero,
           TensorProduct.tmul_zero, map_zero, zero_add, ← Submodule.coe_projectionOnto_apply,
           hzero ((fixedSub x).projectionOnto (movedSub x) hc v), Submodule.coe_zero, sub_zero]
-        rfl
       rw [hid, LinearMap.det_id]
     refine ⟨θ₀ ∘ₗ reflFix hu, fun a => hθ _, fun a => ?_, ?_⟩
     · rw [LinearMap.comp_apply, hθQ]

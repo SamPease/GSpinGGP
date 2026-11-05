@@ -415,4 +415,25 @@ theorem exists_specMatFbar_bcGSpin_eq {h : GL (Fin d.m) (AlgebraicClosure F)}
   show _ = X
   rw [← hN, hφl, LinearMap.toMatrix'_toLin']
 
+open scoped TensorProduct in
+/-- Two `F̄`-linear maps out of `F̄ ⊗ V` agree if they agree on `1 ⊗ v`. -/
+theorem baseChange_hom_ext {V M : Type*} [AddCommGroup V] [Module F V] [AddCommGroup M]
+    [Module (AlgebraicClosure F) M] [Module F M] [IsScalarTower F (AlgebraicClosure F) M]
+    {f g : (AlgebraicClosure F ⊗[F] V) →ₗ[AlgebraicClosure F] M}
+    (h : ∀ v, f (1 ⊗ₜ v) = g (1 ⊗ₜ v)) : f = g :=
+  TensorProduct.AlgebraTensorModule.curry_injective (LinearMap.ext_ring (LinearMap.ext h))
+
+open scoped TensorProduct in
+/-- A map `f` with `f ∘ P = f` kills the `-1`-eigenvectors of `P_{F̄}`. -/
+theorem baseChange_apply_eq_zero_of_neg {V M : Type*} [AddCommGroup V] [Module F V]
+    [AddCommGroup M] [Module F M] {P : V →ₗ[F] V} {w : AlgebraicClosure F ⊗[F] V}
+    (hw : P.baseChange (AlgebraicClosure F) w = -w) (f : V →ₗ[F] M) (hf : f ∘ₗ P = f) :
+    f.baseChange (AlgebraicClosure F) w = 0 := by
+  have h1 : f.baseChange (AlgebraicClosure F) w = -f.baseChange (AlgebraicClosure F) w := by
+    conv_lhs => rw [← hf, LinearMap.baseChange_comp, LinearMap.comp_apply, hw]
+    rw [map_neg]
+  have h2 : (2 : AlgebraicClosure F) • f.baseChange (AlgebraicClosure F) w = 0 := by
+    rw [two_smul]; nth_rewrite 1 [h1]; abel
+  exact (smul_eq_zero.1 h2).resolve_left two_ne_zero
+
 end GSpinGGP

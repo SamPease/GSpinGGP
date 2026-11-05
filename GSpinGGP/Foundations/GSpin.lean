@@ -1572,6 +1572,10 @@ def fixedSub {Q : QuadraticForm K V} (x : GSpin Q) : Submodule K V :=
 def movedSub {Q : QuadraticForm K V} (x : GSpin Q) : Submodule K V :=
   LinearMap.range ((specP Q x : V →ₗ[K] V) - LinearMap.id)
 
+theorem sub_mem_movedSub {Q : QuadraticForm K V} {x : GSpin Q} (v : V) :
+    specP Q x v - v ∈ movedSub x :=
+  ⟨v, rfl⟩
+
 /-- `W = W'_x ⊕^⊥ W''_x` for semisimple `x` (we state the orthogonality, which holds
 for every `x` since `P(x)` is an isometry). -/
 theorem fixedSub_orthogonal_movedSub {Q : QuadraticForm K V} (x : GSpin Q) :
