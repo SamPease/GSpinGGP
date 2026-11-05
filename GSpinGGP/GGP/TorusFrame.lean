@@ -92,8 +92,12 @@ theorem exists_pair_mem_torusFbar {n : ℕ} {e f : Fin n → Wb} {μ : Fin n →
     (hXef : ∀ i, XX (e i) = (μ i : Kb) • e i ∧ XX (f i) = (((μ i)⁻¹ : Kbˣ) : Kb) • f i)
     (i : Fin n) (s : Kbˣ) :
     ∃ g ∈ d.torusFbar x, (∀ w ∈ Module.End.eigenspace XX 1, specP _ g w = w) ∧
-      ∀ j, specP _ g (e j) = (if j = i then ((s⁻¹ : Kbˣ) : Kb) else 1) • e j ∧
-        specP _ g (f j) = (if j = i then (s : Kb) else 1) • f j := by
+      (∀ j, specP _ g (e j) = (if j = i then ((s⁻¹ : Kbˣ) : Kb) else 1) • e j ∧
+        specP _ g (f j) = (if j = i then (s : Kb) else 1) • f j) ∧
+      ∀ z : GSpin (d.QW.baseChange Kb), (∀ j, ∃ c : Kbˣ, specP _ z (e j) = (c : Kb) • e j ∧
+        specP _ z (f j) = ((c⁻¹ : Kbˣ) : Kb) • f j) →
+        Commute ((z : (CliffordAlgebra (d.QW.baseChange Kb))ˣ) : CliffordAlgebra (d.QW.baseChange Kb))
+          ((g : (CliffordAlgebra (d.QW.baseChange Kb))ˣ) : CliffordAlgebra (d.QW.baseChange Kb)) := by
   have h2 : (2 : Kb) ≠ 0 := two_ne_zero
   have hQe : d.QW.baseChange Kb (e i) = 0 := by
     have h := polar_self (d.QW.baseChange Kb) (e i)
@@ -112,7 +116,7 @@ theorem exists_pair_mem_torusFbar {n : ℕ} {e f : Fin n → Wb} {μ : Fin n →
     have h := (hF.mem_iff w).1 hw i
     rw [hg, polar_comm _ (f i), polar_comm _ (e i), h.1, h.2]
     simp
-  refine ⟨g, ⟨?_, fun w hw => hW w ?_⟩, hW, fun j => ⟨?_, ?_⟩⟩
+  refine ⟨g, ⟨?_, fun w hw => hW w ?_⟩, hW, fun j => ⟨?_, ?_⟩, fun z hz => ?_⟩
   · have hc := commute_hypUnit hQe hQf hp (g := bcGSpin d.QW x) (s := μ i) (hXef i).1
       (hXef i).2 s
     refine Units.ext ?_
@@ -127,6 +131,8 @@ theorem exists_pair_mem_torusFbar {n : ℕ} {e f : Fin n → Wb} {μ : Fin n →
     by_cases hj : j = i
     · subst hj; simp only [ite_true, smul_zero, add_zero, Units.val_inv_eq_inv_val]; module
     · simp [hj, Ne.symm hj]
+  · obtain ⟨c, hce, hcf⟩ := hz i
+    exact commute_hypUnit hQe hQf hp hce hcf s
 
 /-- Every element of the split torus of an eigen-frame is `P(g)` for some `g ∈ T_x(F̄)`: a
 product of the pair elements. -/
@@ -137,20 +143,30 @@ theorem exists_torusFbar_scale {n : ℕ} {e f : Fin n → Wb}
       XX (f i) = (((μ i)⁻¹ : Kbˣ) : Kb) • f i)
     (t : Fin n → Kbˣ) :
     ∃ g ∈ d.torusFbar x, (∀ w ∈ Module.End.eigenspace XX 1, specP _ g w = w) ∧
-      ∀ j, specP _ g (e j) = (t j : Kb) • e j ∧
-        specP _ g (f j) = (((t j)⁻¹ : Kbˣ) : Kb) • f j := by
+      (∀ j, specP _ g (e j) = (t j : Kb) • e j ∧
+        specP _ g (f j) = (((t j)⁻¹ : Kbˣ) : Kb) • f j) ∧
+      ∀ z : GSpin (d.QW.baseChange Kb), (∀ j, ∃ c : Kbˣ, specP _ z (e j) = (c : Kb) • e j ∧
+        specP _ z (f j) = ((c⁻¹ : Kbˣ) : Kb) • f j) →
+        Commute ((z : (CliffordAlgebra (d.QW.baseChange Kb))ˣ) : CliffordAlgebra (d.QW.baseChange Kb))
+          ((g : (CliffordAlgebra (d.QW.baseChange Kb))ˣ) : CliffordAlgebra (d.QW.baseChange Kb)) := by
   have key : ∀ S : Finset (Fin n), ∃ g ∈ d.torusFbar x,
       (∀ w ∈ Module.End.eigenspace XX 1, specP _ g w = w) ∧
-      ∀ j, specP _ g (e j) = (if j ∈ S then (t j : Kb) else 1) • e j ∧
+      (∀ j, specP _ g (e j) = (if j ∈ S then (t j : Kb) else 1) • e j ∧
         specP _ g (f j) =
-          (if j ∈ S then (((t j)⁻¹ : Kbˣ) : Kb) else 1) • f j := by
+          (if j ∈ S then (((t j)⁻¹ : Kbˣ) : Kb) else 1) • f j) ∧
+      ∀ z : GSpin (d.QW.baseChange Kb), (∀ j, ∃ c : Kbˣ, specP _ z (e j) = (c : Kb) • e j ∧
+        specP _ z (f j) = ((c⁻¹ : Kbˣ) : Kb) • f j) →
+        Commute ((z : (CliffordAlgebra (d.QW.baseChange Kb))ˣ) : CliffordAlgebra (d.QW.baseChange Kb))
+          ((g : (CliffordAlgebra (d.QW.baseChange Kb))ˣ) : CliffordAlgebra (d.QW.baseChange Kb)) := by
     intro S
     induction S using Finset.induction_on with
-    | empty => exact ⟨1, Subgroup.one_mem _, fun w _ => by simp, fun j => by simp⟩
+    | empty => exact ⟨1, Subgroup.one_mem _, fun w _ => by simp, fun j => by simp,
+        fun z _ => Commute.one_right _⟩
     | insert i S hi ih =>
-      obtain ⟨g, hg, hgW, hge⟩ := ih
-      obtain ⟨p, hp, hpW, hpe⟩ := exists_pair_mem_torusFbar x hF hXef i (t i)⁻¹
-      refine ⟨p * g, Subgroup.mul_mem _ hp hg, fun w hw => ?_, fun j => ⟨?_, ?_⟩⟩
+      obtain ⟨g, hg, hgW, hge, hgz⟩ := ih
+      obtain ⟨p, hp, hpW, hpe, hpz⟩ := exists_pair_mem_torusFbar x hF hXef i (t i)⁻¹
+      refine ⟨p * g, Subgroup.mul_mem _ hp hg, fun w hw => ?_, fun j => ⟨?_, ?_⟩,
+        fun z hz => (hpz z hz).mul_right (hgz z hz)⟩
       · rw [map_mul, LinearEquiv.mul_apply, hgW w hw, hpW w hw]
       · rw [map_mul, LinearEquiv.mul_apply, (hge j).1, map_smul, (hpe j).1, smul_smul]
         by_cases hj : j = i
@@ -160,8 +176,8 @@ theorem exists_torusFbar_scale {n : ℕ} {e f : Fin n → Wb}
         by_cases hj : j = i
         · subst hj; simp [hi]
         · simp [hj]
-  obtain ⟨g, hg, hgW, hge⟩ := key Finset.univ
-  exact ⟨g, hg, hgW, fun j => by simpa using hge j⟩
+  obtain ⟨g, hg, hgW, hge, hgz⟩ := key Finset.univ
+  exact ⟨g, hg, hgW, fun j => by simpa using hge j, hgz⟩
 
 /-- The split torus of an eigen-frame lies in `S_x(F̄)`. -/
 theorem hypTorus_le_map_torusFbar {n : ℕ} {e f : Fin n → Wb}
@@ -171,24 +187,22 @@ theorem hypTorus_le_map_torusFbar {n : ℕ} {e f : Fin n → Wb}
       XX (f i) = (((μ i)⁻¹ : Kbˣ) : Kb) • f i) :
     hypTorus (Module.End.eigenspace XX 1) e f ≤ (d.torusFbar x).map (specP _) := by
   rintro h ⟨hW, t, ht⟩
-  obtain ⟨g, hg, hgW, hge⟩ := exists_torusFbar_scale x hF hXef t
+  obtain ⟨g, hg, hgW, hge, -⟩ := exists_torusFbar_scale x hF hXef t
   refine ⟨g, hg, LinearEquiv.toLinearMap_injective (hF.linearMap_ext (fun w hw => ?_)
     (fun j => ?_) (fun j => ?_))⟩
   · simp only [LinearEquiv.coe_coe, hgW w hw, hW w hw]
   · simp only [LinearEquiv.coe_coe, (hge j).1, (ht j).1]
   · simp only [LinearEquiv.coe_coe, (hge j).2, (ht j).2]
 
-/-- **`S_x(F̄)` is the split torus of an eigen-frame of `P(x)_{F̄}`**, for `x ∈ Γ(G,H)`. -/
-theorem exists_hypFrame_torusFbar (hx : d.IsGammaElt x) :
-    ∃ (n : ℕ) (e f : Fin n → Wb),
-      IsHypFrame (d.QW.baseChange Kb) (Module.End.eigenspace XX 1) e f ∧
-        (d.torusFbar x).map (specP _) = hypTorus (Module.End.eigenspace XX 1) e f := by
-  have hss : Module.End.IsSemisimple XX := by
-    rw [specP_bcGSpin]; exact isSemisimple_specP_baseChange x hx.1
-  obtain ⟨n, e, f, μ, hF, hXef⟩ := IsomCent.exists_hypFrame_eigen
-    polarBilin_baseChange_nondegenerate
-    (fun a b => Steinberg.polar_specP (bcGSpin d.QW x) a b) hss (det_specP _)
-  refine ⟨n, e, f, hF, le_antisymm ?_ (hypTorus_le_map_torusFbar x hF hXef)⟩
+/-- A **regular** element of the split torus of an eigen-frame: `P(g)` scales `eᵢ, fᵢ` by `tᵢ, tᵢ⁻¹`
+with `tᵢ ≠ 1`, the `tᵢ` distinct and `tᵢ tⱼ ≠ 1` (`tᵢ = 2^{i+1}`). -/
+theorem exists_regular_torusFbar {n : ℕ} {e f : Fin n → Wb} {μ : Fin n → Kbˣ}
+    (hF : IsHypFrame (d.QW.baseChange Kb) (Module.End.eigenspace XX 1) e f)
+    (hXef : ∀ i, XX (e i) = (μ i : Kb) • e i ∧ XX (f i) = (((μ i)⁻¹ : Kbˣ) : Kb) • f i) :
+    ∃ (t : Fin n → Kbˣ), ∃ g ∈ d.torusFbar x,
+      (∀ w ∈ Module.End.eigenspace XX 1, specP _ g w = w) ∧
+      (∀ j, specP _ g (e j) = (t j : Kb) • e j ∧ specP _ g (f j) = (((t j)⁻¹ : Kbˣ) : Kb) • f j) ∧
+      (∀ i, (t i : Kb) ≠ 1) ∧ (∀ i j, (t i : Kb) = t j → i = j) ∧ (∀ i j, (t i : Kb) * t j ≠ 1) := by
   -- a regular element `k = P(gₖ)`, `tᵢ = 2^{i+1}`
   have h2 : ∀ k : ℕ, ((2 : Kb) ^ k) = ((2 ^ k : ℕ) : Kb) := by
     intro k; push_cast; rfl
@@ -205,7 +219,23 @@ theorem exists_hypFrame_torusFbar (hx : d.IsGammaElt x) :
     simp only [t, Units.val_mk0]
     rw [← pow_add, h2]
     exact_mod_cast (Nat.one_lt_two_pow (by omega : i.val + 1 + (j.val + 1) ≠ 0)).ne'
-  obtain ⟨gk, hgk, hgkW, hgke⟩ := exists_torusFbar_scale x hF hXef t
+  obtain ⟨gk, hgk, hgkW, hgke, -⟩ := exists_torusFbar_scale x hF hXef t
+  exact ⟨t, gk, hgk, hgkW, hgke, ht1, htinj, htinv⟩
+
+/-- **`S_x(F̄)` is the split torus of an eigen-frame of `P(x)_{F̄}`**, for `x ∈ Γ(G,H)`, with the
+eigenvalues `μᵢ, μᵢ⁻¹` of the frame. -/
+theorem exists_hypFrame_eigen_torusFbar (hx : d.IsGammaElt x) :
+    ∃ (n : ℕ) (e f : Fin n → Wb) (μ : Fin n → Kbˣ),
+      IsHypFrame (d.QW.baseChange Kb) (Module.End.eigenspace XX 1) e f ∧
+        (∀ i, XX (e i) = (μ i : Kb) • e i ∧ XX (f i) = (((μ i)⁻¹ : Kbˣ) : Kb) • f i) ∧
+        (d.torusFbar x).map (specP _) = hypTorus (Module.End.eigenspace XX 1) e f := by
+  have hss : Module.End.IsSemisimple XX := by
+    rw [specP_bcGSpin]; exact isSemisimple_specP_baseChange x hx.1
+  obtain ⟨n, e, f, μ, hF, hXef⟩ := IsomCent.exists_hypFrame_eigen
+    polarBilin_baseChange_nondegenerate
+    (fun a b => Steinberg.polar_specP (bcGSpin d.QW x) a b) hss (det_specP _)
+  refine ⟨n, e, f, μ, hF, hXef, le_antisymm ?_ (hypTorus_le_map_torusFbar x hF hXef)⟩
+  obtain ⟨t, gk, hgk, hgkW, hgke, ht1, htinj, htinv⟩ := exists_regular_torusFbar x hF hXef
   rintro _ ⟨g, hg, rfl⟩
   have hc : Commute (specP _ gk) (specP _ g) := by
     have h := torusBarFbar_commute x hx _ ⟨gk, hgk, rfl⟩ _ ⟨g, hg, rfl⟩
@@ -216,6 +246,72 @@ theorem exists_hypFrame_torusFbar (hx : d.IsGammaElt x) :
     (fun a b => Steinberg.polar_specP g a b) (fun w hw => hg.2 w ?_) hc
   rw [← GGPData.eigenspace_bc_one]
   exact hw
+
+
+/-- **`S_x(F̄)` is the split torus of an eigen-frame of `P(x)_{F̄}`**, for `x ∈ Γ(G,H)`. -/
+theorem exists_hypFrame_torusFbar (hx : d.IsGammaElt x) :
+    ∃ (n : ℕ) (e f : Fin n → Wb),
+      IsHypFrame (d.QW.baseChange Kb) (Module.End.eigenspace XX 1) e f ∧
+        (d.torusFbar x).map (specP _) = hypTorus (Module.End.eigenspace XX 1) e f := by
+  obtain ⟨n, e, f, -, hF, -, hT⟩ := exists_hypFrame_eigen_torusFbar x hx
+  exact ⟨n, e, f, hF, hT⟩
+
+/-- **`T_x(F̄)` is central in the centralizer of `x` in `GSpin(W)(F̄)`**, for `x ∈ Γ(G,H)`.  `P(z)`
+commutes with a regular element of the split torus of an eigen-frame (`commute_of_lieAbelian_of_det`;
+`det P(z)|_{W₋₁} = 1` by Steinberg), so it scales each frame pair `eᵢ, fᵢ` by `cᵢ, cᵢ⁻¹`; then `z`
+commutes with the pair elements `h(s)` (`commute_hypUnit`), whose product is `t` up to a scalar. -/
+theorem commute_of_mem_torusFbar (hx : d.IsGammaElt x) {t z : GSpin (d.QW.baseChange Kb)}
+    (ht : t ∈ d.torusFbar x) (hz : Commute z (bcGSpin d.QW x)) : Commute z t := by
+  have hQL := isNondeg_baseChange d.QW d.nondeg
+  have hss : Module.End.IsSemisimple XX := by
+    rw [specP_bcGSpin]; exact isSemisimple_specP_baseChange x hx.1
+  have hL : IsomCent.LieAbelian (bform (d.QW.baseChange Kb)) XX := by
+    rw [specP_bcGSpin]; exact lieAbelian_specP_baseChange x hx
+  have hB : (bform (d.QW.baseChange Kb)).IsSymm := ⟨fun u v => bform_comm _ u v⟩
+  have hiso : ∀ g : GSpin (d.QW.baseChange Kb), IsomCent.IsIsom (bform (d.QW.baseChange Kb))
+      (specP _ g : Wb →ₗ[Kb] Wb) := fun g u v => bform_specP g u v
+  obtain ⟨n, e, f, μ, hF, hXef, hT⟩ := exists_hypFrame_eigen_torusFbar x hx
+  obtain ⟨tk, gk, hgk, hgkW, hgke, ht1, htinj, htinv⟩ := exists_regular_torusFbar x hF hXef
+  -- `P(z)` commutes with `P(gₖ)`
+  have hzX : Commute (specP _ z) (specP _ (bcGSpin d.QW x)) := hz.map (specP _)
+  have hgkX : Commute (specP _ gk) (specP _ (bcGSpin d.QW x)) :=
+    (show Commute gk (bcGSpin d.QW x) from Subtype.ext hgk.1).map (specP _)
+  have hdz := (Steinberg.commute_iff_det_negFixedSub hQL (bcGSpin d.QW x) hss z hzX).1 hz
+  have hcm := IsomCent.commute_of_lieAbelian_of_det hB hQL (hiso _) hss hL (hiso gk) (hiso z)
+    (det_specP gk) (Steinberg.commute_toLinearMap hgkX) (Steinberg.commute_toLinearMap hzX)
+    hgkW hdz
+  have hcm' : Commute (specP _ gk) (specP _ z) :=
+    LinearEquiv.toLinearMap_injective (by
+      rw [LinearEquiv.coe_toLinearMap_mul, LinearEquiv.coe_toLinearMap_mul]; exact hcm.eq)
+  -- `P(z)` scales each frame pair
+  have hE := hF.eq_smul_e_of_commute hgkW hgke ht1 htinj htinv hcm'
+  have hFf := hF.eq_smul_f_of_commute hgkW hgke ht1 htinj htinv hcm'
+  have hcc : ∀ i, polar (d.QW.baseChange Kb) (specP _ z (e i)) (f i) *
+      polar (d.QW.baseChange Kb) (specP _ z (f i)) (e i) = 1 := fun i => by
+    have h := Steinberg.polar_specP z (e i) (f i)
+    rw [hE i, hFf i, polar_smul_left, polar_smul_right] at h
+    simp only [hF.polar_ef, ↓reduceIte] at h
+    simpa [smul_eq_mul, mul_comm] using h
+  have hzs : ∀ j, ∃ c : Kbˣ, specP _ z (e j) = (c : Kb) • e j ∧
+      specP _ z (f j) = ((c⁻¹ : Kbˣ) : Kb) • f j := fun j =>
+    ⟨⟨_, _, hcc j, by rw [mul_comm]; exact hcc j⟩, hE j, hFf j⟩
+  -- `t` is a product of pair elements, up to a scalar
+  obtain ⟨-, u, hu⟩ : specP _ t ∈ hypTorus (Module.End.eigenspace XX 1) e f := hT ▸ ⟨t, ht, rfl⟩
+  obtain ⟨g, -, hgW, hge, hgz⟩ := exists_torusFbar_scale x hF hXef u
+  have hPtg : specP _ t = specP _ g := LinearEquiv.toLinearMap_injective
+    (hF.linearMap_ext (fun w hw => by
+      simp only [LinearEquiv.coe_coe, hgW w hw]
+      exact ht.2 w (by rw [← GGPData.eigenspace_bc_one]; exact hw))
+      (fun j => by simp only [LinearEquiv.coe_coe, (hge j).1, (hu j).1])
+      (fun j => by simp only [LinearEquiv.coe_coe, (hge j).2, (hu j).2]))
+  have hker : t * g⁻¹ ∈ (specP (d.QW.baseChange Kb)).ker := by
+    rw [MonoidHom.mem_ker, map_mul, map_inv, hPtg, mul_inv_cancel]
+  rw [ker_specP hQL] at hker
+  obtain ⟨c, hc⟩ := hker
+  have htg : t = scalarGSpin _ c * g := by rw [hc, inv_mul_cancel_right]
+  rw [htg]
+  refine Commute.mul_right ?_ (Subtype.ext (Units.ext (hgz z hzs)))
+  exact ((scalarGSpin_mem_center _ c).comm z).symm
 
 end Frame
 

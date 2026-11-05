@@ -166,6 +166,60 @@ theorem eigen_of_scale (hkW : ∀ w ∈ W, k w = w)
     rw [hv, polar_smul_left, smul_eq_mul] at h
     exact mul_right_cancel₀ hj h
 
+/-- A map `h` commuting with a *regular* element `k` of the torus (`tᵢ ≠ 1`, the `tᵢ` distinct,
+`tᵢ tⱼ ≠ 1`) scales each `eᵢ`. -/
+theorem eq_smul_e_of_commute (hF : IsHypFrame Q W e f) {k h : V ≃ₗ[K] V}
+    (hkW : ∀ w ∈ W, k w = w)
+    (ht : ∀ i, k (e i) = (t i : K) • e i ∧ k (f i) = (((t i)⁻¹ : Kˣ) : K) • f i)
+    (h1 : ∀ i, (t i : K) ≠ 1) (hinj : ∀ i j, (t i : K) = t j → i = j)
+    (hinv : ∀ i j, (t i : K) * t j ≠ 1) (hc : Commute k h) (i : Fin n) :
+    h (e i) = polar Q (h (e i)) (f i) • e i := by
+  have hkc : ∀ v, k (h v) = h (k v) := fun v => by
+    rw [← LinearEquiv.mul_apply, hc.eq, LinearEquiv.mul_apply]
+  have htj : ∀ i j, (t i : K) = (((t j)⁻¹ : Kˣ) : K) → False := fun i j hij => hinv i j (by
+    rw [hij, Units.inv_mul])
+  have hv : (k : V →ₗ[K] V) (h (e i)) = (t i : K) • h (e i) := by
+    simp [hkc, (ht i).1]
+  obtain ⟨hs, hfj, hej⟩ := eigen_of_scale (k := (k : V →ₗ[K] V)) hkW ht hF hv (h1 i)
+  refine hs.trans ?_
+  unfold frameSum
+  rw [Finset.sum_eq_single i]
+  · have : polar Q (h (e i)) (e i) = 0 := by_contra fun h0 => htj i i (hej i h0)
+    rw [this, zero_smul, add_zero]
+  · intro j _ hji
+    have a : polar Q (h (e i)) (f j) = 0 := by_contra fun h0 => hji (hinj _ _ (hfj j h0)).symm
+    have b : polar Q (h (e i)) (e j) = 0 := by_contra fun h0 => htj i j (hej j h0)
+    rw [a, b, zero_smul, zero_smul, add_zero]
+  · simp
+
+/-- A map `h` commuting with a regular element `k` of the torus scales each `fᵢ`. -/
+theorem eq_smul_f_of_commute (hF : IsHypFrame Q W e f) {k h : V ≃ₗ[K] V}
+    (hkW : ∀ w ∈ W, k w = w)
+    (ht : ∀ i, k (e i) = (t i : K) • e i ∧ k (f i) = (((t i)⁻¹ : Kˣ) : K) • f i)
+    (h1 : ∀ i, (t i : K) ≠ 1) (hinj : ∀ i j, (t i : K) = t j → i = j)
+    (hinv : ∀ i j, (t i : K) * t j ≠ 1) (hc : Commute k h) (i : Fin n) :
+    h (f i) = polar Q (h (f i)) (e i) • f i := by
+  have hkc : ∀ v, k (h v) = h (k v) := fun v => by
+    rw [← LinearEquiv.mul_apply, hc.eq, LinearEquiv.mul_apply]
+  have hinv' : ∀ i j, (((t i)⁻¹ : Kˣ) : K) = (((t j)⁻¹ : Kˣ) : K) → i = j := fun i j hij =>
+    hinj i j (by simpa using congrArg (·⁻¹) hij)
+  have hti : ∀ i j, (((t i)⁻¹ : Kˣ) : K) = t j → False := fun i j hij => hinv i j (by
+    rw [← hij, Units.mul_inv])
+  have hv : (k : V →ₗ[K] V) (h (f i)) = (((t i)⁻¹ : Kˣ) : K) • h (f i) := by
+    simp [hkc, (ht i).2]
+  have hne : (((t i)⁻¹ : Kˣ) : K) ≠ 1 := fun h0 => h1 i (by simpa using congrArg (·⁻¹) h0)
+  obtain ⟨hs, hfj, hej⟩ := eigen_of_scale (k := (k : V →ₗ[K] V)) hkW ht hF hv hne
+  refine hs.trans ?_
+  unfold frameSum
+  rw [Finset.sum_eq_single i]
+  · have : polar Q (h (f i)) (f i) = 0 := by_contra fun h0 => hti i i (hfj i h0)
+    rw [this, zero_smul, zero_add]
+  · intro j _ hji
+    have a : polar Q (h (f i)) (f j) = 0 := by_contra fun h0 => hti i j (hfj j h0)
+    have b : polar Q (h (f i)) (e j) = 0 := by_contra fun h0 => hji (hinv' _ _ (hej j h0)).symm
+    rw [a, b, zero_smul, zero_smul, add_zero]
+  · simp
+
 /-- An isometry `h` fixing `W` and commuting with a *regular* element `k` of the torus
 (`tᵢ ≠ 1`, the `tᵢ` distinct, `tᵢ tⱼ ≠ 1`, in particular `tᵢ² ≠ 1`) lies in the torus. -/
 theorem mem_hypTorus_of_commute (hF : IsHypFrame Q W e f) {k h : V ≃ₗ[K] V}
@@ -175,44 +229,8 @@ theorem mem_hypTorus_of_commute (hF : IsHypFrame Q W e f) {k h : V ≃ₗ[K] V}
     (hinv : ∀ i j, (t i : K) * t j ≠ 1)
     (hh : ∀ u v, polar Q (h u) (h v) = polar Q u v) (hW : ∀ w ∈ W, h w = w) (hc : Commute k h) :
     h ∈ hypTorus W e f := by
-  have hkc : ∀ v, k (h v) = h (k v) := fun v => by
-    rw [← LinearEquiv.mul_apply, hc.eq, LinearEquiv.mul_apply]
-  have hinv' : ∀ i j, (((t i)⁻¹ : Kˣ) : K) = (((t j)⁻¹ : Kˣ) : K) → i = j := fun i j hij =>
-    hinj i j (by simpa using congrArg (·⁻¹) hij)
-  have hti : ∀ i j, (((t i)⁻¹ : Kˣ) : K) = t j → False := fun i j hij => hinv i j (by
-    rw [← hij, Units.mul_inv])
-  have htj : ∀ i j, (t i : K) = (((t j)⁻¹ : Kˣ) : K) → False := fun i j hij => hinv i j (by
-    rw [hij, Units.inv_mul])
-  -- `h eᵢ = c eᵢ`
-  have hE : ∀ i, h (e i) = polar Q (h (e i)) (f i) • e i := fun i => by
-    have hv : (k : V →ₗ[K] V) (h (e i)) = (t i : K) • h (e i) := by
-      simp [hkc, (ht i).1]
-    obtain ⟨hs, hfj, hej⟩ := eigen_of_scale (k := (k : V →ₗ[K] V)) hkW ht hF hv (h1 i)
-    refine hs.trans ?_
-    unfold frameSum
-    rw [Finset.sum_eq_single i]
-    · have : polar Q (h (e i)) (e i) = 0 := by_contra fun h0 => htj i i (hej i h0)
-      rw [this, zero_smul, add_zero]
-    · intro j _ hji
-      have a : polar Q (h (e i)) (f j) = 0 := by_contra fun h0 => hji (hinj _ _ (hfj j h0)).symm
-      have b : polar Q (h (e i)) (e j) = 0 := by_contra fun h0 => htj i j (hej j h0)
-      rw [a, b, zero_smul, zero_smul, add_zero]
-    · simp
-  have hFf : ∀ i, h (f i) = polar Q (h (f i)) (e i) • f i := fun i => by
-    have hv : (k : V →ₗ[K] V) (h (f i)) = (((t i)⁻¹ : Kˣ) : K) • h (f i) := by
-      simp [hkc, (ht i).2]
-    have hne : (((t i)⁻¹ : Kˣ) : K) ≠ 1 := fun h0 => h1 i (by simpa using congrArg (·⁻¹) h0)
-    obtain ⟨hs, hfj, hej⟩ := eigen_of_scale (k := (k : V →ₗ[K] V)) hkW ht hF hv hne
-    refine hs.trans ?_
-    unfold frameSum
-    rw [Finset.sum_eq_single i]
-    · have : polar Q (h (f i)) (f i) = 0 := by_contra fun h0 => hti i i (hfj i h0)
-      rw [this, zero_smul, zero_add]
-    · intro j _ hji
-      have a : polar Q (h (f i)) (f j) = 0 := by_contra fun h0 => hti i j (hfj j h0)
-      have b : polar Q (h (f i)) (e j) = 0 := by_contra fun h0 => hji (hinv' _ _ (hej j h0)).symm
-      rw [a, b, zero_smul, zero_smul, add_zero]
-    · simp
+  have hE := hF.eq_smul_e_of_commute hkW ht h1 hinj hinv hc
+  have hFf := hF.eq_smul_f_of_commute hkW ht h1 hinj hinv hc
   have hcc : ∀ i, polar Q (h (e i)) (f i) * polar Q (h (f i)) (e i) = 1 := fun i => by
     have := hh (e i) (f i)
     rw [hE i, hFf i, polar_smul_left, polar_smul_right] at this
