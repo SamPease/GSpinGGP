@@ -2253,26 +2253,112 @@ theorem torusIntegral_eq_of_torusTransfer {IF : InnerFormSystem d} (P : Tempered
         mul_zero]
   · exact gammaIntegrand_mul_mem_scalarsIn ψ (P.packetChar_mem_QCfin α) _ s t a ha
 
+/-- `IsQdAt` is constant on `T_{x,♮}` (`W'_t = W'_x`, `fixedSub_eq_of_torusOf_eq`). -/
+theorem isQdAt_iff_of_torusOf_eq {x t : ↥(GSpin d.QW)} (ht : t ∈ d.torusOf x)
+    (hT : d.torusOf t = d.torusOf x) : IsQdAt d t ↔ IsQdAt d x := by
+  unfold IsQdAt GGPData.QVfix GGPData.QWfix
+  rw [d.fixedSub_eq_of_torusOf_eq ht hT]
+
+/-- **Non-quasi-split tori contribute `0`**: for `y ∈ Γ(G,H)` with `G'_y` not quasi-split the
+integrand of `m_{geom,s}` vanishes on `T_y` (on `T_{y,♮}` every point has `G'_t ≅ G'_y`,
+`isQdAt_iff_of_torusOf_eq`, and `gammaIntegrand_eq_zero_of_not_qd`). -/
+theorem torusIntegral_eq_zero_of_not_qd (d' : GGPData F) (θ : ↥d'.G → ℂ) {y : ↥(GSpin d'.QW)}
+    (hq : ¬ IsQdAt d' y) (s : ℝ) : torusIntegral ψ d' θ (d'.torusOf y) s = 0 := by
+  unfold torusIntegral
+  have h0 : (fun q : d'.TorusQuot (d'.torusOf y) =>
+      gammaIntegrand ψ d' θ (d'.torusOf y) s ((Quotient.out q : ↥(d'.torusOf y)) :
+        ↥(GSpin d'.QW))) = fun _ => 0 := by
+    funext q
+    set t : ↥(GSpin d'.QW) := ((Quotient.out q : ↥(d'.torusOf y)) : ↥(GSpin d'.QW))
+    by_cases hT : d'.IsGammaElt t ∧ d'.torusOf t = d'.torusOf y
+    · exact gammaIntegrand_eq_zero_of_not_qd ψ d' θ _ s t
+        (fun h => hq ((isQdAt_iff_of_torusOf_eq (Quotient.out q).2 hT.2).mp h))
+    · unfold gammaIntegrand
+      rw [ite_eq_right_of_eq_false _ _ (eq_false hT)]
+  rw [h0, integral_zero]
+
+/-- **The stable weight comes out of the torus integral** (gating lemma (C)): `Σ_α e(G_α)n_α(t)/n_1(t)`
+is constant on `T_{x,♮}` (`n_alpha_eq_of_torusOf_eq`), and the integrand vanishes off `T_{x,♮}`. -/
+theorem integral_stableWeight_mul (IF : InnerFormSystem d) (θ : ↥d.G → ℂ) {x : ↥(GSpin d.QW)}
+    (hx : d.IsGammaElt x) {T : Subgroup ↥(GSpin d.QW)} (hT : d.torusOf x = T) (s : ℝ) :
+    (letI : MeasurableSpace (d.TorusQuot T) := borel _
+     haveI : BorelSpace (d.TorusQuot T) := ⟨rfl⟩
+     ∫ q, stableWeight IF ((Quotient.out q : ↥T) : ↥(GSpin d.QW)) *
+        gammaIntegrand ψ d θ T s ((Quotient.out q : ↥T) : ↥(GSpin d.QW))
+       ∂(probHaar (d.TorusQuot T))) = stableWeight IF x * torusIntegral ψ d θ T s := by
+  subst hT
+  unfold torusIntegral
+  rw [← integral_const_mul]
+  refine integral_congr_ae (Filter.Eventually.of_forall fun q => ?_)
+  set t : ↥(GSpin d.QW) := ((Quotient.out q : ↥(d.torusOf x)) : ↥(GSpin d.QW))
+  by_cases hT : d.IsGammaElt t ∧ d.torusOf t = d.torusOf x
+  · have hn : ∀ α, n_alpha IF α t = n_alpha IF α x := fun α =>
+      n_alpha_eq_of_torusOf_eq IF α hx hT.1 (Quotient.out q).2 hT.2
+    change (signedCount IF t : ℂ) / (n_alpha IF IF.base t : ℂ) * _ =
+      (signedCount IF x : ℂ) / (n_alpha IF IF.base x : ℂ) * _
+    simp only [signedCount, hn]
+  · have h0 : gammaIntegrand ψ d θ (d.torusOf x) s t = 0 := by
+      unfold gammaIntegrand
+      rw [ite_eq_right_of_eq_false _ _ (eq_false hT)]
+    change _ * gammaIntegrand ψ d θ (d.torusOf x) s t = _ * gammaIntegrand ψ d θ (d.torusOf x) s t
+    rw [h0, mul_zero, mul_zero]
+
+/-- A generator `x` of the torus class `c` (`T = T_x`, `x ∈ Γ(G,H)`). -/
+noncomputable def gammaGen (d : GGPData F) (c : GammaClass d) : ↥(GSpin d.QW) :=
+  (Quot.out c).2.choose
+
+theorem gammaGen_spec (d : GGPData F) (c : GammaClass d) :
+    d.IsGammaElt (gammaGen d c) ∧ d.torusOf (gammaGen d c) = (Quot.out c).1 :=
+  (Quot.out c).2.choose_spec
+
+open Classical in
+/-- `F_α(c) = f(T_x)` for some `x ∈ Γ(G,H)` strongly stably conjugate to the generator of the
+torus class `c` of `Γ(G_α,H_α)`, and `0` if there is none. -/
+noncomputable def stableLift (IF : InnerFormSystem d) (α : IF.Idx)
+    (f : Subgroup ↥(GSpin d.QW) → ℂ) (c : GammaClass (IF.data α)) : ℂ :=
+  if h : ∃ x : ↥(GSpin d.QW), d.IsGammaElt x ∧
+      d.StronglyStablyConjW (IF.twist α) x (gammaGen (IF.data α) c) then
+    f (d.torusOf h.choose) else 0
+
+/-- **The torus-class count (R2)** (own work; the regrouping step of Thesis (6.7.2)–(6.7.5)): for
+a function `f` of the tori of `Γ(G,H)` that is constant on tori `T_x`, `T_{x'}` with `x`, `x'`
+strongly stably conjugate to a common `y` (and `0` on non-quasi-split tori),
+`Σ_{[T'] ∈ Γ(G_α,H_α)/conj} |W(T')|⁻¹ F_α(T') = Σ_{[T] ∈ Γ(G,H)/conj} |W(T)|⁻¹ (n_α(x_T)/n_1(x_T)) f(T)`.
+Regrouping both sides by stable classes, this says that `N_α = Σ |W(T')|⁻¹` over the classes of
+`G_α` stably conjugate to `T_x` is proportional to `n_α(x)` (with the same constant for every `α`).
+Expected proof: `n_α(x) = |q_x⁻¹(α)|` (`n_alpha_eq_card_twistIdx`), and the rational classes of tori
+over `α` are the orbits of `(N_x/S_x)(F)` on `q_x⁻¹(α) ⊆ H¹(F, S_x)`, with stabilizers `W(T')`
+(orbit–stabilizer).  Checks: at `α = 1` both sides agree by the invariance of `f`; for central `x`,
+`n_α(x) = [α = 1]`. -/
+theorem torusClass_count (hqs : d.IsQuasiSplit) (IF : InnerFormSystem d) (α : IF.Idx)
+    (f : Subgroup ↥(GSpin d.QW) → ℂ)
+    (hf : ∀ (β : IF.Idx) (y : ↥(GSpin (IF.data β).QW)) (x x' : ↥(GSpin d.QW)),
+      (IF.data β).IsGammaElt y → d.IsGammaElt x → d.IsGammaElt x' →
+      d.StronglyStablyConjW (IF.twist β) x y → d.StronglyStablyConjW (IF.twist β) x' y →
+      f (d.torusOf x) = f (d.torusOf x'))
+    (hf0 : ∀ x : ↥(GSpin d.QW), d.IsGammaElt x → ¬ IsQdAt d x → f (d.torusOf x) = 0) :
+    ∑' c : GammaClass (IF.data α), ((weylCard (IF.data α) c : ℂ))⁻¹ * stableLift IF α f c =
+      ∑' c : GammaClass d, ((weylCard d c : ℂ))⁻¹ *
+        ((n_alpha IF α (gammaGen d c) : ℂ) / (n_alpha IF IF.base (gammaGen d c) : ℂ)) *
+          f (Quot.out c).1 :=
+  sorry
+
 /-- **The stable rearrangement at `s > 0`** (own work; Thesis (6.7.2)–(6.7.5) before the limit):
 for `s > 0`,
 `Σ_α m_{geom,s}(θ_α) = ∫_{Γ(G,H)} (Σ_α e(G_α)n_α(x)/n_1(x)) c_{θ_1}(x) D^G(x)^{1/2} Δ(x)^{s-1/2} dx`.
-Route, all at fixed `s > 0`, where the integrals converge absolutely (Thesis Prop.
-12.1.1):
-* in `m_{geom,s}(θ_α)` only quasi-split classes contribute (`hvanish`);
-* `c_{θ_α}`, `D^{G_α}`, `Δ` are constant on strongly stable classes (`hgerm` at `α`, `α`), so the
-  integral over `Γ(G_α,H_α)` is one over `Γ^qd_stab(G_α,H_α)` weighted by the fibre counts;
-* `y ↦ x` with `x ∼_stab y` (`hi`) is a measure-preserving injection
-  `Γ^qd_stab(G_α,H_α) ↪ Γ^qd_stab(G,H)`: near a class with distinct eigenvalues on `W''` (full
-  measure) the weight `|W(T)|⁻¹` cancels the `|W(T)|`-to-1 projection, and `TorusTransfer` (`hii`)
-  identifies the probability Haar measures of `T_x(F)/A(F)`, `T_y(F)/A(F)`, `D^G` and `Δ`;
-* `c_{θ_α}(y) = e(G_α) c_{θ_1}(x)` (`hgerm`), and the fibres have `n_α(x)` points;
-* finally `∫_{Γ_stab(G,H)} f = ∫_{Γ(G,H)} f / n_1` (fibres of `Γ → Γ_stab` have `n_1` points). -/
+Proof, torus class by torus class:
+* a torus `T_y` of `Γ(G_α,H_α)` with `G'_y` not quasi-split contributes `0`
+  (`torusIntegral_eq_zero_of_not_qd`); otherwise some `x ∈ Γ(G,H)` is strongly stably conjugate to
+  `y` (`hi`), and `∫_{T_y/A} = e(G_α) ∫_{T_x/A}` (`torusIntegral_eq_of_torusTransfer`: `hii`
+  identifies the probability Haar measures, `D^G` and `Δ`; `hgerm` the germs);
+* regrouping the torus classes of all `G_α` over those of `G` is the torus-class count
+  `torusClass_count`;
+* `Σ_α e(G_α)n_α/n_1` is constant on `T_{x,♮}` and comes out of the torus integral
+  (`integral_stableWeight_mul`).
+(The identity holds for every `s`; `s > 0` is where the integrals converge, Thesis Prop. 12.1.1.) -/
 theorem stable_rearrangement_pos (hqs : d.IsQuasiSplit) (IF : InnerFormSystem d)
     (P : TemperedPacketFamily d IF)
     (hgerm : PacketGermTransfer ψ P)
-    (hvanish : ∀ (α : IF.Idx) (θ : ↥(IF.data α).G → ℂ) (T : Subgroup ↥(GSpin (IF.data α).QW))
-      (s : ℝ) (t : ↥(GSpin (IF.data α).QW)), ¬ IsQdAt (IF.data α) t →
-        gammaIntegrand ψ (IF.data α) θ T s t = 0)
     (hi : ∀ (α : IF.Idx) (y : ↥(GSpin (IF.data α).QW)), (IF.data α).IsGammaElt y →
       IsQdAt (IF.data α) y → ∃ x : ↥(GSpin d.QW), d.IsGammaElt x ∧
         d.StronglyStablyConjW (IF.twist α) x y)
@@ -2280,15 +2366,71 @@ theorem stable_rearrangement_pos (hqs : d.IsQuasiSplit) (IF : InnerFormSystem d)
       (IF.data α).IsGammaElt y → d.StronglyStablyConjW (IF.twist α) x y →
         TorusTransfer IF α x y)
     {s : ℝ} (hs : 0 < s) :
-    ∑ᶠ α : IF.Idx, mGeomS ψ (IF.data α) (P.packetChar α) s = mGeomStabS ψ IF P.baseChar s :=
-  sorry
+    ∑ᶠ α : IF.Idx, mGeomS ψ (IF.data α) (P.packetChar α) s = mGeomStabS ψ IF P.baseChar s := by
+  classical
+  have _ := hs
+  have := finite_gammaClass d
+  let _ : Fintype (GammaClass d) := Fintype.ofFinite _
+  have := IF.finite_idx
+  let _ : Fintype IF.Idx := Fintype.ofFinite _
+  let f : Subgroup ↥(GSpin d.QW) → ℂ := fun T => torusIntegral ψ d P.baseChar T s
+  have he0 : ∀ β : IF.Idx, (kottwitzSign d (IF.twist β) : ℂ) ≠ 0 := fun β => by
+    rcases kottwitzSign_eq_one_or d (IF.twist β) with h | h <;> simp [h]
+  -- each inner form: transport the quasi-split tori to `G`
+  have h1 : ∀ α, mGeomS ψ (IF.data α) (P.packetChar α) s = (kottwitzSign d (IF.twist α) : ℂ) *
+      ∑' c : GammaClass (IF.data α), ((weylCard (IF.data α) c : ℂ))⁻¹ * stableLift IF α f c := by
+    intro α
+    unfold mGeomS
+    rw [← tsum_mul_left]
+    refine tsum_congr fun c => ?_
+    obtain ⟨hy, hyT⟩ := gammaGen_spec (IF.data α) c
+    rw [← hyT]
+    unfold stableLift
+    split_ifs with h
+    · obtain ⟨hx, hxy⟩ := h.choose_spec
+      rw [torusIntegral_eq_of_torusTransfer ψ P hgerm hx hy (hii α _ _ hx hy hxy) s]
+      ring
+    · have hq : ¬ IsQdAt (IF.data α) (gammaGen (IF.data α) c) := fun hq => h (hi α _ hy hq)
+      rw [torusIntegral_eq_zero_of_not_qd ψ _ _ hq]
+      ring
+  have hf : ∀ (β : IF.Idx) (y : ↥(GSpin (IF.data β).QW)) (x x' : ↥(GSpin d.QW)),
+      (IF.data β).IsGammaElt y → d.IsGammaElt x → d.IsGammaElt x' →
+      d.StronglyStablyConjW (IF.twist β) x y → d.StronglyStablyConjW (IF.twist β) x' y →
+      f (d.torusOf x) = f (d.torusOf x') := by
+    intro β y x x' hy hx hx' hxy hx'y
+    have a := torusIntegral_eq_of_torusTransfer ψ P hgerm hx hy (hii β x y hx hy hxy) s
+    have b := torusIntegral_eq_of_torusTransfer ψ P hgerm hx' hy (hii β x' y hx' hy hx'y) s
+    exact mul_left_cancel₀ (he0 β) (a.symm.trans b)
+  have hf0 : ∀ x : ↥(GSpin d.QW), d.IsGammaElt x → ¬ IsQdAt d x → f (d.torusOf x) = 0 :=
+    fun x _ hq => torusIntegral_eq_zero_of_not_qd ψ d _ hq s
+  have hL : ∀ α, mGeomS ψ (IF.data α) (P.packetChar α) s =
+      (kottwitzSign d (IF.twist α) : ℂ) * ∑' c : GammaClass d, ((weylCard d c : ℂ))⁻¹ *
+        ((n_alpha IF α (gammaGen d c) : ℂ) / (n_alpha IF IF.base (gammaGen d c) : ℂ)) *
+          f (Quot.out c).1 := fun α => by
+    rw [h1, torusClass_count hqs IF α f hf hf0]
+  -- the stable side
+  have hR : mGeomStabS ψ IF P.baseChar s = ∑' c : GammaClass d, ((weylCard d c : ℂ))⁻¹ *
+      (stableWeight IF (gammaGen d c) * f (Quot.out c).1) := by
+    unfold mGeomStabS
+    refine tsum_congr fun c => ?_
+    rw [integral_stableWeight_mul ψ IF P.baseChar (gammaGen_spec d c).1 (gammaGen_spec d c).2 s]
+  rw [finsum_congr hL, hR, finsum_eq_sum_of_fintype]
+  simp only [tsum_fintype]
+  simp_rw [Finset.mul_sum]
+  rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl fun c _ => ?_
+  rw [stableWeight, signedCount, finsum_eq_sum_of_fintype]
+  push_cast
+  rw [Finset.sum_div, Finset.sum_mul, Finset.mul_sum]
+  refine Finset.sum_congr rfl fun α _ => ?_
+  ring
 
 /-- **Thesis (6.7.5)** (own work): summing (6.7.2) over the inner forms and
 rearranging over strongly stable classes,
 `Σ_α m_geom(θ_α) = lim_{s→0⁺} ∫_{Γ(G,H)} (Σ_α e(G_α)n_α(x)/n_1(x)) c_{θ_1}(x) D^G(x)^{1/2}
 Δ(x)^{s-1/2} dx`.  Ingredients: STAB + BP (12.1.2) (`packet_germ_transfer`) make `c_{θ_α}`
 constant on strongly stable classes; only quasi-split classes contribute
-(`gammaIntegrand_eq_zero_of_not_qd`); Prop. 6.6.1(i),(ii) (`prop_12_5_1_i`, `prop_12_5_1_ii`)
+(`torusIntegral_eq_zero_of_not_qd`); Prop. 6.6.1(i),(ii) (`prop_12_5_1_i`, `prop_12_5_1_ii`)
 give a measure-preserving injection `Γ^qd_stab(G_α,H_α) ↪ Γ^qd_stab(G,H)` (argued locally: near a
 class with distinct eigenvalues on `W''` (full measure) the weight `|W(T)|⁻¹` cancels the
 `|W(T)|`-to-1 projection, so `|W(T_x)| ≠ |W(T_y)|` is
@@ -2299,9 +2441,6 @@ of the main theorem on them is explicit. -/
 theorem stable_rearrangement (hqs : d.IsQuasiSplit) (IF : InnerFormSystem d)
     (P : TemperedPacketFamily d IF)
     (hgerm : PacketGermTransfer ψ P)
-    (hvanish : ∀ (α : IF.Idx) (θ : ↥(IF.data α).G → ℂ) (T : Subgroup ↥(GSpin (IF.data α).QW))
-      (s : ℝ) (t : ↥(GSpin (IF.data α).QW)), ¬ IsQdAt (IF.data α) t →
-        gammaIntegrand ψ (IF.data α) θ T s t = 0)
     (hi : ∀ (α : IF.Idx) (y : ↥(GSpin (IF.data α).QW)), (IF.data α).IsGammaElt y →
       IsQdAt (IF.data α) y → ∃ x : ↥(GSpin d.QW), d.IsGammaElt x ∧
         d.StronglyStablyConjW (IF.twist α) x y)
@@ -2320,7 +2459,7 @@ theorem stable_rearrangement (hqs : d.IsQuasiSplit) (IF : InnerFormSystem d)
     eventually_nhdsWithin_of_forall fun s hs => by
       show ∑ α, _ = _
       rw [← finsum_eq_sum_of_fintype]
-      exact stable_rearrangement_pos ψ hqs IF P hgerm hvanish hi hii hs
+      exact stable_rearrangement_pos ψ hqs IF P hgerm hi hii hs
   rw [finsum_eq_sum_of_fintype]
   exact ((hlim.congr' heq).limUnder_eq).symm
 
@@ -2350,7 +2489,6 @@ theorem sum_mult_eq_germ_one (hqs : d.IsQuasiSplit) (IF : InnerFormSystem d)
       germ d.G d.lie d.bilin ψ P.baseChar (d.diag 1) (orbitChoice d 1) := by
   rw [finsum_congr (packet_sum_mult ψ P), stable_rearrangement ψ hqs IF P
     (packetGermTransfer_holds ψ hqs P)
-    (fun α θ T s t ht => gammaIntegrand_eq_zero_of_not_qd ψ (IF.data α) θ T s t ht)
     (fun α y hy hqd => prop_12_5_1_i hqs IF α y hy hqd)
     (fun α x y hx hy hxy => prop_12_5_1_ii IF α x y hx hy hxy)]
   have hsc := fun t ht hqd => signed_count hqs IF t ht hqd
