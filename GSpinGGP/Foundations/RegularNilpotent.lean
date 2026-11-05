@@ -473,4 +473,11 @@ theorem commute_regNil {V : Type*} [AddCommGroup V] [Module K V] {Q : QuadraticF
 
 end Commute
 
+/-- Split families are carried by isometric embeddings. -/
+theorem IsSplitFamily.map_isometry {K : Type*} [Field K] [Invertible (2 : K)] {V₁ V₂ : Type*}
+    [AddCommGroup V₁] [Module K V₁] [AddCommGroup V₂] [Module K V₂] {Q₁ : QuadraticForm K V₁}
+    {Q₂ : QuadraticForm K V₂} (f : Q₁ →qᵢ Q₂) {w : ℤ → V₁} {ν : K} {k : ℕ}
+    (hw : IsSplitFamily Q₁ w ν k) : IsSplitFamily Q₂ (fun j => f (w j)) ν k :=
+  fun i j hi hj => (bform_isometry f _ _).trans (hw i j hi hj)
+
 end GSpinGGP

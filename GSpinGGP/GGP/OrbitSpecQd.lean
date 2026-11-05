@@ -10,6 +10,7 @@ import GSpinGGP.GGP.RegularNilpotent
 
 For semisimple `x ∈ GSpin(W)(F)` with abelian moved part and `G'_x` quasi-split, the regular
 nilpotent orbit `O_x` of `𝔤_x` selected by Luo's recipe (`OrbitSpec`, Luo §7.1) exists
+(the hypotheses are those of `IsQdAt`: `W'_x` and `V'_x` quasi-split)
 (`exists_orbitSpec_of_quasiSplit`).  Luo's recipe applied to the descended GGP datum
 `(W'_x, V'_x)` (`GGPData.restrictFix`) gives the split family of `O_ν` (resp. `O_{−ν}`) in
 `V'_x` (resp. `W'_x`) (`exists_orbitNu_family_V`, `exists_orbitNu_family_W`); carried into `V`
@@ -27,13 +28,6 @@ namespace GSpinGGP
 
 variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
 
-/-- Split families are carried by isometric embeddings. -/
-theorem IsSplitFamily.map_isometry {K : Type*} [Field K] [Invertible (2 : K)] {V₁ V₂ : Type*}
-    [AddCommGroup V₁] [Module K V₁] [AddCommGroup V₂] [Module K V₂] {Q₁ : QuadraticForm K V₁}
-    {Q₂ : QuadraticForm K V₂} (f : Q₁ →qᵢ Q₂) {w : ℤ → V₁} {ν : K} {k : ℕ}
-    (hw : IsSplitFamily Q₁ w ν k) : IsSplitFamily Q₂ (fun j => f (w j)) ν k :=
-  fun i j hi hj => (bform_isometry f _ _).trans (hw i j hi hj)
-
 namespace GGPData
 
 variable (d : GGPData F) {x : GSpin d.QW} (hnd : IsNondeg (d.QW.comp (fixedSub x).subtype))
@@ -50,6 +44,7 @@ theorem isQuasiSplit_restrictFix (hW : IsQuasiSplitQF (d.QWfix x))
     QuadClassify.isQuasiSplitQF_of_isometryEquiv
       ((d.fixQWIso).prod (QuadraticMap.IsometryEquiv.refl d.QZ)).symm hV⟩
 
+/-- `dim W'_x` for the descended datum. -/
 theorem finrank_restrictFix_W : finrank F (Fin (d.restrictFix x hnd).m → F) =
     finrank F ↥(fixedSub x) := by
   rw [Module.finrank_fin_fun]
@@ -61,6 +56,7 @@ theorem prod_top_eq_fixedSub_incl (x : GSpin d.QW) :
   rw [d.mem_fixedSub_incl_iff, Submodule.mem_prod]
   simp
 
+/-- `dim V'_x = dim (W'_x ⊕ Z)` for the descended datum. -/
 theorem finrank_restrictFix_V : finrank F (d.restrictFix x hnd).V =
     finrank F ↥((fixedSub x).prod (⊤ : Submodule F d.Z)) := by
   rw [prod_top_eq_fixedSub_incl, ← (d.QVfixIso x).toLinearEquiv.finrank_eq, Module.finrank_prod,
