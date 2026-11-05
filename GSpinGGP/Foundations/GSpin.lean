@@ -1492,19 +1492,6 @@ theorem bform_isometry {V₁ V₂ : Type*} [AddCommGroup V₁] [Module K V₁]
   exact mul_left_cancel₀ (Invertible.ne_zero (2 : K)) h
 
 omit [Invertible (2 : K)] in
-/-- `C(f)` maps even elements to even elements. -/
-theorem map_mem_evenOdd_zero {V₁ V₂ : Type*} [AddCommGroup V₁] [Module K V₁]
-    [AddCommGroup V₂] [Module K V₂] {Q₁ : QuadraticForm K V₁} {Q₂ : QuadraticForm K V₂}
-    (f : Q₁ →qᵢ Q₂) {x : CliffordAlgebra Q₁} (hx : x ∈ evenOdd Q₁ 0) :
-    CliffordAlgebra.map f x ∈ evenOdd Q₂ 0 := by
-  induction x, hx using even_induction with
-  | algebraMap r => rw [AlgHom.commutes]; exact SetLike.algebraMap_mem_graded _ _
-  | add x y _ _ ihx ihy => rw [map_add]; exact Submodule.add_mem _ ihx ihy
-  | ι_mul_ι_mul m₁ m₂ x _ ih =>
-    rw [map_mul, map_mul, map_apply_ι, map_apply_ι]
-    exact zero_add (0 : ZMod 2) ▸ SetLike.mul_mem_graded (ι_mul_ι_mem_evenOdd_zero Q₂ _ _) ih
-
-omit [Invertible (2 : K)] in
 /-- The image under `C(f)` of an even element commutes with `ι(u)` whenever `u ⊥ f(V₁)`
 (used for `GSpin.map`, and for `GSpin(W)` fixing `Z` pointwise). -/
 theorem map_even_commute_ι {V₁ V₂ : Type*} [AddCommGroup V₁] [Module K V₁]
@@ -1572,7 +1559,7 @@ def GSpin.map {V₁ V₂ : Type*} [AddCommGroup V₁] [Module K V₁] [Module.Fi
         · rw [map_even_commute_ι f ha hu, mul_assoc, ← map_mul, hab, map_one, mul_one]
       refine ⟨?_, key x y hg0 hxy hg1, key y x hi0 hyx hg2⟩
       rw [← Subalgebra.mem_toSubmodule, even_toSubmodule]
-      exact map_mem_evenOdd_zero f hg0)
+      exact CliffordAlgebra.map_mem_even f hg0)
 
 @[simp] theorem GSpin.coe_map {V₁ V₂ : Type*} [AddCommGroup V₁] [Module K V₁] [Module.Finite K V₁]
     [AddCommGroup V₂] [Module K V₂] {Q₁ : QuadraticForm K V₁} {Q₂ : QuadraticForm K V₂}
@@ -2709,7 +2696,7 @@ theorem isNilpotent_mul_sub_one_of_flagUnipSO_of_finite {F : IsotropicFlag Q}
         bform Q r (specP Q y⁻¹ z) from bform_specP y r _]
       exact bform_eq_zero_of_mem_ker hr _
     let P0 : V0 →ₗ[K] V0 := p ∘ₗ (specP Q y : V →ₗ[K] V) ∘ₗ V0.subtype
-    refine sub_one_mem_wtFil_one hQ0 hV0 hdual0 (map_mem_evenOdd_zero pp hx0) (P := P0)
+    refine sub_one_mem_wtFil_one hQ0 hV0 hdual0 (CliffordAlgebra.map_mem_even pp hx0) (P := P0)
       (fun u => ?_) (fun w u hu => ?_) (by have := hy'.map π; rwa [map_sub, map_one] at this)
     · have e : ι Q0 u = π (ι Q (u : V)) := by
         change ι Q0 u = CliffordAlgebra.map pp (ι Q (u : V))
