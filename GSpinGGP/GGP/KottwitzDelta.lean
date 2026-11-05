@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.GGP.TorusFrame
 import GSpinGGP.GGP.StableCocycleSurj
+import GSpinGGP.GGP.CliffordDescent
 
 /-!
 # The connecting map `H¹(F, S_x) → H²(F, F̄^×)`, concretely
@@ -149,6 +150,28 @@ theorem galObstruction_mul_central (t μ : GalF F → GSpin (Q.baseChange Kb))
         rw [← e1]; group
     _ = _ := by rw [← e2]; group
 
+end Generic
+
+section Twist
+
+open TorusTransfer
+
+variable {V V₁ : Type*} [AddCommGroup V] [Module F V] [AddCommGroup V₁] [Module F V₁]
+
+/-- If `t` lifts `φ⁻¹ ∘ σφ`, then `σ(C(φ) z) = C(φ)(t σ(z) t⁻¹)`. -/
+theorem galC_map_of_lift {Q : QuadraticForm F V} {Q₁ : QuadraticForm F V₁}
+    (φ : (Q.baseChange Kb).IsometryEquiv (Q₁.baseChange Kb)) (σ : GalF F)
+    (t : GSpin (Q.baseChange Kb)) (h : ∀ w, specP _ t w = φ.symm (galIso σ φ w))
+    (z : CliffordAlgebra (Q.baseChange Kb)) :
+    galC Q₁ σ (CliffordAlgebra.map φ.toIsometry z) = CliffordAlgebra.map φ.toIsometry
+      (((t : (CliffordAlgebra (Q.baseChange Kb))ˣ) : CliffordAlgebra (Q.baseChange Kb)) *
+        galC Q σ z * (((t : (CliffordAlgebra (Q.baseChange Kb))ˣ)⁻¹ :
+          (CliffordAlgebra (Q.baseChange Kb))ˣ) : CliffordAlgebra (Q.baseChange Kb))) := by
+  have e : ∀ w, galIso σ φ w = ((specPIso t).trans φ) w := fun w => by
+    change galIso σ φ w = φ (specP _ t w)
+    rw [h, QuadraticMap.IsometryEquiv.apply_symm_apply]
+  rw [galC_map, map_isometryEquiv_congr e, map_trans_apply, map_specPIso_apply]
+
 /-- **Twists with equal obstructions are isometric.** Let `φᵢ : U_{F̄} ≅ Uᵢ_{F̄}` (`i = 1, 2`) and
 let `t`, `s` be continuous lifts to `GSpin(U)(F̄)` of their cocycles `σ ↦ φᵢ⁻¹ ∘ σφᵢ` with equal
 obstructions `t_σ σ(t_τ) t_{στ}⁻¹ = s_σ σ(s_τ) s_{στ}⁻¹`. Then `U₁ ≅ U₂` over `F`.
@@ -161,18 +184,21 @@ twisted algebra, which is `C(U₂)` (resp. `C⁺(U₂)`), is isomorphic to `C(U�
 have the same rank, discriminant and Clifford invariant, and are isometric by the classification of
 quadratic forms over `p`-adic fields (Tau Ceti's
 `RegularFormClass.eq_iff_rank_eq_and_signedDiscr_eq_and_cliffordInvariant_eq`). -/
-theorem nonempty_isometryEquiv_of_galObstruction_eq [FiniteDimensional F V] (hQ : IsNondeg Q)
-    {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂}
+theorem nonempty_isometryEquiv_of_galObstruction_eq {m : ℕ}
+    {Q Q₁ Q₂ : QuadraticForm F (Fin m → F)} (hQ : IsNondeg Q) (hQ₁ : IsNondeg Q₁)
+    (hQ₂ : IsNondeg Q₂)
     (φ₁ : (Q.baseChange Kb).IsometryEquiv (Q₁.baseChange Kb))
     (φ₂ : (Q.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb))
     (t s : GalF F → GSpin (Q.baseChange Kb)) (ht : IsGalContinuous t) (hs : IsGalContinuous s)
     (hta : ∀ σ w, specP _ (t σ) w = φ₁.symm (galIso σ φ₁ w))
     (hsb : ∀ σ w, specP _ (s σ) w = φ₂.symm (galIso σ φ₂ w))
+    (hscal : ∀ σ τ, galObstruction Q t σ τ ∈ (scalarGSpin (Q.baseChange Kb)).range)
     (hobs : galObstruction Q t = galObstruction Q s) :
     Nonempty (Q₁.IsometryEquiv Q₂) :=
   sorry
 
-end Generic
+end Twist
+
 
 namespace GalCocycle
 
@@ -424,15 +450,16 @@ theorem specP_apply_of_specMatFbar_eq {Q' : QuadraticForm F (Fin d.m → F)} {σ
 
 /-- **(B)**: `DRel`-related cocycles are cocycles of isometric twists
 (`nonempty_isometryEquiv_of_galObstruction_eq`). -/
-theorem DRel.isometryEquiv {Q₁ Q₂ : QuadraticForm F (Fin d.m → F)}
-    {a b : GalCocycle (d.torusBarFbar x)} (ha : IsTwistBy d.QW Q₁ a.toFun)
+theorem DRel.isometryEquiv {Q₁ Q₂ : QuadraticForm F (Fin d.m → F)} (hQ₁ : IsNondeg Q₁)
+    (hQ₂ : IsNondeg Q₂) {a b : GalCocycle (d.torusBarFbar x)} (ha : IsTwistBy d.QW Q₁ a.toFun)
     (hb : IsTwistBy d.QW Q₂ b.toFun) (h : DRel a b) : Nonempty (Q₁.IsometryEquiv Q₂) := by
   obtain ⟨t, s, ht, hs, he⟩ := h
   obtain ⟨φ₁, hφ₁⟩ := (isTwistBy_iff _ _ _).1 ha
   obtain ⟨φ₂, hφ₂⟩ := (isTwistBy_iff _ _ _).1 hb
-  exact nonempty_isometryEquiv_of_galObstruction_eq d.QW d.nondeg φ₁ φ₂ t s ht.1 hs.1
+  exact nonempty_isometryEquiv_of_galObstruction_eq d.nondeg hQ₁ hQ₂ φ₁ φ₂ t s ht.1 hs.1
     (fun σ => specP_apply_of_specMatFbar_eq ((ht.2 σ).2.trans (hφ₁ σ)))
-    (fun σ => specP_apply_of_specMatFbar_eq ((hs.2 σ).2.trans (hφ₂ σ))) he
+    (fun σ => specP_apply_of_specMatFbar_eq ((hs.2 σ).2.trans (hφ₂ σ)))
+    (ht.obstruction_mem) he
 
 end GalCocycle
 
