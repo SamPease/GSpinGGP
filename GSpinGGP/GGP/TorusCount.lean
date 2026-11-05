@@ -18,6 +18,7 @@ Ingredients of the torus-class count (`torusClass_count`, Thesis (6.7.2)–(6.7.
 noncomputable section
 
 open QuadraticMap
+open scoped TensorProduct
 
 namespace GSpinGGP
 
@@ -83,6 +84,51 @@ theorem commute_torusOf_of_commute {x z t : ↥(GSpin d.QW)} (hx : d.IsGammaElt 
     (fun w hw => (bcGSpin_mem_torusFbar ht).2 w (by rwa [GGPData.eigenspace_bc_one] at hw))
     (hzx.map (bcGSpin d.QW))
   exact bcGSpin_injective d.QW (by rw [map_mul, map_mul, h.eq])
+
+/-- **Finitely many conjugates of `x` in `T_x(F)`**: for `x ∈ Γ(G,H)`, only finitely many
+`t ∈ T_x(F)` are `GSpin(W)(F̄)`-conjugate to `x`. Over `F̄`, `P(t)` acts on an eigen-frame of
+`P(x)` by eigenvalues of `P(x)` (roots of its minimal polynomial), so takes finitely many values;
+and two such `t` with the same `P(t)` differ by a scalar `c` with `c ^ N = 1`
+(`pow_finrank_eq_one_of_conj_eq_smul`). -/
+theorem finite_conj_torusOf {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x) :
+    {t : ↥(GSpin d.QW) | t ∈ d.torusOf x ∧ ∃ g : ↥(GSpin (d.QW.baseChange (AlgebraicClosure F))),
+      g * bcGSpin d.QW x * g⁻¹ = bcGSpin d.QW t}.Finite := by
+  classical
+  set S := {t : ↥(GSpin d.QW) | t ∈ d.torusOf x ∧ ∃ g : ↥(GSpin (d.QW.baseChange (AlgebraicClosure F))),
+      g * bcGSpin d.QW x * g⁻¹ = bcGSpin d.QW t}
+  obtain ⟨n, e, f, hF, heq⟩ := exists_hypFrame_torusFbar x hx
+  set X : Module.End (AlgebraicClosure F) (AlgebraicClosure F ⊗[F] (Fin d.m → F)) :=
+    (specP _ (bcGSpin d.QW x) : AlgebraicClosure F ⊗[F] (Fin d.m → F) →ₗ[AlgebraicClosure F]
+      AlgebraicClosure F ⊗[F] (Fin d.m → F))
+  set R : Set (AlgebraicClosure F)ˣ := {c | (minpoly (AlgebraicClosure F) X).IsRoot (c : (AlgebraicClosure F))}
+  have hR : R.Finite := ((Polynomial.finite_setOfPred_isRoot
+    (minpoly.ne_zero (Algebra.IsIntegral.isIntegral X))).preimage Units.val_injective.injOn)
+  have : Finite R := hR.to_subtype
+  -- the frame scalars of `P(t)` are eigenvalues of `X`
+  have hscal : ∀ t ∈ S, ∃ τ : Fin n → R, (∀ w ∈ Module.End.eigenspace X 1,
+      specP _ (bcGSpin d.QW t) w = w) ∧ ∀ i, specP _ (bcGSpin d.QW t) (e i) = ((τ i : (AlgebraicClosure F)ˣ) : (AlgebraicClosure F)) • e i ∧
+        specP _ (bcGSpin d.QW t) (f i) = ((((τ i : (AlgebraicClosure F)ˣ))⁻¹ : (AlgebraicClosure F)ˣ) : (AlgebraicClosure F)) • f i := by
+    rintro t ⟨ht, g, hg⟩
+    obtain ⟨hW, τ, hτ⟩ : specP _ (bcGSpin d.QW t) ∈ hypTorus (Module.End.eigenspace X 1) e f :=
+      heq ▸ Subgroup.mem_map_of_mem _ (bcGSpin_mem_torusFbar ht)
+    have hmem : ∀ i, τ i ∈ R := fun i => by
+      have he : e i ≠ 0 := fun h0 => by
+        have := hF.polar_ef_self i; rw [h0, polar_zero_left] at this; exact zero_ne_one this
+      set v := specP _ g⁻¹ (e i)
+      have hv : v ≠ 0 := fun h0 => he (by
+        have := congrArg (specP _ g) h0
+        rw [map_zero, ← LinearEquiv.mul_apply, ← map_mul, mul_inv_cancel, map_one] at this
+        exact this)
+      have hXv : X v = ((τ i : (AlgebraicClosure F)ˣ) : (AlgebraicClosure F)) • v := by
+        have h1 : specP _ g⁻¹ * specP _ (bcGSpin d.QW t) = specP _ (bcGSpin d.QW x) * specP _ g⁻¹ := by
+          rw [← map_mul, ← map_mul, ← hg]; congr 1; group
+        have h2 := congrArg (fun φ => φ (e i)) h1
+        simp only [LinearEquiv.mul_apply, (hτ i).1, map_smul] at h2
+        exact h2.symm
+      exact (Module.End.hasEigenvalue_iff_isRoot).1
+        (Module.End.hasEigenvalue_of_hasEigenvector ⟨Module.End.mem_eigenspace_iff.2 hXv, hv⟩)
+    exact ⟨fun i => ⟨τ i, hmem i⟩, hW, hτ⟩
+  sorry
 
 end GGPData
 
