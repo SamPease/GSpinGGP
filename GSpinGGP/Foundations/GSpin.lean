@@ -644,6 +644,23 @@ theorem map_specPIso_apply {Q : QuadraticForm K V} (g : GSpin Q) (a : CliffordAl
   | mul a b ha hb => rw [map_mul, ha, hb]; simp only [mul_assoc, Units.inv_mul_cancel_left]
   | add a b ha hb => rw [map_add, ha, hb, mul_add, add_mul]
 
+/-- If `C(P(u))` fixes `X`, then `u` commutes with `X`. -/
+theorem commute_of_map_specPIso_eq_self {Q : QuadraticForm K V} (u : GSpin Q) {X : CliffordAlgebra Q}
+    (h : CliffordAlgebra.map (specPIso u).toIsometry X = X) :
+    Commute ((u : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) X := by
+  rw [map_specPIso_apply] at h
+  change _ * X = X * _
+  conv_rhs => rw [← h]
+  simp only [mul_assoc, Units.inv_mul, mul_one]
+
+/-- `C(e)` depends only on the underlying map of the isometry `e`. -/
+theorem map_isometryEquiv_congr {V₁ V₂ : Type*} [AddCommGroup V₁] [Module K V₁] [AddCommGroup V₂]
+    [Module K V₂] {Q₁ : QuadraticForm K V₁} {Q₂ : QuadraticForm K V₂} {e e' : Q₁.IsometryEquiv Q₂}
+    (h : ∀ v, e v = e' v) : CliffordAlgebra.map e.toIsometry = CliffordAlgebra.map e'.toIsometry := by
+  congr 1
+  ext v
+  exact h v
+
 theorem specP_inv_apply_apply {Q : QuadraticForm K V} (g : GSpin Q) (v : V) :
     specP Q g (specP Q g⁻¹ v) = v := by
   rw [← specP_mul_apply, mul_inv_cancel, map_one]; rfl

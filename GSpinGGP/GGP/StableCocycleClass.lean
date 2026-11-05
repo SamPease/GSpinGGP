@@ -28,43 +28,11 @@ variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
 local notation "Kb" => AlgebraicClosure F
 
-/-- An algebra map out of a Clifford algebra has image commuting with `z` if the images of the
-generators do. -/
-theorem commute_of_commute_ι {R V A : Type*} [CommRing R] [AddCommGroup V] [Module R V] [Ring A]
-    [Algebra R A] {Q : QuadraticForm R V} (φ : CliffordAlgebra Q →ₐ[R] A) {z : A}
-    (h : ∀ v, Commute (φ (ι Q v)) z) (a : CliffordAlgebra Q) : Commute (φ a) z := by
-  induction a using CliffordAlgebra.induction with
-  | algebraMap r => rw [AlgHom.commutes]; exact Algebra.commute_algebraMap_left r z
-  | ι v => exact h v
-  | mul a b ha hb => rw [map_mul]; exact ha.mul_left hb
-  | add a b ha hb => rw [map_add]; exact ha.add_left hb
-
-/-- An element of `S_x(F̄)`, as an isometry, is the identity on `W'_x ⊗ F̄`. -/
-theorem apply_eq_self_of_glOf_mem_torusBarFbar (d : GGPData F) {x : GSpin d.QW}
-    (a : (d.QW.baseChange Kb).IsometryEquiv (d.QW.baseChange Kb)) (ha : glOf a ∈ d.torusBarFbar x)
-    {w : Kb ⊗[F] (Fin d.m → F)} (hw : w ∈ (fixedSub x).baseChange Kb) : a w = w := by
-  obtain ⟨t, ht, hta⟩ := ha
-  have h1 := congrArg Units.val hta
-  rw [coe_specMatFbar, coe_glOf] at h1
-  have e : (a.toLinearEquiv : (Kb ⊗[F] (Fin d.m → F)) →ₗ[Kb] (Kb ⊗[F] (Fin d.m → F))) =
-      (specP _ t : (Kb ⊗[F] (Fin d.m → F)) →ₗ[Kb] (Kb ⊗[F] (Fin d.m → F))) :=
-    ((LinearMap.toMatrix (bcBasis F d.m) (bcBasis F d.m)).injective h1).symm
-  change (a.toLinearEquiv : (Kb ⊗[F] (Fin d.m → F)) →ₗ[Kb] (Kb ⊗[F] (Fin d.m → F))) w = w
-  rw [e]
-  exact ht.2 w hw
-
 namespace GGPData
 
 open WitnessChange
 
 variable {d : GGPData F}
-
-/-- The cocycle of a witness is trivial on `W'_x ⊗ F̄`. -/
-theorem IsStableIso.fix {τ : InnerTwist d.QW} {x : GSpin d.QW} {y : GSpin (d.twist τ).QW}
-    {ψ : (d.QW.baseChange Kb).IsometryEquiv (τ.Q'.baseChange Kb)} (h : d.IsStableIso τ x y ψ)
-    (σ : GalF F) {w : Kb ⊗[F] (Fin d.m → F)} (hw : w ∈ (fixedSub x).baseChange Kb) :
-    (galIso σ ψ).trans ψ.symm w = w :=
-  apply_eq_self_of_glOf_mem_torusBarFbar d _ (by rw [glOf_trans, glOf_symm, glOf_galIso]; exact h.2.1 σ) hw
 
 /-- **Two witnesses give cohomologous cocycles** in `S_x` (well-definedness of the class of `y`,
 Thesis Prop. 6.6.1(iii)). -/
@@ -93,18 +61,8 @@ theorem IsStableIso.rel {τ : InnerTwist d.QW} {x : GSpin d.QW} (hx : d.IsGammaE
   have hcx : CliffordAlgebra.map c.toIsometry (X : CliffordAlgebra _) = X := by
     rw [← hcdef, map_trans_apply, h'.1, ← h.1, map_symm_map]
   have hk₀x : Commute k₀ (bcGSpin d.QW x) := by
-    have hmap : CliffordAlgebra.map c.toIsometry = CliffordAlgebra.map (specPIso k₀).toIsometry := by
-      congr 1
-      ext v
-      exact (hk₀w v).symm
-    rw [hmap, map_specPIso_apply] at hcx
-    apply Subtype.ext; apply Units.ext
-    change ((k₀ : (CliffordAlgebra (d.QW.baseChange Kb))ˣ) : CliffordAlgebra (d.QW.baseChange Kb)) *
-        (X : CliffordAlgebra _) =
-      (X : CliffordAlgebra _) *
-        ((k₀ : (CliffordAlgebra (d.QW.baseChange Kb))ˣ) : CliffordAlgebra (d.QW.baseChange Kb))
-    conv_rhs => rw [← hcx]
-    simp only [mul_assoc, Units.inv_mul, mul_one]
+    rw [map_isometryEquiv_congr (e' := specPIso k₀) fun v => (hk₀w v).symm] at hcx
+    exact Subtype.ext (Units.ext (commute_of_map_specPIso_eq_self k₀ hcx).eq)
   -- `c = r ⊗ 1` on `W'_x ⊗ F̄`, `r = θ⁻¹ θ'` rational
   set r := θ'.trans θ.symm
   have hcr : ∀ v : fixedSub x, c (1 ⊗ₜ (v : W)) = 1 ⊗ₜ ((r v : fixedSub x) : W) := fun v => by
@@ -129,15 +87,11 @@ theorem IsStableIso.rel {τ : InnerTwist d.QW} {x : GSpin d.QW} (hx : d.IsGammaE
     rfl
   have hfp : Set.MapsTo f (fixedSub x) (fixedSub x) := fun a ha => by
     rw [show f a = r ⟨a, ha⟩ from hfa ⟨a, ha⟩]; exact (r ⟨a, ha⟩).2
-  have hagree : ∀ w ∈ (fixedSub x).baseChange Kb, specP _ k₀ w = f.baseChange Kb w := by
-    intro w hw
-    have hle : (fixedSub x).baseChange Kb ≤ LinearMap.eqLocus
-        (specP _ k₀ : Kb ⊗[F] W →ₗ[Kb] Kb ⊗[F] W) (f.baseChange Kb) := by
-      rw [Submodule.baseChange_eq_span, Submodule.span_le]
-      rintro _ ⟨a, ha, rfl⟩
-      change specP _ k₀ (1 ⊗ₜ a) = f.baseChange Kb (1 ⊗ₜ a)
-      rw [hk₀w, hcr ⟨a, ha⟩, LinearMap.baseChange_tmul, hfa ⟨a, ha⟩]
-    exact hle hw
+  have hagree : ∀ w ∈ (fixedSub x).baseChange Kb, specP _ k₀ w = f.baseChange Kb w :=
+    fun w hw => eqOn_baseChange_of_tmul (f := (specP _ k₀ : Kb ⊗[F] W →ₗ[Kb] Kb ⊗[F] W))
+      (fun a ha => by
+        change specP _ k₀ (1 ⊗ₜ a) = f.baseChange Kb (1 ⊗ₜ a)
+        rw [hk₀w, hcr ⟨a, ha⟩, LinearMap.baseChange_tmul, hfa ⟨a, ha⟩]) hw
   have hfp' : Set.MapsTo (f.baseChange Kb) ((fixedSub x).baseChange Kb)
       ((fixedSub x).baseChange Kb) := by
     have hle : (fixedSub x).baseChange Kb ≤ ((fixedSub x).baseChange Kb).comap (f.baseChange Kb) := by
@@ -176,22 +130,16 @@ theorem IsStableIso.rel {τ : InnerTwist d.QW} {x : GSpin d.QW} (hx : d.IsGammaE
     apply Subtype.ext; apply Units.ext
     change ((kr : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) * _ = _ * _
     rw [← hkrdef, GSpin.coe_map]
-    refine (commute_of_commute_ι (CliffordAlgebra.map ι') (fun v => ?_) _).eq
-    rw [CliffordAlgebra.map_apply_ι]
-    exact (commute_ι_of_specP_eq x ((GSpinGGP.mem_fixedSub_iff x _).1 v.2)).symm
+    exact (commute_map_of_commute_ι ι' (fun v =>
+      commute_ι_of_specP_eq x ((GSpinGGP.mem_fixedSub_iff x _).1 v.2)) _).eq.symm
   -- `P(k̃_r) = c` on `W'_x ⊗ F̄`
   have hPkr : ∀ v : W, specP _ (bcGSpin d.QW kr) ((1 : Kb) ⊗ₜ[F] v) = (1 : Kb) ⊗ₜ[F] specP d.QW kr v :=
     fun v => by rw [← LinearEquiv.coe_coe, specP_bcGSpin]; rfl
-  have hcw : ∀ w ∈ (fixedSub x).baseChange Kb, c w = specP _ (bcGSpin d.QW kr) w := by
-    intro w hw
-    have hle : (fixedSub x).baseChange Kb ≤ LinearMap.eqLocus
-        (c.toLinearEquiv : Kb ⊗[F] W →ₗ[Kb] Kb ⊗[F] W)
-        (specP _ (bcGSpin d.QW kr) : Kb ⊗[F] W →ₗ[Kb] Kb ⊗[F] W) := by
-      rw [Submodule.baseChange_eq_span, Submodule.span_le]
-      rintro _ ⟨a, ha, rfl⟩
-      change c (1 ⊗ₜ a) = specP _ (bcGSpin d.QW kr) (1 ⊗ₜ a)
-      rw [hcr ⟨a, ha⟩, hPkr, hkr ⟨a, ha⟩]
-    exact hle hw
+  have hcw : ∀ w ∈ (fixedSub x).baseChange Kb, c w = specP _ (bcGSpin d.QW kr) w :=
+    fun w hw => eqOn_baseChange_of_tmul (f := (c.toLinearEquiv : Kb ⊗[F] W →ₗ[Kb] Kb ⊗[F] W))
+      (g := (specP _ (bcGSpin d.QW kr) : Kb ⊗[F] W →ₗ[Kb] Kb ⊗[F] W)) (fun a ha => by
+        change c (1 ⊗ₜ a) = specP _ (bcGSpin d.QW kr) (1 ⊗ₜ a)
+        rw [hcr ⟨a, ha⟩, hPkr, hkr ⟨a, ha⟩]) hw
   -- `s = k̃_r⁻¹ k₀ ∈ T_x(F̄)`
   obtain ⟨s, hsdef⟩ : ∃ s : GSpin (d.QW.baseChange Kb), (bcGSpin d.QW kr)⁻¹ * k₀ = s := ⟨_, rfl⟩
   have hs : s ∈ d.torusFbar x := by
@@ -206,12 +154,11 @@ theorem IsStableIso.rel {τ : InnerTwist d.QW} {x : GSpin d.QW} (hx : d.IsGammaE
   have hglψ' : glOf ψ' = glOf ψ * (M * S) := by
     have e1 : glOf c = specMatFbar d.QW k₀ := by
       rw [← glOf_specPIso]
-      exact Units.ext (congrArg (LinearMap.toMatrix (bcBasis F d.m) (bcBasis F d.m))
-        (LinearMap.ext fun w => (hk₀w w).symm))
+      exact glOf_congr fun w => (hk₀w w).symm
     have e2 : k₀ = bcGSpin d.QW kr * s := by rw [← hsdef, mul_inv_cancel_left]
     rw [← hMdef, ← hSdef, ← map_mul, ← e2, ← e1, hglc, mul_inv_cancel_left]
-  have hM : ∀ σ : GalF F, galGL d.m σ M = M := fun σ => Units.ext (by
-    rw [← hMdef, coe_galGL, coe_specMatFbar_bcGSpin, map_algebraMap_fixed])
+  have hM : ∀ σ : GalF F, galGL d.m σ M = M := fun σ => by
+    rw [← hMdef]; exact galGL_specMatFbar_bcGSpin kr σ
   have hMa : ∀ a ∈ d.torusBarFbar x, a * M = M * a := by
     rintro _ ⟨t, ht, rfl⟩
     rw [← hMdef, ← map_mul, ← map_mul]
@@ -228,9 +175,9 @@ theorem IsStableIso.rel {τ : InnerTwist d.QW} {x : GSpin d.QW} (hx : d.IsGammaE
         Algebra.TensorProduct.includeRight
     have hbc : ∀ z, bcHom d.QW z = bc z := fun _ => rfl
     rw [hbc, ← AlgHom.comp_apply]
-    refine (commute_of_commute_ι (bc.comp (CliffordAlgebra.map ι')) (fun v => ?_) _).eq.symm
+    refine (commute_algHom_of_commute_ι (bc.comp (CliffordAlgebra.map ι')) (fun v => ?_) _).eq
     rw [AlgHom.comp_apply, CliffordAlgebra.map_apply_ι, ← hbc, bcHom_ι]
-    exact (commute_ι_of_specP_eq t (ht.2 _ (Submodule.tmul_mem_baseChange_of_mem 1 v.2))).symm
+    exact commute_ι_of_specP_eq t (ht.2 _ (Submodule.tmul_mem_baseChange_of_mem 1 v.2))
   refine ⟨S, ⟨s, hs, hSdef⟩, fun σ => ?_⟩
   change (glOf ψ')⁻¹ * galGL d.m σ (glOf ψ') =
     S⁻¹ * ((glOf ψ)⁻¹ * galGL d.m σ (glOf ψ)) * galGL d.m σ S
@@ -248,8 +195,8 @@ theorem IsStableIso.conj {τ : InnerTwist d.QW} {x : GSpin d.QW} {y : GSpin (d.t
     ∃ h' : d.IsStableIso τ x (g * y * g⁻¹) (ψ.trans (specPIso (bcGSpin τ.Q' g))),
       ∀ σ, h'.cocycle.toFun σ = h.cocycle.toFun σ := by
   obtain ⟨N, hNdef⟩ : ∃ N, specMatFbar τ.Q' (bcGSpin τ.Q' g) = N := ⟨_, rfl⟩
-  have hN : ∀ σ : GalF F, galGL d.m σ N = N := fun σ => Units.ext (by
-    rw [← hNdef, coe_galGL, coe_specMatFbar_bcGSpin (d := d.twist τ), map_algebraMap_fixed])
+  have hN : ∀ σ : GalF F, galGL d.m σ N = N := fun σ => by
+    rw [← hNdef]; exact galGL_specMatFbar_bcGSpin (d := d.twist τ) g σ
   have hgl : glOf (ψ.trans (specPIso (bcGSpin τ.Q' g))) = N * glOf ψ := by
     rw [glOf_trans, glOf_specPIso, hNdef]
   have hco : ∀ σ : GalF F, (glOf (ψ.trans (specPIso (bcGSpin τ.Q' g))))⁻¹ *
@@ -262,7 +209,8 @@ theorem IsStableIso.conj {τ : InnerTwist d.QW} {x : GSpin d.QW} {y : GSpin (d.t
   simp [bcGSpin, map_mul, map_inv]
 
 /-- **The class of `y` in `H¹(F, S_x)` is well defined** on `GSpin(W_α)(F)`-conjugacy classes and
-independent of the witness (Thesis Prop. 6.6.1(iii)). -/
+independent of the witness `ψ` (among witnesses with `det ψ = det φ_α`, as for the thesis's
+`g ∈ GSpin(F̄)`; Thesis Prop. 6.6.1(iii)). -/
 theorem IsStableIso.mk_eq {τ : InnerTwist d.QW} {x : GSpin d.QW} (hx : d.IsGammaElt x)
     {y y' : GSpin (d.twist τ).QW} (g : GSpin (d.twist τ).QW) (hy : y' = g * y * g⁻¹)
     {ψ ψ' : (d.QW.baseChange Kb).IsometryEquiv (τ.Q'.baseChange Kb)}
@@ -313,17 +261,10 @@ theorem IsStableIso.exists_conj_of_mk_eq {τ : InnerTwist d.QW} {x : GSpin d.QW}
     χ.map_app hdetχ
   have hkχ : specMatFbar τ.Q' k = glOf χ := by
     rw [← glOf_specPIso]
-    exact Units.ext (congrArg (LinearMap.toMatrix (bcBasis F d.m) (bcBasis F d.m))
-      (LinearMap.ext fun w => by change specP _ k w = χ w; rw [hk]; rfl))
+    exact glOf_congr fun w => by change specP _ k w = χ w; rw [hk]; rfl
   obtain ⟨g, hg⟩ := exists_specMatFbar_bcGSpin_eq (d := d.twist τ) ⟨k, hkχ⟩ hfix
-  have hχg : ∀ w, χ w = specP _ (bcGSpin τ.Q' g) w := fun w => by
-    have e : LinearMap.toMatrix (bcBasis F d.m) (bcBasis F d.m)
-        (χ.toLinearEquiv : Kb ⊗[F] (Fin d.m → F) →ₗ[Kb] _) =
-        LinearMap.toMatrix (bcBasis F d.m) (bcBasis F d.m)
-          (specP _ (bcGSpin τ.Q' g) : Kb ⊗[F] (Fin d.m → F) →ₗ[Kb] _) := by
-      rw [← coe_glOf, ← coe_specMatFbar]
-      exact (congrArg Units.val hg).symm
-    exact LinearMap.congr_fun ((LinearMap.toMatrix _ _).injective e) w
+  have hχg : ∀ w, χ w = specPIso (bcGSpin τ.Q' g) w :=
+    apply_eq_of_glOf_eq (by rw [glOf_specPIso]; exact hg.symm)
   -- `C(χ)` carries `y` to `y'`
   set X : (CliffordAlgebra (d.QW.baseChange Kb))ˣ := bcUnits d.QW (x : (CliffordAlgebra d.QW)ˣ)
   have htX : ((t : (CliffordAlgebra (d.QW.baseChange Kb))ˣ) : CliffordAlgebra (d.QW.baseChange Kb)) * (X : CliffordAlgebra (d.QW.baseChange Kb)) *
@@ -338,12 +279,7 @@ theorem IsStableIso.exists_conj_of_mk_eq {τ : InnerTwist d.QW} {x : GSpin d.QW}
   have hχy : CliffordAlgebra.map χ.toIsometry (bcUnits τ.Q' (y : (CliffordAlgebra τ.Q')ˣ) :
       CliffordAlgebra _) = bcUnits τ.Q' (y' : (CliffordAlgebra τ.Q')ˣ) := by
     rw [← hχdef, map_trans_apply, ← hAx, map_symm_map, h'.1]
-  have hmapχ : CliffordAlgebra.map χ.toIsometry =
-      CliffordAlgebra.map (specPIso (bcGSpin τ.Q' g)).toIsometry := by
-    congr 1
-    ext w
-    exact hχg w
-  rw [hmapχ, map_specPIso_apply] at hχy
+  rw [map_isometryEquiv_congr hχg, map_specPIso_apply] at hχy
   refine ⟨g, bcUnits_GSpin_injective τ.Q' (Units.ext ?_)⟩
   rw [← hχy]
   simp [bcGSpin, map_mul, map_inv]

@@ -127,21 +127,12 @@ theorem galIso_trans_symm_eq_self_of_odd [FiniteDimensional F V₁] (hQ₁ : IsN
   -- lift `a` to `u ∈ GSpin(F̄)`
   obtain ⟨u, hu⟩ := gspin_specP_surjective_SO (Q₁.baseChange Kb) hQL a.toLinearEquiv a.map_app hdet
   have hau : ∀ v, a v = specP (Q₁.baseChange Kb) u v := fun v => by rw [hu]; rfl
-  have hmap : ∀ c, CliffordAlgebra.map a.toIsometry c = CliffordAlgebra.map (specPIso u).toIsometry c := by
-    intro c
-    congr 2
-    ext v
-    exact hau v
+  have hmap : ∀ c, CliffordAlgebra.map a.toIsometry c = CliffordAlgebra.map (specPIso u).toIsometry c :=
+    fun c => by rw [map_isometryEquiv_congr (e' := specPIso u) hau]
   have hux : Commute u (bcGSpin Q₁ x) := by
     have h := hfix (bcUnits Q₁ (x : (CliffordAlgebra Q₁)ˣ)) (bcGSpin Q₁ x).2 (Commute.refl _)
-    rw [hmap, map_specPIso_apply] at h
-    apply Subtype.ext; apply Units.ext
-    show ((u : (CliffordAlgebra (Q₁.baseChange Kb))ˣ) : CliffordAlgebra (Q₁.baseChange Kb)) *
-        (bcUnits Q₁ (x : (CliffordAlgebra Q₁)ˣ) : CliffordAlgebra (Q₁.baseChange Kb)) =
-      (bcUnits Q₁ (x : (CliffordAlgebra Q₁)ˣ) : CliffordAlgebra (Q₁.baseChange Kb)) *
-        ((u : (CliffordAlgebra (Q₁.baseChange Kb))ˣ) : CliffordAlgebra (Q₁.baseChange Kb))
-    conv_rhs => rw [← h]
-    simp only [mul_assoc, Units.inv_mul, mul_one]
+    rw [hmap] at h
+    exact Subtype.ext (Units.ext (commute_of_map_specPIso_eq_self u h).eq)
   have hsemiL : Module.End.IsSemisimple (specP (Q₁.baseChange Kb) (bcGSpin Q₁ x) : Kb ⊗[F] V₁ →ₗ[Kb] _) := by
     rw [specP_bcGSpin]; exact isSemisimple_baseChange_algebraicClosure hxss
   obtain ⟨hc, hdet1⟩ := det_restrict_one_eq_one_of_commute hQL (bcGSpin Q₁ x) hsemiL u hux
@@ -232,14 +223,11 @@ theorem galIso_trans_symm_eq_self_of_odd [FiniteDimensional F V₁] (hQ₁ : IsN
 theorem galIso_trans_symm_eq_self_of_tmul (ψ : (Q₁.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb))
     {p : Submodule F V₁} (θ : p → V₂) (hψ : ∀ a : p, ψ (1 ⊗ₜ (a : V₁)) = 1 ⊗ₜ θ a) (σ : GalF F)
     {w : Kb ⊗[F] V₁} (hw : w ∈ p.baseChange Kb) : (galIso σ ψ).trans ψ.symm w = w := by
-  have hle : p.baseChange Kb ≤ LinearMap.eqLocus
-      ((galIso σ ψ).trans ψ.symm).toLinearEquiv.toLinearMap LinearMap.id := by
-    rw [Submodule.baseChange_eq_span, Submodule.span_le]
-    rintro _ ⟨a, ha, rfl⟩
-    change ψ.symm (galIso σ ψ (1 ⊗ₜ a)) = 1 ⊗ₜ a
-    rw [galIso_apply, galV_tmul, map_one, hψ ⟨a, ha⟩, galV_tmul, map_one, ← hψ ⟨a, ha⟩,
-      ψ.symm_apply_apply]
-  exact hle hw
+  refine eqOn_baseChange_of_tmul (f := ((galIso σ ψ).trans ψ.symm).toLinearEquiv.toLinearMap)
+    (g := LinearMap.id) (fun a ha => ?_) hw
+  change ψ.symm (galIso σ ψ (1 ⊗ₜ a)) = 1 ⊗ₜ a
+  rw [galIso_apply, galV_tmul, map_one, hψ ⟨a, ha⟩, galV_tmul, map_one, ← hψ ⟨a, ha⟩,
+    ψ.symm_apply_apply]
 
 /-- `ψ = P(g) ∘ e` and `e` have cocycles of the same determinant. -/
 theorem det_galIso_trans_specPIso [FiniteDimensional F V₁] [FiniteDimensional F V₂]
@@ -326,21 +314,10 @@ theorem inv_mul_galGL_glOf_mem_torusBarFbar (d : GGPData F) (x : GSpin d.QW)
   obtain ⟨u, hu⟩ := gspin_specP_surjective_SO (d.QW.baseChange Kb)
     (isNondeg_baseChange d.QW d.nondeg) a.toLinearEquiv a.map_app hdet'
   have hau : ∀ v, a v = specPIso u v := fun v => by rw [specPIso_apply, hu]; rfl
-  have hgl : glOf a = glOf (specPIso u) := Units.ext (congrArg (LinearMap.toMatrix _ _)
-    (LinearMap.ext hau))
-  have hmap : CliffordAlgebra.map a.toIsometry = CliffordAlgebra.map (specPIso u).toIsometry := by
-    congr 1
-    ext v
-    exact hau v
-  refine ⟨u, ⟨?_, fun w hw => (hau w).symm.trans (hfix w hw)⟩, (hgl.trans (glOf_specPIso u)).symm⟩
-  rw [hmap, map_specPIso_apply] at hx
-  apply Units.ext
-  show ((u : (CliffordAlgebra (d.QW.baseChange Kb))ˣ) : CliffordAlgebra (d.QW.baseChange Kb)) *
-      (bcUnits d.QW (x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra _) =
-    (bcUnits d.QW (x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra _) *
-      ((u : (CliffordAlgebra (d.QW.baseChange Kb))ˣ) : CliffordAlgebra (d.QW.baseChange Kb))
-  conv_rhs => rw [← hx]
-  simp only [mul_assoc, Units.inv_mul, mul_one]
+  refine ⟨u, ⟨?_, fun w hw => (hau w).symm.trans (hfix w hw)⟩,
+    ((glOf_congr hau).trans (glOf_specPIso u)).symm⟩
+  rw [map_isometryEquiv_congr hau] at hx
+  exact Units.ext (commute_of_map_specPIso_eq_self u hx).eq
 
 end Torus
 
@@ -374,6 +351,14 @@ def IsStableIso.cocycle {τ : InnerTwist d.QW} {x : GSpin d.QW} {y : GSpin (d.tw
     {ψ : (d.QW.baseChange Kb).IsometryEquiv (τ.Q'.baseChange Kb)} (h : d.IsStableIso τ x y ψ) :
     GalCocycle (d.torusBarFbar x) :=
   conjCocycle (glOf ψ) h.2.1
+
+/-- The cocycle of a witness is trivial on `W'_x ⊗ F̄`. -/
+theorem IsStableIso.fix {τ : InnerTwist d.QW} {x : GSpin d.QW} {y : GSpin (d.twist τ).QW}
+    {ψ : (d.QW.baseChange Kb).IsometryEquiv (τ.Q'.baseChange Kb)} (h : d.IsStableIso τ x y ψ)
+    (σ : GalF F) {w : Kb ⊗[F] (Fin d.m → F)} (hw : w ∈ (fixedSub x).baseChange Kb) :
+    (galIso σ ψ).trans ψ.symm w = w :=
+  apply_eq_self_of_glOf_mem_torusBarFbar d _
+    (by rw [glOf_trans, glOf_symm, glOf_galIso]; exact h.2.1 σ) hw
 
 /-- The class of the cocycle of `y` maps to `α` in `H¹(F, SO(W))`. -/
 theorem IsStableIso.twistIdx (IF : InnerFormSystem d) {α : IF.Idx} {x : GSpin d.QW}
