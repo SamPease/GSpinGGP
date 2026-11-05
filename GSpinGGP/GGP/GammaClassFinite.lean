@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.GGP.GaloisTorus
+import GSpinGGP.GGP.TorusFrame
 import GSpinGGP.GGP.ConjCocycle
 
 /-!
@@ -38,21 +39,36 @@ theorem isGalStable_range_specMatFbar : IsGalStable (F := F) (specMatFbar d.QW).
 /-- **Tori of the same type are conjugate over `F̄`**: for `x, y ∈ Γ(G,H)` with
 `dim W''_x = dim W''_y`, some `g ∈ SO(W)(F̄)` conjugates `S_x(F̄)` to `S_y(F̄)`.
 
-**Status: `sorry`** (own work, standard). Sketch: over `F̄`, `P(x)` is semisimple with
-`ker (P(x) − 1) = W'_x ⊗ F̄`; `W''_x` is even-dimensional (`det P(x) = 1`), and the commutativity of
-`T_x` in `IsGammaElt` (with Zariski density of `T_x(F)`) forces the eigenvalues `λ ≠ ±1` of `P(x)` on
-`W''_x` to be simple and `dim ker (P(x) + 1) ∈ {0, 2}`.  So the centralizer of `P(x)` in
-`SO(W''_x ⊗ F̄)` is a maximal torus, and `S_x(F̄)` is that torus extended by `1` on `W'_x ⊗ F̄`
-(`P(T_x(F̄))` has index `≤ 2` in it and a torus is divisible).  `W'_x ⊗ F̄ ≅ W'_y ⊗ F̄` and
-`W''_x ⊗ F̄ ≅ W''_y ⊗ F̄` (quadratic spaces over an algebraically closed field are classified by their
-dimension), and maximal tori of `SO(W''_y)(F̄)` are conjugate; gluing gives an isometry of
-`W ⊗ F̄`, adjusted to determinant `1` by a reflection in `W'_y` (or, if `W'_y = 0`, by a reflection in
-the plane spanned by a weight pair of `S_y`, which normalizes the torus); `P` is onto `SO(W)(F̄)` (`gspin_specP_surjective_SO`). -/
+Own work, standard. `S_x(F̄)` is the split torus of a hyperbolic frame of eigenvectors of
+`P(x)_{F̄}` with orthogonal complement `W'_x ⊗ F̄` (`exists_hypFrame_torusFbar`); the frames of `x`
+and `y` have the same size `(m − dim W')/2`, so an element of `SO(W)(F̄)` carries one to the other
+(`IsHypFrame.exists_conj_hypTorus`: Witt's extension theorem and a reflection), and it is
+`P` of an element of `GSpin(W)(F̄)` (`gspin_specP_surjective_SO`). -/
 theorem exists_conj_torusBarFbar (x y : GSpin d.QW) (hx : d.IsGammaElt x) (hy : d.IsGammaElt y)
     (hdim : Module.finrank F (movedSub x) = Module.finrank F (movedSub y)) :
     ∃ g ∈ (specMatFbar d.QW).range,
       (d.torusBarFbar x).map (MulAut.conj g).toMonoidHom = d.torusBarFbar y := by
-  sorry
+  obtain ⟨n₁, e₁, f₁, hF₁, hT₁⟩ := exists_hypFrame_torusFbar x hx
+  obtain ⟨n₂, e₂, f₂, hF₂, hT₂⟩ := exists_hypFrame_torusFbar y hy
+  have hfix : ∀ z : GSpin d.QW,
+      Module.finrank F (fixedSub z) + Module.finrank F (movedSub z) = d.m := fun z => by
+    have := LinearMap.finrank_range_add_finrank_ker
+      ((specP d.QW z : (Fin d.m → F) →ₗ[F] (Fin d.m → F)) - LinearMap.id)
+    rw [Module.finrank_fin_fun] at this
+    unfold fixedSub movedSub
+    omega
+  have h₁ := hF₁.finrank_add
+  have h₂ := hF₂.finrank_add
+  rw [finrank_eigenspace_bc_one, Module.finrank_baseChange, Module.finrank_fin_fun] at h₁ h₂
+  have hn : n₁ = n₂ := by
+    have := hfix x; have := hfix y; omega
+  subst hn
+  obtain ⟨g, hgQ, hgdet, hgT⟩ :=
+    IsHypFrame.exists_conj_hypTorus polarBilin_baseChange_nondegenerate.1 hF₁ hF₂
+  obtain ⟨γ, hγ⟩ := gspin_specP_surjective_SO _ (isNondeg_baseChange _ d.nondeg) g hgQ hgdet
+  refine ⟨specMatFbar d.QW γ, ⟨γ, rfl⟩, ?_⟩
+  rw [torusBarFbar_eq_map, torusBarFbar_eq_map, specMatFbar_eq_matGL_comp, MonoidHom.comp_apply,
+    hγ, map_matGL_conj, hT₁, hgT, hT₂]
 
 /-- Conjugating `S_y(F̄)` by `P(t)`, `t ∈ GSpin(W)(F)`, conjugates `T_y` by `t`. -/
 theorem torusOf_eq_map_conj_of_torusBarFbar {y y' t : GSpin d.QW}
@@ -96,7 +112,7 @@ end GGPData
 open GGPData in
 /-- **`Γ(G,H)` meets finitely many conjugacy classes of tori** (used implicitly in Thesis §6.5,
 (6.5.3)).  Twisting argument: tori `S_y` of the same type `dim W''_y` are conjugate over `F̄`
-(`GGPData.exists_conj_torusBarFbar`, a `sorry` with sketch); the conjugator defines a class in
+(`GGPData.exists_conj_torusBarFbar`); the conjugator defines a class in
 `H¹(F, N_{SO(W)}(S_x))`, a finite set by Borel–Serre, *Théorèmes de finitude en cohomologie
 galoisienne*, Comment. Math. Helv. 39 (1964), Thm. 6.1 (`finite_H1_normalizerBar`); tori with equal
 classes are `GSpin(W)(F)`-conjugate (`GGPData.exists_conj_torusOf_of_H1`).  (Borel–Serre's Cor. 6.5,
