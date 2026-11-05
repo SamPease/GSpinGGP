@@ -24,32 +24,6 @@ variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
 set_option linter.unusedSectionVars false
 
-/-- The Kottwitz sign of an inner form isometric to `W` is `1`. -/
-theorem kottwitzSign_eq_one_of_nonempty (d : GGPData F) (τ : InnerTwist d.QW)
-    (h : Nonempty (d.QW.IsometryEquiv τ.Q')) : kottwitzSign d τ = 1 := by
-  obtain ⟨e⟩ := h
-  have hW := QuadClassify.wittIndex_eq_of_isometryEquiv e
-  have hV := QuadClassify.wittIndex_eq_of_isometryEquiv
-    (e.prod (QuadraticMap.IsometryEquiv.refl d.QZ))
-  unfold kottwitzSign
-  show (-1 : ℤ) ^ (wittIndex d.QW + wittIndex τ.Q' + wittIndex (d.QW.prod d.QZ) +
-    wittIndex (τ.Q'.prod d.QZ)) = 1
-  rw [← hW, ← hV, show ∀ a b : ℕ, a + a + b + b = 2 * (a + b) from fun a b => by ring, pow_mul]
-  norm_num
-
-/-- The trivial cocycle is the cocycle of the trivial twist. -/
-theorem isTwistBy_one (d : GGPData F) (x : ↥(GSpin d.QW)) :
-    IsTwistBy d.QW d.QW (GalCocycle.one (d.torusBarFbar x)).toFun := by
-  refine ⟨QuadraticMap.IsometryEquiv.refl _, fun σ => ?_⟩
-  have h1 : ((QuadraticMap.IsometryEquiv.refl
-      (d.QW.baseChange (AlgebraicClosure F))).toLinearEquiv).toLinearMap = LinearMap.id := rfl
-  have h2 : ((QuadraticMap.IsometryEquiv.refl
-      (d.QW.baseChange (AlgebraicClosure F))).toLinearEquiv.symm).toLinearMap =
-        LinearMap.id := rfl
-  simp only [galoisConj, h1, h2, LinearMap.toMatrix_id, LinearMap.id_comp]
-  rw [Matrix.map_one _ (map_zero σ) (map_one σ), Matrix.toLin_one, LinearMap.toMatrix_id]
-  rfl
-
 /-- **The Kottwitz sign is multiplicative on `H¹(F, S_x)`**.
 For `G` quasi-split and `x ∈ Γ(G,H)`, if the cocycle `c` is the pointwise product of the cocycles
 `a`, `b` (with values in `S_x`), then `e(G_{q_x[c]}) = e(G_{q_x[a]}) e(G_{q_x[b]})`.
@@ -58,10 +32,11 @@ For `G` quasi-split and `x ∈ Γ(G,H)`, if the cocycle `c` is the pointwise pro
 Math. Soc. 278 (1983).)
 
 Own work, without Brauer groups: `e(G_α) = 1` exactly when `W_α ≅ W`
-(`kottwitzSign_eq_one_of_nonempty`, `WittParity.kottwitzSign_eq_neg_one`), and `W_α ≅ W_β` exactly
-when the cocycles have lifts to `T_x(F̄)` with equal obstructions (`GalCocycle.DRel`), a relation
-compatible with products; there are at most two classes of the dimension and discriminant of `W`.
-The quasi-split hypothesis is not needed. -/
+(`WittParity.kottwitzSign_eq_one_of_nonempty`, `WittParity.kottwitzSign_eq_neg_one`), and
+`W_α ≅ W_β` exactly when the cocycles have lifts to `T_x(F̄)` with equal obstructions
+(`GalCocycle.DRel`), a relation compatible with products; there are at most two classes of the
+dimension and discriminant of `W`. The quasi-split hypothesis is not needed. `F : Type`, as in
+`GaloisTorus` (commutativity of `S_x`). -/
 theorem kottwitzSign_twistIdx_mul {d : GGPData F} (hqs : d.IsQuasiSplit) (IF : InnerFormSystem d)
     (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x)
     (a b c : GalCocycle (d.torusBarFbar x)) (hc : ∀ σ, c.toFun σ = a.toFun σ * b.toFun σ)
@@ -78,7 +53,8 @@ theorem kottwitzSign_twistIdx_mul {d : GGPData F} (hqs : d.IsQuasiSplit) (IF : I
   have Da : GalCocycle.DRel a' a := GalCocycle.DRel.of_rel (H1.mk_eq_mk.1 ha'mk)
   have Db : GalCocycle.DRel b' b := GalCocycle.DRel.of_rel (H1.mk_eq_mk.1 hb'mk)
   have Dc : GalCocycle.DRel c' c := GalCocycle.DRel.of_rel (H1.mk_eq_mk.1 hc'mk)
-  have h1 := isTwistBy_one d x
+  have h1 : IsTwistBy d.QW d.QW (GalCocycle.one (d.torusBarFbar x)).toFun :=
+    TwistDescent.isTwistBy_refl d.QW
   set one := GalCocycle.one (d.torusBarFbar x)
   set mul := GalCocycle.mulOf hcomm hstab
   have hcab : GalCocycle.DRel c (mul a b) := GalCocycle.DRel.of_toFun_eq (funext hc)
@@ -94,7 +70,7 @@ theorem kottwitzSign_twistIdx_mul {d : GGPData F} (hqs : d.IsQuasiSplit) (IF : I
   have sgn (δ : IF.Idx) : kottwitzSign d (IF.twist δ) =
       if Nonempty (d.QW.IsometryEquiv (IF.twist δ).Q') then 1 else -1 := by
     split_ifs with h
-    · exact kottwitzSign_eq_one_of_nonempty d _ h
+    · exact WittParity.kottwitzSign_eq_one_of_nonempty d _ h
     · exact WittParity.kottwitzSign_eq_neg_one d _ h
   have hd : ∀ δ : IF.Idx, QuadClassify.DiscRel d.QW (IF.twist δ).Q' := fun δ =>
     (QuadClassify.sameDisc_iff_discRel _ _).1 (IF.twist δ).sameDisc

@@ -169,6 +169,19 @@ theorem isTwistBy_iff {m : ℕ} (Q Q' : QuadraticForm F (Fin m → F))
   · rintro ⟨φ, hφ⟩
     exact ⟨φ, fun σ => (key φ σ).trans (by rw [hφ σ])⟩
 
+/-- The trivial cocycle is the cocycle of the trivial twist. -/
+theorem isTwistBy_refl {m : ℕ} (Q : QuadraticForm F (Fin m → F)) :
+    IsTwistBy Q Q (fun _ => 1) := by
+  refine ⟨QuadraticMap.IsometryEquiv.refl _, fun σ => ?_⟩
+  have h1 : ((QuadraticMap.IsometryEquiv.refl
+      (Q.baseChange (AlgebraicClosure F))).toLinearEquiv).toLinearMap = LinearMap.id := rfl
+  have h2 : ((QuadraticMap.IsometryEquiv.refl
+      (Q.baseChange (AlgebraicClosure F))).toLinearEquiv.symm).toLinearMap =
+        LinearMap.id := rfl
+  simp only [galoisConj, h1, h2, LinearMap.toMatrix_id, LinearMap.id_comp]
+  rw [Matrix.map_one _ (map_zero σ) (map_one σ), Matrix.toLin_one, LinearMap.toMatrix_id]
+  rfl
+
 /-- The `F̄`-isometry with a given matrix `X` satisfying the Gram relation. -/
 def isoOfGL {m : ℕ} (Q Q' : QuadraticForm F (Fin m → F)) (X : GL (Fin m) Kb)
     (hX : (X : Matrix (Fin m) (Fin m) Kb)ᵀ * Q'.toMatrix'.map (algebraMap F Kb) * X =

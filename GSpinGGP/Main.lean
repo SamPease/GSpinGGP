@@ -1621,7 +1621,7 @@ theorem twistIdx_one_base (IF : InnerFormSystem d) (x : ↥(GSpin d.QW)) :
     TwistIdx IF x (H1.mk (GalCocycle.one _)) IF.base := by
   refine ⟨GalCocycle.one _, rfl, ?_⟩
   rw [IF.twist_base]
-  exact isTwistBy_one d x
+  exact TwistDescent.isTwistBy_refl d.QW
 
 /-- **The signed count** (own work; replaces the Kottwitz-sign cancellation of Thesis §6.7,
 after (6.7.6)).  Let `G` be quasi-split and

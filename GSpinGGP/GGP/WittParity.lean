@@ -19,7 +19,8 @@ Witt decomposition, the classification of quadratic forms over `p`-adic fields).
 * `wittIndex_odd_pair`, `even_wittIndex_add_of_even`: for two forms of the same dimension and
   discriminant, the Witt indices differ by `1` (odd dimension, the two classes) or by an even
   number (even dimension).
-* `kottwitzSign_eq_neg_one`: for `G` quasi-split and `W_α ≇ W`, `e(G_α) = -1`.
+* `kottwitzSign_eq_neg_one`: for `G` quasi-split and `W_α ≇ W`, `e(G_α) = -1`; and
+  `kottwitzSign_eq_one_of_nonempty`: `e(G_α) = 1` when `W_α ≅ W`.
 -/
 
 noncomputable section
@@ -484,6 +485,19 @@ theorem kottwitzSign_eq_neg_one (d : GGPData F) (τ : InnerTwist d.QW)
     rw [Nat.odd_iff] at hW
     rw [Nat.even_iff] at hV
     omega
+
+/-- The Kottwitz sign of an inner form isometric to `W` is `1`. -/
+theorem kottwitzSign_eq_one_of_nonempty (d : GGPData F) (τ : InnerTwist d.QW)
+    (h : Nonempty (d.QW.IsometryEquiv τ.Q')) : kottwitzSign d τ = 1 := by
+  obtain ⟨e⟩ := h
+  have hW := wittIndex_eq_of_isometryEquiv e
+  have hV := wittIndex_eq_of_isometryEquiv
+    (e.prod (QuadraticMap.IsometryEquiv.refl d.QZ))
+  unfold kottwitzSign
+  show (-1 : ℤ) ^ (wittIndex d.QW + wittIndex τ.Q' + wittIndex (d.QW.prod d.QZ) +
+    wittIndex (τ.Q'.prod d.QZ)) = 1
+  rw [← hW, ← hV, show ∀ a b : ℕ, a + a + b + b = 2 * (a + b) from fun a b => by ring, pow_mul]
+  norm_num
 
 end Padic
 

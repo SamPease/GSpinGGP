@@ -19,9 +19,10 @@ For `x ∈ Γ(G,H)` the exact sequence `1 → F̄^× → T_x(F̄) → S_x(F̄) �
   `F`, then `DRel a b` (`h⁻¹ t_σ σ(h)` is a lift of `b` with the same obstruction, `h` a lift of
   `φ_a⁻¹ ι⁻¹ φ_b`).
 * `DRel.isometryEquiv`: conversely `DRel a b` gives `W_α ≅ W_β`, from
-  `nonempty_isometryEquiv_of_gspinCocycle` (a twist whose cocycle lifts to a `1`-cocycle in
-  `GSpin(U)(F̄)` is trivial; own work, by descent of the Clifford algebra and the classification of
-  quadratic forms over `F` by rank, discriminant and Clifford invariant).
+  `nonempty_isometryEquiv_of_galObstruction_eq` (two twists of `U` whose cocycles have continuous
+  lifts to `GSpin(U)(F̄)` with equal obstructions are isometric; own work, by descent of the
+  Clifford algebra and the classification of quadratic forms over `F` by rank, discriminant and
+  Clifford invariant).
 -/
 
 noncomputable section
@@ -68,21 +69,6 @@ def galObstruction (t : GalF F → GSpin (Q.baseChange Kb)) (σ τ : GalF F) :
     GSpin (Q.baseChange Kb) :=
   t σ * galGS Q σ (t τ) * (t (σ * τ))⁻¹
 
-
-theorem galGS_mul (σ : GalF F) (g h : GSpin (Q.baseChange Kb)) :
-    galGS Q σ (g * h) = galGS Q σ g * galGS Q σ h :=
-  Subtype.ext (map_mul (galCU Q σ) _ _)
-
-theorem galGS_inv (σ : GalF F) (g : GSpin (Q.baseChange Kb)) :
-    galGS Q σ g⁻¹ = (galGS Q σ g)⁻¹ :=
-  Subtype.ext (map_inv (galCU Q σ) _)
-
-theorem galGS_scalarGSpin (σ : GalF F) (c : Kbˣ) :
-    galGS Q σ (scalarGSpin _ c) = scalarGSpin _ (Units.map (σ : Kb →* Kb) c) := by
-  apply Subtype.ext; apply Units.ext
-  show galC Q σ (algebraMap Kb _ (c : Kb)) = algebraMap Kb _ (σ c)
-  exact galC_algebraMap Q σ c
-
 omit [PAdicField F] in
 /-- An element of `F̄ ⊗ M` is moved the same way by Galois elements agreeing on a finite
 extension. -/
@@ -116,10 +102,6 @@ theorem isGalContinuous_galGS (g : GSpin (Q.baseChange Kb)) :
   congr 1
   exact h σ τ hστ
 
-theorem galGS_galGS (σ τ : GalF F) (g : GSpin (Q.baseChange Kb)) :
-    galGS Q σ (galGS Q τ g) = galGS Q (σ * τ) g :=
-  Subtype.ext (Units.ext (galC_galC Q σ τ _))
-
 /-- Conjugating a family by a fixed `h`, twisted by the Galois action: `h⁻¹ t_σ σ(h)`. -/
 def galConj (h : GSpin (Q.baseChange Kb)) (t : GalF F → GSpin (Q.baseChange Kb)) (σ : GalF F) :
     GSpin (Q.baseChange Kb) :=
@@ -137,9 +119,6 @@ theorem isGalContinuous_galConj (h : GSpin (Q.baseChange Kb)) {t : GalF F → GS
   IsGalContinuous.mul (IsGalContinuous.mul
     (⟨⊥, inferInstance, fun _ _ _ => rfl⟩ : IsGalContinuous (fun _ : GalF F => h⁻¹)) ht)
     (isGalContinuous_galGS Q h)
-
-theorem galGS_one (σ : GalF F) : galGS Q σ 1 = 1 :=
-  Subtype.ext (map_one (galCU Q σ))
 
 theorem galObstruction_one (σ τ : GalF F) :
     galObstruction Q (1 : GalF F → GSpin (Q.baseChange Kb)) σ τ = 1 := by
@@ -174,11 +153,11 @@ theorem galObstruction_mul_central (t μ : GalF F → GSpin (Q.baseChange Kb))
 let `t`, `s` be continuous lifts to `GSpin(U)(F̄)` of their cocycles `σ ↦ φᵢ⁻¹ ∘ σφᵢ` with equal
 obstructions `t_σ σ(t_τ) t_{στ}⁻¹ = s_σ σ(s_τ) s_{στ}⁻¹`. Then `U₁ ≅ U₂` over `F`.
 
-Own work (the injectivity of the connecting map `H¹(F, SO(U)) → H²(F, F̄^×)` of
+Own work (the connecting map `H¹(F, SO(U)) → H²(F, F̄^×)` of
 `1 → F̄^× → GSpin(U) → SO(U) → 1` on twists, without `H²`): `σ ↦ s_σ t_σ⁻¹`, transported by
 `C(φ₁)`, is a `1`-cocycle in `GSpin(U₁)(F̄)` lifting the cocycle of `φ₂ φ₁⁻¹`; Hilbert 90 for the
-units of the Clifford algebra `C(U₁)` (or of `C⁺(U₁)`, whichever is central simple) shows the twisted
-algebra, which is `C(U₂)` (resp. `C⁺(U₂)`), is isomorphic to `C(U₁)` (resp. `C⁺(U₁)`). So `U₁`, `U₂`
+units of the Clifford algebra `C(U₁)` (or of `C⁺(U₁)`, whichever is central simple) shows the
+twisted algebra, which is `C(U₂)` (resp. `C⁺(U₂)`), is isomorphic to `C(U₁)` (resp. `C⁺(U₁)`). So `U₁`, `U₂`
 have the same rank, discriminant and Clifford invariant, and are isometric by the classification of
 quadratic forms over `p`-adic fields (Tau Ceti's
 `RegularFormClass.eq_iff_rank_eq_and_signedDiscr_eq_and_cliffordInvariant_eq`). -/
@@ -197,12 +176,7 @@ end Generic
 
 section Reflection
 
-
 variable {V : Type*} [AddCommGroup V] [Module F V]
-
-theorem polar_baseChange_galV (Q : QuadraticForm F V) (σ : GalF F) (a b : Kb ⊗[F] V) :
-    polar (Q.baseChange Kb) (galV σ a) (galV σ b) = σ (polar (Q.baseChange Kb) a b) := by
-  simp only [polar, ← map_add, baseChange_galV, map_sub]
 
 /-- A nondegenerate form on a nonzero space has an anisotropic vector. -/
 theorem exists_apply_ne_zero_of_isNondeg {m : ℕ} {Q : QuadraticForm F (Fin m → F)} (hQ : IsNondeg Q)
