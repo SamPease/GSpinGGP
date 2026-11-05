@@ -11,7 +11,9 @@ On the `V`-factor `dim V'_x = dim W'_x + dim Z` is odd, so the witness `ψ_V` of
 conjugacy on `V` is rational on `V'_x` (`galIso_trans_symm_eq_self_of_odd`), and gives an `F`-isometry
 `W'_x ⊕ Z ≅ W'_y ⊕ Z`; Witt cancellation gives `W'_x ≅ W'_y`, and the change of witness
 (`exists_isStableIso_of_isometry`) gives the cocycle.  With the odd case (`exists_isStableIso_of_odd`)
-this defines the map `y ↦ [a] ∈ H¹(F, S_x)` of Thesis Prop. 6.6.1(iii) (`exists_isStableIso`).
+this gives, for each such `y`, a class in `H¹(F, S_x)` over `α` (`exists_isStableIso`; the forward
+direction of Thesis Prop. 6.6.1(iii), whose `H¹(F, T_x)` becomes `H¹(F, S_x)`).  Independence of the
+choices is not shown here.
 Own work, elementary.
 -/
 
@@ -30,57 +32,6 @@ section Det
 
 variable {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V₁] [AddCommGroup V₂] [Module F V₂]
   {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂}
-
-/-- `ψ = P(g) ∘ e` and `e` have cocycles of the same determinant. -/
-theorem det_galIso_trans_specPIso [FiniteDimensional F V₁] [FiniteDimensional F V₂]
-    (e : (Q₁.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb)) (g : GSpin (Q₂.baseChange Kb))
-    (σ : GalF F) :
-    LinearMap.det ((galIso σ (e.trans (specPIso g))).trans (e.trans (specPIso g)).symm :
-        Kb ⊗[F] V₁ →ₗ[Kb] Kb ⊗[F] V₁) =
-      LinearMap.det ((galIso σ e).trans e.symm : Kb ⊗[F] V₁ →ₗ[Kb] Kb ⊗[F] V₁) := by
-  set M : (Kb ⊗[F] V₂) →ₗ[Kb] (Kb ⊗[F] V₂) := (specP _ (g⁻¹ * galGS Q₂ σ g)).toLinearMap
-  have key : ((galIso σ (e.trans (specPIso g))).trans (e.trans (specPIso g)).symm :
-      Kb ⊗[F] V₁ →ₗ[Kb] Kb ⊗[F] V₁) =
-      ((e.symm.toLinearEquiv : (Kb ⊗[F] V₂) →ₗ[Kb] _) ∘ₗ M ∘ₗ
-        (e.toLinearEquiv : (Kb ⊗[F] V₁) →ₗ[Kb] _)) ∘ₗ
-        ((galIso σ e).trans e.symm : Kb ⊗[F] V₁ →ₗ[Kb] Kb ⊗[F] V₁) := by
-    refine LinearMap.ext fun w => ?_
-    change (e.trans (specPIso g)).symm (galV σ (specP _ g (e (galV σ⁻¹ w)))) =
-      e.symm (specP _ (g⁻¹ * galGS Q₂ σ g) (e (e.symm (galV σ (e (galV σ⁻¹ w))))))
-    rw [e.apply_symm_apply, map_mul, LinearEquiv.mul_apply, ← specP_galGS]
-    change e.symm (specP _ g⁻¹ _) = _
-    rfl
-  have hc : LinearMap.det ((e.symm.toLinearEquiv : (Kb ⊗[F] V₂) →ₗ[Kb] _) ∘ₗ M ∘ₗ
-      (e.toLinearEquiv : (Kb ⊗[F] V₁) →ₗ[Kb] _)) = LinearMap.det M :=
-    LinearMap.det_conj M e.symm.toLinearEquiv
-  have hM : LinearMap.det M = 1 := det_specP _
-  rw [key, LinearMap.det_comp, hc, hM, one_mul]
-
-theorem prodBaseChange_galV (σ : GalF F) (w : Kb ⊗[F] (V₁ × V₂)) :
-    prodBaseChange Q₁ Q₂ (galV σ w) =
-      (galV σ (prodBaseChange Q₁ Q₂ w).1, galV σ (prodBaseChange Q₁ Q₂ w).2) := by
-  induction w using TensorProduct.inductionOn with
-  | tmul a v =>
-    change TensorProduct.prodRight F Kb Kb V₁ V₂ (σ a ⊗ₜ v) =
-      (galV σ (TensorProduct.prodRight F Kb Kb V₁ V₂ (a ⊗ₜ v)).1,
-        galV σ (TensorProduct.prodRight F Kb Kb V₁ V₂ (a ⊗ₜ v)).2)
-    simp [galV_tmul]
-  | add u w hu hw => simp only [map_add, hu, hw, Prod.fst_add, Prod.snd_add, Prod.mk_add_mk]
-
-theorem galV_prodBaseChange_symm (σ : GalF F) (r : Kb ⊗[F] V₁) (q : Kb ⊗[F] V₂) :
-    galV σ ((prodBaseChange Q₁ Q₂).symm (r, q)) = (prodBaseChange Q₁ Q₂).symm (galV σ r, galV σ q) := by
-  apply (prodBaseChange Q₁ Q₂).toLinearEquiv.injective
-  change prodBaseChange Q₁ Q₂ _ = prodBaseChange Q₁ Q₂ _
-  rw [prodBaseChange_galV, QuadraticMap.IsometryEquiv.apply_symm_apply,
-    QuadraticMap.IsometryEquiv.apply_symm_apply]
-
-/-- The cocycle of an inner twist has determinant `1`. -/
-theorem det_galIso_trans_symm_innerTwist {m : ℕ} {Q : QuadraticForm F (Fin m → F)} (τ : InnerTwist Q)
-    (σ : GalF F) :
-    LinearMap.det ((galIso σ τ.φ).trans τ.φ.symm : Kb ⊗[F] (Fin m → F) →ₗ[Kb] _) = 1 := by
-  have h := det_glOf_inv_mul_galGL τ σ
-  rw [← glOf_galIso, ← glOf_symm, ← glOf_trans, coe_glOf, LinearMap.det_toMatrix] at h
-  exact h
 
 /-- `C(ψ)` carrying `x` to `y` matches the fixed spaces: `dim W'_x = dim W'_y`. -/
 theorem finrank_fixedSub_eq_of_map [FiniteDimensional F V₁] [FiniteDimensional F V₂]
@@ -111,13 +62,15 @@ theorem finrank_fixedSub_eq_of_map [FiniteDimensional F V₁] [FiniteDimensional
   exact e1
 
 /-- **Descent of a rational witness**: if `C(ψ)` carries `x` to `y` and the cocycle `ψ⁻¹ ∘ σψ` is the
-identity on `W'_x ⊗ F̄`, then `ψ` restricts to an `F`-isometry `W'_x ≅ W'_y`. -/
-theorem nonempty_isometryEquiv_fixedSub [FiniteDimensional F V₁] [FiniteDimensional F V₂]
+identity on `W'_x ⊗ F̄`, then `ψ` restricts to an `F`-isometry `θ : W'_x ≅ W'_y`:
+`ψ(1 ⊗ v) = 1 ⊗ θ(v)`. -/
+theorem exists_isometryEquiv_fixedSub [FiniteDimensional F V₁] [FiniteDimensional F V₂]
     (ψ : (Q₁.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb)) {x : GSpin Q₁} {y : GSpin Q₂}
     (h : CliffordAlgebra.map ψ.toIsometry (bcUnits Q₁ (x : (CliffordAlgebra Q₁)ˣ) : CliffordAlgebra _) =
       (bcUnits Q₂ (y : (CliffordAlgebra Q₂)ˣ) : CliffordAlgebra _))
     (hfix : ∀ σ : GalF F, ∀ w ∈ (fixedSub x).baseChange Kb, (galIso σ ψ).trans ψ.symm w = w) :
-    Nonempty ((Q₁.comp (fixedSub x).subtype).IsometryEquiv (Q₂.comp (fixedSub y).subtype)) := by
+    ∃ θ : (Q₁.comp (fixedSub x).subtype).IsometryEquiv (Q₂.comp (fixedSub y).subtype),
+      ∀ v : fixedSub x, ψ (1 ⊗ₜ (v : V₁)) = (1 : Kb) ⊗ₜ[F] ((θ v : fixedSub y) : V₂) := by
   have hmk₁ := Module.Flat.tensorProduct_mk_injective (R := F) (S := Kb) (M := V₁)
   have hmk₂ := Module.Flat.tensorProduct_mk_injective (R := F) (S := Kb) (M := V₂)
   -- `ψ(1 ⊗ v)` is rational for `v ∈ W'_x`
@@ -168,7 +121,8 @@ theorem nonempty_isometryEquiv_fixedSub [FiniteDimensional F V₁] [FiniteDimens
     apply ψ.injective
     change ψ (1 ⊗ₜ (v : V₁)) = ψ (1 ⊗ₜ (w : V₁))
     rw [hθ', hθ', e]
-  exact ⟨⟨θy.linearEquivOfInjective hinj (finrank_fixedSub_eq_of_map ψ h), fun v => hQ v⟩⟩
+  exact ⟨⟨θy.linearEquivOfInjective hinj (finrank_fixedSub_eq_of_map ψ h), fun v => hQ v⟩,
+    fun v => hθ' v⟩
 
 end Det
 
@@ -202,21 +156,10 @@ namespace GGPData
 
 variable (d : GGPData F)
 
-/-- `V'_a = W'_a ⊕ Z` as quadratic spaces. -/
-def fixedSubInclIso (a : GSpin d.QW) :
-    (d.QV.comp (fixedSub (d.incl a)).subtype).IsometryEquiv
-      ((d.QW.comp (fixedSub a).subtype).prod d.QZ) where
-  toFun v := (⟨v.1.1, (d.mem_fixedSub_incl_iff a v.1.1 v.1.2).1 v.2⟩, v.1.2)
-  invFun p := ⟨(p.1.1, p.2), (d.mem_fixedSub_incl_iff a p.1.1 p.2).2 p.1.2⟩
-  left_inv _ := rfl
-  right_inv _ := rfl
-  map_add' _ _ := rfl
-  map_smul' _ _ := rfl
-  map_app' _ := rfl
-
 variable {d}
 
-/-- **The cocycle of `y`** (the map `y ↦ [a] ∈ H¹(F, S_x)` of Thesis Prop. 6.6.1(iii)): for `x ∈ Γ(G,H)`
+/-- **The cocycle of `y`** (the forward direction of Thesis Prop. 6.6.1(iii); independence of `ψ` is not
+shown here): for `x ∈ Γ(G,H)`
 and `y` strongly stably conjugate to `x`, some `ψ` with `C(ψ) x = y` has its cocycle in `S_x`.
 If `dim W'_x` is odd, `ψ = P(g_W) ∘ φ_α` works (`exists_isStableIso_of_odd`).  Otherwise
 `dim V'_x = dim W'_x + dim Z` is odd, so `P(g_V) ∘ (φ_α ⊕ id_Z)` is rational on `V'_x` and gives
@@ -239,7 +182,7 @@ theorem exists_isStableIso (τ : InnerTwist d.QW) {x : GSpin d.QW} (hx : d.IsGam
     exact congrArg Units.val hconjV
   have hxssV := isSemisimple_specP_of_isSS d.QV (d.incl x) (d.isSS_incl hx.1)
   have hoddV : Odd (Module.finrank F (fixedSub (d.incl x))) := by
-    rw [(d.fixedSubInclIso x).toLinearEquiv.finrank_eq, Module.finrank_prod, Module.finrank_fin_fun]
+    rw [(d.QVfixIso x).symm.toLinearEquiv.finrank_eq, Module.finrank_prod, Module.finrank_fin_fun]
     exact he.add_odd (odd_two_mul_add_one _)
   have hfixV : ∀ σ : GalF F, ∀ w ∈ (fixedSub (d.incl x)).baseChange Kb,
       (galIso σ ((d.twistV τ).trans (specPIso gV'))).trans ((d.twistV τ).trans (specPIso gV')).symm w =
@@ -249,10 +192,10 @@ theorem exists_isStableIso (τ : InnerTwist d.QW) {x : GSpin d.QW} (hx : d.IsGam
       rw [det_galIso_trans_specPIso, d.det_galIso_twistV]
     rw [← GGPData.eigenspace_bc_one] at hw
     exact galIso_trans_symm_eq_self_of_odd d.nondeg_QV (d.twistV τ) gV' hxssV hratV σ hdet hoddV hw
-  obtain ⟨θV⟩ := nonempty_isometryEquiv_fixedSub _ hmapV hfixV
+  obtain ⟨θV, -⟩ := exists_isometryEquiv_fixedSub _ hmapV hfixV
   -- Witt cancellation of `Z`
-  have e := (QuadraticMap.IsometryEquiv.prodComm _ _).trans ((d.fixedSubInclIso x).symm.trans
-    (θV.trans (((d.twist τ).fixedSubInclIso y).trans (QuadraticMap.IsometryEquiv.prodComm _ _))))
+  have e := (QuadraticMap.IsometryEquiv.prodComm _ _).trans ((d.QVfixIso x).trans
+    (θV.trans (((d.twist τ).QVfixIso y).symm.trans (QuadraticMap.IsometryEquiv.prodComm _ _))))
   obtain ⟨θ⟩ := witt_cancellation d.QZ _ _ ⟨e⟩
   obtain ⟨g, hg, hconj, -⟩ := hxy.1
   exact d.exists_isStableIso_of_isometry τ hx ⟨g, hg, hconj⟩ θ

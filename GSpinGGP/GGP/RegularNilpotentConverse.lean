@@ -216,7 +216,7 @@ theorem nilReg_centralizer_nonempty_imp (d : GGPData F) (x : GSpin d.QW)
     have := hmin (X.1, Y) ((hmem _).2 ⟨hX1, hY⟩)
     rw [finrank_lieCentralizer_lieCentralizer_lie, finrank_lieCentralizer_lieCentralizer_lie] at this
     exact Nat.le_of_add_le_add_left this
-  exact ⟨hW, QuadClassify.isQuasiSplitQF_of_isometryEquiv (QVfixIso d x).symm hV⟩
+  exact ⟨hW, QuadClassify.isQuasiSplitQF_of_isometryEquiv (d.QVfixIso x).symm hV⟩
 
 /-- **Regular nilpotent orbits of GGP centralizers** (Waldspurger 2001
 Ch. I, 2010 §7.1).  For semisimple `x ∈ GSpin(W)(F)` whose moved part `G''_x` is a torus

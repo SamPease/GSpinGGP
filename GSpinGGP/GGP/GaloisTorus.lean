@@ -281,6 +281,29 @@ theorem galC_map {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂} (σ
       CliffordAlgebra.map (galIso σ ψ).toIsometry (galC Q₁ σ a) :=
   galC_map_of_galV σ ψ _ (fun w => (galIso_galV σ ψ w).symm) a
 
+/-- `F̄ ⊗ (V₁ × V₂) ≅ F̄ ⊗ V₁ × F̄ ⊗ V₂` commutes with the Galois action. -/
+theorem prodBaseChange_galV (Q₁ : QuadraticForm F V₁) (Q₂ : QuadraticForm F V₂) (σ : GalF F)
+    (w : AlgebraicClosure F ⊗[F] (V₁ × V₂)) :
+    prodBaseChange Q₁ Q₂ (galV σ w) =
+      (galV σ (prodBaseChange Q₁ Q₂ w).1, galV σ (prodBaseChange Q₁ Q₂ w).2) := by
+  induction w using TensorProduct.inductionOn with
+  | tmul a v =>
+    change TensorProduct.prodRight F (AlgebraicClosure F) (AlgebraicClosure F) V₁ V₂ (σ a ⊗ₜ v) =
+      (galV σ (TensorProduct.prodRight F (AlgebraicClosure F) (AlgebraicClosure F) V₁ V₂ (a ⊗ₜ v)).1,
+        galV σ (TensorProduct.prodRight F (AlgebraicClosure F) (AlgebraicClosure F) V₁ V₂ (a ⊗ₜ v)).2)
+    simp [galV_tmul]
+  | add u w hu hw => simp only [map_add, hu, hw, Prod.fst_add, Prod.snd_add, Prod.mk_add_mk]
+
+/-- The inverse of `prodBaseChange` commutes with the Galois action. -/
+theorem galV_prodBaseChange_symm (Q₁ : QuadraticForm F V₁) (Q₂ : QuadraticForm F V₂) (σ : GalF F)
+    (r : AlgebraicClosure F ⊗[F] V₁) (q : AlgebraicClosure F ⊗[F] V₂) :
+    galV σ ((prodBaseChange Q₁ Q₂).symm (r, q)) =
+      (prodBaseChange Q₁ Q₂).symm (galV σ r, galV σ q) := by
+  apply (prodBaseChange Q₁ Q₂).toLinearEquiv.injective
+  change prodBaseChange Q₁ Q₂ _ = prodBaseChange Q₁ Q₂ _
+  rw [prodBaseChange_galV Q₁ Q₂, QuadraticMap.IsometryEquiv.apply_symm_apply,
+    QuadraticMap.IsometryEquiv.apply_symm_apply]
+
 end GalIso
 
 end EndElemGal

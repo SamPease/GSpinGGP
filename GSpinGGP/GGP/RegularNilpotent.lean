@@ -471,18 +471,6 @@ theorem isInOrbitNu_regNil {V : Type*} [AddCommGroup V] [Module F V] [FiniteDime
     unfold IsSplitQF
     omega
 
-/-- `V'_x = W'_x ⊕ Z` (`QVfix`) is the fixed space of `P(incl x)` in `V`, with the restricted form. -/
-def QVfixIso (d : GGPData F) (x : GSpin d.QW) :
-    (d.QVfix x).IsometryEquiv (d.QV.comp (fixedSub (d.incl x)).subtype) where
-  toFun p := ⟨((p.1 : Fin d.m → F), p.2), (d.mem_fixedSub_incl_iff x _ _).mpr p.1.2⟩
-  invFun v := (⟨(v : d.V).1, (d.mem_fixedSub_incl_iff x (v : d.V).1 (v : d.V).2).mp v.2⟩, (v : d.V).2)
-  map_add' p q := rfl
-  map_smul' c p := rfl
-  left_inv p := rfl
-  right_inv v := rfl
-  map_app' p := by
-    simp [GGPData.QVfix, GGPData.QWfix, QuadraticMap.prod_apply]
-
 /-- **Existence of regular nilpotent orbits of `𝔤_x`** (the direction `⇐` of
 `nilReg_centralizer_nonempty_iff`). For semisimple `x` with abelian moved part and `W'_x`, `V'_x`
 quasi-split: `X = (regNil on W'_x, regNil on V'_x)` is regular nilpotent in `𝔤_x`. Indeed
@@ -506,7 +494,7 @@ theorem nilReg_centralizer_nonempty_of_quasiSplit (d : GGPData F) (x : GSpin d.Q
   have habW := commute_of_movedPart d.nondeg x hmoved
   have habV := commute_movedPart_incl d x habW
   have hV' : IsQuasiSplitQF (d.QV.comp (fixedSub (d.incl x)).subtype) :=
-    QuadClassify.isQuasiSplitQF_of_isometryEquiv (QVfixIso d x) hV
+    QuadClassify.isQuasiSplitQF_of_isometryEquiv (d.QVfixIso x) hV
   obtain ⟨XW, hXWm, hXWn, hXWb⟩ := exists_side_regNil d.nondeg x hcW hW
   obtain ⟨XV, hXVm, hXVn, hXVb⟩ := exists_side_regNil d.nondeg_QV (d.incl x) hcV hV'
   set X : d.ambient := (XW, XV)
