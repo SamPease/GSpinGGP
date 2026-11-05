@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Literature.Kottwitz
 import GSpinGGP.GGP.Centralizers
+import GSpinGGP.GGP.ConjCocycle
 
 /-!
 # Galois descent for twisted quadratic forms
@@ -118,22 +119,6 @@ theorem glOf_symm {m : ℕ} {Q₁ Q₂ : QuadraticForm F (Fin m → F)}
 theorem glOf_specPIso {m : ℕ} {Q : QuadraticForm F (Fin m → F)} (g : GSpin (Q.baseChange Kb)) :
     glOf (specPIso g) = specMatFbar Q g :=
   Units.ext rfl
-
-/-- `det(Ψ⁻¹ σ(Ψ))` is unchanged when `Ψ` is multiplied on the left by a matrix of determinant `1`. -/
-theorem det_inv_mul_galGL_mul {m : ℕ} (σ : GalF F) (S Φ : GL (Fin m) Kb)
-    (hS : (S : Matrix (Fin m) (Fin m) Kb).det = 1) :
-    (((S * Φ)⁻¹ * galGL m σ (S * Φ) : GL (Fin m) Kb) : Matrix (Fin m) (Fin m) Kb).det =
-      ((Φ⁻¹ * galGL m σ Φ : GL (Fin m) Kb) : Matrix (Fin m) (Fin m) Kb).det := by
-  have hSi : ((S⁻¹ : GL (Fin m) Kb) : Matrix (Fin m) (Fin m) Kb).det = 1 := by
-    have h := congrArg Matrix.det (congrArg Units.val (inv_mul_cancel S))
-    rwa [Units.val_mul, Matrix.det_mul, hS, mul_one, Units.val_one, Matrix.det_one] at h
-  have hσS : ((galGL m σ S : GL (Fin m) Kb) : Matrix (Fin m) (Fin m) Kb).det = 1 := by
-    rw [coe_galGL]
-    have h := RingHom.map_det (σ : Kb →+* Kb) (S : Matrix (Fin m) (Fin m) Kb)
-    rw [hS, map_one] at h
-    exact h.symm
-  simp only [_root_.mul_inv_rev, map_mul, Units.val_mul, Matrix.det_mul, hSi, hσS]
-  ring
 
 /-- `det(Φ⁻¹ σ(Φ)) = 1` for the matrix `Φ` of the isometry of an inner twist (`InnerTwist.cocycle`
 in matrices). -/

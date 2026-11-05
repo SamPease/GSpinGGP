@@ -20,7 +20,8 @@ For strong stable conjugacy (Thesis §6.1) through `Ad(g) ∘ C(φ)`, put `ψ = 
 (`map_galIso_trans_symm_of_ratAt`), and then `a_σ` is the identity on an odd-dimensional `W'_x ⊗ F̄`
 (`galIso_trans_symm_eq_self_of_odd`).
 
-An `a_σ` of determinant `1` that is the identity on `W'_x ⊗ F̄` and fixes `x` lies in `S_x(F̄)`
+If `C(ψ)` carries `x` to a rational element, then `C(a_σ) x = x` (`map_galIso_trans_symm_bcUnits`);
+such an `a_σ` of determinant `1` that is the identity on `W'_x ⊗ F̄` lies in `S_x(F̄)`
 (`inv_mul_galGL_glOf_mem_torusBarFbar`).  `GGPData.IsStableIso` packages an isometry `ψ` with
 `C(ψ) x = y` whose cocycle `σ ↦ ψ⁻¹ ∘ σψ` lies in `S_x`; its class in `H¹(F, S_x)` maps to `α`
 (`IsStableIso.twistIdx`).  Such a `ψ` exists when `dim W'_x` is odd (`exists_isStableIso_of_odd`).
@@ -82,8 +83,8 @@ theorem map_galIso_trans_symm_of_ratAt (φ : (Q₁.baseChange Kb).IsometryEquiv 
   rw [psiA_eq_map, psiA_eq_map, galC_map, hσz] at key
   calc CliffordAlgebra.map ((galIso σ ψ).trans ψ.symm).toIsometry (w : CliffordAlgebra _)
       = CliffordAlgebra.map ψ.symm.toIsometry
-          (CliffordAlgebra.map (galIso σ ψ).toIsometry (w : CliffordAlgebra _)) := by
-        rw [← AlgHom.comp_apply, CliffordAlgebra.map_comp_map]; rfl
+          (CliffordAlgebra.map (galIso σ ψ).toIsometry (w : CliffordAlgebra _)) :=
+        map_trans_apply _ _ _
     _ = w := by rw [key, map_symm_map]
 
 end Strong
@@ -252,17 +253,7 @@ theorem map_galIso_trans_symm_bcUnits (ψ : (Q₁.baseChange Kb).IsometryEquiv (
   have h1 : CliffordAlgebra.map (galIso σ ψ).toIsometry (bcUnits Q₁ x : CliffordAlgebra _) =
       bcUnits Q₂ y := by
     rw [← hx, ← galC_map, h, hy]
-  have h2 : CliffordAlgebra.map ψ.symm.toIsometry (bcUnits Q₂ y : CliffordAlgebra _) =
-      bcUnits Q₁ x := by
-    have e : ψ.symm.toIsometry.comp ψ.toIsometry = QuadraticMap.Isometry.id _ := by
-      ext v
-      exact ψ.symm_apply_apply v
-    rw [← h, ← AlgHom.comp_apply, CliffordAlgebra.map_comp_map, e, CliffordAlgebra.map_id]
-    rfl
-  have e : ∀ z, CliffordAlgebra.map ((galIso σ ψ).trans ψ.symm).toIsometry z =
-      CliffordAlgebra.map ψ.symm.toIsometry (CliffordAlgebra.map (galIso σ ψ).toIsometry z) :=
-    fun z => by rw [← AlgHom.comp_apply, CliffordAlgebra.map_comp_map]; rfl
-  rw [e, h1, h2]
+  rw [map_trans_apply, h1, ← h, map_symm_map]
 
 /-- **The cocycle lies in `S_x`.**  If `C(ψ)` carries `x` to a rational element, `det a_σ = 1`, and
 `a_σ = ψ⁻¹ ∘ σψ` is the identity on `W'_x ⊗ F̄`, then `a_σ = P(t_σ)` with `t_σ ∈ T_x(F̄)`: lift `a_σ`
@@ -317,7 +308,8 @@ variable (d : GGPData F)
 /-- `ψ : W_{F̄} ≃ W_{α,F̄}` **computes the class of `y`** (Thesis Prop. 6.6.1(iii), proof): `C(ψ)` carries
 `x` to `y`, and `a_σ = ψ⁻¹ ∘ σψ` lies in `S_x(F̄)` for every `σ`.  Then `σ ↦ a_σ` is a cocycle of
 `Γ_F` in `S_x` (`IsStableIso.cocycle`) whose image in `H¹(F, SO(W))` is `α`
-(`IsStableIso.twistIdx`). -/
+(`IsStableIso.twistIdx`).  The thesis's cocycle `g⁻¹ c_{α,σ} σ(g)` takes values in `T_x`; this is its
+image in `S_x = T_x/A_{G,H}`, as in `n_alpha_eq_card_twistIdx`. -/
 def IsStableIso (τ : InnerTwist d.QW) (x : GSpin d.QW) (y : GSpin (d.twist τ).QW)
     (ψ : (d.QW.baseChange Kb).IsometryEquiv (τ.Q'.baseChange Kb)) : Prop :=
   CliffordAlgebra.map ψ.toIsometry (bcUnits d.QW (x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra _) =
@@ -341,7 +333,8 @@ theorem IsStableIso.twistIdx (IF : InnerFormSystem d) {α : IF.Idx} {x : GSpin d
 
 /-- **The cocycle of `y`, when `dim W'_x` is odd** (Thesis Prop. 6.6.1(iii), proof): the witness `g` of
 strong stable conjugacy on the `W`-factor gives `ψ = P(g) ∘ φ_α`, and `a_σ = ψ⁻¹ ∘ σψ` is the
-identity on `W'_x ⊗ F̄` (`galIso_trans_symm_eq_self_of_odd`), so it lies in `S_x(F̄)`. -/
+identity on `W'_x ⊗ F̄` (`galIso_trans_symm_eq_self_of_odd`), so it lies in `S_x(F̄)`.  For
+`x ∈ Γ(G,H)` the `-1`-eigenspace of `x̄` has even dimension, so this is the case `dim W` odd. -/
 theorem exists_isStableIso_of_odd (τ : InnerTwist d.QW) {x : GSpin d.QW} (hx : d.IsGammaElt x)
     {y : GSpin (d.twist τ).QW} (hxy : d.StronglyStablyConjW τ x y)
     (hodd : Odd (Module.finrank F (fixedSub x))) : ∃ ψ, d.IsStableIso τ x y ψ := by
