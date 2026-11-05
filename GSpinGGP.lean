@@ -7,6 +7,7 @@ import GSpinGGP.TraceFormula.JHatSelfDual
 import GSpinGGP.Foundations.Representations
 import GSpinGGP.Foundations.GSpin
 import GSpinGGP.Foundations.HypPlane
+import GSpinGGP.Foundations.HypFrame
 import GSpinGGP.Foundations.SoCentralizer
 import GSpinGGP.Foundations.RegularNilpotent
 import GSpinGGP.Foundations.QuadraticForms
