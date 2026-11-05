@@ -330,6 +330,64 @@ open WitnessChange
 
 variable {d : GGPData F}
 
+
+/-- **`y` lies in `Γ(G_α, H_α)`**: if `Ad(g) ∘ C(φ_α)` carries `x ∈ Γ(G,H)` to `y` and satisfies the
+rationality clause, then `y` is semisimple and the torus isomorphism `T_x(F) ≃ T_y(F)`
+(`TorusTransfer.transportEquiv`, a homeomorphism fixing the scalars) carries commutativity of `T_x(F)`
+and compactness of `T_x(F)/A(F)` over. -/
+theorem isGammaElt_of_ratAt (τ : InnerTwist d.QW) {x : GSpin d.QW} (hx : d.IsGammaElt x)
+    {y : GSpin (d.twist τ).QW} {g : (CliffordAlgebra (τ.Q'.baseChange Kb))ˣ}
+    (hg : g ∈ GSpin (τ.Q'.baseChange Kb)) (hrat : RatAt τ.φ g (x : (CliffordAlgebra d.QW)ˣ))
+    (hconj : psiU τ.φ g (bcUnits d.QW (x : (CliffordAlgebra d.QW)ˣ)) =
+      bcUnits τ.Q' (y : (CliffordAlgebra τ.Q')ˣ)) :
+    (d.twist τ).IsGammaElt y := by
+  let e : ↥(d.torusOf x) ≃* ↥((d.twist τ).torusOf y) := transportEquiv hg hrat hconj
+  have he : ∀ t : ↥(d.torusOf x), bcUnits τ.Q'
+      (((e t : ↥((d.twist τ).torusOf y)) : GSpin τ.Q') : (CliffordAlgebra τ.Q')ˣ) =
+        psiU τ.φ g (bcUnits d.QW ((t : GSpin d.QW) : (CliffordAlgebra d.QW)ˣ)) :=
+    bcUnits_transportEquiv hg hrat hconj
+  have c1 : Continuous e := continuous_of_bcUnits_eq e.toMonoidHom he
+  refine ⟨?_, fun a ha b hb => ?_, ?_⟩
+  · exact isSS_of_psiA τ.φ g (t := ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW))
+      (congrArg Units.val hconj).symm hx.1
+  · have hc := hx.2.1 _ (e.symm ⟨a, ha⟩).2 _ (e.symm ⟨b, hb⟩).2
+    have hc' : Commute (e.symm ⟨a, ha⟩) (e.symm ⟨b, hb⟩) := Subtype.ext hc
+    have := (hc'.map e.toMonoidHom)
+    simp only [MulEquiv.coe_toMonoidHom, MulEquiv.apply_symm_apply] at this
+    exact congrArg Subtype.val this.eq
+  · -- the induced map of quotients is a continuous surjection
+    have hsc : ∀ c : Fˣ, ((e ⟨scalarGSpin d.QW c, d.scalar_mem_torusOf x c⟩ :
+        ↥((d.twist τ).torusOf y)) : GSpin τ.Q') = scalarGSpin τ.Q' c := fun c => by
+      apply bcUnits_GSpin_injective
+      change bcUnits _ _ = bcUnits _ _
+      rw [he]
+      exact psiU_bcUnits_scalar _ _ c
+    have hle : d.scalarsIn (d.torusOf x) ≤ ((d.twist τ).scalarsIn ((d.twist τ).torusOf y)).comap
+        e.toMonoidHom := by
+      rintro ⟨t, ht⟩ ⟨c, hc⟩
+      refine ⟨c, ?_⟩
+      have e1 : (⟨t, ht⟩ : ↥(d.torusOf x)) = ⟨scalarGSpin d.QW c, d.scalar_mem_torusOf x c⟩ :=
+        Subtype.ext hc.symm
+      change scalarGSpin τ.Q' c = ((e ⟨t, ht⟩ : ↥((d.twist τ).torusOf y)) : GSpin τ.Q')
+      rw [e1, hsc]
+    haveI : ((d.twist τ).scalarsIn ((d.twist τ).torusOf y)).Normal :=
+      GGPData.scalarsIn_normal _ _
+    let f := QuotientGroup.map (d.scalarsIn (d.torusOf x))
+      ((d.twist τ).scalarsIn ((d.twist τ).torusOf y)) e.toMonoidHom hle
+    have hf : Continuous f := by
+      refine (QuotientGroup.isQuotientMap_mk _).continuous_iff.2 ?_
+      have h : ⇑f ∘ QuotientGroup.mk = QuotientGroup.mk ∘ ⇑e := rfl
+      rw [h]
+      exact QuotientGroup.continuous_mk.comp c1
+    have hsurj : Function.Surjective f := by
+      intro q
+      obtain ⟨s, rfl⟩ := QuotientGroup.mk_surjective q
+      exact ⟨QuotientGroup.mk (e.symm s), by simp [f]⟩
+    haveI := hx.2.2
+    refine ⟨?_⟩
+    rw [← Set.range_eq_univ.2 hsurj]
+    exact isCompact_range hf
+
 /-- The rationality clause on `W` and on `V` for `ψ = P(g) ∘ φ_α` with cocycle in `S_x(F̄)`. -/
 theorem ratAt_of_torusFbar (τ : InnerTwist d.QW) {x : GSpin d.QW} (hx : d.IsGammaElt x)
     (g : GSpin (τ.Q'.baseChange Kb))
@@ -444,6 +502,20 @@ theorem exists_stronglyStablyConj_of_isTwistBy (τ : InnerTwist d.QW) {x : GSpin
   · rw [← hψdef, ← psiA_eq_map]
     exact (congrArg Units.val hy).symm
   · rw [← hψdef]; exact det_glOf_trans_specPIso_eq _ _
+
+/-- **Surjectivity of `y ↦ [a]`** (Thesis Prop. 6.6.1(iii)): every class `β ∈ H¹(F, S_x)` over `α` is
+the class of some `y ∈ Γ(G_α, H_α)` strongly stably conjugate to `x`. -/
+theorem exists_of_twistIdx (IF : InnerFormSystem d) {α : IF.Idx} {x : GSpin d.QW}
+    (hx : d.IsGammaElt x) {β : H1 (d.torusBarFbar x)} (hβ : TwistIdx IF x β α) :
+    ∃ y : GSpin (IF.data α).QW, (IF.data α).IsGammaElt y ∧ d.StronglyStablyConjW (IF.twist α) x y ∧
+      ∃ ψ, ∃ h : d.IsStableIso (IF.twist α) x y ψ, H1.mk h.cocycle = β := by
+  obtain ⟨a, ha, htw⟩ := hβ
+  obtain ⟨y, hst, ψ, h, hco⟩ := exists_stronglyStablyConj_of_isTwistBy (IF.twist α) hx a htw
+  obtain ⟨g, hg, hconj, hrat⟩ := hst.1
+  refine ⟨y, isGammaElt_of_ratAt (IF.twist α) hx hg hrat hconj, hst, ψ, h, ?_⟩
+  rw [← ha]
+  exact H1.mk_eq_mk.2 ⟨1, (d.torusBarFbar x).one_mem, fun σ => by
+    rw [← hco σ, inv_one, one_mul, map_one, mul_one]⟩
 
 end GGPData
 
