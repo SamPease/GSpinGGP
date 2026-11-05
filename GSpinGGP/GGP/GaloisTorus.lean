@@ -272,13 +272,6 @@ theorem baseChange_galV (Q : QuadraticForm F V₁) (σ : GalF F) (w : AlgebraicC
   apply (algebraMap (AlgebraicClosure F) (CliffordAlgebra (Q.baseChange (AlgebraicClosure F)))).injective
   rw [← ι_sq_scalar, ← galC_algebraMap Q σ, ← ι_sq_scalar, map_mul, galC_ι]
 
-/-- `σ` preserves the polar form of `q_{F̄}`, up to `σ` on values. -/
-theorem polar_baseChange_galV (Q : QuadraticForm F V₁) (σ : GalF F)
-    (a b : AlgebraicClosure F ⊗[F] V₁) :
-    QuadraticMap.polar (Q.baseChange (AlgebraicClosure F)) (galV σ a) (galV σ b) =
-      σ (QuadraticMap.polar (Q.baseChange (AlgebraicClosure F)) a b) := by
-  simp only [QuadraticMap.polar, ← map_add, baseChange_galV, map_sub]
-
 /-- The Galois conjugate `σψ = σ ∘ ψ ∘ σ⁻¹` of an `F̄`-isometry, as an `F̄`-isometry. -/
 def galIso {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂} (σ : GalF F)
     (ψ : (Q₁.baseChange (AlgebraicClosure F)).IsometryEquiv (Q₂.baseChange (AlgebraicClosure F))) :
@@ -510,5 +503,15 @@ theorem eqOn_baseChange_of_tmul {V M : Type*} [AddCommGroup V] [Module F V] [Add
     rintro _ ⟨a, ha, rfl⟩
     exact h a ha
   exact hle hw
+
+
+open scoped TensorProduct in
+/-- The Galois action commutes with the base change of a rational map. -/
+theorem galV_baseChange {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V₁] [AddCommGroup V₂]
+    [Module F V₂] (f : V₁ →ₗ[F] V₂) (σ : GalF F) (w : AlgebraicClosure F ⊗[F] V₁) :
+    galV σ (f.baseChange (AlgebraicClosure F) w) = f.baseChange (AlgebraicClosure F) (galV σ w) := by
+  induction w using TensorProduct.inductionOn with
+  | tmul a v => rfl
+  | add u w hu hw => rw [map_add, map_add, hu, hw, map_add, map_add]
 
 end GSpinGGP

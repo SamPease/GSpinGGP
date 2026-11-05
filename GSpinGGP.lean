@@ -58,6 +58,9 @@ import GSpinGGP.GGP.StableCocycle
 import GSpinGGP.GGP.StableCocycleEven
 import GSpinGGP.GGP.StableCocycleWitt
 import GSpinGGP.GGP.StableCocycleClass
+import GSpinGGP.GGP.StableCocycleSurj
+import GSpinGGP.GGP.TorusCentral
+import GSpinGGP.GGP.TwistIncl
 import GSpinGGP.Foundations.EigenFrame
 import GSpinGGP.GGP.TorusFrame
 import GSpinGGP.GGP.GammaClassFinite

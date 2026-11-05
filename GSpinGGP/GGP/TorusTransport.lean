@@ -283,6 +283,15 @@ theorem psiU_bcUnits_scalar {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V�
   rw [bcHom_algebraMap, bcHom_algebraMap, psiA, AlgHom.commutes, ← Algebra.commutes,
     mul_assoc, Units.mul_inv, mul_one]
 
+/-- `T_x(F) ≃ T_y(F)` fixes the scalars `F^×`. -/
+theorem transportEquiv_scalar (c : Fˣ) (hc : scalarGSpin Q₁ c ∈ torusSub Q₁ x) :
+    ((transportEquiv hg hrat hconj ⟨scalarGSpin Q₁ c, hc⟩ : torusSub Q₂ y) : GSpin Q₂) =
+      scalarGSpin Q₂ c := by
+  apply bcUnits_GSpin_injective
+  change bcUnits _ _ = bcUnits _ _
+  rw [bcUnits_transportEquiv]
+  exact psiU_bcUnits_scalar _ _ c
+
 end Equiv
 
 section Continuity

@@ -13,6 +13,8 @@ import GSpinGGP.GGP.TorusTransport
 import GSpinGGP.GGP.QuadClassify
 import GSpinGGP.GGP.MovedCentralizer
 import GSpinGGP.GGP.GaloisTorus
+import GSpinGGP.GGP.TwistIncl
+import GSpinGGP.GGP.StableCocycleSurj
 
 /-!
 # The main theorem: the local GGP conjecture for general spin groups
@@ -1177,84 +1179,6 @@ theorem weylDisc_eq_of_stablyConjG (τ : InnerTwist d.QW) (t : ↥d.G) (t' : ↥
     weylDisc (d.twist τ).lie (t' : (d.twist τ).ambientˣ) = weylDisc d.lie (t : d.ambientˣ) :=
   weylDisc_eq_of_conj d (d.twist τ) τ.φ (d.twistV τ) t t' h.1 h.2
 
-section TwistIncl
-
-open CliffordAlgebra
-open scoped TensorProduct
-
-/-- `W_{α,F̄} ↪ V_{α,F̄}`. -/
-def inlBC (d : GGPData F) (τ : InnerTwist d.QW) :
-    (τ.Q'.baseChange (AlgebraicClosure F)) →qᵢ ((d.twist τ).QV.baseChange (AlgebraicClosure F)) :=
-  (prodBaseChange τ.Q' d.QZ).symm.toIsometry.comp
-    (QuadraticMap.Isometry.inl (τ.Q'.baseChange (AlgebraicClosure F)) (d.QZ.baseChange (AlgebraicClosure F)))
-
-theorem map_twistV_bcHom_incl (τ : InnerTwist d.QW) (a : CliffordAlgebra d.QW) :
-    CliffordAlgebra.map (d.twistV τ).toIsometry
-        (bcHom d.QV (CliffordAlgebra.map (QuadraticMap.Isometry.inl d.QW d.QZ) a)) =
-      CliffordAlgebra.map (inlBC d τ) (CliffordAlgebra.map τ.φ.toIsometry (bcHom d.QW a)) := by
-  induction a using CliffordAlgebra.induction with
-  | algebraMap r => simp only [AlgHom.commutes, bcHom_algebraMap]
-  | ι w =>
-    rw [map_apply_ι, bcHom_ι, bcHom_ι, map_apply_ι, map_apply_ι, map_apply_ι]
-    congr 1
-    simp only [GGPData.twistV, inlBC, prodBaseChange]
-    show (prodBaseChange τ.Q' d.QZ).symm ((τ.φ.prod (QuadraticMap.IsometryEquiv.refl _))
-      (TensorProduct.prodRight F (AlgebraicClosure F) (AlgebraicClosure F) _ _ (1 ⊗ₜ (w, 0)))) = _
-    rw [TensorProduct.prodRight_tmul, TensorProduct.tmul_zero]
-    have e : (τ.φ.prod (QuadraticMap.IsometryEquiv.refl (d.QZ.baseChange (AlgebraicClosure F))))
-        ((1 : AlgebraicClosure F) ⊗ₜ[F] w, 0) = (τ.φ (1 ⊗ₜ w), 0) := Prod.ext rfl rfl
-    rw [e]
-    rfl
-  | mul a b ha hb => simp only [map_mul, ha, hb]
-  | add a b ha hb => simp only [map_add, ha, hb]
-
-theorem bcHom_incl_twist (τ : InnerTwist d.QW) (a : CliffordAlgebra τ.Q') :
-    bcHom (d.twist τ).QV (CliffordAlgebra.map (QuadraticMap.Isometry.inl τ.Q' d.QZ) a) =
-      CliffordAlgebra.map (inlBC d τ) (bcHom τ.Q' a) := by
-  induction a using CliffordAlgebra.induction with
-  | algebraMap r => simp only [AlgHom.commutes, bcHom_algebraMap]
-  | ι w =>
-    rw [map_apply_ι, bcHom_ι, bcHom_ι, map_apply_ι]
-    simp only [inlBC, QuadraticMap.Isometry.comp_apply, QuadraticMap.Isometry.inl_apply]
-    have e : ((1 : AlgebraicClosure F) ⊗ₜ[F] w, (0 : AlgebraicClosure F ⊗[F] d.Z)) =
-        prodBaseChange τ.Q' d.QZ (1 ⊗ₜ (w, 0)) := by
-      show _ = TensorProduct.prodRight F (AlgebraicClosure F) (AlgebraicClosure F) _ _ _
-      rw [TensorProduct.prodRight_tmul, TensorProduct.tmul_zero]
-    rw [e]
-    congr 1
-    exact ((prodBaseChange τ.Q' d.QZ).symm_apply_apply _).symm
-  | mul a b ha hb => simp only [map_mul, ha, hb]
-  | add a b ha hb => simp only [map_add, ha, hb]
-
-/-- **Stable conjugacy in `G` from a transport on `W`**: if `ē = Ad(g) C(φ_α)(t̄)` with
-`g ∈ GSpin(W_α)(F̄)`, then `diag t` and `diag e` are stably conjugate in `G` through `ψ_α`, the
-`V`-component conjugating by the image of `g` under `W_{α,F̄} ⊆ V_{α,F̄}`. -/
-theorem stablyConjG_diag_of_psiU (τ : InnerTwist d.QW)
-    {g : (CliffordAlgebra (τ.Q'.baseChange (AlgebraicClosure F)))ˣ}
-    (hg : g ∈ GSpin (τ.Q'.baseChange (AlgebraicClosure F))) (t : GSpin d.QW)
-    (s : GSpin (d.twist τ).QW)
-    (hs : bcUnits τ.Q' (s : (CliffordAlgebra τ.Q')ˣ) =
-      TorusTransfer.psiU τ.φ g (bcUnits d.QW (t : (CliffordAlgebra d.QW)ˣ))) :
-    d.StablyConjG τ (d.diag t) ((d.twist τ).diag s) := by
-  refine ⟨⟨g, hg, hs.symm⟩, ?_⟩
-  let gV : GSpin ((d.twist τ).QV.baseChange (AlgebraicClosure F)) :=
-    GSpin.map (inlBC d τ) (isNondeg_baseChange _ τ.nondeg') ⟨g, hg⟩
-  refine ⟨gV, gV.2, Units.ext ?_⟩
-  have hs' := congrArg Units.val hs
-  rw [TorusTransfer.coe_psiU] at hs'
-  rw [Units.val_mul, Units.val_mul, GSpin.coe_map_inv]
-  show CliffordAlgebra.map (inlBC d τ) (g : CliffordAlgebra _) *
-      CliffordAlgebra.map (d.twistV τ).toIsometry
-        (bcHom d.QV (CliffordAlgebra.map (QuadraticMap.Isometry.inl d.QW d.QZ)
-          ((t : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW))) *
-      CliffordAlgebra.map (inlBC d τ) ((g⁻¹ : (CliffordAlgebra _)ˣ) : CliffordAlgebra _) =
-    bcHom (d.twist τ).QV (CliffordAlgebra.map (QuadraticMap.Isometry.inl τ.Q' d.QZ)
-      ((s : (CliffordAlgebra τ.Q')ˣ) : CliffordAlgebra τ.Q'))
-  rw [map_twistV_bcHom_incl, bcHom_incl_twist, ← map_mul, ← map_mul]
-  congr 1
-  exact hs'.symm
-
-end TwistIncl
 
 
 section TorusNat
@@ -1265,35 +1189,6 @@ open scoped TensorProduct
 
 section Clause6
 
-
-/-- The `V`-component of the transport: conjugation by the image `g_V` of `g` under
-`W_{α,F̄} ⊆ V_{α,F̄}` sends `C(φ_α ⊕ 1)(incl t̄)` to `incl s̄` when `s̄ = Ad(g) C(φ_α)(t̄)`. -/
-theorem conj_gV (τ : InnerTwist d.QW)
-    {g : (CliffordAlgebra (τ.Q'.baseChange (AlgebraicClosure F)))ˣ}
-    (hg : g ∈ GSpin (τ.Q'.baseChange (AlgebraicClosure F))) (t : GSpin d.QW)
-    (s : GSpin (d.twist τ).QW)
-    (hs : bcUnits τ.Q' (s : (CliffordAlgebra τ.Q')ˣ) =
-      TorusTransfer.psiU τ.φ g (bcUnits d.QW (t : (CliffordAlgebra d.QW)ˣ))) :
-    ((GSpin.map (inlBC d τ) (isNondeg_baseChange _ τ.nondeg') ⟨g, hg⟩ : GSpin _) :
-        (CliffordAlgebra _)ˣ) *
-      cliffUnits (d.twistV τ) (bcUnits d.QV ((d.incl t : GSpin d.QV) : (CliffordAlgebra d.QV)ˣ)) *
-      ((GSpin.map (inlBC d τ) (isNondeg_baseChange _ τ.nondeg') ⟨g, hg⟩ : GSpin _) :
-        (CliffordAlgebra _)ˣ)⁻¹ =
-      bcUnits (d.twist τ).QV (((d.twist τ).incl s : GSpin _) : (CliffordAlgebra _)ˣ) := by
-  apply Units.ext
-  have hs' := congrArg Units.val hs
-  rw [TorusTransfer.coe_psiU] at hs'
-  rw [Units.val_mul, Units.val_mul, GSpin.coe_map_inv]
-  show CliffordAlgebra.map (inlBC d τ) (g : CliffordAlgebra _) *
-      CliffordAlgebra.map (d.twistV τ).toIsometry
-        (bcHom d.QV (CliffordAlgebra.map (QuadraticMap.Isometry.inl d.QW d.QZ)
-          ((t : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW))) *
-      CliffordAlgebra.map (inlBC d τ) ((g⁻¹ : (CliffordAlgebra _)ˣ) : CliffordAlgebra _) =
-    bcHom (d.twist τ).QV (CliffordAlgebra.map (QuadraticMap.Isometry.inl τ.Q' d.QZ)
-      ((s : (CliffordAlgebra τ.Q')ˣ) : CliffordAlgebra τ.Q'))
-  rw [map_twistV_bcHom_incl, bcHom_incl_twist, ← map_mul, ← map_mul]
-  congr 1
-  exact hs'.symm
 
 theorem cliffUnits_symm_cliffUnits {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V₁]
     [AddCommGroup V₂] [Module F V₂] {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂}
@@ -1483,15 +1378,12 @@ theorem exists_torusTransfer_core (IF : InnerFormSystem d) (α : IF.Idx)
     rw [TorusTransfer.psiU_symm_psiU]
   have c1 : Continuous e := TorusTransfer.continuous_of_bcUnits_eq e.toMonoidHom he
   have c2 : Continuous e.symm := TorusTransfer.continuous_of_bcUnits_eq e.symm.toMonoidHom he'
-  refine ⟨e, c1, c2, fun c => ?_, fun t ht => ?_, c5, c6, c7⟩
-  · apply TorusTransfer.bcUnits_GSpin_injective
-    show bcUnits _ _ = bcUnits _ _
-    rw [he]
-    exact TorusTransfer.psiU_bcUnits_scalar _ _ c
-  · apply TorusTransfer.bcUnits_GSpin_injective
-    show bcUnits _ _ = bcUnits _ _
-    rw [he, ht]
-    exact hconj
+  refine ⟨e, c1, c2, fun c => TorusTransfer.transportEquiv_scalar hg hrat hconj c _,
+    fun t ht => ?_, c5, c6, c7⟩
+  apply TorusTransfer.bcUnits_GSpin_injective
+  show bcUnits _ _ = bcUnits _ _
+  rw [he, ht]
+  exact hconj
 
 /-- **Thesis Prop. 6.6.1(ii)** (own work).
 If `x ∈ Γ(G,H)` and `y ∈ Γ(G_α,H_α)` are strongly stably conjugate, `Ad(g) ∘ ψ_α` restricts to an
@@ -1517,17 +1409,41 @@ theorem prop_12_5_1_ii (IF : InnerFormSystem d) (α : IF.Idx)
 /-- **Thesis Prop. 6.6.1(iii)** (own work): for `x ∈ Γ(G,H)` and every
 inner form `α`, the `GSpin(W_α)(F)`-classes of `y ∈ Γ(G_α,H_α)` strongly stably conjugate to `x`
 are in bijection with `q_x⁻¹(α) ⊆ H¹(F, S_x)`.  This differs from Thesis Prop. 6.6.1(iii), which
-uses `H¹(F, T_x)`.  Proof route:
-Galois cohomology parametrizes the `G_α(F)`-classes of all semisimple
-`y ∼_stab x` by `Im(H¹(F, Z(Ḡ_x)) → H¹(F, Ḡ_x)) ∩ p_x⁻¹([a_α])`
-(here `G_α(F)`-, `Ḡ_α(F)`- and `GSpin(W_α)(F)`-conjugacy agree on diagonal elements, as
-`GSpin → SO` is onto on `F`-points by Hilbert 90 for `G_m`); those with `y ∈ Γ(G_α,H_α)` form the
-triple intersection, which is `{(1,1,s,s)} ≅ H¹(F, S_x)` by the case analysis on
-`dim W'_x` and Witt cancellation, and `p_x = [a_α]` becomes `q_x(s) = α`. -/
+uses `H¹(F, T_x)`.  Proved: `y` is sent to the class of `σ ↦ ψ⁻¹ ∘ σψ` for any `ψ = P(g) ∘ φ_α` with
+`C(ψ) x = y` and cocycle in `S_x` (`GGPData.IsStableIso`; it exists by the case analysis on
+`dim W'_x` and Witt cancellation, `GGPData.exists_isStableIso`); the class is well defined and
+injective on `GSpin(W_α)(F)`-classes (`IsStableIso.mk_eq`, `IsStableIso.exists_conj_of_mk_eq`), and
+every class over `α` arises, since the cocycle lifts to `T_x(F̄)`, which is central in the
+centralizer of `x` in `GSpin(W)(F̄)` (`GGPData.exists_of_twistIdx`). -/
 theorem n_alpha_eq_card_twistIdx (IF : InnerFormSystem d) (α : IF.Idx) (x : ↥(GSpin d.QW))
     (hx : d.IsGammaElt x) :
-    n_alpha IF α x = Nat.card {β : H1 (d.torusBarFbar x) // TwistIdx IF x β α} :=
-  sorry
+    n_alpha IF α x = Nat.card {β : H1 (d.torusBarFbar x) // TwistIdx IF x β α} := by
+  classical
+  -- the class of `y`, from any witness (`exists_isStableIso`)
+  have hex : ∀ y : stableFiber IF α x, ∃ ψ, d.IsStableIso (IF.twist α) x (y : _) ψ :=
+    fun y => d.exists_isStableIso (IF.twist α) hx y.2.2
+  let cls : stableFiber IF α x → H1 (d.torusBarFbar x) := fun y =>
+    H1.mk (Classical.choose_spec (hex y)).cocycle
+  have hcls : ∀ y, TwistIdx IF x (cls y) α := fun y =>
+    (Classical.choose_spec (hex y)).twistIdx IF
+  have hwd : ∀ y y', stableFiberConj IF α x y y' → cls y = cls y' := by
+    rintro y y' ⟨g, hg⟩
+    exact GGPData.IsStableIso.mk_eq hx g hg _ _
+  let Φ : Quot (stableFiberConj IF α x) → {β : H1 (d.torusBarFbar x) // TwistIdx IF x β α} :=
+    Quot.lift (fun y => ⟨cls y, hcls y⟩) fun y y' h => Subtype.ext (hwd y y' h)
+  have hinj : Function.Injective Φ := by
+    rintro ⟨y⟩ ⟨y'⟩ h
+    have h' : cls y = cls y' := congrArg Subtype.val h
+    obtain ⟨g, hg⟩ := GGPData.IsStableIso.exists_conj_of_mk_eq _ _ h'
+    exact Quot.sound ⟨g, hg⟩
+  have hsurj : Function.Surjective Φ := by
+    rintro ⟨β, hβ⟩
+    obtain ⟨y, hyΓ, hyst, ψ, h, hβ'⟩ := GGPData.exists_of_twistIdx IF hx hβ
+    refine ⟨Quot.mk _ ⟨y, hyΓ, hyst⟩, Subtype.ext ?_⟩
+    change cls ⟨y, hyΓ, hyst⟩ = β
+    rw [← hβ']
+    exact GGPData.IsStableIso.mk_eq hx 1 (by simp) _ _
+  exact Nat.card_congr (Equiv.ofBijective Φ ⟨hinj, hsurj⟩)
 
 /-- **`q_x` is a function** `H¹(F, S_x) → IF.Idx` (own work; standard descent).  Existence: by
 Hilbert 90 for `GL_m` (Serre, *Local Fields*, X §1 Prop. 3) a cocycle `a` with values in

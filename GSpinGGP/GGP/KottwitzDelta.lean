@@ -3,7 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.GGP.TorusFrame
-import GSpinGGP.GGP.StableCocycle
+import GSpinGGP.GGP.StableCocycleSurj
 
 /-!
 # The connecting map `H¹(F, S_x) → H²(F, F̄^×)`, concretely
@@ -173,56 +173,6 @@ theorem nonempty_isometryEquiv_of_galObstruction_eq [FiniteDimensional F V] (hQ 
   sorry
 
 end Generic
-
-section Reflection
-
-variable {V : Type*} [AddCommGroup V] [Module F V]
-
-/-- A nondegenerate form on a nonzero space has an anisotropic vector. -/
-theorem exists_apply_ne_zero_of_isNondeg {m : ℕ} {Q : QuadraticForm F (Fin m → F)} (hQ : IsNondeg Q)
-    (hm : m ≠ 0) : ∃ u, Q u ≠ 0 := by
-  by_contra h
-  push Not at h
-  have h0 := hQ.1 (Pi.single ⟨0, Nat.pos_of_ne_zero hm⟩ 1) fun b => by
-    have h2 := polar_eq_two_mul_bform Q (Pi.single ⟨0, Nat.pos_of_ne_zero hm⟩ 1) b
-    rw [QuadraticMap.polar, h, h, h, sub_zero, sub_zero] at h2
-    exact (mul_eq_zero.1 h2.symm).resolve_left two_ne_zero
-  exact one_ne_zero (congrFun h0 ⟨0, Nat.pos_of_ne_zero hm⟩ ▸ (Pi.single_eq_same _ _).symm)
-
-/-- **A rational reflection, over `F̄`**: an isometry of `Q_{F̄}` of determinant `−1` whose matrix
-is Galois-fixed. -/
-theorem exists_galFixed_det_neg_one {m : ℕ} {Q : QuadraticForm F (Fin m → F)} (hQ : IsNondeg Q)
-    (hm : m ≠ 0) :
-    ∃ r : (Q.baseChange Kb).IsometryEquiv (Q.baseChange Kb),
-      (∀ σ, galGL m σ (glOf r) = glOf r) ∧ (glOf r : Matrix (Fin m) (Fin m) Kb).det = -1 := by
-  obtain ⟨u, hu⟩ := exists_apply_ne_zero_of_isNondeg hQ hm
-  set v : Kb ⊗[F] (Fin m → F) := (1 : Kb) ⊗ₜ u
-  have hv : Q.baseChange Kb v = algebraMap F Kb (Q u) := by
-    simp [v, QuadraticForm.baseChange_tmul, Algebra.algebraMap_eq_smul_one]
-  have hv0 : Q.baseChange Kb v ≠ 0 := by
-    rw [hv]; exact (map_ne_zero _).2 hu
-  have := invertibleOfNonzero hv0
-  let R := TauCeti.QuadraticMap.reflection (Q.baseChange Kb) v
-  let r : (Q.baseChange Kb).IsometryEquiv (Q.baseChange Kb) :=
-    ⟨R, fun w => TauCeti.QuadraticMap.reflection_mem_orthogonalGroup _ v w⟩
-  have hR : ∀ w, R w = w - (⅟(Q.baseChange Kb v) * polar (Q.baseChange Kb) v w) • v :=
-    TauCeti.QuadraticMap.reflection_apply _ v
-  have hgalv : ∀ σ : GalF F, galV σ v = v := fun σ => by simp [v, galV_tmul]
-  refine ⟨r, fun σ => ?_, ?_⟩
-  · rw [← glOf_galIso]
-    refine glOf_congr fun w => ?_
-    show galV σ (R (galV σ⁻¹ w)) = R w
-    have hpol : σ (polar (Q.baseChange Kb) v (galV σ⁻¹ w)) = polar (Q.baseChange Kb) v w := by
-      rw [← polar_baseChange_galV, hgalv, galV_galV_inv]
-    have hinv : σ (⅟(Q.baseChange Kb v)) = ⅟(Q.baseChange Kb v) := by
-      rw [invOf_eq_inv, map_inv₀, hv, AlgEquiv.commutes]
-    rw [hR, hR, map_sub, galV_smul, galV_galV_inv, hgalv, map_mul, hpol, hinv]
-  · rw [coe_glOf, LinearMap.det_toMatrix]
-    show LinearMap.det (R : (Kb ⊗[F] (Fin m → F)) →ₗ[Kb] _) = -1
-    rw [← LinearEquiv.coe_det, TauCeti.QuadraticMap.det_reflection]
-    rfl
-
-end Reflection
 
 namespace GalCocycle
 
@@ -430,7 +380,10 @@ theorem DRel.of_isometryEquiv {Q₁ Q₂ : QuadraticForm F (Fin d.m → F)} (hQ�
       rintro hm0
       rw [Matrix.det_eq_one_of_card_eq_zero (by simp [hm0])] at h1
       exact absurd h1 (by norm_num)
-    obtain ⟨r, hr, hrdet⟩ := exists_galFixed_det_neg_one hQ₂ hm
+    obtain ⟨X, hX, hXg, hrdet⟩ := exists_galFixed_gram_det_neg hQ₂ (Nat.pos_of_ne_zero hm)
+    set r := isoOfGL Q₂ Q₂ X hXg
+    have hr : ∀ σ, galGL d.m σ (glOf r) = glOf r := fun σ => by rw [glOf_isoOfGL, hX]
+    rw [← glOf_isoOfGL Q₂ Q₂ X hXg] at hrdet
     refine ⟨φ₂.trans r, fun σ => ?_, ?_⟩
     · rw [hφ₂, glOf_trans, mul_inv_rev, map_mul, hr, mul_assoc, inv_mul_cancel_left]
     · have e1 : glOf ((φ₂.trans r).trans φ₁.symm) = (glOf φ₁)⁻¹ * (glOf r * glOf φ₂) := by
