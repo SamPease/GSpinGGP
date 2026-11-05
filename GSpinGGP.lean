@@ -68,6 +68,7 @@ import GSpinGGP.GGP.TorusCentral
 import GSpinGGP.GGP.TwistIncl
 import GSpinGGP.Foundations.EigenFrame
 import GSpinGGP.GGP.TorusFrame
+import GSpinGGP.GGP.TorusCount
 import GSpinGGP.GGP.GammaClassFinite
 import GSpinGGP.GGP.TwistPlane
 import GSpinGGP.GGP.TwistTorus
