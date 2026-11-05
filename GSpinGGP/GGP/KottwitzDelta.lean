@@ -215,6 +215,21 @@ theorem galIso_symm_trans {V V₁ V₂ : Type*} [AddCommGroup V] [Module F V] [A
     galV σ (φ₂ (galV σ⁻¹ (galV σ (φ₁.symm (galV σ⁻¹ w)))))
   rw [galV_inv_galV]
 
+/-- `C(ψ)` preserves the even part. -/
+theorem map_mem_even {V V₁ : Type*} [AddCommGroup V] [Module F V] [AddCommGroup V₁] [Module F V₁]
+    {Q : QuadraticForm F V} {Q₁ : QuadraticForm F V₁}
+    (ψ : (Q.baseChange Kb).IsometryEquiv (Q₁.baseChange Kb)) {z : CliffordAlgebra (Q.baseChange Kb)}
+    (hz : z ∈ CliffordAlgebra.even (Q.baseChange Kb)) :
+    CliffordAlgebra.map ψ.toIsometry z ∈ CliffordAlgebra.even (Q₁.baseChange Kb) := by
+  rw [← Subalgebra.mem_toSubmodule, CliffordAlgebra.even_toSubmodule] at hz ⊢
+  induction z, hz using CliffordAlgebra.even_induction with
+  | algebraMap r => rw [AlgHom.commutes]; exact SetLike.algebraMap_mem_graded _ _
+  | add x y hx hy ihx ihy => rw [map_add]; exact Submodule.add_mem _ ihx ihy
+  | ι_mul_ι_mul m₁ m₂ x hx ih =>
+    rw [map_mul, map_mul, CliffordAlgebra.map_apply_ι, CliffordAlgebra.map_apply_ι]
+    exact zero_add (0 : ZMod 2) ▸
+      SetLike.mul_mem_graded (CliffordAlgebra.ι_mul_ι_mem_evenOdd_zero _ _ _) ih
+
 /-- **Twists with equal obstructions are isometric.** Let `φᵢ : U_{F̄} ≅ Uᵢ_{F̄}` (`i = 1, 2`) and
 let `t`, `s` be continuous lifts to `GSpin(U)(F̄)` of their cocycles `σ ↦ φᵢ⁻¹ ∘ σφᵢ` with equal
 obstructions `t_σ σ(t_τ) t_{στ}⁻¹ = s_σ σ(s_τ) s_{στ}⁻¹`. Then `U₁ ≅ U₂` over `F`.
