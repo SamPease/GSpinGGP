@@ -80,7 +80,61 @@ theorem galGS_scalarGSpin (σ : GalF F) (c : Kbˣ) :
   show galC Q σ (algebraMap Kb _ (c : Kb)) = algebraMap Kb _ (σ c)
   exact galC_algebraMap Q σ c
 
-/-- Central factors of a family split off its obstruction. -/
+omit [PAdicField F] in
+/-- An element of `F̄ ⊗ M` is moved the same way by Galois elements agreeing on a finite
+extension. -/
+theorem exists_finite_map_tensor {M : Type*} [AddCommGroup M] [Module F M] (z : Kb ⊗[F] M) :
+    ∃ E : IntermediateField F Kb, FiniteDimensional F E ∧ ∀ σ τ : GalF F, (∀ e ∈ E, σ e = τ e) →
+      TensorProduct.map (σ : Kb →ₗ[F] Kb) LinearMap.id z =
+        TensorProduct.map (τ : Kb →ₗ[F] Kb) LinearMap.id z := by
+  induction z using TensorProduct.inductionOn with
+  | tmul k m =>
+    refine ⟨IntermediateField.adjoin F {k}, IntermediateField.adjoin.finiteDimensional
+      (Algebra.IsIntegral.isIntegral k), fun σ τ h => ?_⟩
+    simp only [TensorProduct.map_tmul, LinearMap.id_apply]
+    congr 1
+    exact h k (IntermediateField.mem_adjoin_simple_self F k)
+  | add z w hz hw =>
+    obtain ⟨E₁, h₁, he₁⟩ := hz
+    obtain ⟨E₂, h₂, he₂⟩ := hw
+    refine ⟨E₁ ⊔ E₂, inferInstance, fun σ τ h => ?_⟩
+    rw [map_add, map_add, he₁ σ τ fun e he => h e (le_sup_left (a := E₁) he),
+      he₂ σ τ fun e he => h e (le_sup_right (a := E₁) he)]
+
+/-- `σ ↦ σ(g)` is continuous for a fixed `g ∈ GSpin(V)(F̄)`. -/
+theorem isGalContinuous_galGS (g : GSpin (Q.baseChange Kb)) :
+    IsGalContinuous (fun σ => galGS Q σ g) := by
+  obtain ⟨E, hE, h⟩ := exists_finite_map_tensor
+    (CliffordAlgebra.toBaseChange Kb Q
+      ((g : (CliffordAlgebra (Q.baseChange Kb))ˣ) : CliffordAlgebra (Q.baseChange Kb)))
+  refine ⟨E, hE, fun σ τ hστ => Subtype.ext (Units.ext ?_)⟩
+  show galC Q σ _ = galC Q τ _
+  simp only [galC, RingHom.comp_apply, AlgHom.toRingHom_eq_coe, AlgHom.coe_toRingHom]
+  congr 1
+  exact h σ τ hστ
+
+theorem galGS_galGS (σ τ : GalF F) (g : GSpin (Q.baseChange Kb)) :
+    galGS Q σ (galGS Q τ g) = galGS Q (σ * τ) g :=
+  Subtype.ext (Units.ext (galC_galC Q σ τ _))
+
+/-- Conjugating a family by a fixed `h`, twisted by the Galois action: `h⁻¹ t_σ σ(h)`. -/
+def galConj (h : GSpin (Q.baseChange Kb)) (t : GalF F → GSpin (Q.baseChange Kb)) (σ : GalF F) :
+    GSpin (Q.baseChange Kb) :=
+  h⁻¹ * t σ * galGS Q σ h
+
+/-- The obstruction of `h⁻¹ t_σ σ(h)` is the conjugate of that of `t`. -/
+theorem galObstruction_galConj (h : GSpin (Q.baseChange Kb)) (t : GalF F → GSpin (Q.baseChange Kb))
+    (σ τ : GalF F) :
+    galObstruction Q (galConj Q h t) σ τ = h⁻¹ * galObstruction Q t σ τ * h := by
+  simp only [galObstruction, galConj, galGS_mul, galGS_inv, galGS_galGS]
+  group
+
+theorem isGalContinuous_galConj (h : GSpin (Q.baseChange Kb)) {t : GalF F → GSpin (Q.baseChange Kb)}
+    (ht : IsGalContinuous t) : IsGalContinuous (galConj Q h t) :=
+  IsGalContinuous.mul (IsGalContinuous.mul
+    (⟨⊥, inferInstance, fun _ _ _ => rfl⟩ : IsGalContinuous (fun _ : GalF F => h⁻¹)) ht)
+    (isGalContinuous_galGS Q h)
+
 theorem galGS_one (σ : GalF F) : galGS Q σ 1 = 1 :=
   Subtype.ext (map_one (galCU Q σ))
 
@@ -88,6 +142,7 @@ theorem galObstruction_one (σ τ : GalF F) :
     galObstruction Q (1 : GalF F → GSpin (Q.baseChange Kb)) σ τ = 1 := by
   simp [galObstruction, galGS_one]
 
+/-- Central factors of a family split off its obstruction. -/
 theorem galObstruction_mul_central (t μ : GalF F → GSpin (Q.baseChange Kb))
     (hμ : ∀ σ, μ σ ∈ (scalarGSpin (Q.baseChange Kb)).range) (σ τ : GalF F) :
     galObstruction Q (t * μ) σ τ = galObstruction Q t σ τ * galObstruction Q μ σ τ := by
@@ -270,8 +325,27 @@ def invOf (hx : d.IsGammaElt x) (a : GalCocycle (d.torusBarFbar x)) :
     obtain ⟨E, hE, h⟩ := a.continuous'
     exact ⟨E, hE, fun σ τ hστ => by rw [h σ τ hστ]⟩
 
-theorem DRel.of_rel {a b : GalCocycle (d.torusBarFbar x)} (h : Rel a b) : DRel a b :=
-  sorry
+/-- A conjugate `h⁻¹ t_σ σ(h)` of a lift of `a` is a lift of the cocycle `P(h)⁻¹ a_σ σ(P(h))`, with
+the same obstruction. -/
+theorem IsLift.conj {a b : GalCocycle (d.torusBarFbar x)} {t : GalF F → GSpin (d.QW.baseChange Kb)}
+    (ht : IsLift a t) {h : GSpin (d.QW.baseChange Kb)}
+    (hb : ∀ σ, b.toFun σ = (specMatFbar d.QW h)⁻¹ * a.toFun σ * galGL d.m σ (specMatFbar d.QW h))
+    (hbmem : ∀ σ, galConj d.QW h t σ ∈ d.torusFbar x) :
+    IsLift b (galConj d.QW h t) ∧ galObstruction d.QW (galConj d.QW h t) = galObstruction d.QW t := by
+  refine ⟨⟨isGalContinuous_galConj d.QW h ht.1, fun σ => ⟨hbmem σ, ?_⟩⟩, ?_⟩
+  · rw [hb, GSpinGGP.galConj, map_mul, map_mul, map_inv, specMatFbar_galGS, (ht.2 σ).2]
+  · ext1 σ; ext1 τ
+    rw [galObstruction_galConj]
+    obtain ⟨c, hc⟩ := ht.obstruction_mem σ τ
+    rw [← hc, Subgroup.mem_center_iff.1 (scalarGSpin_mem_center _ c) h⁻¹, inv_mul_cancel_right]
+
+theorem DRel.of_rel {a b : GalCocycle (d.torusBarFbar x)} (h : Rel a b) : DRel a b := by
+  obtain ⟨c, hc, hb⟩ := h
+  obtain ⟨g, hg, rfl⟩ := hc
+  obtain ⟨t, ht⟩ := exists_isLift a
+  have := ht.conj hb fun σ => Subgroup.mul_mem _ (Subgroup.mul_mem _ (Subgroup.inv_mem _ hg)
+    (ht.2 σ).1) (galGS_mem_torusFbar x σ hg)
+  exact ⟨t, _, ht, this.1, this.2.symm⟩
 
 theorem DRel.of_isometryEquiv {Q₁ Q₂ : QuadraticForm F (Fin d.m → F)}
     {a b : GalCocycle (d.torusBarFbar x)} (ha : IsTwistBy d.QW Q₁ a.toFun)
