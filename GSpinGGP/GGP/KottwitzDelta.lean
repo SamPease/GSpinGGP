@@ -40,6 +40,22 @@ def IsGalContinuous {X : Type*} (t : GalF F → X) : Prop :=
   ∃ E : IntermediateField F Kb, FiniteDimensional F E ∧
     ∀ σ τ : GalF F, (∀ e ∈ E, σ e = τ e) → t σ = t τ
 
+omit [PAdicField F] in
+theorem IsGalContinuous.mul {G : Type*} [Mul G] {t s : GalF F → G} (ht : IsGalContinuous t)
+    (hs : IsGalContinuous s) : IsGalContinuous (t * s) := by
+  obtain ⟨E₁, h₁, he₁⟩ := ht
+  obtain ⟨E₂, h₂, he₂⟩ := hs
+  refine ⟨E₁ ⊔ E₂, inferInstance, fun σ τ h => ?_⟩
+  simp only [Pi.mul_apply]
+  rw [he₁ σ τ fun e he => h e (le_sup_left (a := E₁) he),
+    he₂ σ τ fun e he => h e (le_sup_right (a := E₁) he)]
+
+omit [PAdicField F] in
+theorem IsGalContinuous.inv {G : Type*} [Inv G] {t : GalF F → G} (ht : IsGalContinuous t) :
+    IsGalContinuous t⁻¹ := by
+  obtain ⟨E, hE, h⟩ := ht
+  exact ⟨E, hE, fun σ τ hστ => by simp only [Pi.inv_apply, h σ τ hστ]⟩
+
 section Generic
 
 variable {V : Type*} [AddCommGroup V] [Module F V] (Q : QuadraticForm F V)
@@ -48,6 +64,53 @@ variable {V : Type*} [AddCommGroup V] [Module F V] (Q : QuadraticForm F V)
 def galObstruction (t : GalF F → GSpin (Q.baseChange Kb)) (σ τ : GalF F) :
     GSpin (Q.baseChange Kb) :=
   t σ * galGS Q σ (t τ) * (t (σ * τ))⁻¹
+
+
+theorem galGS_mul (σ : GalF F) (g h : GSpin (Q.baseChange Kb)) :
+    galGS Q σ (g * h) = galGS Q σ g * galGS Q σ h :=
+  Subtype.ext (map_mul (galCU Q σ) _ _)
+
+theorem galGS_inv (σ : GalF F) (g : GSpin (Q.baseChange Kb)) :
+    galGS Q σ g⁻¹ = (galGS Q σ g)⁻¹ :=
+  Subtype.ext (map_inv (galCU Q σ) _)
+
+theorem galGS_scalarGSpin (σ : GalF F) (c : Kbˣ) :
+    galGS Q σ (scalarGSpin _ c) = scalarGSpin _ (Units.map (σ : Kb →* Kb) c) := by
+  apply Subtype.ext; apply Units.ext
+  show galC Q σ (algebraMap Kb _ (c : Kb)) = algebraMap Kb _ (σ c)
+  exact galC_algebraMap Q σ c
+
+/-- Central factors of a family split off its obstruction. -/
+theorem galGS_one (σ : GalF F) : galGS Q σ 1 = 1 :=
+  Subtype.ext (map_one (galCU Q σ))
+
+theorem galObstruction_one (σ τ : GalF F) :
+    galObstruction Q (1 : GalF F → GSpin (Q.baseChange Kb)) σ τ = 1 := by
+  simp [galObstruction, galGS_one]
+
+theorem galObstruction_mul_central (t μ : GalF F → GSpin (Q.baseChange Kb))
+    (hμ : ∀ σ, μ σ ∈ (scalarGSpin (Q.baseChange Kb)).range) (σ τ : GalF F) :
+    galObstruction Q (t * μ) σ τ = galObstruction Q t σ τ * galObstruction Q μ σ τ := by
+  have hZ : ∀ σ, ∀ z ∈ (scalarGSpin (Q.baseChange Kb)).range,
+      galGS Q σ z ∈ Subgroup.center (GSpin (Q.baseChange Kb)) := by
+    rintro σ _ ⟨c, rfl⟩
+    rw [galGS_scalarGSpin]; exact scalarGSpin_mem_center _ _
+  have hc : ∀ z ∈ (scalarGSpin (Q.baseChange Kb)).range,
+      z ∈ Subgroup.center (GSpin (Q.baseChange Kb)) := by
+    rintro _ ⟨c, rfl⟩; exact scalarGSpin_mem_center _ _
+  have ha := hc _ (hμ σ)
+  have hb := hZ σ _ (hμ τ)
+  have hk : μ σ * galGS Q σ (μ τ) * (μ (σ * τ))⁻¹ ∈ Subgroup.center (GSpin (Q.baseChange Kb)) :=
+    Subgroup.mul_mem _ (Subgroup.mul_mem _ ha hb) (Subgroup.inv_mem _ (hc _ (hμ (σ * τ))))
+  simp only [galObstruction, Pi.mul_apply, galGS_mul]
+  have e1 := Subgroup.mem_center_iff.1 ha (galGS Q σ (t τ))
+  have e2 := Subgroup.mem_center_iff.1 hk (t (σ * τ))⁻¹
+  calc t σ * μ σ * (galGS Q σ (t τ) * galGS Q σ (μ τ)) * (t (σ * τ) * μ (σ * τ))⁻¹
+      = t σ * (μ σ * galGS Q σ (t τ)) * galGS Q σ (μ τ) * ((μ (σ * τ))⁻¹ * (t (σ * τ))⁻¹) := by
+        group
+    _ = t σ * galGS Q σ (t τ) * ((μ σ * galGS Q σ (μ τ) * (μ (σ * τ))⁻¹) * (t (σ * τ))⁻¹) := by
+        rw [← e1]; group
+    _ = _ := by rw [← e2]; group
 
 variable {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V₁] [AddCommGroup V₂] [Module F V₂]
 
@@ -81,8 +144,53 @@ def IsLift (a : GalCocycle (d.torusBarFbar x)) (t : GalF F → GSpin (d.QW.baseC
 def DRel (a b : GalCocycle (d.torusBarFbar x)) : Prop :=
   ∃ t s, IsLift a t ∧ IsLift b s ∧ galObstruction d.QW t = galObstruction d.QW s
 
-theorem exists_isLift (a : GalCocycle (d.torusBarFbar x)) : ∃ t, IsLift a t :=
-  sorry
+theorem scalarGSpin_mem_torusFbar (c : Kbˣ) : scalarGSpin _ c ∈ d.torusFbar x :=
+  ⟨Units.ext (Algebra.commutes (c : Kb) _), fun w _ => by rw [specP_scalarGSpin_eq_one]; rfl⟩
+
+theorem specMatFbar_scalarGSpin (c : Kbˣ) : specMatFbar d.QW (scalarGSpin _ c) = 1 := by
+  rw [GGPData.specMatFbar_eq_matGL_comp, MonoidHom.comp_apply, specP_scalarGSpin_eq_one, map_one]
+
+/-- `ker P = F̄^×`, in matrices. -/
+theorem mem_range_scalarGSpin_of_specMatFbar {g : GSpin (d.QW.baseChange Kb)}
+    (hg : specMatFbar d.QW g = 1) : g ∈ (scalarGSpin (d.QW.baseChange Kb)).range := by
+  rw [← ker_specP (isNondeg_baseChange _ d.nondeg), MonoidHom.mem_ker]
+  apply GGPData.matGL_injective (d := d)
+  rw [map_one, ← MonoidHom.comp_apply, ← GGPData.specMatFbar_eq_matGL_comp, hg]
+
+theorem exists_isLift (a : GalCocycle (d.torusBarFbar x)) : ∃ t, IsLift a t := by
+  classical
+  let L : GL (Fin d.m) Kb → GSpin (d.QW.baseChange Kb) := fun s =>
+    if h : ∃ g ∈ d.torusFbar x, specMatFbar d.QW g = s then h.choose else 1
+  refine ⟨fun σ => L (a.toFun σ), ?_, fun σ => ?_⟩
+  · obtain ⟨E, hE, h⟩ := a.continuous'
+    exact ⟨E, hE, fun σ τ hστ => by simp only [h σ τ hστ]⟩
+  · have h : ∃ g ∈ d.torusFbar x, specMatFbar d.QW g = a.toFun σ := a.mem' σ
+    simp only [L, h, ↓reduceDIte]
+    exact h.choose_spec
+
+/-- The obstruction of a lift is a scalar. -/
+theorem IsLift.obstruction_mem {a : GalCocycle (d.torusBarFbar x)}
+    {t : GalF F → GSpin (d.QW.baseChange Kb)} (ht : IsLift a t) (σ τ : GalF F) :
+    galObstruction d.QW t σ τ ∈ (scalarGSpin (d.QW.baseChange Kb)).range := by
+  apply mem_range_scalarGSpin_of_specMatFbar
+  simp only [galObstruction, map_mul, map_inv, specMatFbar_galGS, (ht.2 _).2, a.cocycle',
+    mul_inv_cancel]
+
+/-- Two lifts of one cocycle differ by scalars. -/
+theorem IsLift.mem_range_inv_mul {a : GalCocycle (d.torusBarFbar x)}
+    {t s : GalF F → GSpin (d.QW.baseChange Kb)} (ht : IsLift a t) (hs : IsLift a s) (σ : GalF F) :
+    (t σ)⁻¹ * s σ ∈ (scalarGSpin (d.QW.baseChange Kb)).range := by
+  apply mem_range_scalarGSpin_of_specMatFbar
+  rw [map_mul, map_inv, (ht.2 σ).2, (hs.2 σ).2, inv_mul_cancel]
+
+/-- Changing a lift by a continuous scalar family. -/
+theorem IsLift.mul_scalar {a : GalCocycle (d.torusBarFbar x)}
+    {t μ : GalF F → GSpin (d.QW.baseChange Kb)} (ht : IsLift a t) (hμc : IsGalContinuous μ)
+    (hμ : ∀ σ, μ σ ∈ (scalarGSpin (d.QW.baseChange Kb)).range) : IsLift a (t * μ) := by
+  refine ⟨ht.1.mul hμc, fun σ => ?_⟩
+  obtain ⟨c, hc⟩ := hμ σ
+  refine ⟨Subgroup.mul_mem _ (ht.2 σ).1 (hc ▸ scalarGSpin_mem_torusFbar c), ?_⟩
+  rw [Pi.mul_apply, map_mul, ← hc, specMatFbar_scalarGSpin, mul_one, (ht.2 σ).2]
 
 theorem DRel.of_toFun_eq {a b : GalCocycle (d.torusBarFbar x)} (h : a.toFun = b.toFun) :
     DRel a b := by
@@ -96,14 +204,58 @@ theorem DRel.symm {a b : GalCocycle (d.torusBarFbar x)} (h : DRel a b) : DRel b 
   exact ⟨s, t, hs, ht, he.symm⟩
 
 theorem DRel.trans {a b e : GalCocycle (d.torusBarFbar x)} (h₁ : DRel a b) (h₂ : DRel b e) :
-    DRel a e :=
-  sorry
+    DRel a e := by
+  obtain ⟨t, s, ht, hs, he₁⟩ := h₁
+  obtain ⟨s', r, hs', hr, he₂⟩ := h₂
+  -- `s' = s λ` with `λ` scalar; use `r λ⁻¹`
+  set μ : GalF F → GSpin (d.QW.baseChange Kb) := s⁻¹ * s'
+  have hμ : ∀ σ, μ σ ∈ (scalarGSpin (d.QW.baseChange Kb)).range := hs.mem_range_inv_mul hs'
+  have hμc : IsGalContinuous μ := hs.1.inv.mul hs'.1
+  have hμi : ∀ σ, μ⁻¹ σ ∈ (scalarGSpin (d.QW.baseChange Kb)).range := fun σ =>
+    Subgroup.inv_mem _ (hμ σ)
+  have hs's : s' = s * μ := by ext1 σ; simp [μ]
+  refine ⟨t, r * μ⁻¹, ht, hr.mul_scalar hμc.inv hμi, ?_⟩
+  ext1 σ; ext1 τ
+  rw [he₁, galObstruction_mul_central _ _ _ hμi]
+  have h2 := congrFun (congrFun he₂ σ) τ
+  rw [hs's, galObstruction_mul_central _ _ _ hμ] at h2
+  rw [← h2, mul_assoc, ← galObstruction_mul_central _ _ _ hμi, mul_inv_cancel,
+    galObstruction_one, mul_one]
+
+/-- Obstructions are multiplicative on families in the commutative `T_x(F̄)`. -/
+theorem galObstruction_mul_of_mem (hx : d.IsGammaElt x) {t u : GalF F → GSpin (d.QW.baseChange Kb)}
+    (ht : ∀ σ, t σ ∈ d.torusFbar x) (hu : ∀ σ, u σ ∈ d.torusFbar x) (σ τ : GalF F) :
+    galObstruction d.QW (t * u) σ τ = galObstruction d.QW t σ τ * galObstruction d.QW u σ τ := by
+  have hc := fun {p q} (hp : p ∈ d.torusFbar x) (hq : q ∈ d.torusFbar x) =>
+    GGPData.torusFbar_commute x hx hp hq
+  have hC := galGS_mem_torusFbar x σ (ht τ)
+  have hD := galGS_mem_torusFbar x σ (hu τ)
+  have hBC := hc (hu σ) hC
+  have hK : Commute (u σ * galGS d.QW σ (u τ) * (u (σ * τ))⁻¹) (t (σ * τ))⁻¹ :=
+    (((hc (hu σ) (ht _)).mul_left (hc hD (ht _))).mul_left (hc (hu _) (ht _)).inv_left).inv_right
+  simp only [galObstruction, Pi.mul_apply, galGS_mul]
+  calc t σ * u σ * (galGS d.QW σ (t τ) * galGS d.QW σ (u τ)) * (t (σ * τ) * u (σ * τ))⁻¹
+      = t σ * (u σ * galGS d.QW σ (t τ)) * galGS d.QW σ (u τ) *
+          ((u (σ * τ))⁻¹ * (t (σ * τ))⁻¹) := by group
+    _ = t σ * galGS d.QW σ (t τ) *
+          ((u σ * galGS d.QW σ (u τ) * (u (σ * τ))⁻¹) * (t (σ * τ))⁻¹) := by rw [hBC.eq]; group
+    _ = _ := by rw [hK.eq]; group
 
 theorem DRel.mul_right (hx : d.IsGammaElt x) {a b : GalCocycle (d.torusBarFbar x)}
     (h : DRel a b) (e : GalCocycle (d.torusBarFbar x)) :
     DRel (mulOf (torusBarFbar_commute x hx) (fun σ => galGL_mem_torusBarFbar x σ) a e)
-      (mulOf (torusBarFbar_commute x hx) (fun σ => galGL_mem_torusBarFbar x σ) b e) :=
-  sorry
+      (mulOf (torusBarFbar_commute x hx) (fun σ => galGL_mem_torusBarFbar x σ) b e) := by
+  obtain ⟨t, s, ht, hs, he⟩ := h
+  obtain ⟨u, hu⟩ := exists_isLift e
+  have hmul : ∀ {c : GalCocycle (d.torusBarFbar x)} {r : GalF F → GSpin (d.QW.baseChange Kb)},
+      IsLift c r → IsLift (mulOf (torusBarFbar_commute x hx)
+        (fun σ => galGL_mem_torusBarFbar x σ) c e) (r * u) := fun {c r} hr =>
+    ⟨hr.1.mul hu.1, fun σ => ⟨Subgroup.mul_mem _ (hr.2 σ).1 (hu.2 σ).1, by
+      rw [Pi.mul_apply, map_mul, (hr.2 σ).2, (hu.2 σ).2]; rfl⟩⟩
+  refine ⟨t * u, s * u, hmul ht, hmul hs, ?_⟩
+  ext1 σ; ext1 τ
+  rw [galObstruction_mul_of_mem hx (fun σ => (ht.2 σ).1) (fun σ => (hu.2 σ).1),
+    galObstruction_mul_of_mem hx (fun σ => (hs.2 σ).1) (fun σ => (hu.2 σ).1), he]
 
 /-- The inverse `σ ↦ a_σ⁻¹` of a cocycle with values in the commutative, Galois-stable `S_x`. -/
 def invOf (hx : d.IsGammaElt x) (a : GalCocycle (d.torusBarFbar x)) :
