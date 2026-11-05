@@ -47,7 +47,7 @@ As of November 2026:
   that the dissertation adapts to general spin groups (see below), the rest smaller lemmas.
 - Results from the literature are assumed as `axiom`s in `GSpinGGP/Literature/`, each with a
   docstring citing its source. Only statements that appear in a source, specialized to general spin
-  groups with the source's hypotheses checked, are axioms. `local_ggp` uses 13 of the 14.
+  groups with the source's hypotheses checked, are axioms. `local_ggp` uses 13 of the 15.
   Where the dissertation adapts a published result (stated for orthogonal or unitary groups, groups
   with compact centre, pure inner forms, …) or combines several, the statement is a theorem with
   `sorry`, and its docstring names the exact ingredients and sketches the argument.
