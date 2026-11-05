@@ -16,6 +16,7 @@ import GSpinGGP.GGP.GaloisTorus
 import GSpinGGP.GGP.TwistIncl
 import GSpinGGP.GGP.StableCocycleSurj
 import GSpinGGP.GGP.OrbitSpecQd
+import GSpinGGP.GGP.TorusIntegral
 
 /-!
 # The main theorem: the local GGP conjecture for general spin groups
@@ -2122,6 +2123,136 @@ theorem TemperedPacketFamily.packetChar_mem_QCfin {IF : InnerFormSystem d}
   exact Submodule.sum_mem _ fun i _ => mem_QCfin_of_mem_QC _ (charG_mem_QC _
     (centralCharOf_spec _ (P.rep α i) (P.tempered α i) (P.central_trivial α i)))
 
+/-- `O_x` is regular as soon as some regular orbit satisfies Luo's condition `OrbitSpec`. -/
+theorem orbitChoice_mem_nilReg_of_exists (d : GGPData F) (x : ↥(GSpin d.QW))
+    (h : ∃ O ∈ NilReg (grpCentralizer d.G (d.diag x : d.ambientˣ))
+      (lieCentralizer d.lie (((d.diag x : d.ambientˣ)) : d.ambient)),
+      ∃ X ∈ nilOrbitSet O, OrbitSpec d x (X : d.ambient)) :
+    orbitChoice d x ∈ NilReg (grpCentralizer d.G (d.diag x : d.ambientˣ))
+      (lieCentralizer d.lie (((d.diag x : d.ambientˣ)) : d.ambient)) := by
+  have e : orbitChoice d x = h.choose := dite_eq_left h
+  rw [e]
+  exact h.choose_spec.1
+
+
+/-- **`O_x` is regular at quasi-split points of `Γ(G,H)`**: for `x ∈ Γ(G,H)` with `G'_x`
+quasi-split, Luo's orbit exists (`GGPData.exists_orbitSpec_of_quasiSplit`), so `orbitChoice d x`
+is a regular nilpotent orbit of `𝔤_x`. -/
+theorem orbitChoice_mem_nilReg_of_qd (d : GGPData F) (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x)
+    (hq : IsQdAt d x) :
+    orbitChoice d x ∈ NilReg (grpCentralizer d.G (d.diag x : d.ambientˣ))
+      (lieCentralizer d.lie (((d.diag x : d.ambientˣ)) : d.ambient)) :=
+  orbitChoice_mem_nilReg_of_exists d x
+    (d.exists_orbitSpec_of_quasiSplit x hx.1 (movedPartAbelian_of_isGammaElt d x hx) hq.1 hq.2)
+
+/-- **Strong stable conjugacy preserves `IsQdAt`**: for `x ∈ Γ(G,H)` and `y` strongly stably
+conjugate to `x`, `W'_x ≅ W'_y` over `F` (a witness `ψ` of `GGPData.IsStableIso` has cocycle trivial on
+`W'_x ⊗ F̄`, so it restricts to a rational isometry, `exists_isometryEquiv_fixedSub`), hence also
+`V'_x ≅ V'_y`. -/
+theorem isQdAt_iff_of_stronglyStablyConj (IF : InnerFormSystem d) {α : IF.Idx}
+    {x : ↥(GSpin d.QW)} {y : ↥(GSpin (IF.data α).QW)} (hx : d.IsGammaElt x)
+    (hxy : d.StronglyStablyConjW (IF.twist α) x y) :
+    IsQdAt d x ↔ IsQdAt (IF.data α) y := by
+  obtain ⟨φ, hφ⟩ := d.exists_isStableIso (IF.twist α) hx hxy
+  obtain ⟨θ, -⟩ := exists_isometryEquiv_fixedSub φ hφ.1 (fun σ _ hw => hφ.fix σ hw)
+  have θV : (d.QVfix x).IsometryEquiv ((IF.data α).QVfix y) :=
+    θ.prod (QuadraticMap.IsometryEquiv.refl d.QZ)
+  exact ⟨fun h => ⟨QuadClassify.isQuasiSplitQF_of_isometryEquiv θ h.1,
+      QuadClassify.isQuasiSplitQF_of_isometryEquiv θV h.2⟩,
+    fun h => ⟨QuadClassify.isQuasiSplitQF_of_isometryEquiv θ.symm h.1,
+      QuadClassify.isQuasiSplitQF_of_isometryEquiv θV.symm h.2⟩⟩
+
+/-- The integrand of `m_{geom,s}` is `A_{G,H}(F)`-invariant for `θ ∈ QCfin`
+(`gammaIntegrand_scalar_mul_of_mem_QC` on each `QC d χ`, and additivity on quasi-characters). -/
+theorem gammaIntegrand_scalar_mul_of_mem_QCfin {θ : ↥d.G → ℂ} (hθ : θ ∈ QCfin d)
+    (T : Subgroup ↥(GSpin d.QW)) (s : ℝ) (c : Fˣ) (t : ↥(GSpin d.QW)) :
+    gammaIntegrand ψ d θ T s (scalarGSpin d.QW c * t) = gammaIntegrand ψ d θ T s t := by
+  let S : Submodule ℂ (↥d.G → ℂ) :=
+    { carrier := {θ | IsQuasiCharacter d.G d.lie d.bilin ψ θ ∧
+        ∀ (c : Fˣ) (t : ↥(GSpin d.QW)),
+          gammaIntegrand ψ d θ T s (scalarGSpin d.QW c * t) = gammaIntegrand ψ d θ T s t}
+      add_mem' := fun {θ₁ θ₂} h₁ h₂ => ⟨isQuasiCharacter_add d ψ h₁.1 h₂.1, fun c t => by
+        rw [gammaIntegrand_add ψ d h₁.1 h₂.1, gammaIntegrand_add ψ d h₁.1 h₂.1, h₁.2, h₂.2]⟩
+      zero_mem' := ⟨isQuasiCharacter_zero d ψ, fun c t => by
+        rw [gammaIntegrand_zero, gammaIntegrand_zero]⟩
+      smul_mem' := fun a {θ} h => ⟨isQuasiCharacter_smul d ψ a h.1, fun c t => by
+        rw [gammaIntegrand_smul ψ d a h.1, gammaIntegrand_smul ψ d a h.1, h.2]⟩ }
+  have hle : QCfin d ≤ S := iSup_le fun _ _ hθ =>
+    ⟨hθ.1 ψ, fun c t => gammaIntegrand_scalar_mul_of_mem_QC ψ d hθ T s c t⟩
+  exact (hle hθ).2 c t
+
+/-- `A_{G,H}(F)`-invariance of the integrand of `m_{geom,s}` along a torus `T`, for `θ ∈ QCfin`
+(`gammaIntegrand_scalar_mul_of_mem_QCfin`). -/
+theorem gammaIntegrand_mul_mem_scalarsIn {d' : GGPData F} {θ : ↥d'.G → ℂ} (hθ : θ ∈ QCfin d')
+    (T : Subgroup ↥(GSpin d'.QW)) (s : ℝ) (t a : ↥T) (ha : a ∈ d'.scalarsIn T) :
+    gammaIntegrand ψ d' θ T s ((t * a : ↥T) : ↥(GSpin d'.QW)) =
+      gammaIntegrand ψ d' θ T s (t : ↥(GSpin d'.QW)) := by
+  obtain ⟨c, hc⟩ : ∃ c, scalarGSpin d'.QW c = (a : ↥(GSpin d'.QW)) :=
+    Subgroup.mem_subgroupOf.mp ha
+  have : ((t * a : ↥T) : ↥(GSpin d'.QW)) = scalarGSpin d'.QW c * t := by
+    rw [Subgroup.coe_mul, ← hc]
+    exact ((scalarGSpin_commute _ c (t : ↥(GSpin d'.QW))).eq).symm
+  rw [this, gammaIntegrand_scalar_mul_of_mem_QCfin ψ hθ]
+
+/-- **(R1) Transport of the torus integrals along a torus transfer** (Thesis (6.7.2)–(6.7.5)): for
+`x ∈ Γ(G,H)`, `y ∈ Γ(G_α,H_α)` and a `TorusTransfer` `e : T_x ≃ T_y`,
+`∫_{T_y/A} D^{1/2} c_{θ_α} Δ^{s-1/2} = e(G_α) ∫_{T_x/A} D^{1/2} c_{θ_1} Δ^{s-1/2}`.
+Pointwise on `T_x`: off `T_{x,♮}` both integrands vanish (`TorusTransfer`'s `T_♮` clause); at
+non-quasi-split points both vanish (`isQdAt_iff_of_stronglyStablyConj`,
+`gammaIntegrand_eq_zero_of_not_qd`); at quasi-split points `O_t`, `O_{e t}` are regular
+(`orbitChoice_mem_nilReg_of_qd`), so `hgerm` applies, and `D^G`, `Δ` agree.  Then
+`torusIntegral_eq_of_mulEquiv` (the integrand on `T_y` is `A(F)`-invariant,
+`gammaIntegrand_scalar_mul_of_mem_QCfin`). -/
+theorem torusIntegral_eq_of_torusTransfer {IF : InnerFormSystem d} (P : TemperedPacketFamily d IF)
+    (hgerm : PacketGermTransfer ψ P) {α : IF.Idx} {x : ↥(GSpin d.QW)}
+    {y : ↥(GSpin (IF.data α).QW)} (hx : d.IsGammaElt x) (hy : (IF.data α).IsGammaElt y)
+    (htr : TorusTransfer IF α x y) (s : ℝ) :
+    torusIntegral ψ (IF.data α) (P.packetChar α) ((IF.data α).torusOf y) s =
+      (kottwitzSign d (IF.twist α) : ℂ) * torusIntegral ψ d P.baseChar (d.torusOf x) s := by
+  obtain ⟨e, hc, hcs, hsc, -, hreg, hst, hDΔ⟩ := htr
+  have := hx.2.2
+  have := hy.2.2
+  let E : ↥(d.torusOf x) ≃ₜ* ↥((IF.data α).torusOf y) :=
+    { e with continuous_toFun := hc, continuous_invFun := hcs }
+  have he : (d.scalarsIn (d.torusOf x)).map E.toMulEquiv.toMonoidHom =
+      (IF.data α).scalarsIn ((IF.data α).torusOf y) := by
+    ext t'
+    simp only [Subgroup.mem_map, GGPData.scalarsIn, Subgroup.mem_subgroupOf, MonoidHom.mem_range]
+    constructor
+    · rintro ⟨t, ⟨c, hct⟩, rfl⟩
+      refine ⟨c, ?_⟩
+      have : t = ⟨scalarGSpin d.QW c, d.scalar_mem_torusOf x c⟩ := Subtype.ext hct.symm
+      subst this
+      exact (hsc c).symm
+    · rintro ⟨c, hct⟩
+      refine ⟨⟨scalarGSpin d.QW c, d.scalar_mem_torusOf x c⟩, ⟨c, rfl⟩, Subtype.ext ?_⟩
+      exact (hsc c).trans hct
+  refine GGPData.torusIntegral_eq_of_mulEquiv ψ E he _ (fun t => ?_) (fun t a ha => ?_)
+  · change gammaIntegrand ψ (IF.data α) (P.packetChar α) ((IF.data α).torusOf y) s
+        ((e t : ↥((IF.data α).torusOf y)) : ↥(GSpin (IF.data α).QW)) = _
+    by_cases hT : d.IsGammaElt t ∧ d.torusOf t = d.torusOf x
+    · have hT' := (hreg t).mp hT
+      have hxy := hst t hT.1 hT.2
+      by_cases hq : IsQdAt d t
+      · have hq' := (isQdAt_iff_of_stronglyStablyConj IF hT.1 hxy).mp hq
+        unfold gammaIntegrand
+        rw [ite_eq_left_of_eq_true _ _ (eq_true hT), ite_eq_left_of_eq_true _ _ (eq_true hT'), (hDΔ t).1, (hDΔ t).2,
+          hgerm α t (e t) (isSS_diag_of_isGammaElt d hT.1)
+            (isSS_diag_of_isGammaElt (IF.data α) hT'.1) hxy _
+            (orbitChoice_mem_nilReg_of_qd d t hT.1 hq) _
+            (orbitChoice_mem_nilReg_of_qd (IF.data α) (e t) hT'.1 hq')]
+        ring
+      · have hq' : ¬ IsQdAt (IF.data α) (e t) :=
+          fun h => hq ((isQdAt_iff_of_stronglyStablyConj IF hT.1 hxy).mpr h)
+        rw [gammaIntegrand_eq_zero_of_not_qd ψ _ _ _ _ _ hq',
+          gammaIntegrand_eq_zero_of_not_qd ψ _ _ _ _ _ hq, mul_zero]
+    · have hT' : ¬ ((IF.data α).IsGammaElt (e t) ∧
+          (IF.data α).torusOf (e t) = (IF.data α).torusOf y) := fun h => hT ((hreg t).mpr h)
+      unfold gammaIntegrand
+      rw [ite_eq_right_of_eq_false _ _ (eq_false hT), ite_eq_right_of_eq_false _ _ (eq_false hT'),
+        mul_zero]
+  · exact gammaIntegrand_mul_mem_scalarsIn ψ (P.packetChar_mem_QCfin α) _ s t a ha
+
 /-- **The stable rearrangement at `s > 0`** (own work; Thesis (6.7.2)–(6.7.5) before the limit):
 for `s > 0`,
 `Σ_α m_{geom,s}(θ_α) = ∫_{Γ(G,H)} (Σ_α e(G_α)n_α(x)/n_1(x)) c_{θ_1}(x) D^G(x)^{1/2} Δ(x)^{s-1/2} dx`.
@@ -2233,27 +2364,6 @@ end Stable
 
 /-! ## 9. The germ at `1` and Whittaker models (Thesis (6.7.1)) -/
 
-/-- `O_x` is regular as soon as some regular orbit satisfies Luo's condition `OrbitSpec`. -/
-theorem orbitChoice_mem_nilReg_of_exists (d : GGPData F) (x : ↥(GSpin d.QW))
-    (h : ∃ O ∈ NilReg (grpCentralizer d.G (d.diag x : d.ambientˣ))
-      (lieCentralizer d.lie (((d.diag x : d.ambientˣ)) : d.ambient)),
-      ∃ X ∈ nilOrbitSet O, OrbitSpec d x (X : d.ambient)) :
-    orbitChoice d x ∈ NilReg (grpCentralizer d.G (d.diag x : d.ambientˣ))
-      (lieCentralizer d.lie (((d.diag x : d.ambientˣ)) : d.ambient)) := by
-  have e : orbitChoice d x = h.choose := dite_eq_left h
-  rw [e]
-  exact h.choose_spec.1
-
-
-/-- **`O_x` is regular at quasi-split points of `Γ(G,H)`**: for `x ∈ Γ(G,H)` with `G'_x`
-quasi-split, Luo's orbit exists (`GGPData.exists_orbitSpec_of_quasiSplit`), so `orbitChoice d x`
-is a regular nilpotent orbit of `𝔤_x`. -/
-theorem orbitChoice_mem_nilReg_of_qd (d : GGPData F) (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x)
-    (hq : IsQdAt d x) :
-    orbitChoice d x ∈ NilReg (grpCentralizer d.G (d.diag x : d.ambientˣ))
-      (lieCentralizer d.lie (((d.diag x : d.ambientˣ)) : d.ambient)) :=
-  orbitChoice_mem_nilReg_of_exists d x
-    (d.exists_orbitSpec_of_quasiSplit x hx.1 (movedPartAbelian_of_isGammaElt d x hx) hq.1 hq.2)
 
 /-- A regular orbit satisfying `OrbitSpec d 1` exists: `GGPData.exists_orbitSpec_of_quasiSplit` at
 `x = 1` (`W'_1 = W`, `V'_1 = V`, `𝔤_1 = 𝔤`). -/
