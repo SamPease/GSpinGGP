@@ -2,7 +2,7 @@
 Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import GSpinGGP.GGP.EigenFrame
+import GSpinGGP.Foundations.EigenFrame
 import GSpinGGP.GGP.Steinberg
 import GSpinGGP.Foundations.HypPlane
 
@@ -44,16 +44,9 @@ theorem exists_frame_torus_elt {x : GSpin Q} {n : ℕ} {e f : Fin n → V} {μ :
       ∀ z : GSpin Q, (∀ j, ∃ c : Kˣ, specP Q z (e j) = (c : K) • e j ∧
         specP Q z (f j) = ((c⁻¹ : Kˣ) : K) • f j) → Commute z g := by
   classical
-  have h2 : (2 : K) ≠ 0 := two_ne_zero
-  have hQe : ∀ i, Q (e i) = 0 := fun i => by
-    have h := polar_self Q (e i)
-    rw [hF.polar_ee, nsmul_eq_mul, Nat.cast_ofNat] at h
-    exact (mul_eq_zero.1 h.symm).resolve_left h2
-  have hQf : ∀ i, Q (f i) = 0 := fun i => by
-    have h := polar_self Q (f i)
-    rw [hF.polar_ff, nsmul_eq_mul, Nat.cast_ofNat] at h
-    exact (mul_eq_zero.1 h.symm).resolve_left h2
-  have hp : ∀ i, polar Q (e i) (f i) = 1 := fun i => by simp [hF.polar_ef]
+  have hQe : ∀ i, Q (e i) = 0 := hF.apply_e_eq_zero
+  have hQf : ∀ i, Q (f i) = 0 := hF.apply_f_eq_zero
+  have hp : ∀ i, polar Q (e i) (f i) = 1 := hF.polar_ef_self
   -- the pair elements
   have pair : ∀ (i : Fin n) (s : Kˣ), ∃ g : GSpin Q, Commute g x ∧
       (∀ w ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) 1, specP Q g w = w) ∧
