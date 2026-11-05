@@ -146,6 +146,32 @@ theorem coe_bcSubIncl (C : Subalgebra F (CliffordAlgebra Q)) (c : C) :
     (bcSubIncl Q C c : CliffordAlgebra (Q.baseChange Kb)) = bcHom Q (c : CliffordAlgebra Q) :=
   rfl
 
+theorem bcHom_smul (f : F) (x : CliffordAlgebra Q) : bcHom Q (f • x) = f • bcHom Q x := by
+  rw [Algebra.smul_def, map_mul, bcHom_algebraMap, Algebra.smul_def,
+    IsScalarTower.algebraMap_apply F Kb (CliffordAlgebra (Q.baseChange Kb))]
+
+/-- **Descent**: a Galois-fixed element of `F̄ ⊗ C` lies in `C`. -/
+theorem exists_bcHom_of_mem_bcSub (C : Subalgebra F (CliffordAlgebra Q)) {N : ℕ}
+    (b : Module.Basis (Fin N) F C) {z : CliffordAlgebra (Q.baseChange Kb)} (hz : z ∈ bcSub Q C)
+    (hfix : ∀ σ : GalF F, galC Q σ z = z) : ∃ c ∈ C, bcHom Q c = z := by
+  set e := bcSubBasis Q C b
+  have hrat : ∀ i, ∃ f : F, algebraMap F Kb f = e.repr ⟨z, hz⟩ i := fun i =>
+    (InfiniteGalois.mem_range_algebraMap_iff_fixed _).2 fun σ => by
+      rw [← (bcSubAction Q C b).repr_act]
+      congr 2
+      exact Subtype.ext (hfix σ)
+  choose f hf using hrat
+  refine ⟨(∑ i, f i • b i : C), (∑ i, f i • b i : C).2, ?_⟩
+  have hz' : (⟨z, hz⟩ : bcSub Q C) = ∑ i, e.repr ⟨z, hz⟩ i • e i := (e.sum_repr _).symm
+  have := congrArg (bcSub Q C).val hz'
+  rw [map_sum] at this
+  change z = _ at this
+  rw [this, show ((∑ i, f i • b i : C) : CliffordAlgebra Q) = C.val (∑ i, f i • b i) from rfl,
+    map_sum, map_sum]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [map_smul C.val, bcHom_smul, map_smul (bcSub Q C).val, ← hf, algebraMap_smul]
+  exact congrArg _ (coe_bcSubBasis Q C b i).symm
+
 end BaseChangeSub
 
 end GSpinGGP
