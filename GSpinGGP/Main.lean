@@ -15,6 +15,7 @@ import GSpinGGP.GGP.MovedCentralizer
 import GSpinGGP.GGP.GaloisTorus
 import GSpinGGP.GGP.TwistIncl
 import GSpinGGP.GGP.StableCocycleSurj
+import GSpinGGP.GGP.OrbitSpecQd
 
 /-!
 # The main theorem: the local GGP conjecture for general spin groups
@@ -2222,6 +2223,16 @@ theorem orbitChoice_mem_nilReg_of_exists (d : GGPData F) (x : ↥(GSpin d.QW))
   rw [e]
   exact h.choose_spec.1
 
+
+/-- **`O_x` is regular at quasi-split points of `Γ(G,H)`**: for `x ∈ Γ(G,H)` with `G'_x`
+quasi-split, Luo's orbit exists (`GGPData.exists_orbitSpec_of_quasiSplit`), so `orbitChoice d x`
+is a regular nilpotent orbit of `𝔤_x`. -/
+theorem orbitChoice_mem_nilReg_of_qd (d : GGPData F) (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x)
+    (hq : IsQdAt d x) :
+    orbitChoice d x ∈ NilReg (grpCentralizer d.G (d.diag x : d.ambientˣ))
+      (lieCentralizer d.lie (((d.diag x : d.ambientˣ)) : d.ambient)) :=
+  orbitChoice_mem_nilReg_of_exists d x
+    (d.exists_orbitSpec_of_quasiSplit x hx.1 (movedPartAbelian_of_isGammaElt d x hx) hq.1 hq.2)
 
 /-- Conjugation by `G(F)` preserves `𝔤`. -/
 theorem conj_mem_lie_of_mem_G (d : GGPData F) {g : d.ambientˣ} (hg : g ∈ d.G) {Y : d.ambient}
