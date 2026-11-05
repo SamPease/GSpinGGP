@@ -344,8 +344,53 @@ theorem nonempty_isometryEquiv_of_galObstruction_eq {m : ℕ}
     (hsb : ∀ σ w, specP _ (s σ) w = φ₂.symm (galIso σ φ₂ w))
     (hscal : ∀ σ τ, galObstruction Q t σ τ ∈ (scalarGSpin (Q.baseChange Kb)).range)
     (hobs : galObstruction Q t = galObstruction Q s) :
-    Nonempty (Q₁.IsometryEquiv Q₂) :=
-  sorry
+    Nonempty (Q₁.IsometryEquiv Q₂) := by
+  classical
+  -- equal discriminants: `det` of the matrix of `ψ` is Galois-fixed
+  have hdetinv : ∀ X : GL (Fin m) Kb,
+      ((X⁻¹ : GL (Fin m) Kb) : Matrix (Fin m) (Fin m) Kb).det *
+        (X : Matrix (Fin m) (Fin m) Kb).det = 1 :=
+    fun X => by rw [← Matrix.det_mul, ← Units.val_mul, inv_mul_cancel, Units.val_one,
+      Matrix.det_one]
+  have hd : SameDisc Q₁ Q₂ := sameDisc_of_det_glOf_fixed (φ₁.symm.trans φ₂) fun σ => by
+    have h1 : σ ((glOf (φ₁.symm.trans φ₂) : Matrix (Fin m) (Fin m) Kb).det) =
+        ((galGL m σ (glOf (φ₁.symm.trans φ₂)) : GL (Fin m) Kb) :
+          Matrix (Fin m) (Fin m) Kb).det := by
+      rw [coe_galGL]; exact RingHom.map_det (σ : Kb →+* Kb) _
+    have hψ : glOf (φ₁.symm.trans φ₂) = glOf φ₂ * (glOf φ₁)⁻¹ := by rw [glOf_trans, glOf_symm]
+    rw [h1, ← glOf_galIso, glOf_congr (e' := (galIso σ φ₁).symm.trans (galIso σ φ₂))
+      (galIso_symm_trans φ₁ φ₂ σ), glOf_trans, glOf_symm,
+      glOf_galIso_of_lift φ₁ σ (t σ) (hta σ), glOf_galIso_of_lift φ₂ σ (s σ) (hsb σ), hψ,
+      mul_inv_rev]
+    simp only [Units.val_mul, Matrix.det_mul, det_specMatFbar, mul_one]
+    have ht1 := hdetinv (specMatFbar Q (t σ))
+    rw [det_specMatFbar, mul_one] at ht1
+    rw [ht1, one_mul]
+  rcases Nat.even_or_odd m with hm | hm
+  · -- even dimension: the full Clifford algebras
+    have hn₁ := (isNondeg_iff_nondegenerate Q₁).1 hQ₁
+    have hm' : Even (Module.finrank F (Fin m → F)) := by rwa [Module.finrank_fin_fun]
+    have hs₁ := CliffordAlgebra.isSimpleRing_of_even_finrank hn₁ hm'
+    have : IsSimpleRing (⊤ : Subalgebra F (CliffordAlgebra Q₁)) :=
+      IsSimpleRing.of_ringEquiv
+        (Subalgebra.topEquiv (R := F) (A := CliffordAlgebra Q₁)).symm.toRingEquiv hs₁
+    have : IsArtinianRing (⊤ : Subalgebra F (CliffordAlgebra Q₁)) := IsArtinianRing.of_finite F _
+    obtain ⟨e⟩ := nonempty_algEquiv_of_galObstruction_eq φ₁ φ₂ t s ht hs hta hsb hscal hobs
+      ⊤ ⊤ (fun g _ => by rw [bcSub_top]; trivial) (fun y _ => by rw [bcSub_top]; trivial)
+      (fun y _ => by rw [bcSub_top]; trivial)
+    exact nonempty_isometryEquiv_of_cliffordAlgEquiv hQ₁ hQ₂ hd
+      (Or.inl ⟨hm, ⟨(Subalgebra.topEquiv.symm.trans e).trans Subalgebra.topEquiv⟩⟩)
+  · -- odd dimension: the even Clifford algebras
+    have hn₁ := (isNondeg_iff_nondegenerate Q₁).1 hQ₁
+    have hm' : Odd (Module.finrank F (Fin m → F)) := by rwa [Module.finrank_fin_fun]
+    have := TauCeti.CliffordAlgebra.isSimpleRing_even_of_odd_finrank hn₁ hm'
+    have : IsArtinianRing (CliffordAlgebra.even Q₁) := IsArtinianRing.of_finite F _
+    obtain ⟨e⟩ := nonempty_algEquiv_of_galObstruction_eq φ₁ φ₂ t s ht hs hta hsb hscal hobs
+      (CliffordAlgebra.even Q₁) (CliffordAlgebra.even Q₂)
+      (fun g hg => (mem_bcSub_even_iff Q₁).2 hg.1)
+      (fun y hy => (mem_bcSub_even_iff Q₂).2 (map_mem_even _ ((mem_bcSub_even_iff Q₁).1 hy)))
+      (fun y hy => (mem_bcSub_even_iff Q₁).2 (map_mem_even _ ((mem_bcSub_even_iff Q₂).1 hy)))
+    exact nonempty_isometryEquiv_of_cliffordAlgEquiv hQ₁ hQ₂ hd (Or.inr ⟨hm, ⟨e⟩⟩)
 
 end Twist
 
