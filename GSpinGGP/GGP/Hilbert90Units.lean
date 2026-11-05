@@ -16,6 +16,7 @@ Galois-fixed `F̄`-basis of `Ā` (`Ā = F̄ ⊗ A`). Then every continuous `1`-c
 Proof (own work, standard): the twisted fixed vectors `B = {z : σ(z) = z v_σ}` form a left
 `A`-module; in coordinates, Hilbert 90 for `GL_N` (`hilbert90_GL`, applied to the matrices of right
 multiplication by `v_σ⁻¹`) shows that `B` has `F`-dimension `N = dim A` and spans `Ā` over `F̄`.
+(`exists_rmat_eq`, `exists_twisted_basis`)
 Since `A` is simple, `B ≅ A` (Tau Ceti `IsSimpleRing.nonempty_linearEquiv_of_finrank_eq`), so
 `B = A u`; then `Ā = Ā u`,
 `u` is a unit, and `σ(u) = u v_σ`.
@@ -105,12 +106,13 @@ theorem repr_mul (z w : Ā) : ⇑(e.repr (z * w)) = rmat (e := e) w *ᵥ ⇑(e.r
 
 end GalAlgAction
 
-/-- **Hilbert 90 for `Āˣ`.** -/
-theorem exists_units_eq_inv_mul_act (G : GalAlgAction F Ā e) (ι : A →ₐ[F] Ā)
-    (b : Module.Basis (Fin N) F A) (hb : ∀ i, ι (b i) = e i)
-    (v : GalF F → Āˣ) (hv : IsGalContinuous v)
+/-- Hilbert 90 for `GL_N` applied to the matrices of right multiplication by `v_σ⁻¹`:
+`ρ(v_σ) = σ(M)⁻¹ M`. -/
+theorem exists_rmat_eq (G : GalAlgAction F Ā e) (v : GalF F → Āˣ) (hv : IsGalContinuous v)
     (hcoc : ∀ σ τ, (v (σ * τ) : Ā) = v σ * G.act σ (v τ)) :
-    ∃ u : Āˣ, ∀ σ, (v σ : Ā) = (u⁻¹ : Āˣ) * G.act σ u := by
+    ∃ M : GL (Fin N) Kb, ∀ σ, GalAlgAction.rmat (e := e) (v σ : Ā) =
+      (((M⁻¹ : GL (Fin N) Kb) : Matrix (Fin N) (Fin N) Kb).map σ) *
+        (M : Matrix (Fin N) (Fin N) Kb) := by
   classical
   -- the `GL_N` cocycle `a_σ = ρ(v_σ⁻¹)`
   have hinv : ∀ σ τ, (((v (σ * τ))⁻¹ : Āˣ) : Ā) =
@@ -133,14 +135,22 @@ theorem exists_units_eq_inv_mul_act (G : GalAlgAction F Ā e) (ι : A →ₐ[F] 
         exact ⟨E, hE, fun σ τ hστ => by simp only [a, h σ τ hστ]⟩ }
   obtain ⟨M, hM⟩ := hilbert90_GL c
   -- `ρ(v_σ) = σ(M)⁻¹ M`
-  have hrv : ∀ σ, GalAlgAction.rmat (e := e) (v σ : Ā) =
-      (((M⁻¹ : GL (Fin N) Kb) : Matrix (Fin N) (Fin N) Kb).map σ) *
-        (M : Matrix (Fin N) (Fin N) Kb) := by
-    intro σ
-    have h := congrArg (fun g : GL (Fin N) Kb =>
-      ((g⁻¹ : GL (Fin N) Kb) : Matrix (Fin N) (Fin N) Kb)) (hM σ)
-    simp only [_root_.mul_inv_rev, inv_inv, Units.val_mul, ← map_inv, coe_galGL] at h
-    exact h
+  refine ⟨M, fun σ => ?_⟩
+  have h := congrArg (fun g : GL (Fin N) Kb =>
+    ((g⁻¹ : GL (Fin N) Kb) : Matrix (Fin N) (Fin N) Kb)) (hM σ)
+  simp only [_root_.mul_inv_rev, inv_inv, Units.val_mul, ← map_inv, coe_galGL] at h
+  exact h
+
+/-- **The twisted-fixed basis.** There is an `F̄`-basis `β` of `Ā` of vectors with
+`σ(β_j) = β_j v_σ`, in which every twisted-fixed vector has coordinates in `F`. -/
+theorem exists_twisted_basis (G : GalAlgAction F Ā e) (v : GalF F → Āˣ) (hv : IsGalContinuous v)
+    (hcoc : ∀ σ τ, (v (σ * τ) : Ā) = v σ * G.act σ (v τ)) :
+    ∃ (β : Fin N → Ā) (c : Ā → Fin N → Kb), (∀ σ j, G.act σ (β j) = β j * v σ) ∧
+      (∀ z, z = ∑ j, c z j • β j) ∧
+      (∀ z, (∀ σ, G.act σ z = z * v σ) → ∀ j, ∃ f : F, algebraMap F Kb f = c z j) ∧
+      (∀ y : Fin N → Kb, ∑ j, y j • β j = 0 → y = 0) := by
+  classical
+  obtain ⟨M, hrv⟩ := exists_rmat_eq G v hv hcoc
   have hMM : (M : Matrix (Fin N) (Fin N) Kb) *
       ((M⁻¹ : GL (Fin N) Kb) : Matrix (Fin N) (Fin N) Kb) = 1 := by
     rw [← Units.val_mul, mul_inv_cancel, Units.val_one]
@@ -194,6 +204,21 @@ theorem exists_units_eq_inv_mul_act (G : GalAlgAction F Ā e) (ι : A →ₐ[F] 
       simp [Matrix.mulVec, dotProduct, map_sum]
     rw [h3, hx, Matrix.mulVec_mulVec, ← Matrix.map_mul, hMM,
       Matrix.map_one _ (map_zero σ) (map_one σ), Matrix.one_mulVec]
+  refine ⟨β, fun z => Mm *ᵥ e.equivFun z, hβB, hspan, hrat, fun y hy => ?_⟩
+  have h1 := congrArg e.equivFun hy
+  rw [map_sum, map_zero] at h1
+  simp only [map_smul, hβc] at h1
+  rw [hcomb] at h1
+  rw [← Matrix.one_mulVec y, ← hMM, ← Matrix.mulVec_mulVec, h1, Matrix.mulVec_zero]
+
+/-- **Hilbert 90 for `Āˣ`.** -/
+theorem exists_units_eq_inv_mul_act (G : GalAlgAction F Ā e) (ι : A →ₐ[F] Ā)
+    (b : Module.Basis (Fin N) F A) (hb : ∀ i, ι (b i) = e i)
+    (v : GalF F → Āˣ) (hv : IsGalContinuous v)
+    (hcoc : ∀ σ τ, (v (σ * τ) : Ā) = v σ * G.act σ (v τ)) :
+    ∃ u : Āˣ, ∀ σ, (v σ : Ā) = (u⁻¹ : Āˣ) * G.act σ u := by
+  classical
+  obtain ⟨β, c, hβB, hspan, hrat, hind⟩ := exists_twisted_basis G v hv hcoc
   -- `ι(A)` is Galois-fixed
   have hιfix : ∀ σ a, G.act σ (ι a) = ι a := by
     intro σ a
@@ -220,13 +245,7 @@ theorem exists_units_eq_inv_mul_act (G : GalAlgAction F Ā e) (ι : A →ₐ[F] 
     have h0 : ∑ j, (algebraMap F Kb (g j)) • β j = 0 := by
       have := congrArg Subtype.val hg
       simpa [βB, algebraMap_smul] using this
-    have h1 := congrArg e.equivFun h0
-    rw [map_sum, map_zero] at h1
-    simp only [map_smul, hβc] at h1
-    rw [hcomb] at h1
-    have h2 : (fun j => algebraMap F Kb (g j)) = 0 := by
-      rw [← Matrix.one_mulVec (fun j => algebraMap F Kb (g j)), ← hMM,
-        ← Matrix.mulVec_mulVec, h1, Matrix.mulVec_zero]
+    have h2 := hind _ h0
     intro j
     exact (algebraMap F Kb).injective (by simpa using congrFun h2 j)
   have hsp : ⊤ ≤ Submodule.span F (Set.range βB) := by
@@ -254,8 +273,7 @@ theorem exists_units_eq_inv_mul_act (G : GalAlgAction F Ā e) (ι : A →ₐ[F] 
     rw [this]
     rfl
   -- a left inverse of `u`
-  set c := Mm *ᵥ e.equivFun (1 : Ā)
-  set y : Ā := ∑ j, c j • ι (f.symm (βB j))
+  set y : Ā := ∑ j, c 1 j • ι (f.symm (βB j))
   have hyu : y * u = 1 := by
     rw [Finset.sum_mul]
     conv_rhs => rw [hspan 1]
