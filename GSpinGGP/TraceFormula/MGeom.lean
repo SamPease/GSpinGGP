@@ -400,6 +400,22 @@ def qcGood : Submodule ℂ (↥d.G → ℂ) where
 theorem QCfin_le_qcGood : QCfin d ≤ qcGood ψ d :=
   iSup_le fun _ _ hθ => ⟨hθ.1 ψ, fun T _ hs => isTorusIntegrable_of_mem_QC ψ d hθ T hs⟩
 
+/-- The integrand of `m_{geom,s}` is `A_{G,H}(F)`-invariant for `θ ∈ QCfin`
+(`gammaIntegrand_scalar_mul_of_mem_QC` on each `QC d χ`, additivity on quasi-characters). -/
+theorem gammaIntegrand_scalar_mul_of_mem_QCfin {θ : ↥d.G → ℂ} (hθ : θ ∈ QCfin d)
+    (T : Subgroup ↥(GSpin d.QW)) (s : ℝ) (c : Fˣ) (t : ↥(GSpin d.QW)) :
+    gammaIntegrand ψ d θ T s (scalarGSpin d.QW c * t) = gammaIntegrand ψ d θ T s t := by
+  have key : IsQuasiCharacter d.G d.lie d.bilin ψ θ ∧ ∀ (c : Fˣ) (t : ↥(GSpin d.QW)),
+      gammaIntegrand ψ d θ T s (scalarGSpin d.QW c * t) = gammaIntegrand ψ d θ T s t :=
+    Submodule.iSup_induction (fun χ : CentralCharOn d => QC d χ)
+    (motive := fun θ => IsQuasiCharacter d.G d.lie d.bilin ψ θ ∧ ∀ (c : Fˣ) (t : ↥(GSpin d.QW)),
+      gammaIntegrand ψ d θ T s (scalarGSpin d.QW c * t) = gammaIntegrand ψ d θ T s t)
+    hθ (fun _ _ hθ => ⟨hθ.1 ψ, fun c t => gammaIntegrand_scalar_mul_of_mem_QC ψ d hθ T s c t⟩)
+    ⟨isQuasiCharacter_zero d ψ, fun c t => by rw [gammaIntegrand_zero, gammaIntegrand_zero]⟩
+    (fun _ _ h₁ h₂ => ⟨isQuasiCharacter_add d ψ h₁.1 h₂.1, fun c t => by
+      rw [gammaIntegrand_add ψ d h₁.1 h₂.1, gammaIntegrand_add ψ d h₁.1 h₂.1, h₁.2, h₂.2]⟩)
+  exact key.2 c t
+
 /-- **(12.1.2) ⇒ additivity of `m_{geom,s}` for `s > 0`** on `qcGood` (finitely many tori). -/
 theorem mGeomS_add_of_mem_qcGood {θ₁ θ₂ : ↥d.G → ℂ} (h₁ : θ₁ ∈ qcGood ψ d)
     (h₂ : θ₂ ∈ qcGood ψ d) {s : ℝ} (hs : 0 < s) :

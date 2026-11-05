@@ -88,6 +88,7 @@ GSpinGGP.TwistPlane.exists_twistIdx_not_isometric_of_hasTwistPlane
 GSpinGGP.exists_twistIdx_not_isometric_of_not_hasTwistPlane
 GSpinGGP.exists_twistIdx_kottwitzSign_neg
 GSpinGGP.signed_count
+GSpinGGP.torusClass_count
 GSpinGGP.stable_rearrangement_pos
 GSpinGGP.stable_rearrangement
 GSpinGGP.germ_baseChar_central
