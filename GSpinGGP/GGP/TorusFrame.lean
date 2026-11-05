@@ -141,6 +141,15 @@ theorem exists_hypFrame_torusFbar (hx : d.IsGammaElt x) :
   rw [← GGPData.eigenspace_bc_one]
   exact hw
 
+/-- **`T_x(F̄)` is commutative**, for `x ∈ Γ(G,H)` (in `GSpin(W)(F̄)`, not only modulo scalars): a
+special case of `Steinberg.commute_of_fixes_eigenspace_one`. -/
+theorem torusFbar_commute (hx : d.IsGammaElt x) {s t : GSpin (d.QW.baseChange Kb)}
+    (hs : s ∈ d.torusFbar x) (ht : t ∈ d.torusFbar x) : Commute s t :=
+  Steinberg.commute_of_fixes_eigenspace_one (x := bcGSpin d.QW x) (isNondeg_baseChange _ d.nondeg)
+    (by rw [specP_bcGSpin]; exact isSemisimple_specP_baseChange x hx.1)
+    (by rw [specP_bcGSpin]; exact lieAbelian_specP_baseChange x hx) (Subtype.ext ht.1.eq)
+    (fun w hw => ht.2 w (by rwa [GGPData.eigenspace_bc_one] at hw)) (Subtype.ext hs.1.eq)
+
 end Frame
 
 end GGPData

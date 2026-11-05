@@ -1445,6 +1445,42 @@ theorem n_alpha_eq_card_twistIdx (IF : InnerFormSystem d) (α : IF.Idx) (x : ↥
     exact GGPData.IsStableIso.mk_eq hx 1 (by simp) _ _
   exact Nat.card_congr (Equiv.ofBijective Φ ⟨hinj, hsurj⟩)
 
+/-- On `T_{x,♮} = {t ∈ T_x ∩ Γ(G,H) : T_t = T_x}` (Thesis §6.5) the tori agree over `F̄`:
+`torusFbar t = torusFbar x` as subgroups of `GSpin(W)(F̄)` (`fixedSub_eq_of_torusOf_eq`,
+`commute_bc_iff_of_torusOf_eq`). -/
+theorem torusFbar_eq_of_torusOf_eq {x t : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
+    (ht : d.IsGammaElt t) (htx : t ∈ d.torusOf x) (hT : d.torusOf t = d.torusOf x) :
+    d.torusFbar t = d.torusFbar x := by
+  have hW := d.fixedSub_eq_of_torusOf_eq htx hT
+  ext z
+  change (_ ∧ _) ↔ (_ ∧ _)
+  rw [hW]
+  refine and_congr_left' ?_
+  have h := d.commute_bc_iff_of_torusOf_eq hx ht htx hT z
+  constructor
+  · intro hz
+    exact congrArg Subtype.val (h.mp (Subtype.ext hz)).eq
+  · intro hz
+    exact congrArg Subtype.val (h.mpr (Subtype.ext hz)).eq
+
+/-- **`n_α` is constant on `T_{x,♮}`** (Thesis §6.7): for `x ∈ Γ(G,H)` and `t ∈ T_x` with
+`t ∈ Γ(G,H)` and `T_t = T_x`, `n_α(t) = n_α(x)` (both are `|q_x⁻¹(α)|`, `n_alpha_eq_card_twistIdx`, and
+`S_t = S_x`). -/
+theorem n_alpha_eq_of_torusOf_eq (IF : InnerFormSystem d) (α : IF.Idx) {x t : ↥(GSpin d.QW)}
+    (hx : d.IsGammaElt x) (ht : d.IsGammaElt t) (htx : t ∈ d.torusOf x)
+    (hT : d.torusOf t = d.torusOf x) :
+    n_alpha IF α t = n_alpha IF α x := by
+  have hS : d.torusBarFbar t = d.torusBarFbar x := by
+    unfold GGPData.torusBarFbar
+    rw [torusFbar_eq_of_torusOf_eq hx ht htx hT]
+  have key : ∀ S S' : Subgroup (GL (Fin d.m) (AlgebraicClosure F)), S = S' →
+      Nat.card {β : H1 S // ∃ a : GalCocycle S, H1.mk a = β ∧ IsTwistBy d.QW (IF.twist α).Q' a.toFun} =
+        Nat.card {β : H1 S' // ∃ a : GalCocycle S', H1.mk a = β ∧
+          IsTwistBy d.QW (IF.twist α).Q' a.toFun} := by
+    rintro S _ rfl; rfl
+  rw [n_alpha_eq_card_twistIdx IF α t ht, n_alpha_eq_card_twistIdx IF α x hx]
+  exact key _ _ hS
+
 /-- **`q_x` is a function** `H¹(F, S_x) → IF.Idx` (own work; standard descent).  Existence: by
 Hilbert 90 for `GL_m` (Serre, *Local Fields*, X §1 Prop. 3) a cocycle `a` with values in
 `S_x(F̄) ⊆ SO(W)(F̄)` is `a_σ = M⁻¹ σ(M)`; then `v ↦ Q_{F̄}(M⁻¹ v)` is an `F`-valued nondegenerate
@@ -1537,15 +1573,7 @@ theorem twistIdx_one_base (IF : InnerFormSystem d) (x : ↥(GSpin d.QW)) :
     TwistIdx IF x (H1.mk (GalCocycle.one _)) IF.base := by
   refine ⟨GalCocycle.one _, rfl, ?_⟩
   rw [IF.twist_base]
-  refine ⟨QuadraticMap.IsometryEquiv.refl _, fun σ => ?_⟩
-  have h1 : ((QuadraticMap.IsometryEquiv.refl
-      (d.QW.baseChange (AlgebraicClosure F))).toLinearEquiv).toLinearMap = LinearMap.id := rfl
-  have h2 : ((QuadraticMap.IsometryEquiv.refl
-      (d.QW.baseChange (AlgebraicClosure F))).toLinearEquiv.symm).toLinearMap =
-        LinearMap.id := rfl
-  simp only [galoisConj, h1, h2, LinearMap.toMatrix_id, LinearMap.id_comp]
-  rw [Matrix.map_one _ (map_zero σ) (map_one σ), Matrix.toLin_one, LinearMap.toMatrix_id]
-  rfl
+  exact TwistDescent.isTwistBy_refl d.QW
 
 /-- **The signed count** (own work; replaces the Kottwitz-sign cancellation of Thesis §6.7,
 after (6.7.6)).  Let `G` be quasi-split and

@@ -378,7 +378,31 @@ Not yet formalized. Galois-cohomological parametrization of stable classes, then
 For $G$ quasi-split and $x\in\Gamma(G,H)$, $\beta\mapsto e(G_{q_x(\beta)})$ is multiplicative on $H^1(F,S_x)$.
 \end{theorem}
 \begin{proof}
-Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{Kot83}; \cite{BP}, \S12.1, (12.1.6), via Tate--Nakayama}
+\leanok
+\uses{kottwitzSign, padic_quadratic_classes, torusBarFbar_commute, nonempty_isometryEquiv_of_galObstruction_eq}
+Own work, without Brauer groups (the statement is \cite{BP}, (12.1.6), with the sign of \cite{Kot83}).
+$e(G_\alpha)=1$ exactly when $W_\alpha\cong W$. For a cocycle $a$ in $S_x$ choose lifts $t_\sigma\in T_x(\bar F)$;
+the scalars $t_\sigma\,\sigma(t_\tau)\,t_{\sigma\tau}^{-1}$ form its obstruction. Call $a\sim b$ when they have lifts with
+equal obstructions; as $T_x(\bar F)$ is commutative this is compatible with products. If $W_\alpha\cong W_\beta$, a lift
+$h\in\mathrm{GSpin}(W)(\bar F)$ of $\varphi_a^{-1}\varphi_b$ (made proper by a rational reflection) conjugates a lift of $a$
+into one of $b$, so $a\sim b$; conversely $a\sim b$ gives $W_\alpha\cong W_\beta$
+(Lemma~\ref{nonempty_isometryEquiv_of_galObstruction_eq}). With at most two classes of the dimension and discriminant
+of $W$, the sign is multiplicative.
+\end{proof}
+
+\begin{lemma}[Twists with equal obstructions are isometric]
+\label{nonempty_isometryEquiv_of_galObstruction_eq}
+\lean{GSpinGGP.nonempty_isometryEquiv_of_galObstruction_eq}
+\leanok
+\uses{GSpin}
+If the cocycles of $\varphi_i\colon U_{\bar F}\cong U_{i,\bar F}$ have continuous lifts to $\mathrm{GSpin}(U)(\bar F)$ with
+equal obstructions, then $U_1\cong U_2$ over $F$.
+\end{lemma}
+\begin{proof}
+Own work; not yet formalized. The quotient of the lifts is a $1$-cocycle in $\mathrm{GSpin}(U_1)(\bar F)$ lifting the
+cocycle of $\varphi_2\varphi_1^{-1}$. Hilbert 90 for the units of the Clifford algebra (or its even part, whichever is
+central simple) shows the twisted algebra is isomorphic to the untwisted one, so $U_1,U_2$ have the same Clifford
+invariant, rank and discriminant, hence are isometric over the $p$-adic field $F$.
 \end{proof}
 
 \begin{lemma}[A twist into the other form: the plane case]

@@ -207,6 +207,33 @@ theorem specP_galGS (Q : QuadraticForm F V) (σ : GalF F)
   rw [ι_specP, ← galC_ι Q σ (specP _ g w), ι_specP, map_mul, map_mul, galC_ι]
   rfl
 
+/-- `galGS σ` is multiplicative. -/
+theorem galGS_mul (Q : QuadraticForm F V) (σ : GalF F)
+    (g h : GSpin (Q.baseChange (AlgebraicClosure F))) :
+    galGS Q σ (g * h) = galGS Q σ g * galGS Q σ h :=
+  Subtype.ext (map_mul (galCU Q σ) _ _)
+
+theorem galGS_inv (Q : QuadraticForm F V) (σ : GalF F)
+    (g : GSpin (Q.baseChange (AlgebraicClosure F))) :
+    galGS Q σ g⁻¹ = (galGS Q σ g)⁻¹ :=
+  Subtype.ext (map_inv (galCU Q σ) _)
+
+theorem galGS_scalarGSpin (Q : QuadraticForm F V) (σ : GalF F) (c : (AlgebraicClosure F)ˣ) :
+    galGS Q σ (scalarGSpin _ c) =
+      scalarGSpin _ (Units.map (σ : AlgebraicClosure F →* AlgebraicClosure F) c) := by
+  apply Subtype.ext; apply Units.ext
+  show galC Q σ (algebraMap (AlgebraicClosure F) _ (c : AlgebraicClosure F)) =
+    algebraMap (AlgebraicClosure F) _ (σ c)
+  exact galC_algebraMap Q σ c
+
+theorem galGS_galGS (Q : QuadraticForm F V) (σ τ : GalF F)
+    (g : GSpin (Q.baseChange (AlgebraicClosure F))) :
+    galGS Q σ (galGS Q τ g) = galGS Q (σ * τ) g :=
+  Subtype.ext (Units.ext (galC_galC Q σ τ _))
+
+theorem galGS_one (Q : QuadraticForm F V) (σ : GalF F) : galGS Q σ 1 = 1 :=
+  Subtype.ext (map_one (galCU Q σ))
+
 /-- `σ(T_x(F̄)) = T_x(F̄)`: `σ` fixes `x` (`galC_bcHom`) and preserves `W'_x ⊗ F̄`. -/
 theorem galGS_mem_torusFbar (x : ↥(GSpin d.QW)) (σ : GalF F)
     {g : GSpin (d.QW.baseChange (AlgebraicClosure F))} (hg : g ∈ d.torusFbar x) :
