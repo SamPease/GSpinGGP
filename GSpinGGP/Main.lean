@@ -1537,15 +1537,7 @@ theorem twistIdx_one_base (IF : InnerFormSystem d) (x : ↥(GSpin d.QW)) :
     TwistIdx IF x (H1.mk (GalCocycle.one _)) IF.base := by
   refine ⟨GalCocycle.one _, rfl, ?_⟩
   rw [IF.twist_base]
-  refine ⟨QuadraticMap.IsometryEquiv.refl _, fun σ => ?_⟩
-  have h1 : ((QuadraticMap.IsometryEquiv.refl
-      (d.QW.baseChange (AlgebraicClosure F))).toLinearEquiv).toLinearMap = LinearMap.id := rfl
-  have h2 : ((QuadraticMap.IsometryEquiv.refl
-      (d.QW.baseChange (AlgebraicClosure F))).toLinearEquiv.symm).toLinearMap =
-        LinearMap.id := rfl
-  simp only [galoisConj, h1, h2, LinearMap.toMatrix_id, LinearMap.id_comp]
-  rw [Matrix.map_one _ (map_zero σ) (map_one σ), Matrix.toLin_one, LinearMap.toMatrix_id]
-  rfl
+  exact TwistDescent.isTwistBy_refl d.QW
 
 /-- **The signed count** (own work; replaces the Kottwitz-sign cancellation of Thesis §6.7,
 after (6.7.6)).  Let `G` be quasi-split and
