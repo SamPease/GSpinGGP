@@ -6,6 +6,7 @@ import GSpinGGP.GGP.GaloisTorus
 import GSpinGGP.GGP.TwistDescent
 import GSpinGGP.GGP.TorusTransport
 import GSpinGGP.GGP.Steinberg
+import GSpinGGP.GGP.ConjCocycle
 
 /-!
 # The cocycle of a strongly stably conjugate element
@@ -17,8 +18,14 @@ algebras up to replacing `ψ` by `σψ` (`galC_map`, in `GGP/GaloisTorus`).
 For strong stable conjugacy (Thesis §6.1) through `Ad(g) ∘ C(φ)`, put `ψ = P(g) ∘ φ` and
 `a_σ = ψ⁻¹ ∘ σψ`: the rationality clause says that `C(a_σ)` fixes the centralizer of `x` pointwise
 (`map_galIso_trans_symm_of_ratAt`), and then `a_σ` is the identity on an odd-dimensional `W'_x ⊗ F̄`
-(`galIso_trans_symm_eq_self_of_odd`).  These give the cocycle of Thesis Prop. 6.6.1(iii).
-Own work, elementary.
+(`galIso_trans_symm_eq_self_of_odd`).
+
+If `C(ψ)` carries `x` to a rational element, then `C(a_σ) x = x` (`map_galIso_trans_symm_bcUnits`);
+such an `a_σ` of determinant `1` that is the identity on `W'_x ⊗ F̄` lies in `S_x(F̄)`
+(`inv_mul_galGL_glOf_mem_torusBarFbar`).  `GGPData.IsStableIso` packages an isometry `ψ` with
+`C(ψ) x = y` whose cocycle `σ ↦ ψ⁻¹ ∘ σψ` lies in `S_x`; its class in `H¹(F, S_x)` maps to `α`
+(`IsStableIso.twistIdx`).  Such a `ψ` exists when `dim W'_x` is odd (`exists_isStableIso_of_odd`).
+These give the map `y ↦ [a]` of Thesis Prop. 6.6.1(iii).  Own work, elementary.
 -/
 
 noncomputable section
@@ -76,8 +83,8 @@ theorem map_galIso_trans_symm_of_ratAt (φ : (Q₁.baseChange Kb).IsometryEquiv 
   rw [psiA_eq_map, psiA_eq_map, galC_map, hσz] at key
   calc CliffordAlgebra.map ((galIso σ ψ).trans ψ.symm).toIsometry (w : CliffordAlgebra _)
       = CliffordAlgebra.map ψ.symm.toIsometry
-          (CliffordAlgebra.map (galIso σ ψ).toIsometry (w : CliffordAlgebra _)) := by
-        rw [← AlgHom.comp_apply, CliffordAlgebra.map_comp_map]; rfl
+          (CliffordAlgebra.map (galIso σ ψ).toIsometry (w : CliffordAlgebra _)) :=
+        map_trans_apply _ _ _
     _ = w := by rw [key, map_symm_map]
 
 end Strong
@@ -221,5 +228,134 @@ theorem galIso_trans_symm_eq_self_of_odd [FiniteDimensional F V₁] (hQ₁ : IsN
   rw [hcE w hw, hc1, one_smul]
 
 end OddFixed
+
+section Torus
+
+/-! ### The cocycle lies in `S_x` -/
+
+open TorusTransfer
+
+variable {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V₁] [AddCommGroup V₂] [Module F V₂]
+  {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂}
+
+/-- If `C(ψ)` carries the rational `x` to the rational `y`, then `a_σ = ψ⁻¹ ∘ σψ` fixes `x` (through
+`C(a_σ)`). -/
+theorem map_galIso_trans_symm_bcUnits (ψ : (Q₁.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb))
+    {x : (CliffordAlgebra Q₁)ˣ} {y : (CliffordAlgebra Q₂)ˣ}
+    (h : CliffordAlgebra.map ψ.toIsometry (bcUnits Q₁ x : CliffordAlgebra _) = bcUnits Q₂ y)
+    (σ : GalF F) :
+    CliffordAlgebra.map ((galIso σ ψ).trans ψ.symm).toIsometry (bcUnits Q₁ x : CliffordAlgebra _) =
+      bcUnits Q₁ x := by
+  have hx : galC Q₁ σ (bcUnits Q₁ x : CliffordAlgebra _) = bcUnits Q₁ x :=
+    galC_bcHom Q₁ σ (x : CliffordAlgebra Q₁)
+  have hy : galC Q₂ σ (bcUnits Q₂ y : CliffordAlgebra _) = bcUnits Q₂ y :=
+    galC_bcHom Q₂ σ (y : CliffordAlgebra Q₂)
+  have h1 : CliffordAlgebra.map (galIso σ ψ).toIsometry (bcUnits Q₁ x : CliffordAlgebra _) =
+      bcUnits Q₂ y := by
+    rw [← hx, ← galC_map, h, hy]
+  rw [map_trans_apply, h1, ← h, map_symm_map]
+
+/-- **The cocycle lies in `S_x`.**  If `C(ψ)` carries `x` to a rational element, `det a_σ = 1`, and
+`a_σ = ψ⁻¹ ∘ σψ` is the identity on `W'_x ⊗ F̄`, then `a_σ = P(t_σ)` with `t_σ ∈ T_x(F̄)`: lift `a_σ`
+to `GSpin(W)(F̄)` (`a_σ ∈ SO`); `C(a_σ)` is conjugation by the lift, which therefore commutes with `x`. -/
+theorem inv_mul_galGL_glOf_mem_torusBarFbar (d : GGPData F) (x : GSpin d.QW)
+    {Q' : QuadraticForm F (Fin d.m → F)} (ψ : (d.QW.baseChange Kb).IsometryEquiv (Q'.baseChange Kb))
+    {y : (CliffordAlgebra Q')ˣ}
+    (hxy : CliffordAlgebra.map ψ.toIsometry (bcUnits d.QW (x : (CliffordAlgebra d.QW)ˣ) :
+      CliffordAlgebra _) = bcUnits Q' y) (σ : GalF F)
+    (hdet : (((glOf ψ)⁻¹ * galGL d.m σ (glOf ψ) : GL (Fin d.m) Kb) :
+      Matrix (Fin d.m) (Fin d.m) Kb).det = 1)
+    (hfix : ∀ w ∈ (fixedSub x).baseChange Kb, (galIso σ ψ).trans ψ.symm w = w) :
+    (glOf ψ)⁻¹ * galGL d.m σ (glOf ψ) ∈ d.torusBarFbar x := by
+  have hx := map_galIso_trans_symm_bcUnits ψ hxy σ
+  obtain ⟨a, ha⟩ : ∃ a, (galIso σ ψ).trans ψ.symm = a := ⟨_, rfl⟩
+  have hga : glOf a = (glOf ψ)⁻¹ * galGL d.m σ (glOf ψ) := by
+    rw [← ha, glOf_trans, glOf_symm, glOf_galIso]
+  rw [ha] at hx hfix
+  rw [← hga] at hdet ⊢
+  clear ha hga
+  have hdet' : LinearMap.det (a.toLinearEquiv : Kb ⊗[F] (Fin d.m → F) →ₗ[Kb] _) = 1 := by
+    rw [← LinearMap.det_toMatrix (bcBasis F d.m)]; exact hdet
+  obtain ⟨u, hu⟩ := gspin_specP_surjective_SO (d.QW.baseChange Kb)
+    (isNondeg_baseChange d.QW d.nondeg) a.toLinearEquiv a.map_app hdet'
+  have hau : ∀ v, a v = specPIso u v := fun v => by rw [specPIso_apply, hu]; rfl
+  have hgl : glOf a = glOf (specPIso u) := Units.ext (congrArg (LinearMap.toMatrix _ _)
+    (LinearMap.ext hau))
+  have hmap : CliffordAlgebra.map a.toIsometry = CliffordAlgebra.map (specPIso u).toIsometry := by
+    congr 1
+    ext v
+    exact hau v
+  refine ⟨u, ⟨?_, fun w hw => (hau w).symm.trans (hfix w hw)⟩, (hgl.trans (glOf_specPIso u)).symm⟩
+  rw [hmap, map_specPIso_apply] at hx
+  apply Units.ext
+  show ((u : (CliffordAlgebra (d.QW.baseChange Kb))ˣ) : CliffordAlgebra (d.QW.baseChange Kb)) *
+      (bcUnits d.QW (x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra _) =
+    (bcUnits d.QW (x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra _) *
+      ((u : (CliffordAlgebra (d.QW.baseChange Kb))ˣ) : CliffordAlgebra (d.QW.baseChange Kb))
+  conv_rhs => rw [← hx]
+  simp only [mul_assoc, Units.inv_mul, mul_one]
+
+end Torus
+
+/-! ### The cocycle of `y ∈ Γ(G_α, H_α)` strongly stably conjugate to `x` -/
+
+namespace GGPData
+
+open TorusTransfer
+
+variable (d : GGPData F)
+
+/-- `ψ : W_{F̄} ≃ W_{α,F̄}` **computes the class of `y`** (Thesis Prop. 6.6.1(iii), proof): `C(ψ)` carries
+`x` to `y`, and `a_σ = ψ⁻¹ ∘ σψ` lies in `S_x(F̄)` for every `σ`.  Then `σ ↦ a_σ` is a cocycle of
+`Γ_F` in `S_x` (`IsStableIso.cocycle`) whose image in `H¹(F, SO(W))` is `α`
+(`IsStableIso.twistIdx`).  The thesis's cocycle `g⁻¹ c_{α,σ} σ(g)` takes values in `T_x`; this is its
+image in `S_x = T_x/A_{G,H}`, as in `n_alpha_eq_card_twistIdx`. -/
+def IsStableIso (τ : InnerTwist d.QW) (x : GSpin d.QW) (y : GSpin (d.twist τ).QW)
+    (ψ : (d.QW.baseChange Kb).IsometryEquiv (τ.Q'.baseChange Kb)) : Prop :=
+  CliffordAlgebra.map ψ.toIsometry (bcUnits d.QW (x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra _) =
+      bcUnits τ.Q' (y : (CliffordAlgebra τ.Q')ˣ) ∧
+    ∀ σ : GalF F, (glOf ψ)⁻¹ * galGL d.m σ (glOf ψ) ∈ d.torusBarFbar x
+
+variable {d}
+
+/-- The cocycle `σ ↦ ψ⁻¹ ∘ σψ` in `S_x`. -/
+def IsStableIso.cocycle {τ : InnerTwist d.QW} {x : GSpin d.QW} {y : GSpin (d.twist τ).QW}
+    {ψ : (d.QW.baseChange Kb).IsometryEquiv (τ.Q'.baseChange Kb)} (h : d.IsStableIso τ x y ψ) :
+    GalCocycle (d.torusBarFbar x) :=
+  conjCocycle (glOf ψ) h.2
+
+/-- The class of the cocycle of `y` maps to `α` in `H¹(F, SO(W))`. -/
+theorem IsStableIso.twistIdx (IF : InnerFormSystem d) {α : IF.Idx} {x : GSpin d.QW}
+    {y : GSpin (IF.data α).QW}
+    {ψ : (d.QW.baseChange Kb).IsometryEquiv ((IF.twist α).Q'.baseChange Kb)}
+    (h : d.IsStableIso (IF.twist α) x y ψ) : TwistIdx IF x (H1.mk h.cocycle) α :=
+  ⟨h.cocycle, rfl, (isTwistBy_iff _ _ _).2 ⟨ψ, fun _ => rfl⟩⟩
+
+/-- **The cocycle of `y`, when `dim W'_x` is odd** (Thesis Prop. 6.6.1(iii), proof): the witness `g` of
+strong stable conjugacy on the `W`-factor gives `ψ = P(g) ∘ φ_α`, and `a_σ = ψ⁻¹ ∘ σψ` is the
+identity on `W'_x ⊗ F̄` (`galIso_trans_symm_eq_self_of_odd`), so it lies in `S_x(F̄)`.  For
+`x ∈ Γ(G,H)` the `-1`-eigenspace of `x̄` has even dimension, so this is the case `dim W` odd. -/
+theorem exists_isStableIso_of_odd (τ : InnerTwist d.QW) {x : GSpin d.QW} (hx : d.IsGammaElt x)
+    {y : GSpin (d.twist τ).QW} (hxy : d.StronglyStablyConjW τ x y)
+    (hodd : Odd (Module.finrank F (fixedSub x))) : ∃ ψ, d.IsStableIso τ x y ψ := by
+  obtain ⟨g, hg, hconj, hrat⟩ := hxy.1
+  set g' : GSpin (τ.Q'.baseChange Kb) := ⟨g, hg⟩
+  have hxss := isSemisimple_specP_of_isSS d.QW x hx.1
+  have hmap : CliffordAlgebra.map (τ.φ.trans (specPIso g')).toIsometry
+      (bcUnits d.QW (x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra _) =
+      bcUnits τ.Q' (y : (CliffordAlgebra τ.Q')ˣ) := by
+    rw [← psiA_eq_map]
+    exact congrArg Units.val hconj
+  refine ⟨τ.φ.trans (specPIso g'), hmap, fun σ => ?_⟩
+  have hdet := det_glOf_trans_specPIso τ g' σ
+  refine inv_mul_galGL_glOf_mem_torusBarFbar d x _ hmap σ hdet fun w hw => ?_
+  have hdet' : LinearMap.det (((galIso σ (τ.φ.trans (specPIso g'))).trans
+      (τ.φ.trans (specPIso g')).symm).toLinearEquiv : Kb ⊗[F] (Fin d.m → F) →ₗ[Kb] _) = 1 := by
+    rw [← glOf_galIso, ← glOf_symm, ← glOf_trans, coe_glOf, LinearMap.det_toMatrix] at hdet
+    exact hdet
+  rw [← GGPData.eigenspace_bc_one] at hw
+  exact galIso_trans_symm_eq_self_of_odd d.nondeg τ.φ g' hxss hrat σ hdet' hodd hw
+
+end GGPData
 
 end GSpinGGP

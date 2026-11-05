@@ -38,6 +38,23 @@ theorem galGL_inv_apply (σ : GalF F) (g : GL (Fin m) Kb) :
     galGL m σ⁻¹ (galGL m σ g) = g := by
   rw [← galGL_mul_apply, inv_mul_cancel, galGL_one]
 
+/-- `det σ(g) = σ(det g)`. -/
+theorem det_galGL (σ : GalF F) (g : GL (Fin m) Kb) :
+    ((galGL m σ g : GL (Fin m) Kb) : Matrix (Fin m) (Fin m) Kb).det =
+      σ (g : Matrix (Fin m) (Fin m) Kb).det :=
+  ((RingHom.map_det (σ : Kb →+* Kb) _)).symm
+
+/-- `det(Ψ⁻¹ σ(Ψ))` is unchanged when `Ψ` is multiplied on the left by a matrix of determinant `1`. -/
+theorem det_inv_mul_galGL_mul (σ : GalF F) (S Φ : GL (Fin m) Kb)
+    (hS : (S : Matrix (Fin m) (Fin m) Kb).det = 1) :
+    (((S * Φ)⁻¹ * galGL m σ (S * Φ) : GL (Fin m) Kb) : Matrix (Fin m) (Fin m) Kb).det =
+      ((Φ⁻¹ * galGL m σ Φ : GL (Fin m) Kb) : Matrix (Fin m) (Fin m) Kb).det := by
+  have hSi : ((S⁻¹ : GL (Fin m) Kb) : Matrix (Fin m) (Fin m) Kb).det = 1 := by
+    rw [Matrix.coe_units_inv, Matrix.det_nonsing_inv, hS, Ring.inverse_one]
+  simp only [_root_.mul_inv_rev, map_mul, Units.val_mul, Matrix.det_mul, hSi, det_galGL σ S, hS,
+    map_one]
+  ring
+
 /-- A Galois-stable subgroup: `σ(S) ⊆ S` for every `σ` (hence `σ(S) = S`). -/
 def IsGalStable (S : Subgroup (GL (Fin m) Kb)) : Prop :=
   ∀ σ : GalF F, ∀ s ∈ S, galGL m σ s ∈ S

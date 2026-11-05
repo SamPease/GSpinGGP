@@ -34,6 +34,14 @@ theorem map_map_symm (b : CliffordAlgebra (Q₂.baseChange (AlgebraicClosure F))
     CliffordAlgebra.map φ.toIsometry (CliffordAlgebra.map φ.symm.toIsometry b) = b :=
   (CliffordAlgebra.equivOfIsometry φ).apply_symm_apply b
 
+/-- `C(ψ ∘ φ) = C(ψ) ∘ C(φ)`. -/
+theorem map_trans_apply {V₃ : Type*} [AddCommGroup V₃] [Module F V₃] {Q₃ : QuadraticForm F V₃}
+    (ψ : (Q₂.baseChange (AlgebraicClosure F)).IsometryEquiv (Q₃.baseChange (AlgebraicClosure F)))
+    (a : CliffordAlgebra (Q₁.baseChange (AlgebraicClosure F))) :
+    CliffordAlgebra.map (φ.trans ψ).toIsometry a =
+      CliffordAlgebra.map ψ.toIsometry (CliffordAlgebra.map φ.toIsometry a) :=
+  (AlgHom.congr_fun (CliffordAlgebra.map_comp_map ψ.toIsometry φ.toIsometry) a).symm
+
 /-- The inverse of `Ad(g) ∘ C(φ)` is `Ad(C(φ⁻¹)(g⁻¹)) ∘ C(φ⁻¹)`. -/
 theorem psiA_symm_psiA (a : CliffordAlgebra (Q₁.baseChange (AlgebraicClosure F))) :
     psiA φ.symm (cliffUnits φ.symm g⁻¹) (psiA φ g a) = a := by
