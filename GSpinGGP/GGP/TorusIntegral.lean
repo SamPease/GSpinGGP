@@ -1,11 +1,13 @@
 import GSpinGGP.GGP.Triple
+import TauCeti.Topology.Algebra.Group.ClosedSubgroup
 
 /-!
 # Transporting torus integrals
 
 The integrals `∫_{T(F)/A(F)} f` of `m_{geom,s}` (`torusIntegral`, Thesis §6.5) are taken against the
 probability Haar measure `probHaar`.  A continuous group isomorphism `e : T ≃ T'` carrying the
-scalars onto the scalars induces a continuous isomorphism `T(F)/A(F) ≃ T'(F)/A'(F)`, which carries
+scalars onto the scalars induces a continuous isomorphism `T(F)/A(F) ≃ T'(F)/A'(F)` (Tau Ceti
+`ContinuousMulEquiv.quotientCongr`), which carries
 probability Haar measure to probability Haar measure (uniqueness of Haar measure).  So
 `torusIntegral` is transported along `e`, given the pointwise relation of the integrands
 (`torusIntegral_eq_of_mulEquiv`).  Used for the stable rearrangement (Thesis (6.7.2)–(6.7.5)).
@@ -43,33 +45,6 @@ theorem map_probHaar {R : Type*} [CompactSpace Q] [Group R] [TopologicalSpace R]
 
 end ProbHaar
 
-section Quot
-
-variable {G G' : Type*} [Group G] [TopologicalSpace G] [IsTopologicalGroup G] [Group G']
-  [TopologicalSpace G'] [IsTopologicalGroup G'] {N : Subgroup G} {N' : Subgroup G'} [N.Normal]
-  [N'.Normal]
-
-/-- A continuous group isomorphism `e : G ≃ G'` with `e(N) = N'` induces a continuous group
-isomorphism `G/N ≃ G'/N'` (`QuotientGroup.congr`). -/
-noncomputable def quotientCongrCont (e : G ≃ₜ* G') (he : N.map (e : G →* G') = N') :
-    G ⧸ N ≃ₜ* G' ⧸ N' where
-  toMulEquiv := QuotientGroup.congr N N' e.toMulEquiv he
-  continuous_toFun := (QuotientGroup.isQuotientMap_mk N).continuous_iff.mpr
-    ((QuotientGroup.isQuotientMap_mk N').continuous.comp e.continuous)
-  continuous_invFun := by
-    have he' : N'.map (e.symm : G' →* G) = N := by
-      rw [← he, Subgroup.map_map]
-      convert Subgroup.map_id N
-      ext g; simp
-    exact (QuotientGroup.isQuotientMap_mk N').continuous_iff.mpr
-      ((QuotientGroup.isQuotientMap_mk N).continuous.comp e.symm.continuous)
-
-omit [IsTopologicalGroup G] [IsTopologicalGroup G'] in
-@[simp] theorem quotientCongrCont_mk (e : G ≃ₜ* G') (he : N.map (e : G →* G') = N') (g : G) :
-    quotientCongrCont e he (g : G ⧸ N) = (e g : G' ⧸ N') := rfl
-
-end Quot
-
 namespace GGPData
 
 variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
@@ -82,7 +57,7 @@ theorem torusIntegral_eq_of_mulEquiv {d d' : GGPData F} (ψ : NontrivialAddChar 
     {θ : ↥d.G → ℂ} {θ' : ↥d'.G → ℂ} {T : Subgroup ↥(GSpin d.QW)}
     {T' : Subgroup ↥(GSpin d'.QW)} {s : ℝ} [CompactSpace (d.TorusQuot T)]
     [CompactSpace (d'.TorusQuot T')] (e : ↥T ≃ₜ* ↥T')
-    (he : (d.scalarsIn T).map (e : ↥T →* ↥T') = d'.scalarsIn T') (c : ℂ)
+    (he : (d.scalarsIn T).map e.toMulEquiv.toMonoidHom = d'.scalarsIn T') (c : ℂ)
     (hrel : ∀ t : ↥T, gammaIntegrand ψ d' θ' T' s (e t : ↥(GSpin d'.QW)) =
       c * gammaIntegrand ψ d θ T s (t : ↥(GSpin d.QW)))
     (hinv : ∀ t a : ↥T', a ∈ d'.scalarsIn T' →
@@ -93,7 +68,7 @@ theorem torusIntegral_eq_of_mulEquiv {d d' : GGPData F} (ψ : NontrivialAddChar 
   have _ : BorelSpace (d.TorusQuot T) := ⟨rfl⟩
   let _ : MeasurableSpace (d'.TorusQuot T') := borel _
   have _ : BorelSpace (d'.TorusQuot T') := ⟨rfl⟩
-  let E := quotientCongrCont e he
+  let E := e.quotientCongr _ _ he
   have hval : ∀ q : d.TorusQuot T,
       gammaIntegrand ψ d' θ' T' s ((Quotient.out (E q) : ↥T') : ↥(GSpin d'.QW)) =
         c * gammaIntegrand ψ d θ T s ((Quotient.out q : ↥T) : ↥(GSpin d.QW)) := by
