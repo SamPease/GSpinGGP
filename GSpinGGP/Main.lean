@@ -560,8 +560,9 @@ coordinates; the cocycle lies in `SO(W_α)_{W'_y}(F̄)`, and Kottwitz 1986, Lemm
 `S_y(F̄)`).  The construction of Prop. 6.6.1(iii) (`exists_stronglyStablyConj_of_isTwistBy`,
 `isGammaElt_of_ratAt`) for the datum `G_α` and the inverse twist `τ_α⁻¹ = (W, φ_α⁻¹)`
 (`InnerTwist.symm`; `G_α` twisted by it is `G`) gives `x ∈ Γ(G,H)` strongly stably conjugate to `y`
-through `τ_α⁻¹`, i.e. `y` to `x` through `τ_α` (`stronglyStablyConjW_of_symm`).  (`hqs`, `hqd` are
-not needed; they are kept for the callers.) -/
+through `τ_α⁻¹`, i.e. `y` to `x` through `τ_α` (`stronglyStablyConjW_of_symm`).  This differs from
+Thesis Prop. 6.6.1(i), Steps 2–3, which use quasi-splitness of `GSpin(W'')` and (12.1.1): Kottwitz's
+lemma needs no quasi-splitness, so `hqs`, `hqd` are not needed (they are kept for the callers). -/
 theorem exists_stronglyStablyConj_of_isometry (hqs : d.IsQuasiSplit) (IF : InnerFormSystem d)
     (α : IF.Idx) (y : ↥(GSpin (IF.data α).QW)) (hy : (IF.data α).IsGammaElt y)
     (hqd : IsQdAt (IF.data α) y) (ι : (IF.data α).QW.comp (fixedSub y).subtype →qᵢ d.QW)

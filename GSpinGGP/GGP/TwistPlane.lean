@@ -114,6 +114,39 @@ def blockFormIso {m n : ℕ} {κ : Type*} [Fintype κ] [DecidableEq κ] (e : Fin
     Matrix.isometryEquivCongr hBt (blockDiag e A C)).trans
     ((Matrix.isometryEquivReindex e _).trans (Matrix.isometryEquivFromBlocks _ _))
 
+/-- The first block of a nondegenerate form in block coordinates is nondegenerate. -/
+theorem isNondeg_of_blockDiag {m n : ℕ} {κ : Type*} [Fintype κ] [DecidableEq κ]
+    {Q : QuadraticForm F (Fin m → F)} (hQ : IsNondeg Q) (e : Fin n ⊕ κ ≃ Fin m) (B : GL (Fin m) F)
+    {Q₂ : QuadraticForm F (Fin n → F)} {G₃ : Matrix κ κ F}
+    (hB : Q.toMatrix' = (B : Matrix (Fin m) (Fin m) F)ᵀ * blockDiag e Q₂.toMatrix' G₃ * B) :
+    IsNondeg Q₂ := by
+  have hd := (PAdicQuadAux.isNondeg_iff_discr'_ne_zero Q).1 hQ
+  rw [QuadraticForm.discr', hB, det_mul, det_mul, det_transpose, det_blockDiag] at hd
+  refine (PAdicQuadAux.isNondeg_iff_discr'_ne_zero _).2 fun h0 => hd ?_
+  rw [QuadraticForm.discr'] at h0
+  rw [h0]; ring
+
+/-- **Witt cancellation in block coordinates**: replacing the first block `Q₂` by a form `Q₂'` not
+isometric to it gives a form not isometric to `Q`. -/
+theorem not_nonempty_isometryEquiv_blockForm {m n : ℕ} {κ : Type*} [Fintype κ] [DecidableEq κ]
+    {Q : QuadraticForm F (Fin m → F)} (e : Fin n ⊕ κ ≃ Fin m) (B : GL (Fin m) F)
+    {Q₂ Q₂' : QuadraticForm F (Fin n → F)} {G₃ : Matrix κ κ F}
+    (hB : Q.toMatrix' = (B : Matrix (Fin m) (Fin m) F)ᵀ * blockDiag e Q₂.toMatrix' G₃ * B)
+    (hniso : ¬ Nonempty (Q₂.IsometryEquiv Q₂')) :
+    ¬ Nonempty (Q.IsometryEquiv
+      ((B : Matrix (Fin m) (Fin m) F)ᵀ * blockDiag e Q₂'.toMatrix' G₃ * B).toQuadraticForm') := by
+  rintro ⟨f⟩
+  have e₁ : Q.IsometryEquiv (Q₂.toMatrix'.toQuadraticForm'.prod G₃.toQuadraticForm') := by
+    have h0 : Q = ((B : Matrix (Fin m) (Fin m) F)ᵀ * blockDiag e Q₂.toMatrix' G₃ *
+        B).toQuadraticForm' := by
+      rw [← hB, QuadraticForm.toMatrix'_toQuadraticForm']
+    exact h0 ▸ blockFormIso e B _ _
+  have e₃ := ((((QuadraticMap.IsometryEquiv.prodComm _ _).trans e₁.symm).trans f).trans
+    (blockFormIso e B Q₂'.toMatrix' G₃)).trans (QuadraticMap.IsometryEquiv.prodComm _ _)
+  obtain ⟨g⟩ := witt_cancellation G₃.toQuadraticForm' _ _ ⟨e₃⟩
+  rw [QuadraticForm.toMatrix'_toQuadraticForm', QuadraticForm.toMatrix'_toQuadraticForm'] at g
+  exact hniso ⟨g⟩
+
 /-- **Twisting a block, explicitly.**  Suppose that in rational coordinates `B`, `Q` is the orthogonal
 sum of a form `Q₂` on `F^n` and a form with Gram matrix `G₃`, and that `Q₂'` has the discriminant of
 `Q₂`.  Then `Q' = Bᵀ (Q₂' ⊕ G₃) B` has the discriminant of `Q`, and there is an `F̄`-isometry
@@ -261,18 +294,7 @@ theorem exists_blockTwist {m : ℕ} {Q : QuadraticForm F (Fin m → F)} (hQ : Is
       ∃ E : IntermediateField F Kb, FiniteDimensional F E ∧
         ∀ σ τ : GalF F, (∀ x ∈ E, σ x = τ x) → galGL m σ X = galGL m τ X := by
   obtain ⟨X, hnd, hsd, hgram, hcoc, hE⟩ := exists_blockTwist_core hQ e B hQ₂ hnd' hdr G₃ hG₃ hB
-  refine ⟨_, X, hnd, hsd, fun ⟨f⟩ => ?_, hgram, hcoc, hE⟩
-  -- not isometric: Witt cancellation
-  have e₁ : Q.IsometryEquiv (Q₂.toMatrix'.toQuadraticForm'.prod G₃.toQuadraticForm') := by
-    have h0 : Q = ((B : Matrix (Fin m) (Fin m) F)ᵀ * blockDiag e Q₂.toMatrix' G₃ *
-        B).toQuadraticForm' := by
-      rw [← hB, QuadraticForm.toMatrix'_toQuadraticForm']
-    exact h0 ▸ blockFormIso e B _ _
-  have e₃ := ((((QuadraticMap.IsometryEquiv.prodComm _ _).trans e₁.symm).trans f).trans
-    (blockFormIso e B Q₂'.toMatrix' G₃)).trans (QuadraticMap.IsometryEquiv.prodComm _ _)
-  obtain ⟨g⟩ := witt_cancellation G₃.toQuadraticForm' _ _ ⟨e₃⟩
-  rw [QuadraticForm.toMatrix'_toQuadraticForm', QuadraticForm.toMatrix'_toQuadraticForm'] at g
-  exact hniso ⟨g⟩
+  exact ⟨_, X, hnd, hsd, not_nonempty_isometryEquiv_blockForm e B hB hniso, hgram, hcoc, hE⟩
 
 /-- **Twisting an anisotropic plane.**  Suppose that in rational coordinates `B`, `Q` is the
 orthogonal sum of an anisotropic binary form `Q₂` and a form with Gram matrix `G₃`.  Then there is

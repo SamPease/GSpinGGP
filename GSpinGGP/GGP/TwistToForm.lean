@@ -27,7 +27,8 @@ section Orth
 variable {K V : Type*} [Field K] [Invertible (2 : K)] [AddCommGroup V] [Module K V]
 
 /-- **An orthogonal decomposition is an orthogonal sum**: `V = U ⊕ U'` with `U ⊥ U'` gives
-`Q|_U ⊥ Q|_{U'} ≅ Q`. -/
+`Q|_U ⊥ Q|_{U'} ≅ Q` (for any complement `U'` orthogonal for `bform Q`; Tau Ceti
+`QuadraticMap.IsometryEquiv.prodRestrictOrthogonal` is the case `U' = U^⊥` for the polar form). -/
 def orthIsometry (Q : QuadraticForm K V) {U U' : Submodule K V} (hc : IsCompl U U')
     (horth : ∀ u ∈ U, ∀ u' ∈ U', bform Q u u' = 0) :
     ((Q.comp U.subtype).prod (Q.comp U'.subtype)).IsometryEquiv Q where
@@ -46,12 +47,12 @@ theorem isCompl_orthogonal_of_isNondeg [FiniteDimensional K V] {Q : QuadraticFor
   exact (LinearMap.BilinForm.restrict_nondegenerate_iff_isCompl_orthogonal
     (LinearMap.IsSymm.isRefl (QuadraticForm.associated_isSymm (S := K) Q))).1 hA'
 
-/-- The form of `U` transported to `K^{dim U}` along `finBasis` is isometric to `Q|_U`. -/
+/-- The form of `U` transported to `K^{dim U}` along `finBasis` is isometric to `Q|_U`
+(Mathlib `QuadraticMap.isometryEquivOfCompLinearEquiv`). -/
 def finBasisIso [FiniteDimensional K V] (Q : QuadraticForm K V) (U : Submodule K V) :
     ((Q.comp U.subtype).comp (finBasis K U).equivFun.symm.toLinearMap).IsometryEquiv
-      (Q.comp U.subtype) where
-  toLinearEquiv := (finBasis K U).equivFun.symm
-  map_app' _ := rfl
+      (Q.comp U.subtype) :=
+  (QuadraticMap.isometryEquivOfCompLinearEquiv _ (finBasis K U).equivFun.symm).symm
 
 end Orth
 
@@ -138,13 +139,7 @@ theorem exists_isTwistBy_torusBar_of_isometry {d : GGPData F} {y : ↥(GSpin d.Q
     have i1 := TwistPlane.blockFormIso e B (QuadraticForm.toMatrix' Q₂) G₃
     rw [QuadraticForm.toMatrix'_toQuadraticForm', hG₃QF, ← h0] at i1
     exact i1
-  have hQ₂ : IsNondeg Q₂ := by
-    have hd := (PAdicQuadAux.isNondeg_iff_discr'_ne_zero d.QW).1 d.nondeg
-    rw [QuadraticForm.discr', hB, Matrix.det_mul, Matrix.det_mul, Matrix.det_transpose,
-      TwistPlane.det_blockDiag] at hd
-    refine (PAdicQuadAux.isNondeg_iff_discr'_ne_zero _).2 fun h0 => hd ?_
-    rw [QuadraticForm.discr'] at h0
-    rw [h0]; ring
+  have hQ₂ : IsNondeg Q₂ := TwistPlane.isNondeg_of_blockDiag d.nondeg e B hB
   have hGA : IsNondeg GA :=
     (QuadClassify.DiscRel.of_isometryEquiv (finBasisIso d.QW (fixedSub y)).symm).isNondeg hAnd
   -- `disc Q₂ = disc Q₂'`
@@ -159,8 +154,7 @@ theorem exists_isTwistBy_torusBar_of_isometry {d : GGPData F} {y : ↥(GSpin d.Q
     exact QuadClassify.DiscRel.cancel_right h1
       (QuadClassify.DiscRel.of_isometryEquiv ((finBasisIso d.QW (fixedSub y)).trans jι)) hGA rfl
   have hnd' : IsNondeg Q₂' := hdr.isNondeg hQ₂
-  obtain ⟨X, -, -, hgram, hcoc, E, hE, hEX⟩ :=
-    TwistPlane.exists_blockTwist_core d.nondeg e B hQ₂ hnd' hdr G₃ hG₃ hB
+  obtain ⟨-, -, a, ha⟩ := exists_isTwistBy_torusBar_of_blockCoords hy e B hnd' hdr hG₃ hB hfix
   -- the twisted form is `≅ Q'`
   have isoC : ((B : Matrix (Fin d.m) (Fin d.m) F)ᵀ * TwistPlane.blockDiag e (QuadraticForm.toMatrix' Q₂') G₃ *
       B).toQuadraticForm'.IsometryEquiv Q' := by
@@ -168,19 +162,6 @@ theorem exists_isTwistBy_torusBar_of_isometry {d : GGPData F} {y : ↥(GSpin d.Q
     rw [QuadraticForm.toMatrix'_toQuadraticForm', hG₃QF] at i1
     exact i1.trans (((iL.trans (finBasisIso Q' U'')).prod
       ((finBasisIso d.QW (fixedSub y)).trans jι)).trans (orthIsometry Q' hcV.symm horth2))
-  let c : GalCocycle (d.fixerBar y) :=
-    { toFun := fun σ => X⁻¹ * galGL d.m σ X
-      mem' := fun σ => by
-        obtain ⟨R, hR, hRdet, hXR⟩ := hcoc σ
-        rw [hXR]
-        exact TwistDescent.conj_blockDiagGL_mem_fixerBar e B hB hfix R hR hRdet
-      cocycle' := fun σ τ => by
-        rw [galGL_mul, map_mul, map_inv]
-        group
-      continuous' := ⟨E, hE, fun σ τ hστ => by rw [hEX σ τ hστ]⟩ }
-  have htw : IsTwistBy d.QW _ c.toFun := (TwistDescent.isTwistBy_iff _ _ _).2
-    ⟨TwistDescent.isoOfGL d.QW _ X hgram, fun σ => by rw [TwistDescent.glOf_isoOfGL]⟩
-  obtain ⟨a, ha⟩ := d.exists_isTwistBy_torusBar_of_fixerBar hy c htw
   exact ⟨a, TwistDescent.isTwistBy_of_isometryEquiv isoC ha⟩
 
 end GSpinGGP

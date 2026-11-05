@@ -73,6 +73,7 @@ import GSpinGGP.GGP.TwistPlane
 import GSpinGGP.GGP.FixerTwist
 import GSpinGGP.GGP.BlockCoords
 import GSpinGGP.GGP.TwistMoved
+import GSpinGGP.GGP.TwistToForm
 import GSpinGGP.GGP.TwistTorus
 import GSpinGGP.GGP.TwistPlaneCocycle
 import GSpinGGP.GGP.QuadClassify
