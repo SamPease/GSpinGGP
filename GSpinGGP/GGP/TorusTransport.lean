@@ -97,7 +97,28 @@ theorem ratAt_symm (hg : g ∈ GSpin (Q₂.baseChange (AlgebraicClosure F))) {x 
   rw [h]
   exact (psiA_symm_psiA φ g _).symm
 
+/-- **Strong stable conjugacy is symmetric**: `x ∼ y` through `φ` gives `y ∼ x` through `φ⁻¹`. -/
+theorem StronglyStablyConjVia.symm {x : GSpin Q₁} {y : (CliffordAlgebra Q₂)ˣ}
+    (h : StronglyStablyConjVia φ (x : (CliffordAlgebra Q₁)ˣ) y) :
+    StronglyStablyConjVia φ.symm y (x : (CliffordAlgebra Q₁)ˣ) := by
+  obtain ⟨g, hg, hconj, hrat⟩ := h
+  refine ⟨cliffUnits φ.symm g⁻¹, cliffUnits_mem_GSpin φ.symm ((GSpin _).inv_mem hg), ?_,
+    ratAt_symm hg hrat hconj⟩
+  rw [← hconj]
+  exact psiU_symm_psiU φ g _
+
 end Inverse
+
+/-- Strong stable conjugacy depends only on the underlying map of `φ`. -/
+theorem StronglyStablyConjVia.congr {φ φ' : (Q₁.baseChange (AlgebraicClosure F)).IsometryEquiv
+      (Q₂.baseChange (AlgebraicClosure F))} (hφ : ∀ w, φ w = φ' w) {x : (CliffordAlgebra Q₁)ˣ}
+    {y : (CliffordAlgebra Q₂)ˣ} (h : StronglyStablyConjVia φ x y) :
+    StronglyStablyConjVia φ' x y := by
+  have hm := map_isometryEquiv_congr hφ
+  have hc : cliffUnits φ = cliffUnits φ' := by
+    ext u; change CliffordAlgebra.map φ.toIsometry _ = CliffordAlgebra.map φ'.toIsometry _; rw [hm]
+  obtain ⟨g, hg, hconj, hrat⟩ := h
+  exact ⟨g, hg, hc ▸ hconj, fun σ z hz hzx => by rw [← hm, ← hc]; exact hrat σ z hz hzx⟩
 
 section Hom
 
