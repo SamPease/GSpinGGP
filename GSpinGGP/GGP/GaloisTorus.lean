@@ -459,4 +459,22 @@ theorem baseChange_apply_eq_zero_of_neg {V M : Type*} [AddCommGroup V] [Module F
     rw [two_smul]; nth_rewrite 1 [h1]; abel
   exact (smul_eq_zero.1 h2).resolve_left two_ne_zero
 
+/-- Rational elements of `GSpin(W)` give Galois-fixed matrices. -/
+theorem galGL_specMatFbar_bcGSpin (t : GSpin d.QW) (σ : GalF F) :
+    galGL d.m σ (specMatFbar d.QW (bcGSpin d.QW t)) = specMatFbar d.QW (bcGSpin d.QW t) :=
+  Units.ext (by rw [coe_galGL, coe_specMatFbar_bcGSpin, TwistDescent.map_algebraMap_fixed])
+
+open scoped TensorProduct in
+/-- Two `F̄`-linear maps agreeing on `1 ⊗ a`, `a ∈ p`, agree on `p ⊗ F̄`. -/
+theorem eqOn_baseChange_of_tmul {V M : Type*} [AddCommGroup V] [Module F V] [AddCommGroup M]
+    [Module (AlgebraicClosure F) M] {p : Submodule F V}
+    {f g : (AlgebraicClosure F ⊗[F] V) →ₗ[AlgebraicClosure F] M}
+    (h : ∀ a ∈ p, f (1 ⊗ₜ a) = g (1 ⊗ₜ a)) {w : AlgebraicClosure F ⊗[F] V}
+    (hw : w ∈ p.baseChange (AlgebraicClosure F)) : f w = g w := by
+  have hle : p.baseChange (AlgebraicClosure F) ≤ LinearMap.eqLocus f g := by
+    rw [Submodule.baseChange_eq_span, Submodule.span_le]
+    rintro _ ⟨a, ha, rfl⟩
+    exact h a ha
+  exact hle hw
+
 end GSpinGGP

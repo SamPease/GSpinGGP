@@ -174,15 +174,23 @@ theorem isNilpotent_map_sub_one (f : Q₁ →qᵢ Q₂) (hf : IsNondeg Q₁) (g 
   rw [GSpin.coe_map, ← map_one (CliffordAlgebra.map f), ← map_sub]
   exact hg.map _
 
+/-- If `y` commutes with the images of the generators under an algebra map out of `C(V₁)`, it
+commutes with the whole image. -/
+theorem commute_algHom_of_commute_ι {A : Type*} [Ring A] [Algebra K A]
+    (φ : CliffordAlgebra Q₁ →ₐ[K] A) {y : A} (hy : ∀ v, Commute y (φ (ι Q₁ v)))
+    (a : CliffordAlgebra Q₁) : Commute y (φ a) := by
+  induction a using CliffordAlgebra.induction with
+  | algebraMap r => rw [AlgHom.commutes]; exact Algebra.commute_algebraMap_right _ _
+  | ι v => exact hy v
+  | mul a b ha hb => rw [map_mul]; exact ha.mul_right hb
+  | add a b ha hb => rw [map_add]; exact ha.add_right hb
+
 /-- If `y ∈ C(V₂)` commutes with `ι(f v)` for all `v ∈ V₁`, it commutes with `C(f)(C(V₁))`. -/
 theorem commute_map_of_commute_ι (f : Q₁ →qᵢ Q₂) {y : CliffordAlgebra Q₂}
     (hy : ∀ v, Commute y (ι Q₂ (f v))) (a : CliffordAlgebra Q₁) :
-    Commute y (CliffordAlgebra.map f a) := by
-  induction a using CliffordAlgebra.induction with
-  | algebraMap r => rw [AlgHom.commutes]; exact Algebra.commute_algebraMap_right _ _
-  | ι v => rw [CliffordAlgebra.map_apply_ι]; exact hy v
-  | mul a b ha hb => rw [map_mul]; exact ha.mul_right hb
-  | add a b ha hb => rw [map_add]; exact ha.add_right hb
+    Commute y (CliffordAlgebra.map f a) :=
+  commute_algHom_of_commute_ι (CliffordAlgebra.map f) (fun v => by
+    rw [CliffordAlgebra.map_apply_ι]; exact hy v) a
 
 /-- `g ∈ GSpin(V)` commutes with `ι v` when `P(g) v = v`. -/
 theorem commute_ι_of_specP_eq {Q : QuadraticForm K V₂} (g : GSpin Q) {v : V₂}

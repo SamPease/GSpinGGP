@@ -103,6 +103,19 @@ theorem coe_glOf_inv {m : ℕ} {Q Q' : QuadraticForm F (Fin m → F)}
     (((glOf φ)⁻¹ : GL (Fin m) Kb) : Matrix (Fin m) (Fin m) Kb) =
       LinearMap.toMatrix (bcBasis F m) (bcBasis F m) φ.toLinearEquiv.symm.toLinearMap := rfl
 
+/-- Isometries with the same underlying map have the same matrix. -/
+theorem glOf_congr {m : ℕ} {Q Q' : QuadraticForm F (Fin m → F)}
+    {e e' : (Q.baseChange Kb).IsometryEquiv (Q'.baseChange Kb)} (h : ∀ w, e w = e' w) :
+    glOf e = glOf e' :=
+  Units.ext (congrArg (LinearMap.toMatrix (bcBasis F m) (bcBasis F m)) (LinearMap.ext h))
+
+/-- Isometries with the same matrix are equal pointwise. -/
+theorem apply_eq_of_glOf_eq {m : ℕ} {Q Q' : QuadraticForm F (Fin m → F)}
+    {e e' : (Q.baseChange Kb).IsometryEquiv (Q'.baseChange Kb)} (h : glOf e = glOf e')
+    (w : Kb ⊗[F] (Fin m → F)) : e w = e' w :=
+  LinearMap.congr_fun ((LinearMap.toMatrix (bcBasis F m) (bcBasis F m)).injective
+    (congrArg Units.val h)) w
+
 /-- The matrix of a composite isometry. -/
 theorem glOf_trans {m : ℕ} {Q₁ Q₂ Q₃ : QuadraticForm F (Fin m → F)}
     (e : (Q₁.baseChange Kb).IsometryEquiv (Q₂.baseChange Kb))
@@ -424,6 +437,20 @@ theorem det_glOf_trans_specPIso {m : ℕ} {Q : QuadraticForm F (Fin m → F)} (�
   rw [glOf_trans, glOf_specPIso, det_inv_mul_galGL_mul σ _ _ (det_specMatFbar _ g)]
   exact det_glOf_inv_mul_galGL τ σ
 
+/-- Composing with `P(g)` does not change the determinant of the matrix of an isometry. -/
+theorem det_glOf_trans_specPIso_eq {m : ℕ} {Q Q' : QuadraticForm F (Fin m → F)}
+    (e : (Q.baseChange Kb).IsometryEquiv (Q'.baseChange Kb)) (g : GSpin (Q'.baseChange Kb)) :
+    ((glOf (e.trans (specPIso g)) : GL (Fin m) Kb) : Matrix (Fin m) (Fin m) Kb).det =
+      ((glOf e : GL (Fin m) Kb) : Matrix (Fin m) (Fin m) Kb).det := by
+  rw [glOf_trans, glOf_specPIso, Units.val_mul, Matrix.det_mul, det_specMatFbar, one_mul]
+
+/-- Precomposing with `P(g)` does not change the determinant of the matrix of an isometry. -/
+theorem det_glOf_specPIso_trans {m : ℕ} {Q Q' : QuadraticForm F (Fin m → F)}
+    (g : GSpin (Q.baseChange Kb)) (e : (Q.baseChange Kb).IsometryEquiv (Q'.baseChange Kb)) :
+    ((glOf ((specPIso g).trans e) : GL (Fin m) Kb) : Matrix (Fin m) (Fin m) Kb).det =
+      ((glOf e : GL (Fin m) Kb) : Matrix (Fin m) (Fin m) Kb).det := by
+  rw [glOf_trans, glOf_specPIso, Units.val_mul, Matrix.det_mul, det_specMatFbar, mul_one]
+
 /-- `S_x(F̄) ⊆ O(W)(F̄)`, in matrix form. -/
 theorem gram_mem_torusBarFbar (d : GGPData F) (x : GSpin d.QW) :
     ∀ s ∈ d.torusBarFbar x, (s : Matrix (Fin d.m) (Fin d.m) Kb)ᵀ *
@@ -436,6 +463,14 @@ theorem det_mem_torusBarFbar (d : GGPData F) (x : GSpin d.QW) :
     ∀ s ∈ d.torusBarFbar x, (s : Matrix (Fin d.m) (Fin d.m) Kb).det = 1 := by
   rintro s ⟨g, -, rfl⟩
   exact det_specMatFbar d.QW g
+
+/-- An element of `S_x(F̄)`, as an isometry, is the identity on `W'_x ⊗ F̄`. -/
+theorem apply_eq_self_of_glOf_mem_torusBarFbar (d : GGPData F) {x : GSpin d.QW}
+    (a : (d.QW.baseChange Kb).IsometryEquiv (d.QW.baseChange Kb)) (ha : glOf a ∈ d.torusBarFbar x)
+    {w : Kb ⊗[F] (Fin d.m → F)} (hw : w ∈ (fixedSub x).baseChange Kb) : a w = w := by
+  obtain ⟨t, ht, hta⟩ := ha
+  rw [apply_eq_of_glOf_eq (e' := specPIso t) (by rw [glOf_specPIso, hta]) w]
+  exact ht.2 w hw
 
 end TwistDescent
 end GSpinGGP
