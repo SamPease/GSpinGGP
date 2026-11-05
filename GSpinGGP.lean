@@ -68,6 +68,9 @@ import GSpinGGP.Foundations.EigenFrame
 import GSpinGGP.GGP.TorusFrame
 import GSpinGGP.GGP.GammaClassFinite
 import GSpinGGP.GGP.TwistPlane
+import GSpinGGP.GGP.FixerTwist
+import GSpinGGP.GGP.BlockCoords
+import GSpinGGP.GGP.TwistMoved
 import GSpinGGP.GGP.TwistTorus
 import GSpinGGP.GGP.TwistPlaneCocycle
 import GSpinGGP.GGP.QuadClassify

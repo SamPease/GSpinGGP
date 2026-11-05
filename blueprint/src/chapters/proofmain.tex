@@ -348,6 +348,17 @@ For $x\in\Gamma(G,H)$, $H^1(F,S_x)$ is finite.
 \assumedfrom{\cite{SerreCG}, III \S4.3 Thm.~4 (Borel--Serre); Tate--Nakayama}
 \end{literature}
 
+\begin{literature}[Fundamental tori]
+\label{LIT-exists_rel_torusBar_of_fixerBar}
+\lean{GSpinGGP.exists_rel_torusBar_of_fixerBar}
+\leanok
+\uses{GGPData, GSpin, IsGammaElt}
+For $x\in\Gamma(G,H)$, $H^1(F,S_x)\to H^1(F,SO(W)_{W'_x})$ is surjective ($S_x$ is an anisotropic, hence fundamental,
+maximal torus of $SO(W)_{W'_x}\cong SO(W''_x)$).
+
+\assumedfrom{\cite{Kot86}, \S10, Lemma~10.2}
+\end{literature}
+
 \begin{literature}[Finiteness of $H^1(F,N_x)$]
 \label{LIT-finite_H1_normalizerBar}
 \lean{GSpinGGP.finite_H1_normalizerBar}
@@ -422,17 +433,44 @@ Twisting $\Pi$ into the other binary form of its discriminant gives a cocycle wi
 not isometric to $W$ by Witt cancellation.
 \end{proof}
 
+\begin{lemma}[The moved space of $x\in\Gamma(G,H)$]
+\label{orthogonal_fixedSub_of_isGammaElt}
+\lean{GSpinGGP.orthogonal_fixedSub_of_isGammaElt}
+\leanok
+\uses{GGPData, GSpin, IsGammaElt}
+For $x\in\Gamma(G,H)$, $W''_x$ is not a line, and if it is a plane it is anisotropic.
+\end{lemma}
+\begin{proof}
+Not yet formalized. On a line $P(x)=-1$, so $\det P(x)=-1$; on a hyperbolic plane the split torus of $W''_x$ lifts to
+$T_x(F)$, contradicting compactness of $T_x(F)/A(F)$.
+\end{proof}
+
+\begin{lemma}[Twisting $W''_x$ along $S_x$]
+\label{exists_twistIdx_not_isometric_of_moved}
+\lean{GSpinGGP.exists_twistIdx_not_isometric_of_moved}
+\leanok
+\uses{GGPData, GSpin, InnerFormSystem, InnerTwist, IsGammaElt}
+For $x\in\Gamma(G,H)$ with $W''_x$ of dimension $\ge3$ or an anisotropic plane, some $\beta\in H^1(F,S_x)$ twists $W$ into a
+form $W_{q_x(\beta)}\not\cong W$.
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{LIT-exists_rel_torusBar_of_fixerBar}
+Twist the block $W''_x$ into the other form of its dimension and discriminant; the cocycle lies in $SO(W)_{W'_x}$, so by
+\cite{Kot86} Lemma 10.2 it is cohomologous to one in $S_x$; Witt cancellation.
+\end{proof}
+
 \begin{lemma}[A twist into the other form: no twisting plane]
 \label{exists_twistIdx_not_isometric_of_not_hasTwistPlane}
 \lean{GSpinGGP.exists_twistIdx_not_isometric_of_not_hasTwistPlane}
 \leanok
 \uses{GGPData, GSpin, InnerFormSystem, InnerTwist, IsGammaElt, IsQuasiSplit}
-For $G$ quasi-split and $x\in\Gamma(G,H)$ not central such that $W''_x$ contains no such plane (hence all irreducible factors of
-$P(x)|_{W''_x}$ have degree $\ge4$), some $\beta\in H^1(F,S_x)$ twists $W$ into a form $W_{q_x(\beta)}\not\cong W$.
+For $x\in\Gamma(G,H)$ not central, some $\beta\in H^1(F,S_x)$ twists $W$ into a form $W_{q_x(\beta)}\not\cong W$.
 \end{lemma}
 \begin{proof}
-Not yet formalized. By \cite{BP} (12.1.6), or directly: the Hasse invariant of a transfer $\operatorname{Tr}_{E_0/F}(c\,h)$ changes for
-$c\notin N(E^\times)$ because corestriction $\mathrm{Br}(E_0)[2]\to\mathrm{Br}(F)[2]$ is an isomorphism \cite{SerreLF}; the sign is then \cite{Kot83}.
+\leanok
+\uses{orthogonal_fixedSub_of_isGammaElt, exists_twistIdx_not_isometric_of_moved}
+$W''_x\neq0$ since $x$ is not central; Lemmas~\ref{orthogonal_fixedSub_of_isGammaElt} and~\ref{exists_twistIdx_not_isometric_of_moved}.
 \end{proof}
 
 \begin{lemma}[A twist into the other form]
