@@ -140,6 +140,7 @@ theorem specP_inlW_inrF (t : GSpin (d.QW.baseChange Kb)) (z : Kb ⊗[F] d.Z) :
 
 end GGPData
 
+omit [PAdicField F] in
 /-- The Galois action commutes with the base change of a rational map. -/
 theorem galV_baseChange {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V₁] [AddCommGroup V₂]
     [Module F V₂] (f : V₁ →ₗ[F] V₂) (σ : GalF F) (w : Kb ⊗[F] V₁) :
@@ -287,6 +288,7 @@ theorem inlW_mem_torus {x : GSpin d.QW} {t : GSpin (d.QW.baseChange Kb)} (ht : t
 
 end GGPData
 
+omit [PAdicField F] in
 theorem det_map_algebraMap {n : ℕ} (N : Matrix (Fin n) (Fin n) F) :
     (N.map (algebraMap F Kb)).det = algebraMap F Kb N.det :=
   (RingHom.map_det (algebraMap F Kb) N).symm
@@ -370,7 +372,7 @@ theorem isGammaElt_of_ratAt (τ : InnerTwist d.QW) {x : GSpin d.QW} (hx : d.IsGa
         Subtype.ext hc.symm
       change scalarGSpin τ.Q' c = ((e ⟨t, ht⟩ : ↥((d.twist τ).torusOf y)) : GSpin τ.Q')
       rw [e1, hsc]
-    haveI : ((d.twist τ).scalarsIn ((d.twist τ).torusOf y)).Normal :=
+    have : ((d.twist τ).scalarsIn ((d.twist τ).torusOf y)).Normal :=
       GGPData.scalarsIn_normal _ _
     let f := QuotientGroup.map (d.scalarsIn (d.torusOf x))
       ((d.twist τ).scalarsIn ((d.twist τ).torusOf y)) e.toMonoidHom hle
@@ -383,7 +385,7 @@ theorem isGammaElt_of_ratAt (τ : InnerTwist d.QW) {x : GSpin d.QW} (hx : d.IsGa
       intro q
       obtain ⟨s, rfl⟩ := QuotientGroup.mk_surjective q
       exact ⟨QuotientGroup.mk (e.symm s), by simp [f]⟩
-    haveI := hx.2.2
+    have := hx.2.2
     refine ⟨?_⟩
     rw [← Set.range_eq_univ.2 hsurj]
     exact isCompact_range hf

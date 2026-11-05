@@ -31,6 +31,7 @@ namespace Steinberg
 variable {K : Type*} [Field K] [CharZero K] [IsAlgClosed K] [Invertible (2 : K)]
   {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V] {Q : QuadraticForm K V}
 
+omit [IsAlgClosed K] [FiniteDimensional K V] in
 /-- The elements of the split torus of an eigen-frame of `P(x)` lift to products of pair elements:
 they commute with `x`, and with every `z` whose `P(z)` scales each pair `eᵢ, fᵢ` by `c, c⁻¹`. -/
 theorem exists_frame_torus_elt {x : GSpin Q} {n : ℕ} {e f : Fin n → V} {μ : Fin n → Kˣ}
@@ -72,11 +73,11 @@ theorem exists_frame_torus_elt {x : GSpin Q} {n : ℕ} {e f : Fin n → V} {μ :
       simp
     · rw [hg, hF.polar_fe, hF.polar_ee]
       by_cases hj : j = i
-      · subst hj; simp only [ite_true, smul_zero, add_zero, Units.val_inv_eq_inv_val]; module
-      · simp [hj, Ne.symm hj]
+      · subst hj; simp only [ite_true, Units.val_inv_eq_inv_val]; module
+      · simp [hj]
     · rw [hg, hF.polar_ff, hF.polar_ef]
       by_cases hj : j = i
-      · subst hj; simp only [ite_true, smul_zero, add_zero, Units.val_inv_eq_inv_val]; module
+      · subst hj; simp only [ite_true, Units.val_inv_eq_inv_val]; module
       · simp [hj, Ne.symm hj]
     · obtain ⟨c, hce, hcf⟩ := hz i
       exact Subtype.ext (Units.ext (commute_hypUnit (hQe i) (hQf i) (hp i) hce hcf s))

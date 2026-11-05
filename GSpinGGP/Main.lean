@@ -14,6 +14,7 @@ import GSpinGGP.GGP.QuadClassify
 import GSpinGGP.GGP.MovedCentralizer
 import GSpinGGP.GGP.GaloisTorus
 import GSpinGGP.GGP.TwistIncl
+import GSpinGGP.GGP.StableCocycleSurj
 
 /-!
 # The main theorem: the local GGP conjecture for general spin groups
@@ -1411,17 +1412,41 @@ theorem prop_12_5_1_ii (IF : InnerFormSystem d) (α : IF.Idx)
 /-- **Thesis Prop. 6.6.1(iii)** (own work): for `x ∈ Γ(G,H)` and every
 inner form `α`, the `GSpin(W_α)(F)`-classes of `y ∈ Γ(G_α,H_α)` strongly stably conjugate to `x`
 are in bijection with `q_x⁻¹(α) ⊆ H¹(F, S_x)`.  This differs from Thesis Prop. 6.6.1(iii), which
-uses `H¹(F, T_x)`.  Proof route:
-Galois cohomology parametrizes the `G_α(F)`-classes of all semisimple
-`y ∼_stab x` by `Im(H¹(F, Z(Ḡ_x)) → H¹(F, Ḡ_x)) ∩ p_x⁻¹([a_α])`
-(here `G_α(F)`-, `Ḡ_α(F)`- and `GSpin(W_α)(F)`-conjugacy agree on diagonal elements, as
-`GSpin → SO` is onto on `F`-points by Hilbert 90 for `G_m`); those with `y ∈ Γ(G_α,H_α)` form the
-triple intersection, which is `{(1,1,s,s)} ≅ H¹(F, S_x)` by the case analysis on
-`dim W'_x` and Witt cancellation, and `p_x = [a_α]` becomes `q_x(s) = α`. -/
+uses `H¹(F, T_x)`.  Proved: `y` is sent to the class of `σ ↦ ψ⁻¹ ∘ σψ` for any `ψ = P(g) ∘ φ_α` with
+`C(ψ) x = y` and cocycle in `S_x` (`GGPData.IsStableIso`; it exists by the case analysis on
+`dim W'_x` and Witt cancellation, `GGPData.exists_isStableIso`); the class is well defined and
+injective on `GSpin(W_α)(F)`-classes (`IsStableIso.mk_eq`, `IsStableIso.exists_conj_of_mk_eq`), and
+every class over `α` arises, since `S_x(F̄)` is central in the centralizer of `x`
+(`GGPData.exists_of_twistIdx`). -/
 theorem n_alpha_eq_card_twistIdx (IF : InnerFormSystem d) (α : IF.Idx) (x : ↥(GSpin d.QW))
     (hx : d.IsGammaElt x) :
-    n_alpha IF α x = Nat.card {β : H1 (d.torusBarFbar x) // TwistIdx IF x β α} :=
-  sorry
+    n_alpha IF α x = Nat.card {β : H1 (d.torusBarFbar x) // TwistIdx IF x β α} := by
+  classical
+  -- the class of `y`, from any witness (`exists_isStableIso`)
+  have hex : ∀ y : stableFiber IF α x, ∃ ψ, d.IsStableIso (IF.twist α) x (y : _) ψ :=
+    fun y => d.exists_isStableIso (IF.twist α) hx y.2.2
+  let cls : stableFiber IF α x → H1 (d.torusBarFbar x) := fun y =>
+    H1.mk (Classical.choose_spec (hex y)).cocycle
+  have hcls : ∀ y, TwistIdx IF x (cls y) α := fun y =>
+    (Classical.choose_spec (hex y)).twistIdx IF
+  have hwd : ∀ y y', stableFiberConj IF α x y y' → cls y = cls y' := by
+    rintro y y' ⟨g, hg⟩
+    exact GGPData.IsStableIso.mk_eq hx g hg _ _
+  let Φ : Quot (stableFiberConj IF α x) → {β : H1 (d.torusBarFbar x) // TwistIdx IF x β α} :=
+    Quot.lift (fun y => ⟨cls y, hcls y⟩) fun y y' h => Subtype.ext (hwd y y' h)
+  have hinj : Function.Injective Φ := by
+    rintro ⟨y⟩ ⟨y'⟩ h
+    have h' : cls y = cls y' := congrArg Subtype.val h
+    obtain ⟨g, hg⟩ := GGPData.IsStableIso.exists_conj_of_mk_eq _ _ h'
+    exact Quot.sound ⟨g, hg⟩
+  have hsurj : Function.Surjective Φ := by
+    rintro ⟨β, hβ⟩
+    obtain ⟨y, hyΓ, hyst, ψ, h, hβ'⟩ := GGPData.exists_of_twistIdx IF hx hβ
+    refine ⟨Quot.mk _ ⟨y, hyΓ, hyst⟩, Subtype.ext ?_⟩
+    change cls ⟨y, hyΓ, hyst⟩ = β
+    rw [← hβ']
+    exact GGPData.IsStableIso.mk_eq hx 1 (by simp) _ _
+  exact Nat.card_congr (Equiv.ofBijective Φ ⟨hinj, hsurj⟩)
 
 /-- **`q_x` is a function** `H¹(F, S_x) → IF.Idx` (own work; standard descent).  Existence: by
 Hilbert 90 for `GL_m` (Serre, *Local Fields*, X §1 Prop. 3) a cocycle `a` with values in
