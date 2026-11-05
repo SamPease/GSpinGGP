@@ -286,6 +286,38 @@ section CentralizerNilReg
 
 variable {K : Type*} [Field K] [Invertible (2 : K)]
 
+/-- **`regNil` on a split family of the fixed space is a regular element of one side**: for a
+split family `w` of `A = W'_y` with `dim A ≤ 2k + 2`, `X = regNil(w)` lies in `gspin(V)_y`, is
+nilpotent, and `dim gspin(V)_{y,X} ≤ ⌊dim A/2⌋ + dim (so(V)_{P y} killing A) + 1`. -/
+theorem side_regNil_bound [CharZero K] {V : Type*} [AddCommGroup V] [Module K V]
+    [FiniteDimensional K V] {Q : QuadraticForm K V} (hQ : IsNondeg Q) (y : GSpin Q)
+    (hc : IsCompl (fixedSub y) ((bform Q).orthogonal (fixedSub y))) {w : ℤ → ↥(fixedSub y)}
+    {ν : K} {k : ℕ} (hν : ν ≠ 0) (hw : IsSplitFamily (Q.comp (fixedSub y).subtype) w ν k)
+    (hdim : finrank K (fixedSub y) ≤ 2 * k + 2) :
+    regNil Q (fun j => (w j : V)) ν k ∈
+        lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∧
+      IsNilpotent (regNil Q (fun j => (w j : V)) ν k) ∧
+      finrank K (lieCentralizer (lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) :
+        CliffordAlgebra Q)) (regNil Q (fun j => (w j : V)) ν k)) ≤ finrank K (fixedSub y) / 2 +
+          finrank K ↥(soCent Q (specP Q y : Module.End K V) ⊓ killSub (fixedSub y)) + 1 := by
+  have hQA : IsNondeg (Q.comp (fixedSub y).subtype) := isNondeg_comp_subtype_of_isCompl hc
+  set X := regNil Q (fun j => (w j : V)) ν k
+  have hw' : IsSplitFamily Q (fun j => (w j : V)) ν k := fun i j hi hj => by
+    rw [← bform_comp_subtype]; exact hw i j hi hj
+  have hXm : X ∈ lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) :=
+    mem_lieCentralizer.mpr ⟨regNil_mem_gspin, commute_regNil y (fun j => (w j).2) ν k⟩
+  have h : ∀ a ∈ (fixedSub y), adV Q X a ∈ (fixedSub y) := fun a ha => by
+    rw [show a = ((⟨a, ha⟩ : (fixedSub y)) : V) from rfl, adV_regNil_subtype w ν k ⟨a, ha⟩]
+    exact Submodule.coe_mem _
+  have hr : (adV Q X).restrict h = adV (Q.comp (fixedSub y).subtype) (regNil (Q.comp (fixedSub y).subtype) w ν k) :=
+    LinearMap.ext fun a => Subtype.ext (adV_regNil_subtype w ν k a)
+  have h1 := finrank_lieCentralizer_fixed_le hQ y hc hXm h
+  rw [hr] at h1
+  have h2 := finrank_soCent_regNil_le hQA hw hν hdim
+  have h3 := (linearIndependent_isSplitFamily hw hν).fintype_card_le_finrank
+  rw [Fintype.card_fin] at h3
+  exact ⟨hXm, isNilpotent_regNil hw' hν, by omega⟩
+
 /-- **A regular element of one side**: if `(A, q|_A)` (`A = W'_y`) is quasi-split, some nilpotent
 `X ∈ gspin(V)_y` (an explicit `regNil` on `A`, or `0` if `A = 0`) has
 `dim gspin(V)_{y,X} ≤ ⌊dim A/2⌋ + dim (so(V)_{P y} killing A) + 1`. -/
@@ -301,22 +333,7 @@ theorem exists_side_regNil [CharZero K] {V : Type*} [AddCommGroup V] [Module K V
   have hQA : IsNondeg (Q.comp (fixedSub y).subtype) := isNondeg_comp_subtype_of_isCompl hc
   by_cases hpos : 0 < finrank K (fixedSub y)
   · obtain ⟨w, ν, k, hν, hw, hdim⟩ := exists_isSplitFamily_of_quasiSplit hQA hqs hpos
-    set X := regNil Q (fun j => (w j : V)) ν k
-    have hw' : IsSplitFamily Q (fun j => (w j : V)) ν k := fun i j hi hj => by
-      rw [← bform_comp_subtype]; exact hw i j hi hj
-    have hXm : X ∈ lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) :=
-      mem_lieCentralizer.mpr ⟨regNil_mem_gspin, commute_regNil y (fun j => (w j).2) ν k⟩
-    have h : ∀ a ∈ (fixedSub y), adV Q X a ∈ (fixedSub y) := fun a ha => by
-      rw [show a = ((⟨a, ha⟩ : (fixedSub y)) : V) from rfl, adV_regNil_subtype w ν k ⟨a, ha⟩]
-      exact Submodule.coe_mem _
-    have hr : (adV Q X).restrict h = adV (Q.comp (fixedSub y).subtype) (regNil (Q.comp (fixedSub y).subtype) w ν k) :=
-      LinearMap.ext fun a => Subtype.ext (adV_regNil_subtype w ν k a)
-    have h1 := finrank_lieCentralizer_fixed_le hQ y hc hXm h
-    rw [hr] at h1
-    have h2 := finrank_soCent_regNil_le hQA hw hν hdim
-    have h3 := (linearIndependent_isSplitFamily hw hν).fintype_card_le_finrank
-    rw [Fintype.card_fin] at h3
-    exact ⟨X, hXm, isNilpotent_regNil hw' hν, by omega⟩
+    exact ⟨_, side_regNil_bound hQ y hc hν hw hdim⟩
   · have h0 : finrank K (fixedSub y) = 0 := by omega
     have hXm : (0 : CliffordAlgebra Q) ∈
         lieCentralizer (gspin Q) ((y : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) :=
@@ -365,17 +382,24 @@ theorem nilReg_nonempty_of_quasiSplit {V : Type*} [AddCommGroup V] [Module F V]
         exact ciInf_le (OrderBot.bddBelow _) (⟨0, (gspin Q).zero_mem⟩ : gspin Q)
   exact ⟨_, mk_mem_nilReg_of_isRegularNil _ _ hconj ⟨X, hX.1, hX.2.1⟩ hX⟩
 
-/-- **`regNil` lies in Luo's orbit `O_ν`** when `V = ⟨d₀⟩ ⊥ ⟨w_{-k..k}⟩` with `d₀` anisotropic
-(`IsInOrbitNu`): `adV X` kills `d₀`, is one Jordan block on `U₁ = ⟨w⟩`, and `U₁ = ⟨w_0⟩ ⊥ ⟨w_j : j ≠ 0⟩`
-with `q(w_0) = ν` and `⟨w_j : j ≠ 0⟩` hyperbolic (`⟨w_1, …, w_k⟩` totally isotropic). -/
-theorem isInOrbitNu_regNil {V : Type*} [AddCommGroup V] [Module F V] [FiniteDimensional F V]
+/-- **`regNil` lies in Luo's orbit `O_ν` on a subspace** `U = ⟨d₀⟩ ⊥ ⟨w_{-k..k}⟩` with `d₀`
+anisotropic (`IsInOrbitNu`): `adV X` kills `d₀`, is one Jordan block on `U₁ = ⟨w⟩`, and
+`U₁ = ⟨w_0⟩ ⊥ ⟨w_j : j ≠ 0⟩` with `q(w_0) = ν` and `⟨w_j : j ≠ 0⟩` hyperbolic (`⟨w_1, …, w_k⟩`
+totally isotropic). -/
+theorem isInOrbitNu_regNil_of_le {V : Type*} [AddCommGroup V] [Module F V] [FiniteDimensional F V]
     {Q : QuadraticForm F V} {w : ℤ → V} {ν : F} {k : ℕ} (hw : IsSplitFamily Q w ν k) (hν : ν ≠ 0)
     {d₀ : V} (hd₀ : Q d₀ ≠ 0) (hd₀w : ∀ j : ℤ, |j| ≤ k → bform Q (w j) d₀ = 0)
-    (hdim : finrank F V = 2 * k + 2) :
-    IsInOrbitNu Q ⊤ ν (adV Q (regNil Q w ν k)) := by
+    {U : Submodule F V} (hd₀U' : d₀ ∈ U) (hwU : ∀ j : ℤ, |j| ≤ k → w j ∈ U)
+    (hdim : finrank F U = 2 * k + 2) :
+    IsInOrbitNu Q U ν (adV Q (regNil Q w ν k)) := by
   have hsymm : ∀ x y, bform Q x y = bform Q y x := fun x y => QuadraticMap.associated_isSymm F Q x y
   have hQb : ∀ x, bform Q x x = Q x := fun x => QuadraticMap.associated_eq_self_apply F Q x
   set U₁ := Submodule.span F (Set.range fun i : Fin (2 * k + 1) => w ((i : ℤ) - k))
+  have hU₁U : U₁ ≤ U := by
+    rw [Submodule.span_le]
+    rintro _ ⟨i, rfl⟩
+    exact hwU _ (abs_le.2 ⟨by have := i.2; omega, by have := i.2; omega⟩)
+  clear hwU
   have hwU : ∀ j : ℤ, |j| ≤ k → w j ∈ U₁ := fun j hj => Submodule.subset_span
     ⟨⟨(j + k).toNat, by rw [abs_le] at hj; omega⟩, by
       simp only; congr 1; rw [abs_le] at hj; omega⟩
@@ -390,9 +414,9 @@ theorem isInOrbitNu_regNil {V : Type*} [AddCommGroup V] [Module F V] [FiniteDime
       rw [hsymm]; exact hd₀w _ (abs_le.2 ⟨by omega, by omega⟩)
     exact fun u hu => hle hu
   have hd₀0 : d₀ ≠ 0 := fun h => hd₀ (by rw [h, map_zero])
-  refine ⟨d₀, U₁, Submodule.mem_top, hd₀, le_top, hd₀U, ?_, adV_regNil_of_orthogonal hd₀w,
+  refine ⟨d₀, U₁, hd₀U', hd₀, hU₁U, hd₀U, ?_, adV_regNil_of_orthogonal hd₀w,
     fun u hu => adV_regNil_mem_span hw hν hu, ?_, w 0, hwU 0 (by simp), ?_, ?_⟩
-  · -- `⟨d₀⟩ ⊔ U₁ = V`
+  · -- `⟨d₀⟩ ⊔ U₁ = U`
     have hinf : Submodule.span F {d₀} ⊓ U₁ = ⊥ := by
       rw [eq_bot_iff]
       rintro x ⟨hx1, hx2⟩
@@ -401,7 +425,9 @@ theorem isInOrbitNu_regNil {V : Type*} [AddCommGroup V] [Module F V] [FiniteDime
       rw [map_smul, smul_eq_mul, hQb] at this
       rw [(mul_eq_zero.mp this).resolve_right hd₀, zero_smul]
       exact Submodule.zero_mem _
-    apply Submodule.eq_top_of_finrank_eq
+    have hle : Submodule.span F {d₀} ⊔ U₁ ≤ U :=
+      sup_le ((Submodule.span_singleton_le_iff_mem _ _).mpr hd₀U') hU₁U
+    apply Submodule.eq_of_le_of_finrank_eq hle
     have := Submodule.finrank_sup_add_finrank_inf_eq (Submodule.span F {d₀}) U₁
     rw [hinf, finrank_bot, add_zero, finrank_span_singleton hd₀0, hU] at this
     omega
@@ -471,19 +497,42 @@ theorem isInOrbitNu_regNil {V : Type*} [AddCommGroup V] [Module F V] [FiniteDime
     unfold IsSplitQF
     omega
 
-/-- **Existence of regular nilpotent orbits of `𝔤_x`** (the direction `⇐` of
-`nilReg_centralizer_nonempty_iff`). For semisimple `x` with abelian moved part and `W'_x`, `V'_x`
-quasi-split: `X = (regNil on W'_x, regNil on V'_x)` is regular nilpotent in `𝔤_x`. Indeed
-`dim 𝔤_{x,Y} = dim so(W'_x)_{Y} + dim so(V'_x)_{Y} + (moved parts, constant) + 2` for `Y ∈ 𝔤_x`
-(`finrank_lieCentralizer_lieCentralizer_lie`, `finrank_lieCentralizer_fixed`,
-`soCent_inf_killSub_eq`), and the `so(W'_x)`, `so(V'_x)` terms are minimal at `X`
-(`le_finrank_soCent`, `finrank_soCent_regNil_le`). -/
-theorem nilReg_centralizer_nonempty_of_quasiSplit (d : GGPData F) (x : GSpin d.QW)
+/-- **`regNil` lies in Luo's orbit `O_ν`** when `V = ⟨d₀⟩ ⊥ ⟨w_{-k..k}⟩` with `d₀` anisotropic
+(`isInOrbitNu_regNil_of_le` with `U = V`). -/
+theorem isInOrbitNu_regNil {V : Type*} [AddCommGroup V] [Module F V] [FiniteDimensional F V]
+    {Q : QuadraticForm F V} {w : ℤ → V} {ν : F} {k : ℕ} (hw : IsSplitFamily Q w ν k) (hν : ν ≠ 0)
+    {d₀ : V} (hd₀ : Q d₀ ≠ 0) (hd₀w : ∀ j : ℤ, |j| ≤ k → bform Q (w j) d₀ = 0)
+    (hdim : finrank F V = 2 * k + 2) :
+    IsInOrbitNu Q ⊤ ν (adV Q (regNil Q w ν k)) :=
+  isInOrbitNu_regNil_of_le hw hν hd₀ hd₀w Submodule.mem_top (fun _ _ => Submodule.mem_top)
+    (by rw [finrank_top, hdim])
+
+/-- **A regular nilpotent of `𝔤_x` from regular elements of the two sides**: for semisimple `x`
+with abelian moved part, if `X_W ∈ gspin(W)_x` and `X_V ∈ gspin(V)_x` are nilpotent with
+`dim gspin_{x,X_·}` at most the minimal value (`exists_side_regNil`, `side_regNil_bound`), then
+`(X_W, X_V)` is regular nilpotent in `𝔤_x`: `dim 𝔤_{x,Y} = dim gspin(W)_{x,Y₁} + dim gspin(V)_{x,Y₂}`
+(`finrank_lieCentralizer_lieCentralizer_lie`), each term bounded below by
+`le_finrank_lieCentralizer_fixed`. -/
+theorem exists_nilReg_of_sides (d : GGPData F) (x : GSpin d.QW)
     (hx : IsSS F ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW))
-    (hmoved : MovedPartAbelian d.QW x) (hW : IsQuasiSplitQF (d.QWfix x))
-    (hV : IsQuasiSplitQF (d.QVfix x)) :
-    (NilReg (grpCentralizer d.G ((d.diag x : d.G) : d.ambientˣ))
-      (lieCentralizer d.lie (((d.diag x : d.G) : d.ambientˣ) : d.ambient))).Nonempty := by
+    (hmoved : MovedPartAbelian d.QW x) {XW : CliffordAlgebra d.QW} {XV : CliffordAlgebra d.QV}
+    (hXWm : XW ∈ lieCentralizer (gspin d.QW) ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW))
+    (hXWn : IsNilpotent XW)
+    (hXWb : finrank F (lieCentralizer (lieCentralizer (gspin d.QW)
+      ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW)) XW) ≤ finrank F (fixedSub x) / 2 +
+        finrank F ↥(soCent d.QW (specP d.QW x : Module.End F (Fin d.m → F)) ⊓
+          killSub (fixedSub x)) + 1)
+    (hXVm : XV ∈ lieCentralizer (gspin d.QV)
+      ((d.incl x : (CliffordAlgebra d.QV)ˣ) : CliffordAlgebra d.QV))
+    (hXVn : IsNilpotent XV)
+    (hXVb : finrank F (lieCentralizer (lieCentralizer (gspin d.QV)
+      ((d.incl x : (CliffordAlgebra d.QV)ˣ) : CliffordAlgebra d.QV)) XV) ≤
+        finrank F (fixedSub (d.incl x)) / 2 +
+        finrank F ↥(soCent d.QV (specP d.QV (d.incl x) : Module.End F d.V) ⊓
+          killSub (fixedSub (d.incl x))) + 1) :
+    ∃ O ∈ NilReg (grpCentralizer d.G ((d.diag x : d.G) : d.ambientˣ))
+      (lieCentralizer d.lie (((d.diag x : d.G) : d.ambientˣ) : d.ambient)),
+      ∃ X ∈ nilOrbitSet O, (X : d.ambient) = (XW, XV) := by
   set dx : d.ambient := (((d.diag x : d.G) : d.ambientˣ) : d.ambient)
   have hdx : dx = (((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW),
       ((d.incl x : (CliffordAlgebra d.QV)ˣ) : CliffordAlgebra d.QV)) := rfl
@@ -493,10 +542,6 @@ theorem nilReg_centralizer_nonempty_of_quasiSplit (d : GGPData F) (x : GSpin d.Q
     (fixedSub_inf_movedSub_incl d x hdisj)
   have habW := commute_of_movedPart d.nondeg x hmoved
   have habV := commute_movedPart_incl d x habW
-  have hV' : IsQuasiSplitQF (d.QV.comp (fixedSub (d.incl x)).subtype) :=
-    QuadClassify.isQuasiSplitQF_of_isometryEquiv (d.QVfixIso x) hV
-  obtain ⟨XW, hXWm, hXWn, hXWb⟩ := exists_side_regNil d.nondeg x hcW hW
-  obtain ⟨XV, hXVm, hXVn, hXVb⟩ := exists_side_regNil d.nondeg_QV (d.incl x) hcV hV'
   set X : d.ambient := (XW, XV)
   have hXm : X ∈ lieCentralizer d.lie dx := by
     obtain ⟨h1, h2⟩ := mem_lieCentralizer.mp hXWm
@@ -544,7 +589,31 @@ theorem nilReg_centralizer_nonempty_of_quasiSplit (d : GGPData F) (x : GSpin d.Q
     have hc1 : Commute dx (g : d.ambient) := hgc'.symm
     have hc3 : Commute dx (↑g⁻¹ : d.ambient) := hc1.units_inv_right
     exact ((hc1.mul_right hYc).mul_right hc3)
-  exact ⟨_, mk_mem_nilReg_of_isRegularNil _ _ hG ⟨X, hXm, hXn⟩ hreg⟩
+  exact ⟨_, mk_mem_nilReg_of_isRegularNil _ _ hG ⟨X, hXm, hXn⟩ hreg, ⟨X, hXm⟩, ⟨hXn, rfl⟩, rfl⟩
+
+/-- **Existence of regular nilpotent orbits of `𝔤_x`** (the direction `⇐` of
+`nilReg_centralizer_nonempty_iff`). For semisimple `x` with abelian moved part and `W'_x`, `V'_x`
+quasi-split: `X = (regNil on W'_x, regNil on V'_x)` is regular nilpotent in `𝔤_x`. Indeed
+`dim 𝔤_{x,Y} = dim so(W'_x)_{Y} + dim so(V'_x)_{Y} + (moved parts, constant) + 2` for `Y ∈ 𝔤_x`
+(`finrank_lieCentralizer_lieCentralizer_lie`, `finrank_lieCentralizer_fixed`,
+`soCent_inf_killSub_eq`), and the `so(W'_x)`, `so(V'_x)` terms are minimal at `X`
+(`le_finrank_soCent`, `finrank_soCent_regNil_le`). -/
+theorem nilReg_centralizer_nonempty_of_quasiSplit (d : GGPData F) (x : GSpin d.QW)
+    (hx : IsSS F ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW))
+    (hmoved : MovedPartAbelian d.QW x) (hW : IsQuasiSplitQF (d.QWfix x))
+    (hV : IsQuasiSplitQF (d.QVfix x)) :
+    (NilReg (grpCentralizer d.G ((d.diag x : d.G) : d.ambientˣ))
+      (lieCentralizer d.lie (((d.diag x : d.G) : d.ambientˣ) : d.ambient))).Nonempty := by
+  have hdisj := fixedSub_inf_movedSub_of_isSS x hx
+  have hcW := isCompl_fixedSub_orthogonal d.nondeg x hdisj
+  have hcV := isCompl_fixedSub_orthogonal d.nondeg_QV (d.incl x)
+    (fixedSub_inf_movedSub_incl d x hdisj)
+  have hV' : IsQuasiSplitQF (d.QV.comp (fixedSub (d.incl x)).subtype) :=
+    QuadClassify.isQuasiSplitQF_of_isometryEquiv (d.QVfixIso x) hV
+  obtain ⟨XW, hXWm, hXWn, hXWb⟩ := exists_side_regNil d.nondeg x hcW hW
+  obtain ⟨XV, hXVm, hXVn, hXVb⟩ := exists_side_regNil d.nondeg_QV (d.incl x) hcV hV'
+  obtain ⟨O, hO, -⟩ := exists_nilReg_of_sides d x hx hmoved hXWm hXWn hXWb hXVm hXVn hXVb
+  exact ⟨O, hO⟩
 
 /-- **Witt data for `O_{−ν}` in `W`** (the second Witt-theory step in the docstring of
 `exists_regularNil_inOrbitNu`): for a quasi-split GGP datum with `dim W = 2s + 2` even, `W` contains
@@ -686,6 +755,81 @@ theorem exists_wittData_W (d : GGPData F) (hqs : d.IsQuasiSplit) (s : ℕ) (hm :
     · simp only [h', dite_eq_left (show j < 2 * t by omega)]; rw [hJ]; simp
     · simp only [h', dite_eq_left (show j < 2 * t by omega)]; rw [hJ]; simp
 
+/-- **The split family of Luo's orbit `O_ν` in `V`** (first case of `exists_regularNil_inOrbitNu`):
+for `W` quasi-split and `dim V` even, `V = ⟨d₀⟩ ⊥ ⟨w_{-k..k}⟩` with `d₀` anisotropic and `w` a
+split family for `ν` built from `Z` and the hyperbolic part of `W`. -/
+theorem exists_orbitNu_family_V {F : Type*} [NontriviallyNormedField F] [PAdicField F]
+    (d : GGPData F) (hqW : IsQuasiSplitQF d.QW) (hev : Even (finrank F d.V)) :
+    ∃ (w : ℤ → d.V) (k : ℕ) (d₀ : d.V), IsSplitFamily d.QV w (d.ν : F) k ∧ d.QV d₀ ≠ 0 ∧
+      (∀ j : ℤ, |j| ≤ k → bform d.QV (w j) d₀ = 0) ∧ finrank F d.V = 2 * k + 2 := by
+  have hν : (d.ν : F) ≠ 0 := d.ν.ne_zero
+  have hsymmW : ∀ x y, bform d.QW x y = bform d.QW y x :=
+    fun x y => QuadraticMap.associated_isSymm F d.QW x y
+  have hQbW : ∀ x, bform d.QW x x = d.QW x := fun x => QuadraticMap.associated_eq_self_apply F d.QW x
+  have hdimV : finrank F d.V = d.m + (2 * d.r + 1) := by
+    rw [Module.finrank_prod, Module.finrank_fin_fun, Module.finrank_fin_fun]
+  have hodd : Odd (finrank F (Fin d.m → F)) := by
+    rw [Module.finrank_fin_fun]; rw [hdimV] at hev
+    obtain ⟨t, ht⟩ := hev; exact ⟨t - d.r - 1, by omega⟩
+  obtain ⟨s, h, a, hh, ha, hah, hm⟩ := exists_hyp_of_quasiSplit_odd d.nondeg hqW hodd
+  rw [Module.finrank_fin_fun] at hm
+  let wZ : ℤ → d.V := fun j => (0, zvec d.r j)
+  have hwZ : IsSplitFamily d.QV wZ (d.ν : F) d.r := by
+    intro i j hi hj
+    rw [bform_prod]
+    simp only [wZ, map_zero, zero_add]
+    exact bform_splitOddForm_zvec d.r _ hi hj
+  let hV : ℕ → d.V := fun b => (h b, 0)
+  have hw : IsSplitFamily d.QV (extFamily wZ hV (d.ν : F) d.r s) (d.ν : F) (d.r + s) :=
+    isSplitFamily_extFamily hwZ (fun i j hi hj => by
+      rw [bform_prod]; simp only [hV, map_zero, add_zero]; exact hh i j hi hj)
+      (fun j _ b _ => by rw [bform_prod]; simp [wZ, hV])
+  have hdim : finrank F d.V = 2 * (d.r + s) + 2 := by omega
+  refine ⟨_, d.r + s, (a, 0), hw, ?_, fun j hj => ?_, hdim⟩
+  · simpa using ha
+  · have hj' := abs_le.mp hj
+    push_cast at hj'
+    simp only [extFamily]
+    split_ifs with h1 h2
+    · rw [bform_prod]; simp [wZ]
+    · rw [bform_prod]
+      simp only [hV, Prod.smul_fst, Prod.smul_snd, smul_zero, map_smul, LinearMap.smul_apply,
+        map_zero, add_zero]
+      rw [hsymmW, hah _ (by rw [abs_le] at h1; omega), smul_zero]
+    · rw [bform_prod]; simp only [hV, map_zero, add_zero]
+      rw [hsymmW, hah _ (by rw [abs_le] at h1; omega)]
+
+/-- **The split family of Luo's orbit `O_{−ν}` in `W`** (second case of
+`exists_regularNil_inOrbitNu`): for a quasi-split GGP datum with `dim W` even `≥ 4`,
+`W = ⟨d₀⟩ ⊥ ⟨w_{-k..k}⟩` with `d₀` anisotropic and `w` a split family for `−ν`
+(`exists_wittData_W`). -/
+theorem exists_orbitNu_family_W {F : Type*} [NontriviallyNormedField F] [PAdicField F]
+    (d : GGPData F) (hqs : d.IsQuasiSplit) (hev : Even d.m) (h4 : 4 ≤ d.m) :
+    ∃ (w : ℤ → Fin d.m → F) (k : ℕ) (d₀ : Fin d.m → F), IsSplitFamily d.QW w (-(d.ν : F)) k ∧
+      d.QW d₀ ≠ 0 ∧ (∀ j : ℤ, |j| ≤ k → bform d.QW (w j) d₀ = 0) ∧
+      finrank F (Fin d.m → F) = 2 * k + 2 := by
+  have hν : (d.ν : F) ≠ 0 := d.ν.ne_zero
+  have hsymmW : ∀ x y, bform d.QW x y = bform d.QW y x :=
+    fun x y => QuadraticMap.associated_isSymm F d.QW x y
+  have hQbW : ∀ x, bform d.QW x x = d.QW x := fun x => QuadraticMap.associated_eq_self_apply F d.QW x
+  obtain ⟨s, hs⟩ : ∃ s, d.m = 2 * s + 2 := by
+    obtain ⟨t, ht⟩ := hev; exact ⟨t - 1, by omega⟩
+  obtain ⟨h, u, d₀, hh, hu, hd₀, hud, huh, hdh⟩ := exists_wittData_W d hqs s hs
+  have hw : IsSplitFamily d.QW (extFamily (fun _ => u) h (-(d.ν : F)) 0 s) (-(d.ν : F)) (0 + s) :=
+    isSplitFamily_extFamily (fun i j hi hj => by
+      have hi0 : i = 0 := by rw [abs_le] at hi; omega
+      have hj0 : j = 0 := by rw [abs_le] at hj; omega
+      subst hi0 hj0; simp [hQbW, hu]) hh (fun j _ b hb => huh b hb)
+  have hdim : finrank F (Fin d.m → F) = 2 * (0 + s) + 2 := by rw [Module.finrank_fin_fun]; omega
+  refine ⟨_, 0 + s, d₀, hw, hd₀, fun j hj => ?_, hdim⟩
+  have hj' := abs_le.mp hj
+  push_cast at hj'
+  simp only [extFamily]
+  split_ifs with h1 h2
+  · exact hud
+  · rw [map_smul, LinearMap.smul_apply, hsymmW, hdh _ (by rw [abs_le] at h1; omega), smul_zero]
+  · rw [hsymmW, hdh _ (by rw [abs_le] at h1; omega)]
+
 /-- **Luo's orbit `O_ν` exists in the GGP situation** (Waldspurger, *Compositio* 146 (2010),
 §7.1; Luo, *A local trace formula for the local Gan–Gross–Prasad conjecture for special
 orthogonal groups*, §2.1 and §7.1; classification of regular nilpotent orbits: Waldspurger,
@@ -728,63 +872,12 @@ theorem exists_regularNil_inOrbitNu {F : Type*} [NontriviallyNormedField F] [PAd
       ∃ X : CliffordAlgebra d.QW, IsRegularNil (gspin d.QW) X ∧
         IsInOrbitNu d.QW ⊤ (-(d.ν : F)) (adV d.QW X)) := by
   have hν : (d.ν : F) ≠ 0 := d.ν.ne_zero
-  have hsymmW : ∀ x y, bform d.QW x y = bform d.QW y x :=
-    fun x y => QuadraticMap.associated_isSymm F d.QW x y
-  have hQbW : ∀ x, bform d.QW x x = d.QW x := fun x => QuadraticMap.associated_eq_self_apply F d.QW x
-  constructor
-  · intro hev h4
-    have hdimV : finrank F d.V = d.m + (2 * d.r + 1) := by
-      rw [Module.finrank_prod, Module.finrank_fin_fun, Module.finrank_fin_fun]
-    have hodd : Odd (finrank F (Fin d.m → F)) := by
-      rw [Module.finrank_fin_fun]; rw [hdimV] at hev
-      obtain ⟨t, ht⟩ := hev; exact ⟨t - d.r - 1, by omega⟩
-    obtain ⟨s, h, a, hh, ha, hah, hm⟩ := exists_hyp_of_quasiSplit_odd d.nondeg hqs.1 hodd
-    rw [Module.finrank_fin_fun] at hm
-    let wZ : ℤ → d.V := fun j => (0, zvec d.r j)
-    have hwZ : IsSplitFamily d.QV wZ (d.ν : F) d.r := by
-      intro i j hi hj
-      rw [bform_prod]
-      simp only [wZ, map_zero, zero_add]
-      exact bform_splitOddForm_zvec d.r _ hi hj
-    let hV : ℕ → d.V := fun b => (h b, 0)
-    have hw : IsSplitFamily d.QV (extFamily wZ hV (d.ν : F) d.r s) (d.ν : F) (d.r + s) :=
-      isSplitFamily_extFamily hwZ (fun i j hi hj => by
-        rw [bform_prod]; simp only [hV, map_zero, add_zero]; exact hh i j hi hj)
-        (fun j _ b _ => by rw [bform_prod]; simp [wZ, hV])
-    have hdim : finrank F d.V = 2 * (d.r + s) + 2 := by omega
-    refine ⟨_, isRegularNil_regNil d.nondeg_QV hw hν hdim.le, isInOrbitNu_regNil hw hν
-      (d₀ := (a, 0)) ?_ (fun j hj => ?_) hdim⟩
-    · simpa using ha
-    · have hj' := abs_le.mp hj
-      push_cast at hj'
-      simp only [extFamily]
-      split_ifs with h1 h2
-      · rw [bform_prod]; simp [wZ]
-      · rw [bform_prod]
-        simp only [hV, Prod.smul_fst, Prod.smul_snd, smul_zero, map_smul, LinearMap.smul_apply,
-          map_zero, add_zero]
-        rw [hsymmW, hah _ (by rw [abs_le] at h1; omega), smul_zero]
-      · rw [bform_prod]; simp only [hV, map_zero, add_zero]
-        rw [hsymmW, hah _ (by rw [abs_le] at h1; omega)]
-  · intro hev h4
-    obtain ⟨s, hs⟩ : ∃ s, d.m = 2 * s + 2 := by
-      obtain ⟨t, ht⟩ := hev; exact ⟨t - 1, by omega⟩
-    obtain ⟨h, u, d₀, hh, hu, hd₀, hud, huh, hdh⟩ := exists_wittData_W d hqs s hs
-    have hw : IsSplitFamily d.QW (extFamily (fun _ => u) h (-(d.ν : F)) 0 s) (-(d.ν : F)) (0 + s) :=
-      isSplitFamily_extFamily (fun i j hi hj => by
-        have hi0 : i = 0 := by rw [abs_le] at hi; omega
-        have hj0 : j = 0 := by rw [abs_le] at hj; omega
-        subst hi0 hj0; simp [hQbW, hu]) hh (fun j _ b hb => huh b hb)
-    have hdim : finrank F (Fin d.m → F) = 2 * (0 + s) + 2 := by rw [Module.finrank_fin_fun]; omega
-    refine ⟨_, isRegularNil_regNil d.nondeg hw (neg_ne_zero.2 hν) hdim.le,
-      isInOrbitNu_regNil hw (neg_ne_zero.2 hν) hd₀ (fun j hj => ?_) hdim⟩
-    have hj' := abs_le.mp hj
-    push_cast at hj'
-    simp only [extFamily]
-    split_ifs with h1 h2
-    · exact hud
-    · rw [map_smul, LinearMap.smul_apply, hsymmW, hdh _ (by rw [abs_le] at h1; omega), smul_zero]
-    · rw [hsymmW, hdh _ (by rw [abs_le] at h1; omega)]
+  refine ⟨fun hev _ => ?_, fun hev h4 => ?_⟩
+  · obtain ⟨w, k, d₀, hw, hd₀, hd₀w, hdim⟩ := exists_orbitNu_family_V d hqs.1 hev
+    exact ⟨_, isRegularNil_regNil d.nondeg_QV hw hν hdim.le, isInOrbitNu_regNil hw hν hd₀ hd₀w hdim⟩
+  · obtain ⟨w, k, d₀, hw, hd₀, hd₀w, hdim⟩ := exists_orbitNu_family_W d hqs hev h4
+    exact ⟨_, isRegularNil_regNil d.nondeg hw (neg_ne_zero.2 hν) hdim.le,
+      isInOrbitNu_regNil hw (neg_ne_zero.2 hν) hd₀ hd₀w hdim⟩
 
 end NilReg
 
