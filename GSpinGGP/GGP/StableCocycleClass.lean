@@ -5,12 +5,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import GSpinGGP.GGP.StableCocycleWitt
 
 /-!
-# The class of `y` in `H¹(F, S_x)` is well defined
+# The class of `y` in `H¹(F, S_x)` is well defined, and determines `y`
 
 Two isometries `ψ, ψ'` computing the class of `y` (`GGPData.IsStableIso`) give cohomologous cocycles
-in `S_x`: `c = ψ⁻¹ ψ'` is `P(k₀)` with `k₀` commuting with `x` (the normalization `det ψ = det φ_α`),
-`c` is rational on `W'_x` (`exists_isometryEquiv_fixedSub`), and splitting off a rational lift of
-`c|_{W'_x}` leaves an element of `T_x(F̄)`.  Own work, elementary.
+in `S_x` (`IsStableIso.rel`): `c = ψ⁻¹ ψ'` is `P(k₀)` with `k₀` commuting with `x` (by the normalization
+`det ψ = det φ_α`), `c` is rational on `W'_x` (`exists_isometryEquiv_fixedSub`), its restriction there
+has determinant `1` (Steinberg) and lifts to `k_r ∈ GSpin(W)(F)` supported on `W'_x`, and
+`k_r⁻¹ k₀ ∈ T_x(F̄)`.  Conjugating `y` by a rational `g` does not change the cocycle
+(`IsStableIso.conj`), so the class depends only on the `GSpin(W_α)(F)`-conjugacy class of `y`
+(`IsStableIso.mk_eq`).  Conversely equal classes come from conjugate elements
+(`IsStableIso.exists_conj_of_mk_eq`).  Thesis Prop. 6.6.1(iii); own work, elementary.
 -/
 
 noncomputable section
@@ -269,6 +273,80 @@ theorem IsStableIso.mk_eq {τ : InnerTwist d.QW} {x : GSpin d.QW} (hx : d.IsGamm
   refine (H1.mk_eq_mk.2 ⟨1, (d.torusBarFbar x).one_mem, fun σ => ?_⟩).trans
     (H1.mk_eq_mk.2 (h''.rel hx h'))
   rw [hco σ, inv_one, one_mul, map_one, mul_one]
+
+/-- **Equal classes come from conjugate elements** (injectivity in Thesis Prop. 6.6.1(iii)): if the
+cocycles of `y` and `y'` are cohomologous in `S_x`, then `y' = g y g⁻¹` for some `g ∈ GSpin(W_α)(F)`.
+(With `b_σ = t⁻¹ a_σ σ(t)`, the isometry `ψ' ∘ (ψ ∘ P(t))⁻¹` of `W_{α,F̄}` is Galois-fixed of determinant
+`1`, so it is `P(g)` for a rational `g`.) -/
+theorem IsStableIso.exists_conj_of_mk_eq {τ : InnerTwist d.QW} {x : GSpin d.QW}
+    {y y' : GSpin (d.twist τ).QW} {ψ ψ' : (d.QW.baseChange Kb).IsometryEquiv (τ.Q'.baseChange Kb)}
+    (h : d.IsStableIso τ x y ψ) (h' : d.IsStableIso τ x y' ψ')
+    (heq : H1.mk h.cocycle = H1.mk h'.cocycle) :
+    ∃ g : GSpin (d.twist τ).QW, y' = g * y * g⁻¹ := by
+  obtain ⟨S, ⟨t, ht, hSt⟩, hrel⟩ := H1.mk_eq_mk.1 heq
+  -- the isometry `χ = ψ' ∘ (ψ ∘ P(t))⁻¹` of `W_{α,F̄}`
+  obtain ⟨A, hAdef⟩ : ∃ A, (specPIso t).trans ψ = A := ⟨_, rfl⟩
+  obtain ⟨χ, hχdef⟩ : ∃ χ, A.symm.trans ψ' = χ := ⟨_, rfl⟩
+  have hglA : glOf A = glOf ψ * S := by rw [← hAdef, glOf_trans, glOf_specPIso, hSt]
+  have hglχ : glOf χ = glOf ψ' * (glOf ψ * S)⁻¹ := by rw [← hχdef, glOf_trans, glOf_symm, hglA]
+  -- `χ` is Galois-fixed
+  have hfix : ∀ σ : GalF F, galGL d.m σ (glOf χ) = glOf χ := by
+    intro σ
+    have e : (glOf ψ')⁻¹ * galGL d.m σ (glOf ψ') =
+        S⁻¹ * ((glOf ψ)⁻¹ * galGL d.m σ (glOf ψ)) * galGL d.m σ S := hrel σ
+    have e' : galGL d.m σ (glOf ψ') =
+        glOf ψ' * (S⁻¹ * ((glOf ψ)⁻¹ * galGL d.m σ (glOf ψ)) * galGL d.m σ S) := by
+      rw [← e, mul_inv_cancel_left]
+    rw [hglχ, map_mul, map_inv, map_mul, e']
+    group
+  -- `det χ = 1`, so `χ = P(k)`
+  have hdetχ : LinearMap.det (χ.toLinearEquiv : Kb ⊗[F] (Fin d.m → F) →ₗ[Kb] _) = 1 := by
+    have h1 : ((((glOf ψ * S)⁻¹ : GL (Fin d.m) Kb)) : Matrix (Fin d.m) (Fin d.m) Kb).det *
+        (((glOf ψ * S : GL (Fin d.m) Kb)) : Matrix (Fin d.m) (Fin d.m) Kb).det = 1 := by
+      rw [← Matrix.det_mul, ← Units.val_mul, inv_mul_cancel, Units.val_one, Matrix.det_one]
+    have h2 : (((glOf ψ * S : GL (Fin d.m) Kb)) : Matrix (Fin d.m) (Fin d.m) Kb).det =
+        ((glOf ψ' : GL (Fin d.m) Kb) : Matrix (Fin d.m) (Fin d.m) Kb).det := by
+      rw [Units.val_mul, Matrix.det_mul, ← hSt, det_specMatFbar, mul_one, h.2.2, h'.2.2]
+    rw [← LinearMap.det_toMatrix (bcBasis F d.m), ← coe_glOf, hglχ, Units.val_mul, Matrix.det_mul,
+      ← h2, mul_comm, h1]
+  obtain ⟨k, hk⟩ := gspin_specP_surjective_SO _ (isNondeg_baseChange τ.Q' τ.nondeg') χ.toLinearEquiv
+    χ.map_app hdetχ
+  have hkχ : specMatFbar τ.Q' k = glOf χ := by
+    rw [← glOf_specPIso]
+    exact Units.ext (congrArg (LinearMap.toMatrix (bcBasis F d.m) (bcBasis F d.m))
+      (LinearMap.ext fun w => by change specP _ k w = χ w; rw [hk]; rfl))
+  obtain ⟨g, hg⟩ := exists_specMatFbar_bcGSpin_eq (d := d.twist τ) ⟨k, hkχ⟩ hfix
+  have hχg : ∀ w, χ w = specP _ (bcGSpin τ.Q' g) w := fun w => by
+    have e : LinearMap.toMatrix (bcBasis F d.m) (bcBasis F d.m)
+        (χ.toLinearEquiv : Kb ⊗[F] (Fin d.m → F) →ₗ[Kb] _) =
+        LinearMap.toMatrix (bcBasis F d.m) (bcBasis F d.m)
+          (specP _ (bcGSpin τ.Q' g) : Kb ⊗[F] (Fin d.m → F) →ₗ[Kb] _) := by
+      rw [← coe_glOf, ← coe_specMatFbar]
+      exact (congrArg Units.val hg).symm
+    exact LinearMap.congr_fun ((LinearMap.toMatrix _ _).injective e) w
+  -- `C(χ)` carries `y` to `y'`
+  set X : (CliffordAlgebra (d.QW.baseChange Kb))ˣ := bcUnits d.QW (x : (CliffordAlgebra d.QW)ˣ)
+  have htX : ((t : (CliffordAlgebra (d.QW.baseChange Kb))ˣ) : CliffordAlgebra (d.QW.baseChange Kb)) * (X : CliffordAlgebra (d.QW.baseChange Kb)) *
+      (((t : (CliffordAlgebra (d.QW.baseChange Kb))ˣ)⁻¹ : (CliffordAlgebra (d.QW.baseChange Kb))ˣ) : CliffordAlgebra (d.QW.baseChange Kb)) = X := by
+    have e : ((t : (CliffordAlgebra (d.QW.baseChange Kb))ˣ) : CliffordAlgebra (d.QW.baseChange Kb)) * (X : CliffordAlgebra (d.QW.baseChange Kb)) =
+        (X : CliffordAlgebra (d.QW.baseChange Kb)) * ((t : (CliffordAlgebra (d.QW.baseChange Kb))ˣ) : CliffordAlgebra (d.QW.baseChange Kb)) :=
+      congrArg Units.val ht.1.eq
+    rw [e, mul_assoc, Units.mul_inv, mul_one]
+  have hAx : CliffordAlgebra.map A.toIsometry (X : CliffordAlgebra _) =
+      bcUnits τ.Q' (y : (CliffordAlgebra τ.Q')ˣ) := by
+    rw [← hAdef, map_trans_apply, map_specPIso_apply, htX, h.1]
+  have hχy : CliffordAlgebra.map χ.toIsometry (bcUnits τ.Q' (y : (CliffordAlgebra τ.Q')ˣ) :
+      CliffordAlgebra _) = bcUnits τ.Q' (y' : (CliffordAlgebra τ.Q')ˣ) := by
+    rw [← hχdef, map_trans_apply, ← hAx, map_symm_map, h'.1]
+  have hmapχ : CliffordAlgebra.map χ.toIsometry =
+      CliffordAlgebra.map (specPIso (bcGSpin τ.Q' g)).toIsometry := by
+    congr 1
+    ext w
+    exact hχg w
+  rw [hmapχ, map_specPIso_apply] at hχy
+  refine ⟨g, bcUnits_GSpin_injective τ.Q' (Units.ext ?_)⟩
+  rw [← hχy]
+  simp [bcGSpin, map_mul, map_inv]
 
 end GGPData
 
