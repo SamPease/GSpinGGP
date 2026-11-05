@@ -478,19 +478,39 @@ sign is a character of the finite group $H^1(F,S_x)$ taking the value $-1$, so t
 \end{proof}
 
 \section{Rearrangement and the atom}
+\begin{lemma}[The torus-class count]
+\label{torusClass_count}
+\lean{GSpinGGP.torusClass_count}
+\leanok
+\uses{GammaClass, InnerFormSystem, InnerTwist, IsGammaElt, IsQuasiSplit, StablyConjG, n_alpha}
+Let $f$ be a function of the tori $T_x$, $x\in\Gamma(G,H)$, with $f(T_x)=f(T_{x'})$ whenever $x,x'$ are
+strongly stably conjugate to a common $y\in\Gamma(G_\beta,H_\beta)$, and $f=0$ on non-quasi-split tori. Then
+\[ \sum_{[T']\in\Gamma(G_\alpha,H_\alpha)/\sim}|W(T')|^{-1}f(T_{x(T')})=\sum_{[T]\in\Gamma(G,H)/\sim}|W(T)|^{-1}
+\frac{n_\alpha(x_T)}{n_1(x_T)}f(T), \]
+where $x(T')$ is strongly stably conjugate to a generator of $T'$ ($f(T_{x(T')}) := 0$ if there is none).
+\end{lemma}
+\begin{proof}
+Not yet formalized. Regroup by stable classes; $n_\alpha(x)=|q_x^{-1}(\alpha)|$, and the rational classes of
+tori over $\alpha$ are the orbits of $(N_x/S_x)(F)$ on $q_x^{-1}(\alpha)\subseteq H^1(F,S_x)$, with
+stabilizers $W(T')$ (orbit--stabilizer).
+\end{proof}
+
 \begin{lemma}[The stable rearrangement at $s>0$]
 \label{stable_rearrangement_pos}
 \lean{GSpinGGP.stable_rearrangement_pos}
 \leanok
 \uses{G, GGPData, GSpin, GammaClass, InnerFormSystem, InnerTwist, IsGammaElt, IsQuasiSplit, StablyConjG, TemperedPacketFamily, TorusTransfer, charG, deltaGGP, germ, gspin, kottwitzSign, n_alpha, orbitChoice, signedCount, weylDisc}
-Given germ transfer, vanishing of the non-quasi-split classes, and Prop.~6.6.1(i),(ii): for $s>0$,
+Given germ transfer and Prop.~6.6.1(i),(ii): for $s>0$,
 \[ \sum_\alpha m_{\mathrm{geom},s}(\theta_\alpha)=\int_{\Gamma(G,H)}\frac{\sum_\alpha e(G_\alpha)n_\alpha(x)}{n_1(x)}
 c_{\theta_1}(x)D^G(x)^{1/2}\Delta(x)^{s-1/2}\,dx \] (Thesis (6.7.2)--(6.7.5) before the limit).
 \end{lemma}
 \begin{proof}
-Not yet formalized. At fixed $s>0$ the integrals converge absolutely; $y\mapsto x$ is a measure-preserving
-injection $\Gamma^{qd}_{\mathrm{stab}}(G_\alpha,H_\alpha)\hookrightarrow\Gamma^{qd}_{\mathrm{stab}}(G,H)$, and
-(TRANS) gives $c_{\theta_\alpha}(y)=e(G_\alpha)c_{\theta_1}(x)$.
+\leanok
+\uses{torusClass_count, orbitChoice_mem_nilReg_of_qd}
+Torus by torus: non-quasi-split tori contribute $0$; a quasi-split torus $T_y$ of $G_\alpha$ has
+$\int_{T_y/A}=e(G_\alpha)\int_{T_x/A}$ for $x\sim_{\mathrm{stab}}y$ (the torus transfer identifies the
+probability Haar measures, $D^G$ and $\Delta$; germ transfer at the regular orbits $\mathcal O_x$,
+$\mathcal O_y$); regroup with the torus-class count; the stable weight is constant on $T_{x,\natural}$.
 \end{proof}
 
 \begin{proposition}[Thesis (6.7.5)]
@@ -549,18 +569,32 @@ $c_{\theta_1,\mathcal O_1}(1)$ (Thesis \S6.7 after (6.7.6)).
 Non-central and non-quasi-split classes have weight $0$; the atom gives the value above.
 \end{proof}
 
-\begin{lemma}[Luo's orbit at $x=1$]
-\label{exists_orbitSpec_one_of_even}
-\lean{GSpinGGP.exists_orbitSpec_one_of_even}
+\begin{lemma}[Luo's orbit at quasi-split points]
+\label{exists_orbitSpec_of_quasiSplit}
+\lean{GSpinGGP.GGPData.exists_orbitSpec_of_quasiSplit}
 \leanok
 \uses{G, GGPData, GSpin, IsQuasiSplit, gspin}
-Let $G$ be quasi-split with $\dim V$ or $\dim W$ even and $\ge 4$. Then some $\mathcal O\in\Nilreg(\mathfrak g)$
-satisfies Luo's condition at $x=1$ (\cite{Luo} \S7.1).
+Let $x\in\mathrm{GSpin}(W)(F)$ be semisimple with abelian moved part and $W'_x$, $V'_x$ quasi-split.
+Then some $\mathcal O\in\Nilreg(\mathfrak g_x)$ satisfies Luo's condition at $x$ (\cite{Luo} \S7.1).
 \end{lemma}
 \begin{proof}
 \leanok
 \uses{LIT-jantzen_finrank_soCentMat_ge, exists_regularNil_inOrbitNu, witt_decomposition}
-Luo's orbit in the even factor, paired with a regular nilpotent of the other factor.
+Luo's split family for the descended datum $(W'_x,V'_x)$, carried into $V$ (or $W$) by the
+isometric embedding, paired with a regular element of the other factor.
+\end{proof}
+
+\begin{lemma}[$\mathcal O_x$ is regular at quasi-split points]
+\label{orbitChoice_mem_nilReg_of_qd}
+\lean{GSpinGGP.orbitChoice_mem_nilReg_of_qd}
+\leanok
+\uses{G, GGPData, GSpin, IsGammaElt, gspin, orbitChoice}
+For $x\in\Gamma(G,H)$ with $G'_x$ quasi-split, $\mathcal O_x\in\Nilreg(\mathfrak g_x)$.
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{exists_orbitSpec_of_quasiSplit}
+Lemma~\ref{exists_orbitSpec_of_quasiSplit}.
 \end{proof}
 
 \begin{lemma}[$\mathcal O_1$ is regular]
@@ -572,7 +606,7 @@ For $G$ quasi-split, $\mathcal O_1\in\Nilreg(\mathfrak g)$.
 \end{lemma}
 \begin{proof}
 \leanok
-\uses{IsGammaElt, exists_orbitSpec_one_of_even, nilReg_centralizer_nonempty_iff}
+\uses{IsGammaElt, exists_orbitSpec_of_quasiSplit}
 Luo's recipe applied to $(G,H)$ selects a regular orbit, which exists since $G$ is quasi-split.
 \end{proof}
 
