@@ -2303,7 +2303,8 @@ Regrouping both sides by stable classes, this says that `N_α = Σ |W(T')|⁻¹`
 Expected proof: `n_α(x) = |q_x⁻¹(α)|` (`n_alpha_eq_card_twistIdx`), and the rational classes of tori
 over `α` are the orbits of `(N_x/S_x)(F)` on `q_x⁻¹(α) ⊆ H¹(F, S_x)`, with stabilizers `W(T')`
 (orbit–stabilizer).  Checks: at `α = 1` both sides agree by the invariance of `f`; for central `x`,
-`n_α(x) = [α = 1]`. -/
+`n_α(x) = [α = 1]`.  (`n_1(x) ≥ 1`, `x` itself being strongly stably conjugate to its image in `G_1`;
+`hqs` and `hf0` are not needed for the identity.) -/
 theorem torusClass_count (hqs : d.IsQuasiSplit) (IF : InnerFormSystem d) (α : IF.Idx)
     (f : Subgroup ↥(GSpin d.QW) → ℂ)
     (hf : ∀ (β : IF.Idx) (y : ↥(GSpin (IF.data β).QW)) (x x' : ↥(GSpin d.QW)),
