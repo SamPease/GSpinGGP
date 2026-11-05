@@ -7,6 +7,7 @@ import GSpinGGP.TraceFormula.JHatSelfDual
 import GSpinGGP.Foundations.Representations
 import GSpinGGP.Foundations.GSpin
 import GSpinGGP.Foundations.HypPlane
+import GSpinGGP.Foundations.HypFrame
 import GSpinGGP.Foundations.SoCentralizer
 import GSpinGGP.Foundations.RegularNilpotent
 import GSpinGGP.Foundations.QuadraticForms
@@ -55,6 +56,8 @@ import GSpinGGP.GGP.GaloisTorus
 import GSpinGGP.GGP.StableCocycle
 import GSpinGGP.GGP.StableCocycleEven
 import GSpinGGP.GGP.StableCocycleWitt
+import GSpinGGP.GGP.EigenFrame
+import GSpinGGP.GGP.TorusFrame
 import GSpinGGP.GGP.GammaClassFinite
 import GSpinGGP.GGP.TwistPlane
 import GSpinGGP.GGP.TwistTorus
