@@ -1,4 +1,5 @@
 import Mathlib
+import GSpinGGP.Foundations.Determinant
 import TauCeti.LinearAlgebra.CliffordAlgebra.Vectors
 import TauCeti.LinearAlgebra.CliffordAlgebra.Functoriality
 import TauCeti.LinearAlgebra.BilinearForm.BaseChange
@@ -869,6 +870,27 @@ theorem ker_specP [Module.Finite K V] {Q : QuadraticForm K V} (hQ : IsNondeg Q) 
     rfl
   · rintro _ ⟨c, rfl⟩
     exact specP_scalarGSpin_eq_one c
+
+/-- Two elements of `GSpin(V)` with the same image in `SO(V)` differ by a scalar (`ker_specP`). -/
+theorem exists_eq_mul_scalarGSpin_of_specP_eq [Module.Finite K V] {Q : QuadraticForm K V}
+    (hQ : IsNondeg Q) {u v : ↥(GSpin Q)} (h : specP Q u = specP Q v) :
+    ∃ c, u = v * scalarGSpin Q c := by
+  have hker : v⁻¹ * u ∈ (specP Q).ker := by
+    rw [MonoidHom.mem_ker, map_mul, map_inv, h, inv_mul_cancel]
+  rw [ker_specP hQ] at hker
+  obtain ⟨c, hc⟩ := hker
+  exact ⟨c, by rw [hc, mul_inv_cancel_left]⟩
+
+/-- If `g u g⁻¹ = u c` in `GSpin(V)` with `c` a scalar, then `c ^ dim C(V) = 1`
+(`pow_finrank_eq_one_of_conj_eq_smul`). -/
+theorem pow_finrank_eq_one_of_conj_eq_mul_scalarGSpin [Module.Finite K V] {Q : QuadraticForm K V}
+    {u g : ↥(GSpin Q)} {c : Kˣ} (h : g * u * g⁻¹ = u * scalarGSpin Q c) :
+    (c : K) ^ Module.finrank K (CliffordAlgebra Q) = 1 := by
+  have h2 := congrArg (fun z : ↥(GSpin Q) => ((z : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) h
+  refine pow_finrank_eq_one_of_conj_eq_smul (u := (u : (CliffordAlgebra Q)ˣ))
+    (g := (g : (CliffordAlgebra Q)ˣ)) (h2.trans ?_)
+  change _ * algebraMap K _ (c : K) = _
+  rw [Algebra.smul_def, ← Algebra.commutes]
 
 omit [Invertible (2 : K)] in
 /-- The scalars `K^×` are central in `GSpin(V)` (Thesis §5.1.2). -/

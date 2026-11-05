@@ -13,6 +13,8 @@ Ingredients of the torus-class count (`torusClass_count`, Thesis (6.7.2)–(6.7.
   commutes with all of `T_x(F)` (by base change, from `Steinberg.commute_of_fixes_eigenspace_one`).
   Consequently (not formalized here) `N(T_x)` acts freely, through `W(T_x) = N(T_x)/Z(T_x)`, on the
   elements `t` with `T_t = T_x`.
+* `finite_conj_torusOf`: only finitely many `t ∈ T_x(F)` are `GSpin(W)(F̄)`-conjugate to `x`.
+* `finite_weylQuot`, `weylCardOf_pos`: `W(T_x)` is finite, so `|W(T_x)| ≥ 1`.
 -/
 
 noncomputable section
@@ -26,30 +28,6 @@ variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
 set_option hygiene false in
 local notation "Kb" => AlgebraicClosure F
-
-/-- **A conjugate of a unit by a scalar multiple**: in a finite-dimensional algebra, if
-`g u g⁻¹ = c • u` for a unit `u`, then `c ^ dim A = 1` (compare the determinants of left
-multiplication). -/
-theorem pow_finrank_eq_one_of_conj_eq_smul {K A : Type*} [Field K] [Ring A] [Algebra K A]
-    [FiniteDimensional K A] {u g : Aˣ} {c : K}
-    (h : ((g * u * g⁻¹ : Aˣ) : A) = c • (u : A)) : c ^ Module.finrank K A = 1 := by
-  have hdet : ∀ v : Aˣ, LinearMap.det (LinearMap.mulLeft K (v : A)) *
-      LinearMap.det (LinearMap.mulLeft K ((v⁻¹ : Aˣ) : A)) = 1 := fun v => by
-    rw [← LinearMap.det_comp, ← LinearMap.mulLeft_mul, Units.mul_inv, LinearMap.mulLeft_one,
-      LinearMap.det_id]
-  have h1 : LinearMap.det (LinearMap.mulLeft K ((g * u * g⁻¹ : Aˣ) : A)) =
-      LinearMap.det (LinearMap.mulLeft K (u : A)) := by
-    rw [Units.val_mul, Units.val_mul, LinearMap.mulLeft_mul, LinearMap.mulLeft_mul,
-      LinearMap.det_comp, LinearMap.det_comp]
-    linear_combination LinearMap.det (LinearMap.mulLeft K (u : A)) * hdet g
-  have h2 : LinearMap.det (LinearMap.mulLeft K (c • (u : A))) =
-      c ^ Module.finrank K A * LinearMap.det (LinearMap.mulLeft K (u : A)) := by
-    rw [show LinearMap.mulLeft K (c • (u : A)) = c • LinearMap.mulLeft K (u : A) by
-      ext; simp [smul_mul_assoc], LinearMap.det_smul]
-  rw [h, h2] at h1
-  have hu : LinearMap.det (LinearMap.mulLeft K (u : A)) ≠ 0 := fun h0 => by
-    have := hdet u; rw [h0, zero_mul] at this; exact zero_ne_one this
-  exact (mul_eq_right₀ hu).1 h1
 
 namespace GGPData
 
@@ -88,15 +66,24 @@ theorem commute_torusOf_of_commute {x z t : ↥(GSpin d.QW)} (hx : d.IsGammaElt 
     (hzx.map (bcGSpin d.QW))
   exact bcGSpin_injective d.QW (by rw [map_mul, map_mul, h.eq])
 
-/-- Over `F̄`, two elements of `GSpin(W)` with the same image in `SO(W)` differ by a scalar. -/
-theorem exists_eq_mul_scalarGSpin_of_specP_eq {u v : ↥(GSpin (d.QW.baseChange Kb))}
-    (h : specP _ u = specP _ v) : ∃ c, u = v * scalarGSpin _ c := by
-  have hker : v⁻¹ * u ∈ (specP (d.QW.baseChange Kb)).ker := by
-    rw [MonoidHom.mem_ker, map_mul, map_inv, h, inv_mul_cancel]
-  rw [ker_specP (isNondeg_baseChange _ d.nondeg)] at hker
-  obtain ⟨c, hc⟩ := hker
-  exact ⟨c, by rw [hc, mul_inv_cancel_left]⟩
+/-- Two `GSpin(W)(F̄)`-conjugates `t, t₀` of `x` with the same image in `SO(W)` differ by a
+scalar `c` with `c ^ dim C(W) = 1` (`exists_eq_mul_scalarGSpin_of_specP_eq`,
+`pow_finrank_eq_one_of_conj_eq_mul_scalarGSpin`). -/
+theorem exists_pow_eq_one_of_conj_of_specP_eq {x t t₀ : ↥(GSpin d.QW)}
+    (ht : ∃ g : ↥(GSpin (d.QW.baseChange Kb)), g * bcGSpin d.QW x * g⁻¹ = bcGSpin d.QW t)
+    (ht₀ : ∃ g : ↥(GSpin (d.QW.baseChange Kb)), g * bcGSpin d.QW x * g⁻¹ = bcGSpin d.QW t₀)
+    (hP : specP _ (bcGSpin d.QW t) = specP _ (bcGSpin d.QW t₀)) :
+    ∃ c : Kbˣ, (c : Kb) ^ Module.finrank Kb (CliffordAlgebra (d.QW.baseChange Kb)) = 1 ∧
+      bcGSpin d.QW t₀ * scalarGSpin _ c = bcGSpin d.QW t := by
+  obtain ⟨c, htc⟩ := exists_eq_mul_scalarGSpin_of_specP_eq (isNondeg_baseChange _ d.nondeg) hP
+  refine ⟨c, ?_, htc.symm⟩
+  obtain ⟨g, hg⟩ := ht
+  obtain ⟨g₀, hg₀⟩ := ht₀
+  refine pow_finrank_eq_one_of_conj_eq_mul_scalarGSpin (u := bcGSpin d.QW t₀) (g := g * g₀⁻¹) ?_
+  rw [← htc, ← hg, ← hg₀]
+  group
 
+-- elaborating the frame-scalar bookkeeping over `F̄` exceeds the default budget
 set_option maxHeartbeats 400000 in
 /-- **Finitely many conjugates of `x` in `T_x(F)`**: for `x ∈ Γ(G,H)`, only finitely many
 `t ∈ T_x(F)` are `GSpin(W)(F̄)`-conjugate to `x`. Over `F̄`, `P(t)` acts on an eigen-frame of
@@ -166,23 +153,8 @@ theorem finite_conj_torusOf {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x) :
     have hP : specP _ (bcGSpin d.QW t) = specP _ (bcGSpin d.QW t₀) :=
       LinearEquiv.toLinearMap_injective (hF.eq_of_scale (t := fun i => (τ i : Kbˣ))
         (fun w hw => hW w hw) hτ (fun w hw => hW₀ w hw) hτ₀)
-    obtain ⟨c, htc⟩ := exists_eq_mul_scalarGSpin_of_specP_eq hP
-    refine ⟨c, ?_, htc.symm⟩
-    -- and are conjugate, so `c ^ N = 1`
-    obtain ⟨g, hg⟩ := ht.2
-    obtain ⟨g₀, hg₀⟩ := ht₀.2
-    have hconj : (g * g₀⁻¹) * bcGSpin d.QW t₀ * (g * g₀⁻¹)⁻¹ =
-        bcGSpin d.QW t₀ * scalarGSpin _ c := by
-      rw [← htc, ← hg, ← hg₀]; group
-    have h2 := congrArg (fun z : ↥(GSpin (d.QW.baseChange Kb)) =>
-      ((z : (CliffordAlgebra (d.QW.baseChange Kb))ˣ) :
-        CliffordAlgebra (d.QW.baseChange Kb))) hconj
-    refine pow_finrank_eq_one_of_conj_eq_smul
-      (u := (bcGSpin d.QW t₀ : (CliffordAlgebra (d.QW.baseChange Kb))ˣ))
-      (g := ((g * g₀⁻¹ : ↥(GSpin _)) : (CliffordAlgebra (d.QW.baseChange Kb))ˣ))
-      (h2.trans ?_)
-    change _ * algebraMap Kb _ (c : Kb) = _
-    rw [Algebra.smul_def, ← Algebra.commutes]
+    obtain ⟨c, hc, htc⟩ := exists_pow_eq_one_of_conj_of_specP_eq (x := x) ht.2 ht₀.2 hP
+    exact ⟨c, hc, htc⟩
   -- conclude
   refine Set.Finite.of_finite_image ?_ (bcGSpin_injective d.QW).injOn
   refine (Set.finite_iUnion hfib).subset ?_
