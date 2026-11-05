@@ -1815,6 +1815,12 @@ theorem gammaIntegrand_eq_zero_of_not_qd (d : GGPData F) (θ : ↥d.G → ℂ)
     rw [germ_of_not_mem hO, mul_zero, zero_mul]
   · rfl
 
+/-- The integrand of `m_{geom,s}` vanishes off `T_♮` (by definition). -/
+theorem gammaIntegrand_of_not_mem {d : GGPData F} {θ : ↥d.G → ℂ} {T : Subgroup ↥(GSpin d.QW)}
+    {s : ℝ} {t : ↥(GSpin d.QW)} (h : ¬ (d.IsGammaElt t ∧ d.torusOf t = T)) :
+    gammaIntegrand ψ d θ T s t = 0 :=
+  ite_eq_right h
+
 /-! ## 8. The stable rearrangement (Thesis (6.7.2)–(6.7.5)) -/
 
 section Stable
@@ -2162,25 +2168,6 @@ theorem isQdAt_iff_of_stronglyStablyConj (IF : InnerFormSystem d) {α : IF.Idx}
     fun h => ⟨QuadClassify.isQuasiSplitQF_of_isometryEquiv θ.symm h.1,
       QuadClassify.isQuasiSplitQF_of_isometryEquiv θV.symm h.2⟩⟩
 
-/-- The integrand of `m_{geom,s}` is `A_{G,H}(F)`-invariant for `θ ∈ QCfin`
-(`gammaIntegrand_scalar_mul_of_mem_QC` on each `QC d χ`, and additivity on quasi-characters). -/
-theorem gammaIntegrand_scalar_mul_of_mem_QCfin {θ : ↥d.G → ℂ} (hθ : θ ∈ QCfin d)
-    (T : Subgroup ↥(GSpin d.QW)) (s : ℝ) (c : Fˣ) (t : ↥(GSpin d.QW)) :
-    gammaIntegrand ψ d θ T s (scalarGSpin d.QW c * t) = gammaIntegrand ψ d θ T s t := by
-  let S : Submodule ℂ (↥d.G → ℂ) :=
-    { carrier := {θ | IsQuasiCharacter d.G d.lie d.bilin ψ θ ∧
-        ∀ (c : Fˣ) (t : ↥(GSpin d.QW)),
-          gammaIntegrand ψ d θ T s (scalarGSpin d.QW c * t) = gammaIntegrand ψ d θ T s t}
-      add_mem' := fun {θ₁ θ₂} h₁ h₂ => ⟨isQuasiCharacter_add d ψ h₁.1 h₂.1, fun c t => by
-        rw [gammaIntegrand_add ψ d h₁.1 h₂.1, gammaIntegrand_add ψ d h₁.1 h₂.1, h₁.2, h₂.2]⟩
-      zero_mem' := ⟨isQuasiCharacter_zero d ψ, fun c t => by
-        rw [gammaIntegrand_zero, gammaIntegrand_zero]⟩
-      smul_mem' := fun a {θ} h => ⟨isQuasiCharacter_smul d ψ a h.1, fun c t => by
-        rw [gammaIntegrand_smul ψ d a h.1, gammaIntegrand_smul ψ d a h.1, h.2]⟩ }
-  have hle : QCfin d ≤ S := iSup_le fun _ _ hθ =>
-    ⟨hθ.1 ψ, fun c t => gammaIntegrand_scalar_mul_of_mem_QC ψ d hθ T s c t⟩
-  exact (hle hθ).2 c t
-
 /-- `A_{G,H}(F)`-invariance of the integrand of `m_{geom,s}` along a torus `T`, for `θ ∈ QCfin`
 (`gammaIntegrand_scalar_mul_of_mem_QCfin`). -/
 theorem gammaIntegrand_mul_mem_scalarsIn {d' : GGPData F} {θ : ↥d'.G → ℂ} (hθ : θ ∈ QCfin d')
@@ -2192,7 +2179,7 @@ theorem gammaIntegrand_mul_mem_scalarsIn {d' : GGPData F} {θ : ↥d'.G → ℂ}
   have : ((t * a : ↥T) : ↥(GSpin d'.QW)) = scalarGSpin d'.QW c * t := by
     rw [Subgroup.coe_mul, ← hc]
     exact ((scalarGSpin_commute _ c (t : ↥(GSpin d'.QW))).eq).symm
-  rw [this, gammaIntegrand_scalar_mul_of_mem_QCfin ψ hθ]
+  rw [this, gammaIntegrand_scalar_mul_of_mem_QCfin ψ d' hθ]
 
 /-- **(R1) Transport of the torus integrals along a torus transfer** (Thesis (6.7.2)–(6.7.5)): for
 `x ∈ Γ(G,H)`, `y ∈ Γ(G_α,H_α)` and a `TorusTransfer` `e : T_x ≃ T_y`,
@@ -2236,7 +2223,7 @@ theorem torusIntegral_eq_of_torusTransfer {IF : InnerFormSystem d} (P : Tempered
       by_cases hq : IsQdAt d t
       · have hq' := (isQdAt_iff_of_stronglyStablyConj IF hT.1 hxy).mp hq
         unfold gammaIntegrand
-        rw [ite_eq_left_of_eq_true _ _ (eq_true hT), ite_eq_left_of_eq_true _ _ (eq_true hT'), (hDΔ t).1, (hDΔ t).2,
+        rw [ite_eq_left hT, ite_eq_left hT', (hDΔ t).1, (hDΔ t).2,
           hgerm α t (e t) (isSS_diag_of_isGammaElt d hT.1)
             (isSS_diag_of_isGammaElt (IF.data α) hT'.1) hxy _
             (orbitChoice_mem_nilReg_of_qd d t hT.1 hq) _
@@ -2248,9 +2235,7 @@ theorem torusIntegral_eq_of_torusTransfer {IF : InnerFormSystem d} (P : Tempered
           gammaIntegrand_eq_zero_of_not_qd ψ _ _ _ _ _ hq, mul_zero]
     · have hT' : ¬ ((IF.data α).IsGammaElt (e t) ∧
           (IF.data α).torusOf (e t) = (IF.data α).torusOf y) := fun h => hT ((hreg t).mpr h)
-      unfold gammaIntegrand
-      rw [ite_eq_right_of_eq_false _ _ (eq_false hT), ite_eq_right_of_eq_false _ _ (eq_false hT'),
-        mul_zero]
+      rw [gammaIntegrand_of_not_mem ψ hT, gammaIntegrand_of_not_mem ψ hT', mul_zero]
   · exact gammaIntegrand_mul_mem_scalarsIn ψ (P.packetChar_mem_QCfin α) _ s t a ha
 
 /-- `IsQdAt` is constant on `T_{x,♮}` (`W'_t = W'_x`, `fixedSub_eq_of_torusOf_eq`). -/
@@ -2273,8 +2258,7 @@ theorem torusIntegral_eq_zero_of_not_qd (d' : GGPData F) (θ : ↥d'.G → ℂ) 
     by_cases hT : d'.IsGammaElt t ∧ d'.torusOf t = d'.torusOf y
     · exact gammaIntegrand_eq_zero_of_not_qd ψ d' θ _ s t
         (fun h => hq ((isQdAt_iff_of_torusOf_eq (Quotient.out q).2 hT.2).mp h))
-    · unfold gammaIntegrand
-      rw [ite_eq_right_of_eq_false _ _ (eq_false hT)]
+    · exact gammaIntegrand_of_not_mem ψ hT
   rw [h0, integral_zero]
 
 /-- **The stable weight comes out of the torus integral** (gating lemma (C)): `Σ_α e(G_α)n_α(t)/n_1(t)`
@@ -2297,19 +2281,9 @@ theorem integral_stableWeight_mul (IF : InnerFormSystem d) (θ : ↥d.G → ℂ)
     change (signedCount IF t : ℂ) / (n_alpha IF IF.base t : ℂ) * _ =
       (signedCount IF x : ℂ) / (n_alpha IF IF.base x : ℂ) * _
     simp only [signedCount, hn]
-  · have h0 : gammaIntegrand ψ d θ (d.torusOf x) s t = 0 := by
-      unfold gammaIntegrand
-      rw [ite_eq_right_of_eq_false _ _ (eq_false hT)]
+  · have h0 : gammaIntegrand ψ d θ (d.torusOf x) s t = 0 := gammaIntegrand_of_not_mem ψ hT
     change _ * gammaIntegrand ψ d θ (d.torusOf x) s t = _ * gammaIntegrand ψ d θ (d.torusOf x) s t
     rw [h0, mul_zero, mul_zero]
-
-/-- A generator `x` of the torus class `c` (`T = T_x`, `x ∈ Γ(G,H)`). -/
-noncomputable def gammaGen (d : GGPData F) (c : GammaClass d) : ↥(GSpin d.QW) :=
-  (Quot.out c).2.choose
-
-theorem gammaGen_spec (d : GGPData F) (c : GammaClass d) :
-    d.IsGammaElt (gammaGen d c) ∧ d.torusOf (gammaGen d c) = (Quot.out c).1 :=
-  (Quot.out c).2.choose_spec
 
 open Classical in
 /-- `F_α(c) = f(T_x)` for some `x ∈ Γ(G,H)` strongly stably conjugate to the generator of the

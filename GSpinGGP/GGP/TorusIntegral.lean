@@ -90,4 +90,14 @@ theorem torusIntegral_eq_of_mulEquiv {d d' : GGPData F} (ψ : NontrivialAddChar 
 
 end GGPData
 
+variable {F : Type*} [NontriviallyNormedField F] [PAdicField F] in
+/-- A generator `x` of the torus class `c` (`T = T_x`, `x ∈ Γ(G,H)`). -/
+noncomputable def gammaGen (d : GGPData F) (c : GammaClass d) : ↥(GSpin d.QW) :=
+  (Quot.out c).2.choose
+
+variable {F : Type*} [NontriviallyNormedField F] [PAdicField F] in
+theorem gammaGen_spec (d : GGPData F) (c : GammaClass d) :
+    d.IsGammaElt (gammaGen d c) ∧ d.torusOf (gammaGen d c) = (Quot.out c).1 :=
+  (Quot.out c).2.choose_spec
+
 end GSpinGGP
