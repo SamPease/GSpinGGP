@@ -3,6 +3,8 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Foundations.PAdicQuadraticForms
+import GSpinGGP.GGP.Hilbert90Units
+import GSpinGGP.GGP.GaloisTorus
 import TauCeti.NumberTheory.LocalField.QuadraticForm.Witt
 import TauCeti.LinearAlgebra.CliffordAlgebra.CentralSimple.Even
 
@@ -19,6 +21,7 @@ regular forms over a nonarchimedean local field by rank, signed discriminant and
 noncomputable section
 
 open TauCeti QuadraticMap Module
+open scoped TensorProduct
 
 namespace GSpinGGP
 
@@ -61,5 +64,66 @@ theorem nonempty_isometryEquiv_of_cliffordAlgEquiv {m : ℕ} {Q₁ Q₂ : Quadra
     RegularFormClass.eq_iff_rank_eq_and_signedDiscr_eq_and_cliffordInvariant_eq.2
       ⟨hrank, hsd, hcl⟩
   exact (formClass_eq_iff Q₁ hn₁ Q₂ hn₂).1 heq
+
+section BaseChangeSub
+
+variable {V : Type*} [AddCommGroup V] [Module F V] (Q : QuadraticForm F V)
+
+set_option hygiene false in
+local notation "Kb" => AlgebraicClosure F
+
+/-- The `F̄`-span `F̄ ⊗ C ⊆ C(Q_{F̄})` of a subalgebra `C` of `C(Q)`. -/
+def bcSub (C : Subalgebra F (CliffordAlgebra Q)) :
+    Subalgebra Kb (CliffordAlgebra (Q.baseChange Kb)) :=
+  (C.baseChange Kb).map (CliffordAlgebra.ofBaseChange Kb Q)
+
+/-- `F̄ ⊗ C → C(Q_{F̄})`. -/
+def bcSubHom (C : Subalgebra F (CliffordAlgebra Q)) :
+    Kb ⊗[F] C →ₐ[Kb] CliffordAlgebra (Q.baseChange Kb) :=
+  (CliffordAlgebra.ofBaseChange Kb Q).comp (Algebra.TensorProduct.map (AlgHom.id Kb Kb) C.val)
+
+theorem bcSubHom_injective (C : Subalgebra F (CliffordAlgebra Q)) :
+    Function.Injective (bcSubHom Q C) := by
+  have h1 : Function.Injective (CliffordAlgebra.ofBaseChange Kb Q) :=
+    (CliffordAlgebra.equivBaseChange Kb Q).symm.injective
+  have h2 : Function.Injective
+      (Algebra.TensorProduct.map (AlgHom.id Kb Kb) C.val : Kb ⊗[F] C → _) :=
+    Module.Flat.lTensor_preserves_injective_linearMap (M := Kb) C.val.toLinearMap
+      Subtype.val_injective
+  exact h1.comp h2
+
+theorem range_bcSubHom (C : Subalgebra F (CliffordAlgebra Q)) :
+    (bcSubHom Q C).range = bcSub Q C := by
+  rw [bcSubHom, AlgHom.range_comp, bcSub, Subalgebra.baseChange]
+
+/-- The basis `1 ⊗ bᵢ` of `F̄ ⊗ C`, inside `C(Q_{F̄})`. -/
+def bcSubBasis (C : Subalgebra F (CliffordAlgebra Q)) {ι : Type*} (b : Module.Basis ι F C) :
+    Module.Basis ι Kb (bcSub Q C) :=
+  ((Algebra.TensorProduct.basis Kb b).map
+    (AlgEquiv.ofInjective _ (bcSubHom_injective Q C)).toLinearEquiv).map
+    (Subalgebra.equivOfEq _ _ (range_bcSubHom Q C)).toLinearEquiv
+
+theorem coe_bcSubBasis (C : Subalgebra F (CliffordAlgebra Q)) {ι : Type*}
+    (b : Module.Basis ι F C) (i : ι) : (bcSubBasis Q C b i : CliffordAlgebra (Q.baseChange Kb)) =
+      bcHom Q (b i : CliffordAlgebra Q) := by
+  rw [bcSubBasis, Module.Basis.map_apply, Module.Basis.map_apply]
+  change ((AlgEquiv.ofInjective _ (bcSubHom_injective Q C)
+    ((Algebra.TensorProduct.basis Kb b) i) : _) : CliffordAlgebra (Q.baseChange Kb)) = _
+  rw [AlgEquiv.ofInjective_apply, Algebra.TensorProduct.basis_apply]
+  rfl
+
+/-- `σ` preserves `F̄ ⊗ C`. -/
+theorem galC_mem_bcSub (C : Subalgebra F (CliffordAlgebra Q)) (σ : GalF F)
+    {z : CliffordAlgebra (Q.baseChange Kb)} (hz : z ∈ bcSub Q C) : galC Q σ z ∈ bcSub Q C := by
+  obtain ⟨y, ⟨t, rfl⟩, rfl⟩ := hz
+  refine ⟨_, ⟨Algebra.TensorProduct.map (σ : Kb →ₐ[F] Kb) (AlgHom.id F C) t, rfl⟩, ?_⟩
+  simp only [galC, RingHom.comp_apply, AlgHom.toRingHom_eq_coe, AlgHom.coe_toRingHom,
+    CliffordAlgebra.toBaseChange_ofBaseChange]
+  congr 1
+  induction t using TensorProduct.inductionOn with
+  | tmul k c => simp
+  | add x y hx hy => simp only [map_add, hx, hy]
+
+end BaseChangeSub
 
 end GSpinGGP
