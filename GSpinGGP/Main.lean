@@ -18,6 +18,8 @@ import GSpinGGP.GGP.StableCocycleSurj
 import GSpinGGP.GGP.OrbitSpecQd
 import GSpinGGP.GGP.TorusIntegral
 import GSpinGGP.GGP.TwistMoved
+import GSpinGGP.GGP.TwistToForm
+import GSpinGGP.GGP.TwistSymm
 
 /-!
 # The main theorem: the local GGP conjecture for general spin groups
@@ -550,23 +552,30 @@ theorem exists_isometry_fixedSub_of_qd (hqs : d.IsQuasiSplit) (IF : InnerFormSys
   QuadClassify.exists_isometry_fixedSub d hqs (IF.twist α).nondeg' (IF.twist α).sameDisc y hy.1
     hqd.1 hqd.2
 
-/-- **Thesis Prop. 6.6.1(i), Steps 2–3** (own work, citing BP (12.1.6)): given an isometric
-embedding `W'_{α,y} ↪ W`, some `x ∈ Γ(G,H)` is strongly stably conjugate to `y`.  Route:
-let `W''` be the orthogonal complement of the image; its class lies in the image of
-`H¹(F, S_y) → H¹(F, SO(W''_{α,y}))` (`k = 1`: `S_y = SO(W''_{α,y})`; `k ≥ 2`: surjective by
-BP (12.1.6), `S~_y` being connected as in `exists_twistIdx_kottwitzSign_neg`);
-a cocycle `b` in `S_y` with an
-isometry `ι'' : W''_{α,y,F̄} ≃ W''_{F̄}`, `ι''⁻¹ σι'' = b_σ`, transports `ȳ''` to a rational regular
-`x̄'' ∈ SO(W'')` with anisotropic centralizer; a lift `x₀ ∈ GSpin(W)(F)` of `(1_{W'}, x̄'')` lies
-in `Γ(G,H)`; after a rational reflection making `Φ⁻¹ ∘ φ_α` proper, lifting the stable
-conjugacy from `SO` to `GSpin` gives
-`x = λ x₀`, `λ ∈ F^×`, strongly stably conjugate to `y`. -/
+/-- **Thesis Prop. 6.6.1(i), Steps 2–3** (own work, citing Kottwitz 1986, Lemma 10.2): given an
+isometric embedding `ι : W'_{α,y} ↪ W`, some `x ∈ Γ(G,H)` is strongly stably conjugate to `y`.
+Proof: `W` is the twist of `W_α` by a cocycle with values in `S_y(F̄)`
+(`exists_isTwistBy_torusBar_of_isometry`: twist `W''_{α,y}` into `ι(W'_{α,y})^⊥` in block
+coordinates; the cocycle lies in `SO(W_α)_{W'_y}(F̄)`, and Kottwitz 1986, Lemma 10.2 moves it into
+`S_y(F̄)`).  The construction of Prop. 6.6.1(iii) (`exists_stronglyStablyConj_of_isTwistBy`,
+`isGammaElt_of_ratAt`) for the datum `G_α` and the inverse twist `τ_α⁻¹ = (W, φ_α⁻¹)`
+(`InnerTwist.symm`; `G_α` twisted by it is `G`) gives `x ∈ Γ(G,H)` strongly stably conjugate to `y`
+through `τ_α⁻¹`, i.e. `y` to `x` through `τ_α` (`stronglyStablyConjW_of_symm`).  This differs from
+Thesis Prop. 6.6.1(i), Steps 2–3, which use quasi-splitness of `GSpin(W'')` and (12.1.1): Kottwitz's
+lemma needs no quasi-splitness, so `hqs`, `hqd` are not needed (they are kept for the callers). -/
 theorem exists_stronglyStablyConj_of_isometry (hqs : d.IsQuasiSplit) (IF : InnerFormSystem d)
     (α : IF.Idx) (y : ↥(GSpin (IF.data α).QW)) (hy : (IF.data α).IsGammaElt y)
     (hqd : IsQdAt (IF.data α) y) (ι : (IF.data α).QW.comp (fixedSub y).subtype →qᵢ d.QW)
     (hι : Function.Injective ι) :
-    ∃ x : ↥(GSpin d.QW), d.IsGammaElt x ∧ d.StronglyStablyConjW (IF.twist α) x y :=
-  sorry
+    ∃ x : ↥(GSpin d.QW), d.IsGammaElt x ∧ d.StronglyStablyConjW (IF.twist α) x y := by
+  have _ := hqs
+  have _ := hqd
+  set τ' := (IF.twist α).symm d.nondeg
+  obtain ⟨a, ha⟩ := exists_isTwistBy_torusBar_of_isometry (d := IF.data α) hy τ'.sameDisc ι hι
+  obtain ⟨x, hst, -⟩ := (IF.data α).exists_stronglyStablyConj_of_isTwistBy τ' hy a ha
+  obtain ⟨g, hg, hconj, hrat⟩ := hst.1
+  exact ⟨x, (IF.data α).isGammaElt_of_ratAt τ' hy hg hrat hconj,
+    d.stronglyStablyConjW_of_symm (IF.twist α) hst⟩
 
 /-- **Thesis Prop. 6.6.1(i)** (own work).
 Let `G` be quasi-split, `α` an inner form and `y ∈ Γ(G_α,H_α)` with `G_{α,y}` quasi-split
