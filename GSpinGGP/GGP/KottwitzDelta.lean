@@ -21,9 +21,11 @@ For `x ∈ Γ(G,H)` the exact sequence `1 → F̄^× → T_x(F̄) → S_x(F̄) �
   `φ_a⁻¹ ι⁻¹ φ_b`).
 * `DRel.isometryEquiv`: conversely `DRel a b` gives `W_α ≅ W_β`, from
   `nonempty_isometryEquiv_of_galObstruction_eq` (two twists of `U` whose cocycles have continuous
-  lifts to `GSpin(U)(F̄)` with equal obstructions are isometric; own work, by descent of the
-  Clifford algebra and the classification of quadratic forms over `F` by rank, discriminant and
-  Clifford invariant).
+  lifts to `GSpin(U)(F̄)` with equal obstructions are isometric): the twist of `C(ψ)` by the
+  quotient of the lifts is split by Hilbert 90 for the units of `C(U₁)` or `C⁺(U₁)`
+  (`exists_units_eq_inv_mul_act`), so `C(U₁) ≅ C(U₂)` (resp. `C⁺`) over `F`
+  (`nonempty_algEquiv_of_twist`), and Tau Ceti's classification by rank, discriminant and Clifford
+  invariant applies (`nonempty_isometryEquiv_of_cliffordAlgEquiv`).
 -/
 
 noncomputable section
@@ -311,7 +313,8 @@ theorem nonempty_algEquiv_of_galObstruction_eq {m : ℕ} {Q Q₁ Q₂ : Quadrati
       rw [h1, map_symm_map, ← mul_assoc, ← mul_assoc, hTiT, one_mul, mul_assoc, hTiT, mul_one]
     have hw1 : ((w σ : (CliffordAlgebra (Q.baseChange Kb))ˣ) : CliffordAlgebra (Q.baseChange Kb)) =
         S * Ti := rfl
-    have hw2 : (((w σ : (CliffordAlgebra (Q.baseChange Kb))ˣ)⁻¹ : (CliffordAlgebra (Q.baseChange Kb))ˣ) :
+    have hw2 : (((w σ : (CliffordAlgebra (Q.baseChange Kb))ˣ)⁻¹ :
+        (CliffordAlgebra (Q.baseChange Kb))ˣ) :
         CliffordAlgebra (Q.baseChange Kb)) = T * Si := by
       simp only [w, Subgroup.coe_mul, Subgroup.coe_inv, mul_inv_rev, inv_inv, Units.val_mul]
       rfl
@@ -330,7 +333,8 @@ Own work (the connecting map `H¹(F, SO(U)) → H²(F, F̄^×)` of
 `1 → F̄^× → GSpin(U) → SO(U) → 1` on twists, without `H²`): `σ ↦ s_σ t_σ⁻¹`, transported by
 `C(φ₁)`, is a `1`-cocycle in `GSpin(U₁)(F̄)` lifting the cocycle of `φ₂ φ₁⁻¹`; Hilbert 90 for the
 units of the Clifford algebra `C(U₁)` (or of `C⁺(U₁)`, whichever is central simple) shows the
-twisted algebra, which is `C(U₂)` (resp. `C⁺(U₂)`), is isomorphic to `C(U₁)` (resp. `C⁺(U₁)`). So `U₁`, `U₂`
+twisted algebra, which is `C(U₂)` (resp. `C⁺(U₂)`), is isomorphic to `C(U₁)` (resp. `C⁺(U₁)`). So
+`U₁`, `U₂`
 have the same rank, discriminant and Clifford invariant, and are isometric by the classification of
 quadratic forms over `p`-adic fields (Tau Ceti's
 `RegularFormClass.eq_iff_rank_eq_and_signedDiscr_eq_and_cliffordInvariant_eq`). -/

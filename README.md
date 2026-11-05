@@ -41,8 +41,8 @@ satisfying the stability, transfer and genericity hypotheses, which is all the p
 
 As of November 2026:
 
-- The project builds with 36 declarations containing `sorry`. The main theorem `local_ggp`
-  depends on 24 of them: 7 are the analytic core of the local trace formula (Thesis Ch. 8–12,
+- The project builds with 35 declarations containing `sorry`. The main theorem `local_ggp`
+  depends on 23 of them: 7 are the analytic core of the local trace formula (Thesis Ch. 8–12,
   e.g. convergence of the distribution `J` and its spectral expansion), 12 are published results
   that the dissertation adapts to general spin groups (see below), the rest smaller lemmas.
 - Results from the literature are assumed as `axiom`s in `GSpinGGP/Literature/`, each with a
@@ -56,7 +56,8 @@ As of November 2026:
   the classification over `p`-adic fields) are proved from the
   [Tau Ceti](https://github.com/TauCetiProject/TauCeti) library, which this project depends on.
 - Hilbert's Theorem 90 for `GL_m` is proved (`GGP/Hilbert90.lean`), from Mathlib's linear
-  independence of characters.
+  independence of characters, and from it Hilbert 90 for the units of a central simple algebra
+  (`GGP/Hilbert90Units.lean`).
 
 To see exactly what the main theorem rests on:
 

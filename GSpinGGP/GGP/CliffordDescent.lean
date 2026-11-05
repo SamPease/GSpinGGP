@@ -239,7 +239,8 @@ theorem nonempty_algEquiv_of_twist (C₁ : Subalgebra F (CliffordAlgebra Q₁))
   obtain ⟨u, hu⟩ := exists_units_eq_inv_mul_act (bcSubAction Q₁ C₁ b₁) (bcSubIncl Q₁ C₁) b₁
     (fun i => Subtype.ext (by rw [coe_bcSubIncl, coe_bcSubBasis])) v hv
     (fun σ τ => Subtype.ext (hcoc σ τ))
-  set U : CliffordAlgebra (Q₁.baseChange Kb) := ((u : bcSub Q₁ C₁) : CliffordAlgebra (Q₁.baseChange Kb))
+  set U : CliffordAlgebra (Q₁.baseChange Kb) :=
+    ((u : bcSub Q₁ C₁) : CliffordAlgebra (Q₁.baseChange Kb))
   set Ui : CliffordAlgebra (Q₁.baseChange Kb) := (((u⁻¹ : (bcSub Q₁ C₁)ˣ) : bcSub Q₁ C₁) :
     CliffordAlgebra (Q₁.baseChange Kb))
   have hUUi : U * Ui = 1 := congrArg Subtype.val u.mul_inv
