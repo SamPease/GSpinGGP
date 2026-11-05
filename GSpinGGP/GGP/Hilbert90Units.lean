@@ -3,7 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.GGP.Hilbert90
-import GSpinGGP.Foundations.SimpleAlgebraModule
+import TauCeti.RingTheory.Semisimple.SimpleArtinian
 
 /-!
 # Hilbert 90 for the units of a simple algebra
@@ -16,7 +16,8 @@ Galois-fixed `F̄`-basis of `Ā` (`Ā = F̄ ⊗ A`). Then every continuous `1`-c
 Proof (own work, standard): the twisted fixed vectors `B = {z : σ(z) = z v_σ}` form a left
 `A`-module; in coordinates, Hilbert 90 for `GL_N` (`hilbert90_GL`, applied to the matrices of right
 multiplication by `v_σ⁻¹`) shows that `B` has `F`-dimension `N = dim A` and spans `Ā` over `F̄`.
-Since `A` is simple, `B ≅ A` (`nonempty_linearEquiv_of_finrank_eq`), so `B = A u`; then `Ā = Ā u`,
+Since `A` is simple, `B ≅ A` (Tau Ceti `IsSimpleRing.nonempty_linearEquiv_of_finrank_eq`), so
+`B = A u`; then `Ā = Ā u`,
 `u` is a unit, and `σ(u) = u v_σ`.
 -/
 
@@ -32,6 +33,25 @@ variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
 
 
+/-- `t : Γ_F → X` is continuous: it factors through `Gal(E/F)` for a finite extension `E`. -/
+def IsGalContinuous {X : Type*} (t : GalF F → X) : Prop :=
+  ∃ E : IntermediateField F (AlgebraicClosure F), FiniteDimensional F E ∧
+    ∀ σ τ : GalF F, (∀ e ∈ E, σ e = τ e) → t σ = t τ
+
+theorem IsGalContinuous.mul {G : Type*} [Mul G] {t s : GalF F → G} (ht : IsGalContinuous t)
+    (hs : IsGalContinuous s) : IsGalContinuous (t * s) := by
+  obtain ⟨E₁, h₁, he₁⟩ := ht
+  obtain ⟨E₂, h₂, he₂⟩ := hs
+  refine ⟨E₁ ⊔ E₂, inferInstance, fun σ τ h => ?_⟩
+  simp only [Pi.mul_apply]
+  rw [he₁ σ τ fun e he => h e (le_sup_left (a := E₁) he),
+    he₂ σ τ fun e he => h e (le_sup_right (a := E₁) he)]
+
+theorem IsGalContinuous.inv {G : Type*} [Inv G] {t : GalF F → G} (ht : IsGalContinuous t) :
+    IsGalContinuous t⁻¹ := by
+  obtain ⟨E, hE, h⟩ := ht
+  exact ⟨E, hE, fun σ τ hστ => by simp only [Pi.inv_apply, h σ τ hστ]⟩
+
 /-- A semilinear action of `Γ_F` on an `F̄`-algebra by ring automorphisms, fixing a basis. -/
 structure GalAlgAction (F : Type) [NontriviallyNormedField F] [PAdicField F] (Ā : Type*) [Ring Ā]
     [Algebra (AlgebraicClosure F) Ā] {N : ℕ} (e : Module.Basis (Fin N) (AlgebraicClosure F) Ā) where
@@ -46,7 +66,7 @@ local notation "Kb" => AlgebraicClosure F
 
 variable {Ā : Type*} [Ring Ā] [Algebra Kb Ā] [Algebra F Ā] [IsScalarTower F Kb Ā] {N : ℕ}
   {e : Module.Basis (Fin N) Kb Ā}
-  {A : Type*} [Ring A] [Algebra F A] [IsSimpleRing A] [IsArtinianRing A]
+  {A : Type*} [Ring A] [Algebra F A] [IsSimpleRing A]
 
 namespace GalAlgAction
 
@@ -88,8 +108,7 @@ end GalAlgAction
 /-- **Hilbert 90 for `Āˣ`.** -/
 theorem exists_units_eq_inv_mul_act (G : GalAlgAction F Ā e) (ι : A →ₐ[F] Ā)
     (b : Module.Basis (Fin N) F A) (hb : ∀ i, ι (b i) = e i)
-    (v : GalF F → Āˣ) (hv : ∃ E : IntermediateField F Kb, FiniteDimensional F E ∧
-      ∀ σ τ : GalF F, (∀ x ∈ E, σ x = τ x) → v σ = v τ)
+    (v : GalF F → Āˣ) (hv : IsGalContinuous v)
     (hcoc : ∀ σ τ, (v (σ * τ) : Ā) = v σ * G.act σ (v τ)) :
     ∃ u : Āˣ, ∀ σ, (v σ : Ā) = (u⁻¹ : Āˣ) * G.act σ u := by
   classical
@@ -226,7 +245,7 @@ theorem exists_units_eq_inv_mul_act (G : GalAlgAction F Ā e) (ι : A →ₐ[F] 
   let bB := Module.Basis.mk hli hsp
   have : FiniteDimensional F B := Module.Finite.of_basis bB
   have : FiniteDimensional F A := Module.Finite.of_basis b
-  obtain ⟨f⟩ := nonempty_linearEquiv_of_finrank_eq (F := F) (A := A) (M := A) (N := B)
+  obtain ⟨f⟩ := IsSimpleRing.nonempty_linearEquiv_of_finrank_eq F (R := A) (M := A) (N := B)
     (by rw [Module.finrank_eq_card_basis b, Module.finrank_eq_card_basis bB])
   -- `u = f(1)`, `B = A u`
   set u : Ā := (f 1 : Ā)
@@ -242,20 +261,11 @@ theorem exists_units_eq_inv_mul_act (G : GalAlgAction F Ā e) (ι : A →ₐ[F] 
     conv_rhs => rw [hspan 1]
     refine Finset.sum_congr rfl fun j _ => ?_
     rw [smul_mul_assoc, ← hfu, LinearEquiv.apply_symm_apply]
-  -- so `u` is a unit (`Ā` is finite-dimensional over `F̄`)
+  -- so `u` is a unit (`Ā` is finite-dimensional over `F̄`, hence Dedekind-finite)
   have : FiniteDimensional Kb Ā := Module.Finite.of_basis e
-  have hinj : Function.Injective (LinearMap.mulLeft Kb u) := by
-    intro w₁ w₂ h
-    have h' : u * w₁ = u * w₂ := h
-    calc w₁ = y * u * w₁ := by rw [hyu, one_mul]
-      _ = y * u * w₂ := by rw [mul_assoc, h', ← mul_assoc]
-      _ = w₂ := by rw [hyu, one_mul]
-  obtain ⟨w, hw⟩ := (LinearMap.injective_iff_surjective.1 hinj) 1
-  have huw : u * w = 1 := hw
-  have hyw : y = w := by
-    calc y = y * (u * w) := by rw [huw, mul_one]
-      _ = w := by rw [← mul_assoc, hyu, one_mul]
-  refine ⟨⟨u, y, hyw ▸ huw, hyu⟩, fun σ => ?_⟩
+  have : IsArtinianRing Ā := IsArtinianRing.of_finite Kb Ā
+  have huy : u * y = 1 := mul_eq_one_symm hyu
+  refine ⟨⟨u, y, huy, hyu⟩, fun σ => ?_⟩
   show (v σ : Ā) = y * G.act σ u
   rw [(f 1).2 σ, ← mul_assoc, hyu, one_mul]
 

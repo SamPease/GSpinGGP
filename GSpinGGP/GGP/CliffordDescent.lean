@@ -146,10 +146,6 @@ theorem coe_bcSubIncl (C : Subalgebra F (CliffordAlgebra Q)) (c : C) :
     (bcSubIncl Q C c : CliffordAlgebra (Q.baseChange Kb)) = bcHom Q (c : CliffordAlgebra Q) :=
   rfl
 
-theorem bcHom_smul (f : F) (x : CliffordAlgebra Q) : bcHom Q (f • x) = f • bcHom Q x := by
-  rw [Algebra.smul_def, map_mul, bcHom_algebraMap, Algebra.smul_def,
-    IsScalarTower.algebraMap_apply F Kb (CliffordAlgebra (Q.baseChange Kb))]
-
 /-- **Descent**: a Galois-fixed element of `F̄ ⊗ C` lies in `C`. -/
 theorem exists_bcHom_of_mem_bcSub (C : Subalgebra F (CliffordAlgebra Q)) {N : ℕ}
     (b : Module.Basis (Fin N) F C) {z : CliffordAlgebra (Q.baseChange Kb)} (hz : z ∈ bcSub Q C)
@@ -169,7 +165,7 @@ theorem exists_bcHom_of_mem_bcSub (C : Subalgebra F (CliffordAlgebra Q)) {N : �
   rw [this, show ((∑ i, f i • b i : C) : CliffordAlgebra Q) = C.val (∑ i, f i • b i) from rfl,
     map_sum, map_sum]
   refine Finset.sum_congr rfl fun i _ => ?_
-  rw [map_smul C.val, bcHom_smul, map_smul (bcSub Q C).val, ← hf, algebraMap_smul]
+  rw [map_smul C.val, bcHom_smul Q, map_smul (bcSub Q C).val, ← hf, algebraMap_smul]
   exact congrArg _ (coe_bcSubBasis Q C b i).symm
 
 theorem bcSub_top : bcSub Q ⊤ = ⊤ := by
@@ -224,12 +220,11 @@ variable {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V₁] [AddCommGroup V
 `(F̄ ⊗ C₁)ˣ`, with `C₁` simple. Then `C₁ ≅ C₂` over `F`: with `v_σ = u⁻¹ σ(u)` (Hilbert 90,
 `exists_units_eq_inv_mul_act`), `z ↦ Θ(u⁻¹ z u)` is Galois-equivariant. -/
 theorem nonempty_algEquiv_of_twist (C₁ : Subalgebra F (CliffordAlgebra Q₁))
-    (C₂ : Subalgebra F (CliffordAlgebra Q₂)) [IsSimpleRing C₁] [IsArtinianRing C₁] {N₁ N₂ : ℕ}
+    (C₂ : Subalgebra F (CliffordAlgebra Q₂)) [IsSimpleRing C₁] {N₁ N₂ : ℕ}
     (b₁ : Module.Basis (Fin N₁) F C₁) (b₂ : Module.Basis (Fin N₂) F C₂)
     (Θ : CliffordAlgebra (Q₁.baseChange Kb) ≃ₐ[Kb] CliffordAlgebra (Q₂.baseChange Kb))
     (hΘ₁ : ∀ y ∈ bcSub Q₁ C₁, Θ y ∈ bcSub Q₂ C₂) (hΘ₂ : ∀ y ∈ bcSub Q₂ C₂, Θ.symm y ∈ bcSub Q₁ C₁)
-    (v : GalF F → (bcSub Q₁ C₁)ˣ) (hv : ∃ E : IntermediateField F Kb, FiniteDimensional F E ∧
-      ∀ σ τ : GalF F, (∀ x ∈ E, σ x = τ x) → v σ = v τ)
+    (v : GalF F → (bcSub Q₁ C₁)ˣ) (hv : IsGalContinuous v)
     (hcoc : ∀ σ τ, (v (σ * τ) : CliffordAlgebra (Q₁.baseChange Kb)) =
       (v σ : CliffordAlgebra (Q₁.baseChange Kb)) * galC Q₁ σ (v τ : CliffordAlgebra _))
     (hΘv : ∀ σ z, galC Q₂ σ (Θ z) = Θ ((v σ : CliffordAlgebra (Q₁.baseChange Kb)) *
