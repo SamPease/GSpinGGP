@@ -270,7 +270,57 @@ theorem nonempty_algEquiv_of_galObstruction_eq {m : ℕ} {Q Q₁ Q₂ : Quadrati
           group
       _ = (s σ * galGS Q σ (s τ)) * (t σ * galGS Q σ (t τ))⁻¹ := by rw [e1, e2]; group
       _ = _ := by simp only [w, galGS_mul, galGS_inv]; group
-  sorry
+  -- transport to `C(Q₁)` by `C(φ₁)`
+  let Vu : GSpin (Q.baseChange Kb) → (bcSub Q₁ C₁)ˣ := fun g =>
+    { val := ⟨_, hC₁ _ (cliffUnits_mem_GSpin φ₁ g.2)⟩
+      inv := ⟨_, hC₁ _ (Subgroup.inv_mem _ (cliffUnits_mem_GSpin φ₁ g.2))⟩
+      val_inv := Subtype.ext (Units.mul_inv _)
+      inv_val := Subtype.ext (Units.inv_mul _) }
+  have hVu : ∀ g : GSpin (Q.baseChange Kb), ((Vu g : bcSub Q₁ C₁) :
+      CliffordAlgebra (Q₁.baseChange Kb)) = CliffordAlgebra.map φ₁.toIsometry
+        ((g : (CliffordAlgebra (Q.baseChange Kb))ˣ) : CliffordAlgebra (Q.baseChange Kb)) :=
+    fun _ => rfl
+  have hVui : ∀ g : GSpin (Q.baseChange Kb), (((Vu g)⁻¹ : (bcSub Q₁ C₁)ˣ) :
+      CliffordAlgebra (Q₁.baseChange Kb)) = CliffordAlgebra.map φ₁.toIsometry
+        (((g : (CliffordAlgebra (Q.baseChange Kb))ˣ)⁻¹ : (CliffordAlgebra (Q.baseChange Kb))ˣ) :
+          CliffordAlgebra (Q.baseChange Kb)) :=
+    fun _ => rfl
+  have hwc : IsGalContinuous w := hs.mul ht.inv
+  obtain ⟨E, hE, hEw⟩ := hwc
+  refine nonempty_algEquiv_of_twist C₁ C₂ (Module.finBasis F C₁) (Module.finBasis F C₂)
+    (CliffordAlgebra.equivOfIsometry (φ₁.symm.trans φ₂)) hΘ₁ (fun y hy => ?_) (fun σ => Vu (w σ))
+    ⟨E, hE, fun σ τ h => congrArg Vu (hEw σ τ h)⟩ (fun σ τ => ?_) (fun σ z => ?_)
+  · rw [CliffordAlgebra.equivOfIsometry_symm]; exact hΘ₂ y hy
+  · rw [hVu, hVu, hVu, galC_map_of_lift φ₁ σ (t σ) (hta σ), ← map_mul]
+    congr 1
+    exact congrArg (fun g : GSpin (Q.baseChange Kb) =>
+      ((g : (CliffordAlgebra (Q.baseChange Kb))ˣ) : CliffordAlgebra (Q.baseChange Kb))) (hw σ τ)
+  · set T : CliffordAlgebra (Q.baseChange Kb) := ((t σ : (CliffordAlgebra (Q.baseChange Kb))ˣ) :
+      CliffordAlgebra (Q.baseChange Kb))
+    set Ti : CliffordAlgebra (Q.baseChange Kb) := (((t σ : (CliffordAlgebra (Q.baseChange Kb))ˣ)⁻¹ :
+      (CliffordAlgebra (Q.baseChange Kb))ˣ) : CliffordAlgebra (Q.baseChange Kb))
+    set S : CliffordAlgebra (Q.baseChange Kb) := ((s σ : (CliffordAlgebra (Q.baseChange Kb))ˣ) :
+      CliffordAlgebra (Q.baseChange Kb))
+    set Si : CliffordAlgebra (Q.baseChange Kb) := (((s σ : (CliffordAlgebra (Q.baseChange Kb))ˣ)⁻¹ :
+      (CliffordAlgebra (Q.baseChange Kb))ˣ) : CliffordAlgebra (Q.baseChange Kb))
+    have hTiT : Ti * T = 1 := Units.inv_mul _
+    have key : galC Q σ (CliffordAlgebra.map φ₁.symm.toIsometry z) =
+        Ti * CliffordAlgebra.map φ₁.symm.toIsometry (galC Q₁ σ z) * T := by
+      have h1 := galC_map_of_lift φ₁ σ (t σ) (hta σ) (CliffordAlgebra.map φ₁.symm.toIsometry z)
+      rw [map_map_symm] at h1
+      rw [h1, map_symm_map, ← mul_assoc, ← mul_assoc, hTiT, one_mul, mul_assoc, hTiT, mul_one]
+    have hw1 : ((w σ : (CliffordAlgebra (Q.baseChange Kb))ˣ) : CliffordAlgebra (Q.baseChange Kb)) =
+        S * Ti := rfl
+    have hw2 : (((w σ : (CliffordAlgebra (Q.baseChange Kb))ˣ)⁻¹ : (CliffordAlgebra (Q.baseChange Kb))ˣ) :
+        CliffordAlgebra (Q.baseChange Kb)) = T * Si := by
+      simp only [w, Subgroup.coe_mul, Subgroup.coe_inv, mul_inv_rev, inv_inv, Units.val_mul]
+      rfl
+    rw [CliffordAlgebra.equivOfIsometry_apply, CliffordAlgebra.equivOfIsometry_apply,
+      map_trans_apply, map_trans_apply, galC_map_of_lift φ₂ σ (s σ) (hsb σ), key, hVu, hVui,
+      map_mul (CliffordAlgebra.map φ₁.symm.toIsometry),
+      map_mul (CliffordAlgebra.map φ₁.symm.toIsometry), map_symm_map, map_symm_map, hw1, hw2]
+    simp only [mul_assoc]
+    rfl
 
 /-- **Twists with equal obstructions are isometric.** Let `φᵢ : U_{F̄} ≅ Uᵢ_{F̄}` (`i = 1, 2`) and
 let `t`, `s` be continuous lifts to `GSpin(U)(F̄)` of their cocycles `σ ↦ φᵢ⁻¹ ∘ σφᵢ` with equal
