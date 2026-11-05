@@ -372,6 +372,16 @@ theorem exists_other_class_plane {P : QuadraticForm F (Fin 2 → F)} (hP : IsNon
   obtain ⟨v, hv, hQv⟩ := exists_isotropic_of_isSquare P hsq
   exact hv (ha v hQv)
 
+/-- A second class of the dimension and discriminant: in dimension `≥ 3`, or for an anisotropic
+plane (`exists_other_class`, `exists_other_class_plane`). -/
+theorem exists_other_class_of {n : ℕ} {P : QuadraticForm F (Fin n → F)} (hP : IsNondeg P)
+    (hn : 3 ≤ n ∨ (n = 2 ∧ P.Anisotropic)) :
+    ∃ P' : QuadraticForm F (Fin n → F), IsNondeg P' ∧ DiscRel P P' ∧
+      ¬ Nonempty (P.IsometryEquiv P') := by
+  rcases hn with h | ⟨rfl, ha⟩
+  · exact exists_other_class hP (Or.inl h)
+  · exact exists_other_class_plane hP ha
+
 /-- The Witt decomposition `Q ≅ H^w ⊥ Q_an`, with `dim Q_an ≤ 4` over a `p`-adic field. -/
 theorem exists_decomp {Q : QuadraticForm F V₁} (h : IsNondeg Q) :
     ∃ (k : ℕ) (Qa : QuadraticForm F (Fin k → F)), Qa.Anisotropic ∧ IsNondeg Qa ∧
