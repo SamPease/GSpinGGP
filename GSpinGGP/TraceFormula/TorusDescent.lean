@@ -7,7 +7,7 @@ import GSpinGGP.TraceFormula.GermTranslate
 import GSpinGGP.GGP.MovedCentralizer
 import GSpinGGP.Foundations.RankSemicontinuity
 import GSpinGGP.Foundations.Determinant
-import GSpinGGP.GGP.IsometrySemisimple
+import GSpinGGP.Foundations.IsometrySemisimple
 import GSpinGGP.GGP.GSpinSemisimple
 import GSpinGGP.TraceFormula.ThetaF
 import GSpinGGP.TraceFormula.JHatSelfDual
