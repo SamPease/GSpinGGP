@@ -11,7 +11,8 @@ Ingredients of the torus-class count (`torusClass_count`, Thesis (6.7.2)–(6.7.
 
 * `commute_torusOf_of_commute`: for `x ∈ Γ(G,H)`, an element of `GSpin(W)(F)` commuting with `x`
   commutes with all of `T_x(F)` (by base change, from `Steinberg.commute_of_fixes_eigenspace_one`).
-  So `N(T_x)` acts freely, through `W(T_x) = N(T_x)/Z(T_x)`, on the elements `t` with `T_t = T_x`.
+  Consequently (not formalized here) `N(T_x)` acts freely, through `W(T_x) = N(T_x)/Z(T_x)`, on the
+  elements `t` with `T_t = T_x`.
 -/
 
 noncomputable section
@@ -26,7 +27,7 @@ namespace GGPData
 
 variable {d : GGPData F}
 
-/-- `T_x(F) → T_x(F̄)`. -/
+/-- Base change maps `T_x(F)` into `T_x(F̄)`. -/
 theorem bcGSpin_mem_torusFbar {x t : ↥(GSpin d.QW)} (ht : t ∈ d.torusOf x) :
     bcGSpin d.QW t ∈ d.torusFbar x := by
   refine ⟨?_, fun w hw => ?_⟩
