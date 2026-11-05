@@ -549,18 +549,32 @@ $c_{\theta_1,\mathcal O_1}(1)$ (Thesis \S6.7 after (6.7.6)).
 Non-central and non-quasi-split classes have weight $0$; the atom gives the value above.
 \end{proof}
 
-\begin{lemma}[Luo's orbit at $x=1$]
-\label{exists_orbitSpec_one_of_even}
-\lean{GSpinGGP.exists_orbitSpec_one_of_even}
+\begin{lemma}[Luo's orbit at quasi-split points]
+\label{exists_orbitSpec_of_quasiSplit}
+\lean{GSpinGGP.GGPData.exists_orbitSpec_of_quasiSplit}
 \leanok
 \uses{G, GGPData, GSpin, IsQuasiSplit, gspin}
-Let $G$ be quasi-split with $\dim V$ or $\dim W$ even and $\ge 4$. Then some $\mathcal O\in\Nilreg(\mathfrak g)$
-satisfies Luo's condition at $x=1$ (\cite{Luo} \S7.1).
+Let $x\in\mathrm{GSpin}(W)(F)$ be semisimple with abelian moved part and $W'_x$, $V'_x$ quasi-split.
+Then some $\mathcal O\in\Nilreg(\mathfrak g_x)$ satisfies Luo's condition at $x$ (\cite{Luo} \S7.1).
 \end{lemma}
 \begin{proof}
 \leanok
 \uses{LIT-jantzen_finrank_soCentMat_ge, exists_regularNil_inOrbitNu, witt_decomposition}
-Luo's orbit in the even factor, paired with a regular nilpotent of the other factor.
+Luo's split family for the descended datum $(W'_x,V'_x)$, carried into $V$ (or $W$) by the
+isometric embedding, paired with a regular element of the other factor.
+\end{proof}
+
+\begin{lemma}[$\mathcal O_x$ is regular at quasi-split points]
+\label{orbitChoice_mem_nilReg_of_qd}
+\lean{GSpinGGP.orbitChoice_mem_nilReg_of_qd}
+\leanok
+\uses{G, GGPData, GSpin, IsGammaElt, gspin, orbitChoice}
+For $x\in\Gamma(G,H)$ with $G'_x$ quasi-split, $\mathcal O_x\in\Nilreg(\mathfrak g_x)$.
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{exists_orbitSpec_of_quasiSplit}
+Lemma~\ref{exists_orbitSpec_of_quasiSplit}.
 \end{proof}
 
 \begin{lemma}[$\mathcal O_1$ is regular]
@@ -572,7 +586,7 @@ For $G$ quasi-split, $\mathcal O_1\in\Nilreg(\mathfrak g)$.
 \end{lemma}
 \begin{proof}
 \leanok
-\uses{IsGammaElt, exists_orbitSpec_one_of_even, nilReg_centralizer_nonempty_iff}
+\uses{IsGammaElt, exists_orbitSpec_of_quasiSplit}
 Luo's recipe applied to $(G,H)$ selects a regular orbit, which exists since $G$ is quasi-split.
 \end{proof}
 

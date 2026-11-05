@@ -15,6 +15,7 @@ import GSpinGGP.GGP.MovedCentralizer
 import GSpinGGP.GGP.GaloisTorus
 import GSpinGGP.GGP.TwistIncl
 import GSpinGGP.GGP.StableCocycleSurj
+import GSpinGGP.GGP.OrbitSpecQd
 
 /-!
 # The main theorem: the local GGP conjecture for general spin groups
@@ -2232,13 +2233,6 @@ end Stable
 
 /-! ## 9. The germ at `1` and Whittaker models (Thesis (6.7.1)) -/
 
-/-- `Nil_reg(𝔤) ≠ ∅` for quasi-split `G` (`nilReg_centralizer_nonempty_iff` at `x = 1`, where the moved part is `0`). -/
-theorem nilReg_one_nonempty (d : GGPData F) (hqs : d.IsQuasiSplit) :
-    (NilReg (grpCentralizer d.G ((d.diag 1 : d.G) : d.ambientˣ))
-      (lieCentralizer d.lie (((d.diag 1 : d.G) : d.ambientˣ) : d.ambient))).Nonempty :=
-  (nilReg_centralizer_nonempty_iff d 1 (isSS_one_W d) (movedPartAbelian_one d)).2
-    (isQdAt_of_fixedSub_eq_top d hqs 1 (fixedSub_one_eq_top d.QW))
-
 /-- `O_x` is regular as soon as some regular orbit satisfies Luo's condition `OrbitSpec`. -/
 theorem orbitChoice_mem_nilReg_of_exists (d : GGPData F) (x : ↥(GSpin d.QW))
     (h : ∃ O ∈ NilReg (grpCentralizer d.G (d.diag x : d.ambientˣ))
@@ -2251,99 +2245,24 @@ theorem orbitChoice_mem_nilReg_of_exists (d : GGPData F) (x : ↥(GSpin d.QW))
   exact h.choose_spec.1
 
 
-/-- Conjugation by `G(F)` preserves `𝔤`. -/
-theorem conj_mem_lie_of_mem_G (d : GGPData F) {g : d.ambientˣ} (hg : g ∈ d.G) {Y : d.ambient}
-    (hY : Y ∈ d.lie) : (g : d.ambient) * Y * (↑g⁻¹ : d.ambient) ∈ d.lie :=
-  ⟨conj_mem_gspin d.QW (d.fst ⟨g, hg⟩) hY.1, conj_mem_gspin d.QV (d.snd ⟨g, hg⟩) hY.2⟩
+/-- **`O_x` is regular at quasi-split points of `Γ(G,H)`**: for `x ∈ Γ(G,H)` with `G'_x`
+quasi-split, Luo's orbit exists (`GGPData.exists_orbitSpec_of_quasiSplit`), so `orbitChoice d x`
+is a regular nilpotent orbit of `𝔤_x`. -/
+theorem orbitChoice_mem_nilReg_of_qd (d : GGPData F) (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x)
+    (hq : IsQdAt d x) :
+    orbitChoice d x ∈ NilReg (grpCentralizer d.G (d.diag x : d.ambientˣ))
+      (lieCentralizer d.lie (((d.diag x : d.ambientˣ)) : d.ambient)) :=
+  orbitChoice_mem_nilReg_of_exists d x
+    (d.exists_orbitSpec_of_quasiSplit x hx.1 (movedPartAbelian_of_isGammaElt d x hx) hq.1 hq.2)
 
-/-- A pair of regular nilpotent elements is regular nilpotent in `𝔤 = gspin(W) ⊕ gspin(V)`
-(`Nil_reg` of a product is the product). -/
-theorem isRegularNil_lie_mk (d : GGPData F) {a : CliffordAlgebra d.QW} {b : CliffordAlgebra d.QV}
-    (ha : IsRegularNil (gspin d.QW) a) (hb : IsRegularNil (gspin d.QV) b) :
-    IsRegularNil d.lie ((a, b) : d.ambient) := by
-  obtain ⟨haL, ⟨n, hn⟩, har⟩ := ha
-  obtain ⟨hbL, ⟨k, hk⟩, hbr⟩ := hb
-  refine ⟨⟨haL, hbL⟩, ⟨n + k, ?_⟩, ?_⟩
-  · rw [Prod.pow_mk, pow_eq_zero_of_le (Nat.le_add_right n k) hn,
-      pow_eq_zero_of_le (Nat.le_add_left k n) hk]; rfl
-  · apply le_antisymm
-    · rw [finrank_lieCentralizer_lie, har, hbr]
-      have : Nonempty ↥d.lie := ⟨0⟩
-      refine le_ciInf fun Y => ?_
-      rw [finrank_lieCentralizer_lie]
-      exact add_le_add (ciInf_le (OrderBot.bddBelow _) (⟨(Y : d.ambient).1, Y.2.1⟩ : ↥(gspin d.QW)))
-        (ciInf_le (OrderBot.bddBelow _) (⟨(Y : d.ambient).2, Y.2.2⟩ : ↥(gspin d.QV)))
-    · exact ciInf_le (OrderBot.bddBelow _) (⟨(a, b), haL, hbL⟩ : ↥d.lie)
-
-/-- **A regular orbit satisfying Luo's condition exists at `x = 1` when `dim V` or `dim W` is even
-`≥ 4`** (Luo §7.1).  From
-`exists_regularNil_inOrbitNu` (Luo's orbit `O_ν` exists in `gspin(V)`, resp. `O_{−ν}` in
-`gspin(W)`: Waldspurger 2010 §7.1, Luo §2.1), paired with a regular nilpotent of the other factor
-(`nilReg_nonempty_of_quasiSplit`); the pair is regular in `𝔤` (`isRegularNil_lie_mk`), and its
-orbit is regular (`mk_mem_nilReg_of_isRegularNil`).  At `x = 1`, `W'_1 = W`, `V'_1 = V` and
-`𝔤_1 = 𝔤`.  This is not a consequence of `nilReg_nonempty_iff_quasiSplit` /
-`nilReg_centralizer_nonempty_iff` alone, which only give *some* regular orbit. -/
-theorem exists_orbitSpec_one_of_even (d : GGPData F) (hqs : d.IsQuasiSplit)
-    (h : (Even (finrank F ↥((fixedSub (1 : GSpin d.QW)).prod (⊤ : Submodule F d.Z))) ∧
-        4 ≤ finrank F ↥((fixedSub (1 : GSpin d.QW)).prod (⊤ : Submodule F d.Z))) ∨
-      (Even (finrank F ↥(fixedSub (1 : GSpin d.QW))) ∧ 4 ≤ finrank F ↥(fixedSub (1 : GSpin d.QW)))) :
-    ∃ O ∈ NilReg (grpCentralizer d.G (d.diag 1 : d.ambientˣ))
-      (lieCentralizer d.lie (((d.diag 1 : d.ambientˣ)) : d.ambient)),
-      ∃ X ∈ nilOrbitSet O, OrbitSpec d 1 (X : d.ambient) := by
-  have hfix : fixedSub (1 : GSpin d.QW) = ⊤ := fixedSub_one_eq_top d.QW
-  have h1 : ((d.diag 1 : d.G) : d.ambientˣ) = 1 := by rw [map_one]; rfl
-  have hL : lieCentralizer d.lie (((d.diag 1 : d.ambientˣ)) : d.ambient) = d.lie := by
-    ext Y
-    rw [mem_lieCentralizer, h1, Units.val_one, one_mul, mul_one]
-    simp
-  -- an element `X` of `𝔤`, regular nilpotent, satisfying Luo's condition at `x = 1`
-  have key : ∃ X : d.ambient, IsRegularNil d.lie X ∧ OrbitSpec d 1 X := by
-    obtain ⟨hV1, hW1⟩ := exists_regularNil_inOrbitNu d hqs
-    by_cases hV : Even (finrank F ↥((fixedSub (1 : GSpin d.QW)).prod (⊤ : Submodule F d.Z))) ∧
-        4 ≤ finrank F ↥((fixedSub (1 : GSpin d.QW)).prod (⊤ : Submodule F d.Z))
-    · have hV' := hV
-      rw [hfix, Submodule.prod_top, finrank_top] at hV'
-      obtain ⟨b, hb, hbν⟩ := hV1 hV'.1 hV'.2
-      obtain ⟨O, hO⟩ := nilReg_nonempty_of_quasiSplit d.QW d.nondeg hqs.1
-      refine ⟨((Quotient.out O).1, b), isRegularNil_lie_mk d hO hb, ?_⟩
-      unfold OrbitSpec
-      rw [ite_eq_left_of_eq_true _ _ (eq_true hV), hfix, Submodule.prod_top]
-      exact hbν
-    · have hW := h.resolve_left hV
-      have hW' := hW
-      rw [hfix, finrank_top, Module.finrank_fin_fun] at hW'
-      obtain ⟨a, ha, haν⟩ := hW1 hW'.1 hW'.2
-      obtain ⟨O, hO⟩ := nilReg_nonempty_of_quasiSplit d.QV d.nondeg_QV hqs.2
-      refine ⟨(a, (Quotient.out O).1), isRegularNil_lie_mk d ha hO, ?_⟩
-      unfold OrbitSpec
-      rw [ite_eq_right_of_eq_false _ _ (eq_false hV), ite_eq_left_of_eq_true _ _ (eq_true hW), hfix]
-      exact haν
-  obtain ⟨X, hX, hspec⟩ := key
-  have hX1 : X ∈ lieCentralizer d.lie (((d.diag 1 : d.ambientˣ)) : d.ambient) := by
-    rw [hL]; exact hX.1
-  refine ⟨Quotient.mk _ ⟨X, hX1, hX.2.1⟩, ?_, ⟨X, hX1⟩, ⟨hX.2.1, rfl⟩, hspec⟩
-  refine mk_mem_nilReg_of_isRegularNil _ _ (fun g hg Y hY => ?_) _ (by show IsRegularNil _ X; rw [hL]; exact hX)
-  rw [hL] at hY ⊢
-  exact conj_mem_lie_of_mem_G d (Subgroup.mem_inf.mp hg).1 hY
-
-/-- A regular orbit satisfying `OrbitSpec d 1` exists: where Luo's recipe imposes no condition, by
-`nilReg_one_nonempty`; otherwise by `exists_orbitSpec_one_of_even`. -/
+/-- A regular orbit satisfying `OrbitSpec d 1` exists: `GGPData.exists_orbitSpec_of_quasiSplit` at
+`x = 1` (`W'_1 = W`, `V'_1 = V`, `𝔤_1 = 𝔤`). -/
 theorem exists_orbitSpec_one (d : GGPData F) (hqs : d.IsQuasiSplit) :
     ∃ O ∈ NilReg (grpCentralizer d.G (d.diag 1 : d.ambientˣ))
       (lieCentralizer d.lie (((d.diag 1 : d.ambientˣ)) : d.ambient)),
-      ∃ X ∈ nilOrbitSet O, OrbitSpec d 1 (X : d.ambient) := by
-  by_cases hV : Even (finrank F ↥((fixedSub (1 : GSpin d.QW)).prod (⊤ : Submodule F d.Z))) ∧
-      4 ≤ finrank F ↥((fixedSub (1 : GSpin d.QW)).prod (⊤ : Submodule F d.Z))
-  · exact exists_orbitSpec_one_of_even d hqs (Or.inl hV)
-  by_cases hW : Even (finrank F ↥(fixedSub (1 : GSpin d.QW))) ∧
-      4 ≤ finrank F ↥(fixedSub (1 : GSpin d.QW))
-  · exact exists_orbitSpec_one_of_even d hqs (Or.inr hW)
-  obtain ⟨O, hO⟩ := nilReg_one_nonempty d hqs
-  refine ⟨O, hO, ⟨(Quotient.out O).1, (Quotient.out O).2.1⟩, ⟨(Quotient.out O).2.2, ?_⟩, ?_⟩
-  · exact Quotient.out_eq O
-  · unfold OrbitSpec
-    rw [ite_eq_right hV, ite_eq_right hW]
-    trivial
+      ∃ X ∈ nilOrbitSet O, OrbitSpec d 1 (X : d.ambient) :=
+  have hq := isQdAt_of_fixedSub_eq_top d hqs 1 (fixedSub_one_eq_top d.QW)
+  d.exists_orbitSpec_of_quasiSplit 1 (isSS_one_W d) (movedPartAbelian_one d) hq.1 hq.2
 
 /-- **The orbit `O_1` is regular** for quasi-split `G` (own work, after Luo §7.1:
 Luo's recipe applied to `(G'_1, H'_1) = (G, H)` selects a regular nilpotent orbit of `𝔤`, which
