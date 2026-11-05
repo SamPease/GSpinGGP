@@ -157,8 +157,11 @@ Given an isometric embedding $W'_{\alpha,y}\hookrightarrow W$, some $x\in\Gamma(
 conjugate to $y$.
 \end{lemma}
 \begin{proof}
-Not yet formalized. Transport the anisotropic torus through a cocycle in $S_y$ (\cite{BP} (12.1.6)), lift
-$(1_{W'},\bar x'')$ from $\SO$ to $\GSpin$ and rescale by a scalar.
+\leanok
+\uses{LIT-exists_rel_torusBar_of_fixerBar}
+$W$ is the twist of $W_\alpha$ by a cocycle in $S_y$: twist $W''_{\alpha,y}$ into $\iota(W'_{\alpha,y})^\perp$ in block
+coordinates, a cocycle in $SO(W_\alpha)_{W'_y}$, moved into $S_y$ by \cite{Kot86} Lemma~10.2. Then the construction of
+Prop.~6.6.1(iii) for $G_\alpha$ and the inverse twist $(W,\varphi_\alpha^{-1})$, and symmetry of strong stable conjugacy.
 \end{proof}
 
 \begin{proposition}[Thesis Prop.~6.6.1(i)]
