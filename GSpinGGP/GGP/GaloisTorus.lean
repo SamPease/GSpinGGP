@@ -477,4 +477,14 @@ theorem eqOn_baseChange_of_tmul {V M : Type*} [AddCommGroup V] [Module F V] [Add
     exact h a ha
   exact hle hw
 
+
+open scoped TensorProduct in
+/-- The Galois action commutes with the base change of a rational map. -/
+theorem galV_baseChange {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V₁] [AddCommGroup V₂]
+    [Module F V₂] (f : V₁ →ₗ[F] V₂) (σ : GalF F) (w : AlgebraicClosure F ⊗[F] V₁) :
+    galV σ (f.baseChange (AlgebraicClosure F) w) = f.baseChange (AlgebraicClosure F) (galV σ w) := by
+  induction w using TensorProduct.inductionOn with
+  | tmul a v => rfl
+  | add u w hu hw => rw [map_add, map_add, hu, hw, map_add, map_add]
+
 end GSpinGGP

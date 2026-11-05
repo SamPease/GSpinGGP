@@ -311,6 +311,14 @@ theorem quadReflection_eq (Q : QuadraticForm K V) (v : V) [Invertible (Q v)] :
   ext y
   simp [quadReflection, TauCeti.QuadraticMap.reflection_apply, invOf_eq_inv, smul_smul]
 
+/-- A totally isotropic nondegenerate space is zero. -/
+theorem eq_zero_of_isNondeg_of_forall_eq_zero {Q : QuadraticForm K V} (hQ : IsNondeg Q)
+    (h : ∀ v, Q v = 0) (v : V) : v = 0 :=
+  hQ.1 v fun w => by
+    have h2 := polar_eq_two_mul_bform Q v w
+    rw [QuadraticMap.polar, h, h, h, sub_zero, sub_zero] at h2
+    exact (mul_eq_zero.1 h2.symm).resolve_left (Invertible.ne_zero 2)
+
 omit [Invertible (2 : K)] in
 theorem quadReflection_mem {Q : QuadraticForm K V} {p : Submodule K V} {u v : V} (hu : u ∈ p)
     (hv : v ∈ p) : quadReflection Q u v ∈ p := by

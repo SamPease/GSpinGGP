@@ -119,21 +119,8 @@ theorem commute_of_fixes_eigenspace_one (hQ : IsNondeg Q) {x : GSpin Q}
     QuadraticMap.nondegenerate_polar_iff.mpr ((isNondeg_iff_nondegenerate _).1 hQ)
   obtain ⟨n, e, f, μ, hF, hXef⟩ := IsomCent.exists_hypFrame_eigen hpnd
     (fun a b => polar_specP x a b) hss (det_specP x)
-  -- a regular element `gₖ` of the split torus, `tᵢ = 2^{i+1}`
-  have h2 : ∀ k : ℕ, ((2 : K) ^ k) = ((2 ^ k : ℕ) : K) := by
-    intro k; push_cast; rfl
-  let tk : Fin n → Kˣ := fun i => Units.mk0 ((2 : K) ^ (i.val + 1)) (pow_ne_zero _ two_ne_zero)
-  have ht1 : ∀ i, (tk i : K) ≠ 1 := fun i => by
-    simp only [tk, Units.val_mk0, h2]
-    exact_mod_cast (Nat.one_lt_two_pow (Nat.succ_ne_zero _)).ne'
-  have htinj : ∀ i j, (tk i : K) = tk j → i = j := fun i j hij => by
-    simp only [tk, Units.val_mk0, h2] at hij
-    have : 2 ^ (i.val + 1) = 2 ^ (j.val + 1) := by exact_mod_cast hij
-    exact Fin.ext (by have := Nat.pow_right_injective le_rfl this; omega)
-  have htinv : ∀ i j, (tk i : K) * tk j ≠ 1 := fun i j => by
-    simp only [tk, Units.val_mk0]
-    rw [← pow_add, h2]
-    exact_mod_cast (Nat.one_lt_two_pow (by omega : i.val + 1 + (j.val + 1) ≠ 0)).ne'
+  -- a regular element `gₖ` of the split torus
+  obtain ⟨tk, ht1, htinj, htinv⟩ := exists_regular_units K n
   obtain ⟨gk, hgkx, hgkW, hgke, -⟩ := exists_frame_torus_elt hF hXef tk
   -- `P(z)` commutes with `P(gₖ)`, so it scales each frame pair
   have hdz := (commute_iff_det_negFixedSub hQ x hss z (hzx.map (specP Q))).1 hzx

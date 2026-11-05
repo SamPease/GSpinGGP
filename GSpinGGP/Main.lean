@@ -1378,15 +1378,12 @@ theorem exists_torusTransfer_core (IF : InnerFormSystem d) (α : IF.Idx)
     rw [TorusTransfer.psiU_symm_psiU]
   have c1 : Continuous e := TorusTransfer.continuous_of_bcUnits_eq e.toMonoidHom he
   have c2 : Continuous e.symm := TorusTransfer.continuous_of_bcUnits_eq e.symm.toMonoidHom he'
-  refine ⟨e, c1, c2, fun c => ?_, fun t ht => ?_, c5, c6, c7⟩
-  · apply TorusTransfer.bcUnits_GSpin_injective
-    show bcUnits _ _ = bcUnits _ _
-    rw [he]
-    exact TorusTransfer.psiU_bcUnits_scalar _ _ c
-  · apply TorusTransfer.bcUnits_GSpin_injective
-    show bcUnits _ _ = bcUnits _ _
-    rw [he, ht]
-    exact hconj
+  refine ⟨e, c1, c2, fun c => TorusTransfer.transportEquiv_scalar hg hrat hconj c _,
+    fun t ht => ?_, c5, c6, c7⟩
+  apply TorusTransfer.bcUnits_GSpin_injective
+  show bcUnits _ _ = bcUnits _ _
+  rw [he, ht]
+  exact hconj
 
 /-- **Thesis Prop. 6.6.1(ii)** (own work).
 If `x ∈ Γ(G,H)` and `y ∈ Γ(G_α,H_α)` are strongly stably conjugate, `Ad(g) ∘ ψ_α` restricts to an
@@ -1416,8 +1413,8 @@ uses `H¹(F, T_x)`.  Proved: `y` is sent to the class of `σ ↦ ψ⁻¹ ∘ σ�
 `C(ψ) x = y` and cocycle in `S_x` (`GGPData.IsStableIso`; it exists by the case analysis on
 `dim W'_x` and Witt cancellation, `GGPData.exists_isStableIso`); the class is well defined and
 injective on `GSpin(W_α)(F)`-classes (`IsStableIso.mk_eq`, `IsStableIso.exists_conj_of_mk_eq`), and
-every class over `α` arises, since `S_x(F̄)` is central in the centralizer of `x`
-(`GGPData.exists_of_twistIdx`). -/
+every class over `α` arises, since the cocycle lifts to `T_x(F̄)`, which is central in the
+centralizer of `x` in `GSpin(W)(F̄)` (`GGPData.exists_of_twistIdx`). -/
 theorem n_alpha_eq_card_twistIdx (IF : InnerFormSystem d) (α : IF.Idx) (x : ↥(GSpin d.QW))
     (hx : d.IsGammaElt x) :
     n_alpha IF α x = Nat.card {β : H1 (d.torusBarFbar x) // TwistIdx IF x β α} := by

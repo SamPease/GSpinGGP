@@ -31,7 +31,10 @@ namespace TorusTransfer
 variable {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V₁] [FiniteDimensional F V₁]
   [AddCommGroup V₂] [Module F V₂] {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂}
 
-/-- **The rationality clause from a torus-valued cocycle.** -/
+/-- **The rationality clause from a torus-valued cocycle.**  If for every `σ` the cocycle
+`ψ⁻¹ ∘ σψ` of `ψ = P(g) ∘ φ` is `P(t_σ)` with `t_σ` commuting with `x` and trivial on
+`ker (P(x) − 1)`, then `Ad(g) ∘ C(φ)` commutes with the Galois action on the centralizer of `x`,
+since `t_σ` is central there (`Steinberg.commute_of_fixes_eigenspace_one`). -/
 theorem ratAt_of_torus (hQ₁ : IsNondeg Q₁) {x : GSpin Q₁}
     (hss : Module.End.IsSemisimple (specP _ (bcGSpin Q₁ x) : Kb ⊗[F] V₁ →ₗ[Kb] _))
     (hL : IsomCent.LieAbelian (bform (Q₁.baseChange Kb))
@@ -121,11 +124,8 @@ def inlW : d.QW.baseChange Kb →qᵢ d.QV.baseChange Kb where
 
 theorem polar_inlF_inrF (w : Kb ⊗[F] (Fin d.m → F)) (z : Kb ⊗[F] d.Z) :
     QuadraticMap.polar (d.QV.baseChange Kb) (d.inlF w) (d.inrF z) = 0 := by
-  have h : ∀ a b, QuadraticMap.polar (d.QV.baseChange Kb) a b = QuadraticMap.polar
-      ((d.QW.baseChange Kb).prod (d.QZ.baseChange Kb)) (prodBaseChange d.QW d.QZ a)
-        (prodBaseChange d.QW d.QZ b) := fun a b => by
-    simp only [QuadraticMap.polar, ← map_add, QuadraticMap.IsometryEquiv.map_app]
-  rw [h, prodBaseChange_inlF, prodBaseChange_inrF, QuadraticMap.polar_prod]
+  rw [← (prodBaseChange d.QW d.QZ).polar_apply, prodBaseChange_inlF, prodBaseChange_inrF,
+    QuadraticMap.polar_prod]
   simp
 
 
@@ -140,25 +140,9 @@ theorem specP_inlW_inrF (t : GSpin (d.QW.baseChange Kb)) (z : Kb ⊗[F] d.Z) :
 
 end GGPData
 
-omit [PAdicField F] in
-/-- The Galois action commutes with the base change of a rational map. -/
-theorem galV_baseChange {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V₁] [AddCommGroup V₂]
-    [Module F V₂] (f : V₁ →ₗ[F] V₂) (σ : GalF F) (w : Kb ⊗[F] V₁) :
-    galV σ (f.baseChange Kb w) = f.baseChange Kb (galV σ w) := by
-  induction w using TensorProduct.inductionOn with
-  | tmul a v => rfl
-  | add u w hu hw => rw [map_add, map_add, hu, hw, map_add, map_add]
-
 namespace GGPData
 
 variable {d : GGPData F}
-
-theorem polar_prodBaseChange_symm {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V₁] [AddCommGroup V₂]
-    [Module F V₂] (Q₁ : QuadraticForm F V₁) (Q₂ : QuadraticForm F V₂) (a b : _ × _) :
-    QuadraticMap.polar (QuadraticForm.baseChange Kb (Q₁.prod Q₂)) ((prodBaseChange Q₁ Q₂).symm a)
-      ((prodBaseChange Q₁ Q₂).symm b) =
-      QuadraticMap.polar ((Q₁.baseChange Kb).prod (Q₂.baseChange Kb)) a b := by
-  simp only [QuadraticMap.polar, ← map_add, QuadraticMap.IsometryEquiv.map_app]
 
 theorem twistV_inlF (τ : InnerTwist d.QW) (w : Kb ⊗[F] (Fin d.m → F)) :
     d.twistV τ (d.inlF w) = inlBC d τ (τ.φ w) := by
@@ -209,7 +193,7 @@ theorem psiV_inrF (τ : InnerTwist d.QW) (g : GSpin (τ.Q'.baseChange Kb)) (z : 
   refine specP_map_apply_of_orth _ _ _ fun u => ?_
   change QuadraticMap.polar (QuadraticForm.baseChange Kb (τ.Q'.prod d.QZ))
     ((prodBaseChange τ.Q' d.QZ).symm (u, 0)) ((prodBaseChange τ.Q' d.QZ).symm (0, z)) = 0
-  rw [polar_prodBaseChange_symm, QuadraticMap.polar_prod]
+  rw [QuadraticMap.IsometryEquiv.polar_apply, QuadraticMap.polar_prod]
   simp
 
 /-- **The cocycle on `V`** of `ψ_V = P(g_V) ∘ (φ_α ⊕ 1)` is `a_σ ⊕ 1`: if `a_σ = P(t)`, it is `P` of the
@@ -288,11 +272,6 @@ theorem inlW_mem_torus {x : GSpin d.QW} {t : GSpin (d.QW.baseChange Kb)} (ht : t
 
 end GGPData
 
-omit [PAdicField F] in
-theorem det_map_algebraMap {n : ℕ} (N : Matrix (Fin n) (Fin n) F) :
-    (N.map (algebraMap F Kb)).det = algebraMap F Kb N.det :=
-  (RingHom.map_det (algebraMap F Kb) N).symm
-
 /-- A rational matrix of determinant `-1` preserving a nondegenerate form in dimension `m > 0` (the
 matrix of a rational reflection), viewed in `GL_m(F̄)`. -/
 theorem exists_galFixed_gram_det_neg {m : ℕ} {Q : QuadraticForm F (Fin m → F)} (hQ : IsNondeg Q)
@@ -304,11 +283,7 @@ theorem exists_galFixed_gram_det_neg {m : ℕ} {Q : QuadraticForm F (Fin m → F
   obtain ⟨u, hu⟩ : ∃ u, Q u ≠ 0 := by
     by_contra hcon
     push Not at hcon
-    have hb : ∀ v w, bform Q v w = 0 := fun v w => by
-      have h2 := polar_eq_two_mul_bform Q v w
-      rw [QuadraticMap.polar, hcon, hcon, hcon, sub_zero, sub_zero] at h2
-      exact (mul_eq_zero.1 h2.symm).resolve_left two_ne_zero
-    have h0 := hQ.1 (Pi.single ⟨0, hm⟩ 1) fun w => hb _ w
+    have h0 := eq_zero_of_isNondeg_of_forall_eq_zero hQ hcon (Pi.single ⟨0, hm⟩ 1)
     simpa using congrFun h0 ⟨0, hm⟩
   set N := LinearMap.toMatrix' (quadReflection Q u)
   have hNdet : N.det = -1 := by rw [LinearMap.det_toMatrix', det_quadReflection hu]
@@ -318,13 +293,16 @@ theorem exists_galFixed_gram_det_neg {m : ℕ} {Q : QuadraticForm F (Fin m → F
     ext v
     exact quadReflection_isometry hu v
   have hdet : IsUnit (N.map (algebraMap F Kb)).det := by
-    rw [det_map_algebraMap, hNdet]; exact (isUnit_one.neg).map _
+    rw [show (N.map (algebraMap F Kb)).det = algebraMap F Kb N.det from (RingHom.map_det _ _).symm,
+      hNdet]
+    exact (isUnit_one.neg).map _
   obtain ⟨X, hX⟩ : ∃ X : GL (Fin m) Kb, (X : Matrix (Fin m) (Fin m) Kb) = N.map (algebraMap F Kb) :=
     ⟨Matrix.nonsingInvUnit _ hdet, rfl⟩
   refine ⟨X, fun σ => Units.ext ?_, ?_, ?_⟩
   · rw [coe_galGL, hX, map_algebraMap_fixed]
   · rw [hX, ← Matrix.transpose_map, ← Matrix.map_mul, ← Matrix.map_mul, hNg]
-  · rw [hX, det_map_algebraMap, hNdet, map_neg, map_one]
+  · rw [hX, show (N.map (algebraMap F Kb)).det = algebraMap F Kb N.det from
+      (RingHom.map_det _ _).symm, hNdet, map_neg, map_one]
 
 namespace GGPData
 
@@ -359,11 +337,8 @@ theorem isGammaElt_of_ratAt (τ : InnerTwist d.QW) {x : GSpin d.QW} (hx : d.IsGa
     exact congrArg Subtype.val this.eq
   · -- the induced map of quotients is a continuous surjection
     have hsc : ∀ c : Fˣ, ((e ⟨scalarGSpin d.QW c, d.scalar_mem_torusOf x c⟩ :
-        ↥((d.twist τ).torusOf y)) : GSpin τ.Q') = scalarGSpin τ.Q' c := fun c => by
-      apply bcUnits_GSpin_injective
-      change bcUnits _ _ = bcUnits _ _
-      rw [he]
-      exact psiU_bcUnits_scalar _ _ c
+        ↥((d.twist τ).torusOf y)) : GSpin τ.Q') = scalarGSpin τ.Q' c := fun c =>
+      transportEquiv_scalar hg hrat hconj c _
     have hle : d.scalarsIn (d.torusOf x) ≤ ((d.twist τ).scalarsIn ((d.twist τ).torusOf y)).comap
         e.toMonoidHom := by
       rintro ⟨t, ht⟩ ⟨c, hc⟩
@@ -426,7 +401,8 @@ theorem ratAt_of_torusFbar (τ : InnerTwist d.QW) {x : GSpin d.QW} (hx : d.IsGam
 /-- **Surjectivity** (Thesis Prop. 6.6.1(iii)): every cocycle `a` in `S_x` twisting `W` into `W_α`
 is the cocycle of some `y` strongly stably conjugate to `x`.  Normalize the `F̄`-isometry `φ` of the
 twist so that `det φ = det φ_α` (a rational reflection of `W_α`), write `φ = P(g) ∘ φ_α`; since
-`φ⁻¹ ∘ σφ = a_σ ∈ S_x(F̄)` is central in the centralizer of `x` (on `W` and, through `W ⊆ V`, on `V`),
+`φ⁻¹ ∘ σφ = a_σ = P(t_σ)` with `t_σ ∈ T_x(F̄)`, central in the centralizer of `x` in `GSpin(F̄)` (on `W`
+and, through `W ⊆ V`, on `V`; `Steinberg.commute_of_fixes_eigenspace_one`),
 `Ad(g) ∘ C(φ_α)` and `Ad(g_V) ∘ C(φ_α ⊕ 1)` satisfy the rationality clause, and `y` is the rational
 element `g C(φ_α)(x) g⁻¹` (`TorusTransfer.exists_transport`). -/
 theorem exists_stronglyStablyConj_of_isTwistBy (τ : InnerTwist d.QW) {x : GSpin d.QW}
@@ -447,7 +423,8 @@ theorem exists_stronglyStablyConj_of_isTwistBy (τ : InnerTwist d.QW) {x : GSpin
       have h2 := congrArg Matrix.det (gram_glOf τ.φ)
       rw [Matrix.det_mul, Matrix.det_mul, Matrix.det_transpose] at h1 h2
       have hG : (τ.Q'.toMatrix'.map (algebraMap F Kb)).det ≠ 0 := by
-        rw [det_map_algebraMap]
+        rw [show (τ.Q'.toMatrix'.map (algebraMap F Kb)).det = algebraMap F Kb τ.Q'.toMatrix'.det from
+          (RingHom.map_det _ _).symm]
         exact (map_ne_zero _).2 ((InnerTwistAux.isNondeg_iff_discr'_ne_zero τ.Q').1 τ.nondeg')
       have := h1.trans h2.symm
       exact mul_right_cancel₀ hG (by linear_combination this)

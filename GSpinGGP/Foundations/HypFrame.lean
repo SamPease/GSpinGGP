@@ -640,4 +640,23 @@ end Witt
 
 end IsHypFrame
 
+
+/-- **Regular scalars** in characteristic `0`: `tᵢ = 2^{i+1}` satisfy `tᵢ ≠ 1`, are distinct, and
+`tᵢ tⱼ ≠ 1`; they give a regular element of the split torus of a frame. -/
+theorem exists_regular_units (K : Type*) [Field K] [CharZero K] (n : ℕ) :
+    ∃ t : Fin n → Kˣ, (∀ i, (t i : K) ≠ 1) ∧ (∀ i j, (t i : K) = t j → i = j) ∧
+      ∀ i j, (t i : K) * t j ≠ 1 := by
+  have h2 : ∀ k : ℕ, ((2 : K) ^ k) = ((2 ^ k : ℕ) : K) := by
+    intro k; push_cast; rfl
+  refine ⟨fun i => Units.mk0 ((2 : K) ^ (i.val + 1)) (pow_ne_zero _ two_ne_zero), fun i => ?_,
+    fun i j hij => ?_, fun i j => ?_⟩
+  · simp only [Units.val_mk0, h2]
+    exact_mod_cast (Nat.one_lt_two_pow (Nat.succ_ne_zero _)).ne'
+  · simp only [Units.val_mk0, h2] at hij
+    have : 2 ^ (i.val + 1) = 2 ^ (j.val + 1) := by exact_mod_cast hij
+    exact Fin.ext (by have := Nat.pow_right_injective le_rfl this; omega)
+  · simp only [Units.val_mk0]
+    rw [← pow_add, h2]
+    exact_mod_cast (Nat.one_lt_two_pow (by omega : i.val + 1 + (j.val + 1) ≠ 0)).ne'
+
 end GSpinGGP

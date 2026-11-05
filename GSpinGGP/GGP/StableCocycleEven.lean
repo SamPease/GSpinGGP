@@ -310,12 +310,8 @@ theorem exists_isStableIso_of_isometry (τ : InnerTwist d.QW) {x : GSpin d.QW} (
       by_contra hcon
       push Not at hcon
       have hnd := isNondeg_fixedSub_of_isSS d.nondeg x hx.1
-      have hzero : ∀ a : fixedSub x, a = 0 := fun a => hnd.1 a fun b => by
-        rw [bform_comp_subtype]
-        have h2 := polar_eq_two_mul_bform d.QW a b
-        rw [QuadraticMap.polar, hcon _ ((fixedSub x).add_mem a.2 b.2), hcon _ a.2, hcon _ b.2,
-          sub_zero, sub_zero] at h2
-        exact (mul_eq_zero.1 h2.symm).resolve_left two_ne_zero
+      have hzero : ∀ a : fixedSub x, a = 0 :=
+        eq_zero_of_isNondeg_of_forall_eq_zero hnd fun a => hcon _ a.2
       apply h1
       have hid : rmap hc ψ θ₀ = LinearMap.id := by
         refine baseChange_hom_ext fun v => ?_
