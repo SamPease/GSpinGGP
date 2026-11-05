@@ -1,5 +1,5 @@
 import GSpinGGP.GGP.CentralizerSign
-import GSpinGGP.GGP.IsometryDet
+import GSpinGGP.Foundations.IsometryDet
 
 /-!
 # Pair blocks of the centralizer of a semisimple element of `GSpin`

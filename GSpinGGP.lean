@@ -13,7 +13,7 @@ import GSpinGGP.Foundations.RegularNilpotent
 import GSpinGGP.Foundations.QuadraticForms
 import GSpinGGP.Foundations.GSpinLipschitz
 import GSpinGGP.GGP.CentralizerSign
-import GSpinGGP.GGP.IsometryDet
+import GSpinGGP.Foundations.IsometryDet
 import GSpinGGP.GGP.PairBlock
 import GSpinGGP.GGP.Steinberg
 import GSpinGGP.Foundations.LocalFieldBridge
@@ -57,7 +57,7 @@ import GSpinGGP.GGP.StableCocycle
 import GSpinGGP.GGP.StableCocycleEven
 import GSpinGGP.GGP.StableCocycleWitt
 import GSpinGGP.GGP.StableCocycleClass
-import GSpinGGP.GGP.EigenFrame
+import GSpinGGP.Foundations.EigenFrame
 import GSpinGGP.GGP.TorusFrame
 import GSpinGGP.GGP.GammaClassFinite
 import GSpinGGP.GGP.TwistPlane
@@ -68,10 +68,10 @@ import GSpinGGP.GGP.WittParity
 import GSpinGGP.GGP.TorusTransfer
 import GSpinGGP.GGP.Cocharacter
 import GSpinGGP.GGP.Contraction
-import GSpinGGP.GGP.IsometryCentralizer
+import GSpinGGP.Foundations.IsometryCentralizer
 import GSpinGGP.GGP.TorusCommute
 import GSpinGGP.GGP.MovedCentralizer
-import GSpinGGP.GGP.IsometrySemisimple
+import GSpinGGP.Foundations.IsometrySemisimple
 import GSpinGGP.GGP.GSpinSemisimple
 import GSpinGGP.GGP.TorusTransport
 import GSpinGGP.GGP.Levi

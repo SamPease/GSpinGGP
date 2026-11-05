@@ -1,4 +1,4 @@
-import GSpinGGP.GGP.IsometryCentralizer
+import GSpinGGP.Foundations.IsometryCentralizer
 import TauCeti.LinearAlgebra.Eigenspace.BaseChange
 import TauCeti.LinearAlgebra.BilinearForm.BaseChange
 

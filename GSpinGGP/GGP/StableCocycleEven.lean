@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.GGP.StableCocycle
 import GSpinGGP.GGP.Descent
-import GSpinGGP.GGP.IsometryDet
+import GSpinGGP.Foundations.IsometryDet
 
 /-!
 # Changing the witness of a stable conjugacy
