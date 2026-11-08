@@ -104,6 +104,8 @@ GSpinGGP.sum_mult_eq_germ_one
 GSpinGGP.ScuspTestFn
 GSpinGGP.distribJ
 GSpinGGP.GGPData.distribJ_convergent
+GSpinGGP.GGPData.prop_6_7_1_iii
+GSpinGGP.GGPData.exists_iwasawaDatum
 GSpinGGP.GGPData.distribJ_add
 GSpinGGP.thetaF
 GSpinGGP.LitTF.bp_thetaF_exists

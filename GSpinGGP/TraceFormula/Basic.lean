@@ -1313,16 +1313,24 @@ theorem modularCharacter_eq_one_of_mem (E : Subgroup G₀) (hEo : IsOpen (E : Se
   rw [Measure.modularCharacterFun_eq_haarScalarFactor μ k]
   exact_mod_cast h1
 
+/-- A function on a topological group that is invariant under right translation by an open
+subgroup `K` is locally constant (it is constant on each open coset `xK`). -/
+theorem isLocallyConstant_of_mul_right_invariant {G A : Type*} [Group G] [TopologicalSpace G]
+    [ContinuousMul G] {K : Subgroup G} (hK : IsOpen (K : Set G)) {f : G → A}
+    (hf : ∀ x, ∀ k ∈ K, f (x * k) = f x) : IsLocallyConstant f := by
+  rw [IsLocallyConstant.iff_exists_open]
+  intro x
+  refine ⟨(fun y => x⁻¹ * y) ⁻¹' (K : Set G),
+    hK.preimage (continuous_const.mul continuous_id), by simp, fun y hy => ?_⟩
+  have e : y = x * (x⁻¹ * y) := by group
+  rw [e, hf x _ hy]
+
 /-- The modular character is locally constant if there is a compact open subgroup. -/
 theorem isLocallyConstant_modularCharacter (E : Subgroup G₀) (hEo : IsOpen (E : Set G₀))
     (hEc : IsCompact (E : Set G₀)) :
     IsLocallyConstant (fun p : G₀ => (Measure.modularCharacter p : ℝ)) := by
-  rw [IsLocallyConstant.iff_exists_open]
-  intro x
-  refine ⟨(fun y => x⁻¹ * y) ⁻¹' (E : Set G₀),
-    hEo.preimage (continuous_const.mul continuous_id), by simp, fun y hy => ?_⟩
-  have e : y = x * (x⁻¹ * y) := by group
-  rw [e, map_mul, modularCharacter_eq_one_of_mem E hEo hEc _ hy, mul_one]
+  refine isLocallyConstant_of_mul_right_invariant hEo fun x k hk => ?_
+  rw [map_mul, modularCharacter_eq_one_of_mem E hEo hEc _ hk, mul_one]
 
 /-- On a compact set, the modular character is bounded below by a positive constant (if there
 is a compact open subgroup). -/
