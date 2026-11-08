@@ -486,6 +486,16 @@ section Semisimple
 
 variable {A : Type*} [Ring A] [Algebra F A]
 
+/-- Semisimplicity is invariant under conjugation by a unit (`a ↦ u a` intertwines left
+multiplication by `a` and by `u a u⁻¹`). -/
+theorem isSS_units_conj (u : Aˣ) (a : A) : IsSS F ((u : A) * a * ((u⁻¹ : Aˣ) : A)) ↔ IsSS F a := by
+  let e : A ≃ₗ[F] A := LinearEquiv.ofLinearMap (LinearMap.mulLeft F (u : A))
+    (LinearMap.mulLeft F ((u⁻¹ : Aˣ) : A)) (by ext b; simp [← mul_assoc])
+    (by ext b; simp [← mul_assoc])
+  refine (LinearEquiv.isSemisimple_iff _ _ e ?_).symm
+  ext b
+  simp [e, mul_assoc]
+
 /-- Semisimplicity is preserved by algebra homomorphisms: `p(a) = 0` with `p` squarefree gives
 `p(φ a) = 0`.  Used for `x ↦ incl x`, `C(W) → C(V)`. -/
 theorem isSS_algHom {A B : Type*} [Ring A] [Algebra F A] [FiniteDimensional F A] [Ring B]
