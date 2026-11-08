@@ -108,13 +108,13 @@ variable {d : GGPData F}
 conjugate to `x ∈ GSpin(W)(F)` (Thesis §6.7, definition of `n_α(x)`). -/
 def stableFiber (IF : InnerFormSystem d) (α : IF.Idx) (x : ↥(GSpin d.QW)) :
     Set ↥(GSpin (IF.data α).QW) :=
-  {y | (IF.data α).IsGammaElt y ∧ d.StronglyStablyConjW (IF.twist α) x y}
+  GGPData.stableSet (IF.twist α) x
 
 /-- `GSpin(W_α)(F)`-conjugacy on `stableFiber` (by Thesis §6.6, two
 elements of `GSpin(W_α)` are `G_α(F)`-conjugate iff they are `GSpin(W_α)(F)`-conjugate). -/
 def stableFiberConj (IF : InnerFormSystem d) (α : IF.Idx) (x : ↥(GSpin d.QW))
     (y y' : stableFiber IF α x) : Prop :=
-  ∃ g : ↥(GSpin (IF.data α).QW), (y' : ↥(GSpin (IF.data α).QW)) = g * y * g⁻¹
+  GGPData.ConjOn (stableFiber IF α x) y y'
 
 /-- `n_α(x) = |{y ∈ Γ(G_α, H_α) : y ∼_stab x}|` (Thesis §6.7): the number of
 `GSpin(W_α)(F)`-conjugacy classes of elements of `Γ(G_α,H_α)` strongly stably conjugate to `x`.
@@ -468,33 +468,7 @@ theorem eq_scalar_of_stablyConjVia {V₁ V₂ : Type*} [AddCommGroup V₁] [Modu
 theorem scalar_stronglyStablyConjW_refl (τ : InnerTwist d.QW) (hτ : τ = d.reflTwist) (c : Fˣ) :
     d.StronglyStablyConjW τ (scalarGSpin d.QW c) (scalarGSpin (d.twist τ).QW c) := by
   subst hτ
-  have hW : CliffordAlgebra.map (d.reflTwist.φ).toIsometry = AlgHom.id _ _ :=
-    CliffordAlgebra.map_id _
-  have hV : CliffordAlgebra.map (d.twistV d.reflTwist).toIsometry = AlgHom.id _ _ := by
-    rw [← CliffordAlgebra.map_id]
-    congr 1
-    ext v
-    show (prodBaseChange d.QW d.QZ).symm ((d.reflTwist.φ.prod
-      (QuadraticMap.IsometryEquiv.refl (d.QZ.baseChange (AlgebraicClosure F))))
-      (prodBaseChange d.QW d.QZ v)) = v
-    exact (prodBaseChange d.QW d.QZ).symm_apply_apply v
-  have hcW : ∀ z, cliffUnits d.reflTwist.φ z = z := fun z => Units.ext (by
-    simp only [cliffUnits, hW]; rfl)
-  have hcV : ∀ z, cliffUnits (d.twistV d.reflTwist) z = z := fun z => Units.ext (by
-    simp only [cliffUnits, hV]; rfl)
-  refine ⟨⟨1, Subgroup.one_mem _, ?_, fun σ z _ _ => ?_⟩, ⟨1, Subgroup.one_mem _, ?_, fun σ z _ _ => ?_⟩⟩
-  · rw [hcW, inv_one, mul_one]; exact one_mul _
-  · rw [hcW, hW]
-    show galC d.QW σ ((1 * z * 1⁻¹ : (CliffordAlgebra (d.QW.baseChange (AlgebraicClosure F)))ˣ) :
-      CliffordAlgebra (d.QW.baseChange (AlgebraicClosure F))) = _
-    simp only [mul_one, one_mul, inv_one, Units.val_one]
-    rfl
-  · rw [hcV, inv_one, mul_one]; exact one_mul _
-  · rw [hcV, hV]
-    show galC d.QV σ ((1 * z * 1⁻¹ : (CliffordAlgebra (d.QV.baseChange (AlgebraicClosure F)))ˣ) :
-      CliffordAlgebra (d.QV.baseChange (AlgebraicClosure F))) = _
-    simp only [mul_one, one_mul, inv_one, Units.val_one]
-    rfl
+  exact d.stronglyStablyConjW_refl_self _
 
 /-- **`n_1(c) = 1` for central `c`** (own work; Thesis §6.7, where the atom
 contributes with weight `1`): anything strongly stably conjugate to the scalar `c` is `c`
@@ -2361,11 +2335,10 @@ strongly stably conjugate to a common `y` (and `0` on non-quasi-split tori),
 `Σ_{[T'] ∈ Γ(G_α,H_α)/conj} |W(T')|⁻¹ F_α(T') = Σ_{[T] ∈ Γ(G,H)/conj} |W(T)|⁻¹ (n_α(x_T)/n_1(x_T)) f(T)`.
 Regrouping both sides by stable classes, this says that `N_α = Σ |W(T')|⁻¹` over the classes of
 `G_α` stably conjugate to `T_x` is proportional to `n_α(x)` (with the same constant for every `α`).
-Expected proof: `n_α(x) = |q_x⁻¹(α)|` (`n_alpha_eq_card_twistIdx`), and the rational classes of tori
-over `α` are the orbits of `(N_x/S_x)(F)` on `q_x⁻¹(α) ⊆ H¹(F, S_x)`, with stabilizers `W(T')`
-(orbit–stabilizer).  Checks: at `α = 1` both sides agree by the invariance of `f`; for central `x`,
-`n_α(x) = [α = 1]`.  (`n_1(x) ≥ 1`, `x` itself being strongly stably conjugate to its image in `G_1`;
-`hqs` and `hf0` are not needed for the identity.) -/
+Proof: `n_α(x) = w(x) · Σ_{c meets x} |W(T_c)|⁻¹` (`n_alpha_eq_stableWeight_mul`, with the same
+`w(x)` for every `α`); the classes meeting `x` form a stable class of tori (`meets_refl_iff`), on which
+`f` is constant (`hf`), so both sides regroup class by class.  (`hqs` and `hf0` are not needed for the
+identity.) -/
 theorem torusClass_count (hqs : d.IsQuasiSplit) (IF : InnerFormSystem d) (α : IF.Idx)
     (f : Subgroup ↥(GSpin d.QW) → ℂ)
     (hf : ∀ (β : IF.Idx) (y : ↥(GSpin (IF.data β).QW)) (x x' : ↥(GSpin d.QW)),
@@ -2376,8 +2349,7 @@ theorem torusClass_count (hqs : d.IsQuasiSplit) (IF : InnerFormSystem d) (α : I
     ∑' c : GammaClass (IF.data α), ((weylCard (IF.data α) c : ℂ))⁻¹ * stableLift IF α f c =
       ∑' c : GammaClass d, ((weylCard d c : ℂ))⁻¹ *
         ((n_alpha IF α (gammaGen d c) : ℂ) / (n_alpha IF IF.base (gammaGen d c) : ℂ)) *
-          f (Quot.out c).1 :=
- by
+          f (Quot.out c).1 := by
   classical
   have _ := hqs
   have _ := hf0
@@ -2472,17 +2444,9 @@ theorem torusClass_count (hqs : d.IsQuasiSplit) (IF : InnerFormSystem d) (α : I
         rw [dif_neg]
         rintro ⟨x, hx, hxy⟩
         have hm : GGPData.Meets (IF.twist α) x c' := ⟨_, ⟨hg'.1, hxy⟩, hg'.2⟩
-        let cx : GammaClass d := Quot.mk _ ⟨d.torusOf x, x, hx, rfl⟩
-        obtain ⟨g, hg⟩ := (GGPData.torusConj_equivalence).eqvGen_iff.1
-          (Quot.eqvGen_exact (Quot.out_eq (cx : Quot d.TorusConj)).symm)
-        have hT1 : d.torusOf (g * x * g⁻¹) = (Quot.out cx).1 := by
-          rw [GGPData.torusOf_conj]; exact hg.symm
-        have hss : IsSS F ((((g * x * g⁻¹ : ↥(GSpin d.QW)) : (CliffordAlgebra d.QW)ˣ)) :
-            CliffordAlgebra d.QW) := (GGPData.isSS_conj x g).2 hx.1
-        have hΓ1 : d.IsGammaElt (g * x * g⁻¹) :=
-          GGPData.isGammaElt_of_torusOf_eq (hgen cx).1 hss (hT1.trans (hgen cx).2.symm)
-        exact hex cx (GGPData.meets_of_torusOf_eq hTα hΓ1 (hgen cx).1
-          ((hgen cx).2.trans hT1.symm) (GGPData.meets_conj g hm))
+        obtain ⟨g, hΓ1, hT1⟩ := GGPData.exists_conj_torusOf_eq_out hx rfl
+        exact hex _ (GGPData.meets_of_torusOf_eq hTα hΓ1 (hgen _).1 ((hgen _).2.trans hT1.symm)
+          (GGPData.meets_conj g hm))
       rw [h0]
       exact (Finset.sum_eq_zero fun c _ => if_neg (hex c)).symm
   -- regroup

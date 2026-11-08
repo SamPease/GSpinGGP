@@ -97,7 +97,6 @@ theorem GGPData.stronglyStablyConjW_of_symm (d : GGPData F) (τ : InnerTwist d.Q
   rw [GGPData.twistV_symm] at hV
   exact StronglyStablyConjVia.of_symm (d.twistV τ) hV
 
-
 section Compose
 
 variable {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V₁] [AddCommGroup V₂] [Module F V₂]

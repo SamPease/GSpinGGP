@@ -20,6 +20,10 @@ Ingredients of the torus-class count (`torusClass_count`, Thesis (6.7.2)–(6.7.
 * `card_quot_conjOn`: for `Y ⊆ Γ(G,H)` stable under conjugation, the number of rational classes of
   `Y` is `Σ_c |{y ∈ Y : T_y = T_c}| / |W(T_c)|` over the torus classes `c`
   (`card_classOn_mul_weylCard`: `N(T_c)` acts freely modulo `Z(T_c)`).
+* `stableSet`, `stableWeight`, `Meets`, `card_quot_stableSet`: for `x ∈ Γ(G,H)` and an inner twist `τ`
+  with torus transport (`HasTorusTransport`, from Thesis Prop. 6.6.1(ii)),
+  `n_τ(x) = w(x) · Σ_{c meets x} |W(T_c)|⁻¹`; `meets_refl_iff`: the classes meeting `x` form a stable
+  class of tori.
 -/
 
 noncomputable section
@@ -250,20 +254,13 @@ theorem torusOf_conj (x g : ↥(GSpin d.QW)) :
     have := conj_mem_torusOf_conj g ht
     rwa [show g * (g⁻¹ * t * g⁻¹⁻¹) * g⁻¹ = t by group] at this
 
-/-- Semisimplicity is invariant under conjugation by `GSpin(W)(F)`. -/
+/-- Semisimplicity is invariant under conjugation by `GSpin(W)(F)` (`isSS_units_conj`). -/
 theorem isSS_conj (x g : ↥(GSpin d.QW)) :
     IsSS F (((g * x * g⁻¹ : ↥(GSpin d.QW)) : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) ↔
-      IsSS F (((x : (CliffordAlgebra d.QW)ˣ)) : CliffordAlgebra d.QW) := by
-  let e : CliffordAlgebra d.QW ≃ₗ[F] CliffordAlgebra d.QW :=
-    LinearEquiv.ofLinearMap
-      (LinearMap.mulLeft F (((g : (CliffordAlgebra d.QW)ˣ)) : CliffordAlgebra d.QW))
-      (LinearMap.mulLeft F (((g : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) :
-        CliffordAlgebra d.QW))
-      (by ext a; simp [← mul_assoc]) (by ext a; simp [← mul_assoc])
-  refine (LinearEquiv.isSemisimple_iff _ _ e ?_).symm
-  ext a
-  simp [e, mul_assoc]
-/-- An element of `Γ(G,H)` is determined up to its semisimplicity by its torus: a semisimple `u`
+      IsSS F (((x : (CliffordAlgebra d.QW)ˣ)) : CliffordAlgebra d.QW) :=
+  isSS_units_conj (g : (CliffordAlgebra d.QW)ˣ) _
+
+/-- Membership in `Γ(G,H)` depends only on semisimplicity and the torus: a semisimple `u`
 with `T_u = T_z` for some `z ∈ Γ(G,H)` lies in `Γ(G,H)`. -/
 theorem isGammaElt_of_torusOf_eq {z u : ↥(GSpin d.QW)} (hz : d.IsGammaElt z)
     (hu : IsSS F (((u : (CliffordAlgebra d.QW)ˣ)) : CliffordAlgebra d.QW))
@@ -280,27 +277,17 @@ theorem torusConj_equivalence : Equivalence d.TorusConj := by
   · rw [hg', hg, Subgroup.map_map]
     congr 1; ext t; simp [MulAut.conj_apply, mul_assoc]
 
-/-- An element of the normalizer of `T` conjugates `T` onto itself. -/
-theorem map_conj_eq_of_mem_normalizer {T : Subgroup ↥(GSpin d.QW)} {n : ↥(GSpin d.QW)}
-    (hn : n ∈ Subgroup.normalizer (T : Set ↥(GSpin d.QW))) :
-    T.map (MulAut.conj n).toMonoidHom = T := by
-  ext t
-  rw [Subgroup.mem_map_equiv]
-  change n⁻¹ * t * n⁻¹⁻¹ ∈ T ↔ t ∈ T
-  constructor
-  · intro h; simpa [mul_assoc] using (hn _).1 h
-  · intro h; exact (hn _).2 (by simpa [mul_assoc] using h)
-
-/-- `g` normalizes `T` if it conjugates `T` onto itself. -/
-theorem mem_normalizer_of_map_conj_eq {T : Subgroup ↥(GSpin d.QW)} {g : ↥(GSpin d.QW)}
-    (h : T.map (MulAut.conj g).toMonoidHom = T) :
-    g ∈ Subgroup.normalizer (T : Set ↥(GSpin d.QW)) := by
-  intro t
-  conv_rhs => rw [← h]
-  change _ ↔ g * t * g⁻¹ ∈ T.map (MulAut.conj g).toMonoidHom
-  rw [Subgroup.mem_map_equiv]
-  change _ ↔ g⁻¹ * (g * t * g⁻¹) * g⁻¹⁻¹ ∈ T
-  simp [mul_assoc]
+/-- **Conjugating into the representative torus**: for `x ∈ Γ(G,H)` whose torus lies in the class
+`c`, some rational conjugate `g x g⁻¹` lies in `Γ(G,H)` and has torus `T_c`. -/
+theorem exists_conj_torusOf_eq_out {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x) {c : GammaClass d}
+    (hc : Quot.mk d.TorusConj ⟨d.torusOf x, x, hx, rfl⟩ = c) :
+    ∃ g : ↥(GSpin d.QW), d.IsGammaElt (g * x * g⁻¹) ∧ d.torusOf (g * x * g⁻¹) = (Quot.out c).1 := by
+  have h : Quot.mk d.TorusConj ⟨d.torusOf x, x, hx, rfl⟩ = Quot.mk _ (Quot.out c) :=
+    hc.trans (Quot.out_eq c).symm
+  obtain ⟨g, hg⟩ := torusConj_equivalence.eqvGen_iff.1 (Quot.eqvGen_exact h)
+  have hT : d.torusOf (g * x * g⁻¹) = (Quot.out c).1 := by rw [torusOf_conj]; exact hg.symm
+  obtain ⟨z, hz, hzT⟩ := (Quot.out c).2
+  exact ⟨g, isGammaElt_of_torusOf_eq hz ((isSS_conj x g).2 hx.1) (hT.trans hzT.symm), hT⟩
 
 section Count
 
@@ -327,7 +314,8 @@ noncomputable def classOn : Quot (ConjOn Y) → GammaClass d :=
     Quot.sound ⟨g, by simp only [hg, torusOf_conj]⟩
 
 /-- The elements of `Y` whose torus is the chosen representative of `c`. -/
-def fibOn (Y : Set ↥(GSpin d.QW)) (c : GammaClass d) : Set ↥(GSpin d.QW) := {y | y ∈ Y ∧ d.torusOf y = (Quot.out c).1}
+def fibOn (Y : Set ↥(GSpin d.QW)) (c : GammaClass d) : Set ↥(GSpin d.QW) :=
+  {y | y ∈ Y ∧ d.torusOf y = (Quot.out c).1}
 
 variable (hYc : ∀ y ∈ Y, ∀ g : ↥(GSpin d.QW), d.IsGammaElt (g * y * g⁻¹) → g * y * g⁻¹ ∈ Y)
 include hYΓ hYc
@@ -337,14 +325,7 @@ theorem exists_fibOn_of_classOn {c : GammaClass d} (q : Quot (ConjOn Y)) (hq : c
     ∃ y : Y, (y : ↥(GSpin d.QW)) ∈ fibOn Y c ∧ Quot.mk _ y = q := by
   induction q using Quot.ind with
   | mk y =>
-  have h : Quot.mk d.TorusConj ⟨d.torusOf y, y, hYΓ y y.2, rfl⟩ = Quot.mk _ (Quot.out c) := by
-    exact hq.trans (Quot.out_eq c).symm
-  obtain ⟨g, hg⟩ := (torusConj_equivalence).eqvGen_iff.1 (Quot.eqvGen_exact h)
-  have hT : d.torusOf (g * y * g⁻¹) = (Quot.out c).1 := by rw [torusOf_conj]; exact hg.symm
-  obtain ⟨z, hz, hzT⟩ := (Quot.out c).2
-  have hss : IsSS F ((((g * y * g⁻¹ : ↥(GSpin d.QW)) : (CliffordAlgebra d.QW)ˣ)) :
-      CliffordAlgebra d.QW) := (isSS_conj (y : ↥(GSpin d.QW)) g).2 (hYΓ _ y.2).1
-  have hΓ : d.IsGammaElt (g * y * g⁻¹) := isGammaElt_of_torusOf_eq hz hss (hT.trans hzT.symm)
+  obtain ⟨g, hΓ, hT⟩ := exists_conj_torusOf_eq_out (hYΓ y y.2) hq
   exact ⟨⟨g * y * g⁻¹, hYc y y.2 g hΓ⟩, ⟨hYc y y.2 g hΓ, hT⟩, Quot.sound ⟨g⁻¹, by group⟩⟩
 
 /-- The map from `fibOn Y c` to the rational classes over `c`. -/
@@ -382,7 +363,7 @@ theorem card_classOn_mul_weylCard (c : GammaClass d) (hfin : (fibOn Y c).Finite)
     let N := Subgroup.normalizer (T : Set ↥(GSpin d.QW))
     let ψ0 : N → {y // fibToClass hYΓ c y = fibToClass hYΓ c y₀} := fun n =>
       have hT : d.torusOf (n * y₀ * (n : ↥(GSpin d.QW))⁻¹) = T := by
-        rw [torusOf_conj, hy₀T]; exact map_conj_eq_of_mem_normalizer n.2
+        rw [torusOf_conj, hy₀T]; exact Subgroup.mem_normalizer_iff_map_conj_eq.1 n.2
       ⟨⟨n * y₀ * (n : ↥(GSpin d.QW))⁻¹, hYc _ y₀.2.1 n (isGammaElt_of_torusOf_eq hy₀Γ
         ((isSS_conj _ _).2 hy₀Γ.1) (hT.trans hy₀T.symm)), hT⟩,
         Subtype.ext (Quot.sound ⟨(n : ↥(GSpin d.QW))⁻¹, by simp [mul_assoc]⟩)⟩
@@ -426,8 +407,10 @@ theorem card_classOn_mul_weylCard (c : GammaClass d) (hfin : (fibOn Y c).Finite)
       · obtain ⟨⟨y, hyY, hyT⟩, hy⟩ := y
         have hq := congrArg Subtype.val hy
         obtain ⟨g, hg⟩ := conjOn_of_mk_eq Y hq.symm
-        have hgN : g ∈ N := mem_normalizer_of_map_conj_eq (by
-          rw [← hy₀T, ← torusOf_conj]
+        have hgN : g ∈ N := Subgroup.mem_normalizer_iff_map_conj_eq.2 (by
+          rw [← hy₀T]
+          change (d.torusOf y₀).map (MulAut.conj g).toMonoidHom = d.torusOf y₀
+          rw [← torusOf_conj]
           change d.torusOf (g * y₀ * g⁻¹) = d.torusOf y₀
           rw [← hg, hy₀T]; exact hyT)
         refine ⟨Quotient.mk _ ⟨g, hgN⟩, Subtype.ext (Subtype.ext ?_)⟩
