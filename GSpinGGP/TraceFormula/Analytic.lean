@@ -28,13 +28,15 @@ of Thesis Ch. 8 and 10 and proves the bookkeeping around it.
 
 * Proved: `kernelK_integrable` (the integral defining `K(f,x)` converges for
   `f ∈ ScuspTestFn`), `kernelK_add`, `kernelK_smul`, `distribJ_add`, `distribJ_smul`,
+  `distribJ_convergent` (from `kernelK_bound_scusp`, `prop_6_7_1_iii` and the continuity of
+  `K(f,·)` on `H(F)\G(F)/A_G(F)`, `continuous_kernelK_repHG`),
   `scuspTestFn_subset_scuspSchwartz` (`C_c^∞` strongly cuspidal functions are Schwartz), and the
   supporting lemmas: continuity of `λ` and `ξ`, properties of `δ_{P₀}` and a lower bound for
   `Ξ^G` on compact sets, van Dantzig's theorem, uniform local constancy, log-norm lemmas.
 * `sorry` (own work, Thesis Ch. 8 and 10, adapted from BP Ch. 6, 8): `kernelK_bound` (Thm 10.1.1(i)),
-  `kernelK_bound_scusp` (Thm 10.1.1(ii)), `distribJ_convergent` (Thm 10.1.1 + BP Prop 6.7.1(iii)),
+  `kernelK_bound_scusp` (Thm 10.1.1(ii)), `prop_6_7_1_iii` (Thesis Prop 8.4.1(iii)),
   `lemma_6_5_1_i/ii/iii` (Thesis Lemma 8.2.1), `exists_good_minimal_parabolic` (Thesis
-  Prop 8.1.1(i)).
+  Prop 8.1.1(i)); `exists_iwasawaDatum` (Bruhat–Tits).
 
 ## Conventions on `H\G` (see the docstrings of `logNormHG`, `lemma_6_5_1_i`)
 
@@ -260,7 +262,7 @@ def xiHG (C : Set ↥d.G) (q : d.HGQuot) : ℝ :=
 /-- An Iwasawa datum (BP §1.5, Thesis §2.3): full isotropic flags `F_W`, `F_V` (so that
 `P₀ = whittB F_W F_V` is a minimal parabolic subgroup), a compact open subgroup `K` of `G(F)`, and
 the Iwasawa decomposition `G(F) = P₀(F) K`.  Its existence (with `K` a special maximal compact
-subgroup) is Bruhat–Tits; it is not needed in this file, so no axiom is added.  Harish-Chandra's
+subgroup) is Bruhat–Tits (`exists_iwasawaDatum`, used for `distribJ_convergent`).  Harish-Chandra's
 `Ξ^G` built from different data are equivalent functions (they are matrix coefficients of
 positive `K`-fixed vectors of `i_{P₀}^G 1`).  The field `AG_le_P0` is automatic and recorded only
 for convenience (see its docstring). -/
@@ -567,34 +569,6 @@ theorem kernelK_smul (c : ℂ) (f : ↥d.G → ℂ) (x : ↥d.G) :
   simp_rw [kernelIntegrand_smul]
   exact integral_const_mul c _
 
-/-- **`J(f)` converges** for `f ∈ ScuspTestFn d χ` (Thesis §10.1: Thm 10.1.1(ii)
-(`kernelK_bound_scusp`) with BP Prop 6.7.1(iii) (Thesis Prop 8.4.1(iii)),
-`∫_{H\G/A_G} Ξ^{H\G}(x)² σ_{H\G}(x)^{-d} dx < ∞` for `d` large; `ScuspTestFn` lies in
-`ScuspSchwartz`).  Own work (adapted from BP Thm 8.1.1); not proved here. -/
-theorem distribJ_convergent (f : ↥d.G → ℂ) (hf : f ∈ ScuspTestFn d χ) :
-    Integrable (fun q : d.HGQuot => kernelK d ψ f (d.repHG q)) d.weilMeasureHG := by
-  sorry
-
-/-- `J` is additive on `ScuspTestFn d χ` (Thesis §10.1: `J` is a linear form). -/
-theorem distribJ_add (f g : ↥d.G → ℂ) (hf : f ∈ ScuspTestFn d χ) (hg : g ∈ ScuspTestFn d χ) :
-    distribJ d ψ (f + g) = distribJ d ψ f + distribJ d ψ g := by
-  have e : ∀ q : d.HGQuot, kernelK d ψ (f + g) (d.repHG q) =
-      kernelK d ψ f (d.repHG q) + kernelK d ψ g (d.repHG q) :=
-    fun q => d.kernelK_add χ ψ f g hf hg _
-  unfold distribJ
-  change ∫ q, kernelK d ψ (f + g) (d.repHG q) ∂d.weilMeasureHG =
-    ∫ q, kernelK d ψ f (d.repHG q) ∂d.weilMeasureHG +
-      ∫ q, kernelK d ψ g (d.repHG q) ∂d.weilMeasureHG
-  simp_rw [e]
-  exact integral_add (d.distribJ_convergent χ ψ f hf) (d.distribJ_convergent χ ψ g hg)
-
-/-- `J(c f) = c J(f)` (Thesis §10.1); no hypothesis needed. -/
-theorem distribJ_smul (c : ℂ) (f : ↥d.G → ℂ) :
-    distribJ d ψ (c • f) = c * distribJ d ψ f := by
-  unfold distribJ
-  simp_rw [kernelK_smul]
-  exact integral_const_mul c _
-
 /-! ## 5. The estimates of Thesis Ch. 8 and 10 (own work, adapted from BP Ch. 6, 8; stated, not proved) -/
 
 /-- **Thesis Thm 10.1.1(i)** (adapted from BP Thm 8.1.1(i)): there is `d₀ > 0`
@@ -753,6 +727,127 @@ theorem scuspTestFn_subset_scuspSchwartz (IW : d.IwasawaDatum) :
         exact hg (hsupp h)
       simp only [h0, norm_zero, zero_mul]
       exact hpos
+
+/-! ## 6. Convergence of `J` (Thesis §10.1) -/
+
+/-- **Thesis Prop 8.4.1(iii)** (adapted from BP Prop 6.7.1(iii)): there is `d > 0` with
+`∫_{H(F)\G(F)/A_G(F)} Ξ^{H\G}(x)² σ_{H\G}(x)^{-d} dx < ∞`.  Stated for every compact `C₀`
+with nonempty interior defining `Ξ^{H\G} = Ξ^{H\G}_{C₀}` (`xiHG`); the thesis fixes one such
+`C₀`, and different choices give equivalent functions (Thesis §8.4).  Own work; not proved
+here. -/
+theorem prop_6_7_1_iii (C₀ : Set ↥d.G) (hC₀ : IsCompact C₀) (hC₀' : (interior C₀).Nonempty) :
+    ∃ d₀ : ℝ, 0 < d₀ ∧
+      Integrable (fun q : d.HGQuot => d.xiHG C₀ q ^ 2 * d.logNormHG q ^ (-d₀)) d.weilMeasureHG := by
+  sorry
+
+/-- **An Iwasawa datum exists** (BP §1.5, Thesis §2.3): `G(F)` has a minimal parabolic subgroup
+`P₀` (the stabilizer of full isotropic flags of `W` and `V`) and a compact open subgroup `K` with
+`G(F) = P₀(F) K` (Bruhat–Tits: `K` a special maximal compact subgroup; Thesis §2.3 uses it
+without citation).  A `sorry` theorem rather than a literature axiom until it is matched to an
+exact statement in a source; not proved here. -/
+theorem exists_iwasawaDatum : Nonempty d.IwasawaDatum := by
+  sorry
+
+/-- `mkHG (repHG q) = q`. -/
+@[simp] theorem mkHG_repHG (q : d.HGQuot) : d.mkHG (d.repHG q) = q := by
+  unfold mkHG repHG
+  rw [QuotientGroup.out_eq']
+  exact CosetSpace.mk_out _ q
+
+/-- `K(f,·)` is right `K'`-invariant when `f` is bi-`K'`-invariant:
+`f((xk)⁻¹ h x k) = f(k⁻¹ (x⁻¹ h x) k) = f(x⁻¹ h x)`. -/
+theorem kernelK_mul_right_of_isBiInvariant {K' : Subgroup ↥d.G} {f : ↥d.G → ℂ}
+    (hf : d.IsBiInvariant K' f) (x k : ↥d.G) (hk : k ∈ K') :
+    kernelK d ψ f (x * k) = kernelK d ψ f x := by
+  unfold kernelK kernelIntegrand
+  congr 1
+  funext q
+  congr 1
+  rw [show (x * k)⁻¹ * ((Quotient.out q : ↥d.H) : ↥d.G) * (x * k) =
+      k⁻¹ * (x⁻¹ * ((Quotient.out q : ↥d.H) : ↥d.G) * x) * k by group]
+  exact hf _ (K'.inv_mem hk) _ hk _
+
+/-- **`K(f,·)` is continuous on `H(F)\G(F)/A_G(F)`** for `f` `χ`-equivariant and bi-invariant
+under a compact open subgroup `K'`: it is right `K'`-invariant, hence locally constant on `G(F)`,
+and it is left `H(F)`- and right `A_G(F)`-invariant (`kernelK_mul_left_H`, `kernelK_mul_AG`), so
+it descends to the quotient. -/
+theorem continuous_kernelK_repHG (f : ↥d.G → ℂ) (hchi : IsChiEquivariant d χ f)
+    {K' : Subgroup ↥d.G} (hK'o : IsOpen (K' : Set ↥d.G)) (hbi : d.IsBiInvariant K' f) :
+    Continuous (fun q : d.HGQuot => kernelK d ψ f (d.repHG q)) := by
+  -- continuity on `G(F)`
+  have hG : Continuous (kernelK d ψ f) := by
+    refine continuous_iff_continuousAt.2 fun x => ?_
+    have hnhds : (fun y => x⁻¹ * y) ⁻¹' (K' : Set ↥d.G) ∈ nhds x :=
+      (hK'o.preimage (continuous_const.mul continuous_id)).mem_nhds (by simp)
+    refine (continuousAt_const (y := kernelK d ψ f x)).congr
+      (Filter.eventually_of_mem hnhds fun y hy => ?_)
+    have := d.kernelK_mul_right_of_isBiInvariant ψ hbi x (x⁻¹ * y) hy
+    rw [mul_inv_cancel_left] at this
+    exact this.symm
+  -- descent to `G(F)/A_G(F)`
+  let φG : d.GmodAG → ℂ := Quotient.lift (kernelK d ψ f) fun a b hab => by
+    have hab' : a⁻¹ * b ∈ d.AG := QuotientGroup.leftRel_apply.mp hab
+    have := kernelK_mul_AG d ψ f a (a⁻¹ * b) hab'
+    rw [mul_inv_cancel_left] at this
+    exact this.symm
+  have hφG : Continuous φG := continuous_quot_lift _ hG
+  -- descent to `H(F)\G(F)/A_G(F)`
+  let φ : d.HGQuot → ℂ := Quotient.lift φG fun a b hab => by
+    obtain ⟨s, rfl⟩ := (CosetSpace.rel_iff d.toGmodAG a b).1 hab
+    induction s using QuotientGroup.induction_on with
+    | H h =>
+      induction a using QuotientGroup.induction_on with
+      | H g =>
+        rw [toGmodAG_mk, ← QuotientGroup.mk_mul]
+        exact (kernelK_mul_left_H d χ ψ f hchi h g).symm
+  have hφ : Continuous φ := continuous_quot_lift _ hφG
+  have heq : (fun q : d.HGQuot => kernelK d ψ f (d.repHG q)) = φ := by
+    funext q
+    conv_rhs => rw [← d.mkHG_repHG q]
+    rfl
+  rw [heq]
+  exact hφ
+
+/-- **`J(f)` converges** for `f ∈ ScuspTestFn d χ` (Thesis §10.1): `f` is Schwartz
+(`scuspTestFn_subset_scuspSchwartz`), so Thm 10.1.1(ii) (`kernelK_bound_scusp`) bounds
+`|K(f,x)|` by a multiple of `Ξ^{H\G}(x)² σ_{H\G}(x)^{-d}` for every `d > 0`, which is integrable
+for `d` large by Thesis Prop 8.4.1(iii) (`prop_6_7_1_iii`); `K(f,·)` is continuous on
+`H(F)\G(F)/A_G(F)` (`continuous_kernelK_repHG`). -/
+theorem distribJ_convergent (f : ↥d.G → ℂ) (hf : f ∈ ScuspTestFn d χ) :
+    Integrable (fun q : d.HGQuot => kernelK d ψ f (d.repHG q)) d.weilMeasureHG := by
+  obtain ⟨IW⟩ := d.exists_iwasawaDatum
+  have hf' := d.scuspTestFn_subset_scuspSchwartz χ IW hf
+  obtain ⟨⟨K', hK'o, hK'c, hbi⟩, hchi, -⟩ := hf'.1
+  have hC₀' : (interior (K' : Set ↥d.G)).Nonempty :=
+    ⟨1, hK'o.interior_eq.symm ▸ K'.one_mem⟩
+  obtain ⟨d₀, hd₀, hint⟩ := d.prop_6_7_1_iii (K' : Set ↥d.G) hK'c hC₀'
+  obtain ⟨C, n, hb⟩ := d.kernelK_bound_scusp χ ψ IW (K' : Set ↥d.G) hK'c hC₀' d₀ hd₀ K' hK'o hK'c
+  refine (hint.const_mul (C * d.schwartzSeminorm IW n f)).mono'
+    (d.continuous_kernelK_repHG χ ψ f hchi hK'o hbi).aestronglyMeasurable
+    (Filter.Eventually.of_forall fun q => ?_)
+  have := hb f hf' hbi (d.repHG q)
+  rw [d.mkHG_repHG] at this
+  simpa only [mul_assoc] using this
+
+/-- `J` is additive on `ScuspTestFn d χ` (Thesis §10.1: `J` is a linear form). -/
+theorem distribJ_add (f g : ↥d.G → ℂ) (hf : f ∈ ScuspTestFn d χ) (hg : g ∈ ScuspTestFn d χ) :
+    distribJ d ψ (f + g) = distribJ d ψ f + distribJ d ψ g := by
+  have e : ∀ q : d.HGQuot, kernelK d ψ (f + g) (d.repHG q) =
+      kernelK d ψ f (d.repHG q) + kernelK d ψ g (d.repHG q) :=
+    fun q => d.kernelK_add χ ψ f g hf hg _
+  unfold distribJ
+  change ∫ q, kernelK d ψ (f + g) (d.repHG q) ∂d.weilMeasureHG =
+    ∫ q, kernelK d ψ f (d.repHG q) ∂d.weilMeasureHG +
+      ∫ q, kernelK d ψ g (d.repHG q) ∂d.weilMeasureHG
+  simp_rw [e]
+  exact integral_add (d.distribJ_convergent χ ψ f hf) (d.distribJ_convergent χ ψ g hg)
+
+/-- `J(c f) = c J(f)` (Thesis §10.1); no hypothesis needed. -/
+theorem distribJ_smul (c : ℂ) (f : ↥d.G → ℂ) :
+    distribJ d ψ (c • f) = c * distribJ d ψ f := by
+  unfold distribJ
+  simp_rw [kernelK_smul]
+  exact integral_const_mul c _
 
 end GGPData
 
