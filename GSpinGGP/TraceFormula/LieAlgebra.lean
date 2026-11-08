@@ -10,7 +10,8 @@ import GSpinGGP.GGP.Descent
 
 This file holds the *definitions* of the Lie-algebra objects on
 `𝔤⁰ = so(W) ⊕ so(V)` that the two cited theorems mention, followed by two statements from the literature for `SO(W) × SO(V)`, stated here for our objects
-as `sorry` theorems.
+as `sorry` theorems, and the existence of the `exp`-compatible measures (`exists_isExpCompatH`,
+`exists_isExpCompatT`, also `sorry`).
 (The definitions live here, not in `TraceFormula/Lie.lean`, because those statements mention them
 and `Lie.lean` imports this file.)  All definitions are real definitions; measures and functions
 that are pinned only by a property are chosen by the epsilon pattern, as elsewhere in the project.
@@ -23,7 +24,7 @@ that are pinned only by a property are chosen by the epsilon pattern, as elsewhe
 * `lieFlagUnip`, `lieH0`, `lamLie`: `𝔫 = Lie(N)`, `𝔥⁰ = 𝔥 ∩ 𝔤⁰ = so(W) ⊕ 𝔫` (with `so(W)`
   diagonal) and the linear form `λ` on `𝔥⁰` with `ξ(X) = ψ(λ(X))` (Thesis §5.2, §11.1; Luo §2.1).
 * `measH0`: the Haar measure on `𝔥⁰(F)` compatible through `exp` with `Measure.haar` on
-  `H(F)/A_{G,H}(F)` (BP §1.6, `j^H = 1` near `0`).
+  `H(F)/A_{G,H}(F)` (BP §1.6, `j^H = 1` near `0`); it is nonzero by `exists_isExpCompatH`.
 * `distribJLie`: `J^Lie(f) = ∫_{H\G/A_G} ∫_{𝔥⁰} f(x⁻¹Xx) ξ(X) dX dx` (Thesis §10.1;
   Luo §4, BP §8.1), with the Weil measure `weilMeasureHG` of `J`.
 * `IsLieScusp`: strongly cuspidal Schwartz–Bruhat functions on `𝔤⁰(F)` (Thesis §4.5, BP §5.1).
@@ -218,6 +219,14 @@ open Classical in
 def measH0 : Measure ↥d.lieH0 :=
   if h : ∃ μ, d.IsExpCompatH μ then h.choose else 0
 
+/-- **An `exp`-compatible Haar measure on `𝔥⁰(F)` exists** (BP §1.6, Thesis §10.1, §12.4): near
+`0`, `X ↦ e^X` is a homeomorphism from a neighbourhood of `0` in `𝔥⁰(F)` onto a neighbourhood of `1` in
+`H(F)/A_{G,H}(F)` (`𝔥 = Lie(A_{G,H}) ⊕ 𝔥⁰`), and on a small enough lattice it carries an additive
+Haar measure to a Haar measure (the Jacobian `j^H` is `1` near `0` in the `p`-adic case).
+Not proved here. -/
+theorem exists_isExpCompatH : ∃ μ, d.IsExpCompatH μ := by
+  sorry
+
 variable (ψ : NontrivialAddChar F)
 
 /-- `K^Lie(f, x) = ∫_{𝔥⁰(F)} f(x⁻¹ X x) ξ(X) dX` (Thesis §10.1; Luo §4; BP §8.1). -/
@@ -387,6 +396,14 @@ open Classical in
 /-- The measure on `𝔱⁰(F)` (epsilon; `0` if none). -/
 def measLieTorus (T : Subgroup ↥(GSpin d.QW)) : Measure ↥(d.lieTorus T) :=
   if h : ∃ μ, d.IsExpCompatT T μ then h.choose else 0
+
+/-- **An `exp`-compatible Haar measure on `𝔱⁰(F)` exists** for the tori `T = T_x` of
+`Γ(G,H)` (BP §1.6, §11.1; Thesis §12.1): `T(F)` is commutative, so `exp` is a homomorphism on a
+small lattice of `𝔱⁰(F)`, a homeomorphism onto an open compact subgroup of `T(F)/A_{G,H}(F)`
+(`𝔱 = Lie(A_{G,H}) ⊕ 𝔱⁰`), and it carries an additive Haar measure to a multiple of the
+probability Haar measure there.  Not proved here. -/
+theorem exists_isExpCompatT (T : d.GammaTorus) : ∃ μ, d.IsExpCompatT T.1 μ := by
+  sorry
 
 /-- `X ∈ 𝔱⁰_♮(F)` (Lie version of `T_♮`): `X` has no eigenvalue `0` on `W'' = (W')^⊥`,
 i.e. `ker X = W'`, and `X` is regular in `so(W'')`: every `Y ∈ so(W)` commuting with `X` and
