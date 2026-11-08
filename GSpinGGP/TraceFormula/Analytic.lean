@@ -36,7 +36,8 @@ of Thesis Ch. 8 and 10 and proves the bookkeeping around it.
 * `sorry` (own work, Thesis Ch. 8 and 10, adapted from BP Ch. 6, 8): `kernelK_bound` (Thm 10.1.1(i)),
   `kernelK_bound_scusp` (Thm 10.1.1(ii)), `prop_6_7_1_iii` (Thesis Prop 8.4.1(iii)),
   `lemma_6_5_1_i/ii/iii` (Thesis Lemma 8.2.1), `exists_good_minimal_parabolic` (Thesis
-  Prop 8.1.1(i)); `exists_iwasawaDatum` (Bruhat–Tits).
+  Prop 8.1.1(i)).
+* `sorry` (a standard structural fact, Bruhat–Tits): `exists_iwasawaDatum`.
 
 ## Conventions on `H\G` (see the docstrings of `logNormHG`, `lemma_6_5_1_i`)
 
@@ -237,6 +238,12 @@ def mkHG (g : ↥d.G) : d.HGQuot := CosetSpace.mk d.toGmodAG (QuotientGroup.mk g
 /-- A representative in `G(F)` of a class of `H(F)\G(F)/A_G(F)` (the one used in `distribJ`). -/
 def repHG (q : d.HGQuot) : ↥d.G := Quotient.out (CosetSpace.out d.toGmodAG q : d.GmodAG)
 
+/-- `mkHG (repHG q) = q`. -/
+@[simp] theorem mkHG_repHG (q : d.HGQuot) : d.mkHG (d.repHG q) = q := by
+  unfold mkHG repHG
+  rw [QuotientGroup.out_eq']
+  exact CosetSpace.mk_out _ q
+
 /-- The log-norm on `H(F)\G(F)/A_G(F)` (BP §1.2; Thesis §8.4, §10.1, where it is written
 `σ_{H\G}`): the infimum of `σ_G` over all representatives `h x a` (`h ∈ H(F)`, `a ∈ A_G(F)`).
 
@@ -405,6 +412,14 @@ theorem exists_xiHC_inv_le (C : Set ↥d.G) (hC : IsCompact C) :
 
 end IwasawaDatum
 
+/-- **An Iwasawa datum exists** (BP §1.5, Thesis §2.3): `G(F)` has a minimal parabolic subgroup
+`P₀` (the stabilizer of full isotropic flags of `W` and `V`) and a compact open subgroup `K` with
+`G(F) = P₀(F) K` (Bruhat–Tits: `K` a special maximal compact subgroup; Thesis §2.3 uses it
+without citation).  A `sorry` theorem rather than a literature axiom until it is matched to an
+exact statement in a source; not proved here. -/
+theorem exists_iwasawaDatum : Nonempty d.IwasawaDatum := by
+  sorry
+
 /-! ## 3. Harish-Chandra Schwartz spaces (Thesis §2.3) -/
 
 variable (χ : CentralCharOn d)
@@ -568,6 +583,19 @@ theorem kernelK_smul (c : ℂ) (f : ↥d.G → ℂ) (x : ↥d.G) :
   unfold kernelK
   simp_rw [kernelIntegrand_smul]
   exact integral_const_mul c _
+
+/-- `K(f,·)` is right `K'`-invariant when `f` is bi-`K'`-invariant:
+`f((xk)⁻¹ h x k) = f(k⁻¹ (x⁻¹ h x) k) = f(x⁻¹ h x)`. -/
+theorem kernelK_mul_right_of_isBiInvariant {K' : Subgroup ↥d.G} {f : ↥d.G → ℂ}
+    (hf : d.IsBiInvariant K' f) (x k : ↥d.G) (hk : k ∈ K') :
+    kernelK d ψ f (x * k) = kernelK d ψ f x := by
+  unfold kernelK kernelIntegrand
+  congr 1
+  funext q
+  congr 1
+  rw [show (x * k)⁻¹ * ((Quotient.out q : ↥d.H) : ↥d.G) * (x * k) =
+      k⁻¹ * (x⁻¹ * ((Quotient.out q : ↥d.H) : ↥d.G) * x) * k by group]
+  exact hf _ (K'.inv_mem hk) _ hk _
 
 /-! ## 5. The estimates of Thesis Ch. 8 and 10 (own work, adapted from BP Ch. 6, 8; stated, not proved) -/
 
@@ -740,33 +768,6 @@ theorem prop_6_7_1_iii (C₀ : Set ↥d.G) (hC₀ : IsCompact C₀) (hC₀' : (i
       Integrable (fun q : d.HGQuot => d.xiHG C₀ q ^ 2 * d.logNormHG q ^ (-d₀)) d.weilMeasureHG := by
   sorry
 
-/-- **An Iwasawa datum exists** (BP §1.5, Thesis §2.3): `G(F)` has a minimal parabolic subgroup
-`P₀` (the stabilizer of full isotropic flags of `W` and `V`) and a compact open subgroup `K` with
-`G(F) = P₀(F) K` (Bruhat–Tits: `K` a special maximal compact subgroup; Thesis §2.3 uses it
-without citation).  A `sorry` theorem rather than a literature axiom until it is matched to an
-exact statement in a source; not proved here. -/
-theorem exists_iwasawaDatum : Nonempty d.IwasawaDatum := by
-  sorry
-
-/-- `mkHG (repHG q) = q`. -/
-@[simp] theorem mkHG_repHG (q : d.HGQuot) : d.mkHG (d.repHG q) = q := by
-  unfold mkHG repHG
-  rw [QuotientGroup.out_eq']
-  exact CosetSpace.mk_out _ q
-
-/-- `K(f,·)` is right `K'`-invariant when `f` is bi-`K'`-invariant:
-`f((xk)⁻¹ h x k) = f(k⁻¹ (x⁻¹ h x) k) = f(x⁻¹ h x)`. -/
-theorem kernelK_mul_right_of_isBiInvariant {K' : Subgroup ↥d.G} {f : ↥d.G → ℂ}
-    (hf : d.IsBiInvariant K' f) (x k : ↥d.G) (hk : k ∈ K') :
-    kernelK d ψ f (x * k) = kernelK d ψ f x := by
-  unfold kernelK kernelIntegrand
-  congr 1
-  funext q
-  congr 1
-  rw [show (x * k)⁻¹ * ((Quotient.out q : ↥d.H) : ↥d.G) * (x * k) =
-      k⁻¹ * (x⁻¹ * ((Quotient.out q : ↥d.H) : ↥d.G) * x) * k by group]
-  exact hf _ (K'.inv_mem hk) _ hk _
-
 /-- **`K(f,·)` is continuous on `H(F)\G(F)/A_G(F)`** for `f` `χ`-equivariant and bi-invariant
 under a compact open subgroup `K'`: it is right `K'`-invariant, hence locally constant on `G(F)`,
 and it is left `H(F)`- and right `A_G(F)`-invariant (`kernelK_mul_left_H`, `kernelK_mul_AG`), so
@@ -775,15 +776,9 @@ theorem continuous_kernelK_repHG (f : ↥d.G → ℂ) (hchi : IsChiEquivariant d
     {K' : Subgroup ↥d.G} (hK'o : IsOpen (K' : Set ↥d.G)) (hbi : d.IsBiInvariant K' f) :
     Continuous (fun q : d.HGQuot => kernelK d ψ f (d.repHG q)) := by
   -- continuity on `G(F)`
-  have hG : Continuous (kernelK d ψ f) := by
-    refine continuous_iff_continuousAt.2 fun x => ?_
-    have hnhds : (fun y => x⁻¹ * y) ⁻¹' (K' : Set ↥d.G) ∈ nhds x :=
-      (hK'o.preimage (continuous_const.mul continuous_id)).mem_nhds (by simp)
-    refine (continuousAt_const (y := kernelK d ψ f x)).congr
-      (Filter.eventually_of_mem hnhds fun y hy => ?_)
-    have := d.kernelK_mul_right_of_isBiInvariant ψ hbi x (x⁻¹ * y) hy
-    rw [mul_inv_cancel_left] at this
-    exact this.symm
+  have hG : Continuous (kernelK d ψ f) :=
+    (isLocallyConstant_of_mul_right_invariant hK'o fun x k hk =>
+      d.kernelK_mul_right_of_isBiInvariant ψ hbi x k hk).continuous
   -- descent to `G(F)/A_G(F)`
   let φG : d.GmodAG → ℂ := Quotient.lift (kernelK d ψ f) fun a b hab => by
     have hab' : a⁻¹ * b ∈ d.AG := QuotientGroup.leftRel_apply.mp hab
@@ -819,7 +814,7 @@ theorem distribJ_convergent (f : ↥d.G → ℂ) (hf : f ∈ ScuspTestFn d χ) :
   have hf' := d.scuspTestFn_subset_scuspSchwartz χ IW hf
   obtain ⟨⟨K', hK'o, hK'c, hbi⟩, hchi, -⟩ := hf'.1
   have hC₀' : (interior (K' : Set ↥d.G)).Nonempty :=
-    ⟨1, hK'o.interior_eq.symm ▸ K'.one_mem⟩
+    ⟨1, mem_interior_iff_mem_nhds.2 (hK'o.mem_nhds K'.one_mem)⟩
   obtain ⟨d₀, hd₀, hint⟩ := d.prop_6_7_1_iii (K' : Set ↥d.G) hK'c hC₀'
   obtain ⟨C, n, hb⟩ := d.kernelK_bound_scusp χ ψ IW (K' : Set ↥d.G) hK'c hC₀' d₀ hd₀ K' hK'o hK'c
   refine (hint.const_mul (C * d.schwartzSeminorm IW n f)).mono'
