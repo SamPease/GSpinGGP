@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.GGP.Descent
 import GSpinGGP.Foundations.QuadraticForms
-import GSpinGGP.TraceFormula.SpinorNorm
+import GSpinGGP.Foundations.HypPlane
 
 /-!
 # The moved space of an element of `GSpin`
@@ -12,6 +12,9 @@ import GSpinGGP.TraceFormula.SpinorNorm
 For `x ∈ GSpin(V)` with `V = V'_x ⊕ V''_x`, `V''_x = (V'_x)^⊥` (`V'_x = ker(P(x) − 1)`):
 * `finrank_orthogonal_fixedSub_ne_one`: `V''_x` is not a line (on a line `P(x)` would be the
   reflection in it, of determinant `−1`, while `det P(x) = 1`, `det_specP`).
+* `exists_eigen_hypPair`: on a plane `V''_x` with hyperbolic pair `f, f'`, `P(x)` is diagonal.
+* `anisotropic_orthogonal_fixedSub_of_isGammaElt`: for `x ∈ Γ(G,H)`, a plane `W''_x` is anisotropic
+  (its hyperbolic torus would lie in the compact-mod-centre `T_x(F)`).
 -/
 
 noncomputable section
@@ -82,39 +85,6 @@ theorem finrank_orthogonal_fixedSub_ne_one {Q : QuadraticForm K V} (hQ : IsNonde
   rw [← hPdef, hPs, det_quadReflection hQu] at hdet
   norm_num at hdet
 
-omit [Invertible (2 : K)] [FiniteDimensional K V] in
-/-- **The split torus of a hyperbolic pair as a product of two reflections**: for a hyperbolic pair
-`f, f'` (`q(f) = q(f') = 0`, `polar(f, f') = 1`) and `s ≠ 0`, `s_{f+f'} s_{f+s f'}` maps `f ↦ s f`,
-`f' ↦ s⁻¹ f'`, and fixes every vector polar-orthogonal to `f` and `f'`. -/
-theorem hypPair_reflections {Q : QuadraticForm K V} {f f' : V} (hf : Q f = 0) (hf' : Q f' = 0)
-    (hp : QuadraticMap.polar Q f f' = 1) {s : K} (hs : s ≠ 0) :
-    Q (f + f') ≠ 0 ∧ Q (f + s • f') ≠ 0 ∧
-      (quadReflection Q (f + f') * quadReflection Q (f + s • f')) f = s • f ∧
-      (quadReflection Q (f + f') * quadReflection Q (f + s • f')) f' = s⁻¹ • f' ∧
-      ∀ v, QuadraticMap.polar Q f v = 0 → QuadraticMap.polar Q f' v = 0 →
-        (quadReflection Q (f + f') * quadReflection Q (f + s • f')) v = v := by
-  have hff : QuadraticMap.polar Q f f = 0 := by rw [QuadraticMap.polar_self, hf, smul_zero]
-  have hf'f' : QuadraticMap.polar Q f' f' = 0 := by rw [QuadraticMap.polar_self, hf', smul_zero]
-  have hf'f : QuadraticMap.polar Q f' f = 1 := by rw [QuadraticMap.polar_comm, hp]
-  have hQa : Q (f + f') = 1 := by rw [QuadraticMap.map_add Q f f', hf, hf', hp]; ring
-  have hQb : Q (f + s • f') = s := by
-    rw [QuadraticMap.map_add Q f (s • f'), QuadraticMap.map_smul, QuadraticMap.polar_smul_right, hf, hf', hp]
-    simp
-  refine ⟨by rw [hQa]; exact one_ne_zero, by rw [hQb]; exact hs, ?_, ?_, fun v hv hv' => ?_⟩
-  · simp only [Module.End.mul_apply, quadReflection_apply, hQa, hQb, QuadraticMap.polar_add_left,
-      QuadraticMap.polar_add_right, QuadraticMap.polar_smul_left, QuadraticMap.polar_smul_right,
-      QuadraticMap.polar_sub_right, hff, hf'f', hp, hf'f, smul_eq_mul]
-    match_scalars <;> field_simp <;> ring
-  · simp only [Module.End.mul_apply, quadReflection_apply, hQa, hQb, QuadraticMap.polar_add_left,
-      QuadraticMap.polar_add_right, QuadraticMap.polar_smul_left, QuadraticMap.polar_smul_right,
-      QuadraticMap.polar_sub_right, hff, hf'f', hp, hf'f, smul_eq_mul]
-    match_scalars <;> field_simp <;> ring
-  · have hvf : QuadraticMap.polar Q v f = 0 := by rw [QuadraticMap.polar_comm, hv]
-    have hvf' : QuadraticMap.polar Q v f' = 0 := by rw [QuadraticMap.polar_comm, hv']
-    simp only [Module.End.mul_apply, quadReflection_apply, QuadraticMap.polar_add_left,
-      QuadraticMap.polar_smul_left, hv, hv', smul_eq_mul, mul_zero, add_zero, zero_smul,
-      smul_zero, sub_zero]
-
 omit [CharZero K] [Invertible (2 : K)] in
 /-- In a plane `U` containing a hyperbolic pair `f, f'`, every `u ∈ U` is
 `polar(f', u) f + polar(f, u) f'`. -/
@@ -126,14 +96,7 @@ theorem eq_of_mem_hypPlane {Q : QuadraticForm K V} {U : Submodule K V} (h2 : fin
   have hf'f' : QuadraticMap.polar Q f' f' = 0 := by rw [QuadraticMap.polar_self, hf', smul_zero]
   have hf'f : QuadraticMap.polar Q f' f = 1 := by rw [QuadraticMap.polar_comm, hp]
   -- `f, f'` are independent, hence span `U`
-  have hli : LinearIndependent K ![f, f'] := by
-    rw [LinearIndependent.pair_iff]
-    intro a b hab
-    have h1 := congrArg (QuadraticMap.polar Q f') hab
-    have h2 := congrArg (QuadraticMap.polar Q f) hab
-    simp only [QuadraticMap.polar_add_right, QuadraticMap.polar_smul_right, hf'f, hf'f', hff, hp,
-      smul_eq_mul, mul_one, mul_zero, add_zero, zero_add, QuadraticMap.polar_zero_right] at h1 h2
-    exact ⟨h1, h2⟩
+  have hli : LinearIndependent K ![f, f'] := linearIndependent_hyperbolicPair hf hf' hp
   have hspan : Submodule.span K (Set.range ![f, f']) = U := by
     apply Submodule.eq_of_le_of_finrank_eq
     · rw [Submodule.span_le]
@@ -239,10 +202,10 @@ section Gamma
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
 /-- **For `x ∈ Γ(G,H)`, a plane `W''_x` is anisotropic**: otherwise, with a hyperbolic pair `f, f'`
-of `W''_x`, the elements `z_s = ι(f+f') ι(f+s f')` (`P(z_s) = s` on `f`, `s⁻¹` on `f'`, `1` on
-`W'_x`) commute with `x` up to a scalar `c_s` with `c_s^N = 1` (`N = dim C(W)`, apply `detChar`), so
-`z_s^N ∈ T_x(F)` with `P(z_s^N) f = s^N f`; but `t ↦ polar(f', P(t) f)` is continuous on the compact
-`T_x(F)/A(F)`, hence bounded. -/
+of `W''_x`, `P(x)` is diagonal on `f, f'` (`exists_eigen_hypPair`), so the lifts `h(s)` of the
+hyperbolic torus (`hypGSpin`: `P(h(s)) = s` on `f`, `s⁻¹` on `f'`, `1` on `W'_x`) commute with `x`
+(`commute_hypUnit`) and lie in `T_x(F)`; but `t ↦ polar(f', P(t) f)` is continuous on the compact
+`T_x(F)/A(F)`, hence bounded, while it takes the value `s` at `h(s)`. -/
 theorem anisotropic_orthogonal_fixedSub_of_isGammaElt (d : GGPData F) (x : ↥(GSpin d.QW))
     (hx : d.IsGammaElt x) (h2 : finrank F ↥((bform d.QW).orthogonal (fixedSub x)) = 2) :
     (d.QW.comp ((bform d.QW).orthogonal (fixedSub x)).subtype).Anisotropic := by
@@ -266,95 +229,30 @@ theorem anisotropic_orthogonal_fixedSub_of_isGammaElt (d : GGPData F) (x : ↥(G
   have hp : QuadraticMap.polar d.QW (u : Fin d.m → F) (f'' : Fin d.m → F) = 1 := by
     rw [← hpol]; rfl
   obtain ⟨μ, hμ0, hPf, hPf'⟩ := exists_eigen_hypPair x hc h2 u.2 f''.2 hu0 hf''0 hp
-  set N := finrank F (CliffordAlgebra d.QW) with hNdef
-  have hN : 0 < N := Module.finrank_pos
-  -- elements of `T_x(F)` acting by `s^N` on `f`
-  have key : ∀ s : F, s ≠ 0 → ∃ t ∈ d.torusOf x,
-      specP d.QW t (u : Fin d.m → F) = s ^ N • (u : Fin d.m → F) := by
-    intro s hs
-    obtain ⟨ha, hb, hgf, hgf', hgv⟩ := hypPair_reflections (Q := d.QW) (f := (u : Fin d.m → F))
-      (f' := (f'' : Fin d.m → F)) hu0 hf''0 hp hs
-    set z := gspinPair d.QW ha hb with hzdef
-    have hPz : (specP d.QW z : Module.End F (Fin d.m → F)) =
-        quadReflection d.QW ((u : Fin d.m → F) + f'') *
-          quadReflection d.QW ((u : Fin d.m → F) + s • (f'' : Fin d.m → F)) :=
-      specP_gspinPair d.QW ha hb
-    have hPzW : ∀ v ∈ fixedSub x, (specP d.QW z : Module.End F (Fin d.m → F)) v = v :=
-      fun v hv => by rw [hPz]; exact hgv v (hpW _ u.2 v hv) (hpW _ f''.2 v hv)
-    have hPzf : (specP d.QW z : Module.End F (Fin d.m → F)) u = s • (u : Fin d.m → F) := by
-      rw [hPz]; exact hgf
-    have hPzf' : (specP d.QW z : Module.End F (Fin d.m → F)) f'' = s⁻¹ • (f'' : Fin d.m → F) := by
-      rw [hPz]; exact hgf'
-    -- `P(z)` commutes with `P(x)`
-    have hcomm : specP d.QW (z * x * z⁻¹ * x⁻¹) = 1 := by
-      have hPxz : (specP d.QW z : Module.End F (Fin d.m → F)) * (specP d.QW x : Module.End F _) =
-          (specP d.QW x : Module.End F _) * (specP d.QW z : Module.End F _) := by
-        refine LinearMap.ext fun v => ?_
-        obtain ⟨a, ha', b, hb', rfl⟩ :=
-          Submodule.mem_sup.1 (hc.sup_eq_top ▸ Submodule.mem_top (x := v))
-        obtain ⟨p₁, p₂, rfl⟩ : ∃ p₁ p₂ : F, b = p₁ • (u : Fin d.m → F) + p₂ • (f'' : Fin d.m → F) :=
-          ⟨_, _, eq_of_mem_hypPlane h2 u.2 f''.2 hu0 hf''0 hp hb'⟩
-        have hPxa : (specP d.QW x : Module.End F (Fin d.m → F)) a = a := (mem_fixedSub_iff x a).1 ha'
-        simp only [Module.End.mul_apply, map_add, map_smul, hPxa, hPzW a ha', hPzf, hPzf', hPf,
-          hPf', smul_smul, mul_comm]
-      have hPxz' : specP d.QW z * specP d.QW x = specP d.QW x * specP d.QW z :=
-        LinearEquiv.toLinearMap_injective hPxz
-      rw [map_mul, map_mul, map_mul, map_inv, map_inv, hPxz']
-      group
-    -- `z x z⁻¹ = c x` with `c^N = 1`
-    obtain ⟨c, hc'⟩ : ∃ c, scalarGSpin d.QW c = z * x * z⁻¹ * x⁻¹ := by
-      have hk : z * x * z⁻¹ * x⁻¹ ∈ (specP d.QW).ker := hcomm
-      rwa [ker_specP d.nondeg] at hk
-    have hcN : c ^ N = 1 := by
-      have h := congrArg (detChar d.QW) hc'
-      rw [map_mul, map_mul, map_mul, map_inv, map_inv, mul_comm (detChar d.QW z)] at h
-      have h1 : detChar d.QW x * detChar d.QW z * (detChar d.QW z)⁻¹ * (detChar d.QW x)⁻¹ = 1 := by
-        group
-      rw [h1] at h
-      apply Units.ext
-      rw [Units.val_pow_eq_pow_val, Units.val_one, ← detChar_scalarGSpin, h, Units.val_one]
-    have hzx : z * x * z⁻¹ = scalarGSpin d.QW c * x := by rw [hc']; group
-    have hconj : ∀ n : ℕ, z ^ n * x * (z ^ n)⁻¹ = scalarGSpin d.QW (c ^ n) * x := by
-      intro n
-      induction n with
-      | zero => simp
-      | succ n ih =>
-        have hcz : scalarGSpin d.QW (c ^ n) * z = z * scalarGSpin d.QW (c ^ n) :=
-          (scalarGSpin_commute d.QW (c ^ n) z).eq
-        calc z ^ (n + 1) * x * (z ^ (n + 1))⁻¹ = z * (z ^ n * x * (z ^ n)⁻¹) * z⁻¹ := by group
-          _ = scalarGSpin d.QW (c ^ n) * (z * x * z⁻¹) := by
-            rw [ih, ← mul_assoc, ← hcz]; group
-          _ = scalarGSpin d.QW (c ^ (n + 1)) * x := by
-            rw [hzx, ← mul_assoc, ← map_mul, pow_succ]
-    have hpow : ∀ (n : ℕ) (v : Fin d.m → F),
-        (specP d.QW (z ^ n) : Module.End F (Fin d.m → F)) v =
-          ((specP d.QW z : Module.End F (Fin d.m → F)) ^ n) v := fun n => by
-      induction n with
-      | zero => intro v; simp
-      | succ n ih =>
-        intro v
-        rw [pow_succ, map_mul, pow_succ, Module.End.mul_apply, ← ih]
-        rfl
-    refine ⟨z ^ N, ⟨?_, fun v hv => ?_⟩, ?_⟩
-    · change z ^ N ∈ Subgroup.centralizer {x}
+  -- the hyperbolic torus of `W''_x` lies in `T_x(F)` (`hypGSpin`, `commute_hypUnit`)
+  have key : ∀ s : Fˣ, ∃ t ∈ d.torusOf x,
+      specP d.QW t (u : Fin d.m → F) = (s : F) • (u : Fin d.m → F) := by
+    intro s
+    have hp' : QuadraticMap.polar d.QW (f'' : Fin d.m → F) u = 1 := by
+      rw [QuadraticMap.polar_comm, hp]
+    have hpuu : QuadraticMap.polar d.QW (u : Fin d.m → F) u = 0 := by
+      rw [QuadraticMap.polar_self, show d.QW (u : Fin d.m → F) = 0 from hu0, smul_zero]
+    have hfa : d.QW (u : Fin d.m → F) = 0 := hu0
+    have hf'a : d.QW (f'' : Fin d.m → F) = 0 := hf''0
+    set t := hypGSpin (Q := d.QW) hfa hf'a hp s⁻¹ with htdef
+    have hcx := commute_hypUnit (Q := d.QW) hfa hf'a hp (g := x) (s := Units.mk0 μ hμ0)
+      (by simpa using hPf) (by simpa using hPf') s⁻¹
+    refine ⟨t, ⟨?_, fun v hv => ?_⟩, ?_⟩
+    · change t ∈ Subgroup.centralizer {x}
       rw [Subgroup.mem_centralizer_singleton_iff]
-      have h := hconj N
-      rw [hcN, map_one, one_mul] at h
-      calc z ^ N * x = z ^ N * x * (z ^ N)⁻¹ * z ^ N := by group
-        _ = x * z ^ N := by rw [h]
-    · change (specP d.QW (z ^ N) : Module.End F (Fin d.m → F)) v = v
-      rw [hpow]
-      clear hpow hconj
-      induction N with
-      | zero => rfl
-      | succ n ih => rw [pow_succ, Module.End.mul_apply, hPzW v hv, ih]
-    · change (specP d.QW (z ^ N) : Module.End F (Fin d.m → F)) u = _
-      rw [hpow]
-      clear hpow hconj
-      induction N with
-      | zero => simp
-      | succ n ih => rw [pow_succ, Module.End.mul_apply, hPzf, map_smul, ih, smul_smul,
-          pow_succ, mul_comm]
+      exact Subtype.ext (Units.ext hcx.eq.symm)
+    · have h1 : QuadraticMap.polar d.QW (f'' : Fin d.m → F) v = 0 := hpW _ f''.2 v hv
+      have h2 : QuadraticMap.polar d.QW (u : Fin d.m → F) v = 0 := hpW _ u.2 v hv
+      rw [htdef, specP_hypGSpin, h1, h2]
+      simp
+    · rw [htdef, specP_hypGSpin, hp', hpuu]
+      simp only [inv_inv, one_smul]
+      module
   -- boundedness on the compact `T_x(F)/A(F)`
   obtain ⟨R, hR⟩ : ∃ R : ℝ, ∀ t ∈ d.torusOf x,
       ‖QuadraticMap.polar d.QW (f'' : Fin d.m → F) (specP d.QW t (u : Fin d.m → F))‖ ≤ R := by
@@ -388,12 +286,10 @@ theorem anisotropic_orthogonal_fixedSub_of_isGammaElt (d : GGPData F) (x : ↥(G
     rintro rfl
     rw [norm_zero] at hs
     linarith [le_max_right R 1]
-  obtain ⟨t, ht, htf⟩ := key s hs0
+  obtain ⟨t, ht, htf⟩ := key (Units.mk0 s hs0)
   have hb := hR t ht
-  rw [htf, QuadraticMap.polar_smul_right, QuadraticMap.polar_comm, hp, smul_eq_mul, mul_one,
-    norm_pow] at hb
-  have h1 : 1 < ‖s‖ := lt_of_le_of_lt (le_max_right _ _) hs
-  have h3 : ‖s‖ ≤ ‖s‖ ^ N := le_self_pow₀ h1.le (Nat.pos_iff_ne_zero.1 hN)
+  rw [htf, Units.val_mk0, QuadraticMap.polar_smul_right, QuadraticMap.polar_comm, hp, smul_eq_mul,
+    mul_one] at hb
   linarith [le_max_left R 1]
 
 end Gamma
