@@ -20,6 +20,7 @@ import GSpinGGP.GGP.TorusIntegral
 import GSpinGGP.GGP.TwistMoved
 import GSpinGGP.GGP.TwistToForm
 import GSpinGGP.GGP.TwistSymm
+import GSpinGGP.GGP.MovedAniso
 
 /-!
 # The main theorem: the local GGP conjecture for general spin groups
@@ -1527,12 +1528,16 @@ on a hyperbolic plane with hyperbolic pair `f, f'`, the isometries `f ↦ t f`, 
 `1` on `W'_x` (`t ∈ F^×`) lift to `GSpin(W)(F)` (units of `C⁺(W''_x)`, which commute with `x` since
 `x ∈ F^× · C⁺(W''_x)` (`ker_specP`) and `C⁺` of a plane is commutative), hence lie in
 `T_x(F)`, and their images under `P` are unbounded, contradicting compactness of `T_x(F)/A(F)`
-(`IsGammaElt`). -/
+(`IsGammaElt`).  Proved in `GGP/MovedAniso` (`finrank_orthogonal_fixedSub_ne_one`,
+`anisotropic_orthogonal_fixedSub_of_isGammaElt`; the lifts `ι(f+f') ι(f+s f')` commute with `x` up to
+a scalar `c` with `c^N = 1`, `N = dim C(W)`, by `detChar`, so their `N`-th powers lie in `T_x(F)`). -/
 theorem orthogonal_fixedSub_of_isGammaElt (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) :
     finrank F ↥((bform d.QW).orthogonal (fixedSub x)) ≠ 1 ∧
       (finrank F ↥((bform d.QW).orthogonal (fixedSub x)) = 2 →
         (d.QW.comp ((bform d.QW).orthogonal (fixedSub x)).subtype).Anisotropic) :=
-  sorry
+  ⟨finrank_orthogonal_fixedSub_ne_one d.nondeg x
+    (isCompl_fixedSub_orthogonal d.nondeg x (fixedSub_inf_movedSub_of_isSS x hx.1)),
+    anisotropic_orthogonal_fixedSub_of_isGammaElt d x hx⟩
 
 /-- **Statement (S)** (Thesis Prop 6.5.1(iv), first half): for `x ∈ Γ(G,H)` not central, some
 `β ∈ H¹(F, S_x)` has `W_{q_x(β)} ≇ W`.  Proof: `W''_x ≠ 0` (else `P(x) = 1` and `x` is a scalar,
