@@ -218,6 +218,14 @@ open Classical in
 def measH0 : Measure ↥d.lieH0 :=
   if h : ∃ μ, d.IsExpCompatH μ then h.choose else 0
 
+/-- **An `exp`-compatible Haar measure on `𝔥⁰(F)` exists** (BP §1.6, Thesis §10.1, §12.4): near
+`0`, `X ↦ e^X` is a homeomorphism from `𝔥⁰(F)` onto a neighbourhood of `1` in
+`H(F)/A_{G,H}(F)` (`𝔥 = Lie(A_{G,H}) ⊕ 𝔥⁰`), and on a small enough lattice it carries an additive
+Haar measure to a Haar measure (the Jacobian `j^H` is `1` near `0` in the `p`-adic case).
+Not proved here. -/
+theorem exists_isExpCompatH : ∃ μ, d.IsExpCompatH μ := by
+  sorry
+
 variable (ψ : NontrivialAddChar F)
 
 /-- `K^Lie(f, x) = ∫_{𝔥⁰(F)} f(x⁻¹ X x) ξ(X) dX` (Thesis §10.1; Luo §4; BP §8.1). -/
@@ -387,6 +395,14 @@ open Classical in
 /-- The measure on `𝔱⁰(F)` (epsilon; `0` if none). -/
 def measLieTorus (T : Subgroup ↥(GSpin d.QW)) : Measure ↥(d.lieTorus T) :=
   if h : ∃ μ, d.IsExpCompatT T μ then h.choose else 0
+
+/-- **An `exp`-compatible Haar measure on `𝔱⁰(F)` exists** for the tori `T = T_x` of
+`Γ(G,H)` (BP §1.6, §11.1; Thesis §12.1): `T(F)` is commutative, so `exp` is a homomorphism on a
+small lattice of `𝔱⁰(F)`, a homeomorphism onto an open compact subgroup of `T(F)/A_{G,H}(F)`
+(`𝔱 = Lie(A_{G,H}) ⊕ 𝔱⁰`), and it carries an additive Haar measure to a multiple of the
+probability Haar measure there.  Not proved here. -/
+theorem exists_isExpCompatT (T : d.GammaTorus) : ∃ μ, d.IsExpCompatT T.1 μ := by
+  sorry
 
 /-- `X ∈ 𝔱⁰_♮(F)` (Lie version of `T_♮`): `X` has no eigenvalue `0` on `W'' = (W')^⊥`,
 i.e. `ker X = W'`, and `X` is regular in `so(W'')`: every `Y ∈ so(W)` commuting with `X` and
