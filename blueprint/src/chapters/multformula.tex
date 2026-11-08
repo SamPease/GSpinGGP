@@ -25,6 +25,40 @@ $f(ag)=\chi(a)^{-1}f(g)$ for $a\in A_G(F)$, compactly supported modulo $A_G(F)$,
 (Thesis \S7.1, \S10.1), for the Weil quotient measure on $H(F)\backslash G(F)/A_G(F)$.
 \end{definition}
 
+\begin{theorem}[Thesis Thm.~10.1.1(ii)]
+\label{kernelK_bound_scusp}
+\lean{GSpinGGP.GGPData.kernelK_bound_scusp}
+\leanok
+\uses{CentralCharOn, G, GGPData, GSpin, H, N, xi}
+For every $d>0$ there is a continuous seminorm $\nu_d$ with
+$|K(f,x)|\le\nu_d(f)\,\Xi^{H\backslash G}(x)^2\sigma_{H\backslash G}(x)^{-d}$ for strongly cuspidal $f$.
+\end{theorem}
+\begin{proof}
+Not yet formalized (adapted from \cite{BP} Thm.~8.1.1(ii)).
+\end{proof}
+
+\begin{proposition}[Thesis Prop.~8.4.1(iii)]
+\label{prop_6_7_1_iii}
+\lean{GSpinGGP.GGPData.prop_6_7_1_iii}
+\leanok
+\uses{G, GGPData, H}
+For every compact $C\subseteq G(F)$ with nonempty interior defining $\Xi^{H\backslash G}$, there is $d>0$ with $\int_{H(F)\backslash G(F)/A_G(F)}\Xi^{H\backslash G}(x)^2\sigma_{H\backslash G}(x)^{-d}\,dx<\infty$.
+\end{proposition}
+\begin{proof}
+Not yet formalized (adapted from \cite{BP} Prop.~6.7.1(iii)).
+\end{proof}
+
+\begin{proposition}[Iwasawa data exist]
+\label{exists_iwasawaDatum}
+\lean{GSpinGGP.GGPData.exists_iwasawaDatum}
+\leanok
+\uses{G, GGPData}
+$G(F)$ has a minimal parabolic subgroup $P_0$ and a compact open subgroup $K$ with $G(F)=P_0(F)K$.
+\end{proposition}
+\begin{proof}
+Not yet formalized (Bruhat--Tits).
+\end{proof}
+
 \begin{theorem}[Convergence of $J$]
 \label{distribJ_convergent}
 \lean{GSpinGGP.GGPData.distribJ_convergent}
@@ -34,8 +68,12 @@ For $f\in\scusp(A_G\backslash G,\chi^{-1})$, $x\mapsto K(f,x)$ is integrable on 
 (Thesis Thm.~10.1.1(ii) with Prop.~8.4.1(iii); = Thm.~1.0.3).
 \end{theorem}
 \begin{proof}
-Not yet formalized. The bound $|K(f,x)|\le\nu(f)\,\Xi^{H\backslash G}(x)^2\sigma(x)^{-d}$ for strongly cuspidal $f$,
-and integrability of $\Xi^{H\backslash G}(x)^2\sigma(x)^{-d}$ for $d$ large.
+\leanok
+\uses{kernelK_bound_scusp, prop_6_7_1_iii, exists_iwasawaDatum}
+$f$ is Harish-Chandra Schwartz and bi-invariant under a compact open subgroup $K'$, so $K(f,\cdot)$ is
+continuous on $H(F)\backslash G(F)/A_G(F)$. The bound $|K(f,x)|\le\nu(f)\,\Xi^{H\backslash G}(x)^2\sigma(x)^{-d}$
+for strongly cuspidal $f$ and every $d>0$, with integrability of $\Xi^{H\backslash G}(x)^2\sigma(x)^{-d}$ for $d$ large, gives
+integrability.
 \end{proof}
 
 \begin{lemma}[$J$ is linear]
