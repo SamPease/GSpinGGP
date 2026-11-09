@@ -4,6 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.TraceFormula.Interface
 import GSpinGGP.Literature.Waldspurger
+import GSpinGGP.Literature.KottwitzClay
+import GSpinGGP.TraceFormula.TorusDescent
+import GSpinGGP.GGP.LieRegular
 
 /-!
 # Invariant open and closed subsets of `G(F)` (`p`-adic)
@@ -19,18 +22,21 @@ Both concern `IsInvariantClopen` sets: open, closed, invariant and `A_G(F)`-stab
   (`exists_compact_conj_of_expHomeo`), and `Ω = A_G(F)·Ω₀` is closed because `H_G` confines the
   `A_G(F)`-factor near every point (`isClosed_AG_mul_of_subset_conj`, `isInvariantClopen_AG_mul`).
   This replaces the passage to `Ḡ = G/A_G`.
-* `hc_exists_invariantClopen_superset` (`sorry`, adapted): every compact subset lies in such a set that
-  is compact modulo conjugation and `A_G(F)`. Planned route: Waldspurger §3.1 at every semisimple `x`,
-  the Jordan decomposition `c = s exp(N)`, `N ∈ ω_s` because `α²O = O` for nilpotent orbits (Kottwitz,
-  Clay Proc. 4, §17.5, p. 461, applied to `G_s`), a finite cover of the compact set, and `A_G(F)`-saturation.
-  (Beuzart-Plessis's characterization of compactness modulo conjugation, Astérisque 418 §1.7, is stated
-  without proof for general connected groups and is not used.)
+* `hc_exists_invariantClopen_superset` (**proved**, adapted): every compact subset lies in such a set
+  that is compact modulo conjugation and `A_G(F)`. Each `c = s e^N` (Jordan decomposition, `N = log u`
+  nilpotent in `𝔤_s`, `exists_eq_mul_expA_nilpotent`) lies in the `G`-domain `(s exp ω_s)^{G(F)}` of
+  Waldspurger 2010 §3.1 at `s` (`waldspurger_goodNbhd`): `α²N ∈ ω_s` for small `α`, and `α²N` is
+  conjugate to `N` under the centralizer of `s` (Kottwitz, Clay Proc. 4, §17.5, p. 461, applied to
+  `Z_G(s)⁰`; `kottwitz_nilpotent_sq_smul`). Finitely many such domains cover the compact set, and the
+  union is saturated by `A_G(F)`. (Beuzart-Plessis's characterization of compactness modulo
+  conjugation, Astérisque 418 §1.7, is stated without proof for general connected groups and is not
+  used.)
 
 **Degenerate checks** (`Sanity/InvariantSetsAudit.lean`): at `toyD` (`A_G = G`) both conclusions hold
 with `Ω = G(F)`.
 -/
 
-open Topology
+open Topology Filter
 open scoped Pointwise
 
 noncomputable section
@@ -38,21 +44,6 @@ noncomputable section
 namespace GSpinGGP
 
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
-
-/-- **Compactness modulo conjugation, `p`-adic open-and-closed form** (BP Astérisque 418 Prop 3.1.1(i)
-= Thesis Prop 3.5.1(i), adapted; see the module docstring for the planned argument).  Every
-compact `C ⊆ G(F)` is contained in a subset `Ω` that is open and closed, conjugation invariant and `A_G(F)`-stable (`IsInvariantClopen`), and compact modulo
-conjugation and `A_G(F)`: `Ω ⊆ A_G(F) · C'^{G(F)}` for a compact `C'`.  (In
-`TraceFormula/Geometric.lean` terms: `C` lies in a set of the projective system `IsQCCutoff`.)
-
-**Status: `sorry`, not a literature axiom** (the statement is not verbatim in a source). Adapted, as
-explained in the module docstring. BP Prop 3.1.1(i) gives open invariant sets with closures compact
-modulo conjugation, not closed `A_G(F)`-stable ones. -/
-theorem hc_exists_invariantClopen_superset (d : GGPData F) {C : Set ↥d.G} (hC : IsCompact C) :
-    ∃ Ω : Set ↥d.G, IsInvariantClopen d Ω ∧ C ⊆ Ω ∧
-      ∃ C' : Set ↥d.G, IsCompact C' ∧
-        ∀ g ∈ Ω, ∃ (a : ↥d.AG) (x c : ↥d.G), c ∈ C' ∧ g = (a : ↥d.G) * (x * c * x⁻¹) := by
-  sorry
 
 /-! ## `A_G(F)`-saturation of `G`-domains -/
 
@@ -240,5 +231,162 @@ theorem hc_exists_invariantClopen_nearCentral (d : GGPData F) {U : Set ↥d.G}
     refine ⟨⟨a, ha⟩, h⁻¹, hOU ?_⟩
     change (a : ↥d.G)⁻¹ * (h⁻¹ * (a * w) * h⁻¹⁻¹) ∈ O
     rw [heq]; exact hyO
+
+/-! ## Compact sets lie in `G`-domains compact modulo conjugation -/
+
+section GoodDomain
+
+variable (d : GGPData F)
+
+attribute [local instance 100] LieRing.ofAssociativeRing LieAlgebra.ofAssociativeAlgebra in
+/-- **Jordan decomposition with a logarithm**: `c = s e^N` with `s ∈ G(F)` semisimple and `N ∈ 𝔤_s`
+nilpotent. From `c = s u` (`exists_jordan_G`), `N = log u` (`exists_expA_nsmul_eq_one_add_pow`), and
+`N ∈ 𝔤` because `e^{mᵏN} = u^{mᵏ} ∈ G(F)` with `mᵏN → 0` (`eventually_mem_lie_of_expA_mem`). -/
+theorem exists_eq_mul_expA_nilpotent (c : ↥d.G) :
+    ∃ sG : ↥d.G, IsSS F ((sG : d.ambientˣ) : d.ambient) ∧ ∃ N : d.ambient,
+      N ∈ lieCentralizer d.lie ((sG : d.ambientˣ) : d.ambient) ∧ IsNilpotent N ∧
+      ((c : d.ambientˣ) : d.ambient) = ((sG : d.ambientˣ) : d.ambient) * expA F N := by
+  have := isTopologicalRing_of_moduleTopology F d.ambient
+  have : ContinuousSMul F d.ambient := IsModuleTopology.toContinuousSMul F d.ambient
+  have hval : ∀ g h : ↥d.G, ((g : d.ambientˣ) : d.ambient) = ((h : d.ambientˣ) : d.ambient) →
+      g = h := fun g h hgh => Subtype.ext (Units.ext hgh)
+  obtain ⟨sG, hs, hss, hn⟩ := exists_jordan_G d c
+  set a : d.ambient := ((c : d.ambientˣ) : d.ambient) with ha
+  set s : d.ambient := ((sG : d.ambientˣ) : d.ambient) with hsd
+  set si : d.ambient := (((sG⁻¹ : ↥d.G) : d.ambientˣ) : d.ambient) with hsid
+  have hsi : si * s = 1 := by simp [si, s]
+  have hsi' : s * si = 1 := by simp [si, s]
+  have hcs : Commute a s := Algebra.commute_of_mem_adjoin_self hs
+  -- the unipotent part `u = s⁻¹ c = 1 + x`
+  set x : d.ambient := si * (a - s) with hx
+  have hssi : Commute s si := by rw [Commute, SemiconjBy, hsi, hsi']
+  have hsx : Commute s x := hssi.mul_right (hcs.symm.sub_right (Commute.refl s))
+  have hsia : Commute si a := by
+    have := (hcs.symm).units_inv_left (u := (sG : d.ambientˣ))
+    simpa [si] using this
+  obtain ⟨n, hxn⟩ : IsNilpotent x :=
+    (hsia.sub_right hssi.symm).isNilpotent_mul_left hn
+  have hau : a = s * (1 + x) := by
+    rw [hx, mul_add, mul_one, ← mul_assoc, hsi', one_mul, add_sub_cancel]
+  -- `N = log u`
+  obtain ⟨N, hNadj, hNn, hexpN⟩ := exists_expA_nsmul_eq_one_add_pow F hxn
+  have hexp1 : expA F N = 1 + x := by simpa using hexpN 1
+  have hsN : Commute s N := Algebra.commute_of_mem_adjoin_singleton_of_commute hNadj hsx
+  set uG : ↥d.G := sG⁻¹ * c with huG
+  have huval : ((uG : d.ambientˣ) : d.ambient) = 1 + x := by
+    rw [hx, mul_sub, hsi, add_sub_cancel]
+    simp [uG, si, a]
+  -- `N ∈ 𝔤`: `e^{mᵏ N} = u^{mᵏ} ∈ G(F)` with `mᵏ N → 0`
+  have hNlie : N ∈ d.lie := by
+    obtain ⟨m, hm0, hm1⟩ := exists_natCast_norm_lt_one F
+    have htend : Tendsto (fun k : ℕ => ((m ^ k : ℕ) : F) • N) atTop (𝓝 0) := by
+      have h0 : Tendsto (fun k : ℕ => ((m ^ k : ℕ) : F)) atTop (𝓝 0) := by
+        rw [tendsto_zero_iff_norm_tendsto_zero]
+        simp only [Nat.cast_pow, norm_pow]
+        exact tendsto_pow_atTop_nhds_zero_of_lt_one (norm_nonneg _) hm1
+      simpa using h0.smul_const N
+    obtain ⟨k, hk⟩ := (htend.eventually (eventually_mem_lie_of_expA_mem d)).exists
+    have hmem := hk (uG ^ (m ^ k)) (by rw [hexpN]; simp [← huval])
+    have hne : ((m ^ k : ℕ) : F) ≠ 0 := by
+      rw [Nat.cast_pow]; exact pow_ne_zero _ (norm_pos_iff.mp hm0)
+    have := d.lie.smul_mem (((m ^ k : ℕ) : F)⁻¹) hmem
+    rwa [smul_smul, inv_mul_cancel₀ hne, one_smul] at this
+  exact ⟨sG, hss, N, mem_lieCentralizer.mpr ⟨hNlie, hsN.eq⟩, ⟨n, hNn⟩, by rw [hexp1]; exact hau⟩
+
+attribute [local instance 100] LieRing.ofAssociativeRing LieAlgebra.ofAssociativeAlgebra in
+/-- **Every element lies in a `G`-domain compact modulo conjugation.** For `c = s u` (Jordan
+decomposition, `exists_jordan_G`), `u = e^N` with `N = log u` nilpotent in `𝔤_s`
+(`exists_expA_nsmul_eq_one_add_pow`; `N ∈ 𝔤` because `e^{mᵏN} = u^{mᵏ} ∈ G(F)` with `mᵏN → 0`,
+`eventually_mem_lie_of_expA_mem`). Waldspurger §3.1 at `s` (`waldspurger_goodNbhd`) gives a good
+neighbourhood `ω_s` and the `G`-domain `Ω_s = (s exp ω_s)^{G(F)}`, compact modulo conjugation. For
+small `α ≠ 0`, `α²N ∈ ω_s`, and `α²N = h N h⁻¹` with `h` commuting with `s`
+(`kottwitz_nilpotent_sq_smul`), so `h c h⁻¹ = s e^{α²N} ∈ Ω_s` and `c ∈ Ω_s`. -/
+theorem exists_goodDomain_mem (c : ↥d.G) :
+    ∃ Ω : Set ↥d.G, IsOpen Ω ∧ IsClosed Ω ∧ (∀ x g : ↥d.G, g ∈ Ω → x * g * x⁻¹ ∈ Ω) ∧
+      ∃ K : Set ↥d.G, IsCompact K ∧ (∀ g ∈ Ω, ∃ (x k : ↥d.G), k ∈ K ∧ g = x * k * x⁻¹) ∧
+        c ∈ Ω := by
+  have := isTopologicalRing_of_moduleTopology F d.ambient
+  have : ContinuousSMul F d.ambient := IsModuleTopology.toContinuousSMul F d.ambient
+  have hval : ∀ g h : ↥d.G, ((g : d.ambientˣ) : d.ambient) = ((h : d.ambientˣ) : d.ambient) →
+      g = h := fun g h hgh => Subtype.ext (Units.ext hgh)
+  obtain ⟨sG, hss, N, hNs, ⟨n, hNn⟩, hcN⟩ := exists_eq_mul_expA_nilpotent d c
+  set s : d.ambient := ((sG : d.ambientˣ) : d.ambient) with hsd
+  -- Waldspurger at `s`
+  obtain ⟨ω, E, Ω, -, h0, hωo, -, -, -, -, ⟨e, he⟩, hΩo, hΩc, hΩinv, hΩeq, ⟨K, hK, hKsub⟩, -⟩ :=
+    waldspurger_goodNbhd d sG hss Filter.univ_mem
+  -- a small `α ≠ 0` with `α²N ∈ ω`
+  obtain ⟨U, hUo, hUω⟩ := isOpen_induced_iff.1 hωo
+  have hαN : ∀ α : F, α ^ 2 • N ∈ lieCentralizer d.lie s := fun α =>
+    (lieCentralizer d.lie s).smul_mem _ hNs
+  have h0U : (0 : d.ambient) ∈ U := by
+    have : (⟨0, (lieCentralizer d.lie s).zero_mem⟩ : ↥(lieCentralizer d.lie s)) ∈
+        Subtype.val ⁻¹' U := by rw [hUω]; exact h0
+    exact this
+  have hf : Continuous fun α : F => α ^ 2 • N := (continuous_pow 2).smul continuous_const
+  have hpre : (fun α : F => α ^ 2 • N) ⁻¹' U ∈ 𝓝 (0 : F) :=
+    hf.continuousAt.preimage_mem_nhds (hUo.mem_nhds (by simpa using h0U))
+  have := NormedField.nhdsNE_neBot (0 : F)
+  obtain ⟨α, hαU, hα0⟩ : ∃ α : F, α ^ 2 • N ∈ U ∧ α ≠ 0 :=
+    ((eventually_nhdsWithin_of_eventually_nhds (s := {0}ᶜ) hpre).and
+      (self_mem_nhdsWithin (s := {0}ᶜ) (a := (0 : F)))).exists
+  have hαω : α ^ 2 • N ∈ ω := by
+    have : (⟨α ^ 2 • N, hαN α⟩ : ↥(lieCentralizer d.lie s)) ∈ Subtype.val ⁻¹' ω := by
+      rw [← hUω]; exact hαU
+    exact this
+  obtain ⟨h, hhs, hhN⟩ := kottwitz_nilpotent_sq_smul d sG hss hNs ⟨n, hNn⟩ hα0
+  set X : ↥ω := ⟨α ^ 2 • N, hαω⟩
+  have hcomm : ((h : d.ambientˣ) : d.ambient) * s = s * ((h : d.ambientˣ) : d.ambient) := by
+    simpa using congrArg (fun g : ↥d.G => ((g : d.ambientˣ) : d.ambient)) hhs
+  have hc' : h * c * h⁻¹ ∈ Ω := by
+    rw [hΩeq]
+    refine ⟨1, (e X : ↥d.G), (e X).2, hval _ _ ?_⟩
+    rw [show (1 : ↥d.G) * (sG * (e X : ↥d.G)) * 1⁻¹ = sG * (e X : ↥d.G) by group]
+    simp only [Subgroup.coe_mul, Units.val_mul]
+    rw [he X]
+    change ((h : d.ambientˣ) : d.ambient) * ((c : d.ambientˣ) : d.ambient) *
+      ((h⁻¹ : ↥d.G) : d.ambientˣ) = s * expA F (α ^ 2 • N)
+    rw [← hhN, expA_conj_G, hcN, ← mul_assoc, hcomm, mul_assoc, mul_assoc, mul_assoc]
+    simp
+  refine ⟨Ω, hΩo, hΩc, hΩinv, K, hK, hKsub, ?_⟩
+  have := hΩinv h⁻¹ _ hc'
+  rwa [show h⁻¹ * (h * c * h⁻¹) * h⁻¹⁻¹ = c by group] at this
+
+end GoodDomain
+
+/-- **Compactness modulo conjugation, `p`-adic open-and-closed form** (BP Astérisque 418
+Prop 3.1.1(i) = Thesis Prop 3.5.1(i), adapted). Every compact `C ⊆ G(F)` is contained in a subset `Ω`
+that is open and closed, conjugation invariant and `A_G(F)`-stable (`IsInvariantClopen`), and compact
+modulo conjugation and `A_G(F)`: `Ω ⊆ A_G(F) · C'^{G(F)}` for a compact `C'`. (In
+`TraceFormula/Geometric.lean` terms: `C` lies in a set of the projective system `IsQCCutoff`.)
+
+BP Prop 3.1.1(i) gives open invariant sets with closures compact modulo conjugation, not closed
+`A_G(F)`-stable ones. Proof: every `c ∈ C` lies in a `G`-domain compact modulo conjugation
+(`exists_goodDomain_mem`); finitely many cover `C`, and their union is saturated by `A_G(F)`
+(`isInvariantClopen_AG_mul`). -/
+theorem hc_exists_invariantClopen_superset (d : GGPData F) {C : Set ↥d.G} (hC : IsCompact C) :
+    ∃ Ω : Set ↥d.G, IsInvariantClopen d Ω ∧ C ⊆ Ω ∧
+      ∃ C' : Set ↥d.G, IsCompact C' ∧
+        ∀ g ∈ Ω, ∃ (a : ↥d.AG) (x c : ↥d.G), c ∈ C' ∧ g = (a : ↥d.G) * (x * c * x⁻¹) := by
+  choose Ωf hΩo hΩc hΩinv Kf hKf hKsub hmem using exists_goodDomain_mem d
+  obtain ⟨t, ht⟩ := hC.elim_finite_subcover Ωf hΩo fun c _ => Set.mem_iUnion.2 ⟨c, hmem c⟩
+  set Ω₀ : Set ↥d.G := ⋃ i ∈ t, Ωf i
+  set K : Set ↥d.G := ⋃ i ∈ t, Kf i
+  have hΩ₀o : IsOpen Ω₀ := isOpen_biUnion fun i _ => hΩo i
+  have hΩ₀c : IsClosed Ω₀ := t.finite_toSet.isClosed_biUnion fun i _ => hΩc i
+  have hΩ₀inv : ∀ x g : ↥d.G, g ∈ Ω₀ → x * g * x⁻¹ ∈ Ω₀ := by
+    intro x g hg
+    obtain ⟨i, hi, hgi⟩ := Set.mem_iUnion₂.1 hg
+    exact Set.mem_iUnion₂.2 ⟨i, hi, hΩinv i x g hgi⟩
+  have hK : IsCompact K := t.isCompact_biUnion fun i _ => hKf i
+  have hsub : ∀ g ∈ Ω₀, ∃ (x k : ↥d.G), k ∈ K ∧ g = x * k * x⁻¹ := by
+    intro g hg
+    obtain ⟨i, hi, hgi⟩ := Set.mem_iUnion₂.1 hg
+    obtain ⟨x, k, hk, rfl⟩ := hKsub i g hgi
+    exact ⟨x, k, Set.mem_iUnion₂.2 ⟨i, hi, hk⟩, rfl⟩
+  refine ⟨(d.AG : Set ↥d.G) * Ω₀, d.isInvariantClopen_AG_mul hΩ₀o hΩ₀c hΩ₀inv hK hsub,
+    fun c hc => ⟨1, d.AG.one_mem, c, ht hc, one_mul c⟩, K, hK, ?_⟩
+  rintro _ ⟨a, ha, w, hw, rfl⟩
+  obtain ⟨x, k, hk, rfl⟩ := hsub w hw
+  exact ⟨⟨a, ha⟩, x, k, hk, rfl⟩
 
 end GSpinGGP

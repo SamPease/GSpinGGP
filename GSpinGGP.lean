@@ -1,4 +1,5 @@
 import GSpinGGP.Foundations.LocalGroups
+import GSpinGGP.Foundations.NilpotentLog
 import GSpinGGP.Foundations.RankSemicontinuity
 import GSpinGGP.Foundations.Determinant
 import GSpinGGP.Foundations.JHatTranslate
@@ -44,6 +45,7 @@ import GSpinGGP.TraceFormula.DeltaIntegrability
 import GSpinGGP.TraceFormula.EllipticRepresentations
 import GSpinGGP.TraceFormula.LieAlgebra
 import GSpinGGP.Literature.Kottwitz
+import GSpinGGP.Literature.KottwitzClay
 import GSpinGGP.Literature.Kottwitz1986
 import GSpinGGP.GGP.KottwitzDelta
 import GSpinGGP.GGP.KottwitzSign
