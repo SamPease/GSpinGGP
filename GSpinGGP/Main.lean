@@ -20,6 +20,7 @@ import GSpinGGP.GGP.TorusIntegral
 import GSpinGGP.GGP.TwistMoved
 import GSpinGGP.GGP.TwistToForm
 import GSpinGGP.GGP.TwistSymm
+import GSpinGGP.GGP.TorusCount
 import GSpinGGP.GGP.MovedAniso
 
 /-!
@@ -108,13 +109,13 @@ variable {d : GGPData F}
 conjugate to `x ∈ GSpin(W)(F)` (Thesis §6.7, definition of `n_α(x)`). -/
 def stableFiber (IF : InnerFormSystem d) (α : IF.Idx) (x : ↥(GSpin d.QW)) :
     Set ↥(GSpin (IF.data α).QW) :=
-  {y | (IF.data α).IsGammaElt y ∧ d.StronglyStablyConjW (IF.twist α) x y}
+  GGPData.stableSet (IF.twist α) x
 
 /-- `GSpin(W_α)(F)`-conjugacy on `stableFiber` (by Thesis §6.6, two
 elements of `GSpin(W_α)` are `G_α(F)`-conjugate iff they are `GSpin(W_α)(F)`-conjugate). -/
 def stableFiberConj (IF : InnerFormSystem d) (α : IF.Idx) (x : ↥(GSpin d.QW))
     (y y' : stableFiber IF α x) : Prop :=
-  ∃ g : ↥(GSpin (IF.data α).QW), (y' : ↥(GSpin (IF.data α).QW)) = g * y * g⁻¹
+  GGPData.ConjOn (stableFiber IF α x) y y'
 
 /-- `n_α(x) = |{y ∈ Γ(G_α, H_α) : y ∼_stab x}|` (Thesis §6.7): the number of
 `GSpin(W_α)(F)`-conjugacy classes of elements of `Γ(G_α,H_α)` strongly stably conjugate to `x`.
@@ -468,33 +469,7 @@ theorem eq_scalar_of_stablyConjVia {V₁ V₂ : Type*} [AddCommGroup V₁] [Modu
 theorem scalar_stronglyStablyConjW_refl (τ : InnerTwist d.QW) (hτ : τ = d.reflTwist) (c : Fˣ) :
     d.StronglyStablyConjW τ (scalarGSpin d.QW c) (scalarGSpin (d.twist τ).QW c) := by
   subst hτ
-  have hW : CliffordAlgebra.map (d.reflTwist.φ).toIsometry = AlgHom.id _ _ :=
-    CliffordAlgebra.map_id _
-  have hV : CliffordAlgebra.map (d.twistV d.reflTwist).toIsometry = AlgHom.id _ _ := by
-    rw [← CliffordAlgebra.map_id]
-    congr 1
-    ext v
-    show (prodBaseChange d.QW d.QZ).symm ((d.reflTwist.φ.prod
-      (QuadraticMap.IsometryEquiv.refl (d.QZ.baseChange (AlgebraicClosure F))))
-      (prodBaseChange d.QW d.QZ v)) = v
-    exact (prodBaseChange d.QW d.QZ).symm_apply_apply v
-  have hcW : ∀ z, cliffUnits d.reflTwist.φ z = z := fun z => Units.ext (by
-    simp only [cliffUnits, hW]; rfl)
-  have hcV : ∀ z, cliffUnits (d.twistV d.reflTwist) z = z := fun z => Units.ext (by
-    simp only [cliffUnits, hV]; rfl)
-  refine ⟨⟨1, Subgroup.one_mem _, ?_, fun σ z _ _ => ?_⟩, ⟨1, Subgroup.one_mem _, ?_, fun σ z _ _ => ?_⟩⟩
-  · rw [hcW, inv_one, mul_one]; exact one_mul _
-  · rw [hcW, hW]
-    show galC d.QW σ ((1 * z * 1⁻¹ : (CliffordAlgebra (d.QW.baseChange (AlgebraicClosure F)))ˣ) :
-      CliffordAlgebra (d.QW.baseChange (AlgebraicClosure F))) = _
-    simp only [mul_one, one_mul, inv_one, Units.val_one]
-    rfl
-  · rw [hcV, inv_one, mul_one]; exact one_mul _
-  · rw [hcV, hV]
-    show galC d.QV σ ((1 * z * 1⁻¹ : (CliffordAlgebra (d.QV.baseChange (AlgebraicClosure F)))ˣ) :
-      CliffordAlgebra (d.QV.baseChange (AlgebraicClosure F))) = _
-    simp only [mul_one, one_mul, inv_one, Units.val_one]
-    rfl
+  exact d.stronglyStablyConjW_refl_self _
 
 /-- **`n_1(c) = 1` for central `c`** (own work; Thesis §6.7, where the atom
 contributes with weight `1`): anything strongly stably conjugate to the scalar `c` is `c`
@@ -2330,17 +2305,44 @@ noncomputable def stableLift (IF : InnerFormSystem d) (α : IF.Idx)
       d.StronglyStablyConjW (IF.twist α) x (gammaGen (IF.data α) c) then
     f (d.torusOf h.choose) else 0
 
+/-- The torus transport of `exists_torusTransfer_core`, in the form used for counting. -/
+theorem hasTorusTransport_twist (IF : InnerFormSystem d) (α : IF.Idx) :
+    GGPData.HasTorusTransport (IF.twist α) := fun x y hx hy hxy => by
+  obtain ⟨e, -, -, -, -, h1, h2, -⟩ := exists_torusTransfer_core IF α x y hx hy hxy
+  exact ⟨e, h1, h2⟩
+
+open Classical in
+/-- `n_α(x) = w(x) · Σ_{c ∈ Γ(G_α,H_α)/conj meeting x} |W(T_c)|⁻¹` (`card_quot_stableSet`). -/
+theorem n_alpha_eq_stableWeight_mul (IF : InnerFormSystem d) (α : IF.Idx) {x : ↥(GSpin d.QW)}
+    (hx : d.IsGammaElt x) :
+    (n_alpha IF α x : ℚ) = GGPData.stableWeight x * ∑' c : GammaClass (IF.data α),
+      (if GGPData.Meets (IF.twist α) x c then 1 else 0) / (weylCard (IF.data α) c : ℚ) :=
+  GGPData.card_quot_stableSet (hasTorusTransport_twist IF α) hx
+
+open Classical in
+/-- The base case of `n_alpha_eq_stableWeight_mul`, over the torus classes of `G` itself. -/
+theorem n_alpha_base_eq_stableWeight_mul (IF : InnerFormSystem d) {x : ↥(GSpin d.QW)}
+    (hx : d.IsGammaElt x) :
+    (n_alpha IF IF.base x : ℚ) = GGPData.stableWeight x * ∑' c : GammaClass d,
+      (if GGPData.Meets d.reflTwist x (c : GammaClass (d.twist d.reflTwist)) then 1 else 0) /
+        (weylCard d c : ℚ) := by
+  have h := n_alpha_eq_stableWeight_mul IF IF.base hx
+  simp only [InnerFormSystem.data] at h
+  generalize hτ : IF.twist IF.base = τ at h
+  rw [IF.twist_base] at hτ
+  subst hτ
+  exact h
+
 /-- **The torus-class count (R2)** (own work; the regrouping step of Thesis (6.7.2)–(6.7.5)): for
 a function `f` of the tori of `Γ(G,H)` that is constant on tori `T_x`, `T_{x'}` with `x`, `x'`
 strongly stably conjugate to a common `y` (and `0` on non-quasi-split tori),
 `Σ_{[T'] ∈ Γ(G_α,H_α)/conj} |W(T')|⁻¹ F_α(T') = Σ_{[T] ∈ Γ(G,H)/conj} |W(T)|⁻¹ (n_α(x_T)/n_1(x_T)) f(T)`.
 Regrouping both sides by stable classes, this says that `N_α = Σ |W(T')|⁻¹` over the classes of
 `G_α` stably conjugate to `T_x` is proportional to `n_α(x)` (with the same constant for every `α`).
-Expected proof: `n_α(x) = |q_x⁻¹(α)|` (`n_alpha_eq_card_twistIdx`), and the rational classes of tori
-over `α` are the orbits of `(N_x/S_x)(F)` on `q_x⁻¹(α) ⊆ H¹(F, S_x)`, with stabilizers `W(T')`
-(orbit–stabilizer).  Checks: at `α = 1` both sides agree by the invariance of `f`; for central `x`,
-`n_α(x) = [α = 1]`.  (`n_1(x) ≥ 1`, `x` itself being strongly stably conjugate to its image in `G_1`;
-`hqs` and `hf0` are not needed for the identity.) -/
+Proof: `n_α(x) = w(x) · Σ_{c meets x} |W(T_c)|⁻¹` (`n_alpha_eq_stableWeight_mul`, with the same
+`w(x)` for every `α`); the classes meeting `x` form a stable class of tori (`meets_refl_iff`), on which
+`f` is constant (`hf`), so both sides regroup class by class.  (`hqs` and `hf0` are not needed for the
+identity.) -/
 theorem torusClass_count (hqs : d.IsQuasiSplit) (IF : InnerFormSystem d) (α : IF.Idx)
     (f : Subgroup ↥(GSpin d.QW) → ℂ)
     (hf : ∀ (β : IF.Idx) (y : ↥(GSpin (IF.data β).QW)) (x x' : ↥(GSpin d.QW)),
@@ -2351,8 +2353,115 @@ theorem torusClass_count (hqs : d.IsQuasiSplit) (IF : InnerFormSystem d) (α : I
     ∑' c : GammaClass (IF.data α), ((weylCard (IF.data α) c : ℂ))⁻¹ * stableLift IF α f c =
       ∑' c : GammaClass d, ((weylCard d c : ℂ))⁻¹ *
         ((n_alpha IF α (gammaGen d c) : ℂ) / (n_alpha IF IF.base (gammaGen d c) : ℂ)) *
-          f (Quot.out c).1 :=
-  sorry
+          f (Quot.out c).1 := by
+  classical
+  have _ := hqs
+  have _ := hf0
+  have := finite_gammaClass d
+  let _ : Fintype (GammaClass d) := Fintype.ofFinite _
+  have := finite_gammaClass (IF.data α)
+  let _ : Fintype (GammaClass (IF.data α)) := Fintype.ofFinite _
+  have hTα := hasTorusTransport_twist IF α
+  have hgen := gammaGen_spec d
+  have hW : ∀ c : GammaClass d, (weylCard d c : ℂ) ≠ 0 := fun c => by
+    have := GGPData.weylCardOf_pos (hgen c).1
+    rw [(hgen c).2] at this
+    exact_mod_cast this.ne'
+  -- the denominators `N(c) = Σ_{c₂ meets gen c} |W(c₂)|⁻¹`, from the count at the base
+  let N : GammaClass d → ℚ := fun c => ∑ c₂ : GammaClass d,
+    (if GGPData.Meets d.reflTwist (gammaGen d c) (c₂ : GammaClass (d.twist d.reflTwist)) then 1 else 0) /
+      (weylCard d c₂ : ℚ)
+  have hratio : ∀ c : GammaClass d,
+      (n_alpha IF α (gammaGen d c) : ℂ) / (n_alpha IF IF.base (gammaGen d c) : ℂ) =
+        ((∑ c' : GammaClass (IF.data α), (if GGPData.Meets (IF.twist α) (gammaGen d c) c' then 1 else 0) /
+          (weylCard (IF.data α) c' : ℚ) : ℚ) : ℂ) / (N c : ℂ) := by
+    intro c
+    have h1 := n_alpha_eq_stableWeight_mul IF α (hgen c).1
+    have h2 := n_alpha_base_eq_stableWeight_mul IF (hgen c).1
+    rw [tsum_fintype] at h1 h2
+    have hw : (GGPData.stableWeight (gammaGen d c) : ℚ) ≠ 0 := by
+      exact_mod_cast (GGPData.stableWeight_pos (hgen c).1).ne'
+    have e : (n_alpha IF α (gammaGen d c) : ℚ) / (n_alpha IF IF.base (gammaGen d c) : ℚ) =
+        (∑ c' : GammaClass (IF.data α), (if GGPData.Meets (IF.twist α) (gammaGen d c) c' then 1 else 0) /
+          (weylCard (IF.data α) c' : ℚ)) / N c := by
+      rw [h1, h2, mul_div_mul_left _ _ hw]
+    have := congrArg (fun q : ℚ => (q : ℂ)) e
+    simpa only [Rat.cast_div, Rat.cast_natCast] using this
+  -- each torus class `c'` of `G_α`
+  have hper : ∀ c' : GammaClass (IF.data α), stableLift IF α f c' =
+      ∑ c : GammaClass d, if GGPData.Meets (IF.twist α) (gammaGen d c) c' then
+        (weylCard d c : ℂ)⁻¹ * f (Quot.out c).1 / (N c : ℂ) else 0 := by
+    intro c'
+    have hg' := gammaGen_spec (IF.data α) c'
+    by_cases hex : ∃ c₀ : GammaClass d, GGPData.Meets (IF.twist α) (gammaGen d c₀) c'
+    · obtain ⟨c₀, hc₀⟩ := hex
+      -- `f(T_c) = F_α(c')` for every `c` meeting `c'`
+      have hf_eq : ∀ c : GammaClass d, GGPData.Meets (IF.twist α) (gammaGen d c) c' →
+          f (Quot.out c).1 = stableLift IF α f c' := by
+        intro c hc
+        obtain ⟨y, ⟨hyΓ, hxy⟩, hyT⟩ := hc
+        obtain ⟨e, he, het⟩ := hTα (gammaGen d c) y (hgen c).1 hyΓ hxy
+        have hmem : gammaGen (IF.data α) c' ∈ (IF.data α).torusOf y := by
+          rw [hyT, ← hg'.2]; exact (IF.data α).self_mem_torusOf _
+        set t := e.symm ⟨_, hmem⟩ with ht
+        have het' : e t = ⟨_, hmem⟩ := by rw [ht, MulEquiv.apply_symm_apply]
+        have hT' : d.IsGammaElt t ∧ d.torusOf t = d.torusOf (gammaGen d c) := (he t).2 (by
+          rw [het']; exact ⟨hg'.1, hg'.2.trans hyT.symm⟩)
+        have hts : d.StronglyStablyConjW (IF.twist α) t (gammaGen (IF.data α) c') := by
+          have := het t hT'.1 hT'.2; rwa [het'] at this
+        have hex' : ∃ x : ↥(GSpin d.QW), d.IsGammaElt x ∧
+            d.StronglyStablyConjW (IF.twist α) x (gammaGen (IF.data α) c') := ⟨t, hT'.1, hts⟩
+        unfold stableLift
+        rw [dif_pos hex']
+        obtain ⟨h1, h2⟩ := hex'.choose_spec
+        rw [hf α _ _ t hg'.1 h1 hT'.1 h2 hts, hT'.2, (hgen c).2]
+      -- `N(c) = S` for every `c` meeting `c'`
+      let S : ℚ := ∑ c₂ : GammaClass d,
+        (if GGPData.Meets (IF.twist α) (gammaGen d c₂) c' then 1 else 0) / (weylCard d c₂ : ℚ)
+      have hN : ∀ c : GammaClass d, GGPData.Meets (IF.twist α) (gammaGen d c) c' → N c = S :=
+        fun c hc => Finset.sum_congr rfl fun c₂ _ => by
+          rw [if_congr (GGPData.meets_refl_iff hTα (hgen c).1 (hgen c₂).1 (hgen c₂).2 hc) rfl rfl]
+      have hS : S ≠ 0 := by
+        refine (Finset.sum_pos' (fun c₂ _ => by positivity) ⟨c₀, Finset.mem_univ _, ?_⟩).ne'
+        rw [if_pos hc₀]
+        have := GGPData.weylCardOf_pos (hgen c₀).1
+        rw [(hgen c₀).2] at this
+        exact div_pos one_pos (by exact_mod_cast this)
+      have hS' : (S : ℂ) ≠ 0 := by exact_mod_cast hS
+      have hsum : (S : ℂ) = ∑ c : GammaClass d,
+          if GGPData.Meets (IF.twist α) (gammaGen d c) c' then (weylCard d c : ℂ)⁻¹ else 0 := by
+        simp only [S]
+        push_cast
+        refine Finset.sum_congr rfl fun c _ => ?_
+        split_ifs <;> simp
+      calc stableLift IF α f c' = stableLift IF α f c' / (S : ℂ) * (S : ℂ) := by field_simp
+        _ = ∑ c : GammaClass d, if GGPData.Meets (IF.twist α) (gammaGen d c) c' then
+              (weylCard d c : ℂ)⁻¹ * f (Quot.out c).1 / (N c : ℂ) else 0 := by
+          rw [hsum, Finset.mul_sum]
+          refine Finset.sum_congr rfl fun c _ => ?_
+          split_ifs with hc
+          · rw [hN c hc, hf_eq c hc, ← hsum]; ring
+          · simp
+    · push_neg at hex
+      have h0 : stableLift IF α f c' = 0 := by
+        unfold stableLift
+        rw [dif_neg]
+        rintro ⟨x, hx, hxy⟩
+        have hm : GGPData.Meets (IF.twist α) x c' := ⟨_, ⟨hg'.1, hxy⟩, hg'.2⟩
+        obtain ⟨g, hΓ1, hT1⟩ := GGPData.exists_conj_torusOf_eq_out hx rfl
+        exact hex _ (GGPData.meets_of_torusOf_eq hTα hΓ1 (hgen _).1 ((hgen _).2.trans hT1.symm)
+          (GGPData.meets_conj g hm))
+      rw [h0]
+      exact (Finset.sum_eq_zero fun c _ => if_neg (hex c)).symm
+  -- regroup
+  rw [tsum_fintype, tsum_fintype]
+  simp_rw [hratio, hper, Finset.mul_sum]
+  rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl fun c _ => ?_
+  push_cast
+  rw [Finset.sum_div, Finset.mul_sum, Finset.sum_mul]
+  refine Finset.sum_congr rfl fun c' _ => ?_
+  split_ifs <;> ring
 
 /-- **The stable rearrangement at `s > 0`** (own work; Thesis (6.7.2)–(6.7.5) before the limit):
 for `s > 0`,

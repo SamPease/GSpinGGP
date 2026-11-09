@@ -2,7 +2,8 @@
 Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import GSpinGGP.GGP.TorusFrame
+import GSpinGGP.GGP.GammaClassFinite
+import GSpinGGP.GGP.TwistSymm
 
 /-!
 # Counting elements of `Γ(G,H)` torus by torus
@@ -15,6 +16,14 @@ Ingredients of the torus-class count (`torusClass_count`, Thesis (6.7.2)–(6.7.
   elements `t` with `T_t = T_x`.
 * `finite_conj_torusOf`: only finitely many `t ∈ T_x(F)` are `GSpin(W)(F̄)`-conjugate to `x`.
 * `finite_weylQuot`, `weylCardOf_pos`: `W(T_x)` is finite, so `|W(T_x)| ≥ 1`.
+* `torusOf_conj`, `isSS_conj`: conjugation moves tori and preserves semisimplicity.
+* `card_quot_conjOn`: for `Y ⊆ Γ(G,H)` stable under conjugation, the number of rational classes of
+  `Y` is `Σ_c |{y ∈ Y : T_y = T_c}| / |W(T_c)|` over the torus classes `c`
+  (`card_classOn_mul_weylCard`: `N(T_c)` acts freely modulo `Z(T_c)`).
+* `stableSet`, `stableWeight`, `Meets`, `card_quot_stableSet`: for `x ∈ Γ(G,H)` and an inner twist `τ`
+  with torus transport (`HasTorusTransport`, from Thesis Prop. 6.6.1(ii)),
+  `n_τ(x) = w(x) · Σ_{c meets x} |W(T_c)|⁻¹`; `meets_refl_iff`: the classes meeting `x` form a stable
+  class of tori.
 -/
 
 noncomputable section
@@ -208,6 +217,411 @@ theorem weylCardOf_pos {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x) :
     0 < weylCardOf d (d.torusOf x) := by
   have := finite_weylQuot hx
   exact Nat.card_pos
+
+/-- `T_{gxg⁻¹} = g T_x g⁻¹` (one inclusion; `torusOf_conj`). -/
+theorem conj_mem_torusOf_conj {x t : ↥(GSpin d.QW)} (g : ↥(GSpin d.QW)) (ht : t ∈ d.torusOf x) :
+    g * t * g⁻¹ ∈ d.torusOf (g * x * g⁻¹) := by
+  have hP : ∀ (a b : ↥(GSpin d.QW)) v, specP d.QW (a * b) v = specP d.QW a (specP d.QW b v) :=
+    fun a b v => by rw [map_mul]; rfl
+  have hgg : ∀ v, specP d.QW g (specP d.QW g⁻¹ v) = v := fun v => by
+    rw [← hP, mul_inv_cancel, map_one]; rfl
+  have hgg' : ∀ v, specP d.QW g⁻¹ (specP d.QW g v) = v := fun v => by
+    rw [← hP, inv_mul_cancel, map_one]; rfl
+  refine ⟨Subgroup.mem_centralizer_singleton_iff.2 ?_, fun w hw => ?_⟩
+  · have h := Subgroup.mem_centralizer_singleton_iff.1 ht.1
+    calc g * t * g⁻¹ * (g * x * g⁻¹) = g * (t * x) * g⁻¹ := by group
+      _ = g * (x * t) * g⁻¹ := by rw [h]
+      _ = g * x * g⁻¹ * (g * t * g⁻¹) := by group
+  · rw [d.mem_fixedSub_iff] at hw
+    have hu : specP d.QW g⁻¹ w ∈ fixedSub x := by
+      rw [d.mem_fixedSub_iff]
+      calc specP d.QW x (specP d.QW g⁻¹ w)
+          = specP d.QW g⁻¹ (specP d.QW (g * x * g⁻¹) w) := by rw [hP, hP, hgg']
+        _ = specP d.QW g⁻¹ w := by rw [hw]
+    rw [hP, hP, ht.2 _ hu, hgg]
+
+/-- **Tori of conjugates**: `T_{gxg⁻¹} = g T_x g⁻¹`. -/
+theorem torusOf_conj (x g : ↥(GSpin d.QW)) :
+    d.torusOf (g * x * g⁻¹) = (d.torusOf x).map (MulAut.conj g).toMonoidHom := by
+  ext t
+  rw [Subgroup.mem_map_equiv]
+  change _ ↔ g⁻¹ * t * g⁻¹⁻¹ ∈ _
+  constructor
+  · intro ht
+    have := conj_mem_torusOf_conj g⁻¹ ht
+    rwa [show g⁻¹ * (g * x * g⁻¹) * g⁻¹⁻¹ = x by group] at this
+  · intro ht
+    have := conj_mem_torusOf_conj g ht
+    rwa [show g * (g⁻¹ * t * g⁻¹⁻¹) * g⁻¹ = t by group] at this
+
+/-- Semisimplicity is invariant under conjugation by `GSpin(W)(F)` (`isSS_units_conj`). -/
+theorem isSS_conj (x g : ↥(GSpin d.QW)) :
+    IsSS F (((g * x * g⁻¹ : ↥(GSpin d.QW)) : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) ↔
+      IsSS F (((x : (CliffordAlgebra d.QW)ˣ)) : CliffordAlgebra d.QW) :=
+  isSS_units_conj (g : (CliffordAlgebra d.QW)ˣ) _
+
+/-- Membership in `Γ(G,H)` depends only on semisimplicity and the torus: a semisimple `u`
+with `T_u = T_z` for some `z ∈ Γ(G,H)` lies in `Γ(G,H)`. -/
+theorem isGammaElt_of_torusOf_eq {z u : ↥(GSpin d.QW)} (hz : d.IsGammaElt z)
+    (hu : IsSS F (((u : (CliffordAlgebra d.QW)ˣ)) : CliffordAlgebra d.QW))
+    (h : d.torusOf u = d.torusOf z) : d.IsGammaElt u :=
+  ⟨hu, h ▸ hz.2.1, h ▸ hz.2.2⟩
+
+/-- `GSpin(W)(F)`-conjugacy of the tori of `Γ(G,H)` is an equivalence relation. -/
+theorem torusConj_equivalence : Equivalence d.TorusConj := by
+  refine ⟨fun T => ⟨1, ?_⟩, fun {T T'} ⟨g, hg⟩ => ⟨g⁻¹, ?_⟩, fun {T T' T''} ⟨g, hg⟩ ⟨g', hg'⟩ =>
+    ⟨g' * g, ?_⟩⟩
+  · ext t; simp
+  · rw [hg, Subgroup.map_map]
+    ext t; simp [MulAut.conj_apply, mul_assoc]
+  · rw [hg', hg, Subgroup.map_map]
+    congr 1; ext t; simp [MulAut.conj_apply, mul_assoc]
+
+/-- **Conjugating into the representative torus**: for `x ∈ Γ(G,H)` whose torus lies in the class
+`c`, some rational conjugate `g x g⁻¹` lies in `Γ(G,H)` and has torus `T_c`. -/
+theorem exists_conj_torusOf_eq_out {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x) {c : GammaClass d}
+    (hc : Quot.mk d.TorusConj ⟨d.torusOf x, x, hx, rfl⟩ = c) :
+    ∃ g : ↥(GSpin d.QW), d.IsGammaElt (g * x * g⁻¹) ∧ d.torusOf (g * x * g⁻¹) = (Quot.out c).1 := by
+  have h : Quot.mk d.TorusConj ⟨d.torusOf x, x, hx, rfl⟩ = Quot.mk _ (Quot.out c) :=
+    hc.trans (Quot.out_eq c).symm
+  obtain ⟨g, hg⟩ := torusConj_equivalence.eqvGen_iff.1 (Quot.eqvGen_exact h)
+  have hT : d.torusOf (g * x * g⁻¹) = (Quot.out c).1 := by rw [torusOf_conj]; exact hg.symm
+  obtain ⟨z, hz, hzT⟩ := (Quot.out c).2
+  exact ⟨g, isGammaElt_of_torusOf_eq hz ((isSS_conj x g).2 hx.1) (hT.trans hzT.symm), hT⟩
+
+section Count
+
+variable (Y : Set ↥(GSpin d.QW))
+
+/-- Rational conjugacy on a set `Y` of elements of `GSpin(W)(F)`. -/
+def ConjOn (a b : Y) : Prop := ∃ g : ↥(GSpin d.QW), (b : ↥(GSpin d.QW)) = g * a * g⁻¹
+
+/-- `ConjOn Y` is an equivalence relation. -/
+theorem conjOn_equivalence : Equivalence (ConjOn Y) := by
+  refine ⟨fun a => ⟨1, by simp⟩, fun {a b} ⟨g, hg⟩ => ⟨g⁻¹, by rw [hg]; group⟩,
+    fun {a b c} ⟨g, hg⟩ ⟨g', hg'⟩ => ⟨g' * g, by rw [hg', hg]; group⟩⟩
+
+/-- Equal rational classes are conjugate. -/
+theorem conjOn_of_mk_eq {a b : Y} (h : Quot.mk (ConjOn Y) a = Quot.mk (ConjOn Y) b) :
+    ConjOn Y a b :=
+  (conjOn_equivalence Y).eqvGen_iff.1 (Quot.eqvGen_exact h)
+
+variable {Y} (hYΓ : ∀ y ∈ Y, d.IsGammaElt y)
+
+/-- The torus class of an element of `Y ⊆ Γ(G,H)`, on rational conjugacy classes. -/
+noncomputable def classOn : Quot (ConjOn Y) → GammaClass d :=
+  Quot.lift (fun y => Quot.mk _ ⟨d.torusOf y, y, hYΓ y y.2, rfl⟩) fun a b ⟨g, hg⟩ =>
+    Quot.sound ⟨g, by simp only [hg, torusOf_conj]⟩
+
+/-- The elements of `Y` whose torus is the chosen representative of `c`. -/
+def fibOn (Y : Set ↥(GSpin d.QW)) (c : GammaClass d) : Set ↥(GSpin d.QW) :=
+  {y | y ∈ Y ∧ d.torusOf y = (Quot.out c).1}
+
+variable (hYc : ∀ y ∈ Y, ∀ g : ↥(GSpin d.QW), d.IsGammaElt (g * y * g⁻¹) → g * y * g⁻¹ ∈ Y)
+include hYΓ hYc
+
+/-- Every rational class of `Y` over `c` meets `fibOn c`. -/
+theorem exists_fibOn_of_classOn {c : GammaClass d} (q : Quot (ConjOn Y)) (hq : classOn hYΓ q = c) :
+    ∃ y : Y, (y : ↥(GSpin d.QW)) ∈ fibOn Y c ∧ Quot.mk _ y = q := by
+  induction q using Quot.ind with
+  | mk y =>
+  obtain ⟨g, hΓ, hT⟩ := exists_conj_torusOf_eq_out (hYΓ y y.2) hq
+  exact ⟨⟨g * y * g⁻¹, hYc y y.2 g hΓ⟩, ⟨hYc y y.2 g hΓ, hT⟩, Quot.sound ⟨g⁻¹, by group⟩⟩
+
+/-- The map from `fibOn Y c` to the rational classes over `c`. -/
+noncomputable def fibToClass (c : GammaClass d) (y : fibOn Y c) :
+    {q : Quot (ConjOn Y) // classOn hYΓ q = c} :=
+  ⟨Quot.mk _ ⟨y, y.2.1⟩, by
+    change Quot.mk d.TorusConj ⟨d.torusOf y, y, hYΓ y y.2.1, rfl⟩ = c
+    exact (congrArg (Quot.mk d.TorusConj) (Subtype.ext y.2.2)).trans
+      (Quot.out_eq (c : Quot d.TorusConj))⟩
+
+/-- `fibToClass` is onto (`exists_fibOn_of_classOn`). -/
+theorem fibToClass_surjective (c : GammaClass d) : Function.Surjective (fibToClass hYΓ (Y := Y) c) := by
+  rintro ⟨q, hq⟩
+  obtain ⟨y, hy, rfl⟩ := exists_fibOn_of_classOn hYΓ hYc q hq
+  exact ⟨⟨y, hy⟩, rfl⟩
+
+/-- **Orbit count over one torus class**: the rational classes of `Y` over `c`, times `|W(T_c)|`,
+number the elements of `Y` with torus `T_c` (`N(T_c)` acts on them by conjugation, freely modulo
+`Z(T_c)`: `commute_torusOf_of_commute`). -/
+theorem card_classOn_mul_weylCard (c : GammaClass d) (hfin : (fibOn Y c).Finite) :
+    Nat.card {q : Quot (ConjOn Y) // classOn hYΓ q = c} * weylCard d c =
+      Nat.card (fibOn Y c) := by
+  classical
+  set T := (Quot.out c).1 with hT
+  have : Finite (fibOn Y c) := hfin.to_subtype
+  have : Finite {q : Quot (ConjOn Y) // classOn hYΓ q = c} :=
+    Finite.of_surjective _ (fibToClass_surjective hYΓ hYc c)
+  let _ : Fintype {q : Quot (ConjOn Y) // classOn hYΓ q = c} := Fintype.ofFinite _
+  -- each fibre of `fibToClass` is `N(T)/Z(T)`
+  have hfib : ∀ q, Nat.card {y // fibToClass hYΓ c y = q} = weylCard d c := by
+    intro q
+    obtain ⟨y₀, rfl⟩ := fibToClass_surjective hYΓ hYc c q
+    have hy₀Γ := hYΓ _ y₀.2.1
+    have hy₀T : d.torusOf y₀ = T := y₀.2.2
+    let N := Subgroup.normalizer (T : Set ↥(GSpin d.QW))
+    let ψ0 : N → {y // fibToClass hYΓ c y = fibToClass hYΓ c y₀} := fun n =>
+      have hT : d.torusOf (n * y₀ * (n : ↥(GSpin d.QW))⁻¹) = T := by
+        rw [torusOf_conj, hy₀T]; exact Subgroup.mem_normalizer_iff_map_conj_eq.1 n.2
+      ⟨⟨n * y₀ * (n : ↥(GSpin d.QW))⁻¹, hYc _ y₀.2.1 n (isGammaElt_of_torusOf_eq hy₀Γ
+        ((isSS_conj _ _).2 hy₀Γ.1) (hT.trans hy₀T.symm)), hT⟩,
+        Subtype.ext (Quot.sound ⟨(n : ↥(GSpin d.QW))⁻¹, by simp [mul_assoc]⟩)⟩
+    have hcomm : ∀ a b : N, ψ0 a = ψ0 b ↔
+        (a : ↥(GSpin d.QW))⁻¹ * b ∈ Subgroup.centralizer (T : Set ↥(GSpin d.QW)) := by
+      intro a b
+      constructor
+      · intro hab
+        have h : (a : ↥(GSpin d.QW)) * y₀ * (a : ↥(GSpin d.QW))⁻¹ =
+            (b : ↥(GSpin d.QW)) * y₀ * (b : ↥(GSpin d.QW))⁻¹ :=
+          congrArg (fun z => ((z.1 : fibOn Y c) : ↥(GSpin d.QW))) hab
+        have hc : Commute ((a : ↥(GSpin d.QW))⁻¹ * b) (y₀ : ↥(GSpin d.QW)) := by
+          change _ * _ = _ * _
+          calc ((a : ↥(GSpin d.QW))⁻¹ * b) * y₀ =
+              (a : ↥(GSpin d.QW))⁻¹ * (b * y₀ * (b : ↥(GSpin d.QW))⁻¹) * b := by group
+            _ = y₀ * ((a : ↥(GSpin d.QW))⁻¹ * b) := by rw [← h]; group
+        rw [Subgroup.mem_centralizer_iff]
+        intro t ht
+        rw [← hy₀T] at ht
+        exact ((commute_torusOf_of_commute hy₀Γ hc ht).eq).symm
+      · intro hab
+        rw [Subgroup.mem_centralizer_iff] at hab
+        have hc := hab y₀ (hy₀T ▸ d.self_mem_torusOf y₀)
+        apply Subtype.ext; apply Subtype.ext
+        change (a : ↥(GSpin d.QW)) * y₀ * (a : ↥(GSpin d.QW))⁻¹ =
+          (b : ↥(GSpin d.QW)) * y₀ * (b : ↥(GSpin d.QW))⁻¹
+        calc (a : ↥(GSpin d.QW)) * y₀ * (a : ↥(GSpin d.QW))⁻¹ =
+            a * (y₀ * ((a : ↥(GSpin d.QW))⁻¹ * b)) * (b : ↥(GSpin d.QW))⁻¹ := by group
+          _ = a * (((a : ↥(GSpin d.QW))⁻¹ * b) * y₀) * (b : ↥(GSpin d.QW))⁻¹ := by rw [hc]
+          _ = _ := by group
+    let ψ : N ⧸ (Subgroup.centralizer (T : Set ↥(GSpin d.QW))).subgroupOf N →
+        {y // fibToClass hYΓ c y = fibToClass hYΓ c y₀} :=
+      Quotient.lift ψ0 fun a b hab => (hcomm a b).2
+        (by have := QuotientGroup.leftRel_apply.mp hab; rwa [Subgroup.mem_subgroupOf] at this)
+    have hψ : Function.Bijective ψ := by
+      refine ⟨fun a b hab => ?_, fun y => ?_⟩
+      · induction a using Quotient.inductionOn
+        induction b using Quotient.inductionOn
+        exact Quotient.sound (QuotientGroup.leftRel_apply.mpr (by
+          rw [Subgroup.mem_subgroupOf]; exact (hcomm _ _).1 hab))
+      · obtain ⟨⟨y, hyY, hyT⟩, hy⟩ := y
+        have hq := congrArg Subtype.val hy
+        obtain ⟨g, hg⟩ := conjOn_of_mk_eq Y hq.symm
+        have hgN : g ∈ N := Subgroup.mem_normalizer_iff_map_conj_eq.2 (by
+          rw [← hy₀T]
+          change (d.torusOf y₀).map (MulAut.conj g).toMonoidHom = d.torusOf y₀
+          rw [← torusOf_conj]
+          change d.torusOf (g * y₀ * g⁻¹) = d.torusOf y₀
+          rw [← hg, hy₀T]; exact hyT)
+        refine ⟨Quotient.mk _ ⟨g, hgN⟩, Subtype.ext (Subtype.ext ?_)⟩
+        exact hg.symm
+    rw [← Nat.card_congr (Equiv.ofBijective ψ hψ)]
+    rfl
+  rw [← Nat.card_congr (Equiv.sigmaFiberEquiv (fibToClass hYΓ (Y := Y) c)), Nat.card_sigma]
+  simp only [hfib, Finset.sum_const, Finset.card_univ, smul_eq_mul, Nat.card_eq_fintype_card]
+
+/-- **The orbit count**: for `Y ⊆ Γ(G,H)` stable under rational conjugation with each `fibOn Y c`
+finite, the number of rational classes of `Y` is `Σ_c |fibOn Y c| / |W(T_c)|`. -/
+theorem card_quot_conjOn (hfin : ∀ c, (fibOn Y c).Finite) :
+    (Nat.card (Quot (ConjOn Y)) : ℚ) =
+      ∑' c : GammaClass d, (Nat.card (fibOn Y c) : ℚ) / weylCard d c := by
+  classical
+  have := finite_gammaClass d
+  let _ : Fintype (GammaClass d) := Fintype.ofFinite _
+  have hfinq : ∀ c, Finite {q : Quot (ConjOn Y) // classOn hYΓ q = c} := fun c =>
+    have : Finite (fibOn Y c) := (hfin c).to_subtype
+    Finite.of_surjective _ (fibToClass_surjective hYΓ hYc c)
+  rw [tsum_fintype, ← Nat.card_congr (Equiv.sigmaFiberEquiv (classOn hYΓ (Y := Y))),
+    Nat.card_sigma, Nat.cast_sum]
+  refine Finset.sum_congr rfl fun c _ => ?_
+  have hW : (weylCard d c : ℚ) ≠ 0 := by
+    obtain ⟨x, hx, hxT⟩ := (Quot.out c).2
+    have := weylCardOf_pos hx
+    rw [hxT] at this
+    exact_mod_cast this.ne'
+  rw [eq_div_iff hW, ← card_classOn_mul_weylCard hYΓ hYc c (hfin c)]
+  push_cast; ring
+
+end Count
+
+section StableCount
+
+variable {d : GGPData F} (τ : InnerTwist d.QW)
+
+/-- The elements `y ∈ Γ(G_τ,H_τ)` strongly stably conjugate to `x ∈ GSpin(W)(F)` through `τ`
+(for `τ = τ_α` this is `stableFiber`, Thesis §6.7). -/
+def stableSet (x : ↥(GSpin d.QW)) : Set ↥(GSpin (d.twist τ).QW) :=
+  {y | (d.twist τ).IsGammaElt y ∧ d.StronglyStablyConjW τ x y}
+
+/-- `w(x)`: the number of `t ∈ T_{x,♮}` strongly stably conjugate to `x` in `G`. -/
+noncomputable def stableWeight (x : ↥(GSpin d.QW)) : ℕ :=
+  Nat.card {t : ↥(d.torusOf x) // d.IsGammaElt t ∧ d.torusOf t = d.torusOf x ∧
+    d.StronglyStablyConjW d.reflTwist x (t : ↥(GSpin d.QW))}
+
+/-- The torus class `c` of `Γ(G_τ,H_τ)` meets the stable class of `x`: some `y` with `T_y = T_c` is
+strongly stably conjugate to `x`. -/
+def Meets (x : ↥(GSpin d.QW)) (c : GammaClass (d.twist τ)) : Prop :=
+  (fibOn (stableSet τ x) c).Nonempty
+
+/-- **Torus transport** (the part of Thesis Prop. 6.6.1(ii) used for counting): if `x ∼ y`
+through `τ`, there is an isomorphism `e : T_x(F) ≃ T_y(F)` matching `T_{x,♮}` with `T_{y,♮}` with
+`t ∼ e(t)` on `T_{x,♮}`. -/
+def HasTorusTransport : Prop :=
+  ∀ (x : ↥(GSpin d.QW)) (y : ↥(GSpin (d.twist τ).QW)), d.IsGammaElt x →
+    (d.twist τ).IsGammaElt y → d.StronglyStablyConjW τ x y →
+    ∃ e : ↥(d.torusOf x) ≃* ↥((d.twist τ).torusOf y),
+      (∀ t : ↥(d.torusOf x), (d.IsGammaElt t ∧ d.torusOf t = d.torusOf x ↔
+        (d.twist τ).IsGammaElt (e t) ∧ (d.twist τ).torusOf (e t) = (d.twist τ).torusOf y)) ∧
+      (∀ t : ↥(d.torusOf x), d.IsGammaElt t → d.torusOf t = d.torusOf x →
+        d.StronglyStablyConjW τ t (e t))
+
+theorem stableSet_conj (x : ↥(GSpin d.QW)) : ∀ y ∈ stableSet τ x, ∀ g : ↥(GSpin (d.twist τ).QW),
+    (d.twist τ).IsGammaElt (g * y * g⁻¹) → g * y * g⁻¹ ∈ stableSet τ x :=
+  fun _ hy g hg => ⟨hg, d.stronglyStablyConjW_conj_right τ hy.2 g⟩
+
+/-- Two elements strongly stably conjugate to the same `x` are conjugate over `F̄`. -/
+theorem exists_bc_conj_of_stronglyStablyConjW {x : ↥(GSpin d.QW)} {y y' : ↥(GSpin (d.twist τ).QW)}
+    (hy : d.StronglyStablyConjW τ x y) (hy' : d.StronglyStablyConjW τ x y') :
+    ∃ g : ↥(GSpin ((d.twist τ).QW.baseChange Kb)),
+      g * bcGSpin (d.twist τ).QW y * g⁻¹ = bcGSpin (d.twist τ).QW y' := by
+  obtain ⟨⟨g₁, hg₁, e₁, -⟩, -⟩ := hy
+  obtain ⟨⟨g₂, hg₂, e₂, -⟩, -⟩ := hy'
+  have e₁' : g₁ * cliffUnits τ.φ (bcUnits d.QW (x : (CliffordAlgebra d.QW)ˣ)) * g₁⁻¹ =
+      bcUnits τ.Q' (y : (CliffordAlgebra τ.Q')ˣ) := e₁
+  have e₂' : g₂ * cliffUnits τ.φ (bcUnits d.QW (x : (CliffordAlgebra d.QW)ˣ)) * g₂⁻¹ =
+      bcUnits τ.Q' (y' : (CliffordAlgebra τ.Q')ˣ) := e₂
+  refine ⟨⟨g₂ * g₁⁻¹, (GSpin _).mul_mem hg₂ ((GSpin _).inv_mem hg₁)⟩, Subtype.ext ?_⟩
+  change g₂ * g₁⁻¹ * bcUnits τ.Q' (y : (CliffordAlgebra τ.Q')ˣ) * (g₂ * g₁⁻¹)⁻¹ =
+    bcUnits τ.Q' (y' : (CliffordAlgebra τ.Q')ˣ)
+  rw [← e₁', ← e₂']
+  group
+
+/-- The fibres of `stableSet τ x` over the torus classes are finite (`finite_conj_torusOf`). -/
+theorem finite_fibOn_stableSet (x : ↥(GSpin d.QW)) (c : GammaClass (d.twist τ)) :
+    (fibOn (stableSet τ x) c).Finite := by
+  rcases (fibOn (stableSet τ x) c).eq_empty_or_nonempty with h | ⟨y₀, hy₀, hy₀T⟩
+  · rw [h]; exact Set.finite_empty
+  refine (finite_conj_torusOf hy₀.1).subset fun y ⟨hy, hyT⟩ => ⟨?_, ?_⟩
+  · rw [hy₀T, ← hyT]; exact (d.twist τ).self_mem_torusOf y
+  · exact exists_bc_conj_of_stronglyStablyConjW τ hy₀.2 hy.2
+
+variable {τ}
+
+/-- **The fibres have size `w(x)`**: if the class `c` meets the stable class of `x ∈ Γ(G,H)`, then
+`|{y ∼ x : T_y = T_c}| = w(x)` (transport `T_x ≃ T_c` from any such `y`). -/
+theorem card_fibOn_stableSet (hT : HasTorusTransport τ) {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
+    {c : GammaClass (d.twist τ)} {y₀ : ↥(GSpin (d.twist τ).QW)}
+    (hy₀ : y₀ ∈ fibOn (stableSet τ x) c) :
+    Nat.card (fibOn (stableSet τ x) c) = stableWeight x := by
+  obtain ⟨e, he, het⟩ := hT x y₀ hx hy₀.1.1 hy₀.1.2
+  let Φ : {t : ↥(d.torusOf x) // d.IsGammaElt t ∧ d.torusOf t = d.torusOf x ∧
+      d.StronglyStablyConjW d.reflTwist x (t : ↥(GSpin d.QW))} → fibOn (stableSet τ x) c := fun t =>
+    ⟨e t, ⟨((he t).1 ⟨t.2.1, t.2.2.1⟩).1,
+      d.stronglyStablyConjW_trans_refl τ t.2.2.2 (het t t.2.1 t.2.2.1)⟩,
+      ((he t).1 ⟨t.2.1, t.2.2.1⟩).2.trans hy₀.2⟩
+  have hΦ : Function.Bijective Φ := by
+    refine ⟨fun a b hab => ?_, fun y => ?_⟩
+    · have h1 : ((e a : ↥((d.twist τ).torusOf y₀)) : ↥(GSpin (d.twist τ).QW)) = e b :=
+        congrArg (fun z : fibOn (stableSet τ x) c => (z : ↥(GSpin (d.twist τ).QW))) hab
+      exact Subtype.ext (e.injective (Subtype.ext h1))
+    · obtain ⟨y, ⟨hyΓ, hxy⟩, hyT⟩ := y
+      have hmem : y ∈ (d.twist τ).torusOf y₀ := by
+        rw [hy₀.2, ← hyT]; exact (d.twist τ).self_mem_torusOf y
+      set t := e.symm ⟨y, hmem⟩ with ht
+      have het' : e t = ⟨y, hmem⟩ := by rw [ht, MulEquiv.apply_symm_apply]
+      have hT' : d.IsGammaElt t ∧ d.torusOf t = d.torusOf x := (he t).2 (by
+        rw [het']; exact ⟨hyΓ, hyT.trans hy₀.2.symm⟩)
+      have hts : d.StronglyStablyConjW τ t y := by
+        have := het t hT'.1 hT'.2; rwa [het'] at this
+      refine ⟨⟨t, hT'.1, hT'.2, d.stronglyStablyConjW_refl_of_common τ hxy hts⟩, ?_⟩
+      apply Subtype.ext
+      change ((e t : ↥((d.twist τ).torusOf y₀)) : ↥(GSpin (d.twist τ).QW)) = y
+      rw [het']
+  exact (Nat.card_congr (Equiv.ofBijective Φ hΦ)).symm
+
+/-- `w(x) ≥ 1` for `x ∈ Γ(G,H)` (`x` itself counts; the set is finite by `finite_conj_torusOf`). -/
+theorem stableWeight_pos {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x) : 0 < stableWeight x := by
+  have := (finite_conj_torusOf hx).to_subtype
+  have hfin : Finite {t : ↥(d.torusOf x) // d.IsGammaElt t ∧ d.torusOf t = d.torusOf x ∧
+      d.StronglyStablyConjW d.reflTwist x (t : ↥(GSpin d.QW))} :=
+    Finite.of_injective (β := {t : ↥(GSpin d.QW) | t ∈ d.torusOf x ∧
+      ∃ g : ↥(GSpin (d.QW.baseChange Kb)), g * bcGSpin d.QW x * g⁻¹ = bcGSpin d.QW t})
+      (fun t => ⟨t.1, t.1.2, exists_bc_conj_of_stronglyStablyConjW d.reflTwist
+        (d.stronglyStablyConjW_refl_self x) t.2.2.2⟩)
+      (fun a b h => by
+        have h' : (a.1 : ↥(GSpin d.QW)) = b.1 :=
+          congrArg (fun z : {t : ↥(GSpin d.QW) | t ∈ d.torusOf x ∧ ∃ g : ↥(GSpin (d.QW.baseChange Kb)),
+            g * bcGSpin d.QW x * g⁻¹ = bcGSpin d.QW t} => (z : ↥(GSpin d.QW))) h
+        exact Subtype.ext (Subtype.ext h'))
+  have : Nonempty {t : ↥(d.torusOf x) // d.IsGammaElt t ∧ d.torusOf t = d.torusOf x ∧
+      d.StronglyStablyConjW d.reflTwist x (t : ↥(GSpin d.QW))} :=
+    ⟨⟨⟨x, d.self_mem_torusOf x⟩, hx, rfl, d.stronglyStablyConjW_refl_self x⟩⟩
+  exact Nat.card_pos
+
+open Classical in
+/-- **The count `n_τ(x) = w(x) · Σ_{c meets x} |W(T_c)|⁻¹`** (`card_quot_conjOn`, with every
+meeting fibre of size `w(x)`, `card_fibOn_stableSet`). -/
+theorem card_quot_stableSet (hT : HasTorusTransport τ) {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x) :
+    (Nat.card (Quot (ConjOn (stableSet τ x))) : ℚ) =
+      stableWeight x * ∑' c : GammaClass (d.twist τ),
+        (if Meets τ x c then 1 else 0) / (weylCard (d.twist τ) c : ℚ) := by
+  rw [card_quot_conjOn (Y := stableSet τ x) (fun y hy => hy.1) (stableSet_conj τ x)
+      (finite_fibOn_stableSet τ x),
+    ← tsum_mul_left]
+  refine tsum_congr fun c => ?_
+  by_cases h : Meets τ x c
+  · obtain ⟨y₀, hy₀⟩ := h
+    rw [card_fibOn_stableSet hT hx hy₀, if_pos ⟨y₀, hy₀⟩]
+    ring
+  · rw [if_neg h, Set.not_nonempty_iff_eq_empty.1 h]
+    simp
+
+/-- `Meets` depends only on the torus of `x`: if `T_u = T_z` (both in `Γ(G,H)`), a class meeting
+the stable class of `z` meets that of `u` (transport `T_z ≃ T_y` sends `u` into `T_{y,♮}`). -/
+theorem meets_of_torusOf_eq (hT : HasTorusTransport τ) {z u : ↥(GSpin d.QW)}
+    (hz : d.IsGammaElt z) (hu : d.IsGammaElt u) (h : d.torusOf u = d.torusOf z)
+    {c : GammaClass (d.twist τ)} (hm : Meets τ z c) : Meets τ u c := by
+  obtain ⟨y, ⟨hyΓ, hzy⟩, hyT⟩ := hm
+  obtain ⟨e, he, het⟩ := hT z y hz hyΓ hzy
+  have hu' : u ∈ d.torusOf z := h ▸ d.self_mem_torusOf u
+  obtain ⟨hΓ, hT'⟩ := (he ⟨u, hu'⟩).1 ⟨hu, h⟩
+  exact ⟨e ⟨u, hu'⟩, ⟨hΓ, het ⟨u, hu'⟩ hu h⟩, hT'.trans hyT⟩
+
+/-- `Meets` is invariant under rational conjugation of `x`. -/
+theorem meets_conj {x : ↥(GSpin d.QW)} (g : ↥(GSpin d.QW)) {c : GammaClass (d.twist τ)}
+    (hm : Meets τ x c) : Meets τ (g * x * g⁻¹) c := by
+  obtain ⟨y, ⟨hyΓ, hxy⟩, hyT⟩ := hm
+  have h1 := d.stronglyStablyConjW_refl_conj (g * x * g⁻¹) g⁻¹
+  rw [show g⁻¹ * (g * x * g⁻¹) * g⁻¹⁻¹ = x by group] at h1
+  exact ⟨y, ⟨hyΓ, d.stronglyStablyConjW_trans_refl τ h1 hxy⟩, hyT⟩
+
+/-- **Stable classes of tori**: if `c` meets the stable class of `x`, then a torus class `c₂` of
+`Γ(G,H)` with generator `x₂` meets the stable class of `x` (in `G`) iff `c` meets that of `x₂`. -/
+theorem meets_refl_iff (hT : HasTorusTransport τ) {x x₂ : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
+    (hx₂ : d.IsGammaElt x₂) {c₂ : GammaClass d} (hx₂T : d.torusOf x₂ = (Quot.out c₂).1)
+    {c : GammaClass (d.twist τ)} (hm : Meets τ x c) :
+    Meets d.reflTwist x (c₂ : GammaClass (d.twist d.reflTwist)) ↔ Meets τ x₂ c := by
+  obtain ⟨y, ⟨hyΓ, hxy⟩, hyT⟩ := hm
+  constructor
+  · rintro ⟨s, ⟨hsΓ, hxs⟩, hsT⟩
+    have hsx : d.StronglyStablyConjW d.reflTwist s x :=
+      d.stronglyStablyConjW_refl_of_common d.reflTwist (d.stronglyStablyConjW_refl_self s) hxs
+    have hsy := d.stronglyStablyConjW_trans_refl τ hsx hxy
+    exact meets_of_torusOf_eq hT hsΓ hx₂ (hx₂T.trans hsT.symm) ⟨y, ⟨hyΓ, hsy⟩, hyT⟩
+  · rintro ⟨y', ⟨hy'Γ, hx₂y'⟩, hy'T⟩
+    obtain ⟨e, he, het⟩ := hT x₂ y' hx₂ hy'Γ hx₂y'
+    have hmem : y ∈ (d.twist τ).torusOf y' := by
+      rw [hy'T, ← hyT]; exact (d.twist τ).self_mem_torusOf y
+    set t := e.symm ⟨y, hmem⟩ with ht
+    have het' : e t = ⟨y, hmem⟩ := by rw [ht, MulEquiv.apply_symm_apply]
+    have hT' : d.IsGammaElt t ∧ d.torusOf t = d.torusOf x₂ := (he t).2 (by
+      rw [het']; exact ⟨hyΓ, hyT.trans hy'T.symm⟩)
+    have hts : d.StronglyStablyConjW τ t y := by
+      have := het t hT'.1 hT'.2; rwa [het'] at this
+    exact ⟨(t : ↥(GSpin d.QW)), ⟨hT'.1, d.stronglyStablyConjW_refl_of_common τ hxy hts⟩,
+      hT'.2.trans hx₂T⟩
+
+end StableCount
 
 end GGPData
 
