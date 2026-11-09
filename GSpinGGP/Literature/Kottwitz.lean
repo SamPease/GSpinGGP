@@ -279,22 +279,24 @@ def TwistIdx {d : GGPData F} (IF : InnerFormSystem d) (x : ↥(GSpin d.QW))
 /-! ## §2 Cited results -/
 
 /-- **Finiteness of `H¹(F, S_x)`** (Borel–Serre, *Théorèmes de finitude en cohomologie
-galoisienne*, Comment. Math. Helv. 39 (1964), Thm. 6.1: for `k` locally compact of characteristic `0`
-and `A` a `k`-group of type (ALA), `H¹(k, A)` is finite; in particular `H¹(k, G)` is finite for `G`
-linear algebraic over `k`. Also Serre, *Cohomologie galoisienne*, III §4.3, Thm. 4.)  Applied to `L = S_x`, whose `F̄`-points
+galoisienne*, Comment. Math. Helv. 39 (1964), Thm. 6.1, p. 153: for `k` locally compact of
+characteristic `0` and `A` a `k`-group of type (ALA), `H¹(k, A)` is finite; in particular `H¹(k, G)` is
+finite for `G` linear algebraic over `k`. Also Serre, *Cohomologie galoisienne*, III §4.3, Thm. 4.)  Applied to `L = S_x`, whose `F̄`-points
 with their Galois action are `torusBarFbar d x` (`P` is defined over `F`; Galois stability of
 `torusBarFbar d x` is proved, `galGL_mem_torusBarFbar`; that it is the group of `F̄`-points of an
 `F`-group is not formalized).  Stated for
-`x ∈ Γ(G,H)`, where `S_x` is a torus. -/
+`x ∈ Γ(G,H)`, where `S_x` is a torus; Borel–Serre covers every linear algebraic group, so the
+hypothesis `hx` is not needed by the source (it only restricts the axiom to the case used). -/
 axiom finite_H1_torusBar (d : GGPData F) (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) :
     Finite (H1 (d.torusBarFbar x))
 
 /-- **Finiteness of `H¹(F, N_x)`**, `N_x = N_{SO(W)}(S_x)` (Borel–Serre, *Théorèmes de finitude en
-cohomologie galoisienne*, Comment. Math. Helv. 39 (1964), Thm. 6.1: for `k` locally compact of
+cohomologie galoisienne*, Comment. Math. Helv. 39 (1964), Thm. 6.1, p. 153: for `k` locally compact of
 characteristic `0` and `A` a `k`-group of type (ALA), `H¹(k, A)` is finite; in particular `H¹(k, G)`
 is finite for `G` linear algebraic over `k`.)  Applied to the linear algebraic `F`-group
 `N_x = N_{SO(W)}(S_x)` (the normalizer of the `F`-torus `S_x` in `SO(W)`), whose `F̄`-points with
-their Galois action are `normalizerBar d x` (Galois stability of `S_x(F̄)` and of `SO(W)(F̄)` is
+their Galois action are `normalizerBar d x` (`range (specMatFbar d.QW)` is `SO(W)(F̄)` by
+`range_specP_eq_SOGrp`, from the theorem `gspin_specP_surjective_SO`; Galois stability of `S_x(F̄)` and of `SO(W)(F̄)` is
 proved, `galGL_mem_torusBarFbar`, `isGalStable_range_specMatFbar`; that it is the group of `F̄`-points
 of an `F`-group is not formalized).  Stated for `x ∈ Γ(G,H)`, where `S_x` is a torus.  (`N_x/S_x` is
 not finite in general: `Z_{SO(W)}(S_x)` contains `SO(W'_x)`; so this does not follow from

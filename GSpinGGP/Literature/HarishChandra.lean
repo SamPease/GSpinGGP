@@ -158,8 +158,9 @@ with `M`, `𝔪` its centralizers in `G`, `𝔤`, there are unique `c_ξ` with
 Prop 4.1.1(i): "for every irreducible admissible representation `π` of `G(F)`, the character `θ_π`
 is a quasi-character on `G(F)`", which is the form stated here (BP §4.1's definition);
 Waldspurger, Compositio 146 (2010), §4; Thesis Prop 4.1.1.1(i).
-Here `ĵ` is normalized by `d.bilin` and `ψ` (Thesis §2.4); a rescaling of `ĵ` is absorbed by the
-coefficients, so this axiom is insensitive to the measure normalization. -/
+Here `ĵ` is normalized by `d.bilin` and `ψ` (Thesis §2.4); a change of invariant form or of measures
+permutes and rescales the `ĵ(O,·)`, which is absorbed by the coefficients, so this axiom is
+insensitive to the normalization. -/
 axiom hc_character_isQuasiCharacter (d : GGPData F) (ψ : NontrivialAddChar F)
     (π : UnitaryRep ↥d.G) (hπ : IsTempered π) :
     IsQuasiCharacter d.G d.lie d.bilin ψ (characterOn π (regularSet d.G d.lie))
@@ -176,7 +177,10 @@ this to linear independence on all of `𝔤_x(F)`, Harish-Chandra), and `x e^X �
 Sources: Harish-Chandra, *Admissible invariant distributions…* (1999), Cor 5.10 (and Thm 5.11 =
 Theorem 4): for a reductive Lie algebra `𝔤` over `F` and any open neighbourhood `V` of `0`, the
 functions `μ̂_O`, `O` a nilpotent orbit, are linearly independent on `V ∩ 𝔤'` (applied to
-`𝔤_x`; the normalization of `μ̂_O` does not affect independence); BP Astérisque 418 §4.5 ("by
+`𝔤_x`, p. 36; a different invariant form or normalization rescales and relabels the `μ̂_O`, which
+does not affect independence; `G_x` is connected for `GSpin`, whose derived group is simply connected
+(Steinberg), and HC's footnote 4, p. 75, covers disconnected centralizers anyway); BP Astérisque 418
+§4.5, p. 96 ("by
 homogeneity and linear independence the `c_{θ,O}(x)`, `O ∈ Nil_reg(𝔤_x)`, are uniquely defined"); Thesis §4.2.
 
 Only uniqueness on `Nil_reg` is asserted (that is all `germ` reads). -/
@@ -385,11 +389,13 @@ theorem lieCentralizer_one {A : Type*} [Ring A] [Algebra F A] (𝔤 : LieSubalge
 /-! ## (g) Schur's lemma -/
 
 /-- **(g) Schur's lemma for unitary representations** (Dixmier, *Les C\*-algèbres et leurs
-représentations*, Gauthier-Villars 1964, 13.1.4, (i) ⇒ (ii); the same for involutive algebras is
+représentations*, Gauthier-Villars 1964, 13.1.4, p. 250, (i) ⇒ (ii); the same for involutive algebras is
 2.3.1): for a continuous unitary representation `π` of a topological group `G` whose only closed
 `π(G)`-stable subspaces are `0` and `H`, the commutant of `π(G)` in `L(H)` consists of the scalars.
 Our `UnitaryRep` is strongly continuous, which is Dixmier's continuity (13.1.1, 13.1.2), and
-`IsIrreducible` is his condition (i) together with `H ≠ 0`. -/
+`IsIrreducible` is his condition (i) together with `H ≠ 0`.  Dixmier's `G` is a topological group;
+only the topology of `G` enters (through continuity), so the axiom is stated for a group with a
+topology, as used here (in fact only with the discrete topology). -/
 axiom dixmier_commutant_scalar {G : Type*} [Group G] [TopologicalSpace G] (π : UnitaryRep G)
     (hπ : π.IsIrreducible) (T : π.H →L[ℂ] π.H) (hT : ∀ g, T * π.ρ g = π.ρ g * T) :
     ∃ c : ℂ, T = c • (1 : π.H →L[ℂ] π.H)

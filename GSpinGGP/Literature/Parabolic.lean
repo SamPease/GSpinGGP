@@ -31,7 +31,8 @@ namespace GSpinGGP
 Prop. 13 and its Corollary, formula (23), p. VII.49: for closed subgroups `X`, `Y` of `G` with `XY`
 open, `X ∩ Y` compact and `X × Y → XY` open, `∫_{XY} f dμ_G = a ∫_{X × Y} f(xy) Δ_G(y) Δ_Y(y)⁻¹
 dμ_X dμ_Y`; checked). Here `X = P`, `Y = K` compact, so `Δ_G = Δ_K = 1` on `K` and `P ∩ K` is
-compact; `XY = G`, and second countability gives the openness hypothesis. So the statement below is
+compact; `XY = G`, and second countability gives the openness hypothesis (Bourbaki's hypothesis
+that `(X × Y)/Z₀ → XY` is a homeomorphism, App. I, Lemma 2, p. VII.75, for σ-compact groups). So the statement below is
 Bourbaki's in its generality (not an adaptation).
 
 Let `G` be a locally compact, Hausdorff, second countable group, `P` a closed subgroup and `K` a
@@ -49,7 +50,8 @@ unimodular), and such a measure is unique up to a positive scalar (the modular f
 Only continuous compactly supported `f` are claimed (as for `weil_quotient`); the constant
 absorbs the normalizations of the three Haar measures.  `dp` is *left* Haar measure on `P`; this
 matters when `P` is not unimodular (checked by hand on `ℚ_p ⋊ ℚ_p^×` with `P = ℚ_p ⋊ p^ℤ`,
-`K = ℤ_p^×`: `c = 1`). -/
+`K = ℤ_p^×`: `c = 1`). The instance `[LocallyCompactSpace ↥P]` is implied by `P` being closed; it is
+kept as a binder for convenience and adds no hypothesis. -/
 axiom integral_eq_mul_integral_compact_integral {G : Type*}
     [Group G] [TopologicalSpace G] [IsTopologicalGroup G] [LocallyCompactSpace G] [T2Space G]
     [SecondCountableTopology G] [MeasurableSpace G] [BorelSpace G]
