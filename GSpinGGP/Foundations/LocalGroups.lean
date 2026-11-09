@@ -803,6 +803,27 @@ lemma expA_mul_expA_neg : ∃ U ∈ 𝓝 (0 : A), ∀ X ∈ U, expA F X * expA F
         (lmulPiInv_lmulPi F _).symm
     _ = 1 := by rw [key, lmulPiInv_lmulPi]
 
+/-- `expA` intertwines conjugation by a unit: `e^{u X u⁻¹} = u e^X u⁻¹` (conjugation is a continuous
+linear automorphism, which commutes with the exponential series term by term). -/
+theorem expA_units_conj (u : Aˣ) (X : A) :
+    expA F ((u : A) * X * ((u⁻¹ : Aˣ) : A)) = (u : A) * expA F X * ((u⁻¹ : Aˣ) : A) := by
+  let _ := isTopologicalRing_of_moduleTopology F A
+  have := t2Space_of_moduleTopology F A
+  let c : A ≃L[F] A :=
+    { toLinearEquiv := LinearEquiv.ofLinearMap
+        (LinearMap.mulRight F ((u⁻¹ : Aˣ) : A) ∘ₗ LinearMap.mulLeft F (u : A))
+        (LinearMap.mulRight F (u : A) ∘ₗ LinearMap.mulLeft F ((u⁻¹ : Aˣ) : A))
+        (by ext a; simp [mul_assoc]) (by ext a; simp [mul_assoc])
+      continuous_toFun := IsModuleTopology.continuous_of_linearMap _
+      continuous_invFun := IsModuleTopology.continuous_of_linearMap _ }
+  have hc : ∀ a, c a = (u : A) * a * ((u⁻¹ : Aˣ) : A) := fun a => rfl
+  unfold expA
+  rw [NormedSpace.exp_eq_tsum F, ← hc, ← hc]
+  simp only
+  rw [c.map_tsum]
+  congr 1; ext n
+  rw [map_smul, hc, hc, Units.conj_pow]
+
 end Exp
 
 /-! ## 4a. The log-norm (Thesis §2.2; BP §1.2) -/
