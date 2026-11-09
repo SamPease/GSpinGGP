@@ -11,8 +11,11 @@ import GSpinGGP.GGP.LieRegular
 
 The regular set of `G = GSpin(W) × GSpin(V)` is open and conull (from Harish-Chandra's theorem
 `hc_regular_open_dense_conull` and the identification of his regular set with `regularSet`,
-`hcDisc_ne_zero_iff_mem_regularSet`), and germs are preserved under transfer to inner forms (BP Astérisque 418,
-(12.1.2), which is stated for pure inner forms; a `sorry` theorem with a proof sketch).
+`hcDisc_ne_zero_iff_mem_regularSet`), and germs are preserved under transfer to inner forms
+(`bp_germ_transfer`). The latter is proved from three `sorry` theorems with proof sketches: the
+averaged form of BP Astérisque 418, (12.1.2), which is stated there for pure inner forms
+(`bp_germAvg_transfer`); the equality of the regular germs of a stable quasi-character
+(`germ_eq_germ_of_stable`); and the finiteness of `Nil_reg(𝔤_x)` (`finite_nilReg`).
 -/
 
 open MeasureTheory Topology Filter
@@ -267,38 +270,15 @@ theorem hc_regularSet_open_conull (d : GGPData F) :
   rw [hset] at h
   exact ⟨h.1, h.2.2⟩
 
-/-- The average germ is any one germ when all regular germs agree: if `Nil_reg(𝔤_x)` is finite, `O
-∈ Nil_reg(𝔤_x)` and `c_{θ,O'}(x) = c_{θ,O}(x)` for every `O' ∈ Nil_reg(𝔤_x)`, then `c_θ(x) =
-c_{θ,O}(x)`. -/
-theorem germAvg_eq_germ_of_forall_eq {A : Type*} [Ring A] [Algebra F A] [TopologicalSpace A]
-    [Module.Finite F A] [IsModuleTopology F A]
-    {G : Subgroup Aˣ} {𝔤 : LieSubalgebra F A} {b : LinearMap.BilinForm F A}
-    {ψ : NontrivialAddChar F} {θ : ↥G → ℂ} {x : ↥G}
-    (hfin : (NilReg (grpCentralizer G x) (lieCentralizer 𝔤 ((x : Aˣ) : A))).Finite)
-    {O : NilOrbit (grpCentralizer G x) (lieCentralizer 𝔤 ((x : Aˣ) : A))}
-    (hO : O ∈ NilReg (grpCentralizer G x) (lieCentralizer 𝔤 ((x : Aˣ) : A)))
-    (h : ∀ O' ∈ NilReg (grpCentralizer G x) (lieCentralizer 𝔤 ((x : Aˣ) : A)),
-      germ G 𝔤 b ψ θ x O' = germ G 𝔤 b ψ θ x O) :
-    germAvg G 𝔤 b ψ θ x = germ G 𝔤 b ψ θ x O := by
-  unfold germAvg
-  rw [finsum_mem_congr rfl h, finsum_mem_eq_finite_toFinset_sum _ hfin, Finset.sum_const,
-    Set.ncard_eq_toFinset_card _ hfin, nsmul_eq_mul]
-  have : (hfin.toFinset.card : ℂ) ≠ 0 := by
-    exact_mod_cast (Finset.card_pos.mpr ⟨O, hfin.mem_toFinset.mpr hO⟩).ne'
-  field_simp
-
 /-- **Finitely many regular nilpotent orbits.** For semisimple `x ∈ G(F)`, `G = GSpin(W) ×
 GSpin(V)`, the set `Nil_reg(𝔤_x)` of regular nilpotent `G_x(F)`-orbits in `𝔤_x(F)` is finite.
 
-Proof sketch (not formalized). If it is nonempty, `G_x` is quasi-split. For a regular nilpotent `N
-∈ 𝔤_x(F)` the centralizer is `Z(G_x) · U_N` with `U_N` connected unipotent (Kostant, *The principal
-three-dimensional subgroup…*, Amer. J. Math. 81 (1959), Thm 5.3 and Cor. 5.6; Jantzen, *Nilpotent
-orbits in representation theory* (2004), §6.7–6.8), and `H¹(F, U_N) = 0` (Springer–Steinberg, LNM
-131, III.3.7). All regular nilpotent elements form one geometric orbit, so the `G_x(F)`-orbits in
-it are in bijection with `ker(H¹(F, Z(G_x)) → H¹(F, G_x))`, which is finite (Borel–Serre, Comment.
-Math. Helv. 39 (1964), Thm 6.1, p. 153: `H¹(F, A)` is finite for a linear algebraic group `A` over
-a `p`-adic field). `G_x` is connected because the derived group of `GSpin` is simply connected
-(Steinberg).
+Proof sketch (not formalized). `F` has characteristic `0`, so `𝔤_x` has finitely many nilpotent
+orbits over `F̄`, and the regular nilpotent elements form one of them. Fix `N` in it with
+`N ∈ 𝔤_x(F)`; the `G_x(F)`-orbits of such elements are in bijection with
+`ker(H¹(F, Z_{G_x}(N)) → H¹(F, G_x))`, which is finite since `H¹(F, A)` is finite for every
+linear algebraic group `A` over a `p`-adic field (Borel–Serre, Comment. Math. Helv. 39 (1964),
+Thm 6.1, p. 153).
 
 **Status: `sorry`** (standard; not stated verbatim for this group in a source). -/
 theorem finite_nilReg (d : GGPData F) (x : ↥d.G) (hx : IsSS F ((x : d.ambientˣ) : d.ambient)) :
@@ -307,26 +287,23 @@ theorem finite_nilReg (d : GGPData F) (x : ↥d.G) (hx : IsSS F ((x : d.ambient�
   sorry
 
 /-- **The regular germs of a stable quasi-character do not depend on the orbit.** Let `θ` be a
-quasi-character on `G(F)` that is *stable* (`θ(x) = θ(x')` for stably conjugate regular `x, x'`; BP
-Astérisque 418 §12.1, pp. 259–260), and `x ∈ G(F)` semisimple. Then `c_{θ,O}(x) = c_{θ,O'}(x)` for
-all `O, O' ∈ Nil_reg(𝔤_x)`. Used in Thesis (6.1.2), whose proof states it without proof.
+quasi-character on `G(F)` that is *stable* (`hstab`: `θ(x) = θ(x')` for stably conjugate regular
+`x, x'`; BP Astérisque 418 §12.1, pp. 259–260), and `x ∈ G(F)` semisimple. Then
+`c_{θ,O}(x) = c_{θ,O'}(x)` for all `O, O' ∈ Nil_reg(𝔤_x)`. Used in Thesis (6.1.2), whose proof
+states it without proof.
 
-Proof sketch (not formalized). (1) For `X` in a small lattice ball `B ⊆ 𝔤_x(F)` around `0`, stable
-conjugacy of regular `X, X'` in `𝔤_x` gives stable conjugacy of `x e^X, x e^{X'}` in `G`, so
-`θ_x(X) = θ(x e^X)` is stable on `B ∩ 𝔤_{x,reg}`. (2) In the expansion `θ_x = Σ_O c_{θ,O}(x)
-ĵ(O,·)` (BP §4.1, p. 74), homogeneity `ĵ(O, λX) = |λ|^{-dim O/2} ĵ(O, X)` for `λ ∈ F^{×2}` (BP
-(1.8.5), p. 34) and a Vandermonde argument in `λ = ϖ^{2j}` show that the regular part `Φ = Σ_{O
-regular} c_{θ,O}(x) ĵ(O,·)` is stable on all of `𝔤_{x,reg}`. (3) Pairing `Φ` with `h = (f₁ − f₁ ∘
-Ad(g)⁻¹)^∨`, where `g ∈ G_{x,ad}(F)` and `f₁` is the indicator of a small compact open set meeting
-the nilpotent cone only in one regular orbit `O₁`: the stable orbital integrals of `h` vanish, so
-(Weyl integration grouped by stable classes, from Kottwitz, *Harmonic analysis on reductive
-`p`-adic groups and Lie algebras*, Clay Math. Proc. 4 (2005), (7.7.1), p. 423) `0 = ∫ Φ h =
-c_{θ,O₁}(x) − c_{θ,gO₁}(x)`. (4) `G_{x,ad}(F)` acts transitively on the regular nilpotent
-`G_x(F)`-orbits (Langlands–Shelstad §5.1; Kostant's centralizer theorem and `H¹(F, U) = 0`).
+Proof sketch (not formalized), as in the proof of BP (3.4.7), p. 71. There is
+`g ∈ G_{x,ad}(F)` with `Ad(g) O = O'`: the adjoint group acts transitively on `Nil_reg(𝔤_x)`
+(asserted in that proof). Lift `g` to `ĝ ∈ G_x(F̄)`. For `X ∈ 𝔤_x(F)` near `0` with `x e^X`
+regular, `x e^{Ad(g) X} = ĝ (x e^X) ĝ⁻¹` is stably conjugate to `x e^X`, so
+`θ(x e^{Ad(g) X}) = θ(x e^X)`. Since the trace form is `Ad(ĝ)`-invariant,
+`ĵ(Ad(g) O'', Ad(g) X) = ĵ(O'', X)`, so `X ↦ Σ c_{θ,O''}(x) ĵ(Ad(g) O'', X)` is also a local
+expansion of `θ` at `x`; by uniqueness of the expansion (`germ_unique`), `c_{θ,Ad(g) O}(x) =
+c_{θ,O}(x)`.
 
-**Status: `sorry`, not a literature axiom** (no source states it for general quasi-split groups;
-the argument above is general). -/
-theorem germ_eq_of_isStable (d : GGPData F) (ψ : NontrivialAddChar F) (θ : ↥d.G → ℂ)
+**Status: `sorry`, not a literature axiom** (the transitivity and the argument are in BP's proof
+of (3.4.7); the statement itself is not in a source). -/
+theorem germ_eq_germ_of_stable (d : GGPData F) (ψ : NontrivialAddChar F) (θ : ↥d.G → ℂ)
     (hθ : IsQuasiCharacter d.G d.lie d.bilin ψ θ)
     (hstab : ∀ x ∈ regularSet d.G d.lie, ∀ x' ∈ regularSet d.G d.lie,
       d.StablyConj x x' → θ x = θ x')
@@ -378,7 +355,7 @@ theorem bp_germAvg_transfer (d : GGPData F) (hqs : d.IsQuasiSplit) (ψ : Nontriv
 /-- **Beuzart-Plessis (12.1.2) for each regular orbit** (Thesis (6.1.2)), for the inner twists of
 `GSpin`: under the hypotheses of `bp_germAvg_transfer`, `c_{θ',O'}(y) = c_{θ,O}(x)` for all `O ∈
 Nil_reg(𝔤_x)`, `O' ∈ Nil_reg(𝔤_{α,y})`. From the averaged form `bp_germAvg_transfer`, since for the
-stable `θ`, `θ'` every regular germ equals the average (`germ_eq_of_isStable`, `finite_nilReg`). -/
+stable `θ`, `θ'` every regular germ equals the average (`germ_eq_germ_of_stable`, `finite_nilReg`). -/
 theorem bp_germ_transfer (d : GGPData F) (hqs : d.IsQuasiSplit) (ψ : NontrivialAddChar F)
     (τ : InnerTwist d.QW) (θ : ↥d.G → ℂ) (θ' : ↥(d.twist τ).G → ℂ)
     (hθ : IsQuasiCharacter d.G d.lie d.bilin ψ θ)
@@ -405,11 +382,11 @@ theorem bp_germ_transfer (d : GGPData F) (hqs : d.IsQuasiSplit) (ψ : Nontrivial
   intro O hO O' hO'
   have e : germAvg d.G d.lie d.bilin ψ θ (d.diag x) = germ d.G d.lie d.bilin ψ θ (d.diag x) O :=
     germAvg_eq_germ_of_forall_eq (finite_nilReg d _ hx) hO
-      fun O₂ h₂ => germ_eq_of_isStable d ψ θ hθ hstab _ hx O₂ h₂ O hO
+      fun O₂ h₂ => germ_eq_germ_of_stable d ψ θ hθ hstab _ hx O₂ h₂ O hO
   have e' : germAvg (d.twist τ).G (d.twist τ).lie (d.twist τ).bilin ψ θ' ((d.twist τ).diag y) =
       germ (d.twist τ).G (d.twist τ).lie (d.twist τ).bilin ψ θ' ((d.twist τ).diag y) O' :=
     germAvg_eq_germ_of_forall_eq (finite_nilReg (d.twist τ) _ hy) hO'
-      fun O₂ h₂ => germ_eq_of_isStable (d.twist τ) ψ θ' hθ' hstab' _ hy O₂ h₂ O' hO'
+      fun O₂ h₂ => germ_eq_germ_of_stable (d.twist τ) ψ θ' hθ' hstab' _ hy O₂ h₂ O' hO'
   rw [← e', ← e, bp_germAvg_transfer d hqs ψ τ θ θ' hθ hθ' hstab hstab' htrans x y hx hy hxy]
 
 end GSpinGGP

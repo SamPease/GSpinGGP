@@ -60,6 +60,9 @@ GSpinGGP.orbitChoice
 GSpinGGP.mGeom
 GSpinGGP.mGeom_finset_sum
 GSpinGGP.packet_sum_mult
+GSpinGGP.finite_nilReg
+GSpinGGP.germ_eq_germ_of_stable
+GSpinGGP.bp_germAvg_transfer
 GSpinGGP.bp_germ_transfer
 GSpinGGP.packet_germ_transfer
 GSpinGGP.exists_isometry_fixedSub_of_qd

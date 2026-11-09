@@ -100,18 +100,60 @@ The multiplicity formula for $(G_\alpha,H_\alpha,\xi_\alpha)$ and linearity of $
 \end{proof}
 
 \section{Germ transfer}
+\begin{lemma}[Finitely many regular nilpotent orbits]
+\label{finite_nilReg}
+\lean{GSpinGGP.finite_nilReg}
+\leanok
+\uses{GGPData, gspin}
+For semisimple $x\in G(F)$ the set $\mathrm{Nil}_{\mathrm{reg}}(\mathfrak g_x)$ of regular nilpotent
+$G_x(F)$-orbits is finite.
+\end{lemma}
+\begin{proof}
+Not yet formalized. The regular nilpotent elements form one geometric orbit, whose rational orbits are
+indexed by a subset of $H^1(F,Z_{G_x}(N))$, finite by Borel--Serre (1964), Thm.~6.1.
+\end{proof}
+
+\begin{lemma}[Regular germs of a stable quasi-character]
+\label{germ_eq_germ_of_stable}
+\lean{GSpinGGP.germ_eq_germ_of_stable}
+\leanok
+\uses{GGPData, IsQuasiCharacter, germ, gspin}
+If $\theta$ is a stable quasi-character on $G(F)$ and $x\in G(F)$ is semisimple, then
+$c_{\theta,\mathcal O}(x)=c_{\theta,\mathcal O'}(x)$ for all $\mathcal O,\mathcal O'\in\mathrm{Nil}_{\mathrm{reg}}(\mathfrak g_x)$.
+\end{lemma}
+\begin{proof}
+Not yet formalized. As in the proof of \cite{BP}, (3.4.7): $G_{x,\mathrm{ad}}(F)$ acts transitively on
+$\mathrm{Nil}_{\mathrm{reg}}(\mathfrak g_x)$, stability makes $X\mapsto\theta(xe^X)$ invariant under it, and the
+local expansion is unique.
+\end{proof}
+
+\begin{theorem}[Transfer preserves average germs]
+\label{bp_germAvg_transfer}
+\lean{GSpinGGP.bp_germAvg_transfer}
+\leanok
+\uses{G, GGPData, GSpin, InnerTwist, IsQuasiCharacter, IsQuasiSplit, StablyConjG, germ, gspin}
+(Thesis (6.1.2).) Let $G$ be quasi-split, $\theta$ a stable quasi-character on $G(F)$ and $\theta'$ a stable
+quasi-character on $G_\alpha(F)$ with $\theta'(y)=\theta(x)$ for stably conjugate regular $x,y$. Then for
+semisimple, strongly stably conjugate $x\in\GSpin(W)(F)$, $y\in\GSpin(W_\alpha)(F)$, $c_{\theta'}(y)=c_\theta(x)$,
+where $c_\theta(x)$ is the average of the regular germs.
+\end{theorem}
+\begin{proof}
+Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{BP}, (12.1.2), stated there for pure inner forms; its proof does not use purity}
+\end{proof}
+
 \begin{theorem}[Transfer preserves germs]
 \label{bp_germ_transfer}
 \lean{GSpinGGP.bp_germ_transfer}
 \leanok
 \uses{G, GGPData, GSpin, InnerTwist, IsQuasiCharacter, IsQuasiSplit, StablyConjG, germ, gspin}
-(Thesis (6.1.2).) Let $G$ be quasi-split, $\theta$ a stable quasi-character on $G(F)$ and $\theta'$ a stable
-quasi-character on $G_\alpha(F)$ with $\theta'(y)=\theta(x)$ for stably conjugate regular $x,y$. Then for
-semisimple, strongly stably conjugate $x\in\GSpin(W)(F)$, $y\in\GSpin(W_\alpha)(F)$,
+(Thesis (6.1.2).) Under the hypotheses of Theorem~\ref{bp_germAvg_transfer},
 $c_{\theta',\mathcal O'}(y)=c_{\theta,\mathcal O}(x)$ for all regular $\mathcal O,\mathcal O'$.
 \end{theorem}
 \begin{proof}
-Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{BP}, (12.1.2), stated there for pure inner forms; the proof is unchanged for these inner twists}
+\leanok
+\uses{bp_germAvg_transfer, germ_eq_germ_of_stable, finite_nilReg}
+Each regular germ of $\theta$ and of $\theta'$ equals the average (Lemmas~\ref{germ_eq_germ_of_stable}
+and~\ref{finite_nilReg}); apply Theorem~\ref{bp_germAvg_transfer}.
 \end{proof}
 
 \begin{proposition}[Germ transfer for packets]

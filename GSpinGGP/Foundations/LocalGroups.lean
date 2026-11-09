@@ -1514,6 +1514,22 @@ lemma germ_of_not_mem {G : Subgroup Aˣ} {𝔤 : LieSubalgebra F A} {b : LinearM
     germ G 𝔤 b ψ θ x O = 0 := by
   simp [germ, hO]
 
+/-- The average germ is any one germ when all regular germs agree: if `Nil_reg(𝔤_x)` is finite,
+`O ∈ Nil_reg(𝔤_x)` and `c_{θ,O'}(x) = c_{θ,O}(x)` for every `O' ∈ Nil_reg(𝔤_x)`, then
+`c_θ(x) = c_{θ,O}(x)`. -/
+theorem germAvg_eq_germ_of_forall_eq {G : Subgroup Aˣ} {𝔤 : LieSubalgebra F A}
+    {b : LinearMap.BilinForm F A} {ψ : NontrivialAddChar F} {θ : ↥G → ℂ} {x : ↥G}
+    (hfin : (NilReg (grpCentralizer G x) (lieCentralizer 𝔤 ((x : Aˣ) : A))).Finite)
+    {O : NilOrbit (grpCentralizer G x) (lieCentralizer 𝔤 ((x : Aˣ) : A))}
+    (hO : O ∈ NilReg (grpCentralizer G x) (lieCentralizer 𝔤 ((x : Aˣ) : A)))
+    (h : ∀ O' ∈ NilReg (grpCentralizer G x) (lieCentralizer 𝔤 ((x : Aˣ) : A)),
+      germ G 𝔤 b ψ θ x O' = germ G 𝔤 b ψ θ x O) :
+    germAvg G 𝔤 b ψ θ x = germ G 𝔤 b ψ θ x O := by
+  unfold germAvg
+  rw [finsum_mem_congr rfl h, finsum_mem_eq_finite_toFinset_sum _ hfin,
+    Set.ncard_eq_toFinset_card _ hfin, ← Finset.expect_eq_sum_div_card,
+    Finset.expect_const ⟨O, hfin.mem_toFinset.mpr hO⟩]
+
 end QuasiCharacter
 
 end GSpinGGP
