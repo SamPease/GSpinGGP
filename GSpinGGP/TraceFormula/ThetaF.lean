@@ -284,8 +284,8 @@ theorem weilMeasureHG_spec :
     IsWeilMeasure d.toGmodAG Measure.haar Measure.haar d.weilMeasureHG :=
   d.weilMeasureHG_spec_of_isMulRightInvariant d.isMulRightInvariant_haar_GmodAG
 
-/-- **The Weil measure on `H(F)\G(F)/A_G(F)` is finite on compact sets**, from its defining formula (`IsWeilMeasure.isFiniteMeasureOnCompacts`), so
-`weil_quotient` did not need strengthening. -/
+/-- **The Weil measure on `H(F)\G(F)/A_G(F)` is finite on compact sets**, from its defining formula (`IsWeilMeasure.isFiniteMeasureOnCompacts`, the
+fact that also derives `weil_quotient` from `weil_quotient_radon`). -/
 instance isFiniteMeasureOnCompacts_weilMeasureHG : IsFiniteMeasureOnCompacts d.weilMeasureHG := by
   have := d.isMulRightInvariant_haar_HmodAGH
   exact IsWeilMeasure.isFiniteMeasureOnCompacts d.continuous_toGmodAG

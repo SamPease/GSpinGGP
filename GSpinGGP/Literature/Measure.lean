@@ -269,7 +269,7 @@ here is the same theorem applied to `γ ↦ γ⁻¹`).
 Let `Γ` and `S` be locally compact, Hausdorff, second countable topological groups with their
 Borel σ-algebras, `ι : S → Γ` a continuous homomorphism that is a closed embedding, and `ν`, `μ`
 Haar measures on `Γ`, `S` that are also right invariant (`Γ` and `S` unimodular). Then there is
-a unique measure `m` on `ι(S)\Γ` with
+a measure `m` on `ι(S)\Γ`, unique among the measures finite on compact sets, with
 `∫_Γ φ dν = ∫_{ι(S)\Γ} ∫_S φ(ι(s) q) dμ(s) dm(q)` for all `φ ∈ C_c(Γ)`.
 
 Unimodularity of both groups is stronger than the sources need (`Δ_Γ|_S = Δ_S`) but is what is
