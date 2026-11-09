@@ -260,9 +260,9 @@ theorem isWeilMeasure_of_subsingleton [Subsingleton S] (ι : S →* Γ) (ν : Me
 end Sanity
 
 /-- **Weil's quotient-measure formula** (Bourbaki, *Integration* II, Ch. VII §2: no. 2, Prop. 4(b)
-and Def. 1, p. VII.31 — a measure `μ` on `X` with `δ(ξ)μ = Δ_H(ξ)μ` for `ξ ∈ H` is `λ^♯` for exactly
-one measure `λ = μ/β` on `X/H`, i.e. `∫_X f dμ = ∫_{X/H} ∫_H f(xξ) dβ(ξ) dλ`; and no. 6, Thm 3: for
-`μ`, `β` Haar this `λ` is `G`-invariant, and unique up to a constant, when `Δ_G|_H = Δ_H`. The right-coset form
+and Def. 1, formula (7), p. VII.31 — a measure `μ` on `X` with `δ(ξ)μ = Δ_H(ξ)μ` for `ξ ∈ H` is `λ^♯` for exactly
+one measure `λ = μ/β` on `X/H`, i.e. `∫_X f dμ = ∫_{X/H} ∫_H f(xξ) dβ(ξ) dλ`; and no. 6, Thm 3 and its
+Cor. 2, pp. VII.43–44: for `μ`, `β` Haar this `λ` is `G`-invariant, and unique up to a constant, when `Δ_G|_H = Δ_H`. The right-coset form
 here is the same theorem applied to `γ ↦ γ⁻¹`).
 
 Let `Γ` and `S` be locally compact, Hausdorff, second countable topological groups with their

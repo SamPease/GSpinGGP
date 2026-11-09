@@ -37,14 +37,14 @@ set_option linter.style.haveILetI false
 
 namespace GSpinGGP
 
-/-- **Existence of self-dual Haar measures** (Tate's thesis, 1950, printed in Cassels–Fröhlich,
-*Algebraic Number Theory* (1967), Ch. XV, §2.2: the characters of `F` are the `x ↦ ψ(ax)`,
-`F ≅ F^`, and for the Haar measure self-dual with respect to this identification the Fourier
-inversion formula holds; Weil, *Basic Number Theory*, Ch. II §5 (for a finite-dimensional
-`F`-vector space `V`, `Y ↦ ψ(⟨·, Y⟩)` identifies the algebraic dual `V'` with the Pontryagin
-dual `V^`; Ch. II §5, Thm 3, p. 40, for any non-discrete locally compact field) and Ch. VII §2,
-p. 105 (dual measure, Fourier inversion `Φ(g) = ∫ Φ*(g*) ⟨−g, g*⟩ dα*`, and the unique self-dual
-Haar measure for a given identification of `G` with `G*`).
+/-- **Existence of self-dual Haar measures** (Weil, *Basic Number Theory*, 3rd ed., Ch. VII §2,
+pp. 104–105 (dual measure, Fourier inversion `Φ(g) = ∫ Φ*(g*) ⟨−g, g*⟩ dα*`, and the unique self-dual
+Haar measure for a given identification of `G` with `G*`) with Def. 1, Prop. 2 and Cor. 2,
+pp. 106–108; Ch. II §5, Thm 3, p. 40: for any non-discrete locally compact field and a
+finite-dimensional vector space `V`, `Y ↦ ψ(⟨·, Y⟩)` identifies the algebraic dual `V'` with the
+Pontryagin dual `V^` (a bijection; that it is a homeomorphism follows from the uniqueness of the
+Hausdorff vector-space topology in finite dimension, Ch. I §2). Also Tate's thesis (Cassels–Fröhlich,
+*Algebraic Number Theory* (1967), Ch. XV, §2.2), not checked here.
 Thesis §2.4; BP Astérisque 418 §1.6.)
 
 Statement: let `F` be a `p`-adic field, `V` a finite-dimensional `F`-vector space with its
@@ -54,11 +54,11 @@ and `ψ` a nontrivial continuous additive character. Then there is a Haar measur
 `f(Z) = ∫ f̂(Y) ψ(-B(Z,Y)) dμ(Y)`, `f̂(Y) = ∫ f(X) ψ(B(X,Y)) dμ(X)`, for every locally constant
 compactly supported `f` (`IsSelfDual`).
 
-Why this is the cited fact. `Y ↦ ψ(B(·, Y))` is a topological isomorphism `V ≅ V^` (Weil II §5,
-using `F ≅ F^` and right separation of `B`); transporting the Pontryagin dual measure `μ^` of a
+Why this is the cited fact. `Y ↦ ψ(B(·, Y))` is a topological isomorphism `V ≅ V^` (Weil II §5
+and I §2, using `F ≅ F^` and right separation of `B`); transporting the Pontryagin dual measure `μ^` of a
 Haar measure `μ` along it gives `c·μ` for some `c > 0`, and `μ' = c^{-1/2} μ` is then equal to its
-own dual. Fourier inversion for `μ'` and its dual (Pontryagin–Plancherel; Folland, *A Course in
-Abstract Harmonic Analysis*, §4.3) is exactly the displayed formula, the character `ψ(B(·,Y))`
+own dual. Fourier inversion for `μ'` and its dual (Weil VII §2; also Folland, *A Course in Abstract
+Harmonic Analysis*, §4.3, not checked here) is exactly the displayed formula, the character `ψ(B(·,Y))`
 being conjugated to `ψ(-B(Z,Y))`. No symmetry of `B` is used.
 
 Lean-specific points. All instance arguments are explicit binders of the axiom (no

@@ -22,12 +22,13 @@ open Module
 
 namespace GSpinGGP
 
-/-- **Centralizers in `so(V)` have dimension at least the rank** (Jantzen 2004, §7.11,
-Proposition and its proof, and the Remark after it, pp. 81–82: for `G = SO(V, φ)` as in
-§7.6–7.7, the maximal dimension of a `G`-orbit in `g` is `2 dim n = dim G − rk G`; cf. §7.13,
-Proposition, for any reductive `G`), combined with `dim O_X = dim G − dim G_X` (§2.1 (6)) and
-`Lie(G_X) = g_X` in characteristic `0` (§2.2, condition (iii), "always satisfied if
-`char(K) = 0`"; `dim G_X = dim Lie(G_X)`). Here `g_X = {Z ∈ g | [Z, X] = 0}` (§2.2 (3)) is
+/-- **Centralizers in `so(V)` have dimension at least the rank** (Jantzen 2004, §7.13,
+Proposition, p. 84: for reductive `G`, each regular orbit in `g` has dimension `2 dim n`, regular
+meaning of maximal dimension; for `G = SO(V, φ)` as in §7.6–7.7 this is also §7.11, Remark after
+the Proposition, pp. 81–82: the maximal dimension of a `G`-orbit in `g` is `2 dim n = dim G − rk G`),
+combined with `dim O_X = dim G − dim G_X` (§2.1 (6)), `Lie(G_X) = g_X` in characteristic `0`
+(§2.2, condition (iii), "always satisfied if `char(K) = 0`"), and `dim G_X = dim Lie(G_X)` (a
+general fact about algebraic groups, not part of §2.2 (iii)). Here `g_X = {Z ∈ g | [Z, X] = 0}` (§2.2 (3)) is
 `soCentMat Φ X`, and `rk SO(V) = ⌊n/2⌋` for `n ≥ 3` (§6.3, last paragraph, with §6.4, first
 sentence, pp. 64–65: `dim g_X = ⌊n/2⌋` for regular nilpotent `X`, and this equals `rk G`).
 
@@ -42,8 +43,9 @@ axiom jantzen_finrank_soCentMat_ge {K : Type*} [Field K] [IsAlgClosed K] [CharZe
 (`n` even)** (Jantzen 2004, §6.3, p. 64, last paragraph: for `G = SO(V, φ)` with `dim V ≥ 3`, the
 regular nilpotent orbit in `so(V, φ)` consists of the nilpotent elements with partition `[2n + 1]`
 when `dim V = 2n + 1`, and of those with partition `[2n − 1, 1]` when `dim V = 2n`. Jantzen
-leaves the deduction from §3.2 (5) to the reader and gives a second proof in the Remark after
-§6.4, p. 65. Chapter 6 assumes `G ⊂ GL(V)` connected reductive, which `SO(V, φ)` is; partitions
+leaves the deduction from §3.2 (5) to the reader, and in the Remark after §6.4, p. 65, reduces it to
+checking `dim g_X = rk G` for these partitions. The even case is stated again in §7.7, p. 78: "Let
+`X ∈ g` be regular nilpotent. Then `X` has partition `[2n − 1, 1]`". Chapter 6 assumes `G ⊂ GL(V)` connected reductive, which `SO(V, φ)` is; partitions
 are `GL(V)`-invariant, so working with `SO` rather than `O` does not affect the conclusion.)
 
 Hypothesis. Jantzen calls `X` regular nilpotent if its orbit is dense in the nilpotent cone, and

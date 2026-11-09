@@ -118,6 +118,12 @@ continuous on `G_reg(F)` and equal to `θ₀` there, represents the orbital pair
   `G`-good neighbourhood of an elliptic point is one of the translated point).  A `θ₀ ∈ QC_c(Ω)`
   (support compact modulo conjugation, *not* modulo `A_G`) meets finitely many translates
   `a Ω_{x_i}^G`; an invariant partition of unity (BP Prop 3.1.1(ii)) reduces to one of them.
+* `p`-adic ingredients without a centre hypothesis, which can replace BP's density statements:
+  Waldspurger, *Une formule intégrale reliée à la conjecture locale de Gross–Prasad*, Compositio
+  Math. 146 (2010), Prop. 6.4 (arXiv:0902.1875v1, p. 31: every quasi-character on `𝔤(F)` compactly
+  supported modulo conjugation is `θ_f` for a strongly cuspidal `f ∈ C_c^∞(𝔤(F))`) and Lemme 6.2 (p. 28:
+  lift from `𝔤_x` to `G` at an elliptic `x`, assuming `Z_G(x)(F)`-invariance, automatic here since
+  `Z_G(x) = G_x` for `GSpin`, whose derived group is simply connected).
 * Surjectivity: in the `p`-adic case `QC_c(Ω)` carries its finest locally convex topology, in which
   every subspace is closed, so "dense image" is "onto" (BP's own parenthesis in Cor 5.7.2(i)).
 * Open and closed: BP's `Ω` is open.  For `p`-adic `F` the `Ω_{x_i}` may be taken compact open,

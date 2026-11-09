@@ -63,7 +63,7 @@ theorem torusBarFbar_le_fixerBar (x : ↥(GSpin d.QW)) : d.torusBarFbar x ≤ d.
 end GGPData
 
 /-- **Fundamental tori** (Kottwitz, *Stable trace formula: elliptic singular terms*, Math. Ann. 275
-(1986), §10, Lemma 10.2, p. 397: for `F` `p`-adic or real and `G` a connected reductive group over
+(1986), §10, Lemma 10.2, p. 397, proof pp. 397–398: for `F` `p`-adic or real and `G` a connected reductive group over
 `F`, "Let `T` be a fundamental torus of `G`. Then `H¹(F,T) → H¹(F,G)` is surjective"; a maximal
 `F`-torus is *fundamental* if the dimension of its split component is as small as possible; "in
 the `p`-adic case fundamental tori are elliptic").
@@ -74,14 +74,18 @@ Applied to `G = SO(W)_{W'_x} ≅ SO(W''_x)` (connected reductive), with `F̄`-po
 * `S_x` is a maximal torus of `SO(W)_{W'_x}`: it is `Z_{SO(W''_x)}(x̄'')`, the centralizer of the
   semisimple element `x̄'' = P(x)|_{W''_x}` (connected, `SO(E₋₁) × ∏ GL(E_λ)` since `x̄''` has no
   eigenvalue `1`; equal to `P(T_x(F̄))` since `P(g)` commuting with `x̄` gives `g x g⁻¹ = ±x`, with
-  sign `+1` on the connected group; abelian for `x ∈ Γ(G,H)`), and the centralizer of a semisimple
-  element contains a maximal torus;
+  sign `+1` on the connected group; abelian for `x ∈ Γ(G,H)`: `T_x(F)` is commutative and, `T_x`
+  being connected reductive over a field of characteristic `0`, Zariski dense in `T_x`, so `T_x` is
+  commutative, which forces `dim E_λ = 1` and `dim E₋₁ ≤ 2`), and the centralizer of a semisimple
+  element contains a maximal torus, so this commutative connected centralizer is a maximal torus;
 * `S_x` is anisotropic (`S_x(F) = T_x(F)/A_{G,H}(F)` is compact, `IsGammaElt`), so its split
   component is trivial, of the smallest possible dimension `0`: `S_x` is fundamental.
 The statement is written in cocycles: every continuous cocycle `c` with values in
 `(SO(W)_{W'_x})(F̄)` is cohomologous in `(SO(W)_{W'_x})(F̄)` to a cocycle with values in `S_x(F̄)`.
 That `fixerBar d x` and `torusBarFbar d x` are the `F̄`-points of these `F`-groups (with the
-entrywise Galois action) is not formalized; the facts above about them are used only here. -/
+entrywise Galois action) is not formalized; the facts above about them are used only here.
+`fixerBar d x` is all of `(SO(W)_{W'_x})(F̄)` because `P` is onto `SO(W)(F̄)` over `F̄`
+(`range_specP_eq_SOGrp`, from the theorem `gspin_specP_surjective_SO`). -/
 axiom exists_rel_torusBar_of_fixerBar (d : GGPData F) (x : ↥(GSpin d.QW))
     (hx : d.IsGammaElt x) (c : GalCocycle (d.fixerBar x)) :
     ∃ a : GalCocycle (d.torusBarFbar x), ∃ h ∈ d.fixerBar x,

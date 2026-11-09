@@ -59,7 +59,8 @@ in `GSpin(W''_x)`, hence a maximal torus, so `λ_1, …, λ_n` form a basis of `
 `S = P(T_x)`; (b) `deltaGGP d t` is computed on `movedSub t`, and on `T_♮` this is `W''_x`: `t ∈ T_x`
 fixes `W'_x`, so `W''_t ⊆ W''_x`, and `x ∈ T_x = T_t` fixes `W'_t`, so `W''_x ⊆ W''_t`; (c) real
 `s > 0` is the restriction of BP's `Re s > 0`.  Exact source: arXiv:1506.01452 (BP), App. B.1,
-Lemma B.1.2(i), for `F` any local field of characteristic `0` other than `ℂ`.
+Lemma B.1.2(i) (Astérisque 418, p. 281), for `F` any local field of characteristic `0` other than `ℂ`;
+BP states the lemma without proof.
 
 Stated for `Γ`-tori only (`T = T_x`, `x ∈ Γ(G,H)`); for any other subgroup the integrand is `0`
 (`TraceFormula/MGeom.lean`, `integrable_delta_rpow`).
