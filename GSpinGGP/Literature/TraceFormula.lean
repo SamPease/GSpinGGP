@@ -17,8 +17,8 @@ quasi-splitness. (The unimodularity of `G(F)` is proved: `GGPData.isMulRightInva
 `TraceFormula/Basic.lean`.)
 
 * (a) `bp_integrable_kernel_scusp` — for `f₀, f' ∈ C_c^∞(G(F))` with `f₀` strongly cuspidal, the
-  function `x ↦ ∫_{G(F)} f₀(x⁻¹gx) f'(g) dg` is integrable on `G(F)/A_G(F)` (BP Thm 5.5.1(ii), in the
-  form stated after it on p. 116; Thesis Thm 4.7.1(ii)).  BP states it without proof.
+  function `x ↦ ∫_{G(F)} f₀(x⁻¹gx) f'(g) dg` is integrable on `G(F)/A_G(F)` (BP Thm 5.5.1(ii), in
+  the form stated after it on p. 116; Thesis Thm 4.7.1(ii)).  BP states it without proof.
 
 The composite statements built on it, (b) `bp_thetaF_exists` (the quasi-character `θ_f`) and (c)
 `bp_scusp_surj_ell` (BP Cor 5.7.2(i), adapted to a non-compact centre), are `sorry` theorems in
@@ -85,32 +85,32 @@ instance instBorelSpaceGmodAG (d : GGPData F) : BorelSpace (↥d.G ⧸ d.AG) := 
 
 /-! ## (a) Integrability of the kernel on the diagonal (BP Thm 5.5.1(ii)) -/
 
-/-- **Integrability of `K^A_{f,f'}(x,x)` for strongly cuspidal `f`** (Beuzart-Plessis, *A local trace
-formula for the Gan–Gross–Prasad conjecture for unitary groups: the archimedean case*, Astérisque 418
-(2020), §5.5, p. 116; Thesis Thm 4.7.1(ii)).  BP fixes "until the end of Chapter 5, a connected
-reductive group `G` over `F`" (§1.1, `F` any local field of characteristic `0`), sets
-`K^A_{f,f'}(g₁,g₂) = ∫_{G(F)} f(g₁⁻¹ g g₂) f'(g) dg` and states, after Thm 5.5.1(iii): "By the point (ii),
-the function `x ∈ A_G(F)\G(F) ↦ K^A_{f,f'}(x,x)` is integrable as soon as `f` is strongly cuspidal",
-for `f ∈ 𝒞_scusp(G(F))` and `f' ∈ 𝒞(G(F))`.
+/-- **Integrability of `K^A_{f,f'}(x,x)` for strongly cuspidal `f`** (Beuzart-Plessis, *A local
+trace formula for the Gan–Gross–Prasad conjecture for unitary groups: the archimedean case*,
+Astérisque 418 (2020), §5.5, p. 116; Thesis Thm 4.7.1(ii)).  BP fixes "until the end of Chapter 5,
+a connected reductive group `G` over `F`" (§1.1, `F` any local field of characteristic `0`), sets
+`K^A_{f,f'}(g₁,g₂) = ∫_{G(F)} f(g₁⁻¹ g g₂) f'(g) dg` and states, after Thm 5.5.1(iii): "By the
+point (ii), the function `x ∈ A_G(F)\G(F) ↦ K^A_{f,f'}(x,x)` is integrable as soon as `f` is
+strongly cuspidal", for `f ∈ 𝒞_scusp(G(F))` and `f' ∈ 𝒞(G(F))`.
 
-Specialized to the connected reductive group `G = GSpin(W) × GSpin(V)` over `p`-adic `F`, with
-`f, f' ∈ C_c^∞(G(F)) ⊂ 𝒞(G(F))` (for `p`-adic `F`, `𝒞(G(F))` is the union over compact open `K'` of the
-bi-`K'`-invariant `f` with `sup |f| Ξ^{-1} σ^d < ∞` for all `d`, BP §1.5, p. 25; a compactly supported
-bi-`K'`-invariant `f` has this property since `Ξ` is continuous and positive).  Strong cuspidality is
-BP §5.1, p. 108: `f^P = 0` for every proper parabolic `P = MU`, where
-`f^P(m) = δ_P(m)^{1/2} ∫_{U(F)} f(mu) du`; it is written here as `∫_{U(F)} f(pu) du = 0` for `p ∈ P(F)`
-(equivalent: `p = mu'` and `du` is invariant), over the proper parabolic subgroups
-`P = P_{F_W} × P_{F_V}` given by proper pairs of isotropic flags (Thesis §5.1.2: every parabolic
-subgroup of `G` has this form; `IsProperFlagPair` is `whittB FW FV ≠ ⊤`).  The kernel is evaluated at
-the representative `Quotient.out x`; it does not depend on it because `A_G` is central.
-Integrability does not depend on the normalization of either Haar measure.
+Specialized to the connected reductive group `G = GSpin(W) × GSpin(V)` over `p`-adic `F`, with `f,
+f' ∈ C_c^∞(G(F)) ⊂ 𝒞(G(F))` (for `p`-adic `F`, `𝒞(G(F))` is the union over compact open `K'` of the
+bi-`K'`-invariant `f` with `sup |f| Ξ^{-1} σ^d < ∞` for all `d`, BP §1.5, p. 25; a compactly
+supported bi-`K'`-invariant `f` has this property since `Ξ` is continuous and positive).  Strong
+cuspidality is BP §5.1, p. 108: `f^P = 0` for every proper parabolic `P = MU`, where `f^P(m) =
+δ_P(m)^{1/2} ∫_{U(F)} f(mu) du`; it is written here as `∫_{U(F)} f(pu) du = 0` for `p ∈ P(F)`
+(equivalent: `p = mu'` and `du` is invariant), over the proper parabolic subgroups `P = P_{F_W} ×
+P_{F_V}` given by proper pairs of isotropic flags (Thesis §5.1.2: every parabolic subgroup of `G`
+has this form; `IsProperFlagPair` is `whittB FW FV ≠ ⊤`).  The kernel is evaluated at the
+representative `Quotient.out x`; it does not depend on it because `A_G` is central. Integrability
+does not depend on the normalization of either Haar measure.
 
 **Stated without proof in the source.**  BP p. 116: "The proof of these two theorems will appear
-elsewhere [18]", with [18] = R. Beuzart-Plessis, *A slight variation of Arthur local trace formula*,
-in preparation; no published version is known.  For `p`-adic `F` the identity of the geometric and
-spectral sides of the local trace formula for a cuspidal test function (Thm 5.5.1(iv) = (v)) is proved
-in J. Arthur, *On elliptic tempered characters*, Acta Math. 171 (1993), Thm 4.2 and Cor 4.3,
-pp. 104–105; the integrability statement here is not part of that. -/
+elsewhere [18]", with [18] = R. Beuzart-Plessis, *A slight variation of Arthur local trace
+formula*, in preparation; no published version is known.  For `p`-adic `F` the identity of the
+geometric and spectral sides of the local trace formula for a cuspidal test function (Thm 5.5.1(iv)
+= (v)) is proved in J. Arthur, *On elliptic tempered characters*, Acta Math. 171 (1993), Thm 4.2
+and Cor 4.3, pp. 104–105; the integrability statement here is not part of that. -/
 axiom bp_integrable_kernel_scusp (d : GGPData F) (f₀ : ↥d.G → ℂ) (hf₀ : f₀ ∈ testFunctions ↥d.G)
     (hcusp : ∀ (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV), d.IsProperFlagPair FW FV →
       ∀ p ∈ d.whittB FW FV,

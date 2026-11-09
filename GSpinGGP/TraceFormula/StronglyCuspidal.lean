@@ -48,22 +48,22 @@ nonempty-flag encoding a hyperbolic-plane factor would give a "proper" pair with
 
 Sources and derivation (`θ` is `θ_f` of BP / the Thesis, up to a positive constant):
 * Geometric expansion `J^A(f₀,f') = ∫_{Γ(G)} D^G(x)^{1/2} θ_{f₀}(x) J_G(x,f') dx`: BP Thm 5.5.1(iv)
-  = Thesis Thm 4.7.1(iv), stated in BP without proof (BP p. 116 defers it, with (ii), to its reference [18],
-  in preparation; see `bp_integrable_kernel_scusp`).  For `p`-adic `F`, its equality with the spectral
-  side (Thm 5.5.1(iv) = (v)) is proved in J. Arthur, *On elliptic tempered characters*, Acta Math. 171
-  (1993), Thm 4.2 and Cor 4.3, pp. 104–105, for cuspidal test functions (strongly cuspidal implies
-  Arthur's cuspidality `f_L = 0`).
+  = Thesis Thm 4.7.1(iv), stated in BP without proof (BP p. 116 defers it, with (ii), to
+  its reference [18], in preparation; see `bp_integrable_kernel_scusp`).  For `p`-adic `F`,
+  its equality with the spectral side (Thm 5.5.1(iv) = (v)) is proved in J. Arthur, *On
+  elliptic tempered characters*, Acta Math. 171 (1993), Thm 4.2 and Cor 4.3, pp. 104–105,
+  for cuspidal test functions (strongly cuspidal implies Arthur's cuspidality `f_L = 0`).
 * Weyl integration formula `∫_G φ dg = ∫_{Γ(G)} D^G(x)^{1/2} J_G(x,φ) dx`, with the measure on
   `Γ(G)` of BP §1.7 = Thesis §2.5 and `J_G` the normalized orbital integral of Thesis §2.6; it
   turns the right-hand side into `∫_G θ_{f₀} f' dg` with constant `1` (BP §1.7 states the formula
   as an exact identity; BP uses this step in the proof of Prop 5.6.1(ii), p. 121). It holds when
-  `A_G(F)\G(F)` carries `dg/d_c a`, `d_c a` giving the maximal compact subgroup of `A_G(F)` volume 1.
-  The constant is irrelevant here anyway, see below.
+  `A_G(F)\G(F)` carries `dg/d_c a`, `d_c a` giving the maximal compact subgroup of `A_G(F)`
+  volume 1. The constant is irrelevant here anyway, see below.
 * `θ_{f₀}` is a quasi-character: BP Prop 5.6.1(ii) = Thesis Prop 4.8.1(ii); in particular it is
   locally constant on `G_reg(F)` and locally integrable (`(D^G)^{1/2} θ` is locally bounded, and
-  `(D^G)^{-1/2}` is locally integrable by Thesis (2.5.1)).  For `p`-adic `F` these properties of `θ_f`
-  are also proved in Waldspurger, *Une formule intégrale reliée à la conjecture locale de
-  Gross–Prasad*, Compositio Math. 146 (2010), §5.3 (Lemme) and §5.9 (Corollaire).
+  `(D^G)^{-1/2}` is locally integrable by Thesis (2.5.1)).  For `p`-adic `F` these properties
+  of `θ_f` are also proved in Waldspurger, *Une formule intégrale reliée à la conjecture locale
+  de Gross–Prasad*, Compositio Math. 146 (2010), §5.3 (Lemme) and §5.9 (Corollaire).
 
 Normalization-insensitivity: rescaling the Haar measure on `G(F)` by `a > 0` and that on
 `G(F)/A_G(F)` by `b > 0` multiplies the right-hand side by `ab` and the left-hand side by `a`, so
@@ -71,10 +71,11 @@ the statement holds for `θ = b·θ_{f₀}`; a positive constant does not affect
 property. Hence the statement does not depend on any measure normalization, and the existential `θ`
 is BP's `θ_{f₀}` up to a positive constant fixed by `Measure.haar` on `G(F)/A_G(F)`.
 
-**Status: `sorry`, not a literature axiom.** `θ_{f₀}` is defined in BP §5.2 (after Waldspurger 2010,
-§5.3) through the weighted orbital integrals `J_{M(x)}(x, f₀)`, which are not defined in this
-development (nor are `Γ(G)` with its measure and `J_G`), so Thm 5.5.1(iv) and Prop 5.6.1(ii) cannot be
-stated verbatim here; this existential composite is not itself a statement of the source. -/
+**Status: `sorry`, not a literature axiom.** `θ_{f₀}` is defined in BP §5.2 (after Waldspurger
+2010, §5.3) through the weighted orbital integrals `J_{M(x)}(x, f₀)`, which are not defined in
+this development (nor are `Γ(G)` with its measure and `J_G`), so Thm 5.5.1(iv) and
+Prop 5.6.1(ii) cannot be stated verbatim here; this existential composite is not itself a
+statement of the source. -/
 theorem bp_thetaF_represents (d : GGPData F) (f₀ : ↥d.G → ℂ) (hf₀ : f₀ ∈ testFunctions ↥d.G)
     (hcusp : ∀ (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV), d.IsProperFlagPair FW FV →
       ∀ p ∈ d.whittB FW FV,
