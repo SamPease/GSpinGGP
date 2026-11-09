@@ -11,7 +11,7 @@ import GSpinGGP.Foundations.LocalGroups
 R. E. Kottwitz, *Harmonic analysis on reductive `p`-adic groups and Lie algebras*, in: Harmonic
 Analysis, the Trace Formula, and Shimura Varieties, Clay Math. Proc. 4 (2005), 393–522. Setting of §17
 (p. 459): "`F` is a `p`-adic field and `G` is a connected reductive `F`-group", with `G` also denoting
-`G(F)`; nilpotent orbits in `𝔤` are `G(F)`-orbits (§17.2, p. 459).
+`G(F)`; nilpotent orbits in `𝔤` are `G(F)`-orbits (§17.2, p. 460).
 
 **Application to a centralizer.** We apply §17.5 to the group `H = Z_G(s)⁰` for a semisimple
 `s ∈ G(F)`, `G = GSpin(W) × GSpin(V)`, not to `G` itself. Its hypotheses: `H` is a connected reductive
@@ -21,8 +21,11 @@ to the trace formula*, same volume, §16, p. 91), with Lie algebra
 `Lie(H) = Lie Z_G(s) = {X ∈ 𝔤 : Ad(s)X = X}` (Humphreys 1995, §1.10, Proposition: equality for
 semisimple `s`), i.e. `lieCentralizer d.lie s`. An element of `Lie(H)(F)` is nilpotent in `Lie(H)` iff it
 is nilpotent in the faithful representation `H ⊆ G ⊆ (C(W) × C(V))^×` (the Jordan decomposition in the
-Lie algebra of a linear algebraic group is preserved by representations). The element `h ∈ H(F)`
-given by the source is weakened to an element of `G(F)` commuting with `s`.
+Lie algebra of a linear algebraic group is preserved by morphisms, and a faithful representation detects
+it: Borel, *Linear Algebraic Groups*, I.4.4; for the closed subgroup `H ⊆ G` the Jordan decomposition
+in `Lie(H)` is that in `𝔤`). Likewise "`s` semisimple in `G`" is `IsSS`, semisimplicity in this
+faithful representation. The element `h ∈ H(F)` given by the source is weakened to an element of `G(F)`
+commuting with `s`.
 -/
 
 namespace GSpinGGP

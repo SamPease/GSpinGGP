@@ -1,5 +1,4 @@
 import GSpinGGP.Foundations.LocalGroups
-import GSpinGGP.Foundations.NilpotentLog
 import GSpinGGP.Foundations.RankSemicontinuity
 import GSpinGGP.Foundations.Determinant
 import GSpinGGP.Foundations.JHatTranslate
