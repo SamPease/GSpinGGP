@@ -51,7 +51,7 @@ Sources and derivation (`θ` is `θ_f` of BP / the Thesis, up to a positive cons
   = Thesis Thm 4.7.1(iv), stated in BP without proof (BP p. 116 defers it, with (ii), to
   its reference [18], in preparation; see `bp_integrable_kernel_scusp`).  For `p`-adic `F`,
   its equality with the spectral side (Thm 5.5.1(iv) = (v)) is proved in J. Arthur, *On
-  elliptic tempered characters*, Acta Math. 171 (1993), Thm 4.2 and Cor 4.3, pp. 104–105,
+  elliptic tempered characters*, Acta Math. 171 (1993), Thm 4.2 (p. 102) and Cor 4.3 (pp. 104–105),
   for cuspidal test functions (strongly cuspidal implies Arthur's cuspidality `f_L = 0`).
 * Weyl integration formula `∫_G φ dg = ∫_{Γ(G)} D^G(x)^{1/2} J_G(x,φ) dx`, with the measure on
   `Γ(G)` of BP §1.7 = Thesis §2.5 and `J_G` the normalized orbital integral of Thesis §2.6; it
