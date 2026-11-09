@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import Mathlib
 import TauCeti.RingTheory.Adjoin.Unit
+import TauCeti.Analysis.Normed.Algebra.NilpotentExponential
 
 /-!
 # Local fields and unbundled linear groups
@@ -823,6 +824,36 @@ theorem expA_units_conj (u : Aˣ) (X : A) :
   rw [c.map_tsum]
   congr 1; ext n
   rw [map_smul, hc, hc, Units.conj_pow]
+
+/-- **The logarithm of a unipotent element**: if `x` is nilpotent, `N = log (1 + x)` (Tau Ceti
+`IsNilpotent.log`) is nilpotent, lies in `F[x]`, and `e^{kN} = (1 + x)ᵏ` for every `k ∈ ℕ`
+(`IsNilpotent.exp_log`; on nilpotents `expA` is the finite exponential,
+`IsNilpotent.normedSpace_exp_eq_exp`). -/
+theorem exists_expA_nsmul_eq_one_add_pow {x : A} {n : ℕ} (hx : x ^ n = 0) :
+    ∃ N : A, N ∈ Algebra.adjoin F {x} ∧ N ^ n = 0 ∧
+      ∀ k : ℕ, expA F ((k : F) • N) = (1 + x) ^ k := by
+  letI : Algebra ℚ A := Algebra.compHom A (algebraMap ℚ F)
+  let _ := isTopologicalRing_of_moduleTopology F A
+  have hsmul : ∀ (q : ℚ) (a : A), q • a = (algebraMap ℚ F q) • a := fun _ _ => rfl
+  have h1 : (1 + x) - 1 = x := add_sub_cancel_left 1 x
+  have hx' : ((1 + x) - 1) ^ n = 0 := by rw [h1]; exact hx
+  set N := IsNilpotent.log (1 + x)
+  have hN : N ^ n = 0 := IsNilpotent.pow_log_eq_zero hx'
+  refine ⟨N, ?_, hN, fun k => ?_⟩
+  · rw [show N = _ from IsNilpotent.log_eq_sum hx', h1]
+    refine Subalgebra.sum_mem _ fun i _ => ?_
+    rw [hsmul]
+    exact Subalgebra.smul_mem _ (Subalgebra.pow_mem _ (Algebra.self_mem_adjoin_singleton F x) _) _
+  · have hkN : IsNilpotent ((k : F) • N) := ⟨n, by rw [smul_pow, hN, smul_zero]⟩
+    have he : expA F ((k : F) • N) = IsNilpotent.exp ((k : F) • N) :=
+      IsNilpotent.normedSpace_exp_eq_exp hkN
+    rw [he, Nat.cast_smul_eq_nsmul, ← IsNilpotent.exp_log (a := 1 + x) ⟨n, hx'⟩]
+    clear he hkN
+    induction k with
+    | zero => rw [zero_nsmul, IsNilpotent.exp_zero, pow_zero]
+    | succ k ih =>
+      rw [succ_nsmul, IsNilpotent.exp_add_of_commute ((Commute.refl N).smul_left k)
+        (IsNilpotent.smul ⟨n, hN⟩ k) ⟨n, hN⟩, ih, pow_succ]
 
 end Exp
 
