@@ -13,15 +13,18 @@ J.-L. Waldspurger, *Une formule intégrale reliée à la conjecture locale de Gr
 characteristic `0` (§1.1, p. 5) and "un groupe réductif connexe `G`" fixed for §§2–6 (§2.1, p. 7); here
 `G = GSpin(W) × GSpin(V)` (`d.G`), which is connected reductive. A *`G`-domaine* of `G(F)` or `𝔤(F)` is an
 open, closed, conjugation-invariant subset (§1.2, p. 6); "compact modulo conjugaison" means contained
-in `Γ^G` for a compact `Γ` (§1.1, stated on `G(F)`; on `𝔤(F)` it is the same definition for the adjoint
-action). We use §3.1 at `x = 1`, where `G_x = Z_G(x) = G` and `𝔤_x = 𝔤 = gspin(W) × gspin(V)` (`d.lie`).
+in `Γ^G` for a compact `Γ` (§1.1, p. 6, stated on `G(F)`; on `𝔤(F)` it is the same definition for the
+adjoint action). We use §3.1 at `x = 1`, where `G_x = Z_G(x) = G` and `𝔤_x = 𝔤(F)`. Here `𝔤(F)` is
+`d.lie = gspin(W) × gspin(V)`, with `gspin(U) = {X ∈ C⁰(U) : [X, U] ⊆ U} = F ⊕ ∧²U` the Lie algebra of
+`GSpin(U)` (Thesis §5.1.3).
 
 **Modelling step (not in the source).** Waldspurger's exponential ("On sait que l'on peut définir une
 application exponentielle", §1.2, p. 6) is not defined there. We identify it with the exponential
 series `expA` of the ambient algebra `C(W) × C(V)`, through which `G ⊆ (C(W) × C(V))^×` is a faithful
 linear representation: near `0` the exponential of a linear algebraic group is the exponential series of
-any faithful representation (Bourbaki, *Lie groups and Lie algebras*, Ch. III), and both are
-`G(F)`-equivariant (`expA_units_conj`), so they agree on the `G`-domains of the source.
+a faithful representation (Bourbaki, *Lie groups and Lie algebras*, Ch. III), say on a neighbourhood
+`U` of `0`. Apply the source to `ω₀ ∩ U ∩ 𝔤(F)`: every `X ∈ ω` is `g Y g⁻¹` with `Y ∈ ω₀ ∩ U`, and both
+exponentials are `G(F)`-equivariant (`expA_units_conj`), so they agree at `X`.
 -/
 
 open Topology
@@ -37,7 +40,8 @@ proof), together with conditions (1) and (2) of a good neighbourhood (p. 13): (1
 `𝔤(F)`, compact modulo conjugation, containing `0`; (2) the exponential is defined on `ω` and is a
 homeomorphism of `ω` onto a `G`-domain `exp(ω)` of `G(F)` (equivariant; here `expA_units_conj`).
 Conditions (3)–(7) are not stated. Here `ω₀` is a neighbourhood of `0` in the ambient algebra (apply the
-source to `ω₀ ∩ 𝔤(F)`), and `exp` is `expA` (see the module docstring for this identification). -/
+source to `ω₀ ∩ U ∩ 𝔤(F)`, `U` as in the module docstring), and `exp` is `expA` (see the module
+docstring for this identification). -/
 axiom waldspurger_goodNbhd_one (d : GGPData F) {ω₀ : Set d.ambient}
     (hω₀ : ω₀ ∈ 𝓝 (0 : d.ambient)) :
     ∃ (ω : Set d.ambient) (Ω : Set ↥d.G),

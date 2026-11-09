@@ -22,7 +22,7 @@ Both concern `IsInvariantClopen` sets: open, closed, invariant and `A_G(F)`-stab
 * `hc_exists_invariantClopen_superset` (`sorry`, adapted): every compact subset lies in such a set that
   is compact modulo conjugation and `A_G(F)`. Planned route: Waldspurger §3.1 at every semisimple `x`,
   the Jordan decomposition `c = s exp(N)`, `N ∈ ω_s` because `α²O = O` for nilpotent orbits (Kottwitz,
-  Clay Proc. 4, §17.5, p. 461, for `G_s`), a finite cover of the compact set, and `A_G(F)`-saturation.
+  Clay Proc. 4, §17.5, p. 461, applied to `G_s`), a finite cover of the compact set, and `A_G(F)`-saturation.
   (Beuzart-Plessis's characterization of compactness modulo conjugation, Astérisque 418 §1.7, is stated
   without proof for general connected groups and is not used.)
 
@@ -40,8 +40,8 @@ namespace GSpinGGP
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
 /-- **Compactness modulo conjugation, `p`-adic open-and-closed form** (BP Astérisque 418 Prop 3.1.1(i)
-= Thesis Prop 3.5.1(i), adapted; see the module docstring for the planned argument).  Every compact `C ⊆ G(F)` is contained in a subset `Ω` that is open and
-closed, conjugation invariant and `A_G(F)`-stable (`IsInvariantClopen`), and compact modulo
+= Thesis Prop 3.5.1(i), adapted; see the module docstring for the planned argument).  Every
+compact `C ⊆ G(F)` is contained in a subset `Ω` that is open and closed, conjugation invariant and `A_G(F)`-stable (`IsInvariantClopen`), and compact modulo
 conjugation and `A_G(F)`: `Ω ⊆ A_G(F) · C'^{G(F)}` for a compact `C'`.  (In
 `TraceFormula/Geometric.lean` terms: `C` lies in a set of the projective system `IsQCCutoff`.)
 
@@ -54,7 +54,6 @@ theorem hc_exists_invariantClopen_superset (d : GGPData F) {C : Set ↥d.G} (hC 
         ∀ g ∈ Ω, ∃ (a : ↥d.AG) (x c : ↥d.G), c ∈ C' ∧ g = (a : ↥d.G) * (x * c * x⁻¹) := by
   sorry
 
-
 /-! ## `A_G(F)`-saturation of `G`-domains -/
 
 namespace GGPData
@@ -62,31 +61,16 @@ namespace GGPData
 variable (d : GGPData F)
 
 /-- The elements of `A_G(F)` with `H_G` in a finite set form a compact set (finitely many cosets of
-the compact `A_G(F) ∩ ker H_G`, `isCompact_AG_inter_ker_hcG`). -/
+the compact `A_G(F) ∩ ker H_G`; `isCompact_preimage_hcA`). -/
 theorem isCompact_AG_inter_hcG_mem {R : Set HCVal} (hR : R.Finite) :
     IsCompact ((d.AG : Set ↥d.G) ∩ {g | d.hcG g ∈ R}) := by
-  classical
-  have hK := d.isCompact_AG_inter_ker_hcG
-  have : (d.AG : Set ↥d.G) ∩ {g | d.hcG g ∈ R} ⊆
-      ⋃ r ∈ R, if h : ∃ b ∈ (d.AG : Set ↥d.G), d.hcG b = r then
-        (fun g => h.choose * g) '' ((d.AG : Set ↥d.G) ∩ {g | d.hcG g = 1}) else ∅ := by
-    rintro a ⟨ha, haR⟩
-    refine Set.mem_biUnion haR ?_
-    have h : ∃ b ∈ (d.AG : Set ↥d.G), d.hcG b = d.hcG a := ⟨a, ha, rfl⟩
-    rw [dif_pos h]
-    obtain ⟨hb, hbr⟩ := h.choose_spec
-    refine ⟨h.choose⁻¹ * a, ⟨d.AG.mul_mem (d.AG.inv_mem hb) ha, ?_⟩, by group⟩
-    change d.hcG (h.choose⁻¹ * a) = 1
-    rw [map_mul, map_inv, hbr, inv_mul_cancel]
-  refine IsCompact.of_isClosed_subset ?_ ?_ this
-  · refine hR.isCompact_biUnion fun r _ => ?_
-    split_ifs
-    · exact hK.image (continuous_const.mul continuous_id)
-    · exact isCompact_empty
-  · have e : {g | d.hcG g ∈ R} = ⋃ r ∈ R, d.hcG ⁻¹' {r} := by ext; simp
-    rw [e]
-    exact d.isClosed_AG.inter
-      (hR.isClosed_biUnion fun r _ => (d.isLocallyConstant_hcG.isClopen_fiber r).isClosed)
+  have e : (d.AG : Set ↥d.G) ∩ {g | d.hcG g ∈ R} = Subtype.val '' (d.hcA ⁻¹' R) := by
+    ext g
+    constructor
+    · rintro ⟨hg, hgR⟩; exact ⟨⟨g, hg⟩, hgR, rfl⟩
+    · rintro ⟨a, ha, rfl⟩; exact ⟨a.2, ha⟩
+  rw [e]
+  exact (d.isCompact_preimage_hcA hR).image continuous_subtype_val
 
 /-- **`A_G(F)`-saturation preserves closedness** for a closed set `Ω₀` contained in the conjugates of
 a compact `K`: near any point, `H_G` (locally constant, conjugation invariant) confines the
@@ -150,7 +134,7 @@ theorem isClosed_of_subset_lie {ω : Set d.ambient} (hωlie : ω ⊆ d.lie)
   haveI : ContinuousSMul F d.ambient := IsModuleTopology.toContinuousSMul F d.ambient
   have hlie : IsClosed (d.lie : Set d.ambient) :=
     Submodule.closed_of_finiteDimensional (LieSubalgebra.toSubmodule d.lie)
-  have := (hlie.isClosedEmbedding_subtypeVal).isClosedMap _ hωc
+  have := hωc.trans hlie
   convert this using 1
   ext X
   constructor
@@ -196,10 +180,7 @@ theorem exists_compact_conj_of_expHomeo (hωlie : ω ⊆ d.lie)
 /-- `exp(0) = 1` lies in `Ω`. -/
 theorem one_mem_of_expHomeo (h0ω : (0 : d.ambient) ∈ ω) : (1 : ↥d.G) ∈ Ω := by
   have h := he ⟨0, h0ω⟩
-  have hz : expA F (0 : d.ambient) = 1 := by
-    letI := isTopologicalRing_of_moduleTopology F d.ambient
-    exact NormedSpace.exp_zero
-  rw [show ((⟨0, h0ω⟩ : ↥ω) : d.ambient) = 0 from rfl, hz] at h
+  rw [show ((⟨0, h0ω⟩ : ↥ω) : d.ambient) = 0 from rfl, expA_zero_eq_one] at h
   have : ((e ⟨0, h0ω⟩ : ↥Ω) : ↥d.G) = 1 := Subtype.ext (Units.ext h)
   rw [← this]; exact (e ⟨0, h0ω⟩).2
 
