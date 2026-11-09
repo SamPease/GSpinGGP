@@ -9,9 +9,10 @@ import GSpinGGP.TraceFormula.InvariantSets
 # Degenerate check of the two statements of `TraceFormula/InvariantSets.lean`
 
 At the smallest triple `toyD` (`W = 0`, `V` a line) the split centre is everything
-(`toyD_AG_eq_top`), and both conclusions are proved here *without* the axioms, with `Ω = G(F)`:
-the instances are consistent.  (Hyperbolic-plane triples, where `G(F)` is a split torus: see the
-module docstring of `TraceFormula/InvariantSets.lean`.)
+(`toyD_AG_eq_top`), and both conclusions are proved here directly (without `sorry` or the
+literature), with `Ω = G(F)`: the instances are consistent.  (For hyperbolic-plane triples, where
+`G(F)` is a split torus, `Ω = A_G(F) · K` with `K` a compact open subgroup works: it is open, and
+closed as the product of a closed subgroup and a compact set.)
 -/
 
 noncomputable section

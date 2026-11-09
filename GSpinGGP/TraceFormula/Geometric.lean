@@ -650,7 +650,8 @@ conjugation and `A_G(F)`), so it vanishes on the regular elements of
 containing the closure of `A_G(F) c^{G(F)}` (all `a u`, `u` unipotent); inside `V` take
 `Ω = A_G(F) · a₀ exp(ω)` with `c ∈ a₀ exp(ω)` and `ω` a small `G(F)`-excellent compact open
 neighbourhood of `0` in `𝔤(F)` (BP §3.3), which is open and closed.
-Status: **proved** from the cited `hc_exists_invariantClopen_nearCentral`
+Status: **proved** from `hc_exists_invariantClopen_nearCentral` (itself proved from Waldspurger 2010
+§3.1, `waldspurger_goodNbhd_one`)
 (`TraceFormula/InvariantSets.lean`: an invariant clopen `Ω` containing the near-central set, every
 element of which is conjugate into `U` modulo `A_G(F)`) and the invariance and `A_G(F)`-equivariance
 of `θ` on `G_reg(F)` (the invariance is part of the quasi-character property, for some `ψ`:
