@@ -40,9 +40,11 @@ namespace GSpinGGP
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
 /-- **The multiplicity of an induced representation is that of its class in `R_temp`**
-(Harish-Chandra; see Waldspurger, *La formule de Plancherel pour les groupes `p`-adiques d'après
-Harish-Chandra*, J. Inst. Math. Jussieu 2 (2003), §III.4 and §VII (numbers unverified); BP §2.2,
-§2.7).  For `P` proper and `σ` tempered with central character `η`, `i_P^G(σ)` is a finite
+(Harish-Chandra; BP §2.2, §2.7).  Finite length of `i_P^G(σ)` for `σ` admissible of finite length:
+Casselman, *Introduction to the theory of admissible representations of `p`-adic reductive groups*
+(1995 notes), Corollary of the Corollary 6.3.8, p. 60; Renard, *Représentations des groupes
+réductifs `p`-adiques*, VI.5.4.  Linear independence of the characters of inequivalent irreducible
+admissible representations: Casselman, Prop. 2.3.1, p. 25; Renard III.1.13.  For `P` proper and `σ` tempered with central character `η`, `i_P^G(σ)` is a finite
 orthogonal sum `⊕ n_c π_c` of irreducible tempered representations, each with central character
 `η` on `A_G(F)`.  If a virtual representation `Π ∈ R_temp(G, η)` has the character of `i_P^G(σ)` on
 `G_reg(F)`, then `Π = Σ n_c [π_c]` (Harish-Chandra's linear independence of the characters of
@@ -89,8 +91,12 @@ theorem vanDijk_charG_parInd_ell (d : GGPData F) (η : CentralCharOn d) (D : d.P
   sorry
 
 /-- **Virtual representations with vanishing elliptic character are properly induced**
-(J. Arthur, *On elliptic tempered characters*, Acta Math. 171 (1993), 73–138, §6 (orthogonality
-relations for elliptic tempered characters; theorem numbers unverified); BP §2.7, (2.7.1):
+(J. Arthur, *On elliptic tempered characters*, Acta Math. 171 (1993), 73–138: the virtual
+characters `Θ(τ)`, `τ ∈ T(G)`, form a basis of the virtual tempered characters (p. 93); for
+`τ ∉ T_ell(G)`, `Θ(τ)` is a combination of induced characters and vanishes on the elliptic set
+(p. 117); Thm 6.1 and Cor 6.2, pp. 113–114: orthogonality of `Θ(τ)`, `Θ(τ')` for the elliptic inner
+product when `τ, τ' ∈ T_ell(G)` have the same central character on `A_G(F)` and lie in different
+`(Z_τ × ia*_G)`-orbits; BP §2.7, (2.7.1), p. 55:
 `R_temp(G) = R_ind(G) ⊕ R_ell(G)`, with `R_ell(G)` spanned by the elliptic representations
 `𝒳_ell(G)`, whose characters are orthogonal, hence linearly independent, for the elliptic inner
 product; transported to the `χ`-equivariant setting).  Write `Π = Π_ind + Σ c_π π`
@@ -106,8 +112,11 @@ parabolic subgroup, `Rind = 0`): the statement says `θ_Π = 0` on `G_reg(F)` im
 the linear independence of characters.
 
 **Status: `sorry`, not a literature axiom** (the statement is not verbatim in a source). Adapted: BP
-(2.7.1) and Arthur's orthogonality relations are for virtual tempered representations without a
-fixed central character; this is the `η`-equivariant form. -/
+(2.7.1) is for virtual tempered representations without a fixed central character; Arthur's
+orthogonality (Cor 6.2) is stated for a fixed central character but only up to the
+`(Z_τ × ia*_G)`-orbits, so the `η`-equivariant form also needs the linear independence on the
+elliptic set of the unramified twists within one orbit (`H_G` takes finitely many values on
+`G_ell(F)/A_G(F)`). -/
 theorem arthur_mem_Rind_of_vChar_ell (d : GGPData F) (η : CentralCharOn d) (P : VirtualTemp d η)
     (hP : ∀ x ∈ d.ellRegSet, vChar d P x = 0) : P ∈ d.Rind η := by
   sorry

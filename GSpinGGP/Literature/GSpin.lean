@@ -345,12 +345,13 @@ For every GGP datum `d`, nontrivial additive character `ψ`, and irreducible tem
 representation `π` of `G(F)`, `m(π) = dim Hom_{H(F)}(π^∞, ξ) ≤ 1`.
 
 Source: Pan Yan, *Uniqueness of Bessel models for GSpin groups*, Nagoya Math. J. (2026),
-arXiv:2503.20116, Thm 1.1: for a nondegenerate quadratic space `V` over a local field of
+arXiv:2503.20116, Thm 1.1, p. 2: for a nondegenerate quadratic space `V` over a local field of
 characteristic `0`, a nondegenerate `V₀ ⊂ V` with `V₀^⊥` split of dimension `2r + 1`, the Bessel
 subgroup `H = N_{Q_r} ⋊ GSpin(V₀)` of `GSpin(V) × GSpin(V₀)` and a generic character `ξ` of `H`,
 `dim Hom_H(π ⊗ π₀, ξ) ≤ 1` for all irreducible admissible `π`, `π₀`.  There is no quasi-split
 hypothesis, so inner forms are covered.  Here `(V₀, V) = (W, V)`.  The case `r = 0` is
-Emory–Takeda, *Contragredients and a multiplicity one theorem for general spin groups*, Thm 1.3.
+Emory–Takeda, *Contragredients and a multiplicity one theorem for general spin groups*, Math. Z. 303
+(2023), Thm 1.1 (arXiv:2104.04814v4, p. 2).
 Dictionary: an irreducible unitary representation of the `p`-adic group `G(F)` has irreducible
 admissible smooth part (Bernstein 1974), of the form `π ⊗ π₀`; all linear forms on it are
 continuous.  The instances on `↥d.G` are the layer-1 theorems of
