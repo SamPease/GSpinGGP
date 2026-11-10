@@ -52,8 +52,6 @@ As of November 2026:
   the axioms on characters and on multiplicity one are stated for irreducible unitary
   representations, where the sources have irreducible admissible smooth ones (the passage between
   the two is standard and is not yet a separate citation);
-  `rodier_germ_one` is assumed in every residue characteristic, as Beuzart-Plessis states it,
-  while the proofs he cites assume it odd;
   `bp_integrable_kernel_scusp` is stated without proof in its source;
   and the Galois-cohomology axioms are applied to groups of `F̄`-points whose description as
   algebraic groups (and, for Kottwitz's lemma, as a fundamental maximal torus) is argued in the
