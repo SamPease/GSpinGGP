@@ -74,16 +74,30 @@ $\GSpin(U)(F)$ (Cartan--Dieudonn\'e), so $\Delta=1$. (The thesis takes unimodula
 \end{proof}
 
 \begin{literature}[Weil's quotient-measure formula]
-\label{LIT-weil_quotient}
-\lean{GSpinGGP.weil_quotient}
+\label{LIT-weil_quotient_radon}
+\lean{GSpinGGP.weil_quotient_radon}
 \leanok
 Let $S\hookrightarrow\Gamma$ be a closed embedding of unimodular locally compact, Hausdorff, second countable
-groups with Haar measures $\mu,\nu$. There is a unique measure $m$ on $S\backslash\Gamma$ with
+groups with Haar measures $\mu,\nu$. There is a measure $m$ on $S\backslash\Gamma$ with
 $\int_\Gamma\varphi\,d\nu=\int_{S\backslash\Gamma}\int_S\varphi(sq)\,d\mu(s)\,dm(q)$ for all
-$\varphi\in C_c(\Gamma)$. (Used for $H(F)/A_{G,H}(F)\subset G(F)/A_G(F)$, Thesis \S7.1.)
+$\varphi\in C_c(\Gamma)$, unique among the measures finite on compact sets (the Radon measures).
+(Used for $H(F)/A_{G,H}(F)\subset G(F)/A_G(F)$, Thesis \S7.1.)
 
 \assumedfrom{Bourbaki, \emph{Int\'egration} VII \S2; \cite{Folland}, Thm.~2.49}
 \end{literature}
+
+\begin{theorem}[Uniqueness of the Weil measure]
+\label{weil_quotient}
+\lean{GSpinGGP.weil_quotient}
+\leanok
+\uses{LIT-weil_quotient_radon}
+The measure $m$ of Literature~\ref{LIT-weil_quotient_radon} is unique among all Borel measures.
+\end{theorem}
+\begin{proof}
+\leanok
+Any measure satisfying the formula is finite on compact sets: lift a compact set to $\Gamma$ and test the formula
+on a bump function that is $1$ on a neighbourhood of the lift.
+\end{proof}
 
 \begin{literature}[Integration over $G=PK$]
 \label{LIT-integral_eq_mul_integral_compact_integral}
