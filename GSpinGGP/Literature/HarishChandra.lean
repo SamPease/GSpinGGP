@@ -354,9 +354,13 @@ Mœglin–Waldspurger, *Modèles de Whittaker dégénérés pour des groupes p-a
 1987), Thm I.16 and Cor I.17; BP Astérisque 418, Prop 4.8.1(i).
 
 **Residue characteristic.** BP states Prop 4.8.1(i) for every `p`-adic field, and so does this
-axiom. The proofs BP cites are narrower: Mœglin–Waldspurger assume the residue characteristic is
-not `2` (their introduction), and Rodier treats split groups. So for residue characteristic `2`
-the axiom rests on BP's statement alone.
+axiom. Mœglin–Waldspurger assume the residue characteristic is not `2` (their introduction), and
+Rodier treats split groups. The remaining case is S. Varma, *On a result of Moeglin and
+Waldspurger in residual characteristic 2*, Math. Z. 277 (2014), doi:10.1007/s00209-014-1292-8,
+Thm 1: for `F` `p`-adic of any residue characteristic, `G` connected reductive and `π` smooth of
+finite length, the maximal orbits with `c_O ≠ 0` are the maximal orbits carrying a nonzero space
+of degenerate Whittaker forms, and for such `O` the coefficient `c_O` is the dimension of that
+space. A regular nilpotent orbit is maximal, so `c_O` is that dimension (`0` if the space is `0`).
 
 The identity is passed as `x` with `hx : x = 1`, so that the orbit type
 `NilOrbit (grpCentralizer d.G x) (lieCentralizer d.lie x)` matches whatever form of `1` the
