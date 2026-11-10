@@ -5,23 +5,26 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import GSpinGGP.TraceFormula.Scusp
 import GSpinGGP.TraceFormula.Geometric
 import GSpinGGP.TraceFormula.LieAlgebra
+import GSpinGGP.TraceFormula.LuoTransfer
 import GSpinGGP.Literature.Fourier
 
 /-!
 # The geometric expansion near `1`, via the Lie algebra
 
 The statement `geomAt_near` is the interface consumed
-by `Spine.lean`.  It fuses Thesis Prop 12.4.1 (descent to `𝔤⁰` near `1`), Prop 12.5.1,
-the endgame (Thesis §12.5) and Thm 12.2.2 (`J^Lie = J^Lie_geom`): the group-side
+by `Spine.lean`.  It fuses Thesis Prop 12.4.1 (descent to `𝔤⁰` near `1`) and Thm 12.2.2
+(`J^Lie = J^Lie_geom`, here from Luo Thm 7.3.3 for the special orthogonal triple): the group-side
 consequence "the geometric expansion holds for test functions supported near `A_G(F)`".
 
 The Lie-algebra definitions (`𝔤⁰`, `𝔥⁰`, `J^Lie`, `θ_f` on `𝔤⁰`, germs, `m^Lie_geom`) and the two
 cited theorems Thesis Thm 11.6.1 (`jLie_eq_of_thetaFLie_eqOn`) and the endgame of Thesis §12.5
 (`lie_endgame`) are in `TraceFormula/LieAlgebra.lean`; they exclude a hyperbolic-plane factor.
+They belong to the thesis's route to Thm 12.2.2, which `geomAt_near` no longer uses.
 This file holds:
 * §1 `jqcLie`: `J^Lie_qc` on the `θ_f` (Prop 12.4.1(ii)), well defined by Thesis Thm 11.6.1;
 * §2 Prop 12.5.1 (`prop_11_8_1_of_jqc`, SORRY; `prop_11_8_1`) and Thm 12.2.2 on `𝔤⁰`
-  (`distribJLie_eq_mGeomLie`, from Prop 12.5.1 and the endgame);
+  (`distribJLie_eq_mGeomLie`, from Luo Thm 7.3.3 for the special orthogonal triple through
+  `TraceFormula/LuoTransfer.lean`; Prop 12.5.1 and the endgame are the thesis's route, not used);
 * §3 the descent from `G` to `𝔤⁰` near `1` (`exists_lie_descent`, SORRY; Prop 12.4.1(i) and
   Prop 12.1.1(iv));
 * §4 the triples with a hyperbolic-plane factor (`geomAt_near_of_isHypPlane_V`, elementary, proved
@@ -125,17 +128,15 @@ theorem prop_11_8_1 (h : HYP ψ d) (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane
     (fun _ hf hθ => distribJLie_eq_jqcLie ψ d hW hV hf hθ) (fun _ _ he => jqcLie_congr ψ d he)
 
 /-- **Thesis Thm 12.2.2 on `𝔤⁰`: `J^Lie = J^Lie_geom`**,
-for triples without a hyperbolic-plane factor: Prop 12.5.1 and the endgame of Thesis §12.5
-(`lie_endgame`, all `c_O = 0`). -/
+for triples without a hyperbolic-plane factor.  Proved from Luo Thm 7.3.3 for the special
+orthogonal triple (the literature axiom `luo_lie_geomExpansion_SO`) and the identification of
+`𝔤⁰` with `so(W) ⊕ so(V)` (`distribJLie_eq_mGeomLie_of_luo`, `TraceFormula/LuoTransfer.lean`);
+the induction hypothesis `h` is not needed on this route.  (The thesis's own route, Prop 12.5.1
+and the endgame of §12.5, is `prop_11_8_1` with `lie_endgame`.) -/
 theorem distribJLie_eq_mGeomLie (h : HYP ψ d) (hW : ¬ IsHypPlane d.QW)
     (hV : ¬ IsHypPlane d.QV) {f : ↥d.lieZero → ℂ} (hf : d.IsLieScusp f) :
-    d.distribJLie ψ f = d.mGeomLie ψ (d.thetaFLie ψ f) := by
-  obtain ⟨c, hc⟩ := prop_11_8_1 ψ d h hW hV
-  have h0 := lie_endgame d ψ hW hV c hc
-  have hs : ∑ᶠ O ∈ NilReg0 d, c O * d.germLie0 ψ (d.thetaFLie ψ f) 0 O = 0 := by
-    rw [finsum_mem_congr rfl (fun O hO => by rw [h0 O hO, zero_mul])]
-    simp
-  exact sub_eq_zero.mp ((hc f hf).trans hs)
+    d.distribJLie ψ f = d.mGeomLie ψ (d.thetaFLie ψ f) :=
+  d.distribJLie_eq_mGeomLie_of_luo ψ hW hV hf
 
 /-! ## 3. Descent from `G` to `𝔤⁰` near `1` (Thesis Prop 12.4.1(i), Prop 12.1.1(iv)) -/
 
@@ -1261,18 +1262,16 @@ theorem geomAt_near_of_isHypPlane_W (h : HYP ψ d) (hW : IsHypPlane d.QW) (χ : 
 
 /-! ## Interface statement -/
 
-/-- **The geometric expansion near `A_G(F)`** (Thesis Prop 12.4.1 and Thm 12.2.2, with
-Prop 12.5.1 and the endgame of Thesis §12.5).
+/-- **The geometric expansion near `A_G(F)`** (Thesis Prop 12.4.1 and Thm 12.2.2).
 Assume (HYP).  For every central character `χ` there is an invariant clopen `Ω ∋ 1`
 (`A_G(F)·exp(ω)` for a `G(F)`-excellent compact open `ω ∋ 0` in `𝔤(F)`) such that
 `J(f) = m_geom(θ_f)` for every `f ∈ ScuspTestFn d χ` supported in `Ω`.
 
 Derivation: for `f` supported in `Ω`, `J(f) = J^Lie((j_G^H)^{1/2} f_ω)` (Prop 12.4.1(i)), and
-`J^Lie = J^Lie_geom` on `𝔤⁰` (Thm 12.2.2, from Prop 12.5.1, the spectral expansion of `J^Lie`
-and the vanishing of the `c_O`), and `J^Lie_geom` corresponds to `m_geom` near `1`
+`J^Lie = J^Lie_geom` on `𝔤⁰` (Thm 12.2.2, from Luo Thm 7.3.3 for `SO(W) × SO(V)`), and `J^Lie_geom` corresponds to `m_geom` near `1`
 (Prop 12.1.1(iii)).  Status: proved, by cases: `V` a hyperbolic plane
 (`geomAt_near_of_isHypPlane_V`), `W` a hyperbolic plane (`geomAt_near_of_isHypPlane_W`), otherwise
-`exists_lie_descent` and `distribJLie_eq_mGeomLie` (Prop 12.5.1 with Thesis Thm 11.6.1, and the endgame). -/
+`exists_lie_descent` and `distribJLie_eq_mGeomLie` (Luo Thm 7.3.3, transported to `𝔤⁰`). -/
 theorem geomAt_near (h : HYP ψ d) (χ : CentralCharOn d) :
     ∃ Ω : Set ↥d.G, IsInvariantClopen d Ω ∧ (1 : ↥d.G) ∈ Ω ∧
       ∀ f ∈ ScuspTestFn d χ, Function.support f ⊆ Ω →
