@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.TraceFormula.LieAlgebra
 import GSpinGGP.Literature.Luo
+import GSpinGGP.Literature.Fourier
+import GSpinGGP.TraceFormula.SelfDual
 
 /-!
 # From the special orthogonal triple to `𝔤⁰`: `J^Lie = m^Lie_geom(θ_f)`
@@ -273,7 +275,8 @@ variable (ψ : NontrivialAddChar F)
 
 /-- **(L4) `J^Lie` of `d` is Luo's `J^Lie`** for `muG`, a Haar measure `μH` on `H̄(F)`, the
 `exp`-compatible `μ_𝔥` and the quotient measure: `H(F)/A_{G,H}(F) ≃ H̄(F)` (Hilbert 90 and
-`ker P ∩ H = A_{G,H}`, through `quotHG_equiv_SO`), `ad : 𝔥⁰ ≃ 𝔥 = so(W) ⊕ 𝔫`, `λ` (`lam_toSO`), `measH0` and `weilMeasureHG` push forward to an `exp`-compatible pair and its Weil
+`ker P ∩ H = A_{G,H}`, through `quotHG_equiv_SO`), `ad : 𝔥⁰ ≃ 𝔥 = so(W) ⊕ 𝔫`, `λ` (`lam_toSO`),
+`measH0` and `weilMeasureHG` push forward to an `exp`-compatible pair and its Weil
 measure (independence of the `exp`-compatible pair), and change of variables.  Not proved here. -/
 theorem exists_JLie_transfer (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) :
     ∃ (μH : Measure ↥d.luoOf.Hbar) (μ𝔥 : Measure ↥d.luoOf.lieH)
@@ -301,11 +304,59 @@ theorem isThetaFLie_of_SO (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
     d.IsThetaFLie ψ f (θ ∘ d.toSO) := by
   sorry
 
+/-- `b(X, Z) = 0` for `X ∈ 𝔤⁰` and `Z` in the centre `𝔷 = F(1,0) ⊕ F(0,1)`:
+`b(X, (1,0)) = tr(L_{X_W})` and `b(X, (0,1)) = tr(L_{X_V})`, which vanish on the traceless part. -/
+theorem bilin_lie0_lieCenter {X Z : d.ambient} (hX : X ∈ d.lie0) (hZ : Z ∈ d.lieCenter) :
+    d.bilin X Z = 0 := by
+  rw [lieCenter, Submodule.mem_span_pair] at hZ
+  obtain ⟨a, b, rfl⟩ := hZ
+  have h1 : d.bilin X ((1 : CliffordAlgebra d.QW), (0 : CliffordAlgebra d.QV)) = 0 := by
+    rw [bilin_apply, trace_mulLeft_prod]
+    have e1 := (mem_soSub.mp hX.1).2
+    unfold cliffTrace at e1
+    simp [e1]
+  have h2 : d.bilin X ((0 : CliffordAlgebra d.QW), (1 : CliffordAlgebra d.QV)) = 0 := by
+    rw [bilin_apply, trace_mulLeft_prod]
+    have e2 := (mem_soSub.mp hX.2).2
+    unfold cliffTrace at e2
+    simp [e2]
+  rw [map_add, map_smul, map_smul, h1, h2, smul_zero, smul_zero, add_zero]
+
+/-- **The trace form is nondegenerate on `𝔤⁰`** (Thesis §2.4): `𝔤 = 𝔷 ⊕ 𝔤⁰` with `𝔷 ⊥ 𝔤⁰`, and the
+form is nondegenerate on `𝔤` (`bilin_nondegenerate_lie`). -/
+theorem restrictForm_lieZero_nondegenerate :
+    (restrictForm d.lieZero d.bilin).Nondegenerate := by
+  have hL : ∀ X : ↥d.lieZero, (∀ Y : ↥d.lieZero, restrictForm d.lieZero d.bilin X Y = 0) →
+      X = 0 := by
+    intro X hX
+    refine Subtype.ext (d.bilin_nondegenerate_lie X (d.lieZero_le_lie X.2) fun Y hY => ?_)
+    have hY' : Y ∈ d.lieCenter ⊔ d.lie0 := by rw [← lie_eq_center_sup_lie0]; exact hY
+    obtain ⟨Z, hZ, Y₀, hY₀, rfl⟩ := Submodule.mem_sup.mp hY'
+    rw [map_add, d.bilin_lie0_lieCenter X.2 hZ, zero_add]
+    exact hX ⟨Y₀, hY₀⟩
+  refine ⟨hL, fun Y hY => hL Y fun X => ?_⟩
+  have := hY X
+  simp only [restrictForm, LinearMap.compl₁₂_apply] at this ⊢
+  rw [ggp_bilin_symm]; exact this
+
+/-- A self-dual measure exists on `𝔤⁰` (from the existence of self-dual Haar measures, for the
+nondegenerate trace form). -/
+theorem exists_isSelfDual_lieZero : ∃ μ, IsSelfDual μ (restrictForm d.lieZero d.bilin) ψ := by
+  have := t2Space_of_moduleTopology F d.ambient
+  exact exists_isSelfDual_of_isInducing d.lieZero.incl.toLinearMap IsInducing.subtypeVal
+    Subtype.val_injective _ d.restrictForm_lieZero_nondegenerate ψ
+
+/-- `measLie0` is a Haar measure on `𝔤⁰` (not the junk value `0`). -/
+theorem isAddHaarMeasure_measLie0 : (d.measLie0 ψ).IsAddHaarMeasure :=
+  selfDualMeasure_isAddHaar (d.exists_isSelfDual_lieZero ψ)
+
 /-- **`θ_f` is unique on `𝔤⁰_reg`**: two locally integrable functions, continuous on `𝔤⁰_reg(F)`,
 representing the same distribution agree on `𝔤⁰_reg(F)` (they agree almost everywhere, `𝔤⁰_reg` is
 open and `measLie0` charges every nonempty open set).  This uses that `measLie0` is a Haar measure
 and not the junk value `0`, i.e. that `bilin` is nondegenerate on `𝔤⁰`, so that a self-dual measure
-exists; that nondegeneracy is part of what remains to be proved.  Not proved here. -/
+exists (`isAddHaarMeasure_measLie0`, proved above).  Still needed: the regular set of `𝔤⁰` is open
+(known for `𝔤`, `isOpen_setOf_isRegularSS_lieCentralizer` at `g = 1`; `X ∈ 𝔤⁰` is regular in
+`𝔤⁰` iff it is regular in `𝔤 = 𝔷 ⊕ 𝔤⁰`).  Not proved here. -/
 theorem isThetaFLie_eqOn_regular {f θ θ' : ↥d.lieZero → ℂ} (hθ : d.IsThetaFLie ψ f θ)
     (hθ' : d.IsThetaFLie ψ f θ') :
     ∀ X : ↥d.lieZero, IsRegularSS d.lieZero (X : d.ambient) → θ X = θ' X := by
@@ -319,7 +370,8 @@ theorem isThetaFLie_eqOn_regular {f θ θ' : ↥d.lieZero → ℂ} (hθ : d.IsTh
 `orbitChoice`).  Ingredients: (L6) on `so(W) ⊕ so(V)`, `bilin = (k_W tr_W, k_V tr_V)` with
 `k_W, k_V ∈ F^×` (one constant for each factor, so the scaling argument is applied to `so(W)` and
 `so(V)` separately), and `ĵ_{aB}(O, ·) = ĵ_B(aO, ·)` with `aO = O` for regular nilpotent orbits, so
-the germs do not depend on the choice of invariant form; `Z_G(X)(F) → Ḡ_X(F)` is onto, so the nilpotent
+the germs do not depend on the choice of invariant form; `Z_G(X)(F) → Ḡ_X(F)` is onto, so the
+nilpotent
 orbits of `𝔤⁰_X` are the same; (L7) `OrbitSpecAt` is Luo's and Waldspurger's recipe (`O_{ν₀}` on
 `V'_X`, `O_{−ν₀}` on `W'_X`), with `ν₀ = q(z₀) = ν`.  Not proved here. -/
 theorem cTheta_toSO (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) {θ : ↥d.luoOf.lie → ℂ}
@@ -338,7 +390,8 @@ def IsNaturalTorusCorr (T : Subgroup ↥(GSpin d.QW)) (T' : Subgroup d.luoOf.Amb
 tori `H''_X` of Luo's `𝒯` (`T_x(F)/A_{G,H}(F) ≅ H''_X(F)`), compatibly with conjugacy (by
 `GSpin(W)(F)`, resp. `H̄(F)`; `N ⊆ H̄` does not normalize a torus of `SO(W)` nontrivially), and
 `|N_{GSpin(W)}(T)/Z_{GSpin(W)}(T)| = |N_{H̄}(T)/Z_{H̄}(T)|`: there is a bijection of classes
-matching each torus with the conjugacy class of its image (`IsNaturalTorusCorr`).  Not proved here. -/
+matching each torus with the conjugacy class of its image (`IsNaturalTorusCorr`).
+Not proved here. -/
 theorem gammaClass_equiv (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) :
     ∃ e : GammaClass d ≃ d.luoOf.GammaClass,
       (∀ c, d.IsNaturalTorusCorr (Quot.out c).1 (Quot.out (e c)).1) ∧

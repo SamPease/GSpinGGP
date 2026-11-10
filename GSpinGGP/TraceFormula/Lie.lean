@@ -7,6 +7,7 @@ import GSpinGGP.TraceFormula.Geometric
 import GSpinGGP.TraceFormula.LieAlgebra
 import GSpinGGP.TraceFormula.LuoTransfer
 import GSpinGGP.Literature.Fourier
+import GSpinGGP.TraceFormula.SelfDual
 
 /-!
 # The geometric expansion near `1`, via the Lie algebra
@@ -256,14 +257,6 @@ theorem selfDualMeasure_eq_dirac_zero [Subsingleton V] (B : LinearMap.BilinForm 
   rw [dite_eq_left_of_eq_true (eq_true h)]
   exact eq_dirac_of_isSelfDual h.choose_spec
 
-/-- In general, `selfDualMeasure B ψ` is a genuine (nonzero) Haar measure as soon as some self-dual
-measure exists. -/
-theorem selfDualMeasure_isAddHaar {B : LinearMap.BilinForm F V} {ψ : NontrivialAddChar F}
-    (h : ∃ μ, IsSelfDual μ B ψ) : (selfDualMeasure B ψ).IsAddHaarMeasure := by
-  unfold selfDualMeasure
-  rw [dite_eq_left_of_eq_true (eq_true h)]
-  exact h.choose_spec.1
-
 theorem selfDualMeasure_ne_zero [IsTopologicalAddGroup V] {B : LinearMap.BilinForm F V}
     {ψ : NontrivialAddChar F} (h : ∃ μ, IsSelfDual μ B ψ) : selfDualMeasure B ψ ≠ 0 := by
   haveI := selfDualMeasure_isAddHaar h
@@ -310,10 +303,6 @@ lemma mem_nilOrbitSet_zeroOrbit {G : Subgroup Aˣ} {𝔤 : LieSubalgebra F A} (X
 lemma nilOrbitSet_zeroOrbit {G : Subgroup Aˣ} {𝔤 : LieSubalgebra F A} :
     nilOrbitSet (zeroOrbit G 𝔤) = {0} := by
   ext X; simp [mem_nilOrbitSet_zeroOrbit]
-
-lemma measurableSingletonClass_lie (𝔤 : LieSubalgebra F A) : MeasurableSingletonClass ↥𝔤 := by
-  haveI := t2Space_of_moduleTopology F A
-  infer_instance
 
 lemma subsingleton_of_isCompl_top {𝔤 : LieSubalgebra F A} {C : Submodule F ↥𝔤}
     (hC : IsCompl C ⊤) : Subsingleton ↥C := by
@@ -400,16 +389,6 @@ theorem orbitMeasure_zeroOrbit (G : Subgroup Aˣ) (𝔤 : LieSubalgebra F A)
   unfold orbitMeasure
   rw [dite_eq_left_of_eq_true (eq_true h)]
   exact eq_dirac_of_isOrbitMeasure_zeroOrbit h.choose_spec
-
-/-- A Lie subalgebra of `A` is locally compact (finite-dimensional subspaces of a Hausdorff TVS
-over a complete field are closed). -/
-lemma locallyCompactSpace_lie (𝔤 : LieSubalgebra F A) : LocallyCompactSpace ↥𝔤 := by
-  haveI := t2Space_of_moduleTopology F A
-  haveI := isTopologicalRing_of_moduleTopology F A
-  haveI := locallyCompactSpace_of_moduleTopology F A
-  haveI : ContinuousSMul F A := IsModuleTopology.toContinuousSMul F A
-  have hcl : IsClosed (𝔤.toSubmodule : Set A) := Submodule.closed_of_finiteDimensional _
-  exact hcl.locallyCompactSpace
 
 /-- **Non-vacuity of `IsJHat`**: `ĵ(0, ·) = 1` (`μ_0(f̂) = f̂(0) = ∫_𝔤 f`). -/
 theorem isJHat_zeroOrbit_one (G : Subgroup Aˣ) (𝔤 : LieSubalgebra F A)
@@ -692,11 +671,6 @@ theorem probHaar_real_univ (Q : Type*) [Group Q] [TopologicalSpace Q] [IsTopolog
   have : Measure.haarMeasure (⟨⟨Set.univ, isCompact_univ⟩, by simp⟩ :
       TopologicalSpace.PositiveCompacts Q) Set.univ = 1 := Measure.haarMeasure_self
   rw [this, ENNReal.toReal_one]
-/-- The trace form `b(X,Y) = tr(L_{XY})` of a GGP datum is symmetric (`tr(L_X L_Y) = tr(L_Y L_X)`). -/
-theorem ggp_bilin_symm (d : GGPData F) (X Y : d.ambient) : d.bilin X Y = d.bilin Y X := by
-  rw [GGPData.bilin_apply, GGPData.bilin_apply, LinearMap.mulLeft_mul, ← Module.End.mul_eq_comp,
-    LinearMap.trace_mul_comm, Module.End.mul_eq_comp, ← LinearMap.mulLeft_mul]
-
 /-- The restriction of `b` to `𝔤` is nondegenerate (left and right separating), for every GGP
 datum (Thesis §2.4): `GGPData.bilin_nondegenerate_lie` plus symmetry. -/
 theorem restrictForm_lie_nondegenerate (d : GGPData F) :
