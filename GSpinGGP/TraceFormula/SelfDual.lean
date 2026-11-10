@@ -58,7 +58,8 @@ lemma locallyCompactSpace_lie (𝔤 : LieSubalgebra F A) : LocallyCompactSpace �
   have hcl : IsClosed (𝔤.toSubmodule : Set A) := Submodule.closed_of_finiteDimensional _
   exact hcl.locallyCompactSpace
 
-/-- The trace form `b(X,Y) = tr(L_{XY})` of a GGP datum is symmetric (`tr(L_X L_Y) = tr(L_Y L_X)`). -/
+/-- The trace form `b(X,Y) = tr(L_{XY})` of a GGP datum is symmetric
+(`tr(L_X L_Y) = tr(L_Y L_X)`). -/
 theorem ggp_bilin_symm (d : GGPData F) (X Y : d.ambient) : d.bilin X Y = d.bilin Y X := by
   rw [GGPData.bilin_apply, GGPData.bilin_apply, LinearMap.mulLeft_mul, ← Module.End.mul_eq_comp,
     LinearMap.trace_mul_comm, Module.End.mul_eq_comp, ← LinearMap.mulLeft_mul]
