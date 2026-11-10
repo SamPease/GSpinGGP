@@ -227,6 +227,32 @@ Not proved here. -/
 theorem exists_isExpCompatH : ∃ μ, d.IsExpCompatH μ := by
   sorry
 
+/-- **`exp` preserves measures on the part of `𝔥⁰(F)` conjugate into a small neighbourhood of `0`**
+(the Jacobian `j^H = 1` there). There is a neighbourhood `ω₀` of `0` such that for every measurable
+`S ⊆ 𝔥⁰(F)` whose elements are all `G(F)`-conjugate into `ω₀` (for example `S = ω ∩ 𝔥⁰` for a
+good neighbourhood `ω ⊆ ω₀^{G(F)}` of `waldspurger_goodNbhd_one`, which is not bounded), the measure
+`dX` of `J^Lie` gives `S` the Haar measure of its image `{e^X}` in `H(F)/A_{G,H}(F)`: the
+identity defining `measH0` near `0` holds on all of `S`.
+
+The smallness hypothesis is what makes the Jacobian `|det φ(ad X|𝔥)|`, `φ(z) = (1 - e^{-z})/z`, equal
+to `1`: `𝔥` is `ad X`-stable, the eigenvalues of `ad X` are invariant under conjugation and so are
+small on `S` (the nilpotent parts need not be). It also makes `X ↦ e^X A_{G,H}(F)` injective on `S`: if
+`e^X = a e^{X'}` with `a ∈ A_{G,H}(F)` scalar, then `a` is a root of unity (`X, X' ∈ 𝔤⁰` have trace `0`) and
+close to `1` (the eigenvalues of `e^X` and `e^{X'}` are), so `a = 1`, and `log` recovers `X` (on the
+semisimple and nilpotent parts of its Jordan decomposition).
+Waldspurger 2010 §3.1 (p. 14: under condition (6), `exp` on a good neighbourhood "préserve les
+mesures") and §8.2 (p. 47: `N ↦ exp(−X) exp(X + N)` on `𝔲_x(F)` "préserve les mesures"), adapted:
+condition (6) is replaced by conjugacy into `ω₀`, and `H̄ = SO(W) ⋉ N` is not reductive.
+Not proved here. -/
+theorem measH0_eq_haar_image_of_conj_small :
+    ∃ ω₀ ∈ 𝓝 (0 : d.ambient), ∀ S : Set ↥d.lieH0, MeasurableSet S →
+      (∀ X ∈ S, ∃ g : ↥d.G, ∃ Y ∈ ω₀,
+        (X : d.ambient) = ((g : d.ambientˣ) : d.ambient) * Y * ((g⁻¹ : d.ambientˣ) : d.ambient)) →
+      d.measH0 S = (Measure.haar : Measure d.HmodAGH)
+        {q | ∃ X ∈ S, ∃ h : ↥d.H, (((h : ↥d.G) : d.ambientˣ) : d.ambient) =
+          expA F ((X : d.ambient)) ∧ q = (h : d.HmodAGH)} := by
+  sorry
+
 variable (ψ : NontrivialAddChar F)
 
 /-- `K^Lie(f, x) = ∫_{𝔥⁰(F)} f(x⁻¹ X x) ξ(X) dX` (Thesis §10.1; Luo §4; BP §8.1). -/
