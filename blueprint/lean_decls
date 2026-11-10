@@ -27,6 +27,7 @@ GSpinGGP.mult
 GSpinGGP.dixmier_commutant_scalar
 GSpinGGP.schur_central
 GSpinGGP.GGPData.isMulRightInvariant_haar_G
+GSpinGGP.weil_quotient_radon
 GSpinGGP.weil_quotient
 GSpinGGP.integral_eq_mul_integral_compact_integral
 GSpinGGP.weylDisc
@@ -60,6 +61,9 @@ GSpinGGP.orbitChoice
 GSpinGGP.mGeom
 GSpinGGP.mGeom_finset_sum
 GSpinGGP.packet_sum_mult
+GSpinGGP.finite_nilReg
+GSpinGGP.germ_eq_germ_of_stable
+GSpinGGP.bp_germAvg_transfer
 GSpinGGP.bp_germ_transfer
 GSpinGGP.packet_germ_transfer
 GSpinGGP.exists_isometry_fixedSub_of_qd

@@ -31,11 +31,12 @@ where `ι` is the closed embedding `H/A_{G,H} ↪ G/A_G`. The Haar measure on
 * `IsWeilMeasure.integral_complex`: the formula for `ℂ`-valued `φ ∈ C_c(Γ)`;
 * `isWeilMeasure_of_subsingleton` (sanity): for trivial `S` the Weil measure is the pushforward
   of `ν`;
-* **axiom** `weil_quotient` (existence and uniqueness; Bourbaki), and its corollary
-  `IsWeilMeasure.unique`;
+* **axiom** `weil_quotient_radon` (existence, and uniqueness among measures finite on compacts;
+  Bourbaki);
 * `CosetSpace.exists_isCompact_image_superset` (compact sets lift) and
   `IsWeilMeasure.isFiniteMeasureOnCompacts` (a Weil measure is finite on compacts, proved from
-  the defining formula).
+  the defining formula);
+* `weil_quotient` (uniqueness among all Borel measures) and its corollary `IsWeilMeasure.unique`.
 
 ## Why `CosetSpace` is a `def` and not an `abbrev`
 Mathlib has a global instance `Quotient.instMeasurableSpace` giving `Quotient s` the pushforward
@@ -268,17 +269,18 @@ here is the same theorem applied to `γ ↦ γ⁻¹`).
 Let `Γ` and `S` be locally compact, Hausdorff, second countable topological groups with their
 Borel σ-algebras, `ι : S → Γ` a continuous homomorphism that is a closed embedding, and `ν`, `μ`
 Haar measures on `Γ`, `S` that are also right invariant (`Γ` and `S` unimodular). Then there is
-a unique measure `m` on `ι(S)\Γ` with
+a measure `m` on `ι(S)\Γ`, unique among the measures finite on compact sets, with
 `∫_Γ φ dν = ∫_{ι(S)\Γ} ∫_S φ(ι(s) q) dμ(s) dm(q)` for all `φ ∈ C_c(Γ)`.
 
 Unimodularity of both groups is stronger than the sources need (`Δ_Γ|_S = Δ_S`) but is what is
 used: `Γ = G(F)/A_G(F)` and `S = H(F)/A_{G,H}(F)` (Thesis §7.1).
 
-Uniqueness is over *all* measures on the Borel σ-algebra: any `m'` satisfying the formula
-integrates every nonnegative `C_c` function on the quotient (each is a fibre integral, Bourbaki
-loc. cit. no. 2, Prop. 4) to the same finite value as `m`, hence is finite on compacts, hence Radon
-(second countability), hence equal to `m` by the Riesz uniqueness theorem. -/
-axiom weil_quotient {S Γ : Type*}
+Bourbaki's measures are Radon measures; uniqueness is stated here among the Borel measures that
+are finite on compact sets, which on the second countable, locally compact Hausdorff space
+`ι(S)\Γ` are exactly the Radon measures. Uniqueness among *all* Borel measures is proved from
+this below (`weil_quotient`), since any Weil measure is finite on compacts
+(`IsWeilMeasure.isFiniteMeasureOnCompacts`). -/
+axiom weil_quotient_radon {S Γ : Type*}
     [Group Γ] [TopologicalSpace Γ] [IsTopologicalGroup Γ] [LocallyCompactSpace Γ] [T2Space Γ]
     [SecondCountableTopology Γ] [MeasurableSpace Γ] [BorelSpace Γ]
     [Group S] [TopologicalSpace S] [IsTopologicalGroup S] [LocallyCompactSpace S] [T2Space S]
@@ -286,22 +288,9 @@ axiom weil_quotient {S Γ : Type*}
     (ι : S →* Γ) (hι : Continuous ι) (hemb : IsClosedEmbedding ι)
     (ν : Measure Γ) [ν.IsHaarMeasure] [ν.IsMulRightInvariant]
     (μ : Measure S) [μ.IsHaarMeasure] [μ.IsMulRightInvariant] :
-    ∃! m : Measure (CosetSpace ι), IsWeilMeasure ι ν μ m
-
-
-/-- Uniqueness of the Weil measure, in the form used to compare two candidates (from
-`weil_quotient`). -/
-theorem IsWeilMeasure.unique {S Γ : Type*}
-    [Group Γ] [TopologicalSpace Γ] [IsTopologicalGroup Γ] [LocallyCompactSpace Γ] [T2Space Γ]
-    [SecondCountableTopology Γ] [MeasurableSpace Γ] [BorelSpace Γ]
-    [Group S] [TopologicalSpace S] [IsTopologicalGroup S] [LocallyCompactSpace S] [T2Space S]
-    [SecondCountableTopology S] [MeasurableSpace S] [BorelSpace S]
-    {ι : S →* Γ} (hι : Continuous ι) (hemb : IsClosedEmbedding ι)
-    {ν : Measure Γ} [ν.IsHaarMeasure] [ν.IsMulRightInvariant]
-    {μ : Measure S} [μ.IsHaarMeasure] [μ.IsMulRightInvariant]
-    {m m' : Measure (CosetSpace ι)} (h : IsWeilMeasure ι ν μ m) (h' : IsWeilMeasure ι ν μ m') :
-    m = m' :=
-  (weil_quotient ι hι hemb ν μ).unique h h'
+    ∃ m : Measure (CosetSpace ι), IsWeilMeasure ι ν μ m ∧
+      ∀ m' : Measure (CosetSpace ι), IsFiniteMeasureOnCompacts m' → IsWeilMeasure ι ν μ m' →
+        m' = m
 
 /-- Compact subsets of `ι(S)\Γ` lift to compact subsets of `Γ` (the projection is open and `Γ`
 is locally compact). -/
@@ -322,7 +311,7 @@ theorem CosetSpace.exists_isCompact_image_superset {S Γ : Type*} [Group S] [Gro
   exact ⟨γ, Set.mem_biUnion hq' (interior_subset hγ), rfl⟩
 
 /-- **A Weil measure is finite on compact sets**.
-Proved from the defining formula alone, so `weil_quotient` need not be strengthened.
+Proved from the defining formula alone; it gives `weil_quotient` from `weil_quotient_radon`.
 For compact `K ⊆ ι(S)\Γ`, lift it to a compact `K' ⊆ Γ`, take `φ ∈ C_c(Γ)`, `0 ≤ φ ≤ 1`, with
 `φ = 1` on `V K'` for a compact neighbourhood `V` of `1`.  Its fibre integral `F` is `≥ μ(ι⁻¹ V°) > 0`
 on `K`, and `∫ F dm = ∫ φ dν > 0` forces `F` to be `m`-integrable (a non-integrable function has
@@ -389,5 +378,34 @@ theorem IsWeilMeasure.isFiniteMeasureOnCompacts {S Γ : Type*}
         obtain ⟨γ, hγ, rfl⟩ := hKK' hq
         exact hfib γ hγ
     _ < ∞ := hF.measure_ge_lt_top hc
+
+/-- **Weil's quotient-measure formula**, with uniqueness among all Borel measures on `ι(S)\Γ`:
+from `weil_quotient_radon`, since every Weil measure is finite on compact sets
+(`IsWeilMeasure.isFiniteMeasureOnCompacts`). -/
+theorem weil_quotient {S Γ : Type*}
+    [Group Γ] [TopologicalSpace Γ] [IsTopologicalGroup Γ] [LocallyCompactSpace Γ] [T2Space Γ]
+    [SecondCountableTopology Γ] [MeasurableSpace Γ] [BorelSpace Γ]
+    [Group S] [TopologicalSpace S] [IsTopologicalGroup S] [LocallyCompactSpace S] [T2Space S]
+    [SecondCountableTopology S] [MeasurableSpace S] [BorelSpace S]
+    (ι : S →* Γ) (hι : Continuous ι) (hemb : IsClosedEmbedding ι)
+    (ν : Measure Γ) [ν.IsHaarMeasure] [ν.IsMulRightInvariant]
+    (μ : Measure S) [μ.IsHaarMeasure] [μ.IsMulRightInvariant] :
+    ∃! m : Measure (CosetSpace ι), IsWeilMeasure ι ν μ m := by
+  obtain ⟨m, hm, huniq⟩ := weil_quotient_radon ι hι hemb ν μ
+  exact ⟨m, hm, fun m' h' => huniq m' (h'.isFiniteMeasureOnCompacts hι hemb) h'⟩
+
+/-- Uniqueness of the Weil measure, in the form used to compare two candidates (from
+`weil_quotient`). -/
+theorem IsWeilMeasure.unique {S Γ : Type*}
+    [Group Γ] [TopologicalSpace Γ] [IsTopologicalGroup Γ] [LocallyCompactSpace Γ] [T2Space Γ]
+    [SecondCountableTopology Γ] [MeasurableSpace Γ] [BorelSpace Γ]
+    [Group S] [TopologicalSpace S] [IsTopologicalGroup S] [LocallyCompactSpace S] [T2Space S]
+    [SecondCountableTopology S] [MeasurableSpace S] [BorelSpace S]
+    {ι : S →* Γ} (hι : Continuous ι) (hemb : IsClosedEmbedding ι)
+    {ν : Measure Γ} [ν.IsHaarMeasure] [ν.IsMulRightInvariant]
+    {μ : Measure S} [μ.IsHaarMeasure] [μ.IsMulRightInvariant]
+    {m m' : Measure (CosetSpace ι)} (h : IsWeilMeasure ι ν μ m) (h' : IsWeilMeasure ι ν μ m') :
+    m = m' :=
+  (weil_quotient ι hι hemb ν μ).unique h h'
 
 end GSpinGGP

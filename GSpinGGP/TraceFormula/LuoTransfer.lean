@@ -227,11 +227,9 @@ variable (ψ : NontrivialAddChar F)
 
 /-- **(L4) `J^Lie` of `d` is Luo's `J^Lie`** for `muG`, a Haar measure `μH` on `H̄(F)`, the
 `exp`-compatible `μ_𝔥` and the quotient measure: `H(F)/A_{G,H}(F) ≃ H̄(F)` (Hilbert 90 and
-`ker P ∩ H = A_{G,H}`, through `quotHG_equiv_SO`), `ad : 𝔥⁰ ≃ 𝔥 = so(W) ⊕ 𝔫`, `λ` (hypothesis `hlam`,
-`lam_toSO`), `measH0` and `weilMeasureHG` push forward to an `exp`-compatible pair and its Weil
+`ker P ∩ H = A_{G,H}`, through `quotHG_equiv_SO`), `ad : 𝔥⁰ ≃ 𝔥 = so(W) ⊕ 𝔫`, `λ` (`lam_toSO`), `measH0` and `weilMeasureHG` push forward to an `exp`-compatible pair and its Weil
 measure (independence of the `exp`-compatible pair), and change of variables.  Not proved here. -/
-theorem exists_JLie_transfer (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
-    (hlam : ∀ X : d.ambient, X ∈ d.lieH0 → d.lamLie X = d.luoOf.lam (d.toSOLin X)) :
+theorem exists_JLie_transfer (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) :
     ∃ (μH : Measure ↥d.luoOf.Hbar) (μ𝔥 : Measure ↥d.luoOf.lieH)
       (m : Measure (CosetSpace d.luoOf.Hbar.subtype)),
       μH.IsHaarMeasure ∧ d.luoOf.IsExpCompatH μH μ𝔥 ∧
@@ -259,7 +257,9 @@ theorem isThetaFLie_of_SO (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
 
 /-- **`θ_f` is unique on `𝔤⁰_reg`**: two locally integrable functions, continuous on `𝔤⁰_reg(F)`,
 representing the same distribution agree on `𝔤⁰_reg(F)` (they agree almost everywhere, `𝔤⁰_reg` is
-open and `measLie0` charges every nonempty open set).  Not proved here. -/
+open and `measLie0` charges every nonempty open set).  This uses that `measLie0` is a Haar measure
+and not the junk value `0`, i.e. that `bilin` is nondegenerate on `𝔤⁰`, so that a self-dual measure
+exists; that nondegeneracy is part of what remains to be proved.  Not proved here. -/
 theorem isThetaFLie_eqOn_regular {f θ θ' : ↥d.lieZero → ℂ} (hθ : d.IsThetaFLie ψ f θ)
     (hθ' : d.IsThetaFLie ψ f θ') :
     ∀ X : ↥d.lieZero, IsRegularSS d.lieZero (X : d.ambient) → θ X = θ' X := by
@@ -271,8 +271,9 @@ theorem isThetaFLie_eqOn_regular {f θ θ' : ↥d.lieZero → ℂ} (hθ : d.IsTh
 `X ∈ 𝔱⁰_♮` of a torus of `Γ^Lie(G,H)`, the germ of `θ ∘ ad` at `X` for the orbit `orbitChoiceLie X`
 (`germLie` for `(G, 𝔤⁰, bilin)`) is Luo's `c_θ(ad X)` (`germLie` for `(Ḡ, 𝔤, B)` and the orbit
 `orbitChoice`).  Ingredients: (L6) on `so(W) ⊕ so(V)`, `bilin = (k_W tr_W, k_V tr_V)` with
-`k_W, k_V ∈ F^×`, and `ĵ_{aB}(O, ·) = ĵ_B(aO, ·)` with `aO = O` for regular nilpotent orbits, so the
-germs do not depend on the choice of invariant form; `Z_G(X)(F) → Ḡ_X(F)` is onto, so the nilpotent
+`k_W, k_V ∈ F^×` (one constant for each factor, so the scaling argument is applied to `so(W)` and
+`so(V)` separately), and `ĵ_{aB}(O, ·) = ĵ_B(aO, ·)` with `aO = O` for regular nilpotent orbits, so
+the germs do not depend on the choice of invariant form; `Z_G(X)(F) → Ḡ_X(F)` is onto, so the nilpotent
 orbits of `𝔤⁰_X` are the same; (L7) `OrbitSpecAt` is Luo's and Waldspurger's recipe (`O_{ν₀}` on
 `V'_X`, `O_{−ν₀}` on `W'_X`), with `ν₀ = q(z₀) = ν`.  Not proved here. -/
 theorem cTheta_toSO (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) {θ : ↥d.luoOf.lie → ℂ}
@@ -356,10 +357,10 @@ theorem distribJLie_eq_mGeomLie_of_luo (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypP
     d.distribJLie ψ f = d.mGeomLie ψ (d.thetaFLie ψ f) := by
   have := d.muG_isHaarMeasure hW hV
   obtain ⟨μH, μ𝔥, m, hμH, h𝔥, hm, hJ⟩ :=
-    d.exists_JLie_transfer ψ hW hV (fun X _ => d.lam_toSO X)
+    d.exists_JLie_transfer ψ hW hV
   obtain ⟨e, hen, he⟩ := d.gammaClass_equiv hW hV
   obtain ⟨μT, hμT, hT⟩ := d.torusIntegralLie_toSO ψ hW hV e hen
-  obtain ⟨θ, -, ⟨h1, h2, h3⟩, ⟨hqc, -⟩, hlim⟩ :=
+  obtain ⟨θ, ⟨h1, h2, h3⟩, hqc, hlim⟩ :=
     luo_lie_geomExpansion_SO d.luoOf hW hV ψ d.muG μH μ𝔥 h𝔥 m hm μT hμT
       (f ∘ d.toSO.symm) (d.isScusp_toSO hf)
   have hθ : d.IsThetaFLie ψ f (θ ∘ d.toSO) := d.isThetaFLie_of_SO ψ hW hV hf h1 h2 h3

@@ -48,12 +48,24 @@ As of November 2026:
   objects of a cited theorem (Luo's geometric expansion of `J^Lie`) with those of the general spin
   triple (`TraceFormula/LuoTransfer.lean`), the rest smaller lemmas.
 - Results from the literature are assumed as `axiom`s in `GSpinGGP/Literature/`, each with a
-  docstring citing its source. Only statements that appear in a source, specialized to general spin
-  groups with the source's hypotheses checked, are axioms. `local_ggp` uses 18 of the 19.
+  docstring citing its source. Each axiom is meant to be a statement that appears in its source,
+  for the group the source treats; `local_ggp` uses 18 of the 19. Where an axiom goes beyond
+  its source, its docstring says so. At present:
+  the axioms on characters and on multiplicity one are stated for irreducible unitary
+  representations, where the sources have irreducible admissible smooth ones (the passage between
+  the two is standard and is not yet a separate citation);
+  `bp_integrable_kernel_scusp` is stated without proof in its source;
+  `luo_lie_geomExpansion_SO` (for the special orthogonal triple) combines Luo's geometric expansion
+  of `J^Lie`, from a preprint whose `p`-adic case follows Waldspurger, with properties of `θ_f`
+  that Beuzart-Plessis states without proof, composed with the Weyl integration formula;
+  and the Galois-cohomology axioms are applied to groups of `F̄`-points whose description as
+  algebraic groups (and, for Kottwitz's lemma, as a fundamental maximal torus) is argued in the
+  docstring and not formalized.
   Where the dissertation adapts a published result (stated for orthogonal or unitary groups, groups
   with compact centre, pure inner forms, …) or combines several, the statement is a theorem with
   `sorry`, and its docstring names the exact ingredients and sketches the argument.
-- Definitions are never axiomatized. `GSpinGGP/Sanity/` checks key definitions on small cases.
+- Definitions are never axiomatized. `GSpinGGP/Sanity/` checks key definitions on small cases
+  (a few of these checks are hand computations recorded as `sorry` statements).
 - Classical facts about quadratic forms (Witt cancellation and decomposition, Cartan–Dieudonné,
   the classification over `p`-adic fields) are proved from the
   [Tau Ceti](https://github.com/TauCetiProject/TauCeti) library, which this project depends on.

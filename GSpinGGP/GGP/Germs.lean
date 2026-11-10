@@ -11,8 +11,11 @@ import GSpinGGP.GGP.LieRegular
 
 The regular set of `G = GSpin(W) × GSpin(V)` is open and conull (from Harish-Chandra's theorem
 `hc_regular_open_dense_conull` and the identification of his regular set with `regularSet`,
-`hcDisc_ne_zero_iff_mem_regularSet`), and germs are preserved under transfer to inner forms (BP Astérisque 418,
-(12.1.2), which is stated for pure inner forms; a `sorry` theorem with a proof sketch).
+`hcDisc_ne_zero_iff_mem_regularSet`), and germs are preserved under transfer to inner forms
+(`bp_germ_transfer`). The latter is proved from three `sorry` theorems with proof sketches: the
+averaged form of BP Astérisque 418, (12.1.2), which is stated there for pure inner forms
+(`bp_germAvg_transfer`); the equality of the regular germs of a stable quasi-character
+(`germ_eq_germ_of_stable`); and the finiteness of `Nil_reg(𝔤_x)` (`finite_nilReg`).
 -/
 
 open MeasureTheory Topology Filter
@@ -267,28 +270,92 @@ theorem hc_regularSet_open_conull (d : GGPData F) :
   rw [hset] at h
   exact ⟨h.1, h.2.2⟩
 
-/-- **(e) Beuzart-Plessis (12.1.2)** (Thesis (6.1.2)), for the inner twists of `GSpin`.
-Let `G` be quasi-split, `τ` an inner twist (`G_α = (d.twist τ).G`), `θ` a *stable*
-quasi-character on `G(F)` and `θ'` a stable quasi-character on `G_α(F)` which is a *transfer* of
-`θ`: `θ'(y) = θ(x)` whenever `x ∈ G_reg(F)`, `y ∈ G_{α,reg}(F)` are stably conjugate through
-`ψ_α = C(φ) × C(φ ⊕ id_Z)`. Then for `x ∈ GSpin(W)(F)`, `y ∈ GSpin(W_α)(F)` semisimple and strongly
-stably conjugate (embedded diagonally), `c_{θ',O'}(y) = c_{θ,O}(x)` for all `O ∈ Nil_reg(𝔤_x)`,
-`O' ∈ Nil_reg(𝔤_{α,y})`. (For stable `θ` the regular germs do not depend on the orbit; the
-equality then follows from the limit formula BP Prop 4.5.1(ii) along a maximal torus of `G_x`
-transported to `G_{α,y}`.)
+/-- **Finitely many regular nilpotent orbits.** For semisimple `x ∈ G(F)`, `G = GSpin(W) ×
+GSpin(V)`, the set `Nil_reg(𝔤_x)` of regular nilpotent `G_x(F)`-orbits in `𝔤_x(F)` is finite.
 
-Sources: Beuzart-Plessis, *A local trace formula for the Gan–Gross–Prasad conjecture for unitary
-groups: the archimedean case* (Astérisque 418, 2020), (12.1.2) (as cited in Thesis §6.1) — stated there for pure inner
-forms; here it is used for the inner twists of `GSpin` with cocycle in `SO(W) × SO(V)`, for
-which the proof is unchanged. Stability and transfer are written out inline (Triple's
-`IsStableFn` is not visible here). Only diagonal elements are needed (Thesis §6.7).
+Proof sketch (not formalized). `F` has characteristic `0`, so `𝔤_x` has finitely many nilpotent
+orbits over `F̄`, and the regular nilpotent elements form one of them. Fix `N` in it with
+`N ∈ 𝔤_x(F)`; the `G_x(F)`-orbits of such elements are in bijection with
+`ker(H¹(F, Z_{G_x}(N)) → H¹(F, G_x))`, which is finite since `H¹(F, A)` is finite for every
+linear algebraic group `A` over a `p`-adic field (Borel–Serre, Comment. Math. Helv. 39 (1964),
+Thm 6.1, p. 153).
 
-**Status: `sorry`, not a literature axiom** (the statement is not verbatim in a source). BP (12.1.2)
-is stated for any connected reductive group, but for *pure* inner forms. The inner forms here have
-cocycles valued in `SO(W) × SO(V)`, and those with the other Hasse invariant are not pure inner
-forms of `GSpin(W) × GSpin(V)`. BP's proof uses only BP Prop 4.5.1 1.(i),(ii) for `G` and `G_α`
-separately, `D^G(x) = D^{G_α}(y)`, and the transport of a Borel pair of `G_x` by the `F`-isomorphism
-`G_x ≅ G_{α,y}`. All of these hold here. -/
+**Status: `sorry`** (standard; not stated verbatim for this group in a source). -/
+theorem finite_nilReg (d : GGPData F) (x : ↥d.G) (hx : IsSS F ((x : d.ambientˣ) : d.ambient)) :
+    (NilReg (grpCentralizer d.G x)
+      (lieCentralizer d.lie ((x : d.ambientˣ) : d.ambient))).Finite := by
+  sorry
+
+/-- **The regular germs of a stable quasi-character do not depend on the orbit.** Let `θ` be a
+quasi-character on `G(F)` that is *stable* (`hstab`: `θ(x) = θ(x')` for stably conjugate regular
+`x, x'`; BP Astérisque 418 §12.1, pp. 259–260), and `x ∈ G(F)` semisimple. Then
+`c_{θ,O}(x) = c_{θ,O'}(x)` for all `O, O' ∈ Nil_reg(𝔤_x)`. Used in Thesis (6.1.2), whose proof
+states it without proof.
+
+Proof sketch (not formalized), as in the proof of BP (3.4.7), p. 71. There is
+`g ∈ G_{x,ad}(F)` with `Ad(g) O = O'`: the adjoint group acts transitively on `Nil_reg(𝔤_x)`
+(asserted in that proof). Lift `g` to `ĝ ∈ G_x(F̄)`. For `X ∈ 𝔤_x(F)` near `0` with `x e^X`
+regular, `x e^{Ad(g) X} = ĝ (x e^X) ĝ⁻¹` is stably conjugate to `x e^X`, so
+`θ(x e^{Ad(g) X}) = θ(x e^X)`. Since the trace form is `Ad(ĝ)`-invariant,
+`ĵ(Ad(g) O'', Ad(g) X) = ĵ(O'', X)`, so `X ↦ Σ c_{θ,O''}(x) ĵ(Ad(g) O'', X)` is also a local
+expansion of `θ` at `x`; by uniqueness of the expansion (`germ_unique`), `c_{θ,Ad(g) O}(x) =
+c_{θ,O}(x)`.
+
+**Status: `sorry`, not a literature axiom** (the transitivity and the argument are in BP's proof
+of (3.4.7); the statement itself is not in a source). -/
+theorem germ_eq_germ_of_stable (d : GGPData F) (ψ : NontrivialAddChar F) (θ : ↥d.G → ℂ)
+    (hθ : IsQuasiCharacter d.G d.lie d.bilin ψ θ)
+    (hstab : ∀ x ∈ regularSet d.G d.lie, ∀ x' ∈ regularSet d.G d.lie,
+      d.StablyConj x x' → θ x = θ x')
+    (x : ↥d.G) (hx : IsSS F ((x : d.ambientˣ) : d.ambient)) :
+    ∀ O ∈ NilReg (grpCentralizer d.G x) (lieCentralizer d.lie ((x : d.ambientˣ) : d.ambient)),
+    ∀ O' ∈ NilReg (grpCentralizer d.G x) (lieCentralizer d.lie ((x : d.ambientˣ) : d.ambient)),
+      germ d.G d.lie d.bilin ψ θ x O = germ d.G d.lie d.bilin ψ θ x O' := by
+  sorry
+
+/-- **Beuzart-Plessis (12.1.2), averaged form, for the inner twists of `GSpin`** (Thesis (6.1.2)).
+Let `G` be quasi-split, `τ` an inner twist (`G_α = (d.twist τ).G`), `θ` a stable quasi-character on
+`G(F)` and `θ'` a stable quasi-character on `G_α(F)` which is a transfer of `θ`: `θ'(y) = θ(x)`
+whenever `x ∈ G_reg(F)`, `y ∈ G_{α,reg}(F)` are stably conjugate through `ψ_α = C(φ) × C(φ ⊕
+id_Z)`. Then for `x ∈ GSpin(W)(F)`, `y ∈ GSpin(W_α)(F)` semisimple and strongly stably conjugate
+(embedded diagonally), `c_{θ'}(y) = c_θ(x)`, where `c_θ(x) = |Nil_reg(𝔤_x)|⁻¹ Σ_{O ∈ Nil_reg(𝔤_x)}
+c_{θ,O}(x)` (`germAvg`).
+
+Source: Beuzart-Plessis, Astérisque 418 (2020), (12.1.2), p. 260, stated for a connected reductive
+`G` and its *pure* inner forms. The inner forms here have cocycles valued in `SO(W) × SO(V)`, and
+those with the other Hasse invariant are not pure inner forms of `GSpin(W) × GSpin(V)`. BP's proof
+does not use purity: if `G_x`, `G_{α,y}` are not quasi-split both sides are `0` (BP Prop 4.5.1
+1.(i), p. 96); otherwise transport a Borel pair `(B_x, T_x)` of `G_x` along the `F`-isomorphism `ι
+: G_x ≅ G_{α,y}`, apply the limit formula BP Prop 4.5.1 1.(ii) on both sides, and use that `x'` and
+`ι(x')` are stably conjugate for regular `x' ∈ T_x(F)` (so `θ'(ι(x')) = θ(x')`), with `D^G(x') =
+D^{G_α}(ι(x'))` and `|W(G_x, T_x)| = |W(G_{α,y}, T_y)|`. Stability and transfer are written out
+inline. Only diagonal elements are needed (Thesis §6.7).
+
+**Status: `sorry`, not a literature axiom** (stated in the source for pure inner forms only). -/
+theorem bp_germAvg_transfer (d : GGPData F) (hqs : d.IsQuasiSplit) (ψ : NontrivialAddChar F)
+    (τ : InnerTwist d.QW) (θ : ↥d.G → ℂ) (θ' : ↥(d.twist τ).G → ℂ)
+    (hθ : IsQuasiCharacter d.G d.lie d.bilin ψ θ)
+    (hθ' : IsQuasiCharacter (d.twist τ).G (d.twist τ).lie (d.twist τ).bilin ψ θ')
+    (hstab : ∀ x ∈ regularSet d.G d.lie, ∀ x' ∈ regularSet d.G d.lie,
+      d.StablyConj x x' → θ x = θ x')
+    (hstab' : ∀ y ∈ regularSet (d.twist τ).G (d.twist τ).lie,
+      ∀ y' ∈ regularSet (d.twist τ).G (d.twist τ).lie,
+      (d.twist τ).StablyConj y y' → θ' y = θ' y')
+    (htrans : ∀ x ∈ regularSet d.G d.lie, ∀ y ∈ regularSet (d.twist τ).G (d.twist τ).lie,
+      d.StablyConjG τ x y → θ' y = θ x)
+    (x : GSpin d.QW) (y : GSpin (d.twist τ).QW)
+    (hx : IsSS F (((d.diag x : ↥d.G) : d.ambientˣ) : d.ambient))
+    (hy : IsSS F ((((d.twist τ).diag y : ↥(d.twist τ).G) : (d.twist τ).ambientˣ) :
+      (d.twist τ).ambient))
+    (hxy : d.StronglyStablyConjW τ x y) :
+    germAvg (d.twist τ).G (d.twist τ).lie (d.twist τ).bilin ψ θ' ((d.twist τ).diag y) =
+      germAvg d.G d.lie d.bilin ψ θ (d.diag x) := by
+  sorry
+
+/-- **Beuzart-Plessis (12.1.2) for each regular orbit** (Thesis (6.1.2)), for the inner twists of
+`GSpin`: under the hypotheses of `bp_germAvg_transfer`, `c_{θ',O'}(y) = c_{θ,O}(x)` for all `O ∈
+Nil_reg(𝔤_x)`, `O' ∈ Nil_reg(𝔤_{α,y})`. From the averaged form `bp_germAvg_transfer`, since for the
+stable `θ`, `θ'` every regular germ equals the average (`germ_eq_germ_of_stable`, `finite_nilReg`). -/
 theorem bp_germ_transfer (d : GGPData F) (hqs : d.IsQuasiSplit) (ψ : NontrivialAddChar F)
     (τ : InnerTwist d.QW) (θ : ↥d.G → ℂ) (θ' : ↥(d.twist τ).G → ℂ)
     (hθ : IsQuasiCharacter d.G d.lie d.bilin ψ θ)
@@ -312,6 +379,14 @@ theorem bp_germ_transfer (d : GGPData F) (hqs : d.IsQuasiSplit) (ψ : Nontrivial
           ((((d.twist τ).diag y : ↥(d.twist τ).G) : (d.twist τ).ambientˣ) : (d.twist τ).ambient)),
       germ (d.twist τ).G (d.twist τ).lie (d.twist τ).bilin ψ θ' ((d.twist τ).diag y) O' =
         germ d.G d.lie d.bilin ψ θ (d.diag x) O := by
-  sorry
+  intro O hO O' hO'
+  have e : germAvg d.G d.lie d.bilin ψ θ (d.diag x) = germ d.G d.lie d.bilin ψ θ (d.diag x) O :=
+    germAvg_eq_germ_of_forall_eq (finite_nilReg d _ hx) hO
+      fun O₂ h₂ => germ_eq_germ_of_stable d ψ θ hθ hstab _ hx O₂ h₂ O hO
+  have e' : germAvg (d.twist τ).G (d.twist τ).lie (d.twist τ).bilin ψ θ' ((d.twist τ).diag y) =
+      germ (d.twist τ).G (d.twist τ).lie (d.twist τ).bilin ψ θ' ((d.twist τ).diag y) O' :=
+    germAvg_eq_germ_of_forall_eq (finite_nilReg (d.twist τ) _ hy) hO'
+      fun O₂ h₂ => germ_eq_germ_of_stable (d.twist τ) ψ θ' hθ' hstab' _ hy O₂ h₂ O' hO'
+  rw [← e', ← e, bp_germAvg_transfer d hqs ψ τ θ θ' hθ hθ' hstab hstab' htrans x y hx hy hxy]
 
 end GSpinGGP

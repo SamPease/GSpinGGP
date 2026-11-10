@@ -31,7 +31,7 @@ The generic Lie-algebra notions are reused: `selfDualHaar`, `IsTestFn`, `IsLieQu
   arguments (Haar measures, `exp`-compatible measure on `𝔥`, Weil quotient measure).
 * `IsScusp`: strongly cuspidal Schwartz–Bruhat functions on `𝔤(F)` (Luo p. 7; BP §5.1;
   Waldspurger 2010 §6.1).
-* `orbitalPairing`, `HasCompactSupportModConj`.
+* `orbitalPairing`.
 * `Γ^Lie(Ḡ, H̄)` (Luo §7.1): `torusOf`, `IsGammaElt`, `GammaTorus`, `GammaClass`, `lieTorus`,
   `IsNat` (`t_♮`), `weylCard` (`|W(H̄,T)|`), `IsExpCompatT`, `delta` (`Δ`), `OrbitSpec`,
   `orbitChoice`, `gammaIntegrand`, `mGeomLieS`.
@@ -410,13 +410,6 @@ def measLie (ψ : NontrivialAddChar F) : Measure ↥L.lie := selfDualHaar L.lie 
 `∫ K^A_{f,f'}(x, x) dx`, with `A_Ḡ = 1`), for a Haar measure `μG` on `Ḡ(F)`. -/
 def orbitalPairing (ψ : NontrivialAddChar F) (μG : Measure ↥L.Gbar) (f f' : ↥L.lie → ℂ) : ℂ :=
   ∫ x : ↥L.Gbar, (∫ X : ↥L.lie, L.extFn f (L.conjInv x X) * f' X ∂L.measLie ψ) ∂μG
-
-/-- **Compact support modulo conjugation** in Waldspurger's sense (Waldspurger 2010 §5.3: the
-support of `θ_f` is contained in `(Supp f)^G`): there is a compact `C ⊆ 𝔤(F)` such that every
-regular `X` with `θ(X) ≠ 0` is `G(F)`-conjugate into `C`. -/
-def HasCompactSupportModConj (θ : ↥L.lie → ℂ) : Prop :=
-  ∃ C : Set L.Amb, IsCompact C ∧ ∀ X : ↥L.lie, (X : L.Amb) ∈ regularSetLie L.lie → θ X ≠ 0 →
-    ∃ g ∈ L.Gbar, ∃ Y ∈ C, (X : L.Amb) = ((g : L.Ambˣ) : L.Amb) * Y * ((g⁻¹ : L.Ambˣ) : L.Amb)
 
 end ScuspF
 

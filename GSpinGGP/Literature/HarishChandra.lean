@@ -42,7 +42,8 @@ Not needed as an axiom: BP Prop 4.5.1(i) (`c_θ(x) = 0` if `G_x` is not quasi-sp
 is a GSpin fact (`GGP/Centralizers.lean`).
 
 `GGP/Germs.lean` derives `hc_regularSet_open_conull` from (a) and the identification of `G'` with
-`regularSet`; `bp_germ_transfer` (not verbatim in the literature) is a `sorry` theorem there.
+`regularSet`; `bp_germ_transfer` (not verbatim in the literature) is proved there from `sorry`
+theorems (`bp_germAvg_transfer`, `germ_eq_germ_of_stable`, `finite_nilReg`).
 -/
 
 open MeasureTheory Topology Filter
@@ -350,7 +351,16 @@ quasi-split. For each regular nilpotent orbit `O ∈ Nil_reg(𝔤)` there is a W
 
 Sources: Rodier, *Modèle de Whittaker et caractères de représentations* (LNM 466, 1975);
 Mœglin–Waldspurger, *Modèles de Whittaker dégénérés pour des groupes p-adiques* (Math. Z. 196,
-1987) (theorem numbers unverified); BP Astérisque 418, Prop 4.8.1(i).
+1987), Thm I.16 and Cor I.17; BP Astérisque 418, Prop 4.8.1(i).
+
+**Residue characteristic.** BP states Prop 4.8.1(i) for every `p`-adic field, and so does this
+axiom. Mœglin–Waldspurger assume the residue characteristic is not `2` (their introduction), and
+Rodier treats split groups. The remaining case is S. Varma, *On a result of Moeglin and
+Waldspurger in residual characteristic 2*, Math. Z. 277 (2014), doi:10.1007/s00209-014-1292-8,
+Thm 1: for `F` `p`-adic of any residue characteristic, `G` connected reductive and `π` smooth of
+finite length, the maximal orbits with `c_O ≠ 0` are the maximal orbits carrying a nonzero space
+of degenerate Whittaker forms, and for such `O` the coefficient `c_O` is the dimension of that
+space. A regular nilpotent orbit is maximal, so `c_O` is that dimension (`0` if the space is `0`).
 
 The identity is passed as `x` with `hx : x = 1`, so that the orbit type
 `NilOrbit (grpCentralizer d.G x) (lieCentralizer d.lie x)` matches whatever form of `1` the
@@ -361,9 +371,10 @@ Only the existence of *some* datum per orbit is asserted.
 normalization of `ĵ(O,·)`: self-dual Haar measure on `𝔤(F)` for `(d.bilin, ψ)` and the Kirillov
 measure on `O` self-dual for `ψ ∘ ω_X`, `ω_X(Y,Z) = b(Y,[X,Z])` (Thesis §2.4 = BP §1.6). This is the
 normalization of `LocalGroups.IsOrbitMeasure`; if that definition deviated from BP's, this axiom
-would be false. Checked on `𝔰𝔩₂`/`GL₂` (two independent hand computations, any residue
-characteristic including `2`): the Lean normalization gives germ `1` for a principal series
-(`Sanity/NilpotentOrbit.lean`). -/
+would be false. Checked by hand on `𝔰𝔩₂`/`GL₂` (two independent computations, any residue
+characteristic including `2`): the Lean normalization gives germ `1` for a principal series.
+`Sanity/NilpotentOrbit.lean` records the values of these hand computations as `sorry` statements;
+they are not checked by Lean. -/
 axiom rodier_germ_one (d : GGPData F) (hqs : d.IsQuasiSplit) (ψ : NontrivialAddChar F)
     (x : ↥d.G) (hx : x = 1)
     (O : NilOrbit (grpCentralizer d.G x) (lieCentralizer d.lie ((x : d.ambientˣ) : d.ambient)))

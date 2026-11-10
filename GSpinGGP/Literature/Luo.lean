@@ -11,15 +11,14 @@ One literature axiom, `luo_lie_geomExpansion_SO`, about the special orthogonal G
 `(Ḡ, H̄, ξ)` on `𝔤 = so(W) ⊕ so(V)` of an admissible pair, with the objects of
 `TraceFormula/SOLie.lean` (defined on the quadratic spaces, not on `GSpin`).  For a strongly
 cuspidal `f` it asserts that **one** function `θ` (the quasi-character `θ_f` of `f`) has the
-properties stated for `θ_f` in three sources:
+properties stated for `θ_f` in three sources (the labels (b)–(d) are those of the statement):
 
-* (a) Beuzart-Plessis, Astérisque 418 (2020), Thm 5.5.2(i): integrability of the kernel on the
-  diagonal (page numbers and reference labels below are those of arXiv:1506.01452);
-* (b) Beuzart-Plessis Thm 5.5.2(ii) composed with the Weyl integration formula of BP §1.7, and
+* (b) Beuzart-Plessis, Astérisque 418 (2020), Thm 5.5.2(ii) (page numbers and reference labels
+  below are those of arXiv:1506.01452), composed with the Weyl integration formula of BP §1.7, and
   Waldspurger, Compositio 146 (2010), §5.3 Lemme via §6.1: `θ` represents the orbital pairing, is
   locally integrable and locally constant on `𝔤_reg(F)`;
 * (c) Waldspurger 2010 §6.1 Lemme (ii) and §5.3 Lemme via §6.1 (also BP Prop 5.6.1(i)): `θ` is a
-  quasi-character with support compact modulo conjugation;
+  quasi-character;
 * (d) Luo Thm 7.3.3: `J^Lie(f) = m^Lie_geom(θ_f)`, with `m^Lie_geom` in its limit form
   (Luo Prop 7.1.2(3)).
 
@@ -58,10 +57,6 @@ Waldspurger 2010 §6.1 "très cuspidale").
 pp. 6–7: `θ_f(X) = (−1)^{a_{M(X)} − a_G} ν(G_X)^{−1} D^G(X)^{−1/2} J_{M(X)}(X, f)` on `𝔤_reg(F)`,
 Arthur's weighted orbital integrals) with:
 
-* (a) for every test function `f'`, `x ↦ ∫_{𝔤(F)} f(x⁻¹Xx) f'(X) dX` is integrable on `Ḡ(F)`.
-  BP Thm 5.5.2(i) (p. 129), "In particular the function `x ∈ A_G(F)\G(F) ↦ K^A_{f,f'}(x, x)` is
-  integrable as soon as `f` is strongly cuspidal", with `K^A_{f,f'}(x,x) = ∫_{𝔤(F)} f(x⁻¹Xx) f'(X) dX`
-  (p. 127) and `A_Ḡ = 1` (see Coverage).
 * (b) `θ` is locally integrable, continuous on `𝔤_reg(F)`, and `∫_{𝔤(F)} θ f' dX = ∫_{Ḡ(F)} ∫_{𝔤(F)}
   f(x⁻¹Xx) f'(X) dX dx` for every test function `f'`.  The identity is the **composite of BP Thm
   5.5.2(ii)** (`J^A(f, f') = ∫_{Γ(𝔤)} D^G(X)^{1/2} θ_f(X) J_G(X, f') dX`, absolutely convergent)
@@ -72,25 +67,30 @@ Arthur's weighted orbital integrals) with:
   localement intégrable … et localement constante sur `G_reg(F)`"), transferred to the Lie algebra in
   §6.1 ("Elle a des propriétés similaires à celles énoncées au lemme 5.3").
 * (c) `θ` is a quasi-character on `𝔤(F)` (Waldspurger 2010 §6.1 Lemme (ii); BP Prop 5.6.1(i):
-  a Schwartz quasi-character), and its support is compact modulo conjugation in Waldspurger's sense
-  (`HasCompactSupportModConj`: the support of `θ_f` is contained in `(Supp f)^G`, proof of the §5.3
-  Lemme, via §6.1; cf. BP Prop 5.6.1(i), `S_scusp(ω) → QC_c(ω)`).
+  a Schwartz quasi-character).  Its support is compact modulo conjugation (the support of `θ_f` is
+  contained in `(Supp f)^G`, proof of Waldspurger's §5.3 Lemme, via §6.1), so `θ_f ∈ QC_c(𝔤)`; this
+  is not part of the statement below, which does not need it.
 * (d) `m^Lie_{geom,s}(θ) → J^Lie(f)` as `s → 0⁺`.  Luo Thm 7.3.3 (p. 46): "`J^Lie(f) =
   J^Lie_geom(f)` for any `f ∈ S_scusp(𝔤)`", with `J^Lie_geom(f) = m^Lie_geom(θ_f)` (§7.3) and
   `m^Lie_geom(θ) = lim_{s→0⁺} ∫_{Γ^Lie(G,H)} D^G(X)^{1/2} c_θ(X) Δ(X)^{s−1/2} dX` for
-  `θ ∈ QC_c(𝔤)` (Prop 7.1.2(3), p. 44; the limit exists), extended continuously to `SQC(𝔤)`.  By (c)
-  `θ_f ∈ QC_c(𝔤)`, so the limit formula applies to it directly.  `Γ^Lie(G, H)` and its measure
-  `Σ_{T ∈ 𝒯} |W(H,T)|⁻¹ ν(T) ∫_{𝔱(F)}` are Luo §7.1, (7.1.5); `Δ` is (7.1.7).  Luo defines `c_θ` only
+  `θ ∈ QC_c(𝔤)` (Prop 7.1.2(3), p. 44; the limit exists), extended continuously to `SQC(𝔤)`.  Since
+  `θ_f ∈ QC_c(𝔤)` (see (c)), the limit formula applies to it directly.  `Γ^Lie(G, H)` and its measure
+  `Σ_{T ∈ 𝒯} |W(H,T)|⁻¹ ν(T) ∫_{𝔱(F)}` are Luo §7.1, (7.1.5); `Δ` is (7.1.7).  **Luo's text does not define
+  `c_θ(X)` for `X ≠ 0`**: it defines `c_θ` only
   at `X = 0` for quasi-split `G` (p. 41: `c_{θ,O_reg}`, `c_{θ,O_{ν₀}}` if `dim V ≥ 4` is even,
-  `c_{θ,O_{−ν₀}}` if `dim W ≥ 4` is even); at `X ∈ 𝔱_♮(F)` the germ `c_θ(X)` is Waldspurger 2010 §7.3
+  `c_{θ,O_{−ν₀}}` if `dim W ≥ 4` is even).  The definition used here at `X ∈ 𝔱_♮(F)` is that of
+  Waldspurger 2010 §7.3
   (the same recipe applied to the descended triple: `O_{ν₀}` on `V'_X` if `dim V'_X ≥ 4` is even,
   `O_{−ν₀}` on `W'_X` if `dim W'_X ≥ 4` is even, the unique regular orbit otherwise) and §7.9 (its
   Lie-algebra form on `𝔱_♮(F)`); when `G_X` is not quasi-split, `c_θ(X) = 0` (BP Prop 4.5.1 2.(i)).
 
-**Stated without proof in the source.**  BP Thm 5.5.2 is announced, not proved: "The two theorems
+**A composite, and stated without proof in the source.**  The identity in (b) is not displayed as
+a theorem in any source: it is BP Thm 5.5.2(ii) followed by the Weyl integration formula, a step BP
+carries out inside the proof of Prop 5.6.1(i).  Both statements are BP's, for any connected reductive
+group, here `Ḡ`.  BP Thm 5.5.2 is announced, not proved: "The two theorems
 below are slight variations around the local trace formula of Arthur (cf. [A1]) and its version for
 Lie algebras due to Waldspurger (cf. [Wa3]). The proof of these two theorems will appear elsewhere
-[Beu2]" (BP p. 127).  (b) and the convergence part of (a) rest on it.  Waldspurger 2010 §6.1 proves
+[Beu2]" (BP p. 127).  (b) rests on it.  Waldspurger 2010 §6.1 proves
 the corresponding identity `J(φ̂, f) = ∫ φ̂ θ_f` for the geometric side `J` of the local trace
 formula on `𝔤`, not for the kernel integral.
 
@@ -108,11 +108,14 @@ over `Ḡ(F)`.  With the hypothesis, `A_Ḡ = 1`.
   where Luo's `J` and `J^Lie` (no quotient by `A_G`) are `0` or divergent.  Luo does not say how this
   is handled (BP, for unitary groups, work modulo `A_G`).  The statement here is only used for
   triples without such a factor.
-* Luo states no condition on the residue characteristic.  His Appendix B (the regular germs used,
-  through Lemma B.3.1, in the proof of Prop 7.3.7) follows Waldspurger, Astérisque 269 (2001),
-  Ch. I and X, which assumes the residue characteristic odd (and the groups unramified).  So for
-  `p = 2` the citation rests on a step whose source does not cover that case.  `PAdicField` allows
-  `p = 2`.
+* Luo states no condition on the residue characteristic, and `PAdicField` allows `p = 2`.  His
+  Appendix B (the regular germs used, through Lemma B.3.1, in the proof of Prop 7.3.7) refers to
+  Waldspurger, Astérisque 269 (2001), parts of which assume the residue characteristic odd and the
+  groups unramified.  Whether the steps Luo uses need that assumption has not been checked.
+* Luo's article is a preprint (arXiv:2009.13947v1); for `p`-adic `F` it follows Waldspurger 2010,
+  whose Thm 7.9 is the published `p`-adic statement closest to (d) (it is not the same statement).
+* The sources fix the Haar measure on `Ḡ(F)` (BP §1.6).  The statement allows any Haar measure
+  `μG`: for `μG = c · dg`, (b) holds with `c θ_f`, and both sides of (d) are multiplied by `c`.
 * The quasi-character, germ and Fourier-transform notions are this project's definitions
   (`IsLieQuasiCharacter`, `germLie` with `jHat`, `selfDualHaar`); the orbits `O_ν` are
   `IsInOrbitNu` (Luo §2.1, Waldspurger 2010 §7.1). -/
@@ -127,17 +130,13 @@ axiom luo_lie_geomExpansion_SO {F : Type} [NontriviallyNormedField F] [PAdicFiel
     (hμT : ∀ T : L.GammaTorus, L.IsExpCompatT T.1 (μT T))
     (f : ↥L.lie → ℂ) (hf : L.IsScusp f) :
     ∃ θ : ↥L.lie → ℂ,
-      -- (a) BP Thm 5.5.2(i)
-      (∀ f' : ↥L.lie → ℂ, IsTestFn f' →
-        Integrable (fun x : ↥L.Gbar =>
-          ∫ X : ↥L.lie, L.extFn f (L.conjInv x X) * f' X ∂L.measLie ψ) μG) ∧
       -- (b) BP Thm 5.5.2(ii) with the Weyl integration formula (BP §1.7); Waldspurger 2010 §5.3, §6.1
       (LocallyIntegrable θ (L.measLie ψ) ∧
         ContinuousOn θ {X : ↥L.lie | IsRegularSS L.lie (X : L.Amb)} ∧
         ∀ f' : ↥L.lie → ℂ, IsTestFn f' →
           ∫ X, θ X * f' X ∂L.measLie ψ = L.orbitalPairing ψ μG f f') ∧
-      -- (c) Waldspurger 2010 §6.1 Lemme (ii), §5.3 Lemme (support)
-      (IsLieQuasiCharacter L.Gbar L.lie L.traceForm ψ θ ∧ L.HasCompactSupportModConj θ) ∧
+      -- (c) Waldspurger 2010 §6.1 Lemme (ii)
+      IsLieQuasiCharacter L.Gbar L.lie L.traceForm ψ θ ∧
       -- (d) Luo Thm 7.3.3 with Prop 7.1.2(3)
       Tendsto (L.mGeomLieS ψ μT θ) (𝓝[>] (0 : ℝ)) (𝓝 (L.distribJLie ψ μ𝔥 m f))
 
