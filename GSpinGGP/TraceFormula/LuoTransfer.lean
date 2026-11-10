@@ -191,15 +191,6 @@ theorem toSO_bijective : Function.Bijective d.toSOFun := by
     obtain ⟨Y₂, hY₂, e₂⟩ := hsurj d.nondeg_QV (d.luoOf.sndA (M : d.luoOf.Amb)) M.2.2
     exact ⟨⟨(Y₁, Y₂), hY₁, hY₂⟩, Subtype.ext (Prod.ext e₁ e₂)⟩
 
-/-- `𝔤⁰ ≃ so(W) ⊕ so(V)`. -/
-def toSO : ↥d.lieZero ≃ ↥d.luoOf.lie := Equiv.ofBijective d.toSOFun d.toSO_bijective
-
-/-- `(toSO X : End W × End V) = toSOLin X`. -/
-@[simp] theorem coe_toSO (X : ↥d.lieZero) : (d.toSO X : d.luoOf.Amb) = d.toSOLin X := rfl
-
-theorem toSOLin_toSO_symm (Y : ↥d.luoOf.lie) : d.toSOLin (d.toSO.symm Y : d.ambient) = Y :=
-  congrArg Subtype.val (d.toSO.apply_symm_apply Y)
-
 /-- `ad : 𝔤⁰ → so(W) ⊕ so(V)` as a linear map. -/
 def toSOLinRestr : ↥d.lieZero →ₗ[F] ↥d.luoOf.lie :=
   LinearMap.codRestrict d.luoOf.lie.toSubmodule (d.toSOLin ∘ₗ d.lieZero.toSubmodule.subtype)
@@ -209,24 +200,33 @@ def toSOLinRestr : ↥d.lieZero →ₗ[F] ↥d.luoOf.lie :=
 def toSOLinEquiv : ↥d.lieZero ≃ₗ[F] ↥d.luoOf.lie :=
   LinearEquiv.ofBijective d.toSOLinRestr d.toSO_bijective
 
-theorem toSO_symm_eq (Y : ↥d.luoOf.lie) : d.toSO.symm Y = d.toSOLinEquiv.symm Y :=
-  d.toSO.injective (by
-    rw [d.toSO.apply_symm_apply]
-    exact (d.toSOLinEquiv.apply_symm_apply Y).symm)
+/-- `𝔤⁰ ≃ so(W) ⊕ so(V)`. -/
+def toSO : ↥d.lieZero ≃ ↥d.luoOf.lie := d.toSOLinEquiv.toEquiv
+
+/-- `(toSO X : End W × End V) = toSOLin X`. -/
+@[simp] theorem coe_toSO (X : ↥d.lieZero) : (d.toSO X : d.luoOf.Amb) = d.toSOLin X := rfl
+
+theorem toSOLin_toSO_symm (Y : ↥d.luoOf.lie) : d.toSOLin (d.toSO.symm Y : d.ambient) = Y :=
+  congrArg Subtype.val (d.toSO.apply_symm_apply Y)
 
 /-- `ad : 𝔤⁰ ≃ so(W) ⊕ so(V)` is a homeomorphism (finite dimension). -/
 def toSOCLE : ↥d.lieZero ≃L[F] ↥d.luoOf.lie :=
-  { d.toSOLinEquiv with
-    continuous_toFun := continuous_induced_rng.mpr
-      (continuous_linearMap_of_isEmbedding d.lieZero.toSubmodule.subtype
-        Topology.IsEmbedding.subtypeVal (d.luoOf.lie.toSubmodule.subtype ∘ₗ d.toSOLinRestr))
-    continuous_invFun := continuous_induced_rng.mpr
-      (continuous_linearMap_of_isEmbedding d.luoOf.lie.toSubmodule.subtype
-        Topology.IsEmbedding.subtypeVal
-        (d.lieZero.toSubmodule.subtype ∘ₗ d.toSOLinEquiv.symm.toLinearMap)) }
+  haveI := t2Space_of_moduleTopology F d.ambient
+  haveI := isTopologicalRing_of_moduleTopology F d.ambient
+  haveI := IsModuleTopology.toContinuousSMul F d.ambient
+  haveI := t2Space_of_moduleTopology F d.luoOf.Amb
+  haveI := isTopologicalRing_of_moduleTopology F d.luoOf.Amb
+  haveI := IsModuleTopology.toContinuousSMul F d.luoOf.Amb
+  haveI : ContinuousSMul F ↥d.lieZero := inferInstanceAs (ContinuousSMul F ↥d.lieZero.toSubmodule)
+  haveI : IsTopologicalAddGroup ↥d.lieZero :=
+    inferInstanceAs (IsTopologicalAddGroup ↥d.lieZero.toSubmodule)
+  haveI : ContinuousSMul F ↥d.luoOf.lie :=
+    inferInstanceAs (ContinuousSMul F ↥d.luoOf.lie.toSubmodule)
+  haveI : IsTopologicalAddGroup ↥d.luoOf.lie :=
+    inferInstanceAs (IsTopologicalAddGroup ↥d.luoOf.lie.toSubmodule)
+  d.toSOLinEquiv.toContinuousLinearEquiv
 
-theorem toSOCLE_symm_apply (Y : ↥d.luoOf.lie) : d.toSOCLE.symm Y = d.toSO.symm Y :=
-  (d.toSO_symm_eq Y).symm
+theorem coe_toSOCLE_symm : ⇑d.toSOCLE.symm = ⇑d.toSO.symm := rfl
 
 /-- `ad` carries `𝔭⁰` onto `𝔭`: the conditions on `X_W`, `X_V` are conditions on `ad X_W`,
 `ad X_V`. -/
@@ -256,15 +256,13 @@ def toSOUnip (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV) :
 /-- `toSOUnip` is a homeomorphism (finite dimension). -/
 def toSOUnipCLE (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV) :
     ↥(d.lieUnip FW FV) ≃L[F] ↥(d.luoOf.lieUnip FW FV) :=
-  { d.toSOUnip FW FV with
-    continuous_toFun := continuous_induced_rng.mpr
-      (continuous_linearMap_of_isEmbedding (d.lieUnip FW FV).subtype
-        Topology.IsEmbedding.subtypeVal
-        ((d.luoOf.lieUnip FW FV).subtype ∘ₗ (d.toSOUnip FW FV).toLinearMap))
-    continuous_invFun := continuous_induced_rng.mpr
-      (continuous_linearMap_of_isEmbedding (d.luoOf.lieUnip FW FV).subtype
-        Topology.IsEmbedding.subtypeVal
-        ((d.lieUnip FW FV).subtype ∘ₗ (d.toSOUnip FW FV).symm.toLinearMap)) }
+  haveI := t2Space_of_moduleTopology F d.ambient
+  haveI := isTopologicalRing_of_moduleTopology F d.ambient
+  haveI := IsModuleTopology.toContinuousSMul F d.ambient
+  haveI := t2Space_of_moduleTopology F d.luoOf.Amb
+  haveI := isTopologicalRing_of_moduleTopology F d.luoOf.Amb
+  haveI := IsModuleTopology.toContinuousSMul F d.luoOf.Amb
+  (d.toSOUnip FW FV).toContinuousLinearEquiv
 
 /-- A proper parabolic of `Ḡ` (some element of `Ḡ(F)` moves the flag pair) gives a proper
 parabolic of `G` (lift that element through `G(F) → Ḡ(F)`, `Pbar_surjective`). -/
@@ -296,13 +294,12 @@ theorem isScusp_toSO {f : ↥d.lieZero → ℂ} (hf : d.IsLieScusp f) :
   have := t2Space_of_moduleTopology F d.ambient
   have := isTopologicalRing_of_moduleTopology F d.ambient
   have := isTopologicalRing_of_moduleTopology F d.luoOf.Amb
-  have hcomp : f ∘ d.toSO.symm = f ∘ d.toSOCLE.symm :=
-    funext fun Y => by simp only [Function.comp_apply, d.toSOCLE_symm_apply]
   refine ⟨?_, ?_⟩
-  · rw [hcomp]
-    exact ⟨hf.1.1.comp_continuous d.toSOCLE.symm.continuous, hf.1.2.comp_homeomorph d.toSOCLE.symm.toHomeomorph⟩
+  · rw [← coe_toSOCLE_symm]
+    exact ⟨hf.1.1.comp_continuous d.toSOCLE.symm.continuous,
+      hf.1.2.comp_homeomorph d.toSOCLE.symm.toHomeomorph⟩
   intro (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV) hP X hX μ hμ
-  letI : MeasurableSpace ↥(d.luoOf.lieUnip FW FV) := d.luoOf.instMeasurableSpaceLieUnip FW FV
+  let : MeasurableSpace ↥(d.luoOf.lieUnip FW FV) := d.luoOf.instMeasurableSpaceLieUnip FW FV
   have : BorelSpace ↥(d.lieUnip FW FV) := ⟨rfl⟩
   have : BorelSpace ↥(d.luoOf.lieUnip FW FV) := ⟨rfl⟩
   set X' : ↥d.lieZero := d.toSO.symm X with hX'def
@@ -324,7 +321,7 @@ theorem isScusp_toSO {f : ↥d.lieZero → ℂ} (hf : d.IsLieScusp f) :
       d.toSOLin_toSO_symm ⟨N, d.luoOf.lieUnip_le_lie FW FV N.2⟩
     rw [Equiv.symm_apply_eq]
     apply Subtype.ext
-    show (X : d.luoOf.Amb) + N = d.toSOLin ((X' : d.ambient) + (em N : d.ambient))
+    change (X : d.luoOf.Amb) + N = d.toSOLin ((X' : d.ambient) + (em N : d.ambient))
     rw [map_add, hN, hX'def, d.toSOLin_toSO_symm]
   refine ⟨?_, ?_⟩
   · rw [key]; exact (integrable_map_equiv em _).mp hint

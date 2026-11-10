@@ -12,8 +12,6 @@ import GSpinGGP.Foundations.LocalGroups
   measure exists (otherwise it is the junk value `0`).
 * `measurableSingletonClass_lie`, `locallyCompactSpace_lie`: topological facts about a Lie
   subalgebra of a finite-dimensional algebra with its module topology.
-* `continuous_linearMap_of_isEmbedding`: linear maps out of a subspace of such an algebra are
-  continuous.
 * `ggp_bilin_symm`: the trace form of a GGP datum is symmetric.
 -/
 
@@ -59,24 +57,6 @@ lemma locallyCompactSpace_lie (𝔤 : LieSubalgebra F A) : LocallyCompactSpace �
   haveI : ContinuousSMul F A := IsModuleTopology.toContinuousSMul F A
   have hcl : IsClosed (𝔤.toSubmodule : Set A) := Submodule.closed_of_finiteDimensional _
   exact hcl.locallyCompactSpace
-
-/-- A linear map out of a subspace `S ⊆ A` (with the induced topology) into a finite-dimensional
-algebra `B` with its module topology is continuous (finite dimension, complete `F`). -/
-theorem continuous_linearMap_of_isEmbedding {S : Type*} [AddCommGroup S] [Module F S]
-    [TopologicalSpace S] (i : S →ₗ[F] A) (hi : Topology.IsEmbedding i)
-    {B : Type*} [Ring B] [Algebra F B] [Module.Finite F B] [TopologicalSpace B]
-    [IsModuleTopology F B] (φ : S →ₗ[F] B) : Continuous φ := by
-  haveI := t2Space_of_moduleTopology F A
-  haveI := isTopologicalRing_of_moduleTopology F A
-  haveI := isTopologicalRing_of_moduleTopology F B
-  haveI : ContinuousSMul F A := IsModuleTopology.toContinuousSMul F A
-  haveI : ContinuousSMul F B := IsModuleTopology.toContinuousSMul F B
-  haveI : IsTopologicalAddGroup S := hi.isInducing.isTopologicalAddGroup i
-  haveI : ContinuousSMul F S :=
-    hi.isInducing.continuousSMul continuous_id (fun {c x} => i.map_smul c x)
-  haveI : T2Space S := hi.t2Space
-  haveI : FiniteDimensional F S := Module.Finite.of_injective i hi.injective
-  exact φ.continuous_of_finiteDimensional
 
 /-- The trace form `b(X,Y) = tr(L_{XY})` of a GGP datum is symmetric
 (`tr(L_X L_Y) = tr(L_Y L_X)`). -/
