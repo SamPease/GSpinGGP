@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.TraceFormula.LieAlgebra
+import GSpinGGP.GGP.MovedCentralizer
 import GSpinGGP.Literature.Luo
 import GSpinGGP.Literature.Fourier
 import GSpinGGP.TraceFormula.SelfDual
@@ -34,7 +35,7 @@ The identification is own work, stated step by step (most steps are `sorry` here
   `Ḡ_X`, the orbit choice `orbitChoiceLie` vs Luo's and Waldspurger's `O_{±ν₀}`);
 * (L8) `gammaClass_equiv`, `torusIntegralLie_toSO`: `Γ^Lie` (tori, `|W(H,T)|`, `ν(T) dX`,
   `D^G`, `Δ`, `𝔱_♮`) agree; `mGeomLieS_toSO` is proved from them;
-* (L9) `mGeomLie_congr_regularSet`: `m^Lie_geom(θ)` depends only on `θ|_{𝔤⁰_reg}`.
+* (L9) `mGeomLie_congr_regularSet` (proved): `m^Lie_geom(θ)` depends only on `θ|_{𝔤⁰_reg}`.
 -/
 
 noncomputable section
@@ -546,6 +547,7 @@ theorem germLie0_congr_regularSet {θ θ' : ↥d.lieZero → ℂ}
     {X : d.ambient} (hX : IsSS F X)
     (O : NilOrbit (lieGrpCentralizer d.G X) (lieCentralizer d.lieZero X)) :
     d.germLie0 ψ θ X O = d.germLie0 ψ θ' X O := by
+  classical
   have hP : (fun c => HasGermExpansionLie d.G d.lieZero d.bilin ψ θ X c) =
       fun c => HasGermExpansionLie d.G d.lieZero d.bilin ψ θ' X c :=
     funext fun c => propext
@@ -558,9 +560,7 @@ theorem germLie0_congr_regularSet {θ θ' : ↥d.lieZero → ℂ}
     subst hPQ
     rfl
   unfold germLie0 germLie
-  split_ifs with hO
-  · exact key hP
-  · rfl
+  rw [key hP]
 
 /-- The integrand of `m^Lie_{geom,s}` only sees `θ|_{𝔤⁰_reg(F)}`, at points of `𝔱⁰_♮` that are
 semisimple. -/
@@ -594,15 +594,21 @@ theorem mGeomLie_congr_regularSet_of_isSS {θ θ' : ↥d.lieZero → ℂ}
 /-- **(L9) `m^Lie_geom(θ)` depends only on `θ|_{𝔤⁰_reg}`** (the Lie-algebra form of
 `mGeomS_congr_regularSet`): the germs `c_{θ,O}(X)` only see `θ` at `X + Y` with `Y ∈ 𝔤⁰_X` small
 and regular in `𝔤⁰_X`, and such `X + Y` are regular in `𝔤⁰` (`mGeomLie_congr_regularSet_of_isSS`).
-What is not proved here: the points of `𝔱⁰_♮` are semisimple, for a torus `T` of `𝒯` (they lie in
-the Lie algebra of the torus `S = T/A_{G,H}`).  `IsGammaEltLie` does not state it, unlike
-`IsGammaElt` on the group. -/
+The points `X` of `𝔱⁰_♮` are semisimple for `T = T_x`, `x ∈ Γ(G,H)`: `X` commutes with `x` and
+kills `W'_x` (`GGPData.isSS_of_commute_of_isGammaElt`), and so is `(X, X)`. -/
 theorem mGeomLie_congr_regularSet {θ θ' : ↥d.lieZero → ℂ}
     (he : ∀ X : ↥d.lieZero, IsRegularSS d.lieZero (X : d.ambient) → θ X = θ' X) :
     d.mGeomLie ψ θ = d.mGeomLie ψ θ' := by
   refine d.mGeomLie_congr_regularSet_of_isSS ψ he fun c X hX => ?_
-  -- `X ∈ 𝔱⁰_♮` for the torus `T = Quot.out c` of `𝒯`: `diagLie X` is semisimple
-  sorry
+  obtain ⟨x, hx, hT⟩ := (Quot.out c).2
+  obtain ⟨hXs, hXc, hXf⟩ := hX.1
+  rw [← hT] at hXc hXf
+  have hss : IsSS F X := d.isSS_of_commute_of_isGammaElt hx hXs.1
+    (hXc x (d.self_mem_torusOf x)) fun v hv => hXf v <| Submodule.mem_iInf _ |>.mpr fun t => by
+      have := t.2.2 v hv
+      simpa [fixedSub, sub_eq_zero] using this
+  exact isSS_algHom ((AlgHom.id F _).prod
+    (CliffordAlgebra.map (QuadraticMap.Isometry.inl d.QW d.QZ))) hss
 
 /-- `m^Lie_{geom,s}` agrees with Luo's, for `s > 0`, from `gammaClass_equiv` and
 `torusIntegralLie_toSO`. -/

@@ -21,6 +21,11 @@ nondegenerate plane over an algebraically closed field of characteristic `≠ 2`
 `e^⊥` is a second eigenline, or `e` is isotropic, `B(e,f) ≠ 0`, `h f = α e + β f` with `aβ = 1`,
 and `f + γ e` is an eigenvector for a suitable `γ` (`α = 0` if `β = a`, since then `β² = 1` and
 `B(hf,hf) = B(f,f)` gives `2αβ B(e,f) = 0`).
+
+The same holds for skew `h` vanishing on `ker (X − 1)`
+(`isSemisimple_of_isSkew_of_commute_of_lieAbelian`): a skew endomorphism of a nondegenerate plane
+is diagonalizable (`le_iSup_eigenspace_of_finrank_eq_two_of_isSkew`; with `h e = a e`, `e`
+isotropic and `h f = α e + β f`, skewness gives `β = −a`, and `α = 0` when `a = 0`).
 -/
 
 noncomputable section
@@ -199,6 +204,114 @@ theorem le_iSup_eigenspace_of_finrank_eq_two [IsAlgClosed K] (h2K : (2 : K) ≠ 
     refine ⟨g, hgE, ⟨β, ?_⟩, hind⟩
     rw [← hab, hα, zero_smul, zero_add]
 
+/-- **A skew endomorphism of a nondegenerate plane is diagonalizable** (over an algebraically
+closed field of characteristic `≠ 2`). -/
+theorem le_iSup_eigenspace_of_finrank_eq_two_of_isSkew [IsAlgClosed K] (h2K : (2 : K) ≠ 0)
+    (hB : B.IsSymm) {h : Module.End K V} (hi : IsSkew B h) {E : Submodule K V}
+    [FiniteDimensional K E] (hE : ∀ v ∈ E, h v ∈ E) (h2 : finrank K E = 2)
+    (hndE : ∀ e ∈ E, e ≠ 0 → ∃ e' ∈ E, B e e' ≠ 0) : E ≤ ⨆ μ : K, h.eigenspace μ := by
+  classical
+  have hmemE : ∀ {u μ}, u ∈ h.eigenspace μ → u ∈ ⨆ μ : K, h.eigenspace μ :=
+    fun hu => Submodule.mem_iSup_of_mem _ hu
+  have : Nontrivial E := Module.nontrivial_of_finrank_pos (R := K) (by omega)
+  obtain ⟨a, ha⟩ := Module.End.exists_eigenvalue (h.restrict hE)
+  obtain ⟨e₀, he₀, he₀0⟩ := ha.exists_hasEigenvector
+  set e : V := (e₀ : V) with hedef
+  have heE : e ∈ E := e₀.2
+  have he0 : e ≠ 0 := fun h0 => he₀0 (Subtype.ext h0)
+  have hhe : h e = a • e := by
+    have := congrArg Subtype.val (mem_eigenspace_iff.mp he₀)
+    simpa [LinearMap.restrict_apply] using this
+  have heig : e ∈ h.eigenspace a := mem_eigenspace_iff.mpr hhe
+  obtain ⟨e', he'E, hee'⟩ := hndE e heE he0
+  suffices ∃ g ∈ E, (∃ β, h g = β • g) ∧ ∀ s t : K, s • e + t • g = 0 → s = 0 ∧ t = 0 by
+    obtain ⟨g, hgE, ⟨β, hhg⟩, hind⟩ := this
+    refine (le_span_pair_of_finrank_eq_two h2 heE hgE hind).trans ?_
+    rw [Submodule.span_le, Set.insert_subset_iff, Set.singleton_subset_iff]
+    exact ⟨hmemE heig, hmemE (mem_eigenspace_iff.mpr hhg)⟩
+  by_cases hee : B e e = 0
+  · set f := e' with hfdef
+    have hind : ∀ s t : K, s • e + t • f = 0 → s = 0 ∧ t = 0 := by
+      intro s t hst
+      have h1 := congrArg (B e) hst
+      rw [map_add, map_smul, map_smul, hee, map_zero, smul_zero, zero_add, smul_eq_mul] at h1
+      have ht : t = 0 := (mul_eq_zero.mp h1).resolve_right hee'
+      rw [ht, zero_smul, add_zero] at hst
+      exact ⟨(smul_eq_zero.mp hst).resolve_right he0, ht⟩
+    obtain ⟨α, β, hab⟩ := Submodule.mem_span_pair.mp
+      (le_span_pair_of_finrank_eq_two h2 heE he'E hind (hE f he'E))
+    have hfe : B f e = B e f := hB.eq f e
+    -- `β = −a`
+    have hβ : β = -a := by
+      have h1 := hi e f
+      rw [hhe, ← hab] at h1
+      simp only [map_add, map_smul, LinearMap.smul_apply, smul_eq_mul, hee, mul_zero,
+        zero_add] at h1
+      have : (β + a) * B e f = 0 := by linear_combination h1
+      exact eq_neg_of_add_eq_zero_left ((mul_eq_zero.mp this).resolve_right hee')
+    -- `α B(e,f) + β B(f,f) = 0`
+    have hff : α * B e f + β * B f f = 0 := by
+      have h1 := hi f f
+      rw [← hab] at h1
+      simp only [map_add, map_smul, LinearMap.add_apply, LinearMap.smul_apply, smul_eq_mul,
+        hfe] at h1
+      have : (2 : K) * (α * B e f + β * B f f) = 0 := by linear_combination h1
+      exact (mul_eq_zero.mp this).resolve_left h2K
+    set γ : K := if β = a then 0 else α / (β - a) with hγ
+    have hαγ : α = γ * (β - a) := by
+      by_cases hβa : β = a
+      · simp only [hγ, hβa, ite_true, zero_mul]
+        have ha0 : a = 0 := by
+          have : (2 : K) * a = 0 := by linear_combination hβ - hβa
+          exact (mul_eq_zero.mp this).resolve_left h2K
+        have hβ0 : β = 0 := by rw [hβ, ha0, neg_zero]
+        rw [hβ0, zero_mul, add_zero] at hff
+        exact (mul_eq_zero.mp hff).resolve_right hee'
+      · simp only [hγ, hβa, ite_false]
+        rw [div_mul_cancel₀ _ (sub_ne_zero.mpr hβa)]
+    refine ⟨f + γ • e, add_mem he'E (E.smul_mem γ heE), ⟨β, ?_⟩, fun s t hst => ?_⟩
+    · rw [map_add, map_smul, ← hab, hhe, hαγ, smul_add, smul_smul, smul_smul]
+      module
+    · have h' : (s + t * γ) • e + t • f = 0 := by rw [← hst]; module
+      obtain ⟨h1, ht⟩ := hind _ _ h'
+      rw [ht, zero_mul, add_zero] at h1
+      exact ⟨h1, ht⟩
+  · obtain ⟨w, hwE, hw⟩ : ∃ w ∈ E, w ∉ Submodule.span K {e} := by
+      by_contra hcon
+      push Not at hcon
+      have hle : E ≤ Submodule.span K {e} := fun w hw => hcon w hw
+      have := Submodule.finrank_mono hle
+      rw [finrank_span_singleton he0] at this
+      omega
+    set g := w - (B e w / B e e) • e with hgdef
+    have hgE : g ∈ E := sub_mem hwE (E.smul_mem _ heE)
+    have heg : B e g = 0 := by
+      rw [hgdef, map_sub, map_smul, smul_eq_mul, div_mul_cancel₀ _ hee, sub_self]
+    have hg0 : g ≠ 0 := by
+      intro hg
+      apply hw
+      rw [hgdef, sub_eq_zero] at hg
+      rw [hg]
+      exact Submodule.smul_mem _ _ (Submodule.mem_span_singleton_self e)
+    have hind : ∀ s t : K, s • e + t • g = 0 → s = 0 ∧ t = 0 := by
+      intro s t hst
+      have h1 := congrArg (B e) hst
+      rw [map_add, map_smul, map_smul, heg, smul_zero, add_zero, map_zero, smul_eq_mul] at h1
+      have hs : s = 0 := (mul_eq_zero.mp h1).resolve_right hee
+      rw [hs, zero_smul, zero_add] at hst
+      exact ⟨hs, (smul_eq_zero.mp hst).resolve_right hg0⟩
+    obtain ⟨α, β, hab⟩ := Submodule.mem_span_pair.mp
+      (le_span_pair_of_finrank_eq_two h2 heE hgE hind (hE g hgE))
+    have hα : α = 0 := by
+      have h1 := hi e g
+      rw [hhe, ← hab] at h1
+      simp only [map_add, map_smul, LinearMap.smul_apply, smul_eq_mul, heg, mul_zero,
+        add_zero] at h1
+      have : α * B e e = 0 := by linear_combination h1
+      exact (mul_eq_zero.mp this).resolve_right hee
+    refine ⟨g, hgE, ⟨β, ?_⟩, hind⟩
+    rw [← hab, hα, zero_smul, zero_add]
+
 variable [CharZero K] [IsAlgClosed K] [FiniteDimensional K V] {X : Module.End K V}
 
 /-- **Isometries commuting with a regular semisimple isometry are semisimple**: if `X` is a
@@ -230,6 +343,40 @@ theorem isSemisimple_of_commute_of_lieAbelian (hB : B.IsSymm) (hnd : B.Nondegene
   rcases Nat.lt_or_ge (finrank K (X.eigenspace (-1))) 2 with hlt | hge
   · exact le_iSup_eigenspace_of_restrict hmaps (isSemisimple_of_finrank_le_one (by omega) _)
   · refine le_iSup_eigenspace_of_finrank_eq_two two_ne_zero hB hi hmaps (by omega) ?_
+    intro e he he0
+    obtain ⟨w, hw, hew⟩ := exists_eigen_pair_ne_zero hnd hX hss he he0
+    rw [inv_neg, inv_one] at hw
+    exact ⟨w, hw, hew⟩
+
+/-- **Skew endomorphisms commuting with a regular semisimple isometry are semisimple**: if `X`
+is a semisimple isometry with `LieAbelian B X`, every skew `h` commuting with `X` and vanishing on
+`ker (X − 1)` is semisimple.  Lie-algebra form of `isSemisimple_of_commute_of_lieAbelian`. -/
+theorem isSemisimple_of_isSkew_of_commute_of_lieAbelian (hB : B.IsSymm) (hnd : B.Nondegenerate)
+    (hX : IsIsom B X) (hss : X.IsSemisimple) (hL : LieAbelian B X) {h : Module.End K V}
+    (hi : IsSkew B h) (hc : Commute X h) (hf : ∀ z ∈ X.eigenspace 1, h z = 0) :
+    h.IsSemisimple := by
+  apply TauCeti.isSemisimple_of_iSup_eigenspace_eq_top
+  rw [eq_top_iff, ← hss.iSup_eigenspace_eq_top]
+  refine iSup_le fun μ => ?_
+  have hmaps := mapsTo_eigenspace_of_commute hc μ
+  by_cases hμ1 : μ = 1
+  · subst hμ1
+    intro v hv
+    exact Submodule.mem_iSup_of_mem 0 (mem_eigenspace_iff.mpr (by rw [zero_smul]; exact hf v hv))
+  by_cases hμ2 : μ * μ ≠ 1
+  · exact le_iSup_eigenspace_of_restrict hmaps (isSemisimple_of_finrank_le_one
+      (finrank_eigenspace_le_one hB hnd hX hss hL hμ1 hμ2) _)
+  push Not at hμ2
+  have hμ : μ = -1 := by
+    have : (μ - 1) * (μ + 1) = 0 := by linear_combination hμ2
+    rcases mul_eq_zero.mp this with h0 | h0
+    · exact absurd (sub_eq_zero.mp h0) hμ1
+    · exact eq_neg_of_add_eq_zero_left h0
+  subst hμ
+  have hle2 := finrank_eigenspace_neg_one_le_two hB hnd hX hss hL
+  rcases Nat.lt_or_ge (finrank K (X.eigenspace (-1))) 2 with hlt | hge
+  · exact le_iSup_eigenspace_of_restrict hmaps (isSemisimple_of_finrank_le_one (by omega) _)
+  · refine le_iSup_eigenspace_of_finrank_eq_two_of_isSkew two_ne_zero hB hi hmaps (by omega) ?_
     intro e he he0
     obtain ⟨w, hw, hew⟩ := exists_eigen_pair_ne_zero hnd hX hss he he0
     rw [inv_neg, inv_one] at hw

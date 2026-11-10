@@ -4,13 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.GGP.Steinberg
 import GSpinGGP.Foundations.JordanAlgebra
+import GSpinGGP.Foundations.SoCentralizer
 
 /-!
 # Semisimplicity in `GSpin(V)` is detected by `P`
 
 Over a field of characteristic `0`, `x ∈ GSpin(V)` acts semisimply on `C(V)` as soon as
 `P(x) ∈ SO(V)` is semisimple (`isSS_of_isSemisimple_specP_baseChange`); the converse is
-`isSemisimple_specP_of_isSS`.
+`isSemisimple_specP_of_isSS`.  Likewise `X ∈ gspin(V)` is semisimple as soon as `adV X ∈ so(V)` is
+(`isSemisimple_mulLeft_of_isSemisimple_adV_baseChange`).
 
 Proof. Write `x = s + n` (additive Jordan–Chevalley decomposition of left multiplication by `x`,
 `exists_jordan_unit`), with `s, n ∈ K[x]`, `s` semisimple and `n` nilpotent; `s` is a unit.
@@ -120,5 +122,39 @@ theorem isSS_of_isSemisimple_specP_baseChange {Q : QuadraticForm K V} (hQ : IsNo
   rw [show LinearMap.mulLeft K X = r • LinearMap.mulLeft K s by
     rw [hXr]; ext z; simp]
   exact Module.End.IsSemisimple_smul r hLs
+
+/-- **`X ∈ gspin(V)` is semisimple if `adV X` is** (over a field of characteristic `0`; the
+hypothesis is semisimplicity over `K̄`).  Lie-algebra form of
+`isSS_of_isSemisimple_specP_baseChange`. -/
+theorem isSemisimple_mulLeft_of_isSemisimple_adV_baseChange {Q : QuadraticForm K V}
+    (hQ : IsNondeg Q) {X : CliffordAlgebra Q} (hX : X ∈ gspin Q)
+    (hs : Module.End.IsSemisimple ((adV Q X).baseChange (AlgebraicClosure K))) :
+    Module.End.IsSemisimple (LinearMap.mulLeft K X) := by
+  obtain ⟨s, hsX, n, -, hss, hnil, rfl, hsg, hng⟩ := exists_jordan_gspin hX
+  have hsn : (s + n) * s = s * (s + n) :=
+    (Algebra.commute_of_mem_adjoin_self hsX).eq
+  have hc : Commute (adV Q (s + n)) (adV Q s) := by
+    have h := adV_commutator hX hsg
+    rw [hsn, sub_self, map_zero, eq_comm, sub_eq_zero] at h
+    exact h
+  have hn : adV Q n = adV Q (s + n) - adV Q s := by rw [map_add, add_sub_cancel_left]
+  have hbc : (adV Q n).baseChange (AlgebraicClosure K) = 0 := by
+    refine Module.End.eq_zero_of_isNilpotent_isSemisimple ?_ ?_
+    · obtain ⟨k, hk⟩ := isNilpotent_adV hng hnil
+      exact ⟨k, by rw [← LinearMap.baseChange_pow, hk, LinearMap.baseChange_zero]⟩
+    · rw [hn, LinearMap.baseChange_sub]
+      refine hs.sub_of_commute ?_
+        (IsomCent.isSemisimple_baseChange_algebraicClosure (isSemisimple_adV hsg hss))
+      rw [Commute, SemiconjBy, ← LinearMap.baseChange_mul, ← LinearMap.baseChange_mul, hc.eq]
+  have h0 : adV Q n = 0 := by
+    refine LinearMap.ext fun v => Module.Flat.tensorProduct_mk_injective K V (AlgebraicClosure K) ?_
+    have := LinearMap.congr_fun hbc (1 ⊗ₜ v)
+    simpa using this
+  obtain ⟨r, rfl⟩ := eq_algebraMap_of_adV_eq_zero hQ hng h0
+  have e : LinearMap.mulLeft K (s + algebraMap K _ r) =
+      LinearMap.mulLeft K s - algebraMap K (Module.End K (CliffordAlgebra Q)) (-r) := by
+    ext z; simp [add_mul, Algebra.smul_def]
+  rw [e, Module.End.isSemisimple_sub_algebraMap_iff]
+  exact hss
 
 end GSpinGGP
