@@ -41,26 +41,29 @@ satisfying the stability, transfer and genericity hypotheses, which is all the p
 
 As of November 2026:
 
-- The project builds with 47 declarations containing `sorry`. The main theorem `local_ggp`
-  depends on 30 of them. They are of three kinds: the analytic core of the local trace formula
+- The project builds with 46 declarations containing `sorry`. The main theorem `local_ggp`
+  depends on 29 of them. They are of three kinds: the analytic core of the local trace formula
   (Thesis Ch. 8–12, e.g. the bound on the kernel of the distribution `J` and its spectral
-  expansion); published results that the dissertation adapts to general spin groups or combines
-  (see below), among them the geometric expansion of `J^Lie` for the special orthogonal triple
-  (`luo_lie_geomExpansion_SO`: Luo's theorem together with properties of `θ_f` from Waldspurger and
-  Beuzart-Plessis, one of which is not printed in the form used); and 10 statements identifying
-  the special orthogonal objects of that expansion with those of the general spin triple
-  (`TraceFormula/LuoTransfer.lean`), plus some smaller lemmas.
+  expansion); published results that the dissertation adapts to general spin groups (see below);
+  and 10 statements identifying the special orthogonal objects of a cited theorem (Luo's geometric
+  expansion of `J^Lie`) with those of the general spin triple (`TraceFormula/LuoTransfer.lean`),
+  plus some smaller lemmas. A `sorry` is a step this project still owes.
 - Results from the literature are assumed as `axiom`s in `GSpinGGP/Literature/`, each with a
-  docstring citing its source. Each axiom is meant to be a statement that appears in its source,
-  for the group the source treats; `local_ggp` uses 17 of the 18. Where an axiom goes beyond
-  its source, its docstring says so. At present:
-  the axioms on characters and on multiplicity one are stated for irreducible unitary
-  representations, where the sources have irreducible admissible smooth ones (the passage between
-  the two is standard and is not yet a separate citation);
-  `bp_integrable_kernel_scusp` is stated without proof in its source;
-  and the Galois-cohomology axioms are applied to groups of `F̄`-points whose description as
-  algebraic groups (and, for Kottwitz's lemma, as a fundamental maximal torus) is argued in the
-  docstring and not formalized.
+  docstring citing its source; they are where the formalization stops, and are not meant to be
+  proved here. `local_ggp` uses 18 of the 19. There are two classes.
+  A *verbatim* axiom is a statement printed in its source, for the group the source treats,
+  specialized (one, `bp_integrable_kernel_scusp`, is stated without proof in its source).
+  A *derived* axiom is a short, explicit combination of such statements, or a printed statement
+  whose hypotheses are checked for our object in the docstring only; the docstring quotes the
+  ingredients and gives the steps. 8 of the 19 are derived (`scripts/derived-axioms.txt`):
+  the two on characters and the one on multiplicity one (sources state them for irreducible
+  admissible smooth representations, the axioms for irreducible unitary ones);
+  the three on Galois cohomology (applied to groups of `F̄`-points whose description as algebraic
+  groups, and for Kottwitz's lemma as a fundamental maximal torus, is argued in the docstring);
+  `jantzen_finrank_soCentMat_ge` (four statements of Jantzen combined);
+  and `luo_lie_geomExpansion_SO` (Luo's theorem with properties of `θ_f` from Waldspurger and
+  Beuzart-Plessis, one obtained from a theorem stated without proof by the Weyl integration formula).
+  No axiom states for general spin groups a result that its source states for another group.
   Where the dissertation adapts a published result (stated for orthogonal or unitary groups, groups
   with compact centre, pure inner forms, …) or combines several, the statement is a theorem with
   `sorry`, and its docstring names the exact ingredients and sketches the argument.

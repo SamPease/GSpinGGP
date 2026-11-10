@@ -14,7 +14,7 @@ special orthogonal GGP triple `(Ḡ, H̄, ξ)` of an admissible pair `(W, V)`, o
 `𝔤 = so(W) ⊕ so(V)`.  They are defined **directly on the quadratic spaces**, with
 `Ḡ = SO(W) × SO(V)` inside the units of `End W × End V`; nothing here refers to Clifford
 algebras or to `GSpin`.  They are the objects of the literature axiom
-`luo_lie_geomExpansion_SO` (`TraceFormula/LuoExpansion.lean`).  The identification with the objects of the
+`luo_lie_geomExpansion_SO` (`Literature/Luo.lean`).  The identification with the objects of the
 general spin triple on `𝔤⁰` (`TraceFormula/LieAlgebra.lean`) is `TraceFormula/LuoTransfer.lean`.
 
 The generic Lie-algebra notions are reused: `selfDualHaar`, `IsTestFn`, `IsLieQuasiCharacter`,

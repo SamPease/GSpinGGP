@@ -7,11 +7,12 @@ import GSpinGGP.TraceFormula.SOLie
 /-!
 # The geometric expansion of `J^Lie` for the special orthogonal triple
 
-One statement, `luo_lie_geomExpansion_SO`, about the special orthogonal GGP triple `(Ḡ, H̄, ξ)` on
+One literature axiom, `luo_lie_geomExpansion_SO`, about the special orthogonal GGP triple `(Ḡ, H̄, ξ)` on
 `𝔤 = so(W) ⊕ so(V)` of an admissible pair, with the objects of `TraceFormula/SOLie.lean` (defined
-on the quadratic spaces, not on `GSpin`).  It is a **theorem with `sorry`, not a literature axiom**:
-it combines several published statements about the quasi-character `θ_f` of a strongly cuspidal
-`f`, and one of its parts is not printed in the form used here.
+on the quadratic spaces, not on `GSpin`).  It is a **derived axiom**: it combines several
+published statements about the quasi-character `θ_f` of a strongly cuspidal `f`, all for this
+group, and one of its parts is not printed in the form used here but follows from two printed
+statements by a short step, written out in the docstring.
 
 Published statements (the labels (b)–(d) are those of the statement):
 
@@ -85,12 +86,11 @@ Arthur's weighted orbital integrals) with:
   `O_{−ν₀}` on `W'_X` if `dim W'_X ≥ 4` is even, the unique regular orbit otherwise) and §7.9 (its
   Lie-algebra form on `𝔱_♮(F)`); when `G_X` is not quasi-split, `c_θ(X) = 0` (BP Prop 4.5.1 2.(i)).
 
-**Status: `sorry`, not a literature axiom.**  (c) and (d) are published statements for this
-group.  The identity in (b) is not printed.  What is printed is BP Thm 5.5.2(ii),
+**Derived axiom.**  (c) and (d) are published statements for this group.  The identity in (b) is not printed.  What is printed is BP Thm 5.5.2(ii),
 `J^A(f, f') = ∫_{Γ(𝔤)} D^G(X)^{1/2} θ_f(X) J_G(X, f') dX` (absolutely convergent), where
 `J^A(f, f') = ∫_{A_G(F)\G(F)} ∫_{𝔤(F)} f(x⁻¹Xx) f'(X) dX dx`, and the Weyl integration formula
 `∫_{𝔤(F)} φ(X) dX = ∫_{Γ(𝔤)} D^G(X)^{1/2} J_G(X, φ) dX` (BP §1.7, for `φ ∈ S(𝔤(F))`), both for any
-connected reductive group, here `Ḡ` with `A_Ḡ = 1`.  Argument for (b), not formalized: `θ_f` is
+connected reductive group, here `Ḡ` with `A_Ḡ = 1`.  The step from these to (b), not formalized: `θ_f` is
 invariant under conjugation, so `J_G(X, θ_f f') = θ_f(X) J_G(X, f')`; the Weyl formula extends from
 `S(𝔤(F))` to the integrable function `θ_f f'`; so `∫ θ_f f' = ∫_{Γ(𝔤)} D^G(X)^{1/2} θ_f(X) J_G(X, f') dX
 = J^A(f, f')`.  (BP uses the same two ingredients in the proof of Prop 5.6.1(i), for a different
@@ -126,7 +126,7 @@ over `Ḡ(F)`.  With the hypothesis, `A_Ḡ = 1`.
 * The quasi-character, germ and Fourier-transform notions are this project's definitions
   (`IsLieQuasiCharacter`, `germLie` with `jHat`, `selfDualHaar`); the orbits `O_ν` are
   `IsInOrbitNu` (Luo §2.1, Waldspurger 2010 §7.1). -/
-theorem luo_lie_geomExpansion_SO {F : Type} [NontriviallyNormedField F] [PAdicField F]
+axiom luo_lie_geomExpansion_SO {F : Type} [NontriviallyNormedField F] [PAdicField F]
     (L : LuoDatum F) (hW : ¬ IsHypPlane L.QW) (hV : ¬ IsHypPlane L.QV)
     (ψ : NontrivialAddChar F)
     (μG : Measure ↥L.Gbar) [μG.IsHaarMeasure]
@@ -145,7 +145,6 @@ theorem luo_lie_geomExpansion_SO {F : Type} [NontriviallyNormedField F] [PAdicFi
       -- (c) Waldspurger 2010 §6.1 Lemme (ii)
       IsLieQuasiCharacter L.Gbar L.lie L.traceForm ψ θ ∧
       -- (d) Luo Thm 7.3.3 with Prop 7.1.2(3)
-      Tendsto (L.mGeomLieS ψ μT θ) (𝓝[>] (0 : ℝ)) (𝓝 (L.distribJLie ψ μ𝔥 m f)) := by
-  sorry
+      Tendsto (L.mGeomLieS ψ μT θ) (𝓝[>] (0 : ℝ)) (𝓝 (L.distribJLie ψ μ𝔥 m f))
 
 end GSpinGGP
