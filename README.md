@@ -46,12 +46,23 @@ As of November 2026:
   e.g. the bound on the kernel of the distribution `J` and its spectral expansion), 10 are published results
   that the dissertation adapts to general spin groups (see below), the rest smaller lemmas.
 - Results from the literature are assumed as `axiom`s in `GSpinGGP/Literature/`, each with a
-  docstring citing its source. Only statements that appear in a source, specialized to general spin
-  groups with the source's hypotheses checked, are axioms. `local_ggp` uses 17 of the 18.
+  docstring citing its source. Each axiom is meant to be a statement that appears in its source,
+  specialized to general spin groups; `local_ggp` uses 17 of the 18. Where an axiom goes beyond
+  its source, its docstring says so. At present:
+  the axioms on characters and on multiplicity one are stated for irreducible unitary
+  representations, where the sources have irreducible admissible smooth ones (the passage between
+  the two is standard and is not yet a separate citation);
+  `rodier_germ_one` is assumed in every residue characteristic, as Beuzart-Plessis states it,
+  while the proofs he cites assume it odd;
+  `bp_integrable_kernel_scusp` is stated without proof in its source;
+  and the Galois-cohomology axioms are applied to groups of `F̄`-points whose description as
+  algebraic groups (and, for Kottwitz's lemma, as a fundamental maximal torus) is argued in the
+  docstring and not formalized.
   Where the dissertation adapts a published result (stated for orthogonal or unitary groups, groups
   with compact centre, pure inner forms, …) or combines several, the statement is a theorem with
   `sorry`, and its docstring names the exact ingredients and sketches the argument.
-- Definitions are never axiomatized. `GSpinGGP/Sanity/` checks key definitions on small cases.
+- Definitions are never axiomatized. `GSpinGGP/Sanity/` checks key definitions on small cases
+  (a few of these checks are hand computations recorded as `sorry` statements).
 - Classical facts about quadratic forms (Witt cancellation and decomposition, Cartan–Dieudonné,
   the classification over `p`-adic fields) are proved from the
   [Tau Ceti](https://github.com/TauCetiProject/TauCeti) library, which this project depends on.
