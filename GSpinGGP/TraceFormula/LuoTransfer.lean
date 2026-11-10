@@ -277,21 +277,29 @@ orbits of `𝔤⁰_X` are the same; (L7) `OrbitSpecAt` is Luo's and Waldspurger'
 `V'_X`, `O_{−ν₀}` on `W'_X`), with `ν₀ = q(z₀) = ν`.  Not proved here. -/
 theorem cTheta_toSO (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) {θ : ↥d.luoOf.lie → ℂ}
     (hθ : IsLieQuasiCharacter d.luoOf.Gbar d.luoOf.lie d.luoOf.traceForm ψ θ)
-    (T : Subgroup ↥(GSpin d.QW)) (X : CliffordAlgebra d.QW) (hX : d.IsGammaEltLie T X) :
+    (T : d.GammaTorus) (X : CliffordAlgebra d.QW) (hX : d.IsGammaEltLie T.1 X) :
     d.germLie0 ψ (θ ∘ d.toSO) (d.diagLie X) (d.orbitChoiceLie X) =
       d.luoOf.cTheta ψ θ (d.toSOLin (d.diagLie X)) := by
   sorry
 
+/-- The torus `T'` of Luo's `𝒯` is `H̄(F)`-conjugate to the image of `T ⊆ GSpin(W)(F)` under
+`t ↦ (P(t), P(t) ⊕ 1)` (the natural correspondence of tori). -/
+def IsNaturalTorusCorr (T : Subgroup ↥(GSpin d.QW)) (T' : Subgroup d.luoOf.Ambˣ) : Prop :=
+  ∃ h ∈ d.luoOf.HbarU, T' = (T.map (d.toGbarU.comp d.diag)).map (MulAut.conj h).toMonoidHom
+
 /-- **(L8) The index sets of `Γ^Lie` agree**: `P` maps the tori `T_x` of `GammaClass d` onto the
 tori `H''_X` of Luo's `𝒯` (`T_x(F)/A_{G,H}(F) ≅ H''_X(F)`), compatibly with conjugacy (by
 `GSpin(W)(F)`, resp. `H̄(F)`; `N ⊆ H̄` does not normalize a torus of `SO(W)` nontrivially), and
-`|N_{GSpin(W)}(T)/Z_{GSpin(W)}(T)| = |N_{H̄}(T)/Z_{H̄}(T)|`.  Not proved here. -/
+`|N_{GSpin(W)}(T)/Z_{GSpin(W)}(T)| = |N_{H̄}(T)/Z_{H̄}(T)|`: there is a bijection of classes
+matching each torus with the conjugacy class of its image (`IsNaturalTorusCorr`).  Not proved here. -/
 theorem gammaClass_equiv (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) :
     ∃ e : GammaClass d ≃ d.luoOf.GammaClass,
+      (∀ c, d.IsNaturalTorusCorr (Quot.out c).1 (Quot.out (e c)).1) ∧
       ∀ c, weylCard d c = d.luoOf.weylCardOf (Quot.out (e c)).1 := by
   sorry
 
-/-- **(L8) The torus integrals agree**, for the bijection of `gammaClass_equiv` and the measures
+/-- **(L8) The torus integrals agree**, for a bijection of classes matching each torus with its
+image (`IsNaturalTorusCorr`, as given by `gammaClass_equiv`) and the measures
 `ν(T) dX`: on each torus, `ad` maps `𝔱⁰ = lieTorus T` onto Luo's `𝔱` (embedded diagonally), carries
 `measLieTorus` (`exp`-compatible with the probability measure on `T(F)/A_{G,H}(F)`) to the
 `exp`-compatible measure for the probability measure on `H''(F)`, `𝔱⁰_♮` (`IsGammaEltLie`) to `𝔱_♮`
@@ -299,12 +307,13 @@ theorem gammaClass_equiv (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) :
 the hypothesis `hc`, i.e. `cTheta_toSO`) `c_θ` to `c_θ`; the representatives of the classes differ
 by conjugation, which preserves the integrands and measures.  Not proved here. -/
 theorem torusIntegralLie_toSO (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
-    (e : GammaClass d ≃ d.luoOf.GammaClass) :
+    (e : GammaClass d ≃ d.luoOf.GammaClass)
+    (hen : ∀ c, d.IsNaturalTorusCorr (Quot.out c).1 (Quot.out (e c)).1) :
     ∃ μT : ∀ T : d.luoOf.GammaTorus, Measure ↥(d.luoOf.lieTorus T.1),
       (∀ T, d.luoOf.IsExpCompatT T.1 (μT T)) ∧
       ∀ θ : ↥d.luoOf.lie → ℂ,
         IsLieQuasiCharacter d.luoOf.Gbar d.luoOf.lie d.luoOf.traceForm ψ θ →
-        (∀ (T : Subgroup ↥(GSpin d.QW)) (X : CliffordAlgebra d.QW), d.IsGammaEltLie T X →
+        (∀ (T : d.GammaTorus) (X : CliffordAlgebra d.QW), d.IsGammaEltLie T.1 X →
           d.germLie0 ψ (θ ∘ d.toSO) (d.diagLie X) (d.orbitChoiceLie X) =
             d.luoOf.cTheta ψ θ (d.toSOLin (d.diagLie X))) →
         ∀ (c : GammaClass d) (s : ℝ), 0 < s →
@@ -348,8 +357,8 @@ theorem distribJLie_eq_mGeomLie_of_luo (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypP
   have := d.muG_isHaarMeasure hW hV
   obtain ⟨μH, μ𝔥, m, hμH, h𝔥, hm, hJ⟩ :=
     d.exists_JLie_transfer ψ hW hV (fun X _ => d.lam_toSO X)
-  obtain ⟨e, he⟩ := d.gammaClass_equiv hW hV
-  obtain ⟨μT, hμT, hT⟩ := d.torusIntegralLie_toSO ψ hW hV e
+  obtain ⟨e, hen, he⟩ := d.gammaClass_equiv hW hV
+  obtain ⟨μT, hμT, hT⟩ := d.torusIntegralLie_toSO ψ hW hV e hen
   obtain ⟨θ, -, ⟨h1, h2, h3⟩, ⟨hqc, -⟩, hlim⟩ :=
     luo_lie_geomExpansion_SO d.luoOf hW hV ψ d.muG μH μ𝔥 h𝔥 m hm μT hμT
       (f ∘ d.toSO.symm) (d.isScusp_toSO hf)

@@ -13,7 +13,8 @@ One literature axiom, `luo_lie_geomExpansion_SO`, about the special orthogonal G
 cuspidal `f` it asserts that **one** function `θ` (the quasi-character `θ_f` of `f`) has the
 properties stated for `θ_f` in three sources:
 
-* (a) Beuzart-Plessis, Astérisque 418, Thm 5.5.2(i): integrability of the kernel on the diagonal;
+* (a) Beuzart-Plessis, Astérisque 418 (2020), Thm 5.5.2(i): integrability of the kernel on the
+  diagonal (page numbers and reference labels below are those of arXiv:1506.01452);
 * (b) Beuzart-Plessis Thm 5.5.2(ii) composed with the Weyl integration formula of BP §1.7, and
   Waldspurger, Compositio 146 (2010), §5.3 Lemme via §6.1: `θ` represents the orbital pairing, is
   locally integrable and locally constant on `𝔤_reg(F)`;
@@ -40,7 +41,7 @@ open LuoDatum
 
 /-- **The geometric expansion of `J^Lie` for the special orthogonal GGP triple, with the
 properties of `θ_f` it uses** (Luo Thm 7.3.3; Beuzart-Plessis Thm 5.5.2(i), (ii); Waldspurger
-2010 §5.3, §6.1).
+2010 §5.3, §6.1).  BP page numbers and reference labels are those of arXiv:1506.01452.
 
 **Setting.**  `F` is `p`-adic, `L` an admissible pair `(W, V)`, `V = W ⊕^⊥ D ⊕^⊥ Z`, with Luo's basis
 (Luo §2.1, Def 2.1.3: `q(z_i, z_j) = δ_{i,-j}` on `Z`, `ν₀ = q(z₀, z₀)`), `Ḡ = SO(W) × SO(V)`,
