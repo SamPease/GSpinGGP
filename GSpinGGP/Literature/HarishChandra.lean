@@ -351,7 +351,12 @@ quasi-split. For each regular nilpotent orbit `O ∈ Nil_reg(𝔤)` there is a W
 
 Sources: Rodier, *Modèle de Whittaker et caractères de représentations* (LNM 466, 1975);
 Mœglin–Waldspurger, *Modèles de Whittaker dégénérés pour des groupes p-adiques* (Math. Z. 196,
-1987) (theorem numbers unverified); BP Astérisque 418, Prop 4.8.1(i).
+1987), Thm I.16 and Cor I.17; BP Astérisque 418, Prop 4.8.1(i).
+
+**Residue characteristic.** BP states Prop 4.8.1(i) for every `p`-adic field, and so does this
+axiom. The proofs BP cites are narrower: Mœglin–Waldspurger assume the residue characteristic is
+not `2` (their introduction), and Rodier treats split groups. So for residue characteristic `2`
+the axiom rests on BP's statement alone.
 
 The identity is passed as `x` with `hx : x = 1`, so that the orbit type
 `NilOrbit (grpCentralizer d.G x) (lieCentralizer d.lie x)` matches whatever form of `1` the
@@ -362,9 +367,10 @@ Only the existence of *some* datum per orbit is asserted.
 normalization of `ĵ(O,·)`: self-dual Haar measure on `𝔤(F)` for `(d.bilin, ψ)` and the Kirillov
 measure on `O` self-dual for `ψ ∘ ω_X`, `ω_X(Y,Z) = b(Y,[X,Z])` (Thesis §2.4 = BP §1.6). This is the
 normalization of `LocalGroups.IsOrbitMeasure`; if that definition deviated from BP's, this axiom
-would be false. Checked on `𝔰𝔩₂`/`GL₂` (two independent hand computations, any residue
-characteristic including `2`): the Lean normalization gives germ `1` for a principal series
-(`Sanity/NilpotentOrbit.lean`). -/
+would be false. Checked by hand on `𝔰𝔩₂`/`GL₂` (two independent computations, any residue
+characteristic including `2`): the Lean normalization gives germ `1` for a principal series.
+`Sanity/NilpotentOrbit.lean` records the values of these hand computations as `sorry` statements;
+they are not checked by Lean. -/
 axiom rodier_germ_one (d : GGPData F) (hqs : d.IsQuasiSplit) (ψ : NontrivialAddChar F)
     (x : ↥d.G) (hx : x = 1)
     (O : NilOrbit (grpCentralizer d.G x) (lieCentralizer d.lie ((x : d.ambientˣ) : d.ambient)))
