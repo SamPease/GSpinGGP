@@ -6,6 +6,10 @@
 # 2. The axioms used by the main theorem `local_ggp` are exactly those listed in
 #    scripts/main-axioms.txt (update that file, and the README, when a citation is added or removed),
 #    together with Lean's standard axioms and `sorryAx` only (so no `native_decide`).
+# 2b. scripts/derived-axioms.txt lists the *derived* axioms: short combinations of published
+#    statements, or published statements whose hypotheses are checked in the docstring only. Every
+#    other axiom is a published statement as printed. Each listed name must be an axiom, and the
+#    README must give their number.
 # 3. The README's status numbers match: total Literature axioms, axioms used by `local_ggp`, the
 #    number of declarations with `sorry` that `local_ggp` depends on, and (if a build log is given)
 #    the total number of declarations using `sorry`.
@@ -49,6 +53,20 @@ if ! diff -u scripts/main-axioms.txt "$tmp/used.txt"; then
   echo "ERROR: local_ggp's literature axioms differ from scripts/main-axioms.txt (diff above)."; fail=1
 fi
 used=$(wc -l < "$tmp/used.txt" | tr -d ' ')
+
+# 2b. Derived axioms.
+derived=0
+while read -r name; do
+  [ -z "$name" ] && continue
+  derived=$((derived + 1))
+  short="${name##*.}"
+  if ! grep -rqE "${decl}axiom[[:space:]]+${short}([[:space:]]|\$)" GSpinGGP/Literature --include='*.lean'; then
+    echo "ERROR: scripts/derived-axioms.txt lists $name, which is not an axiom in GSpinGGP/Literature/"; fail=1
+  fi
+done < scripts/derived-axioms.txt
+if ! grep -q "$derived of the $total are derived" README.md; then
+  echo "ERROR: README should say \"$derived of the $total are derived\""; fail=1
+fi
 
 # 3. README status numbers.
 if ! grep -q "\`local_ggp\` uses $used of the $total\." README.md; then

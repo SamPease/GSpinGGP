@@ -43,9 +43,12 @@ import GSpinGGP.TraceFormula.StronglyCuspidal
 import GSpinGGP.TraceFormula.DeltaIntegrability
 import GSpinGGP.TraceFormula.EllipticRepresentations
 import GSpinGGP.TraceFormula.LieAlgebra
+import GSpinGGP.TraceFormula.SOLie
+import GSpinGGP.TraceFormula.LuoTransfer
 import GSpinGGP.Literature.Kottwitz
 import GSpinGGP.Literature.KottwitzClay
 import GSpinGGP.Literature.Kottwitz1986
+import GSpinGGP.Literature.Luo
 import GSpinGGP.GGP.KottwitzDelta
 import GSpinGGP.GGP.KottwitzSign
 import GSpinGGP.GGP.Hilbert90
