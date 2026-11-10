@@ -3,12 +3,12 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.TraceFormula.LieAlgebra
-import GSpinGGP.Literature.Luo
+import GSpinGGP.TraceFormula.LuoExpansion
 
 /-!
 # From the special orthogonal triple to `𝔤⁰`: `J^Lie = m^Lie_geom(θ_f)`
 
-The literature axiom `luo_lie_geomExpansion_SO` is about the special orthogonal triple
+The statement `luo_lie_geomExpansion_SO` (`TraceFormula/LuoExpansion.lean`) is about the special orthogonal triple
 `(Ḡ, H̄, ξ)` of an admissible pair, with objects defined on the quadratic spaces
 (`TraceFormula/SOLie.lean`).  This file identifies them with the objects on
 `𝔤⁰ = so(W) ⊕ so(V) ⊆ C(W) × C(V)` of the general spin triple (`TraceFormula/LieAlgebra.lean`)

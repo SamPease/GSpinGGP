@@ -5,27 +5,28 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import GSpinGGP.TraceFormula.SOLie
 
 /-!
-# The geometric expansion of `J^Lie` for special orthogonal groups (Luo, with BP and Waldspurger)
+# The geometric expansion of `J^Lie` for the special orthogonal triple
 
-One literature axiom, `luo_lie_geomExpansion_SO`, about the special orthogonal GGP triple
-`(Ḡ, H̄, ξ)` on `𝔤 = so(W) ⊕ so(V)` of an admissible pair, with the objects of
-`TraceFormula/SOLie.lean` (defined on the quadratic spaces, not on `GSpin`).  For a strongly
-cuspidal `f` it asserts that **one** function `θ` (the quasi-character `θ_f` of `f`) has the
-properties stated for `θ_f` in three sources (the labels (b)–(d) are those of the statement):
+One statement, `luo_lie_geomExpansion_SO`, about the special orthogonal GGP triple `(Ḡ, H̄, ξ)` on
+`𝔤 = so(W) ⊕ so(V)` of an admissible pair, with the objects of `TraceFormula/SOLie.lean` (defined
+on the quadratic spaces, not on `GSpin`).  It is a **theorem with `sorry`, not a literature axiom**:
+it combines several published statements about the quasi-character `θ_f` of a strongly cuspidal
+`f`, and one of its parts is not printed in the form used here.
 
-* (b) Beuzart-Plessis, Astérisque 418 (2020), Thm 5.5.2(ii) (page numbers and reference labels
-  below are those of arXiv:1506.01452), composed with the Weyl integration formula of BP §1.7, and
-  Waldspurger, Compositio 146 (2010), §5.3 Lemme via §6.1: `θ` represents the orbital pairing, is
-  locally integrable and locally constant on `𝔤_reg(F)`;
-* (c) Waldspurger 2010 §6.1 Lemme (ii) and §5.3 Lemme via §6.1 (also BP Prop 5.6.1(i)): `θ` is a
-  quasi-character;
-* (d) Luo Thm 7.3.3: `J^Lie(f) = m^Lie_geom(θ_f)`, with `m^Lie_geom` in its limit form
-  (Luo Prop 7.1.2(3)).
+Published statements (the labels (b)–(d) are those of the statement):
 
-The sources define `θ_f` by the same explicit formula (weighted orbital integrals), so the
-conjunction for that function is what they state; the existential is weaker.  The
-identification of these objects with those of the general spin triple on `𝔤⁰` is not part of the
-axiom: it is `TraceFormula/LuoTransfer.lean`.
+* (c) Waldspurger, Compositio 146 (2010), §6.1 Lemme (ii): `θ_f` is a quasi-character; §5.3 Lemme via
+  §6.1: it is locally integrable and locally constant on `𝔤_reg(F)`;
+* (d) Luo (arXiv:2009.13947) Thm 7.3.3: `J^Lie(f) = m^Lie_geom(θ_f)`, with `m^Lie_geom` in its limit
+  form (Luo Prop 7.1.2(3));
+* for (b): Beuzart-Plessis, Astérisque 418 (2020), Thm 5.5.2(ii) (page numbers and reference labels
+  below are those of arXiv:1506.01452) and the Weyl integration formula of BP §1.7.
+
+Not printed: (b) itself, `∫ θ_f f' = ∫_{Ḡ(F)} ∫_{𝔤(F)} f(x⁻¹Xx) f'(X) dX dx`.  It follows from
+BP Thm 5.5.2(ii) by the Weyl integration formula; see the docstring.  The sources define `θ_f` by
+an explicit formula (weighted orbital integrals), which is not formalized; here `θ_f` is the
+existential witness `θ`.  The identification of these objects with those of the general spin
+triple on `𝔤⁰` is `TraceFormula/LuoTransfer.lean`.
 -/
 
 open MeasureTheory Topology Filter
@@ -39,8 +40,8 @@ namespace GSpinGGP
 open LuoDatum
 
 /-- **The geometric expansion of `J^Lie` for the special orthogonal GGP triple, with the
-properties of `θ_f` it uses** (Luo Thm 7.3.3; Beuzart-Plessis Thm 5.5.2(i), (ii); Waldspurger
-2010 §5.3, §6.1).  BP page numbers and reference labels are those of arXiv:1506.01452.
+properties of `θ_f` it uses** (Luo Thm 7.3.3; Beuzart-Plessis Thm 5.5.2(ii) with the Weyl integration formula;
+Waldspurger 2010 §5.3, §6.1).  BP page numbers and reference labels are those of arXiv:1506.01452.
 
 **Setting.**  `F` is `p`-adic, `L` an admissible pair `(W, V)`, `V = W ⊕^⊥ D ⊕^⊥ Z`, with Luo's basis
 (Luo §2.1, Def 2.1.3: `q(z_i, z_j) = δ_{i,-j}` on `Z`, `ν₀ = q(z₀, z₀)`), `Ḡ = SO(W) × SO(V)`,
@@ -84,13 +85,19 @@ Arthur's weighted orbital integrals) with:
   `O_{−ν₀}` on `W'_X` if `dim W'_X ≥ 4` is even, the unique regular orbit otherwise) and §7.9 (its
   Lie-algebra form on `𝔱_♮(F)`); when `G_X` is not quasi-split, `c_θ(X) = 0` (BP Prop 4.5.1 2.(i)).
 
-**A composite, and stated without proof in the source.**  The identity in (b) is not displayed as
-a theorem in any source: it is BP Thm 5.5.2(ii) followed by the Weyl integration formula, a step BP
-carries out inside the proof of Prop 5.6.1(i).  Both statements are BP's, for any connected reductive
-group, here `Ḡ`.  BP Thm 5.5.2 is announced, not proved: "The two theorems
+**Status: `sorry`, not a literature axiom.**  (c) and (d) are published statements for this
+group.  The identity in (b) is not printed.  What is printed is BP Thm 5.5.2(ii),
+`J^A(f, f') = ∫_{Γ(𝔤)} D^G(X)^{1/2} θ_f(X) J_G(X, f') dX` (absolutely convergent), where
+`J^A(f, f') = ∫_{A_G(F)\G(F)} ∫_{𝔤(F)} f(x⁻¹Xx) f'(X) dX dx`, and the Weyl integration formula
+`∫_{𝔤(F)} φ(X) dX = ∫_{Γ(𝔤)} D^G(X)^{1/2} J_G(X, φ) dX` (BP §1.7, for `φ ∈ S(𝔤(F))`), both for any
+connected reductive group, here `Ḡ` with `A_Ḡ = 1`.  Argument for (b), not formalized: `θ_f` is
+invariant under conjugation, so `J_G(X, θ_f f') = θ_f(X) J_G(X, f')`; the Weyl formula extends from
+`S(𝔤(F))` to the integrable function `θ_f f'`; so `∫ θ_f f' = ∫_{Γ(𝔤)} D^G(X)^{1/2} θ_f(X) J_G(X, f') dX
+= J^A(f, f')`.  (BP uses the same two ingredients in the proof of Prop 5.6.1(i), for a different
+identity.)  BP Thm 5.5.2 is itself announced, not proved: "The two theorems
 below are slight variations around the local trace formula of Arthur (cf. [A1]) and its version for
 Lie algebras due to Waldspurger (cf. [Wa3]). The proof of these two theorems will appear elsewhere
-[Beu2]" (BP p. 127).  (b) rests on it.  Waldspurger 2010 §6.1 proves
+[Beu2]" (BP p. 127).  Waldspurger 2010 §6.1 proves
 the corresponding identity `J(φ̂, f) = ∫ φ̂ θ_f` for the geometric side `J` of the local trace
 formula on `𝔤`, not for the kernel integral.
 
@@ -102,7 +109,7 @@ central torus `SO(W)` (resp. `SO(V)`) `≅ G_m`, which acts trivially on `𝔤` 
 quotient by `A_G`) is `0` or divergent, and BP's integrals over `A_G(F)\G(F)` are not those
 over `Ḡ(F)`.  With the hypothesis, `A_Ḡ = 1`.
 
-**Caveats recorded with the citation.**
+**Caveats.**
 * Luo's induction applies the three theorems to the smaller triples `(G'_X, H'_X)` of semisimple
   descent, and starts at `dim G = 1`, i.e. `SO(1) × SO(2)`; these can have a hyperbolic-plane factor,
   where Luo's `J` and `J^Lie` (no quotient by `A_G`) are `0` or divergent.  Luo does not say how this
@@ -119,7 +126,7 @@ over `Ḡ(F)`.  With the hypothesis, `A_Ḡ = 1`.
 * The quasi-character, germ and Fourier-transform notions are this project's definitions
   (`IsLieQuasiCharacter`, `germLie` with `jHat`, `selfDualHaar`); the orbits `O_ν` are
   `IsInOrbitNu` (Luo §2.1, Waldspurger 2010 §7.1). -/
-axiom luo_lie_geomExpansion_SO {F : Type} [NontriviallyNormedField F] [PAdicField F]
+theorem luo_lie_geomExpansion_SO {F : Type} [NontriviallyNormedField F] [PAdicField F]
     (L : LuoDatum F) (hW : ¬ IsHypPlane L.QW) (hV : ¬ IsHypPlane L.QV)
     (ψ : NontrivialAddChar F)
     (μG : Measure ↥L.Gbar) [μG.IsHaarMeasure]
@@ -138,6 +145,7 @@ axiom luo_lie_geomExpansion_SO {F : Type} [NontriviallyNormedField F] [PAdicFiel
       -- (c) Waldspurger 2010 §6.1 Lemme (ii)
       IsLieQuasiCharacter L.Gbar L.lie L.traceForm ψ θ ∧
       -- (d) Luo Thm 7.3.3 with Prop 7.1.2(3)
-      Tendsto (L.mGeomLieS ψ μT θ) (𝓝[>] (0 : ℝ)) (𝓝 (L.distribJLie ψ μ𝔥 m f))
+      Tendsto (L.mGeomLieS ψ μT θ) (𝓝[>] (0 : ℝ)) (𝓝 (L.distribJLie ψ μ𝔥 m f)) := by
+  sorry
 
 end GSpinGGP

@@ -13,6 +13,5 @@ GSpinGGP.integral_eq_mul_integral_compact_integral
 GSpinGGP.jantzen_finrank_soCentMat_ge
 GSpinGGP.jantzen_regularNil_partition
 GSpinGGP.kottwitz_nilpotent_sq_smul
-GSpinGGP.luo_lie_geomExpansion_SO
 GSpinGGP.rodier_germ_one
 GSpinGGP.waldspurger_goodNbhd

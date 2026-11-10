@@ -129,7 +129,7 @@ theorem prop_11_8_1 (h : HYP ψ d) (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane
 
 /-- **Thesis Thm 12.2.2 on `𝔤⁰`: `J^Lie = J^Lie_geom`**,
 for triples without a hyperbolic-plane factor.  Proved from Luo Thm 7.3.3 for the special
-orthogonal triple (the literature axiom `luo_lie_geomExpansion_SO`) and the identification of
+orthogonal triple (`luo_lie_geomExpansion_SO`, a `sorry` combining published statements) and the identification of
 `𝔤⁰` with `so(W) ⊕ so(V)` (`distribJLie_eq_mGeomLie_of_luo`, `TraceFormula/LuoTransfer.lean`);
 the induction hypothesis `h` is not needed on this route.  (The thesis's own route, Prop 12.5.1
 and the endgame of §12.5, is `prop_11_8_1` with `lie_endgame`.) -/

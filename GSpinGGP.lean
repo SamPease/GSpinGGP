@@ -44,7 +44,7 @@ import GSpinGGP.TraceFormula.DeltaIntegrability
 import GSpinGGP.TraceFormula.EllipticRepresentations
 import GSpinGGP.TraceFormula.LieAlgebra
 import GSpinGGP.TraceFormula.SOLie
-import GSpinGGP.Literature.Luo
+import GSpinGGP.TraceFormula.LuoExpansion
 import GSpinGGP.TraceFormula.LuoTransfer
 import GSpinGGP.Literature.Kottwitz
 import GSpinGGP.Literature.KottwitzClay
