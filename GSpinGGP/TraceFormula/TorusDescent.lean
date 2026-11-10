@@ -11,6 +11,7 @@ import GSpinGGP.Foundations.IsometrySemisimple
 import GSpinGGP.GGP.GSpinSemisimple
 import GSpinGGP.TraceFormula.ThetaF
 import GSpinGGP.TraceFormula.JHatSelfDual
+import GSpinGGP.GGP.LieRegular
 
 /-!
 # Measurability of the integrand of `m_{geom,s}` on `T(F)/A_{G,H}(F)`
@@ -957,6 +958,61 @@ theorem eventually_mem_lie_of_expA_mem :
   refine ⟨hY1 (d.fst g) ?_, hY2 (d.snd g) ?_⟩
   · rw [← hY.1, ← hg]; rfl
   · rw [← hY.2, ← hg]; rfl
+
+attribute [local instance 100] LieRing.ofAssociativeRing LieAlgebra.ofAssociativeAlgebra in
+/-- **Jordan decomposition with a logarithm**: `c = s e^N` with `s ∈ G(F)` semisimple and `N ∈ 𝔤_s`
+nilpotent. From `c = s u` (`exists_jordan_G`), `u = 1 + x` with `x = s⁻¹(c − s)` nilpotent and
+commuting with `s` (`s ∈ F[c]`), and `N = log u ∈ F[x]` (`exists_expA_nsmul_eq_one_add_pow`), so `N`
+commutes with `s`; `N ∈ 𝔤` because `e^{mᵏN} = u^{mᵏ} ∈ G(F)` with `mᵏN → 0`
+(`eventually_mem_lie_of_expA_mem`). -/
+theorem exists_eq_mul_expA_nilpotent (c : ↥d.G) :
+    ∃ sG : ↥d.G, IsSS F ((sG : d.ambientˣ) : d.ambient) ∧ ∃ N : d.ambient,
+      N ∈ lieCentralizer d.lie ((sG : d.ambientˣ) : d.ambient) ∧ IsNilpotent N ∧
+      ((c : d.ambientˣ) : d.ambient) = ((sG : d.ambientˣ) : d.ambient) * expA F N := by
+  have := isTopologicalRing_of_moduleTopology F d.ambient
+  have : ContinuousSMul F d.ambient := IsModuleTopology.toContinuousSMul F d.ambient
+  obtain ⟨sG, hs, hss, hn⟩ := exists_jordan_G d c
+  set a : d.ambient := ((c : d.ambientˣ) : d.ambient)
+  set s : d.ambient := ((sG : d.ambientˣ) : d.ambient)
+  set si : d.ambient := (((sG⁻¹ : ↥d.G) : d.ambientˣ) : d.ambient)
+  have hsi : si * s = 1 := by simp [si, s]
+  have hsi' : s * si = 1 := by simp [si, s]
+  have hcs : Commute a s := Algebra.commute_of_mem_adjoin_self hs
+  -- the unipotent part `u = s⁻¹ c = 1 + x`
+  set x : d.ambient := si * (a - s) with hx
+  have hssi : Commute s si := by rw [Commute, SemiconjBy, hsi, hsi']
+  have hsx : Commute s x := hssi.mul_right (hcs.symm.sub_right (Commute.refl s))
+  have hsia : Commute si a := by
+    have := (hcs.symm).units_inv_left (u := (sG : d.ambientˣ))
+    simpa [si] using this
+  obtain ⟨n, hxn⟩ : IsNilpotent x :=
+    (hsia.sub_right hssi.symm).isNilpotent_mul_left hn
+  have hau : a = s * (1 + x) := by
+    rw [hx, mul_add, mul_one, ← mul_assoc, hsi', one_mul, add_sub_cancel]
+  -- `N = log u`
+  obtain ⟨N, hNadj, hNn, hexpN⟩ := exists_expA_nsmul_eq_one_add_pow F hxn
+  have hexp1 : expA F N = 1 + x := by simpa using hexpN 1
+  have hsN : Commute s N := Algebra.commute_of_mem_adjoin_singleton_of_commute hNadj hsx
+  set uG : ↥d.G := sG⁻¹ * c with huG
+  have huval : ((uG : d.ambientˣ) : d.ambient) = 1 + x := by
+    rw [hx, mul_sub, hsi, add_sub_cancel]
+    simp [uG, si, a]
+  -- `N ∈ 𝔤`: `e^{mᵏ N} = u^{mᵏ} ∈ G(F)` with `mᵏ N → 0`
+  have hNlie : N ∈ d.lie := by
+    obtain ⟨m, hm0, hm1⟩ := exists_natCast_norm_lt_one F
+    have htend : Tendsto (fun k : ℕ => ((m ^ k : ℕ) : F) • N) atTop (𝓝 0) := by
+      have h0 : Tendsto (fun k : ℕ => ((m ^ k : ℕ) : F)) atTop (𝓝 0) := by
+        rw [tendsto_zero_iff_norm_tendsto_zero]
+        simp only [Nat.cast_pow, norm_pow]
+        exact tendsto_pow_atTop_nhds_zero_of_lt_one (norm_nonneg _) hm1
+      simpa using h0.smul_const N
+    obtain ⟨k, hk⟩ := (htend.eventually (eventually_mem_lie_of_expA_mem d)).exists
+    have hmem := hk (uG ^ (m ^ k)) (by rw [hexpN]; simp [← huval])
+    have hne : ((m ^ k : ℕ) : F) ≠ 0 := by
+      rw [Nat.cast_pow]; exact pow_ne_zero _ (norm_pos_iff.mp hm0)
+    have := d.lie.smul_mem (((m ^ k : ℕ) : F)⁻¹) hmem
+    rwa [smul_smul, inv_mul_cancel₀ hne, one_smul] at this
+  exact ⟨sG, hss, N, mem_lieCentralizer.mpr ⟨hNlie, hsN.eq⟩, ⟨n, hNn⟩, by rw [hexp1]; exact hau⟩
 
 /-- `t ↦ diag t` is continuous from `GSpin(W)(F)` to `C(W) × C(V)`. -/
 theorem continuous_coe_diag :
