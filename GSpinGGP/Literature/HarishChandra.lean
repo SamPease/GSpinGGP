@@ -42,7 +42,8 @@ Not needed as an axiom: BP Prop 4.5.1(i) (`c_θ(x) = 0` if `G_x` is not quasi-sp
 is a GSpin fact (`GGP/Centralizers.lean`).
 
 `GGP/Germs.lean` derives `hc_regularSet_open_conull` from (a) and the identification of `G'` with
-`regularSet`; `bp_germ_transfer` (not verbatim in the literature) is a `sorry` theorem there.
+`regularSet`; `bp_germ_transfer` (not verbatim in the literature) is proved there from `sorry`
+theorems (`bp_germAvg_transfer`, `germ_eq_germ_of_stable`, `finite_nilReg`).
 -/
 
 open MeasureTheory Topology Filter
