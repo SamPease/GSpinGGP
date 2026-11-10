@@ -138,10 +138,56 @@ theorem toSO_mem (X : ↥d.lieZero) : d.toSOLin (X : d.ambient) ∈ d.luoOf.lie 
 def toSOFun (X : ↥d.lieZero) : ↥d.luoOf.lie := ⟨d.toSOLin X, d.toSO_mem X⟩
 
 /-- **(L1) `ad : 𝔤⁰ → so(W) ⊕ so(V)` is bijective** (Thesis Prop 5.1.3.1: `so_Cliff(V) ≅ ∧²V ≅
-so(V)`; injective on the traceless part, onto by `exists_mem_soSub_adV_eq`-type surjectivity).
-Not proved here. -/
+so(V)`): `adV` is injective on the traceless part (its kernel on `gspin` is the scalars) and maps
+it onto `so` (`exists_mem_gspin_adV_eq`, after subtracting the trace part). -/
 theorem toSO_bijective : Function.Bijective d.toSOFun := by
-  sorry
+  -- `adV` is injective on the traceless part: its kernel on `gspin` is the scalars, and a traceless
+  -- scalar is `0`.
+  have hinj : ∀ {U : Type} [AddCommGroup U] [Module F U] [Module.Finite F U]
+      {Q : QuadraticForm F U}, IsNondeg Q → ∀ {X : CliffordAlgebra Q}, X ∈ soSub Q →
+      adV Q X = 0 → X = 0 := by
+    intro U _ _ _ Q hQ X hX h0
+    obtain ⟨r, rfl⟩ := eq_algebraMap_of_adV_eq_zero hQ hX.1 h0
+    have h2 := (mem_soSub.mp hX).2
+    rw [Algebra.algebraMap_eq_smul_one, cliffTrace_smul, cliffTrace_one] at h2
+    have hr : r = 0 :=
+      (mul_eq_zero.mp h2).resolve_right (cast_finrank_cliffordAlgebra_ne_zero Q)
+    rw [hr, map_zero]
+  -- `adV` maps the traceless part onto `so`: lift to `gspin` and subtract the trace part.
+  have hsurj : ∀ {U : Type} [AddCommGroup U] [Module F U] [Module.Finite F U]
+      {Q : QuadraticForm F U}, IsNondeg Q → ∀ M : Module.End F U,
+      M ∈ skewAdjointLieSubalgebra (bform Q) → ∃ Y ∈ soSub Q, adV Q Y = M := by
+    intro U _ _ _ Q hQ M hM
+    have hMs : ∀ u w, bform Q (M u) w = -bform Q u (M w) := by
+      have h := (LinearMap.mem_skewAdjointSubmodule (B := bform Q) (f := M)).mp hM
+      intro u w
+      have := h u w
+      simpa using this
+    obtain ⟨Y, hYg, hY⟩ := exists_mem_gspin_adV_eq hQ M hMs
+    set n : F := (Module.finrank F (CliffordAlgebra Q) : F)
+    have hn : n ≠ 0 := cast_finrank_cliffordAlgebra_ne_zero Q
+    set c : F := cliffTrace Q Y / n
+    refine ⟨Y - c • 1, ⟨sub_mem hYg ((gspin Q).smul_mem c (one_mem_gspin Q)), ?_⟩, ?_⟩
+    · rw [sub_eq_add_neg, cliffTrace_add, ← neg_smul, cliffTrace_smul, cliffTrace_one]
+      change cliffTrace Q Y + -(cliffTrace Q Y / n) * n = 0
+      field_simp
+      ring
+    · rw [map_sub, hY, ← Algebra.algebraMap_eq_smul_one, adV_algebraMap, sub_zero]
+  constructor
+  · intro X Y hXY
+    have h := congrArg Subtype.val hXY
+    change d.toSOLin (X : d.ambient) = d.toSOLin (Y : d.ambient) at h
+    have hZ : ((X : d.ambient) - (Y : d.ambient)) ∈ d.lieZero := sub_mem X.2 Y.2
+    have h0 : d.toSOLin ((X : d.ambient) - (Y : d.ambient)) = 0 := by rw [map_sub, h, sub_self]
+    have h1 : adV d.QW ((X : d.ambient) - (Y : d.ambient)).1 = 0 := congrArg Prod.fst h0
+    have h2 : adV d.QV ((X : d.ambient) - (Y : d.ambient)).2 = 0 := congrArg Prod.snd h0
+    have e1 := hinj d.nondeg hZ.1 h1
+    have e2 := hinj d.nondeg_QV hZ.2 h2
+    exact Subtype.ext (sub_eq_zero.mp (Prod.ext e1 e2))
+  · intro M
+    obtain ⟨Y₁, hY₁, e₁⟩ := hsurj d.nondeg (d.luoOf.fstA (M : d.luoOf.Amb)) M.2.1
+    obtain ⟨Y₂, hY₂, e₂⟩ := hsurj d.nondeg_QV (d.luoOf.sndA (M : d.luoOf.Amb)) M.2.2
+    exact ⟨⟨(Y₁, Y₂), hY₁, hY₂⟩, Subtype.ext (Prod.ext e₁ e₂)⟩
 
 /-- `𝔤⁰ ≃ so(W) ⊕ so(V)`. -/
 def toSO : ↥d.lieZero ≃ ↥d.luoOf.lie := Equiv.ofBijective d.toSOFun d.toSO_bijective
