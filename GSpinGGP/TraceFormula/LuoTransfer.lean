@@ -20,7 +20,7 @@ Thm 12.2.2 on `𝔤⁰`).
 
 The identification is own work, stated step by step (most steps are `sorry` here):
 * (L1) `toSO`: `X ↦ (ad_W X_W, ad_V X_V)` maps `𝔤⁰` onto `so(W) ⊕ so(V)` (`toSO_mem` is proved;
-  `toSO_bijective` and the transfer of strong cuspidality `isScusp_toSO` are `sorry`);
+  `toSO_bijective` and the transfer of strong cuspidality `isScusp_toSO` are proved);
 * (L2) `luoOf`: the admissible pair of `d` with Luo's basis `z^L_i = ν^{-i} z_i`,
   `z^L_{-i} = ν^{i-1} z_{-i}` (`i ≥ 1`), `z^L_0 = z_0` (`luoOf_gram` proved), and `λ` agrees
   (`lam_toSO`);
@@ -194,13 +194,141 @@ theorem toSO_bijective : Function.Bijective d.toSOFun := by
 /-- `𝔤⁰ ≃ so(W) ⊕ so(V)`. -/
 def toSO : ↥d.lieZero ≃ ↥d.luoOf.lie := Equiv.ofBijective d.toSOFun d.toSO_bijective
 
+/-- `(toSO X : End W × End V) = toSOLin X`. -/
+@[simp] theorem coe_toSO (X : ↥d.lieZero) : (d.toSO X : d.luoOf.Amb) = d.toSOLin X := rfl
+
+theorem toSOLin_toSO_symm (Y : ↥d.luoOf.lie) : d.toSOLin (d.toSO.symm Y : d.ambient) = Y :=
+  congrArg Subtype.val (d.toSO.apply_symm_apply Y)
+
+/-- `ad : 𝔤⁰ → so(W) ⊕ so(V)` as a linear map. -/
+def toSOLinRestr : ↥d.lieZero →ₗ[F] ↥d.luoOf.lie :=
+  LinearMap.codRestrict d.luoOf.lie.toSubmodule (d.toSOLin ∘ₗ d.lieZero.toSubmodule.subtype)
+    d.toSO_mem
+
+/-- `ad : 𝔤⁰ ≃ so(W) ⊕ so(V)` as a linear equivalence (`toSO_bijective`). -/
+def toSOLinEquiv : ↥d.lieZero ≃ₗ[F] ↥d.luoOf.lie :=
+  LinearEquiv.ofBijective d.toSOLinRestr d.toSO_bijective
+
+theorem toSO_symm_eq (Y : ↥d.luoOf.lie) : d.toSO.symm Y = d.toSOLinEquiv.symm Y :=
+  d.toSO.injective (by
+    rw [d.toSO.apply_symm_apply]
+    exact (d.toSOLinEquiv.apply_symm_apply Y).symm)
+
+/-- `ad : 𝔤⁰ ≃ so(W) ⊕ so(V)` is a homeomorphism (finite dimension). -/
+def toSOCLE : ↥d.lieZero ≃L[F] ↥d.luoOf.lie :=
+  { d.toSOLinEquiv with
+    continuous_toFun := continuous_induced_rng.mpr
+      (continuous_linearMap_of_isEmbedding d.lieZero.toSubmodule.subtype
+        Topology.IsEmbedding.subtypeVal (d.luoOf.lie.toSubmodule.subtype ∘ₗ d.toSOLinRestr))
+    continuous_invFun := continuous_induced_rng.mpr
+      (continuous_linearMap_of_isEmbedding d.luoOf.lie.toSubmodule.subtype
+        Topology.IsEmbedding.subtypeVal
+        (d.lieZero.toSubmodule.subtype ∘ₗ d.toSOLinEquiv.symm.toLinearMap)) }
+
+theorem toSOCLE_symm_apply (Y : ↥d.luoOf.lie) : d.toSOCLE.symm Y = d.toSO.symm Y :=
+  (d.toSO_symm_eq Y).symm
+
+/-- `ad` carries `𝔭⁰` onto `𝔭`: the conditions on `X_W`, `X_V` are conditions on `ad X_W`,
+`ad X_V`. -/
+theorem mem_liePar_iff (X : ↥d.lieZero) {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV} :
+    (X : d.ambient) ∈ d.liePar FW FV ↔ d.toSOLin X ∈ d.luoOf.liePar FW FV :=
+  ⟨fun h => ⟨d.toSO_mem X, h.2.1.2, h.2.2.2⟩, fun h => ⟨X.2, ⟨X.2.1, h.2.1⟩, ⟨X.2.2, h.2.2⟩⟩⟩
+
+/-- `ad` carries `𝔲 = Lie(U_P)` of `𝔤⁰` onto that of `so(W) ⊕ so(V)`. -/
+theorem mem_lieUnip_iff (X : ↥d.lieZero) {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV} :
+    (X : d.ambient) ∈ d.lieUnip FW FV ↔ d.toSOLin X ∈ d.luoOf.lieUnip FW FV :=
+  ⟨fun h => ⟨d.toSO_mem X, h.2.1.2, h.2.2.2⟩, fun h => ⟨X.2, ⟨X.2.1, h.2.1⟩, ⟨X.2.2, h.2.2⟩⟩⟩
+
+/-- `ad : 𝔲 ≃ 𝔲` between the nilpotent radicals of `𝔭⁰` and `𝔭`. -/
+def toSOUnip (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV) :
+    ↥(d.lieUnip FW FV) ≃ₗ[F] ↥(d.luoOf.lieUnip FW FV) where
+  toFun N := ⟨d.toSOLin (N : d.ambient),
+    (d.mem_lieUnip_iff ⟨N, d.lieUnip_le_lie0 FW FV N.2⟩).mp N.2⟩
+  invFun N := ⟨(d.toSO.symm ⟨N, d.luoOf.lieUnip_le_lie FW FV N.2⟩ : d.ambient),
+    (d.mem_lieUnip_iff _).mpr (by rw [d.toSOLin_toSO_symm]; exact N.2)⟩
+  map_add' N N' := Subtype.ext (map_add d.toSOLin (N : d.ambient) N')
+  map_smul' c N := Subtype.ext (map_smul d.toSOLin c (N : d.ambient))
+  left_inv N := Subtype.ext (by
+    exact congrArg (fun Y : ↥d.lieZero => (Y : d.ambient))
+      (d.toSO.symm_apply_apply ⟨(N : d.ambient), d.lieUnip_le_lie0 FW FV N.2⟩))
+  right_inv N := Subtype.ext (d.toSOLin_toSO_symm _)
+
+/-- `toSOUnip` is a homeomorphism (finite dimension). -/
+def toSOUnipCLE (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV) :
+    ↥(d.lieUnip FW FV) ≃L[F] ↥(d.luoOf.lieUnip FW FV) :=
+  { d.toSOUnip FW FV with
+    continuous_toFun := continuous_induced_rng.mpr
+      (continuous_linearMap_of_isEmbedding (d.lieUnip FW FV).subtype
+        Topology.IsEmbedding.subtypeVal
+        ((d.luoOf.lieUnip FW FV).subtype ∘ₗ (d.toSOUnip FW FV).toLinearMap))
+    continuous_invFun := continuous_induced_rng.mpr
+      (continuous_linearMap_of_isEmbedding (d.luoOf.lieUnip FW FV).subtype
+        Topology.IsEmbedding.subtypeVal
+        ((d.lieUnip FW FV).subtype ∘ₗ (d.toSOUnip FW FV).symm.toLinearMap)) }
+
+/-- A proper parabolic of `Ḡ` (some element of `Ḡ(F)` moves the flag pair) gives a proper
+parabolic of `G` (lift that element through `G(F) → Ḡ(F)`, `Pbar_surjective`). -/
+theorem isProperFlagPair_of_luoOf {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV}
+    (h : d.luoOf.IsProperFlagPair FW FV) : d.IsProperFlagPair FW FV := by
+  obtain ⟨g, hg, hn⟩ := h
+  intro htop
+  obtain ⟨x, hx⟩ := d.Pbar_surjective (⟨_, hg.1⟩, ⟨_, hg.2⟩)
+  have hxB : x ∈ d.whittB FW FV := htop ▸ Subgroup.mem_top x
+  have e1 : ((specP d.QW (d.fst x) : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) :
+      (Fin d.m → F) →ₗ[F] (Fin d.m → F)) =
+      d.luoOf.fstA (g : d.luoOf.Amb) := by
+    rw [← d.Pbar_fst, hx]; rfl
+  have e2 : ((specP d.QV (d.snd x) : d.V ≃ₗ[F] d.V) : d.V →ₗ[F] d.V) =
+      d.luoOf.sndA (g : d.luoOf.Amb) := by
+    rw [← d.Pbar_snd, hx]; rfl
+  refine hn ⟨fun i => ?_, fun i => ?_⟩
+  · rw [← e1]; exact (hxB.1 i).le
+  · rw [← e2]; exact (hxB.2 i).le
+
 /-- **(L1) Strong cuspidality is transported** (`IsLieScusp` on `𝔤⁰` to `IsScusp` on
-`so(W) ⊕ so(V)`): `ad` carries the flag parabolics `𝔭⁰ = liePar`, their radicals `lieUnip` and the
-properness condition (`whittB FW FV ≠ ⊤` vs a non-stabilizing element of `Ḡ`, through the surjection
-`G(F) → Ḡ(F)`) to those of `Ḡ`, and Haar measures on `𝔲(F)` to Haar measures.  Not proved here. -/
+`so(W) ⊕ so(V)`): `ad` is a homeomorphism (`toSOCLE`) carrying the flag parabolics `𝔭⁰ = liePar`
+and their radicals `lieUnip` to those of `Ḡ` (`mem_liePar_iff`, `mem_lieUnip_iff`), properness of a
+flag pair for `Ḡ` gives properness for `G` (through the surjection `G(F) → Ḡ(F)`,
+`isProperFlagPair_of_luoOf`), and a Haar measure on `𝔲(F)` of `Ḡ` pulls back along `ad` to a Haar
+measure on `𝔲(F)` of `G`. -/
 theorem isScusp_toSO {f : ↥d.lieZero → ℂ} (hf : d.IsLieScusp f) :
     d.luoOf.IsScusp (f ∘ d.toSO.symm) := by
-  sorry
+  have := t2Space_of_moduleTopology F d.ambient
+  have := isTopologicalRing_of_moduleTopology F d.ambient
+  have := isTopologicalRing_of_moduleTopology F d.luoOf.Amb
+  have hcomp : f ∘ d.toSO.symm = f ∘ d.toSOCLE.symm :=
+    funext fun Y => by simp only [Function.comp_apply, d.toSOCLE_symm_apply]
+  refine ⟨?_, ?_⟩
+  · rw [hcomp]
+    exact ⟨hf.1.1.comp_continuous d.toSOCLE.symm.continuous, hf.1.2.comp_homeomorph d.toSOCLE.symm.toHomeomorph⟩
+  intro (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV) hP X hX μ hμ
+  letI : MeasurableSpace ↥(d.luoOf.lieUnip FW FV) := d.luoOf.instMeasurableSpaceLieUnip FW FV
+  have : BorelSpace ↥(d.lieUnip FW FV) := ⟨rfl⟩
+  have : BorelSpace ↥(d.luoOf.lieUnip FW FV) := ⟨rfl⟩
+  set X' : ↥d.lieZero := d.toSO.symm X with hX'def
+  have hX' : (X' : d.ambient) ∈ d.liePar FW FV :=
+    (d.mem_liePar_iff X').mpr (by rw [hX'def, d.toSOLin_toSO_symm]; exact hX)
+  set e := d.toSOUnipCLE FW FV
+  set em : ↥(d.luoOf.lieUnip FW FV) ≃ᵐ ↥(d.lieUnip FW FV) := e.symm.toHomeomorph.toMeasurableEquiv
+  have : (μ.map em).IsAddHaarMeasure := e.symm.isAddHaarMeasure_map μ
+  obtain ⟨hint, h0⟩ := hf.2 FW FV (d.isProperFlagPair_of_luoOf hP) X' hX' (μ.map em) inferInstance
+  have key : (fun N : ↥(d.luoOf.lieUnip FW FV) =>
+      (f ∘ d.toSO.symm) ⟨(X : d.luoOf.Amb) + N, d.luoOf.lie.add_mem X.2
+        (d.luoOf.lieUnip_le_lie FW FV N.2)⟩) =
+      (fun N' : ↥(d.lieUnip FW FV) =>
+        f ⟨(X' : d.ambient) + N', d.lie0.add_mem X'.2 (d.lieUnip_le_lie0 FW FV N'.2)⟩) ∘ em := by
+    funext N
+    simp only [Function.comp_apply]
+    congr 1
+    have hN : d.toSOLin ((em N : ↥(d.lieUnip FW FV)) : d.ambient) = N :=
+      d.toSOLin_toSO_symm ⟨N, d.luoOf.lieUnip_le_lie FW FV N.2⟩
+    rw [Equiv.symm_apply_eq]
+    apply Subtype.ext
+    show (X : d.luoOf.Amb) + N = d.toSOLin ((X' : d.ambient) + (em N : d.ambient))
+    rw [map_add, hN, hX'def, d.toSOLin_toSO_symm]
+  refine ⟨?_, ?_⟩
+  · rw [key]; exact (integrable_map_equiv em _).mp hint
+  · rw [key]; exact (integral_map_equiv em _).symm.trans h0
 
 theorem luoOf_zV (i : ℤ) : d.luoOf.zV i = d.luoScale i • d.zV i := by
   unfold LuoDatum.zV GGPData.zV
