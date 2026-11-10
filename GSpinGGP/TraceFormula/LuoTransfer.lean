@@ -350,17 +350,116 @@ theorem exists_isSelfDual_lieZero : ∃ μ, IsSelfDual μ (restrictForm d.lieZer
 theorem isAddHaarMeasure_measLie0 : (d.measLie0 ψ).IsAddHaarMeasure :=
   selfDualMeasure_isAddHaar (d.exists_isSelfDual_lieZero ψ)
 
+/-- The centre `𝔷 = F(1,0) ⊕ F(0,1)` commutes with everything in `C(W) × C(V)`. -/
+theorem commute_of_mem_lieCenter {Z : d.ambient} (hZ : Z ∈ d.lieCenter) (Y : d.ambient) :
+    Z * Y = Y * Z := by
+  rw [lieCenter, Submodule.mem_span_pair] at hZ
+  obtain ⟨a, b, rfl⟩ := hZ
+  refine Prod.ext ?_ ?_ <;> simp [Algebra.smul_def, Algebra.commutes]
+
+/-- `X` is regular semisimple for `𝔤⁰` iff it is for `𝔤 = 𝔷 ⊕ 𝔤⁰`: the centralizer of `X` in `𝔤`
+is `𝔷` plus its centralizer in `𝔤⁰`, and `𝔷` is central. -/
+theorem isRegularSS_lieZero_iff {X : d.ambient} :
+    IsRegularSS d.lieZero X ↔ IsRegularSS d.lie X := by
+  unfold IsRegularSS
+  refine and_congr_right fun _ => ?_
+  rw [isLieAbelian_iff_forall_commute, isLieAbelian_iff_forall_commute]
+  constructor
+  · intro h Y₁ h₁ Y₂ h₂
+    rw [mem_lieCentralizer] at h₁ h₂
+    have d₁ : Y₁ ∈ d.lieCenter ⊔ d.lie0 := by rw [← lie_eq_center_sup_lie0]; exact h₁.1
+    have d₂ : Y₂ ∈ d.lieCenter ⊔ d.lie0 := by rw [← lie_eq_center_sup_lie0]; exact h₂.1
+    obtain ⟨Z₁, hZ₁, A₁, hA₁, rfl⟩ := Submodule.mem_sup.mp d₁
+    obtain ⟨Z₂, hZ₂, A₂, hA₂, rfl⟩ := Submodule.mem_sup.mp d₂
+    have c₁ : X * A₁ = A₁ * X := by
+      have := h₁.2
+      rw [mul_add, add_mul, ← d.commute_of_mem_lieCenter hZ₁ X] at this
+      exact add_left_cancel this
+    have c₂ : X * A₂ = A₂ * X := by
+      have := h₂.2
+      rw [mul_add, add_mul, ← d.commute_of_mem_lieCenter hZ₂ X] at this
+      exact add_left_cancel this
+    have hA : A₁ * A₂ = A₂ * A₁ :=
+      h A₁ (mem_lieCentralizer.mpr ⟨hA₁, c₁⟩) A₂ (mem_lieCentralizer.mpr ⟨hA₂, c₂⟩)
+    rw [add_mul, mul_add, mul_add, add_mul, mul_add, mul_add, hA,
+      d.commute_of_mem_lieCenter hZ₁ Z₂, d.commute_of_mem_lieCenter hZ₁ A₂,
+      ← d.commute_of_mem_lieCenter hZ₂ A₁]
+    abel
+  · intro h Y₁ h₁ Y₂ h₂
+    rw [mem_lieCentralizer] at h₁ h₂
+    exact h Y₁ (mem_lieCentralizer.mpr ⟨d.lieZero_le_lie h₁.1, h₁.2⟩) Y₂
+      (mem_lieCentralizer.mpr ⟨d.lieZero_le_lie h₂.1, h₂.2⟩)
+
+/-- **The regular semisimple set of `𝔤⁰` is open**: it is the preimage, under the inclusion
+`𝔤⁰ ⊆ 𝔤`, of the regular semisimple set of `𝔤 = 𝔤_1` (`isOpen_setOf_isRegularSS_lieCentralizer`
+at `g = 1`). -/
+theorem isOpen_setOf_isRegularSS_lieZero :
+    IsOpen {X : ↥d.lieZero | IsRegularSS d.lieZero (X : d.ambient)} := by
+  have hss : IsSS F (((1 : ↥d.G) : d.ambientˣ) : d.ambient) := by
+    unfold IsSS
+    simp only [OneMemClass.coe_one, Units.val_one, LinearMap.mulLeft_one]
+    exact Module.End.isSemisimple_id
+  have hL : lieCentralizer d.lie (((1 : ↥d.G) : d.ambientˣ) : d.ambient) = d.lie := by
+    refine LieSubalgebra.ext _ _ fun X => ?_
+    simp [mem_lieCentralizer]
+  have h := isOpen_setOf_isRegularSS_lieCentralizer d 1 hss
+  rw [hL] at h
+  have hc : Continuous fun X : ↥d.lieZero => (⟨(X : d.ambient), d.lieZero_le_lie X.2⟩ : ↥d.lie) :=
+    Continuous.subtype_mk continuous_subtype_val _
+  have he : {X : ↥d.lieZero | IsRegularSS d.lieZero (X : d.ambient)} =
+      (fun X : ↥d.lieZero => (⟨(X : d.ambient), d.lieZero_le_lie X.2⟩ : ↥d.lie)) ⁻¹'
+        {Z : ↥d.lie | IsRegularSS d.lie (Z : d.ambient)} := by
+    ext X
+    exact d.isRegularSS_lieZero_iff
+  rw [he]
+  exact h.preimage hc
+
 /-- **`θ_f` is unique on `𝔤⁰_reg`**: two locally integrable functions, continuous on `𝔤⁰_reg(F)`,
 representing the same distribution agree on `𝔤⁰_reg(F)` (they agree almost everywhere, `𝔤⁰_reg` is
 open and `measLie0` charges every nonempty open set).  This uses that `measLie0` is a Haar measure
 and not the junk value `0`, i.e. that `bilin` is nondegenerate on `𝔤⁰`, so that a self-dual measure
-exists (`isAddHaarMeasure_measLie0`, proved above).  Still needed: the regular set of `𝔤⁰` is open
-(known for `𝔤`, `isOpen_setOf_isRegularSS_lieCentralizer` at `g = 1`; `X ∈ 𝔤⁰` is regular in
-`𝔤⁰` iff it is regular in `𝔤 = 𝔷 ⊕ 𝔤⁰`).  Not proved here. -/
+exists (`isAddHaarMeasure_measLie0`), and that the regular set of `𝔤⁰` is open
+(`isOpen_setOf_isRegularSS_lieZero`). -/
 theorem isThetaFLie_eqOn_regular {f θ θ' : ↥d.lieZero → ℂ} (hθ : d.IsThetaFLie ψ f θ)
     (hθ' : d.IsThetaFLie ψ f θ') :
     ∀ X : ↥d.lieZero, IsRegularSS d.lieZero (X : d.ambient) → θ X = θ' X := by
-  sorry
+  have := t2Space_of_moduleTopology F d.ambient
+  have := isTopologicalRing_of_moduleTopology F d.ambient
+  have hind : IsInducing (d.lieZero.incl.toLinearMap : ↥d.lieZero → d.ambient) :=
+    IsInducing.subtypeVal
+  have : IsTopologicalAddGroup ↥d.lieZero :=
+    hind.isTopologicalAddGroup d.lieZero.incl.toLinearMap
+  have : ContinuousSMul F ↥d.lieZero :=
+    hind.continuousSMul continuous_id (fun {c x} => d.lieZero.incl.toLinearMap.map_smul c x)
+  -- `𝔤⁰ ≅ F^n` as topological vector spaces
+  have : ProperSpace F := .of_nontriviallyNormedField_of_weaklyLocallyCompactSpace F
+  let e : ↥d.lieZero ≃L[F] (Fin (Module.finrank F ↥d.lieZero) → F) :=
+    ContinuousLinearEquiv.ofFinrankEq (by simp)
+  have : LocallyCompactSpace ↥d.lieZero := e.toHomeomorph.isClosedEmbedding.locallyCompactSpace
+  have : TotallyDisconnectedSpace ↥d.lieZero := e.toHomeomorph.symm.totallyDisconnectedSpace
+  have : SigmaCompactSpace ↥d.lieZero := e.toHomeomorph.isClosedEmbedding.sigmaCompactSpace
+  have : SecondCountableTopology ↥d.lieZero :=
+    e.toHomeomorph.isEmbedding.secondCountableTopology
+  have := d.isAddHaarMeasure_measLie0 ψ
+  obtain ⟨hli, hc, hrep⟩ := hθ
+  obtain ⟨hli', hc', hrep'⟩ := hθ'
+  have hint : ∀ {φ : ↥d.lieZero → ℂ}, LocallyIntegrable φ (d.measLie0 ψ) →
+      ∀ f' : ↥d.lieZero → ℂ, IsTestFn f' → Integrable (fun X => φ X * f' X) (d.measLie0 ψ) := by
+    intro φ hφ f' hf'
+    simpa [mul_comm] using hφ.integrable_smul_left_of_hasCompactSupport hf'.1.continuous hf'.2
+  -- the two functions agree almost everywhere
+  have hae : (θ - θ') =ᵐ[d.measLie0 ψ] 0 :=
+    ae_eq_zero_of_integral_isLocallyConstant (hli.sub hli') fun f' hf hcs => by
+      simp only [Pi.sub_apply, sub_mul]
+      rw [integral_sub (hint hli f' ⟨hf, hcs⟩) (hint hli' f' ⟨hf, hcs⟩), hrep f' ⟨hf, hcs⟩,
+        hrep' f' ⟨hf, hcs⟩, sub_self]
+  have hae' : θ =ᵐ[d.measLie0 ψ] θ' := by
+    filter_upwards [hae] with X hX
+    exact sub_eq_zero.mp hX
+  -- hence everywhere on the open regular set, where both are continuous
+  have hEq := MeasureTheory.Measure.eqOn_open_of_ae_eq (ae_restrict_of_ae hae')
+    d.isOpen_setOf_isRegularSS_lieZero hc hc'
+  exact fun X hX => hEq hX
 
 /-! ## (L6)–(L9) `m^Lie_geom` -/
 
