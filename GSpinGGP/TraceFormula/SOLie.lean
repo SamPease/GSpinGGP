@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.TraceFormula.LieAlgebra
 import GSpinGGP.Literature.Measure
+import TauCeti.Topology.Algebra.QuadraticForm.OrthogonalGroup.SpecialOrthogonal
 
 /-!
 # The special orthogonal GGP triple on the Lie algebra (Luo's objects)
@@ -32,6 +33,7 @@ The generic Lie-algebra notions are reused: `selfDualHaar`, `IsTestFn`, `IsLieQu
 * `IsScusp`: strongly cuspidal Schwartz–Bruhat functions on `𝔤(F)` (Luo p. 7; BP §5.1;
   Waldspurger 2010 §6.1).
 * `orbitalPairing`.
+* `isClosed_Gbar`: `Ḡ(F)` is closed in `(End W × End V)ˣ`, hence locally compact.
 * `Γ^Lie(Ḡ, H̄)` (Luo §7.1): `torusOf`, `IsGammaElt`, `GammaTorus`, `GammaClass`, `lieTorus`,
   `IsNat` (`t_♮`), `weylCard` (`|W(H̄,T)|`), `IsExpCompatT`, `delta` (`Δ`), `OrbitSpec`,
   `orbitChoice`, `gammaIntegrand`, `mGeomLieS`.
@@ -185,6 +187,30 @@ def traceForm : LinearMap.BilinForm K L.Amb :=
 
 end LuoDatum
 
+/-! ## `SO(Q)` is closed -/
+
+section SOClosed
+
+variable {K V : Type*} [Field K] [AddCommGroup V] [Module K V]
+
+/-- `SOGrp Q` is Tau Ceti's special orthogonal group of `Q`. -/
+theorem SOGrp_eq_specialOrthogonalGroup [Invertible (2 : K)] (Q : QuadraticForm K V) :
+    SOGrp Q = TauCeti.QuadraticMap.specialOrthogonalGroup Q := by
+  ext g
+  simp only [TauCeti.QuadraticMap.mem_specialOrthogonalGroup_iff,
+    TauCeti.QuadraticMap.mem_orthogonalGroup_iff, Units.ext_iff, LinearEquiv.coe_det,
+    Units.val_one]
+  rfl
+
+/-- `SO(Q)` is closed in `GL(V)` (Tau Ceti's `isClosed_specialOrthogonalGroup`). -/
+theorem isClosed_SOGrp [Invertible (2 : K)] [TopologicalSpace K] [IsTopologicalRing K] [T2Space K]
+    [FiniteDimensional K V] (Q : QuadraticForm K V) :
+    IsClosed (SOGrp Q : Set (V ≃ₗ[K] V)) := by
+  rw [SOGrp_eq_specialOrthogonalGroup]
+  exact TauCeti.QuadraticMap.isClosed_specialOrthogonalGroup Q
+
+end SOClosed
+
 /-! ## Topology on `End W × End V` -/
 
 namespace LuoDatum
@@ -208,6 +234,36 @@ instance instMeasurableSpaceLie : MeasurableSpace ↥L.lie := borel _
 instance instBorelSpaceLie : BorelSpace ↥L.lie := ⟨rfl⟩
 
 example : IsTopologicalGroup ↥L.Gbar := inferInstance
+
+theorem continuous_fstA : Continuous (L.fstA : L.Amb → Module.End F L.W) := by
+  have : IsModuleTopology F (Module.End F L.W) := ⟨rfl⟩
+  exact IsModuleTopology.continuous_of_linearMap L.fstA.toLinearMap
+
+theorem continuous_sndA : Continuous (L.sndA : L.Amb → Module.End F L.V) := by
+  have : IsModuleTopology F (Module.End F L.V) := ⟨rfl⟩
+  exact IsModuleTopology.continuous_of_linearMap L.sndA.toLinearMap
+
+/-- **`Ḡ(F) = SO(W)(F) × SO(V)(F)` is closed in `(End W × End V)ˣ`**: it is the preimage of
+`SO(W) × SO(V)` (closed, `isClosed_SOGrp`) under the continuous map to `GL(W) × GL(V)`. -/
+theorem isClosed_Gbar : IsClosed (L.Gbar : Set L.Ambˣ) := by
+  have hW : Continuous fun u : L.Ambˣ =>
+      LinearMap.GeneralLinearGroup.generalLinearEquiv F L.W (L.unitFst u) := by
+    rw [TauCeti.continuous_linearEquiv_iff]
+    exact ⟨L.continuous_fstA.comp Units.continuous_val,
+      L.continuous_fstA.comp Units.continuous_coe_inv⟩
+  have hV : Continuous fun u : L.Ambˣ =>
+      LinearMap.GeneralLinearGroup.generalLinearEquiv F L.V (L.unitSnd u) := by
+    rw [TauCeti.continuous_linearEquiv_iff]
+    exact ⟨L.continuous_sndA.comp Units.continuous_val,
+      L.continuous_sndA.comp Units.continuous_coe_inv⟩
+  exact ((isClosed_SOGrp L.QW).preimage hW).inter ((isClosed_SOGrp L.QV).preimage hV)
+
+/-- `Ḡ(F)` is locally compact (`isClosed_Gbar`). -/
+instance instLocallyCompactSpaceGbar : LocallyCompactSpace ↥L.Gbar :=
+  subgroup_locallyCompactSpace_of_isClosed F L.Amb L.Gbar L.isClosed_Gbar
+
+/-- `Ḡ(F)` is Hausdorff. -/
+instance instT2SpaceGbar : T2Space ↥L.Gbar := subgroup_t2Space F L.Amb L.Gbar
 
 /-! ## `N`, `H̄ = SO(W) ⋉ N`, `𝔥 = so(W) ⊕ 𝔫` and `ξ` (Luo §2.1) -/
 

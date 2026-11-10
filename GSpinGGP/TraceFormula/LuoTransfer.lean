@@ -25,7 +25,7 @@ The identification is own work, stated step by step (most steps are `sorry` here
   `z^L_{-i} = ν^{i-1} z_{-i}` (`i ≥ 1`), `z^L_0 = z_0` (`luoOf_gram` proved), and `λ` agrees
   (`lam_toSO`);
 * (L3) `muG`: the push-forward of `Measure.haar` on `G(F)/A_G(F)` to `Ḡ(F)`, a Haar measure
-  (`muG_isHaarMeasure`);
+  (`muG_isHaarMeasure`, proved);
 * (L4) `exists_JLie_transfer`: `J^Lie` of `d` is Luo's `J^Lie` for compatible measures;
 * (L5) `isThetaFLie_of_SO`: a `θ` representing the orbital pairing on `so(W) ⊕ so(V)` gives one on
   `𝔤⁰`;
@@ -40,12 +40,28 @@ The identification is own work, stated step by step (most steps are `sorry` here
 noncomputable section
 
 open MeasureTheory Topology Filter
+open CliffordAlgebra (ιInv)
 
 attribute [local instance 100] LieRing.ofAssociativeRing LieAlgebra.ofAssociativeAlgebra
 
 set_option linter.unusedSectionVars false
 
 namespace GSpinGGP
+
+/-- `g ↦ P(x(g))` is continuous into `End U` when `x` is continuous into `GSpin(U)`. -/
+theorem continuous_specP_toEnd {F : Type} [NontriviallyNormedField F] [PAdicField F]
+    {X : Type*} [TopologicalSpace X] {U : Type*} [AddCommGroup U] [Module F U]
+    [FiniteDimensional F U] [TopologicalSpace U] [IsModuleTopology F U]
+    {Q : QuadraticForm F U} {x : X → GSpin Q} (hx : Continuous x) :
+    Continuous fun t => ((specP Q (x t) : U ≃ₗ[F] U) : Module.End F U) := by
+  have : ContinuousAdd U := IsModuleTopology.toContinuousAdd F U
+  rw [(Module.finBasis F U).continuous_iff_apply]
+  intro i
+  have hn : Continuous fun t => ((x t : GSpin Q) : (CliffordAlgebra Q)ˣ) :=
+    continuous_subtype_val.comp hx
+  simp only [LinearEquiv.coe_coe, specP_apply_eq]
+  exact (IsModuleTopology.continuous_of_linearMap (ιInv Q)).comp
+    ((Units.continuous_val.comp hn).mul (continuous_const.mul (Units.continuous_coe_inv.comp hn)))
 
 namespace GGPData
 
@@ -255,6 +271,31 @@ theorem toGbarU_mem (g : ↥d.G) : d.toGbarU g ∈ d.luoOf.Gbar := by
 /-- `G(F) → Ḡ(F)`. -/
 def toGbar : ↥d.G →* ↥d.luoOf.Gbar := d.toGbarU.codRestrict _ d.toGbarU_mem
 
+/-- The underlying pair of endomorphisms of `toGbarU g`. -/
+theorem toGbarU_val (g : ↥d.G) : ((d.toGbarU g : d.luoOf.Ambˣ) : d.luoOf.Amb) =
+    d.luoOf.pair (specP d.QW (d.fst g)).toLinearMap (specP d.QV (d.snd g)).toLinearMap := rfl
+
+theorem continuous_toGbarU_val :
+    Continuous fun g : ↥d.G => ((d.toGbarU g : d.luoOf.Ambˣ) : d.luoOf.Amb) := by
+  have : IsModuleTopology F (Module.End F d.luoOf.W) := ⟨rfl⟩
+  have : IsModuleTopology F (Module.End F d.luoOf.V) := ⟨rfl⟩
+  let ℓ : (Module.End F d.luoOf.W × Module.End F d.luoOf.V) →ₗ[F] d.luoOf.Amb := LinearMap.id
+  have hl : Continuous ℓ := IsModuleTopology.continuous_of_linearMap ℓ
+  exact hl.comp ((continuous_specP_toEnd d.continuous_fst).prodMk
+    (continuous_specP_toEnd d.continuous_snd))
+
+/-- `G(F) → Ḡ(F)` is continuous. -/
+theorem continuous_toGbar : Continuous d.toGbar := by
+  apply continuous_induced_rng.2
+  show Continuous fun g => d.toGbarU g
+  rw [Units.continuous_iff]
+  refine ⟨d.continuous_toGbarU_val, ?_⟩
+  have : (fun g : ↥d.G => (((d.toGbarU g)⁻¹ : d.luoOf.Ambˣ) : d.luoOf.Amb)) =
+      (fun g : ↥d.G => ((d.toGbarU g : d.luoOf.Ambˣ) : d.luoOf.Amb)) ∘ (fun g => g⁻¹) := by
+    funext g; simp [map_inv]
+  rw [this]
+  exact d.continuous_toGbarU_val.comp continuous_inv
+
 /-- **The Haar measure on `Ḡ(F)`**: the push-forward of `Measure.haar` on `G(F)/A_G(F)` along
 `G(F)/A_G(F) → Ḡ(F)` (an isomorphism of topological groups when neither `W` nor `V` is a hyperbolic
 plane: `AGbar_eq_bot` and Hilbert 90, `Pbar_surjective`). -/
@@ -263,11 +304,71 @@ def muG : Measure ↥d.luoOf.Gbar :=
 
 /-- **(L3) `muG` is a Haar measure on `Ḡ(F)`**: `G(F)/A_G(F) → Ḡ(F)` is a bijective continuous
 homomorphism of locally compact, σ-compact groups (`AGbar_eq_bot`, `Pbar_surjective`), hence a
-homeomorphism (open mapping theorem), and the push-forward of a Haar measure by an isomorphism of
-topological groups is a Haar measure.  Not proved here. -/
+homeomorphism (open mapping theorem; `Ḡ(F)` is locally compact, `isClosed_Gbar`), and the
+push-forward of a Haar measure by an isomorphism of topological groups is a Haar measure.
+Injectivity: the kernel of `P` is the central `G_m × G_m ⊆ A_G`
+(`exists_scalarPair_of_specP_eq`). -/
 theorem muG_isHaarMeasure (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) :
     d.muG.IsHaarMeasure := by
-  sorry
+  have hPbar : ∀ g, d.Pbar g = 1 → d.toGbar g = 1 := by
+    intro g hg
+    apply Subtype.ext
+    change d.toGbarU g = 1
+    apply Units.ext
+    have h1 : specP d.QW (d.fst g) = 1 :=
+      congrArg (fun p : d.GbarGrp => (p.1 : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F))) hg
+    have h2 : specP d.QV (d.snd g) = 1 := congrArg (fun p : d.GbarGrp => (p.2 : d.V ≃ₗ[F] d.V)) hg
+    rw [toGbarU_val, h1, h2]
+    rfl
+  have hker : d.AG ≤ d.toGbar.ker := by
+    intro g hg
+    rw [MonoidHom.mem_ker]
+    apply hPbar
+    have hm : d.Pbar g ∈ d.AGbar := ⟨g, hg, rfl⟩
+    rw [d.AGbar_eq_bot hW hV] at hm
+    exact hm
+  let φ : d.GmodAG →* ↥d.luoOf.Gbar := QuotientGroup.lift d.AG d.toGbar hker
+  have hφ : (fun x : d.GmodAG => d.toGbar (Quotient.out x)) = φ := by
+    funext x
+    conv_rhs => rw [← QuotientGroup.out_eq' x]
+    rfl
+  have hcont : Continuous φ :=
+    (QuotientGroup.isQuotientMap_mk d.AG).continuous_iff.mpr d.continuous_toGbar
+  have hinj : Function.Injective φ := by
+    rw [injective_iff_map_eq_one]
+    intro x hx
+    induction x using QuotientGroup.induction_on with | H g => ?_
+    have h1 : d.toGbar g = 1 := hx
+    have hv := congrArg (fun u : ↥d.luoOf.Gbar => ((u : d.luoOf.Ambˣ) : d.luoOf.Amb)) h1
+    simp only [OneMemClass.coe_one, Units.val_one] at hv
+    have e1 : specP d.QW (d.fst g) = specP d.QW (d.fst 1) := by
+      rw [map_one, map_one]
+      exact LinearEquiv.toLinearMap_injective (congrArg Prod.fst hv)
+    have e2 : specP d.QV (d.snd g) = specP d.QV (d.snd 1) := by
+      rw [map_one, map_one]
+      exact LinearEquiv.toLinearMap_injective (congrArg Prod.snd hv)
+    obtain ⟨c₁, c₂, hc⟩ := d.exists_scalarPair_of_specP_eq e1 e2
+    rw [QuotientGroup.eq_one_iff, hc, one_mul]
+    exact d.scalarPair_mem_AG c₁ c₂
+  have hsurj : Function.Surjective φ := by
+    intro y
+    obtain ⟨g, hg⟩ := d.Pbar_surjective
+      (⟨LinearMap.GeneralLinearGroup.generalLinearEquiv F _ (d.luoOf.unitFst (y : d.luoOf.Ambˣ)),
+          y.2.1⟩,
+       ⟨LinearMap.GeneralLinearGroup.generalLinearEquiv F _ (d.luoOf.unitSnd (y : d.luoOf.Ambˣ)),
+          y.2.2⟩)
+    refine ⟨QuotientGroup.mk g, ?_⟩
+    apply Subtype.ext
+    apply Units.ext
+    show d.luoOf.pair _ _ = _
+    rw [MonoidHom.comp_apply, hg]
+    rfl
+  have hopen : IsOpenMap φ := φ.isOpenMap_of_sigmaCompact hsurj hcont
+  let e : d.GmodAG ≃* ↥d.luoOf.Gbar := MulEquiv.ofBijective φ ⟨hinj, hsurj⟩
+  let h : d.GmodAG ≃ₜ ↥d.luoOf.Gbar := e.toEquiv.toHomeomorphOfContinuousOpen hcont hopen
+  unfold muG
+  rw [hφ]
+  exact e.isHaarMeasure_map Measure.haar hcont h.symm.continuous
 
 /-! ## (L4) `J^Lie` -/
 
