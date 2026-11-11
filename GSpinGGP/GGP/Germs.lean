@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import GSpinGGP.Literature.HarishChandra
 import GSpinGGP.Foundations.Determinant
 import GSpinGGP.GGP.LieRegular
-import GSpinGGP.Foundations.CentralizerIso
+import GSpinGGP.TraceFormula.JHatTransport
 
 /-!
 # The regular set and the transfer of germs
@@ -16,7 +16,8 @@ The regular set of `G = GSpin(W) × GSpin(V)` is open and conull (from Harish-Ch
 (`bp_germ_transfer`). The latter is proved from the averaged form of BP Astérisque 418, (12.1.2),
 which is stated there for pure inner forms (`bp_germAvg_transfer`, proved here by transport of the
 local expansions along the `F`-isomorphism `G_x ≃ G_{α,y}`: `germAvg_eq_of_centralizerIso`, from the
-`sorry` theorems `exists_centralizerIso_of_stronglyStablyConjW` and `jHat_centralizerIso`); the
+`sorry` theorem `exists_centralizerIso_of_stronglyStablyConjW` and `jHat_centralizerIso`, which rests on
+`isOrbitMeasure_unique` and the transport lemmas of `TraceFormula/JHatTransport.lean`); the
 equality of the regular germs of a stable quasi-character (`germ_eq_germ_of_stable`); and the
 finiteness of `Nil_reg(𝔤_x)` (`finite_nilReg`).
 -/
@@ -316,38 +317,92 @@ theorem germ_eq_germ_of_stable (d : GGPData F) (ψ : NontrivialAddChar F) (θ : 
       germ d.G d.lie d.bilin ψ θ x O = germ d.G d.lie d.bilin ψ θ x O' := by
   sorry
 
-namespace GGPData
+/-- **`b` is nondegenerate on `𝔤_g`** for semisimple `g ∈ G(F)`: `𝔤 = 𝔤_g ⊕ im(1 − Ad g)`
+(`1 − Ad g` is semisimple), and `b(Z, W − g W g⁻¹) = b(Z, W) − b(g Z g⁻¹, g W g⁻¹) = 0` for
+`Z ∈ 𝔤_g`, as `b` is `Ad`-invariant; so `b(Z, ·) = 0` on `𝔤_g` forces `b(Z, ·) = 0` on `𝔤`. -/
+theorem restrictForm_lieCentralizer_nondegenerate (d : GGPData F) (g : ↥d.G)
+    (hg : IsSS F ((g : d.ambientˣ) : d.ambient)) :
+    (restrictForm (lieCentralizer d.lie ((g : d.ambientˣ) : d.ambient)) d.bilin).Nondegenerate := by
+  set a : d.ambient := ((g : d.ambientˣ) : d.ambient)
+  set ai : d.ambient := (((g : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient)
+  have hia : ai * a = 1 := Units.inv_mul _
+  have hai : a * ai = 1 := Units.mul_inv _
+  set N := oneSubAd d g
+  have hss := isSemisimple_oneSubAd d g hg
+  have hcompl := isCompl_ker_range_of_isSemisimple hss
+  have hN : ∀ X : d.lie.toSubmodule, ((N X : d.lie.toSubmodule) : d.ambient) =
+      (X : d.ambient) - a * X * ai := fun X => rfl
+  have hL : ∀ Z : ↥(lieCentralizer d.lie a),
+      (∀ W, restrictForm (lieCentralizer d.lie a) d.bilin Z W = 0) → Z = 0 := by
+    intro Z hZ
+    obtain ⟨hZl, hZc⟩ := mem_lieCentralizer.mp Z.2
+    refine Subtype.ext (d.bilin_nondegenerate_lie Z hZl fun Y hY => ?_)
+    obtain ⟨l, hl, c, hc, hlc⟩ := Submodule.mem_sup.mp
+      (hcompl.sup_eq_top ▸ Submodule.mem_top (x := (⟨Y, hY⟩ : d.lie.toSubmodule)))
+    have hYeq : Y = (l : d.ambient) + (c : d.ambient) := by
+      have := congrArg Subtype.val hlc
+      simpa using this.symm
+    rw [hYeq, map_add]
+    have h1 : d.bilin Z l = 0 := by
+      have hl0 := congrArg Subtype.val (LinearMap.mem_ker.mp hl)
+      rw [hN, ZeroMemClass.coe_zero, sub_eq_zero] at hl0
+      have hl' : (l : d.ambient) ∈ lieCentralizer d.lie a := by
+        rw [mem_lieCentralizer]
+        refine ⟨l.2, ?_⟩
+        calc a * l = a * l * ai * a := by rw [mul_assoc _ ai, hia, mul_one]
+          _ = l * a := by rw [← hl0]
+      have := hZ ⟨l, hl'⟩
+      simpa [restrictForm] using this
+    have h2 : d.bilin Z c = 0 := by
+      obtain ⟨w, rfl⟩ := hc
+      have hconj : a * (Z : d.ambient) * ai = Z := by
+        rw [hZc, mul_assoc, hai, mul_one]
+      rw [hN, map_sub, ← d.bilin_conj g (Z : d.ambient) (w : d.ambient)]
+      change d.bilin (a * Z * ai) (a * w * ai) - d.bilin (Z : d.ambient) (a * w * ai) = 0
+      rw [hconj, sub_self]
+    rw [h1, h2, add_zero]
+  refine ⟨hL, fun Y hY => hL Y fun X => ?_⟩
+  have := hY X
+  simp only [restrictForm, LinearMap.compl₁₂_apply] at this ⊢
+  rw [GGPData.bilin_apply, LinearMap.mulLeft_mul, ← Module.End.mul_eq_comp,
+    LinearMap.trace_mul_comm, Module.End.mul_eq_comp, ← LinearMap.mulLeft_mul, ← GGPData.bilin_apply]
+  exact this
 
-variable (d : GGPData F)
+/-- **Uniqueness of the orbit measure.** For semisimple `x ∈ G(F)` and a nilpotent orbit `O` of
+`G_x(F)` in `𝔤_x(F)`, there is at most one measure satisfying the defining conditions of the
+Kirillov-normalized orbit measure (`IsOrbitMeasure`): carried by `O`, `G_x(F)`-invariant, and equal
+near each point `X ∈ O` to the self-dual measure of the Kirillov form in the chart
+`Y ↦ e^Y X e^{-Y}`.
 
-/-- `𝔤 = gspin(W) × gspin(V)` is `Ad(G)`-stable. -/
-theorem conj_mem_lie (g : ↥d.G) {X : d.ambient} (hX : X ∈ d.lie) :
-    ((g : d.ambientˣ) : d.ambient) * X * ((g⁻¹ : d.ambientˣ) : d.ambient) ∈ d.lie :=
-  ⟨conj_mem_gspin d.QW (d.fst g) hX.1, conj_mem_gspin d.QV (d.snd g) hX.2⟩
+Reason (not formalized): the chart is a local homeomorphism of a neighbourhood of `0` in a
+complement of `𝔤_{x,X}` onto a neighbourhood of `X` in `O` (`p`-adic inverse function theorem, e.g.
+Serre, *Lie Algebras and Lie Groups*, Part II, Ch. III; not checked here), so the chart images
+cover `O` by open sets on which the measure is prescribed; `O` is second countable, so countably
+many of them suffice and the measure is determined. Only the zero orbit is done in Lean
+(`eq_dirac_of_isOrbitMeasure_zeroOrbit`). No source states this for the definition used here.
 
-/-- `conj_mem_lie` for units of the ambient algebra lying in `G`, in the form used by
-`CentralizerIso`. -/
-theorem conj_mem_lie_of_mem :
-    ∀ g ∈ d.G, ∀ Y ∈ d.lie, (g : d.ambient) * Y * (↑g⁻¹ : d.ambient) ∈ d.lie :=
-  fun g hg Y hY => d.conj_mem_lie ⟨g, hg⟩ hY
-
-end GGPData
+**Status: `sorry`** (general fact; needs the `p`-adic inverse function theorem). -/
+theorem isOrbitMeasure_unique (d : GGPData F) (ψ : NontrivialAddChar F) (x : ↥d.G)
+    (hx : IsSS F ((x : d.ambientˣ) : d.ambient))
+    (O : NilOrbit (grpCentralizer d.G x) (lieCentralizer d.lie ((x : d.ambientˣ) : d.ambient)))
+    (μ ν : Measure ↥(lieCentralizer d.lie ((x : d.ambientˣ) : d.ambient)))
+    (hμ : IsOrbitMeasure (grpCentralizer d.G x) (lieCentralizer d.lie ((x : d.ambientˣ) : d.ambient))
+      d.bilin ψ O μ)
+    (hν : IsOrbitMeasure (grpCentralizer d.G x) (lieCentralizer d.lie ((x : d.ambientˣ) : d.ambient))
+      d.bilin ψ O ν) : μ = ν := by
+  sorry
 
 /-- **`ĵ` is transported by isomorphisms of descent data.** If `ι : (G_x, 𝔤_x) ≃ (G'_y, 𝔤'_y)`
 respects the commutator, the trace forms, nilpotency, regular semisimplicity, the adjoint actions
 and the maps `Y ↦ e^Y X e^{-Y}` (`CentralizerIso`), then `ĵ(ι O, ι X) = ĵ(O, X)` for every nilpotent
 orbit `O` of `𝔤_x(F)` and every regular semisimple `X ∈ 𝔤_x(F)`.
 
-Proof sketch (not formalized): transport of structure. `ι` is a linear homeomorphism
-`𝔤_x(F) ≃ 𝔤'_y(F)` (finite dimension) carrying `b|_{𝔤_x}` to `b'|_{𝔤'_y}`, so it carries the
-self-dual Haar measure and the Fourier transform of `𝔤_x(F)` to those of `𝔤'_y(F)`. It carries the
-Kirillov forms `b(·, [X, ·])` and the charts `Y ↦ e^Y X e^{-Y}` to those at `ι X`, and intertwines the
-actions of `G_x(F)` and `G'_y(F)`, so the push-forward of the orbit measure `μ_O` satisfies the
-defining conditions of `μ_{ι O}`; these determine the measure (the charts cover the orbit). Hence
-`X ↦ ĵ(O, ι⁻¹ X)` represents `f ↦ μ_{ι O}(f̂)`, and representatives agree on the open regular set
-(`eqOn_of_isJHat`; the self-dual measure exists since `b` is nondegenerate on `𝔤_x`).
-
-**Status: `sorry`** (formal transport of structure; no literature input). -/
+From `CentralizerIso.jHat_map`: the defining conditions of the self-dual measure, the orbit
+measures and `ĵ` are transported by `ι` (`isSelfDual_map_iff`, `isOrbitMeasure_map_iff`,
+`isJHat_comp_iff`); the chosen measures on `𝔤_{α,y}` correspond by uniqueness (`isSelfDual_unique`,
+`isOrbitMeasure_unique`); and the chosen representatives agree on the regular set, which is open
+(`isOpen_setOf_isRegularSS_lieCentralizer`), because the self-dual measure exists. The latter uses
+that the trace form is nondegenerate on `𝔤_{α,y}` (`restrictForm_lieCentralizer_nondegenerate`). -/
 theorem jHat_centralizerIso (d d' : GGPData F) (ψ : NontrivialAddChar F) (x : ↥d.G) (y : ↥d'.G)
     (hx : IsSS F ((x : d.ambientˣ) : d.ambient)) (hy : IsSS F ((y : d'.ambientˣ) : d'.ambient))
     (ι : CentralizerIso d.G d.lie d.bilin d'.G d'.lie d'.bilin (x : d.ambientˣ) (y : d'.ambientˣ))
@@ -357,8 +412,10 @@ theorem jHat_centralizerIso (d d' : GGPData F) (ψ : NontrivialAddChar F) (x : �
     jHat (grpCentralizer d'.G y) (lieCentralizer d'.lie ((y : d'.ambientˣ) : d'.ambient)) d'.bilin ψ
         (ι.nilOrbitEquiv d.conj_mem_lie_of_mem O) (ι.lin X) =
       jHat (grpCentralizer d.G x) (lieCentralizer d.lie ((x : d.ambientˣ) : d.ambient)) d.bilin ψ
-        O X := by
-  sorry
+        O X :=
+  ι.jHat_map d.conj_mem_lie_of_mem ψ (restrictForm_lieCentralizer_nondegenerate d' y hy)
+    (isOpen_setOf_isRegularSS_lieCentralizer d' y hy)
+    (fun O' μ ν => isOrbitMeasure_unique d' ψ y hy O' μ ν) O X hX hXr
 
 /-- **Germs are transported by isomorphisms of descent data.** Let `ι : (G_x, 𝔤_x) ≃ (G'_y, 𝔤'_y)`
 be as in `CentralizerIso`, `θ` a quasi-character on `G(F)` and `θ'` a function on `G'(F)` such that
@@ -390,7 +447,7 @@ theorem germ_eq_germ_of_centralizerIso (d d' : GGPData F) (ψ : NontrivialAddCha
   have hc' : HasGermExpansion d'.G d'.lie d'.bilin ψ θ' y (c ∘ E.symm) := by
     refine ⟨hcfin.preimage E.symm.injective.injOn, ω', hω',
       fun X' hX'ω hX' hX'r y' hy' => ?_⟩
-    obtain ⟨X, hX, rfl⟩ := ι.surjOn X' hX'
+    obtain ⟨X, hX, rfl⟩ := ι.bijOn.surjOn hX'
     have hXω : X ∈ ω₁ ∩ ω₂ := hω'sub X hX hX'ω
     have hXr := (ι.isRegularSS_iff X hX).mp hX'r
     obtain ⟨z, hz, hθz⟩ := hl X hXω.1 hX hXr y' hy'
@@ -445,17 +502,18 @@ descent data `CentralizerIso` at `x` and `y`, and for `X ∈ 𝔤_x(F)` small an
 `x e^X ∈ G_reg(F)` and `y e^{ι X} ∈ G_{α,reg}(F)` are stably conjugate (through `ψ_α`, by the same
 `g`).
 
-Proof sketch (not formalized). `ι` is the restriction of the `F̄`-algebra isomorphism
-`a ↦ g ψ_α(a) g⁻¹` of the ambient algebras (base changed to `F̄`); since `ι` commutes with the Galois
-action on `G_x`, so does its differential on `𝔤_x`, and `ι` maps `G_x(F)`, `𝔤_x(F)` onto
-`G_{α,y}(F)`, `𝔤_{α,y}(F)`. An algebra isomorphism preserves commutators, nilpotency,
-semisimplicity (both are invariant under base change), centralizers, the trace forms
-`tr(L_{XY})` and the exponential series, which gives the fields of `CentralizerIso`. For
-`X ∈ 𝔤_x(F)` small, `x e^X ∈ G_x(F)` (Waldspurger's good neighbourhoods, `waldspurger_goodNbhd`),
-it is regular when `X` is regular in `𝔤_x` (`exists_nhds_isRegularSS_mul_expA`), and
-`g ψ_α(x e^X) g⁻¹ = y e^{ι X}`.
+Proof sketch (not formalized). Let `Φ : a ↦ g ψ_α(a) g⁻¹` be the `F̄`-algebra isomorphism of the
+ambient algebras base changed to `F̄`. Since `ι = Φ|_{G_x}` commutes with the Galois action, so does
+its differential, and `Φ` maps `G_x(F)`, `𝔤_x(F)` onto `G_{α,y}(F)`, `𝔤_{α,y}(F)`. Take for `lin` an
+`F`-linear extension of `Φ` restricted to `F[𝔤_x(F)]`, an injective `F`-algebra map into `A'(F)`; so
+`lin` preserves commutators, nilpotency, semisimplicity (invariant under base change), centralizers
+and summability of the exponential series. `Φ` preserves the trace forms `tr(L_{XY})`. This gives the
+fields of `CentralizerIso`. For `X ∈ 𝔤_x(F)` small, `x e^X ∈ G_x(F)` (Waldspurger's good
+neighbourhoods, `waldspurger_goodNbhd`); it is regular when `X` is regular in `𝔤_x`
+(`exists_nhds_isRegularSS_mul_expA`); and `g ψ_α(x e^X) g⁻¹ = y e^{ι X}`.
 
-**Status: `sorry`** (the dissertation's own argument, Thesis §6.1). -/
+**Status: `sorry`** (transport along `ι`, defined in Thesis §6.1; this argument is not in the
+thesis). -/
 theorem exists_centralizerIso_of_stronglyStablyConjW (d : GGPData F) (τ : InnerTwist d.QW)
     (x : GSpin d.QW) (y : GSpin (d.twist τ).QW)
     (hx : IsSS F (((d.diag x : ↥d.G) : d.ambientˣ) : d.ambient))
@@ -495,7 +553,9 @@ proofs: the `F`-isomorphism `ι = Ad(g) ∘ ψ_α : G_x ≃ G_{α,y}` is an isom
 `X ∈ 𝔤_x(F)` small and regular, so `θ'(y e^{ι X}) = θ(x e^X)`, and the local expansions correspond
 orbit by orbit (`germAvg_eq_of_centralizerIso`). Stability and transfer are written out inline;
 `hqs`, `hθ'` and the stability hypotheses are not needed by this argument. Only diagonal elements
-are needed (Thesis §6.7). -/
+are needed (Thesis §6.7).
+
+**Status: proved** from `exists_centralizerIso_of_stronglyStablyConjW` and `jHat_centralizerIso`. -/
 theorem bp_germAvg_transfer (d : GGPData F) (hqs : d.IsQuasiSplit) (ψ : NontrivialAddChar F)
     (τ : InnerTwist d.QW) (θ : ↥d.G → ℂ) (θ' : ↥(d.twist τ).G → ℂ)
     (hθ : IsQuasiCharacter d.G d.lie d.bilin ψ θ)
