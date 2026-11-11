@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.TraceFormula.LieAlgebra
+import GSpinGGP.GGP.MovedCentralizer
 import GSpinGGP.Literature.Luo
 import GSpinGGP.Literature.Fourier
 import GSpinGGP.TraceFormula.SelfDual
@@ -34,7 +35,7 @@ The identification is own work, stated step by step (most steps are `sorry` here
   `Ḡ_X`, the orbit choice `orbitChoiceLie` vs Luo's and Waldspurger's `O_{±ν₀}`);
 * (L8) `gammaClass_equiv`, `torusIntegralLie_toSO`: `Γ^Lie` (tori, `|W(H,T)|`, `ν(T) dX`,
   `D^G`, `Δ`, `𝔱_♮`) agree; `mGeomLieS_toSO` is proved from them;
-* (L9) `mGeomLie_congr_regularSet`: `m^Lie_geom(θ)` depends only on `θ|_{𝔤⁰_reg}`.
+* (L9) `mGeomLie_congr_regularSet` (proved): `m^Lie_geom(θ)` depends only on `θ|_{𝔤⁰_reg}`.
 -/
 
 noncomputable section
@@ -646,13 +647,93 @@ theorem torusIntegralLie_toSO (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV
               d.luoOf.gammaIntegrand ψ θ (Quot.out (e c)).1 s X ∂μT (Quot.out (e c)) := by
   sorry
 
+/-- A local expansion of `θ` at a semisimple `X` is one of every `θ'` agreeing with `θ` on
+`𝔤⁰_reg(F)`: the expansion is only evaluated at `X + Y` with `Y ∈ 𝔤⁰_X` small and regular, which
+is regular in `𝔤⁰` (`exists_nhds_isRegularSS_add`).  Lie-algebra form of
+`hasGermExpansion_congr_regularSet`. -/
+theorem hasGermExpansionLie_congr_regularSet {θ θ' : ↥d.lieZero → ℂ}
+    (he : ∀ X : ↥d.lieZero, IsRegularSS d.lieZero (X : d.ambient) → θ X = θ' X)
+    {X : d.ambient} (hX : IsSS F X)
+    {c : NilOrbit (lieGrpCentralizer d.G X) (lieCentralizer d.lieZero X) → ℂ}
+    (h : HasGermExpansionLie d.G d.lieZero d.bilin ψ θ X c) :
+    HasGermExpansionLie d.G d.lieZero d.bilin ψ θ' X c := by
+  obtain ⟨hfin, ω, hω, hexp⟩ := h
+  obtain ⟨ω', hω', hreg⟩ := exists_nhds_isRegularSS_add F d.lieZero hX
+  refine ⟨hfin, ω ∩ ω', Filter.inter_mem hω hω', fun Y hY hYc hYr Z hZ => ?_⟩
+  rw [← he Z (by rw [hZ]; exact hreg Y hY.2 hYc hYr)]
+  exact hexp Y hY.1 hYc hYr Z hZ
+
+/-- **Germs only see `𝔤⁰_reg(F)`**: at a semisimple `X`, `c_{θ,O}(X)` depends only on
+`θ|_{𝔤⁰_reg(F)}`.  The two functions have the same local expansions at `X`
+(`hasGermExpansionLie_congr_regularSet`), so the same coefficient is chosen; no uniqueness of the
+expansion is used. -/
+theorem germLie0_congr_regularSet {θ θ' : ↥d.lieZero → ℂ}
+    (he : ∀ X : ↥d.lieZero, IsRegularSS d.lieZero (X : d.ambient) → θ X = θ' X)
+    {X : d.ambient} (hX : IsSS F X)
+    (O : NilOrbit (lieGrpCentralizer d.G X) (lieCentralizer d.lieZero X)) :
+    d.germLie0 ψ θ X O = d.germLie0 ψ θ' X O := by
+  classical
+  have hP : (fun c => HasGermExpansionLie d.G d.lieZero d.bilin ψ θ X c) =
+      fun c => HasGermExpansionLie d.G d.lieZero d.bilin ψ θ' X c :=
+    funext fun c => propext
+      ⟨d.hasGermExpansionLie_congr_regularSet ψ he hX,
+        d.hasGermExpansionLie_congr_regularSet ψ (fun Z hZ => (he Z hZ).symm) hX⟩
+  have key : ∀ {P Q : (NilOrbit (lieGrpCentralizer d.G X) (lieCentralizer d.lieZero X) → ℂ) →
+      Prop}, P = Q → (if h : ∃ c, P c then h.choose O else 0) =
+        (if h : ∃ c, Q c then h.choose O else 0) := by
+    intro P Q hPQ
+    subst hPQ
+    rfl
+  unfold germLie0 germLie
+  rw [key hP]
+
+/-- The integrand of `m^Lie_{geom,s}` only sees `θ|_{𝔤⁰_reg(F)}`, at points of `𝔱⁰_♮` that are
+semisimple. -/
+theorem gammaIntegrandLie_congr_regularSet {θ θ' : ↥d.lieZero → ℂ}
+    (he : ∀ X : ↥d.lieZero, IsRegularSS d.lieZero (X : d.ambient) → θ X = θ' X)
+    (T : Subgroup ↥(GSpin d.QW)) (s : ℝ) (X : CliffordAlgebra d.QW)
+    (hss : d.IsGammaEltLie T X → IsSS F (d.diagLie X)) :
+    d.gammaIntegrandLie ψ θ T s X = d.gammaIntegrandLie ψ θ' T s X := by
+  unfold gammaIntegrandLie
+  split_ifs with h
+  · rw [d.germLie0_congr_regularSet ψ he (hss h)]
+  · rfl
+
+/-- `m^Lie_geom(θ)` depends only on `θ|_{𝔤⁰_reg}`, given that the points of `𝔱⁰_♮` are semisimple
+for the tori representing the classes of `Γ^Lie(G,H)`. -/
+theorem mGeomLie_congr_regularSet_of_isSS {θ θ' : ↥d.lieZero → ℂ}
+    (he : ∀ X : ↥d.lieZero, IsRegularSS d.lieZero (X : d.ambient) → θ X = θ' X)
+    (hss : ∀ (c : GammaClass d) (X : CliffordAlgebra d.QW),
+      d.IsGammaEltLie (Quot.out c).1 X → IsSS F (d.diagLie X)) :
+    d.mGeomLie ψ θ = d.mGeomLie ψ θ' := by
+  have hS : d.mGeomLieS ψ θ = d.mGeomLieS ψ θ' := by
+    funext s
+    unfold mGeomLieS torusIntegralLie
+    refine tsum_congr fun c => ?_
+    congr 2
+    funext X
+    exact d.gammaIntegrandLie_congr_regularSet ψ he _ s X (hss c X)
+  unfold mGeomLie
+  rw [hS]
+
 /-- **(L9) `m^Lie_geom(θ)` depends only on `θ|_{𝔤⁰_reg}`** (the Lie-algebra form of
 `mGeomS_congr_regularSet`): the germs `c_{θ,O}(X)` only see `θ` at `X + Y` with `Y ∈ 𝔤⁰_X` small
-and regular in `𝔤⁰_X`, and such `X + Y` are regular in `𝔤⁰`.  Not proved here. -/
+and regular in `𝔤⁰_X`, and such `X + Y` are regular in `𝔤⁰` (`mGeomLie_congr_regularSet_of_isSS`).
+The points `X` of `𝔱⁰_♮` are semisimple for `T = T_x`, `x ∈ Γ(G,H)`: `X` commutes with `x` and
+kills `W'_x` (`GGPData.isSS_of_commute_of_isGammaElt`), and so is `(X, X)`. -/
 theorem mGeomLie_congr_regularSet {θ θ' : ↥d.lieZero → ℂ}
     (he : ∀ X : ↥d.lieZero, IsRegularSS d.lieZero (X : d.ambient) → θ X = θ' X) :
     d.mGeomLie ψ θ = d.mGeomLie ψ θ' := by
-  sorry
+  refine d.mGeomLie_congr_regularSet_of_isSS ψ he fun c X hX => ?_
+  obtain ⟨x, hx, hT⟩ := (Quot.out c).2
+  obtain ⟨hXs, hXc, hXf⟩ := hX.1
+  rw [← hT] at hXc hXf
+  have hss : IsSS F X := d.isSS_of_commute_of_isGammaElt hx hXs.1
+    (hXc x (d.self_mem_torusOf x)) fun v hv => hXf v <| Submodule.mem_iInf _ |>.mpr fun t => by
+      have := t.2.2 v hv
+      simpa [fixedSub, sub_eq_zero] using this
+  exact isSS_algHom ((AlgHom.id F _).prod
+    (CliffordAlgebra.map (QuadraticMap.Isometry.inl d.QW d.QZ))) hss
 
 /-- `m^Lie_{geom,s}` agrees with Luo's, for `s > 0`, from `gammaClass_equiv` and
 `torusIntegralLie_toSO`. -/

@@ -1296,6 +1296,81 @@ theorem exists_nhds_isRegularSS_mul_expA (𝔤 : LieSubalgebra F A) {x : A} (hx 
     rw [mem_lieCentralizer, mem_lieCentralizer]
     exact ⟨⟨hY.1, hYx.eq.symm⟩, hYX.eq.symm⟩
 
+variable (F) in
+/-- **Commuting with `x + Y` forces commuting with `x`**, for `x` semisimple and `Y` near `0`
+commuting with `x` (the Lie-algebra form of `exists_nhds_commute_of_commute_mul_expA`).
+
+Proof.  Put `N = ad x = L_x - R_x` (semisimple).  If `W` commutes with `x + Y`, then `Z = N W`
+satisfies `N Z = K Z` with `K Z = Z Y - Y Z`, an operator that tends to `0` as `Y → 0`.  Since `N`
+is invertible on its range with bounded inverse (`exists_pos_eq_zero_of_isSemisimple`), `Z = 0`
+once `‖K‖` is small. -/
+lemma exists_nhds_commute_of_commute_add {x : A} (hx : IsSS F x) :
+    ∃ U ∈ 𝓝 (0 : A), ∀ Y ∈ U, Commute x Y → ∀ W : A, Commute W (x + Y) → Commute W x := by
+  letI := isTopologicalRing_of_moduleTopology F A
+  set e := (toPiCLE F A).toLinearEquiv
+  set NA : Module.End F A := LinearMap.mulLeft F x - LinearMap.mulRight F x
+  set NV := e.conjAlgEquiv F NA
+  have hNV : NV.IsSemisimple := isSemisimple_conj e (isSemisimple_ad hx)
+  obtain ⟨ε, hε, hkey⟩ := exists_pos_eq_zero_of_isSemisimple hNV
+  set K : A → (VA →L[F] VA) := fun Y => rmulPi F Y - lmulPi F Y
+  have hK0 : K 0 = 0 := by
+    refine ContinuousLinearMap.ext fun v => ?_
+    simp [K, lmulPi_apply, rmulPi_apply]
+  have hKc : ContinuousAt K 0 :=
+    ((continuous_rmulPi F (A := A)).sub (continuous_lmulPi F (A := A))).continuousAt
+  have hU : K ⁻¹' Metric.ball 0 ε ∈ 𝓝 (0 : A) :=
+    hKc.preimage_mem_nhds (by rw [hK0]; exact Metric.ball_mem_nhds 0 hε)
+  refine ⟨_, hU, fun Y hY hxY W hW => ?_⟩
+  -- `x W - W x = W Y - Y W`
+  have hZ : x * W - W * x = W * Y - Y * W := by
+    have := hW.eq
+    rw [mul_add, add_mul] at this
+    rw [sub_eq_sub_iff_add_eq_add, add_comm (W * Y)]
+    exact this.symm
+  have hid : x * (x * W - W * x) - (x * W - W * x) * x =
+      (x * W - W * x) * Y - Y * (x * W - W * x) := by
+    have e1 : x * (W * Y - Y * W) - (W * Y - Y * W) * x =
+        (x * W - W * x) * Y - Y * (x * W - W * x) := by
+      have h1 : x * (Y * W) = Y * (x * W) := by rw [← mul_assoc, hxY.eq, mul_assoc]
+      have h2 : W * Y * x = W * x * Y := by rw [mul_assoc, ← hxY.eq, ← mul_assoc]
+      rw [mul_sub, sub_mul, sub_mul, mul_sub, h1, h2]
+      simp only [mul_assoc]
+      abel
+    rw [← e1, ← hZ]
+  have hNVy : ∀ W' : A, NV (toPiCLE F A W') = toPiCLE F A (x * W' - W' * x) := fun W' => by
+    simp [NV, NA, LinearEquiv.conjAlgEquiv_apply, e]
+  have hKy : ∀ W' : A, K Y (toPiCLE F A W') = toPiCLE F A (W' * Y - Y * W') := fun W' => by
+    simp [K, lmulPi_apply, rmulPi_apply]
+  have hKY : ‖K Y‖ < ε := by simpa using hY
+  have h0 := hkey (K Y) hKY (toPiCLE F A W) (by rw [hNVy, hNVy, hKy, ← hid])
+  rw [hNVy, map_eq_zero_iff _ (toPiCLE F A).injective, sub_eq_zero] at h0
+  exact h0.symm
+
+variable (F) in
+/-- **Regularity near a semisimple element of the Lie algebra** (Thesis §4.1.1, BP §4.1, the
+setting of the local expansion `θ(X + Y)`): if `x` is semisimple, then for `Y ∈ 𝔤_x` close to `0`
+and regular semisimple in `𝔤_x`, the element `x + Y` is regular semisimple in `𝔤`.  Indeed `x + Y`
+is a sum of commuting semisimple elements, and `𝔤_{x + Y} ⊆ (𝔤_x)_Y`
+(`exists_nhds_commute_of_commute_add`), which is abelian. -/
+theorem exists_nhds_isRegularSS_add [PerfectField F] (𝔤 : LieSubalgebra F A) {x : A}
+    (hx : IsSS F x) :
+    ∃ U ∈ 𝓝 (0 : A), ∀ Y ∈ U, Y ∈ lieCentralizer 𝔤 x →
+      IsRegularSS (lieCentralizer 𝔤 x) Y → IsRegularSS 𝔤 (x + Y) := by
+  obtain ⟨U, hU, h⟩ := exists_nhds_commute_of_commute_add F hx
+  refine ⟨U, hU, fun Y hY hYc hreg => ⟨?_, ?_⟩⟩
+  · exact isSS_add_of_commute (mem_lieCentralizer.mp hYc).2 hx hreg.1
+  · refine isLieAbelian_of_le ?_ hreg.2
+    intro W hW
+    rw [mem_lieCentralizer] at hW
+    have hxY : Commute x Y := (mem_lieCentralizer.mp hYc).2
+    have hWx : Commute W x := h Y hY hxY W hW.2.symm
+    have hWY : Y * W = W * Y := by
+      have := hW.2
+      rw [add_mul, mul_add, hWx.eq] at this
+      exact add_left_cancel this
+    rw [mem_lieCentralizer, mem_lieCentralizer]
+    exact ⟨⟨hW.1, hWx.eq.symm⟩, hWY⟩
+
 end ExpRegular
 
 /-! ## 5. Nilpotent orbits (Thesis §2.4, §4.2, §4.4) -/
