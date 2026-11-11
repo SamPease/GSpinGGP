@@ -2,6 +2,7 @@ import GSpinGGP.Foundations.LocalGroups
 import GSpinGGP.Foundations.RankSemicontinuity
 import GSpinGGP.Foundations.Determinant
 import GSpinGGP.Foundations.JHatTranslate
+import GSpinGGP.Foundations.CentralizerIso
 import GSpinGGP.Foundations.ExpLocal
 import GSpinGGP.TraceFormula.JHatSelfDual
 import GSpinGGP.Foundations.Representations
