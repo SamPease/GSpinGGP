@@ -486,12 +486,8 @@ theorem continuous_nPart : Continuous d.nPart := by
 
 /-- `g ↦ P(n(g)) v` is continuous on `G(F)`. -/
 theorem continuous_specP_nPart (v : d.V) :
-    Continuous fun g : ↥d.G => specP d.QV (d.nPart g) v := by
-  have hn : Continuous fun g : ↥d.G => ((d.nPart g : GSpin d.QV) : (CliffordAlgebra d.QV)ˣ) :=
-    continuous_subtype_val.comp d.continuous_nPart
-  simp only [specP_apply_eq]
-  exact (IsModuleTopology.continuous_of_linearMap (ιInv d.QV)).comp
-    ((Units.continuous_val.comp hn).mul (continuous_const.mul (Units.continuous_coe_inv.comp hn)))
+    Continuous fun g : ↥d.G => specP d.QV (d.nPart g) v :=
+  continuous_specP_apply d.continuous_nPart v
 
 /-- `λ : H(F) → F` is continuous (Thesis §5.2). -/
 theorem continuous_lam : Continuous d.lam := by

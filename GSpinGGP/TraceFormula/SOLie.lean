@@ -193,17 +193,8 @@ section SOClosed
 
 variable {K V : Type*} [Field K] [AddCommGroup V] [Module K V]
 
-/-- `SOGrp Q` is Tau Ceti's special orthogonal group of `Q`. -/
-theorem SOGrp_eq_specialOrthogonalGroup [Invertible (2 : K)] (Q : QuadraticForm K V) :
-    SOGrp Q = TauCeti.QuadraticMap.specialOrthogonalGroup Q := by
-  ext g
-  simp only [TauCeti.QuadraticMap.mem_specialOrthogonalGroup_iff,
-    TauCeti.QuadraticMap.mem_orthogonalGroup_iff, Units.ext_iff, LinearEquiv.coe_det,
-    Units.val_one]
-  rfl
-
 /-- `SO(Q)` is closed in `GL(V)` (Tau Ceti's `isClosed_specialOrthogonalGroup`). -/
-theorem isClosed_SOGrp [Invertible (2 : K)] [TopologicalSpace K] [IsTopologicalRing K] [T2Space K]
+theorem isClosed_SOGrp [TopologicalSpace K] [IsTopologicalRing K] [T2Space K]
     [FiniteDimensional K V] (Q : QuadraticForm K V) :
     IsClosed (SOGrp Q : Set (V ≃ₗ[K] V)) := by
   rw [SOGrp_eq_specialOrthogonalGroup]
@@ -236,11 +227,9 @@ instance instBorelSpaceLie : BorelSpace ↥L.lie := ⟨rfl⟩
 example : IsTopologicalGroup ↥L.Gbar := inferInstance
 
 theorem continuous_fstA : Continuous (L.fstA : L.Amb → Module.End F L.W) := by
-  have : IsModuleTopology F (Module.End F L.W) := ⟨rfl⟩
   exact IsModuleTopology.continuous_of_linearMap L.fstA.toLinearMap
 
 theorem continuous_sndA : Continuous (L.sndA : L.Amb → Module.End F L.V) := by
-  have : IsModuleTopology F (Module.End F L.V) := ⟨rfl⟩
   exact IsModuleTopology.continuous_of_linearMap L.sndA.toLinearMap
 
 /-- **`Ḡ(F) = SO(W)(F) × SO(V)(F)` is closed in `(End W × End V)ˣ`**: it is the preimage of

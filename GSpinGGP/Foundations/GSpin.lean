@@ -1,6 +1,8 @@
 import Mathlib
 import GSpinGGP.Foundations.Determinant
 import TauCeti.LinearAlgebra.CliffordAlgebra.Vectors
+import TauCeti.Topology.Algebra.CliffordAlgebra.Basic
+import TauCeti.Topology.Algebra.Module.GeneralLinearGroup
 import TauCeti.LinearAlgebra.CliffordAlgebra.Functoriality
 import TauCeti.LinearAlgebra.BilinearForm.BaseChange
 import TauCeti.LinearAlgebra.CliffordAlgebra.Quadratic.Realization
@@ -4296,6 +4298,32 @@ def StronglyStablyConjW (τ : InnerTwist d.QW) (x : GSpin d.QW) (y : GSpin (d.tw
 end GGPData
 
 end InnerTwists
+
+/-! ## Continuity of the vector representation `P` -/
+
+section SpecPContinuous
+
+variable {K : Type*} [Field K] [Invertible (2 : K)] [TopologicalSpace K] [IsTopologicalRing K]
+variable {U : Type*} [AddCommGroup U] [Module K U] [FiniteDimensional K U] [TopologicalSpace U]
+  [IsModuleTopology K U]
+
+/-- `t ↦ P(x(t)) v` is continuous when `x` is continuous into `GSpin(U)`. -/
+theorem continuous_specP_apply {X : Type*} [TopologicalSpace X] {Q : QuadraticForm K U}
+    {x : X → GSpin Q} (hx : Continuous x) (v : U) : Continuous fun t => specP Q (x t) v := by
+  have hn : Continuous fun t => ((x t : GSpin Q) : (CliffordAlgebra Q)ˣ) :=
+    continuous_subtype_val.comp hx
+  simp only [specP_apply_eq]
+  exact (CliffordAlgebra.continuous_ιInv Q).comp
+    ((Units.continuous_val.comp hn).mul (continuous_const.mul (Units.continuous_coe_inv.comp hn)))
+
+/-- `t ↦ P(x(t))` is continuous into `End U` when `x` is continuous into `GSpin(U)`. -/
+theorem continuous_specP_toEnd {X : Type*} [TopologicalSpace X] {Q : QuadraticForm K U}
+    {x : X → GSpin Q} (hx : Continuous x) :
+    Continuous fun t => ((specP Q (x t) : U ≃ₗ[K] U) : Module.End K U) := by
+  rw [(Module.finBasis K U).continuous_iff_apply]
+  exact fun i => continuous_specP_apply hx _
+
+end SpecPContinuous
 
 /-! ## Whittaker data (Thesis §4.4) -/
 

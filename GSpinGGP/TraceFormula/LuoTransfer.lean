@@ -40,28 +40,12 @@ The identification is own work, stated step by step (most steps are `sorry` here
 noncomputable section
 
 open MeasureTheory Topology Filter
-open CliffordAlgebra (ιInv)
 
 attribute [local instance 100] LieRing.ofAssociativeRing LieAlgebra.ofAssociativeAlgebra
 
 set_option linter.unusedSectionVars false
 
 namespace GSpinGGP
-
-/-- `g ↦ P(x(g))` is continuous into `End U` when `x` is continuous into `GSpin(U)`. -/
-theorem continuous_specP_toEnd {F : Type} [NontriviallyNormedField F] [PAdicField F]
-    {X : Type*} [TopologicalSpace X] {U : Type*} [AddCommGroup U] [Module F U]
-    [FiniteDimensional F U] [TopologicalSpace U] [IsModuleTopology F U]
-    {Q : QuadraticForm F U} {x : X → GSpin Q} (hx : Continuous x) :
-    Continuous fun t => ((specP Q (x t) : U ≃ₗ[F] U) : Module.End F U) := by
-  have : ContinuousAdd U := IsModuleTopology.toContinuousAdd F U
-  rw [(Module.finBasis F U).continuous_iff_apply]
-  intro i
-  have hn : Continuous fun t => ((x t : GSpin Q) : (CliffordAlgebra Q)ˣ) :=
-    continuous_subtype_val.comp hx
-  simp only [LinearEquiv.coe_coe, specP_apply_eq]
-  exact (IsModuleTopology.continuous_of_linearMap (ιInv Q)).comp
-    ((Units.continuous_val.comp hn).mul (continuous_const.mul (Units.continuous_coe_inv.comp hn)))
 
 namespace GGPData
 
@@ -277,8 +261,6 @@ theorem toGbarU_val (g : ↥d.G) : ((d.toGbarU g : d.luoOf.Ambˣ) : d.luoOf.Amb)
 
 theorem continuous_toGbarU_val :
     Continuous fun g : ↥d.G => ((d.toGbarU g : d.luoOf.Ambˣ) : d.luoOf.Amb) := by
-  have : IsModuleTopology F (Module.End F d.luoOf.W) := ⟨rfl⟩
-  have : IsModuleTopology F (Module.End F d.luoOf.V) := ⟨rfl⟩
   let ℓ : (Module.End F d.luoOf.W × Module.End F d.luoOf.V) →ₗ[F] d.luoOf.Amb := LinearMap.id
   have hl : Continuous ℓ := IsModuleTopology.continuous_of_linearMap ℓ
   exact hl.comp ((continuous_specP_toEnd d.continuous_fst).prodMk

@@ -2,6 +2,7 @@ import GSpinGGP.Foundations.SoCentralizer
 import GSpinGGP.GGP.Triple
 import GSpinGGP.GGP.Centralizers
 import GSpinGGP.GGP.Germs
+import TauCeti.LinearAlgebra.QuadraticForm.OrthogonalGroup.Basic
 
 /-!
 # Descent data: `𝔤⁰`, the special orthogonal quotient, and semisimple descent
@@ -226,6 +227,16 @@ def SOGrp (Q : QuadraticForm K V) : Subgroup (V ≃ₗ[K] V) where
       rw [show (g : V →ₗ[K] V) ∘ₗ (g.symm : V →ₗ[K] V) = LinearMap.id by ext; simp,
         LinearMap.det_id, hg.2, one_mul] at h
       exact h.symm⟩
+
+omit [Invertible (2 : K)] in
+/-- `SOGrp Q` is Tau Ceti's special orthogonal group of `Q`. -/
+theorem SOGrp_eq_specialOrthogonalGroup (Q : QuadraticForm K V) :
+    SOGrp Q = TauCeti.QuadraticMap.specialOrthogonalGroup Q := by
+  ext g
+  simp only [TauCeti.QuadraticMap.mem_specialOrthogonalGroup_iff,
+    TauCeti.QuadraticMap.mem_orthogonalGroup_iff, Units.ext_iff, LinearEquiv.coe_det,
+    Units.val_one]
+  rfl
 
 /-- **Surjectivity of `P`** (Thesis §5.1.2): `P(GSpin(V)(K)) = SO(V)(K)` (Hilbert 90, the axiom
 `gspin_specP_surjective_SO`; the inclusion `⊆` is `specP_isometry`, `det_specP`). -/
