@@ -15,6 +15,9 @@ compatibilities, on the ambient algebras.
 
 * `CentralizerIso.nilOrbitEquiv`: the induced bijection `Nil(𝔤_x) ≃ Nil(𝔤'_y)`;
 * `CentralizerIso.nilOrbitEquiv_mem_nilReg_iff`: it maps `Nil_reg(𝔤_x)` onto `Nil_reg(𝔤'_y)`.
+
+General lemmas: `conj_mem_lieCentralizer` (`G_x` preserves `𝔤_x`), `mk_mem_nilReg_iff` (the orbit of a
+nilpotent `X` is regular iff `X` is).
 -/
 
 noncomputable section
@@ -31,6 +34,40 @@ variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
   {A : Type*} [Ring A] [Algebra F A] [TopologicalSpace A] [Module.Finite F A] [IsModuleTopology F A]
   {A' : Type*} [Ring A'] [Algebra F A'] [TopologicalSpace A'] [Module.Finite F A']
   [IsModuleTopology F A']
+
+/-- Conjugation by `G_x(F)` preserves `𝔤_x` when conjugation by `G(F)` preserves `𝔤`. -/
+theorem conj_mem_lieCentralizer {H : Subgroup Aˣ} {𝔥 : LieSubalgebra F A} {z : Aˣ}
+    (hH : ∀ g ∈ H, ∀ Y ∈ 𝔥, (g : A) * Y * (↑g⁻¹ : A) ∈ 𝔥) {g : Aˣ} (hg : g ∈ grpCentralizer H z)
+    {X : A} (hX : X ∈ lieCentralizer 𝔥 (z : A)) :
+    (g : A) * X * (↑g⁻¹ : A) ∈ lieCentralizer 𝔥 (z : A) := by
+  obtain ⟨hgH, hgz⟩ := hg
+  have hc : (g : A) * (z : A) = (z : A) * g := by
+    have := Subgroup.mem_centralizer_iff.mp hgz z rfl
+    exact (congrArg Units.val this).symm
+  have hc' : (↑g⁻¹ : A) * (z : A) = (z : A) * (↑g⁻¹ : A) := by
+    have := Subgroup.mem_centralizer_iff.mp (Subgroup.inv_mem _ hgz) z rfl
+    exact (congrArg Units.val this).symm
+  obtain ⟨hX𝔥, hXz⟩ := mem_lieCentralizer.mp hX
+  refine mem_lieCentralizer.mpr ⟨hH g hgH X hX𝔥, ?_⟩
+  calc (z : A) * ((g : A) * X * (↑g⁻¹ : A)) = (g : A) * ((z : A) * X) * (↑g⁻¹ : A) := by
+        simp only [← mul_assoc, ← hc]
+    _ = (g : A) * (X * (z : A)) * (↑g⁻¹ : A) := by rw [hXz]
+    _ = (g : A) * X * (↑g⁻¹ : A) * (z : A) := by
+        simp only [mul_assoc, ← hc']
+
+/-- The orbit of a nilpotent `X` is regular iff `X` is regular nilpotent (when conjugation by `H`
+preserves `𝔥`). -/
+theorem mk_mem_nilReg_iff {H : Subgroup Aˣ} {𝔥 : LieSubalgebra F A}
+    (hH : ∀ g ∈ H, ∀ Y ∈ 𝔥, (g : A) * Y * (↑g⁻¹ : A) ∈ 𝔥)
+    (X : {X : A // X ∈ 𝔥 ∧ IsNilpotent X}) :
+    Quotient.mk (nilSetoid H 𝔥) X ∈ NilReg H 𝔥 ↔ IsRegularNil 𝔥 X.1 := by
+  refine ⟨fun h => ?_, mk_mem_nilReg_of_isRegularNil H 𝔥 hH X⟩
+  obtain ⟨g, hgH, hgX⟩ := Quotient.exact (Quotient.out_eq (Quotient.mk (nilSetoid H 𝔥) X))
+  refine ⟨X.2.1, X.2.2, ?_⟩
+  have hg' : ∀ Y ∈ 𝔥, (↑g⁻¹ : A) * Y * (g : A) ∈ 𝔥 := fun Y hY => by
+    simpa using hH g⁻¹ (H.inv_mem hgH) Y hY
+  rw [← hgX, finrank_lieCentralizer_conj 𝔥 g (hH g hgH) hg']
+  exact h.2.2
 
 /-- **An isomorphism of the descent data at `x` and `y`**: an `F`-linear map of the ambient algebras
 restricting to a bijection `𝔤_x(F) → 𝔤'_y(F)` that respects the commutator, the forms `b`, `b'`,
@@ -67,26 +104,6 @@ namespace CentralizerIso
 variable {G : Subgroup Aˣ} {𝔤 : LieSubalgebra F A} {b : LinearMap.BilinForm F A}
   {G' : Subgroup A'ˣ} {𝔤' : LieSubalgebra F A'} {b' : LinearMap.BilinForm F A'}
   {x : Aˣ} {y : A'ˣ} (ι : CentralizerIso G 𝔤 b G' 𝔤' b' x y)
-
-/-- Conjugation by `G_x(F)` preserves `𝔤_x` when conjugation by `G(F)` preserves `𝔤`. -/
-theorem conj_mem_lieCentralizer {H : Subgroup Aˣ} {𝔥 : LieSubalgebra F A} {z : Aˣ}
-    (hH : ∀ g ∈ H, ∀ Y ∈ 𝔥, (g : A) * Y * (↑g⁻¹ : A) ∈ 𝔥) {g : Aˣ} (hg : g ∈ grpCentralizer H z)
-    {X : A} (hX : X ∈ lieCentralizer 𝔥 (z : A)) :
-    (g : A) * X * (↑g⁻¹ : A) ∈ lieCentralizer 𝔥 (z : A) := by
-  obtain ⟨hgH, hgz⟩ := hg
-  have hc : (g : A) * (z : A) = (z : A) * g := by
-    have := Subgroup.mem_centralizer_iff.mp hgz z rfl
-    exact (congrArg Units.val this).symm
-  have hc' : (↑g⁻¹ : A) * (z : A) = (z : A) * (↑g⁻¹ : A) := by
-    have := Subgroup.mem_centralizer_iff.mp (Subgroup.inv_mem _ hgz) z rfl
-    exact (congrArg Units.val this).symm
-  obtain ⟨hX𝔥, hXz⟩ := mem_lieCentralizer.mp hX
-  refine mem_lieCentralizer.mpr ⟨hH g hgH X hX𝔥, ?_⟩
-  calc (z : A) * ((g : A) * X * (↑g⁻¹ : A)) = (g : A) * ((z : A) * X) * (↑g⁻¹ : A) := by
-        simp only [← mul_assoc, ← hc]
-    _ = (g : A) * (X * (z : A)) * (↑g⁻¹ : A) := by rw [hXz]
-    _ = (g : A) * X * (↑g⁻¹ : A) * (z : A) := by
-        simp only [mul_assoc, ← hc']
 
 /-- The map on nilpotent elements of `𝔤_x`. -/
 def nilMap (X : {X : A // X ∈ lieCentralizer 𝔤 (x : A) ∧ IsNilpotent X}) :
@@ -185,20 +202,6 @@ theorem isRegularNil_iff {X : A} (hX : X ∈ lieCentralizer 𝔤 (x : A)) :
   unfold IsRegularNil
   rw [ι.finrank_lieCentralizer hX, ι.lieRank_eq, ι.isNilpotent_iff X hX]
   exact ⟨fun h => ⟨hX, h.2⟩, fun h => ⟨ι.mapsTo X hX, h.2⟩⟩
-
-/-- The orbit of a nilpotent `X` is regular iff `X` is regular nilpotent (when conjugation by `H`
-preserves `𝔥`). -/
-theorem mk_mem_nilReg_iff {H : Subgroup Aˣ} {𝔥 : LieSubalgebra F A}
-    (hH : ∀ g ∈ H, ∀ Y ∈ 𝔥, (g : A) * Y * (↑g⁻¹ : A) ∈ 𝔥)
-    (X : {X : A // X ∈ 𝔥 ∧ IsNilpotent X}) :
-    Quotient.mk (nilSetoid H 𝔥) X ∈ NilReg H 𝔥 ↔ IsRegularNil 𝔥 X.1 := by
-  refine ⟨fun h => ?_, mk_mem_nilReg_of_isRegularNil H 𝔥 hH X⟩
-  obtain ⟨g, hgH, hgX⟩ := Quotient.exact (Quotient.out_eq (Quotient.mk (nilSetoid H 𝔥) X))
-  refine ⟨X.2.1, X.2.2, ?_⟩
-  have hg' : ∀ Y ∈ 𝔥, (↑g⁻¹ : A) * Y * (g : A) ∈ 𝔥 := fun Y hY => by
-    simpa using hH g⁻¹ (H.inv_mem hgH) Y hY
-  rw [← hgX, finrank_lieCentralizer_conj 𝔥 g (hH g hgH) hg']
-  exact h.2.2
 
 /-- The bijection `Nil(𝔤_x) ≃ Nil(𝔤'_y)` maps `Nil_reg(𝔤_x)` onto `Nil_reg(𝔤'_y)`. -/
 theorem nilOrbitEquiv_mem_nilReg_iff (hG : ∀ g ∈ G, ∀ Y ∈ 𝔤, (g : A) * Y * (↑g⁻¹ : A) ∈ 𝔤)

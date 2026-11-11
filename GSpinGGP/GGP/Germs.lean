@@ -316,10 +316,22 @@ theorem germ_eq_germ_of_stable (d : GGPData F) (ψ : NontrivialAddChar F) (θ : 
       germ d.G d.lie d.bilin ψ θ x O = germ d.G d.lie d.bilin ψ θ x O' := by
   sorry
 
-/-- Conjugation by `G(F)` preserves `𝔤` (`lie_conj_stable`, in the form used by `CentralizerIso`). -/
-theorem conj_mem_lie (d : GGPData F) :
+namespace GGPData
+
+variable (d : GGPData F)
+
+/-- `𝔤 = gspin(W) × gspin(V)` is `Ad(G)`-stable. -/
+theorem conj_mem_lie (g : ↥d.G) {X : d.ambient} (hX : X ∈ d.lie) :
+    ((g : d.ambientˣ) : d.ambient) * X * ((g⁻¹ : d.ambientˣ) : d.ambient) ∈ d.lie :=
+  ⟨conj_mem_gspin d.QW (d.fst g) hX.1, conj_mem_gspin d.QV (d.snd g) hX.2⟩
+
+/-- `conj_mem_lie` for units of the ambient algebra lying in `G`, in the form used by
+`CentralizerIso`. -/
+theorem conj_mem_lie_of_mem :
     ∀ g ∈ d.G, ∀ Y ∈ d.lie, (g : d.ambient) * Y * (↑g⁻¹ : d.ambient) ∈ d.lie :=
-  fun g hg Y hY => lie_conj_stable d ⟨g, hg⟩ Y hY
+  fun g hg Y hY => d.conj_mem_lie ⟨g, hg⟩ hY
+
+end GGPData
 
 /-- **`ĵ` is transported by isomorphisms of descent data.** If `ι : (G_x, 𝔤_x) ≃ (G'_y, 𝔤'_y)`
 respects the commutator, the trace forms, nilpotency, regular semisimplicity, the adjoint actions
@@ -343,7 +355,7 @@ theorem jHat_centralizerIso (d d' : GGPData F) (ψ : NontrivialAddChar F) (x : �
     (X : d.ambient) (hX : X ∈ lieCentralizer d.lie ((x : d.ambientˣ) : d.ambient))
     (hXr : IsRegularSS (lieCentralizer d.lie ((x : d.ambientˣ) : d.ambient)) X) :
     jHat (grpCentralizer d'.G y) (lieCentralizer d'.lie ((y : d'.ambientˣ) : d'.ambient)) d'.bilin ψ
-        (ι.nilOrbitEquiv (conj_mem_lie d) O) (ι.lin X) =
+        (ι.nilOrbitEquiv d.conj_mem_lie_of_mem O) (ι.lin X) =
       jHat (grpCentralizer d.G x) (lieCentralizer d.lie ((x : d.ambientˣ) : d.ambient)) d.bilin ψ
         O X := by
   sorry
@@ -367,9 +379,10 @@ theorem germ_eq_germ_of_centralizerIso (d d' : GGPData F) (ψ : NontrivialAddCha
         ∃ z : ↥d.G, ((z : d.ambientˣ) : d.ambient) = ((x : d.ambientˣ) : d.ambient) * expA F X ∧
           θ' y' = θ z)
     (O : NilOrbit (grpCentralizer d.G x) (lieCentralizer d.lie ((x : d.ambientˣ) : d.ambient))) :
-    germ d'.G d'.lie d'.bilin ψ θ' y (ι.nilOrbitEquiv (conj_mem_lie d) O) =
+    germ d'.G d'.lie d'.bilin ψ θ' y (ι.nilOrbitEquiv d.conj_mem_lie_of_mem O) =
       germ d.G d.lie d.bilin ψ θ x O := by
-  set E := ι.nilOrbitEquiv (conj_mem_lie d)
+  set E := ι.nilOrbitEquiv d.conj_mem_lie_of_mem
+  have hreg := ι.nilOrbitEquiv_mem_nilReg_iff d.conj_mem_lie_of_mem d'.conj_mem_lie_of_mem
   obtain ⟨c, hcfin, ω₂, hω₂, hc⟩ := hθ.2 x hx
   obtain ⟨ω₁, hω₁, hl⟩ := hloc
   obtain ⟨ω', hω', hω'sub⟩ := ι.exists_nhds_of_mem_nhds (inter_mem hω₁ hω₂)
@@ -386,12 +399,12 @@ theorem germ_eq_germ_of_centralizerIso (d d' : GGPData F) (ψ : NontrivialAddCha
     simp only [Function.comp_apply, Equiv.symm_apply_apply]
     rw [jHat_centralizerIso d d' ψ x y hx hy ι O₁ X hX hXr]
   by_cases hO : O ∈ NilReg _ _
-  · have hO' : E O ∈ NilReg _ _ := (ι.nilOrbitEquiv_mem_nilReg_iff (conj_mem_lie d) (conj_mem_lie d') O).mpr hO
+  · have hO' : E O ∈ NilReg _ _ := (hreg O).mpr hO
     rw [germ_eq_of_hasGermExpansion d' ψ hy hc' hO',
       germ_eq_of_hasGermExpansion d ψ hx ⟨hcfin, ω₂, hω₂, hc⟩ hO]
     simp
   · rw [germ_of_not_mem hO, germ_of_not_mem fun h =>
-      hO ((ι.nilOrbitEquiv_mem_nilReg_iff (conj_mem_lie d) (conj_mem_lie d') O).mp h)]
+      hO ((hreg O).mp h)]
 
 /-- The averaged germs agree: `c_{θ'}(y) = c_θ(x)` under the hypotheses of
 `germ_eq_germ_of_centralizerIso`, since `ι` maps `Nil_reg(𝔤_x)` bijectively onto `Nil_reg(𝔤'_y)`. -/
@@ -408,15 +421,16 @@ theorem germAvg_eq_of_centralizerIso (d d' : GGPData F) (ψ : NontrivialAddChar 
         ∃ z : ↥d.G, ((z : d.ambientˣ) : d.ambient) = ((x : d.ambientˣ) : d.ambient) * expA F X ∧
           θ' y' = θ z) :
     germAvg d'.G d'.lie d'.bilin ψ θ' y = germAvg d.G d.lie d.bilin ψ θ x := by
-  set E := ι.nilOrbitEquiv (conj_mem_lie d)
+  set E := ι.nilOrbitEquiv d.conj_mem_lie_of_mem
+  have hreg := ι.nilOrbitEquiv_mem_nilReg_iff d.conj_mem_lie_of_mem d'.conj_mem_lie_of_mem
   have hset : NilReg (grpCentralizer d'.G y) (lieCentralizer d'.lie ((y : d'.ambientˣ) : d'.ambient)) =
       E '' NilReg (grpCentralizer d.G x) (lieCentralizer d.lie ((x : d.ambientˣ) : d.ambient)) := by
     ext O'
     refine ⟨fun h => ⟨E.symm O', ?_, E.apply_symm_apply O'⟩, ?_⟩
-    · rw [← ι.nilOrbitEquiv_mem_nilReg_iff (conj_mem_lie d) (conj_mem_lie d') (E.symm O')]
+    · rw [← hreg (E.symm O')]
       simpa [E] using h
     · rintro ⟨O, hO, rfl⟩
-      exact (ι.nilOrbitEquiv_mem_nilReg_iff (conj_mem_lie d) (conj_mem_lie d') O).mpr hO
+      exact (hreg O).mpr hO
   unfold germAvg
   rw [hset, finsum_mem_image E.injective.injOn, Set.ncard_image_of_injective _ E.injective]
   congr 1
@@ -438,7 +452,7 @@ action on `G_x`, so does its differential on `𝔤_x`, and `ι` maps `G_x(F)`, `
 semisimplicity (both are invariant under base change), centralizers, the trace forms
 `tr(L_{XY})` and the exponential series, which gives the fields of `CentralizerIso`. For
 `X ∈ 𝔤_x(F)` small, `x e^X ∈ G_x(F)` (Waldspurger's good neighbourhoods, `waldspurger_goodNbhd`),
-it is regular when `X` is regular in `𝔤_x` (`G_{x e^X} = (G_x)_X`), and
+it is regular when `X` is regular in `𝔤_x` (`exists_nhds_isRegularSS_mul_expA`), and
 `g ψ_α(x e^X) g⁻¹ = y e^{ι X}`.
 
 **Status: `sorry`** (the dissertation's own argument, Thesis §6.1). -/

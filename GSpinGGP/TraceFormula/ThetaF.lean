@@ -295,17 +295,6 @@ end GGPData
 
 /-! ### Conjugation stability of `G_reg` -/
 
-namespace GGPData
-
-variable (d : GGPData F)
-
-/-- `𝔤 = gspin(W) × gspin(V)` is `Ad(G)`-stable. -/
-theorem conj_mem_lie (g : ↥d.G) {X : d.ambient} (hX : X ∈ d.lie) :
-    ((g : d.ambientˣ) : d.ambient) * X * ((g⁻¹ : d.ambientˣ) : d.ambient) ∈ d.lie :=
-  ⟨conj_mem_gspin d.QW (d.fst g) hX.1, conj_mem_gspin d.QV (d.snd g) hX.2⟩
-
-end GGPData
-
 /-- `G_reg(F)` is stable under conjugation by `G(F)` (Thesis §2.1). -/
 theorem conj_mem_regularSet (d : GGPData F) (g y : ↥d.G) (hy : y ∈ regularSet d.G d.lie) :
     g * y * g⁻¹ ∈ regularSet d.G d.lie :=
