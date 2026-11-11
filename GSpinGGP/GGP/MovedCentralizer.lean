@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.GGP.TorusCommute
 import GSpinGGP.Foundations.ExpLocal
+import GSpinGGP.GGP.GSpinSemisimple
 
 /-!
 # The moved part of the centralizer of `x ∈ GSpin(W)(F)`
@@ -18,7 +19,9 @@ For `x ∈ GSpin(W)(F)`, the *moved part* of the Lie centralizer is
 * `movedPartAbelian_of_isGammaElt`: `𝔩_x` is abelian for `x ∈ Γ(G,H)`;
 * `gspinBC`, `movedCentMap`, `gspinBC_commute_of_mem`: `𝔩_x ⊗ F̄` and its commutativity;
 * `lieAbelian_specP_baseChange_of_movedPartAbelian`: if `𝔩_x` is abelian, so is the Lie algebra
-  of `S_x` over `F̄` (`IsomCent.LieAbelian`).
+  of `S_x` over `F̄` (`IsomCent.LieAbelian`);
+* `GGPData.isSS_of_commute_of_isGammaElt`: for `x ∈ Γ(G,H)`, every `X ∈ gspin(W)` commuting with
+  `x` and killing `W'_x` is semisimple.
 -/
 
 noncomputable section
@@ -703,6 +706,50 @@ theorem commute_bc_incl_iff_of_torusOf_eq {x t : GSpin d.QW} (hx : d.IsGammaElt 
   · exact Steinberg.commute_of_commute_of_lieAbelian hQ (hss x hx) (hss t ht) (hL t ht) hxt' hE
   · exact Steinberg.commute_of_commute_of_lieAbelian hQ (hss t ht) (hss x hx) (hL x hx)
       hxt'.symm hE.symm
+
+/-- **Points of the Lie algebra of `T_x` are semisimple** for `x ∈ Γ(G,H)`: an `X ∈ gspin(W)`
+commuting with `x` and killing `W'_x` is semisimple.  Over `F̄`, `P(x)` is semisimple with abelian
+moved Lie centralizer (`lieAbelian_specP_baseChange`), and `adV X` is skew, commutes with `P(x)`
+and vanishes on `ker (P(x) − 1) = W'_x ⊗ F̄`, hence is semisimple
+(`IsomCent.isSemisimple_of_isSkew_of_commute_of_lieAbelian`); then so is `X`
+(`isSemisimple_mulLeft_of_isSemisimple_adV_baseChange`).  Lie-algebra form of
+`isSS_of_mem_torusOf`. -/
+theorem isSS_of_commute_of_isGammaElt {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
+    {X : CliffordAlgebra d.QW} (hX : X ∈ gspin d.QW)
+    (hc : ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) * X =
+      X * ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW))
+    (hf : ∀ v ∈ fixedSub x, adV d.QW X v = 0) : IsSS F X := by
+  refine isSemisimple_mulLeft_of_isSemisimple_adV_baseChange d.nondeg hX ?_
+  have hQ := isNondeg_baseChange _ d.nondeg
+  have hB : (bform (d.QW.baseChange (AlgebraicClosure F))).IsSymm :=
+    ⟨fun u v => bform_comm _ u v⟩
+  have hbf : bform (d.QW.baseChange (AlgebraicClosure F)) =
+      (bform d.QW).baseChange (AlgebraicClosure F) := QuadraticForm.associated_baseChange _
+  have hxss : Module.End.IsSemisimple ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange
+      (AlgebraicClosure F)) :=
+    isSemisimple_baseChange (isSemisimple_specP_of_isSS d.QW x hx.1)
+  have hXi : IsomCent.IsIsom (bform (d.QW.baseChange (AlgebraicClosure F)))
+      ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange (AlgebraicClosure F)) := by
+    rw [← specP_bcGSpin]; exact Steinberg.isIsom_specP _
+  have hsk : IsomCent.IsSkew (bform (d.QW.baseChange (AlgebraicClosure F)))
+      ((adV d.QW X).baseChange (AlgebraicClosure F)) := by
+    rw [hbf]; exact IsomCent.IsSkew.baseChange _ (bform_adV hX)
+  have hcomm : Commute ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange
+      (AlgebraicClosure F)) ((adV d.QW X).baseChange (AlgebraicClosure F)) := by
+    rw [Commute, SemiconjBy, ← LinearMap.baseChange_mul, ← LinearMap.baseChange_mul,
+      (commute_iff_adV d.nondeg x hX).mp hc]
+  refine IsomCent.isSemisimple_of_isSkew_of_commute_of_lieAbelian hB hQ hXi hxss
+    (lieAbelian_specP_baseChange x hx) hsk hcomm fun z hz => ?_
+  have he := eigenspace_bc_one d.QW x
+  rw [specP_bcGSpin] at he
+  rw [he, Submodule.baseChange_eq_span] at hz
+  induction hz using Submodule.span_induction with
+  | mem y hy =>
+    obtain ⟨v, hv, rfl⟩ := hy
+    simp [hf v hv]
+  | zero => simp
+  | add a b _ _ ha hb => rw [map_add, ha, hb, add_zero]
+  | smul c a _ ha => rw [map_smul, ha, smul_zero]
 
 end GGPData
 

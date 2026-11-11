@@ -242,6 +242,17 @@ theorem IsIsom.baseChange (L : Type*) [Field L] [Algebra K L] {h : V →ₗ[K] V
     | add v w hv hw => simp only [map_add, LinearMap.add_apply] at hv hw ⊢; rw [hv, hw]
   | add u w hu hw => simp only [map_add, LinearMap.add_apply] at hu hw ⊢; rw [hu, hw]
 
+/-- A skew endomorphism stays skew after extension of scalars. -/
+theorem IsSkew.baseChange (L : Type*) [Field L] [Algebra K L] {h : V →ₗ[K] V}
+    (hh : IsSkew B h) : IsSkew (B.baseChange L) (h.baseChange L) := by
+  intro u v
+  induction u using TensorProduct.inductionOn with
+  | tmul a x =>
+    induction v using TensorProduct.inductionOn with
+    | tmul b y => simp [LinearMap.BilinForm.baseChange_tmul, hh x y]
+    | add v w hv hw => simp only [map_add] at hv hw ⊢; rw [hv, hw, neg_add]
+  | add u w hu hw => simp only [map_add, LinearMap.add_apply] at hu hw ⊢; rw [hu, hw, neg_add]
+
 /-- Over a perfect field, semisimplicity survives extension of scalars to the algebraic closure
 (squarefree polynomials stay squarefree). -/
 theorem isSemisimple_baseChange_algebraicClosure [PerfectField K] [FiniteDimensional K V]
