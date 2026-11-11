@@ -571,13 +571,9 @@ theorem continuousOn_deltaGGP_rpow (T : Subgroup ↥(GSpin d.QW)) (s : ℝ) :
     congr 1
     exact Steinberg.det_restrict_eq rfl heq _ _
   -- continuity of `t ↦ det g(t)`
-  have hPc : ∀ v, Continuous fun t : ↥T => P t v := fun v => by
-    have hn : Continuous fun t : ↥T => ((t : ↥(GSpin d.QW)) : (CliffordAlgebra d.QW)ˣ) :=
-      continuous_subtype_val.comp continuous_subtype_val
-    show Continuous fun t : ↥T => specP d.QW (t : ↥(GSpin d.QW)) v
-    simp only [specP_apply_eq]
-    exact (IsModuleTopology.continuous_of_linearMap (CliffordAlgebra.ιInv d.QW)).comp
-      ((Units.continuous_val.comp hn).mul (continuous_const.mul (Units.continuous_coe_inv.comp hn)))
+  have hPc : ∀ v, Continuous fun t : ↥T => P t v := fun v =>
+    continuous_specP_apply (Q := d.QW) (x := fun t : ↥T => (t : ↥(GSpin d.QW)))
+      continuous_subtype_val v
   have hdet : Continuous fun t => LinearMap.det (g t) := by
     refine ContinuousLinearMap.continuous_det.comp
       (f := fun t => LinearMap.toContinuousLinearMap (g t)) (continuous_clm_apply.2 fun u => ?_)
