@@ -374,12 +374,14 @@ Kirillov-normalized orbit measure (`IsOrbitMeasure`): carried by `O`, `G_x(F)`-i
 near each point `X ∈ O` to the self-dual measure of the Kirillov form in the chart
 `Y ↦ e^Y X e^{-Y}`.
 
-Reason (not formalized): the chart is a local homeomorphism of a neighbourhood of `0` in a
-complement of `𝔤_{x,X}` onto a neighbourhood of `X` in `O` (`p`-adic inverse function theorem, e.g.
-Serre, *Lie Algebras and Lie Groups*, Part II, Ch. III; not checked here), so the chart images
-cover `O` by open sets on which the measure is prescribed; `O` is second countable, so countably
-many of them suffice and the measure is determined. Only the zero orbit is done in Lean
-(`eq_dirac_of_isOrbitMeasure_zeroOrbit`). No source states this for the definition used here.
+Reason (not formalized): by the inverse function theorem (valid over any complete nontrivially
+normed field, Mathlib `HasStrictFDerivAt.toOpenPartialHomeomorph`), the chart is an injective
+immersion of a neighbourhood of `0` in a complement of `𝔤_{x,X}` into `O`. Its image is a
+neighbourhood of `X` in `O` because, in addition, the orbit map `G_x(F) → O` is open, as orbits are
+locally closed. So the chart images cover `O` by open sets on which the measure is prescribed; `O`
+is second countable, so countably many of them suffice and the measure is determined. Only the zero
+orbit is done in Lean (`eq_dirac_of_isOrbitMeasure_zeroOrbit`). No source states this for the
+definition used here.
 
 **Status: `sorry`** (general fact; needs the `p`-adic inverse function theorem). -/
 theorem isOrbitMeasure_unique (d : GGPData F) (ψ : NontrivialAddChar F) (x : ↥d.G)

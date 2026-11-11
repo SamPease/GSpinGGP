@@ -38,9 +38,12 @@ variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
 
 Source: Weil, *Basic Number Theory*, 3rd ed., Ch. VII §2, pp. 104–105 ("the" self-dual Haar
 measure for a given identification of `G` with `G*`), together with the uniqueness of Haar measure.
+Weil's identification `V ≅ V*` needs `B` nondegenerate; for degenerate `B` the statement holds
+vacuously, since then no self-dual measure exists.
 
 **Status: `sorry`** (general harmonic analysis; a short proof from the uniqueness of Haar measure,
-Mathlib `isAddHaarMeasure_eq_smul`, and a test function `1_L`, `L` a compact open subgroup). -/
+Mathlib `MeasureTheory.Measure.isAddLeftInvariant_eq_smul`, and a test function `1_L`, `L` a
+compact open subgroup). -/
 theorem isSelfDual_unique {V : Type*} [AddCommGroup V] [Module F V] [FiniteDimensional F V]
     [TopologicalSpace V] [IsModuleTopology F V] [MeasurableSpace V] [BorelSpace V]
     {B : LinearMap.BilinForm F V} {ψ : NontrivialAddChar F} {μ ν : Measure V}
@@ -95,23 +98,6 @@ variable {A : Type*} [Ring A] [Algebra F A] [TopologicalSpace A] [Module.Finite 
   [IsModuleTopology F A]
   {A' : Type*} [Ring A'] [Algebra F A'] [TopologicalSpace A'] [Module.Finite F A']
   [IsModuleTopology F A']
-
-/-- A Lie subalgebra of the ambient algebra is a topological additive group. -/
-theorem isTopologicalAddGroup_lieSubalgebra (𝔤 : LieSubalgebra F A) : IsTopologicalAddGroup ↥𝔤 :=
-  haveI := isTopologicalRing_of_moduleTopology F A
-  IsInducing.subtypeVal.isTopologicalAddGroup 𝔤.incl.toLinearMap
-
-/-- `𝔤 ≅ F^n` gives `𝔤` the instances needed for self-dual measures and for
-`eqOn_of_isJHat`. -/
-theorem isModuleTopology_lieSubalgebra (𝔤 : LieSubalgebra F A) : IsModuleTopology F ↥𝔤 := by
-  haveI := t2Space_of_moduleTopology F A
-  haveI := isTopologicalRing_of_moduleTopology F A
-  have hind : IsInducing (𝔤.incl.toLinearMap : ↥𝔤 → A) := IsInducing.subtypeVal
-  haveI : IsTopologicalAddGroup ↥𝔤 := hind.isTopologicalAddGroup 𝔤.incl.toLinearMap
-  haveI : ContinuousSMul F ↥𝔤 :=
-    hind.continuousSMul continuous_id (fun {c x} => 𝔤.incl.toLinearMap.map_smul c x)
-  haveI : T2Space ↥𝔤 := (IsEmbedding.mk hind Subtype.val_injective).t2Space
-  exact isModuleTopologyOfFiniteDimensional (𝕜 := F) (E := ↥𝔤)
 
 namespace CentralizerIso
 
@@ -291,37 +277,22 @@ theorem jHat_map (ψ : NontrivialAddChar F)
   have he : ι.linEquiv ⟨X, hX⟩ = ⟨ι.lin X, hX'⟩ := rfl
   unfold jHat
   by_cases h : ∃ j, IsJHat (grpCentralizer G x) (lieCentralizer 𝔤 (x : A)) b ψ O j
-  · have hj' : IsJHat (grpCentralizer G' y) (lieCentralizer 𝔤' (y : A')) b' ψ (ι.nilOrbitEquiv hG O)
-        (h.choose ∘ ι.linEquiv.symm) := (key _).mpr (by
+  · have hj' : IsJHat (grpCentralizer G' y) (lieCentralizer 𝔤' (y : A')) b' ψ
+        (ι.nilOrbitEquiv hG O) (h.choose ∘ ι.linEquiv.symm) := (key _).mpr (by
       have : (h.choose ∘ ι.linEquiv.symm) ∘ ι.linEquiv = h.choose := by
         funext Z; simp
       rw [this]; exact h.choose_spec)
-    have h' : ∃ j, IsJHat (grpCentralizer G' y) (lieCentralizer 𝔤' (y : A')) b' ψ (ι.nilOrbitEquiv hG O) j := ⟨_, hj'⟩
+    have h' : ∃ j, IsJHat (grpCentralizer G' y) (lieCentralizer 𝔤' (y : A')) b' ψ
+        (ι.nilOrbitEquiv hG O) j := ⟨_, hj'⟩
     rw [dif_pos h, dif_pos h', dif_pos hX, dif_pos hX']
-    -- the instances on `(lieCentralizer 𝔤' (y : A'))` needed by `eqOn_of_isJHat` (as in `jHat_add_eq_of_nondegenerate`)
+    -- the instances on `𝔤'_y` needed by `eqOn_of_isJHat`
+    obtain ⟨_, _, _, _, _⟩ := lieSubalgebra_topology (lieCentralizer 𝔤' (y : A'))
     haveI := t2Space_of_moduleTopology F A'
-    haveI := isTopologicalRing_of_moduleTopology F A'
-    have hind : IsInducing ((lieCentralizer 𝔤' (y : A')).incl.toLinearMap : ↥(lieCentralizer 𝔤' (y : A')) → A') := IsInducing.subtypeVal
-    haveI : IsTopologicalAddGroup ↥(lieCentralizer 𝔤' (y : A')) := hind.isTopologicalAddGroup (lieCentralizer 𝔤' (y : A')).incl.toLinearMap
-    haveI : ContinuousSMul F ↥(lieCentralizer 𝔤' (y : A')) :=
-      hind.continuousSMul continuous_id (fun {c x} => (lieCentralizer 𝔤' (y : A')).incl.toLinearMap.map_smul c x)
-    haveI : ProperSpace F := .of_nontriviallyNormedField_of_weaklyLocallyCompactSpace F
-    let e : ↥(lieCentralizer 𝔤' (y : A')) ≃L[F] (Fin (Module.finrank F ↥(lieCentralizer 𝔤' (y : A'))) → F) :=
-      ContinuousLinearEquiv.ofFinrankEq (by simp)
-    haveI : LocallyCompactSpace ↥(lieCentralizer 𝔤' (y : A')) := e.toHomeomorph.isClosedEmbedding.locallyCompactSpace
-    haveI : TotallyDisconnectedSpace ↥(lieCentralizer 𝔤' (y : A')) := e.toHomeomorph.symm.totallyDisconnectedSpace
-    haveI : SigmaCompactSpace ↥(lieCentralizer 𝔤' (y : A')) := e.toHomeomorph.isClosedEmbedding.sigmaCompactSpace
-    haveI : SecondCountableTopology ↥(lieCentralizer 𝔤' (y : A')) := e.toHomeomorph.isEmbedding.secondCountableTopology
-    have hex : ∃ μ, IsSelfDual μ (restrictForm (lieCentralizer 𝔤' (y : A')) b') ψ :=
-      exists_isSelfDual_of_isInducing (lieCentralizer 𝔤' (y : A')).incl.toLinearMap hind Subtype.val_injective _ hnd' ψ
-    have hμ : IsSelfDual (selfDualHaar (lieCentralizer 𝔤' (y : A')) b' ψ) (restrictForm (lieCentralizer 𝔤' (y : A')) b') ψ := by
-      unfold selfDualHaar selfDualMeasure
-      rw [dif_pos hex]
-      exact hex.choose_spec
+    haveI := isTopologicalAddGroup_lieSubalgebra (lieCentralizer 𝔤' (y : A'))
+    have hμ := isSelfDual_selfDualHaar_of_nondegenerate (lieCentralizer 𝔤' (y : A')) hnd' ψ
     haveI := hμ.1
-    haveI : TopologicalSpace.PseudoMetrizableSpace ↥(lieCentralizer 𝔤' (y : A')) :=
-      e.toHomeomorph.isEmbedding.pseudoMetrizableSpace
-    have hreg : (⟨ι.lin X, hX'⟩ : ↥(lieCentralizer 𝔤' (y : A'))) ∈ {Z : ↥(lieCentralizer 𝔤' (y : A')) | IsRegularSS (lieCentralizer 𝔤' (y : A')) (Z : A')} :=
+    have hreg : (⟨ι.lin X, hX'⟩ : ↥(lieCentralizer 𝔤' (y : A'))) ∈
+        {Z : ↥(lieCentralizer 𝔤' (y : A')) | IsRegularSS (lieCentralizer 𝔤' (y : A')) (Z : A')} :=
       (ι.isRegularSS_iff X hX).mpr hXr
     rw [eqOn_of_isJHat hμ h'.choose_spec hj' hopen' le_rfl hreg, Function.comp_apply, ← he,
       LinearEquiv.symm_apply_apply]
