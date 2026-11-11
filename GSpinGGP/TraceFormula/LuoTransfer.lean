@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.TraceFormula.LieAlgebra
+import GSpinGGP.GGP.MovedCentralizer
 import GSpinGGP.Literature.Luo
 import GSpinGGP.Literature.Fourier
 import GSpinGGP.TraceFormula.SelfDual
@@ -20,7 +21,7 @@ Thm 12.2.2 on `𝔤⁰`).
 
 The identification is own work, stated step by step (most steps are `sorry` here):
 * (L1) `toSO`: `X ↦ (ad_W X_W, ad_V X_V)` maps `𝔤⁰` onto `so(W) ⊕ so(V)` (`toSO_mem` is proved;
-  `toSO_bijective` and the transfer of strong cuspidality `isScusp_toSO` are `sorry`);
+  `toSO_bijective` and the transfer of strong cuspidality `isScusp_toSO` are proved);
 * (L2) `luoOf`: the admissible pair of `d` with Luo's basis `z^L_i = ν^{-i} z_i`,
   `z^L_{-i} = ν^{i-1} z_{-i}` (`i ≥ 1`), `z^L_0 = z_0` (`luoOf_gram` proved), and `λ` agrees
   (`lam_toSO`);
@@ -34,7 +35,7 @@ The identification is own work, stated step by step (most steps are `sorry` here
   `Ḡ_X`, the orbit choice `orbitChoiceLie` vs Luo's and Waldspurger's `O_{±ν₀}`);
 * (L8) `gammaClass_equiv`, `torusIntegralLie_toSO`: `Γ^Lie` (tori, `|W(H,T)|`, `ν(T) dX`,
   `D^G`, `Δ`, `𝔱_♮`) agree; `mGeomLieS_toSO` is proved from them;
-* (L9) `mGeomLie_congr_regularSet`: `m^Lie_geom(θ)` depends only on `θ|_{𝔤⁰_reg}`.
+* (L9) `mGeomLie_congr_regularSet` (proved): `m^Lie_geom(θ)` depends only on `θ|_{𝔤⁰_reg}`.
 -/
 
 noncomputable section
@@ -191,16 +192,141 @@ theorem toSO_bijective : Function.Bijective d.toSOFun := by
     obtain ⟨Y₂, hY₂, e₂⟩ := hsurj d.nondeg_QV (d.luoOf.sndA (M : d.luoOf.Amb)) M.2.2
     exact ⟨⟨(Y₁, Y₂), hY₁, hY₂⟩, Subtype.ext (Prod.ext e₁ e₂)⟩
 
+/-- `ad : 𝔤⁰ → so(W) ⊕ so(V)` as a linear map. -/
+def toSOLinRestr : ↥d.lieZero →ₗ[F] ↥d.luoOf.lie :=
+  LinearMap.codRestrict d.luoOf.lie.toSubmodule (d.toSOLin ∘ₗ d.lieZero.toSubmodule.subtype)
+    d.toSO_mem
+
+/-- `ad : 𝔤⁰ ≃ so(W) ⊕ so(V)` as a linear equivalence (`toSO_bijective`). -/
+def toSOLinEquiv : ↥d.lieZero ≃ₗ[F] ↥d.luoOf.lie :=
+  LinearEquiv.ofBijective d.toSOLinRestr d.toSO_bijective
+
 /-- `𝔤⁰ ≃ so(W) ⊕ so(V)`. -/
-def toSO : ↥d.lieZero ≃ ↥d.luoOf.lie := Equiv.ofBijective d.toSOFun d.toSO_bijective
+def toSO : ↥d.lieZero ≃ ↥d.luoOf.lie := d.toSOLinEquiv.toEquiv
+
+/-- `(toSO X : End W × End V) = toSOLin X`. -/
+@[simp] theorem coe_toSO (X : ↥d.lieZero) : (d.toSO X : d.luoOf.Amb) = d.toSOLin X := rfl
+
+theorem toSOLin_toSO_symm (Y : ↥d.luoOf.lie) : d.toSOLin (d.toSO.symm Y : d.ambient) = Y :=
+  congrArg Subtype.val (d.toSO.apply_symm_apply Y)
+
+/-- `ad : 𝔤⁰ ≃ so(W) ⊕ so(V)` is a homeomorphism (finite dimension). -/
+def toSOCLE : ↥d.lieZero ≃L[F] ↥d.luoOf.lie :=
+  haveI := t2Space_of_moduleTopology F d.ambient
+  haveI := isTopologicalRing_of_moduleTopology F d.ambient
+  haveI := IsModuleTopology.toContinuousSMul F d.ambient
+  haveI := t2Space_of_moduleTopology F d.luoOf.Amb
+  haveI := isTopologicalRing_of_moduleTopology F d.luoOf.Amb
+  haveI := IsModuleTopology.toContinuousSMul F d.luoOf.Amb
+  haveI : ContinuousSMul F ↥d.lieZero := inferInstanceAs (ContinuousSMul F ↥d.lieZero.toSubmodule)
+  haveI : IsTopologicalAddGroup ↥d.lieZero :=
+    inferInstanceAs (IsTopologicalAddGroup ↥d.lieZero.toSubmodule)
+  haveI : ContinuousSMul F ↥d.luoOf.lie :=
+    inferInstanceAs (ContinuousSMul F ↥d.luoOf.lie.toSubmodule)
+  haveI : IsTopologicalAddGroup ↥d.luoOf.lie :=
+    inferInstanceAs (IsTopologicalAddGroup ↥d.luoOf.lie.toSubmodule)
+  d.toSOLinEquiv.toContinuousLinearEquiv
+
+theorem coe_toSOCLE_symm : ⇑d.toSOCLE.symm = ⇑d.toSO.symm := rfl
+
+/-- `ad` carries `𝔭⁰` onto `𝔭`: the conditions on `X_W`, `X_V` are conditions on `ad X_W`,
+`ad X_V`. -/
+theorem mem_liePar_iff (X : ↥d.lieZero) {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV} :
+    (X : d.ambient) ∈ d.liePar FW FV ↔ d.toSOLin X ∈ d.luoOf.liePar FW FV :=
+  ⟨fun h => ⟨d.toSO_mem X, h.2.1.2, h.2.2.2⟩, fun h => ⟨X.2, ⟨X.2.1, h.2.1⟩, ⟨X.2.2, h.2.2⟩⟩⟩
+
+/-- `ad` carries `𝔲 = Lie(U_P)` of `𝔤⁰` onto that of `so(W) ⊕ so(V)`. -/
+theorem mem_lieUnip_iff (X : ↥d.lieZero) {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV} :
+    (X : d.ambient) ∈ d.lieUnip FW FV ↔ d.toSOLin X ∈ d.luoOf.lieUnip FW FV :=
+  ⟨fun h => ⟨d.toSO_mem X, h.2.1.2, h.2.2.2⟩, fun h => ⟨X.2, ⟨X.2.1, h.2.1⟩, ⟨X.2.2, h.2.2⟩⟩⟩
+
+/-- `ad : 𝔲 ≃ 𝔲` between the nilpotent radicals of `𝔭⁰` and `𝔭`. -/
+def toSOUnip (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV) :
+    ↥(d.lieUnip FW FV) ≃ₗ[F] ↥(d.luoOf.lieUnip FW FV) where
+  toFun N := ⟨d.toSOLin (N : d.ambient),
+    (d.mem_lieUnip_iff ⟨N, d.lieUnip_le_lie0 FW FV N.2⟩).mp N.2⟩
+  invFun N := ⟨(d.toSO.symm ⟨N, d.luoOf.lieUnip_le_lie FW FV N.2⟩ : d.ambient),
+    (d.mem_lieUnip_iff _).mpr (by rw [d.toSOLin_toSO_symm]; exact N.2)⟩
+  map_add' N N' := Subtype.ext (map_add d.toSOLin (N : d.ambient) N')
+  map_smul' c N := Subtype.ext (map_smul d.toSOLin c (N : d.ambient))
+  left_inv N := Subtype.ext (by
+    exact congrArg (fun Y : ↥d.lieZero => (Y : d.ambient))
+      (d.toSO.symm_apply_apply ⟨(N : d.ambient), d.lieUnip_le_lie0 FW FV N.2⟩))
+  right_inv N := Subtype.ext (d.toSOLin_toSO_symm _)
+
+/-- `toSOUnip` is a homeomorphism (finite dimension). -/
+def toSOUnipCLE (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV) :
+    ↥(d.lieUnip FW FV) ≃L[F] ↥(d.luoOf.lieUnip FW FV) :=
+  haveI := t2Space_of_moduleTopology F d.ambient
+  haveI := isTopologicalRing_of_moduleTopology F d.ambient
+  haveI := IsModuleTopology.toContinuousSMul F d.ambient
+  haveI := t2Space_of_moduleTopology F d.luoOf.Amb
+  haveI := isTopologicalRing_of_moduleTopology F d.luoOf.Amb
+  haveI := IsModuleTopology.toContinuousSMul F d.luoOf.Amb
+  (d.toSOUnip FW FV).toContinuousLinearEquiv
+
+/-- A proper parabolic of `Ḡ` (some element of `Ḡ(F)` moves the flag pair) gives a proper
+parabolic of `G` (lift that element through `G(F) → Ḡ(F)`, `Pbar_surjective`). -/
+theorem isProperFlagPair_of_luoOf {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV}
+    (h : d.luoOf.IsProperFlagPair FW FV) : d.IsProperFlagPair FW FV := by
+  obtain ⟨g, hg, hn⟩ := h
+  intro htop
+  obtain ⟨x, hx⟩ := d.Pbar_surjective (⟨_, hg.1⟩, ⟨_, hg.2⟩)
+  have hxB : x ∈ d.whittB FW FV := htop ▸ Subgroup.mem_top x
+  have e1 : ((specP d.QW (d.fst x) : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) :
+      (Fin d.m → F) →ₗ[F] (Fin d.m → F)) =
+      d.luoOf.fstA (g : d.luoOf.Amb) := by
+    rw [← d.Pbar_fst, hx]; rfl
+  have e2 : ((specP d.QV (d.snd x) : d.V ≃ₗ[F] d.V) : d.V →ₗ[F] d.V) =
+      d.luoOf.sndA (g : d.luoOf.Amb) := by
+    rw [← d.Pbar_snd, hx]; rfl
+  refine hn ⟨fun i => ?_, fun i => ?_⟩
+  · rw [← e1]; exact (hxB.1 i).le
+  · rw [← e2]; exact (hxB.2 i).le
 
 /-- **(L1) Strong cuspidality is transported** (`IsLieScusp` on `𝔤⁰` to `IsScusp` on
-`so(W) ⊕ so(V)`): `ad` carries the flag parabolics `𝔭⁰ = liePar`, their radicals `lieUnip` and the
-properness condition (`whittB FW FV ≠ ⊤` vs a non-stabilizing element of `Ḡ`, through the surjection
-`G(F) → Ḡ(F)`) to those of `Ḡ`, and Haar measures on `𝔲(F)` to Haar measures.  Not proved here. -/
+`so(W) ⊕ so(V)`): `ad` is a homeomorphism (`toSOCLE`) carrying the flag parabolics `𝔭⁰ = liePar`
+and their radicals `lieUnip` to those of `Ḡ` (`mem_liePar_iff`, `mem_lieUnip_iff`), properness of a
+flag pair for `Ḡ` gives properness for `G` (through the surjection `G(F) → Ḡ(F)`,
+`isProperFlagPair_of_luoOf`), and a Haar measure on `𝔲(F)` of `Ḡ` pulls back along `ad` to a Haar
+measure on `𝔲(F)` of `G`. -/
 theorem isScusp_toSO {f : ↥d.lieZero → ℂ} (hf : d.IsLieScusp f) :
     d.luoOf.IsScusp (f ∘ d.toSO.symm) := by
-  sorry
+  have := t2Space_of_moduleTopology F d.ambient
+  have := isTopologicalRing_of_moduleTopology F d.ambient
+  have := isTopologicalRing_of_moduleTopology F d.luoOf.Amb
+  refine ⟨?_, ?_⟩
+  · rw [← coe_toSOCLE_symm]
+    exact ⟨hf.1.1.comp_continuous d.toSOCLE.symm.continuous,
+      hf.1.2.comp_homeomorph d.toSOCLE.symm.toHomeomorph⟩
+  intro (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV) hP X hX μ hμ
+  let : MeasurableSpace ↥(d.luoOf.lieUnip FW FV) := d.luoOf.instMeasurableSpaceLieUnip FW FV
+  have : BorelSpace ↥(d.lieUnip FW FV) := ⟨rfl⟩
+  have : BorelSpace ↥(d.luoOf.lieUnip FW FV) := ⟨rfl⟩
+  set X' : ↥d.lieZero := d.toSO.symm X with hX'def
+  have hX' : (X' : d.ambient) ∈ d.liePar FW FV :=
+    (d.mem_liePar_iff X').mpr (by rw [hX'def, d.toSOLin_toSO_symm]; exact hX)
+  set e := d.toSOUnipCLE FW FV
+  set em : ↥(d.luoOf.lieUnip FW FV) ≃ᵐ ↥(d.lieUnip FW FV) := e.symm.toHomeomorph.toMeasurableEquiv
+  have : (μ.map em).IsAddHaarMeasure := e.symm.isAddHaarMeasure_map μ
+  obtain ⟨hint, h0⟩ := hf.2 FW FV (d.isProperFlagPair_of_luoOf hP) X' hX' (μ.map em) inferInstance
+  have key : (fun N : ↥(d.luoOf.lieUnip FW FV) =>
+      (f ∘ d.toSO.symm) ⟨(X : d.luoOf.Amb) + N, d.luoOf.lie.add_mem X.2
+        (d.luoOf.lieUnip_le_lie FW FV N.2)⟩) =
+      (fun N' : ↥(d.lieUnip FW FV) =>
+        f ⟨(X' : d.ambient) + N', d.lie0.add_mem X'.2 (d.lieUnip_le_lie0 FW FV N'.2)⟩) ∘ em := by
+    funext N
+    simp only [Function.comp_apply]
+    congr 1
+    have hN : d.toSOLin ((em N : ↥(d.lieUnip FW FV)) : d.ambient) = N :=
+      d.toSOLin_toSO_symm ⟨N, d.luoOf.lieUnip_le_lie FW FV N.2⟩
+    rw [Equiv.symm_apply_eq]
+    apply Subtype.ext
+    change (X : d.luoOf.Amb) + N = d.toSOLin ((X' : d.ambient) + (em N : d.ambient))
+    rw [map_add, hN, hX'def, d.toSOLin_toSO_symm]
+  refine ⟨?_, ?_⟩
+  · rw [key]; exact (integrable_map_equiv em _).mp hint
+  · rw [key]; exact (integral_map_equiv em _).symm.trans h0
 
 theorem luoOf_zV (i : ℤ) : d.luoOf.zV i = d.luoScale i • d.zV i := by
   unfold LuoDatum.zV GGPData.zV
@@ -604,13 +730,93 @@ theorem torusIntegralLie_toSO (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV
               d.luoOf.gammaIntegrand ψ θ (Quot.out (e c)).1 s X ∂μT (Quot.out (e c)) := by
   sorry
 
+/-- A local expansion of `θ` at a semisimple `X` is one of every `θ'` agreeing with `θ` on
+`𝔤⁰_reg(F)`: the expansion is only evaluated at `X + Y` with `Y ∈ 𝔤⁰_X` small and regular, which
+is regular in `𝔤⁰` (`exists_nhds_isRegularSS_add`).  Lie-algebra form of
+`hasGermExpansion_congr_regularSet`. -/
+theorem hasGermExpansionLie_congr_regularSet {θ θ' : ↥d.lieZero → ℂ}
+    (he : ∀ X : ↥d.lieZero, IsRegularSS d.lieZero (X : d.ambient) → θ X = θ' X)
+    {X : d.ambient} (hX : IsSS F X)
+    {c : NilOrbit (lieGrpCentralizer d.G X) (lieCentralizer d.lieZero X) → ℂ}
+    (h : HasGermExpansionLie d.G d.lieZero d.bilin ψ θ X c) :
+    HasGermExpansionLie d.G d.lieZero d.bilin ψ θ' X c := by
+  obtain ⟨hfin, ω, hω, hexp⟩ := h
+  obtain ⟨ω', hω', hreg⟩ := exists_nhds_isRegularSS_add F d.lieZero hX
+  refine ⟨hfin, ω ∩ ω', Filter.inter_mem hω hω', fun Y hY hYc hYr Z hZ => ?_⟩
+  rw [← he Z (by rw [hZ]; exact hreg Y hY.2 hYc hYr)]
+  exact hexp Y hY.1 hYc hYr Z hZ
+
+/-- **Germs only see `𝔤⁰_reg(F)`**: at a semisimple `X`, `c_{θ,O}(X)` depends only on
+`θ|_{𝔤⁰_reg(F)}`.  The two functions have the same local expansions at `X`
+(`hasGermExpansionLie_congr_regularSet`), so the same coefficient is chosen; no uniqueness of the
+expansion is used. -/
+theorem germLie0_congr_regularSet {θ θ' : ↥d.lieZero → ℂ}
+    (he : ∀ X : ↥d.lieZero, IsRegularSS d.lieZero (X : d.ambient) → θ X = θ' X)
+    {X : d.ambient} (hX : IsSS F X)
+    (O : NilOrbit (lieGrpCentralizer d.G X) (lieCentralizer d.lieZero X)) :
+    d.germLie0 ψ θ X O = d.germLie0 ψ θ' X O := by
+  classical
+  have hP : (fun c => HasGermExpansionLie d.G d.lieZero d.bilin ψ θ X c) =
+      fun c => HasGermExpansionLie d.G d.lieZero d.bilin ψ θ' X c :=
+    funext fun c => propext
+      ⟨d.hasGermExpansionLie_congr_regularSet ψ he hX,
+        d.hasGermExpansionLie_congr_regularSet ψ (fun Z hZ => (he Z hZ).symm) hX⟩
+  have key : ∀ {P Q : (NilOrbit (lieGrpCentralizer d.G X) (lieCentralizer d.lieZero X) → ℂ) →
+      Prop}, P = Q → (if h : ∃ c, P c then h.choose O else 0) =
+        (if h : ∃ c, Q c then h.choose O else 0) := by
+    intro P Q hPQ
+    subst hPQ
+    rfl
+  unfold germLie0 germLie
+  rw [key hP]
+
+/-- The integrand of `m^Lie_{geom,s}` only sees `θ|_{𝔤⁰_reg(F)}`, at points of `𝔱⁰_♮` that are
+semisimple. -/
+theorem gammaIntegrandLie_congr_regularSet {θ θ' : ↥d.lieZero → ℂ}
+    (he : ∀ X : ↥d.lieZero, IsRegularSS d.lieZero (X : d.ambient) → θ X = θ' X)
+    (T : Subgroup ↥(GSpin d.QW)) (s : ℝ) (X : CliffordAlgebra d.QW)
+    (hss : d.IsGammaEltLie T X → IsSS F (d.diagLie X)) :
+    d.gammaIntegrandLie ψ θ T s X = d.gammaIntegrandLie ψ θ' T s X := by
+  unfold gammaIntegrandLie
+  split_ifs with h
+  · rw [d.germLie0_congr_regularSet ψ he (hss h)]
+  · rfl
+
+/-- `m^Lie_geom(θ)` depends only on `θ|_{𝔤⁰_reg}`, given that the points of `𝔱⁰_♮` are semisimple
+for the tori representing the classes of `Γ^Lie(G,H)`. -/
+theorem mGeomLie_congr_regularSet_of_isSS {θ θ' : ↥d.lieZero → ℂ}
+    (he : ∀ X : ↥d.lieZero, IsRegularSS d.lieZero (X : d.ambient) → θ X = θ' X)
+    (hss : ∀ (c : GammaClass d) (X : CliffordAlgebra d.QW),
+      d.IsGammaEltLie (Quot.out c).1 X → IsSS F (d.diagLie X)) :
+    d.mGeomLie ψ θ = d.mGeomLie ψ θ' := by
+  have hS : d.mGeomLieS ψ θ = d.mGeomLieS ψ θ' := by
+    funext s
+    unfold mGeomLieS torusIntegralLie
+    refine tsum_congr fun c => ?_
+    congr 2
+    funext X
+    exact d.gammaIntegrandLie_congr_regularSet ψ he _ s X (hss c X)
+  unfold mGeomLie
+  rw [hS]
+
 /-- **(L9) `m^Lie_geom(θ)` depends only on `θ|_{𝔤⁰_reg}`** (the Lie-algebra form of
 `mGeomS_congr_regularSet`): the germs `c_{θ,O}(X)` only see `θ` at `X + Y` with `Y ∈ 𝔤⁰_X` small
-and regular in `𝔤⁰_X`, and such `X + Y` are regular in `𝔤⁰`.  Not proved here. -/
+and regular in `𝔤⁰_X`, and such `X + Y` are regular in `𝔤⁰` (`mGeomLie_congr_regularSet_of_isSS`).
+The points `X` of `𝔱⁰_♮` are semisimple for `T = T_x`, `x ∈ Γ(G,H)`: `X` commutes with `x` and
+kills `W'_x` (`GGPData.isSS_of_commute_of_isGammaElt`), and so is `(X, X)`. -/
 theorem mGeomLie_congr_regularSet {θ θ' : ↥d.lieZero → ℂ}
     (he : ∀ X : ↥d.lieZero, IsRegularSS d.lieZero (X : d.ambient) → θ X = θ' X) :
     d.mGeomLie ψ θ = d.mGeomLie ψ θ' := by
-  sorry
+  refine d.mGeomLie_congr_regularSet_of_isSS ψ he fun c X hX => ?_
+  obtain ⟨x, hx, hT⟩ := (Quot.out c).2
+  obtain ⟨hXs, hXc, hXf⟩ := hX.1
+  rw [← hT] at hXc hXf
+  have hss : IsSS F X := d.isSS_of_commute_of_isGammaElt hx hXs.1
+    (hXc x (d.self_mem_torusOf x)) fun v hv => hXf v <| Submodule.mem_iInf _ |>.mpr fun t => by
+      have := t.2.2 v hv
+      simpa [fixedSub, sub_eq_zero] using this
+  exact isSS_algHom ((AlgHom.id F _).prod
+    (CliffordAlgebra.map (QuadraticMap.Isometry.inl d.QW d.QZ))) hss
 
 /-- `m^Lie_{geom,s}` agrees with Luo's, for `s > 0`, from `gammaClass_equiv` and
 `torusIntegralLie_toSO`. -/
