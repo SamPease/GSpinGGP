@@ -3304,6 +3304,12 @@ abbrev ambient : Type _ := CliffordAlgebra d.QW × CliffordAlgebra d.QV
 def G : Subgroup d.ambientˣ :=
   ((GSpin d.QW).prod (GSpin d.QV)).comap (MulEquiv.prodUnits).toMonoidHom
 
+/-- `G` is a topological group.  A shortcut instance: the generic search goes through the
+Clifford algebra instances and is long (it exceeds `synthInstance.maxSize` for `G/A_G`). -/
+instance isTopologicalGroup_G [TopologicalSpace K] [IsTopologicalRing K] :
+    IsTopologicalGroup ↥d.G :=
+  inferInstance
+
 /-- First projection `G → GSpin(W)`. -/
 def fst : d.G →* GSpin d.QW :=
   (((MonoidHom.fst _ _).comp (MulEquiv.prodUnits).toMonoidHom).comp d.G.subtype).codRestrict _
@@ -3998,6 +4004,16 @@ def lie : LieSubalgebra K d.ambient where
       simpa [Ring.lie_def] using this
     · have := (gspin d.QV).lie_mem hX.2 hY.2
       simpa [Ring.lie_def] using this
+
+/-- `𝔤 = gspin(W) × gspin(V)` is `Ad(G)`-stable. -/
+theorem conj_mem_lie (g : ↥d.G) {X : d.ambient} (hX : X ∈ d.lie) :
+    ((g : d.ambientˣ) : d.ambient) * X * ((g⁻¹ : d.ambientˣ) : d.ambient) ∈ d.lie :=
+  ⟨conj_mem_gspin d.QW (d.fst g) hX.1, conj_mem_gspin d.QV (d.snd g) hX.2⟩
+
+/-- `conj_mem_lie` for units of the ambient algebra lying in `G`. -/
+theorem conj_mem_lie_of_mem :
+    ∀ g ∈ d.G, ∀ Y ∈ d.lie, (g : d.ambient) * Y * (↑g⁻¹ : d.ambient) ∈ d.lie :=
+  fun g hg Y hY => d.conj_mem_lie ⟨g, hg⟩ hY
 
 /-- The `G`-invariant symmetric bilinear form on the ambient algebra used for `𝔤`: the trace form
 `(X, Y) ↦ tr(L_{XY})` of `C(W) × C(V)` (`Algebra.traceForm` needs commutativity); the Thesis only

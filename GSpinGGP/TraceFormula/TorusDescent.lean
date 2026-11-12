@@ -373,8 +373,9 @@ theorem isSS_of_mem_torusOf {x t : ↥(GSpin d.QW)} (hx : d.IsGammaElt x) (ht : 
   have htx : Commute t x := Subgroup.mem_centralizer_singleton_iff.mp ht.1
   have hc : Commute (specP _ (bcGSpin d.QW x)) (specP _ (bcGSpin d.QW t)) :=
     ((htx.symm.map (bcGSpin d.QW)).map (specP _))
-  refine IsomCent.isSemisimple_of_commute_of_lieAbelian hB hQ (Steinberg.isIsom_specP _) hxss hL
-    (Steinberg.isIsom_specP _) (Steinberg.commute_toLinearMap hc.symm) fun z hz => ?_
+  refine IsomCent.isSemisimple_of_commute_of_lieAbelian hB hQ
+      (Steinberg.isOrthogonal_specP _) hxss hL
+    (Steinberg.isOrthogonal_specP _) (Steinberg.commute_toLinearMap hc.symm) fun z hz => ?_
   have hle : fixedSub x ≤ fixedSub t := fun v hv => by
     have := ht.2 v hv
     simpa [fixedSub, sub_eq_zero] using this
@@ -854,57 +855,6 @@ theorem bilin_eq_zero_of_commute_of_isNilpotent {Y N : d.ambient} (hc : Commute 
   exact LinearMap.isNilpotent_trace_of_isNilpotent (hYN.map (Algebra.lmul F d.ambient)) |>.eq_zero
 
 /-! ### The germ term on `T_♮` -/
-
-/-- **`b` is nondegenerate on `𝔤_g`** for semisimple `g ∈ G(F)`: `𝔤 = 𝔤_g ⊕ im(1 − Ad g)`
-(`1 − Ad g` is semisimple), and `b(Z, W − g W g⁻¹) = b(Z, W) − b(g Z g⁻¹, g W g⁻¹) = 0` for
-`Z ∈ 𝔤_g`, as `b` is `Ad`-invariant; so `b(Z, ·) = 0` on `𝔤_g` forces `b(Z, ·) = 0` on `𝔤`. -/
-theorem restrictForm_lieCentralizer_nondegenerate (g : ↥d.G)
-    (hg : IsSS F ((g : d.ambientˣ) : d.ambient)) :
-    (restrictForm (lieCentralizer d.lie ((g : d.ambientˣ) : d.ambient)) d.bilin).Nondegenerate := by
-  set a : d.ambient := ((g : d.ambientˣ) : d.ambient)
-  set ai : d.ambient := (((g : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient)
-  have hia : ai * a = 1 := Units.inv_mul _
-  have hai : a * ai = 1 := Units.mul_inv _
-  set N := oneSubAd d g
-  have hss := isSemisimple_oneSubAd d g hg
-  have hcompl := isCompl_ker_range_of_isSemisimple hss
-  have hN : ∀ X : d.lie.toSubmodule, ((N X : d.lie.toSubmodule) : d.ambient) =
-      (X : d.ambient) - a * X * ai := fun X => rfl
-  have hL : ∀ Z : ↥(lieCentralizer d.lie a),
-      (∀ W, restrictForm (lieCentralizer d.lie a) d.bilin Z W = 0) → Z = 0 := by
-    intro Z hZ
-    obtain ⟨hZl, hZc⟩ := mem_lieCentralizer.mp Z.2
-    refine Subtype.ext (d.bilin_nondegenerate_lie Z hZl fun Y hY => ?_)
-    obtain ⟨l, hl, c, hc, hlc⟩ := Submodule.mem_sup.mp
-      (hcompl.sup_eq_top ▸ Submodule.mem_top (x := (⟨Y, hY⟩ : d.lie.toSubmodule)))
-    have hYeq : Y = (l : d.ambient) + (c : d.ambient) := by
-      have := congrArg Subtype.val hlc
-      simpa using this.symm
-    rw [hYeq, map_add]
-    have h1 : d.bilin Z l = 0 := by
-      have hl0 := congrArg Subtype.val (LinearMap.mem_ker.mp hl)
-      rw [hN, ZeroMemClass.coe_zero, sub_eq_zero] at hl0
-      have hl' : (l : d.ambient) ∈ lieCentralizer d.lie a := by
-        rw [mem_lieCentralizer]
-        refine ⟨l.2, ?_⟩
-        calc a * l = a * l * ai * a := by rw [mul_assoc _ ai, hia, mul_one]
-          _ = l * a := by rw [← hl0]
-      have := hZ ⟨l, hl'⟩
-      simpa [restrictForm] using this
-    have h2 : d.bilin Z c = 0 := by
-      obtain ⟨w, rfl⟩ := hc
-      have hconj : a * (Z : d.ambient) * ai = Z := by
-        rw [hZc, mul_assoc, hai, mul_one]
-      rw [hN, map_sub, ← d.bilin_conj g (Z : d.ambient) (w : d.ambient)]
-      change d.bilin (a * Z * ai) (a * w * ai) - d.bilin (Z : d.ambient) (a * w * ai) = 0
-      rw [hconj, sub_self]
-    rw [h1, h2, add_zero]
-  refine ⟨hL, fun Y hY => hL Y fun X => ?_⟩
-  have := hY X
-  simp only [restrictForm, LinearMap.compl₁₂_apply] at this ⊢
-  rw [GGPData.bilin_apply, LinearMap.mulLeft_mul, ← Module.End.mul_eq_comp,
-    LinearMap.trace_mul_comm, Module.End.mul_eq_comp, ← LinearMap.mulLeft_mul, ← GGPData.bilin_apply]
-  exact this
 
 /-- **The regular semisimple set of `𝔤_g` is open** for semisimple `g ∈ G(F)`
 (`isOpen_setOf_isRegularSS_lieCentralizer`: semicontinuity of `dim ker (ad Z)^D`, the Jordan

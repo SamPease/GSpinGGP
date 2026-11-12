@@ -1,9 +1,12 @@
 import GSpinGGP.Foundations.LocalGroups
 import GSpinGGP.Foundations.RankSemicontinuity
 import GSpinGGP.Foundations.Determinant
+import GSpinGGP.Foundations.SubgroupTransport
 import GSpinGGP.Foundations.JHatTranslate
+import GSpinGGP.Foundations.CentralizerIso
 import GSpinGGP.Foundations.ExpLocal
 import GSpinGGP.TraceFormula.JHatSelfDual
+import GSpinGGP.TraceFormula.JHatTransport
 import GSpinGGP.Foundations.Representations
 import GSpinGGP.Foundations.GSpin
 import GSpinGGP.Foundations.HypPlane
@@ -45,6 +48,7 @@ import GSpinGGP.TraceFormula.EllipticRepresentations
 import GSpinGGP.TraceFormula.LieAlgebra
 import GSpinGGP.TraceFormula.SelfDual
 import GSpinGGP.TraceFormula.SOLie
+import GSpinGGP.TraceFormula.SOLieFacts
 import GSpinGGP.TraceFormula.LuoTransfer
 import GSpinGGP.Literature.Kottwitz
 import GSpinGGP.Literature.KottwitzClay
@@ -89,6 +93,7 @@ import GSpinGGP.GGP.WittParity
 import GSpinGGP.GGP.TorusTransfer
 import GSpinGGP.GGP.Cocharacter
 import GSpinGGP.GGP.Contraction
+import GSpinGGP.Foundations.BilinFormAdjoint
 import GSpinGGP.Foundations.IsometryCentralizer
 import GSpinGGP.GGP.TorusCommute
 import GSpinGGP.GGP.MovedCentralizer

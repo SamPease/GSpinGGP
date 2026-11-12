@@ -728,9 +728,9 @@ theorem isSS_of_commute_of_isGammaElt {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x
   have hxss : Module.End.IsSemisimple ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange
       (AlgebraicClosure F)) :=
     isSemisimple_baseChange (isSemisimple_specP_of_isSS d.QW x hx.1)
-  have hXi : IsomCent.IsIsom (bform (d.QW.baseChange (AlgebraicClosure F)))
+  have hXi : LinearMap.IsOrthogonal (bform (d.QW.baseChange (AlgebraicClosure F)))
       ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange (AlgebraicClosure F)) := by
-    rw [← specP_bcGSpin]; exact Steinberg.isIsom_specP _
+    rw [← specP_bcGSpin]; exact Steinberg.isOrthogonal_specP _
   have hsk : LinearMap.IsSkewAdjoint (bform (d.QW.baseChange (AlgebraicClosure F)))
       ((adV d.QW X).baseChange (AlgebraicClosure F)) := by
     rw [hbf]; exact LinearMap.IsSkewAdjoint.baseChange _

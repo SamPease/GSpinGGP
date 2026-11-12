@@ -31,7 +31,8 @@ variable {V : Type*} [AddCommGroup V] [Module K V]
 variable {Q : QuadraticForm K V} {P N : Module.End K V}
 
 /-- Wedges of dual families in paired joint eigenspaces lie in the joint centralizer. -/
-theorem wedge_mem_soCent_inf (hP : IsIsom (bform Q) P) (hN : (bform Q).IsSkewAdjoint N) {μ c : K}
+theorem wedge_mem_soCent_inf (hP : (bform Q).IsOrthogonal P) (hN : (bform Q).IsSkewAdjoint N)
+    {μ c : K}
     (hμ : μ ≠ 0) {u w : V} (hu : u ∈ P.eigenspace μ) (hu' : u ∈ N.eigenspace c)
     (hw : w ∈ P.eigenspace μ⁻¹) (hw' : w ∈ N.eigenspace (-c)) :
     wedge (bform Q) u w ∈ soCent Q P ⊓ soCent Q N :=
@@ -53,7 +54,7 @@ theorem not_commute_wedge_dual {d : ℕ} (hd : 2 ≤ d) (u w : Fin d → V)
   simp at h1
   exact hu1 h1.symm
 
-variable (hP : IsIsom (bform Q) P) (hN : (bform Q).IsSkewAdjoint N) {μ c : K} (hμ0 : μ ≠ 0)
+variable (hP : (bform Q).IsOrthogonal P) (hN : (bform Q).IsSkewAdjoint N) {μ c : K} (hμ0 : μ ≠ 0)
   (hne : μ⁻¹ ≠ μ ∨ c ≠ 0) {u w : V} (hu : P u = μ • u) (hu' : N u = c • u) (hw : P w = μ⁻¹ • w)
   (hw' : N w = (-c) • w) (huw : bform Q u w ≠ 0) (hspan : Submodule.span K {u, w} = ⊤)
 include hP hN hμ0 hne hu hu' hw hw' huw hspan
@@ -158,7 +159,7 @@ private theorem pow_apply_of_eq_smul {f : Module.End K V} {x : V} {r : K} (hx : 
 element, and the only unipotent isometry commuting with `P` and `N` is `1`. -/
 theorem pair_nilpotent_unipotent :
     (∀ M ∈ soCent Q P ⊓ soCent Q N, IsNilpotent M → M = 0) ∧
-    (∀ h : Module.End K V, IsIsom (bform Q) h → IsNilpotent (h - 1) → Commute P h →
+    (∀ h : Module.End K V, (bform Q).IsOrthogonal h → IsNilpotent (h - 1) → Commute P h →
       Commute N h → h = 1) := by
   obtain ⟨huu, hww, lineu, linew⟩ := pair_facts hP hN hμ0 hne hu hu' hw hw' huw hspan
   have hC := soCent_inf_eq_span_wedge hP hN hμ0 hne hu hu' hw hw' huw hspan
@@ -221,7 +222,7 @@ def JointClauses (Q : QuadraticForm K V) (P N : Module.End K V) (ℓ : ℕ) : Pr
     ∀ M₁ ∈ soCent Q P ⊓ soCent Q N, ∀ M₂ ∈ soCent Q P ⊓ soCent Q N, Commute M₁ M₂) ∧
   (finrank K ↥(soCent Q P ⊓ soCent Q N) = ℓ →
     ∀ M ∈ soCent Q P ⊓ soCent Q N, IsNilpotent M → M = 0) ∧
-  (finrank K ↥(soCent Q P ⊓ soCent Q N) = ℓ → ∀ h : Module.End K V, IsomCent.IsIsom (bform Q) h →
+  (finrank K ↥(soCent Q P ⊓ soCent Q N) = ℓ → ∀ h : Module.End K V, (bform Q).IsOrthogonal h →
     IsNilpotent (h - 1) → Commute P h → Commute N h → h = 1)
 
 end Clauses
@@ -272,7 +273,7 @@ include hXU' hYU' in
 theorem jointClauses_of_split [FiniteDimensional K V]
     (hM : ∀ M ∈ soCent Q X ⊓ soCent Q Y, Set.MapsTo M U U)
     (hM' : ∀ M ∈ soCent Q X ⊓ soCent Q Y, Set.MapsTo M U' U')
-    (hH : ∀ g : Module.End K V, IsomCent.IsIsom (bform Q) g → Commute X g → Commute Y g →
+    (hH : ∀ g : Module.End K V, (bform Q).IsOrthogonal g → Commute X g → Commute Y g →
       Set.MapsTo g U U ∧ Set.MapsTo g U' U')
     {ℓ₁ ℓ₂ : ℕ} (h₁ : JointClauses (Q.comp U.subtype) (X.restrict hXU) (Y.restrict hYU) ℓ₁)
     (h₂ : JointClauses (Q.comp U'.subtype) (X.restrict hXU') (Y.restrict hYU') ℓ₂) :
@@ -389,8 +390,8 @@ theorem exists_isotropic_pair (hQ : IsNondeg Q) (h2 : finrank K V = 2) :
     · exact h1
 
 /-- An isometry of a nondegenerate space of dimension `≤ 2` is semisimple. -/
-theorem isSemisimple_of_isIsom_of_finrank_le_two (hQ : IsNondeg Q) (hn : finrank K V ≤ 2)
-    {h : Module.End K V} (hi : IsIsom (bform Q) h) : h.IsSemisimple := by
+theorem isSemisimple_of_isOrthogonal_of_finrank_le_two (hQ : IsNondeg Q) (hn : finrank K V ≤ 2)
+    {h : Module.End K V} (hi : (bform Q).IsOrthogonal h) : h.IsSemisimple := by
   rcases Nat.lt_or_ge (finrank K V) 2 with h1 | h2
   · exact isSemisimple_of_finrank_le_one (by omega) h
   · have h2' : finrank K V = 2 := by omega
@@ -429,13 +430,14 @@ private theorem so_clauses [CharZero K] (hQ : IsNondeg Q) :
       ∀ M₁ ∈ soCent Q 1, ∀ M₂ ∈ soCent Q 1, Commute M₁ M₂) ∧
     (finrank K (soCent Q 1) = finrank K V / 2 → ∀ M ∈ soCent Q 1, IsNilpotent M → M = 0) ∧
     (finrank K (soCent Q 1) = finrank K V / 2 →
-      ∀ h : Module.End K V, IsIsom (bform Q) h → IsNilpotent (h - 1) → h = 1) := by
+      ∀ h : Module.End K V, (bform Q).IsOrthogonal h → IsNilpotent (h - 1) → h = 1) := by
   have hlow := le_finrank_soCent_one hQ
   have hn2 : finrank K (soCent Q 1) = finrank K V / 2 → finrank K V ≤ 2 := fun h => by omega
   refine ⟨by omega, ⟨fun h M₁ h₁ M₂ h₂ => commute_of_mem_finrank_le_one (by omega) h₁ h₂,
     fun hab => finrank_soCent_one_of_le_two hQ (finrank_le_two_of_commute hQ hab)⟩,
     fun h M hM hnil => ?_, fun h g hg hnil =>
-      eq_one_of_isNilpotent_sub_one (isSemisimple_of_isIsom_of_finrank_le_two hQ (hn2 h) hg) hnil⟩
+      eq_one_of_isNilpotent_sub_one (isSemisimple_of_isOrthogonal_of_finrank_le_two hQ
+          (hn2 h) hg) hnil⟩
   have hle := hn2 h
   rcases Nat.lt_or_ge (finrank K V) 2 with h1 | h2
   · have h0 : finrank K (soCent Q 1) = 0 := by omega
@@ -485,7 +487,7 @@ private theorem so_clauses [CharZero K] (hQ : IsNondeg Q) :
 
 /-- **The four clauses on a paired piece**: `V` spanned by `u_i` (joint eigenvectors for `(μ, c)`)
 and `w_j` (for `(μ⁻¹, −c)`), `w_j` for `(μ⁻¹, −c)`, `(μ, c) ≠ (μ⁻¹, −c)`, `b(w_j, u_k) = δ_{jk}`: bound `d`. -/
-theorem jointClauses_pair {P N : Module.End K V} (hP : IsIsom (bform Q) P)
+theorem jointClauses_pair {P N : Module.End K V} (hP : (bform Q).IsOrthogonal P)
     (hN : (bform Q).IsSkewAdjoint N) {μ c : K} (hμ0 : μ ≠ 0) (hne : μ⁻¹ ≠ μ ∨ c ≠ 0) {d : ℕ}
     (hd : 1 ≤ d) (u w : Fin d → V) (hu : ∀ i, P (u i) = μ • u i) (hu' : ∀ i, N (u i) = c • u i)
     (hw : ∀ j, P (w j) = μ⁻¹ • w j) (hw' : ∀ j, N (w j) = (-c) • w j)
@@ -555,7 +557,8 @@ variable {K : Type*} [Field K] [Invertible (2 : K)] [CharZero K] [IsAlgClosed K]
 /-- Induction form of `jointClauses`, with `dim E₋₁(P)` even in place of `det P = 1`. -/
 private theorem jointClauses_aux (n : ℕ) : ∀ {V : Type u} [AddCommGroup V] [Module K V]
     [FiniteDimensional K V] (Q : QuadraticForm K V) (P N : Module.End K V), finrank K V = n →
-    IsNondeg Q → IsIsom (bform Q) P → P.IsSemisimple → (bform Q).IsSkewAdjoint N → N.IsSemisimple →
+    IsNondeg Q → (bform Q).IsOrthogonal P → P.IsSemisimple →
+        (bform Q).IsSkewAdjoint N → N.IsSemisimple →
     Commute N P → Even (finrank K ↥(P.eigenspace (-1))) →
     JointClauses Q P N (n / 2) := by
   induction n using Nat.strong_induction_on with
@@ -856,7 +859,7 @@ with `det P = 1` and `N` a semisimple skew map commuting with `P`. Then
 `C = so(V)_P ⊓ so(V)_N` has `dim C ≥ ⌊dim V/2⌋`, with equality iff `C` is abelian; and then `C` has
 no nonzero nilpotent element and the only unipotent isometry commuting with `P` and `N` is `1`. -/
 theorem jointClauses {V : Type u} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
-    {Q : QuadraticForm K V} {P N : Module.End K V} (hQ : IsNondeg Q) (hP : IsIsom (bform Q) P)
+    {Q : QuadraticForm K V} {P N : Module.End K V} (hQ : IsNondeg Q) (hP : (bform Q).IsOrthogonal P)
     (hssP : P.IsSemisimple) (hN : (bform Q).IsSkewAdjoint N) (hssN : N.IsSemisimple)
     (hc : Commute N P) (hdet : LinearMap.det P = 1) : JointClauses Q P N (finrank K V / 2) := by
   refine jointClauses_aux _ Q P N rfl hQ hP hssP hN hssN hc ?_

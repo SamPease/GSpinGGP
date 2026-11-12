@@ -38,7 +38,7 @@ open IsomCent
 /-- **A hyperbolic pair of eigenvectors.** If `V` is spanned by `u, w` with `X u = μ u`,
 `X w = μ⁻¹ w`, `μ² ≠ 1` and `b(u, w) ≠ 0`, then `so(V)_X` is the line spanned by
 `z ↦ b(w, z) u − b(u, z) w` (acting by `b(u,w)` on `u` and `−b(u,w)` on `w`). -/
-theorem soCent_eq_span_wedge (hX : IsIsom (bform Q) X) {μ : K} (hμ0 : μ ≠ 0) (hμ : μ * μ ≠ 1)
+theorem soCent_eq_span_wedge (hX : (bform Q).IsOrthogonal X) {μ : K} (hμ0 : μ ≠ 0) (hμ : μ * μ ≠ 1)
     {u w : V} (hu : X u = μ • u) (hw : X w = μ⁻¹ • w) (huw : bform Q u w ≠ 0)
     (hspan : Submodule.span K {u, w} = ⊤) :
     soCent Q X = K ∙ wedge (bform Q) u w := by
@@ -103,7 +103,7 @@ theorem soCent_eq_span_wedge (hX : IsIsom (bform Q) X) {μ : K} (hμ0 : μ ≠ 0
   · rintro ⟨r, rfl⟩
     exact Submodule.smul_mem _ r hJ
 
-theorem finrank_soCent_pair (hX : IsIsom (bform Q) X) {μ : K} (hμ0 : μ ≠ 0) (hμ : μ * μ ≠ 1)
+theorem finrank_soCent_pair (hX : (bform Q).IsOrthogonal X) {μ : K} (hμ0 : μ ≠ 0) (hμ : μ * μ ≠ 1)
     {u w : V} (hu : X u = μ • u) (hw : X w = μ⁻¹ • w) (huw : bform Q u w ≠ 0)
     (hspan : Submodule.span K {u, w} = ⊤) : finrank K (soCent Q X) = 1 := by
   rw [soCent_eq_span_wedge hX hμ0 hμ hu hw huw hspan]
@@ -280,7 +280,7 @@ open IsomCent
 /-- Induction form of `finrank_soCent_of_commute`, with `dim E₋₁` even in place of `det X = 1`. -/
 private theorem finrank_soCent_aux (n : ℕ) : ∀ {V : Type u} [AddCommGroup V] [Module K V]
     [FiniteDimensional K V] (Q : QuadraticForm K V) (X : Module.End K V), finrank K V = n →
-    IsNondeg Q → IsIsom (bform Q) X → X.IsSemisimple → Even (finrank K (X.eigenspace (-1))) →
+    IsNondeg Q → (bform Q).IsOrthogonal X → X.IsSemisimple → Even (finrank K (X.eigenspace (-1))) →
     (∀ M₁ ∈ soCent Q X, ∀ M₂ ∈ soCent Q X, Commute M₁ M₂) → finrank K (soCent Q X) = n / 2 := by
   induction n using Nat.strong_induction_on with
   | _ n ih =>
@@ -442,7 +442,7 @@ field of characteristic `0`, if `X` is a semisimple isometry of the nondegenerat
 `det X = 1` and `so(V)_X` is abelian, then `dim so(V)_X = ⌊dim V / 2⌋`. -/
 theorem finrank_soCent_of_commute {V : Type u} [AddCommGroup V] [Module K V]
     [FiniteDimensional K V] {Q : QuadraticForm K V} {X : Module.End K V} (hQ : IsNondeg Q)
-    (hX : IsIsom (bform Q) X) (hss : X.IsSemisimple) (hdet : LinearMap.det X = 1)
+    (hX : (bform Q).IsOrthogonal X) (hss : X.IsSemisimple) (hdet : LinearMap.det X = 1)
     (hab : ∀ M₁ ∈ soCent Q X, ∀ M₂ ∈ soCent Q X, Commute M₁ M₂) :
     finrank K (soCent Q X) = finrank K V / 2 := by
   have hB : (bform Q).IsSymm := ⟨bform_comm Q⟩

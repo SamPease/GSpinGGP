@@ -577,18 +577,8 @@ theorem exists_nilReg_of_sides (d : GGPData F) (x : GSpin d.QW)
     · unfold lieRank
       exact ciInf_le (OrderBot.bddBelow _) (⟨X, hXm⟩ : lieCentralizer d.lie dx)
   have hG : ∀ g ∈ grpCentralizer d.G ((d.diag x : d.G) : d.ambientˣ), ∀ Y ∈ lieCentralizer d.lie dx,
-      (g : d.ambient) * Y * (↑g⁻¹ : d.ambient) ∈ lieCentralizer d.lie dx := by
-    intro g hg Y hY
-    obtain ⟨hgG, hgc⟩ := Subgroup.mem_inf.mp hg
-    have hgc' : (g : d.ambient) * dx = dx * g := by
-      have := Subgroup.mem_centralizer_singleton_iff.mp hgc
-      exact congrArg Units.val this
-    obtain ⟨hYl, hYc⟩ := mem_lieCentralizer.mp hY
-    refine mem_lieCentralizer.mpr ⟨⟨conj_mem_gspin d.QW (d.fst ⟨g, hgG⟩) hYl.1,
-      conj_mem_gspin d.QV (d.snd ⟨g, hgG⟩) hYl.2⟩, ?_⟩
-    have hc1 : Commute dx (g : d.ambient) := hgc'.symm
-    have hc3 : Commute dx (↑g⁻¹ : d.ambient) := hc1.units_inv_right
-    exact ((hc1.mul_right hYc).mul_right hc3)
+      (g : d.ambient) * Y * (↑g⁻¹ : d.ambient) ∈ lieCentralizer d.lie dx :=
+    fun _ hg _ hY => conj_mem_lieCentralizer d.conj_mem_lie_of_mem hg hY
   exact ⟨_, mk_mem_nilReg_of_isRegularNil _ _ hG ⟨X, hXm, hXn⟩ hreg, ⟨X, hXm⟩, ⟨hXn, rfl⟩, rfl⟩
 
 /-- **Existence of regular nilpotent orbits of `𝔤_x`** (the direction `⇐` of

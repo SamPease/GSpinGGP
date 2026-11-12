@@ -183,7 +183,7 @@ theorem le_iSup_eigenspace_of_finrank_eq_two_of_forall [IsAlgClosed K] {h : Modu
 of characteristic `≠ 2`): an `h`-stable plane `E` on which `B` is nondegenerate lies in the span
 of the eigenspaces of the isometry `h`. -/
 theorem le_iSup_eigenspace_of_finrank_eq_two [IsAlgClosed K] (h2K : (2 : K) ≠ 0)
-    (hB : B.IsSymm) {h : Module.End K V} (hi : IsIsom B h) {E : Submodule K V}
+    (hB : B.IsSymm) {h : Module.End K V} (hi : B.IsOrthogonal h) {E : Submodule K V}
     (hE : ∀ v ∈ E, h v ∈ E) (h2 : finrank K E = 2)
     (hndE : ∀ e ∈ E, e ≠ 0 → ∃ e' ∈ E, B e e' ≠ 0) : E ≤ ⨆ μ : K, h.eigenspace μ := by
   refine le_iSup_eigenspace_of_finrank_eq_two_of_forall hE h2 hndE
@@ -273,7 +273,7 @@ variable [CharZero K] [IsAlgClosed K] [FiniteDimensional K V] {X : Module.End K 
 on `ker (X − 1)` by a scalar `c`, and diagonalizable on every `h`-stable plane on which `B` is
 nondegenerate, is semisimple. -/
 theorem isSemisimple_of_commute_of_lieAbelian_of_forall (hB : B.IsSymm) (hnd : B.Nondegenerate)
-    (hX : IsIsom B X) (hss : X.IsSemisimple) (hL : LieAbelian B X) {h : Module.End K V}
+    (hX : B.IsOrthogonal X) (hss : X.IsSemisimple) (hL : LieAbelian B X) {h : Module.End K V}
     (hc : Commute X h) (c : K) (hf : ∀ z ∈ X.eigenspace 1, h z = c • z)
     (hplane : ∀ {E : Submodule K V}, (∀ v ∈ E, h v ∈ E) → finrank K E = 2 →
       (∀ e ∈ E, e ≠ 0 → ∃ e' ∈ E, B e e' ≠ 0) → E ≤ ⨆ μ : K, h.eigenspace μ) :
@@ -309,8 +309,8 @@ theorem isSemisimple_of_commute_of_lieAbelian_of_forall (hB : B.IsSymm) (hnd : B
 semisimple isometry with `LieAbelian B X`, every isometry `h` commuting with `X` and fixing
 `ker (X − 1)` pointwise is semisimple. -/
 theorem isSemisimple_of_commute_of_lieAbelian (hB : B.IsSymm) (hnd : B.Nondegenerate)
-    (hX : IsIsom B X) (hss : X.IsSemisimple) (hL : LieAbelian B X) {h : Module.End K V}
-    (hi : IsIsom B h) (hc : Commute X h) (hf : ∀ z ∈ X.eigenspace 1, h z = z) :
+    (hX : B.IsOrthogonal X) (hss : X.IsSemisimple) (hL : LieAbelian B X) {h : Module.End K V}
+    (hi : B.IsOrthogonal h) (hc : Commute X h) (hf : ∀ z ∈ X.eigenspace 1, h z = z) :
     h.IsSemisimple :=
   isSemisimple_of_commute_of_lieAbelian_of_forall hB hnd hX hss hL hc 1
     (fun z hz => by rw [one_smul]; exact hf z hz)
@@ -321,7 +321,7 @@ theorem isSemisimple_of_commute_of_lieAbelian (hB : B.IsSymm) (hnd : B.Nondegene
 vanishing on `ker (X − 1)` is semisimple.  Lie-algebra form of
 `isSemisimple_of_commute_of_lieAbelian`. -/
 theorem isSemisimple_of_isSkewAdjoint_of_commute_of_lieAbelian (hB : B.IsSymm)
-    (hnd : B.Nondegenerate) (hX : IsIsom B X) (hss : X.IsSemisimple) (hL : LieAbelian B X)
+    (hnd : B.Nondegenerate) (hX : B.IsOrthogonal X) (hss : X.IsSemisimple) (hL : LieAbelian B X)
     {h : Module.End K V} (hi : B.IsSkewAdjoint h) (hc : Commute X h)
     (hf : ∀ z ∈ X.eigenspace 1, h z = 0) : h.IsSemisimple :=
   isSemisimple_of_commute_of_lieAbelian_of_forall hB hnd hX hss hL hc 0

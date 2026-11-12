@@ -294,18 +294,19 @@ theorem commute_iff_det_negFixedSub [CharZero K] [IsAlgClosed K] [FiniteDimensio
   have hcl := commute_toLinearMap hc
   have hE1 : ∀ u ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) 1,
       (∀ w ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) 1, bform Q u w = 0) → u = 0 := by
-    have h := (pairing_eigenspace hB hQ (isIsom_specP x) hx 1).2
+    have h := (pairing_eigenspace hB hQ (isOrthogonal_specP x) hx 1).2
     rwa [inv_one] at h
   have hEm : ∀ u ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) (-1),
       (∀ w ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) (-1), bform Q u w = 0) → u = 0 := by
-    have h := (pairing_eigenspace hB hQ (isIsom_specP x) hx (-1)).2
+    have h := (pairing_eigenspace hB hQ (isOrthogonal_specP x) hx (-1)).2
     rwa [inv_neg, inv_one] at h
   -- Cartan–Dieudonné on `E₁` and on `E₋₁`
   obtain ⟨l₁, hl₁, hp₁, hd₁⟩ := exists_reflections_eq_on _ hE1 (specP Q g) (specP_isometry g)
     (mapsTo_eigenspace_of_commute hcl 1)
   obtain ⟨l₂, hl₂, hp₂, hd₂⟩ := exists_reflections_eq_on _ hEm (specP Q g) (specP_isometry g)
     (mapsTo_eigenspace_of_commute hcl (-1))
-  have hdetσ := det_eq_det_one_mul_det_neg_one hB hQ (isIsom_specP x) hx (isIsom_specP g) hcl
+  have hdetσ := det_eq_det_one_mul_det_neg_one hB hQ (isOrthogonal_specP x) hx
+      (isOrthogonal_specP g) hcl
   rw [det_specP, hd₁, hd₂, ← pow_add] at hdetσ
   have heven : Even (l₁ ++ l₂).length := by
     rw [List.length_append]
@@ -414,8 +415,8 @@ theorem det_restrict_one_eq_one_of_commute [CharZero K] [IsAlgClosed K] [FiniteD
   refine ⟨hc, ?_⟩
   have hB : (bform Q).IsSymm := ⟨fun u v => bform_comm Q u v⟩
   have hn := (commute_iff_det_negFixedSub hQ x hx g hc).1 hgx
-  have hdet := det_eq_det_one_mul_det_neg_one_of_charZero hB hQ (isIsom_specP x) hx
-    (isIsom_specP g) (commute_toLinearMap hc)
+  have hdet := det_eq_det_one_mul_det_neg_one_of_charZero hB hQ (isOrthogonal_specP x) hx
+    (isOrthogonal_specP g) (commute_toLinearMap hc)
   rw [hn, mul_one, det_specP] at hdet
   exact hdet.symm
 
@@ -478,8 +479,8 @@ theorem commute_iff [CharZero K] [FiniteDimensional K V] (hQ : IsNondeg Q) (x : 
     have hc : Commute (specP Q g) (specP Q x) := by
       rw [Commute, SemiconjBy, ← map_mul, ← map_mul, hgx.eq]
     have hn := (hneg hc).1 hgx
-    have hdet := det_eq_det_one_mul_det_neg_one_of_charZero hB hQ (isIsom_specP x) hss
-      (isIsom_specP g) (commute_toLinearMap hc)
+    have hdet := det_eq_det_one_mul_det_neg_one_of_charZero hB hQ (isOrthogonal_specP x) hss
+      (isOrthogonal_specP g) (commute_toLinearMap hc)
     rw [hn, mul_one, det_specP] at hdet
     refine ⟨hc, ⟨mapsTo_fixedSub_of_commute hc, ?_⟩, ⟨mapsTo_negFixedSub_of_commute hc, ?_⟩⟩
     · exact (det_restrict_eq rfl (fixedSub_eq_eigenspace x) _ _).trans hdet.symm
@@ -509,8 +510,8 @@ theorem commute_of_commute_of_lieAbelian [CharZero K] [IsAlgClosed K] [FiniteDim
     (commute_iff_det_negFixedSub hQ t htss z hzt').mp hzt
   -- `P(x)` and `P(z)` commute
   have hxz : Commute (specP Q x : V →ₗ[K] V) (specP Q z : V →ₗ[K] V) := by
-    refine commute_of_lieAbelian_of_det hB hQ (isIsom_specP t) htss hL (isIsom_specP x)
-      (isIsom_specP z) (det_specP x) (commute_toLinearMap hxt') hct (fun v hv => ?_) hdz
+    refine commute_of_lieAbelian_of_det hB hQ (isOrthogonal_specP t) htss hL (isOrthogonal_specP x)
+      (isOrthogonal_specP z) (det_specP x) (commute_toLinearMap hxt') hct (fun v hv => ?_) hdz
     rw [← hE, Module.End.mem_eigenspace_iff, one_smul] at hv
     exact hv
   have hxz' : Commute (specP Q z) (specP Q x) := by
@@ -520,10 +521,12 @@ theorem commute_of_commute_of_lieAbelian [CharZero K] [IsAlgClosed K] [FiniteDim
     exact hxz.eq
   rw [commute_iff_det_negFixedSub hQ x hxss z hxz']
   have hcx := commute_toLinearMap hxz'
-  have hsplit := det_eq_det_one_mul_det_neg_one hB hQ (isIsom_specP x) hxss (isIsom_specP z) hcx
+  have hsplit := det_eq_det_one_mul_det_neg_one hB hQ (isOrthogonal_specP x) hxss
+      (isOrthogonal_specP z) hcx
   have h1 : LinearMap.det ((specP Q z : V →ₗ[K] V).restrict
       (mapsTo_eigenspace_of_commute hcx 1)) = 1 := by
-    have hsplit_t := det_eq_det_one_mul_det_neg_one hB hQ (isIsom_specP t) htss (isIsom_specP z) hct
+    have hsplit_t := det_eq_det_one_mul_det_neg_one hB hQ (isOrthogonal_specP t) htss
+        (isOrthogonal_specP z) hct
     rw [det_specP, hdz, mul_one] at hsplit_t
     exact (det_restrict_eq rfl hE _ (mapsTo_eigenspace_of_commute hct 1)).trans hsplit_t.symm
   rw [det_specP, h1, one_mul] at hsplit

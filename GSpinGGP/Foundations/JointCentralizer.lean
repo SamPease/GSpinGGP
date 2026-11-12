@@ -108,7 +108,8 @@ variable [IsAlgClosed K] [FiniteDimensional K V]
 
 /-- **Joint pairing**: for `u ∈ E_μ(P) ∩ E_c(N)` (`P` a semisimple isometry, `N` a semisimple skew
 map commuting with it), every value `B u v` is attained on `E_{μ⁻¹}(P) ∩ E_{−c}(N)`. -/
-theorem exists_joint_eigen_pair (hP : IsIsom B P) (hssP : P.IsSemisimple) (hN : B.IsSkewAdjoint N)
+theorem exists_joint_eigen_pair (hP : B.IsOrthogonal P) (hssP : P.IsSemisimple)
+    (hN : B.IsSkewAdjoint N)
     (hssN : N.IsSemisimple) (hc : Commute N P) {μ c : K} {u : V} (hu : u ∈ P.eigenspace μ)
     (hu' : u ∈ N.eigenspace c) (v : V) :
     ∃ w ∈ P.eigenspace μ⁻¹ ⊓ N.eigenspace (-c), B u w = B u v := by

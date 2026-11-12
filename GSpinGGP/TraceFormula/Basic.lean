@@ -342,11 +342,6 @@ instance (priority := 1100) measurableSpace_GmodAG : MeasurableSpace d.GmodAG :=
 
 instance borelSpace_GmodAG : BorelSpace d.GmodAG := ⟨rfl⟩
 
-/-- `G(F)/A_G(F)` is σ-compact (locally compact and second countable).  Stated as an instance
-because the default search exceeds `synthInstance.maxSize` here. -/
-instance sigmaCompactSpace_GmodAG : SigmaCompactSpace d.GmodAG :=
-  sigmaCompactSpace_of_locallyCompact_secondCountable
-
 /-- `A_G(F) = A_{GSpin(W)}(F) × A_{GSpin(V)}(F)` as a subset of `G(F)`. -/
 theorem coe_AG : (d.AG : Set ↥d.G) =
     d.fst ⁻¹' (splitCentralGSpin d.QW : Set _) ∩ d.snd ⁻¹' (splitCentralGSpin d.QV : Set _) := by

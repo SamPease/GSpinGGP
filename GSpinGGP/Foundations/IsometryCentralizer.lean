@@ -16,6 +16,7 @@ import Mathlib.RingTheory.HopfAlgebra.Basic
 import Mathlib.RingTheory.RegularLocalRing.Defs
 import Mathlib.RingTheory.SimpleRing.Principal
 import TauCeti.LinearAlgebra.Matrix.Block
+import GSpinGGP.Foundations.BilinFormAdjoint
 
 /-!
 # Centralizers of a semisimple isometry with abelian Lie algebra
@@ -37,30 +38,11 @@ For `h ∈ S`, `h − h⁻¹ ∈ 𝔩`.  On a line `E_μ` any two maps commute. 
 
 noncomputable section
 
-namespace LinearMap
-
-variable {R M N : Type*} [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
-  {B : M →ₗ[R] M →ₗ[R] N} {f : Module.End R M}
-
-/-- Skew-adjointness, unfolded: `B (f u) v = - B u (f v)`. -/
-theorem isSkewAdjoint_iff : B.IsSkewAdjoint f ↔ ∀ u v, B (f u) v = -B u (f v) := by
-  simp only [IsSkewAdjoint, IsAdjointPair, Pi.neg_apply, map_neg]
-
-theorem IsSkewAdjoint.eq (h : B.IsSkewAdjoint f) (u v : M) : B (f u) v = -B u (f v) :=
-  isSkewAdjoint_iff.1 h u v
-
-end LinearMap
-
 open Module LinearMap
 
 namespace GSpinGGP
 
 namespace IsomCent
-
-/-- `B`-isometries. -/
-def IsIsom {R M : Type*} [CommSemiring R] [AddCommMonoid M] [Module R M]
-    (B : LinearMap.BilinForm R M) (h : M →ₗ[R] M) : Prop :=
-  ∀ u v, B (h u) (h v) = B u v
 
 variable {K : Type*} [Field K] {V : Type*} [AddCommGroup V] [Module K V]
 variable (B : LinearMap.BilinForm K V)
@@ -79,7 +61,8 @@ theorem isSkewAdjoint_wedge (hB : B.IsSymm) (u w : V) : B.IsSkewAdjoint (wedge B
   rw [h1, h2, ← h3, ← h4]; ring
 
 /-- An isometry of a nondegenerate form is injective. -/
-theorem IsIsom.injective (hnd : B.Nondegenerate) {h : V →ₗ[K] V} (hh : IsIsom B h) :
+theorem _root_.LinearMap.IsOrthogonal.injective (hnd : B.Nondegenerate) {h : V →ₗ[K] V}
+    (hh : B.IsOrthogonal h) :
     Function.Injective h := by
   rw [← LinearMap.ker_eq_bot, LinearMap.ker_eq_bot']
   intro z hz
@@ -95,7 +78,7 @@ variable {X : Module.End K V}
 open Module.End
 
 /-- `B(E_μ, E_ν) = 0` unless `μν = 1`. -/
-theorem bform_eigen_eq_zero (hX : IsIsom B X) {μ ν : K} (hμν : μ * ν ≠ 1) {u v : V}
+theorem bform_eigen_eq_zero (hX : B.IsOrthogonal X) {μ ν : K} (hμν : μ * ν ≠ 1) {u v : V}
     (hu : u ∈ X.eigenspace μ) (hv : v ∈ X.eigenspace ν) : B u v = 0 := by
   rw [mem_eigenspace_iff] at hu hv
   have h := hX u v
@@ -106,7 +89,7 @@ theorem bform_eigen_eq_zero (hX : IsIsom B X) {μ ν : K} (hμν : μ * ν ≠ 1
   · exact h0
 
 /-- `B(w, Xz) = μ B(w, z)` for `w ∈ E_{μ'}`, `μ μ' = 1`. -/
-theorem bform_eigen_X (hX : IsIsom B X) {μ μ' : K} (h1 : μ * μ' = 1) {w : V}
+theorem bform_eigen_X (hX : B.IsOrthogonal X) {μ μ' : K} (h1 : μ * μ' = 1) {w : V}
     (hw : w ∈ X.eigenspace μ') (z : V) : B w (X z) = μ * B w z := by
   rw [mem_eigenspace_iff] at hw
   have hμ' : μ' ≠ 0 := right_ne_zero_of_mul_eq_one h1
@@ -118,7 +101,7 @@ theorem bform_eigen_X (hX : IsIsom B X) {μ μ' : K} (h1 : μ * μ' = 1) {w : V}
     _ = μ := by rw [mul_assoc, mul_inv_cancel₀ hμ', mul_one]
 
 /-- The wedge of `u ∈ E_μ` and `w ∈ E_{μ'}`, `μμ' = 1`, commutes with `X`. -/
-theorem commute_wedge (hB : B.IsSymm) (hX : IsIsom B X) {μ μ' : K} (h1 : μ * μ' = 1) {u w : V}
+theorem commute_wedge (hB : B.IsSymm) (hX : B.IsOrthogonal X) {μ μ' : K} (h1 : μ * μ' = 1) {u w : V}
     (hu : u ∈ X.eigenspace μ) (hw : w ∈ X.eigenspace μ') : Commute X (wedge B u w) := by
   have h1' : μ' * μ = 1 := by rw [mul_comm, h1]
   ext z
@@ -127,7 +110,8 @@ theorem commute_wedge (hB : B.IsSymm) (hX : IsIsom B X) {μ μ' : K} (h1 : μ * 
     (mem_eigenspace_iff.1 hw), smul_smul, smul_smul, mul_comm μ, mul_comm μ']
 
 /-- The wedge of `u ∈ E_μ`, `w ∈ E_{μ'}` with `μ, μ' ≠ 1` kills the fixed space. -/
-theorem wedge_eq_zero_of_fixed (hX : IsIsom B X) {μ μ' : K} (hμ : μ ≠ 1) (hμ' : μ' ≠ 1) {u w : V}
+theorem wedge_eq_zero_of_fixed (hX : B.IsOrthogonal X) {μ μ' : K} (hμ : μ ≠ 1) (hμ' : μ' ≠ 1)
+    {u w : V}
     (hu : u ∈ X.eigenspace μ) (hw : w ∈ X.eigenspace μ') {z : V} (hz : z ∈ X.eigenspace 1) :
     wedge B u w z = 0 := by
   rw [wedge_apply, bform_eigen_eq_zero hX (by simpa using hμ') hw hz,
@@ -136,7 +120,7 @@ theorem wedge_eq_zero_of_fixed (hX : IsIsom B X) {μ μ' : K} (hμ : μ ≠ 1) (
 variable [IsAlgClosed K] [FiniteDimensional K V]
 
 /-- Pairing: for `u ∈ E_μ`, every value `B u v` is attained on `E_{μ⁻¹}`. -/
-theorem exists_eigen_pair (hX : IsIsom B X) (hss : X.IsSemisimple) {μ : K} {u : V}
+theorem exists_eigen_pair (hX : B.IsOrthogonal X) (hss : X.IsSemisimple) {μ : K} {u : V}
     (hu : u ∈ X.eigenspace μ) (v : V) : ∃ w ∈ X.eigenspace μ⁻¹, B u w = B u v := by
   have hv : v ∈ ⨆ ν : K, X.eigenspace ν := by rw [hss.iSup_eigenspace_eq_top]; trivial
   induction hv using Submodule.iSup_induction' with
@@ -178,7 +162,7 @@ theorem exists_pair_of_one_lt_finrank (E : Submodule K V) (h : 1 < finrank K E) 
 variable [IsAlgClosed K] [FiniteDimensional K V]
 
 /-- A nonzero `u ∈ E_μ` pairs nontrivially with `E_{μ⁻¹}`. -/
-theorem exists_eigen_pair_ne_zero (hnd : B.Nondegenerate) (hX : IsIsom B X)
+theorem exists_eigen_pair_ne_zero (hnd : B.Nondegenerate) (hX : B.IsOrthogonal X)
     (hss : X.IsSemisimple) {μ : K} {u : V} (hu : u ∈ X.eigenspace μ) (hu0 : u ≠ 0) :
     ∃ w ∈ X.eigenspace μ⁻¹, B u w ≠ 0 := by
   by_contra hcon
@@ -188,7 +172,7 @@ theorem exists_eigen_pair_ne_zero (hnd : B.Nondegenerate) (hX : IsIsom B X)
   rw [← e, hcon w hw]
 
 /-- **`dim E_μ ≤ 1` for `μ ≠ ±1`** when `𝔩` is abelian. -/
-theorem finrank_eigenspace_le_one (hB : B.IsSymm) (hnd : B.Nondegenerate) (hX : IsIsom B X)
+theorem finrank_eigenspace_le_one (hB : B.IsSymm) (hnd : B.Nondegenerate) (hX : B.IsOrthogonal X)
     (hss : X.IsSemisimple) (hL : LieAbelian B X) {μ : K} (hμ1 : μ ≠ 1) (hμ2 : μ * μ ≠ 1) :
     finrank K (X.eigenspace μ) ≤ 1 := by
   by_contra hcon
@@ -202,7 +186,7 @@ theorem finrank_eigenspace_le_one (hB : B.IsSymm) (hnd : B.Nondegenerate) (hX : 
   obtain ⟨w₂, hw₂, hB₂⟩ := exists_eigen_pair_ne_zero hnd hX hss hu₂ (hne _ (Or.inr rfl))
   have hμ0 : μ ≠ 0 := by
     rintro rfl
-    refine hne u₁ (Or.inl rfl) (IsIsom.injective hnd hX ?_)
+    refine hne u₁ (Or.inl rfl) (LinearMap.IsOrthogonal.injective hnd hX ?_)
     rw [mem_eigenspace_iff.1 hu₁, zero_smul, map_zero]
   have h1 : μ * μ⁻¹ = 1 := mul_inv_cancel₀ hμ0
   have hμ'1 : μ⁻¹ ≠ 1 := by rwa [ne_eq, inv_eq_one]
@@ -227,7 +211,8 @@ theorem finrank_eigenspace_le_one (hB : B.IsSymm) (hnd : B.Nondegenerate) (hX : 
 
 /-- An anisotropic vector in `E_{−1}` if it is nonzero (characteristic `0`). -/
 theorem exists_anisotropic_neg_one [CharZero K] (hB : B.IsSymm) (hnd : B.Nondegenerate)
-    (hX : IsIsom B X) (hss : X.IsSemisimple) {e : V} (he : e ∈ X.eigenspace (-1)) (he0 : e ≠ 0) :
+    (hX : B.IsOrthogonal X) (hss : X.IsSemisimple) {e : V} (he : e ∈ X.eigenspace (-1))
+    (he0 : e ≠ 0) :
     ∃ v ∈ X.eigenspace (-1), B v v ≠ 0 := by
   obtain ⟨e', he', hee'⟩ := exists_eigen_pair_ne_zero hnd hX hss he he0
   rw [inv_neg, inv_one] at he'
@@ -243,7 +228,7 @@ theorem exists_anisotropic_neg_one [CharZero K] (hB : B.IsSymm) (hnd : B.Nondege
 
 /-- **`dim E_{−1} ≤ 2`** when `𝔩` is abelian. -/
 theorem finrank_eigenspace_neg_one_le_two [CharZero K] (hB : B.IsSymm) (hnd : B.Nondegenerate)
-    (hX : IsIsom B X) (hss : X.IsSemisimple) (hL : LieAbelian B X) :
+    (hX : B.IsOrthogonal X) (hss : X.IsSemisimple) (hL : LieAbelian B X) :
     finrank K (X.eigenspace (-1)) ≤ 2 := by
   by_contra hcon
   push Not at hcon
@@ -371,7 +356,7 @@ theorem sq_sub_trace_add_det {E : Type*} [AddCommGroup E] [Module K E] [FiniteDi
 
 variable [IsAlgClosed K] [FiniteDimensional K V]
 
-theorem hasEigenvalue_inv (hnd : B.Nondegenerate) (hX : IsIsom B X) (hss : X.IsSemisimple)
+theorem hasEigenvalue_inv (hnd : B.Nondegenerate) (hX : B.IsOrthogonal X) (hss : X.IsSemisimple)
     {μ : K} (hμ : X.HasEigenvalue μ) : X.HasEigenvalue μ⁻¹ := by
   obtain ⟨u, hu, hu0⟩ := Submodule.exists_mem_ne_zero_of_ne_bot (hasEigenvalue_iff.1 hμ)
   obtain ⟨w, hw, hBw⟩ := exists_eigen_pair_ne_zero hnd hX hss hu hu0
@@ -381,8 +366,8 @@ theorem hasEigenvalue_inv (hnd : B.Nondegenerate) (hX : IsIsom B X) (hss : X.IsS
 
 /-- On a line `E_μ` (`μ ≠ ±1`) and its partner `E_{μ⁻¹}`, `h` acts by `c` and `c⁻¹`. -/
 theorem det_restrict_mul_inv [CharZero K] (hB : B.IsSymm) (hnd : B.Nondegenerate)
-    (hX : IsIsom B X) (hss : X.IsSemisimple) (hL : LieAbelian B X) {h : Module.End K V}
-    (hi : IsIsom B h) (hc : Commute X h) (hfix : ∀ z ∈ X.eigenspace 1, h z = z) {μ : K}
+    (hX : B.IsOrthogonal X) (hss : X.IsSemisimple) (hL : LieAbelian B X) {h : Module.End K V}
+    (hi : B.IsOrthogonal h) (hc : Commute X h) (hfix : ∀ z ∈ X.eigenspace 1, h z = z) {μ : K}
     (hμ : X.HasEigenvalue μ) (hμm : μ ≠ -1) :
     LinearMap.det (h.restrict (mapsTo_eigenspace_of_commute hc μ)) *
       LinearMap.det (h.restrict (mapsTo_eigenspace_of_commute hc μ⁻¹)) = 1 := by
@@ -433,18 +418,18 @@ theorem det_restrict_mul_inv [CharZero K] (hB : B.IsSymm) (hnd : B.Nondegenerate
   · linear_combination h0
   · exact absurd h0 hBw
 
-theorem ne_zero_of_hasEigenvalue (hnd : B.Nondegenerate) (hX : IsIsom B X) {μ : K}
+theorem ne_zero_of_hasEigenvalue (hnd : B.Nondegenerate) (hX : B.IsOrthogonal X) {μ : K}
     (hμ : X.HasEigenvalue μ) : μ ≠ 0 := by
   rintro rfl
   obtain ⟨u, hu, hu0⟩ := Submodule.exists_mem_ne_zero_of_ne_bot (hasEigenvalue_iff.1 hμ)
-  refine hu0 (IsIsom.injective hnd hX ?_)
+  refine hu0 (LinearMap.IsOrthogonal.injective hnd hX ?_)
   rw [mem_eigenspace_iff.1 hu, zero_smul, map_zero]
 
 /-- **`det (h|_{E_{−1}}) = 1`** for `h ∈ S`: the other eigenspaces pair off as `E_μ, E_{μ⁻¹}`
 with determinants `c, c⁻¹`, or are `E_1`, where `h = 1`. -/
 theorem det_restrict_neg_one [CharZero K] (hB : B.IsSymm) (hnd : B.Nondegenerate)
-    (hX : IsIsom B X) (hss : X.IsSemisimple) (hL : LieAbelian B X) {h : Module.End K V}
-    (hi : IsIsom B h) (hd : LinearMap.det h = 1) (hc : Commute X h)
+    (hX : B.IsOrthogonal X) (hss : X.IsSemisimple) (hL : LieAbelian B X) {h : Module.End K V}
+    (hi : B.IsOrthogonal h) (hd : LinearMap.det h = 1) (hc : Commute X h)
     (hfix : ∀ z ∈ X.eigenspace 1, h z = z) :
     LinearMap.det (h.restrict (mapsTo_eigenspace_of_commute hc (-1))) = 1 := by
   classical
@@ -494,11 +479,11 @@ theorem det_restrict_neg_one [CharZero K] (hB : B.IsSymm) (hnd : B.Nondegenerate
   exact hprod.symm
 
 /-- The inverse of an isometry `h ∈ S`, and `h − h⁻¹ ∈ 𝔩`. -/
-theorem exists_inv_mem_lie (hnd : B.Nondegenerate) (hX : IsIsom B X) {h : Module.End K V}
-    (hi : IsIsom B h) (hc : Commute X h) (hfix : ∀ z ∈ X.eigenspace 1, h z = z) :
+theorem exists_inv_mem_lie (hnd : B.Nondegenerate) (hX : B.IsOrthogonal X) {h : Module.End K V}
+    (hi : B.IsOrthogonal h) (hc : Commute X h) (hfix : ∀ z ∈ X.eigenspace 1, h z = z) :
     ∃ g : Module.End K V, (∀ v, h (g v) = v) ∧ (∀ v, g (h v) = v) ∧
       B.IsSkewAdjoint ⇑(h - g) ∧ Commute X (h - g) ∧ ∀ z ∈ X.eigenspace 1, (h - g) z = 0 := by
-  let e := LinearEquiv.ofInjectiveEndo h (IsIsom.injective hnd hi)
+  let e := LinearEquiv.ofInjectiveEndo h (LinearMap.IsOrthogonal.injective hnd hi)
   let g : Module.End K V := e.symm
   have hhg : ∀ v, h (g v) = v := fun v => e.apply_symm_apply v
   have hgh : ∀ v, g (h v) = v := fun v => e.symm_apply_apply v
@@ -510,7 +495,7 @@ theorem exists_inv_mem_lie (hnd : B.Nondegenerate) (hX : IsIsom B X) {h : Module
     rw [e1, e2]; ring
   · have hXg : Commute X g := by
       refine LinearMap.ext fun v => ?_
-      apply IsIsom.injective hnd hi
+      apply LinearMap.IsOrthogonal.injective hnd hi
       simp only [Module.End.mul_apply]
       rw [hhg, ← Module.End.mul_apply h X, ← hc.eq, Module.End.mul_apply, hhg]
     exact hc.sub_right hXg
@@ -521,8 +506,8 @@ theorem exists_inv_mem_lie (hnd : B.Nondegenerate) (hX : IsIsom B X) {h : Module
 /-- **Main result.**  If `𝔩` is abelian, the isometries of determinant `1` commuting with `X` and
 fixing `ker (X − 1)` pointwise commute with each other. -/
 theorem commute_of_lieAbelian [CharZero K] (hB : B.IsSymm) (hnd : B.Nondegenerate)
-    (hX : IsIsom B X) (hss : X.IsSemisimple) (hL : LieAbelian B X) {h₁ h₂ : Module.End K V}
-    (hi₁ : IsIsom B h₁) (hi₂ : IsIsom B h₂) (hd₁ : LinearMap.det h₁ = 1)
+    (hX : B.IsOrthogonal X) (hss : X.IsSemisimple) (hL : LieAbelian B X) {h₁ h₂ : Module.End K V}
+    (hi₁ : B.IsOrthogonal h₁) (hi₂ : B.IsOrthogonal h₂) (hd₁ : LinearMap.det h₁ = 1)
     (hd₂ : LinearMap.det h₂ = 1) (hc₁ : Commute X h₁) (hc₂ : Commute X h₂)
     (hf₁ : ∀ z ∈ X.eigenspace 1, h₁ z = z) (hf₂ : ∀ z ∈ X.eigenspace 1, h₂ z = z) :
     Commute h₁ h₂ := by
@@ -596,17 +581,18 @@ theorem commute_of_lieAbelian [CharZero K] (hB : B.IsSymm) (hnd : B.Nondegenerat
     linear_combination (norm := module) (1 / 4 : K) • eq
 
 /-- An isometry commuting with `X` has a two-sided inverse commuting with `X`. -/
-theorem exists_inv_of_isIsom (hnd : B.Nondegenerate) {h : Module.End K V} (hi : IsIsom B h)
+theorem exists_inv_of_isOrthogonal (hnd : B.Nondegenerate) {h : Module.End K V}
+    (hi : B.IsOrthogonal h)
     (hc : Commute X h) :
     ∃ g : Module.End K V, (∀ v, h (g v) = v) ∧ (∀ v, g (h v) = v) ∧ Commute X g ∧
       ∀ u v, B (h u) v = B u (g v) := by
-  let e := LinearEquiv.ofInjectiveEndo h (IsIsom.injective hnd hi)
+  let e := LinearEquiv.ofInjectiveEndo h (LinearMap.IsOrthogonal.injective hnd hi)
   let g : Module.End K V := e.symm
   have hhg : ∀ v, h (g v) = v := fun v => e.apply_symm_apply v
   have hgh : ∀ v, g (h v) = v := fun v => e.symm_apply_apply v
   refine ⟨g, hhg, hgh, ?_, fun u v => ?_⟩
   · refine LinearMap.ext fun v => ?_
-    apply IsIsom.injective hnd hi
+    apply LinearMap.IsOrthogonal.injective hnd hi
     simp only [Module.End.mul_apply]
     rw [hhg, ← Module.End.mul_apply h X, ← hc.eq, Module.End.mul_apply, hhg]
   · conv_lhs => rw [← hhg v]
@@ -615,14 +601,14 @@ theorem exists_inv_of_isIsom (hnd : B.Nondegenerate) {h : Module.End K V} (hi : 
 /-- `(h − h⁻¹)(2 − X − X⁻¹) ∈ 𝔩` for an isometry `h` commuting with `X`, with
 `2 − X − X⁻¹ = 4` on `E₋₁`. -/
 theorem exists_mem_lie_of_commute (hnd : B.Nondegenerate)
-    (hX : IsIsom B X) {h : Module.End K V} (hi : IsIsom B h) (hc : Commute X h) :
+    (hX : B.IsOrthogonal X) {h : Module.End K V} (hi : B.IsOrthogonal h) (hc : Commute X h) :
     ∃ g S : Module.End K V, (∀ v, h (g v) = v) ∧ (∀ v, g (h v) = v) ∧
       B.IsSkewAdjoint ⇑((h - g) * S) ∧ Commute X ((h - g) * S) ∧
       (∀ z ∈ X.eigenspace 1, ((h - g) * S) z = 0) ∧
       (∀ w ∈ X.eigenspace (-1), S w = (4 : K) • w) ∧
       ∀ w, S (X w) = X (S w) := by
-  obtain ⟨g, hhg, hgh, hXg, hBg⟩ := exists_inv_of_isIsom hnd hi hc
-  obtain ⟨gX, hXgX, hgXX, hXgX', hBgX⟩ := exists_inv_of_isIsom hnd hX (Commute.refl X)
+  obtain ⟨g, hhg, hgh, hXg, hBg⟩ := exists_inv_of_isOrthogonal hnd hi hc
+  obtain ⟨gX, hXgX, hgXX, hXgX', hBgX⟩ := exists_inv_of_isOrthogonal hnd hX (Commute.refl X)
   set S : Module.End K V := (2 : K) • 1 - X - gX with hS
   -- `S` is self-adjoint and commutes with `X`, `h`, `g`
   have hSadj : ∀ u v, B (S u) v = B u (S v) := by
@@ -635,12 +621,12 @@ theorem exists_mem_lie_of_commute (hnd : B.Nondegenerate)
   have hXgXc : Commute X gX := hXgX'
   have hgXh : Commute gX h := by
     refine LinearMap.ext fun v => ?_
-    apply IsIsom.injective hnd hX
+    apply LinearMap.IsOrthogonal.injective hnd hX
     simp only [Module.End.mul_apply]
     rw [hXgX, ← Module.End.mul_apply X h, hc.eq, Module.End.mul_apply, hXgX]
   have hgXg : Commute gX g := by
     refine LinearMap.ext fun v => ?_
-    apply IsIsom.injective hnd hX
+    apply LinearMap.IsOrthogonal.injective hnd hX
     simp only [Module.End.mul_apply]
     rw [hXgX, ← Module.End.mul_apply X g, hXg.eq, Module.End.mul_apply, hXgX]
   have hSh : Commute S h :=
@@ -687,8 +673,8 @@ theorem exists_mem_lie_of_commute (hnd : B.Nondegenerate)
 /-- **Variant of `commute_of_lieAbelian`**: only `h₁` need fix `ker (X − 1)`; for `h₂` it suffices that
 `det h₂|_{E₋₁} = 1`. -/
 theorem commute_of_lieAbelian_of_det [CharZero K] (hB : B.IsSymm) (hnd : B.Nondegenerate)
-    (hX : IsIsom B X) (hss : X.IsSemisimple) (hL : LieAbelian B X) {h₁ h₂ : Module.End K V}
-    (hi₁ : IsIsom B h₁) (hi₂ : IsIsom B h₂) (hd₁ : LinearMap.det h₁ = 1)
+    (hX : B.IsOrthogonal X) (hss : X.IsSemisimple) (hL : LieAbelian B X) {h₁ h₂ : Module.End K V}
+    (hi₁ : B.IsOrthogonal h₁) (hi₂ : B.IsOrthogonal h₂) (hd₁ : LinearMap.det h₁ = 1)
     (hc₁ : Commute X h₁) (hc₂ : Commute X h₂)
     (hf₁ : ∀ z ∈ X.eigenspace 1, h₁ z = z)
     (hd₂' : LinearMap.det (h₂.restrict (mapsTo_eigenspace_of_commute hc₂ (-1))) = 1) :
