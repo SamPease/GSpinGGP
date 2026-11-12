@@ -109,24 +109,14 @@ theorem weylCardOf_eq_luo_of_centralizer {T : Subgroup ↥(GSpin d.QW)}
     (hZ : ∀ g : ↥(GSpin d.QW), (∀ t ∈ T, Commute (specP d.QW g) (specP d.QW t)) →
       ∀ t ∈ T, Commute g t) :
     weylCardOf d T = d.luoOf.weylCardOf (T.map (d.toGbarU.comp d.diag)) := by
-  have hmem : ∀ g : ↥(GSpin d.QW), d.specPU g ∈ LuoDatum.SOu d.luoOf.QW := fun g => by
-    change LinearMap.GeneralLinearGroup.generalLinearEquiv F _
-      ((LinearMap.GeneralLinearGroup.generalLinearEquiv F _).symm (specP d.QW g)) ∈ SOGrp d.QW
-    rw [MulEquiv.apply_symm_apply, ← range_specP_eq_SOGrp d.nondeg]
-    exact ⟨g, rfl⟩
-  let ψ : ↥(GSpin d.QW) →* ↥(LuoDatum.SOu d.luoOf.QW) := d.specPU.codRestrict _ hmem
+  let ψ : ↥(GSpin d.QW) →* ↥(LuoDatum.SOu d.luoOf.QW) :=
+    d.specPU.codRestrict _ d.specPU_mem_SOu
   have hψ : ∀ g, ((ψ g : ↥(LuoDatum.SOu d.luoOf.QW)) : (Module.End F d.luoOf.W)ˣ) = d.specPU g :=
     fun _ => rfl
   have hψsurj : Function.Surjective ψ := by
     intro s
-    have hs := s.2
-    change LinearMap.GeneralLinearGroup.generalLinearEquiv F d.luoOf.W
-      (s : (Module.End F d.luoOf.W)ˣ) ∈ SOGrp d.QW at hs
-    rw [← range_specP_eq_SOGrp d.nondeg] at hs
-    obtain ⟨g, hg⟩ := hs
-    refine ⟨g, Subtype.ext (Units.ext ?_)⟩
-    rw [hψ, coe_specPU, hg]
-    rfl
+    obtain ⟨g, hg⟩ := d.exists_specP_eq_of_mem_SOu s.2
+    exact ⟨g, Subtype.ext (Units.ext (by rw [hψ, coe_specPU, hg]))⟩
   have hker : ψ.ker ≤ T := by
     intro g hg
     apply hsc
