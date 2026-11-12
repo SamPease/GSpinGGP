@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Foundations.CentralizerIso
+import GSpinGGP.Foundations.ExpLocal
 import GSpinGGP.TraceFormula.JHatSelfDual
 
 /-!
@@ -11,10 +12,13 @@ import GSpinGGP.TraceFormula.JHatSelfDual
 `ĵ(O, ·)` (`jHat`) is defined through two choices: the self-dual Haar measure (`selfDualMeasure`)
 and the orbit measure (`orbitMeasure`). Along a `CentralizerIso` `ι : (G_x, 𝔤_x) ≃ (G'_y, 𝔤'_y)`:
 
-* `isSelfDual_map_iff`, `isOrbitMeasure_map_iff`, `isJHat_comp_iff`: the defining conditions are
-  transported (change of variables; choice-free; `isOrbitMeasure_map_iff` is a `sorry`);
+* `isSelfDual_map_iff`, `isJHat_comp_iff`: the defining conditions are transported (change of
+  variables; choice-free);
 * `isSelfDual_unique`: a self-dual measure is unique (`sorry`, Weil);
-* `selfDualHaar_map`, `orbitMeasure_map`: hence the chosen measures correspond;
+* `selfDualMeasure_map`, `selfDualHaar_map`: hence the chosen self-dual measures correspond;
+* `isOrbitMeasure_map_iff`: the defining conditions of orbit measures are transported (uses
+  `selfDualMeasure_map` for the Kirillov forms on complements of centralizers);
+* `orbitMeasure_map`: hence the chosen orbit measures correspond (given uniqueness);
 * `jHat_map`: `ĵ(ι O, ι X) = ĵ(O, X)` for regular `X`, when `b'` is nondegenerate on `𝔤'_y`, the
   regular set of `𝔤'_y` is open, and orbit measures on `𝔤'_y` are unique.
 -/
@@ -94,6 +98,31 @@ theorem isSelfDual_map_iff {V V' : Type*} [AddCommGroup V] [Module F V] [Topolog
   rwa [Measure.map_map he'.measurable he.measurable,
     show (⇑e.symm ∘ ⇑e) = id from funext e.symm_apply_apply, Measure.map_id] at this
 
+/-- **The self-dual measures correspond** under a linear homeomorphism `e : V ≃ V'` with
+`B'(e u, e v) = B(u, v)`: `selfDualMeasure B' ψ = e_* selfDualMeasure B ψ` (transport,
+`isSelfDual_map_iff`, and uniqueness, `isSelfDual_unique`). -/
+theorem selfDualMeasure_map {V V' : Type*} [AddCommGroup V] [Module F V] [TopologicalSpace V]
+    [IsTopologicalAddGroup V] [MeasurableSpace V] [BorelSpace V] [AddCommGroup V'] [Module F V']
+    [FiniteDimensional F V'] [TopologicalSpace V'] [IsTopologicalAddGroup V']
+    [IsModuleTopology F V'] [MeasurableSpace V'] [BorelSpace V']
+    (e : V ≃ₗ[F] V') (he : Continuous e) (he' : Continuous e.symm)
+    {B : LinearMap.BilinForm F V} {B' : LinearMap.BilinForm F V'}
+    (hB : ∀ u v, B' (e u) (e v) = B u v) (ψ : NontrivialAddChar F) :
+    selfDualMeasure B' ψ = (selfDualMeasure B ψ).map e := by
+  have key := fun μ => isSelfDual_map_iff e he he' hB ψ μ
+  unfold selfDualMeasure
+  by_cases h : ∃ μ, IsSelfDual μ B ψ
+  · have h' : ∃ μ, IsSelfDual μ B' ψ := ⟨_, (key _).mpr h.choose_spec⟩
+    rw [dif_pos h, dif_pos h']
+    exact isSelfDual_unique h'.choose_spec ((key _).mpr h.choose_spec)
+  · have h' : ¬ ∃ μ, IsSelfDual μ B' ψ := by
+      rintro ⟨μ', hμ'⟩
+      refine h ⟨μ'.map e.symm, (key _).mp ?_⟩
+      rw [Measure.map_map he.measurable he'.measurable,
+        show (⇑e ∘ ⇑e.symm) = id from funext e.apply_symm_apply, Measure.map_id]
+      exact hμ'
+    rw [dif_neg h, dif_neg h', Measure.map_zero]
+
 variable {A : Type*} [Ring A] [Algebra F A] [TopologicalSpace A] [Module.Finite F A]
   [IsModuleTopology F A]
   {A' : Type*} [Ring A'] [Algebra F A'] [TopologicalSpace A'] [Module.Finite F A']
@@ -125,7 +154,7 @@ theorem restrictForm_linEquiv (X Y : ↥(lieCentralizer 𝔤 (x : A))) :
   ι.map_bilin X X.2 Y Y.2
 
 /-- **The self-dual Haar measures correspond**: `selfDualHaar 𝔤'_y = ι_* selfDualHaar 𝔤_x`
-(transport, `isSelfDual_map_iff`, and uniqueness, `isSelfDual_unique`). -/
+(`selfDualMeasure_map`). -/
 theorem selfDualHaar_map (ψ : NontrivialAddChar F) :
     selfDualHaar (lieCentralizer 𝔤' (y : A')) b' ψ =
       (selfDualHaar (lieCentralizer 𝔤 (x : A)) b ψ).map ι.linEquiv := by
@@ -133,41 +162,132 @@ theorem selfDualHaar_map (ψ : NontrivialAddChar F) :
   haveI := isModuleTopology_lieSubalgebra (lieCentralizer 𝔤' (y : A'))
   haveI := isTopologicalAddGroup_lieSubalgebra (lieCentralizer 𝔤 (x : A))
   haveI := isTopologicalAddGroup_lieSubalgebra (lieCentralizer 𝔤' (y : A'))
-  have key := fun μ => isSelfDual_map_iff ι.linEquiv ι.continuous_linEquiv
-    ι.continuous_linEquiv_symm ι.restrictForm_linEquiv ψ μ
-  unfold selfDualHaar selfDualMeasure
-  by_cases h : ∃ μ, IsSelfDual μ (restrictForm (lieCentralizer 𝔤 (x : A)) b) ψ
-  · have h' : ∃ μ, IsSelfDual μ (restrictForm (lieCentralizer 𝔤' (y : A')) b') ψ :=
-      ⟨_, (key _).mpr h.choose_spec⟩
-    rw [dif_pos h, dif_pos h']
-    exact isSelfDual_unique h'.choose_spec ((key _).mpr h.choose_spec)
-  · have h' : ¬ ∃ μ, IsSelfDual μ (restrictForm (lieCentralizer 𝔤' (y : A')) b') ψ := by
-      rintro ⟨μ', hμ'⟩
-      refine h ⟨μ'.map ι.linEquiv.symm, (key _).mp ?_⟩
-      rw [Measure.map_map ι.continuous_linEquiv.measurable ι.continuous_linEquiv_symm.measurable,
-        show (⇑ι.linEquiv ∘ ⇑ι.linEquiv.symm) = id from funext ι.linEquiv.apply_symm_apply,
-        Measure.map_id]
-      exact hμ'
-    rw [dif_neg h, dif_neg h', Measure.map_zero]
+  exact selfDualMeasure_map ι.linEquiv ι.continuous_linEquiv ι.continuous_linEquiv_symm
+    ι.restrictForm_linEquiv ψ
 
 variable (hG : ∀ g ∈ G, ∀ Y ∈ 𝔤, (g : A) * Y * (↑g⁻¹ : A) ∈ 𝔤)
 
 /-- **Orbit measures are transported**: `ι_* μ` satisfies the defining conditions of the orbit
-measure of `ι O` iff `μ` satisfies those of `O`. `ι` carries the orbit `O` onto `ι O`, the
-adjoint action of `G_x(F)` to that of `G'_y(F)`, the Kirillov forms `b(·, [X, ·])` to
-`b'(·, [ι X, ·])`, complements of `𝔤_{x,X}` to complements of `𝔤'_{y, ι X}`, and the charts
-`Y ↦ e^Y X e^{-Y}` to the charts at `ι X` (`map_orbitMap`); the self-dual measures on the
-complements correspond (`isSelfDual_map_iff`, `isSelfDual_unique`); neighbourhoods of `0`
-correspond since `ι` is a linear homeomorphism of `𝔤_x(F)` onto `𝔤'_y(F)`.
-
-**Status: `sorry`** (transport of structure). -/
+measure of `ι O` iff `μ` satisfies those of `O`. `ι` carries the orbit `O` onto `ι O`
+(`linEquiv_mem_nilOrbitSet_iff`), the adjoint action of `G_x(F)` to that of `G'_y(F)`
+(`preimage_conjAd_image`), the Kirillov forms `b(·, [X, ·])` to `b'(·, [ι X, ·])`
+(`kirillovForm_linEquiv`), complements of `𝔤_{x,X}` to complements of `𝔤'_{y, ι X}`
+(`ker_ad_linEquiv`), and the charts `Y ↦ e^Y X e^{-Y}` to the charts at `ι X`
+(`preimage_orbitMap_image`; near `0` the chart stays in `𝔤_x`, `exists_nhds_expA_conj_mem`).
+The self-dual measures on the complements correspond (`selfDualMeasure_map`, which rests on the
+uniqueness `isSelfDual_unique`); neighbourhoods of `0` correspond since `ι` is a linear
+homeomorphism of `𝔤_x(F)` onto `𝔤'_y(F)`. -/
 theorem isOrbitMeasure_map_iff (ψ : NontrivialAddChar F)
     (O : NilOrbit (grpCentralizer G x) (lieCentralizer 𝔤 (x : A)))
     (μ : Measure ↥(lieCentralizer 𝔤 (x : A))) :
     IsOrbitMeasure (grpCentralizer G' y) (lieCentralizer 𝔤' (y : A')) b' ψ
         (ι.nilOrbitEquiv hG O) (μ.map ι.linEquiv) ↔
       IsOrbitMeasure (grpCentralizer G x) (lieCentralizer 𝔤 (x : A)) b ψ O μ := by
-  sorry
+  have hc := ι.continuous_linEquiv
+  have hc' := ι.continuous_linEquiv_symm
+  let h : ↥(lieCentralizer 𝔤 (x : A)) ≃ₜ ↥(lieCentralizer 𝔤' (y : A')) :=
+    ⟨ι.linEquiv.toEquiv, hc, hc'⟩
+  let em := h.toMeasurableEquiv
+  have hem : (em : ↥(lieCentralizer 𝔤 (x : A)) → ↥(lieCentralizer 𝔤' (y : A'))) = ι.linEquiv :=
+    rfl
+  have hmap : ∀ T, (μ.map ι.linEquiv) T = μ (ι.linEquiv ⁻¹' T) := fun T => by
+    rw [← hem]; exact em.map_apply T
+  have hnil : ι.linEquiv ⁻¹' nilOrbitSet (ι.nilOrbitEquiv hG O) = nilOrbitSet O :=
+    Set.ext fun X => ι.linEquiv_mem_nilOrbitSet_iff hG O X
+  -- near `0`, the chart `Y ↦ e^Y X e^{-Y}` stays in `𝔤_x`
+  obtain ⟨U₀, hU₀, hconj⟩ := exists_nhds_expA_conj_mem F (A := A)
+  have hstay : ∀ X Y : ↥(lieCentralizer 𝔤 (x : A)), (Y : A) ∈ U₀ →
+      orbitMap F (X : A) (Y : A) ∈ lieCentralizer 𝔤 (x : A) := fun X Y hY =>
+    hconj _ hY (lieCentralizer 𝔤 (x : A)).toSubmodule (fun r hr => by
+      have := (lieCentralizer 𝔤 (x : A)).lie_mem Y.2 hr
+      rwa [Ring.lie_def] at this) _ X.2
+  -- instances on subspaces of `𝔤_x`, `𝔤'_y`
+  haveI := t2Space_of_moduleTopology F A
+  haveI := t2Space_of_moduleTopology F A'
+  haveI := isModuleTopology_lieSubalgebra (lieCentralizer 𝔤 (x : A))
+  haveI := isModuleTopology_lieSubalgebra (lieCentralizer 𝔤' (y : A'))
+  haveI := isTopologicalAddGroup_lieSubalgebra (lieCentralizer 𝔤 (x : A))
+  haveI := isTopologicalAddGroup_lieSubalgebra (lieCentralizer 𝔤' (y : A'))
+  -- `ι` restricted to a subspace `C` of `𝔤_x` is a linear homeomorphism onto `ι C`
+  have hcont : ∀ C : Submodule F ↥(lieCentralizer 𝔤 (x : A)),
+      Continuous (ι.linEquiv.submoduleMap C) ∧ Continuous (ι.linEquiv.submoduleMap C).symm :=
+    fun C => ⟨continuous_induced_rng.2 (hc.comp continuous_subtype_val),
+      continuous_induced_rng.2 ((hc'.comp continuous_subtype_val).congr fun u => by
+        simp [LinearEquiv.submoduleMap_symm_apply])⟩
+  -- the self-dual measures for the Kirillov forms on `C` and `ι C` correspond
+  have hsd : ∀ (X : ↥(lieCentralizer 𝔤 (x : A))) (C : Submodule F ↥(lieCentralizer 𝔤 (x : A)))
+      (T : Set ↥(C.map (ι.linEquiv :
+        ↥(lieCentralizer 𝔤 (x : A)) →ₗ[F] ↥(lieCentralizer 𝔤' (y : A'))))),
+      selfDualMeasure ((kirillovForm (lieCentralizer 𝔤' (y : A')) b' (ι.linEquiv X)).compl₁₂
+          (C.map (ι.linEquiv : ↥(lieCentralizer 𝔤 (x : A)) →ₗ[F] ↥(lieCentralizer 𝔤' (y : A')))).subtype
+          (C.map (ι.linEquiv :
+            ↥(lieCentralizer 𝔤 (x : A)) →ₗ[F] ↥(lieCentralizer 𝔤' (y : A')))).subtype) ψ T =
+        selfDualMeasure ((kirillovForm (lieCentralizer 𝔤 (x : A)) b X).compl₁₂ C.subtype
+          C.subtype) ψ (ι.linEquiv.submoduleMap C ⁻¹' T) := by
+    intro X C T
+    haveI : IsModuleTopology F ↥(C.map (ι.linEquiv :
+        ↥(lieCentralizer 𝔤 (x : A)) →ₗ[F] ↥(lieCentralizer 𝔤' (y : A')))) :=
+      isModuleTopologyOfFiniteDimensional (𝕜 := F)
+    set eC := ι.linEquiv.submoduleMap C
+    obtain ⟨hC, hC'⟩ := hcont C
+    let hCm : ↥C ≃ₜ _ := ⟨eC.toEquiv, hC, hC'⟩
+    rw [selfDualMeasure_map eC hC hC'
+      (B := (kirillovForm (lieCentralizer 𝔤 (x : A)) b X).compl₁₂ C.subtype C.subtype) (fun u v => by
+        simp only [LinearMap.compl₁₂_apply, Submodule.subtype_apply, eC,
+          LinearEquiv.submoduleMap_apply]
+        exact ι.kirillovForm_linEquiv X u v) ψ]
+    exact hCm.toMeasurableEquiv.map_apply T
+  unfold IsOrbitMeasure
+  rw [hmap, Set.preimage_compl, hnil]
+  refine and_congr Iff.rfl (and_congr ⟨fun h2' => ?_, fun h2 => ?_⟩ ⟨fun h3' => ?_, fun h3 => ?_⟩)
+  · intro g hg S hS
+    have hS' : MeasurableSet (ι.linEquiv.symm ⁻¹' S) := hS.preimage hc'.measurable
+    have hpre : ι.linEquiv ⁻¹' (ι.linEquiv.symm ⁻¹' S) = S := by ext; simp
+    have := h2' (ι.grp g) (ι.grp_mapsTo hg) _ hS'
+    rwa [hmap, hmap, ι.preimage_conjAd_image hG hg, hpre] at this
+  · intro g' hg' S' hS'
+    obtain ⟨g, hg, rfl⟩ := ι.grp_surjOn hg'
+    rw [hmap, hmap, ι.preimage_conjAd_image hG hg]
+    exact h2 g hg _ (hS'.preimage hc.measurable)
+  · intro X hX C hCX
+    have hC' := Submodule.isCompl_map ι.linEquiv hCX
+    rw [← ι.ker_ad_linEquiv] at hC'
+    obtain ⟨U', hU', hUS'⟩ :=
+      h3' (ι.linEquiv X) ((ι.linEquiv_mem_nilOrbitSet_iff hG O X).mpr hX) _ hC'
+    haveI := IsModuleTopology.toContinuousAdd F A'
+    have hlin : Continuous ι.lin := IsModuleTopology.continuous_of_linearMap ι.lin
+    refine ⟨U₀ ∩ ι.lin ⁻¹' U', Filter.inter_mem hU₀
+      (hlin.continuousAt.preimage_mem_nhds (by rwa [map_zero])), fun S hS hSU => ?_⟩
+    have hSm : MeasurableSet (ι.linEquiv.submoduleMap C '' S) := by
+      rw [LinearEquiv.image_eq_preimage_symm]
+      exact hS.preimage (hcont C).2.measurable
+    have := hUS' (ι.linEquiv.submoduleMap C '' S) hSm (by
+      rintro _ ⟨Y, hY, rfl⟩
+      simpa using (hSU Y hY).2)
+    rwa [hmap, ι.preimage_orbitMap_image X C S (fun Y hY => hstay X Y (hSU Y hY).1), hsd,
+      Set.preimage_image_eq _ (ι.linEquiv.submoduleMap C).injective] at this
+  · intro X' hX' C' hC'
+    obtain ⟨X, rfl⟩ := ι.linEquiv.surjective X'
+    obtain ⟨C, rfl⟩ : ∃ C : Submodule F ↥(lieCentralizer 𝔤 (x : A)),
+        C.map (ι.linEquiv :
+          ↥(lieCentralizer 𝔤 (x : A)) →ₗ[F] ↥(lieCentralizer 𝔤' (y : A'))) = C' :=
+      ⟨_, Submodule.map_comap_eq_of_surjective ι.linEquiv.surjective C'⟩
+    rw [ι.ker_ad_linEquiv] at hC'
+    have hX : X ∈ nilOrbitSet O := (ι.linEquiv_mem_nilOrbitSet_iff hG O X).mp hX'
+    obtain ⟨U, hU, hUS⟩ :=
+      h3 X hX C ((Submodule.orderIsoMapComap ι.linEquiv).isCompl_iff.mpr hC')
+    obtain ⟨U', hU', hUU'⟩ := ι.exists_nhds_of_mem_nhds (Filter.inter_mem hU hU₀)
+    refine ⟨U', hU', fun S' hS' hS'U => ?_⟩
+    obtain ⟨S, rfl⟩ : ∃ S, ι.linEquiv.submoduleMap C '' S = S' :=
+      ⟨_, Set.image_preimage_eq S' (ι.linEquiv.submoduleMap C).surjective⟩
+    have hSU : ∀ Y ∈ S, ((Y : ↥(lieCentralizer 𝔤 (x : A))) : A) ∈ U ∩ U₀ := fun Y hY =>
+      hUU' _ (Y : ↥(lieCentralizer 𝔤 (x : A))).2 (by simpa using hS'U _ ⟨Y, hY, rfl⟩)
+    have hSm : MeasurableSet S := by
+      have := hS'.preimage (hcont C).1.measurable
+      rwa [Set.preimage_image_eq _ (ι.linEquiv.submoduleMap C).injective] at this
+    rw [hmap, ι.preimage_orbitMap_image X C S (fun Y hY => hstay X Y (hSU Y hY).2),
+      hUS S hSm (fun Y hY => (hSU Y hY).1), hsd,
+      Set.preimage_image_eq _ (ι.linEquiv.submoduleMap C).injective]
 
 /-- **The orbit measures correspond**, when orbit measures on `𝔤'_y` are unique (`hu'`). -/
 theorem orbitMeasure_map (ψ : NontrivialAddChar F)

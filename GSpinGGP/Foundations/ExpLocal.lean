@@ -15,6 +15,7 @@ import GSpinGGP.Foundations.LocalGroups
   commuting with `exp Y` (so the local inverse `L(c)` commutes with the commutant of `c`);
 * `eventually_map_expA`: `φ(e^X) = e^{φ X}` near `0` for linear maps preserving powers;
 * `stabSubalgebra`, `expA_ad_eq`: `e^{ad Y} = Ad(e^Y)` near `0` in `End(A)`;
+* `exists_nhds_expA_conj_mem`: `e^X r e^{-X}` stays in any `ad X`-stable subspace for `X` near `0`;
 * `exists_logA`: a local logarithm `log`, continuous at `1`, with `e^{log u} = u` near `1`
   (no logarithm series: the local inverse of `exp` on `End(F^d)` restricted to `A`).
 -/
@@ -270,5 +271,29 @@ theorem expA_ad_eq [TopologicalSpace (Module.End F B)] [IsModuleTopology F (Modu
     exact hrY.symm
 
 end Ad
+
+/-- **`e^X r e^{-X}` stays in an `ad X`-stable subspace** for `X` near `0`: in `End(A)`,
+`L_{e^X} R_{e^{-X}} = e^{ad X}` (`expA_ad_eq`), and `e^{ad X} ∈ F[ad X]` preserves `R`. -/
+lemma exists_nhds_expA_conj_mem :
+    ∃ U ∈ 𝓝 (0 : A), ∀ X ∈ U, ∀ R : Submodule F A, (∀ r ∈ R, X * r - r * X ∈ R) →
+      ∀ r ∈ R, expA F X * r * expA F (-X) ∈ R := by
+  letI : TopologicalSpace (Module.End F A) := moduleTopology F (Module.End F A)
+  haveI : IsModuleTopology F (Module.End F A) := ⟨rfl⟩
+  letI := isTopologicalRing_of_moduleTopology F A
+  letI := isTopologicalRing_of_moduleTopology F (Module.End F A)
+  obtain ⟨UB, hUB, hadj⟩ := exists_nhds_expA_mem_adjoin F (A := Module.End F A)
+  obtain ⟨U, hU, hAd⟩ := (expA_ad_eq F (B := A)).exists_mem
+  set ad : A →ₗ[F] Module.End F A := (Algebra.lmul F A).toLinearMap - mulRightₗ with had
+  have h3 : ad ⁻¹' UB ∈ 𝓝 (0 : A) :=
+    (IsModuleTopology.continuous_of_linearMap ad).continuousAt.preimage_mem_nhds
+      (by rwa [map_zero])
+  refine ⟨U ∩ ad ⁻¹' UB, inter_mem hU h3, fun X hX R hR r hr => ?_⟩
+  have hadR : ad X ∈ stabSubalgebra R := fun r hr => by
+    simpa [had, mulRightₗ_apply] using hR r hr
+  have hmem : expA F (ad X) ∈ stabSubalgebra R :=
+    Algebra.adjoin_le (Set.singleton_subset_iff.mpr hadR) (hadj _ hX.2)
+  have := hmem r hr
+  rw [show ad X = LinearMap.mulLeft F X - LinearMap.mulRight F X from rfl, hAd X hX.1] at this
+  simpa [mul_assoc] using this
 
 end GSpinGGP

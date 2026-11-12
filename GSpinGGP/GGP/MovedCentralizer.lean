@@ -53,30 +53,6 @@ namespace MovedPart
 variable {A : Type*} [Ring A] [Algebra F A] [Module.Finite F A] [TopologicalSpace A]
   [IsModuleTopology F A]
 
-/-- **`e^X r e^{-X}` stays in an `ad X`-stable subspace** for `X` near `0`: in `End(A)`,
-`L_{e^X} R_{e^{-X}} = e^{ad X}` (`expA_ad_eq`), and `e^{ad X} ∈ F[ad X]` preserves `R`. -/
-lemma exists_nhds_expA_conj_mem :
-    ∃ U ∈ 𝓝 (0 : A), ∀ X ∈ U, ∀ R : Submodule F A, (∀ r ∈ R, X * r - r * X ∈ R) →
-      ∀ r ∈ R, expA F X * r * expA F (-X) ∈ R := by
-  letI : TopologicalSpace (Module.End F A) := moduleTopology F (Module.End F A)
-  haveI : IsModuleTopology F (Module.End F A) := ⟨rfl⟩
-  letI := isTopologicalRing_of_moduleTopology F A
-  letI := isTopologicalRing_of_moduleTopology F (Module.End F A)
-  obtain ⟨UB, hUB, hadj⟩ := exists_nhds_expA_mem_adjoin F (A := Module.End F A)
-  obtain ⟨U, hU, hAd⟩ := (expA_ad_eq F (B := A)).exists_mem
-  set ad : A →ₗ[F] Module.End F A := (Algebra.lmul F A).toLinearMap - mulRightₗ with had
-  have h3 : ad ⁻¹' UB ∈ 𝓝 (0 : A) :=
-    (IsModuleTopology.continuous_of_linearMap ad).continuousAt.preimage_mem_nhds
-      (by rwa [map_zero])
-  refine ⟨U ∩ ad ⁻¹' UB, inter_mem hU h3, fun X hX R hR r hr => ?_⟩
-  have hadR : ad X ∈ stabSubalgebra R := fun r hr => by
-    simpa [had, mulRightₗ_apply] using hR r hr
-  have hmem : expA F (ad X) ∈ stabSubalgebra R :=
-    Algebra.adjoin_le (Set.singleton_subset_iff.mpr hadR) (hadj _ hX.2)
-  have := hmem r hr
-  rw [show ad X = LinearMap.mulLeft F X - LinearMap.mulRight F X from rfl, hAd X hX.1] at this
-  simpa [mul_assoc] using this
-
 /-- **`e^X ∈ GSpin(V)` for `X ∈ gspin(V)` near `0`**: `e^X` is a unit (inverse `e^{-X}`), even
 (`e^X ∈ F[X] ⊆ C⁺(V)`), and conjugation by `e^{±X}` preserves `ι(V)`, which is `ad X`-stable
 (`exists_nhds_expA_conj_mem`). -/

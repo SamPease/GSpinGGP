@@ -15,6 +15,10 @@ compatibilities, on the ambient algebras.
 
 * `CentralizerIso.nilOrbitEquiv`: the induced bijection `Nil(𝔤_x) ≃ Nil(𝔤'_y)`;
 * `CentralizerIso.nilOrbitEquiv_mem_nilReg_iff`: it maps `Nil_reg(𝔤_x)` onto `Nil_reg(𝔤'_y)`.
+* `CentralizerIso.linEquiv_lie`, `ker_ad_linEquiv`, `kirillovForm_linEquiv`,
+  `linEquiv_mem_nilOrbitSet_iff`, `preimage_conjAd_image`, `preimage_orbitMap_image`: the structure
+  entering orbit measures (bracket, centralizers, Kirillov forms, orbits, adjoint action, charts)
+  is transported.
 -/
 
 noncomputable section
@@ -193,6 +197,88 @@ def linEquiv : ↥(lieCentralizer 𝔤 (x : A)) ≃ₗ[F] ↥(lieCentralizer �
 
 @[simp] theorem linEquiv_apply (X : ↥(lieCentralizer 𝔤 (x : A))) :
     (ι.linEquiv X : A') = ι.lin X := rfl
+
+/-- `ι` respects the Lie bracket of `𝔤_x`. -/
+theorem linEquiv_lie (X Z : ↥(lieCentralizer 𝔤 (x : A))) :
+    ι.linEquiv ⁅X, Z⁆ = ⁅ι.linEquiv X, ι.linEquiv Z⁆ :=
+  Subtype.ext (by
+    simp only [linEquiv_apply, LieSubalgebra.coe_bracket, Ring.lie_def]
+    exact ι.map_commutator X X.2 Z Z.2)
+
+/-- `ι` maps the centralizer `ker(ad X)` of `X` in `𝔤_x` onto that of `ι X` in `𝔤'_y`. -/
+theorem ker_ad_linEquiv (X : ↥(lieCentralizer 𝔤 (x : A))) :
+    LinearMap.ker (LieAlgebra.ad F ↥(lieCentralizer 𝔤' (y : A')) (ι.linEquiv X)) =
+      (LinearMap.ker (LieAlgebra.ad F ↥(lieCentralizer 𝔤 (x : A)) X)).map
+        (ι.linEquiv : ↥(lieCentralizer 𝔤 (x : A)) →ₗ[F] ↥(lieCentralizer 𝔤' (y : A'))) := by
+  ext Z'
+  obtain ⟨Z, rfl⟩ := ι.linEquiv.surjective Z'
+  rw [Submodule.mem_map_equiv, LinearEquiv.symm_apply_apply, LinearMap.mem_ker,
+    LinearMap.mem_ker, LieAlgebra.ad_apply, LieAlgebra.ad_apply, ← ι.linEquiv_lie,
+    LinearEquiv.map_eq_zero_iff]
+
+/-- `ι` carries the Kirillov form `b(·, [X, ·])` on `𝔤_x` to `b'(·, [ι X, ·])` on `𝔤'_y`. -/
+theorem kirillovForm_linEquiv (X Y Z : ↥(lieCentralizer 𝔤 (x : A))) :
+    kirillovForm (lieCentralizer 𝔤' (y : A')) b' (ι.linEquiv X) (ι.linEquiv Y) (ι.linEquiv Z) =
+      kirillovForm (lieCentralizer 𝔤 (x : A)) b X Y Z := by
+  simp only [kirillovForm, LinearMap.compl₂_apply, LieAlgebra.ad_apply, ← ι.linEquiv_lie]
+  exact ι.map_bilin _ Y.2 _ (⁅X, Z⁆ : ↥(lieCentralizer 𝔤 (x : A))).2
+
+/-- `ι X` lies in the orbit `ι O` iff `X` lies in `O`. -/
+theorem linEquiv_mem_nilOrbitSet_iff (hG : ∀ g ∈ G, ∀ Y ∈ 𝔤, (g : A) * Y * (↑g⁻¹ : A) ∈ 𝔤)
+    (O : NilOrbit (grpCentralizer G x) (lieCentralizer 𝔤 (x : A)))
+    (X : ↥(lieCentralizer 𝔤 (x : A))) :
+    ι.linEquiv X ∈ nilOrbitSet (ι.nilOrbitEquiv hG O) ↔ X ∈ nilOrbitSet O := by
+  constructor
+  · rintro ⟨hn', hq'⟩
+    exact ⟨(ι.isNilpotent_iff X X.2).mp hn', (ι.nilOrbitMap_bijective hG).1 hq'⟩
+  · rintro ⟨hn, rfl⟩
+    exact ⟨(ι.isNilpotent_iff X X.2).mpr hn, rfl⟩
+
+/-- Conjugation by `g ∈ G_x(F)` on `𝔤_x` corresponds under `ι` to conjugation by `ι g` on
+`𝔤'_y`, as an identity of preimages. -/
+theorem preimage_conjAd_image (hG : ∀ g ∈ G, ∀ Y ∈ 𝔤, (g : A) * Y * (↑g⁻¹ : A) ∈ 𝔤)
+    {g : Aˣ} (hg : g ∈ grpCentralizer G x) (S' : Set ↥(lieCentralizer 𝔤' (y : A'))) :
+    ι.linEquiv ⁻¹' (Subtype.val ⁻¹' (conjAd F (ι.grp g) ⁻¹' (Subtype.val '' S'))) =
+      Subtype.val ⁻¹' (conjAd F g ⁻¹' (Subtype.val '' (ι.linEquiv ⁻¹' S'))) := by
+  ext Z
+  simp only [Set.mem_preimage, Set.mem_image]
+  have hZ : (g : A) * Z * (↑g⁻¹ : A) ∈ lieCentralizer 𝔤 (x : A) :=
+    conj_mem_lieCentralizer hG hg Z.2
+  have hc : conjAd F (ι.grp g) ((ι.linEquiv Z : ↥(lieCentralizer 𝔤' (y : A'))) : A') =
+      ι.lin ((g : A) * Z * (↑g⁻¹ : A)) := (ι.map_conj g hg Z Z.2).symm
+  have hc' : conjAd F g (Z : A) = (g : A) * Z * (↑g⁻¹ : A) := rfl
+  rw [hc, hc']
+  constructor
+  · rintro ⟨s', hs', he⟩
+    refine ⟨⟨_, hZ⟩, ?_, rfl⟩
+    convert hs'
+    exact Subtype.ext he.symm
+  · rintro ⟨s, hs, he⟩
+    exact ⟨_, hs, by rw [linEquiv_apply, he]⟩
+
+/-- `ι` carries the chart `Y ↦ e^Y X e^{-Y}` on a subspace `C ⊆ 𝔤_x` to the chart at `ι X` on
+`ι C`, as an identity of preimages, on sets `S` on which the chart stays in `𝔤_x`. -/
+theorem preimage_orbitMap_image (X : ↥(lieCentralizer 𝔤 (x : A)))
+    (C : Submodule F ↥(lieCentralizer 𝔤 (x : A))) (S : Set ↥C)
+    (hS : ∀ Y ∈ S, orbitMap F (X : A) ((Y : ↥(lieCentralizer 𝔤 (x : A))) : A) ∈
+      lieCentralizer 𝔤 (x : A)) :
+    ι.linEquiv ⁻¹' (Subtype.val ⁻¹'
+        ((fun Y' : ↥(C.map (ι.linEquiv :
+            ↥(lieCentralizer 𝔤 (x : A)) →ₗ[F] ↥(lieCentralizer 𝔤' (y : A')))) ↦
+          orbitMap F ((ι.linEquiv X : ↥(lieCentralizer 𝔤' (y : A'))) : A')
+            ((Y' : ↥(lieCentralizer 𝔤' (y : A'))) : A')) ''
+          (ι.linEquiv.submoduleMap C '' S))) =
+      Subtype.val ⁻¹' ((fun Y : ↥C ↦ orbitMap F (X : A) ((Y : ↥(lieCentralizer 𝔤 (x : A))) : A)) ''
+        S) := by
+  ext Z
+  simp only [Set.mem_preimage, Set.mem_image, exists_exists_and_eq_and,
+    LinearEquiv.submoduleMap_apply, linEquiv_apply]
+  constructor
+  · rintro ⟨Y, hY, he⟩
+    refine ⟨Y, hY, ι.bijOn.injOn (hS Y hY) Z.2 ?_⟩
+    rw [ι.map_orbitMap _ X.2 _ (Y : ↥(lieCentralizer 𝔤 (x : A))).2, he]
+  · rintro ⟨Y, hY, he⟩
+    exact ⟨Y, hY, by rw [← ι.map_orbitMap _ X.2 _ (Y : ↥(lieCentralizer 𝔤 (x : A))).2, he]⟩
 
 /-- **`ι⁻¹` is continuous at `0`**: for every neighbourhood `U` of `0` in `A` there is a
 neighbourhood `U'` of `0` in `A'` with `X ∈ U` whenever `X ∈ 𝔤_x` and `ι X ∈ U'` (finite
