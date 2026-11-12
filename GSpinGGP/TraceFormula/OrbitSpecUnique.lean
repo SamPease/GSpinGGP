@@ -370,6 +370,43 @@ theorem exists_isometry_conj_of_finrank_soCent_eq {Q : QuadraticForm F W} (hQ : 
 
 end FactorConj
 
+/-! ## Isometries fixing `U^⊥` -/
+
+section FixOrth
+
+variable {K : Type*} [Field K] [Invertible (2 : K)]
+variable {V : Type*} [AddCommGroup V] [Module K V]
+
+/-- An isometry fixing `U^⊥` pointwise preserves `U`, when `V = U ⊥ U^⊥` is nondegenerate. -/
+theorem isometry_mem_of_fix_orthogonal {Q : QuadraticForm K V} (hQ : IsNondeg Q)
+    {U : Submodule K V} (hc : IsCompl U ((bform Q).orthogonal U)) (g : Q.IsometryEquiv Q)
+    (hg : ∀ b ∈ (bform Q).orthogonal U, g b = b) {u : V} (hu : u ∈ U) : g u ∈ U := by
+  obtain ⟨a, ha, b, hb, hab⟩ := Submodule.mem_sup.1 (hc.sup_eq_top ▸ Submodule.mem_top (x := g u))
+  have hb0 : b = 0 := by
+    refine (isNondeg_iff Q).1 hQ b fun v => ?_
+    obtain ⟨a', ha', b', hb', rfl⟩ := Submodule.mem_sup.1 (hc.sup_eq_top ▸ Submodule.mem_top (x := v))
+    have h1 : bform Q b a' = 0 := by rw [bform_comm]; exact hb a' ha'
+    have h2 : bform Q (g u) b' = 0 := by
+      rw [← hg b' hb']
+      exact (bform_isometry g.toIsometry u b').trans (hb' u hu)
+    have h3 : bform Q a b' = 0 := hb' a ha
+    rw [← hab, map_add, LinearMap.add_apply, h3, zero_add] at h2
+    rw [map_add, h1, zero_add, h2]
+  rw [← hab, hb0, add_zero]; exact ha
+
+/-- An isometry fixing `U^⊥` pointwise and conjugating `N` to `N'` on `U` conjugates them on all
+of `V`, if `N` maps `U^⊥` into itself and `N = N'` there. -/
+theorem isometry_conj_of_fix_orthogonal {Q : QuadraticForm K V} {U : Submodule K V}
+    (hc : IsCompl U ((bform Q).orthogonal U)) (g : Q.IsometryEquiv Q)
+    (hg : ∀ b ∈ (bform Q).orthogonal U, g b = b) {N N' : Module.End K V}
+    (hU : ∀ u ∈ U, g (N u) = N' (g u))
+    (hB : ∀ b ∈ (bform Q).orthogonal U, N b ∈ (bform Q).orthogonal U ∧ N' b = N b) (v : V) :
+    g (N v) = N' (g v) := by
+  obtain ⟨a, ha, b, hb, rfl⟩ := Submodule.mem_sup.1 (hc.sup_eq_top ▸ Submodule.mem_top (x := v))
+  rw [map_add, map_add, map_add, map_add, hU a ha, hg b hb, hg _ (hB b hb).1, (hB b hb).2]
+
+end FixOrth
+
 namespace GGPData
 
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F] (d : GGPData F)
@@ -709,6 +746,131 @@ theorem exists_conj_of_isometries {X : CliffordAlgebra d.QW} (hX : X ∈ soSub d
     exact Prod.ext
       (conj_eq_of_specP_conj d.nondeg γ₁ hY.1 hY'.1 fun v => by rw [h₁]; exact hgWY v)
       (conj_eq_of_specP_conj d.nondeg_QV γ₂ hY.2 hY'.2 fun v => by rw [h₂]; exact hgVY v)
+
+/-! ## R4: uniqueness of the orbit -/
+
+theorem finrank_prod_top (U : Submodule F (Fin d.m → F)) :
+    finrank F ↥(U.prod (⊤ : Submodule F d.Z)) = finrank F U + (2 * d.r + 1) := by
+  rw [(Submodule.prodEquiv _ _).finrank_eq, Module.finrank_prod, finrank_top,
+    Module.finrank_fin_fun]
+
+/-- `ad Y` preserves `ker X` on `W` for `Y ∈ 𝔤⁰_X`. -/
+theorem mapsTo_ker_fst {X : CliffordAlgebra d.QW} (hX : X ∈ soSub d.QW) {Y : d.ambient}
+    (hY : Y ∈ lieCentralizer d.lieZero (d.diagLie X)) :
+    ∀ a ∈ LinearMap.ker (adV d.QW X), adV d.QW Y.1 a ∈ LinearMap.ker (adV d.QW X) := by
+  obtain ⟨⟨hY1, -⟩, hYc⟩ := mem_lieCentralizer.mp hY
+  have hc := adV_mul_comm_of_mul_comm hY1.1 hX.1 (congrArg Prod.fst hYc)
+  intro a ha
+  rw [LinearMap.mem_ker] at ha ⊢
+  rw [← Module.End.mul_apply, ← hc, Module.End.mul_apply, ha, map_zero]
+
+/-- `ad Y` preserves `ker X` on `V` for `Y ∈ 𝔤⁰_X`. -/
+theorem mapsTo_ker_snd {X : CliffordAlgebra d.QW} (hX : X ∈ soSub d.QW) {Y : d.ambient}
+    (hY : Y ∈ lieCentralizer d.lieZero (d.diagLie X)) :
+    ∀ a ∈ LinearMap.ker (adV d.QV (d.diagLie X).2),
+      adV d.QV Y.2 a ∈ LinearMap.ker (adV d.QV (d.diagLie X).2) := by
+  obtain ⟨⟨-, hY2⟩, hYc⟩ := mem_lieCentralizer.mp hY
+  have hc := adV_mul_comm_of_mul_comm hY2.1 (d.diagLie_mem_lieZero hX).2.1
+    (congrArg Prod.snd hYc)
+  intro a ha
+  rw [LinearMap.mem_ker] at ha ⊢
+  rw [← Module.End.mul_apply, ← hc, Module.End.mul_apply, ha, map_zero]
+
+/-- **Two regular nilpotent elements of `𝔤⁰_X` meeting Luo's recipe are `Z_G(X)`-conjugate.** -/
+theorem exists_conj_of_orbitSpecAt {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
+    {X : CliffordAlgebra d.QW} (hX : d.IsGammaEltLie (d.torusOf x) X) {Y Y' : d.ambient}
+    (hY : IsRegularNil (lieCentralizer d.lieZero (d.diagLie X)) Y)
+    (hY' : IsRegularNil (lieCentralizer d.lieZero (d.diagLie X)) Y')
+    (hYs : d.OrbitSpecAt (LinearMap.ker (adV d.QW X)) Y)
+    (hY's : d.OrbitSpecAt (LinearMap.ker (adV d.QW X)) Y') :
+    ∃ γ ∈ lieGrpCentralizer d.G (d.diagLie X),
+      ((γ : d.ambientˣ) : d.ambient) * Y * ((γ⁻¹ : d.ambientˣ) : d.ambient) = Y' := by
+  have hX0 : X ∈ soSub d.QW := hX.1.1
+  have hXV : (d.diagLie X).2 ∈ soSub d.QV := (d.diagLie_mem_lieZero hX0).2
+  have hc := d.isCompl_ker_adV hx hX
+  have hcV := d.isCompl_ker_adV_snd hx hX
+  obtain ⟨hY1, hY2⟩ := (mem_lieCentralizer.mp hY.1).1
+  obtain ⟨hY'1, hY'2⟩ := (mem_lieCentralizer.mp hY'.1).1
+  have hn1 : IsNilpotent (adV d.QW Y.1) := isNilpotent_adV hY1.1 (hY.2.1.map (RingHom.fst _ _))
+  have hn2 : IsNilpotent (adV d.QV Y.2) := isNilpotent_adV hY2.1 (hY.2.1.map (RingHom.snd _ _))
+  have hn'1 : IsNilpotent (adV d.QW Y'.1) :=
+    isNilpotent_adV hY'1.1 (hY'.2.1.map (RingHom.fst _ _))
+  have hn'2 : IsNilpotent (adV d.QV Y'.2) :=
+    isNilpotent_adV hY'2.1 (hY'.2.1.map (RingHom.snd _ _))
+  have hA := d.mapsTo_ker_fst hX0 hY.1
+  have hA' := d.mapsTo_ker_fst hX0 hY'.1
+  have hAV := d.mapsTo_ker_snd hX0 hY.1
+  have hAV' := d.mapsTo_ker_snd hX0 hY'.1
+  have hfin := d.finrank_prod_top (LinearMap.ker (adV d.QW X))
+  -- the factor `W' = ker X`, form `−ν`
+  obtain ⟨gW, hgW1, hgWB, hgWU⟩ := exists_isometry_conj_of_finrank_soCent_eq d.nondeg hc
+    (neg_ne_zero.2 (Units.ne_zero d.ν)) (bform_adV hY1.1) (bform_adV hY'1.1) hn1 hn'1 hA hA'
+    (d.finrank_soCent_ker_fst_eq hx hX hY hA) (d.finrank_soCent_ker_fst_eq hx hX hY' hA')
+    fun he h4 => by
+      have hnot : ¬ (Even (finrank F ↥((LinearMap.ker (adV d.QW X)).prod
+          (⊤ : Submodule F d.Z))) ∧ 4 ≤ finrank F ↥((LinearMap.ker (adV d.QW X)).prod
+          (⊤ : Submodule F d.Z))) := fun h => by
+        obtain ⟨k, hk⟩ := he
+        obtain ⟨j, hj⟩ := h.1
+        omega
+      unfold OrbitSpecAt at hYs hY's
+      simp only [hnot, he, h4, and_self, ↓reduceIte] at hYs hY's
+      exact ⟨hYs, hY's⟩
+  -- the factor `V' = W' ⊕ Z`, form `ν`
+  obtain ⟨gV, hgV1, hgVB, hgVU⟩ := exists_isometry_conj_of_finrank_soCent_eq d.nondeg_QV hcV
+    (Units.ne_zero d.ν) (bform_adV hY2.1) (bform_adV hY'2.1) hn2 hn'2 hAV hAV'
+    (d.finrank_soCent_ker_snd_eq hx hX hY hAV) (d.finrank_soCent_ker_snd_eq hx hX hY' hAV')
+    fun he h4 => by
+      rw [d.ker_adV_diagLie_snd hX0] at he h4 ⊢
+      unfold OrbitSpecAt at hYs hY's
+      simp only [he, h4, and_self, ↓reduceIte] at hYs hY's
+      exact ⟨hYs, hY's⟩
+  have hB1 := d.adV_fst_eq_zero_of_isNilpotent hx hX hY.1 hY.2.1
+  have hB1' := d.adV_fst_eq_zero_of_isNilpotent hx hX hY'.1 hY'.2.1
+  have hB2 := d.adV_snd_eq_zero_of_isNilpotent hx hX hY.1 hY.2.1
+  have hB2' := d.adV_snd_eq_zero_of_isNilpotent hx hX hY'.1 hY'.2.1
+  have hXB : ∀ b ∈ (bform d.QW).orthogonal (LinearMap.ker (adV d.QW X)),
+      adV d.QW X b ∈ (bform d.QW).orthogonal (LinearMap.ker (adV d.QW X)) :=
+    fun b hb => mapsTo_orthogonal_of_skew (bform_adV hX0.1)
+      (fun a ha => by simp only [SetLike.mem_coe, LinearMap.mem_ker] at ha ⊢; rw [ha, map_zero])
+      hb
+  have hXVB : ∀ b ∈ (bform d.QV).orthogonal (LinearMap.ker (adV d.QV (d.diagLie X).2)),
+      adV d.QV (d.diagLie X).2 b ∈
+        (bform d.QV).orthogonal (LinearMap.ker (adV d.QV (d.diagLie X).2)) :=
+    fun b hb => mapsTo_orthogonal_of_skew (bform_adV hXV.1)
+      (fun a ha => by simp only [SetLike.mem_coe, LinearMap.mem_ker] at ha ⊢; rw [ha, map_zero])
+      hb
+  refine d.exists_conj_of_isometries hX0 hY.1.1 hY'.1.1 gW gV hgW1 hgV1 ?_ ?_ ?_ ?_
+  · refine isometry_conj_of_fix_orthogonal hc gW hgWB (fun u hu => ?_) fun b hb => ⟨hXB b hb, rfl⟩
+    rw [LinearMap.mem_ker.mp hu, map_zero,
+      LinearMap.mem_ker.mp (isometry_mem_of_fix_orthogonal d.nondeg hc gW hgWB hu)]
+  · refine isometry_conj_of_fix_orthogonal hcV gV hgVB (fun u hu => ?_) fun b hb => ⟨hXVB b hb, rfl⟩
+    rw [LinearMap.mem_ker.mp hu, map_zero,
+      LinearMap.mem_ker.mp (isometry_mem_of_fix_orthogonal d.nondeg_QV hcV gV hgVB hu)]
+  · exact isometry_conj_of_fix_orthogonal hc gW hgWB hgWU fun b hb => by
+      rw [hB1 b hb, hB1' b hb]; exact ⟨zero_mem _, rfl⟩
+  · exact isometry_conj_of_fix_orthogonal hcV gV hgVB hgVU fun b hb => by
+      rw [hB2 b hb, hB2' b hb]; exact ⟨zero_mem _, rfl⟩
+
+/-- **At most one regular nilpotent orbit of `𝔤⁰_X` meets Luo's recipe** (Luo §7.1;
+Waldspurger 2010 §7.1), for `X ∈ 𝔱⁰_♮`: two regular nilpotent orbits of `Z_G(X)` on `𝔤⁰_X`
+containing elements `Y`, `Y'` with `OrbitSpecAt (ker X)` coincide (`exists_conj_of_orbitSpecAt`).
+This is the hypothesis `horb` of `cTheta_toSO_of_transport`. -/
+theorem orbitSpecAt_orbit_unique (T : d.GammaTorus) {X : CliffordAlgebra d.QW}
+    (hX : d.IsGammaEltLie T.1 X) :
+    ∀ O O' : NilOrbit (lieGrpCentralizer d.G (d.diagLie X))
+        (lieCentralizer d.lieZero (d.diagLie X)), O ∈ NilReg _ _ → O' ∈ NilReg _ _ →
+      (∃ Y ∈ nilOrbitSet O, d.OrbitSpecAt (LinearMap.ker (adV d.QW X)) (Y : d.ambient)) →
+      (∃ Y ∈ nilOrbitSet O', d.OrbitSpecAt (LinearMap.ker (adV d.QW X)) (Y : d.ambient)) →
+      O = O' := by
+  obtain ⟨_, x, hx, rfl⟩ := T
+  rintro O O' hO hO' ⟨Y, hYO, hYs⟩ ⟨Y', hY'O, hY's⟩
+  obtain ⟨γ, hγ, hγY⟩ := d.exists_conj_of_orbitSpecAt hx hX
+    (d.isRegularNil_of_mem_nilOrbitSet hO hYO) (d.isRegularNil_of_mem_nilOrbitSet hO' hY'O)
+    hYs hY's
+  obtain ⟨hn, rfl⟩ := hYO
+  obtain ⟨hn', rfl⟩ := hY'O
+  exact Quotient.sound ⟨γ, hγ, hγY⟩
 
 end GGPData
 
