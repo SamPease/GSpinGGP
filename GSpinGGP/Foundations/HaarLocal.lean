@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import Mathlib
+import TauCeti.MeasureTheory.Group.Conjugation
 
 /-!
 # Haar measures are determined near the identity
@@ -14,6 +15,8 @@ import Mathlib
 * `Measure.measure_eq_card_mul_of_vadd`, `Measure.eq_of_forall_vadd_coset`: two finite measures
   carried by a compact open subgroup `L₀`, with the same mass on `L₀`, and each giving every coset
   inside `L₀` of a basis of open subgroups `Lₙ` the mass of `Lₙ`, are equal.
+* `Measure.map_conj_map_mulEquiv`: the push-forward of a bi-invariant measure along a group
+  isomorphism is conjugation invariant (Tau Ceti `measurePreserving_conj`).
 -/
 
 open MeasureTheory Topology Filter
@@ -182,5 +185,16 @@ theorem eq_of_forall_vadd_coset (L : ℕ → AddSubgroup V) (hanti : Antitone L)
     rw [← measure_add_measure_compl hm, ← measure_add_measure_compl hm, hμ0, hν0, h0]
 
 end CosetMeasure
+/-- **The push-forward of a bi-invariant measure along a group isomorphism is conjugation
+invariant** (Tau Ceti `measurePreserving_conj`). -/
+theorem map_conj_map_mulEquiv {G P : Type*} [Group G] [Group P] [MeasurableSpace G]
+    [MeasurableMul G] [MeasurableSpace P] [MeasurableMul P] (μ : Measure G)
+    [μ.IsMulLeftInvariant] [μ.IsMulRightInvariant] (e : G ≃* P) (he : Measurable e) (u : P) :
+    (μ.map e).map (fun h => u⁻¹ * h * u) = μ.map e := by
+  set h₀ := (e.symm u)⁻¹
+  have hc : (fun h => u⁻¹ * h * u) ∘ e = e ∘ (fun q => h₀ * q * h₀⁻¹) := by
+    funext q; simp [h₀, map_mul, map_inv]
+  rw [Measure.map_map (by fun_prop) he, hc, ← Measure.map_map he (by fun_prop),
+    (TauCeti.measurePreserving_conj μ h₀).map_eq]
 
 end MeasureTheory.Measure

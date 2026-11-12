@@ -1965,7 +1965,7 @@ semidirect-product decomposition of Haar measure: the modular character `Δ` is 
 `ℝ_{>0}`, invariant under continuous automorphisms; conjugation by an anisotropic `w ∈ W` is a
 continuous involutive automorphism of `H/A_{G,H}` mapping `(uw, uw)` to its inverse modulo
 `A_{G,H}`, so `Δ(uw, uw) = 1`; the scalars lie in `A_{G,H}`; and scalars and products `u w`
-generate `GSpin(W)` (`closure_scalarGSpin_gspinPair`, proved from the Cartan–Dieudonné axiom
+generate `GSpin(W)` (`closure_scalarGSpin_gspinPair`, from the Cartan–Dieudonné theorem
 `cartan_dieudonne_even`). -/
 theorem map_mul_diag_haar_HmodAGH (a : GSpin d.QW) :
     Measure.map (· * (QuotientGroup.mk ⟨d.diag a, d.diag_mem_H a⟩ : d.HmodAGH)) Measure.haar =

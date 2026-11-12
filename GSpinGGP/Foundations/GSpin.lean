@@ -2529,6 +2529,30 @@ theorem isNilpotent_mul_sub_one_of_flagUnipSO_of_nondeg [Module.Finite K V] (hQ 
   exact isNilpotent_of_mem_wtFil_one F.isWtFil
     (add_mem (add_mem (wtFil_anti (by norm_num) (mul_mem_wtFil h1 h2)) h1) h2)
 
+/-- **Every element of `K^× · N_F` has a scalar multiple in `N_F`**: for `g` with `P(g)` trivial on
+the graded pieces of the flag, `g − c` has positive weight for some `c ∈ K`
+(`exists_sub_algebraMap_mem_wtFil_of_raisesFil`), `c ≠ 0` since `g` is a unit and positive weight
+is nilpotent, so `c⁻¹ g − 1` is nilpotent. -/
+theorem exists_smul_sub_one_isNilpotent_of_mem_flagUnipSO [Module.Finite K V] (hQ : IsNondeg Q)
+    {g : GSpin Q} (hg : g ∈ flagUnipSO F) :
+    ∃ c : Kˣ, IsNilpotent ((c : K) • (((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) - 1) := by
+  obtain ⟨c, hc⟩ := exists_sub_algebraMap_mem_wtFil_of_raisesFil (F := F) hQ (g := g)
+    (fun w v hv => by simpa using F.specP_sub_mem_flagWt hg w v hv)
+  have hnil := isNilpotent_of_mem_wtFil_one F.isWtFil hc
+  have hc0 : c ≠ 0 := by
+    rintro rfl
+    rw [map_zero, sub_zero] at hnil
+    exact (Units.isUnit _).not_isNilpotent hnil
+  refine ⟨Units.mk0 c⁻¹ (inv_ne_zero hc0), ?_⟩
+  have e : ((Units.mk0 c⁻¹ (inv_ne_zero hc0) : Kˣ) : K) •
+      (((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) - 1 =
+      c⁻¹ • ((((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) - algebraMap K _ c) := by
+    rw [Units.val_mk0, smul_sub, Algebra.algebraMap_eq_smul_one, smul_smul, inv_mul_cancel₀ hc0,
+      one_smul]
+  rw [e]
+  exact hnil.smul _
+
+
 end FlagUnipLift
 
 section Degenerate
