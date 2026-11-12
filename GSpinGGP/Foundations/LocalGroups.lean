@@ -383,6 +383,15 @@ theorem isSS_zero : IsSS F (0 : A) := by
 
 variable {F}
 
+/-- An element annihilated by a squarefree polynomial is semisimple. -/
+theorem isSS_of_aeval_eq_zero {x : A} {p : Polynomial F} (hp : Squarefree p)
+    (h : Polynomial.aeval x p = 0) : IsSS F x := by
+  refine Module.End.isSemisimple_of_squarefree_aeval_eq_zero hp ?_
+  have := Polynomial.aeval_algHom_apply (Algebra.lmul F A) x p
+  rw [h, map_zero] at this
+  rw [← this]
+  rfl
+
 /-- The centralizer `𝔤_x = {X ∈ 𝔤 | xX = Xx}`. For a unit `x` this is the Lie algebra
 `Lie(G_x)` of the centralizer (fixed points of `Ad x`); for `x = X ∈ 𝔤` it is `Z_𝔤(X)`
 (Thesis §2.1). -/
