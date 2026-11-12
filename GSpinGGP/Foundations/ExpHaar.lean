@@ -250,6 +250,26 @@ theorem exists_expA_isometry {U : Set A} (hU : U ∈ 𝓝 (0 : A)) :
     rw [he, expA_zero_eq_one, sub_zero] at this
     rw [← this]; exact hu
 
+/-- `lmulPi` of a unit, as a unit of `End(F^d)`. -/
+def lmulPiUnit (u : Aˣ) : (VA →L[F] VA)ˣ :=
+  ⟨lmulPi F u, lmulPi F ↑u⁻¹, by rw [← lmulPi_mul, Units.mul_inv, lmulPi_one],
+    by rw [← lmulPi_mul, Units.inv_mul, lmulPi_one]⟩
+
+include F in
+/-- **`Aˣ → A` is a topological embedding**: inversion is continuous on the units of `A` (it is
+`Ring.inverse` of `End(F^d)`, transported along `lmulPi`). -/
+theorem isEmbedding_units_val : Topology.IsEmbedding (Units.val : Aˣ → A) := by
+  refine Units.isEmbedding_val_mk' (f := fun a => lmulPiInv F (Ring.inverse (lmulPi F a)))
+    ?_ fun u => ?_
+  · rintro _ ⟨u, rfl⟩
+    have h1 : ContinuousAt (fun a : A => Ring.inverse (lmulPi F a)) (u : A) :=
+      ContinuousAt.comp (f := lmulPi F) (x := (u : A)) (g := Ring.inverse)
+        (NormedRing.inverse_continuousAt (lmulPiUnit F u)) (continuous_lmulPi F).continuousAt
+    exact ((lmulPiInv F).continuous.continuousAt.comp h1).continuousWithinAt
+  · change lmulPiInv F (Ring.inverse ((lmulPiUnit F u : (VA →L[F] VA)ˣ) : VA →L[F] VA)) = _
+    rw [Ring.inverse_unit]
+    exact lmulPiInv_lmulPi F _
+
 end ALevel
 
 
@@ -838,7 +858,7 @@ theorem exists_isAddHaarMeasure_eq_expA_image
   -- the pull-back `ν` of `μK` by the chart
   haveI : CompactSpace L0 := isCompact_iff_compactSpace.mp hcpt'
   let fL : L0 → 𝓗 ⧸ Z := fun X => Φ X
-  have hfc : Continuous fL := hcont'.restrict
+  have hfc : Continuous fL := hcont'.domRestrict
   have hfi : Function.Injective fL := fun X Y h => Subtype.ext (hinj' X.2 Y.2 h)
   have hfe : MeasurableEmbedding fL := (hfc.isClosedEmbedding hfi).measurableEmbedding
   set ν : Measure 𝔤 := Measure.map Subtype.val (Measure.comap fL μK) with hνdef
