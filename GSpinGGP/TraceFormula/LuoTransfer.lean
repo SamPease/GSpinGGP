@@ -28,8 +28,8 @@ The identification is own work, stated step by step (most steps are `sorry` here
 * (L3) `muG`: the push-forward of `Measure.haar` on `G(F)/A_G(F)` to `Ḡ(F)`, a Haar measure
   (`muG_isHaarMeasure`, proved);
 * (L4) `exists_JLie_transfer`: `J^Lie` of `d` is Luo's `J^Lie` for compatible measures;
-* (L5) `isThetaFLie_of_SO`: a `θ` representing the orbital pairing on `so(W) ⊕ so(V)` gives one on
-  `𝔤⁰`;
+* (L5) `isThetaFLie_of_SO` (proved): a `θ` representing the orbital pairing on `so(W) ⊕ so(V)`
+  gives one on `𝔤⁰`;
 * `isThetaFLie_eqOn_regular`: `θ_f` is unique on `𝔤⁰_reg`;
 * (L6, L7) `cTheta_toSO`: the germs `c_{θ,O_X}(X)` agree (trace form vs `bilin`, `Z_G(X)` vs
   `Ḡ_X`, the orbit choice `orbitChoiceLie` vs Luo's and Waldspurger's `O_{±ν₀}`);
@@ -780,7 +780,9 @@ regular set and represents the orbital pairing of `f ∘ ad⁻¹` for `muG`, the
 the orbital pairing of `f` on `𝔤⁰` (`IsThetaFLie`).  Ingredients: `ad` carries `measLie0` (self-dual
 for `bilin`) to a positive multiple `c` of the self-dual measure for the trace form (both are Haar
 measures), which multiplies both sides of the identity; `ad(gXg⁻¹) = P(g) ad(X) P(g)⁻¹`; the
-regular sets correspond; change of variables along `G(F)/A_G(F) ≃ Ḡ(F)`.  Not proved here. -/
+regular sets correspond (`isRegularSS_toSOLin`); change of variables along `G(F)/A_G(F) ≃ Ḡ(F)`
+(`exists_continuousMulEquiv_toGbar`).  The constant `c` need not be computed: both sides acquire
+the same factor. -/
 theorem isThetaFLie_of_SO (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
     {f : ↥d.lieZero → ℂ} (hf : d.IsLieScusp f) {θ : ↥d.luoOf.lie → ℂ}
     (h1 : LocallyIntegrable θ (d.luoOf.measLie ψ))
