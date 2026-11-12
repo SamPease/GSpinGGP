@@ -60,6 +60,7 @@ import GSpinGGP.TraceFormula.LuoGamma
 import GSpinGGP.TraceFormula.LuoWeyl
 import GSpinGGP.TraceFormula.LuoClass
 import GSpinGGP.TraceFormula.LuoTorus
+import GSpinGGP.TraceFormula.LuoJLie
 import GSpinGGP.Literature.Kottwitz
 import GSpinGGP.Literature.KottwitzClay
 import GSpinGGP.Literature.Kottwitz1986

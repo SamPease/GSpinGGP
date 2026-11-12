@@ -2,7 +2,7 @@
 Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import GSpinGGP.TraceFormula.LuoGamma
+import GSpinGGP.TraceFormula.LuoTorus
 import GSpinGGP.TraceFormula.SOLieFacts
 
 /-!
@@ -440,6 +440,110 @@ theorem exists_weil_Hbar (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) :
     refine Eq.trans ?_ hI.symm
     refine integral_congr_ae (Eventually.of_forall fun q => ?_)
     exact ((congrArg K (congrFun he _)).trans (hK _)).symm
+
+/-! ## `𝔥⁰ ≃ 𝔥 = so(W) ⊕ 𝔫` -/
+
+/-- **`ad` carries `𝔫_F` onto Luo's `𝔫`**: for `Z ∈ so_Cliff(V)`, `ad Z ∈ 𝔫` iff `Z ∈ 𝔫_F`
+(the flags agree, `luoOf_flagSub`). -/
+theorem adV_mem_lieN_iff {Z : CliffordAlgebra d.QV} (hZ : Z ∈ soSub d.QV) :
+    adV d.QV Z ∈ d.luoOf.lieN ↔ Z ∈ lieFlagUnip d.flag := by
+  have hsub : ∀ (k : ℕ) (hk : k ≤ d.r) (v : d.V),
+      v ∈ d.luoOf.flagSub k ↔ v ∈ d.flag.sub ⟨k, Nat.lt_succ_of_le hk⟩ := fun k hk v => by
+    rw [d.luoOf_flagSub hk]; rfl
+  have horth : ∀ v : d.V, v ∈ (bform d.luoOf.QV).orthogonal (d.luoOf.flagSub d.luoOf.r) ↔
+      v ∈ (bform d.QV).orthogonal d.flag.top := fun v => by
+    show v ∈ (bform d.QV).orthogonal (d.luoOf.flagSub d.r) ↔ _
+    rw [d.luoOf_flagSub_r]
+  constructor
+  · rintro ⟨-, h1, h2⟩
+    refine ⟨hZ, fun i (v : d.V) hv => ?_, fun (v : d.V) hv => ?_⟩
+    · exact (hsub i i.2.le _).1 (h1 i i.2 v ((hsub (i + 1) i.2 v).2 hv))
+    · exact (hsub d.r le_rfl _).1 (h2 v ((horth v).2 hv))
+  · rintro ⟨-, h1, h2⟩
+    refine ⟨adV_mem_skewAdjoint hZ.1, fun k hk (v : d.V) hv => ?_, fun (v : d.V) hv => ?_⟩
+    · exact (hsub k hk.le _).2 (h1 ⟨k, hk⟩ v ((hsub (k + 1) hk v).1 hv))
+    · exact (hsub d.r le_rfl _).2 (h2 v ((horth v).1 hv))
+
+/-- **`ad` carries `𝔥⁰` onto `𝔥 = so(W) ⊕ 𝔫`**: for `X ∈ 𝔤⁰`,
+`ad X_V − (ad X_W ⊕ 0) = ad (X_V − X_W)` (`toSOLin_diagLie`), and `adV_mem_lieN_iff`. -/
+theorem toSOLin_mem_lieH_iff {X : d.ambient} (hX : X ∈ d.lieZero) :
+    d.toSOLin X ∈ d.luoOf.lieH ↔ X ∈ d.lieH0 := by
+  have hW : X.1 ∈ gspin d.QW := hX.1.1
+  have hdiag : d.luoOf.extLie (adV d.QW X.1) = adV d.QV (d.diagLie X.1).2 :=
+    (congrArg d.luoOf.sndA (d.toSOLin_diagLie hW)).symm
+  have hZ : X.2 - (d.diagLie X.1).2 ∈ soSub d.QV :=
+    sub_mem hX.2 (map_mem_soSub d.nondeg _ hX.1)
+  have e : d.luoOf.sndA (d.toSOLin X) - d.luoOf.extLie (d.luoOf.fstA (d.toSOLin X)) =
+      adV d.QV (X.2 - (d.diagLie X.1).2) := by
+    rw [sndA_toSOLin, fstA_toSOLin, hdiag, map_sub]
+    rfl
+  constructor
+  · rintro ⟨-, hN⟩
+    rw [e] at hN
+    exact ⟨hX, (d.adV_mem_lieN_iff hZ).1 hN⟩
+  · rintro ⟨-, hN⟩
+    refine ⟨d.toSO_mem ⟨X, hX⟩, ?_⟩
+    rw [e]
+    exact (d.adV_mem_lieN_iff hZ).2 hN
+
+/-- `ad : 𝔥⁰ ≃ 𝔥` as a linear equivalence. -/
+def toSOH : ↥d.lieH0 ≃ₗ[F] ↥d.luoOf.lieH where
+  toFun X := ⟨d.toSOLin X, (d.toSOLin_mem_lieH_iff (d.lieH0_le_lie0 X.2)).2 X.2⟩
+  map_add' X Y := Subtype.ext (map_add d.toSOLin _ _)
+  map_smul' c X := Subtype.ext (map_smul d.toSOLin _ _)
+  invFun Y := ⟨(d.toSO.symm ⟨Y, Y.2.1⟩ : d.ambient), (d.toSOLin_mem_lieH_iff
+      (d.toSO.symm ⟨Y, Y.2.1⟩).2).1 (by rw [toSOLin_toSO_symm]; exact Y.2)⟩
+  left_inv X := Subtype.ext <| by
+    have h := d.toSO.symm_apply_apply ⟨X, d.lieH0_le_lie0 X.2⟩
+    exact (congrArg Subtype.val h : _)
+  right_inv Y := Subtype.ext (d.toSOLin_toSO_symm ⟨Y, Y.2.1⟩)
+
+@[simp] theorem coe_toSOH (X : ↥d.lieH0) : (d.toSOH X : d.luoOf.Amb) = d.toSOLin X := rfl
+
+/-- `ad : 𝔥⁰ ≃ 𝔥` is a homeomorphism (finite dimension). -/
+def toSOHCLE : ↥d.lieH0 ≃L[F] ↥d.luoOf.lieH :=
+  haveI := t2Space_of_moduleTopology F d.ambient
+  haveI := isTopologicalRing_of_moduleTopology F d.ambient
+  haveI := IsModuleTopology.toContinuousSMul F d.ambient
+  haveI := t2Space_of_moduleTopology F d.luoOf.Amb
+  haveI := isTopologicalRing_of_moduleTopology F d.luoOf.Amb
+  haveI := IsModuleTopology.toContinuousSMul F d.luoOf.Amb
+  d.toSOH.toContinuousLinearEquiv
+
+@[simp] theorem coe_toSOHCLE (X : ↥d.lieH0) :
+    ((d.toSOHCLE X : ↥d.luoOf.lieH) : d.luoOf.Amb) = d.toSOLin X := rfl
+
+section Kernel
+
+variable (ψ : NontrivialAddChar F)
+
+/-- `extFn (f ∘ toSO⁻¹)` at `ad Z` is `f Z`. -/
+theorem extFn_toSOLin (f : ↥d.lieZero → ℂ) (Z : ↥d.lieZero) :
+    d.luoOf.extFn (f ∘ d.toSO.symm) (d.toSOLin Z) = f Z := by
+  unfold LuoDatum.extFn
+  rw [dif_pos (d.toSO_mem Z)]
+  simp only [Function.comp_apply]
+  congr 1
+  exact d.toSO.symm_apply_eq.2 (Subtype.ext rfl)
+
+/-- **The kernels of `J^Lie` agree at matched points**: with `μ_𝔥 = ad_* dX`,
+`K^Lie_Luo(f ∘ ad⁻¹, P(g)) = K^Lie(f, g)` (change of variables `ad : 𝔥⁰ ≃ 𝔥`;
+`ad(g⁻¹ X g) = P(g)⁻¹ ad(X) P(g)`, `toSOLin_adLie0_inv`; `λ ∘ ad = λ`, `lam_toSO`). -/
+theorem kernelLie_toGbar (μ : Measure ↥d.lieH0) (f : ↥d.lieZero → ℂ) (g : ↥d.G) :
+    d.luoOf.kernelLie ψ (μ.map d.toSOHCLE) (f ∘ d.toSO.symm) (d.toGbar g) =
+      ∫ X : ↥d.lieH0, f (d.adLie0 g⁻¹ (d.lieH0Incl X)) * d.xiLie ψ (X : d.ambient) ∂μ := by
+  unfold LuoDatum.kernelLie
+  have hme : MeasurableEmbedding (d.toSOHCLE : ↥d.lieH0 → ↥d.luoOf.lieH) :=
+    d.toSOHCLE.toHomeomorph.measurableEmbedding
+  rw [hme.integral_map]
+  refine integral_congr_ae (Eventually.of_forall fun X => ?_)
+  have h1 := d.toSOLin_adLie0_inv g (d.lieH0Incl X)
+  change d.luoOf.extFn (f ∘ d.toSO.symm) (d.luoOf.conjInv (d.toGbar g)
+      (d.toSOLin (d.lieH0Incl X : d.ambient))) * ψ (d.luoOf.lam (d.toSOLin X)) =
+    f (d.adLie0 g⁻¹ (d.lieH0Incl X)) * ψ (d.lamLie X)
+  rw [← h1, d.extFn_toSOLin, ← d.lam_toSO]
+
+end Kernel
 
 end GGPData
 
