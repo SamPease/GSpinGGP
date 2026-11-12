@@ -1981,8 +1981,7 @@ translations preserving Haar measure form a monoid (`map_mul_right_mul_eq`).  Tr
 `(1, n)` is proved (`map_mul_inr_haar_HmodAGH`: powers of a unipotent element are bounded, and the
 modular character is trivial on compact subgroups); translation by `(a, a)` is
 `map_mul_diag_haar_HmodAGH` (an outer involution inverts the generators `u w` of `GSpin(W)`; it
-rests on `closure_scalarGSpin_gspinPair`, from the Cartan–Dieudonné theorem
-`cartan_dieudonne_even`). -/
+rests on `closure_scalarGSpin_gspinPair`, proved from the theorem `cartan_dieudonne_even`). -/
 theorem isMulRightInvariant_haar_HmodAGH :
     (Measure.haar : Measure d.HmodAGH).IsMulRightInvariant := by
   refine ⟨fun q => ?_⟩

@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Literature.Kottwitz1986
+import GSpinGGP.GGP.GaloisTorus
 import GSpinGGP.GGP.TwistDescent
 import GSpinGGP.GGP.TwistPlane
 
@@ -13,6 +14,7 @@ import GSpinGGP.GGP.TwistPlane
   lies in `(SO(W)_{W'_x})(F̄) = fixerBar d x` (lift through `P`, `gspin_specP_surjective_SO`).
 * `isTwistBy_conj`: changing a twisting cocycle `c` to `h⁻¹ c σ(h)` with `h ∈ SO(W)(F̄)` keeps
   `IsTwistBy`.
+* `galGL_mem_fixerBar`: `(SO(W)_{W'_x})(F̄) = fixerBar d x` is Galois-stable.
 * `exists_isTwistBy_torusBar_of_fixerBar`: a twist of `W` by a cocycle in `fixerBar d x` is also a
   twist by a cocycle in `S_x(F̄)`, for `x ∈ Γ(G,H)` (Kottwitz 1986, Lemma 10.2,
   `exists_rel_torusBar_of_fixerBar`).
@@ -193,5 +195,20 @@ theorem exists_isTwistBy_torusBar_of_fixerBar (d : GGPData F) {x : ↥(GSpin d.Q
   exact ha σ
 
 end GGPData
+
+section GaloisStable
+
+variable {F : Type} [NontriviallyNormedField F] [PAdicField F] {d : GGPData F}
+
+/-- **`(SO(W)_{W'_x})(F̄)` is Galois-stable**: `σ` fixes `W'_x ⊗ F̄` (it is defined over `F`) and
+commutes with `P`, so `σ(g)` fixes `W'_x ⊗ F̄` when `g` does. -/
+theorem galGL_mem_fixerBar (x : ↥(GSpin d.QW)) (σ : GalF F) :
+    ∀ s ∈ d.fixerBar x, galGL d.m σ s ∈ d.fixerBar x := by
+  rintro s ⟨g, hg, rfl⟩
+  refine ⟨galGS d.QW σ g, fun w hw => ?_, specMatFbar_galGS σ g⟩
+  have hw' := galV_mem_baseChange σ⁻¹ _ hw
+  rw [← galV_galV_inv σ w, specP_galGS, hg _ hw']
+
+end GaloisStable
 
 end GSpinGGP
