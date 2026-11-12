@@ -45,7 +45,7 @@ As of November 2026:
   depends on 22 of them. They are of three kinds: the analytic core of the local trace formula
   (Thesis Ch. 8–12, e.g. the bound on the kernel of the distribution `J` and its spectral
   expansion); published results that the dissertation adapts to general spin groups (see below);
-  and 4 statements identifying the special orthogonal objects of a cited theorem (Luo's geometric
+  and 3 statements identifying the special orthogonal objects of a cited theorem (Luo's geometric
   expansion of `J^Lie`) with those of the general spin triple (`TraceFormula/LuoTransfer.lean`),
   plus some smaller lemmas. A `sorry` is a step this project still owes.
 - Results from the literature are assumed as `axiom`s in `GSpinGGP/Literature/`, each with a

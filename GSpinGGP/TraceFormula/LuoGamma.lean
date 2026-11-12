@@ -67,6 +67,13 @@ theorem exists_specP_eq_of_mem_SOu {s : (Module.End F d.luoOf.W)ˣ}
   obtain ⟨t, ht⟩ := hs
   exact ⟨t, by rw [ht]; rfl⟩
 
+/-- The kernel of `P` (as units of `End W`) is the scalars `F^×` (`ker_specP`). -/
+theorem ker_specPU : d.specPU.ker = (scalarGSpin d.QW).range := by
+  rw [← ker_specP d.nondeg]
+  ext g
+  rw [MonoidHom.mem_ker, MonoidHom.mem_ker]
+  exact (LinearMap.GeneralLinearGroup.generalLinearEquiv F d.luoOf.W).symm.map_eq_one_iff
+
 /-- `t ↦ (P(t), P(t) ⊕ 1)` is `diagU ∘ P`. -/
 theorem toGbarU_comp_diag : d.toGbarU.comp d.diag = d.luoOf.diagU.comp d.specPU := by
   ext t : 2
