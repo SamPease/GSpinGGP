@@ -7,6 +7,7 @@ import GSpinGGP.Foundations.JHatTranslate
 import GSpinGGP.Foundations.LieEquivAd
 import GSpinGGP.Foundations.CentralizerIso
 import GSpinGGP.Foundations.ExpLocal
+import GSpinGGP.Foundations.ModuleTopologyPAdic
 import GSpinGGP.TraceFormula.JHatSelfDual
 import GSpinGGP.TraceFormula.JHatTransport
 import GSpinGGP.Foundations.Representations
@@ -105,6 +106,8 @@ import GSpinGGP.GGP.MovedCentralizer
 import GSpinGGP.Foundations.IsometrySemisimple
 import GSpinGGP.GGP.GSpinSemisimple
 import GSpinGGP.GGP.TorusTransport
+import GSpinGGP.GGP.CentralizerTransport
+import GSpinGGP.GGP.GermTransfer
 import GSpinGGP.GGP.TwistSymm
 import GSpinGGP.GGP.Levi
 import GSpinGGP.TraceFormula.Basic
