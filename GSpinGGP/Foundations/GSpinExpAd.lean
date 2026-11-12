@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Foundations.GSpinExp
+import GSpinGGP.Foundations.JordanAlgebra
 
 /-!
 # `P(e^X) = e^{ad X}` near the identity
@@ -12,10 +13,6 @@ exponential of `ad X = adV X ∈ so(V)` (`eventually_specP_eq_expA_adV`): conjug
 `C(V)` is `e^{ad X}` (`expA_ad_eq`), and `e^{ad X}` restricts to `ι(V)` as `e^{ad X|_V}`, since
 `ad X` preserves `ι(V)`.
 
-* `eventually_map_expA_of_pow`: `φ(e^X) = e^{φ X}` near `0` for a linear map `φ` preserving the
-  powers of the particular `X` (pointwise form of `eventually_map_expA`);
-* `exists_nhds_expA_sub_expA_mem`: `e^Y − e^X ∈ I` near `0` when `Yⁿ − Xⁿ ∈ I` for all `n`
-  (a closed subspace `I`, the exponential series converging);
 * `eventually_specP_eq_expA_adV`: `P(e^X) = e^{ad X}`.
 -/
 
@@ -32,67 +29,14 @@ namespace GSpinGGP
 
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
-section MapExp
-
-variable {A : Type*} [Ring A] [Algebra F A] [Module.Finite F A] [TopologicalSpace A]
-  [IsModuleTopology F A]
-
-/-- **`φ(e^X) = e^{φ X}` near `0`** for a linear map `φ` that preserves the powers of `X` (only
-of this `X`; `eventually_map_expA` asks it for all `X`): both exponential series converge near
-`0`, and `φ` is continuous. -/
-lemma eventually_map_expA_of_pow {B : Type*} [Ring B] [Algebra F B] [Module.Finite F B]
-    [TopologicalSpace B] [IsModuleTopology F B] (φ : A →ₗ[F] B) :
-    ∀ᶠ X in 𝓝 (0 : A), (∀ n : ℕ, φ (X ^ n) = φ X ^ n) → φ (expA F X) = expA F (φ X) := by
-  letI := isTopologicalRing_of_moduleTopology F A
-  letI := isTopologicalRing_of_moduleTopology F B
-  obtain ⟨U, hU, hA⟩ := expA_hasSum F (A := A)
-  obtain ⟨V, hV, hB⟩ := expA_hasSum F (A := B)
-  have hφc : Continuous φ := IsModuleTopology.continuous_of_linearMap φ
-  have hV' : φ ⁻¹' V ∈ 𝓝 (0 : A) :=
-    hφc.continuousAt.preimage_mem_nhds (by rwa [map_zero])
-  haveI := t2Space_of_moduleTopology F B
-  filter_upwards [hU, hV'] with X hX hX' hφ
-  have h1 := (hA X hX).map φ hφc
-  refine h1.unique ?_
-  convert hB (φ X) hX' using 1
-  funext n
-  simp [map_smul, hφ]
-
-/-- **`e^Y − e^X ∈ I` near `0`** when `Yⁿ − Xⁿ ∈ I` for every `n`: the difference of the two
-convergent exponential series has its partial sums in `I`, which is closed (finite-dimensional). -/
-lemma exists_nhds_expA_sub_expA_mem (I : Submodule F A) :
-    ∃ U ∈ 𝓝 (0 : A), ∀ X ∈ U, ∀ Y ∈ U, (∀ n : ℕ, Y ^ n - X ^ n ∈ I) →
-      expA F Y - expA F X ∈ I := by
-  letI := isTopologicalRing_of_moduleTopology F A
-  haveI := t2Space_of_moduleTopology F A
-  obtain ⟨U, hU, h⟩ := expA_hasSum F (A := A)
-  refine ⟨U, hU, fun X hX Y hY hI => ?_⟩
-  have hs := ((h Y hY).sub (h X hX)).tendsto_sum_nat
-  refine I.closed_of_finiteDimensional.mem_of_tendsto hs (Eventually.of_forall fun n => ?_)
-  refine I.sum_mem fun k _ => ?_
-  rw [← smul_sub]
-  exact I.smul_mem _ (hI k)
-
-end MapExp
-
 section Clifford
 
 variable {V : Type*} [AddCommGroup V] [Module F V] [Module.Finite F V] (Q : QuadraticForm F V)
 
-/-- `ad X` on `C(V)` restricts to `adV X` on `ι(V)`, also for its powers: `(ad X)ⁿ ι(v) =
-ι((adV X)ⁿ v)` for `X ∈ gspin(V)`. -/
-theorem ad_pow_ι {X : CliffordAlgebra Q} (hX : X ∈ gspin Q) (n : ℕ) (v : V) :
-    ((LinearMap.mulLeft F X - LinearMap.mulRight F X) ^ n) (ι Q v) = ι Q ((adV Q X ^ n) v) := by
-  induction n generalizing v with
-  | zero => rfl
-  | succ n ih =>
-    rw [pow_succ, Module.End.mul_apply, pow_succ, Module.End.mul_apply, ← ih, ι_adV hX]
-    rfl
-
 /-- **`P(e^X) = e^{ad X}`** for `X ∈ gspin(V)` near `0` (Thesis §5.1.3: `ad : gspin(V) → so(V)` is
 the differential of `P : GSpin(V) → SO(V)`): if `g ∈ GSpin(V)(F)` has `g = e^X` in `C(V)`, then
 `P(g) = e^{adV X}` in `End(V)`.  Conjugation by `e^X` on `C(V)` is `e^{ad X}` (`expA_ad_eq`), and
-`T ↦ ι⁻¹ ∘ T ∘ ι` maps the powers of `ad X` to those of `adV X` (`ad_pow_ι`). -/
+`T ↦ ι⁻¹ ∘ T ∘ ι` maps the powers of `ad X` to those of `adV X` (`ι_adV_pow`). -/
 theorem eventually_specP_eq_expA_adV [TopologicalSpace (Module.End F V)]
     [IsModuleTopology F (Module.End F V)] :
     ∀ᶠ X in 𝓝 (0 : CliffordAlgebra Q), X ∈ gspin Q → ∀ g : ↥(GSpin Q),
@@ -119,7 +63,10 @@ theorem eventually_specP_eq_expA_adV [TopologicalSpace (Module.End F V)]
     ext v
     change ιInv Q ((ad X ^ n) (ι Q v)) = (ρ (ad X) ^ n) v
     have hρ : ρ (ad X) = adV Q X := rfl
-    rw [hρ, hadX, ad_pow_ι Q hX, ιInv_ι]
+    have hadf : LinearMap.mulLeft F X - LinearMap.mulRight F X =
+        LieAlgebra.ad F (CliffordAlgebra Q) X := by
+      rw [LieAlgebra.ad_eq_lmul_left_sub_lmul_right]; rfl
+    rw [hρ, hadX, hadf, ← ι_adV_pow hX, ιInv_ι]
   have key := hX1 hpow
   rw [hadX, hX2] at key
   change _ = expA F (ρ (ad X))

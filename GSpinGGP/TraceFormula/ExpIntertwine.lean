@@ -38,8 +38,8 @@ variable {V : Type*} [AddCommGroup V] [Module F V] [Module.Finite F V] {Q : Quad
 
 /-- **`e^{-A} e^{A+N} ∈ N_F^{SO}`** for `A ∈ gspin(V)` preserving the flag and `N ∈ 𝔫_F`, both
 near `0`: in `End(V)`, `P(e^{-A} e^{A+N}) − 1 = e^{-ad A}(e^{ad A + ad N} − e^{ad A})`, and
-`(ad A + ad N)ⁿ − (ad A)ⁿ` lies in the two-sided ideal `𝔫_F` of the flag-stabilizing subalgebra,
-which is closed. -/
+`(ad A + ad N)ⁿ − (ad A)ⁿ` lies in the closed subspace `I` of flag-raising endomorphisms
+(`T Z_{i+1} ⊆ Z_i`, `T (Z_r^⊥) ⊆ Z_r`), a two-sided ideal of the subalgebra stabilizing the flag. -/
 theorem eventually_mul_mem_flagUnipSO (Fl : IsotropicFlag Q) :
     ∀ᶠ p : CliffordAlgebra Q × CliffordAlgebra Q in 𝓝 0, p.1 ∈ gspin Q →
       (∀ i, ∀ v ∈ Fl.sub i, adV Q p.1 v ∈ Fl.sub i) → p.2 ∈ lieFlagUnip Fl →
