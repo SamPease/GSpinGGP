@@ -8,6 +8,8 @@ import GSpinGGP.Foundations.JHatTranslate
 import GSpinGGP.Foundations.LieEquivAd
 import GSpinGGP.Foundations.CentralizerIso
 import GSpinGGP.Foundations.ExpLocal
+import GSpinGGP.Foundations.GSpinExp
+import GSpinGGP.Foundations.OrbitChart
 import GSpinGGP.Foundations.ModuleTopologyPAdic
 import GSpinGGP.TraceFormula.JHatSelfDual
 import GSpinGGP.TraceFormula.JHatTransport

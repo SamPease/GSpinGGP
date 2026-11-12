@@ -882,6 +882,24 @@ lemma expA_aux :
     rw [hexp]
     exact h2.unique hE
 
+/-- `e^X` is continuous on an open neighbourhood of `0` (it is `exp` of `End(F^d)`, continuous on
+the ball of convergence, transported along `lmulPi`). -/
+lemma exists_nhds_continuousOn_expA :
+    ∃ U ∈ 𝓝 (0 : A), IsOpen U ∧ ContinuousOn (expA F : A → A) U := by
+  letI := isTopologicalRing_of_moduleTopology F A
+  obtain ⟨U, hU, -, h⟩ := expA_aux F (A := A)
+  refine ⟨interior U, interior_mem_nhds.mpr hU, isOpen_interior, ?_⟩
+  have hc : ContinuousOn (fun X : A => lmulPiInv F (NormedSpace.exp (lmulPi F X)))
+      (interior U) := by
+    refine (lmulPiInv F).continuous.comp_continuousOn ?_
+    refine (NormedSpace.continuousOn_exp (𝕂 := F)).comp (continuous_lmulPi F).continuousOn ?_
+    intro X hX
+    exact (h X (interior_subset hX)).1
+  refine hc.congr fun X hX => ?_
+  obtain ⟨-, -, he⟩ := h X (interior_subset hX)
+  show expA F X = lmulPiInv F (NormedSpace.exp (lmulPi F X))
+  rw [← he, lmulPiInv_lmulPi]
+
 /-- Over a `p`-adic field the exponential series converges on a neighbourhood of `0`
 (classically the ball `|X| < p^{-1/(p-1)}`; here `U = lmulPi⁻¹(ball of convergence of expSeries)`,
 see `expA_aux`). -/
@@ -1295,16 +1313,8 @@ theorem exists_nhds_isRegularSS_expA (𝔤 : LieSubalgebra F A) :
 
 /-- `e^X` is continuous at `0`. -/
 lemma continuousAt_expA_at_zero : ContinuousAt (expA F : A → A) 0 := by
-  letI := isTopologicalRing_of_moduleTopology F A
-  obtain ⟨U, hU, -, h⟩ := expA_aux F (A := A)
-  have heq : (fun X : A => lmulPiInv F (NormedSpace.exp (lmulPi F X))) =ᶠ[𝓝 0] expA F := by
-    filter_upwards [hU] with X hX
-    rw [← (h X hX).2.2, lmulPiInv_lmulPi]
-  refine ContinuousAt.congr ?_ heq
-  have h0 := (h 0 (mem_of_mem_nhds hU)).1
-  have hexp : ContinuousAt (NormedSpace.exp : (VA →L[F] VA) → _) (lmulPi F (0 : A)) :=
-    (NormedSpace.continuousOn_exp (𝕂 := F)).continuousAt (Metric.isOpen_eball.mem_nhds h0)
-  exact (lmulPiInv F).continuous.continuousAt.comp (hexp.comp (continuous_lmulPi F).continuousAt)
+  obtain ⟨U, hU, hUo, hc⟩ := exists_nhds_continuousOn_expA F (A := A)
+  exact hc.continuousAt (hUo.mem_nhds (mem_of_mem_nhds hU))
 
 /-- Right multiplication by `a`, transported to a continuous endomorphism of `F^d`. -/
 def rmulPi (a : A) : VA →L[F] VA :=

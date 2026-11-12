@@ -44,8 +44,8 @@ is a GSpin fact (`GGP/Centralizers.lean`).
 `GGP/Germs.lean` derives `hc_regularSet_open_conull` from (a) and the identification of `G'` with
 `regularSet`. `GGP/GermTransfer.lean` proves `bp_germ_transfer` (not verbatim in the literature)
 from `bp_germAvg_transfer` (proved there by transport along the `F`-isomorphism `G_x ≃ G_{α,y}`,
-`exists_centralizerIso_of_stronglyStablyConjW`, and `jHat_centralizerIso`, which rests on the
-`sorry` theorems `isOrbitMeasure_unique`, `isSelfDual_unique`) and the `sorry` theorems
+`exists_centralizerIso_of_stronglyStablyConjW`, and `jHat_centralizerIso`, which uses the uniqueness
+theorems `isOrbitMeasure_unique`, `isSelfDual_unique`) and the `sorry` theorems
 `germ_eq_germ_of_stable`, `finite_nilReg`.
 -/
 
