@@ -634,6 +634,13 @@ def OrbitSpec (U : Submodule F L.W) (Y : L.Amb) : Prop :=
     IsInOrbitNu L.QW U (-L.nu0) (L.fstA Y)
   else True
 
+/-- **Luo's recipe is stable under scaling each factor** by `a, b ≠ 0`. -/
+theorem orbitSpec_iff_of_smul {a b : F} (ha : a ≠ 0)
+    (hb : b ≠ 0) (U : Submodule F L.W) {Y Y' : L.Amb} (h1 : L.fstA Y' = a • L.fstA Y)
+    (h2 : L.sndA Y' = b • L.sndA Y) : L.OrbitSpec U Y' ↔ L.OrbitSpec U Y := by
+  unfold LuoDatum.OrbitSpec
+  rw [h1, h2, isInOrbitNu_smul_iff ha, isInOrbitNu_smul_iff hb]
+
 open Classical in
 /-- The regular nilpotent orbit `O_X ∈ Nil_reg(𝔤_X)` selected by `OrbitSpec`; the zero orbit if
 there is none (then `G_X` is not quasi-split, `Nil_reg(𝔤_X) = ∅` and `c_θ(X) = 0`, BP

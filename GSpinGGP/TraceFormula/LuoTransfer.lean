@@ -883,9 +883,9 @@ theorem isThetaFLie_of_SO (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
 
 /-- `ν₀ = q(z^L_0) = ν`: Luo's `ν₀` for `luoOf` is the `ν` of `d`. -/
 theorem luoOf_nu0 : d.luoOf.nu0 = (d.ν : F) := by
-  have h00 := bform_splitOddForm_zvec (K := F) d.r (d.ν : F) (le_of_eq abs_zero |>.trans
-    (Nat.cast_nonneg _)) (le_of_eq abs_zero |>.trans (Nat.cast_nonneg _))
-  show d.QZ (d.luoZ 0) = _
+  have h0 : |(0 : ℤ)| ≤ d.r := by simp
+  have h00 := bform_splitOddForm_zvec (K := F) d.r (d.ν : F) h0 h0
+  change d.QZ (d.luoZ 0) = _
   rw [← QuadraticMap.associated_eq_self_apply F d.QZ (d.luoZ 0)]
   simp only [luoZ, LinearMap.map_smul, LinearMap.smul_apply, smul_eq_mul]
   rw [h00]
@@ -898,29 +898,6 @@ theorem orbitSpecAt_iff_orbitSpec_toSOLin (U : Submodule F (Fin d.m → F)) (Y :
   unfold OrbitSpecAt LuoDatum.OrbitSpec
   rw [luoOf_nu0]
   rfl
-
-/-- `IsInOrbitNu` only sees the line `F N`: it holds for `c • N`, `c ≠ 0`, iff it holds for `N`. -/
-theorem isInOrbitNu_smul_iff {V : Type*} [AddCommGroup V] [Module F V] {Q : QuadraticForm F V}
-    {U : Submodule F V} {ν c : F} (hc : c ≠ 0) {N : V →ₗ[F] V} :
-    IsInOrbitNu Q U ν (c • N) ↔ IsInOrbitNu Q U ν N := by
-  have key : ∀ {c : F}, c ≠ 0 → ∀ {N : V →ₗ[F] V}, IsInOrbitNu Q U ν N →
-      IsInOrbitNu Q U ν (c • N) := by
-    intro c hc N ⟨d₀, U₁, h1, h2, h3, h4, h5, h6, h7, ⟨u, hu, hu'⟩, h9⟩
-    refine ⟨d₀, U₁, h1, h2, h3, h4, h5, ?_, fun u hu => ?_, ⟨u, hu, ?_⟩, h9⟩
-    · simp [h6]
-    · simpa using U₁.smul_mem c (h7 u hu)
-    · rw [smul_pow, LinearMap.smul_apply]
-      exact smul_ne_zero (pow_ne_zero _ hc) hu'
-  refine ⟨fun h => ?_, key hc⟩
-  have := key (inv_ne_zero hc) h
-  rwa [smul_smul, inv_mul_cancel₀ hc, one_smul] at this
-
-/-- **Luo's recipe is stable under scaling each factor** by `a, b ≠ 0`. -/
-theorem _root_.GSpinGGP.LuoDatum.orbitSpec_iff_of_smul (L : LuoDatum F) {a b : F} (ha : a ≠ 0)
-    (hb : b ≠ 0) (U : Submodule F L.W) {Y Y' : L.Amb} (h1 : L.fstA Y' = a • L.fstA Y)
-    (h2 : L.sndA Y' = b • L.sndA Y) : L.OrbitSpec U Y' ↔ L.OrbitSpec U Y := by
-  unfold LuoDatum.OrbitSpec
-  rw [h1, h2, isInOrbitNu_smul_iff ha, isInOrbitNu_smul_iff hb]
 
 /-- **The recipe on `𝔤⁰` is stable under scaling each factor** by `a, b ≠ 0`. -/
 theorem orbitSpecAt_iff_of_smul {a b : F} (ha : a ≠ 0) (hb : b ≠ 0)
@@ -977,12 +954,13 @@ theorem orbitChoice_eq_of_orbitMap (X : CliffordAlgebra d.QW)
     simp only [h, h', ↓reduceDIte]
     exact hzero
 
-/-- **Reduction of `cTheta_toSO`** to three inputs at `X`: uniqueness of the regular
+/-- **Reduction of `cTheta_toSO`** at `X` to two uniqueness statements: uniqueness of the regular
 coefficients of local expansions on `𝔤⁰` at `diagLie X` (`hgerm`; Harish-Chandra 1999 Cor 5.10,
-BP §4.5, Lie-algebra case), uniqueness of the regular nilpotent orbit of `𝔤⁰_X` meeting the recipe
-(`horb`), and a map `E` of nilpotent orbits as in `orbitChoice_eq_of_orbitMap` along which every
-local expansion `c'` of `θ` at `ad X` gives the local expansion `c' ∘ E` of `θ ∘ ad` at `X`
-(`htr`; `ad` composed with the rescaling of each factor that turns `bilin` into the trace form).
+BP §4.5, Lie-algebra case) and: at most one regular nilpotent orbit of `𝔤⁰_X`
+meeting the recipe (`horb`).  The remaining hypotheses are compatibility conditions on a map `E`
+of nilpotent orbits (as in `orbitChoice_eq_of_orbitMap`), the main one being that every local
+expansion `c'` of `θ` at `ad X` gives the local expansion `c' ∘ E` of `θ ∘ ad` at `X` (`htr`;
+`ad` composed with the rescaling of each factor that turns `bilin` into the trace form).
 The chosen expansion of `θ` is transported, so uniqueness is needed on `𝔤⁰` only. -/
 theorem cTheta_toSO_of_transport {θ : ↥d.luoOf.lie → ℂ}
     (hθ : IsLieQuasiCharacter d.luoOf.Gbar d.luoOf.lie d.luoOf.traceForm ψ θ)
