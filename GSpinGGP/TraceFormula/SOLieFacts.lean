@@ -2,6 +2,7 @@
 Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
+import GSpinGGP.Foundations.SubgroupTransport
 import GSpinGGP.TraceFormula.SOLie
 
 /-!
@@ -15,10 +16,10 @@ Elementary facts about the objects of `TraceFormula/SOLie.lean` (Luo, arXiv:2009
 * `LuoDatum.extU_conj_mem_Nset`: `SO(W)` (acting by `g ⊕ 1`) normalizes `N`.
 * `LuoDatum.mem_HbarU_iff`: **normal form**, every element of `H̄` is `(g, (g ⊕ 1) n)` with
   `g ∈ SO(W)`, `n ∈ N` (`H̄ = SO(W) ⋉ N`, Luo §2.1); `g` and `n` are unique
-  (`unitFst_diagU_mul_inrU`, `unitSnd_diagU_mul_inrU`).
+  (`diagU_mul_inrU_inj`).
 * `LuoDatum.diagU_mul_inrU_conj_diagU_eq_iff`, `LuoDatum.commute_diagU_mul_inrU_diagU_iff`:
   `(g, (g ⊕ 1) n)` conjugates `(t, t ⊕ 1)` to `(s, s ⊕ 1)` iff `g t g⁻¹ = s` and `n` commutes with
-  `t ⊕ 1`; in particular `H̄_t = SO(W)_t ⋉ N_t` (Luo §7.1, the decomposition before (7.1.1)).
+  `t ⊕ 1`; in particular `H̄_t = SO(W)_t ⋉ N_t` (Luo §7.1, (7.1.1)).
 * `LuoDatum.torusConj_equivalence`: `H̄(F)`-conjugacy of tori is an equivalence relation.
 * `LuoDatum.weylCardOf_map_conj`, `LuoDatum.weylCardOf_eq_of_torusConj`: `|W(H̄, T)|` is invariant
   under `H̄(F)`-conjugation.
@@ -26,37 +27,8 @@ Elementary facts about the objects of `TraceFormula/SOLie.lean` (Luo, arXiv:2009
 
 noncomputable section
 
-/-! ## Normalizers and centralizers under an isomorphism -/
-
-section Weyl
-
-variable {G G' : Type*} [Group G] [Group G']
-
-/-- The image of the centralizer under an isomorphism is the centralizer of the image. -/
-theorem Subgroup.map_equiv_centralizer_eq (s : Set G) (e : G ≃* G') :
-    (Subgroup.centralizer s).map e.toMonoidHom = Subgroup.centralizer (e.toMonoidHom '' s) := by
-  refine le_antisymm (Subgroup.map_centralizer_le_centralizer_image s e.toMonoidHom) ?_
-  intro x hx
-  refine ⟨e.symm x, fun y hy => ?_, by simp⟩
-  have h := hx (e y) ⟨y, hy, rfl⟩
-  apply e.injective
-  simpa using h
-
-/-- `|N_G(S)/Z_G(S)|` is invariant under group isomorphisms. -/
-theorem Subgroup.card_normalizer_quot_centralizer_map (S : Subgroup G) (e : G ≃* G') :
-    Nat.card (↥(Subgroup.normalizer ((S.map e.toMonoidHom : Subgroup G') : Set G')) ⧸
-        (Subgroup.centralizer ((S.map e.toMonoidHom : Subgroup G') : Set G')).subgroupOf
-          (Subgroup.normalizer ((S.map e.toMonoidHom : Subgroup G') : Set G'))) =
-      Nat.card (↥(Subgroup.normalizer (S : Set G)) ⧸
-        (Subgroup.centralizer (S : Set G)).subgroupOf (Subgroup.normalizer (S : Set G))) := by
-  change (Subgroup.centralizer _).relIndex _ = (Subgroup.centralizer _).relIndex _
-  rw [← Subgroup.map_equiv_normalizer_eq, Subgroup.coe_map, ← Subgroup.map_equiv_centralizer_eq]
-  exact Subgroup.relIndex_map_map_of_injective _ _ e.injective
-
-end Weyl
 
 namespace GSpinGGP
-
 
 namespace LuoDatum
 
@@ -79,12 +51,11 @@ variable {K : Type*} [Field K] [Invertible (2 : K)] (L : LuoDatum K)
 @[simp] theorem unitSnd_inrU (n : (Module.End K L.V)ˣ) : L.unitSnd (L.inrU n) = n :=
   Units.ext rfl
 
-/-- A unit of `End W × End V` is determined by its two components. -/
-theorem units_ext_iff {u v : L.Ambˣ} :
-    u = v ↔ L.unitFst u = L.unitFst v ∧ L.unitSnd u = L.unitSnd v := by
-  refine ⟨fun h => h ▸ ⟨rfl, rfl⟩, fun ⟨h₁, h₂⟩ => Units.ext (Prod.ext ?_ ?_)⟩
-  · exact congrArg Units.val h₁
-  · exact congrArg Units.val h₂
+theorem val_diagU (g : (Module.End K L.W)ˣ) :
+    ((L.diagU g : L.Ambˣ) : L.Amb) = ((g : Module.End K L.W), L.extGrp g) := rfl
+
+theorem val_inrU (n : (Module.End K L.V)ˣ) :
+    ((L.inrU n : L.Ambˣ) : L.Amb) = ((1 : Module.End K L.W), (n : Module.End K L.V)) := rfl
 
 theorem extGrp_apply (f : Module.End K L.W) (v : L.V) : L.extGrp f v = (f v.1, v.2) := rfl
 
@@ -237,8 +208,14 @@ theorem extU_conj_mem_Nset {g : (Module.End K L.W)ˣ} (hg : g ∈ SOu L.QW)
 theorem inrU_mul_diagU (g : (Module.End K L.W)ˣ) (n : (Module.End K L.V)ˣ) :
     L.inrU n * L.diagU g =
       L.diagU g * L.inrU ((Units.map L.extGrp g)⁻¹ * n * Units.map L.extGrp g) := by
-  rw [units_ext_iff]
-  simp [map_mul, mul_assoc]
+  refine Units.ext (Prod.ext ?_ ?_)
+  · show (1 : Module.End K L.W) * (g : Module.End K L.W) = (g : Module.End K L.W) * 1
+    rw [one_mul, mul_one]
+  · show (n : Module.End K L.V) * ((Units.map L.extGrp g : (Module.End K L.V)ˣ) : Module.End K L.V) =
+      ((Units.map L.extGrp g : (Module.End K L.V)ˣ) : Module.End K L.V) *
+        ((((Units.map L.extGrp g)⁻¹ : (Module.End K L.V)ˣ) : Module.End K L.V) *
+          (n : Module.End K L.V) * ((Units.map L.extGrp g : (Module.End K L.V)ˣ) : Module.End K L.V))
+    rw [← mul_assoc, ← mul_assoc, Units.mul_inv, one_mul]
 
 /-- **Normal form for `H̄ = SO(W) ⋉ N`** (Luo §2.1): the elements of `H̄` are exactly the
 products `(g, g ⊕ 1)(1, n) = (g, (g ⊕ 1) n)` with `g ∈ SO(W)` and `n ∈ N`. -/
@@ -277,22 +254,19 @@ theorem mem_HbarU_iff {u : L.Ambˣ} :
 theorem unitFst_diagU_mul_inrU (g : (Module.End K L.W)ˣ) (n : (Module.End K L.V)ˣ) :
     L.unitFst (L.diagU g * L.inrU n) = g := by simp
 
-/-- In the normal form `(g, (g ⊕ 1) n)`, `n = (g ⊕ 1)⁻¹ · (GL(V)-component)`. -/
+/-- In the normal form `(g, (g ⊕ 1) n)`, the `GL(V)`-component is `(g ⊕ 1) n`. -/
 theorem unitSnd_diagU_mul_inrU (g : (Module.End K L.W)ˣ) (n : (Module.End K L.V)ˣ) :
     L.unitSnd (L.diagU g * L.inrU n) = Units.map L.extGrp g * n := by simp
 
-/-- `a n x n⁻¹ a⁻¹ = a x a⁻¹` iff `n` commutes with `x`. -/
-private theorem conj_conj_eq_iff {G : Type*} [Group G] (a n x : G) :
-    a * n * x * n⁻¹ * a⁻¹ = a * x * a⁻¹ ↔ n * x = x * n := by
-  constructor
-  · intro h
-    have h1 : n * x * n⁻¹ = x := by
-      have := congrArg (fun y => a⁻¹ * y * a) h
-      simpa [mul_assoc] using this
-    calc n * x = n * x * n⁻¹ * n := by group
-      _ = x * n := by rw [h1]
-  · intro h
-    rw [mul_assoc a n x, h]; group
+/-- **Uniqueness of the normal form**: `(g, (g ⊕ 1) n)` determines `g` and `n`. -/
+theorem diagU_mul_inrU_inj {g g' : (Module.End K L.W)ˣ} {n n' : (Module.End K L.V)ˣ} :
+    L.diagU g * L.inrU n = L.diagU g' * L.inrU n' ↔ g = g' ∧ n = n' := by
+  refine ⟨fun h => ?_, fun ⟨h₁, h₂⟩ => h₁ ▸ h₂ ▸ rfl⟩
+  have h₁ := congrArg L.unitFst h
+  have h₂ := congrArg L.unitSnd h
+  rw [unitFst_diagU_mul_inrU, unitFst_diagU_mul_inrU] at h₁
+  rw [unitSnd_diagU_mul_inrU, unitSnd_diagU_mul_inrU, h₁] at h₂
+  exact ⟨h₁, mul_left_cancel h₂⟩
 
 /-- **Conjugating the diagonal torus** (Luo §7.1): `(g, (g ⊕ 1) n)` conjugates `(t, t ⊕ 1)` to
 `(s, s ⊕ 1)` iff `g t g⁻¹ = s` and `n` commutes with `t ⊕ 1`. -/
@@ -300,16 +274,34 @@ theorem diagU_mul_inrU_conj_diagU_eq_iff (g t s : (Module.End K L.W)ˣ)
     (n : (Module.End K L.V)ˣ) :
     (L.diagU g * L.inrU n) * L.diagU t * (L.diagU g * L.inrU n)⁻¹ = L.diagU s ↔
       g * t * g⁻¹ = s ∧ n * Units.map L.extGrp t = Units.map L.extGrp t * n := by
-  rw [units_ext_iff]
-  simp only [map_mul, map_inv, unitFst_diagU, unitSnd_diagU, unitFst_inrU, unitSnd_inrU,
-    mul_one]
-  refine and_congr_right fun hs => ?_
-  subst hs
-  simp only [map_mul, map_inv]
-  rw [← conj_conj_eq_iff (Units.map L.extGrp g) n (Units.map L.extGrp t)]
-  simp only [mul_assoc, mul_inv_rev]
+  constructor
+  · intro h
+    have h₁ := congrArg L.unitFst h
+    have h₂ := congrArg L.unitSnd h
+    simp only [map_mul, map_inv, unitFst_diagU, unitSnd_diagU, unitFst_inrU, unitSnd_inrU,
+      mul_one] at h₁ h₂
+    subst h₁
+    refine ⟨rfl, ?_⟩
+    rw [← mul_inv_eq_iff_eq_mul]
+    apply (MulAut.conj (Units.map L.extGrp g)).injective
+    rw [map_mul, map_mul, map_inv] at h₂
+    set e := Units.map L.extGrp g
+    set τ := Units.map L.extGrp t
+    have h3 : n * τ * n⁻¹ = τ := (MulAut.conj e).injective (by
+      simp only [MulAut.conj_apply]
+      rw [← h₂]
+      group)
+    simp only [MulAut.conj_apply]
+    rw [h3]
+  · rintro ⟨rfl, hc⟩
+    have hn : (Units.map L.extGrp t)⁻¹ * n * Units.map L.extGrp t = n := by
+      rw [mul_assoc, hc, ← mul_assoc, inv_mul_cancel, one_mul]
+    calc (L.diagU g * L.inrU n) * L.diagU t * (L.diagU g * L.inrU n)⁻¹
+        = L.diagU g * (L.inrU n * L.diagU t) * (L.inrU n)⁻¹ * (L.diagU g)⁻¹ := by group
+      _ = L.diagU g * L.diagU t * (L.diagU g)⁻¹ := by rw [inrU_mul_diagU, hn]; group
+      _ = L.diagU (g * t * g⁻¹) := by simp only [map_mul, map_inv]
 
-/-- **`H̄_t = SO(W)_t ⋉ N_t`** (Luo §7.1, before (7.1.1)): `(g, (g ⊕ 1) n)` commutes with
+/-- **`H̄_t = SO(W)_t ⋉ N_t`** (Luo §7.1, (7.1.1)): `(g, (g ⊕ 1) n)` commutes with
 `(t, t ⊕ 1)` iff `g` commutes with `t` and `n` with `t ⊕ 1`. -/
 theorem commute_diagU_mul_inrU_diagU_iff (g t : (Module.End K L.W)ˣ)
     (n : (Module.End K L.V)ˣ) :
@@ -353,7 +345,7 @@ theorem weylCardOf_map_conj {h : L.Ambˣ} (hh : h ∈ L.HbarU) (T : Subgroup L.A
       exact ⟨y, hy, rfl⟩
   unfold weylCardOf
   rw [hS]
-  exact Subgroup.card_normalizer_quot_centralizer_map _ e
+  exact Subgroup.relIndex_centralizer_normalizer_map_equiv _ e
 
 end Basic
 
