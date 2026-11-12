@@ -276,6 +276,35 @@ theorem det_eq_det_one_mul_det_neg_one_of_charZero [CharZero K] [FiniteDimension
   · exact det_restrict_congr _ (by rw [hE, map_one]) _ _
   · exact det_restrict_congr _ (by rw [hE, map_neg, map_one]) _ _
 
+open Module.End in
+/-- **`det h = det (h|_{E₁})`** for an isometry `h` commuting with a semisimple isometry `X` of a
+nondegenerate symmetric form (characteristic `0`) such that `X` has no eigenvalue `−1`
+(`det_eq_det_one_mul_det_neg_one_of_charZero`). -/
+theorem det_eq_det_restrict_one_of_eigenspace_neg_one_eq_bot [CharZero K] [FiniteDimensional K V]
+    (hB : B.IsSymm) (hnd : B.Nondegenerate) {X : Module.End K V} (hX : B.IsOrthogonal X)
+    (hss : X.IsSemisimple) {h : Module.End K V} (hi : B.IsOrthogonal h) (hc : Commute X h)
+    (hneg : X.eigenspace (-1) = ⊥) :
+    LinearMap.det h = LinearMap.det (h.restrict (mapsTo_eigenspace_of_commute hc 1)) := by
+  rw [det_eq_det_one_mul_det_neg_one_of_charZero hB hnd hX hss hi hc]
+  have : Subsingleton ↥(X.eigenspace (-1)) := by
+    rw [hneg]; infer_instance
+  rw [LinearMap.det_eq_one_of_subsingleton (h.restrict (mapsTo_eigenspace_of_commute hc (-1))),
+    mul_one]
+
+open Module.End in
+/-- A semisimple isometry of a nondegenerate symmetric form (characteristic `0`) with no
+eigenvalue `−1` has determinant `1`: it is the identity on `E₁`. -/
+theorem det_eq_one_of_eigenspace_neg_one_eq_bot [CharZero K] [FiniteDimensional K V]
+    (hB : B.IsSymm) (hnd : B.Nondegenerate) {X : Module.End K V} (hX : B.IsOrthogonal X)
+    (hss : X.IsSemisimple) (hneg : X.eigenspace (-1) = ⊥) : LinearMap.det X = 1 := by
+  rw [det_eq_det_restrict_one_of_eigenspace_neg_one_eq_bot hB hnd hX hss hX (Commute.refl X) hneg]
+  have : X.restrict (mapsTo_eigenspace_of_commute (Commute.refl X) 1) = LinearMap.id :=
+    LinearMap.ext fun v => Subtype.ext (by
+      have := mem_eigenspace_iff.mp v.2
+      rw [one_smul] at this
+      exact this)
+  rw [this, LinearMap.det_id]
+
 end BaseChange
 
 end IsomCent

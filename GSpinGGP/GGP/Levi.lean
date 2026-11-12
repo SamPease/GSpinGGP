@@ -65,20 +65,9 @@ variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
 namespace LeviAux
 
-/-- The ambient algebra `C(W) × C(V)` is second countable (`F` is proper, `C(W) × C(V) ≅ F^n`;
-the same proof as `TraceFormula/Basic.lean`, redeclared since this file does not import it). -/
-theorem secondCountableTopology_ambient (d : GGPData F) : SecondCountableTopology d.ambient := by
-  have : ProperSpace F := .of_nontriviallyNormedField_of_weaklyLocallyCompactSpace F
-  exact (toPiCLE F d.ambient).toHomeomorph.secondCountableTopology
-
-/-- `G(F)` is second countable. -/
-instance secondCountableTopology_G (d : GGPData F) : SecondCountableTopology ↥d.G := by
-  have := secondCountableTopology_ambient d
-  have : SecondCountableTopology d.ambientᵐᵒᵖ :=
-    (MulOpposite.opHomeomorph (M := d.ambient)).symm.secondCountableTopology
-  have : SecondCountableTopology d.ambientˣ :=
-    Units.isEmbedding_embedProduct.secondCountableTopology
-  exact Topology.IsEmbedding.subtypeVal.secondCountableTopology
+/-- `G(F)` is second countable (`subgroup_secondCountableTopology`). -/
+instance secondCountableTopology_G (d : GGPData F) : SecondCountableTopology ↥d.G :=
+  subgroup_secondCountableTopology F d.ambient d.G
 
 end LeviAux
 

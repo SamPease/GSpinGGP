@@ -244,6 +244,23 @@ theorem subgroup_locallyCompactSpace_of_isClosed (G : Subgroup Aˣ) (hG : IsClos
   haveI := units_locallyCompactSpace F A
   exact hG.locallyCompactSpace
 
+/-- Every subgroup of `Aˣ` is second countable: `A ≃ F^n` with `F` proper, and
+`Aˣ ⊆ A × Aᵐᵒᵖ`. -/
+theorem subgroup_secondCountableTopology (G : Subgroup Aˣ) : SecondCountableTopology ↥G := by
+  have : ProperSpace F := .of_nontriviallyNormedField_of_weaklyLocallyCompactSpace F
+  have : SecondCountableTopology A := (toPiCLE F A).toHomeomorph.secondCountableTopology
+  have : SecondCountableTopology Aᵐᵒᵖ :=
+    (MulOpposite.opHomeomorph (M := A)).symm.secondCountableTopology
+  have : SecondCountableTopology Aˣ := Units.isEmbedding_embedProduct.secondCountableTopology
+  exact Topology.IsEmbedding.subtypeVal.secondCountableTopology
+
+/-- A closed subgroup of `Aˣ` is σ-compact (locally compact and second countable). -/
+theorem subgroup_sigmaCompactSpace_of_isClosed (G : Subgroup Aˣ) (hG : IsClosed (G : Set Aˣ)) :
+    SigmaCompactSpace ↥G := by
+  have := subgroup_locallyCompactSpace_of_isClosed F A G hG
+  have := subgroup_secondCountableTopology F A G
+  infer_instance
+
 /-- The ambient algebra is totally disconnected (`F` is ultrametric, `A ≃ F^n`). -/
 theorem totallyDisconnectedSpace_of_moduleTopology : TotallyDisconnectedSpace A :=
   (toPiCLE F A).toHomeomorph.symm.totallyDisconnectedSpace
@@ -589,6 +606,27 @@ theorem isSS_of_isSemisimple {U : Type*} [AddCommGroup U] [Module F U] [FiniteDi
   rw [minpoly.aeval, map_zero] at this
   rw [← this]
   rfl
+
+
+/-- An endomorphism is semisimple as an element of the algebra of endomorphisms iff it is a
+semisimple endomorphism: `L_X` and `X` have the same minimal polynomial (`Algebra.lmul` is
+injective). -/
+theorem isSS_iff_isSemisimple {U : Type*} [AddCommGroup U] [Module F U] [FiniteDimensional F U]
+    {X : Module.End F U} : IsSS F X ↔ X.IsSemisimple := by
+  refine ⟨fun hX => ?_, isSS_of_isSemisimple⟩
+  have h : minpoly F (Algebra.lmul F (Module.End F U) X) = minpoly F X :=
+    minpoly.algHom_eq _ (Algebra.lmul_injective (R := F)) X
+  refine Module.End.isSemisimple_of_squarefree_aeval_eq_zero ?_ (minpoly.aeval F X)
+  rw [← h]
+  exact Module.End.IsSemisimple.minpoly_squarefree hX
+
+/-- A scalar multiple of a semisimple element is semisimple. -/
+theorem isSS_smul {x : A} (c : F) (hx : IsSS F x) : IsSS F (c • x) := by
+  have e : LinearMap.mulLeft F (c • x) = c • LinearMap.mulLeft F x := by
+    ext; simp
+  unfold IsSS at hx ⊢
+  rw [e]
+  exact Module.End.IsSemisimple_smul c hx
 
 end Semisimple
 

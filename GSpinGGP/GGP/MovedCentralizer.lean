@@ -14,8 +14,12 @@ For `x ∈ GSpin(W)(F)`, the *moved part* of the Lie centralizer is
 
 * `MovedPart.exists_nhds_expA_mem_GSpin`: `e^X ∈ GSpin(W)(F)` for small `X ∈ gspin(W)`, and
   conversely `eventually_mem_gspin_of_expA_mem`;
-* `exists_gspin_commute_iff`: an element of `GSpin` with the commutant of a given `Z ∈ gspin`;
-  `mem_torusOf_of_commute`: commuting with `x` and `ι(W'_x)` puts `g` in `T_x`;
+* `exists_gspin_commute_iff` (`exists_gspin_expA_commute_iff`, `exists_gspin_commute_iff_trace`):
+  an element of `GSpin` with the commutant of a given `Z ∈ gspin` (of nonzero trace);
+  `commute_of_commute_specP_of_trace_ne_zero`: `P(h)`, `P(g)` commuting and `tr L_g ≠ 0` force
+  `h`, `g` to commute; `mem_torusOf_of_commute`: commuting with `x` and `ι(W'_x)` puts `g` in
+  `T_x`; `exists_mem_torusOf_commute_iff`: the moved part of `𝔩_x` has commutants of points of
+  `T_x`;
 * `movedPartAbelian_of_isGammaElt`: `𝔩_x` is abelian for `x ∈ Γ(G,H)`;
 * `gspinBC`, `movedCentMap`, `gspinBC_commute_of_mem`: `𝔩_x ⊗ F̄` and its commutativity;
 * `GGPData.exists_movedCent_lift`, `GGPData.eq_zero_of_forall_movedCent`: a skew endomorphism of
@@ -135,6 +139,32 @@ theorem eventually_mem_gspin_of_expA_mem :
 
 end Clifford
 
+/-- `exists_gspin_commute_iff`, with control of the element: `g = e^{cZ}` for some `c ≠ 0` with
+`cZ` in a given neighbourhood `U` of `0`. -/
+theorem exists_gspin_expA_commute_iff
+    {V : Type*} [AddCommGroup V] [Module F V] [Module.Finite F V]
+    (Q : QuadraticForm F V) {Z : CliffordAlgebra Q}
+    (hZ : Z ∈ gspin Q) {U : Set (CliffordAlgebra Q)} (hU : U ∈ 𝓝 (0 : CliffordAlgebra Q)) :
+    ∃ c : F, c ≠ 0 ∧ c • Z ∈ U ∧ ∃ g : GSpin Q,
+      ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) = expA F (c • Z) ∧
+      ∀ W : CliffordAlgebra Q,
+        Commute W ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ↔ Commute W Z := by
+  obtain ⟨U₁, hU₁, hG⟩ := MovedPart.exists_nhds_expA_mem_GSpin (F := F) Q
+  obtain ⟨U', hU', hc⟩ := exists_nhds_commute_of_commute_expA F (A := CliffordAlgebra Q)
+  have hlim : Tendsto (fun c : F => c • Z) (𝓝[≠] 0) (𝓝 0) := by
+    have : Continuous (fun c : F => c • Z) := continuous_id.smul continuous_const
+    simpa using (this.tendsto 0).mono_left nhdsWithin_le_nhds
+  obtain ⟨c, hcU, hc0⟩ :=
+    ((hlim.eventually (inter_mem (inter_mem hU₁ hU') hU)).and self_mem_nhdsWithin).exists
+  obtain ⟨g, hg⟩ := hG _ hcU.1.1 ((gspin Q).smul_mem c hZ)
+  refine ⟨c, hc0, hcU.2, g, hg, fun W => ⟨fun h => ?_, fun h => ?_⟩⟩
+  · rw [hg] at h
+    have h2 := (hc _ hcU.1.2 _ h).eq
+    rw [mul_smul_comm, smul_mul_assoc] at h2
+    exact smul_right_injective _ hc0 h2
+  · rw [hg]
+    exact commute_expA_of_commute (h.smul_right c)
+
 /-- **A group element with the commutant of `Z`**: for `Z ∈ gspin(Q)` there is `g ∈ GSpin(Q)(F)`
 (namely `e^{cZ}` for small `c ≠ 0`, `MovedPart.exists_nhds_expA_mem_GSpin`) commuting with exactly
 the elements of `C(Q)` that commute with `Z` (`commute_expA_of_commute`,
@@ -143,20 +173,74 @@ theorem exists_gspin_commute_iff {V : Type*} [AddCommGroup V] [Module F V] [Modu
     (Q : QuadraticForm F V) {Z : CliffordAlgebra Q} (hZ : Z ∈ gspin Q) :
     ∃ g : GSpin Q, ∀ W : CliffordAlgebra Q,
       Commute W ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ↔ Commute W Z := by
-  obtain ⟨U, hU, hG⟩ := MovedPart.exists_nhds_expA_mem_GSpin (F := F) Q
-  obtain ⟨U', hU', hc⟩ := exists_nhds_commute_of_commute_expA F (A := CliffordAlgebra Q)
-  have hlim : Tendsto (fun c : F => c • Z) (𝓝[≠] 0) (𝓝 0) := by
-    have : Continuous (fun c : F => c • Z) := continuous_id.smul continuous_const
-    simpa using (this.tendsto 0).mono_left nhdsWithin_le_nhds
-  obtain ⟨c, hcU, hc0⟩ := ((hlim.eventually (inter_mem hU hU')).and self_mem_nhdsWithin).exists
-  obtain ⟨g, hg⟩ := hG _ hcU.1 ((gspin Q).smul_mem c hZ)
-  refine ⟨g, fun W => ⟨fun h => ?_, fun h => ?_⟩⟩
-  · rw [hg] at h
-    have h2 := (hc _ hcU.2 _ h).eq
-    rw [mul_smul_comm, smul_mul_assoc] at h2
-    exact smul_right_injective _ hc0 h2
+  obtain ⟨-, -, -, g, -, hg⟩ := exists_gspin_expA_commute_iff Q hZ univ_mem
+  exact ⟨g, hg⟩
+
+/-- **A group element with the commutant of `Z` and nonzero trace**: for `Z ∈ gspin(Q)` there is
+`g ∈ GSpin(Q)(F)` (namely `e^{cZ}` for small `c ≠ 0`) commuting with exactly the elements of `C(Q)`
+that commute with `Z`, with `tr L_g ≠ 0` (`tr L_{e^0} = dim C(Q) ≠ 0`), and semisimple if `Z` is
+(`exists_nhds_isSS_expA`). -/
+theorem exists_gspin_commute_iff_trace
+    {V : Type*} [AddCommGroup V] [Module F V] [Module.Finite F V]
+    (Q : QuadraticForm F V) {Z : CliffordAlgebra Q} (hZ : Z ∈ gspin Q) :
+    ∃ g : GSpin Q,
+      (∀ W : CliffordAlgebra Q,
+        Commute W ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ↔ Commute W Z) ∧
+      cliffTrace Q ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ≠ 0 ∧
+      (IsSS F Z → IsSS F ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) := by
+  obtain ⟨Uss, hUss, hss⟩ := exists_nhds_isSS_expA F (A := CliffordAlgebra Q)
+  let τ : CliffordAlgebra Q →ₗ[F] F :=
+    (LinearMap.trace F (CliffordAlgebra Q)).comp (LinearMap.mul F (CliffordAlgebra Q))
+  have hτY : ∀ Y, τ Y = cliffTrace Q Y := fun Y => rfl
+  have hτ : Continuous τ := IsModuleTopology.continuous_of_linearMap τ
+  have hcont : ContinuousAt (fun Y : CliffordAlgebra Q => τ (expA F Y)) 0 :=
+    hτ.continuousAt.comp (continuousAt_expA_at_zero F (A := CliffordAlgebra Q))
+  have h0 : τ (expA F (0 : CliffordAlgebra Q)) ≠ 0 := by
+    rw [hτY, expA_zero_eq_one, cliffTrace_one]
+    exact cast_finrank_cliffordAlgebra_ne_zero Q
+  obtain ⟨c, hc0, hcU, g, hg, hcomm⟩ :=
+    exists_gspin_expA_commute_iff Q hZ (inter_mem hUss (hcont.eventually_ne h0))
+  refine ⟨g, hcomm, ?_, fun hZs => ?_⟩
+  · have h2 : τ (expA F (c • Z)) ≠ 0 := hcU.2
+    rwa [hτY, ← hg] at h2
   · rw [hg]
-    exact commute_expA_of_commute (h.smul_right c)
+    exact hss _ hcU.1 (isSS_smul c hZs)
+
+/-- **Commutation from `P` and the trace**: for `V` nondegenerate (`IsNondeg Q`), if `P(h)`
+commutes with `P(g)` in `SO(Q)`, then `hgh⁻¹ = cg` for a scalar `c` (`ker P = F^×`), and `c = 1`
+when `tr L_g ≠ 0` (traces of conjugate elements agree). -/
+theorem commute_of_commute_specP_of_trace_ne_zero
+    {V : Type*} [AddCommGroup V] [Module F V] [Module.Finite F V]
+    {Q : QuadraticForm F V} (hQ : IsNondeg Q) {g h : GSpin Q}
+    (hg : cliffTrace Q ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ≠ 0)
+    (hc : Commute (specP Q h) (specP Q g)) : Commute h g := by
+  set A := CliffordAlgebra Q
+  have hP : specP Q (h * g * h⁻¹) = specP Q g := by
+    rw [map_mul, map_mul, hc.eq, mul_assoc, ← map_mul, mul_inv_cancel, map_one, mul_one]
+  obtain ⟨c, hcg⟩ := exists_eq_mul_scalarGSpin_of_specP_eq hQ hP
+  set gA : A := ((g : Aˣ) : A)
+  set hA : A := ((h : Aˣ) : A)
+  set hiA : A := (((h⁻¹ : GSpin Q) : Aˣ) : A)
+  have hhi : hiA * hA = 1 := by
+    simp only [hiA, hA, Subgroup.coe_inv, Units.inv_mul]
+  have hval : hA * gA * hiA = (c : F) • gA := by
+    have := congrArg (fun k : GSpin Q => ((k : Aˣ) : A)) hcg
+    simp only [Subgroup.coe_mul, Units.val_mul] at this
+    rw [this]
+    change gA * algebraMap F A (c : F) = _
+    rw [← Algebra.commutes, Algebra.smul_def]
+  have htr : cliffTrace Q (hA * gA * hiA) = cliffTrace Q gA := by
+    rw [mul_assoc]
+    change LinearMap.trace F _ (LinearMap.mulLeft F (hA * (gA * hiA))) = _
+    rw [trace_mulLeft_comm Q, mul_assoc, hhi, mul_one]
+  rw [hval, cliffTrace_smul] at htr
+  have hc1 : (c : F) = 1 := by
+    have := sub_eq_zero.mpr htr
+    rw [← sub_one_mul] at this
+    exact sub_eq_zero.mp ((mul_eq_zero.mp this).resolve_right hg)
+  have hc1' : c = 1 := Units.ext hc1
+  rw [hc1', map_one, mul_one] at hcg
+  exact (mul_inv_eq_iff_eq_mul.mp hcg)
 
 /-- `g ∈ T_x(F)` as soon as `g` commutes with `x` and with `ι(W'_x)`. -/
 theorem mem_torusOf_of_commute (d : GGPData F) {x g : ↥(GSpin d.QW)}
@@ -172,34 +256,38 @@ theorem mem_torusOf_of_commute (d : GGPData F) {x g : ↥(GSpin d.QW)}
   · apply CliffordAlgebra.ι_injective d.QW
     rw [ι_specP, ← (hf w hw).eq, mul_assoc, Units.mul_inv, mul_one]
 
+/-- **An element of the moved part of the Lie centralizer has the commutant of a point of the
+torus**: for `Z ∈ gspin(W)` commuting with `x` and with `ι(W'_x)`, some `g ∈ T_x(F)` (namely
+`e^{cZ}`, `exists_gspin_commute_iff_trace`) commutes with exactly the elements of `C(W)` that
+commute with `Z`, and `tr L_g ≠ 0`. -/
+theorem exists_mem_torusOf_commute_iff (d : GGPData F) {x : ↥(GSpin d.QW)}
+    {Z : CliffordAlgebra d.QW} (hZ : Z ∈ gspin d.QW)
+    (hZx : Commute ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) Z)
+    (hZf : ∀ v ∈ fixedSub x, ⁅Z, CliffordAlgebra.ι d.QW v⁆ = 0) :
+    ∃ g ∈ d.torusOf x, (∀ W : CliffordAlgebra d.QW,
+        Commute W ((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) ↔ Commute W Z) ∧
+      cliffTrace d.QW ((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) ≠ 0 := by
+  obtain ⟨g, hg, htr, -⟩ := exists_gspin_commute_iff_trace d.QW hZ
+  refine ⟨g, mem_torusOf_of_commute d ((hg _).mpr hZx) fun w hw => (hg _).mpr ?_, hg, htr⟩
+  have hw0 := hZf w hw
+  rw [Ring.lie_def, sub_eq_zero] at hw0
+  exact hw0.symm
+
 /-- For `x ∈ Γ(G,H)` the moved part `G''_x` is a torus: `T_x(F) = Z(x) ∩ Fix(W'_x)`
 is commutative, hence so is its Lie algebra
 `so(W''_x)_{x̄} ⊕ F`.  Own work; this is the hypothesis under which
 `nilReg_centralizer_nonempty_iff` applies.
 
 Proof (exponential, no Zariski density): `X` and `Y` in the moved part have the commutants of some
-`g, h ∈ GSpin(W)(F)` (`exists_gspin_commute_iff`: `e^{cX}`, `e^{cY}` for small `c ≠ 0`), which
-commute with `x` and fix `W'_x` pointwise, so lie in `T_x(F)` (`mem_torusOf_of_commute`) and
+`g, h ∈ T_x(F)` (`exists_mem_torusOf_commute_iff`: `e^{cX}`, `e^{cY}` for small `c ≠ 0`), which
 commute; hence `X` and `Y` commute.  Only the commutativity of
 `T_x(F)` is used, not the semisimplicity of `x` or the compactness of `T_x(F)/A(F)`. -/
 theorem movedPartAbelian_of_isGammaElt (d : GGPData F) (x : ↥(GSpin d.QW))
     (hx : d.IsGammaElt x) : MovedPartAbelian d.QW x := by
   intro X hX Y hY hXf hYf
   rw [mem_lieCentralizer] at hX hY
-  -- `Z` in the moved part has the commutant of some `g ∈ T_x`
-  have key : ∀ Z ∈ gspin d.QW,
-      Commute ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) Z →
-      (∀ v ∈ fixedSub x, ⁅Z, CliffordAlgebra.ι d.QW v⁆ = 0) →
-      ∃ g ∈ d.torusOf x, ∀ W : CliffordAlgebra d.QW,
-        Commute W ((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) ↔ Commute W Z := by
-    intro Z hZ hZx hZf
-    obtain ⟨g, hg⟩ := exists_gspin_commute_iff d.QW hZ
-    refine ⟨g, mem_torusOf_of_commute d ((hg _).mpr hZx) fun w hw => (hg _).mpr ?_, hg⟩
-    have hw0 := hZf w hw
-    rw [Ring.lie_def, sub_eq_zero] at hw0
-    exact hw0.symm
-  obtain ⟨g, hgT, hg⟩ := key X hX.1 hX.2 hXf
-  obtain ⟨h, hhT, hh⟩ := key Y hY.1 hY.2 hYf
+  obtain ⟨g, hgT, hg, -⟩ := exists_mem_torusOf_commute_iff d hX.1 hX.2 hXf
+  obtain ⟨h, hhT, hh, -⟩ := exists_mem_torusOf_commute_iff d hY.1 hY.2 hYf
   have h1 : Commute ((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW)
       ((h : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) :=
     congrArg (fun k : ↥(GSpin d.QW) => ((k : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW))

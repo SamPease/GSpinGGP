@@ -1603,6 +1603,21 @@ theorem mem_fixedSub_iff {Q : QuadraticForm K V} (x : GSpin Q) (v : V) :
     v ∈ fixedSub x ↔ (specP Q x : Module.End K V) v = v := by
   simp [fixedSub, sub_eq_zero]
 
+/-- `W'_x = ker(P(x) − 1)` is the set of `v` with `ι(v)` commuting with `x`. -/
+theorem mem_fixedSub_iff_commute_ι {Q : QuadraticForm K V} (x : GSpin Q) (v : V) :
+    v ∈ fixedSub x ↔ ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * CliffordAlgebra.ι Q v =
+      CliffordAlgebra.ι Q v * ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) := by
+  rw [mem_fixedSub_iff, LinearEquiv.coe_coe]
+  constructor
+  · intro h
+    have h' := congrArg (CliffordAlgebra.ι Q) h
+    rw [ι_specP] at h'
+    conv_rhs => rw [← h']
+    simp [mul_assoc]
+  · intro h
+    apply CliffordAlgebra.ι_injective Q
+    rw [ι_specP, h, mul_assoc, Units.mul_inv, mul_one]
+
 /-- `W = W'_y ⊕ W''_y` when `W'_y ∩ W''_y = 0` (e.g. `y` semisimple). -/
 theorem isCompl_fixedSub_movedSub [Module.Finite K V] {Q : QuadraticForm K V} (y : GSpin Q)
     (hdisj : fixedSub y ⊓ movedSub y = ⊥) : IsCompl (fixedSub y) (movedSub y) := by

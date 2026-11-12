@@ -23,6 +23,7 @@ Elementary facts about the objects of `TraceFormula/SOLie.lean` (Luo, arXiv:2009
 * `LuoDatum.torusConj_equivalence`: `H̄(F)`-conjugacy of tori is an equivalence relation.
 * `LuoDatum.weylCardOf_map_conj`, `LuoDatum.weylCardOf_eq_of_torusConj`: `|W(H̄, T)|` is invariant
   under `H̄(F)`-conjugation.
+* `LuoDatum.weylCardOf_map_diagU`: for `S ⊆ SO(W)`, `|W(H̄, (S, S ⊕ 1))| = |N_{SO(W)}(S) : Z_{SO(W)}(S)|`.
 -/
 
 noncomputable section
@@ -346,6 +347,108 @@ theorem weylCardOf_map_conj {h : L.Ambˣ} (hh : h ∈ L.HbarU) (T : Subgroup L.A
   unfold weylCardOf
   rw [hS]
   exact Subgroup.relIndex_centralizer_normalizer_map_equiv _ e
+
+/-- **`|W(H̄, T')|` for a diagonal torus** (Luo §7.1): for a subgroup `S` of `SO(W)`, with
+`T' = {(s, s ⊕ 1) : s ∈ S}`, `|N_{H̄}(T')/Z_{H̄}(T')| = |N_{SO(W)}(S)/Z_{SO(W)}(S)|`.  The map
+`(g, (g ⊕ 1) n) ↦ g` sends `N_{H̄}(T')` onto `N_{SO(W)}(S)` (with section `g ↦ (g, g ⊕ 1)`), and an
+element of `N_{H̄}(T')` centralizes `T'` iff its image centralizes `S`, since its `N`-part already
+commutes with every `s ⊕ 1` (`diagU_mul_inrU_conj_diagU_eq_iff`). -/
+theorem weylCardOf_map_diagU (S : Subgroup ↥(SOu L.QW)) :
+    L.weylCardOf (S.map (L.diagU.comp (SOu L.QW).subtype)) =
+      (Subgroup.centralizer (S : Set ↥(SOu L.QW))).relIndex
+        (Subgroup.normalizer (S : Set ↥(SOu L.QW))) := by
+  set ι := L.diagU.comp (SOu L.QW).subtype with hι
+  set T := S.map ι with hT
+  have hιapp : ∀ s : ↥(SOu L.QW), ι s = L.diagU s := fun _ => rfl
+  have hdiagH : ∀ g ∈ SOu L.QW, L.diagU g ∈ L.HbarU := fun g hg =>
+    L.mem_HbarU_iff.mpr ⟨g, hg, 1, L.NsetSub.one_mem, by simp⟩
+  have hφmem : ∀ u : ↥L.HbarU, L.unitFst u ∈ SOu L.QW := fun u => by
+    obtain ⟨g, hg, n, -, hu⟩ := L.mem_HbarU_iff.mp u.2
+    rw [hu, unitFst_diagU_mul_inrU]
+    exact hg
+  let φ : ↥L.HbarU →* ↥(SOu L.QW) :=
+    (L.unitFst.comp L.HbarU.subtype).codRestrict _ hφmem
+  have hφ : ∀ u : ↥L.HbarU, ((φ u : ↥(SOu L.QW)) : (Module.End K L.W)ˣ) = L.unitFst u :=
+    fun _ => rfl
+  have hφι : ∀ g : ↥(SOu L.QW), φ ⟨ι g, hdiagH g g.2⟩ = g := fun g =>
+    Subtype.ext (by rw [hφ]; exact L.unitFst_diagU _)
+  have hmemT : ∀ a : L.Ambˣ, a ∈ T ↔ ∃ s ∈ S, ι s = a := fun a => Subgroup.mem_map
+  -- an element of `N_{H̄}(T')`: its `SO(W)`-part normalizes `S`, its `N`-part centralizes `T'`
+  have key : ∀ u : ↥L.HbarU,
+      u ∈ Subgroup.normalizer ((T.subgroupOf L.HbarU : Subgroup ↥L.HbarU) : Set ↥L.HbarU) →
+      ∀ s ∈ S, φ u * s * (φ u)⁻¹ ∈ S ∧
+        ∀ g n, (u : L.Ambˣ) = L.diagU g * L.inrU n →
+          n * Units.map L.extGrp (s : (Module.End K L.W)ˣ) =
+            Units.map L.extGrp (s : (Module.End K L.W)ˣ) * n := by
+    intro u hu s hs
+    have h1 : (⟨ι s, hdiagH s s.2⟩ : ↥L.HbarU) ∈ T.subgroupOf L.HbarU :=
+      Subgroup.mem_subgroupOf.mpr ((hmemT _).mpr ⟨s, hs, rfl⟩)
+    have h2 := (Subgroup.mem_normalizer_iff.mp hu _).mp h1
+    obtain ⟨s', hs', he⟩ := (hmemT _).mp (Subgroup.mem_subgroupOf.mp h2)
+    obtain ⟨g, -, n, -, hu'⟩ := L.mem_HbarU_iff.mp u.2
+    have he' : (L.diagU g * L.inrU n) * L.diagU (s : (Module.End K L.W)ˣ) *
+        (L.diagU g * L.inrU n)⁻¹ = L.diagU (s' : (Module.End K L.W)ˣ) := by
+      rw [← hu', ← hιapp, ← hιapp, he]; rfl
+    have hgs := (L.diagU_mul_inrU_conj_diagU_eq_iff g _ _ n).mp he'
+    have hg : (φ u : (Module.End K L.W)ˣ) = g := by
+      rw [hφ, hu', unitFst_diagU_mul_inrU]
+    refine ⟨?_, fun g' n' hu'' => ?_⟩
+    · have : φ u * s * (φ u)⁻¹ = s' := Subtype.ext (by
+        simp only [Subgroup.coe_mul, Subgroup.coe_inv, hg]
+        exact hgs.1)
+      rw [this]; exact hs'
+    · obtain ⟨rfl, rfl⟩ := (L.diagU_mul_inrU_inj).mp (hu'.symm.trans hu'')
+      exact hgs.2
+  unfold weylCardOf
+  refine Subgroup.relIndex_eq_of_map_eq_of_comap_inf_eq (f := φ) ?_ ?_
+  · -- `φ(N_{H̄}(T')) = N_{SO(W)}(S)`
+    apply le_antisymm
+    · rintro _ ⟨u, hu, rfl⟩
+      refine Subgroup.mem_normalizer_iff.mpr fun s => ⟨fun hs => (key u hu s hs).1, fun hs => ?_⟩
+      have := (key u⁻¹ (Subgroup.inv_mem _ hu) _ hs).1
+      simpa [map_inv, mul_assoc] using this
+    · intro g hg
+      refine ⟨⟨ι g, hdiagH g g.2⟩, ?_, hφι g⟩
+      refine Subgroup.mem_normalizer_iff.mpr fun h => ?_
+      simp only [Subgroup.mem_subgroupOf, Subgroup.coe_mul, Subgroup.coe_inv]
+      constructor
+      · intro hh
+        obtain ⟨s, hs, hse⟩ := (hmemT _).mp hh
+        refine (hmemT _).mpr ⟨g * s * g⁻¹, (Subgroup.mem_normalizer_iff.mp hg s).mp hs, ?_⟩
+        rw [map_mul, map_mul, map_inv, hse]
+      · intro hh
+        obtain ⟨s, hs, hse⟩ := (hmemT _).mp hh
+        refine (hmemT _).mpr ⟨g⁻¹ * s * g, (Subgroup.mem_normalizer_iff''.mp hg s).mp hs, ?_⟩
+        rw [map_mul, map_mul, map_inv, hse]
+        group
+  · -- `N_{H̄}(T') ∩ φ⁻¹(Z_{SO(W)}(S)) = Z_{H̄}(T')`
+    apply le_antisymm
+    · rintro u ⟨hz, hn⟩
+      rw [Subgroup.mem_centralizer_iff]
+      intro h hh
+      obtain ⟨s, hs, hse⟩ := (hmemT _).mp (Subgroup.mem_subgroupOf.mp hh)
+      obtain ⟨g, -, n, -, hu'⟩ := L.mem_HbarU_iff.mp u.2
+      have hg : (φ u : (Module.End K L.W)ˣ) = g := by
+        rw [hφ, hu', unitFst_diagU_mul_inrU]
+      have hgs : Commute g (s : (Module.End K L.W)ˣ) := by
+        have := Subgroup.mem_centralizer_iff.mp hz s hs
+        rw [← hg]
+        exact (congrArg Subtype.val this).symm
+      have hc := (L.commute_diagU_mul_inrU_diagU_iff g s n).mpr
+        ⟨hgs, (key u hn s hs).2 g n hu'⟩
+      apply Subtype.ext
+      simp only [Subgroup.coe_mul]
+      rw [← hse, hιapp, hu']
+      exact hc.eq.symm
+    · intro u hu
+      refine ⟨?_, Subgroup.centralizer_le_normalizer _ hu⟩
+      change φ u ∈ Subgroup.centralizer _
+      rw [Subgroup.mem_centralizer_iff]
+      intro s hs
+      have h1 : (⟨ι s, hdiagH s s.2⟩ : ↥L.HbarU) ∈ T.subgroupOf L.HbarU :=
+        Subgroup.mem_subgroupOf.mpr ((hmemT _).mpr ⟨s, hs, rfl⟩)
+      have h2 := congrArg φ (Subgroup.mem_centralizer_iff.mp hu _ h1)
+      rwa [map_mul, map_mul, hφι] at h2
 
 end Basic
 
