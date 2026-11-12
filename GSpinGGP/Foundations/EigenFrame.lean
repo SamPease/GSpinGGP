@@ -91,13 +91,14 @@ variable [CharZero K] [IsAlgClosed K] [FiniteDimensional K V] [Invertible (2 : K
   {X : Module.End K V}
 
 omit [CharZero K] [IsAlgClosed K] [FiniteDimensional K V] [Invertible (2 : K)] in
-theorem polar_eq_zero_of_eigen (hX : IsIsom (polarBilin Q) X) {μ ν : K} (hμν : μ * ν ≠ 1) {a b : V}
+theorem polar_eq_zero_of_eigen (hX : (polarBilin Q).IsOrthogonal X) {μ ν : K}
+    (hμν : μ * ν ≠ 1) {a b : V}
     (ha : X a = μ • a) (hb : X b = ν • b) : polar Q a b = 0 :=
   bform_eigen_eq_zero (B := polarBilin Q) hX hμν (mem_eigenspace_iff.2 ha) (mem_eigenspace_iff.2 hb)
 
 /-- The inductive step: a hyperbolic frame of eigenvectors of `X` spanning an `X`-stable
 nondegenerate subspace `U` without fixed vectors and with `dim (U ∩ E₋₁)` even. -/
-theorem exists_frame_aux (hQ : (polarBilin Q).Nondegenerate) (hX : IsIsom (polarBilin Q) X)
+theorem exists_frame_aux (hQ : (polarBilin Q).Nondegenerate) (hX : (polarBilin Q).IsOrthogonal X)
     (hss : X.IsSemisimple) (N : ℕ) : ∀ U : Submodule K V, finrank K U = N → (∀ u ∈ U, X u ∈ U) →
       (∀ u ∈ U, (∀ u' ∈ U, polar Q u u' = 0) → u = 0) → (∀ u ∈ U, X u = u → u = 0) →
       Even (finrank K ↥(U ⊓ X.eigenspace (-1))) →
@@ -181,7 +182,7 @@ theorem exists_frame_aux (hQ : (polarBilin Q).Nondegenerate) (hX : IsIsom (polar
       · simpa using hXu
       · simpa using hXw
       · simpa using hXef i
-  have hinj : Function.Injective X := IsIsom.injective hQ hX
+  have hinj : Function.Injective X := LinearMap.IsOrthogonal.injective hQ hX
   have hinv : U ∈ X.invtSubmodule := (mem_invtSubmodule X).2 hU
   set X' : Module.End K U := X.restrict hinv with hX'
   have hss' : X'.IsSemisimple := Module.End.IsSemisimple.restrict hinv hss
@@ -203,7 +204,7 @@ theorem exists_frame_aux (hQ : (polarBilin Q).Nondegenerate) (hX : IsIsom (polar
       refine ⟨fun x hx => Subtype.ext (hnd x x.2 fun y hy => hx ⟨y, hy⟩), fun x hx =>
         Subtype.ext (hnd x x.2 fun y hy => ?_)⟩
       rw [polar_comm]; exact hx ⟨y, hy⟩
-    have hX'i : IsIsom ((polarBilin Q).domRestrict₁₂ U U) X' := fun a b => hX a b
+    have hX'i : LinearMap.IsOrthogonal ((polarBilin Q).domRestrict₁₂ U U) X' := fun a b => hX a b
     obtain ⟨w', hw'E, hw'0⟩ := exists_eigen_pair_ne_zero hnd' hX'i hss'
       ((hmemE ⟨v, hvU⟩ μ).2 hXv) (fun h => hv0 (congrArg Subtype.val h))
     have hXw' : X w' = μ⁻¹ • (w' : V) := (hmemE w' _).1 hw'E
@@ -295,12 +296,13 @@ theorem exists_frame_aux (hQ : (polarBilin Q).Nondegenerate) (hX : IsIsom (polar
 /-- **Eigen-frames**: a semisimple isometry `X` with `det X = 1` of a nondegenerate quadratic
 space over an algebraically closed field of characteristic `0` has a hyperbolic frame of
 eigenvectors, `X eᵢ = μᵢ eᵢ`, `X fᵢ = μᵢ⁻¹ fᵢ`, with orthogonal complement `ker (X − 1)`. -/
-theorem exists_hypFrame_eigen (hQ : (polarBilin Q).Nondegenerate) (hX : IsIsom (polarBilin Q) X)
+theorem exists_hypFrame_eigen (hQ : (polarBilin Q).Nondegenerate)
+    (hX : (polarBilin Q).IsOrthogonal X)
     (hss : X.IsSemisimple) (hdet : LinearMap.det X = 1) :
     ∃ (n : ℕ) (e f : Fin n → V) (μ : Fin n → Kˣ), IsHypFrame Q (X.eigenspace 1) e f ∧
       ∀ i, X (e i) = (μ i : K) • e i ∧ X (f i) = (((μ i)⁻¹ : Kˣ) : K) • f i := by
   have hpX : ∀ a b, polar Q (X a) (X b) = polar Q a b := fun a b => hX a b
-  have hinj : Function.Injective X := IsIsom.injective hQ hX
+  have hinj : Function.Injective X := LinearMap.IsOrthogonal.injective hQ hX
   have hE1 : ∀ v, v ∈ X.eigenspace 1 ↔ X v = v := fun v => by rw [mem_eigenspace_iff, one_smul]
   set R := LinearMap.range (X - 1) with hR
   have hcompl : IsCompl (X.eigenspace 1) R := by

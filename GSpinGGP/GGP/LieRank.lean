@@ -193,7 +193,7 @@ theorem exists_skew_finrank_soCent_le (n : ℕ) : ∀ {V : Type u} [AddCommGroup
     simp only [map_add, map_smul, hJa, hJb, κ]
     module
   have hJso : J ∈ soCent Q 1 :=
-    mem_soCent.2 ⟨IsomCent.isSkew_wedge hB _ _, by rw [mul_one, one_mul]⟩
+    mem_soCent.2 ⟨(IsomCent.isSkewAdjoint_wedge hB _ _).eq, by rw [mul_one, one_mul]⟩
   -- choose `c` with `c² κ` not an eigenvalue of `Z'²`
   obtain ⟨m, hm⟩ : ∃ m : ℕ, ¬ (Z' * Z').HasEigenvalue (((m : K) + 1) ^ 2 * κ) := by
     have hinj : Function.Injective fun m : ℕ => ((m : K) + 1) ^ 2 * κ := by

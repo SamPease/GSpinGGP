@@ -451,7 +451,7 @@ theorem lieAbelian_specP_baseChange_of_movedPartAbelian {d : GGPData F} (x : ↥
       (specP (d.QW.baseChange (AlgebraicClosure F)) xb : _ →ₗ[AlgebraicClosure F] _) :=
     LinearMap.ext fun w => (GGPData.specP_bcUnits d x w).symm
   have key : ∀ Y : Module.End (AlgebraicClosure F) (AlgebraicClosure F ⊗[F] (Fin d.m → F)),
-      IsomCent.IsSkew (bform (d.QW.baseChange (AlgebraicClosure F))) Y →
+      LinearMap.IsSkewAdjoint (bform (d.QW.baseChange (AlgebraicClosure F))) Y →
       Commute ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange
         (AlgebraicClosure F)) Y →
       (∀ z ∈ Module.End.eigenspace ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange
@@ -459,7 +459,7 @@ theorem lieAbelian_specP_baseChange_of_movedPartAbelian {d : GGPData F} (x : ↥
       ∃ u ∈ (LinearMap.ker (movedCentMap d.QW x)).baseChange (AlgebraicClosure F),
         ∀ v, gspinBC d.QW u * ι _ v - ι _ v * gspinBC d.QW u = ι _ (Y v) := by
     intro Y hs hc hf
-    obtain ⟨Yh, hYh0, hYh⟩ := exists_lift_skew hQ Y hs
+    obtain ⟨Yh, hYh0, hYh⟩ := exists_lift_skew hQ Y hs.eq
     have hYh0' := hYh0
     rw [← LieSubalgebra.mem_toSubmodule, ← range_gspinBC d.QW hQ] at hYh0'
     obtain ⟨u, rfl⟩ := hYh0'
@@ -711,7 +711,7 @@ theorem commute_bc_incl_iff_of_torusOf_eq {x t : GSpin d.QW} (hx : d.IsGammaElt 
 commuting with `x` and killing `W'_x` is semisimple.  Over `F̄`, `P(x)` is semisimple with abelian
 moved Lie centralizer (`lieAbelian_specP_baseChange`), and `adV X` is skew, commutes with `P(x)`
 and vanishes on `ker (P(x) − 1) = W'_x ⊗ F̄`, hence is semisimple
-(`IsomCent.isSemisimple_of_isSkew_of_commute_of_lieAbelian`); then so is `X`
+(`IsomCent.isSemisimple_of_isSkewAdjoint_of_commute_of_lieAbelian`); then so is `X`
 (`isSemisimple_mulLeft_of_isSemisimple_adV_baseChange`).  Lie-algebra form of
 `isSS_of_mem_torusOf`. -/
 theorem isSS_of_commute_of_isGammaElt {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
@@ -728,17 +728,18 @@ theorem isSS_of_commute_of_isGammaElt {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x
   have hxss : Module.End.IsSemisimple ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange
       (AlgebraicClosure F)) :=
     isSemisimple_baseChange (isSemisimple_specP_of_isSS d.QW x hx.1)
-  have hXi : IsomCent.IsIsom (bform (d.QW.baseChange (AlgebraicClosure F)))
+  have hXi : LinearMap.IsOrthogonal (bform (d.QW.baseChange (AlgebraicClosure F)))
       ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange (AlgebraicClosure F)) := by
-    rw [← specP_bcGSpin]; exact Steinberg.isIsom_specP _
-  have hsk : IsomCent.IsSkew (bform (d.QW.baseChange (AlgebraicClosure F)))
+    rw [← specP_bcGSpin]; exact Steinberg.isOrthogonal_specP _
+  have hsk : LinearMap.IsSkewAdjoint (bform (d.QW.baseChange (AlgebraicClosure F)))
       ((adV d.QW X).baseChange (AlgebraicClosure F)) := by
-    rw [hbf]; exact IsomCent.IsSkew.baseChange _ (bform_adV hX)
+    rw [hbf]; exact LinearMap.IsSkewAdjoint.baseChange _
+      (LinearMap.isSkewAdjoint_iff.2 (bform_adV hX))
   have hcomm : Commute ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange
       (AlgebraicClosure F)) ((adV d.QW X).baseChange (AlgebraicClosure F)) := by
     rw [Commute, SemiconjBy, ← LinearMap.baseChange_mul, ← LinearMap.baseChange_mul,
       (commute_iff_adV d.nondeg x hX).mp hc]
-  refine IsomCent.isSemisimple_of_isSkew_of_commute_of_lieAbelian hB hQ hXi hxss
+  refine IsomCent.isSemisimple_of_isSkewAdjoint_of_commute_of_lieAbelian hB hQ hXi hxss
     (lieAbelian_specP_baseChange x hx) hsk hcomm fun z hz => ?_
   have he := eigenspace_bc_one d.QW x
   rw [specP_bcGSpin] at he

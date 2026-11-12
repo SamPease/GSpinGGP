@@ -93,6 +93,7 @@ import GSpinGGP.GGP.WittParity
 import GSpinGGP.GGP.TorusTransfer
 import GSpinGGP.GGP.Cocharacter
 import GSpinGGP.GGP.Contraction
+import GSpinGGP.Foundations.BilinFormAdjoint
 import GSpinGGP.Foundations.IsometryCentralizer
 import GSpinGGP.GGP.TorusCommute
 import GSpinGGP.GGP.MovedCentralizer

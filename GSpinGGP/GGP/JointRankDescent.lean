@@ -71,12 +71,13 @@ theorem jointClausesMat_of_isAlgClosed {J A C : Matrix (Fin n) (Fin n) K}
     convert hJd
     exact hJb
   have hiso' : ∀ {X : Matrix (Fin n) (Fin n) K}, X.transpose * J * X = J →
-      IsomCent.IsIsom (bform Q) (Matrix.toLin' X) := fun hX u v => by
+      (bform Q).IsOrthogonal (Matrix.toLin' X) := fun hX u v => by
     rw [hbf, hbf]
     conv_rhs => rw [← hX]
     simp only [Matrix.toLinearMap₂'_apply', Matrix.toLin'_apply, Matrix.dotProduct_mulVec,
       Matrix.vecMul_mulVec, Matrix.mulVec_mulVec, Matrix.mul_assoc]
-  have hskC : IsomCent.IsSkew (bform Q) (Matrix.toLin' C) := fun u v => by
+  have hskC : (bform Q).IsSkewAdjoint (Matrix.toLin' C) :=
+      LinearMap.isSkewAdjoint_iff.2 fun u v => by
     rw [hbf, hbf, eq_neg_iff_add_eq_zero]
     have : (C.transpose * J + J * C) = 0 := hsk
     simp only [Matrix.toLinearMap₂'_apply', Matrix.toLin'_apply, Matrix.dotProduct_mulVec,
@@ -178,8 +179,8 @@ variable {V : Type*} [AddCommGroup V] [Module F V] [FiniteDimensional F V]
 
 /-- **The joint centralizer over a field of characteristic `0`**: `jointClauses` for `F`. -/
 theorem jointClauses_of_charZero [Invertible (2 : F)] {Q : QuadraticForm F V} {P N : Module.End F V}
-    (hQ : IsNondeg Q) (hP : IsomCent.IsIsom (bform Q) P) (hssP : P.IsSemisimple)
-    (hN : IsomCent.IsSkew (bform Q) N) (hssN : N.IsSemisimple) (hc : Commute N P)
+    (hQ : IsNondeg Q) (hP : (bform Q).IsOrthogonal P) (hssP : P.IsSemisimple)
+    (hN : (bform Q).IsSkewAdjoint N) (hssN : N.IsSemisimple) (hc : Commute N P)
     (hdet : LinearMap.det P = 1) : JointClauses Q P N (finrank F V / 2) := by
   let b := Module.finBasis F V
   set J := LinearMap.toMatrix₂ b b (bform Q)
@@ -188,13 +189,13 @@ theorem jointClauses_of_charZero [Invertible (2 : F)] {Q : QuadraticForm F V} {P
   have hsymm : ∀ x y, bform Q x y = bform Q y x := bform_comm Q
   have hJ : J.transpose = J := by ext i j; simp [J, LinearMap.toMatrix₂_apply, hsymm]
   have hJd : J.det ≠ 0 := (LinearMap.nondegenerate_iff_det_ne_zero b).1 hQ
-  have hisoM : ∀ {X : Module.End F V}, IsomCent.IsIsom (bform Q) X →
+  have hisoM : ∀ {X : Module.End F V}, (bform Q).IsOrthogonal X →
       (T X).transpose * J * T X = J := fun {X} hX => by
     have hc' : (bform Q).compl₁₂ X X = bform Q := LinearMap.ext₂ fun u v => hX u v
     rw [hT, ← LinearMap.toMatrix₂_compl₁₂ b b, hc']
   have hskM : (T N).transpose * J + J * T N = 0 := by
     have h0 : (bform Q).compl₁₂ N LinearMap.id + (bform Q).compl₁₂ LinearMap.id N = 0 :=
-      LinearMap.ext₂ fun u v => by simp [hN u v]
+      LinearMap.ext₂ fun u v => by simp [hN.eq u v]
     have := congrArg (LinearMap.toMatrix₂ b b) h0
     rwa [map_add, LinearMap.toMatrix₂_compl₁₂ b b, LinearMap.toMatrix₂_compl₁₂ b b,
       LinearMap.toMatrix_id, Matrix.transpose_one, one_mul, mul_one, map_zero] at this

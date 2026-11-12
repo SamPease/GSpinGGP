@@ -373,8 +373,9 @@ theorem isSS_of_mem_torusOf {x t : ↥(GSpin d.QW)} (hx : d.IsGammaElt x) (ht : 
   have htx : Commute t x := Subgroup.mem_centralizer_singleton_iff.mp ht.1
   have hc : Commute (specP _ (bcGSpin d.QW x)) (specP _ (bcGSpin d.QW t)) :=
     ((htx.symm.map (bcGSpin d.QW)).map (specP _))
-  refine IsomCent.isSemisimple_of_commute_of_lieAbelian hB hQ (Steinberg.isIsom_specP _) hxss hL
-    (Steinberg.isIsom_specP _) (Steinberg.commute_toLinearMap hc.symm) fun z hz => ?_
+  refine IsomCent.isSemisimple_of_commute_of_lieAbelian hB hQ
+      (Steinberg.isOrthogonal_specP _) hxss hL
+    (Steinberg.isOrthogonal_specP _) (Steinberg.commute_toLinearMap hc.symm) fun z hz => ?_
   have hle : fixedSub x ≤ fixedSub t := fun v hv => by
     have := ht.2 v hv
     simpa [fixedSub, sub_eq_zero] using this

@@ -145,7 +145,7 @@ theorem torusBarFbar_commute_of (x : ↥(GSpin d.QW))
     LinearMap.ext fun w => (specP_bcUnits d x w).symm
   have hnd : (bform (d.QW.baseChange (AlgebraicClosure F))).Nondegenerate := isNondeg_baseChange _ d.nondeg
   have hB : (bform (d.QW.baseChange (AlgebraicClosure F))).IsSymm := ⟨fun u v => bform_comm (d.QW.baseChange (AlgebraicClosure F)) u v⟩
-  have hiso : ∀ g : GSpin (d.QW.baseChange (AlgebraicClosure F)), IsomCent.IsIsom (bform (d.QW.baseChange (AlgebraicClosure F))) (specP (d.QW.baseChange (AlgebraicClosure F)) g : _ →ₗ[AlgebraicClosure F] AlgebraicClosure F ⊗[F] (Fin d.m → F)) :=
+  have hiso : ∀ g : GSpin (d.QW.baseChange (AlgebraicClosure F)), LinearMap.IsOrthogonal (bform (d.QW.baseChange (AlgebraicClosure F))) (specP (d.QW.baseChange (AlgebraicClosure F)) g : _ →ₗ[AlgebraicClosure F] AlgebraicClosure F ⊗[F] (Fin d.m → F)) :=
     fun g u v => bform_specP g u v
   have hcomm : ∀ g ∈ d.torusFbar x, Commute X (specP (d.QW.baseChange (AlgebraicClosure F)) g : _ →ₗ[AlgebraicClosure F] AlgebraicClosure F ⊗[F] (Fin d.m → F)) := by
     intro g hg
@@ -165,7 +165,7 @@ theorem torusBarFbar_commute_of (x : ↥(GSpin d.QW))
     rw [LinearMap.mem_ker, LinearMap.baseChange_sub, LinearMap.baseChange_id, LinearMap.sub_apply,
       LinearMap.id_apply, sub_eq_zero]
     exact hz
-  have hXi : IsomCent.IsIsom (bform (d.QW.baseChange (AlgebraicClosure F))) X := by
+  have hXi : LinearMap.IsOrthogonal (bform (d.QW.baseChange (AlgebraicClosure F))) X := by
     rw [hX]; exact hiso xb
   have hc := IsomCent.commute_of_lieAbelian hB hnd hXi hss hL (hiso g₁) (hiso g₂)
     (det_specP g₁) (det_specP g₂) (hcomm g₁ hg₁) (hcomm g₂ hg₂) (hfix g₁ hg₁) (hfix g₂ hg₂)
