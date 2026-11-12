@@ -43,8 +43,7 @@ variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
 
 Source: Weil, *Basic Number Theory*, 3rd ed., Ch. VII §2, pp. 104–105 ("the" self-dual Haar
 measure for a given identification of `G` with `G*`), together with the uniqueness of Haar measure.
-Weil's identification `V ≅ V*` needs `B` nondegenerate; for degenerate `B` the statement holds
-vacuously, since then no self-dual measure exists.
+Weil's identification `V ≅ V*` needs `B` nondegenerate; the argument below does not use this.
 
 Proof: by uniqueness of Haar measure (`V` is locally compact and second countable),
 `ν = c μ` with `c > 0`; then `f(0) = c² f(0)` for a test function `f` with `f(0) ≠ 0`
