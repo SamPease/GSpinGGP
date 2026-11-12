@@ -9,6 +9,7 @@ import GSpinGGP.Foundations.LieEquivAd
 import GSpinGGP.Foundations.CentralizerIso
 import GSpinGGP.Foundations.ExpLocal
 import GSpinGGP.Foundations.GSpinExp
+import GSpinGGP.Foundations.GSpinExpAd
 import GSpinGGP.Foundations.OrbitChart
 import GSpinGGP.Foundations.ModuleTopologyPAdic
 import GSpinGGP.TraceFormula.JHatSelfDual
@@ -63,6 +64,7 @@ import GSpinGGP.TraceFormula.LuoGamma
 import GSpinGGP.TraceFormula.LuoWeyl
 import GSpinGGP.TraceFormula.LuoClass
 import GSpinGGP.TraceFormula.LuoTorus
+import GSpinGGP.TraceFormula.ExpIntertwine
 import GSpinGGP.TraceFormula.LuoJLie
 import GSpinGGP.Literature.Kottwitz
 import GSpinGGP.Literature.KottwitzClay
