@@ -332,11 +332,29 @@ theorem psiL_apply
     (g : (CliffordAlgebra (Q₂.baseChange (AlgebraicClosure F)))ˣ)
     (a : CliffordAlgebra (Q₁.baseChange (AlgebraicClosure F))) : psiL φ g a = psiA φ g a := rfl
 
+/-- An `F`-linear left inverse of the base change `C(Q₂) → C(Q₂)_{F̄}`. -/
+def bcRetract (Q₂ : QuadraticForm F V₂) :
+    CliffordAlgebra (Q₂.baseChange (AlgebraicClosure F)) →ₗ[F] CliffordAlgebra Q₂ :=
+  Classical.choose ((bcHomL Q₂).exists_leftInverse_of_injective
+    (LinearMap.ker_eq_bot.mpr (bcHom_injective Q₂)))
+
+theorem bcRetract_bcHom (b : CliffordAlgebra Q₂) : bcRetract Q₂ (bcHom Q₂ b) = b :=
+  LinearMap.congr_fun (Classical.choose_spec ((bcHomL Q₂).exists_leftInverse_of_injective
+    (LinearMap.ker_eq_bot.mpr (bcHom_injective Q₂)))) b
+
+/-- The transport `a ↦ Ad(g) C(φ)(ā)` as an `F`-linear map `C(Q₁) → C(Q₂)`, correct on `ratSub`
+(`bcHom_transL`, in `GGP/CentralizerTransport.lean`). -/
+def transL
+    (φ : (Q₁.baseChange (AlgebraicClosure F)).IsometryEquiv (Q₂.baseChange (AlgebraicClosure F)))
+    (g : (CliffordAlgebra (Q₂.baseChange (AlgebraicClosure F)))ˣ) :
+    CliffordAlgebra Q₁ →ₗ[F] CliffordAlgebra Q₂ :=
+  bcRetract Q₂ ∘ₗ psiL φ g ∘ₗ bcHomL Q₁
+
 variable [Module.Finite F V₁] [Module.Finite F V₂]
 
 /-- **A map of subgroups given by `t̄ ↦ Ad(g) C(φ)(t̄)` is continuous**: it is the restriction of
-the `F`-linear map `r ∘ Ad(g) ∘ C(φ) ∘ (base change)` from `C(Q₁)` to `C(Q₂)`, where `r` is an
-`F`-linear left inverse of the base change of `C(Q₂)`. -/
+the `F`-linear map `transL φ g = r ∘ Ad(g) ∘ C(φ) ∘ (base change)` from `C(Q₁)` to `C(Q₂)`, where
+`r` is an `F`-linear left inverse of the base change of `C(Q₂)` (`bcRetract`). -/
 theorem continuous_of_bcUnits_eq
     {φ : (Q₁.baseChange (AlgebraicClosure F)).IsometryEquiv (Q₂.baseChange (AlgebraicClosure F))}
     {g : (CliffordAlgebra (Q₂.baseChange (AlgebraicClosure F)))ˣ}
@@ -344,18 +362,16 @@ theorem continuous_of_bcUnits_eq
     (hf : ∀ t : S₁, bcUnits Q₂ (((f t : S₂) : GSpin Q₂) : (CliffordAlgebra Q₂)ˣ) =
       psiU φ g (bcUnits Q₁ ((t : GSpin Q₁) : (CliffordAlgebra Q₁)ˣ))) :
     Continuous f := by
-  obtain ⟨r, hr⟩ := (bcHomL Q₂).exists_leftInverse_of_injective
-    (LinearMap.ker_eq_bot.mpr (bcHom_injective Q₂))
-  let Λ : CliffordAlgebra Q₁ →ₗ[F] CliffordAlgebra Q₂ := r ∘ₗ psiL φ g ∘ₗ bcHomL Q₁
+  let Λ : CliffordAlgebra Q₁ →ₗ[F] CliffordAlgebra Q₂ := transL φ g
   have hΛc : Continuous Λ := IsModuleTopology.continuous_of_linearMap Λ
   have hΛ : ∀ t : S₁, Λ (((t : GSpin Q₁) : (CliffordAlgebra Q₁)ˣ) : CliffordAlgebra Q₁) =
       (((f t : S₂) : GSpin Q₂) : (CliffordAlgebra Q₂)ˣ) := by
     intro t
     have h := congrArg Units.val (hf t)
-    show r (psiA φ g ((bcUnits Q₁ ((t : GSpin Q₁) : (CliffordAlgebra Q₁)ˣ) :
+    show bcRetract Q₂ (psiA φ g ((bcUnits Q₁ ((t : GSpin Q₁) : (CliffordAlgebra Q₁)ˣ) :
       (CliffordAlgebra _)ˣ) : CliffordAlgebra _)) = _
     rw [← coe_psiU, ← h]
-    exact LinearMap.congr_fun hr _
+    exact bcRetract_bcHom _
   have hc1 : Continuous fun t : S₁ => (((f t : S₂) : GSpin Q₂) : (CliffordAlgebra Q₂)ˣ) := by
     rw [Units.continuous_iff]
     constructor
@@ -384,6 +400,9 @@ theorem psiA_algebraMap (a : F) :
     psiA φ g (algebraMap F _ a) = algebraMap F _ a := by
   rw [psiA, IsScalarTower.algebraMap_apply F (AlgebraicClosure F), AlgHom.commutes,
     ← IsScalarTower.algebraMap_apply, ← Algebra.commutes, mul_assoc, Units.mul_inv, mul_one]
+
+theorem psiA_one : psiA φ g 1 = 1 := by
+  simpa using psiA_algebraMap φ g (1 : F)
 
 theorem psiA_add (a b : CliffordAlgebra (Q₁.baseChange (AlgebraicClosure F))) :
     psiA φ g (a + b) = psiA φ g a + psiA φ g b := by
