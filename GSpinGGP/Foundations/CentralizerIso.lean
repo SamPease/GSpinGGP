@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Foundations.LocalGroups
+import GSpinGGP.Foundations.LieEquivAd
 
 /-!
 # Isomorphisms of descent data at two semisimple elements
@@ -15,6 +16,7 @@ compatibilities, on the ambient algebras.
 
 * `CentralizerIso.nilOrbitEquiv`: the induced bijection `Nil(𝔤_x) ≃ Nil(𝔤'_y)`;
 * `CentralizerIso.nilOrbitEquiv_mem_nilReg_iff`: it maps `Nil_reg(𝔤_x)` onto `Nil_reg(𝔤'_y)`.
+* `CentralizerIso.lieEquiv`: the Lie algebra isomorphism `𝔤_x(F) ≃ 𝔤'_y(F)`;
 * `CentralizerIso.linEquiv_lie`, `ker_ad_linEquiv`, `kirillovForm_linEquiv`,
   `linEquiv_mem_nilOrbitSet_iff`, `preimage_conjAd_image`, `preimage_orbitMap_image`: the structure
   entering orbit measures (bracket, centralizers, Kirillov forms, orbits, adjoint action, charts)
@@ -205,16 +207,17 @@ theorem linEquiv_lie (X Z : ↥(lieCentralizer 𝔤 (x : A))) :
     simp only [linEquiv_apply, LieSubalgebra.coe_bracket, Ring.lie_def]
     exact ι.map_commutator X X.2 Z Z.2)
 
-/-- `ι` maps the centralizer `ker(ad X)` of `X` in `𝔤_x` onto that of `ι X` in `𝔤'_y`. -/
+/-- The bijection `𝔤_x(F) ≃ 𝔤'_y(F)` as an isomorphism of Lie algebras. -/
+def lieEquiv : ↥(lieCentralizer 𝔤 (x : A)) ≃ₗ⁅F⁆ ↥(lieCentralizer 𝔤' (y : A')) :=
+  { ι.linEquiv with map_lie' := fun {X Z} => ι.linEquiv_lie X Z }
+
+/-- `ι` maps the centralizer `ker(ad X)` of `X` in `𝔤_x` onto that of `ι X` in `𝔤'_y`
+(`LieAlgebra.ker_ad_lieEquiv` for `lieEquiv`). -/
 theorem ker_ad_linEquiv (X : ↥(lieCentralizer 𝔤 (x : A))) :
     LinearMap.ker (LieAlgebra.ad F ↥(lieCentralizer 𝔤' (y : A')) (ι.linEquiv X)) =
       (LinearMap.ker (LieAlgebra.ad F ↥(lieCentralizer 𝔤 (x : A)) X)).map
-        (ι.linEquiv : ↥(lieCentralizer 𝔤 (x : A)) →ₗ[F] ↥(lieCentralizer 𝔤' (y : A'))) := by
-  ext Z'
-  obtain ⟨Z, rfl⟩ := ι.linEquiv.surjective Z'
-  rw [Submodule.mem_map_equiv, LinearEquiv.symm_apply_apply, LinearMap.mem_ker,
-    LinearMap.mem_ker, LieAlgebra.ad_apply, LieAlgebra.ad_apply, ← ι.linEquiv_lie,
-    LinearEquiv.map_eq_zero_iff]
+        (ι.linEquiv : ↥(lieCentralizer 𝔤 (x : A)) →ₗ[F] ↥(lieCentralizer 𝔤' (y : A'))) :=
+  LieAlgebra.ker_ad_lieEquiv ι.lieEquiv X
 
 /-- `ι` carries the Kirillov form `b(·, [X, ·])` on `𝔤_x` to `b'(·, [ι X, ·])` on `𝔤'_y`. -/
 theorem kirillovForm_linEquiv (X Y Z : ↥(lieCentralizer 𝔤 (x : A))) :
