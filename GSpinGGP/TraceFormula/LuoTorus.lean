@@ -15,8 +15,8 @@ Ingredients of `torusIntegralLie_toSO` (Thesis §12.1–12.2; Luo §7.1): for a 
   `so_Cliff(V)` (`map_mem_soSub`) and `X ↦ (X, X)` maps it into `𝔤⁰` (`diagLie_mem_lieZero`);
 * `toSOLin_diagLie`: `ad (X, X) = (ad X, ad X ⊕ 0)`;
 * `deltaLie_eq_delta`, `weylDiscLie_toSOLin`: `Δ` and `D^G` are transported by `ad`;
-* `commonFixed_eq_fixedOf_map`, `mem_lieTorus_map_iff`, `lieTorusEquiv`: `ad` maps
-  `𝔱⁰ = lieTorus T` onto Luo's `𝔱 = lieTorus T'`;
+* `commonFixed_eq_fixedOf_map`, `mem_lieTorus_map_iff`, `lieTorusEquiv`, `lieTorusCLE`: `ad`
+  maps `𝔱⁰ = lieTorus T` onto Luo's `𝔱 = lieTorus T'` (a linear homeomorphism);
 * `LuoDatum.IsExpCompatT.unique`, `IsExpCompatT.unique`: the measure `ν(T) dX` is unique
   (`Measure.eq_of_isAddHaarMeasure_of_eqOn_nhds`);
 * `exists_conj_eq_map_of_isNaturalTorusCorr`: a torus of `𝒯` naturally corresponding to `T` is the
@@ -286,6 +286,20 @@ def lieTorusEquiv (T : Subgroup ↥(GSpin d.QW)) :
 @[simp] theorem coe_lieTorusEquiv (T : Subgroup ↥(GSpin d.QW)) (X : ↥(d.lieTorus T)) :
     ((d.lieTorusEquiv T X : ↥(d.luoOf.lieTorus (T.map (d.toGbarU.comp d.diag)))) :
       d.luoOf.Amb) = d.toSOLin (d.diagLie X) := rfl
+
+/-- `ad : 𝔱⁰ ≃ 𝔱` is a homeomorphism (finite dimension). -/
+def lieTorusCLE (T : Subgroup ↥(GSpin d.QW)) :
+    ↥(d.lieTorus T) ≃L[F] ↥(d.luoOf.lieTorus (T.map (d.toGbarU.comp d.diag))) :=
+  haveI := t2Space_of_moduleTopology F (CliffordAlgebra d.QW)
+  haveI := isTopologicalRing_of_moduleTopology F (CliffordAlgebra d.QW)
+  haveI := IsModuleTopology.toContinuousSMul F (CliffordAlgebra d.QW)
+  haveI := t2Space_of_moduleTopology F d.luoOf.Amb
+  haveI := isTopologicalRing_of_moduleTopology F d.luoOf.Amb
+  haveI := IsModuleTopology.toContinuousSMul F d.luoOf.Amb
+  (d.lieTorusEquiv T).toContinuousLinearEquiv
+
+@[simp] theorem coe_lieTorusCLE (T : Subgroup ↥(GSpin d.QW)) :
+    ⇑(d.lieTorusCLE T) = ⇑(d.lieTorusEquiv T) := rfl
 
 /-! ### Uniqueness of `ν(T) dX` -/
 
