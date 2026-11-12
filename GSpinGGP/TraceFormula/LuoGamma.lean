@@ -25,7 +25,13 @@ For `x ∈ Γ(G,H)` (`GGPData.IsGammaElt`) we look for `X ∈ so(W)` with `X ∈
   `P(x)` and fixing `W'_x` pointwise.
 * `luo_isGammaElt_of_regular`: if `Z ∈ gspin(W)` commutes with `x`, `ker (ad Z) = W'_x`, and every
   endomorphism of `W` commuting with `ad Z` and fixing `W'_x` commutes with `P(x)`, then
-  `X = ad Z ∈ Γ^Lie(Ḡ, H̄)` and `H''_X` is the image of `T_x`.
+  `X = ad Z ∈ Γ^Lie(Ḡ, H̄)` and `H''_X` is the image of `T_x` (`torusW_adV_eq_map`,
+  `isCompact_map_torusOf`).
+* Towards the existence of such a `Z` over `F̄`: `adV_gspinBC_tmul` (`ad` commutes with base
+  change), `exists_movedCent_lift` (a skew endomorphism of `W_{F̄}` commuting with `P(x)` and
+  vanishing on `W'_x ⊗ F̄` is `ad` of an element of `𝔩_x ⊗ F̄`), `movedCent_baseChange_props`,
+  `eq_zero_of_forall_movedCent` (an `F̄`-linear functional vanishing on `(ad 𝔩_x)_{F̄}` vanishes on
+  all such endomorphisms).
 -/
 
 noncomputable section
@@ -50,7 +56,7 @@ theorem commute_of_commute_specP_of_fixes (hQ : IsNondeg Q) (x : GSpin Q)
       (LinearMap.mulLeft K ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)))
     {g : GSpin Q} (hc : Commute (specP Q g) (specP Q x))
     (hfix : ∀ v ∈ fixedSub x, specP Q g v = v) : Commute g x := by
-  have hss := Steinberg.isSemisimple_specP_of_isSS Q x hx
+  have hss := isSemisimple_specP_of_isSS Q x hx
   have hB : (bform Q).IsSymm := ⟨fun u v => bform_comm Q u v⟩
   have hdet := IsomCent.det_eq_det_one_mul_det_neg_one_of_charZero hB hQ
     (Steinberg.isIsom_specP x) hss (Steinberg.isIsom_specP g) (Steinberg.commute_toLinearMap hc)
@@ -63,7 +69,10 @@ theorem commute_of_commute_specP_of_fixes (hQ : IsNondeg Q) (x : GSpin Q)
     rw [this, LinearMap.det_id]
   have hE1 : ∀ v ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) 1, specP Q g v = v :=
     fun v hv => hfix v (by rw [Steinberg.fixedSub_eq_eigenspace]; exact hv)
-  rw [hone _ hE1, one_mul, det_specP] at hdet
+  have h1 : LinearMap.det ((specP Q g : V →ₗ[K] V).restrict
+      (IsomCent.mapsTo_eigenspace_of_commute (Steinberg.commute_toLinearMap hc) 1)) = 1 :=
+    hone _ hE1 _
+  rw [h1, one_mul, det_specP] at hdet
   have h := (Steinberg.commute_iff hQ x hx g).mpr ⟨hc,
     ⟨mapsTo_fixedSub_of_commute hc, hone _ hfix _⟩,
     ⟨mapsTo_negFixedSub_of_commute hc,
@@ -85,15 +94,15 @@ theorem mem_torusOf_of_specP {x : ↥(GSpin d.QW)}
     (hc : Commute (specP d.QW g) (specP d.QW x)) (hfix : ∀ v ∈ fixedSub x, specP d.QW g v = v) :
     g ∈ d.torusOf x :=
   ⟨Subgroup.mem_centralizer_singleton_iff.mpr
-    (commute_of_commute_specP_of_fixes d.nondeg x hx hc hfix).eq.symm, hfix⟩
+    (commute_of_commute_specP_of_fixes d.nondeg x hx hc hfix).eq, hfix⟩
 
 /-- `P : GSpin(W) → GL(W)`, as units of `End W`. -/
-def specPU : ↥(GSpin d.QW) →* (Module.End F (Fin d.m → F))ˣ :=
-  (LinearMap.GeneralLinearGroup.generalLinearEquiv F (Fin d.m → F)).symm.toMonoidHom.comp
+def specPU : ↥(GSpin d.QW) →* (Module.End F d.luoOf.W)ˣ :=
+  (LinearMap.GeneralLinearGroup.generalLinearEquiv F d.luoOf.W).symm.toMonoidHom.comp
     (specP d.QW)
 
 @[simp] theorem coe_specPU (g : ↥(GSpin d.QW)) :
-    ((d.specPU g : (Module.End F (Fin d.m → F))ˣ) : Module.End F (Fin d.m → F)) =
+    ((d.specPU g : (Module.End F d.luoOf.W)ˣ) : Module.End F d.luoOf.W) =
       (specP d.QW g : (Fin d.m → F) →ₗ[F] (Fin d.m → F)) := rfl
 
 /-- `t ↦ (P(t), P(t) ⊕ 1)` is `diagU ∘ P`. -/
@@ -105,6 +114,16 @@ theorem toGbarU_comp_diag : d.toGbarU.comp d.diag = d.luoOf.diagU.comp d.specPU 
   rfl
 
 section Regular
+
+omit [PAdicField F] in
+/-- A semisimple endomorphism is semisimple in the algebra of endomorphisms (`IsSS`). -/
+theorem isSS_of_isSemisimple {U : Type*} [AddCommGroup U] [Module F U] [FiniteDimensional F U]
+    {X : Module.End F U} (hX : X.IsSemisimple) : IsSS F X := by
+  refine Module.End.isSemisimple_of_squarefree_aeval_eq_zero hX.minpoly_squarefree ?_
+  have := Polynomial.aeval_algHom_apply (Algebra.lmul F (Module.End F U)) X (minpoly F X)
+  rw [minpoly.aeval, map_zero] at this
+  rw [← this]
+  rfl
 
 variable {x : ↥(GSpin d.QW)} {Z : CliffordAlgebra d.QW}
 
@@ -145,11 +164,11 @@ theorem torusW_adV_eq_map (hx : d.IsGammaElt x) (hZ : Z ∈ gspin d.QW)
     change LinearMap.GeneralLinearGroup.generalLinearEquiv F _ s ∈ SOGrp d.QW at hSO
     rw [← range_specP_eq_SOGrp d.nondeg] at hSO
     obtain ⟨t, ht⟩ := hSO
-    have hs : (specP d.QW t : (Fin d.m → F) →ₗ[F] (Fin d.m → F)) = (s : Module.End F _) := by
+    have hs : (specP d.QW t : (Fin d.m → F) →ₗ[F] (Fin d.m → F)) = s.val := by
       rw [ht]; rfl
-    have hfix' : ∀ w ∈ fixedSub x, (s : Module.End F (Fin d.m → F)) w = w := fun w hw =>
-      hfix w (by rw [hker]; exact hw)
-    have hc := hreg s hcomm hfix'
+    have hfix' : ∀ w ∈ fixedSub x, s.val w = w := fun w hw =>
+      hfix w (by rw [← hker] at hw; exact hw)
+    have hc := hreg s.val hcomm hfix'
     have hcE : Commute (specP d.QW t) (specP d.QW x) := by
       refine LinearEquiv.toLinearMap_injective ?_
       rw [LinearEquiv.coe_toLinearMap_mul, LinearEquiv.coe_toLinearMap_mul, hs]
@@ -174,7 +193,7 @@ continuous and factors through the compact `T_x(F)/A_{G,H}(F)` (scalars lie in t
 `P`). -/
 theorem isCompact_map_torusOf (hx : d.IsGammaElt x) :
     IsCompact ((d.torusOf x).map (d.toGbarU.comp d.diag) : Set d.luoOf.Ambˣ) := by
-  haveI := hx.2.2
+  have := hx.2.2
   set T := d.torusOf x
   set ψ := d.toGbarU.comp d.diag
   have hψ : Continuous ψ := by
@@ -187,9 +206,12 @@ theorem isCompact_map_torusOf (hx : d.IsGammaElt x) :
     have h1 : specP d.QW (scalarGSpin d.QW c) = 1 := by
       rw [← MonoidHom.mem_ker, ker_specP d.nondeg]; exact ⟨c, rfl⟩
     rw [MonoidHom.mem_ker, MonoidHom.comp_apply, Subgroup.coe_subtype, ← hc,
-      toGbarU_comp_diag, MonoidHom.comp_apply]
+      show ψ = d.luoOf.diagU.comp d.specPU from d.toGbarU_comp_diag, MonoidHom.comp_apply]
     have h2 : d.specPU (scalarGSpin d.QW c) = 1 := by
-      simp only [specPU, MonoidHom.comp_apply, h1, map_one]
+      change (LinearMap.GeneralLinearGroup.generalLinearEquiv F d.luoOf.W).symm
+        (specP d.QW (scalarGSpin d.QW c)) = 1
+      rw [h1]
+      exact map_one _
     rw [h2, map_one]
   let q := QuotientGroup.lift (d.scalarsIn T) (ψ.comp T.subtype) hker
   have hq : Continuous q :=
@@ -220,13 +242,13 @@ theorem luo_isGammaElt_of_regular (hx : d.IsGammaElt x) (hZ : Z ∈ gspin d.QW)
     d.luoOf.IsGammaElt (adV d.QW Z) ∧
       d.luoOf.torusOf (adV d.QW Z) = (d.torusOf x).map (d.toGbarU.comp d.diag) := by
   have hT : d.luoOf.torusOf (adV d.QW Z) = (d.torusOf x).map (d.toGbarU.comp d.diag) := by
-    rw [LuoDatum.torusOf, d.torusW_adV_eq_map hx hZ hZx hker hreg, Subgroup.map_map,
-      toGbarU_comp_diag]
+    change (d.luoOf.torusW (adV d.QW Z)).map d.luoOf.diagU = _
+    rw [d.torusW_adV_eq_map hx hZ hZx hker hreg, Subgroup.map_map, toGbarU_comp_diag]
   have hZf : ∀ w ∈ fixedSub x, adV d.QW Z w = 0 := fun w hw => by
     rw [← hker] at hw; exact hw
   refine ⟨⟨adV_mem_skewAdjoint hZ, ?_, ?_, ?_⟩, hT⟩
   · have hs := isSemisimple_adV hZ (d.isSS_of_commute_of_isGammaElt hx hZ hZx hZf)
-    exact isSS_of_aeval_eq_zero hs.minpoly_squarefree (minpoly.aeval F _)
+    exact isSS_of_isSemisimple hs
   · rw [hT]
     rintro _ ⟨a, ha, rfl⟩ _ ⟨b, hb, rfl⟩
     exact (hx.2.1 a ha b hb).map _
@@ -253,8 +275,9 @@ local notation "Qb" => d.QW.baseChange (AlgebraicClosure F)
 theorem adV_gspinBC_tmul {Z : (gspin d.QW).toSubmodule} :
     adV Qb (gspinBC d.QW (1 ⊗ₜ Z)) = (adV d.QW (Z : CliffordAlgebra d.QW)).baseChange Kb := by
   refine TensorProduct.AlgebraTensorModule.ext fun z v => ?_
-  rw [LinearMap.baseChange_tmul, ← mul_one z, ← smul_eq_mul, ← TensorProduct.smul_tmul',
-    map_smul, map_smul]
+  have e1 : ∀ w : Fin d.m → F, z ⊗ₜ[F] w = z • ((1 : Kb) ⊗ₜ[F] w) := fun w => by
+    rw [TensorProduct.smul_tmul', smul_eq_mul, mul_one]
+  rw [LinearMap.baseChange_tmul, e1, e1, map_smul]
   congr 1
   rw [adV_apply, gspinBC_tmul, ofBaseChange_tmul_eq, map_one, one_mul, ← bcHom_ι, ← map_mul,
     ← map_mul, ← map_sub, ← ι_adV Z.2, bcHom_ι, ιInv_ι]
@@ -316,7 +339,6 @@ theorem movedCent_baseChange_props (x : ↥(GSpin d.QW))
     obtain ⟨u, rfl⟩ := Submodule.toBaseChange_surjective' Kb _ hz
     clear hz
     induction u using TensorProduct.inductionOn with
-    | zero => simp
     | tmul k v =>
       rw [Submodule.coe_toBaseChange_tmul, LinearMap.baseChange_tmul, hk v v.2,
         TensorProduct.tmul_zero]
@@ -333,6 +355,7 @@ theorem eq_zero_of_forall_movedCent (x : ↥(GSpin d.QW)) (γ : Module.End Kb Wb
       ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb) 1, Y z = 0) :
     γ Y = 0 := by
   obtain ⟨u, hu, rfl⟩ := d.exists_movedCent_lift x Y hs hc hf
+  clear hs hc hf
   rw [Submodule.baseChange_eq_span] at hu
   induction hu using Submodule.span_induction with
   | mem y hy =>
@@ -342,213 +365,6 @@ theorem eq_zero_of_forall_movedCent (x : ↥(GSpin d.QW)) (γ : Module.End Kb Wb
   | zero => simp
   | add a b _ _ ha hb => rw [map_add, map_add, map_add, ha, hb, add_zero]
   | smul c a _ ha => rw [map_smul, map_smul, map_smul, ha, smul_zero]
-
-omit [PAdicField F] in
-/-- `b(u, v) = ½ polar(u, v)`. -/
-theorem bform_eq_half_polar {V : Type*} [AddCommGroup V] [Module F V] (Q : QuadraticForm F V)
-    (u v : V) : bform Q u v = ⅟2 * QuadraticMap.polar Q u v :=
-  QuadraticMap.associated_apply _ _ _ _
-
-/-- Skewness for `b` is skewness for `polar`. -/
-theorem isSkew_bform_iff {V : Type*} [AddCommGroup V] [Module F V] (Q : QuadraticForm F V)
-    (Y : Module.End F V) :
-    IsomCent.IsSkew (bform Q) Y ↔
-      ∀ u v, QuadraticMap.polar Q (Y u) v = -QuadraticMap.polar Q u (Y v) := by
-  have h2 : (⅟2 : F) ≠ 0 := invOf_ne_zero 2
-  refine forall_congr' fun u => forall_congr' fun v => ?_
-  rw [bform_eq_half_polar, bform_eq_half_polar, ← mul_neg]
-  exact mul_right_inj' h2
-
-/-- Two endomorphisms commute if their base changes to `F̄` do. -/
-theorem commute_of_commute_baseChange {V : Type*} [AddCommGroup V] [Module F V]
-    {A B : Module.End F V} (h : Commute (A.baseChange Kb) (B.baseChange Kb)) : Commute A B := by
-  refine LinearMap.ext fun v => Module.Flat.tensorProduct_mk_injective F V Kb ?_
-  have := LinearMap.congr_fun h.eq (1 ⊗ₜ v)
-  simpa [Module.End.mul_apply, LinearMap.baseChange_tmul] using this
-
-/-- **A regular element of the moved part of the Lie centralizer** (own work): for `x ∈ Γ(G,H)`
-there is `Z ∈ gspin(W)` commuting with `x` with `ker (ad Z) = W'_x`, such that every endomorphism of
-`W` commuting with `ad Z` commutes with `P(x)`.
-
-Over `F̄`, `P(x)` is diagonal in a hyperbolic eigen-frame `eᵢ, fᵢ` with complement `W'_x ⊗ F̄`
-(`exists_hypFrame_torusFbar`).  The moved Lie centralizer is abelian
-(`lieAbelian_specP_baseChange`), and contains the regular diagonal map
-`D = diag(i + 1 on eᵢ, −(i + 1) on fᵢ, 0 on W'_x)`, so every `(ad Z)_{F̄}`, `Z ∈ 𝔩_x`, is diagonal in
-the frame, `αᵢ(Z)` on `eᵢ` and `−αᵢ(Z)` on `fᵢ`.  The `F`-linear maps `αᵢ`, `αᵢ − αⱼ` (`i ≠ j`),
-`αᵢ + αⱼ` into `F̄` are nonzero on `𝔩_x`, since their `F̄`-linear extensions are nonzero at `D`, which
-lies in the `F̄`-span of `𝔩_x` (`eq_zero_of_forall_movedCent`); `F` being infinite, some `Z ∈ 𝔩_x`
-avoids their kernels (`Submodule.exists_forall_notMem_of_forall_ne_top`).  Then `(ad Z)_{F̄}` is a
-regular frame-diagonal map, and the conclusions follow from `IsHypFrame.mem_of_diag` and
-`IsHypFrame.commute_of_commute_diag`. -/
-theorem exists_regular_movedCent {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x) :
-    ∃ Z ∈ gspin d.QW,
-      ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) * Z =
-        Z * ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) ∧
-      LinearMap.ker (adV d.QW Z) = fixedSub x ∧
-      ∀ s : Module.End F (Fin d.m → F), Commute s (adV d.QW Z) →
-        Commute s (specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)) := by
-  classical
-  set Pb := (specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb with hPb
-  obtain ⟨n, e, f, hF, hT⟩ := exists_hypFrame_torusFbar x hx
-  have hPw : ∀ w, specP Qb (bcGSpin d.QW x) w = Pb w := fun w =>
-    LinearMap.congr_fun (specP_bcGSpin d.QW x) w
-  rw [specP_bcGSpin] at hF hT
-  -- `P(x)_{F̄}` is diagonal in the frame
-  have hxT : specP Qb (bcGSpin d.QW x) ∈ hypTorus (Module.End.eigenspace Pb 1) e f := by
-    rw [← hT]; exact ⟨_, bcGSpin_mem_torusFbar (d.self_mem_torusOf x), rfl⟩
-  obtain ⟨hxW, t, hxt⟩ := hxT
-  have hPW : ∀ w ∈ Module.End.eigenspace Pb 1, Pb w = (1 : Kb) • w := fun w hw => by
-    rw [← hPw, hxW w hw, one_smul]
-  have hPe : ∀ i, Pb (e i) = (t i : Kb) • e i := fun i => by rw [← hPw, (hxt i).1]
-  have hPf : ∀ i, Pb (f i) = (((t i)⁻¹ : Kbˣ) : Kb) • f i := fun i => by rw [← hPw, (hxt i).2]
-  -- the regular diagonal element `D`
-  set a : Fin n → Kb := fun j => (((j : ℕ) + 1 : ℕ) : Kb) with ha_def
-  have ha0 : ∀ i, a i ≠ 0 := fun i => by simp [a]
-  have hainj : Function.Injective a := fun i j hij => by
-    simp only [a, Nat.cast_inj, add_left_inj] at hij; exact Fin.ext hij
-  have hapos : ∀ i j, a i + a j ≠ 0 := fun i j => by
-    simp only [a, ← Nat.cast_add]; exact Nat.cast_ne_zero.mpr (by omega)
-  set D : Module.End Kb Wb := ∑ j, (a j • ((polarBilin Qb).flip (f j)).smulRight (e j) -
-    a j • ((polarBilin Qb).flip (e j)).smulRight (f j)) with hD_def
-  have hDapp : ∀ v, D v = ∑ j, ((a j * QuadraticMap.polar Qb v (f j)) • e j -
-      (a j * QuadraticMap.polar Qb v (e j)) • f j) := fun v => by
-    simp [D, LinearMap.sum_apply, smul_smul]
-  have hDW : ∀ w ∈ Module.End.eigenspace Pb 1, D w = (0 : Kb) • w := fun w hw => by
-    rw [hDapp, zero_smul]
-    refine Finset.sum_eq_zero fun j _ => ?_
-    rw [((hF.mem_iff w).1 hw j).1, ((hF.mem_iff w).1 hw j).2]
-    simp
-  have hDe : ∀ i, D (e i) = a i • e i := fun i => by
-    rw [hDapp]
-    simp [hF.polar_ee, hF.polar_ef]
-  have hDf : ∀ i, D (f i) = (-a i) • f i := fun i => by
-    rw [hDapp]
-    simp [hF.polar_ff, hF.polar_fe, neg_smul]
-  have hsD : IsomCent.IsSkew (bform Qb) D := by
-    rw [isSkew_bform_iff]
-    intro u v
-    rw [hDapp, hDapp, ← polarBilin_apply_apply, ← polarBilin_apply_apply, map_sum, map_sum,
-      LinearMap.sum_apply, ← Finset.sum_neg_distrib]
-    refine Finset.sum_congr rfl fun j _ => ?_
-    simp only [map_sub, map_smul, LinearMap.sub_apply, LinearMap.smul_apply,
-      polarBilin_apply_apply, smul_eq_mul]
-    rw [QuadraticMap.polar_comm Qb (e j) v, QuadraticMap.polar_comm Qb (f j) v]
-    ring
-  have hcD : Commute Pb D := hF.linearMap_ext (fun w hw => by
-      rw [Module.End.mul_apply, Module.End.mul_apply, hDW w hw, hPW w hw, one_smul, zero_smul,
-        map_zero, hDW w hw, zero_smul])
-    (fun i => by
-      rw [Module.End.mul_apply, Module.End.mul_apply, hDe, hPe, map_smul, map_smul, hPe, hDe,
-        smul_comm])
-    (fun i => by
-      rw [Module.End.mul_apply, Module.End.mul_apply, hDf, hPf, map_smul, map_smul, hPf, hDf,
-        smul_comm])
-  have hfD : ∀ z ∈ Module.End.eigenspace Pb 1, D z = 0 := fun z hz => by
-    rw [hDW z hz, zero_smul]
-  have hL := lieAbelian_specP_baseChange x hx
-  -- every `(ad Z)_{F̄}`, `Z ∈ 𝔩_x`, is diagonal in the frame
-  have hdiag : ∀ Z ∈ LinearMap.ker (movedCentMap d.QW x),
-      (∀ i, (adV d.QW (Z : CliffordAlgebra d.QW)).baseChange Kb (e i) =
-        QuadraticMap.polar Qb ((adV d.QW (Z : CliffordAlgebra d.QW)).baseChange Kb (e i)) (f i) •
-          e i) ∧
-      ∀ i, (adV d.QW (Z : CliffordAlgebra d.QW)).baseChange Kb (f i) =
-        (-QuadraticMap.polar Qb ((adV d.QW (Z : CliffordAlgebra d.QW)).baseChange Kb (e i))
-          (f i)) • f i := by
-    intro Z hZ
-    obtain ⟨hsZ, hcZ, hfZ⟩ := d.movedCent_baseChange_props x hZ
-    have hcom : Commute D ((adV d.QW (Z : CliffordAlgebra d.QW)).baseChange Kb) :=
-      (hL _ _ hsZ hsD hcZ hcD hfZ hfD).symm
-    have hneg : ∀ i, -a i ≠ 0 := fun i => neg_ne_zero.mpr (ha0 i)
-    have hnegi : Function.Injective fun i => -a i := fun i j h => hainj (neg_inj.mp h)
-    have hab : ∀ i j, a i ≠ -a j := fun i j h => hapos i j (by rw [h, neg_add_cancel])
-    have he := hF.eq_smul_e_of_commute_diag hDW hDe hDf ha0 hainj hab hcom
-    have hf := hF.eq_smul_f_of_commute_diag hDW hDe hDf hneg hnegi hab hcom
-    refine ⟨he, fun i => ?_⟩
-    rw [hf i]
-    congr 1
-    rw [(isSkew_bform_iff _ _).mp hsZ, QuadraticMap.polar_comm, he i,
-      QuadraticMap.polar_smul_right, hF.polar_fe]
-    simp
-  -- the functionals
-  let β : Fin n → Module.End Kb Wb →ₗ[Kb] Kb := fun i =>
-    { toFun := fun Y => QuadraticMap.polar Qb (Y (e i)) (f i)
-      map_add' := fun Y Y' => by simp [QuadraticMap.polar_add_left]
-      map_smul' := fun c Y => by simp [QuadraticMap.polar_smul_left] }
-  let ι := Fin n ⊕ ({p : Fin n × Fin n // p.1 ≠ p.2} ⊕ (Fin n × Fin n))
-  let γ : ι → Module.End Kb Wb →ₗ[Kb] Kb := fun k => match k with
-    | .inl i => β i
-    | .inr (.inl p) => β p.1.1 - β p.1.2
-    | .inr (.inr p) => β p.1 + β p.2
-  have hβD : ∀ i, β i D = a i := fun i => by
-    show QuadraticMap.polar Qb (D (e i)) (f i) = a i
-    rw [hDe, QuadraticMap.polar_smul_left, hF.polar_ef]; simp
-  have hγD : ∀ k, γ k D ≠ 0 := by
-    rintro (i | ⟨⟨i, j⟩, hij⟩ | ⟨i, j⟩)
-    · show β i D ≠ 0; rw [hβD]; exact ha0 i
-    · show β i D - β j D ≠ 0
-      rw [hβD, hβD, sub_ne_zero]; exact fun h => hij (hainj h)
-    · show β i D + β j D ≠ 0; rw [hβD, hβD]; exact hapos i j
-  let K𝔩 := LinearMap.ker (movedCentMap d.QW x)
-  let φ : ι → ↥K𝔩 →ₗ[F] Kb := fun k =>
-    { toFun := fun Z => γ k ((adV d.QW ((Z : (gspin d.QW).toSubmodule) :
-        CliffordAlgebra d.QW)).baseChange Kb)
-      map_add' := fun Z Z' => by
-        simp only [Submodule.coe_add, map_add, LinearMap.baseChange_add]
-      map_smul' := fun c Z => by
-        simp only [SetLike.val_smul, map_smul, LinearMap.baseChange_smul, RingHom.id_apply]
-        exact LinearMap.map_smul_of_tower _ c _ }
-  have hne : ∀ k, LinearMap.ker (φ k) ≠ ⊤ := by
-    intro k htop
-    refine hγD k (d.eq_zero_of_forall_movedCent x (γ k) (fun Z hZ => ?_) D hsD hcD hfD)
-    have : (⟨Z, hZ⟩ : ↥K𝔩) ∈ LinearMap.ker (φ k) := htop ▸ Submodule.mem_top
-    exact this
-  haveI : Infinite F := Infinite.of_injective (Nat.cast : ℕ → F) Nat.cast_injective
-  obtain ⟨Z, hZ⟩ := Submodule.exists_forall_notMem_of_forall_ne_top _ hne
-  have hZφ : ∀ k, γ k ((adV d.QW ((Z : (gspin d.QW).toSubmodule) :
-      CliffordAlgebra d.QW)).baseChange Kb) ≠ 0 := fun k h => hZ k h
-  obtain ⟨hZe, hZf⟩ := hdiag Z Z.2
-  obtain ⟨-, -, hYW0⟩ := d.movedCent_baseChange_props x Z.2
-  set Y := (adV d.QW ((Z : (gspin d.QW).toSubmodule) : CliffordAlgebra d.QW)).baseChange Kb
-    with hY
-  set α : Fin n → Kb := fun i => QuadraticMap.polar Qb (Y (e i)) (f i) with hα
-  have hYW : ∀ w ∈ Module.End.eigenspace Pb 1, Y w = (0 : Kb) • w := fun w hw => by
-    rw [hYW0 w hw, zero_smul]
-  have hα0 : ∀ i, α i ≠ 0 := fun i => hZφ (.inl i)
-  have hαn : ∀ i, -α i ≠ 0 := fun i => neg_ne_zero.mpr (hα0 i)
-  have hαinj : Function.Injective α := fun i j h => by
-    by_contra hij
-    exact hZφ (.inr (.inl ⟨(i, j), hij⟩)) (sub_eq_zero.mpr h)
-  have hαninj : Function.Injective fun i => -α i := fun i j h => hαinj (neg_inj.mp h)
-  have hαab : ∀ i j, α i ≠ -α j := fun i j h =>
-    hZφ (.inr (.inr (i, j))) (by show α i + α j = 0; rw [h, neg_add_cancel])
-  obtain ⟨hcx, hfx⟩ := mem_ker_movedCentMap Z.2
-  refine ⟨_, (Z : (gspin d.QW).toSubmodule).2, hcx, ?_, fun s hs => ?_⟩
-  · ext v
-    constructor
-    · intro hv
-      have h0 : Y (1 ⊗ₜ v) = (0 : Kb) • (1 ⊗ₜ v) := by
-        rw [hY, LinearMap.baseChange_tmul, LinearMap.mem_ker.mp hv, TensorProduct.tmul_zero,
-          zero_smul]
-      have hmem := hF.mem_of_diag hYW hZe hZf hα0 hαn h0
-      rw [Module.End.mem_eigenspace_iff, one_smul, hPb, LinearMap.baseChange_tmul] at hmem
-      exact (d.mem_fixedSub_iff).mpr (Module.Flat.tensorProduct_mk_injective F _ Kb hmem)
-    · intro hv
-      rw [LinearMap.mem_ker, adV_apply, hfx v hv, sub_self, map_zero]
-  · have hsb : Commute Y (s.baseChange Kb) := by
-      rw [Commute, SemiconjBy, hY, ← LinearMap.baseChange_mul, ← LinearMap.baseChange_mul,
-        hs.eq]
-    have := hF.commute_of_commute_diag hYW hZe hZf hα0 hαn hαinj hαninj hαab hsb hPW hPe hPf
-    exact (d.commute_of_commute_baseChange this).symm
-
-/-- **Helper (a) for `gammaClass_equiv`: every `x ∈ Γ(G,H)` gives a point of Luo's
-`Γ^Lie(Ḡ, H̄)` with the same torus**: there is `X ∈ so(W)` with `X ∈ Γ^Lie(Ḡ, H̄)` (Luo §7.1) whose
-torus `H''_X`, embedded diagonally in `Ḡ`, is the image of `T_x(F)` under
-`t ↦ (P(t), P(t) ⊕ 1)` (`exists_regular_movedCent`, `luo_isGammaElt_of_regular`). -/
-theorem exists_luo_isGammaElt_torusOf_eq {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x) :
-    ∃ X : Module.End F d.luoOf.W, d.luoOf.IsGammaElt X ∧
-      d.luoOf.torusOf X = (d.torusOf x).map (d.toGbarU.comp d.diag) := by
-  obtain ⟨Z, hZ, hZx, hker, hreg⟩ := d.exists_regular_movedCent hx
-  exact ⟨_, d.luo_isGammaElt_of_regular hx hZ hZx hker fun s hs _ => hreg s hs⟩
 
 end Exists
 
