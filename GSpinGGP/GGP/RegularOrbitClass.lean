@@ -3,31 +3,31 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.GGP.QuadClassify
-import GSpinGGP.Foundations.SoCentralizer
+import GSpinGGP.Foundations.SingleBlock
+import GSpinGGP.Foundations.OrthogonalSum
+import GSpinGGP.Foundations.SoSplit
 import TauCeti.LinearAlgebra.QuadraticForm.Witt.Extension
 import TauCeti.LinearAlgebra.QuadraticForm.OrthogonalGroup.Basic
-import TauCeti.LinearAlgebra.BilinearForm.Isometry
 
 /-!
 # Rational classification of single-block nilpotent skew maps and of the orbit `O_ν`
 
 Let `(V, q)` be a nondegenerate quadratic space of odd dimension `2k + 1` over a field of
-characteristic `≠ 2`, and `N ∈ so(V)` nilpotent with `N^{2k} ≠ 0` (one Jordan block).
+characteristic `≠ 2`, and `N ∈ so(V)` nilpotent with `N^{2k} ≠ 0` (one Jordan block). The normal
+form of a cyclic vector is in `Foundations/SingleBlock.lean`.
 
-* `exists_normal_vector`: there is `v` with `b(v, N^j v) = 0` for `j < 2k` (and `b(v, N^{2k} v) ≠ 0`,
-  `bform_top_ne_zero`); in the basis `v, N v, …, N^{2k} v` the Gram matrix is `β · antiDiag k`
-  (`gdet_chainBasis`).
+* `gdet_chainBasis`: in a normalized chain basis the Gram determinant is `β^{2k+1} det (antiDiag k)`.
 * `exists_isometryEquiv_conj_of_pow_ne_zero`: two such pairs `(V₁, N₁)`, `(V₂, N₂)` with `V₁ ≅ V₂`
   are isometric: `β₂/β₁` is a square since `β^{2k+1}` is the Gram determinant up to a constant.
 * `exists_isometry_det_one_conj_of_pow_ne_zero`: on one space the isometry can be taken in `SO(V)`
   (compose with `−1`, which commutes with `N` and has determinant `−1`).
 * `exists_isometry_det_one_conj_of_isInOrbitNu`: Luo's orbit `O_ν` (`IsInOrbitNu`, after
   Waldspurger 2010 §7.1 / Luo §2.1) on a space of dimension `2k + 2` is a single `SO(V)`-orbit.
-* `eq_zero_of_finrank_le_two`: a nilpotent skew map in dimension `≤ 2` is `0`.
 * `exists_isometry_det_one_conj_of_pow_ne_zero_sub`, `exists_isometry_det_one_conj_of_isInOrbitNu_sub`:
   the same on an orthogonal summand `U` of `V = U ⊥ B`, by an element of `SO(V)` fixing `B` pointwise
   (`extendById`).
 -/
+
 
 noncomputable section
 
@@ -40,166 +40,9 @@ namespace SingleBlock
 variable {K : Type*} [Field K] [Invertible (2 : K)]
 variable {V : Type*} [AddCommGroup V] [Module K V]
 
-section Gram
-
-variable {Q : QuadraticForm K V} {N : Module.End K V}
-
-/-- `b(N^i v, N^j v) = (-1)^i b(v, N^{i+j} v)` for `N` skew. -/
-theorem bform_pow_pow (hN : ∀ u w, bform Q (N u) w = -bform Q u (N w)) (v : V) (i j : ℕ) :
-    bform Q ((N ^ i) v) ((N ^ j) v) = (-1) ^ i * bform Q v ((N ^ (i + j)) v) := by
-  have h := bform_pow_skew hN i v ((N ^ j) v)
-  rw [← Module.End.mul_apply, ← pow_add] at h
-  rw [h, ← mul_assoc, ← pow_add, ← two_mul, pow_mul]
-  simp
-
-/-- `b(v, N^j v) = 0` for `j` odd and `N` skew. -/
-theorem bform_pow_odd (hN : ∀ u w, bform Q (N u) w = -bform Q u (N w)) (v : V) {j : ℕ}
-    (hj : Odd j) : bform Q v ((N ^ j) v) = 0 := by
-  have h := bform_pow_skew hN j v v
-  rw [hj.neg_one_pow, QuadraticMap.associated_isSymm K Q ((N ^ j) v) v] at h
-  have h2 : (2 : K) * bform Q v ((N ^ j) v) = 0 := by
-    change bform Q v ((N ^ j) v) = -1 * bform Q v ((N ^ j) v) at h
-    linear_combination h
-  exact (mul_eq_zero.1 h2).resolve_left (two_ne_zero' K)
-
-/-- The effect of `v ↦ v + c N^{2m} v` on `β_l = b(v, N^l v)`. -/
-theorem bform_shift (hN : ∀ u w, bform Q (N u) w = -bform Q u (N w)) (v : V) (c : K)
-    (m l : ℕ) :
-    bform Q (v + c • (N ^ (2 * m)) v) ((N ^ l) (v + c • (N ^ (2 * m)) v)) =
-      bform Q v ((N ^ l) v) + 2 * c * bform Q v ((N ^ (l + 2 * m)) v) +
-        c ^ 2 * bform Q v ((N ^ (l + 4 * m)) v) := by
-  have e1 : (N ^ l) ((N ^ (2 * m)) v) = (N ^ (l + 2 * m)) v := by
-    rw [← Module.End.mul_apply, ← pow_add]
-  have h1 := bform_pow_pow hN v (2 * m) l
-  have h2 := bform_pow_pow hN v (2 * m) (l + 2 * m)
-  have hs : ((-1 : K)) ^ (2 * m) = 1 := by rw [pow_mul]; simp
-  rw [hs, one_mul] at h1 h2
-  simp only [map_add, map_smul, LinearMap.add_apply, LinearMap.smul_apply, e1, smul_eq_mul]
-  rw [h1, h2, show 2 * m + l = l + 2 * m by ring, show 2 * m + (l + 2 * m) = l + 4 * m by ring]
-  ring
-
-end Gram
-
-
-section Normal
-
-variable {Q : QuadraticForm K V} {N : Module.End K V}
-
-/-- **Normal form of a cyclic vector**: if `N` is skew, `N^{2k+1} = 0` and `b(v, N^{2k} v) ≠ 0`,
-some `v' = p(N) v` (`p(0) = 1`) has `b(v', N^l v') = 0` for all `l < 2k`, with `N^{2k} v'` and
-`b(v', N^{2k} v')` unchanged.  Kill `b(v, N^{2k-2m} v)`, `m = 1, …, k`, by `v ↦ v + c N^{2m} v`
-(`bform_shift`), which leaves the higher `b(v, N^l v)` alone. -/
-theorem exists_normal_vector (hN : ∀ u w, bform Q (N u) w = -bform Q u (N w)) {k : ℕ}
-    (hk : N ^ (2 * k + 1) = 0) (v : V) (hv : bform Q v ((N ^ (2 * k)) v) ≠ 0) :
-    ∃ v' : V, (N ^ (2 * k)) v' = (N ^ (2 * k)) v ∧
-      bform Q v' ((N ^ (2 * k)) v') = bform Q v ((N ^ (2 * k)) v) ∧
-      ∀ l < 2 * k, bform Q v' ((N ^ l) v') = 0 := by
-  have hz : ∀ l, 2 * k + 1 ≤ l → ∀ x, (N ^ l) x = 0 := fun l hl x => by
-    rw [← Nat.add_sub_cancel' hl, pow_add, hk, zero_mul, LinearMap.zero_apply]
-  suffices H : ∀ t ≤ k, ∃ v' : V, (N ^ (2 * k)) v' = (N ^ (2 * k)) v ∧
-      bform Q v' ((N ^ (2 * k)) v') = bform Q v ((N ^ (2 * k)) v) ∧
-      ∀ l, 2 * k - 2 * t ≤ l → l < 2 * k → bform Q v' ((N ^ l) v') = 0 by
-    obtain ⟨v', h1, h2, h3⟩ := H k le_rfl
-    exact ⟨v', h1, h2, fun l hl => h3 l (by omega) hl⟩
-  intro t
-  induction t with
-  | zero => intro _; exact ⟨v, rfl, rfl, fun l h1 h2 => by omega⟩
-  | succ t ih =>
-    intro ht
-    obtain ⟨v', h1, h2, h3⟩ := ih (by omega)
-    set β := bform Q v ((N ^ (2 * k)) v) with hβ
-    set c : K := -bform Q v' ((N ^ (2 * k - 2 * (t + 1))) v') / (2 * β) with hc
-    refine ⟨v' + c • (N ^ (2 * (t + 1))) v', ?_, ?_, ?_⟩
-    · rw [map_add, map_smul, ← Module.End.mul_apply, ← pow_add,
-        hz (2 * k + 2 * (t + 1)) (by omega), smul_zero, add_zero, h1]
-    · rw [bform_shift hN, hz (2 * k + 2 * (t + 1)) (by omega),
-        hz (2 * k + 4 * (t + 1)) (by omega), map_zero, h2]
-      ring
-    · intro l hl1 hl2
-      rcases Nat.even_or_odd l with he | ho
-      · rw [bform_shift hN, hz (l + 4 * (t + 1)) (by omega), map_zero, mul_zero, add_zero]
-        by_cases hl : l = 2 * k - 2 * (t + 1)
-        · rw [show l + 2 * (t + 1) = 2 * k by omega, h2, hl, hc]
-          field_simp
-          ring
-        · obtain ⟨r, hr⟩ := he
-          rw [h3 l (by omega) hl2, hz (l + 2 * (t + 1)) (by omega), map_zero]
-          ring
-      · exact bform_pow_odd hN _ ho
-
-end Normal
-
 section Chain
 
 variable [FiniteDimensional K V] {Q : QuadraticForm K V} {N : Module.End K V}
-
-omit [Invertible (2 : K)] in
-/-- A nilpotent `N` with `N^{2k} v ≠ 0` on a space of dimension `2k + 1` has `N^{2k+1} = 0`. -/
-theorem pow_succ_eq_zero {k : ℕ} (hdim : finrank K V = 2 * k + 1) (hn : IsNilpotent N) {v : V}
-    (hv : (N ^ (2 * k)) v ≠ 0) : (N ^ (2 * k + 1)) v = 0 := by
-  obtain ⟨k', hk', h1, h2⟩ := exists_pow_apply_ne_zero_of_isNilpotent hn hv
-  have hle := (linearIndependent_pow_apply h1 h2).fintype_card_le_finrank
-  rw [Fintype.card_fin, hdim] at hle
-  rwa [show 2 * k = k' by omega]
-
-/-- The chain basis `v, N v, …, N^{2k} v`. -/
-def chainBasis {k : ℕ} (hdim : finrank K V = 2 * k + 1) (N : Module.End K V) {v : V}
-    (hv : (N ^ (2 * k)) v ≠ 0) (hv' : (N ^ (2 * k + 1)) v = 0) : Basis (Fin (2 * k + 1)) K V :=
-  basisOfLinearIndependentOfCardEqFinrank (linearIndependent_pow_apply hv hv')
-    (by rw [Fintype.card_fin, hdim])
-
-omit [Invertible (2 : K)] [FiniteDimensional K V] in
-theorem chainBasis_apply {k : ℕ} (hdim : finrank K V = 2 * k + 1) {v : V}
-    (hv : (N ^ (2 * k)) v ≠ 0) (hv' : (N ^ (2 * k + 1)) v = 0) (i : Fin (2 * k + 1)) :
-    chainBasis hdim N hv hv' i = (N ^ (i : ℕ)) v := by
-  simp [chainBasis, coe_basisOfLinearIndependentOfCardEqFinrank]
-
-omit [Invertible (2 : K)] in
-/-- A nilpotent `N` with `N^{2k} ≠ 0` on a space of dimension `2k + 1` has `N^{2k+1} = 0`. -/
-theorem pow_eq_zero_of_pow_ne_zero {k : ℕ} (hdim : finrank K V = 2 * k + 1) (hn : IsNilpotent N)
-    {v : V} (hv : (N ^ (2 * k)) v ≠ 0) : N ^ (2 * k + 1) = 0 := by
-  have hv' := pow_succ_eq_zero hdim hn hv
-  refine (chainBasis hdim N hv hv').ext fun i => ?_
-  rw [chainBasis_apply, ← Module.End.mul_apply, ← pow_add, add_comm, pow_add,
-    Module.End.mul_apply, hv', map_zero, LinearMap.zero_apply]
-
-omit [FiniteDimensional K V] in
-/-- `b(v, N^{2k} v) ≠ 0` when `N^{2k} v ≠ 0` (nondegeneracy: `N^{2k} v` is orthogonal to
-`N v, …, N^{2k} v`). -/
-theorem bform_top_ne_zero (hQ : IsNondeg Q) (hN : ∀ u w, bform Q (N u) w = -bform Q u (N w))
-    {k : ℕ} (hdim : finrank K V = 2 * k + 1) (hk : N ^ (2 * k + 1) = 0) {v : V}
-    (hv : (N ^ (2 * k)) v ≠ 0) : bform Q v ((N ^ (2 * k)) v) ≠ 0 := by
-  intro h0
-  have hv' : (N ^ (2 * k + 1)) v = 0 := by rw [hk, LinearMap.zero_apply]
-  apply hv
-  refine (isNondeg_iff Q).1 hQ _ fun y => ?_
-  have : bform Q ((N ^ (2 * k)) v) = 0 := by
-    refine (chainBasis hdim N hv hv').ext fun i => ?_
-    rw [chainBasis_apply, bform_pow_pow hN, LinearMap.zero_apply]
-    rcases Nat.eq_zero_or_pos (i : ℕ) with hi | hi
-    · rw [hi, add_zero, h0, mul_zero]
-    · rw [← Nat.add_sub_cancel' (show 2 * k + 1 ≤ 2 * k + i by omega), pow_add, hk, zero_mul,
-        LinearMap.zero_apply, map_zero, mul_zero]
-  rw [this, LinearMap.zero_apply]
-
-omit [FiniteDimensional K V] in
-/-- Gram matrix of a normalized chain: `b(N^i v, N^j v) = (-1)^i β δ_{i+j, 2k}`. -/
-theorem bform_chain_normal (hN : ∀ u w, bform Q (N u) w = -bform Q u (N w)) {k : ℕ}
-    (hk : N ^ (2 * k + 1) = 0) {v : V} (hnorm : ∀ l < 2 * k, bform Q v ((N ^ l) v) = 0)
-    (i j : ℕ) :
-    bform Q ((N ^ i) v) ((N ^ j) v) =
-      if i + j = 2 * k then (-1) ^ i * bform Q v ((N ^ (2 * k)) v) else 0 := by
-  rw [bform_pow_pow hN]
-  split_ifs with h
-  · rw [h]
-  · rcases Nat.lt_or_gt_of_ne h with h' | h'
-    · rw [hnorm _ h', mul_zero]
-    · rw [← Nat.add_sub_cancel' (show 2 * k + 1 ≤ i + j by omega), pow_add, hk, zero_mul,
-        LinearMap.zero_apply, map_zero, mul_zero]
-
-/-- The anti-diagonal sign matrix `M₀ i j = (-1)^i δ_{i+j, 2k}`. -/
-def antiDiag (k : ℕ) : Matrix (Fin (2 * k + 1)) (Fin (2 * k + 1)) K :=
-  Matrix.of fun i j => if (i : ℕ) + j = 2 * k then (-1) ^ (i : ℕ) else 0
 
 omit [FiniteDimensional K V] in
 /-- The Gram determinant of a normalized chain basis is `β^{2k+1} det M₀`. -/
@@ -218,6 +61,7 @@ theorem gdet_chainBasis {k : ℕ} (hdim : finrank K V = 2 * k + 1)
     split_ifs <;> ring
   unfold QuadClassify.gdet
   rw [this, Matrix.det_smul, Fintype.card_fin]
+
 
 end Chain
 
@@ -251,8 +95,8 @@ theorem exists_isometryEquiv_conj_of_pow_ne_zero {Q : QuadraticForm K V}
     by_contra h
     push Not at h
     exact hp₂ (LinearMap.ext h)
-  have hk := pow_eq_zero_of_pow_ne_zero hdim hn hv₀
-  have hk₂ := pow_eq_zero_of_pow_ne_zero hdim₂ hn₂ hw₀
+  have hk := pow_eq_zero_of_finrank_eq hdim hn
+  have hk₂ := pow_eq_zero_of_finrank_eq hdim₂ hn₂
   obtain ⟨v, hv1, -, hv3⟩ := exists_normal_vector hN hk v₀ (bform_top_ne_zero hQ hN hdim hk hv₀)
   obtain ⟨w, hw1, -, hw3⟩ :=
     exists_normal_vector hN₂ hk₂ w₀ (bform_top_ne_zero hQ₂ hN₂ hdim₂ hk₂ hw₀)
@@ -337,23 +181,6 @@ theorem exists_isometryEquiv_conj_of_pow_ne_zero {Q : QuadraticForm K V}
         ← Module.End.mul_apply, ← pow_succ']
     exact LinearMap.congr_fun this x
 
-/-- An isometry of a nondegenerate space has determinant `±1`. -/
-theorem det_isometryEquiv_eq_one_or {Q : QuadraticForm K V} (hQ : IsNondeg Q)
-    (g : Q.IsometryEquiv Q) :
-    LinearMap.det (g.toLinearEquiv : V →ₗ[K] V) = 1 ∨
-      LinearMap.det (g.toLinearEquiv : V →ₗ[K] V) = -1 := by
-  have hB : (bform Q).SeparatingLeft := fun w hw => hQ.1 w hw
-  have hi : TauCeti.BilinForm.IsIsometry (bform Q) (g.toLinearEquiv : V →ₗ[K] V) :=
-    fun u v => bform_isometry g.toIsometry u v
-  have hsq := hi.det_sq_eq_one (Module.Free.chooseBasis K V)
-    (mem_nonZeroDivisors_of_ne_zero ((LinearMap.separatingLeft_iff_det_ne_zero _).mp hB))
-  exact sq_eq_one_iff.1 hsq
-
-/-- `−1` as an isometry. -/
-def negIsometry (Q : QuadraticForm K V) : Q.IsometryEquiv Q where
-  toLinearEquiv := LinearEquiv.neg K
-  map_app' x := QuadraticMap.map_neg Q x
-
 /-- **Single-block nilpotent skew maps are `SO(V)`-conjugate**: as
 `exists_isometryEquiv_conj_of_pow_ne_zero` on one space, corrected by `−1` (central, determinant
 `−1` in odd dimension). -/
@@ -368,10 +195,12 @@ theorem exists_isometry_det_one_conj_of_pow_ne_zero {Q : QuadraticForm K V} (hQ 
     hdim hN hN' hn hn' hp hp'
   rcases det_isometryEquiv_eq_one_or hQ φ with h | h
   · exact ⟨φ, h, hφ⟩
-  · refine ⟨φ.trans (negIsometry Q), ?_, fun x => ?_⟩
-    · have hneg : ((negIsometry Q).toLinearEquiv : V →ₗ[K] V) = (-1 : K) • LinearMap.id := by
-        ext x; simp [negIsometry]
-      change LinearMap.det (((negIsometry Q).toLinearEquiv : V →ₗ[K] V) ∘ₗ
+  · set ng := TauCeti.QuadraticMap.orthogonalGroupEquivIsometryEquiv Q
+      (QuadraticMap.negOrthogonal Q)
+    refine ⟨φ.trans ng, ?_, fun x => ?_⟩
+    · have hneg : (ng.toLinearEquiv : V →ₗ[K] V) = (-1 : K) • LinearMap.id := by
+        ext x; simp [ng]
+      change LinearMap.det ((ng.toLinearEquiv : V →ₗ[K] V) ∘ₗ
         (φ.toLinearEquiv : V →ₗ[K] V)) = 1
       rw [LinearMap.det_comp, hneg, LinearMap.det_smul, LinearMap.det_id, h, hdim]
       rw [pow_succ, pow_mul]
@@ -380,155 +209,6 @@ theorem exists_isometry_det_one_conj_of_pow_ne_zero {Q : QuadraticForm K V} (hQ 
       rw [hφ, map_neg]
 
 end Iso
-
-section Orth
-
-variable {Q : QuadraticForm K V}
-
-/-- An orthogonal summand of a subspace `U` without radical has no radical. -/
-theorem isNondeg_comp_of_sup {U A B : Submodule K V}
-    (hU : ∀ x ∈ U, (∀ y ∈ U, bform Q x y = 0) → x = 0) (hAB : A ⊔ B = U)
-    (horth : ∀ a ∈ A, ∀ b ∈ B, bform Q a b = 0) : IsNondeg (Q.comp A.subtype) := by
-  have hAU : A ≤ U := hAB ▸ le_sup_left
-  refine (isNondeg_iff _).2 fun x hx => Subtype.ext (hU x (hAU x.2) fun y hy => ?_)
-  rw [← hAB] at hy
-  obtain ⟨a, ha, b, hb, rfl⟩ := Submodule.mem_sup.1 hy
-  rw [map_add, horth _ x.2 _ hb, add_zero]
-  have := hx ⟨a, ha⟩
-  rwa [bform_comp_subtype] at this
-
-/-- A subspace `U` with `IsNondeg (Q|_U)` has no radical. -/
-theorem radical_free_of_isNondeg {U : Submodule K V} (hU : IsNondeg (Q.comp U.subtype)) :
-    ∀ x ∈ U, (∀ y ∈ U, bform Q x y = 0) → x = 0 := fun x hx h => by
-  have := (isNondeg_iff _).1 hU ⟨x, hx⟩ fun y => by rw [bform_comp_subtype]; exact h y y.2
-  exact congrArg Subtype.val this
-
-/-- `A ⊔ B ≅ A ⊥ B` for orthogonal `A, B` with `A ⊓ B = 0`. -/
-def orthSupIso {A B : Submodule K V} (hd : Disjoint A B)
-    (horth : ∀ a ∈ A, ∀ b ∈ B, bform Q a b = 0) :
-    ((Q.comp A.subtype).prod (Q.comp B.subtype)).IsometryEquiv (Q.comp (A ⊔ B).subtype) where
-  toLinearEquiv := LinearEquiv.ofBijective
-    ((Submodule.inclusion le_sup_left).coprod (Submodule.inclusion le_sup_right)) ⟨by
-      rw [← LinearMap.ker_eq_bot, Submodule.eq_bot_iff]
-      rintro ⟨a, b⟩ h
-      rw [LinearMap.mem_ker, LinearMap.coprod_apply] at h
-      have h' : (a : V) + b = 0 := congrArg Subtype.val h
-      have hb : (b : V) ∈ A := by
-        rw [eq_neg_of_add_eq_zero_right h']
-        exact A.neg_mem a.2
-      have hb0 : (b : V) = 0 := (Submodule.disjoint_def.1 hd) _ hb b.2
-      have ha0 : (a : V) = 0 := by rw [eq_neg_of_add_eq_zero_left h', hb0, neg_zero]
-      exact Prod.ext (Subtype.ext ha0) (Subtype.ext hb0), by
-      rintro ⟨x, hx⟩
-      obtain ⟨a, ha, b, hb, rfl⟩ := Submodule.mem_sup.1 hx
-      exact ⟨(⟨a, ha⟩, ⟨b, hb⟩), rfl⟩⟩
-  map_app' p := by
-    change Q ((p.1 : V) + (p.2 : V)) = Q p.1 + Q p.2
-    rw [QuadraticMap.map_add Q, polar_eq_two_mul_bform, horth _ p.1.2 _ p.2.2, mul_zero, add_zero]
-
-/-- Equal subspaces carry isometric forms. -/
-def isoOfEq {A B : Submodule K V} (h : A = B) :
-    (Q.comp A.subtype).IsometryEquiv (Q.comp B.subtype) where
-  toLinearEquiv := LinearEquiv.ofEq A B h
-  map_app' _ := rfl
-
-/-- Lines spanned by vectors of the same length are isometric. -/
-def lineIso {e e' : V} (he : e ≠ 0) (he' : e' ≠ 0) (hQ : Q e = Q e') :
-    (Q.comp (K ∙ e).subtype).IsometryEquiv (Q.comp (K ∙ e').subtype) where
-  toLinearEquiv := (LinearEquiv.toSpanNonzeroSingleton K V e he).symm.trans
-    (LinearEquiv.toSpanNonzeroSingleton K V e' he')
-  map_app' x := by
-    set c := (LinearEquiv.toSpanNonzeroSingleton K V e he).symm x
-    have hx : x = LinearEquiv.toSpanNonzeroSingleton K V e he c := by
-      rw [LinearEquiv.apply_symm_apply]
-    change Q ((LinearEquiv.toSpanNonzeroSingleton K V e' he' c : K ∙ e') : V) = Q (x : V)
-    rw [hx, LinearEquiv.toSpanNonzeroSingleton_apply, LinearEquiv.toSpanNonzeroSingleton_apply]
-    simp only [QuadraticMap.map_smul, hQ]
-
-/-- Nondegenerate split forms of the same even dimension are isometric (both are `H^k`). -/
-theorem nonempty_isometryEquiv_of_split {V₁ V₂ : Type*} [AddCommGroup V₁] [Module K V₁]
-    [FiniteDimensional K V₁] [AddCommGroup V₂] [Module K V₂] [FiniteDimensional K V₂]
-    {Q₁ : QuadraticForm K V₁} {Q₂ : QuadraticForm K V₂} (h₁ : IsNondeg Q₁) (h₂ : IsNondeg Q₂)
-    (hs₁ : IsSplitQF Q₁) (hs₂ : IsSplitQF Q₂) (hd : finrank K V₁ = finrank K V₂)
-    (he : Even (finrank K V₁)) : Nonempty (Q₁.IsometryEquiv Q₂) := by
-  obtain ⟨k₁, Qa₁, -, ⟨I₁⟩, hk₁⟩ := witt_decomposition Q₁ h₁
-  obtain ⟨k₂, Qa₂, -, ⟨I₂⟩, hk₂⟩ := witt_decomposition Q₂ h₂
-  unfold IsSplitQF at hs₁ hs₂
-  obtain ⟨t, ht⟩ := he
-  have h1 : k₁ = 0 := by omega
-  have h2 : k₂ = 0 := by omega
-  have hw : wittIndex Q₂ = wittIndex Q₁ := by omega
-  subst h1 h2
-  rw [hw] at I₂
-  have : Qa₁ = Qa₂ := by
-    ext x
-    rw [Subsingleton.elim x 0, QuadraticMap.map_zero, QuadraticMap.map_zero]
-  subst this
-  exact ⟨I₁.trans I₂.symm⟩
-
-end Orth
-
-section OrbitNuAux
-
-variable [FiniteDimensional K V] {Q : QuadraticForm K V}
-
-omit [FiniteDimensional K V] in
-/-- `x ∈ (K e)^⊥` iff `b(e, x) = 0`. -/
-theorem mem_orthogonal_span_singleton {e x : V} :
-    x ∈ (bform Q).orthogonal (K ∙ e) ↔ bform Q e x = 0 := by
-  rw [LinearMap.BilinForm.mem_orthogonal_iff]
-  constructor
-  · intro h; exact h e (Submodule.mem_span_singleton_self e)
-  · intro h n hn
-    obtain ⟨c, rfl⟩ := Submodule.mem_span_singleton.1 hn
-    change bform Q (c • e) x = 0
-    rw [LinearMap.map_smul₂, h, smul_zero]
-
-omit [FiniteDimensional K V] in
-/-- An anisotropic vector `e ∈ U` splits `U = K e ⊥ (U ∩ e^⊥)`. -/
-theorem span_sup_inf_orthogonal {U : Submodule K V} {e : V} (he : e ∈ U) (hQe : Q e ≠ 0) :
-    (K ∙ e) ⊔ (U ⊓ (bform Q).orthogonal (K ∙ e)) = U ∧
-      Disjoint (K ∙ e) (U ⊓ (bform Q).orthogonal (K ∙ e)) ∧
-      ∀ a ∈ K ∙ e, ∀ b ∈ U ⊓ (bform Q).orthogonal (K ∙ e), bform Q a b = 0 := by
-  have hee : bform Q e e = Q e := QuadraticMap.associated_eq_self_apply K Q e
-  have horth : ∀ a ∈ K ∙ e, ∀ b ∈ U ⊓ (bform Q).orthogonal (K ∙ e), bform Q a b = 0 := by
-    intro a ha b hb
-    obtain ⟨c, rfl⟩ := Submodule.mem_span_singleton.1 ha
-    rw [LinearMap.map_smul₂, mem_orthogonal_span_singleton.1 hb.2,
-      smul_zero]
-  refine ⟨le_antisymm (sup_le ((Submodule.span_singleton_le_iff_mem _ _).2 he) inf_le_left)
-    fun u hu => ?_, ?_, horth⟩
-  · set c := bform Q e u / Q e
-    rw [show u = c • e + (u - c • e) by abel]
-    refine Submodule.add_mem_sup (Submodule.smul_mem _ _ (Submodule.mem_span_singleton_self e))
-      ⟨U.sub_mem hu (U.smul_mem _ he), mem_orthogonal_span_singleton.2 ?_⟩
-    rw [map_sub, map_smul, hee, smul_eq_mul]
-    simp only [c, div_mul_cancel₀ _ hQe, sub_self]
-  · rw [Submodule.disjoint_def]
-    intro x hx hx'
-    obtain ⟨c, rfl⟩ := Submodule.mem_span_singleton.1 hx
-    have := mem_orthogonal_span_singleton.1 hx'.2
-    rw [map_smul, hee, smul_eq_mul] at this
-    rw [(mul_eq_zero.1 this).resolve_right hQe, zero_smul]
-
-omit [Invertible (2 : K)] in
-/-- `finrank (A ⊔ B) = finrank A + finrank B` for `A ⊓ B = 0`. -/
-theorem finrank_sup_of_disjoint {A B : Submodule K V} (hd : Disjoint A B) :
-    finrank K ↥(A ⊔ B) = finrank K A + finrank K B := by
-  have := Submodule.finrank_sup_add_finrank_inf_eq A B
-  rw [hd.eq_bot, finrank_bot, add_zero] at this
-  exact this
-
-omit [FiniteDimensional K V] in
-/-- The restriction of a skew map to an invariant subspace is skew. -/
-theorem skew_restrict {N : Module.End K V} (hN : ∀ u w, bform Q (N u) w = -bform Q u (N w))
-    {U : Submodule K V} (hNU : ∀ u ∈ U, N u ∈ U) :
-    ∀ u w : U, bform (Q.comp U.subtype) (N.restrict hNU u) w =
-      -bform (Q.comp U.subtype) u (N.restrict hNU w) := fun u w => by
-  simp only [bform_comp_subtype, LinearMap.coe_restrict_apply]
-  exact hN u w
-
-end OrbitNuAux
 
 section OrbitNu
 
@@ -560,10 +240,9 @@ theorem isInOrbitNu_top_data (hQ : IsNondeg Q) {k : ℕ} (hdim : finrank F W = 2
     have := finrank_sup_of_disjoint hdisj
     rw [hspan, finrank_top, _root_.finrank_span_singleton hd0, hdim] at this
     omega
-  have hrad : ∀ x ∈ (⊤ : Submodule F W), (∀ y ∈ (⊤ : Submodule F W), bform Q x y = 0) → x = 0 :=
-    fun x _ hx => (isNondeg_iff Q).1 hQ x fun y => hx y trivial
   have hU₁ : IsNondeg (Q.comp U₁.subtype) := by
-    refine isNondeg_comp_of_sup hrad (by rw [sup_comm]; exact hspan) fun a ha b hb => ?_
+    refine isNondeg_comp_subtype (U' := F ∙ d₀) (fun a ha b hb => ?_) hQ
+      (IsCompl.of_eq hdisj.symm.eq_bot (by rw [sup_comm]; exact hspan))
     obtain ⟨c, rfl⟩ := Submodule.mem_span_singleton.1 hb
     rw [map_smul, QuadraticMap.associated_isSymm F Q a d₀, horth a ha, smul_zero]
   have hQe0 : Q e ≠ 0 := by rw [hQe]; exact hν
@@ -587,7 +266,7 @@ nondegenerate `W` of dimension `2k + 2`, two nilpotent skew maps in `O_ν` (`IsI
 conjugate under `SO(W)`.  Both `U₁ = F e ⊥ S` are `⟨ν⟩ ⊥ H^k`; the single blocks on `U₁, U₁'` are
 conjugate by an isometry (`exists_isometryEquiv_conj_of_pow_ne_zero`), which extends to `W`
 (Witt) and then carries `d₀` to a multiple of `d₀'`; the reflection in `d₀'` commutes with `N'`
-and fixes the determinant. -/
+and corrects the determinant to `1`. -/
 theorem exists_isometry_det_one_conj_of_isInOrbitNu (hQ : IsNondeg Q) {k : ℕ}
     (hdim : finrank F W = 2 * k + 2) {ν : F} (hν : ν ≠ 0) {N N' : Module.End F W}
     (hN : ∀ u w, bform Q (N u) w = -bform Q u (N w))
@@ -686,48 +365,6 @@ theorem exists_isometry_det_one_conj_of_isInOrbitNu (hQ : IsNondeg Q) {k : ℕ}
 
 end OrbitNu
 
-section Small
-
-variable [FiniteDimensional K V] {Q : QuadraticForm K V}
-
-/-- **A nilpotent skew map in dimension `≤ 2` is `0`** (`so(V)` is `0` or a torus): if `N v ≠ 0`
-then `v, N v` is a basis, `N² v = 0`, and `N v` is orthogonal to both. -/
-theorem eq_zero_of_finrank_le_two (hQ : IsNondeg Q) (hdim : finrank K V ≤ 2)
-    {N : Module.End K V} (hN : ∀ u w, bform Q (N u) w = -bform Q u (N w)) (hn : IsNilpotent N) :
-    N = 0 := by
-  by_contra h0
-  obtain ⟨v, hv⟩ : ∃ v, N v ≠ 0 := by
-    by_contra h
-    push Not at h
-    exact h0 (LinearMap.ext h)
-  have hv1 : (N ^ 1) v ≠ 0 := by rwa [pow_one]
-  obtain ⟨m, hm, h1, h2⟩ := exists_pow_apply_ne_zero_of_isNilpotent hn hv1
-  have hli := linearIndependent_pow_apply h1 h2
-  have hle := hli.fintype_card_le_finrank
-  rw [Fintype.card_fin] at hle
-  have hm1 : m = 1 := by omega
-  subst hm1
-  have hcard : Fintype.card (Fin 2) = finrank K V := by rw [Fintype.card_fin]; omega
-  set b := basisOfLinearIndependentOfCardEqFinrank hli hcard
-  apply hv
-  refine (isNondeg_iff Q).1 hQ _ fun y => ?_
-  have : bform Q (N v) = 0 := by
-    refine b.ext fun i => ?_
-    rw [show b i = (N ^ (i : ℕ)) v by simp [b, coe_basisOfLinearIndependentOfCardEqFinrank],
-      LinearMap.zero_apply]
-    have := bform_pow_pow hN v 1 i
-    rw [pow_one] at this
-    rw [this]
-    obtain ⟨i, hi⟩ := i
-    interval_cases i
-    · show (-1) ^ 1 * bform Q v ((N ^ (1 + 0)) v) = 0
-      rw [bform_pow_odd hN v (by decide : Odd (1 + 0)), mul_zero]
-    · show (-1) ^ 1 * bform Q v ((N ^ (1 + 1)) v) = 0
-      rw [h2, map_zero, mul_zero]
-  rw [this, LinearMap.zero_apply]
-
-end Small
-
 section Extend
 
 variable {Q : QuadraticForm K V} {A B : Submodule K V}
@@ -768,6 +405,36 @@ theorem det_extendById [FiniteDimensional K V] (hc : IsCompl A B)
     ext x
     rfl
   rw [this, LinearMap.det_conj, LinearMap.det_prodMap, LinearMap.det_id, mul_one]
+
+/-- **Single blocks on a subspace**: if `V = U ⊥ B`, `dim U = 2k + 1`, and `N, N'` are nilpotent
+skew, preserve `U`, and have `N^{2k}, N'^{2k} ≠ 0` on `U`, some `g ∈ SO(V)` fixing `B` pointwise
+has `g N = N' g` on `U`. -/
+theorem exists_isometry_det_one_conj_of_pow_ne_zero_sub [FiniteDimensional K V] (hQ : IsNondeg Q) {U B : Submodule K V}
+    (hc : IsCompl U B) (horth : ∀ a ∈ U, ∀ b ∈ B, bform Q a b = 0) {k : ℕ}
+    (hdim : finrank K U = 2 * k + 1) {N N' : Module.End K V}
+    (hN : ∀ u w, bform Q (N u) w = -bform Q u (N w))
+    (hN' : ∀ u w, bform Q (N' u) w = -bform Q u (N' w))
+    (hn : IsNilpotent N) (hn' : IsNilpotent N') (hNU : ∀ u ∈ U, N u ∈ U)
+    (hNU' : ∀ u ∈ U, N' u ∈ U) (hp : ∃ u ∈ U, (N ^ (2 * k)) u ≠ 0)
+    (hp' : ∃ u ∈ U, (N' ^ (2 * k)) u ≠ 0) :
+    ∃ g : Q.IsometryEquiv Q, LinearMap.det (g.toLinearEquiv : V →ₗ[K] V) = 1 ∧
+      (∀ b ∈ B, g b = b) ∧ ∀ u ∈ U, g (N u) = N' (g u) := by
+  have hU : IsNondeg (Q.comp U.subtype) := isNondeg_comp_subtype horth hQ hc
+  have hpU : ∀ {M : Module.End K V} (hMU : ∀ u ∈ U, M u ∈ U), (∃ u ∈ U, (M ^ (2 * k)) u ≠ 0) →
+      (M.restrict hMU) ^ (2 * k) ≠ 0 := fun hMU ⟨u, hu, hpow⟩ h0 => hpow (by
+    have := LinearMap.congr_fun h0 ⟨u, hu⟩
+    rw [Module.End.pow_restrict, LinearMap.restrict_apply] at this
+    exact congrArg Subtype.val this)
+  obtain ⟨f, hf1, hf2⟩ := exists_isometry_det_one_conj_of_pow_ne_zero hU hdim
+    (skew_restrict hN hNU) (skew_restrict hN' hNU') (Module.End.isNilpotent.restrict hNU hn)
+    (Module.End.isNilpotent.restrict hNU' hn') (hpU hNU hp) (hpU hNU' hp')
+  refine ⟨extendById hc horth f, by rw [det_extendById, hf1],
+    fun b hb => extendById_apply_right hc horth f ⟨b, hb⟩, fun u hu => ?_⟩
+  have h1 := extendById_apply_left hc horth f ⟨N u, hNU u hu⟩
+  have h2 := extendById_apply_left hc horth f ⟨u, hu⟩
+  simp only at h1 h2
+  rw [h1, h2]
+  exact congrArg Subtype.val (hf2 ⟨u, hu⟩)
 
 end Extend
 
@@ -844,47 +511,13 @@ theorem exists_isometry_det_one_conj_of_isInOrbitNu_sub (hQ : IsNondeg Q) {U B :
     (h' : IsInOrbitNu Q U ν N') :
     ∃ g : Q.IsometryEquiv Q, LinearMap.det (g.toLinearEquiv : W →ₗ[F] W) = 1 ∧
       (∀ b ∈ B, g b = b) ∧ ∀ u ∈ U, g (N u) = N' (g u) := by
-  have hrad : ∀ x ∈ (⊤ : Submodule F W), (∀ y ∈ (⊤ : Submodule F W), bform Q x y = 0) → x = 0 :=
-    fun x _ hx => (isNondeg_iff Q).1 hQ x fun y => hx y trivial
-  have hU : IsNondeg (Q.comp U.subtype) := isNondeg_comp_of_sup hrad hc.sup_eq_top horth
+  have hU : IsNondeg (Q.comp U.subtype) := isNondeg_comp_subtype horth hQ hc
   have hNU := mapsTo_of_isInOrbitNu h
   have hNU' := mapsTo_of_isInOrbitNu h'
   obtain ⟨f, hf1, hf2⟩ := exists_isometry_det_one_conj_of_isInOrbitNu hU hdim hν
     (skew_restrict hN hNU) (skew_restrict hN' hNU') (Module.End.isNilpotent.restrict hNU hn)
     (Module.End.isNilpotent.restrict hNU' hn') (isInOrbitNu_restrict hNU h)
     (isInOrbitNu_restrict hNU' h')
-  refine ⟨extendById hc horth f, by rw [det_extendById, hf1],
-    fun b hb => extendById_apply_right hc horth f ⟨b, hb⟩, fun u hu => ?_⟩
-  have h1 := extendById_apply_left hc horth f ⟨N u, hNU u hu⟩
-  have h2 := extendById_apply_left hc horth f ⟨u, hu⟩
-  simp only at h1 h2
-  rw [h1, h2]
-  exact congrArg Subtype.val (hf2 ⟨u, hu⟩)
-
-/-- **Single blocks on a subspace**: if `W = U ⊥ B`, `dim U = 2k + 1`, and `N, N'` are nilpotent
-skew, preserve `U`, and have `N^{2k}, N'^{2k} ≠ 0` on `U`, some `g ∈ SO(W)` fixing `B` pointwise
-has `g N = N' g` on `U`. -/
-theorem exists_isometry_det_one_conj_of_pow_ne_zero_sub (hQ : IsNondeg Q) {U B : Submodule F W}
-    (hc : IsCompl U B) (horth : ∀ a ∈ U, ∀ b ∈ B, bform Q a b = 0) {k : ℕ}
-    (hdim : finrank F U = 2 * k + 1) {N N' : Module.End F W}
-    (hN : ∀ u w, bform Q (N u) w = -bform Q u (N w))
-    (hN' : ∀ u w, bform Q (N' u) w = -bform Q u (N' w))
-    (hn : IsNilpotent N) (hn' : IsNilpotent N') (hNU : ∀ u ∈ U, N u ∈ U)
-    (hNU' : ∀ u ∈ U, N' u ∈ U) (hp : ∃ u ∈ U, (N ^ (2 * k)) u ≠ 0)
-    (hp' : ∃ u ∈ U, (N' ^ (2 * k)) u ≠ 0) :
-    ∃ g : Q.IsometryEquiv Q, LinearMap.det (g.toLinearEquiv : W →ₗ[F] W) = 1 ∧
-      (∀ b ∈ B, g b = b) ∧ ∀ u ∈ U, g (N u) = N' (g u) := by
-  have hrad : ∀ x ∈ (⊤ : Submodule F W), (∀ y ∈ (⊤ : Submodule F W), bform Q x y = 0) → x = 0 :=
-    fun x _ hx => (isNondeg_iff Q).1 hQ x fun y => hx y trivial
-  have hU : IsNondeg (Q.comp U.subtype) := isNondeg_comp_of_sup hrad hc.sup_eq_top horth
-  have hpU : ∀ {M : Module.End F W} (hMU : ∀ u ∈ U, M u ∈ U), (∃ u ∈ U, (M ^ (2 * k)) u ≠ 0) →
-      (M.restrict hMU) ^ (2 * k) ≠ 0 := fun hMU ⟨u, hu, hpow⟩ h0 => hpow (by
-    have := LinearMap.congr_fun h0 ⟨u, hu⟩
-    rw [Module.End.pow_restrict, LinearMap.restrict_apply] at this
-    exact congrArg Subtype.val this)
-  obtain ⟨f, hf1, hf2⟩ := exists_isometry_det_one_conj_of_pow_ne_zero hU hdim
-    (skew_restrict hN hNU) (skew_restrict hN' hNU') (Module.End.isNilpotent.restrict hNU hn)
-    (Module.End.isNilpotent.restrict hNU' hn') (hpU hNU hp) (hpU hNU' hp')
   refine ⟨extendById hc horth f, by rw [det_extendById, hf1],
     fun b hb => extendById_apply_right hc horth f ⟨b, hb⟩, fun u hu => ?_⟩
   have h1 := extendById_apply_left hc horth f ⟨N u, hNU u hu⟩

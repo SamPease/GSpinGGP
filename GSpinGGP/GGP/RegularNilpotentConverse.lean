@@ -62,10 +62,9 @@ section Core
 variable {K : Type*} [Field K] [CharZero K] [Invertible (2 : K)]
 variable {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
 
-/-- **A nilpotent skew `N` with `dim so(V)_N = ⌊dim V/2⌋` is a single Jordan block** (or two, of
-sizes `n − 1, 1`): over `K̄`, `N` has the least centralizer dimension
-(`jantzen_finrank_soCentMat_ge`), so it is regular nilpotent of partition `[n]` or `[n − 1, 1]`
-(`jantzen_regularNil_partition`), i.e. `N^{n−1} ≠ 0` for `n` odd and `N^{n−2} ≠ 0` for `n` even. -/
+/-- **A nilpotent skew `N` with `dim so(V)_N = ⌊dim V/2⌋` is regular**: over `K̄`, `N` has the
+least centralizer dimension (`jantzen_finrank_soCentMat_ge`), so it is regular nilpotent, of
+partition `[n]` for `n` odd and `[n − 1, 1]` for `n` even (`jantzen_regularNil_partition`), i.e. `N^{n−1} ≠ 0` for `n` odd and `N^{n−2} ≠ 0` for `n` even. -/
 theorem pow_ne_zero_of_finrank_soCent_eq {Q : QuadraticForm K V} (hQ : IsNondeg Q)
     {N : Module.End K V} (hN : ∀ u w, bform Q (N u) w = -bform Q u (N w)) (hNn : IsNilpotent N)
     (hdim : finrank K (soCent Q N) = finrank K V / 2) (hn : 2 < finrank K V) :

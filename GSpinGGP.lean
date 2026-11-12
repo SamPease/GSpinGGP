@@ -39,6 +39,8 @@ import GSpinGGP.Foundations.JointCentralizer
 import GSpinGGP.GGP.JointRank
 import GSpinGGP.GGP.LieRank
 import GSpinGGP.GGP.RegularNilpotentConverse
+import GSpinGGP.Foundations.SingleBlock
+import GSpinGGP.Foundations.OrthogonalSum
 import GSpinGGP.GGP.RegularOrbitClass
 import GSpinGGP.GGP.OrbitSpecQd
 import GSpinGGP.GGP.RegularRank
