@@ -239,7 +239,8 @@ theorem measLieTorus_eq {T : Subgroup ↥(GSpin d.QW)} {μ : Measure ↥(d.lieTo
 
 /-- **A torus of `𝒯` naturally corresponding to `T` is the image of a `GSpin(W)(F)`-conjugate of
 `T`**: if `T' = u φ(T) u⁻¹` with `u ∈ H̄(F)`, write `unitFst u = P(g̃)`
-(`exists_specPU_eq_unitFst`). As `T'` lies in the image of `diagU`, it is determined by its `GL(W)`-component, which is
+(`exists_specPU_eq_unitFst`). As `T'` lies in the image of `diagU`, it is determined by its
+`GL(W)`-component, which is
 `P(g̃ T g̃⁻¹)` (`map_unitFst_conj_map`): `T' = φ(g̃ T g̃⁻¹)`. -/
 theorem exists_conj_eq_map_of_isNaturalTorusCorr {T : Subgroup ↥(GSpin d.QW)}
     (T' : d.luoOf.GammaTorus) (h : d.IsNaturalTorusCorr T T'.1) :
