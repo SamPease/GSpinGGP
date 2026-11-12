@@ -183,6 +183,193 @@ theorem exists_killPart {Q : QuadraticForm K V} {E N : Module.End K V}
 
 end KillPart
 
+/-! ## Minimal centralizer on `ker X` -/
+
+section FactorRegular
+
+variable {K : Type*} [Field K] [CharZero K] [Invertible (2 : K)]
+variable {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
+
+omit [CharZero K] [FiniteDimensional K V] in
+theorem soCent_one_add (Q : QuadraticForm K V) (N : Module.End K V) :
+    soCent Q (1 + N) = soCent Q N := by
+  ext M
+  simp only [mem_soCent, mul_add, add_mul, mul_one, one_mul, add_right_inj]
+
+/-- **A minimizer of `dim so_Cliff(V)_{X,·}` killing `(ker X)^⊥` has minimal centralizer on
+`ker X`**: with `A = ker (adV X)`, `V = A ⊥ A^⊥`, if `Y ∈ so_Cliff(V)_X` kills `A^⊥` and
+`dim so_Cliff(V)_{X,Y} ≤ dim so_Cliff(V)_{X,Y'}` for all `Y' ∈ so_Cliff(V)_X`, then
+`dim so(A)_{adV Y|_A} = ⌊dim A/2⌋`.  Changing the `A`-part of `adV Y` to any skew `M`
+(`sumEnd`, lifted by `exists_mem_soSub_adV_eq`) changes `dim so_Cliff(V)_{X,·}` by
+`dim so(A)_M − dim so(A)_{adV Y|_A}` (`finrank_soCent_inf_eq` for `g = 1 + adV X`,
+`soCent_inf_killSub_congr`); conclude with `exists_skew_finrank_soCent_le` and
+`le_finrank_soCent`.  The `so_Cliff` form of `isQuasiSplitQF_fixedSub_of_forall_finrank_le`. -/
+theorem finrank_soCent_ker_eq_of_forall_le {Q : QuadraticForm K V} (hQ : IsNondeg Q)
+    {Xc Yc : CliffordAlgebra Q} (hXc : Xc ∈ soSub Q) (hYc : Yc ∈ lieCentralizer (soSub Q) Xc)
+    (hc : IsCompl (LinearMap.ker (adV Q Xc))
+      ((bform Q).orthogonal (LinearMap.ker (adV Q Xc))))
+    (hYB : ∀ b ∈ (bform Q).orthogonal (LinearMap.ker (adV Q Xc)), adV Q Yc b = 0)
+    (hmin : ∀ Y' ∈ lieCentralizer (soSub Q) Xc,
+      finrank K ↥(lieCentralizer (lieCentralizer (soSub Q) Xc) Yc) ≤
+        finrank K ↥(lieCentralizer (lieCentralizer (soSub Q) Xc) Y'))
+    (hYA : ∀ a ∈ LinearMap.ker (adV Q Xc), adV Q Yc a ∈ LinearMap.ker (adV Q Xc)) :
+    finrank K ↥(soCent (Q.comp (LinearMap.ker (adV Q Xc)).subtype) ((adV Q Yc).restrict hYA)) =
+      finrank K ↥(LinearMap.ker (adV Q Xc)) / 2 := by
+  set A := LinearMap.ker (adV Q Xc)
+  set B := (bform Q).orthogonal A
+  set E := adV Q Xc
+  have hE := bform_adV (Q := Q) hXc.1
+  have horth : ∀ u ∈ A, ∀ w ∈ B, bform Q u w = 0 := fun u hu w hw => hw u hu
+  have hEA : Set.MapsTo E A A := fun a ha => by
+    simp only [SetLike.mem_coe, A, E, LinearMap.mem_ker] at ha ⊢; rw [ha, map_zero]
+  have hEB := mapsTo_orthogonal_of_skew hE hEA
+  have hAg : ∀ v, v ∈ A ↔ (1 + E) v = v := fun v => by
+    simp [A, E, LinearMap.mem_ker]
+  have hgB : ∀ b ∈ B, (1 + E) b ∈ B := fun b hb => by
+    rw [LinearMap.add_apply, Module.End.one_apply]; exact add_mem hb (hEB hb)
+  have hQA := isNondeg_comp_subtype_of_isCompl hc
+  -- the dimension formula
+  have key : ∀ Z ∈ lieCentralizer (soSub Q) Xc, ∀ hZA : ∀ a ∈ A, adV Q Z a ∈ A,
+      finrank K ↥(lieCentralizer (lieCentralizer (soSub Q) Xc) Z) =
+        finrank K ↥(soCent (Q.comp A.subtype) ((adV Q Z).restrict hZA)) +
+        finrank K ↥(soCent Q (1 + E) ⊓ soCent Q (adV Q Z) ⊓ killSub A) := by
+    intro Z hZ hZA
+    obtain ⟨hZs, hZX⟩ := mem_lieCentralizer.mp hZ
+    have hZE : adV Q Z * E = E * adV Q Z := adV_mul_comm_of_mul_comm hZs.1 hXc.1 hZX
+    have hZg : adV Q Z * (1 + E) = (1 + E) * adV Q Z := by
+      rw [mul_add, add_mul, mul_one, one_mul, hZE]
+    rw [finrank_lieCentralizer_lieCentralizer_soSub hQ hXc hZs, ← soCent_one_add Q E]
+    exact finrank_soCent_inf_eq hc hAg hgB (bform_adV hZs.1) hZg
+  have hYs := (mem_lieCentralizer.mp hYc).1
+  have hNs : ∀ u w, bform (Q.comp A.subtype) ((adV Q Yc).restrict hYA u) w =
+      -bform (Q.comp A.subtype) u ((adV Q Yc).restrict hYA w) := fun u w => by
+    simp only [bform_comp_subtype, LinearMap.coe_restrict_apply]; exact bform_adV hYs.1 _ _
+  have hle : ∀ M : Module.End K A, (∀ u w, bform (Q.comp A.subtype) (M u) w =
+      -bform (Q.comp A.subtype) u (M w)) →
+      finrank K ↥(soCent (Q.comp A.subtype) ((adV Q Yc).restrict hYA)) ≤
+        finrank K ↥(soCent (Q.comp A.subtype) M) := by
+    intro M hM
+    have hM0 : M ∈ soCent (Q.comp A.subtype) (E.restrict hEA) := by
+      have hr : E.restrict hEA = 0 := LinearMap.ext fun a => Subtype.ext a.2
+      exact mem_soCent.2 ⟨hM, by rw [hr, mul_zero, zero_mul]⟩
+    have h0 : (0 : Module.End K B) ∈ soCent (Q.comp B.subtype) (E.restrict hEB) :=
+      mem_soCent.2 ⟨fun _ _ => by simp, by simp⟩
+    have hmem := sumEnd_mem_soCent horth hc hEA hEB hM0 h0
+    obtain ⟨Z, hZs, hZ⟩ := exists_mem_soSub_adV_eq hQ _ (mem_soCent.1 hmem).1
+    have hZ' : Z ∈ lieCentralizer (soSub Q) Xc := mem_lieCentralizer.mpr
+      ⟨hZs, (commute_of_adV_commute hQ hZs.1 hXc.1 (by rw [hZ]; exact (mem_soCent.1 hmem).2)).symm⟩
+    have h3 := hmin Z hZ'
+    have hZA : ∀ a ∈ A, adV Q Z a ∈ A := fun a ha => by
+      rw [hZ, show a = ((⟨a, ha⟩ : A) : V) from rfl, sumEnd_left]; exact (M ⟨a, ha⟩).2
+    have hcong := soCent_inf_killSub_congr (g := 1 + E) hc hYA hZA fun b hb => by
+      rw [hYB b hb, hZ, show b = ((⟨b, hb⟩ : B) : V) from rfl, sumEnd_right]; rfl
+    have hres : (adV Q Z).restrict hZA = M := by
+      ext a
+      simp only [LinearMap.coe_restrict_apply, hZ]
+      exact sumEnd_left hc M 0 a
+    have h1' := key Yc hYc hYA
+    have h2' := key Z hZ' hZA
+    rw [hres, ← hcong] at h2'
+    omega
+  obtain ⟨M, hM, hMle⟩ := exists_skew_finrank_soCent_le _ (Q.comp A.subtype) rfl hQA
+  have h1 := hle M (mem_soCent.1 hM).1
+  have h2 := le_finrank_soCent hQA hNs
+  exact le_antisymm (h1.trans hMle) h2
+
+end FactorRegular
+
+/-! ## Conjugating one factor -/
+
+section Factor
+
+variable {K : Type*} [Field K] [Invertible (2 : K)]
+variable {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
+
+/-- If `P(g)` conjugates `adV Z` to `adV Z'` (`Z, Z' ∈ so_Cliff(V)`), then `g Z g⁻¹ = Z'`
+(`adV_conj`, `adV` injective on `so_Cliff(V)`). -/
+theorem conj_eq_of_specP_conj {Q : QuadraticForm K V} (hQ : IsNondeg Q) (g : GSpin Q)
+    {Z Z' : CliffordAlgebra Q} (hZ : Z ∈ soSub Q) (hZ' : Z' ∈ soSub Q)
+    (h : ∀ v, specP Q g (adV Q Z v) = adV Q Z' (specP Q g v)) :
+    ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * Z *
+      (((g : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) = Z' := by
+  refine eq_of_mem_soSub_of_adV_eq hQ (conj_mem_soSub g hZ) hZ' (LinearMap.ext fun v => ?_)
+  rw [adV_conj g hZ.1 v, h]
+  congr 1
+  simp
+
+end Factor
+
+section FactorConj
+
+variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
+variable {W : Type*} [AddCommGroup W] [Module F W] [FiniteDimensional F W]
+
+omit [PAdicField F] [FiniteDimensional F W] in
+/-- `(N|_U)^n ≠ 0` gives `u ∈ U` with `N^n u ≠ 0`. -/
+theorem exists_pow_apply_ne_zero_of_restrict {U : Submodule F W} {N : Module.End F W}
+    (hNU : ∀ u ∈ U, N u ∈ U) {n : ℕ} (h : N.restrict hNU ^ n ≠ 0) : ∃ u ∈ U, (N ^ n) u ≠ 0 := by
+  by_contra hc
+  push Not at hc
+  apply h
+  refine LinearMap.ext fun u => Subtype.ext ?_
+  rw [Module.End.pow_restrict, LinearMap.restrict_apply]
+  exact hc u u.2
+
+/-- **The factor classification**: on a nondegenerate `U ⊆ W` with `W = U ⊥ U^⊥`, two nilpotent
+skew `N, N'` preserving `U` with minimal centralizer on `U` (`dim so(U)_{N|_U} = ⌊dim U/2⌋`), and,
+when `dim U` is even and `≥ 4`, both in `O_ν(U)`, are conjugate on `U` by some `g ∈ SO(W)` fixing
+`U^⊥`.  Odd `dim U`: one Jordan block (`pow_ne_zero_of_finrank_soCent_eq`); even `dim U ≥ 4`:
+`IsInOrbitNu`; even `dim U ≤ 2`: `N|_U = N'|_U = 0`. -/
+theorem exists_isometry_conj_of_finrank_soCent_eq {Q : QuadraticForm F W} (hQ : IsNondeg Q)
+    {U : Submodule F W} (hc : IsCompl U ((bform Q).orthogonal U)) {ν : F} (hν : ν ≠ 0)
+    {N N' : Module.End F W} (hN : ∀ u w, bform Q (N u) w = -bform Q u (N w))
+    (hN' : ∀ u w, bform Q (N' u) w = -bform Q u (N' w)) (hn : IsNilpotent N)
+    (hn' : IsNilpotent N') (hNU : ∀ u ∈ U, N u ∈ U) (hNU' : ∀ u ∈ U, N' u ∈ U)
+    (hd : finrank F ↥(soCent (Q.comp U.subtype) (N.restrict hNU)) = finrank F U / 2)
+    (hd' : finrank F ↥(soCent (Q.comp U.subtype) (N'.restrict hNU')) = finrank F U / 2)
+    (hev : Even (finrank F U) → 4 ≤ finrank F U →
+      IsInOrbitNu Q U ν N ∧ IsInOrbitNu Q U ν N') :
+    ∃ g : Q.IsometryEquiv Q, LinearMap.det (g.toLinearEquiv : W →ₗ[F] W) = 1 ∧
+      (∀ b ∈ (bform Q).orthogonal U, g b = b) ∧ ∀ u ∈ U, g (N u) = N' (g u) := by
+  have horth : ∀ a ∈ U, ∀ b ∈ (bform Q).orthogonal U, bform Q a b = 0 := fun a ha b hb => hb a ha
+  have hU := isNondeg_comp_subtype_of_isCompl hc
+  rcases Nat.even_or_odd (finrank F U) with he | ho
+  · by_cases h4 : 4 ≤ finrank F U
+    · obtain ⟨h, h'⟩ := hev he h4
+      obtain ⟨k, hk⟩ := he
+      exact SingleBlock.exists_isometry_det_one_conj_of_isInOrbitNu_sub hQ hc horth (k := k - 1)
+        (by omega) hν hN hN' hn hn' h h'
+    · have h2 : finrank F U ≤ 2 := by obtain ⟨k, hk⟩ := he; omega
+      have h0 := SingleBlock.eq_zero_of_finrank_le_two hU h2 (skew_restrict hN hNU)
+        (Module.End.isNilpotent.restrict hNU hn)
+      have h0' := SingleBlock.eq_zero_of_finrank_le_two hU h2 (skew_restrict hN' hNU')
+        (Module.End.isNilpotent.restrict hNU' hn')
+      refine ⟨QuadraticMap.IsometryEquiv.refl Q, ?_, fun b _ => rfl, fun u hu => ?_⟩
+      · exact LinearMap.det_id
+      · have e1 := congrArg Subtype.val (LinearMap.congr_fun h0 ⟨u, hu⟩)
+        have e2 := congrArg Subtype.val (LinearMap.congr_fun h0' ⟨u, hu⟩)
+        simp only [LinearMap.restrict_apply, LinearMap.zero_apply, ZeroMemClass.coe_zero] at e1 e2
+        change N u = N' u
+        rw [e1, e2]
+  · obtain ⟨k, hk⟩ := ho
+    have hpow : ∀ {M : Module.End F W} (hM : ∀ u w, bform Q (M u) w = -bform Q u (M w))
+        (hm : IsNilpotent M) (hMU : ∀ u ∈ U, M u ∈ U),
+        finrank F ↥(soCent (Q.comp U.subtype) (M.restrict hMU)) = finrank F U / 2 →
+        ∃ u ∈ U, (M ^ (2 * k)) u ≠ 0 := by
+      intro M hM hm hMU hdM
+      apply exists_pow_apply_ne_zero_of_restrict hMU
+      rcases Nat.eq_zero_or_pos k with rfl | hk0
+      · have : Nontrivial ↥U := Module.nontrivial_of_finrank_pos (R := F) (by omega)
+        rw [Nat.mul_zero, pow_zero]
+        exact one_ne_zero
+      · have := (pow_ne_zero_of_finrank_soCent_eq hU (skew_restrict hM hMU)
+          (Module.End.isNilpotent.restrict hMU hm) hdM (by omega)).1 ⟨k, hk⟩
+        rwa [show finrank F U - 1 = 2 * k by omega] at this
+    exact SingleBlock.exists_isometry_det_one_conj_of_pow_ne_zero_sub hQ hc horth hk hN hN' hn hn'
+      hNU hNU' (hpow hN hn hNU hd) (hpow hN' hn' hNU' hd')
+
+end FactorConj
+
 namespace GGPData
 
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F] (d : GGPData F)
@@ -388,6 +575,140 @@ theorem adV_snd_eq_zero_of_isNilpotent {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt 
   have h0 := d.eq_zero_of_wPart_eq_zero hMs hMz hw
   intro b hb
   rw [← hMB b hb, h0, LinearMap.zero_apply]
+
+/-! ## R2: regular elements of `𝔤⁰_X` are regular on each factor -/
+
+theorem mem_lieCentralizer_lieZero_iff {a Z : d.ambient} :
+    Z ∈ lieCentralizer d.lieZero a ↔
+      Z.1 ∈ lieCentralizer (soSub d.QW) a.1 ∧ Z.2 ∈ lieCentralizer (soSub d.QV) a.2 := by
+  have hl : ∀ Z : d.ambient, Z ∈ d.lieZero ↔ Z.1 ∈ soSub d.QW ∧ Z.2 ∈ soSub d.QV :=
+    fun Z => Iff.rfl
+  simp only [mem_lieCentralizer, hl, Prod.ext_iff, Prod.fst_mul, Prod.snd_mul]
+  tauto
+
+theorem finrank_le_of_isRegularNil {a Y Y' : d.ambient}
+    (hY : IsRegularNil (lieCentralizer d.lieZero a) Y) (hY' : Y' ∈ lieCentralizer d.lieZero a) :
+    finrank F ↥(lieCentralizer (lieCentralizer d.lieZero a) Y) ≤
+      finrank F ↥(lieCentralizer (lieCentralizer d.lieZero a) Y') := by
+  rw [hY.2.2]
+  exact ciInf_le (OrderBot.bddBelow _) (⟨Y', hY'⟩ : lieCentralizer d.lieZero a)
+
+/-- **R2 on `W`**: a regular nilpotent `Y ∈ 𝔤⁰_X` has `dim so(W')_{Y|W'} = ⌊dim W'/2⌋`. -/
+theorem finrank_soCent_ker_fst_eq {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
+    {X : CliffordAlgebra d.QW} (hX : d.IsGammaEltLie (d.torusOf x) X) {Y : d.ambient}
+    (hY : IsRegularNil (lieCentralizer d.lieZero (d.diagLie X)) Y)
+    (hYA : ∀ a ∈ LinearMap.ker (adV d.QW X), adV d.QW Y.1 a ∈ LinearMap.ker (adV d.QW X)) :
+    finrank F ↥(soCent (d.QW.comp (LinearMap.ker (adV d.QW X)).subtype)
+        ((adV d.QW Y.1).restrict hYA)) = finrank F ↥(LinearMap.ker (adV d.QW X)) / 2 := by
+  have hYm := (d.mem_lieCentralizer_lieZero_iff).1 hY.1
+  refine finrank_soCent_ker_eq_of_forall_le d.nondeg hX.1.1 hYm.1 (d.isCompl_ker_adV hx hX)
+    (d.adV_fst_eq_zero_of_isNilpotent hx hX hY.1 hY.2.1) (fun Y' hY' => ?_) hYA
+  have h := d.finrank_le_of_isRegularNil hY
+    ((d.mem_lieCentralizer_lieZero_iff (Z := (Y', Y.2))).2 ⟨hY', hYm.2⟩)
+  rw [d.finrank_lieCentralizer_lieCentralizer_lieZero,
+    d.finrank_lieCentralizer_lieCentralizer_lieZero] at h
+  exact Nat.le_of_add_le_add_right h
+
+/-- **R2 on `V`**: a regular nilpotent `Y ∈ 𝔤⁰_X` has `dim so(V')_{Y|V'} = ⌊dim V'/2⌋`,
+`V' = W' ⊕ Z = ker X` on `V`. -/
+theorem finrank_soCent_ker_snd_eq {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
+    {X : CliffordAlgebra d.QW} (hX : d.IsGammaEltLie (d.torusOf x) X) {Y : d.ambient}
+    (hY : IsRegularNil (lieCentralizer d.lieZero (d.diagLie X)) Y)
+    (hYA : ∀ a ∈ LinearMap.ker (adV d.QV (d.diagLie X).2),
+      adV d.QV Y.2 a ∈ LinearMap.ker (adV d.QV (d.diagLie X).2)) :
+    finrank F ↥(soCent (d.QV.comp (LinearMap.ker (adV d.QV (d.diagLie X).2)).subtype)
+        ((adV d.QV Y.2).restrict hYA)) =
+      finrank F ↥(LinearMap.ker (adV d.QV (d.diagLie X).2)) / 2 := by
+  have hYm := (d.mem_lieCentralizer_lieZero_iff).1 hY.1
+  refine finrank_soCent_ker_eq_of_forall_le d.nondeg_QV (d.diagLie_mem_lieZero hX.1.1).2 hYm.2
+    (d.isCompl_ker_adV_snd hx hX) (d.adV_snd_eq_zero_of_isNilpotent hx hX hY.1 hY.2.1)
+    (fun Y' hY' => ?_) hYA
+  have h := d.finrank_le_of_isRegularNil hY
+    ((d.mem_lieCentralizer_lieZero_iff (Z := (Y.1, Y'))).2 ⟨hYm.1, hY'⟩)
+  rw [d.finrank_lieCentralizer_lieCentralizer_lieZero,
+    d.finrank_lieCentralizer_lieCentralizer_lieZero] at h
+  exact Nat.le_of_add_le_add_left h
+
+/-! ## R2′: regularity is a property of the orbit -/
+
+/-- `Z_G(X)` preserves `𝔤⁰_X`. -/
+theorem conj_mem_lieCentralizer_lieZero {D : d.ambient} {g : d.ambientˣ}
+    (hg : g ∈ lieGrpCentralizer d.G D) {Y : d.ambient} (hY : Y ∈ lieCentralizer d.lieZero D) :
+    (g : d.ambient) * Y * (↑g⁻¹ : d.ambient) ∈ lieCentralizer d.lieZero D := by
+  obtain ⟨hY0, hDY⟩ := mem_lieCentralizer.mp hY
+  have h1 : (g : d.ambient) * D = D * g := hg.2
+  have h2 : (↑g⁻¹ : d.ambient) * D = D * ↑g⁻¹ :=
+    (Commute.units_inv_left (show Commute (g : d.ambient) D from h1)).eq
+  refine mem_lieCentralizer.mpr ⟨d.conj_mem_lie0 ⟨g, hg.1⟩ hY0, ?_⟩
+  calc D * ((g : d.ambient) * Y * ↑g⁻¹) = (D * g) * Y * ↑g⁻¹ := by simp only [mul_assoc]
+    _ = g * (D * Y) * ↑g⁻¹ := by rw [← h1]; simp only [mul_assoc]
+    _ = g * (Y * D) * ↑g⁻¹ := by rw [hDY]
+    _ = g * Y * (↑g⁻¹ * D) := by rw [h2]; simp only [mul_assoc]
+    _ = (g : d.ambient) * Y * ↑g⁻¹ * D := by simp only [mul_assoc]
+
+/-- **R2′**: every element of a regular nilpotent orbit of `𝔤⁰_X` is regular nilpotent
+(`finrank_lieCentralizer_conj`). -/
+theorem isRegularNil_of_mem_nilOrbitSet {D : d.ambient}
+    {O : NilOrbit (lieGrpCentralizer d.G D) (lieCentralizer d.lieZero D)}
+    (hO : O ∈ NilReg _ _) {Y : ↥(lieCentralizer d.lieZero D)} (hY : Y ∈ nilOrbitSet O) :
+    IsRegularNil (lieCentralizer d.lieZero D) (Y : d.ambient) := by
+  obtain ⟨hn, hYO⟩ := hY
+  obtain ⟨g, hg, hgY⟩ := Quotient.exact ((Quotient.out_eq O).trans hYO.symm)
+  refine ⟨Y.2, hn, ?_⟩
+  rw [← hgY, finrank_lieCentralizer_conj _ g (fun Z hZ => d.conj_mem_lieCentralizer_lieZero hg hZ)
+    (fun Z hZ => by
+      simpa using d.conj_mem_lieCentralizer_lieZero (Subgroup.inv_mem _ hg) hZ)]
+  exact hO.2.2
+
+/-! ## R3: lifting conjugating isometries to `Z_G(X)` -/
+
+/-- **Isometries of determinant `1` of `W` and `V` commuting with `ad X` and conjugating `ad Y` to
+`ad Y'` lift to `γ ∈ Z_G(X)` with `γ Y γ⁻¹ = Y'`** (`gspin_specP_surjective_SO` on each factor,
+`conj_eq_of_specP_conj`). -/
+theorem exists_conj_of_isometries {X : CliffordAlgebra d.QW} (hX : X ∈ soSub d.QW)
+    {Y Y' : d.ambient} (hY : Y ∈ d.lieZero) (hY' : Y' ∈ d.lieZero)
+    (gW : d.QW.IsometryEquiv d.QW) (gV : d.QV.IsometryEquiv d.QV)
+    (hgW1 : LinearMap.det (gW.toLinearEquiv : (Fin d.m → F) →ₗ[F] (Fin d.m → F)) = 1)
+    (hgV1 : LinearMap.det (gV.toLinearEquiv : d.V →ₗ[F] d.V) = 1)
+    (hgWX : ∀ w, gW (adV d.QW X w) = adV d.QW X (gW w))
+    (hgVX : ∀ v, gV (adV d.QV (d.diagLie X).2 v) = adV d.QV (d.diagLie X).2 (gV v))
+    (hgWY : ∀ w, gW (adV d.QW Y.1 w) = adV d.QW Y'.1 (gW w))
+    (hgVY : ∀ v, gV (adV d.QV Y.2 v) = adV d.QV Y'.2 (gV v)) :
+    ∃ γ ∈ lieGrpCentralizer d.G (d.diagLie X),
+      ((γ : d.ambientˣ) : d.ambient) * Y * ((γ⁻¹ : d.ambientˣ) : d.ambient) = Y' := by
+  obtain ⟨γ₁, h₁⟩ := gspin_specP_surjective_SO d.QW d.nondeg gW.toLinearEquiv
+    (fun v => gW.map_app v) hgW1
+  obtain ⟨γ₂, h₂⟩ := gspin_specP_surjective_SO d.QV d.nondeg_QV gV.toLinearEquiv
+    (fun v => gV.map_app v) hgV1
+  set γ : d.G := d.pair (γ₁, γ₂)
+  have hXV : (d.diagLie X).2 ∈ soSub d.QV := (d.diagLie_mem_lieZero hX).2
+  have hconj : ∀ Z : d.ambient, ((γ : d.ambientˣ) : d.ambient) * Z *
+      (((γ : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient) =
+      (((γ₁ : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) * Z.1 *
+          (((γ₁ : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW),
+        ((γ₂ : (CliffordAlgebra d.QV)ˣ) : CliffordAlgebra d.QV) * Z.2 *
+          (((γ₂ : (CliffordAlgebra d.QV)ˣ)⁻¹ : (CliffordAlgebra d.QV)ˣ) :
+            CliffordAlgebra d.QV)) := by
+    intro Z
+    have hi : (γ : d.ambientˣ)⁻¹ = ((d.pair (γ₁⁻¹, γ₂⁻¹) : d.G) : d.ambientˣ) := by
+      rw [← Subgroup.coe_inv, ← map_inv]; rfl
+    rw [hi]; rfl
+  have hD : ((γ : d.ambientˣ) : d.ambient) * d.diagLie X *
+      (((γ : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient) = d.diagLie X := by
+    rw [hconj]
+    exact Prod.ext
+      (conj_eq_of_specP_conj d.nondeg γ₁ hX hX fun v => by rw [h₁]; exact hgWX v)
+      (conj_eq_of_specP_conj d.nondeg_QV γ₂ hXV hXV fun v => by rw [h₂]; exact hgVX v)
+  refine ⟨γ, ⟨γ.2, ?_⟩, ?_⟩
+  · calc ((γ : d.ambientˣ) : d.ambient) * d.diagLie X =
+          ((γ : d.ambientˣ) : d.ambient) * d.diagLie X *
+            (((γ : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient) * ((γ : d.ambientˣ) : d.ambient) := by
+          simp [mul_assoc]
+      _ = d.diagLie X * ((γ : d.ambientˣ) : d.ambient) := by rw [hD]
+  · rw [hconj]
+    exact Prod.ext
+      (conj_eq_of_specP_conj d.nondeg γ₁ hY.1 hY'.1 fun v => by rw [h₁]; exact hgWY v)
+      (conj_eq_of_specP_conj d.nondeg_QV γ₂ hY.2 hY'.2 fun v => by rw [h₂]; exact hgVY v)
 
 end GGPData
 
