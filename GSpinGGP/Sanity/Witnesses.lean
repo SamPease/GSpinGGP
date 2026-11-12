@@ -1155,15 +1155,6 @@ section SS
 
 variable {K : Type*} [NontriviallyNormedField K]
 
-/-- An element annihilated by a squarefree polynomial is semisimple. -/
-theorem isSS_of_aeval_eq_zero {A : Type*} [Ring A] [Algebra K A] {x : A} {p : K[X]}
-    (hp : Squarefree p) (h : aeval x p = 0) : IsSS K x := by
-  refine Module.End.isSemisimple_of_squarefree_aeval_eq_zero hp ?_
-  have := Polynomial.aeval_algHom_apply (Algebra.lmul K A) x p
-  rw [h, map_zero] at this
-  rw [← this]
-  rfl
-
 /-- A pair of scalars in a product of algebras is semisimple. -/
 theorem isSS_pair_algebraMap {A₁ A₂ : Type*} [Ring A₁] [Algebra K A₁] [Ring A₂] [Algebra K A₂]
     (a b : K) : IsSS K ((algebraMap K A₁ a, algebraMap K A₂ b) : A₁ × A₂) := by

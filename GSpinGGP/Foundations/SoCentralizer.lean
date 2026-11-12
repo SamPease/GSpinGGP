@@ -30,6 +30,8 @@ kernel the scalars (Thesis Prop. 5.1.3.1). So the centralizer of `X ∈ gspin(V)
   is the kernel of a linear map of matrices. So `finrank_soCentMat_map`: its dimension does not
   change under extension of scalars; `soCentMat_map_eq_span`: over an extension it is spanned by
   its `F`-points.
+* `LinearMap.BilinForm.exists_mem_skewAdjoint_trace_mul_ne_zero`: the trace form `(X, Y) ↦ tr(XY)`
+  separates the skew-adjoint endomorphisms of a nondegenerate symmetric bilinear form.
 -/
 
 noncomputable section
@@ -1045,3 +1047,48 @@ theorem soCentMat_toMatrix (b : Basis n K V) (Q : QuadraticForm K V) (N : Module
 end Endomorphisms
 
 end GSpinGGP
+
+namespace LinearMap.BilinForm
+
+section SkewTrace
+
+variable {K U : Type*} [Field K] [Invertible (2 : K)] [AddCommGroup U] [Module K U]
+  [Module.Finite K U]
+
+/-- **The trace form separates skew-adjoint maps**: for a left-separating symmetric bilinear form `B`
+(characteristic `≠ 2`) and a nonzero `B`-skew `X`, some `B`-skew `Y` has `tr(XY) ≠ 0`.  Take `u` with
+`Xu ≠ 0`, `w` with `B(Xu, w) ≠ 0` and the rank-one skew map `Y = u ∧ w : x ↦ B(w, x) u − B(u, x) w`;
+then `tr(XY) = B(w, Xu) − B(u, Xw) = 2 B(Xu, w)`. -/
+theorem exists_mem_skewAdjoint_trace_mul_ne_zero {B : LinearMap.BilinForm K U} (hs : B.IsSymm)
+    (hB : B.SeparatingLeft) {X : Module.End K U} (hX : X ∈ B.skewAdjointSubmodule) (h0 : X ≠ 0) :
+    ∃ Y ∈ B.skewAdjointSubmodule, LinearMap.trace K U (X * Y) ≠ 0 := by
+  have hsk : ∀ x y, B (X x) y = -B x (X y) := fun x y => by
+    have := (LinearMap.mem_skewAdjointSubmodule (B := B) X).mp hX x y
+    simpa using this
+  obtain ⟨u, hu⟩ : ∃ u, X u ≠ 0 := by
+    by_contra h
+    push Not at h
+    exact h0 (LinearMap.ext h)
+  obtain ⟨w, hw⟩ : ∃ w, B (X u) w ≠ 0 := by
+    by_contra h
+    push Not at h
+    exact hu (hB _ h)
+  refine ⟨(B w).smulRight u - (B u).smulRight w, ?_, ?_⟩
+  · rw [LinearMap.mem_skewAdjointSubmodule]
+    intro x y
+    simp only [LinearMap.sub_apply, LinearMap.smulRight_apply, Pi.neg_apply, map_sub,
+      map_smul, LinearMap.smul_apply, smul_eq_mul, map_neg]
+    rw [hs.eq x u, hs.eq x w]
+    ring
+  · have hc : X * ((B w).smulRight u - (B u).smulRight w) =
+        (B w).smulRight (X u) - (B u).smulRight (X w) := by
+      ext x
+      simp
+    rw [hc, map_sub, LinearMap.trace_smulRight, LinearMap.trace_smulRight, hs.eq u (X w),
+      hsk w u, hs.eq w (X u)]
+    rw [show B (X u) w - -B (X u) w = 2 * B (X u) w by ring]
+    exact mul_ne_zero (Invertible.ne_zero 2) hw
+
+end SkewTrace
+
+end LinearMap.BilinForm
