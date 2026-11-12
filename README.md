@@ -41,8 +41,8 @@ satisfying the stability, transfer and genericity hypotheses, which is all the p
 
 As of November 2026:
 
-- The project builds with 41 declarations containing `sorry`. The main theorem `local_ggp`
-  depends on 24 of them. They are of three kinds: the analytic core of the local trace formula
+- The project builds with 44 declarations containing `sorry`. The main theorem `local_ggp`
+  depends on 27 of them. They are of three kinds: the analytic core of the local trace formula
   (Thesis Ch. 8–12, e.g. the bound on the kernel of the distribution `J` and its spectral
   expansion); published results that the dissertation adapts to general spin groups (see below);
   and 5 statements identifying the special orthogonal objects of a cited theorem (Luo's geometric

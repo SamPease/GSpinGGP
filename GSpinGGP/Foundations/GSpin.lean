@@ -4017,6 +4017,16 @@ def lie : LieSubalgebra K d.ambient where
     · have := (gspin d.QV).lie_mem hX.2 hY.2
       simpa [Ring.lie_def] using this
 
+/-- `𝔤 = gspin(W) × gspin(V)` is `Ad(G)`-stable. -/
+theorem conj_mem_lie (g : ↥d.G) {X : d.ambient} (hX : X ∈ d.lie) :
+    ((g : d.ambientˣ) : d.ambient) * X * ((g⁻¹ : d.ambientˣ) : d.ambient) ∈ d.lie :=
+  ⟨conj_mem_gspin d.QW (d.fst g) hX.1, conj_mem_gspin d.QV (d.snd g) hX.2⟩
+
+/-- `conj_mem_lie` for units of the ambient algebra lying in `G`. -/
+theorem conj_mem_lie_of_mem :
+    ∀ g ∈ d.G, ∀ Y ∈ d.lie, (g : d.ambient) * Y * (↑g⁻¹ : d.ambient) ∈ d.lie :=
+  fun g hg Y hY => d.conj_mem_lie ⟨g, hg⟩ hY
+
 /-- The `G`-invariant symmetric bilinear form on the ambient algebra used for `𝔤`: the trace form
 `(X, Y) ↦ tr(L_{XY})` of `C(W) × C(V)` (`Algebra.traceForm` needs commutativity); the Thesis only
 requires *some* `G`-invariant nondegenerate form (Thesis §2.4 / BP §1.6). -/
