@@ -22,16 +22,6 @@ section ProbHaar
 variable (Q : Type*) [Group Q] [TopologicalSpace Q] [IsTopologicalGroup Q]
   [MeasurableSpace Q] [BorelSpace Q]
 
-theorem probHaar_eq_haarMeasure [h : CompactSpace Q] :
-    probHaar Q = Measure.haarMeasure ⟨⟨Set.univ, isCompact_univ⟩, by simp⟩ := by
-  unfold probHaar; rw [dite_eq_left_of_eq_true (eq_true h)]
-
-instance isHaarMeasure_probHaar [CompactSpace Q] : (probHaar Q).IsHaarMeasure := by
-  rw [probHaar_eq_haarMeasure]; infer_instance
-
-instance isProbabilityMeasure_probHaar [CompactSpace Q] : IsProbabilityMeasure (probHaar Q) := by
-  rw [probHaar_eq_haarMeasure]; exact ⟨Measure.haarMeasure_self⟩
-
 variable {Q}
 
 /-- A continuous group isomorphism of compact groups carries probability Haar measure to

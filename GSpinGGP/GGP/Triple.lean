@@ -365,6 +365,23 @@ def probHaar (Q : Type*) [Group Q] [TopologicalSpace Q] [IsTopologicalGroup Q]
     Measure.haarMeasure ⟨⟨Set.univ, isCompact_univ⟩, by simp⟩
   else 0
 
+section ProbHaar
+
+variable (Q : Type*) [Group Q] [TopologicalSpace Q] [IsTopologicalGroup Q]
+  [MeasurableSpace Q] [BorelSpace Q]
+
+theorem probHaar_eq_haarMeasure [h : CompactSpace Q] :
+    probHaar Q = Measure.haarMeasure ⟨⟨Set.univ, isCompact_univ⟩, by simp⟩ := by
+  unfold probHaar; rw [dite_eq_left_of_eq_true (eq_true h)]
+
+instance isHaarMeasure_probHaar [CompactSpace Q] : (probHaar Q).IsHaarMeasure := by
+  rw [probHaar_eq_haarMeasure]; infer_instance
+
+instance isProbabilityMeasure_probHaar [CompactSpace Q] : IsProbabilityMeasure (probHaar Q) := by
+  rw [probHaar_eq_haarMeasure]; exact ⟨Measure.haarMeasure_self⟩
+
+end ProbHaar
+
 /-- The integrand `D^G(t)^{1/2} c_{θ,O_t}(t) Δ(t)^{s−1/2}` on `T(F)`, set to `0` off
 `T_♮ = {t ∈ T | t ∈ Γ(G,H), T_t = T}` (= regular in `GSpin(W'')` without eigenvalue `1` on
 `W''`). -/

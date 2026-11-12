@@ -53,6 +53,7 @@ import GSpinGGP.TraceFormula.StronglyCuspidal
 import GSpinGGP.TraceFormula.DeltaIntegrability
 import GSpinGGP.TraceFormula.EllipticRepresentations
 import GSpinGGP.TraceFormula.LieAlgebra
+import GSpinGGP.TraceFormula.ExpCompatT
 import GSpinGGP.TraceFormula.SelfDual
 import GSpinGGP.TraceFormula.SOLie
 import GSpinGGP.TraceFormula.SOLieFacts

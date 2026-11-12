@@ -11,6 +11,9 @@ import Mathlib
   compact group that agree on the measurable subsets of a neighbourhood of `1` are equal.
 * `Measure.eq_of_isHaarMeasure_of_eq_near_one`: the same, when both agree near `1` with a common
   reference set function (e.g. the `exp`-image measure of a torus).
+* `Measure.measure_eq_card_mul_of_vadd`, `Measure.eq_of_forall_vadd_coset`: two finite measures
+  carried by a compact open subgroup `L₀`, with the same mass on `L₀`, and each giving every coset
+  inside `L₀` of a basis of open subgroups `Lₙ` the mass of `Lₙ`, are equal.
 -/
 
 open MeasureTheory Topology Filter
@@ -51,5 +54,133 @@ theorem eq_of_isHaarMeasure_of_eq_near_one {μ ν : Measure G} [μ.IsHaarMeasure
   exact eq_of_isHaarMeasure_of_eqOn_nhds μ ν (inter_mem hU hU') fun S hS hSU =>
     (hμU S hS (hSU.trans Set.inter_subset_left)).trans
       (hνU S hS (hSU.trans Set.inter_subset_right)).symm
+
+section CosetMeasure
+
+open Pointwise
+
+/-! ## Measures that are uniform on the cosets of a basis of open subgroups -/
+
+variable {V : Type*} [AddCommGroup V]
+
+variable [MeasurableSpace V]
+
+/-- A measure giving the same mass to all cosets of `L` inside `L₀` gives `L₀` the index times
+that mass. -/
+theorem measure_eq_card_mul_of_vadd [MeasurableAdd V] (μ : Measure V) {L₀ L : AddSubgroup V}
+    (hL : L ≤ L₀) [Finite (L₀ ⧸ L.addSubgroupOf L₀)] (hLm : MeasurableSet (L : Set V))
+    (h : ∀ x ∈ L₀, μ (x +ᵥ (L : Set V)) = μ L) :
+    μ L₀ = Nat.card (L₀ ⧸ L.addSubgroupOf L₀) * μ L := by
+  classical
+  have : Fintype (L₀ ⧸ L.addSubgroupOf L₀) := Fintype.ofFinite _
+  set o : (L₀ ⧸ L.addSubgroupOf L₀) → V := fun q => ((Quotient.out q : ↥L₀) : V) with ho
+  have hcover : (L₀ : Set V) = ⋃ q, o q +ᵥ (L : Set V) := by
+    ext x
+    simp only [SetLike.mem_coe, Set.mem_iUnion]
+    constructor
+    · intro hx
+      refine ⟨QuotientAddGroup.mk ⟨x, hx⟩, ?_⟩
+      rw [mem_leftAddCoset_iff]
+      have := QuotientAddGroup.eq.mp
+        (Quotient.out_eq (QuotientAddGroup.mk (s := L.addSubgroupOf L₀) ⟨x, hx⟩))
+      exact AddSubgroup.mem_addSubgroupOf.mp this
+    · rintro ⟨q, hq⟩
+      rw [mem_leftAddCoset_iff] at hq
+      have h1 := L₀.add_mem (Quotient.out q).2 (hL hq)
+      rwa [add_neg_cancel_left] at h1
+  have hdisj : Pairwise (Function.onFun Disjoint fun q => o q +ᵥ (L : Set V)) := by
+    intro q q' hqq'
+    rw [Function.onFun, Set.disjoint_left]
+    intro w hw hw'
+    rw [mem_leftAddCoset_iff] at hw hw'
+    apply hqq'
+    rw [← Quotient.out_eq q, ← Quotient.out_eq q']
+    apply QuotientAddGroup.eq.mpr
+    rw [AddSubgroup.mem_addSubgroupOf]
+    have := L.sub_mem hw hw'
+    rw [show -o q + w - (-o q' + w) = -o q + o q' by abel] at this
+    simpa [ho] using this
+  rw [hcover, measure_iUnion hdisj fun q => hLm.const_vadd _, tsum_fintype]
+  simp only [fun q => h (o q) (Quotient.out q).2, Finset.sum_const, Finset.card_univ,
+    nsmul_eq_mul, Nat.card_eq_fintype_card]
+
+variable [TopologicalSpace V] [IsTopologicalAddGroup V] [SecondCountableTopology V]
+  [BorelSpace V]
+
+/-- **Measures uniform on cosets are equal.** Let `L₀ ⊇ L₁ ⊇ …` be open subgroups forming a basis
+of neighbourhoods of `0`, with `L₀` compact. Two finite measures carried by `L₀`, giving `L₀` the
+same mass and giving each coset of `Lₙ` inside `L₀` the mass of `Lₙ`, are equal. (Counting cosets
+gives them equal mass on every coset; the cosets form a π-system generating the Borel sets.) -/
+theorem eq_of_forall_vadd_coset (L : ℕ → AddSubgroup V) (hanti : Antitone L)
+    (hopen : ∀ n, IsOpen (L n : Set V)) (hcpt : IsCompact (L 0 : Set V))
+    (hbasis : ∀ U ∈ 𝓝 (0 : V), ∃ n, (L n : Set V) ⊆ U) (μ ν : Measure V) [IsFiniteMeasure μ]
+    (hμ0 : μ (L 0 : Set V)ᶜ = 0) (hν0 : ν (L 0 : Set V)ᶜ = 0)
+    (hμ : ∀ n, ∀ x ∈ L 0, μ (x +ᵥ (L n : Set V)) = μ (L n))
+    (hν : ∀ n, ∀ x ∈ L 0, ν (x +ᵥ (L n : Set V)) = ν (L n)) (h0 : μ (L 0) = ν (L 0)) :
+    μ = ν := by
+  -- equal mass on each `Lₙ`
+  have hLn : ∀ n, μ (L n) = ν (L n) := by
+    intro n
+    have hle : L n ≤ L 0 := hanti (Nat.zero_le n)
+    haveI : CompactSpace ↥(L 0) := isCompact_iff_compactSpace.mp hcpt
+    haveI : Finite (↥(L 0) ⧸ (L n).addSubgroupOf (L 0)) :=
+      AddSubgroup.quotient_finite_of_isOpen _ (AddSubgroup.addSubgroupOf_isOpen _ _ (hopen n))
+    have hm := (hopen n).measurableSet
+    have e1 := measure_eq_card_mul_of_vadd μ hle hm fun x hx => hμ n x hx
+    have e2 := measure_eq_card_mul_of_vadd ν hle hm fun x hx => hν n x hx
+    rw [h0, e2] at e1
+    have hN0 : (Nat.card (↥(L 0) ⧸ (L n).addSubgroupOf (L 0)) : ENNReal) ≠ 0 := by
+      have : Nonempty (↥(L 0) ⧸ (L n).addSubgroupOf (L 0)) := ⟨0⟩
+      exact_mod_cast Nat.card_pos.ne'
+    exact ((ENNReal.mul_right_inj hN0 (ENNReal.natCast_ne_top _)).mp e1).symm
+  -- equal mass on every coset
+  have hC : ∀ n, ∀ x : V, μ (x +ᵥ (L n : Set V)) = ν (x +ᵥ (L n : Set V)) := by
+    intro n x
+    by_cases hx : x ∈ L 0
+    · rw [hμ n x hx, hν n x hx, hLn]
+    · have hsub : x +ᵥ (L n : Set V) ⊆ (L 0 : Set V)ᶜ := by
+        intro w hw hw0
+        rw [mem_leftAddCoset_iff] at hw
+        apply hx
+        have := (L 0).sub_mem hw0 (hanti (Nat.zero_le n) hw)
+        rwa [show w - (-x + w) = x by abel] at this
+      rw [measure_mono_null hsub hμ0, measure_mono_null hsub hν0]
+  -- the cosets form a π-system generating the Borel σ-algebra
+  set C : Set (Set V) := {s | ∃ n, ∃ x : V, s = x +ᵥ (L n : Set V)} with hCdef
+  have hbas : TopologicalSpace.IsTopologicalBasis C := by
+    refine TopologicalSpace.isTopologicalBasis_of_isOpen_of_nhds ?_ ?_
+    · rintro _ ⟨n, x, rfl⟩
+      exact (hopen n).vadd x
+    · intro a u hau hu
+      have : (fun y => a + y) ⁻¹' u ∈ 𝓝 (0 : V) :=
+        (continuous_const_add a).continuousAt.preimage_mem_nhds (by simpa using hu.mem_nhds hau)
+      obtain ⟨n, hn⟩ := hbasis _ this
+      refine ⟨a +ᵥ (L n : Set V), ⟨n, a, rfl⟩, ?_, ?_⟩
+      · rw [mem_leftAddCoset_iff, neg_add_cancel]; exact (L n).zero_mem
+      · intro w hw
+        rw [mem_leftAddCoset_iff] at hw
+        have := hn hw
+        simpa using this
+  have hpi : IsPiSystem C := by
+    rintro _ ⟨n, x, rfl⟩ _ ⟨m, y, rfl⟩ ⟨z, hzx, hzy⟩
+    refine ⟨max n m, z, ?_⟩
+    rw [(leftAddCoset_eq_iff _).mpr ((mem_leftAddCoset_iff _).mp hzx),
+      (leftAddCoset_eq_iff _).mpr ((mem_leftAddCoset_iff _).mp hzy)]
+    ext w
+    simp only [Set.mem_inter_iff, mem_leftAddCoset_iff]
+    constructor
+    · rintro ⟨h1, h2⟩
+      rcases le_total n m with h | h
+      · rwa [max_eq_right h]
+      · rwa [max_eq_left h]
+    · intro hw
+      exact ⟨hanti (le_max_left n m) hw, hanti (le_max_right n m) hw⟩
+  refine ext_of_generate_finite C (by rw [‹BorelSpace V›.measurable_eq,
+    hbas.borel_eq_generateFrom]) hpi ?_ ?_
+  · rintro _ ⟨n, x, rfl⟩; exact hC n x
+  · have hm := (hopen 0).measurableSet
+    rw [← measure_add_measure_compl hm, ← measure_add_measure_compl hm, hμ0, hν0, h0]
+
+end CosetMeasure
 
 end MeasureTheory.Measure

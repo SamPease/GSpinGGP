@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Foundations.ExpLocal
+import GSpinGGP.Foundations.HaarLocal
 
 /-!
 # `exp` carries an additive Haar measure to a Haar measure near `0` (`p`-adic case)
@@ -10,15 +11,14 @@ import GSpinGGP.Foundations.ExpLocal
 Over a `p`-adic field the Jacobian of `exp` is `1` near `0`. This file proves the measure-theoretic
 form needed for the measures `dX` of `J^Lie` and `m^Lie_geom` (BP §1.6), without a change of
 variables formula: `exp` is an isometry near `0`, so it carries cosets of small lattices to cosets of
-small open subgroups.
+small open subgroups (`MeasureTheory.Measure.eq_of_forall_vadd_coset` in `HaarLocal` then compares
+the measures).
 
 * `exists_norm_exp_sub_exp_eq`: in an ultrametric Banach algebra with `‖1/n!‖ ≤ Rⁿ`,
   `‖e^x − e^y‖ = ‖x − y‖` on a small ball;
 * `exists_expA_isometry`: the same for `expA` on a finite-dimensional algebra `A` (norm
   `‖lmulPi ·‖`), with `exp` onto the ball around `1`;
 * `isEmbedding_units_val`: `Aˣ → A` is a topological embedding;
-* `Measure.eq_of_forall_vadd_coset`: two finite measures carried by a compact open subgroup and
-  uniform on the cosets of a basis of open subgroups are equal;
 * `exists_isAddHaarMeasure_eq_expA_image`: for a group `𝓗 ⊆ Aˣ` whose Lie algebra near `0` is
   `𝔤 ⊕ F·1`, and every Haar measure on `𝓗/(scalars)`, some additive Haar measure `μ` on `𝔤` has
   `μ(S) = μK(e^S)` for `S` near `0`.
@@ -35,14 +35,15 @@ namespace GSpinGGP
 section Ultra
 
 /-- The operator norm into an ultrametric space is ultrametric. -/
-instance ContinuousLinearMap.isUltrametricDist {𝕜 E G : Type*} [NontriviallyNormedField 𝕜]
-    [SeminormedAddCommGroup E] [NormedSpace 𝕜 E] [SeminormedAddCommGroup G] [NormedSpace 𝕜 G]
-    [IsUltrametricDist G] : IsUltrametricDist (E →L[𝕜] G) := by
-  refine IsUltrametricDist.isUltrametricDist_of_forall_norm_add_le_max_norm fun f g => ?_
-  refine ContinuousLinearMap.opNorm_le_bound _ (le_max_of_le_left (norm_nonneg _)) fun x => ?_
-  rw [add_apply, max_mul_of_nonneg _ _ (norm_nonneg x)]
-  exact (IsUltrametricDist.norm_add_le_max _ _).trans
-    (max_le_max (f.le_opNorm x) (g.le_opNorm x))
+instance _root_.ContinuousLinearMap.isUltrametricDist {𝕜 𝕜₂ E G : Type*}
+    [NontriviallyNormedField 𝕜] [NontriviallyNormedField 𝕜₂] {σ : 𝕜 →+* 𝕜₂} [RingHomIsometric σ]
+    [SeminormedAddCommGroup E] [NormedSpace 𝕜 E] [SeminormedAddCommGroup G] [NormedSpace 𝕜₂ G]
+    [IsUltrametricDist G] : IsUltrametricDist (E →SL[σ] G) :=
+  IsUltrametricDist.isUltrametricDist_of_forall_norm_add_le_max_norm fun f g =>
+    ContinuousLinearMap.opNorm_le_bound _ (le_max_of_le_left (norm_nonneg _)) fun x => by
+      rw [ContinuousLinearMap.add_apply, max_mul_of_nonneg _ _ (norm_nonneg x)]
+      exact (IsUltrametricDist.norm_add_le_max _ _).trans
+        (max_le_max (f.le_opNorm x) (g.le_opNorm x))
 
 variable {E : Type*} [NormedRing E] [IsUltrametricDist E]
 
@@ -171,9 +172,6 @@ lemma norm_lmulPi_one_le : ‖lmulPi F (1 : A)‖ ≤ 1 := by
 lemma norm_lmulPi_neg (a : A) : ‖lmulPi F (-a)‖ = ‖lmulPi F a‖ := by
   rw [lmulPi_neg, norm_neg]
 
-lemma norm_lmulPi_sub_comm (a b : A) : ‖lmulPi F (a - b)‖ = ‖lmulPi F (b - a)‖ := by
-  rw [← neg_sub, norm_lmulPi_neg]
-
 /-- The balls `‖a‖ ≤ s` are neighbourhoods of `0`. -/
 lemma lmulPi_ball_mem_nhds {s : ℝ} (hs : 0 < s) : {a : A | ‖lmulPi F a‖ ≤ s} ∈ 𝓝 (0 : A) := by
   have := (continuous_lmulPi F).continuousAt (x := (0 : A))
@@ -288,147 +286,6 @@ theorem isEmbedding_units_val : Topology.IsEmbedding (Units.val : Aˣ → A) := 
 end ALevel
 
 
-section CosetMeasure
-
-/-! ## Measures that are uniform on the cosets of a basis of open subgroups -/
-
-variable {V : Type*} [AddCommGroup V]
-
-lemma mem_vadd_coset_iff {L : AddSubgroup V} {x w : V} :
-    w ∈ x +ᵥ (L : Set V) ↔ -x + w ∈ L := by
-  rw [Set.mem_vadd_set_iff_neg_vadd_mem, vadd_eq_add, SetLike.mem_coe]
-
-lemma vadd_coset_eq_of_mem {L : AddSubgroup V} {x z : V} (hz : z ∈ x +ᵥ (L : Set V)) :
-    x +ᵥ (L : Set V) = z +ᵥ (L : Set V) := by
-  rw [mem_vadd_coset_iff] at hz
-  ext w
-  rw [mem_vadd_coset_iff, mem_vadd_coset_iff]
-  constructor
-  · intro hw
-    have := L.sub_mem hw hz
-    rwa [show -x + w - (-x + z) = -z + w by abel] at this
-  · intro hw
-    have := L.add_mem hz hw
-    rwa [show -x + z + (-z + w) = -x + w by abel] at this
-
-variable [MeasurableSpace V]
-
-/-- A measure giving the same mass to all cosets of `L` inside `L₀` gives `L₀` the index times
-that mass. -/
-theorem measure_eq_card_mul_of_vadd [MeasurableAdd V] (μ : Measure V) {L₀ L : AddSubgroup V}
-    (hL : L ≤ L₀) [Finite (L₀ ⧸ L.addSubgroupOf L₀)] (hLm : MeasurableSet (L : Set V))
-    (h : ∀ x ∈ L₀, μ (x +ᵥ (L : Set V)) = μ L) :
-    μ L₀ = Nat.card (L₀ ⧸ L.addSubgroupOf L₀) * μ L := by
-  classical
-  have : Fintype (L₀ ⧸ L.addSubgroupOf L₀) := Fintype.ofFinite _
-  set o : (L₀ ⧸ L.addSubgroupOf L₀) → V := fun q => ((Quotient.out q : ↥L₀) : V) with ho
-  have hcover : (L₀ : Set V) = ⋃ q, o q +ᵥ (L : Set V) := by
-    ext x
-    simp only [SetLike.mem_coe, Set.mem_iUnion]
-    constructor
-    · intro hx
-      refine ⟨QuotientAddGroup.mk ⟨x, hx⟩, ?_⟩
-      rw [mem_vadd_coset_iff]
-      have := QuotientAddGroup.eq.mp
-        (Quotient.out_eq (QuotientAddGroup.mk (s := L.addSubgroupOf L₀) ⟨x, hx⟩))
-      exact AddSubgroup.mem_addSubgroupOf.mp this
-    · rintro ⟨q, hq⟩
-      rw [mem_vadd_coset_iff] at hq
-      have h1 := L₀.add_mem (Quotient.out q).2 (hL hq)
-      rwa [add_neg_cancel_left] at h1
-  have hdisj : Pairwise (Function.onFun Disjoint fun q => o q +ᵥ (L : Set V)) := by
-    intro q q' hqq'
-    rw [Function.onFun, Set.disjoint_left]
-    intro w hw hw'
-    rw [mem_vadd_coset_iff] at hw hw'
-    apply hqq'
-    rw [← Quotient.out_eq q, ← Quotient.out_eq q']
-    apply QuotientAddGroup.eq.mpr
-    rw [AddSubgroup.mem_addSubgroupOf]
-    have := L.sub_mem hw hw'
-    rw [show -o q + w - (-o q' + w) = -o q + o q' by abel] at this
-    simpa [ho] using this
-  rw [hcover, measure_iUnion hdisj fun q => hLm.const_vadd _, tsum_fintype]
-  simp only [fun q => h (o q) (Quotient.out q).2, Finset.sum_const, Finset.card_univ,
-    nsmul_eq_mul, Nat.card_eq_fintype_card]
-
-variable [TopologicalSpace V] [IsTopologicalAddGroup V] [SecondCountableTopology V]
-  [BorelSpace V]
-
-/-- **Measures uniform on cosets are equal.** Let `L₀ ⊇ L₁ ⊇ …` be open subgroups forming a basis
-of neighbourhoods of `0`, with `L₀` compact. Two finite measures carried by `L₀`, giving `L₀` the
-same mass and giving each coset of `Lₙ` inside `L₀` the mass of `Lₙ`, are equal. (Counting cosets
-gives them equal mass on every coset; the cosets form a π-system generating the Borel sets.) -/
-theorem Measure.eq_of_forall_vadd_coset (L : ℕ → AddSubgroup V) (hanti : Antitone L)
-    (hopen : ∀ n, IsOpen (L n : Set V)) (hcpt : IsCompact (L 0 : Set V))
-    (hbasis : ∀ U ∈ 𝓝 (0 : V), ∃ n, (L n : Set V) ⊆ U) (μ ν : Measure V) [IsFiniteMeasure μ]
-    (hμ0 : μ (L 0 : Set V)ᶜ = 0) (hν0 : ν (L 0 : Set V)ᶜ = 0)
-    (hμ : ∀ n, ∀ x ∈ L 0, μ (x +ᵥ (L n : Set V)) = μ (L n))
-    (hν : ∀ n, ∀ x ∈ L 0, ν (x +ᵥ (L n : Set V)) = ν (L n)) (h0 : μ (L 0) = ν (L 0)) :
-    μ = ν := by
-  -- equal mass on each `Lₙ`
-  have hLn : ∀ n, μ (L n) = ν (L n) := by
-    intro n
-    have hle : L n ≤ L 0 := hanti (Nat.zero_le n)
-    haveI : CompactSpace ↥(L 0) := isCompact_iff_compactSpace.mp hcpt
-    haveI : Finite (↥(L 0) ⧸ (L n).addSubgroupOf (L 0)) :=
-      AddSubgroup.quotient_finite_of_isOpen _ (AddSubgroup.addSubgroupOf_isOpen _ _ (hopen n))
-    have hm := (hopen n).measurableSet
-    have e1 := measure_eq_card_mul_of_vadd μ hle hm fun x hx => hμ n x hx
-    have e2 := measure_eq_card_mul_of_vadd ν hle hm fun x hx => hν n x hx
-    rw [h0, e2] at e1
-    have hN0 : (Nat.card (↥(L 0) ⧸ (L n).addSubgroupOf (L 0)) : ENNReal) ≠ 0 := by
-      have : Nonempty (↥(L 0) ⧸ (L n).addSubgroupOf (L 0)) := ⟨0⟩
-      exact_mod_cast Nat.card_pos.ne'
-    exact ((ENNReal.mul_right_inj hN0 (ENNReal.natCast_ne_top _)).mp e1).symm
-  -- equal mass on every coset
-  have hC : ∀ n, ∀ x : V, μ (x +ᵥ (L n : Set V)) = ν (x +ᵥ (L n : Set V)) := by
-    intro n x
-    by_cases hx : x ∈ L 0
-    · rw [hμ n x hx, hν n x hx, hLn]
-    · have hsub : x +ᵥ (L n : Set V) ⊆ (L 0 : Set V)ᶜ := by
-        intro w hw hw0
-        rw [mem_vadd_coset_iff] at hw
-        apply hx
-        have := (L 0).sub_mem hw0 (hanti (Nat.zero_le n) hw)
-        rwa [show w - (-x + w) = x by abel] at this
-      rw [measure_mono_null hsub hμ0, measure_mono_null hsub hν0]
-  -- the cosets form a π-system generating the Borel σ-algebra
-  set C : Set (Set V) := {s | ∃ n, ∃ x : V, s = x +ᵥ (L n : Set V)} with hCdef
-  have hbas : TopologicalSpace.IsTopologicalBasis C := by
-    refine TopologicalSpace.isTopologicalBasis_of_isOpen_of_nhds ?_ ?_
-    · rintro _ ⟨n, x, rfl⟩
-      exact (hopen n).vadd x
-    · intro a u hau hu
-      have : (fun y => a + y) ⁻¹' u ∈ 𝓝 (0 : V) :=
-        (continuous_const_add a).continuousAt.preimage_mem_nhds (by simpa using hu.mem_nhds hau)
-      obtain ⟨n, hn⟩ := hbasis _ this
-      refine ⟨a +ᵥ (L n : Set V), ⟨n, a, rfl⟩, ?_, ?_⟩
-      · rw [mem_vadd_coset_iff, neg_add_cancel]; exact (L n).zero_mem
-      · intro w hw
-        rw [mem_vadd_coset_iff] at hw
-        have := hn hw
-        simpa using this
-  have hpi : IsPiSystem C := by
-    rintro _ ⟨n, x, rfl⟩ _ ⟨m, y, rfl⟩ ⟨z, hzx, hzy⟩
-    refine ⟨max n m, z, ?_⟩
-    rw [vadd_coset_eq_of_mem hzx, vadd_coset_eq_of_mem hzy]
-    ext w
-    simp only [Set.mem_inter_iff, mem_vadd_coset_iff]
-    constructor
-    · rintro ⟨h1, h2⟩
-      rcases le_total n m with h | h
-      · rwa [max_eq_right h]
-      · rwa [max_eq_left h]
-    · intro hw
-      exact ⟨hanti (le_max_left n m) hw, hanti (le_max_right n m) hw⟩
-  refine ext_of_generate_finite C (by rw [‹BorelSpace V›.measurable_eq,
-    hbas.borel_eq_generateFrom]) hpi ?_ ?_
-  · rintro _ ⟨n, x, rfl⟩; exact hC n x
-  · have hm := (hopen 0).measurableSet
-    rw [← measure_add_measure_compl hm, ← measure_add_measure_compl hm, hμ0, hν0, h0]
-
-end CosetMeasure
 
 section ExpChart
 
@@ -704,7 +561,7 @@ theorem exists_isAddHaarMeasure_eq_expA_image
     ext y
     constructor
     · rintro ⟨Y', hY', rfl⟩
-      rw [mem_vadd_coset_iff] at hY'
+      rw [mem_leftAddCoset_iff] at hY'
       obtain ⟨Ŷ, hŶ, hqŶ⟩ := (hball hs0 _).mp hY'
       have hsum : ‖lmulPi F (Ŵ + Ŷ)‖ ≤ r :=
         (norm_lmulPi_add_le F _ _).trans (max_le hŴ (hŶ.trans hsr))
@@ -748,7 +605,7 @@ theorem exists_isAddHaarMeasure_eq_expA_image
           _ ≤ 1 * s := mul_le_mul hg₀1 hγ' (norm_nonneg _) zero_le_one
           _ = s := one_mul s
       refine ⟨⟨q Vh, hqVh⟩, ?_, ?_⟩
-      · rw [mem_vadd_coset_iff, hball hs0]
+      · rw [mem_leftAddCoset_iff, SetLike.mem_coe, hball hs0]
         refine ⟨Vh - Ŵ, hdist, ?_⟩
         rw [map_sub, hqŴ, Submodule.coe_add, Submodule.coe_neg]
         abel
@@ -866,7 +723,7 @@ theorem exists_isAddHaarMeasure_eq_expA_image
   have hinj' : Set.InjOn Φ L0 := by rw [hL0eq]; exact E5
   have hcos : ∀ n, ∀ x ∈ L 0, x +ᵥ (L n : Set 𝔤) ⊆ L0 := by
     intro n x hx y hy
-    rw [mem_vadd_coset_iff] at hy
+    rw [mem_leftAddCoset_iff] at hy
     have := (L 0).add_mem hx (hanti (Nat.zero_le n) hy)
     rwa [add_neg_cancel_left] at this
   ------------------------------------------------------------------
