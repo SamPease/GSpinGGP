@@ -3,7 +3,8 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import Mathlib.LinearAlgebra.SesquilinearForm.Basic
-import TauCeti.LinearAlgebra.BilinearForm.BaseChange
+import Mathlib.LinearAlgebra.BilinearForm.TensorProduct
+import TauCeti.LinearAlgebra.BilinearForm.Isometry
 
 /-!
 # Skew-adjoint and orthogonal endomorphisms: unfolding and extension of scalars
@@ -58,16 +59,8 @@ theorem IsSkewAdjoint.baseChange (A : Type*) [CommRing A] [Algebra R A] {f : M �
 
 /-- An orthogonal endomorphism stays orthogonal after extension of scalars. -/
 theorem IsOrthogonal.baseChange (A : Type*) [CommRing A] [Algebra R A] {f : M →ₗ[R] M}
-    (h : B.IsOrthogonal f) : (B.baseChange A).IsOrthogonal (f.baseChange A) := by
-  intro u v
-  induction u using TensorProduct.induction_on with
-  | zero => simp
-  | tmul a x =>
-    induction v using TensorProduct.induction_on with
-    | zero => simp
-    | tmul b y => simp [LinearMap.BilinForm.baseChange_tmul, h x y]
-    | add v w hv hw => simp only [map_add, LinearMap.add_apply] at hv hw ⊢; rw [hv, hw]
-  | add u w hu hw => simp only [map_add, LinearMap.add_apply] at hu hw ⊢; rw [hu, hw]
+    (h : B.IsOrthogonal f) : (B.baseChange A).IsOrthogonal (f.baseChange A) :=
+  TauCeti.BilinForm.IsIsometry.baseChange A h
 
 end BaseChange
 

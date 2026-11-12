@@ -190,9 +190,9 @@ variable (A : Type*) [Ring A] [Algebra F A] [Module.Finite F A] [TopologicalSpac
 include F
 
 /-- The ambient algebra is a topological ring: Mathlib's `IsModuleTopology.isTopologicalRing`,
-packaged as a theorem with the instance arguments fixed. `haveI` inlines its argument, and inlining
+packaged as a theorem with the instance arguments fixed. `haveI`/`letI` inline their argument, and inlining
 the Mathlib term (with its synthesized `Module.Finite` argument) makes later unification markedly
-slower, so the uses go through this constant. -/
+slower, so the `haveI`/`letI` uses go through this constant. -/
 theorem isTopologicalRing_of_moduleTopology : IsTopologicalRing A :=
   IsModuleTopology.isTopologicalRing F A
 

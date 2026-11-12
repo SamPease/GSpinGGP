@@ -63,11 +63,8 @@ theorem isSkewAdjoint_wedge (hB : B.IsSymm) (u w : V) : B.IsSkewAdjoint (wedge B
 /-- An isometry of a nondegenerate form is injective. -/
 theorem _root_.LinearMap.IsOrthogonal.injective (hnd : B.Nondegenerate) {h : V →ₗ[K] V}
     (hh : B.IsOrthogonal h) :
-    Function.Injective h := by
-  rw [← LinearMap.ker_eq_bot, LinearMap.ker_eq_bot']
-  intro z hz
-  refine hnd.1 z fun v => ?_
-  rw [← hh z v, hz, map_zero, LinearMap.zero_apply]
+    Function.Injective h :=
+  TauCeti.BilinForm.IsIsometry.injective hnd.1 hh
 
 /-! ## Eigenspaces of an isometry -/
 
