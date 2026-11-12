@@ -467,24 +467,24 @@ theorem restrictForm_lie_traceForm_nondegenerate (hV : IsNondeg L.QV) :
       restrictForm L.lie L.traceForm Y X := by
     intro X Y
     simp only [restrictForm, LinearMap.compl₁₂_apply, traceForm, LinearMap.mk₂_apply]
-    rw [LinearMap.trace_mul_comm F (L.fstA (X : L.Amb)), LinearMap.trace_mul_comm F (L.sndA (X : L.Amb))]
+    congr 2 <;> exact LinearMap.trace_mul_comm F _ _
   have hL : ∀ X : ↥L.lie, (∀ Y : ↥L.lie, restrictForm L.lie L.traceForm X Y = 0) → X = 0 := by
     intro X hX
     have hval : ∀ a b (ha : L.pair a b ∈ L.lie),
         ⅟(2 : F) * (LinearMap.trace F L.W (L.fstA (X : L.Amb) * a) +
           LinearMap.trace F L.V (L.sndA (X : L.Amb) * b)) = 0 := fun a b ha => hX ⟨_, ha⟩
-    have h2 : ⅟(2 : F) ≠ 0 := invOf_ne_zero 2
+    have h2 : ⅟(2 : F) ≠ 0 := Invertible.ne_zero (⅟(2 : F))
     have e1 : L.fstA (X : L.Amb) = 0 := by
       by_contra hne
       obtain ⟨Y, hY, hYt⟩ := exists_mem_skewAdjoint_trace_mul_ne_zero
-        (QuadraticMap.associated_isSymm F L.QW) L.nondeg X.2.1 hne
+        ⟨QuadraticMap.associated_isSymm F L.QW⟩ L.nondeg X.2.1 hne
       have := hval Y 0 ⟨hY, zero_mem (skewAdjointLieSubalgebra (bform L.QV))⟩
       rw [mul_zero, map_zero, add_zero] at this
       exact hYt ((mul_eq_zero.mp this).resolve_left h2)
     have e2 : L.sndA (X : L.Amb) = 0 := by
       by_contra hne
       obtain ⟨Y, hY, hYt⟩ := exists_mem_skewAdjoint_trace_mul_ne_zero
-        (QuadraticMap.associated_isSymm F L.QV) hV X.2.2 hne
+        ⟨QuadraticMap.associated_isSymm F L.QV⟩ hV X.2.2 hne
       have := hval 0 Y ⟨zero_mem (skewAdjointLieSubalgebra (bform L.QW)), hY⟩
       rw [mul_zero, map_zero, zero_add] at this
       exact hYt ((mul_eq_zero.mp this).resolve_left h2)
