@@ -18,6 +18,10 @@ noncomputable section
 
 open MeasureTheory Topology Filter
 
+set_option linter.style.haveILetI false
+
+attribute [local instance 100] LieRing.ofAssociativeRing LieAlgebra.ofAssociativeAlgebra
+
 namespace GSpinGGP
 
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
