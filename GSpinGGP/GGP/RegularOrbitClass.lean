@@ -415,19 +415,14 @@ theorem exists_isometry_det_one_conj_of_pow_ne_zero_sub [FiniteDimensional K V] 
     (hN : ∀ u w, bform Q (N u) w = -bform Q u (N w))
     (hN' : ∀ u w, bform Q (N' u) w = -bform Q u (N' w))
     (hn : IsNilpotent N) (hn' : IsNilpotent N') (hNU : ∀ u ∈ U, N u ∈ U)
-    (hNU' : ∀ u ∈ U, N' u ∈ U) (hp : ∃ u ∈ U, (N ^ (2 * k)) u ≠ 0)
-    (hp' : ∃ u ∈ U, (N' ^ (2 * k)) u ≠ 0) :
+    (hNU' : ∀ u ∈ U, N' u ∈ U) (hp : N.restrict hNU ^ (2 * k) ≠ 0)
+    (hp' : N'.restrict hNU' ^ (2 * k) ≠ 0) :
     ∃ g : Q.IsometryEquiv Q, LinearMap.det (g.toLinearEquiv : V →ₗ[K] V) = 1 ∧
       (∀ b ∈ B, g b = b) ∧ ∀ u ∈ U, g (N u) = N' (g u) := by
   have hU : IsNondeg (Q.comp U.subtype) := isNondeg_comp_subtype horth hQ hc
-  have hpU : ∀ {M : Module.End K V} (hMU : ∀ u ∈ U, M u ∈ U), (∃ u ∈ U, (M ^ (2 * k)) u ≠ 0) →
-      (M.restrict hMU) ^ (2 * k) ≠ 0 := fun hMU ⟨u, hu, hpow⟩ h0 => hpow (by
-    have := LinearMap.congr_fun h0 ⟨u, hu⟩
-    rw [Module.End.pow_restrict, LinearMap.restrict_apply] at this
-    exact congrArg Subtype.val this)
   obtain ⟨f, hf1, hf2⟩ := exists_isometry_det_one_conj_of_pow_ne_zero hU hdim
     (skew_restrict hN hNU) (skew_restrict hN' hNU') (Module.End.isNilpotent.restrict hNU hn)
-    (Module.End.isNilpotent.restrict hNU' hn') (hpU hNU hp) (hpU hNU' hp')
+    (Module.End.isNilpotent.restrict hNU' hn') hp hp'
   refine ⟨extendById hc horth f, by rw [det_extendById, hf1],
     fun b hb => extendById_apply_right hc horth f ⟨b, hb⟩, fun u hu => ?_⟩
   have h1 := extendById_apply_left hc horth f ⟨N u, hNU u hu⟩

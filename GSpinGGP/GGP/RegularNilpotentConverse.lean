@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.GGP.LieRank
 import GSpinGGP.GGP.RegularNilpotent
+import GSpinGGP.GGP.RegularOrbitClass
 
 /-!
 # Regular nilpotent orbits force quasi-splitness
@@ -254,5 +255,67 @@ theorem nilReg_centralizer_nonempty_iff (d : GGPData F) (x : GSpin d.QW)
     fun h => nilReg_centralizer_nonempty_of_quasiSplit d x hx hmoved h.1 h.2⟩
 
 end NilReg
+
+/-! ## Conjugating one factor of a regular nilpotent element -/
+
+section FactorConj
+
+variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
+variable {W : Type*} [AddCommGroup W] [Module F W] [FiniteDimensional F W]
+
+/-- **The factor classification**: on a nondegenerate `U ⊆ W` with `W = U ⊥ U^⊥`, two nilpotent
+skew `N, N'` preserving `U` with minimal centralizer on `U` (`dim so(U)_{N|_U} = ⌊dim U/2⌋`), and,
+when `dim U` is even and `≥ 4`, both in `O_ν(U)`, are conjugate on `U` by some `g ∈ SO(W)` fixing
+`U^⊥`.  Odd `dim U`: one Jordan block (`pow_ne_zero_of_finrank_soCent_eq`); even `dim U ≥ 4`:
+`IsInOrbitNu`; even `dim U ≤ 2`: `N|_U = N'|_U = 0`. -/
+theorem exists_isometry_conj_of_finrank_soCent_eq {Q : QuadraticForm F W} (hQ : IsNondeg Q)
+    {U : Submodule F W} (hc : IsCompl U ((bform Q).orthogonal U)) {ν : F} (hν : ν ≠ 0)
+    {N N' : Module.End F W} (hN : ∀ u w, bform Q (N u) w = -bform Q u (N w))
+    (hN' : ∀ u w, bform Q (N' u) w = -bform Q u (N' w)) (hn : IsNilpotent N)
+    (hn' : IsNilpotent N') (hNU : ∀ u ∈ U, N u ∈ U) (hNU' : ∀ u ∈ U, N' u ∈ U)
+    (hd : finrank F ↥(soCent (Q.comp U.subtype) (N.restrict hNU)) = finrank F U / 2)
+    (hd' : finrank F ↥(soCent (Q.comp U.subtype) (N'.restrict hNU')) = finrank F U / 2)
+    (hev : Even (finrank F U) → 4 ≤ finrank F U →
+      IsInOrbitNu Q U ν N ∧ IsInOrbitNu Q U ν N') :
+    ∃ g : Q.IsometryEquiv Q, LinearMap.det (g.toLinearEquiv : W →ₗ[F] W) = 1 ∧
+      (∀ b ∈ (bform Q).orthogonal U, g b = b) ∧ ∀ u ∈ U, g (N u) = N' (g u) := by
+  have horth : ∀ a ∈ U, ∀ b ∈ (bform Q).orthogonal U, bform Q a b = 0 := fun a ha b hb => hb a ha
+  have hU := isNondeg_comp_subtype_of_isCompl hc
+  rcases Nat.even_or_odd (finrank F U) with he | ho
+  · by_cases h4 : 4 ≤ finrank F U
+    · obtain ⟨h, h'⟩ := hev he h4
+      obtain ⟨k, hk⟩ := he
+      exact SingleBlock.exists_isometry_det_one_conj_of_isInOrbitNu_sub hQ hc horth (k := k - 1)
+        (by omega) hν hN hN' hn hn' h h'
+    · have h2 : finrank F U ≤ 2 := by obtain ⟨k, hk⟩ := he; omega
+      have h0 := SingleBlock.eq_zero_of_finrank_le_two hU h2 (skew_restrict hN hNU)
+        (Module.End.isNilpotent.restrict hNU hn)
+      have h0' := SingleBlock.eq_zero_of_finrank_le_two hU h2 (skew_restrict hN' hNU')
+        (Module.End.isNilpotent.restrict hNU' hn')
+      refine ⟨QuadraticMap.IsometryEquiv.refl Q, ?_, fun b _ => rfl, fun u hu => ?_⟩
+      · exact LinearMap.det_id
+      · have e1 := congrArg Subtype.val (LinearMap.congr_fun h0 ⟨u, hu⟩)
+        have e2 := congrArg Subtype.val (LinearMap.congr_fun h0' ⟨u, hu⟩)
+        simp only [LinearMap.restrict_apply, LinearMap.zero_apply, ZeroMemClass.coe_zero] at e1 e2
+        change N u = N' u
+        rw [e1, e2]
+  · obtain ⟨k, hk⟩ := ho
+    have hpow : ∀ {M : Module.End F W} (hM : ∀ u w, bform Q (M u) w = -bform Q u (M w))
+        (hm : IsNilpotent M) (hMU : ∀ u ∈ U, M u ∈ U),
+        finrank F ↥(soCent (Q.comp U.subtype) (M.restrict hMU)) = finrank F U / 2 →
+        M.restrict hMU ^ (2 * k) ≠ 0 := by
+      intro M hM hm hMU hdM
+      rcases Nat.eq_zero_or_pos k with rfl | hk0
+      · have : Nontrivial ↥U := Module.nontrivial_of_finrank_pos (R := F) (by omega)
+        rw [Nat.mul_zero, pow_zero]
+        exact one_ne_zero
+      · have := (pow_ne_zero_of_finrank_soCent_eq hU (skew_restrict hM hMU)
+          (Module.End.isNilpotent.restrict hMU hm) hdM (by omega)).1 ⟨k, hk⟩
+        rwa [show finrank F U - 1 = 2 * k by omega] at this
+    exact SingleBlock.exists_isometry_det_one_conj_of_pow_ne_zero_sub hQ hc horth hk hN hN' hn hn'
+      hNU hNU' (hpow hN hn hNU hd) (hpow hN' hn' hNU' hd')
+
+end FactorConj
+
 
 end GSpinGGP
