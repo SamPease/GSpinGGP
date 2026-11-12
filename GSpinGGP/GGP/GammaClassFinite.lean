@@ -38,10 +38,10 @@ theorem isGalStable_range_specMatFbar : IsGalStable (F := F) (specMatFbar d.QW).
 
 /-- **`N_x(F̄)` is Galois-stable**: it is the intersection of the normalizer of the Galois-stable
 `S_x(F̄)` (`galGL_mem_torusBarFbar`) with the Galois-stable `SO(W)(F̄)`. -/
-theorem galGL_mem_normalizerBar (x : ↥(GSpin d.QW)) (σ : GalF F) :
-    ∀ s ∈ d.normalizerBar x, galGL d.m σ s ∈ d.normalizerBar x :=
+theorem isGalStable_normalizerBar (x : ↥(GSpin d.QW)) :
+    IsGalStable (F := F) (d.normalizerBar x) :=
   IsGalStable.inf (IsGalStable.normalizer fun σ => galGL_mem_torusBarFbar x σ)
-    isGalStable_range_specMatFbar σ
+    isGalStable_range_specMatFbar
 
 /-- **Tori of the same type are conjugate over `F̄`**: for `x, y ∈ Γ(G,H)` with
 `dim W''_x = dim W''_y`, some `g ∈ SO(W)(F̄)` conjugates `S_x(F̄)` to `S_y(F̄)`.

@@ -74,11 +74,13 @@ theorem IsGalStable.mem_iff {S : Subgroup (GL (Fin m) Kb)} (hS : IsGalStable (F 
     (σ : GalF F) (s : GL (Fin m) Kb) : galGL m σ s ∈ S ↔ s ∈ S :=
   ⟨fun h => galGL_inv_apply σ s ▸ hS σ⁻¹ _ h, hS σ s⟩
 
+/-- The intersection of Galois-stable subgroups is Galois-stable. -/
 theorem IsGalStable.inf {S T : Subgroup (GL (Fin m) Kb)} (hS : IsGalStable (F := F) S)
     (hT : IsGalStable (F := F) T) : IsGalStable (F := F) (S ⊓ T) :=
   fun σ s hs => ⟨hS σ s hs.1, hT σ s hs.2⟩
 
-/-- The normalizer of a Galois-stable subgroup is Galois-stable: `σ(s) h σ(s)⁻¹ = σ(s σ⁻¹(h) s⁻¹)`. -/
+/-- The normalizer of a Galois-stable subgroup is Galois-stable:
+`σ(s) h σ(s)⁻¹ = σ(s σ⁻¹(h) s⁻¹)`. -/
 theorem IsGalStable.normalizer {S : Subgroup (GL (Fin m) Kb)} (hS : IsGalStable (F := F) S) :
     IsGalStable (F := F) (Subgroup.normalizer (S : Set (GL (Fin m) Kb))) := by
   intro σ s hs

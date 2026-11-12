@@ -46,8 +46,8 @@ the axiom it tests; the computations of germs at `toyD` use `exists_isSelfDual` 
 * `luo_lie_geomExpansion_SO`: V on the smallest Luo datum, all measures and `f`
   (`luo_conclusion_L0`). Not covered: nontrivial tori.
 * `jantzen_finrank_soCentMat_ge`: V for `n = 3` (`jantzen_ge_three`). Not covered: `n ≥ 4`.
-* `jantzen_regularNil_partition`: V for `n = 3` (`jantzen_partition_three`); C at `n = 4` with the
-  previous axiom (`partition_four_via_axioms`). Not covered: `n ≥ 5`.
+* `jantzen_regularNil_partition`: V for `n = 3`, `Φ` antidiagonal (`jantzen_partition_three`); C
+  at `n = 4` with the previous axiom (`partition_four_via_axioms`). Not covered: `n ≥ 5`.
 * `finite_H1_torusBar`: V for central `x` and `dim W = 0` (`finite_H1_torusBar_central`,
   `finite_H1_dim_zero`). Not covered: nontrivial tori.
 * `finite_H1_normalizerBar`: V for `dim W = 0` (`finite_H1_dim_zero`). Not covered: `dim W > 0`.

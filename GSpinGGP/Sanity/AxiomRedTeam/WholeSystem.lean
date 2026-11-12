@@ -19,7 +19,10 @@ the path of the main theorem meet the definitions in one instance.
 * **The multiplicity formula for `π = 1`**, both sides computed separately
   (`toyD_multFormula_trivialRep`): `m(1) = 1` from the definition and `emoryTakeda_mult_le_one`;
   `θ_1(1) = 1` from `rodier_germ_one` and `hc_character_isQuasiCharacter`; `m_geom(θ) = θ(1)` for
-  every `θ ∈ QC(χ)` from the definitions.
+  every `θ ∈ QC(χ)` from the definitions.  In all it uses the axioms `emoryTakeda_mult_le_one`,
+  `rodier_germ_one`, `hc_character_exists`, `hc_character_isQuasiCharacter`,
+  `hc_regular_open_dense_conull`, `jantzen_finrank_soCentMat_ge` (the last three through
+  `charG_mem_QC`) and `exists_isSelfDual`.
 * **`sorry` statements, conclusions proved at `toyD`** without them:
   `tendsto_mGeomS_of_mem_QC` and `germ_bound_of_mem_QC` for every `θ ∈ QC(χ)`
   (`toyD_tendsto_mGeomS_of_mem_QC`, `toyD_germ_bound_of_mem_QC`) and for `θ = θ_f`
@@ -176,7 +179,9 @@ theorem toyD_charG_trivialRep_one (ψ : NontrivialAddChar F) :
   exact h1
 
 /-- **The multiplicity formula for `π = 1` on `toyD`**, both sides computed separately:
-`m(1) = 1 = m_geom(θ_1)`. -/
+`m(1) = 1 = m_geom(θ_1)`.  Axioms used: `emoryTakeda_mult_le_one`, `rodier_germ_one`,
+`hc_character_exists`, `hc_character_isQuasiCharacter`, `hc_regular_open_dense_conull`,
+`jantzen_finrank_soCentMat_ge`, `exists_isSelfDual`. -/
 theorem toyD_multFormula_trivialRep (ψ : NontrivialAddChar F) :
     ((mult ψ (𝕋) (trivialRep ↥(𝕋).G)).toNat : ℂ) =
       mGeom ψ (𝕋) (charG (𝕋) (trivialRep ↥(𝕋).G)) := by

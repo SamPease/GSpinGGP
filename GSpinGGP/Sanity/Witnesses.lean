@@ -1749,9 +1749,9 @@ theorem toyD_hyp (ψ : NontrivialAddChar F) : HYP ψ (𝕋) := fun d' hd' =>
 
 /-- **The multiplicity formula for the toy datum, from the spine** (`multAt_of_hyp_geom`, with
 `toy_hyp` and `toy_geomAt`).  Not a direct computation: it goes through the spine `sorry`s
-`prop_11_5_1_ii_ell` and `exists_scusp_ell` (and the axioms `dixmier_commutant_scalar`, through
-the theorem `schur_central`, and `emoryTakeda_mult_le_one`), so it checks only that the spine
-closes at the bottom of the induction, where (HYP) is empty. -/
+`prop_11_5_1_ii_ell` and `exists_scusp_ell` (and, among others, the axioms
+`dixmier_commutant_scalar`, through the theorem `schur_central`, and `emoryTakeda_mult_le_one`), so
+it checks only that the spine closes at the bottom of the induction, where (HYP) is empty. -/
 theorem toyD_multAt (ψ : NontrivialAddChar F) : MultAt ψ (𝕋) :=
   multAt_of_hyp_geom ψ (𝕋) (toyD_hyp ψ) (fun χ' => toyD_geomAt χ' ψ)
 

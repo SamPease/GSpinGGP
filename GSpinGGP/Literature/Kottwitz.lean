@@ -297,9 +297,9 @@ characteristic `0` and `A` a `k`-group of type (ALA), `H¹(k, A)` is finite; in 
 is finite for `G` linear algebraic over `k`.)  Applied to the linear algebraic `F`-group
 `N_x = N_{SO(W)}(S_x)` (the normalizer of the `F`-torus `S_x` in `SO(W)`), whose `F̄`-points with
 their Galois action are `normalizerBar d x` (`range (specMatFbar d.QW)` is `SO(W)(F̄)` by
-`range_specP_eq_SOGrp`, from the theorem `gspin_specP_surjective_SO`; Galois stability of `S_x(F̄)`, of `SO(W)(F̄)` and of
-`N_x(F̄)` is proved, `galGL_mem_torusBarFbar`, `isGalStable_range_specMatFbar`,
-`galGL_mem_normalizerBar`; that it is the group of `F̄`-points
+`range_specP_eq_SOGrp`, from the theorem `gspin_specP_surjective_SO`; Galois stability of
+`S_x(F̄)`, of `SO(W)(F̄)` and of `N_x(F̄)` is proved, `galGL_mem_torusBarFbar`,
+`isGalStable_range_specMatFbar`, `isGalStable_normalizerBar`; that it is the group of `F̄`-points
 of an `F`-group is not formalized).  Stated for `x ∈ Γ(G,H)`, where `S_x` is a torus.  (`N_x/S_x` is
 not finite in general: `Z_{SO(W)}(S_x)` contains `SO(W'_x)`; so this does not follow from
 `finite_H1_torusBar`.) -/

@@ -22,7 +22,7 @@ import GSpinGGP.Sanity.Witnesses
   covers central `x` (`finite_H1_torusBar_central`) and `dim W = 0`, e.g. `toyData`
   (`finite_H1_dim_zero`, `finite_H1_toyData`).  The Galois stability of the groups of
   `F̄`-points involved is proved in the library (`galGL_mem_torusBarFbar`, `galGL_mem_fixerBar`,
-  `GGPData.galGL_mem_normalizerBar`).
+  `GGPData.isGalStable_normalizerBar`).
 * `exists_rel_torusBar_of_fixerBar`: for central `x`, `(SO(W)_{W'_x})(F̄) = 1` and the conclusion
   holds with the trivial cocycle (`exists_rel_central`).
 * `kottwitz_nilpotent_sq_smul`: holds for `N = 0` (`kottwitz_sq_smul_zero`) and on `toyData`,
@@ -207,8 +207,8 @@ theorem jantzen_partition_three {K : Type*} [Field K] [CharZero K]
   have := two_le_finrank_so (K := K)
   omega
 
-/-- Check the axiom's hypotheses hold for `Y₀` (via `jantzen_ge_three`-style bound) and its
-conclusion is true: `Y₀² ≠ 0`. -/
+/-- The regular nilpotent `Y₀` of `so(Φ₀)` satisfies the conclusion of
+`jantzen_regularNil_partition` for `n = 3`: `Y₀² ≠ 0`. -/
 theorem Y₀_sq_ne_zero {K : Type*} [Field K] : (soMk (0 : K) 1 0) ^ 2 ≠ 0 := by
   intro h
   have := congrFun (congrFun h 0) 2

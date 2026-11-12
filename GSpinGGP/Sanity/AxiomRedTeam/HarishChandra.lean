@@ -12,8 +12,8 @@ import GSpinGGP.GGP.Germs
 # Checks of the Harish-Chandra, germ and Waldspurger axioms
 
 Unless said otherwise, each conclusion is verified *without* the axiom at the toy datum `toyD`
-(`W = 0`, `V` a line, `G ≅ F^× × F^×`), for the trivial representation; then the axiom's own
-instance is shown to agree with that computation.
+(`W = 0`, `V` a line, `G ≅ F^× × F^×`), for the trivial representation.  For `germ_unique` and
+`rodier_germ_one` the axiom's own instance at `toyD` is also shown to agree with that computation.
 
 * `dixmier_commutant_scalar`: the commutant of the one-dimensional trivial representation is `ℂ`
   (`scalar_of_C`); for the two-dimensional trivial representation of the trivial group
