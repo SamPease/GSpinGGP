@@ -327,6 +327,22 @@ def IsInOrbitNu (Q : QuadraticForm F V) (U : Submodule F V) (ν : F) (N : V →�
     ∃ e ∈ U₁, Q e = ν ∧
       IsSplitQF (Q.comp (U₁ ⊓ (bform Q).orthogonal (Submodule.span F {e})).subtype)
 
+/-- `IsInOrbitNu` only sees the line `F N`: it holds for `c • N`, `c ≠ 0`, iff it holds for `N`. -/
+theorem isInOrbitNu_smul_iff {V : Type*} [AddCommGroup V] [Module F V] {Q : QuadraticForm F V}
+    {U : Submodule F V} {ν c : F} (hc : c ≠ 0) {N : V →ₗ[F] V} :
+    IsInOrbitNu Q U ν (c • N) ↔ IsInOrbitNu Q U ν N := by
+  have key : ∀ {c : F}, c ≠ 0 → ∀ {N : V →ₗ[F] V}, IsInOrbitNu Q U ν N →
+      IsInOrbitNu Q U ν (c • N) := by
+    intro c hc N ⟨d₀, U₁, h1, h2, h3, h4, h5, h6, h7, ⟨u, hu, hu'⟩, h9⟩
+    refine ⟨d₀, U₁, h1, h2, h3, h4, h5, ?_, fun u hu => ?_, ⟨u, hu, ?_⟩, h9⟩
+    · simp [h6]
+    · simpa using U₁.smul_mem c (h7 u hu)
+    · rw [smul_pow, LinearMap.smul_apply]
+      exact smul_ne_zero (pow_ne_zero _ hc) hu'
+  refine ⟨fun h => ?_, key hc⟩
+  have := key (inv_ne_zero hc) h
+  rwa [smul_smul, inv_mul_cancel₀ hc, one_smul] at this
+
 end Orbits
 
 /-- Luo's recipe (Luo §7.1) applied to the GGP triple `(G'_x, H'_x)` of the
