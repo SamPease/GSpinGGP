@@ -847,46 +847,6 @@ theorem isOpen_regularSS_lieCentralizer (g : ↥d.G)
       IsRegularSS (lieCentralizer d.lie ((g : d.ambientˣ) : d.ambient)) (Z : d.ambient)} :=
   isOpen_setOf_isRegularSS_lieCentralizer d g hg
 
-/-- `expA` on `C(W) × C(V)` is computed componentwise near `0`. -/
-theorem eventually_expA_ambient :
-    ∀ᶠ X in 𝓝 (0 : d.ambient), (expA F X).1 = expA F X.1 ∧ (expA F X).2 = expA F X.2 := by
-  have h1 := eventually_map_expA (F := F) (A := d.ambient)
-    (LinearMap.fst F (CliffordAlgebra d.QW) (CliffordAlgebra d.QV)) (fun X n => Prod.pow_fst X n)
-  have h2 := eventually_map_expA (F := F) (A := d.ambient)
-    (LinearMap.snd F (CliffordAlgebra d.QW) (CliffordAlgebra d.QV)) (fun X n => Prod.pow_snd X n)
-  filter_upwards [h1, h2] with X hX1 hX2
-  exact ⟨hX1, hX2⟩
-
-/-- **`e^X ∈ G(F)` for `X ∈ 𝔤` near `0`** (componentwise `MovedPart.exists_nhds_expA_mem_GSpin`). -/
-theorem eventually_expA_mem_G :
-    ∀ᶠ X in 𝓝 (0 : d.ambient), X ∈ d.lie → ∃ g : ↥d.G, ((g : d.ambientˣ) : d.ambient) = expA F X := by
-  obtain ⟨U₁, hU₁, h₁⟩ := MovedPart.exists_nhds_expA_mem_GSpin (F := F) d.QW
-  obtain ⟨U₂, hU₂, h₂⟩ := MovedPart.exists_nhds_expA_mem_GSpin (F := F) d.QV
-  have hf : (fun X : d.ambient => X.1) ⁻¹' U₁ ∈ 𝓝 (0 : d.ambient) :=
-    continuous_fst.continuousAt.preimage_mem_nhds hU₁
-  have hs : (fun X : d.ambient => X.2) ⁻¹' U₂ ∈ 𝓝 (0 : d.ambient) :=
-    continuous_snd.continuousAt.preimage_mem_nhds hU₂
-  filter_upwards [hf, hs, eventually_expA_ambient d] with X hX1 hX2 hX hXl
-  obtain ⟨g₁, hg₁⟩ := h₁ X.1 hX1 hXl.1
-  obtain ⟨g₂, hg₂⟩ := h₂ X.2 hX2 hXl.2
-  refine ⟨d.pair (g₁, g₂), Prod.ext ?_ ?_⟩
-  · rw [hX.1]; exact hg₁
-  · rw [hX.2]; exact hg₂
-
-/-- **The logarithm of `G(F)` near `1` lies in `𝔤`**: for `Y` near `0`, `e^Y ∈ G(F)` implies
-`Y ∈ 𝔤 = gspin(W) × gspin(V)` (componentwise `eventually_mem_gspin_of_expA_mem`). -/
-theorem eventually_mem_lie_of_expA_mem :
-    ∀ᶠ Y in 𝓝 (0 : d.ambient), ∀ g : ↥d.G, ((g : d.ambientˣ) : d.ambient) = expA F Y →
-      Y ∈ d.lie := by
-  have h₁ := (continuous_fst.tendsto (0 : d.ambient)).eventually
-    (eventually_mem_gspin_of_expA_mem (F := F) d.QW)
-  have h₂ := (continuous_snd.tendsto (0 : d.ambient)).eventually
-    (eventually_mem_gspin_of_expA_mem (F := F) d.QV)
-  filter_upwards [h₁, h₂, eventually_expA_ambient d] with Y hY1 hY2 hY g hg
-  refine ⟨hY1 (d.fst g) ?_, hY2 (d.snd g) ?_⟩
-  · rw [← hY.1, ← hg]; rfl
-  · rw [← hY.2, ← hg]; rfl
-
 attribute [local instance 100] LieRing.ofAssociativeRing LieAlgebra.ofAssociativeAlgebra in
 /-- **Jordan decomposition with a logarithm**: `c = s e^N` with `s ∈ G(F)` semisimple and `N ∈ 𝔤_s`
 nilpotent. From `c = s u` (`exists_jordan_G`), `u = 1 + x` with `x = s⁻¹(c − s)` nilpotent and
