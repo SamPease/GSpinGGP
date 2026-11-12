@@ -3296,6 +3296,21 @@ structure GGPData (K : Type*) [Field K] [Invertible (2 : K)] where
   r : ℕ
   ν : Kˣ
 
+section TraceProd
+
+variable {K : Type*} [Field K]
+
+/-- The trace of left multiplication on a product algebra. -/
+theorem trace_mulLeft_prod {A B : Type*} [Ring A] [Algebra K A] [Module.Finite K A] [Ring B]
+    [Algebra K B] [Module.Finite K B] (x : A × B) :
+    LinearMap.trace K (A × B) (LinearMap.mulLeft K x) =
+      LinearMap.trace K A (LinearMap.mulLeft K x.1) + LinearMap.trace K B (LinearMap.mulLeft K x.2) := by
+  have : LinearMap.mulLeft K x = (LinearMap.mulLeft K x.1).prodMap (LinearMap.mulLeft K x.2) := by
+    ext <;> simp
+  rw [this, LinearMap.trace_prodMap']
+
+end TraceProd
+
 namespace GGPData
 
 variable {K : Type*} [Field K] [Invertible (2 : K)] (d : GGPData K)
@@ -4056,16 +4071,6 @@ theorem bilin_conj (g : d.G) (X Y : d.ambient) :
     LinearMap.trace_mul_comm, Module.End.mul_eq_comp, ← LinearMap.mulLeft_mul, mul_assoc, hba,
     mul_one]
 
-omit [Invertible (2 : K)] in
-/-- The trace of left multiplication on a product algebra. -/
-theorem trace_mulLeft_prod {A B : Type*} [Ring A] [Algebra K A] [Module.Finite K A] [Ring B]
-    [Algebra K B] [Module.Finite K B] (x : A × B) :
-    LinearMap.trace K (A × B) (LinearMap.mulLeft K x) =
-      LinearMap.trace K A (LinearMap.mulLeft K x.1) + LinearMap.trace K B (LinearMap.mulLeft K x.2) := by
-  have : LinearMap.mulLeft K x = (LinearMap.mulLeft K x.1).prodMap (LinearMap.mulLeft K x.2) := by
-    ext <;> simp
-  rw [this, LinearMap.trace_prodMap']
-
 /-- `bilin` is nondegenerate on `𝔤`. -/
 theorem bilin_nondegenerate_lie (X : d.ambient) (hX : X ∈ d.lie)
     (h : ∀ Y ∈ d.lie, d.bilin X Y = 0) : X = 0 := by
@@ -4201,6 +4206,11 @@ theorem bcHom_algebraMap (Q : QuadraticForm K V) (c : K) :
   show CliffordAlgebra.ofBaseChange (AlgebraicClosure K) Q (1 ⊗ₜ algebraMap K _ c) = _
   rw [Algebra.algebraMap_eq_smul_one, ← TensorProduct.smul_tmul,
     CliffordAlgebra.ofBaseChange_tmul_one, Algebra.smul_def, mul_one]
+
+/-- Base change sends the scalar `c` to the scalar `c` (as an element of the `K`-algebra). -/
+theorem bcHom_algebraMap_scalar (Q : QuadraticForm K V) (c : K) :
+    bcHom Q (algebraMap K _ c) = algebraMap K _ c := by
+  rw [bcHom_algebraMap, ← IsScalarTower.algebraMap_apply]
 
 /-- Base change is `K`-linear. -/
 theorem bcHom_smul (Q : QuadraticForm K V) (f : K) (x : CliffordAlgebra Q) :

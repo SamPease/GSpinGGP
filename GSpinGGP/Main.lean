@@ -1,6 +1,7 @@
 import GSpinGGP.GGP.Triple
 import GSpinGGP.TraceFormula.Spine
 import GSpinGGP.GGP.Germs
+import GSpinGGP.GGP.GermTransfer
 import GSpinGGP.GGP.Centralizers
 import GSpinGGP.GGP.RegularNilpotentConverse
 import GSpinGGP.GGP.KottwitzSign

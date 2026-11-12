@@ -12,14 +12,12 @@ import GSpinGGP.TraceFormula.JHatTransport
 
 The regular set of `G = GSpin(W) × GSpin(V)` is open and conull (from Harish-Chandra's theorem
 `hc_regular_open_dense_conull` and the identification of his regular set with `regularSet`,
-`hcDisc_ne_zero_iff_mem_regularSet`), and germs are preserved under transfer to inner forms
-(`bp_germ_transfer`). The latter is proved from the averaged form of BP Astérisque 418, (12.1.2),
-which is stated there for pure inner forms (`bp_germAvg_transfer`, proved here by transport of the
-local expansions along the `F`-isomorphism `G_x ≃ G_{α,y}`: `germAvg_eq_of_centralizerIso`, from the
-`sorry` theorem `exists_centralizerIso_of_stronglyStablyConjW` and `jHat_centralizerIso`, which rests on
-`isOrbitMeasure_unique` and the transport lemmas of `TraceFormula/JHatTransport.lean`); the
-equality of the regular germs of a stable quasi-character (`germ_eq_germ_of_stable`); and the
-finiteness of `Nil_reg(𝔤_x)` (`finite_nilReg`).
+`hcDisc_ne_zero_iff_mem_regularSet`), and germs are transported along isomorphisms of descent data
+(`germ_eq_germ_of_centralizerIso`, `germAvg_eq_of_centralizerIso`, from `jHat_centralizerIso`, which
+rests on `isOrbitMeasure_unique` and the transport lemmas of `TraceFormula/JHatTransport.lean`).
+These, the equality of the regular germs of a stable quasi-character (`germ_eq_germ_of_stable`) and
+the finiteness of `Nil_reg(𝔤_x)` (`finite_nilReg`) give the transfer of germs to inner forms
+(`bp_germ_transfer`, in `GGP/GermTransfer.lean`).
 -/
 
 open MeasureTheory Topology Filter
@@ -495,128 +493,5 @@ theorem germAvg_eq_of_centralizerIso (d d' : GGPData F) (ψ : NontrivialAddChar 
   congr 1
   exact finsum_mem_congr rfl fun O _ =>
     germ_eq_germ_of_centralizerIso d d' ψ θ θ' hθ x y hx hy ι hloc O
-
-/-- **Strongly stably conjugate elements have isomorphic descent data** (Thesis §6.1). Let
-`x ∈ GSpin(W)(F)`, `y ∈ GSpin(W_α)(F)` be semisimple and strongly stably conjugate (`hxy`): there is
-`g ∈ G_α(F̄)` with `y = g ψ_α(x) g⁻¹` such that `ι = Ad(g) ∘ ψ_α : G_x ≃ G_{α,y}` is defined over `F`
-(`ψ_α = C(φ) × C(φ ⊕ id_Z)`; `x`, `y` embedded diagonally). Then `ι` induces an isomorphism of
-descent data `CentralizerIso` at `x` and `y`, and for `X ∈ 𝔤_x(F)` small and regular the elements
-`x e^X ∈ G_reg(F)` and `y e^{ι X} ∈ G_{α,reg}(F)` are stably conjugate (through `ψ_α`, by the same
-`g`).
-
-Proof sketch (not formalized). Let `Φ : a ↦ g ψ_α(a) g⁻¹` be the `F̄`-algebra isomorphism of the
-ambient algebras base changed to `F̄`. Since `ι = Φ|_{G_x}` commutes with the Galois action, so does
-its differential, and `Φ` maps `G_x(F)`, `𝔤_x(F)` onto `G_{α,y}(F)`, `𝔤_{α,y}(F)`. Take for `lin` an
-`F`-linear extension of `Φ` restricted to `F[𝔤_x(F)]`, an injective `F`-algebra map into `A'(F)`; so
-`lin` preserves commutators, nilpotency, semisimplicity (invariant under base change), centralizers
-and summability of the exponential series. `Φ` preserves the trace forms `tr(L_{XY})`. This gives the
-fields of `CentralizerIso`. For `X ∈ 𝔤_x(F)` small, `x e^X ∈ G_x(F)` (Waldspurger's good
-neighbourhoods, `waldspurger_goodNbhd`); it is regular when `X` is regular in `𝔤_x`
-(`exists_nhds_isRegularSS_mul_expA`); and `g ψ_α(x e^X) g⁻¹ = y e^{ι X}`.
-
-**Status: `sorry`** (transport along `ι`, defined in Thesis §6.1; this argument is not in the
-thesis). -/
-theorem exists_centralizerIso_of_stronglyStablyConjW (d : GGPData F) (τ : InnerTwist d.QW)
-    (x : GSpin d.QW) (y : GSpin (d.twist τ).QW)
-    (hx : IsSS F (((d.diag x : ↥d.G) : d.ambientˣ) : d.ambient))
-    (hy : IsSS F ((((d.twist τ).diag y : ↥(d.twist τ).G) : (d.twist τ).ambientˣ) :
-      (d.twist τ).ambient))
-    (hxy : d.StronglyStablyConjW τ x y) :
-    ∃ ι : CentralizerIso d.G d.lie d.bilin (d.twist τ).G (d.twist τ).lie (d.twist τ).bilin
-        ((d.diag x : ↥d.G) : d.ambientˣ) (((d.twist τ).diag y : ↥(d.twist τ).G) :
-          (d.twist τ).ambientˣ),
-      ∃ ω ∈ 𝓝 (0 : d.ambient), ∀ X ∈ ω,
-        X ∈ lieCentralizer d.lie (((d.diag x : ↥d.G) : d.ambientˣ) : d.ambient) →
-        IsRegularSS (lieCentralizer d.lie (((d.diag x : ↥d.G) : d.ambientˣ) : d.ambient)) X →
-        ∀ y' : ↥(d.twist τ).G, ((y' : (d.twist τ).ambientˣ) : (d.twist τ).ambient) =
-            ((((d.twist τ).diag y : ↥(d.twist τ).G) : (d.twist τ).ambientˣ) :
-              (d.twist τ).ambient) * expA F (ι.lin X) →
-          ∃ z : ↥d.G, ((z : d.ambientˣ) : d.ambient) =
-              (((d.diag x : ↥d.G) : d.ambientˣ) : d.ambient) * expA F X ∧
-            z ∈ regularSet d.G d.lie ∧ y' ∈ regularSet (d.twist τ).G (d.twist τ).lie ∧
-            d.StablyConjG τ z y' := by
-  sorry
-
-set_option linter.unusedVariables false in
-/-- **Beuzart-Plessis (12.1.2), averaged form, for the inner twists of `GSpin`** (Thesis (6.1.2)).
-Let `G` be quasi-split, `τ` an inner twist (`G_α = (d.twist τ).G`), `θ` a stable quasi-character on
-`G(F)` and `θ'` a stable quasi-character on `G_α(F)` which is a transfer of `θ`: `θ'(y) = θ(x)`
-whenever `x ∈ G_reg(F)`, `y ∈ G_{α,reg}(F)` are stably conjugate through `ψ_α = C(φ) × C(φ ⊕
-id_Z)`. Then for `x ∈ GSpin(W)(F)`, `y ∈ GSpin(W_α)(F)` semisimple and strongly stably conjugate
-(embedded diagonally), `c_{θ'}(y) = c_θ(x)`, where `c_θ(x) = |Nil_reg(𝔤_x)|⁻¹ Σ_{O ∈ Nil_reg(𝔤_x)}
-c_{θ,O}(x)` (`germAvg`).
-
-Source: Beuzart-Plessis, Astérisque 418 (2020), (12.1.2), p. 260, stated for a connected reductive
-`G` and its *pure* inner forms. The inner forms here have cocycles valued in `SO(W) × SO(V)`, and
-those with the other Hasse invariant are not pure inner forms of `GSpin(W) × GSpin(V)`. The proof
-here does not use purity, nor the limit formula BP Prop 4.5.1 1.(ii) used in BP's and the thesis's
-proofs: the `F`-isomorphism `ι = Ad(g) ∘ ψ_α : G_x ≃ G_{α,y}` is an isomorphism of descent data
-(`exists_centralizerIso_of_stronglyStablyConjW`), `x e^X` and `y e^{ι X}` are stably conjugate for
-`X ∈ 𝔤_x(F)` small and regular, so `θ'(y e^{ι X}) = θ(x e^X)`, and the local expansions correspond
-orbit by orbit (`germAvg_eq_of_centralizerIso`). Stability and transfer are written out inline;
-`hqs`, `hθ'` and the stability hypotheses are not needed by this argument. Only diagonal elements
-are needed (Thesis §6.7).
-
-**Status: proved** from `exists_centralizerIso_of_stronglyStablyConjW` and `jHat_centralizerIso`. -/
-theorem bp_germAvg_transfer (d : GGPData F) (hqs : d.IsQuasiSplit) (ψ : NontrivialAddChar F)
-    (τ : InnerTwist d.QW) (θ : ↥d.G → ℂ) (θ' : ↥(d.twist τ).G → ℂ)
-    (hθ : IsQuasiCharacter d.G d.lie d.bilin ψ θ)
-    (hθ' : IsQuasiCharacter (d.twist τ).G (d.twist τ).lie (d.twist τ).bilin ψ θ')
-    (hstab : ∀ x ∈ regularSet d.G d.lie, ∀ x' ∈ regularSet d.G d.lie,
-      d.StablyConj x x' → θ x = θ x')
-    (hstab' : ∀ y ∈ regularSet (d.twist τ).G (d.twist τ).lie,
-      ∀ y' ∈ regularSet (d.twist τ).G (d.twist τ).lie,
-      (d.twist τ).StablyConj y y' → θ' y = θ' y')
-    (htrans : ∀ x ∈ regularSet d.G d.lie, ∀ y ∈ regularSet (d.twist τ).G (d.twist τ).lie,
-      d.StablyConjG τ x y → θ' y = θ x)
-    (x : GSpin d.QW) (y : GSpin (d.twist τ).QW)
-    (hx : IsSS F (((d.diag x : ↥d.G) : d.ambientˣ) : d.ambient))
-    (hy : IsSS F ((((d.twist τ).diag y : ↥(d.twist τ).G) : (d.twist τ).ambientˣ) :
-      (d.twist τ).ambient))
-    (hxy : d.StronglyStablyConjW τ x y) :
-    germAvg (d.twist τ).G (d.twist τ).lie (d.twist τ).bilin ψ θ' ((d.twist τ).diag y) =
-      germAvg d.G d.lie d.bilin ψ θ (d.diag x) := by
-  obtain ⟨ι, ω, hω, hloc⟩ := exists_centralizerIso_of_stronglyStablyConjW d τ x y hx hy hxy
-  refine germAvg_eq_of_centralizerIso d (d.twist τ) ψ θ θ' hθ _ _ hx hy ι
-    ⟨ω, hω, fun X hXω hX hXr y' hy' => ?_⟩
-  obtain ⟨z, hz, hzr, hy'r, hst⟩ := hloc X hXω hX hXr y' hy'
-  exact ⟨z, hz, htrans z hzr y' hy'r hst⟩
-
-/-- **Beuzart-Plessis (12.1.2) for each regular orbit** (Thesis (6.1.2)), for the inner twists of
-`GSpin`: under the hypotheses of `bp_germAvg_transfer`, `c_{θ',O'}(y) = c_{θ,O}(x)` for all `O ∈
-Nil_reg(𝔤_x)`, `O' ∈ Nil_reg(𝔤_{α,y})`. From the averaged form `bp_germAvg_transfer`, since for the
-stable `θ`, `θ'` every regular germ equals the average (`germ_eq_germ_of_stable`, `finite_nilReg`). -/
-theorem bp_germ_transfer (d : GGPData F) (hqs : d.IsQuasiSplit) (ψ : NontrivialAddChar F)
-    (τ : InnerTwist d.QW) (θ : ↥d.G → ℂ) (θ' : ↥(d.twist τ).G → ℂ)
-    (hθ : IsQuasiCharacter d.G d.lie d.bilin ψ θ)
-    (hθ' : IsQuasiCharacter (d.twist τ).G (d.twist τ).lie (d.twist τ).bilin ψ θ')
-    (hstab : ∀ x ∈ regularSet d.G d.lie, ∀ x' ∈ regularSet d.G d.lie,
-      d.StablyConj x x' → θ x = θ x')
-    (hstab' : ∀ y ∈ regularSet (d.twist τ).G (d.twist τ).lie,
-      ∀ y' ∈ regularSet (d.twist τ).G (d.twist τ).lie,
-      (d.twist τ).StablyConj y y' → θ' y = θ' y')
-    (htrans : ∀ x ∈ regularSet d.G d.lie, ∀ y ∈ regularSet (d.twist τ).G (d.twist τ).lie,
-      d.StablyConjG τ x y → θ' y = θ x)
-    (x : GSpin d.QW) (y : GSpin (d.twist τ).QW)
-    (hx : IsSS F (((d.diag x : ↥d.G) : d.ambientˣ) : d.ambient))
-    (hy : IsSS F ((((d.twist τ).diag y : ↥(d.twist τ).G) : (d.twist τ).ambientˣ) :
-      (d.twist τ).ambient))
-    (hxy : d.StronglyStablyConjW τ x y) :
-    ∀ O ∈ NilReg (grpCentralizer d.G (d.diag x))
-        (lieCentralizer d.lie (((d.diag x : ↥d.G) : d.ambientˣ) : d.ambient)),
-    ∀ O' ∈ NilReg (grpCentralizer (d.twist τ).G ((d.twist τ).diag y))
-        (lieCentralizer (d.twist τ).lie
-          ((((d.twist τ).diag y : ↥(d.twist τ).G) : (d.twist τ).ambientˣ) : (d.twist τ).ambient)),
-      germ (d.twist τ).G (d.twist τ).lie (d.twist τ).bilin ψ θ' ((d.twist τ).diag y) O' =
-        germ d.G d.lie d.bilin ψ θ (d.diag x) O := by
-  intro O hO O' hO'
-  have e : germAvg d.G d.lie d.bilin ψ θ (d.diag x) = germ d.G d.lie d.bilin ψ θ (d.diag x) O :=
-    germAvg_eq_germ_of_forall_eq (finite_nilReg d _ hx) hO
-      fun O₂ h₂ => germ_eq_germ_of_stable d ψ θ hθ hstab _ hx O₂ h₂ O hO
-  have e' : germAvg (d.twist τ).G (d.twist τ).lie (d.twist τ).bilin ψ θ' ((d.twist τ).diag y) =
-      germ (d.twist τ).G (d.twist τ).lie (d.twist τ).bilin ψ θ' ((d.twist τ).diag y) O' :=
-    germAvg_eq_germ_of_forall_eq (finite_nilReg (d.twist τ) _ hy) hO'
-      fun O₂ h₂ => germ_eq_germ_of_stable (d.twist τ) ψ θ' hθ' hstab' _ hy O₂ h₂ O' hO'
-  rw [← e', ← e, bp_germAvg_transfer d hqs ψ τ θ θ' hθ hθ' hstab hstab' htrans x y hx hy hxy]
 
 end GSpinGGP

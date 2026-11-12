@@ -321,4 +321,160 @@ theorem exists_nhds_of_mem_nhds {U : Set A} (hU : U ∈ 𝓝 (0 : A)) :
 
 end CentralizerIso
 
+/-! ### Construction from a partial algebra isomorphism -/
+
+section OfSubalgebra
+
+variable {G : Subgroup Aˣ} {𝔤 : LieSubalgebra F A} {b : LinearMap.BilinForm F A}
+  {G' : Subgroup A'ˣ} {𝔤' : LieSubalgebra F A'} {b' : LinearMap.BilinForm F A'}
+  {x : Aˣ} {y : A'ˣ}
+
+/-- A linear map, unital and multiplicative on a subalgebra `S`, as an algebra map on `S`. -/
+def restrictAlgHom (S : Subalgebra F A) (f : A →ₗ[F] A') (hone : f 1 = 1)
+    (hmul : ∀ a ∈ S, ∀ c ∈ S, f (a * c) = f a * f c) : S →ₐ[F] A' :=
+  AlgHom.ofLinearMap (f ∘ₗ S.val.toLinearMap) hone fun a c => hmul _ a.2 _ c.2
+
+@[simp] theorem restrictAlgHom_apply (S : Subalgebra F A) (f : A →ₗ[F] A') (hone : f 1 = 1)
+    (hmul : ∀ a ∈ S, ∀ c ∈ S, f (a * c) = f a * f c) (a : S) :
+    restrictAlgHom S f hone hmul a = f a := rfl
+
+/-- `f'` is multiplicative on `S'` when `f` is multiplicative on `S` and they are mutually inverse
+on `S`, `S'`. -/
+theorem map_mul_of_inverse {S : Subalgebra F A} {S' : Subalgebra F A'} {f : A →ₗ[F] A'}
+    {f' : A' →ₗ[F] A} (hmul : ∀ a ∈ S, ∀ c ∈ S, f (a * c) = f a * f c)
+    (hf'S : ∀ a ∈ S', f' a ∈ S) (hinv : ∀ a ∈ S, f' (f a) = a) (hinv' : ∀ a ∈ S', f (f' a) = a)
+    {a c : A'} (ha : a ∈ S') (hc : c ∈ S') : f' (a * c) = f' a * f' c := by
+  conv_lhs => rw [← hinv' a ha, ← hinv' c hc, ← hmul _ (hf'S a ha) _ (hf'S c hc)]
+  exact hinv _ (S.mul_mem (hf'S a ha) (hf'S c hc))
+
+open Classical in
+/-- The map on units `u ↦ f u` (when `f u` is a unit; `1` otherwise). -/
+noncomputable def unitsMap (f : A →ₗ[F] A') (u : Aˣ) : A'ˣ :=
+  if h : IsUnit (f u) then h.unit else 1
+
+theorem coe_unitsMap {f : A →ₗ[F] A'} {u : Aˣ} (h : IsUnit (f u)) :
+    (unitsMap f u : A') = f u := by
+  simp [unitsMap, h]
+
+namespace CentralizerIso
+
+/-- **An isomorphism of descent data from a partial algebra isomorphism.** Let `f : A → A'`,
+`f' : A' → A` be `F`-linear maps restricting to mutually inverse algebra isomorphisms between
+subalgebras `S ⊆ A`, `S' ⊆ A'` that contain `𝔤_x`, `G_x(F)` and `𝔤'_y`, `G'_y(F)`, and that match
+`𝔤_x` with `𝔤'_y` and `G_x(F)` with `G'_y(F)`. If `f` preserves the forms on `𝔤_x`, it is an
+isomorphism of descent data. -/
+noncomputable def ofSubalgebra (S : Subalgebra F A) (S' : Subalgebra F A') (f : A →ₗ[F] A')
+    (f' : A' →ₗ[F] A) (hfS : ∀ a ∈ S, f a ∈ S') (hf'S : ∀ a ∈ S', f' a ∈ S) (hone : f 1 = 1)
+    (hmul : ∀ a ∈ S, ∀ c ∈ S, f (a * c) = f a * f c) (hinv : ∀ a ∈ S, f' (f a) = a)
+    (hinv' : ∀ a ∈ S', f (f' a) = a)
+    (h𝔤S : ∀ X ∈ lieCentralizer 𝔤 (x : A), X ∈ S)
+    (h𝔤S' : ∀ X ∈ lieCentralizer 𝔤' (y : A'), X ∈ S')
+    (h𝔤 : ∀ X ∈ lieCentralizer 𝔤 (x : A), f X ∈ lieCentralizer 𝔤' (y : A'))
+    (h𝔤' : ∀ X ∈ lieCentralizer 𝔤' (y : A'), f' X ∈ lieCentralizer 𝔤 (x : A))
+    (hGS : ∀ u ∈ grpCentralizer G x, (u : A) ∈ S)
+    (hGS' : ∀ u ∈ grpCentralizer G' y, (u : A') ∈ S')
+    (hG : ∀ u ∈ grpCentralizer G x, ∀ v : A'ˣ, (v : A') = f u → v ∈ grpCentralizer G' y)
+    (hG' : ∀ v ∈ grpCentralizer G' y, ∀ u : Aˣ, (u : A) = f' v → u ∈ grpCentralizer G x)
+    (hb : ∀ X ∈ lieCentralizer 𝔤 (x : A), ∀ Y ∈ lieCentralizer 𝔤 (x : A), b' (f X) (f Y) = b X Y) :
+    CentralizerIso G 𝔤 b G' 𝔤' b' x y :=
+  have hmul' := fun a c (ha : a ∈ S') (hc : c ∈ S') =>
+    map_mul_of_inverse hmul hf'S hinv hinv' ha hc
+  have hone' : f' 1 = 1 := by rw [← hone]; exact hinv 1 S.one_mem
+  have hunit : ∀ u ∈ grpCentralizer G x, IsUnit (f u) := fun u hu =>
+    ⟨⟨f u, f ↑u⁻¹, by rw [← hmul _ (hGS u hu) _ (hGS _ (inv_mem hu)), Units.mul_inv, hone],
+      by rw [← hmul _ (hGS _ (inv_mem hu)) _ (hGS u hu), Units.inv_mul, hone]⟩, rfl⟩
+  have hpow : ∀ {X : A}, X ∈ S → ∀ n : ℕ, f (X ^ n) = f X ^ n := fun hX n =>
+    map_pow (restrictAlgHom S f hone hmul) ⟨_, hX⟩ n
+  have haeval : ∀ {X : A}, X ∈ S → ∀ p : Polynomial F,
+      f (Polynomial.aeval X p) = Polynomial.aeval (f X) p := fun {X} hX p => by
+    rw [← Polynomial.aeval_subalgebra_coe p S ⟨X, hX⟩]
+    exact (Polynomial.aeval_algHom_apply (restrictAlgHom S f hone hmul) ⟨X, hX⟩ p).symm
+  have hinvj : ∀ {X Y : A}, X ∈ S → Y ∈ S → f X = f Y → X = Y := fun hX hY h => by
+    rw [← hinv _ hX, h, hinv _ hY]
+  { lin := f
+    bijOn := ⟨h𝔤, fun X hX Y hY h => hinvj (h𝔤S X hX) (h𝔤S Y hY) h, fun X' hX' =>
+      ⟨f' X', h𝔤' X' hX', hinv' X' (h𝔤S' X' hX')⟩⟩
+    map_commutator := fun X hX Y hY => by
+      rw [map_sub, hmul _ (h𝔤S X hX) _ (h𝔤S Y hY), hmul _ (h𝔤S Y hY) _ (h𝔤S X hX)]
+    map_bilin := hb
+    isNilpotent_iff := fun X hX => by
+      have hXS := h𝔤S X hX
+      constructor
+      · rintro ⟨n, hn⟩
+        refine ⟨n, ?_⟩
+        rw [← hpow hXS] at hn
+        rw [← hinv _ (S.pow_mem hXS n), hn, map_zero]
+      · rintro ⟨n, hn⟩
+        exact ⟨n, by rw [← hpow hXS, hn, map_zero]⟩
+    isRegularSS_iff := fun X hX => by
+      have hXS := h𝔤S X hX
+      have hfX : f X ∈ S' := hfS X hXS
+      refine and_congr ⟨fun h => ?_, fun h => ?_⟩ ?_
+      · refine isSS_of_aeval_eq_zero h.minpoly_squarefree ?_
+        rw [← hinv _ (Algebra.adjoin_le (Set.singleton_subset_iff.mpr hXS)
+          (Polynomial.aeval_mem_adjoin_singleton F X)), haeval hXS,
+          aeval_minpoly_mulLeft, map_zero]
+      · refine isSS_of_aeval_eq_zero h.minpoly_squarefree ?_
+        rw [← haeval hXS, aeval_minpoly_mulLeft, map_zero]
+      · rw [isLieAbelian_iff_forall_commute, isLieAbelian_iff_forall_commute]
+        constructor
+        · intro h Z₁ hZ₁ Z₂ hZ₂
+          obtain ⟨hZ₁x, hXZ₁⟩ := mem_lieCentralizer.mp hZ₁
+          obtain ⟨hZ₂x, hXZ₂⟩ := mem_lieCentralizer.mp hZ₂
+          have hS₁ := h𝔤S _ hZ₁x
+          have hS₂ := h𝔤S _ hZ₂x
+          have hc : ∀ {Z : A}, Z ∈ S → X * Z = Z * X → f X * f Z = f Z * f X := fun hZ hXZ => by
+            rw [← hmul _ hXS _ hZ, hXZ, hmul _ hZ _ hXS]
+          have := h _ (mem_lieCentralizer.mpr ⟨h𝔤 _ hZ₁x, hc hS₁ hXZ₁⟩)
+            _ (mem_lieCentralizer.mpr ⟨h𝔤 _ hZ₂x, hc hS₂ hXZ₂⟩)
+          rw [← hmul _ hS₁ _ hS₂, ← hmul _ hS₂ _ hS₁] at this
+          exact hinvj (S.mul_mem hS₁ hS₂) (S.mul_mem hS₂ hS₁) this
+        · intro h Z₁ hZ₁ Z₂ hZ₂
+          obtain ⟨hZ₁y, hXZ₁⟩ := mem_lieCentralizer.mp hZ₁
+          obtain ⟨hZ₂y, hXZ₂⟩ := mem_lieCentralizer.mp hZ₂
+          have hS₁ := h𝔤S' _ hZ₁y
+          have hS₂ := h𝔤S' _ hZ₂y
+          have hc : ∀ {Z : A'}, Z ∈ S' → f X * Z = Z * f X → X * f' Z = f' Z * X :=
+            fun hZ hXZ => by
+              rw [← hinv X hXS, ← hmul' _ _ hfX hZ, hXZ, hmul' _ _ hZ hfX]
+          have := h _ (mem_lieCentralizer.mpr ⟨h𝔤' _ hZ₁y, hc hS₁ hXZ₁⟩)
+            _ (mem_lieCentralizer.mpr ⟨h𝔤' _ hZ₂y, hc hS₂ hXZ₂⟩)
+          rw [← hmul' _ _ hS₁ hS₂, ← hmul' _ _ hS₂ hS₁] at this
+          rw [← hinv' _ (S'.mul_mem hS₁ hS₂), this, hinv' _ (S'.mul_mem hS₂ hS₁)]
+    map_orbitMap := fun X hX Y hY => by
+      have hXS := h𝔤S X hX
+      have hexp : ∀ {Z : A}, Z ∈ S → f (expA F Z) = expA F (f Z) := fun hZ =>
+        map_expA_of_leftInverse f f' (hpow hZ)
+          (fun n => hinv _ (S.pow_mem hZ n))
+      have hYS := h𝔤S Y hY
+      have hnYS : -Y ∈ S := S.neg_mem hYS
+      rw [orbitMap, orbitMap, hmul _ (S.mul_mem (expA_mem_subalgebra S hYS) hXS) _
+        (expA_mem_subalgebra S hnYS), hmul _ (expA_mem_subalgebra S hYS) _ hXS, hexp hYS,
+        hexp hnYS, map_neg]
+    grp := unitsMap f
+    grp_mapsTo := fun u hu => hG u hu _ (coe_unitsMap (hunit u hu))
+    grp_surjOn := fun v hv => by
+      have hvS := hGS' v hv
+      have hvS' := hGS' _ (inv_mem hv)
+      let u : Aˣ := ⟨f' v, f' ↑v⁻¹, by rw [← hmul' _ _ hvS hvS', Units.mul_inv, hone'],
+        by rw [← hmul' _ _ hvS' hvS, Units.inv_mul, hone']⟩
+      have hu : u ∈ grpCentralizer G x := hG' v hv u rfl
+      refine ⟨u, hu, Units.ext ?_⟩
+      rw [coe_unitsMap (hunit u hu)]
+      exact hinv' _ hvS
+    map_conj := fun u hu X hX => by
+      have huS := hGS u hu
+      have huS' := hGS _ (inv_mem hu)
+      have hXS := h𝔤S X hX
+      have h1 := coe_unitsMap (hunit u hu)
+      have h2 : ((unitsMap f u)⁻¹ : A'ˣ) = f ↑u⁻¹ := by
+        refine Units.inv_eq_of_mul_eq_one_right ?_
+        rw [h1, ← hmul _ huS _ huS', Units.mul_inv, hone]
+      rw [h1, h2, hmul _ (S.mul_mem huS hXS) _ huS', hmul _ huS _ hXS] }
+
+end CentralizerIso
+
+end OfSubalgebra
+
+
 end GSpinGGP
