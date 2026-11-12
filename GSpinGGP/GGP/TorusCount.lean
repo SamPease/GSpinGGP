@@ -12,9 +12,9 @@ Ingredients of the torus-class count (`torusClass_count`, Thesis (6.7.2)–(6.7.
 
 * `commute_torusOf_of_commute_of_movedPartAbelian`, `commute_torusOf_of_commute`: for semisimple
   `x` with abelian moved Lie centralizer (e.g. `x ∈ Γ(G,H)`), an element of `GSpin(W)(F)`
-  commuting with `x` commutes with all of `T_x(F)` (by base change, from `Steinberg.commute_of_fixes_eigenspace_one`).
-  Consequently (not formalized here) `N(T_x)` acts freely, through `W(T_x) = N(T_x)/Z(T_x)`, on the
-  elements `t` with `T_t = T_x`.
+  commuting with `x` commutes with all of `T_x(F)` (by base change, from
+  `Steinberg.commute_of_fixes_eigenspace_one`).  Consequently (not formalized here) `N(T_x)` acts
+  freely, through `W(T_x) = N(T_x)/Z(T_x)`, on the elements `t` with `T_t = T_x`.
 * `isClosed_torusOf`, `sigmaCompactSpace_torusOf`: `T_x(F)` is a closed, σ-compact subgroup.
 * `finite_conj_torusOf`: only finitely many `t ∈ T_x(F)` are `GSpin(W)(F̄)`-conjugate to `x`.
 * `finite_weylQuot`, `weylCardOf_pos`: `W(T_x)` is finite, so `|W(T_x)| ≥ 1`.
@@ -100,20 +100,10 @@ theorem isClosed_torusOf (x : ↥(GSpin d.QW)) : IsClosed (d.torusOf x : Set ↥
       isClosed_eq (continuous_specP_apply continuous_id w) continuous_const
   exact h1.inter h2
 
-/-- `T_x(F)` is σ-compact: a closed subgroup of `GSpin(W)(F)`, which is locally compact (closed in
-`C(W)^×`, `isClosed_GSpin`) and second countable (`C(W) ≅ F^n`, `F` proper). -/
+/-- `T_x(F)` is σ-compact: a closed subgroup of `GSpin(W)(F)`, which is a closed subgroup of
+`C(W)^×` (`isClosed_GSpin`, `subgroup_sigmaCompactSpace_of_isClosed`). -/
 theorem sigmaCompactSpace_torusOf (x : ↥(GSpin d.QW)) : SigmaCompactSpace ↥(d.torusOf x) := by
-  have : LocallyCompactSpace ↥(GSpin d.QW) :=
-    subgroup_locallyCompactSpace_of_isClosed F _ _ (isClosed_GSpin d.QW)
-  have : ProperSpace F := .of_nontriviallyNormedField_of_weaklyLocallyCompactSpace F
-  have : SecondCountableTopology (CliffordAlgebra d.QW) :=
-    (toPiCLE F (CliffordAlgebra d.QW)).toHomeomorph.secondCountableTopology
-  have : SecondCountableTopology (CliffordAlgebra d.QW)ᵐᵒᵖ :=
-    (MulOpposite.opHomeomorph (M := CliffordAlgebra d.QW)).symm.secondCountableTopology
-  have : SecondCountableTopology (CliffordAlgebra d.QW)ˣ :=
-    Units.isEmbedding_embedProduct.secondCountableTopology
-  have : SecondCountableTopology ↥(GSpin d.QW) :=
-    Topology.IsEmbedding.subtypeVal.secondCountableTopology
+  have := subgroup_sigmaCompactSpace_of_isClosed F _ _ (isClosed_GSpin d.QW)
   exact (isClosed_torusOf x).sigmaCompactSpace
 
 /-- **Centralizers of elements of `Γ(G,H)` centralize their torus**: for `x ∈ Γ(G,H)`, an element

@@ -15,6 +15,8 @@ For `x ∈ Γ(G,H)` (`GGPData.IsGammaElt`) we look for `X ∈ so(W)` with `X ∈
 `t ↦ (P(t), P(t) ⊕ 1)`.
 
 * `specPU`, `toGbarU_comp_diag`: `t ↦ (P(t), P(t) ⊕ 1)` is `diagU ∘ P`.
+* `torusQuotMap`: the induced continuous injective map `T(F)/A_{G,H}(F) → Ḡ(F)`, with range the
+  image of `T(F)` (`range_torusQuotMap`, `torusQuotMap_injective`).
 * `luo_isGammaElt_of_regular`: if `Z ∈ gspin(W)` commutes with `x`, `ker (ad Z) = W'_x`, and every
   endomorphism of `W` commuting with `ad Z` and fixing `W'_x` commutes with `P(x)`, then
   `X = ad Z ∈ Γ^Lie(Ḡ, H̄)` and `H''_X` is the image of `T_x` (`torusW_adV_eq_map`, through
@@ -56,6 +58,73 @@ theorem toGbarU_comp_diag : d.toGbarU.comp d.diag = d.luoOf.diagU.comp d.specPU 
   show (specP d.QV (d.incl t) : d.V →ₗ[F] d.V) = _
   rw [d.specP_incl_eq_prodMap]
   rfl
+
+/-- `t ↦ (P(t), P(t) ⊕ 1)` is continuous on `GSpin(W)(F)`. -/
+theorem continuous_toGbarU_comp_diag : Continuous (d.toGbarU.comp d.diag) := by
+  have hdiag : Continuous d.diag :=
+    d.continuous_pair.comp (continuous_id.prodMk d.continuous_incl)
+  exact continuous_subtype_val.comp (d.continuous_toGbar.comp hdiag)
+
+/-- The kernel of `t ↦ (P(t), P(t) ⊕ 1)` is that of `P`, i.e. the scalars `F^×`
+(`ker_specP`). -/
+theorem toGbarU_comp_diag_eq_one_iff (t : ↥(GSpin d.QW)) :
+    d.toGbarU.comp d.diag t = 1 ↔ specP d.QW t = 1 := by
+  rw [toGbarU_comp_diag, MonoidHom.comp_apply]
+  constructor
+  · intro h
+    have h' := congrArg d.luoOf.unitFst h
+    rw [LuoDatum.unitFst_diagU, map_one] at h'
+    have h'' := congrArg Units.val h'
+    rw [coe_specPU] at h''
+    exact LinearEquiv.toLinearMap_injective h''
+  · intro h
+    have h2 : d.specPU t = 1 := by
+      change (LinearMap.GeneralLinearGroup.generalLinearEquiv F d.luoOf.W).symm
+        (specP d.QW t) = 1
+      rw [h]
+      exact map_one _
+    rw [h2, map_one]
+
+/-- The scalars `A_{G,H}(F)` of `T(F)` lie in the kernel of `t ↦ (P(t), P(t) ⊕ 1)`. -/
+theorem scalarsIn_le_ker_toGbarU_comp_diag (T : Subgroup ↥(GSpin d.QW)) :
+    d.scalarsIn T ≤ ((d.toGbarU.comp d.diag).comp T.subtype).ker := by
+  intro n hn
+  obtain ⟨c, hc⟩ := Subgroup.mem_subgroupOf.mp hn
+  rw [MonoidHom.mem_ker, MonoidHom.comp_apply, Subgroup.coe_subtype,
+    toGbarU_comp_diag_eq_one_iff, ← hc, ← MonoidHom.mem_ker, ker_specP d.nondeg]
+  exact ⟨c, rfl⟩
+
+/-- `T(F)/A_{G,H}(F) → Ḡ(F)`, induced by `t ↦ (P(t), P(t) ⊕ 1)`. -/
+def torusQuotMap (T : Subgroup ↥(GSpin d.QW)) : d.TorusQuot T →* d.luoOf.Ambˣ :=
+  QuotientGroup.lift (d.scalarsIn T) ((d.toGbarU.comp d.diag).comp T.subtype)
+    (d.scalarsIn_le_ker_toGbarU_comp_diag T)
+
+theorem continuous_torusQuotMap (T : Subgroup ↥(GSpin d.QW)) : Continuous (d.torusQuotMap T) :=
+  (QuotientGroup.isQuotientMap_mk (d.scalarsIn T)).continuous_iff.mpr
+    (d.continuous_toGbarU_comp_diag.comp continuous_subtype_val)
+
+/-- The range of `torusQuotMap` is the image of `T(F)`. -/
+theorem range_torusQuotMap (T : Subgroup ↥(GSpin d.QW)) :
+    (d.torusQuotMap T).range = T.map (d.toGbarU.comp d.diag) := by
+  ext a
+  constructor
+  · rintro ⟨y, rfl⟩
+    obtain ⟨t, rfl⟩ := QuotientGroup.mk_surjective y
+    exact ⟨t, t.2, rfl⟩
+  · rintro ⟨t, ht, rfl⟩
+    exact ⟨QuotientGroup.mk ⟨t, ht⟩, rfl⟩
+
+/-- `torusQuotMap` is injective: the kernel of `t ↦ (P(t), P(t) ⊕ 1)` is `F^×`. -/
+theorem torusQuotMap_injective (T : Subgroup ↥(GSpin d.QW)) :
+    Function.Injective (d.torusQuotMap T) := by
+  rw [injective_iff_map_eq_one]
+  intro y hy
+  induction y using QuotientGroup.induction_on with | H t => ?_
+  have h1 : d.toGbarU.comp d.diag (t : ↥(GSpin d.QW)) = 1 := hy
+  rw [toGbarU_comp_diag_eq_one_iff, ← MonoidHom.mem_ker, ker_specP d.nondeg] at h1
+  obtain ⟨c, hc⟩ := h1
+  rw [QuotientGroup.eq_one_iff]
+  exact Subgroup.mem_subgroupOf.mpr ⟨c, hc⟩
 
 section Regular
 
@@ -122,45 +191,13 @@ theorem torusW_adV_eq_map (hx : d.IsGammaElt x) (hZ : Z ∈ gspin d.QW)
     · rw [coe_specPU]
       exact ht.2 w (by rw [← hker]; exact hw)
 
-/-- The image of `T_x(F)` under `t ↦ (P(t), P(t) ⊕ 1)` is compact for `x ∈ Γ(G,H)`: the map is
-continuous and factors through the compact `T_x(F)/A_{G,H}(F)` (scalars lie in the kernel of
-`P`). -/
+/-- The image of `T_x(F)` under `t ↦ (P(t), P(t) ⊕ 1)` is compact for `x ∈ Γ(G,H)`: it is the
+range of the continuous `torusQuotMap` on the compact `T_x(F)/A_{G,H}(F)`. -/
 theorem isCompact_map_torusOf (hx : d.IsGammaElt x) :
     IsCompact ((d.torusOf x).map (d.toGbarU.comp d.diag) : Set d.luoOf.Ambˣ) := by
   have := hx.2.2
-  set T := d.torusOf x
-  set ψ := d.toGbarU.comp d.diag
-  have hψ : Continuous ψ := by
-    have hdiag : Continuous d.diag :=
-      d.continuous_pair.comp (continuous_id.prodMk d.continuous_incl)
-    exact continuous_subtype_val.comp (d.continuous_toGbar.comp hdiag)
-  have hker : d.scalarsIn T ≤ (ψ.comp T.subtype).ker := by
-    intro n hn
-    obtain ⟨c, hc⟩ := Subgroup.mem_subgroupOf.mp hn
-    have h1 : specP d.QW (scalarGSpin d.QW c) = 1 := by
-      rw [← MonoidHom.mem_ker, ker_specP d.nondeg]; exact ⟨c, rfl⟩
-    rw [MonoidHom.mem_ker, MonoidHom.comp_apply, Subgroup.coe_subtype, ← hc,
-      show ψ = d.luoOf.diagU.comp d.specPU from d.toGbarU_comp_diag, MonoidHom.comp_apply]
-    have h2 : d.specPU (scalarGSpin d.QW c) = 1 := by
-      change (LinearMap.GeneralLinearGroup.generalLinearEquiv F d.luoOf.W).symm
-        (specP d.QW (scalarGSpin d.QW c)) = 1
-      rw [h1]
-      exact map_one _
-    rw [h2, map_one]
-  let q := QuotientGroup.lift (d.scalarsIn T) (ψ.comp T.subtype) hker
-  have hq : Continuous q :=
-    (QuotientGroup.isQuotientMap_mk (d.scalarsIn T)).continuous_iff.mpr
-      (hψ.comp continuous_subtype_val)
-  have hrange : ((T.map ψ : Subgroup d.luoOf.Ambˣ) : Set d.luoOf.Ambˣ) = Set.range q := by
-    ext a
-    constructor
-    · rintro ⟨t, ht, rfl⟩
-      exact ⟨QuotientGroup.mk ⟨t, ht⟩, rfl⟩
-    · rintro ⟨y, rfl⟩
-      obtain ⟨t, rfl⟩ := QuotientGroup.mk_surjective y
-      exact ⟨t, t.2, rfl⟩
-  rw [hrange]
-  exact isCompact_range hq
+  rw [← d.range_torusQuotMap, MonoidHom.coe_range]
+  exact isCompact_range (d.continuous_torusQuotMap _)
 
 /-- **A regular `ad Z` gives a point of Luo's `Γ^Lie(Ḡ, H̄)` with the torus of `x`**: under the
 hypotheses of `torusW_adV_eq_map`, `X = ad Z` is skew, semisimple, `H''_X` is commutative with
@@ -259,7 +296,7 @@ theorem torusW_adV_eq_map_of_commute_iff (hZ : Z ∈ gspin d.QW)
 
 /-- **The moved Lie centralizer of `x` is abelian** when `x` has the commutant of `Z ∈ gspin(W)` and
 `H''_{ad Z}(F)` is commutative.  For `Y₁, Y₂` in the moved part, `gᵢ = e^{cᵢYᵢ} ∈ T_x(F)` have the
-commutants of `Yᵢ` and `tr L_{gᵢ} ≠ 0` (`exists_gspin_commute_iff_trace`); `P(g₁), P(g₂)` lie in
+commutants of `Yᵢ` and `tr L_{gᵢ} ≠ 0` (`exists_mem_torusOf_commute_iff`); `P(g₁), P(g₂)` lie in
 `H''_{ad Z}(F)` (`torusW_adV_eq_map_of_commute_iff`), so commute, hence so do `g₁, g₂`
 (`commute_of_commute_specP_of_trace_ne_zero`: the scalar `g₁g₂g₁⁻¹g₂⁻¹` is `1` by the trace), and
 then `Y₁, Y₂`. -/
@@ -270,22 +307,8 @@ theorem movedPartAbelian_of_commute_iff (hZ : Z ∈ gspin d.QW)
     MovedPartAbelian d.QW x := by
   intro Y₁ hY₁ Y₂ hY₂ hf₁ hf₂
   rw [mem_lieCentralizer] at hY₁ hY₂
-  have key : ∀ Y ∈ gspin d.QW,
-      ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) * Y =
-        Y * ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) →
-      (∀ v ∈ fixedSub x, ⁅Y, CliffordAlgebra.ι d.QW v⁆ = 0) →
-      ∃ g ∈ d.torusOf x, (∀ W : CliffordAlgebra d.QW,
-        Commute W ((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) ↔ Commute W Y) ∧
-        LinearMap.trace F _ (LinearMap.mulLeft F
-          ((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW)) ≠ 0 := by
-    intro Y hY hYx hYf
-    obtain ⟨g, hg, htr, -⟩ := exists_gspin_commute_iff_trace d.QW hY
-    refine ⟨g, mem_torusOf_of_commute d ((hg _).mpr hYx) fun w hw => (hg _).mpr ?_, hg, htr⟩
-    have hw0 := hYf w hw
-    rw [Ring.lie_def, sub_eq_zero] at hw0
-    exact hw0.symm
-  obtain ⟨g₁, hg₁T, hg₁, -⟩ := key Y₁ hY₁.1 hY₁.2 hf₁
-  obtain ⟨g₂, hg₂T, hg₂, htr₂⟩ := key Y₂ hY₂.1 hY₂.2 hf₂
+  obtain ⟨g₁, hg₁T, hg₁, -⟩ := exists_mem_torusOf_commute_iff d hY₁.1 hY₁.2 hf₁
+  obtain ⟨g₂, hg₂T, hg₂, htr₂⟩ := exists_mem_torusOf_commute_iff d hY₂.1 hY₂.2 hf₂
   have hS : ∀ g ∈ d.torusOf x, d.luoOf.diagU (d.specPU g) ∈ d.luoOf.torusOf (adV d.QW Z) :=
     fun g hg => Subgroup.mem_map_of_mem _ (by
       rw [d.torusW_adV_eq_map_of_commute_iff hZ hxZ]; exact Subgroup.mem_map_of_mem _ hg)
@@ -311,8 +334,7 @@ theorem compactSpace_torusQuot_of_isCompact (x : ↥(GSpin d.QW))
     (hc : IsCompact ((d.torusOf x).map (d.toGbarU.comp d.diag) : Set d.luoOf.Ambˣ)) :
     CompactSpace (d.TorusQuot (d.torusOf x)) := by
   set T := d.torusOf x
-  set ψ := d.toGbarU.comp d.diag
-  set S := T.map ψ
+  set S := T.map (d.toGbarU.comp d.diag)
   have : CompactSpace ↥S := isCompact_iff_compactSpace.mp hc
   have : T2Space ↥S := subgroup_t2Space F d.luoOf.Amb S
   have : SigmaCompactSpace ↥T := sigmaCompactSpace_torusOf x
@@ -320,53 +342,18 @@ theorem compactSpace_torusQuot_of_isCompact (x : ↥(GSpin d.QW))
     isSigmaCompact_univ_iff.mp (by
       rw [← Set.range_eq_univ.mpr (QuotientGroup.mk_surjective (s := d.scalarsIn T))]
       exact isSigmaCompact_range QuotientGroup.continuous_mk)
-  have hψ : Continuous ψ := by
-    have hdiag : Continuous d.diag :=
-      d.continuous_pair.comp (continuous_id.prodMk d.continuous_incl)
-    exact continuous_subtype_val.comp (d.continuous_toGbar.comp hdiag)
-  let ψT : ↥T →* ↥S := (ψ.comp T.subtype).codRestrict S (fun t => ⟨t, t.2, rfl⟩)
-  have hψT : Continuous ψT :=
-    continuous_induced_rng.mpr (hψ.comp continuous_subtype_val)
-  have hP : ∀ t : ↥(GSpin d.QW), ψ t = 1 ↔ specP d.QW t = 1 := by
-    intro t
-    rw [show ψ = d.luoOf.diagU.comp d.specPU from d.toGbarU_comp_diag, MonoidHom.comp_apply]
-    constructor
-    · intro h
-      have h' := congrArg d.luoOf.unitFst h
-      rw [LuoDatum.unitFst_diagU, map_one] at h'
-      have h'' := congrArg Units.val h'
-      rw [coe_specPU] at h''
-      exact LinearEquiv.toLinearMap_injective h''
-    · intro h
-      have h2 : d.specPU t = 1 := by
-        change (LinearMap.GeneralLinearGroup.generalLinearEquiv F d.luoOf.W).symm
-          (specP d.QW t) = 1
-        rw [h]
-        exact map_one _
-      rw [h2, map_one]
-  have hker : d.scalarsIn T ≤ ψT.ker := by
-    intro n hn
-    obtain ⟨c, hc⟩ := Subgroup.mem_subgroupOf.mp hn
-    rw [MonoidHom.mem_ker]
-    apply Subtype.ext
-    change ψ (n : ↥(GSpin d.QW)) = 1
-    rw [hP, ← hc, ← MonoidHom.mem_ker, ker_specP d.nondeg]
-    exact ⟨c, rfl⟩
-  let q := QuotientGroup.lift (d.scalarsIn T) ψT hker
-  have hq : Continuous q :=
-    (QuotientGroup.isQuotientMap_mk (d.scalarsIn T)).continuous_iff.mpr hψT
+  have hR : (d.torusQuotMap T).range = S := d.range_torusQuotMap T
+  have hS : ∀ y, d.torusQuotMap T y ∈ S := fun y => by
+    rw [← hR]; exact ⟨y, rfl⟩
+  let q : d.TorusQuot T →* ↥S := (d.torusQuotMap T).codRestrict S hS
+  have hq : Continuous q := continuous_induced_rng.mpr (d.continuous_torusQuotMap T)
   have hsurj : Function.Surjective q := by
-    rintro ⟨_, t, ht, rfl⟩
-    exact ⟨QuotientGroup.mk ⟨t, ht⟩, rfl⟩
-  have hinj : Function.Injective q := by
-    rw [injective_iff_map_eq_one]
-    intro y hy
-    induction y using QuotientGroup.induction_on with | H t => ?_
-    have h1 : ψ (t : ↥(GSpin d.QW)) = 1 := congrArg Subtype.val hy
-    rw [hP, ← MonoidHom.mem_ker, ker_specP d.nondeg] at h1
-    obtain ⟨c, hc⟩ := h1
-    rw [QuotientGroup.eq_one_iff]
-    exact Subgroup.mem_subgroupOf.mpr ⟨c, hc⟩
+    rintro ⟨a, ha⟩
+    rw [← hR] at ha
+    obtain ⟨y, rfl⟩ := ha
+    exact ⟨y, rfl⟩
+  have hinj : Function.Injective q := fun y z h =>
+    d.torusQuotMap_injective T (congrArg Subtype.val h)
   have hopen : IsOpenMap q := q.isOpenMap_of_sigmaCompact hsurj hq
   let h : d.TorusQuot T ≃ₜ ↥S :=
     (Equiv.ofBijective q ⟨hinj, hsurj⟩).toHomeomorphOfContinuousOpen hq hopen
@@ -418,7 +405,7 @@ theorem exists_isGammaElt_torusOf_eq_of_luo {X : Module.End F d.luoOf.W}
   subst hadV
   have hZss : IsSS F Z :=
     isSemisimple_mulLeft_of_isSemisimple_adV_baseChange d.nondeg hZ
-      (isSemisimple_baseChange (isSemisimple_of_isSS hX.2.1))
+      (isSemisimple_baseChange (isSS_iff_isSemisimple.mp hX.2.1))
   obtain ⟨x, hxZ, -, hxss⟩ := exists_gspin_commute_iff_trace d.QW hZ
   exact ⟨x, d.isGammaElt_of_luo_of_commute_iff hZ hX hxZ (hxss hZss)⟩
 

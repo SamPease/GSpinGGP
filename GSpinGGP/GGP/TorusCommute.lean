@@ -41,16 +41,6 @@ theorem isSemisimple_baseChange {f : Module.End F V} [Module.Finite F V]
     (hf : f.IsSemisimple) : Module.End.IsSemisimple (f.baseChange (AlgebraicClosure F)) :=
   IsomCent.isSemisimple_baseChange_algebraicClosure hf
 
-/-- A semisimple element of the algebra `End V` (`IsSS`: `L_f` semisimple on `End V`) is a
-semisimple endomorphism: `L_f` and `f` have the same minimal polynomial (`Algebra.lmul` is
-injective).  Converse of `isSS_of_isSemisimple`. -/
-theorem isSemisimple_of_isSS {f : Module.End F V} (hf : IsSS F f) : f.IsSemisimple := by
-  have h : minpoly F (Algebra.lmul F (Module.End F V) f) = minpoly F f :=
-    minpoly.algHom_eq _ (Algebra.lmul_injective (R := F)) f
-  refine Module.End.isSemisimple_of_squarefree_aeval_eq_zero ?_ (minpoly.aeval F f)
-  rw [← h]
-  exact Module.End.IsSemisimple.minpoly_squarefree hf
-
 end Semisimple
 
 section Lift

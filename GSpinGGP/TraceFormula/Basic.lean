@@ -72,22 +72,11 @@ instance t2Space_G (d : GGPData F) : T2Space ↥d.G :=
 instance locallyCompactSpace_G (d : GGPData F) : LocallyCompactSpace ↥d.G :=
   subgroup_locallyCompactSpace_of_isClosed F d.ambient d.G d.isClosed_G
 
-/-- The ambient algebra `C(W) × C(V)` is second countable (`F` is proper, hence second
-countable, and `C(W) × C(V) ≅ F^n` as topological vector spaces, LocalGroups `toPiCLE`). -/
-theorem secondCountableTopology_ambient (d : GGPData F) : SecondCountableTopology d.ambient := by
-  have : ProperSpace F := .of_nontriviallyNormedField_of_weaklyLocallyCompactSpace F
-  exact (toPiCLE F d.ambient).toHomeomorph.secondCountableTopology
-
-/-- `G(F)` is second countable (a subspace of `(C(W) × C(V))ˣ ⊆ (C(W) × C(V)) × (C(W) × C(V))ᵐᵒᵖ`).
-Hence also σ-compact (`sigmaCompactSpace_of_locallyCompact_secondCountable`), and so are its
-closed subgroups and quotients. -/
-instance secondCountableTopology_G (d : GGPData F) : SecondCountableTopology ↥d.G := by
-  have := secondCountableTopology_ambient d
-  have : SecondCountableTopology d.ambientᵐᵒᵖ :=
-    (MulOpposite.opHomeomorph (M := d.ambient)).symm.secondCountableTopology
-  have : SecondCountableTopology d.ambientˣ :=
-    Units.isEmbedding_embedProduct.secondCountableTopology
-  exact Topology.IsEmbedding.subtypeVal.secondCountableTopology
+/-- `G(F)` is second countable (`subgroup_secondCountableTopology`). Hence also σ-compact
+(`sigmaCompactSpace_of_locallyCompact_secondCountable`), and so are its closed subgroups and
+quotients. -/
+instance secondCountableTopology_G (d : GGPData F) : SecondCountableTopology ↥d.G :=
+  subgroup_secondCountableTopology F d.ambient d.G
 
 end TraceFormulaBasic
 
