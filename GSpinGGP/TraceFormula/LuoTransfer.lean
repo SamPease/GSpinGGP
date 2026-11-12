@@ -15,7 +15,7 @@ The literature axiom `luo_lie_geomExpansion_SO` is about the special orthogonal 
 `(Ḡ, H̄, ξ)` of an admissible pair, with objects defined on the quadratic spaces
 (`TraceFormula/SOLie.lean`).  This file identifies them with the objects on
 `𝔤⁰ = so(W) ⊕ so(V) ⊆ C(W) × C(V)` of the general spin triple (`TraceFormula/LieAlgebra.lean`)
-when neither `W` nor `V` is a hyperbolic plane, and deduces
+when neither `W` nor `V` is a hyperbolic plane; `TraceFormula/LuoClass.lean` deduces
 `distribJLie_eq_mGeomLie_of_luo`: `J^Lie(f) = m^Lie_geom(θ_f)` for `f ∈ S_scusp(𝔤⁰(F))` (Thesis
 Thm 12.2.2 on `𝔤⁰`).
 
@@ -33,8 +33,9 @@ The identification is own work, stated step by step (most steps are `sorry` here
 * `isThetaFLie_eqOn_regular`: `θ_f` is unique on `𝔤⁰_reg`;
 * (L6, L7) `cTheta_toSO`: the germs `c_{θ,O_X}(X)` agree (trace form vs `bilin`, `Z_G(X)` vs
   `Ḡ_X`, the orbit choice `orbitChoiceLie` vs Luo's and Waldspurger's `O_{±ν₀}`);
-* (L8) `gammaClass_equiv`, `torusIntegralLie_toSO`: `Γ^Lie` (tori, `|W(H,T)|`, `ν(T) dX`,
-  `D^G`, `Δ`, `𝔱_♮`) agree; `mGeomLieS_toSO` is proved from them;
+* (L8) `gammaClass_equiv` (proved, in `TraceFormula/LuoClass.lean`), `torusIntegralLie_toSO`:
+  `Γ^Lie` (tori, `|W(H,T)|`, `ν(T) dX`, `D^G`, `Δ`, `𝔱_♮`) agree; `mGeomLieS_toSO` is proved from
+  them;
 * (L9) `mGeomLie_congr_regularSet` (proved): `m^Lie_geom(θ)` depends only on `θ|_{𝔤⁰_reg}`.
 -/
 
@@ -148,14 +149,8 @@ theorem toSO_bijective : Function.Bijective d.toSOFun := by
   -- scalar is `0`.
   have hinj : ∀ {U : Type} [AddCommGroup U] [Module F U] [Module.Finite F U]
       {Q : QuadraticForm F U}, IsNondeg Q → ∀ {X : CliffordAlgebra Q}, X ∈ soSub Q →
-      adV Q X = 0 → X = 0 := by
-    intro U _ _ _ Q hQ X hX h0
-    obtain ⟨r, rfl⟩ := eq_algebraMap_of_adV_eq_zero hQ hX.1 h0
-    have h2 := (mem_soSub.mp hX).2
-    rw [Algebra.algebraMap_eq_smul_one, cliffTrace_smul, cliffTrace_one] at h2
-    have hr : r = 0 :=
-      (mul_eq_zero.mp h2).resolve_right (cast_finrank_cliffordAlgebra_ne_zero Q)
-    rw [hr, map_zero]
+      adV Q X = 0 → X = 0 :=
+    fun hQ _ hX h0 => eq_zero_of_mem_soSub_of_adV_eq_zero hQ hX h0
   -- `adV` maps the traceless part onto `so`: lift to `gspin` and subtract the trace part.
   have hsurj : ∀ {U : Type} [AddCommGroup U] [Module F U] [Module.Finite F U]
       {Q : QuadraticForm F U}, IsNondeg Q → ∀ M : Module.End F U,
@@ -898,18 +893,6 @@ theorem cTheta_toSO (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) {θ : �
 def IsNaturalTorusCorr (T : Subgroup ↥(GSpin d.QW)) (T' : Subgroup d.luoOf.Ambˣ) : Prop :=
   ∃ h ∈ d.luoOf.HbarU, T' = (T.map (d.toGbarU.comp d.diag)).map (MulAut.conj h).toMonoidHom
 
-/-- **(L8) The index sets of `Γ^Lie` agree**: `P` maps the tori `T_x` of `GammaClass d` onto the
-tori `H''_X` of Luo's `𝒯` (`T_x(F)/A_{G,H}(F) ≅ H''_X(F)`), compatibly with conjugacy (by
-`GSpin(W)(F)`, resp. `H̄(F)`; `N ⊆ H̄` does not normalize a torus of `SO(W)` nontrivially), and
-`|N_{GSpin(W)}(T)/Z_{GSpin(W)}(T)| = |N_{H̄}(T)/Z_{H̄}(T)|`: there is a bijection of classes
-matching each torus with the conjugacy class of its image (`IsNaturalTorusCorr`).
-Not proved here. -/
-theorem gammaClass_equiv (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) :
-    ∃ e : GammaClass d ≃ d.luoOf.GammaClass,
-      (∀ c, d.IsNaturalTorusCorr (Quot.out c).1 (Quot.out (e c)).1) ∧
-      ∀ c, weylCard d c = d.luoOf.weylCardOf (Quot.out (e c)).1 := by
-  sorry
-
 /-- **(L8) The torus integrals agree**, for a bijection of classes matching each torus with its
 image (`IsNaturalTorusCorr`, as given by `gammaClass_equiv`) and the measures
 `ν(T) dX`: on each torus, `ad` maps `𝔱⁰ = lieTorus T` onto Luo's `𝔱` (embedded diagonally), carries
@@ -1037,32 +1020,6 @@ theorem mGeomLieS_toSO (e : GammaClass d ≃ d.luoOf.GammaClass)
   rw [← e.tsum_eq]
   refine tsum_congr fun c => ?_
   rw [he c, hT c s hs]
-
-/-! ## `J^Lie = m^Lie_geom(θ_f)` on `𝔤⁰` -/
-
-/-- **Thesis Thm 12.2.2 on `𝔤⁰`: `J^Lie(f) = m^Lie_geom(θ_f)`** for `f ∈ S_scusp(𝔤⁰(F))`, when
-neither `W` nor `V` is a hyperbolic plane: Luo Thm 7.3.3 for the special orthogonal triple
-(`luo_lie_geomExpansion_SO`), transported by (L1)–(L9). -/
-theorem distribJLie_eq_mGeomLie_of_luo (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
-    {f : ↥d.lieZero → ℂ} (hf : d.IsLieScusp f) :
-    d.distribJLie ψ f = d.mGeomLie ψ (d.thetaFLie ψ f) := by
-  have := d.muG_isHaarMeasure hW hV
-  obtain ⟨μH, μ𝔥, m, hμH, h𝔥, hm, hJ⟩ :=
-    d.exists_JLie_transfer ψ hW hV
-  obtain ⟨e, hen, he⟩ := d.gammaClass_equiv hW hV
-  obtain ⟨μT, hμT, hT⟩ := d.torusIntegralLie_toSO ψ hW hV e hen
-  obtain ⟨θ, ⟨h1, h2, h3⟩, hqc, hlim⟩ :=
-    luo_lie_geomExpansion_SO d.luoOf hW hV ψ d.muG μH μ𝔥 h𝔥 m hm μT hμT
-      (f ∘ d.toSO.symm) (d.isScusp_toSO hf)
-  have hθ : d.IsThetaFLie ψ f (θ ∘ d.toSO) := d.isThetaFLie_of_SO ψ hW hV hf h1 h2 h3
-  have hreg := d.isThetaFLie_eqOn_regular ψ
-    (d.isThetaFLie_thetaFLie_of_exists ψ ⟨_, hθ⟩) hθ
-  rw [d.mGeomLie_congr_regularSet ψ hreg, hJ f hf]
-  have hc := fun T X hX => d.cTheta_toSO ψ hW hV hqc T X hX
-  have hev : d.luoOf.mGeomLieS ψ μT θ =ᶠ[𝓝[>] (0 : ℝ)] d.mGeomLieS ψ (θ ∘ d.toSO) := by
-    filter_upwards [self_mem_nhdsWithin] with s hs
-    exact (d.mGeomLieS_toSO ψ e he μT (hT θ hqc hc) hs).symm
-  exact ((hlim.congr' hev).limUnder_eq).symm
 
 end GGPData
 

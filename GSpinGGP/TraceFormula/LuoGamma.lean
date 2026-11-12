@@ -67,6 +67,19 @@ theorem exists_specP_eq_of_mem_SOu {s : (Module.End F d.luoOf.W)ˣ}
   obtain ⟨t, ht⟩ := hs
   exact ⟨t, by rw [ht]; rfl⟩
 
+/-- Every element of `SO(W)` is some `P(t)`, as units of `End W`. -/
+theorem exists_specPU_eq_of_mem_SOu {s : (Module.End F d.luoOf.W)ˣ}
+    (hs : s ∈ LuoDatum.SOu d.luoOf.QW) : ∃ t : ↥(GSpin d.QW), d.specPU t = s := by
+  obtain ⟨t, ht⟩ := d.exists_specP_eq_of_mem_SOu hs
+  exact ⟨t, Units.ext (by rw [coe_specPU, ht])⟩
+
+/-- The kernel of `P` (as units of `End W`) is the scalars `F^×` (`ker_specP`). -/
+theorem ker_specPU : d.specPU.ker = (scalarGSpin d.QW).range := by
+  rw [← ker_specP d.nondeg]
+  ext g
+  rw [MonoidHom.mem_ker, MonoidHom.mem_ker]
+  exact (LinearMap.GeneralLinearGroup.generalLinearEquiv F d.luoOf.W).symm.map_eq_one_iff
+
 /-- `t ↦ (P(t), P(t) ⊕ 1)` is `diagU ∘ P`. -/
 theorem toGbarU_comp_diag : d.toGbarU.comp d.diag = d.luoOf.diagU.comp d.specPU := by
   ext t : 2
@@ -74,6 +87,33 @@ theorem toGbarU_comp_diag : d.toGbarU.comp d.diag = d.luoOf.diagU.comp d.specPU 
   show (specP d.QV (d.incl t) : d.V →ₗ[F] d.V) = _
   rw [d.specP_incl_eq_prodMap]
   rfl
+
+/-- The `GL(W)`-component of `φ(t) = (P(t), P(t) ⊕ 1)` is `P(t)`. -/
+theorem unitFst_comp_toGbarU_comp_diag :
+    d.luoOf.unitFst.comp (d.toGbarU.comp d.diag) = d.specPU := by
+  rw [toGbarU_comp_diag]
+  ext g : 1
+  simp
+
+/-- The `GL(W)`-component of an element of `H̄` is some `P(g)` (`unitFst_mem_SOu_of_mem_HbarU`,
+`exists_specPU_eq_of_mem_SOu`). -/
+theorem exists_specPU_eq_unitFst {h : d.luoOf.Ambˣ} (hh : h ∈ d.luoOf.HbarU) :
+    ∃ g : ↥(GSpin d.QW), d.specPU g = d.luoOf.unitFst h :=
+  d.exists_specPU_eq_of_mem_SOu (d.luoOf.unitFst_mem_SOu_of_mem_HbarU hh)
+
+/-- **The `GL(W)`-components of an `H̄`-conjugate of `φ(K)`**: if `unitFst h = P(g)`, then
+`unitFst (h φ(K) h⁻¹) = P(g K g⁻¹)`. -/
+theorem map_unitFst_conj_map {h : d.luoOf.Ambˣ} {g : ↥(GSpin d.QW)}
+    (hg : d.specPU g = d.luoOf.unitFst h) (K : Subgroup ↥(GSpin d.QW)) :
+    ((K.map (d.toGbarU.comp d.diag)).map (MulAut.conj h).toMonoidHom).map d.luoOf.unitFst =
+      (K.map (MulAut.conj g).toMonoidHom).map d.specPU := by
+  simp only [Subgroup.map_map]
+  congr 1
+  ext t : 1
+  have := DFunLike.congr_fun d.unitFst_comp_toGbarU_comp_diag t
+  simp only [MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom, MulAut.conj_apply, map_mul,
+    map_inv] at this ⊢
+  rw [this, ← hg]
 
 /-- `t ↦ (P(t), P(t) ⊕ 1)` is continuous on `GSpin(W)(F)`. -/
 theorem continuous_toGbarU_comp_diag : Continuous (d.toGbarU.comp d.diag) := by

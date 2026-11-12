@@ -6,6 +6,8 @@ import GSpinGGP.Literature.HarishChandra
 import GSpinGGP.Foundations.Determinant
 import GSpinGGP.GGP.LieRegular
 import GSpinGGP.TraceFormula.JHatTransport
+import GSpinGGP.Foundations.OrbitChart
+import GSpinGGP.Foundations.GSpinExp
 
 /-!
 # The regular set and the transfer of germs
@@ -372,16 +374,13 @@ Kirillov-normalized orbit measure (`IsOrbitMeasure`): carried by `O`, `G_x(F)`-i
 near each point `X ∈ O` to the self-dual measure of the Kirillov form in the chart
 `Y ↦ e^Y X e^{-Y}`.
 
-Reason (not formalized): by the inverse function theorem (valid over any complete nontrivially
-normed field, Mathlib `HasStrictFDerivAt.toOpenPartialHomeomorph`), the chart is an injective
-immersion of a neighbourhood of `0` in a complement of `𝔤_{x,X}` into `O`. Its image is a
-neighbourhood of `X` in `O` because, in addition, the orbit map `G_x(F) → O` is open, as orbits are
-locally closed. So the chart images cover `O` by open sets on which the measure is prescribed; `O`
-is second countable, so countably many of them suffice and the measure is determined. Only the zero
-orbit is done in Lean (`eq_dirac_of_isOrbitMeasure_zeroOrbit`). No source states this for the
-definition used here.
-
-**Status: `sorry`** (general fact; needs the `p`-adic inverse function theorem). -/
+Proof (`IsOrbitMeasure.eq_of_eventually_conj_eq_orbitMap`): near `1`, every `k ∈ G_x(F)` is
+`e^Y e^W` with `Y` small in the chart complement `C` and `W ∈ 𝔤_{x,X}`, by the inverse function
+theorem (`eventually_eq_expA_mul_expA`; `G_x(F)` and `𝔤_x` correspond under `exp` near `0`,
+`eventually_expA_mem_grpCentralizer`, `eventually_mem_lieCentralizer_of_expA_mem` from
+`eventually_expA_mem_G`, `eventually_mem_lie_of_expA_mem`), so `k X k⁻¹ = e^Y X e^{-Y}` is a chart
+point. Hence the translates of one compact chart image by a countable dense subset of `G_x(F)` cover
+`O`, and on each of them the measure is prescribed. -/
 theorem isOrbitMeasure_unique (d : GGPData F) (ψ : NontrivialAddChar F) (x : ↥d.G)
     (hx : IsSS F ((x : d.ambientˣ) : d.ambient))
     (O : NilOrbit (grpCentralizer d.G x) (lieCentralizer d.lie ((x : d.ambientˣ) : d.ambient)))
@@ -390,7 +389,20 @@ theorem isOrbitMeasure_unique (d : GGPData F) (ψ : NontrivialAddChar F) (x : �
       d.bilin ψ O μ)
     (hν : IsOrbitMeasure (grpCentralizer d.G x) (lieCentralizer d.lie ((x : d.ambientˣ) : d.ambient))
       d.bilin ψ O ν) : μ = ν := by
-  sorry
+  have hexpG : ∀ᶠ Y in 𝓝 (0 : d.ambient), Y ∈ d.lie →
+      ∃ g ∈ d.G, (g : d.ambient) = expA F Y := by
+    filter_upwards [eventually_expA_mem_G d] with Y hY hYl
+    obtain ⟨g, hg⟩ := hY hYl
+    exact ⟨g, g.2, hg⟩
+  have hlogG : ∀ᶠ Y in 𝓝 (0 : d.ambient), ∀ g ∈ d.G,
+      (g : d.ambient) = expA F Y → Y ∈ d.lie := by
+    filter_upwards [eventually_mem_lie_of_expA_mem d] with Y hY g hg hgY
+    exact hY ⟨g, hg⟩ hgY
+  have hexp := eventually_expA_mem_grpCentralizer hexpG (x : d.ambientˣ)
+  have hlog := eventually_mem_lieCentralizer_of_expA_mem hlogG (x : d.ambientˣ)
+  refine IsOrbitMeasure.eq_of_eventually_conj_eq_orbitMap (fun g hg Y hY => ?_)
+    (fun X _ C hC U hU => eventually_conj_eq_orbitMap F hexp hlog X C hC hU) hμ hν
+  exact conj_mem_lieCentralizer d.conj_mem_lie_of_mem hg hY
 
 /-- **`ĵ` is transported by isomorphisms of descent data.** If `ι : (G_x, 𝔤_x) ≃ (G'_y, 𝔤'_y)`
 respects the commutator, the trace forms, nilpotency, regular semisimplicity, the adjoint actions
