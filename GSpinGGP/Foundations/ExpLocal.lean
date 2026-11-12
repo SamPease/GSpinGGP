@@ -13,7 +13,9 @@ import GSpinGGP.Foundations.LocalGroups
   Banach algebra), `exp` has a continuous local inverse `L` at `1`, injective domain included;
 * `commute_of_commute_exp`: on an injectivity domain of `exp`, `Y` commutes with everything
   commuting with `exp Y` (so the local inverse `L(c)` commutes with the commutant of `c`);
-* `eventually_map_expA`: `φ(e^X) = e^{φ X}` near `0` for linear maps preserving powers;
+* `eventually_map_expA`: `φ(e^X) = e^{φ X}` near `0` for linear maps preserving powers
+  (pointwise form `eventually_map_expA_of_pow`);
+* `exists_nhds_expA_sub_expA_mem`: `e^Y − e^X ∈ I` near `0` when `Yⁿ − Xⁿ ∈ I` for all `n`;
 * `stabSubalgebra`, `expA_ad_eq`: `e^{ad Y} = Ad(e^Y)` near `0` in `End(A)`;
 * `exists_nhds_expA_conj_mem`: `e^X r e^{-X}` stays in any `ad X`-stable subspace for `X` near `0`;
 * `exists_logA`: a local logarithm `log`, continuous at `1`, with `e^{log u} = u` near `1`
@@ -142,12 +144,11 @@ section Log
 
 variable {F}
 
-/-- **`expA` commutes with linear maps preserving powers** near `0` (algebra homomorphisms, right
-multiplication, projections of a product): `φ(e^X) = e^{φ X}`. -/
-lemma eventually_map_expA {B : Type*} [Ring B] [Algebra F B] [Module.Finite F B]
-    [TopologicalSpace B] [IsModuleTopology F B] (φ : A →ₗ[F] B)
-    (hφ : ∀ (X : A) (n : ℕ), φ (X ^ n) = φ X ^ n) :
-    ∀ᶠ X in 𝓝 (0 : A), φ (expA F X) = expA F (φ X) := by
+/-- **`φ(e^X) = e^{φ X}` near `0`** for a linear map `φ` that preserves the powers of `X` (only
+of this `X`): both exponential series converge near `0`, and `φ` is continuous. -/
+lemma eventually_map_expA_of_pow {B : Type*} [Ring B] [Algebra F B] [Module.Finite F B]
+    [TopologicalSpace B] [IsModuleTopology F B] (φ : A →ₗ[F] B) :
+    ∀ᶠ X in 𝓝 (0 : A), (∀ n : ℕ, φ (X ^ n) = φ X ^ n) → φ (expA F X) = expA F (φ X) := by
   letI := isTopologicalRing_of_moduleTopology F A
   letI := isTopologicalRing_of_moduleTopology F B
   obtain ⟨U, hU, hA⟩ := expA_hasSum F (A := A)
@@ -156,12 +157,35 @@ lemma eventually_map_expA {B : Type*} [Ring B] [Algebra F B] [Module.Finite F B]
   have hV' : φ ⁻¹' V ∈ 𝓝 (0 : A) :=
     hφc.continuousAt.preimage_mem_nhds (by rwa [map_zero])
   haveI := t2Space_of_moduleTopology F B
-  filter_upwards [hU, hV'] with X hX hX'
+  filter_upwards [hU, hV'] with X hX hX' hφ
   have h1 := (hA X hX).map φ hφc
   refine h1.unique ?_
   convert hB (φ X) hX' using 1
   funext n
   simp [map_smul, hφ]
+
+/-- **`expA` commutes with linear maps preserving powers** near `0` (algebra homomorphisms, right
+multiplication, projections of a product): `φ(e^X) = e^{φ X}`. -/
+lemma eventually_map_expA {B : Type*} [Ring B] [Algebra F B] [Module.Finite F B]
+    [TopologicalSpace B] [IsModuleTopology F B] (φ : A →ₗ[F] B)
+    (hφ : ∀ (X : A) (n : ℕ), φ (X ^ n) = φ X ^ n) :
+    ∀ᶠ X in 𝓝 (0 : A), φ (expA F X) = expA F (φ X) :=
+  (eventually_map_expA_of_pow φ).mono fun X h => h (hφ X)
+
+/-- **`e^Y − e^X ∈ I` near `0`** when `Yⁿ − Xⁿ ∈ I` for every `n`: the difference of the two
+convergent exponential series has its partial sums in `I`, which is closed (finite-dimensional). -/
+lemma exists_nhds_expA_sub_expA_mem (I : Submodule F A) :
+    ∃ U ∈ 𝓝 (0 : A), ∀ X ∈ U, ∀ Y ∈ U, (∀ n : ℕ, Y ^ n - X ^ n ∈ I) →
+      expA F Y - expA F X ∈ I := by
+  letI := isTopologicalRing_of_moduleTopology F A
+  haveI := t2Space_of_moduleTopology F A
+  obtain ⟨U, hU, h⟩ := expA_hasSum F (A := A)
+  refine ⟨U, hU, fun X hX Y hY hI => ?_⟩
+  have hs := ((h Y hY).sub (h X hX)).tendsto_sum_nat
+  refine I.closed_of_finiteDimensional.mem_of_tendsto hs (Eventually.of_forall fun n => ?_)
+  refine I.sum_mem fun k _ => ?_
+  rw [← smul_sub]
+  exact I.smul_mem _ (hI k)
 
 variable (F)
 
