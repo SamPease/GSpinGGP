@@ -405,29 +405,28 @@ plane: `AGbar_eq_bot` and Hilbert 90, `Pbar_surjective`). -/
 def muG : Measure ↥d.luoOf.Gbar :=
   Measure.map (fun x : d.GmodAG => d.toGbar (Quotient.out x)) Measure.haar
 
+/-- `A_G(F) ⊆ ker(G(F) → Ḡ(F))` when neither `W` nor `V` is a hyperbolic plane (`AGbar_eq_bot`). -/
+theorem toGbar_eq_one_of_mem_AG (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) {a : ↥d.G}
+    (ha : a ∈ d.AG) : d.toGbar a = 1 := by
+  have hm : d.Pbar a ∈ d.AGbar := ⟨a, ha, rfl⟩
+  rw [d.AGbar_eq_bot hW hV, Subgroup.mem_bot] at hm
+  apply Subtype.ext
+  change d.toGbarU a = 1
+  apply Units.ext
+  have h1 : specP d.QW (d.fst a) = 1 :=
+    congrArg (fun p : d.GbarGrp => (p.1 : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F))) hm
+  have h2 : specP d.QV (d.snd a) = 1 := congrArg (fun p : d.GbarGrp => (p.2 : d.V ≃ₗ[F] d.V)) hm
+  rw [toGbarU_val, h1, h2]
+  rfl
+
 /-- **`G(F)/A_G(F) ≃ Ḡ(F)` as topological groups**, by `x ↦ toGbar (out x)`, when neither `W` nor
 `V` is a hyperbolic plane: `toGbar` descends to a continuous bijective homomorphism (its kernel is
 `A_G`: `AGbar_eq_bot`, `exists_scalarPair_of_specP_eq`; onto by `Pbar_surjective`), open by the
 open mapping theorem for locally compact σ-compact groups (`Ḡ(F)` is closed, `isClosed_Gbar`). -/
 theorem exists_continuousMulEquiv_toGbar (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) :
     ∃ e : d.GmodAG ≃ₜ* ↥d.luoOf.Gbar, ⇑e = fun x : d.GmodAG => d.toGbar (Quotient.out x) := by
-  have hPbar : ∀ g, d.Pbar g = 1 → d.toGbar g = 1 := by
-    intro g hg
-    apply Subtype.ext
-    change d.toGbarU g = 1
-    apply Units.ext
-    have h1 : specP d.QW (d.fst g) = 1 :=
-      congrArg (fun p : d.GbarGrp => (p.1 : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F))) hg
-    have h2 : specP d.QV (d.snd g) = 1 := congrArg (fun p : d.GbarGrp => (p.2 : d.V ≃ₗ[F] d.V)) hg
-    rw [toGbarU_val, h1, h2]
-    rfl
-  have hker : d.AG ≤ d.toGbar.ker := by
-    intro g hg
-    rw [MonoidHom.mem_ker]
-    apply hPbar
-    have hm : d.Pbar g ∈ d.AGbar := ⟨g, hg, rfl⟩
-    rw [d.AGbar_eq_bot hW hV] at hm
-    exact hm
+  have hker : d.AG ≤ d.toGbar.ker := fun g hg =>
+    MonoidHom.mem_ker.2 (d.toGbar_eq_one_of_mem_AG hW hV hg)
   let φ : d.GmodAG →* ↥d.luoOf.Gbar := QuotientGroup.lift d.AG d.toGbar hker
   have hφ : (fun x : d.GmodAG => d.toGbar (Quotient.out x)) = φ := by
     funext x

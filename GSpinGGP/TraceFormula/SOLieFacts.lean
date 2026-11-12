@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Foundations.SubgroupTransport
 import GSpinGGP.TraceFormula.SOLie
+import GSpinGGP.Foundations.BilinFormAdjoint
 
 /-!
 # Facts about Luo's subgroup `H̄ = SO(W) ⋉ N` and its tori
@@ -23,6 +24,8 @@ Elementary facts about the objects of `TraceFormula/SOLie.lean` (Luo, arXiv:2009
 * `LuoDatum.torusConj_equivalence`: `H̄(F)`-conjugacy of tori is an equivalence relation.
 * `LuoDatum.weylCardOf_map_conj`, `LuoDatum.weylCardOf_eq_of_torusConj`: `|W(H̄, T)|` is invariant
   under `H̄(F)`-conjugation.
+* `LuoDatum.conj_mem_lieH_of_mem_HbarU`: `H̄` normalizes `𝔥 = so(W) ⊕ 𝔫` and fixes `λ`
+  (Luo §2.1; generators `diagU_conj_mem_lieH`, `inrU_conj_mem_lieH`, with `bform_conj_lieN`).
 * `LuoDatum.weylCardOf_map_diagU`: for `S ⊆ SO(W)`, `|W(H̄, (S, S ⊕ 1))| = |N_{SO(W)}(S) : Z_{SO(W)}(S)|`.
 -/
 
@@ -480,6 +483,290 @@ theorem weylCardOf_eq_of_torusConj {T T' : L.GammaTorus} (h : L.TorusConj T T') 
   exact L.weylCardOf_map_conj hg T.1
 
 end Gamma
+
+/-! ## `H̄` normalizes `𝔥` and fixes `λ` (Luo §2.1) -/
+
+section HConj
+
+variable {K : Type*} [Field K] [Invertible (2 : K)]
+
+theorem isOrthogonal_of_mem_SOu {U : Type*} [AddCommGroup U] [Module K U]
+    {Q : QuadraticForm K U} {u : (Module.End K U)ˣ} (hu : u ∈ SOu Q) :
+    (bform Q).IsOrthogonal (u : Module.End K U) := fun x y => by
+  have h : ∀ v, Q ((u : Module.End K U) v) = Q v := fun v => hu.1 v
+  simp only [bform, QuadraticMap.associated_apply]
+  rw [← map_add, h, h, h]
+
+/-- Conjugation by an element of `SO(Q)` preserves `so(Q)`. -/
+theorem conj_mem_skewAdjoint {U : Type*} [AddCommGroup U] [Module K U]
+    {Q : QuadraticForm K U} {u : (Module.End K U)ˣ} (hu : u ∈ SOu Q) {M : Module.End K U}
+    (hM : M ∈ skewAdjointLieSubalgebra (bform Q)) :
+    ((u⁻¹ : (Module.End K U)ˣ) : Module.End K U) * M * (u : Module.End K U) ∈
+      skewAdjointLieSubalgebra (bform Q) :=
+  (LinearMap.mem_skewAdjointSubmodule _).2
+    ((LinearMap.mem_skewAdjointSubmodule _).1 hM |>.conj_units (isOrthogonal_of_mem_SOu hu))
+
+variable (L : LuoDatum K)
+
+/-- `Z_r^⊥` is preserved by an isometry preserving `Z_r`. -/
+theorem apply_mem_orthogonal_of_mem_SOu {u : (Module.End K L.V)ˣ} (hu : u ∈ SOu L.QV)
+    (hinv : ∀ z ∈ L.flagSub L.r, ((u⁻¹ : (Module.End K L.V)ˣ) : Module.End K L.V) z ∈
+      L.flagSub L.r) {v : L.V} (hv : v ∈ (bform L.QV).orthogonal (L.flagSub L.r)) :
+    (u : Module.End K L.V) v ∈ (bform L.QV).orthogonal (L.flagSub L.r) := by
+  rw [LinearMap.BilinForm.mem_orthogonal_iff] at hv ⊢
+  intro z hz
+  have := hv _ (hinv z hz)
+  rwa [(isOrthogonal_of_mem_SOu hu).isAdjointPair_inv] at this
+
+/-- **Conjugation by an isometry preserving the flag preserves `𝔫`.** -/
+theorem conj_mem_lieN {u : (Module.End K L.V)ˣ} (hu : u ∈ SOu L.QV)
+    (h1 : ∀ k ≤ L.r, ∀ v ∈ L.flagSub k, (u : Module.End K L.V) v ∈ L.flagSub k)
+    (h2 : ∀ k ≤ L.r, ∀ v ∈ L.flagSub k,
+      ((u⁻¹ : (Module.End K L.V)ˣ) : Module.End K L.V) v ∈ L.flagSub k)
+    {M : Module.End K L.V} (hM : M ∈ L.lieN) :
+    ((u⁻¹ : (Module.End K L.V)ˣ) : Module.End K L.V) * M * (u : Module.End K L.V) ∈ L.lieN := by
+  refine ⟨conj_mem_skewAdjoint hu hM.1, fun k hk v hv => ?_, fun v hv => ?_⟩
+  · simp only [Module.End.mul_apply]
+    exact h2 k hk.le _ (hM.2.1 k hk _ (h1 (k + 1) hk _ hv))
+  · simp only [Module.End.mul_apply]
+    exact h2 _ le_rfl _ (hM.2.2 _ (L.apply_mem_orthogonal_of_mem_SOu hu (h2 _ le_rfl) hv))
+
+theorem extLie_apply (A : Module.End K L.W) (v : L.V) : L.extLie A v = (A v.1, 0) := rfl
+
+theorem fst_zV (i : ℤ) : (L.zV i).1 = 0 := rfl
+
+theorem bform_zV_zV {i j : ℤ} (hi : |i| ≤ L.r) (hj : |j| ≤ L.r) (hij : i + j ≠ 0) :
+    bform L.QV (L.zV i) (L.zV j) = 0 := by
+  rw [bform_prod]
+  change bform L.QW 0 0 + bform L.QZ (L.z i) (L.z j) = 0
+  rw [L.gram i j hi hj]
+  simp [hij]
+
+/-- `z_i ∈ Z_{r-i+1}` for `i ≤ r`. -/
+theorem zV_mem_flagSub {i : ℕ} (hir : i ≤ L.r) :
+    L.zV (i : ℤ) ∈ L.flagSub (L.r - i + 1) :=
+  Submodule.subset_span ⟨⟨L.r - i, by omega⟩, by
+    simp only
+    congr 1
+    omega⟩
+
+/-- `z_0 ∈ Z_r^⊥`. -/
+theorem zV_zero_mem_orthogonal : L.zV 0 ∈ (bform L.QV).orthogonal (L.flagSub L.r) := by
+  rw [LinearMap.BilinForm.mem_orthogonal_iff]
+  intro v hv
+  have hle : L.flagSub L.r ≤ LinearMap.ker ((bform L.QV).flip (L.zV 0)) := by
+    rw [flagSub, Submodule.span_le]
+    rintro _ ⟨j, rfl⟩
+    change bform L.QV (L.zV ((L.r : ℤ) - (j : ℕ))) (L.zV 0) = 0
+    exact L.bform_zV_zV (by rw [abs_le]; constructor <;> omega) (by simp) (by omega)
+  exact hle hv
+
+/-- `q(z_{-i-1}, Z_{r-i-1}) = 0` (`Z_{r-i-1} = ⟨z_r, …, z_{i+2}⟩`). -/
+theorem bform_zV_neg_of_mem_flagSub {i : ℕ} (hi : i < L.r) {v : L.V}
+    (hv : v ∈ L.flagSub (L.r - i - 1)) : bform L.QV (L.zV (-(i : ℤ) - 1)) v = 0 := by
+  have hle : L.flagSub (L.r - i - 1) ≤ LinearMap.ker (bform L.QV (L.zV (-(i : ℤ) - 1))) := by
+    rw [flagSub, Submodule.span_le]
+    rintro _ ⟨j, rfl⟩
+    have hj := j.2
+    exact L.bform_zV_zV (by rw [abs_le]; constructor <;> omega)
+      (by rw [abs_le]; constructor <;> omega) (by omega)
+  exact hle hv
+
+/-- For `n ∈ N` and `i < r`, `n z_i − z_i ∈ Z_{r-i}`. -/
+theorem apply_zV_sub_mem_flagSub {n : Module.End K L.V}
+    (h1 : ∀ k < L.r, ∀ v ∈ L.flagSub (k + 1), n v ∈ L.flagSub k)
+    (h2 : ∀ v ∈ (bform L.QV).orthogonal (L.flagSub L.r), n v ∈ L.flagSub L.r)
+    {i : ℕ} (hi : i < L.r) : n (L.zV (i : ℤ)) ∈ L.flagSub (L.r - i) := by
+  rcases Nat.eq_zero_or_pos i with rfl | hpos
+  · simpa using h2 _ L.zV_zero_mem_orthogonal
+  · have := L.zV_mem_flagSub hi.le
+    rw [show L.r - i + 1 = (L.r - i) + 1 from rfl] at this
+    exact h1 (L.r - i) (by omega) _ this
+
+theorem extLie_apply_of_fst_eq_zero (A : Module.End K L.W) {v : L.V} (hv : v.1 = 0) :
+    L.extLie A v = 0 := by
+  rw [extLie_apply, hv, map_zero]; rfl
+
+/-- `ad X ⊕ 0` is skew when `X` is. -/
+theorem extLie_mem_skewAdjoint {A : Module.End K L.W}
+    (hA : A ∈ skewAdjointLieSubalgebra (bform L.QW)) :
+    L.extLie A ∈ skewAdjointLieSubalgebra (bform L.QV) := by
+  have hA' := (LinearMap.mem_skewAdjointSubmodule (B := bform L.QW) A).1 hA
+  change _ ∈ (bform L.QV).skewAdjointSubmodule
+  rw [LinearMap.mem_skewAdjointSubmodule]
+  intro x y
+  rw [Pi.neg_apply, map_neg, bform_prod, bform_prod, extLie_apply, extLie_apply, hA' x.1 y.1,
+    Pi.neg_apply, map_neg, map_zero, LinearMap.zero_apply, map_zero]
+  simp
+
+/-- `λ` only sees `X_V`. -/
+theorem lam_eq_of_sndA_eq {X Y : L.Amb} (h : L.sndA X = L.sndA Y) : L.lam X = L.lam Y := by
+  unfold lam; rw [h]
+
+/-- **`λ` is `N`-invariant on `𝔫`**: `q(z_{-i-1}, n⁻¹ M n z_i) = q(z_{-i-1}, M z_i)`. -/
+theorem bform_conj_lieN {n : (Module.End K L.V)ˣ} (hn : n ∈ L.Nset) {M : Module.End K L.V}
+    (hM : M ∈ L.lieN) {i : ℕ} (hi : i < L.r) :
+    bform L.QV (L.zV (-(i : ℤ) - 1))
+        ((((n⁻¹ : (Module.End K L.V)ˣ) : Module.End K L.V) * M * (n : Module.End K L.V))
+          (L.zV i)) =
+      bform L.QV (L.zV (-(i : ℤ) - 1)) (M (L.zV i)) := by
+  have hn' : n⁻¹ ∈ L.Nset := L.NsetSub.inv_mem hn
+  set z := L.zV (i : ℤ)
+  set ni := ((n⁻¹ : (Module.End K L.V)ˣ) : Module.End K L.V)
+  have hk : L.r - i = (L.r - i - 1) + 1 := by omega
+  have hd : (n : Module.End K L.V) z - z ∈ L.flagSub (L.r - i) :=
+    L.apply_zV_sub_mem_flagSub (n := (n : Module.End K L.V) - 1)
+      (fun k hk v hv => hn.2.1 k hk v hv) (fun v hv => hn.2.2 v hv) hi
+  have hMz : M z ∈ L.flagSub (L.r - i) :=
+    L.apply_zV_sub_mem_flagSub (n := M) hM.2.1 hM.2.2 hi
+  rw [hk] at hd hMz
+  have e : (ni * M * (n : Module.End K L.V)) z =
+      ni (M ((n : Module.End K L.V) z - z)) + (ni (M z) - M z) + M z := by
+    simp only [Module.End.mul_apply, map_sub]; abel
+  rw [e, map_add, map_add, L.bform_zV_neg_of_mem_flagSub hi
+      (L.inv_apply_mem_flagSub_of_mem_Nset hn (by omega) (hM.2.1 _ (by omega) _ hd)),
+    L.bform_zV_neg_of_mem_flagSub hi (hn'.2.1 _ (by omega) _ hMz), zero_add, zero_add]
+
+theorem extGrp_zV (f : Module.End K L.W) (i : ℤ) : L.extGrp f (L.zV i) = L.zV i := by
+  rw [extGrp_apply, fst_zV, map_zero]; rfl
+
+theorem extLie_conj (a b c : Module.End K L.W) :
+    L.extLie (a * b * c) = L.extGrp a * L.extLie b * L.extGrp c := by
+  ext v <;> simp [extLie_apply, extGrp_apply]
+
+/-- `n⁻¹ (A ⊕ 0) n − (A ⊕ 0) ∈ 𝔫` for `n ∈ N` and `A ∈ so(W)`. -/
+theorem conj_extLie_sub_mem_lieN {n : (Module.End K L.V)ˣ} (hn : n ∈ L.Nset)
+    {A : Module.End K L.W} (hA : A ∈ skewAdjointLieSubalgebra (bform L.QW)) :
+    ((n⁻¹ : (Module.End K L.V)ˣ) : Module.End K L.V) * L.extLie A * (n : Module.End K L.V) -
+      L.extLie A ∈ L.lieN := by
+  have hn' : n⁻¹ ∈ L.Nset := L.NsetSub.inv_mem hn
+  refine ⟨sub_mem (conj_mem_skewAdjoint hn.1 (L.extLie_mem_skewAdjoint hA))
+    (L.extLie_mem_skewAdjoint hA), fun k hk v hv => ?_, fun v hv => ?_⟩
+  · have h1 : L.extLie A ((n : Module.End K L.V) v) = 0 :=
+      L.extLie_apply_of_fst_eq_zero A (L.fst_eq_zero_of_mem_flagSub
+        (L.apply_mem_flagSub_of_mem_Nset hn hk hv))
+    have h2 : L.extLie A v = 0 := L.extLie_apply_of_fst_eq_zero A (L.fst_eq_zero_of_mem_flagSub hv)
+    simp only [LinearMap.sub_apply, Module.End.mul_apply, h1, h2, map_zero, sub_zero]
+    exact zero_mem _
+  · have hd : (n : Module.End K L.V) v - v ∈ L.flagSub L.r := hn.2.2 v hv
+    have h1 : L.extLie A ((n : Module.End K L.V) v) = L.extLie A v := by
+      rw [show (n : Module.End K L.V) v = v + ((n : Module.End K L.V) v - v) by abel, map_add,
+        L.extLie_apply_of_fst_eq_zero A (L.fst_eq_zero_of_mem_flagSub hd), add_zero]
+    have hw : L.extLie A v ∈ (bform L.QV).orthogonal (L.flagSub L.r) := by
+      rw [LinearMap.BilinForm.mem_orthogonal_iff]
+      intro z hz
+      rw [bform_prod, extLie_apply, L.fst_eq_zero_of_mem_flagSub hz]
+      simp
+    simp only [LinearMap.sub_apply, Module.End.mul_apply, h1]
+    exact hn'.2.2 _ hw
+
+/-- **`(g, g ⊕ 1)` normalizes `𝔥` and fixes `λ`** (`g ∈ SO(W)`). -/
+theorem diagU_conj_mem_lieH {g : (Module.End K L.W)ˣ} (hg : g ∈ SOu L.QW) {Y : L.Amb}
+    (hY : Y ∈ L.lieH) :
+    (((L.diagU g)⁻¹ : L.Ambˣ) : L.Amb) * Y * ((L.diagU g : L.Ambˣ) : L.Amb) ∈ L.lieH ∧
+      L.lam ((((L.diagU g)⁻¹ : L.Ambˣ) : L.Amb) * Y * ((L.diagU g : L.Ambˣ) : L.Amb)) =
+        L.lam Y := by
+  set E : (Module.End K L.V)ˣ := Units.map L.extGrp g
+  have hE : E ∈ SOu L.QV := L.extU_mem_SOu hg
+  have hEi : ((E⁻¹ : (Module.End K L.V)ˣ) : Module.End K L.V) = L.extGrp ↑g⁻¹ := by
+    rw [← map_inv]; rfl
+  have hfst : L.fstA ((((L.diagU g)⁻¹ : L.Ambˣ) : L.Amb) * Y * ((L.diagU g : L.Ambˣ) : L.Amb)) =
+      ((g⁻¹ : (Module.End K L.W)ˣ) : Module.End K L.W) * L.fstA Y * (g : Module.End K L.W) := by
+    rw [← map_inv, map_mul, map_mul]; rfl
+  have hsnd : L.sndA ((((L.diagU g)⁻¹ : L.Ambˣ) : L.Amb) * Y * ((L.diagU g : L.Ambˣ) : L.Amb)) =
+      ((E⁻¹ : (Module.End K L.V)ˣ) : Module.End K L.V) * L.sndA Y * (E : Module.End K L.V) := by
+    rw [← map_inv, map_mul, map_mul, hEi]; rfl
+  refine ⟨⟨⟨?_, ?_⟩, ?_⟩, ?_⟩
+  · rw [hfst]; exact conj_mem_skewAdjoint hg hY.1.1
+  · rw [hsnd]; exact conj_mem_skewAdjoint hE hY.1.2
+  · rw [hfst, hsnd, L.extLie_conj, ← hEi]
+    have e : ((E⁻¹ : (Module.End K L.V)ˣ) : Module.End K L.V) * L.sndA Y *
+          (E : Module.End K L.V) -
+        ((E⁻¹ : (Module.End K L.V)ˣ) : Module.End K L.V) * L.extLie (L.fstA Y) *
+          L.extGrp (g : Module.End K L.W) =
+        ((E⁻¹ : (Module.End K L.V)ˣ) : Module.End K L.V) *
+          (L.sndA Y - L.extLie (L.fstA Y)) * (E : Module.End K L.V) := by
+      rw [mul_sub, sub_mul]; rfl
+    rw [e]
+    refine L.conj_mem_lieN hE (fun k _ v hv => ?_) (fun k _ v hv => ?_) hY.2
+    · change L.extGrp _ v ∈ _
+      rwa [L.extGrp_apply_of_mem_flagSub _ hv]
+    · rw [hEi, L.extGrp_apply_of_mem_flagSub _ hv]; exact hv
+  · unfold lam
+    rw [hsnd]
+    refine Finset.sum_congr rfl fun i _ => ?_
+    rw [Module.End.mul_apply, Module.End.mul_apply, show (E : Module.End K L.V) (L.zV (i : ℕ)) =
+      L.zV (i : ℕ) from L.extGrp_zV _ _, ← (isOrthogonal_of_mem_SOu hE).isAdjointPair]
+    change bform L.QV (L.extGrp _ _) _ = _
+    rw [L.extGrp_zV]
+
+/-- **`(1, n)` normalizes `𝔥` and fixes `λ`** (`n ∈ N`). -/
+theorem inrU_conj_mem_lieH {n : (Module.End K L.V)ˣ} (hn : n ∈ L.Nset) {Y : L.Amb}
+    (hY : Y ∈ L.lieH) :
+    (((L.inrU n)⁻¹ : L.Ambˣ) : L.Amb) * Y * ((L.inrU n : L.Ambˣ) : L.Amb) ∈ L.lieH ∧
+      L.lam ((((L.inrU n)⁻¹ : L.Ambˣ) : L.Amb) * Y * ((L.inrU n : L.Ambˣ) : L.Amb)) =
+        L.lam Y := by
+  set ni := ((n⁻¹ : (Module.End K L.V)ˣ) : Module.End K L.V)
+  have hfst : L.fstA ((((L.inrU n)⁻¹ : L.Ambˣ) : L.Amb) * Y * ((L.inrU n : L.Ambˣ) : L.Amb)) =
+      L.fstA Y := by
+    rw [← map_inv, map_mul, map_mul]
+    change 1 * L.fstA Y * 1 = _
+    rw [one_mul, mul_one]
+  have hsnd : L.sndA ((((L.inrU n)⁻¹ : L.Ambˣ) : L.Amb) * Y * ((L.inrU n : L.Ambˣ) : L.Amb)) =
+      ni * L.sndA Y * (n : Module.End K L.V) := by
+    rw [← map_inv, map_mul, map_mul]; rfl
+  set M := L.sndA Y - L.extLie (L.fstA Y)
+  have hM : M ∈ L.lieN := hY.2
+  have hYV : L.sndA Y = M + L.extLie (L.fstA Y) := by simp [M]
+  refine ⟨⟨⟨?_, ?_⟩, ?_⟩, ?_⟩
+  · rw [hfst]; exact hY.1.1
+  · rw [hsnd]; exact conj_mem_skewAdjoint hn.1 hY.1.2
+  · rw [hfst, hsnd]
+    have e : ni * L.sndA Y * (n : Module.End K L.V) - L.extLie (L.fstA Y) =
+        ni * M * (n : Module.End K L.V) +
+          (ni * L.extLie (L.fstA Y) * (n : Module.End K L.V) - L.extLie (L.fstA Y)) := by
+      rw [hYV, mul_add, add_mul]; abel
+    rw [e]
+    exact add_mem (L.conj_mem_lieN hn.1 (fun k hk v hv => L.apply_mem_flagSub_of_mem_Nset hn hk hv)
+      (fun k hk v hv => L.inv_apply_mem_flagSub_of_mem_Nset hn hk hv) hM)
+      (L.conj_extLie_sub_mem_lieN hn hY.1.1)
+  · unfold lam
+    rw [hsnd]
+    refine Finset.sum_congr rfl fun i _ => ?_
+    have hi : (i : ℕ) < L.r := i.2
+    have hd : (n : Module.End K L.V) (L.zV (i : ℕ)) - L.zV (i : ℕ) ∈ L.flagSub (L.r - i) :=
+      L.apply_zV_sub_mem_flagSub (n := (n : Module.End K L.V) - 1)
+        (fun k hk v hv => hn.2.1 k hk v hv) (fun v hv => hn.2.2 v hv) hi
+    have hnz : (((n : Module.End K L.V) (L.zV (i : ℕ))).1) = 0 := by
+      have := L.fst_eq_zero_of_mem_flagSub hd
+      rw [Prod.fst_sub, fst_zV, sub_zero] at this
+      exact this
+    have e1 : (ni * L.sndA Y * (n : Module.End K L.V)) (L.zV (i : ℕ)) =
+        (ni * M * (n : Module.End K L.V)) (L.zV (i : ℕ)) := by
+      rw [hYV, mul_add, add_mul, LinearMap.add_apply]
+      simp only [Module.End.mul_apply, L.extLie_apply_of_fst_eq_zero _ hnz, map_zero, add_zero]
+    have e2 : L.sndA Y (L.zV (i : ℕ)) = M (L.zV (i : ℕ)) := by
+      rw [hYV, LinearMap.add_apply, L.extLie_apply_of_fst_eq_zero _ (L.fst_zV _), add_zero]
+    rw [e1, L.bform_conj_lieN hn hM hi, e2]
+
+/-- **`H̄` normalizes `𝔥` and fixes `λ`**: write `u = (g, g ⊕ 1)(1, n)` (`mem_HbarU_iff`). -/
+theorem conj_mem_lieH_of_mem_HbarU {u : L.Ambˣ} (hu : u ∈ L.HbarU) {Y : L.Amb}
+    (hY : Y ∈ L.lieH) :
+    ((u⁻¹ : L.Ambˣ) : L.Amb) * Y * (u : L.Amb) ∈ L.lieH ∧
+      L.lam (((u⁻¹ : L.Ambˣ) : L.Amb) * Y * (u : L.Amb)) = L.lam Y := by
+  obtain ⟨g, hg, n, hn, rfl⟩ := L.mem_HbarU_iff.1 hu
+  have e : (((L.diagU g * L.inrU n)⁻¹ : L.Ambˣ) : L.Amb) * Y *
+      ((L.diagU g * L.inrU n : L.Ambˣ) : L.Amb) =
+      (((L.inrU n)⁻¹ : L.Ambˣ) : L.Amb) *
+        ((((L.diagU g)⁻¹ : L.Ambˣ) : L.Amb) * Y * ((L.diagU g : L.Ambˣ) : L.Amb)) *
+        ((L.inrU n : L.Ambˣ) : L.Amb) := by
+    simp only [mul_inv_rev, Units.val_mul, mul_assoc]
+  obtain ⟨h1, h2⟩ := L.diagU_conj_mem_lieH hg hY
+  obtain ⟨h3, h4⟩ := L.inrU_conj_mem_lieH hn h1
+  rw [e]
+  exact ⟨h3, h4.trans h2⟩
+
+end HConj
 
 end LuoDatum
 
