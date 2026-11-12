@@ -284,6 +284,46 @@ theorem totallyDisconnectedSpace_subgroup (G : Subgroup Aˣ) : TotallyDisconnect
 
 end Topology
 
+section SubmoduleTopology
+
+variable [PAdicField F] {A : Type*} [Ring A] [Algebra F A] [Module.Finite F A]
+  [TopologicalSpace A] [IsModuleTopology F A]
+
+/-- A subspace of the ambient algebra is a topological additive group. -/
+theorem submodule_isTopologicalAddGroup (p : Submodule F A) : IsTopologicalAddGroup ↥p :=
+  haveI := isTopologicalRing_of_moduleTopology F A
+  IsInducing.subtypeVal.isTopologicalAddGroup p.subtype
+
+/-- A subspace `p ≅ F^n` of the ambient algebra carries the module topology. -/
+theorem submodule_isModuleTopology (p : Submodule F A) : IsModuleTopology F ↥p := by
+  haveI := t2Space_of_moduleTopology F A
+  haveI := isTopologicalRing_of_moduleTopology F A
+  have hind : IsInducing (p.subtype : ↥p → A) := IsInducing.subtypeVal
+  haveI : IsTopologicalAddGroup ↥p := hind.isTopologicalAddGroup p.subtype
+  haveI : ContinuousSMul F ↥p :=
+    hind.continuousSMul continuous_id (fun {c x} => p.subtype.map_smul c x)
+  haveI : T2Space ↥p := (IsEmbedding.mk hind Subtype.val_injective).t2Space
+  exact isModuleTopologyOfFiniteDimensional (𝕜 := F) (E := ↥p)
+
+/-- The topological properties of a subspace `p ≅ F^n` of the ambient algebra used for Haar
+measures. -/
+theorem submodule_topology (p : Submodule F A) :
+    LocallyCompactSpace ↥p ∧ TotallyDisconnectedSpace ↥p ∧ SigmaCompactSpace ↥p ∧
+      SecondCountableTopology ↥p ∧ TopologicalSpace.PseudoMetrizableSpace ↥p := by
+  haveI := submodule_isTopologicalAddGroup p
+  haveI := submodule_isModuleTopology p
+  haveI : ProperSpace F := .of_nontriviallyNormedField_of_weaklyLocallyCompactSpace F
+  haveI := t2Space_of_moduleTopology F A
+  let e : ↥p ≃L[F] (Fin (Module.finrank F ↥p) → F) :=
+    ContinuousLinearEquiv.ofFinrankEq (by simp)
+  exact ⟨e.toHomeomorph.isClosedEmbedding.locallyCompactSpace,
+    e.toHomeomorph.symm.totallyDisconnectedSpace,
+    e.toHomeomorph.isClosedEmbedding.sigmaCompactSpace,
+    e.toHomeomorph.isEmbedding.secondCountableTopology,
+    e.toHomeomorph.isEmbedding.pseudoMetrizableSpace⟩
+
+end SubmoduleTopology
+
 /-- Elements of a group of points coerce directly to the ambient algebra, so that e.g.
 `lieCentralizer 𝔤 x` typechecks for `x : ↥G`. -/
 instance subgroupCoeAmbient {A : Type*} [Monoid A] (G : Subgroup Aˣ) : CoeOut ↥G A :=
@@ -842,6 +882,24 @@ lemma expA_aux :
     rw [hexp]
     exact h2.unique hE
 
+/-- `e^X` is continuous on an open neighbourhood of `0` (it is `exp` of `End(F^d)`, continuous on
+the ball of convergence, transported along `lmulPi`). -/
+lemma exists_nhds_continuousOn_expA :
+    ∃ U ∈ 𝓝 (0 : A), IsOpen U ∧ ContinuousOn (expA F : A → A) U := by
+  letI := isTopologicalRing_of_moduleTopology F A
+  obtain ⟨U, hU, -, h⟩ := expA_aux F (A := A)
+  refine ⟨interior U, interior_mem_nhds.mpr hU, isOpen_interior, ?_⟩
+  have hc : ContinuousOn (fun X : A => lmulPiInv F (NormedSpace.exp (lmulPi F X)))
+      (interior U) := by
+    refine (lmulPiInv F).continuous.comp_continuousOn ?_
+    refine (NormedSpace.continuousOn_exp (𝕂 := F)).comp (continuous_lmulPi F).continuousOn ?_
+    intro X hX
+    exact (h X (interior_subset hX)).1
+  refine hc.congr fun X hX => ?_
+  obtain ⟨-, -, he⟩ := h X (interior_subset hX)
+  show expA F X = lmulPiInv F (NormedSpace.exp (lmulPi F X))
+  rw [← he, lmulPiInv_lmulPi]
+
 /-- Over a `p`-adic field the exponential series converges on a neighbourhood of `0`
 (classically the ball `|X| < p^{-1/(p-1)}`; here `U = lmulPi⁻¹(ball of convergence of expSeries)`,
 see `expA_aux`). -/
@@ -1255,16 +1313,8 @@ theorem exists_nhds_isRegularSS_expA (𝔤 : LieSubalgebra F A) :
 
 /-- `e^X` is continuous at `0`. -/
 lemma continuousAt_expA_at_zero : ContinuousAt (expA F : A → A) 0 := by
-  letI := isTopologicalRing_of_moduleTopology F A
-  obtain ⟨U, hU, -, h⟩ := expA_aux F (A := A)
-  have heq : (fun X : A => lmulPiInv F (NormedSpace.exp (lmulPi F X))) =ᶠ[𝓝 0] expA F := by
-    filter_upwards [hU] with X hX
-    rw [← (h X hX).2.2, lmulPiInv_lmulPi]
-  refine ContinuousAt.congr ?_ heq
-  have h0 := (h 0 (mem_of_mem_nhds hU)).1
-  have hexp : ContinuousAt (NormedSpace.exp : (VA →L[F] VA) → _) (lmulPi F (0 : A)) :=
-    (NormedSpace.continuousOn_exp (𝕂 := F)).continuousAt (Metric.isOpen_eball.mem_nhds h0)
-  exact (lmulPiInv F).continuous.continuousAt.comp (hexp.comp (continuous_lmulPi F).continuousAt)
+  obtain ⟨U, hU, hUo, hc⟩ := exists_nhds_continuousOn_expA F (A := A)
+  exact hc.continuousAt (hUo.mem_nhds (mem_of_mem_nhds hU))
 
 /-- Right multiplication by `a`, transported to a continuous endomorphism of `F^d`. -/
 def rmulPi (a : A) : VA →L[F] VA :=

@@ -58,19 +58,9 @@ theorem torusConj_of_conj_map {T T' : d.GammaTorus} {h : d.luoOf.Ambˣ} (hh : h 
     (heq : T'.1.map (d.toGbarU.comp d.diag) =
       (T.1.map (d.toGbarU.comp d.diag)).map (MulAut.conj h).toMonoidHom) :
     d.TorusConj T T' := by
-  have hfst : d.luoOf.unitFst.comp (d.toGbarU.comp d.diag) = d.specPU := by
-    rw [toGbarU_comp_diag]
-    ext g : 1
-    simp only [MonoidHom.comp_apply, LuoDatum.unitFst_diagU]
-  have hg : d.luoOf.unitFst h ∈ LuoDatum.SOu d.luoOf.QW := by
-    obtain ⟨g, hg, n, -, rfl⟩ := d.luoOf.mem_HbarU_iff.1 hh
-    rwa [LuoDatum.unitFst_diagU_mul_inrU]
-  obtain ⟨g', hg'⟩ := d.exists_specP_eq_of_mem_SOu hg
-  have hg'' : d.specPU g' = d.luoOf.unitFst h := Units.ext (by rw [coe_specPU, hg'])
+  obtain ⟨g', hg''⟩ := d.exists_specPU_eq_unitFst hh
   have h1 : T'.1.map d.specPU = (T.1.map (MulAut.conj g').toMonoidHom).map d.specPU := by
-    rw [Subgroup.map_map_conj, hg'', ← hfst,
-      ← Subgroup.map_map (K := T'.1) d.luoOf.unitFst (d.toGbarU.comp d.diag), heq,
-      Subgroup.map_map_conj, ← Subgroup.map_map (K := T.1) d.luoOf.unitFst (d.toGbarU.comp d.diag)]
+    rw [← d.map_unitFst_conj_map hg'', ← heq, Subgroup.map_map, unitFst_comp_toGbarU_comp_diag]
   have hsc : ∀ T : d.GammaTorus, (scalarGSpin d.QW).range ≤ T.1 := by
     intro T
     obtain ⟨x, -, hx⟩ := T.2
