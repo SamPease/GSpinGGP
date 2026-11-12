@@ -33,6 +33,10 @@ The identification is own work, stated step by step (most steps are `sorry` here
 * `isThetaFLie_eqOn_regular`: `θ_f` is unique on `𝔤⁰_reg`;
 * (L6, L7) `cTheta_toSO`: the germs `c_{θ,O_X}(X)` agree (trace form vs `bilin`, `Z_G(X)` vs
   `Ḡ_X`, the orbit choice `orbitChoiceLie` vs Luo's and Waldspurger's `O_{±ν₀}`);
+  proved: the recipes agree (`orbitSpecAt_iff_orbitSpec_toSOLin`) and are stable under scaling
+  each factor; the chosen orbits correspond (`orbitChoice_eq_of_orbitMap`) and the germs agree
+  (`cTheta_toSO_of_transport`) given uniqueness of regular germ coefficients on `𝔤⁰`, uniqueness of
+  the regular orbit meeting the recipe, and a transport of local expansions;
 * (L8) `gammaClass_equiv` (proved, in `TraceFormula/LuoClass.lean`), `torusIntegralLie_toSO`:
   `Γ^Lie` (tori, `|W(H,T)|`, `ν(T) dX`, `D^G`, `Δ`, `𝔱_♮`) agree; `mGeomLieS_toSO` is proved from
   them;
@@ -874,6 +878,143 @@ theorem isThetaFLie_of_SO (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
     refine integral_congr_ae (Eventually.of_forall fun Y => ?_)
     dsimp only
     rw [hpt, show φ.toHomeomorph x = d.toGbar (Quotient.out x) from congrFun hφ x]
+
+/-! ## (L7) The orbit recipe -/
+
+/-- `ν₀ = q(z^L_0) = ν`: Luo's `ν₀` for `luoOf` is the `ν` of `d`. -/
+theorem luoOf_nu0 : d.luoOf.nu0 = (d.ν : F) := by
+  have h00 := bform_splitOddForm_zvec (K := F) d.r (d.ν : F) (le_of_eq abs_zero |>.trans
+    (Nat.cast_nonneg _)) (le_of_eq abs_zero |>.trans (Nat.cast_nonneg _))
+  show d.QZ (d.luoZ 0) = _
+  rw [← QuadraticMap.associated_eq_self_apply F d.QZ (d.luoZ 0)]
+  simp only [luoZ, LinearMap.map_smul, LinearMap.smul_apply, smul_eq_mul]
+  rw [h00]
+  simp [luoScale]
+
+/-- **(L7) The recipes agree**: `OrbitSpecAt U Y` (on `𝔤⁰`) is Luo's `OrbitSpec U` (on
+`so(W) ⊕ so(V)`) at `ad Y`. -/
+theorem orbitSpecAt_iff_orbitSpec_toSOLin (U : Submodule F (Fin d.m → F)) (Y : d.ambient) :
+    d.OrbitSpecAt U Y ↔ d.luoOf.OrbitSpec U (d.toSOLin Y) := by
+  unfold OrbitSpecAt LuoDatum.OrbitSpec
+  rw [luoOf_nu0]
+  rfl
+
+/-- `IsInOrbitNu` only sees the line `F N`: it holds for `c • N`, `c ≠ 0`, iff it holds for `N`. -/
+theorem isInOrbitNu_smul_iff {V : Type*} [AddCommGroup V] [Module F V] {Q : QuadraticForm F V}
+    {U : Submodule F V} {ν c : F} (hc : c ≠ 0) {N : V →ₗ[F] V} :
+    IsInOrbitNu Q U ν (c • N) ↔ IsInOrbitNu Q U ν N := by
+  have key : ∀ {c : F}, c ≠ 0 → ∀ {N : V →ₗ[F] V}, IsInOrbitNu Q U ν N →
+      IsInOrbitNu Q U ν (c • N) := by
+    intro c hc N ⟨d₀, U₁, h1, h2, h3, h4, h5, h6, h7, ⟨u, hu, hu'⟩, h9⟩
+    refine ⟨d₀, U₁, h1, h2, h3, h4, h5, ?_, fun u hu => ?_, ⟨u, hu, ?_⟩, h9⟩
+    · simp [h6]
+    · simpa using U₁.smul_mem c (h7 u hu)
+    · rw [smul_pow, LinearMap.smul_apply]
+      exact smul_ne_zero (pow_ne_zero _ hc) hu'
+  refine ⟨fun h => ?_, key hc⟩
+  have := key (inv_ne_zero hc) h
+  rwa [smul_smul, inv_mul_cancel₀ hc, one_smul] at this
+
+/-- **Luo's recipe is stable under scaling each factor** by `a, b ≠ 0`. -/
+theorem _root_.GSpinGGP.LuoDatum.orbitSpec_iff_of_smul (L : LuoDatum F) {a b : F} (ha : a ≠ 0)
+    (hb : b ≠ 0) (U : Submodule F L.W) {Y Y' : L.Amb} (h1 : L.fstA Y' = a • L.fstA Y)
+    (h2 : L.sndA Y' = b • L.sndA Y) : L.OrbitSpec U Y' ↔ L.OrbitSpec U Y := by
+  unfold LuoDatum.OrbitSpec
+  rw [h1, h2, isInOrbitNu_smul_iff ha, isInOrbitNu_smul_iff hb]
+
+/-- **The recipe on `𝔤⁰` is stable under scaling each factor** by `a, b ≠ 0`. -/
+theorem orbitSpecAt_iff_of_smul {a b : F} (ha : a ≠ 0) (hb : b ≠ 0)
+    (U : Submodule F (Fin d.m → F)) {Y Y' : d.ambient} (h1 : Y'.1 = a • Y.1)
+    (h2 : Y'.2 = b • Y.2) : d.OrbitSpecAt U Y' ↔ d.OrbitSpecAt U Y := by
+  rw [orbitSpecAt_iff_orbitSpec_toSOLin, orbitSpecAt_iff_orbitSpec_toSOLin]
+  exact d.luoOf.orbitSpec_iff_of_smul ha hb U
+    (by rw [fstA_toSOLin, fstA_toSOLin, h1, map_smul]; rfl)
+    (by rw [sndA_toSOLin, sndA_toSOLin, h2, map_smul]; rfl)
+
+/-- **(L7) The chosen orbits correspond**, for a surjective map `E` of nilpotent orbits of `𝔤⁰_X`
+onto those of `(so(W) ⊕ so(V))_{ad X}` that matches the regular orbits, the orbits meeting the two
+recipes, and the zero orbits, provided at most one regular nilpotent orbit of `𝔤⁰_X` meets
+`OrbitSpecAt (ker X)` (`huniq`). -/
+theorem orbitChoice_eq_of_orbitMap (X : CliffordAlgebra d.QW)
+    (E : NilOrbit (lieGrpCentralizer d.G (d.diagLie X)) (lieCentralizer d.lieZero (d.diagLie X)) →
+      NilOrbit (lieGrpCentralizer d.luoOf.Gbar (d.toSOLin (d.diagLie X)))
+        (lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X))))
+    (hsurj : Function.Surjective E)
+    (hreg : ∀ O, E O ∈ NilReg _ _ ↔ O ∈ NilReg _ _)
+    (hspec : ∀ O, (∃ Y ∈ nilOrbitSet (E O),
+        d.luoOf.OrbitSpec (LinearMap.ker (adV d.QW X)) (Y : d.luoOf.Amb)) ↔
+      ∃ Y ∈ nilOrbitSet O, d.OrbitSpecAt (LinearMap.ker (adV d.QW X)) (Y : d.ambient))
+    (hzero : E (Quotient.mk (nilSetoid _ _) ⟨0, LieSubalgebra.zero_mem _, IsNilpotent.zero⟩) =
+      Quotient.mk (nilSetoid _ _) ⟨0, LieSubalgebra.zero_mem _, IsNilpotent.zero⟩)
+    (huniq : ∀ O O' : NilOrbit (lieGrpCentralizer d.G (d.diagLie X))
+        (lieCentralizer d.lieZero (d.diagLie X)), O ∈ NilReg _ _ → O' ∈ NilReg _ _ →
+      (∃ Y ∈ nilOrbitSet O, d.OrbitSpecAt (LinearMap.ker (adV d.QW X)) (Y : d.ambient)) →
+      (∃ Y ∈ nilOrbitSet O', d.OrbitSpecAt (LinearMap.ker (adV d.QW X)) (Y : d.ambient)) →
+      O = O') :
+    E (d.orbitChoiceLie X) = d.luoOf.orbitChoice (d.toSOLin (d.diagLie X)) := by
+  classical
+  unfold orbitChoiceLie LuoDatum.orbitChoice
+  by_cases h : ∃ O ∈ NilReg (lieGrpCentralizer d.G (d.diagLie X))
+      (lieCentralizer d.lieZero (d.diagLie X)),
+      ∃ Y ∈ nilOrbitSet O, d.OrbitSpecAt (LinearMap.ker (adV d.QW X)) (Y : d.ambient)
+  · have h' : ∃ O ∈ NilReg (lieGrpCentralizer d.luoOf.Gbar (d.toSOLin (d.diagLie X)))
+        (lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X))),
+        ∃ Y ∈ nilOrbitSet O, d.luoOf.OrbitSpec (LinearMap.ker (d.luoOf.fstA
+          (d.toSOLin (d.diagLie X)))) (Y : d.luoOf.Amb) :=
+      ⟨E h.choose, (hreg _).mpr h.choose_spec.1, (hspec _).mpr h.choose_spec.2⟩
+    simp only [h, h', ↓reduceDIte]
+    obtain ⟨O₂, hO₂⟩ := hsurj h'.choose
+    have hr : O₂ ∈ NilReg _ _ := (hreg O₂).mp (hO₂ ▸ h'.choose_spec.1)
+    have hs := (hspec O₂).mp (hO₂ ▸ h'.choose_spec.2)
+    rw [← hO₂, huniq _ _ h.choose_spec.1 hr h.choose_spec.2 hs]
+  · have h' : ¬ ∃ O ∈ NilReg (lieGrpCentralizer d.luoOf.Gbar (d.toSOLin (d.diagLie X)))
+        (lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X))),
+        ∃ Y ∈ nilOrbitSet O, d.luoOf.OrbitSpec (LinearMap.ker (d.luoOf.fstA
+          (d.toSOLin (d.diagLie X)))) (Y : d.luoOf.Amb) := by
+      rintro ⟨O', hr, hs⟩
+      obtain ⟨O, rfl⟩ := hsurj O'
+      exact h ⟨O, (hreg O).mp hr, (hspec O).mp hs⟩
+    simp only [h, h', ↓reduceDIte]
+    exact hzero
+
+/-- **Reduction of `cTheta_toSO`** to three inputs at `X`: uniqueness of the regular
+coefficients of local expansions on `𝔤⁰` at `diagLie X` (`hgerm`; Harish-Chandra 1999 Cor 5.10,
+BP §4.5, Lie-algebra case), uniqueness of the regular nilpotent orbit of `𝔤⁰_X` meeting the recipe
+(`horb`), and a map `E` of nilpotent orbits as in `orbitChoice_eq_of_orbitMap` along which every
+local expansion `c'` of `θ` at `ad X` gives the local expansion `c' ∘ E` of `θ ∘ ad` at `X`
+(`htr`; `ad` composed with the rescaling of each factor that turns `bilin` into the trace form).
+The chosen expansion of `θ` is transported, so uniqueness is needed on `𝔤⁰` only. -/
+theorem cTheta_toSO_of_transport {θ : ↥d.luoOf.lie → ℂ}
+    (hθ : IsLieQuasiCharacter d.luoOf.Gbar d.luoOf.lie d.luoOf.traceForm ψ θ)
+    (X : CliffordAlgebra d.QW) (hXm : d.toSOLin (d.diagLie X) ∈ d.luoOf.lie)
+    (hss : IsSS F (d.toSOLin (d.diagLie X)))
+    (hgerm : ∀ c c'' : NilOrbit (lieGrpCentralizer d.G (d.diagLie X))
+        (lieCentralizer d.lieZero (d.diagLie X)) → ℂ,
+      HasGermExpansionLie d.G d.lieZero d.bilin ψ (θ ∘ d.toSO) (d.diagLie X) c →
+      HasGermExpansionLie d.G d.lieZero d.bilin ψ (θ ∘ d.toSO) (d.diagLie X) c'' →
+      ∀ O ∈ NilReg _ _, c O = c'' O)
+    (horb : ∀ O O' : NilOrbit (lieGrpCentralizer d.G (d.diagLie X))
+        (lieCentralizer d.lieZero (d.diagLie X)), O ∈ NilReg _ _ → O' ∈ NilReg _ _ →
+      (∃ Y ∈ nilOrbitSet O, d.OrbitSpecAt (LinearMap.ker (adV d.QW X)) (Y : d.ambient)) →
+      (∃ Y ∈ nilOrbitSet O', d.OrbitSpecAt (LinearMap.ker (adV d.QW X)) (Y : d.ambient)) →
+      O = O')
+    (E : NilOrbit (lieGrpCentralizer d.G (d.diagLie X)) (lieCentralizer d.lieZero (d.diagLie X)) →
+      NilOrbit (lieGrpCentralizer d.luoOf.Gbar (d.toSOLin (d.diagLie X)))
+        (lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X))))
+    (hsurj : Function.Surjective E)
+    (hreg : ∀ O, E O ∈ NilReg _ _ ↔ O ∈ NilReg _ _)
+    (hspec : ∀ O, (∃ Y ∈ nilOrbitSet (E O),
+        d.luoOf.OrbitSpec (LinearMap.ker (adV d.QW X)) (Y : d.luoOf.Amb)) ↔
+      ∃ Y ∈ nilOrbitSet O, d.OrbitSpecAt (LinearMap.ker (adV d.QW X)) (Y : d.ambient))
+    (hzero : E (Quotient.mk (nilSetoid _ _) ⟨0, LieSubalgebra.zero_mem _, IsNilpotent.zero⟩) =
+      Quotient.mk (nilSetoid _ _) ⟨0, LieSubalgebra.zero_mem _, IsNilpotent.zero⟩)
+    (htr : ∀ c', HasGermExpansionLie d.luoOf.Gbar d.luoOf.lie d.luoOf.traceForm ψ θ
+        (d.toSOLin (d.diagLie X)) c' →
+      HasGermExpansionLie d.G d.lieZero d.bilin ψ (θ ∘ d.toSO) (d.diagLie X) (c' ∘ E)) :
+    d.germLie0 ψ (θ ∘ d.toSO) (d.diagLie X) (d.orbitChoiceLie X) =
+      d.luoOf.cTheta ψ θ (d.toSOLin (d.diagLie X)) := by
+  rw [LuoDatum.cTheta, ← d.orbitChoice_eq_of_orbitMap X E hsurj hreg hspec hzero horb]
+  exact germLie_eq_of_transport E hreg (hθ.2 ⟨_, hXm⟩ hss) htr hgerm _
 
 /-! ## (L6)–(L9) `m^Lie_geom` -/
 
