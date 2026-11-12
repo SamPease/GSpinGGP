@@ -86,7 +86,7 @@ theorem jointClauses_specP_adV :
   obtain ⟨hYg, hYx⟩ := mem_lieCentralizer.mp hY
   exact jointClauses_of_charZero hQ (fun u v => bform_specP g u v)
     (isSemisimple_specP_of_isSS Q g hg)
-    (fun u v => bform_adV hYg u v) (isSemisimple_adV hYg hs)
+    (LinearMap.isSkewAdjoint_iff.2 (bform_adV hYg)) (isSemisimple_adV hYg hs)
     ((commute_iff_adV hQ g hYg).mp hYx).symm (det_specP g)
 
 /-- **`⌊dim V/2⌋ + 1 ≤ dim gspin(V)_{g,Y}`**, for `g` and `Y` semisimple. -/

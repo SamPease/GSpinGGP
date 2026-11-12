@@ -1457,34 +1457,6 @@ theorem mk_mem_nilReg_of_isRegularNil (G : Subgroup Aˣ)
   rw [← finrank_lieCentralizer_conj 𝔤 g (hG g hgG) hg', hgX]
   exact hX.2.2
 
-/-- Conjugation by `G_x(F)` preserves `𝔤_x` when conjugation by `G(F)` preserves `𝔤`. -/
-theorem conj_mem_lieCentralizer {H : Subgroup Aˣ} {𝔥 : LieSubalgebra F A} {z : Aˣ}
-    (hH : ∀ g ∈ H, ∀ Y ∈ 𝔥, (g : A) * Y * (↑g⁻¹ : A) ∈ 𝔥) {g : Aˣ} (hg : g ∈ grpCentralizer H z)
-    {X : A} (hX : X ∈ lieCentralizer 𝔥 (z : A)) :
-    (g : A) * X * (↑g⁻¹ : A) ∈ lieCentralizer 𝔥 (z : A) := by
-  obtain ⟨hgH, hgz⟩ := hg
-  have hc1 : Commute (z : A) (g : A) := by
-    have h := congrArg Units.val (Subgroup.mem_centralizer_singleton_iff.mp hgz)
-    rw [Units.val_mul, Units.val_mul] at h
-    exact h.symm
-  obtain ⟨hX𝔥, hXz⟩ := mem_lieCentralizer.mp hX
-  exact mem_lieCentralizer.mpr ⟨hH g hgH X hX𝔥,
-    (hc1.mul_right hXz).mul_right hc1.units_inv_right⟩
-
-/-- The orbit of a nilpotent `X` is regular iff `X` is regular nilpotent (when conjugation by `H`
-preserves `𝔥`). -/
-theorem mk_mem_nilReg_iff {H : Subgroup Aˣ} {𝔥 : LieSubalgebra F A}
-    (hH : ∀ g ∈ H, ∀ Y ∈ 𝔥, (g : A) * Y * (↑g⁻¹ : A) ∈ 𝔥)
-    (X : {X : A // X ∈ 𝔥 ∧ IsNilpotent X}) :
-    Quotient.mk (nilSetoid H 𝔥) X ∈ NilReg H 𝔥 ↔ IsRegularNil 𝔥 X.1 := by
-  refine ⟨fun h => ?_, mk_mem_nilReg_of_isRegularNil H 𝔥 hH X⟩
-  obtain ⟨g, hgH, hgX⟩ := Quotient.exact (Quotient.out_eq (Quotient.mk (nilSetoid H 𝔥) X))
-  refine ⟨X.2.1, X.2.2, ?_⟩
-  have hg' : ∀ Y ∈ 𝔥, (↑g⁻¹ : A) * Y * (g : A) ∈ 𝔥 := fun Y hY => by
-    simpa using hH g⁻¹ (H.inv_mem hgH) Y hY
-  rw [← hgX, finrank_lieCentralizer_conj 𝔥 g (hH g hgH) hg']
-  exact h.2.2
-
 end Nilpotent
 
 /-! ## 6. Harmonic analysis on `𝔤` (Thesis §2.4; BP §1.6, §1.8) -/

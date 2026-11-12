@@ -15,6 +15,34 @@ preserves both, then `h` acts on `E'` as the inverse transpose of its action on 
 
 open Module
 
+namespace LinearMap
+
+variable {R M M₁ : Type*} [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup M₁] [Module R M₁]
+  {B : LinearMap.BilinForm R M} {B₁ : LinearMap.BilinForm R M₁}
+
+/-- An adjoint pair stays an adjoint pair after extension of scalars. -/
+theorem IsAdjointPair.baseChange (A : Type*) [CommRing A] [Algebra R A] {f : M →ₗ[R] M₁}
+    {g : M₁ →ₗ[R] M} (h : IsAdjointPair B B₁ f g) :
+    IsAdjointPair (B.baseChange A) (B₁.baseChange A) (f.baseChange A) (g.baseChange A) := by
+  intro u v
+  induction u using TensorProduct.induction_on with
+  | zero => simp
+  | tmul a x =>
+    induction v using TensorProduct.induction_on with
+    | zero => simp
+    | tmul b y => simp [LinearMap.BilinForm.baseChange_tmul, h x y]
+    | add v w hv hw => simp only [map_add] at hv hw ⊢; rw [hv, hw]
+  | add u w hu hw => simp only [map_add, LinearMap.add_apply] at hu hw ⊢; rw [hu, hw]
+
+/-- A skew-adjoint endomorphism stays skew-adjoint after extension of scalars. -/
+theorem IsSkewAdjoint.baseChange (A : Type*) [CommRing A] [Algebra R A] {f : M →ₗ[R] M}
+    (h : B.IsSkewAdjoint f) : (B.baseChange A).IsSkewAdjoint (f.baseChange A) := by
+  have := IsAdjointPair.baseChange A (f := f) (g := -f) h
+  rw [LinearMap.baseChange_neg] at this
+  exact this
+
+end LinearMap
+
 namespace GSpinGGP
 
 namespace IsomCent
@@ -230,8 +258,8 @@ theorem det_restrict_congr {W : Type*} [AddCommGroup W] [Module K W] (f : W →�
   subst h; rfl
 
 /-- An isometry stays an isometry after extension of scalars. -/
-theorem IsIsom.baseChange (L : Type*) [Field L] [Algebra K L] {h : V →ₗ[K] V}
-    (hh : IsIsom B h) : IsIsom (B.baseChange L) (h.baseChange L) := by
+theorem IsIsom.baseChange (A : Type*) [CommRing A] [Algebra K A] {h : V →ₗ[K] V}
+    (hh : IsIsom B h) : IsIsom (B.baseChange A) (h.baseChange A) := by
   intro u v
   induction u using TensorProduct.induction_on with
   | zero => simp
@@ -241,17 +269,6 @@ theorem IsIsom.baseChange (L : Type*) [Field L] [Algebra K L] {h : V →ₗ[K] V
     | tmul b y => simp [LinearMap.BilinForm.baseChange_tmul, hh x y]
     | add v w hv hw => simp only [map_add, LinearMap.add_apply] at hv hw ⊢; rw [hv, hw]
   | add u w hu hw => simp only [map_add, LinearMap.add_apply] at hu hw ⊢; rw [hu, hw]
-
-/-- A skew endomorphism stays skew after extension of scalars. -/
-theorem IsSkew.baseChange (L : Type*) [Field L] [Algebra K L] {h : V →ₗ[K] V}
-    (hh : IsSkew B h) : IsSkew (B.baseChange L) (h.baseChange L) := by
-  intro u v
-  induction u using TensorProduct.inductionOn with
-  | tmul a x =>
-    induction v using TensorProduct.inductionOn with
-    | tmul b y => simp [LinearMap.BilinForm.baseChange_tmul, hh x y]
-    | add v w hv hw => simp only [map_add] at hv hw ⊢; rw [hv, hw, neg_add]
-  | add u w hu hw => simp only [map_add, LinearMap.add_apply] at hu hw ⊢; rw [hu, hw, neg_add]
 
 /-- Over a perfect field, semisimplicity survives extension of scalars to the algebraic closure
 (squarefree polynomials stay squarefree). -/

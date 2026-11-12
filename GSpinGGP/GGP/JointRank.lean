@@ -31,13 +31,13 @@ variable {V : Type*} [AddCommGroup V] [Module K V]
 variable {Q : QuadraticForm K V} {P N : Module.End K V}
 
 /-- Wedges of dual families in paired joint eigenspaces lie in the joint centralizer. -/
-theorem wedge_mem_soCent_inf (hP : IsIsom (bform Q) P) (hN : IsSkew (bform Q) N) {μ c : K}
+theorem wedge_mem_soCent_inf (hP : IsIsom (bform Q) P) (hN : (bform Q).IsSkewAdjoint N) {μ c : K}
     (hμ : μ ≠ 0) {u w : V} (hu : u ∈ P.eigenspace μ) (hu' : u ∈ N.eigenspace c)
     (hw : w ∈ P.eigenspace μ⁻¹) (hw' : w ∈ N.eigenspace (-c)) :
     wedge (bform Q) u w ∈ soCent Q P ⊓ soCent Q N :=
-  ⟨mem_soCent.2 ⟨isSkew_wedge ⟨bform_comm Q⟩ u w,
+  ⟨mem_soCent.2 ⟨(isSkewAdjoint_wedge ⟨bform_comm Q⟩ u w).eq,
       (commute_wedge ⟨bform_comm Q⟩ hP (mul_inv_cancel₀ hμ) hu hw).eq.symm⟩,
-    mem_soCent.2 ⟨isSkew_wedge ⟨bform_comm Q⟩ u w,
+    mem_soCent.2 ⟨(isSkewAdjoint_wedge ⟨bform_comm Q⟩ u w).eq,
       (commute_wedge_of_skew hN hu' hw').eq.symm⟩⟩
 
 /-- For dual families with `d ≥ 2`, the wedges `u₀ ∧ w₁` and `u₁ ∧ w₀` do not commute. -/
@@ -53,7 +53,7 @@ theorem not_commute_wedge_dual {d : ℕ} (hd : 2 ≤ d) (u w : Fin d → V)
   simp at h1
   exact hu1 h1.symm
 
-variable (hP : IsIsom (bform Q) P) (hN : IsSkew (bform Q) N) {μ c : K} (hμ0 : μ ≠ 0)
+variable (hP : IsIsom (bform Q) P) (hN : (bform Q).IsSkewAdjoint N) {μ c : K} (hμ0 : μ ≠ 0)
   (hne : μ⁻¹ ≠ μ ∨ c ≠ 0) {u w : V} (hu : P u = μ • u) (hu' : N u = c • u) (hw : P w = μ⁻¹ • w)
   (hw' : N w = (-c) • w) (huw : bform Q u w ≠ 0) (hspan : Submodule.span K {u, w} = ⊤)
 include hP hN hμ0 hne hu hu' hw hw' huw hspan
@@ -486,7 +486,7 @@ private theorem so_clauses [CharZero K] (hQ : IsNondeg Q) :
 /-- **The four clauses on a paired piece**: `V` spanned by `u_i` (joint eigenvectors for `(μ, c)`)
 and `w_j` (for `(μ⁻¹, −c)`), `w_j` for `(μ⁻¹, −c)`, `(μ, c) ≠ (μ⁻¹, −c)`, `b(w_j, u_k) = δ_{jk}`: bound `d`. -/
 theorem jointClauses_pair {P N : Module.End K V} (hP : IsIsom (bform Q) P)
-    (hN : IsSkew (bform Q) N) {μ c : K} (hμ0 : μ ≠ 0) (hne : μ⁻¹ ≠ μ ∨ c ≠ 0) {d : ℕ}
+    (hN : (bform Q).IsSkewAdjoint N) {μ c : K} (hμ0 : μ ≠ 0) (hne : μ⁻¹ ≠ μ ∨ c ≠ 0) {d : ℕ}
     (hd : 1 ≤ d) (u w : Fin d → V) (hu : ∀ i, P (u i) = μ • u i) (hu' : ∀ i, N (u i) = c • u i)
     (hw : ∀ j, P (w j) = μ⁻¹ • w j) (hw' : ∀ j, N (w j) = (-c) • w j)
     (huu : ∀ i k, bform Q (u i) (u k) = 0)
@@ -555,7 +555,7 @@ variable {K : Type*} [Field K] [Invertible (2 : K)] [CharZero K] [IsAlgClosed K]
 /-- Induction form of `jointClauses`, with `dim E₋₁(P)` even in place of `det P = 1`. -/
 private theorem jointClauses_aux (n : ℕ) : ∀ {V : Type u} [AddCommGroup V] [Module K V]
     [FiniteDimensional K V] (Q : QuadraticForm K V) (P N : Module.End K V), finrank K V = n →
-    IsNondeg Q → IsIsom (bform Q) P → P.IsSemisimple → IsSkew (bform Q) N → N.IsSemisimple →
+    IsNondeg Q → IsIsom (bform Q) P → P.IsSemisimple → (bform Q).IsSkewAdjoint N → N.IsSemisimple →
     Commute N P → Even (finrank K ↥(P.eigenspace (-1))) →
     JointClauses Q P N (n / 2) := by
   induction n using Nat.strong_induction_on with
@@ -662,10 +662,11 @@ private theorem jointClauses_aux (n : ℕ) : ∀ {V : Type u} [AddCommGroup V] [
     have hPU := hUmaps P (Commute.refl P) hc
     have hNU := hUmaps N hc.symm (Commute.refl N)
     have hPU' := mapsTo_orthogonal_of_isometry hQ hP hPU
-    have hNU' := mapsTo_orthogonal_of_skew hN hNU
+    have hNU' := mapsTo_orthogonal_of_skew hN.eq hNU
     have hpair := jointClauses_pair (Q := Q.comp U.subtype) (P := P.restrict hPU)
       (N := N.restrict hNU) (fun x y => by simp only [bform_comp_subtype]; exact hP x y)
-      (fun x y => by simp only [bform_comp_subtype]; exact hN x y) hμ0 hne hd1
+      (LinearMap.isSkewAdjoint_iff.2 fun x y => by
+        simp only [bform_comp_subtype]; exact hN.eq x y) hμ0 hne hd1
       (fun i => ⟨u i, Submodule.mem_sup_left (huE i)⟩)
       (fun j => ⟨w j, Submodule.mem_sup_right (hwE' j)⟩)
       (fun i => Subtype.ext (Module.End.mem_eigenspace_iff.1 (huE i).1))
@@ -761,7 +762,8 @@ private theorem jointClauses_aux (n : ℕ) : ∀ {V : Type u} [AddCommGroup V] [
       (N.restrict hNU') rfl (isNondeg_comp_subtype horth' hQ hcompl.symm)
       (fun x y => by simp only [bform_comp_subtype]; exact hP x y)
       (hssP.restrict ((Module.End.mem_invtSubmodule _).2 hPU'))
-      (fun x y => by simp only [bform_comp_subtype]; exact hN x y)
+      (LinearMap.isSkewAdjoint_iff.2 fun x y => by
+        simp only [bform_comp_subtype]; exact hN.eq x y)
       (hssN.restrict ((Module.End.mem_invtSubmodule _).2 hNU'))
       (LinearMap.restrict_commute hc _ _) hev'
     have hcomb := jointClauses_of_split horth hcompl hPU hPU' hNU hNU'
@@ -855,8 +857,8 @@ with `det P = 1` and `N` a semisimple skew map commuting with `P`. Then
 no nonzero nilpotent element and the only unipotent isometry commuting with `P` and `N` is `1`. -/
 theorem jointClauses {V : Type u} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
     {Q : QuadraticForm K V} {P N : Module.End K V} (hQ : IsNondeg Q) (hP : IsIsom (bform Q) P)
-    (hssP : P.IsSemisimple) (hN : IsSkew (bform Q) N) (hssN : N.IsSemisimple) (hc : Commute N P)
-    (hdet : LinearMap.det P = 1) : JointClauses Q P N (finrank K V / 2) := by
+    (hssP : P.IsSemisimple) (hN : (bform Q).IsSkewAdjoint N) (hssN : N.IsSemisimple)
+    (hc : Commute N P) (hdet : LinearMap.det P = 1) : JointClauses Q P N (finrank K V / 2) := by
   refine jointClauses_aux _ Q P N rfl hQ hP hssP hN hssN hc ?_
   have hd := IsomCent.det_eq_det_one_mul_det_neg_one (B := bform Q) ⟨bform_comm Q⟩ hQ hP hssP hP
     (Commute.refl P)

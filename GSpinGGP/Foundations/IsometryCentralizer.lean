@@ -37,20 +37,33 @@ For `h ∈ S`, `h − h⁻¹ ∈ 𝔩`.  On a line `E_μ` any two maps commute. 
 
 noncomputable section
 
+namespace LinearMap
+
+variable {R M N : Type*} [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
+  {B : M →ₗ[R] M →ₗ[R] N} {f : Module.End R M}
+
+/-- Skew-adjointness, unfolded: `B (f u) v = - B u (f v)`. -/
+theorem isSkewAdjoint_iff : B.IsSkewAdjoint f ↔ ∀ u v, B (f u) v = -B u (f v) := by
+  simp only [IsSkewAdjoint, IsAdjointPair, Pi.neg_apply, map_neg]
+
+theorem IsSkewAdjoint.eq (h : B.IsSkewAdjoint f) (u v : M) : B (f u) v = -B u (f v) :=
+  isSkewAdjoint_iff.1 h u v
+
+end LinearMap
+
 open Module LinearMap
 
 namespace GSpinGGP
 
 namespace IsomCent
 
+/-- `B`-isometries. -/
+def IsIsom {R M : Type*} [CommSemiring R] [AddCommMonoid M] [Module R M]
+    (B : LinearMap.BilinForm R M) (h : M →ₗ[R] M) : Prop :=
+  ∀ u v, B (h u) (h v) = B u v
+
 variable {K : Type*} [Field K] {V : Type*} [AddCommGroup V] [Module K V]
 variable (B : LinearMap.BilinForm K V)
-
-/-- `B`-isometries. -/
-def IsIsom (h : V →ₗ[K] V) : Prop := ∀ u v, B (h u) (h v) = B u v
-
-/-- `B`-skew endomorphisms. -/
-def IsSkew (Y : V →ₗ[K] V) : Prop := ∀ u v, B (Y u) v = - B u (Y v)
 
 /-- The skew map `z ↦ B(w,z) u − B(u,z) w`. -/
 def wedge (u w : V) : V →ₗ[K] V := (B w).smulRight u - (B u).smulRight w
@@ -59,8 +72,8 @@ theorem wedge_apply (u w z : V) : wedge B u w z = B w z • u - B u z • w := r
 
 variable {B}
 
-theorem isSkew_wedge (hB : B.IsSymm) (u w : V) : IsSkew B (wedge B u w) := by
-  intro z z'
+theorem isSkewAdjoint_wedge (hB : B.IsSymm) (u w : V) : B.IsSkewAdjoint (wedge B u w) := by
+  refine LinearMap.isSkewAdjoint_iff.2 fun z z' => ?_
   simp only [wedge_apply, map_sub, map_smul, LinearMap.sub_apply, LinearMap.smul_apply, smul_eq_mul]
   have h1 := hB.eq u z'; have h2 := hB.eq w z'; have h3 := hB.eq z u; have h4 := hB.eq z w
   rw [h1, h2, ← h3, ← h4]; ring
@@ -150,8 +163,9 @@ open Module.End
 
 /-- `𝔩` is abelian: skew endomorphisms commuting with `X` and vanishing on `V'` commute. -/
 def LieAbelian (B : LinearMap.BilinForm K V) (X : Module.End K V) : Prop :=
-  ∀ Y₁ Y₂ : Module.End K V, IsSkew B Y₁ → IsSkew B Y₂ → Commute X Y₁ → Commute X Y₂ →
-    (∀ z ∈ X.eigenspace 1, Y₁ z = 0) → (∀ z ∈ X.eigenspace 1, Y₂ z = 0) → Commute Y₁ Y₂
+  ∀ Y₁ Y₂ : Module.End K V, B.IsSkewAdjoint Y₁ → B.IsSkewAdjoint Y₂ → Commute X Y₁ →
+    Commute X Y₂ → (∀ z ∈ X.eigenspace 1, Y₁ z = 0) → (∀ z ∈ X.eigenspace 1, Y₂ z = 0) →
+    Commute Y₁ Y₂
 
 theorem exists_pair_of_one_lt_finrank (E : Submodule K V) (h : 1 < finrank K E) :
     ∃ x ∈ E, ∃ y ∈ E, ∀ s t : K, s • x + t • y = 0 → s = 0 ∧ t = 0 := by
@@ -195,7 +209,8 @@ theorem finrank_eigenspace_le_one (hB : B.IsSymm) (hnd : B.Nondegenerate) (hX : 
   have h22 : B u₂ u₁ = 0 := bform_eigen_eq_zero hX hμ2 hu₂ hu₁
   have h11 : B u₁ u₁ = 0 := bform_eigen_eq_zero hX hμ2 hu₁ hu₁
   have h12 : B u₁ u₂ = 0 := bform_eigen_eq_zero hX hμ2 hu₁ hu₂
-  have hc := hL (wedge B u₁ w₂) (wedge B u₂ w₁) (isSkew_wedge hB _ _) (isSkew_wedge hB _ _)
+  have hc := hL (wedge B u₁ w₂) (wedge B u₂ w₁) (isSkewAdjoint_wedge hB _ _)
+    (isSkewAdjoint_wedge hB _ _)
     (commute_wedge hB hX h1 hu₁ hw₂) (commute_wedge hB hX h1 hu₂ hw₁)
     (fun z hz => wedge_eq_zero_of_fixed hX hμ1 hμ'1 hu₁ hw₂ hz)
     (fun z hz => wedge_eq_zero_of_fixed hX hμ1 hμ'1 hu₂ hw₁ hz)
@@ -259,7 +274,8 @@ theorem finrank_eigenspace_neg_one_le_two [CharZero K] (hB : B.IsSymm) (hnd : B.
     by_contra h; push Not at h; exact hw0 (hnd.1 w h)
   have hm : (-1 : K) * -1 = 1 := by norm_num
   have h1 : (-1 : K) ≠ 1 := by norm_num
-  have hc := hL (wedge B u v) (wedge B v w) (isSkew_wedge hB _ _) (isSkew_wedge hB _ _)
+  have hc := hL (wedge B u v) (wedge B v w) (isSkewAdjoint_wedge hB _ _)
+    (isSkewAdjoint_wedge hB _ _)
     (commute_wedge hB hX hm x.2 hv) (commute_wedge hB hX hm hv y.2)
     (fun z hz => wedge_eq_zero_of_fixed hX h1 h1 x.2 hv hz)
     (fun z hz => wedge_eq_zero_of_fixed hX h1 h1 hv y.2 hz)
@@ -480,14 +496,14 @@ theorem det_restrict_neg_one [CharZero K] (hB : B.IsSymm) (hnd : B.Nondegenerate
 /-- The inverse of an isometry `h ∈ S`, and `h − h⁻¹ ∈ 𝔩`. -/
 theorem exists_inv_mem_lie (hnd : B.Nondegenerate) (hX : IsIsom B X) {h : Module.End K V}
     (hi : IsIsom B h) (hc : Commute X h) (hfix : ∀ z ∈ X.eigenspace 1, h z = z) :
-    ∃ g : Module.End K V, (∀ v, h (g v) = v) ∧ (∀ v, g (h v) = v) ∧ IsSkew B (h - g) ∧
-      Commute X (h - g) ∧ ∀ z ∈ X.eigenspace 1, (h - g) z = 0 := by
+    ∃ g : Module.End K V, (∀ v, h (g v) = v) ∧ (∀ v, g (h v) = v) ∧
+      B.IsSkewAdjoint ⇑(h - g) ∧ Commute X (h - g) ∧ ∀ z ∈ X.eigenspace 1, (h - g) z = 0 := by
   let e := LinearEquiv.ofInjectiveEndo h (IsIsom.injective hnd hi)
   let g : Module.End K V := e.symm
   have hhg : ∀ v, h (g v) = v := fun v => e.apply_symm_apply v
   have hgh : ∀ v, g (h v) = v := fun v => e.symm_apply_apply v
   refine ⟨g, hhg, hgh, ?_, ?_, ?_⟩
-  · intro u v
+  · refine LinearMap.isSkewAdjoint_iff.2 fun u v => ?_
     simp only [LinearMap.sub_apply, map_sub, LinearMap.sub_apply]
     have e1 : B (h u) v = B u (g v) := by conv_lhs => rw [← hhg v]; exact hi u (g v)
     have e2 : B (g u) v = B u (h v) := by rw [← hi (g u) v, hhg]
@@ -601,7 +617,7 @@ theorem exists_inv_of_isIsom (hnd : B.Nondegenerate) {h : Module.End K V} (hi : 
 theorem exists_mem_lie_of_commute (hnd : B.Nondegenerate)
     (hX : IsIsom B X) {h : Module.End K V} (hi : IsIsom B h) (hc : Commute X h) :
     ∃ g S : Module.End K V, (∀ v, h (g v) = v) ∧ (∀ v, g (h v) = v) ∧
-      IsSkew B ((h - g) * S) ∧ Commute X ((h - g) * S) ∧
+      B.IsSkewAdjoint ⇑((h - g) * S) ∧ Commute X ((h - g) * S) ∧
       (∀ z ∈ X.eigenspace 1, ((h - g) * S) z = 0) ∧
       (∀ w ∈ X.eigenspace (-1), S w = (4 : K) • w) ∧
       ∀ w, S (X w) = X (S w) := by
@@ -650,7 +666,8 @@ theorem exists_mem_lie_of_commute (hnd : B.Nondegenerate)
     have := hgXX w
     rw [hw, map_neg] at this
     rw [← neg_neg (gX w), this]
-  refine ⟨g, S, hhg, hgh, fun u v => ?_, ((hc.sub_right hXg).mul_right hSX.symm), fun z hz => ?_,
+  refine ⟨g, S, hhg, hgh, LinearMap.isSkewAdjoint_iff.2 fun u v => ?_,
+    ((hc.sub_right hXg).mul_right hSX.symm), fun z hz => ?_,
     fun w hw => ?_, fun w => ?_⟩
   · rw [Module.End.mul_apply, hAskew, hSadj, ← Module.End.mul_apply S, ← hAS.eq]
   · have : S z = 0 := by
@@ -754,10 +771,11 @@ theorem LieAbelian.of_equiv {V₁ : Type*} [AddCommGroup V₁] [Module K V₁]
     (hL : LieAbelian B₁ X₁) : LieAbelian B X := by
   intro Y₁ Y₂ hs₁ hs₂ hc₁ hc₂ hf₁ hf₂
   let c : Module.End K V → Module.End K V₁ := fun Y => e.symm.toLinearMap ∘ₗ Y ∘ₗ e.toLinearMap
-  have hcY : ∀ Y : Module.End K V, IsSkew B Y → IsSkew B₁ (c Y) := by
-    intro Y hY u v
+  have hcY : ∀ Y : Module.End K V, B.IsSkewAdjoint Y → B₁.IsSkewAdjoint (c Y) := by
+    intro Y hY
+    refine LinearMap.isSkewAdjoint_iff.2 fun u v => ?_
     simp only [c, LinearMap.comp_apply, LinearEquiv.coe_coe]
-    rw [← hB, ← hB, e.apply_symm_apply, e.apply_symm_apply, hY]
+    rw [← hB, ← hB, e.apply_symm_apply, e.apply_symm_apply, hY.eq]
   have hcc : ∀ Y : Module.End K V, Commute X Y → Commute X₁ (c Y) := by
     intro Y hY
     refine LinearMap.ext fun v => ?_
@@ -802,10 +820,10 @@ theorem LieAbelian.of_restrict (hss : X.IsSemisimple) (U : Submodule K V)
   have hm₂ := hmapsU Y₂ hc₂ hf₂
   let r₁ : Module.End K U := Y₁.restrict (fun u _ => hm₁ u)
   let r₂ : Module.End K U := Y₂.restrict (fun u _ => hm₂ u)
-  have hskew : ∀ (Y : Module.End K V) (h : ∀ v, Y v ∈ U), IsSkew B Y →
-      IsSkew (B.restrict U) (Y.restrict (fun u _ => h u)) := by
-    intro Y h hY u v
-    exact hY u v
+  have hskew : ∀ (Y : Module.End K V) (h : ∀ v, Y v ∈ U), B.IsSkewAdjoint Y →
+      LinearMap.IsSkewAdjoint (B.restrict U) (Y.restrict (fun u _ => h u)) := by
+    intro Y h hY
+    exact LinearMap.isSkewAdjoint_iff.2 fun u v => hY.eq u v
   have hcom : ∀ (Y : Module.End K V) (h : ∀ v, Y v ∈ U), Commute X Y →
       Commute (X.restrict hXU) (Y.restrict (fun u _ => h u)) := by
     intro Y h hY

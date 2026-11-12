@@ -30,24 +30,24 @@ variable {K : Type*} [Field K] {V : Type*} [AddCommGroup V] [Module K V]
 variable {B : LinearMap.BilinForm K V} {N : Module.End K V}
 
 /-- `B(E_c(N), E_c'(N)) = 0` unless `c + c' = 0`, for `N` skew. -/
-theorem bform_eigen_eq_zero_of_skew (hN : IsSkew B N) {c c' : K} (hcc' : c + c' ≠ 0) {u v : V}
-    (hu : u ∈ N.eigenspace c) (hv : v ∈ N.eigenspace c') : B u v = 0 := by
+theorem bform_eigen_eq_zero_of_skew (hN : B.IsSkewAdjoint N) {c c' : K} (hcc' : c + c' ≠ 0)
+    {u v : V} (hu : u ∈ N.eigenspace c) (hv : v ∈ N.eigenspace c') : B u v = 0 := by
   rw [mem_eigenspace_iff] at hu hv
-  have h := hN u v
+  have h := hN.eq u v
   rw [hu, hv, map_smul, map_smul, LinearMap.smul_apply, smul_eq_mul, smul_eq_mul] at h
   have : (c + c') * B u v = 0 := by linear_combination h
   exact (mul_eq_zero.1 this).resolve_left hcc'
 
 /-- The wedge of `u ∈ E_c(N)` and `w ∈ E_{−c}(N)` commutes with the skew `N`. -/
-theorem commute_wedge_of_skew (hN : IsSkew B N) {c : K} {u w : V}
+theorem commute_wedge_of_skew (hN : B.IsSkewAdjoint N) {c : K} {u w : V}
     (hu : u ∈ N.eigenspace c) (hw : w ∈ N.eigenspace (-c)) : Commute N (wedge B u w) := by
   rw [mem_eigenspace_iff] at hu hw
   ext z
   simp only [Module.End.mul_apply, wedge_apply, map_sub, map_smul]
   have h1 : B w (N z) = c * B w z := by
-    rw [← neg_neg (B w (N z)), ← hN, hw, map_smul, LinearMap.smul_apply, smul_eq_mul]; ring
+    rw [← neg_neg (B w (N z)), ← hN.eq, hw, map_smul, LinearMap.smul_apply, smul_eq_mul]; ring
   have h2 : B u (N z) = -c * B u z := by
-    rw [← neg_neg (B u (N z)), ← hN, hu, map_smul, LinearMap.smul_apply, smul_eq_mul]; ring
+    rw [← neg_neg (B u (N z)), ← hN.eq, hu, map_smul, LinearMap.smul_apply, smul_eq_mul]; ring
   rw [h1, h2, hu, hw]
   module
 
@@ -108,7 +108,7 @@ variable [IsAlgClosed K] [FiniteDimensional K V]
 
 /-- **Joint pairing**: for `u ∈ E_μ(P) ∩ E_c(N)` (`P` a semisimple isometry, `N` a semisimple skew
 map commuting with it), every value `B u v` is attained on `E_{μ⁻¹}(P) ∩ E_{−c}(N)`. -/
-theorem exists_joint_eigen_pair (hP : IsIsom B P) (hssP : P.IsSemisimple) (hN : IsSkew B N)
+theorem exists_joint_eigen_pair (hP : IsIsom B P) (hssP : P.IsSemisimple) (hN : B.IsSkewAdjoint N)
     (hssN : N.IsSemisimple) (hc : Commute N P) {μ c : K} {u : V} (hu : u ∈ P.eigenspace μ)
     (hu' : u ∈ N.eigenspace c) (v : V) :
     ∃ w ∈ P.eigenspace μ⁻¹ ⊓ N.eigenspace (-c), B u w = B u v := by

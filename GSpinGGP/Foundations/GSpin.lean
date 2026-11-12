@@ -249,33 +249,15 @@ section Clifford
 variable {K : Type*} [Field K] [Invertible (2 : K)]
 variable {V : Type*} [AddCommGroup V] [Module K V]
 
-/-- The exterior algebra of a finite-dimensional space is finite-dimensional
-(basis indexed by `Finset (Fin n)`). -/
-instance instFiniteExteriorAlgebra [Module.Finite K V] : Module.Finite K (ExteriorAlgebra K V) :=
-  Module.Finite.of_basis (Module.finBasis K V).ExteriorAlgebra
+/-! `C(V)` is finite-dimensional (`CliffordAlgebra.instFinite`, Tau Ceti; Thesis §5.1.1) and
+carries Tau Ceti's module topology (`CliffordAlgebra.instTopologicalSpaceCliffordAlgebra`), for
+which it is a topological ring (`CliffordAlgebra.instIsTopologicalRingCliffordAlgebra`). -/
 
-/-- `dim C(V) = 2^{dim V} < ∞` (Thesis §5.1.1).  Not in Mathlib; we transport finiteness of the
-exterior algebra along `CliffordAlgebra.equivExterior` (characteristic `≠ 2`). -/
-instance instFiniteCliffordAlgebra [Module.Finite K V] (Q : QuadraticForm K V) :
-    Module.Finite K (CliffordAlgebra Q) :=
-  Module.Finite.equiv (equivExterior Q).symm
-
-/-- The Clifford algebra over a topological field carries the module topology. -/
-instance instTopologicalSpaceCliffordAlgebra {R : Type*} [CommRing R] [TopologicalSpace R]
-    {M : Type*} [AddCommGroup M] [Module R M] (Q : QuadraticForm R M) :
-    TopologicalSpace (CliffordAlgebra Q) :=
-  moduleTopology R _
-
+/-- Tau Ceti's topology on `C(V)` is the module topology. -/
 instance instIsModuleTopologyCliffordAlgebra {R : Type*} [CommRing R] [TopologicalSpace R]
     {M : Type*} [AddCommGroup M] [Module R M] (Q : QuadraticForm R M) :
     IsModuleTopology R (CliffordAlgebra Q) :=
   ⟨rfl⟩
-
-/-- The Clifford algebra of a finite-dimensional space over a topological field is a topological
-ring for the module topology. -/
-instance instIsTopologicalRingCliffordAlgebra [TopologicalSpace K] [IsTopologicalRing K]
-    [Module.Finite K V] (Q : QuadraticForm K V) : IsTopologicalRing (CliffordAlgebra Q) :=
-  IsModuleTopology.isTopologicalRing K _
 
 end Clifford
 
@@ -4016,16 +3998,6 @@ def lie : LieSubalgebra K d.ambient where
       simpa [Ring.lie_def] using this
     · have := (gspin d.QV).lie_mem hX.2 hY.2
       simpa [Ring.lie_def] using this
-
-/-- `𝔤 = gspin(W) × gspin(V)` is `Ad(G)`-stable. -/
-theorem conj_mem_lie (g : ↥d.G) {X : d.ambient} (hX : X ∈ d.lie) :
-    ((g : d.ambientˣ) : d.ambient) * X * ((g⁻¹ : d.ambientˣ) : d.ambient) ∈ d.lie :=
-  ⟨conj_mem_gspin d.QW (d.fst g) hX.1, conj_mem_gspin d.QV (d.snd g) hX.2⟩
-
-/-- `conj_mem_lie` for units of the ambient algebra lying in `G`. -/
-theorem conj_mem_lie_of_mem :
-    ∀ g ∈ d.G, ∀ Y ∈ d.lie, (g : d.ambient) * Y * (↑g⁻¹ : d.ambient) ∈ d.lie :=
-  fun g hg Y hY => d.conj_mem_lie ⟨g, hg⟩ hY
 
 /-- The `G`-invariant symmetric bilinear form on the ambient algebra used for `𝔤`: the trace form
 `(X, Y) ↦ tr(L_{XY})` of `C(W) × C(V)` (`Algebra.traceForm` needs commutativity); the Thesis only
