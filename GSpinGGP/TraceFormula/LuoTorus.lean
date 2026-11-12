@@ -237,57 +237,33 @@ theorem measLieTorus_eq {T : Subgroup ↥(GSpin d.QW)} {μ : Measure ↥(d.lieTo
 
 /-! ### Reducing the `H̄(F)`-conjugator to `GSpin(W)(F)` -/
 
-/-- `φ(t)` has `GL(W)`-component `P(t)`. -/
-theorem unitFst_toGbarU_comp_diag (t : ↥(GSpin d.QW)) :
-    d.luoOf.unitFst (d.toGbarU.comp d.diag t) = d.specPU t := by
-  rw [toGbarU_comp_diag, MonoidHom.comp_apply, LuoDatum.unitFst_diagU]
-
 /-- **A torus of `𝒯` naturally corresponding to `T` is the image of a `GSpin(W)(F)`-conjugate of
-`T`**: if `T' = u φ(T) u⁻¹` with `u = (g, (g ⊕ 1) n) ∈ H̄(F)` (`mem_HbarU_iff`), then, as `T'` lies
-in the image of `diagU`, `T'` is determined by its `GL(W)`-component `g P(T) g⁻¹`, and
-`g = P(g̃)` lifts to `GSpin(W)(F)` (`exists_specP_eq_of_mem_SOu`): `T' = φ(g̃ T g̃⁻¹)`. -/
+`T`**: if `T' = u φ(T) u⁻¹` with `u ∈ H̄(F)`, write `unitFst u = P(g̃)` (`exists_specPU_eq_unitFst`).
+As `T'` lies in the image of `diagU`, it is determined by its `GL(W)`-component, which is
+`P(g̃ T g̃⁻¹)` (`map_unitFst_conj_map`): `T' = φ(g̃ T g̃⁻¹)`. -/
 theorem exists_conj_eq_map_of_isNaturalTorusCorr {T : Subgroup ↥(GSpin d.QW)}
     (T' : d.luoOf.GammaTorus) (h : d.IsNaturalTorusCorr T T'.1) :
     ∃ g : ↥(GSpin d.QW),
       T'.1 = (T.map (MulAut.conj g).toMonoidHom).map (d.toGbarU.comp d.diag) := by
-  obtain ⟨u, hu, hT'⟩ := h
-  obtain ⟨s, hs, n, -, rfl⟩ := d.luoOf.mem_HbarU_iff.mp hu
-  obtain ⟨g, hg⟩ := d.exists_specP_eq_of_mem_SOu hs
-  have hgs : d.specPU g = s := Units.ext (by rw [coe_specPU, hg])
-  -- elements of `T'` are determined by their `GL(W)`-component
-  have hdiag : ∀ y ∈ T'.1, d.luoOf.diagU (d.luoOf.unitFst y) = y := by
-    obtain ⟨X, -, hX⟩ := T'.2
-    intro y hy
-    rw [← hX] at hy
-    obtain ⟨z, -, rfl⟩ := hy
-    rw [LuoDatum.unitFst_diagU]
-  have hfst : ∀ t : ↥(GSpin d.QW),
-      d.luoOf.unitFst ((MulAut.conj (d.luoOf.diagU s * d.luoOf.inrU n)).toMonoidHom
-        (d.toGbarU.comp d.diag t)) = d.specPU (g * t * g⁻¹) := by
-    intro t
-    change d.luoOf.unitFst ((d.luoOf.diagU s * d.luoOf.inrU n) * d.toGbarU.comp d.diag t *
-      (d.luoOf.diagU s * d.luoOf.inrU n)⁻¹) = _
-    rw [map_mul, map_mul, map_inv, d.unitFst_toGbarU_comp_diag,
-      d.luoOf.unitFst_diagU_mul_inrU, map_mul, map_mul, map_inv, hgs]
-  have hφ : ∀ t : ↥(GSpin d.QW), d.toGbarU.comp d.diag (g * t * g⁻¹) =
-      d.luoOf.diagU (d.specPU (g * t * g⁻¹)) := by
-    intro t
-    rw [toGbarU_comp_diag, MonoidHom.comp_apply]
+  obtain ⟨u, hu, hT⟩ := h
+  obtain ⟨g, hg⟩ := d.exists_specPU_eq_unitFst hu
   refine ⟨g, ?_⟩
-  ext x
-  constructor
-  · intro hx
-    have hx' := hx
-    rw [hT'] at hx'
-    obtain ⟨_, ⟨t, ht, rfl⟩, rfl⟩ := hx'
-    refine ⟨g * t * g⁻¹, ⟨t, ht, rfl⟩, ?_⟩
-    rw [hφ, ← hfst t, hdiag _ (hT' ▸ ⟨_, ⟨t, ht, rfl⟩, rfl⟩)]
-  · rintro ⟨_, ⟨t, ht, rfl⟩, rfl⟩
-    have hy : (MulAut.conj (d.luoOf.diagU s * d.luoOf.inrU n)).toMonoidHom
-        (d.toGbarU.comp d.diag t) ∈ T'.1 := hT' ▸ ⟨_, ⟨t, ht, rfl⟩, rfl⟩
-    change d.toGbarU.comp d.diag (g * t * g⁻¹) ∈ T'.1
-    rw [hφ, ← hfst t, hdiag _ hy]
-    exact hy
+  have hT' : T'.1 ≤ d.luoOf.diagU.range := by
+    obtain ⟨X, -, hX⟩ := T'.2
+    rw [← hX]
+    rintro _ ⟨z, -, rfl⟩
+    exact ⟨z, rfl⟩
+  have hid : T'.1 = (T'.1.map d.luoOf.unitFst).map d.luoOf.diagU := by
+    rw [Subgroup.map_map]
+    ext y
+    constructor
+    · intro hy
+      obtain ⟨z, rfl⟩ := hT' hy
+      exact ⟨_, hy, by simp⟩
+    · rintro ⟨y', hy', rfl⟩
+      obtain ⟨z, rfl⟩ := hT' hy'
+      simpa using hy'
+  rw [hid, hT, d.map_unitFst_conj_map hg, Subgroup.map_map, toGbarU_comp_diag]
 
 end GGPData
 

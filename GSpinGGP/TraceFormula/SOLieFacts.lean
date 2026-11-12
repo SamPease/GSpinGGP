@@ -259,6 +259,13 @@ theorem unitFst_diagU_mul_inrU (g : (Module.End K L.W)ˣ) (n : (Module.End K L.V
 theorem unitSnd_diagU_mul_inrU (g : (Module.End K L.W)ˣ) (n : (Module.End K L.V)ˣ) :
     L.unitSnd (L.diagU g * L.inrU n) = Units.map L.extGrp g * n := by simp
 
+/-- The `GL(W)`-component of an element of `H̄` lies in `SO(W)` (`mem_HbarU_iff`). -/
+theorem unitFst_mem_SOu_of_mem_HbarU {u : L.Ambˣ} (hu : u ∈ L.HbarU) :
+    L.unitFst u ∈ SOu L.QW := by
+  obtain ⟨g, hg, n, -, rfl⟩ := L.mem_HbarU_iff.mp hu
+  rw [unitFst_diagU_mul_inrU]
+  exact hg
+
 /-- **Uniqueness of the normal form**: `(g, (g ⊕ 1) n)` determines `g` and `n`. -/
 theorem diagU_mul_inrU_inj {g g' : (Module.End K L.W)ˣ} {n n' : (Module.End K L.V)ˣ} :
     L.diagU g * L.inrU n = L.diagU g' * L.inrU n' ↔ g = g' ∧ n = n' := by
@@ -362,10 +369,8 @@ theorem weylCardOf_map_diagU (S : Subgroup ↥(SOu L.QW)) :
   have hιapp : ∀ s : ↥(SOu L.QW), ι s = L.diagU s := fun _ => rfl
   have hdiagH : ∀ g ∈ SOu L.QW, L.diagU g ∈ L.HbarU := fun g hg =>
     L.mem_HbarU_iff.mpr ⟨g, hg, 1, L.NsetSub.one_mem, by simp⟩
-  have hφmem : ∀ u : ↥L.HbarU, L.unitFst u ∈ SOu L.QW := fun u => by
-    obtain ⟨g, hg, n, -, hu⟩ := L.mem_HbarU_iff.mp u.2
-    rw [hu, unitFst_diagU_mul_inrU]
-    exact hg
+  have hφmem : ∀ u : ↥L.HbarU, L.unitFst u ∈ SOu L.QW := fun u =>
+    L.unitFst_mem_SOu_of_mem_HbarU u.2
   let φ : ↥L.HbarU →* ↥(SOu L.QW) :=
     (L.unitFst.comp L.HbarU.subtype).codRestrict _ hφmem
   have hφ : ∀ u : ↥L.HbarU, ((φ u : ↥(SOu L.QW)) : (Module.End K L.W)ˣ) = L.unitFst u :=

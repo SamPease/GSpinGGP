@@ -115,8 +115,8 @@ theorem weylCardOf_eq_luo_of_centralizer {T : Subgroup ↥(GSpin d.QW)}
     fun _ => rfl
   have hψsurj : Function.Surjective ψ := by
     intro s
-    obtain ⟨g, hg⟩ := d.exists_specP_eq_of_mem_SOu s.2
-    exact ⟨g, Subtype.ext (Units.ext (by rw [hψ, coe_specPU, hg]))⟩
+    obtain ⟨g, hg⟩ := d.exists_specPU_eq_of_mem_SOu s.2
+    exact ⟨g, Subtype.ext (by rw [hψ, hg])⟩
   have hker : ψ.ker ≤ T := by
     rw [MonoidHom.ker_codRestrict, ker_specPU]
     exact hsc
