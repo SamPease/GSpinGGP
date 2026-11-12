@@ -377,6 +377,7 @@ near each point `X ∈ O` to the self-dual measure of the Kirillov form in the c
 Proof (`IsOrbitMeasure.eq_of_eventually_conj_eq_orbitMap`): near `1`, every `k ∈ G_x(F)` is
 `e^Y e^W` with `Y` small in the chart complement `C` and `W ∈ 𝔤_{x,X}`, by the inverse function
 theorem (`eventually_eq_expA_mul_expA`; `G_x(F)` and `𝔤_x` correspond under `exp` near `0`,
+`eventually_expA_mem_grpCentralizer`, `eventually_mem_lieCentralizer_of_expA_mem` from
 `eventually_expA_mem_G`, `eventually_mem_lie_of_expA_mem`), so `k X k⁻¹ = e^Y X e^{-Y}` is a chart
 point. Hence the translates of one compact chart image by a countable dense subset of `G_x(F)` cover
 `O`, and on each of them the measure is prescribed. -/

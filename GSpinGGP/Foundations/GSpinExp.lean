@@ -8,6 +8,10 @@ import GSpinGGP.Foundations.GSpin
 /-!
 # The exponential on `GSpin` near the identity
 
+The exponential and the group of points of `GSpin` correspond near the identity: small elements of
+`gspin` exponentiate into `GSpin(F)`, and conversely. (The first lemma keeps its historical
+namespace `MovedPart`.)
+
 * `MovedPart.exists_nhds_expA_mem_GSpin`: `e^X ∈ GSpin(V)(F)` for small `X ∈ gspin(V)`, and
   conversely `eventually_mem_gspin_of_expA_mem`;
 * `eventually_expA_mem_G`, `eventually_mem_lie_of_expA_mem`: the same for
@@ -29,7 +33,7 @@ namespace GSpinGGP
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
 
-/-! ### The moved part on `Γ(G,H)` (helpers for `movedPartAbelian_of_isGammaElt`)
+/-! ### `GSpin(V)(F)` and `gspin(V)` near the identity
 
 The exponential of a small element of `gspin(W)` lies in `GSpin(W)(F)`
 (`MovedPart.exists_nhds_expA_mem_GSpin`): conjugation by `e^X` is `e^{ad X}` (`expA_ad_eq`), which
@@ -121,6 +125,8 @@ theorem eventually_mem_gspin_of_expA_mem :
   rwa [this] at hmem
 
 end Clifford
+
+/-! ### `G = GSpin(W) × GSpin(V)` -/
 
 section GGP
 

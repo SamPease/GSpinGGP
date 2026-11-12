@@ -11,7 +11,7 @@ For a nilpotent `X ∈ 𝔤` and a complement `C` of `𝔤_X = ker(ad X)`, the c
 `Y ↦ e^Y X e^{-Y}` (`orbitMap`) on `C` near `0` is what the definition `IsOrbitMeasure` uses to
 prescribe the orbit measure. This file shows that the prescription determines the measure.
 
-* `exists_nhds_continuousOn_expA`: `e^X` is continuous on a neighbourhood of `0`;
+* `exists_nhds_continuousOn_orbitMap`: the chart is continuous on a neighbourhood of `0`;
 * `IsOrbitMeasure.eq_of_eventually_conj_eq_orbitMap`: if, near `1 ∈ G(F)`, conjugates `k X k⁻¹`
   lie in chart images of arbitrarily small parts of `C`, then two measures satisfying
   `IsOrbitMeasure` are equal. (The orbit is covered by the `G(F)`-translates, by a countable dense
@@ -39,25 +39,6 @@ namespace GSpinGGP
 variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
   {A : Type*} [Ring A] [Algebra F A] [Module.Finite F A] [TopologicalSpace A]
   [IsModuleTopology F A]
-
-variable (F) in
-/-- `e^X` is continuous on an open neighbourhood of `0` (it is `exp` of `End(F^d)`, continuous on
-the ball of convergence, transported along `lmulPi`). -/
-lemma exists_nhds_continuousOn_expA :
-    ∃ U ∈ 𝓝 (0 : A), IsOpen U ∧ ContinuousOn (expA F : A → A) U := by
-  letI := isTopologicalRing_of_moduleTopology F A
-  obtain ⟨U, hU, -, h⟩ := expA_aux F (A := A)
-  refine ⟨interior U, interior_mem_nhds.mpr hU, isOpen_interior, ?_⟩
-  have hc : ContinuousOn (fun X : A => lmulPiInv F (NormedSpace.exp (lmulPi F X)))
-      (interior U) := by
-    refine (lmulPiInv F).continuous.comp_continuousOn ?_
-    refine (NormedSpace.continuousOn_exp (𝕂 := F)).comp (continuous_lmulPi F).continuousOn ?_
-    intro X hX
-    exact (h X (interior_subset hX)).1
-  refine hc.congr fun X hX => ?_
-  obtain ⟨-, -, he⟩ := h X (interior_subset hX)
-  show expA F X = lmulPiInv F (NormedSpace.exp (lmulPi F X))
-  rw [← he, lmulPiInv_lmulPi]
 
 variable (F) in
 /-- The chart `Y ↦ e^Y X e^{-Y}` is continuous on a neighbourhood of `0`. -/
@@ -264,11 +245,7 @@ theorem eventually_eq_expA_mul_expA {H : Subgroup Aˣ} {𝔥 : LieSubalgebra F A
   haveI := t2Space_of_moduleTopology F A
   -- linear algebra: `A = C ⊕ K ⊕ M`
   obtain ⟨M, hM⟩ := Submodule.exists_isCompl 𝔥.toSubmodule
-  let e : A →ₗ[F] ↥𝔥 :=
-    { toFun := fun a => ⟨(𝔥.toSubmodule.projectionOnto M hM a : A),
-        (𝔥.toSubmodule.projectionOnto M hM a).2⟩
-      map_add' := fun a b => by ext; simp
-      map_smul' := fun c a => by ext; simp }
+  let e : A →ₗ[F] ↥𝔥 := 𝔥.toSubmodule.projectionOnto M hM
   let πC : A →ₗ[F] A := 𝔥.incl.toLinearMap ∘ₗ C.projection K hCK ∘ₗ e
   let πK : A →ₗ[F] A := 𝔥.incl.toLinearMap ∘ₗ K.projection C hCK.symm ∘ₗ e
   let πM : A →ₗ[F] A := M.projection 𝔥.toSubmodule hM.symm
