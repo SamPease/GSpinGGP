@@ -10,7 +10,6 @@ import GSpinGGP.Foundations.Representations
 import GSpinGGP.Foundations.GSpin
 import GSpinGGP.Foundations.HypPlane
 import GSpinGGP.Foundations.HypFrame
-import GSpinGGP.Foundations.FrameDiag
 import GSpinGGP.Foundations.SoCentralizer
 import GSpinGGP.Foundations.RegularNilpotent
 import GSpinGGP.Foundations.QuadraticForms

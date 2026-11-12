@@ -304,4 +304,32 @@ end BaseChange
 
 end IsomCent
 
+section BaseChangeCommute
+
+open scoped TensorProduct
+
+/-- Two endomorphisms commute if their extensions of scalars to a field extension do. -/
+theorem commute_of_commute_baseChange {K L : Type*} [Field K] [Field L] [Algebra K L]
+    {V : Type*} [AddCommGroup V] [Module K V] {A B : Module.End K V}
+    (h : Commute (A.baseChange L) (B.baseChange L)) : Commute A B := by
+  refine LinearMap.ext fun v => Module.Flat.tensorProduct_mk_injective K V L ?_
+  have := LinearMap.congr_fun h.eq (1 ⊗ₜ v)
+  simpa [Module.End.mul_apply, LinearMap.baseChange_tmul] using this
+
+/-- Skewness for the associated bilinear form `b = ½ polar` is skewness for `polar`. -/
+theorem isSkew_associated_iff {K : Type*} [Field K] [Invertible (2 : K)] {V : Type*}
+    [AddCommGroup V] [Module K V] (Q : QuadraticForm K V) (Y : Module.End K V) :
+    IsomCent.IsSkew (QuadraticMap.associated Q) Y ↔
+      ∀ u v, QuadraticMap.polar Q (Y u) v = -QuadraticMap.polar Q u (Y v) := by
+  have h2 : (2 : K) ≠ 0 := (isUnit_of_invertible (2 : K)).ne_zero
+  have hp : ∀ x y, QuadraticMap.polar Q x y = 2 * QuadraticMap.associated Q x y := fun x y => by
+    have h := congr($(QuadraticMap.two_nsmul_associated K Q) x y)
+    simp only [LinearMap.smul_apply, QuadraticMap.polarBilin_apply_apply] at h
+    rw [← h, two_nsmul, two_mul]
+  refine forall_congr' fun u => forall_congr' fun v => ?_
+  rw [hp, hp, ← mul_neg]
+  exact (mul_right_inj' h2).symm
+
+end BaseChangeCommute
+
 end GSpinGGP

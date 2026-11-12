@@ -563,6 +563,16 @@ theorem isRegularSS_add_iff_of_central [PerfectField F] [FiniteDimensional F A]
   have := isSS_add_of_commute ((hZY.add_left (Commute.refl Y)).neg_right) h hnY
   rwa [add_neg_cancel_right] at this
 
+
+/-- A semisimple endomorphism is semisimple as an element of the algebra of endomorphisms. -/
+theorem isSS_of_isSemisimple {U : Type*} [AddCommGroup U] [Module F U] [FiniteDimensional F U]
+    {X : Module.End F U} (hX : X.IsSemisimple) : IsSS F X := by
+  refine Module.End.isSemisimple_of_squarefree_aeval_eq_zero hX.minpoly_squarefree ?_
+  have := Polynomial.aeval_algHom_apply (Algebra.lmul F (Module.End F U)) X (minpoly F X)
+  rw [minpoly.aeval, map_zero] at this
+  rw [← this]
+  rfl
+
 end Semisimple
 
 
