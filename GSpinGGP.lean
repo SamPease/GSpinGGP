@@ -45,6 +45,7 @@ import GSpinGGP.TraceFormula.EllipticRepresentations
 import GSpinGGP.TraceFormula.LieAlgebra
 import GSpinGGP.TraceFormula.SelfDual
 import GSpinGGP.TraceFormula.SOLie
+import GSpinGGP.TraceFormula.SOLieFacts
 import GSpinGGP.TraceFormula.LuoTransfer
 import GSpinGGP.Literature.Kottwitz
 import GSpinGGP.Literature.KottwitzClay
