@@ -240,78 +240,17 @@ variable {G : Subgroup Aˣ} {𝔤 : LieSubalgebra F A} {b : LinearMap.BilinForm 
   {G' : Subgroup A'ˣ} {𝔤' : LieSubalgebra F A'} {b' : LinearMap.BilinForm F A'}
   {x : Aˣ} {y : A'ˣ}
 
-/-- A linear map that is multiplicative on a subalgebra commutes with powers there. -/
-theorem map_pow_of_mul {S : Subalgebra F A} {f : A →ₗ[F] A'} (hone : f 1 = 1)
-    (hmul : ∀ a ∈ S, ∀ c ∈ S, f (a * c) = f a * f c) {X : A} (hX : X ∈ S) (n : ℕ) :
-    f (X ^ n) = f X ^ n := by
-  induction n with
-  | zero => rw [pow_zero, pow_zero, hone]
-  | succ n ih => rw [pow_succ, hmul _ (S.pow_mem hX n) _ hX, ih, pow_succ]
+/-- A linear map, unital and multiplicative on a subalgebra `S`, as an algebra map on `S`. -/
+def restrictAlgHom (S : Subalgebra F A) (f : A →ₗ[F] A') (hone : f 1 = 1)
+    (hmul : ∀ a ∈ S, ∀ c ∈ S, f (a * c) = f a * f c) : S →ₐ[F] A' :=
+  AlgHom.ofLinearMap (f ∘ₗ S.val.toLinearMap) hone fun a c => hmul _ a.2 _ c.2
 
-/-- A linear map that is multiplicative and unital on a subalgebra commutes with `aeval` there. -/
-theorem map_aeval_of_mul {S : Subalgebra F A} {f : A →ₗ[F] A'} (hone : f 1 = 1)
-    (hmul : ∀ a ∈ S, ∀ c ∈ S, f (a * c) = f a * f c) {X : A} (hX : X ∈ S) (p : Polynomial F) :
-    f (Polynomial.aeval X p) = Polynomial.aeval (f X) p := by
-  induction p using Polynomial.induction_on' with
-  | add p q hp hq => rw [map_add, map_add, map_add, hp, hq]
-  | monomial n c =>
-    rw [Polynomial.aeval_monomial, Polynomial.aeval_monomial, Algebra.algebraMap_eq_smul_one,
-      Algebra.algebraMap_eq_smul_one, smul_mul_assoc, smul_mul_assoc, one_mul, one_mul, map_smul,
-      map_pow_of_mul hone hmul hX]
+@[simp] theorem restrictAlgHom_apply (S : Subalgebra F A) (f : A →ₗ[F] A') (hone : f 1 = 1)
+    (hmul : ∀ a ∈ S, ∀ c ∈ S, f (a * c) = f a * f c) (a : S) :
+    restrictAlgHom S f hone hmul a = f a := rfl
 
-/-- `p(x) = 0` for `p` the minimal polynomial of left multiplication by `x`. -/
-theorem aeval_minpoly_mulLeft (X : A) :
-    Polynomial.aeval X (minpoly F (LinearMap.mulLeft F X)) = 0 := by
-  have h := Polynomial.aeval_algHom_apply (Algebra.lmul F A) X (minpoly F (LinearMap.mulLeft F X))
-  have h0 : Polynomial.aeval (Algebra.lmul F A X) (minpoly F (LinearMap.mulLeft F X)) = 0 :=
-    minpoly.aeval F _
-  rw [h0] at h
-  have := LinearMap.congr_fun h.symm 1
-  simpa using this
-
-/-- **`exp` commutes with a linear map preserving the powers of `X`** and admitting a linear left
-inverse on them: `f(e^X) = e^{f X}`, also where the exponential series of `X` diverges (both sides
-are `0`: the series of `f X` diverges too, since `r` maps it back to that of `X`). -/
-theorem map_expA_of_leftInverse (f : A →ₗ[F] A') (r : A' →ₗ[F] A) {X : A}
-    (hpow : ∀ n : ℕ, f (X ^ n) = f X ^ n) (hr : ∀ n : ℕ, r (f (X ^ n)) = X ^ n) :
-    f (expA F X) = expA F (f X) := by
-  have := isTopologicalRing_of_moduleTopology F A
-  have := isTopologicalRing_of_moduleTopology F A'
-  have := t2Space_of_moduleTopology F A
-  have := t2Space_of_moduleTopology F A'
-  have hfc : Continuous f := IsModuleTopology.continuous_of_linearMap f
-  have hrc : Continuous r := IsModuleTopology.continuous_of_linearMap r
-  rw [expA, expA, NormedSpace.exp_eq_tsum F, NormedSpace.exp_eq_tsum F]
-  beta_reduce
-  have hterm : ∀ n : ℕ, f (((n.factorial : F)⁻¹) • X ^ n) = ((n.factorial : F)⁻¹) • f X ^ n :=
-    fun n => by rw [map_smul, hpow]
-  by_cases hs : Summable fun n : ℕ => ((n.factorial : F)⁻¹) • X ^ n
-  · have h := hs.hasSum.map f hfc
-    simp only [Function.comp_def, hterm] at h
-    exact h.tsum_eq.symm
-  · have hs' : ¬ Summable fun n : ℕ => ((n.factorial : F)⁻¹) • f X ^ n := fun h' => by
-      refine hs ?_
-      have h2 := h'.map r hrc
-      convert h2 using 2 with n
-      simp only [Function.comp_apply, map_smul, ← hpow, hr]
-    rw [tsum_eq_zero_of_not_summable hs, tsum_eq_zero_of_not_summable hs', map_zero]
-
-/-- A subalgebra of `A` is stable under `expA` (it is closed, and `expA` is `0` where the series
-diverges). -/
-theorem expA_mem_subalgebra (S : Subalgebra F A) {X : A} (hX : X ∈ S) :
-    expA F X ∈ S := by
-  have := isTopologicalRing_of_moduleTopology F A
-  have := t2Space_of_moduleTopology F A
-  have hclosed : IsClosed (S : Set A) := (Subalgebra.toSubmodule S).closed_of_finiteDimensional
-  rw [expA, NormedSpace.exp_eq_tsum F]
-  beta_reduce
-  by_cases hs : Summable fun n : ℕ => ((n.factorial : F)⁻¹) • X ^ n
-  · exact hclosed.mem_of_tendsto hs.hasSum (Filter.Eventually.of_forall fun s =>
-      Subalgebra.sum_mem _ fun n _ => Subalgebra.smul_mem _ (Subalgebra.pow_mem _ hX n) _)
-  · rw [tsum_eq_zero_of_not_summable hs]
-    exact S.zero_mem
-
-/-- `f` is multiplicative on `S'` when `f'` is, and they are mutually inverse on `S`, `S'`. -/
+/-- `f'` is multiplicative on `S'` when `f` is multiplicative on `S` and they are mutually inverse
+on `S`, `S'`. -/
 theorem map_mul_of_inverse {S : Subalgebra F A} {S' : Subalgebra F A'} {f : A →ₗ[F] A'}
     {f' : A' →ₗ[F] A} (hmul : ∀ a ∈ S, ∀ c ∈ S, f (a * c) = f a * f c)
     (hf'S : ∀ a ∈ S', f' a ∈ S) (hinv : ∀ a ∈ S, f' (f a) = a) (hinv' : ∀ a ∈ S', f (f' a) = a)
@@ -322,13 +261,11 @@ theorem map_mul_of_inverse {S : Subalgebra F A} {S' : Subalgebra F A'} {f : A �
 open Classical in
 /-- The map on units `u ↦ f u` (when `f u` is a unit; `1` otherwise). -/
 noncomputable def unitsMap (f : A →ₗ[F] A') (u : Aˣ) : A'ˣ :=
-  if h : ∃ v : A'ˣ, (v : A') = f u then Classical.choose h else 1
+  if h : IsUnit (f u) then h.unit else 1
 
-theorem coe_unitsMap {f : A →ₗ[F] A'} {u : Aˣ} (h : ∃ v : A'ˣ, (v : A') = f u) :
+theorem coe_unitsMap {f : A →ₗ[F] A'} {u : Aˣ} (h : IsUnit (f u)) :
     (unitsMap f u : A') = f u := by
-  unfold unitsMap
-  split_ifs
-  exact Classical.choose_spec h
+  simp [unitsMap, h]
 
 namespace CentralizerIso
 
@@ -354,9 +291,15 @@ noncomputable def ofSubalgebra (S : Subalgebra F A) (S' : Subalgebra F A') (f : 
   have hmul' := fun a c (ha : a ∈ S') (hc : c ∈ S') =>
     map_mul_of_inverse hmul hf'S hinv hinv' ha hc
   have hone' : f' 1 = 1 := by rw [← hone]; exact hinv 1 S.one_mem
-  have hunit : ∀ u ∈ grpCentralizer G x, ∃ v : A'ˣ, (v : A') = f u := fun u hu =>
+  have hunit : ∀ u ∈ grpCentralizer G x, IsUnit (f u) := fun u hu =>
     ⟨⟨f u, f ↑u⁻¹, by rw [← hmul _ (hGS u hu) _ (hGS _ (inv_mem hu)), Units.mul_inv, hone],
       by rw [← hmul _ (hGS _ (inv_mem hu)) _ (hGS u hu), Units.inv_mul, hone]⟩, rfl⟩
+  have hpow : ∀ {X : A}, X ∈ S → ∀ n : ℕ, f (X ^ n) = f X ^ n := fun hX n =>
+    map_pow (restrictAlgHom S f hone hmul) ⟨_, hX⟩ n
+  have haeval : ∀ {X : A}, X ∈ S → ∀ p : Polynomial F,
+      f (Polynomial.aeval X p) = Polynomial.aeval (f X) p := fun {X} hX p => by
+    rw [← Polynomial.aeval_subalgebra_coe p S ⟨X, hX⟩]
+    exact (Polynomial.aeval_algHom_apply (restrictAlgHom S f hone hmul) ⟨X, hX⟩ p).symm
   have hinvj : ∀ {X Y : A}, X ∈ S → Y ∈ S → f X = f Y → X = Y := fun hX hY h => by
     rw [← hinv _ hX, h, hinv _ hY]
   { lin := f
@@ -370,20 +313,20 @@ noncomputable def ofSubalgebra (S : Subalgebra F A) (S' : Subalgebra F A') (f : 
       constructor
       · rintro ⟨n, hn⟩
         refine ⟨n, ?_⟩
-        rw [← map_pow_of_mul hone hmul hXS] at hn
+        rw [← hpow hXS] at hn
         rw [← hinv _ (S.pow_mem hXS n), hn, map_zero]
       · rintro ⟨n, hn⟩
-        exact ⟨n, by rw [← map_pow_of_mul hone hmul hXS, hn, map_zero]⟩
+        exact ⟨n, by rw [← hpow hXS, hn, map_zero]⟩
     isRegularSS_iff := fun X hX => by
       have hXS := h𝔤S X hX
       have hfX : f X ∈ S' := hfS X hXS
       refine and_congr ⟨fun h => ?_, fun h => ?_⟩ ?_
       · refine isSS_of_aeval_eq_zero h.minpoly_squarefree ?_
         rw [← hinv _ (Algebra.adjoin_le (Set.singleton_subset_iff.mpr hXS)
-          (Polynomial.aeval_mem_adjoin_singleton F X)), map_aeval_of_mul hone hmul hXS,
+          (Polynomial.aeval_mem_adjoin_singleton F X)), haeval hXS,
           aeval_minpoly_mulLeft, map_zero]
       · refine isSS_of_aeval_eq_zero h.minpoly_squarefree ?_
-        rw [← map_aeval_of_mul hone hmul hXS, aeval_minpoly_mulLeft, map_zero]
+        rw [← haeval hXS, aeval_minpoly_mulLeft, map_zero]
       · rw [isLieAbelian_iff_forall_commute, isLieAbelian_iff_forall_commute]
         constructor
         · intro h Z₁ hZ₁ Z₂ hZ₂
@@ -412,7 +355,7 @@ noncomputable def ofSubalgebra (S : Subalgebra F A) (S' : Subalgebra F A') (f : 
     map_orbitMap := fun X hX Y hY => by
       have hXS := h𝔤S X hX
       have hexp : ∀ {Z : A}, Z ∈ S → f (expA F Z) = expA F (f Z) := fun hZ =>
-        map_expA_of_leftInverse f f' (map_pow_of_mul hone hmul hZ)
+        map_expA_of_leftInverse f f' (hpow hZ)
           (fun n => hinv _ (S.pow_mem hZ n))
       have hYS := h𝔤S Y hY
       have hnYS : -Y ∈ S := S.neg_mem hYS
@@ -439,12 +382,6 @@ noncomputable def ofSubalgebra (S : Subalgebra F A) (S' : Subalgebra F A') (f : 
         refine Units.inv_eq_of_mul_eq_one_right ?_
         rw [h1, ← hmul _ huS _ huS', Units.mul_inv, hone]
       rw [h1, h2, hmul _ (S.mul_mem huS hXS) _ huS', hmul _ huS _ hXS] }
-
-@[simp] theorem ofSubalgebra_lin (S : Subalgebra F A) (S' : Subalgebra F A') (f : A →ₗ[F] A')
-    (f' : A' →ₗ[F] A) (hfS hf'S hone hmul hinv hinv' h𝔤S h𝔤S' h𝔤 h𝔤' hGS hGS' hG hG' hb) :
-    (ofSubalgebra (G := G) (𝔤 := 𝔤) (b := b) (G' := G') (𝔤' := 𝔤') (b' := b') (x := x) (y := y)
-      S S' f f' hfS hf'S hone hmul hinv hinv' h𝔤S h𝔤S' h𝔤 h𝔤' hGS hGS' hG hG' hb).lin = f :=
-  rfl
 
 end CentralizerIso
 

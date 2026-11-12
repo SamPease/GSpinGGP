@@ -392,6 +392,11 @@ theorem isSS_of_aeval_eq_zero {x : A} {p : Polynomial F} (hp : Squarefree p)
   rw [← this]
   rfl
 
+/-- `p(x) = 0` for `p` the minimal polynomial of left multiplication by `x`. -/
+theorem aeval_minpoly_mulLeft (X : A) :
+    Polynomial.aeval X (minpoly F (LinearMap.mulLeft F X)) = 0 :=
+  (minpoly.algHom_eq (Algebra.lmul F A) Algebra.lmul_injective X).symm ▸ minpoly.aeval F X
+
 /-- The centralizer `𝔤_x = {X ∈ 𝔤 | xX = Xx}`. For a unit `x` this is the Lie algebra
 `Lie(G_x)` of the centralizer (fixed points of `Ad x`); for `x = X ∈ 𝔤` it is `Z_𝔤(X)`
 (Thesis §2.1). -/
@@ -1012,6 +1017,43 @@ lemma commute_expA_of_commute {X Y : A} (h : Commute Y X) : Commute Y (expA F X)
   letI := isTopologicalRing_of_moduleTopology F A
   haveI := t2Space_of_moduleTopology F A
   exact h.exp_right
+
+/-- **`exp` commutes with a linear map preserving the powers of `X`** and admitting a linear left
+inverse on them: `f(e^X) = e^{f X}`, also where the exponential series of `X` diverges (both sides
+are `0`: the series of `f X` diverges too, since `r` maps it back to that of `X`). -/
+theorem map_expA_of_leftInverse {A' : Type*} [Ring A'] [Algebra F A'] [Module.Finite F A']
+    [TopologicalSpace A'] [IsModuleTopology F A'] (f : A →ₗ[F] A') (r : A' →ₗ[F] A) {X : A}
+    (hpow : ∀ n : ℕ, f (X ^ n) = f X ^ n) (hr : ∀ n : ℕ, r (f (X ^ n)) = X ^ n) :
+    f (expA F X) = expA F (f X) := by
+  have := isTopologicalRing_of_moduleTopology F A
+  have := isTopologicalRing_of_moduleTopology F A'
+  have := t2Space_of_moduleTopology F A
+  have := t2Space_of_moduleTopology F A'
+  have hfc : Continuous f := IsModuleTopology.continuous_of_linearMap f
+  have hrc : Continuous r := IsModuleTopology.continuous_of_linearMap r
+  rw [expA, expA, NormedSpace.exp_eq_tsum F, NormedSpace.exp_eq_tsum F]
+  beta_reduce
+  have hterm : ∀ n : ℕ, f (((n.factorial : F)⁻¹) • X ^ n) = ((n.factorial : F)⁻¹) • f X ^ n :=
+    fun n => by rw [map_smul, hpow]
+  by_cases hs : Summable fun n : ℕ => ((n.factorial : F)⁻¹) • X ^ n
+  · have h := hs.hasSum.map f hfc
+    simp only [Function.comp_def, hterm] at h
+    exact h.tsum_eq.symm
+  · have hs' : ¬ Summable fun n : ℕ => ((n.factorial : F)⁻¹) • f X ^ n := fun h' => by
+      refine hs ?_
+      have h2 := h'.map r hrc
+      convert h2 using 2 with n
+      simp only [Function.comp_apply, map_smul, ← hpow, hr]
+    rw [tsum_eq_zero_of_not_summable hs, tsum_eq_zero_of_not_summable hs', map_zero]
+
+/-- A subalgebra of `A` is stable under `expA` (it is closed; `NormedSpace.exp_mem`). -/
+theorem expA_mem_subalgebra (S : Subalgebra F A) {X : A} (hX : X ∈ S) : expA F X ∈ S := by
+  have := isTopologicalRing_of_moduleTopology F A
+  have := t2Space_of_moduleTopology F A
+  letI : Algebra ℚ A := Algebra.compHom A (algebraMap ℚ F)
+  haveI : IsScalarTower ℚ F A := IsScalarTower.of_algebraMap_eq fun _ => rfl
+  exact NormedSpace.exp_mem (R := F) (s := S)
+    ((Subalgebra.toSubmodule S).closed_of_finiteDimensional) hX
 
 variable (F)
 

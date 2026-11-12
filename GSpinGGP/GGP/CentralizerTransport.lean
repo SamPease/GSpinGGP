@@ -16,15 +16,17 @@ restricts to an `F`-linear isomorphism, multiplicative, between the subalgebras 
 of elements whose transport is rational (`ratSub`), and that these contain the centralizers of `x`
 and `y` in `GSpin(F)` and in `gspin(F)`, which it matches.
 
-* `ratSub φ g`: the `a ∈ C(Q₁)` with `Ψ(ā)` rational; `transL φ g`: an `F`-linear map
-  `C(Q₁) → C(Q₂)` with `transL a = Ψ(ā)` on `ratSub` (`bcHom_transL`).
-* `mem_ratSub_of_commute`, `mem_ratSub_of_mem_gspin`: `Z_{GSpin(Q₁)(F)}(x)` and `Z_{gspin(Q₁)}(x)`
-  lie in `ratSub` (the latter from the former through `exp`, near `0`, and scaling).
-* `transL_mem_GSpin`, `transL_mem_gspin`: they are mapped into `GSpin(Q₂)(F)`, `gspin(Q₂)`.
+* `ratSub φ g`: the `a ∈ C(Q₁)` with `Ψ(ā)` rational; on it `transL φ g` (`GGP/TorusTransport.lean`)
+  is `a ↦ Ψ(ā)` (`bcHom_transL`), multiplicative, with inverse the transport for `Ψ⁻¹`
+  (`transL_transL`).
+* `exists_transL_eq_of_commute`: `Z_{GSpin(Q₁)(F)}(x) ⊆ ratSub`, mapped into `GSpin(Q₂)(F)`.
+* `mem_ratSub_of_mem_gspin`: `Z_{gspin(Q₁)}(x) ⊆ ratSub`, mapped into `gspin(Q₂)` (from the
+  group case through `exp`, near `0`, and scaling).
+* `transL_mul_comm`: elements commuting with `x` are mapped to elements commuting with `y`.
 * `trace_mulLeft_transL`: `tr(L_{transL a}) = tr(L_a)` (compute over `F̄`).
 
-Own work: the thesis states (§6.1) that `ι = Ad(g) ∘ ψ_α` is an isomorphism `G_x ≃ G_{α,y}` defined
-over `F`; this file supplies the linear algebra behind it.
+Own work: the thesis states (§6.1, §6.6) that `ι = Ad(g) ∘ ψ_α` is an isomorphism
+`G_x ≃ G_{α,y}` defined over `F`; this file supplies the linear algebra behind it.
 -/
 
 noncomputable section
@@ -49,12 +51,6 @@ variable
   (φ : (Q₁.baseChange (AlgebraicClosure F)).IsometryEquiv (Q₂.baseChange (AlgebraicClosure F)))
   (g : (CliffordAlgebra (Q₂.baseChange (AlgebraicClosure F)))ˣ)
 
-theorem psiA_one : psiA φ g 1 = 1 := by
-  simpa using psiA_algebraMap φ g (1 : F)
-
-theorem bcHom_algebraMap' (c : F) : bcHom Q₁ (algebraMap F _ c) = algebraMap F _ c := by
-  rw [bcHom_algebraMap, ← IsScalarTower.algebraMap_apply]
-
 /-- The subalgebra of `C(Q₁)` of the elements `a` whose transport `Ad(g) C(φ)(ā)` is rational. -/
 def ratSub : Subalgebra F (CliffordAlgebra Q₁) where
   carrier := {a | ∃ b : CliffordAlgebra Q₂, bcHom Q₂ b = psiA φ g (bcHom Q₁ a)}
@@ -65,25 +61,7 @@ def ratSub : Subalgebra F (CliffordAlgebra Q₁) where
     rintro a c ⟨b, hb⟩ ⟨d, hd⟩
     exact ⟨b + d, by rw [map_add, hb, hd, map_add, psiA_add]⟩
   algebraMap_mem' c := ⟨algebraMap F _ c, by
-    rw [bcHom_algebraMap', bcHom_algebraMap', psiA_algebraMap]⟩
-
-theorem mem_ratSub {a : CliffordAlgebra Q₁} :
-    a ∈ ratSub φ g ↔ ∃ b : CliffordAlgebra Q₂, bcHom Q₂ b = psiA φ g (bcHom Q₁ a) := Iff.rfl
-
-/-- An `F`-linear left inverse of the base change `C(Q₂) → C(Q₂)_{F̄}`. -/
-def bcRetract (Q₂ : QuadraticForm F V₂) :
-    CliffordAlgebra (Q₂.baseChange (AlgebraicClosure F)) →ₗ[F] CliffordAlgebra Q₂ :=
-  Classical.choose ((bcHomL Q₂).exists_leftInverse_of_injective
-    (LinearMap.ker_eq_bot.mpr (bcHom_injective Q₂)))
-
-theorem bcRetract_bcHom (b : CliffordAlgebra Q₂) : bcRetract Q₂ (bcHom Q₂ b) = b :=
-  LinearMap.congr_fun (Classical.choose_spec ((bcHomL Q₂).exists_leftInverse_of_injective
-    (LinearMap.ker_eq_bot.mpr (bcHom_injective Q₂)))) b
-
-/-- The transport `a ↦ Ad(g) C(φ)(ā)` as an `F`-linear map `C(Q₁) → C(Q₂)`, correct on `ratSub`
-(`bcHom_transL`). -/
-def transL : CliffordAlgebra Q₁ →ₗ[F] CliffordAlgebra Q₂ :=
-  bcRetract Q₂ ∘ₗ psiL φ g ∘ₗ bcHomL Q₁
+    rw [bcHom_algebraMap_scalar, bcHom_algebraMap_scalar, psiA_algebraMap]⟩
 
 variable {φ g}
 
@@ -140,6 +118,7 @@ theorem exists_transL_eq_of_commute (t : GSpin Q₁)
     ⟨((b : (CliffordAlgebra Q₂)ˣ) : CliffordAlgebra Q₂), congrArg Units.val hb⟩
   exact ⟨hmem, b, bcHom_injective Q₂ (by rw [bcHom_transL hmem]; exact congrArg Units.val hb)⟩
 
+omit hg hrat in
 /-- `transL` maps an element of `ratSub` commuting with `x` to one commuting with `y`. -/
 theorem transL_mul_comm {y : CliffordAlgebra Q₂} (hconj : psiA φ g (bcHom Q₁
     ((x : (CliffordAlgebra Q₁)ˣ) : CliffordAlgebra Q₁)) = bcHom Q₂ y) {X : CliffordAlgebra Q₁}
@@ -196,7 +175,10 @@ theorem mem_ratSub_of_mem_gspin {X : CliffordAlgebra Q₁} (hX : X ∈ gspin Q�
   refine ⟨hXm, ?_⟩
   have hexp : transL φ g (expA F Y) = expA F (transL φ g Y) :=
     map_expA_of_leftInverse (transL φ g) (transL φ.symm (cliffUnits φ.symm g⁻¹))
-      (map_pow_of_mul transL_one (fun a ha c hc => transL_mul ha hc) hYm)
+      (fun n => by
+        have h := map_pow (restrictAlgHom (ratSub φ g) (transL φ g) transL_one
+          fun _ ha _ hc => transL_mul ha hc) ⟨Y, hYm⟩ n
+        rwa [restrictAlgHom_apply, restrictAlgHom_apply, SubmonoidClass.coe_pow] at h)
       (fun n => transL_transL (psiA_symm_psiA φ g) ((ratSub φ g).pow_mem hYm n))
   have hTY : transL φ g Y ∈ gspin Q₂ := by
     rw [hYdef, map_smul]
@@ -216,22 +198,11 @@ theorem trace_mulLeft_bcHom (Q : QuadraticForm F V) (a : CliffordAlgebra Q) :
       algebraMap F (AlgebraicClosure F) (LinearMap.trace F _ (LinearMap.mulLeft F a)) := by
   set E := (CliffordAlgebra.equivBaseChange (AlgebraicClosure F) Q).toLinearEquiv
   rw [← LinearMap.trace_conj' _ E, ← LinearMap.trace_baseChange]
+  change _ = LinearMap.trace _ _ ((Algebra.lmul F _ a).baseChange _)
+  rw [Algebra.baseChange_lmul]
   congr 1
-  refine LinearMap.ext fun t => ?_
-  rw [LinearEquiv.conj_apply_apply, LinearMap.mulLeft_apply]
-  change CliffordAlgebra.equivBaseChange _ Q (bcHom Q a * E.symm t) = _
-  rw [map_mul]
-  change _ * E (E.symm t) = _
-  rw [LinearEquiv.apply_symm_apply]
-  have h1 : CliffordAlgebra.equivBaseChange (AlgebraicClosure F) Q (bcHom Q a) =
-      (1 : AlgebraicClosure F) ⊗ₜ a := by
-    change CliffordAlgebra.toBaseChange (AlgebraicClosure F) Q
-      (CliffordAlgebra.ofBaseChange (AlgebraicClosure F) Q (1 ⊗ₜ a)) = _
-    rw [CliffordAlgebra.toBaseChange_ofBaseChange]
-  rw [h1]
-  induction t using TensorProduct.inductionOn with
-  | tmul z c => simp [Algebra.TensorProduct.tmul_mul_tmul]
-  | add t₁ t₂ h₁ h₂ => rw [mul_add, map_add, h₁, h₂]
+  ext t
+  simp [E, LinearEquiv.conj_apply, bcHom]
 
 /-- `Ad(g) ∘ C(φ)` preserves `tr(L_z)` (it is an algebra isomorphism over `F̄`). -/
 theorem trace_mulLeft_psiA
