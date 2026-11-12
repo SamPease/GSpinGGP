@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import Mathlib
+import TauCeti.MeasureTheory.Group.Conjugation
 
 /-!
 # Haar measures are determined near the identity
@@ -11,6 +12,8 @@ import Mathlib
   compact group that agree on the measurable subsets of a neighbourhood of `1` are equal.
 * `Measure.eq_of_isHaarMeasure_of_eq_near_one`: the same, when both agree near `1` with a common
   reference set function (e.g. the `exp`-image measure of a torus).
+* `Measure.map_conj_map_mulEquiv`: the push-forward of a bi-invariant measure along a group
+  isomorphism is conjugation invariant (Tau Ceti `measurePreserving_conj`).
 -/
 
 open MeasureTheory Topology Filter
@@ -51,5 +54,17 @@ theorem eq_of_isHaarMeasure_of_eq_near_one {μ ν : Measure G} [μ.IsHaarMeasure
   exact eq_of_isHaarMeasure_of_eqOn_nhds μ ν (inter_mem hU hU') fun S hS hSU =>
     (hμU S hS (hSU.trans Set.inter_subset_left)).trans
       (hνU S hS (hSU.trans Set.inter_subset_right)).symm
+
+/-- **The push-forward of a bi-invariant measure along a group isomorphism is conjugation
+invariant** (Tau Ceti `measurePreserving_conj`). -/
+theorem map_conj_map_mulEquiv {G P : Type*} [Group G] [Group P] [MeasurableSpace G]
+    [MeasurableMul G] [MeasurableSpace P] [MeasurableMul P] (μ : Measure G)
+    [μ.IsMulLeftInvariant] [μ.IsMulRightInvariant] (e : G ≃* P) (he : Measurable e) (u : P) :
+    (μ.map e).map (fun h => u⁻¹ * h * u) = μ.map e := by
+  set h₀ := (e.symm u)⁻¹
+  have hc : (fun h => u⁻¹ * h * u) ∘ e = e ∘ (fun q => h₀ * q * h₀⁻¹) := by
+    funext q; simp [h₀, map_mul, map_inv]
+  rw [Measure.map_map (by fun_prop) he, hc, ← Measure.map_map he (by fun_prop),
+    (TauCeti.measurePreserving_conj μ h₀).map_eq]
 
 end MeasureTheory.Measure

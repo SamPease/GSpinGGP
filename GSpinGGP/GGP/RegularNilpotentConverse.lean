@@ -13,6 +13,8 @@ import GSpinGGP.GGP.RegularNilpotent
 * `quasiSplit_of_nilReg_nonempty`: if `gspin(V)` has a regular nilpotent element, `V` is
   quasi-split (Thesis §5.1.4), from `lieRank_gspin` and Jantzen's description of regular nilpotent
   elements of `so(V)` over `F̄` (`jantzen_regularNil_partition`).
+* `pow_ne_zero_of_finrank_soCent_eq`: a nilpotent skew `N` with `dim so(V)_N = ⌊dim V/2⌋` has
+  `N^{n−1} ≠ 0` (`n` odd) or `N^{n−2} ≠ 0` (`n` even).
 * `isQuasiSplitQF_of_finrank_soCent_eq`: the core: a nilpotent skew `N` with
   `dim so(V)_N = ⌊dim V/2⌋` forces `V` quasi-split; `isQuasiSplitQF_fixedSub_of_forall_finrank_le`: the same for
   the fixed space `W'_y` when `X ∈ gspin(V)_y` minimizes `dim gspin(V)_{y,·}`.
@@ -60,18 +62,14 @@ section Core
 variable {K : Type*} [Field K] [CharZero K] [Invertible (2 : K)]
 variable {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
 
-/-- **A nilpotent skew `N` with `dim so(V)_N = ⌊dim V/2⌋` forces `V` quasi-split**: over `K̄`, `N` has
-the least centralizer dimension (`jantzen_finrank_soCentMat_ge`), so it is regular nilpotent of
-partition `[n]` or `[n − 1, 1]` (`jantzen_regularNil_partition`); then
-`le_wittIndex_of_pow_ne_zero` with `m = n − 1` or `n − 2` gives `n ≤ 2 w(V) + 2`. -/
-theorem isQuasiSplitQF_of_finrank_soCent_eq {Q : QuadraticForm K V} (hQ : IsNondeg Q)
+/-- **A nilpotent skew `N` with `dim so(V)_N = ⌊dim V/2⌋` is regular**: over `K̄`, `N` has the
+least centralizer dimension (`jantzen_finrank_soCentMat_ge`), so it is regular nilpotent, of
+partition `[n]` for `n` odd and `[n − 1, 1]` for `n` even (`jantzen_regularNil_partition`), i.e. `N^{n−1} ≠ 0` for `n` odd and `N^{n−2} ≠ 0` for `n` even. -/
+theorem pow_ne_zero_of_finrank_soCent_eq {Q : QuadraticForm K V} (hQ : IsNondeg Q)
     {N : Module.End K V} (hN : ∀ u w, bform Q (N u) w = -bform Q u (N w)) (hNn : IsNilpotent N)
-    (hdim : finrank K (soCent Q N) = finrank K V / 2) : IsQuasiSplitQF Q := by
-  unfold IsQuasiSplitQF
-  set n := finrank K V with hn_def
-  by_cases hn : n ≤ 2
-  · omega
-  push Not at hn
+    (hdim : finrank K (soCent Q N) = finrank K V / 2) (hn : 2 < finrank K V) :
+    (Odd (finrank K V) → N ^ (finrank K V - 1) ≠ 0) ∧
+      (Even (finrank K V) → N ^ (finrank K V - 2) ≠ 0) := by
   obtain ⟨Φ, A, hΦ, hdet, hA, hfin, hpow⟩ := exists_algebraicClosure_soCentMat hQ hN
   have hAn : IsNilpotent A := by
     obtain ⟨k, hk⟩ := hNn
@@ -82,13 +80,25 @@ theorem isQuasiSplitQF_of_finrank_soCent_eq {Q : QuadraticForm K V} (hQ : IsNond
     rw [hfin, hdim]
     exact jantzen_finrank_soCentMat_ge (by omega) Φ hΦ hdet Y hY
   have hp := jantzen_regularNil_partition (by omega) Φ hΦ hdet A hA hAn hreg
-  have hW : ∀ m, A ^ m ≠ 0 → (m + 1) / 2 ≤ wittIndex Q := fun m hm =>
-    le_wittIndex_of_pow_ne_zero hN hNn fun h0 => hm ((hpow m).2 h0)
+  exact ⟨fun ho h0 => hp.1 ho ((hpow _).2 h0), fun he h0 => (hp.2 he).1 ((hpow _).2 h0)⟩
+
+/-- **A nilpotent skew `N` with `dim so(V)_N = ⌊dim V/2⌋` forces `V` quasi-split**: `N` is regular
+(`pow_ne_zero_of_finrank_soCent_eq`), and `le_wittIndex_of_pow_ne_zero` with `m = n − 1` or
+`n − 2` gives `n ≤ 2 w(V) + 2`. -/
+theorem isQuasiSplitQF_of_finrank_soCent_eq {Q : QuadraticForm K V} (hQ : IsNondeg Q)
+    {N : Module.End K V} (hN : ∀ u w, bform Q (N u) w = -bform Q u (N w)) (hNn : IsNilpotent N)
+    (hdim : finrank K (soCent Q N) = finrank K V / 2) : IsQuasiSplitQF Q := by
+  unfold IsQuasiSplitQF
+  set n := finrank K V with hn_def
+  by_cases hn : n ≤ 2
+  · omega
+  push Not at hn
+  have hp := pow_ne_zero_of_finrank_soCent_eq hQ hN hNn hdim hn
   rcases Nat.even_or_odd n with he | ho
-  · have := hW _ (hp.2 he).1
+  · have := le_wittIndex_of_pow_ne_zero hN hNn (hp.2 he)
     obtain ⟨r, hr⟩ := he
     omega
-  · have := hW _ (hp.1 ho)
+  · have := le_wittIndex_of_pow_ne_zero hN hNn (hp.1 ho)
     obtain ⟨r, hr⟩ := ho
     omega
 

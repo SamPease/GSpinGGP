@@ -51,6 +51,19 @@ def specPU : ↥(GSpin d.QW) →* (Module.End F d.luoOf.W)ˣ :=
     ((d.specPU g : (Module.End F d.luoOf.W)ˣ) : Module.End F d.luoOf.W) =
       (specP d.QW g : (Fin d.m → F) →ₗ[F] (Fin d.m → F)) := rfl
 
+/-- `P : GSpin(V) → GL(V)`, as units of `End V`. -/
+def specPVU : ↥(GSpin d.QV) →* (Module.End F d.luoOf.V)ˣ :=
+  (LinearMap.GeneralLinearGroup.generalLinearEquiv F d.luoOf.V).symm.toMonoidHom.comp
+    (specP d.QV)
+
+theorem specPVU_apply (b : ↥(GSpin d.QV)) :
+    d.specPVU b = (LinearMap.GeneralLinearGroup.generalLinearEquiv F d.luoOf.V).symm
+      (specP d.QV b) := rfl
+
+@[simp] theorem coe_specPVU (b : ↥(GSpin d.QV)) :
+    ((d.specPVU b : (Module.End F d.luoOf.V)ˣ) : Module.End F d.luoOf.V) =
+      (specP d.QV b : d.V →ₗ[F] d.V) := rfl
+
 /-- `P(g) ∈ SO(W)`. -/
 theorem specPU_mem_SOu (g : ↥(GSpin d.QW)) : d.specPU g ∈ LuoDatum.SOu d.luoOf.QW := by
   change LinearMap.GeneralLinearGroup.generalLinearEquiv F _
