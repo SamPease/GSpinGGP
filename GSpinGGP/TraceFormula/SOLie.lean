@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.TraceFormula.LieAlgebra
 import GSpinGGP.Literature.Measure
+import GSpinGGP.Literature.Fourier
+import GSpinGGP.TraceFormula.SelfDual
 import TauCeti.Topology.Algebra.QuadraticForm.OrthogonalGroup.SpecialOrthogonal
 
 /-!
@@ -455,6 +457,53 @@ def measLie (ψ : NontrivialAddChar F) : Measure ↥L.lie := selfDualHaar L.lie 
 `∫ K^A_{f,f'}(x, x) dx`, with `A_Ḡ = 1`), for a Haar measure `μG` on `Ḡ(F)`. -/
 def orbitalPairing (ψ : NontrivialAddChar F) (μG : Measure ↥L.Gbar) (f f' : ↥L.lie → ℂ) : ℂ :=
   ∫ x : ↥L.Gbar, (∫ X : ↥L.lie, L.extFn f (L.conjInv x X) * f' X ∂L.measLie ψ) ∂μG
+
+/-- **The trace form is nondegenerate on `so(W) ⊕ so(V)`** (for `V` nondegenerate): on each factor
+`(X, Y) ↦ tr(XY)` separates skew maps (`exists_mem_skewAdjoint_trace_mul_ne_zero`, rank-one skew
+maps `u ∧ w`). -/
+theorem restrictForm_lie_traceForm_nondegenerate (hV : IsNondeg L.QV) :
+    (restrictForm L.lie L.traceForm).Nondegenerate := by
+  have hsymm : ∀ X Y : ↥L.lie, restrictForm L.lie L.traceForm X Y =
+      restrictForm L.lie L.traceForm Y X := by
+    intro X Y
+    simp only [restrictForm, LinearMap.compl₁₂_apply, traceForm, LinearMap.mk₂_apply]
+    rw [LinearMap.trace_mul_comm F (L.fstA (X : L.Amb)), LinearMap.trace_mul_comm F (L.sndA (X : L.Amb))]
+  have hL : ∀ X : ↥L.lie, (∀ Y : ↥L.lie, restrictForm L.lie L.traceForm X Y = 0) → X = 0 := by
+    intro X hX
+    have hval : ∀ a b (ha : L.pair a b ∈ L.lie),
+        ⅟(2 : F) * (LinearMap.trace F L.W (L.fstA (X : L.Amb) * a) +
+          LinearMap.trace F L.V (L.sndA (X : L.Amb) * b)) = 0 := fun a b ha => hX ⟨_, ha⟩
+    have h2 : ⅟(2 : F) ≠ 0 := invOf_ne_zero 2
+    have e1 : L.fstA (X : L.Amb) = 0 := by
+      by_contra hne
+      obtain ⟨Y, hY, hYt⟩ := exists_mem_skewAdjoint_trace_mul_ne_zero
+        (QuadraticMap.associated_isSymm F L.QW) L.nondeg X.2.1 hne
+      have := hval Y 0 ⟨hY, zero_mem (skewAdjointLieSubalgebra (bform L.QV))⟩
+      rw [mul_zero, map_zero, add_zero] at this
+      exact hYt ((mul_eq_zero.mp this).resolve_left h2)
+    have e2 : L.sndA (X : L.Amb) = 0 := by
+      by_contra hne
+      obtain ⟨Y, hY, hYt⟩ := exists_mem_skewAdjoint_trace_mul_ne_zero
+        (QuadraticMap.associated_isSymm F L.QV) hV X.2.2 hne
+      have := hval 0 Y ⟨zero_mem (skewAdjointLieSubalgebra (bform L.QW)), hY⟩
+      rw [mul_zero, map_zero, zero_add] at this
+      exact hYt ((mul_eq_zero.mp this).resolve_left h2)
+    exact Subtype.ext (Prod.ext e1 e2)
+  exact ⟨hL, fun Y hY => hL Y fun X => by rw [hsymm]; exact hY X⟩
+
+/-- A self-dual measure exists on `so(W) ⊕ so(V)` for the trace form (`V` nondegenerate). -/
+theorem exists_isSelfDual_lie (hV : IsNondeg L.QV) (ψ : NontrivialAddChar F) :
+    ∃ μ, IsSelfDual μ (restrictForm L.lie L.traceForm) ψ := by
+  have := t2Space_of_moduleTopology F L.Amb
+  have := IsModuleTopology.toContinuousSMul F L.Amb
+  exact exists_isSelfDual_of_isInducing L.lie.incl.toLinearMap IsInducing.subtypeVal
+    Subtype.val_injective _ (L.restrictForm_lie_traceForm_nondegenerate hV) ψ
+
+/-- `measLie` is a Haar measure on `so(W) ⊕ so(V)` (not the junk value `0`), for `V`
+nondegenerate. -/
+theorem isAddHaarMeasure_measLie (hV : IsNondeg L.QV) (ψ : NontrivialAddChar F) :
+    (L.measLie ψ).IsAddHaarMeasure :=
+  selfDualMeasure_isAddHaar (L.exists_isSelfDual_lie hV ψ)
 
 end ScuspF
 

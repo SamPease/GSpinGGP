@@ -410,14 +410,12 @@ plane: `AGbar_eq_bot` and Hilbert 90, `Pbar_surjective`). -/
 def muG : Measure ↥d.luoOf.Gbar :=
   Measure.map (fun x : d.GmodAG => d.toGbar (Quotient.out x)) Measure.haar
 
-/-- **(L3) `muG` is a Haar measure on `Ḡ(F)`**: `G(F)/A_G(F) → Ḡ(F)` is a bijective continuous
-homomorphism of locally compact, σ-compact groups (`AGbar_eq_bot`, `Pbar_surjective`), hence a
-homeomorphism (open mapping theorem; `Ḡ(F)` is locally compact, `isClosed_Gbar`), and the
-push-forward of a Haar measure by an isomorphism of topological groups is a Haar measure.
-Injectivity: the kernel of `P` is the central `G_m × G_m ⊆ A_G`
-(`exists_scalarPair_of_specP_eq`). -/
-theorem muG_isHaarMeasure (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) :
-    d.muG.IsHaarMeasure := by
+/-- **`G(F)/A_G(F) ≃ Ḡ(F)` as topological groups**, by `x ↦ toGbar (out x)`, when neither `W` nor
+`V` is a hyperbolic plane: `toGbar` descends to a continuous bijective homomorphism (its kernel is
+`A_G`: `AGbar_eq_bot`, `exists_scalarPair_of_specP_eq`; onto by `Pbar_surjective`), open by the
+open mapping theorem for locally compact σ-compact groups (`Ḡ(F)` is closed, `isClosed_Gbar`). -/
+theorem exists_continuousMulEquiv_toGbar (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) :
+    ∃ e : d.GmodAG ≃ₜ* ↥d.luoOf.Gbar, ⇑e = fun x : d.GmodAG => d.toGbar (Quotient.out x) := by
   have hPbar : ∀ g, d.Pbar g = 1 → d.toGbar g = 1 := by
     intro g hg
     apply Subtype.ext
@@ -474,9 +472,20 @@ theorem muG_isHaarMeasure (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) :
   have hopen : IsOpenMap φ := φ.isOpenMap_of_sigmaCompact hsurj hcont
   let e : d.GmodAG ≃* ↥d.luoOf.Gbar := MulEquiv.ofBijective φ ⟨hinj, hsurj⟩
   let h : d.GmodAG ≃ₜ ↥d.luoOf.Gbar := e.toEquiv.toHomeomorphOfContinuousOpen hcont hopen
+  exact ⟨{ e with continuous_toFun := hcont, continuous_invFun := h.symm.continuous }, hφ.symm⟩
+
+/-- **(L3) `muG` is a Haar measure on `Ḡ(F)`**: `G(F)/A_G(F) → Ḡ(F)` is a bijective continuous
+homomorphism of locally compact, σ-compact groups (`AGbar_eq_bot`, `Pbar_surjective`), hence a
+homeomorphism (open mapping theorem; `Ḡ(F)` is locally compact, `isClosed_Gbar`), and the
+push-forward of a Haar measure by an isomorphism of topological groups is a Haar measure.
+Injectivity: the kernel of `P` is the central `G_m × G_m ⊆ A_G`
+(`exists_scalarPair_of_specP_eq`). -/
+theorem muG_isHaarMeasure (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) :
+    d.muG.IsHaarMeasure := by
+  obtain ⟨e, he⟩ := d.exists_continuousMulEquiv_toGbar hW hV
   unfold muG
-  rw [hφ]
-  exact e.isHaarMeasure_map Measure.haar hcont h.symm.continuous
+  rw [← he]
+  exact e.toMulEquiv.isHaarMeasure_map Measure.haar e.continuous e.symm.continuous
 
 /-! ## (L4) `J^Lie` -/
 
@@ -497,21 +506,6 @@ theorem exists_JLie_transfer (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
   sorry
 
 /-! ## (L5) `θ_f` -/
-
-/-- **(L5) `θ_f` transfers**: if `θ` on `so(W) ⊕ so(V)` is locally integrable, continuous on the
-regular set and represents the orbital pairing of `f ∘ ad⁻¹` for `muG`, then `θ ∘ ad` represents
-the orbital pairing of `f` on `𝔤⁰` (`IsThetaFLie`).  Ingredients: `ad` carries `measLie0` (self-dual
-for `bilin`) to a positive multiple `c` of the self-dual measure for the trace form (both are Haar
-measures), which multiplies both sides of the identity; `ad(gXg⁻¹) = P(g) ad(X) P(g)⁻¹`; the
-regular sets correspond; change of variables along `G(F)/A_G(F) ≃ Ḡ(F)`.  Not proved here. -/
-theorem isThetaFLie_of_SO (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
-    {f : ↥d.lieZero → ℂ} (hf : d.IsLieScusp f) {θ : ↥d.luoOf.lie → ℂ}
-    (h1 : LocallyIntegrable θ (d.luoOf.measLie ψ))
-    (h2 : ContinuousOn θ {X : ↥d.luoOf.lie | IsRegularSS d.luoOf.lie (X : d.luoOf.Amb)})
-    (h3 : ∀ f' : ↥d.luoOf.lie → ℂ, IsTestFn f' →
-      ∫ X, θ X * f' X ∂d.luoOf.measLie ψ = d.luoOf.orbitalPairing ψ d.muG (f ∘ d.toSO.symm) f') :
-    d.IsThetaFLie ψ f (θ ∘ d.toSO) := by
-  sorry
 
 /-- `b(X, Z) = 0` for `X ∈ 𝔤⁰` and `Z` in the centre `𝔷 = F(1,0) ⊕ F(0,1)`:
 `b(X, (1,0)) = tr(L_{X_W})` and `b(X, (0,1)) = tr(L_{X_V})`, which vanish on the traceless part. -/
@@ -669,6 +663,207 @@ theorem isThetaFLie_eqOn_regular {f θ θ' : ↥d.lieZero → ℂ} (hθ : d.IsTh
   have hEq := MeasureTheory.Measure.eqOn_open_of_ae_eq (ae_restrict_of_ae hae')
     d.isOpen_setOf_isRegularSS_lieZero hc hc'
   exact fun X hX => hEq hX
+
+/-! ## (L5) `θ_f`: the transfer -/
+
+/-- **`ad` is equivariant**: `ad(g⁻¹ X g) = P(g)⁻¹ ad(X) P(g)` (`adV_conj` on each factor). -/
+theorem toSOLin_adLie0_inv (g : ↥d.G) (X : ↥d.lieZero) :
+    d.toSOLin (d.adLie0 g⁻¹ X : d.ambient) = d.luoOf.conjInv (d.toGbar g) (d.toSOLin X) := by
+  have hinv : ((d.toGbar g)⁻¹ : ↥d.luoOf.Gbar) = d.toGbar g⁻¹ := (map_inv d.toGbar g).symm
+  unfold LuoDatum.conjInv
+  rw [hinv]
+  refine Prod.ext (LinearMap.ext fun v => ?_) (LinearMap.ext fun v => ?_)
+  · have h := adV_conj (d.fst g⁻¹) X.2.1.1 v
+    rw [map_inv, inv_inv] at h
+    exact h
+  · have h := adV_conj (d.snd g⁻¹) X.2.2.1 v
+    rw [map_inv, inv_inv] at h
+    exact h
+
+/-- `ad` preserves commutators on `𝔤⁰` (`adV_commutator` on each factor). -/
+theorem toSOLin_commutator {X Y : d.ambient} (hX : X ∈ d.lieZero) (hY : Y ∈ d.lieZero) :
+    d.toSOLin (X * Y - Y * X) = d.toSOLin X * d.toSOLin Y - d.toSOLin Y * d.toSOLin X :=
+  Prod.ext (adV_commutator hX.1.1 hY.1.1) (adV_commutator hX.2.1 hY.2.1)
+
+/-- **`ad` maps semisimple elements of `𝔤⁰` to semisimple ones**: the minimal polynomial `q` of
+`ad X = L_X − R_X` on `C(W) × C(V)` is squarefree, and kills `adV X_W` and `adV X_V`
+(`ι((adV X_W)^k v) = (ad X_W)^k ι(v)`), hence the pair `(adV X_W, adV X_V)`. -/
+theorem isSS_toSOLin {X : d.ambient} (hX : X ∈ d.lieZero) (hs : IsSS F X) :
+    IsSS F (d.toSOLin X) := by
+  set D := LieAlgebra.ad F d.ambient X
+  have hD : D.IsSemisimple := LieAlgebra.ad_isSemisimple_of_isSemisimple_mulLeft hs
+  set q := minpoly F D
+  have hq : Squarefree q := hD.minpoly_squarefree
+  have h0 : Polynomial.aeval D q = 0 := minpoly.aeval F D
+  have hfst : ∀ (i : ℕ) (y : d.ambient),
+      ((D ^ i) y).1 = (LieAlgebra.ad F (CliffordAlgebra d.QW) X.1 ^ i) y.1 := by
+    intro i
+    induction i with
+    | zero => intro y; rfl
+    | succ i ih =>
+      intro y
+      rw [pow_succ', Module.End.mul_apply, pow_succ', Module.End.mul_apply, ← ih]
+      simp only [D, LieAlgebra.ad_apply, Ring.lie_def, Prod.fst_sub, Prod.fst_mul]
+  have hsnd : ∀ (i : ℕ) (y : d.ambient),
+      ((D ^ i) y).2 = (LieAlgebra.ad F (CliffordAlgebra d.QV) X.2 ^ i) y.2 := by
+    intro i
+    induction i with
+    | zero => intro y; rfl
+    | succ i ih =>
+      intro y
+      rw [pow_succ', Module.End.mul_apply, pow_succ', Module.End.mul_apply, ← ih]
+      simp only [D, LieAlgebra.ad_apply, Ring.lie_def, Prod.snd_sub, Prod.snd_mul]
+  have hW : Polynomial.aeval (adV d.QW X.1) q = 0 := by
+    ext v
+    apply ι_injective d.QW
+    have key : ι d.QW (Polynomial.aeval (adV d.QW X.1) q v) =
+        (Polynomial.aeval D q (ι d.QW v, 0)).1 := by
+      rw [Polynomial.aeval_eq_sum_range, Polynomial.aeval_eq_sum_range]
+      simp only [LinearMap.coeFn_sum, Finset.sum_apply, LinearMap.smul_apply, map_sum, map_smul,
+        Prod.fst_sum, Prod.smul_fst, hfst, ι_adV_pow hX.1.1]
+    rw [key, h0]
+    simp
+  have hV : Polynomial.aeval (adV d.QV X.2) q = 0 := by
+    ext v
+    apply ι_injective d.QV
+    have key : ι d.QV (Polynomial.aeval (adV d.QV X.2) q v) =
+        (Polynomial.aeval D q (0, ι d.QV v)).2 := by
+      rw [Polynomial.aeval_eq_sum_range, Polynomial.aeval_eq_sum_range]
+      simp only [LinearMap.coeFn_sum, Finset.sum_apply, LinearMap.smul_apply, map_sum, map_smul,
+        Prod.snd_sum, Prod.smul_snd, hsnd, ι_adV_pow hX.2.1]
+    rw [key, h0]
+    simp
+  refine isSS_of_aeval_eq_zero hq ?_
+  refine Prod.ext ?_ ?_
+  · change d.luoOf.fstA (Polynomial.aeval (d.toSOLin X) q) = 0
+    rw [← Polynomial.aeval_algHom_apply, fstA_toSOLin, hW]
+  · change d.luoOf.sndA (Polynomial.aeval (d.toSOLin X) q) = 0
+    rw [← Polynomial.aeval_algHom_apply, sndA_toSOLin, hV]
+
+/-- **`ad` maps regular semisimple elements of `𝔤⁰` to regular semisimple elements of
+`so(W) ⊕ so(V)`**: semisimplicity by `isSS_toSOLin`; the centralizer of `ad X` pulls back along the
+bijection `ad` (`toSO_bijective`) into the centralizer of `X`, as `ad` preserves commutators. -/
+theorem isRegularSS_toSOLin {X : d.ambient} (hX : X ∈ d.lieZero)
+    (h : IsRegularSS d.lieZero X) : IsRegularSS d.luoOf.lie (d.toSOLin X) := by
+  refine ⟨d.isSS_toSOLin hX h.1, ?_⟩
+  rw [isLieAbelian_iff_forall_commute]
+  have hab := isLieAbelian_iff_forall_commute.mp h.2
+  have pull : ∀ M ∈ lieCentralizer d.luoOf.lie (d.toSOLin X),
+      ∃ Z ∈ lieCentralizer d.lieZero X, d.toSOLin Z = M := by
+    intro M hM
+    rw [mem_lieCentralizer] at hM
+    set Z : ↥d.lieZero := d.toSO.symm ⟨M, hM.1⟩ with hZdef
+    have hZM : d.toSOLin (Z : d.ambient) = M := d.toSOLin_toSO_symm ⟨M, hM.1⟩
+    refine ⟨Z, mem_lieCentralizer.mpr ⟨Z.2, ?_⟩, hZM⟩
+    have hc : X * Z - Z * X ∈ d.lieZero := by
+      have := d.lieZero.lie_mem hX Z.2
+      rwa [Ring.lie_def] at this
+    have h0 : d.toSOFun ⟨_, hc⟩ = d.toSOFun 0 := by
+      apply Subtype.ext
+      change d.toSOLin (X * Z - Z * X) = d.toSOLin 0
+      rw [d.toSOLin_commutator hX Z.2, hZM, hM.2, sub_self, map_zero]
+    exact sub_eq_zero.mp (congrArg Subtype.val (d.toSO_bijective.1 h0))
+  intro M₁ h₁ M₂ h₂
+  obtain ⟨Z₁, hZ₁, rfl⟩ := pull M₁ h₁
+  obtain ⟨Z₂, hZ₂, rfl⟩ := pull M₂ h₂
+  rw [← sub_eq_zero, ← d.toSOLin_commutator (mem_lieCentralizer.mp hZ₁).1
+    (mem_lieCentralizer.mp hZ₂).1, hab Z₁ hZ₁ Z₂ hZ₂, sub_self, map_zero]
+
+/-- **(L5) `θ_f` transfers**: if `θ` on `so(W) ⊕ so(V)` is locally integrable, continuous on the
+regular set and represents the orbital pairing of `f ∘ ad⁻¹` for `muG`, then `θ ∘ ad` represents
+the orbital pairing of `f` on `𝔤⁰` (`IsThetaFLie`).  Ingredients: `ad` carries `measLie0` (self-dual
+for `bilin`) to a positive multiple `c` of the self-dual measure for the trace form (both are Haar
+measures), which multiplies both sides of the identity; `ad(gXg⁻¹) = P(g) ad(X) P(g)⁻¹`; the
+regular sets correspond; change of variables along `G(F)/A_G(F) ≃ Ḡ(F)`.  Not proved here. -/
+theorem isThetaFLie_of_SO (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
+    {f : ↥d.lieZero → ℂ} (hf : d.IsLieScusp f) {θ : ↥d.luoOf.lie → ℂ}
+    (h1 : LocallyIntegrable θ (d.luoOf.measLie ψ))
+    (h2 : ContinuousOn θ {X : ↥d.luoOf.lie | IsRegularSS d.luoOf.lie (X : d.luoOf.Amb)})
+    (h3 : ∀ f' : ↥d.luoOf.lie → ℂ, IsTestFn f' →
+      ∫ X, θ X * f' X ∂d.luoOf.measLie ψ = d.luoOf.orbitalPairing ψ d.muG (f ∘ d.toSO.symm) f') :
+    d.IsThetaFLie ψ f (θ ∘ d.toSO) := by
+  have := t2Space_of_moduleTopology F d.ambient
+  have := isTopologicalRing_of_moduleTopology F d.ambient
+  have := t2Space_of_moduleTopology F d.luoOf.Amb
+  have : ContinuousSMul F d.luoOf.Amb := IsModuleTopology.toContinuousSMul F d.luoOf.Amb
+  have : ContinuousSMul F ↥d.luoOf.lie :=
+    inferInstanceAs (ContinuousSMul F ↥d.luoOf.lie.toSubmodule)
+  have : IsTopologicalAddGroup ↥d.luoOf.lie :=
+    inferInstanceAs (IsTopologicalAddGroup ↥d.luoOf.lie.toSubmodule)
+  have : T2Space ↥d.luoOf.lie := inferInstance
+  -- `so(W) ⊕ so(V) ≅ F^n`: locally compact and second countable
+  have : ProperSpace F := .of_nontriviallyNormedField_of_weaklyLocallyCompactSpace F
+  let eF : ↥d.luoOf.lie ≃L[F] (Fin (Module.finrank F ↥d.luoOf.lie) → F) :=
+    ContinuousLinearEquiv.ofFinrankEq (by simp)
+  have : LocallyCompactSpace ↥d.luoOf.lie := eF.toHomeomorph.isClosedEmbedding.locallyCompactSpace
+  have : SecondCountableTopology ↥d.luoOf.lie := eF.toHomeomorph.isEmbedding.secondCountableTopology
+  have := d.isAddHaarMeasure_measLie0 ψ
+  have := d.luoOf.isAddHaarMeasure_measLie d.nondeg_QV ψ
+  set e := d.toSOCLE with he
+  have hecoe : ⇑e = ⇑d.toSO := rfl
+  -- `ad` carries `measLie0` to a multiple of `measLie`
+  have : (Measure.map e (d.measLie0 ψ)).IsAddHaarMeasure := e.isAddHaarMeasure_map _
+  set c := Measure.addHaarScalarFactor (Measure.map e (d.measLie0 ψ)) (d.luoOf.measLie ψ)
+  have hc : Measure.map e (d.measLie0 ψ) = c • d.luoOf.measLie ψ :=
+    Measure.isAddLeftInvariant_eq_smul _ _
+  set em := e.toHomeomorph.toMeasurableEquiv
+  have hint : ∀ k : ↥d.luoOf.lie → ℂ, ∫ X, k (d.toSO X) ∂d.measLie0 ψ =
+      ((c : ℝ≥0∞).toReal : ℝ) • ∫ Y, k Y ∂d.luoOf.measLie ψ := by
+    intro k
+    rw [← integral_smul_measure, ← hc]
+    exact (integral_map_equiv em k).symm
+  refine ⟨?_, ?_, ?_⟩
+  · -- local integrability
+    have hl : LocallyIntegrable θ (Measure.map e.toHomeomorph (d.measLie0 ψ)) := by
+      change LocallyIntegrable θ (Measure.map e (d.measLie0 ψ))
+      rw [hc]
+      intro x
+      obtain ⟨s, hs, hi⟩ := h1 x
+      exact ⟨s, hs, by
+        rw [IntegrableOn, Measure.restrict_smul]
+        exact hi.smul_measure ENNReal.coe_ne_top⟩
+    exact (locallyIntegrable_map_homeomorph e.toHomeomorph).1 hl
+  · -- continuity on the regular set
+    exact h2.comp e.continuous.continuousOn fun X hX => d.isRegularSS_toSOLin X.2 hX
+  · intro f' hf'
+    have hf'' : IsTestFn (f' ∘ d.toSO.symm) := by
+      rw [← coe_toSOCLE_symm]
+      exact ⟨hf'.1.comp_continuous d.toSOCLE.symm.continuous,
+        hf'.2.comp_homeomorph d.toSOCLE.symm.toHomeomorph⟩
+    -- pointwise: `f(g⁻¹ X g)` in terms of `ad`
+    have hpt : ∀ (g : ↥d.G) (Y : ↥d.luoOf.lie),
+        f (d.adLie0 g⁻¹ (d.toSO.symm Y)) * f' (d.toSO.symm Y) =
+          d.luoOf.extFn (f ∘ d.toSO.symm) (d.luoOf.conjInv (d.toGbar g) Y) *
+            (f' ∘ d.toSO.symm) Y := by
+      intro g Y
+      have hcj : d.luoOf.conjInv (d.toGbar g) Y = d.toSOLin (d.adLie0 g⁻¹ (d.toSO.symm Y)) := by
+        rw [d.toSOLin_adLie0_inv, d.toSOLin_toSO_symm]
+      have hm : d.luoOf.conjInv (d.toGbar g) Y ∈ d.luoOf.lie := hcj ▸ d.toSO_mem _
+      rw [LuoDatum.extFn, dif_pos hm]
+      simp only [Function.comp_apply]
+      congr 2
+      rw [Equiv.symm_apply_eq]
+      exact Subtype.ext hcj
+    obtain ⟨φ, hφ⟩ := d.exists_continuousMulEquiv_toGbar hW hV
+    have hmu : d.muG = Measure.map φ Measure.haar := by rw [hφ]; rfl
+    have hL := hint fun Y => θ Y * f' (d.toSO.symm Y)
+    simp only [Equiv.symm_apply_apply] at hL
+    simp only [Function.comp_apply]
+    rw [hL]
+    have h3' := h3 _ hf''
+    simp only [Function.comp_apply] at h3'
+    rw [h3', LuoDatum.orbitalPairing, orbitalPairingLie, hmu,
+      φ.toHomeomorph.measurableEmbedding.integral_map, ← integral_smul]
+    refine integral_congr_ae (Eventually.of_forall fun x => ?_)
+    have hI := hint fun Y => f (d.adLie0 (Quotient.out x)⁻¹ (d.toSO.symm Y)) * f' (d.toSO.symm Y)
+    simp only [Equiv.symm_apply_apply] at hI
+    simp only
+    rw [hI]
+    congr 1
+    refine integral_congr_ae (Eventually.of_forall fun Y => ?_)
+    rw [hpt]
+    simp only [Function.comp_apply, hφ]
+    rfl
 
 /-! ## (L6)–(L9) `m^Lie_geom` -/
 
