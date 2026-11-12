@@ -356,6 +356,36 @@ def germLie (G : Subgroup Aˣ) (𝔤 : LieSubalgebra F A) (b : LinearMap.BilinFo
     (if h : ∃ c, HasGermExpansionLie G 𝔤 b ψ θ X c then h.choose O else 0)
   else 0
 
+/-- **Germs along a transport of local expansions.**  Let `E` map the nilpotent orbits of `𝔤_X`
+to those of `𝔤'_{X'}`, matching the regular ones, such that every local expansion `c'` of `θ'` at
+`X'` gives the local expansion `c' ∘ E` of `θ` at `X`.  If `θ'` has a local expansion at `X'` and
+the regular coefficients of local expansions of `θ` at `X` are unique, then
+`c_{θ,O}(X) = c_{θ',E O}(X')`.  Only uniqueness on the side of `θ` is used: the expansion chosen
+for `θ'` is transported. -/
+theorem germLie_eq_of_transport {A' : Type*} [Ring A'] [Algebra F A'] [TopologicalSpace A']
+    [Module.Finite F A'] [IsModuleTopology F A']
+    {G : Subgroup Aˣ} {𝔤 : LieSubalgebra F A} {b : LinearMap.BilinForm F A} {θ : ↥𝔤 → ℂ} {X : A}
+    {G' : Subgroup A'ˣ} {𝔤' : LieSubalgebra F A'} {b' : LinearMap.BilinForm F A'}
+    {θ' : ↥𝔤' → ℂ} {X' : A'} {ψ : NontrivialAddChar F}
+    (E : NilOrbit (lieGrpCentralizer G X) (lieCentralizer 𝔤 X) →
+      NilOrbit (lieGrpCentralizer G' X') (lieCentralizer 𝔤' X'))
+    (hreg : ∀ O, E O ∈ NilReg _ _ ↔ O ∈ NilReg _ _)
+    (hex : ∃ c', HasGermExpansionLie G' 𝔤' b' ψ θ' X' c')
+    (htr : ∀ c', HasGermExpansionLie G' 𝔤' b' ψ θ' X' c' →
+      HasGermExpansionLie G 𝔤 b ψ θ X (c' ∘ E))
+    (huniq : ∀ c c'', HasGermExpansionLie G 𝔤 b ψ θ X c →
+      HasGermExpansionLie G 𝔤 b ψ θ X c'' → ∀ O ∈ NilReg _ _, c O = c'' O)
+    (O : NilOrbit (lieGrpCentralizer G X) (lieCentralizer 𝔤 X)) :
+    germLie G 𝔤 b ψ θ X O = germLie G' 𝔤' b' ψ θ' X' (E O) := by
+  classical
+  have h : ∃ c, HasGermExpansionLie G 𝔤 b ψ θ X c := ⟨_, htr _ hex.choose_spec⟩
+  by_cases hO : O ∈ NilReg _ _
+  · have hO' : E O ∈ NilReg _ _ := (hreg O).mpr hO
+    simp only [germLie, hO, hO', h, hex, ↓reduceIte, ↓reduceDIte]
+    exact huniq _ _ h.choose_spec (htr _ hex.choose_spec) O hO
+  · have hO' : E O ∉ NilReg _ _ := fun h' => hO ((hreg O).mp h')
+    simp only [germLie, hO, hO', ↓reduceIte]
+
 end LieQC
 
 namespace GGPData
