@@ -7,6 +7,21 @@ import GSpinGGP.Foundations.ExpLocal
 /-!
 # `exp` carries an additive Haar measure to a Haar measure near `0` (`p`-adic case)
 
+Over a `p`-adic field the Jacobian of `exp` is `1` near `0`. This file proves the measure-theoretic
+form needed for the measures `dX` of `J^Lie` and `m^Lie_geom` (BP §1.6), without a change of
+variables formula: `exp` is an isometry near `0`, so it carries cosets of small lattices to cosets of
+small open subgroups.
+
+* `exists_norm_exp_sub_exp_eq`: in an ultrametric Banach algebra with `‖1/n!‖ ≤ Rⁿ`,
+  `‖e^x − e^y‖ = ‖x − y‖` on a small ball;
+* `exists_expA_isometry`: the same for `expA` on a finite-dimensional algebra `A` (norm
+  `‖lmulPi ·‖`), with `exp` onto the ball around `1`;
+* `isEmbedding_units_val`: `Aˣ → A` is a topological embedding;
+* `Measure.eq_of_forall_vadd_coset`: two finite measures carried by a compact open subgroup and
+  uniform on the cosets of a basis of open subgroups are equal;
+* `exists_isAddHaarMeasure_eq_expA_image`: for a group `𝓗 ⊆ Aˣ` whose Lie algebra near `0` is
+  `𝔤 ⊕ F·1`, and every Haar measure on `𝓗/(scalars)`, some additive Haar measure `μ` on `𝔤` has
+  `μ(S) = μK(e^S)` for `S` near `0`.
 -/
 
 noncomputable section
