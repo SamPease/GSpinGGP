@@ -38,7 +38,7 @@ open IsomCent
 /-- **A hyperbolic pair of eigenvectors.** If `V` is spanned by `u, w` with `X u = μ u`,
 `X w = μ⁻¹ w`, `μ² ≠ 1` and `b(u, w) ≠ 0`, then `so(V)_X` is the line spanned by
 `z ↦ b(w, z) u − b(u, z) w` (acting by `b(u,w)` on `u` and `−b(u,w)` on `w`). -/
-theorem soCent_eq_span_wedge (hX : IsIsom (bform Q) X) {μ : K} (hμ0 : μ ≠ 0) (hμ : μ * μ ≠ 1)
+theorem soCent_eq_span_wedge (hX : (bform Q).IsOrthogonal X) {μ : K} (hμ0 : μ ≠ 0) (hμ : μ * μ ≠ 1)
     {u w : V} (hu : X u = μ • u) (hw : X w = μ⁻¹ • w) (huw : bform Q u w ≠ 0)
     (hspan : Submodule.span K {u, w} = ⊤) :
     soCent Q X = K ∙ wedge (bform Q) u w := by
@@ -76,7 +76,7 @@ theorem soCent_eq_span_wedge (hX : IsIsom (bform Q) X) {μ : K} (hμ0 : μ ≠ 0
       · exact (mul_eq_zero.1 h).resolve_right (sub_ne_zero.2 hμμ.symm)
       · exact absurd h hu0
     exact ⟨b, by rw [ha, zero_smul, zero_add]⟩
-  have hJ : wedge (bform Q) u w ∈ soCent Q X := mem_soCent.2 ⟨isSkew_wedge hB u w,
+  have hJ : wedge (bform Q) u w ∈ soCent Q X := mem_soCent.2 ⟨(isSkewAdjoint_wedge hB u w).eq,
     (commute_wedge hB hX (mul_inv_cancel₀ hμ0) (Module.End.mem_eigenspace_iff.2 hu)
       (Module.End.mem_eigenspace_iff.2 hw)).eq.symm⟩
   ext M
@@ -103,7 +103,7 @@ theorem soCent_eq_span_wedge (hX : IsIsom (bform Q) X) {μ : K} (hμ0 : μ ≠ 0
   · rintro ⟨r, rfl⟩
     exact Submodule.smul_mem _ r hJ
 
-theorem finrank_soCent_pair (hX : IsIsom (bform Q) X) {μ : K} (hμ0 : μ ≠ 0) (hμ : μ * μ ≠ 1)
+theorem finrank_soCent_pair (hX : (bform Q).IsOrthogonal X) {μ : K} (hμ0 : μ ≠ 0) (hμ : μ * μ ≠ 1)
     {u w : V} (hu : X u = μ • u) (hw : X w = μ⁻¹ • w) (huw : bform Q u w ≠ 0)
     (hspan : Submodule.span K {u, w} = ⊤) : finrank K (soCent Q X) = 1 := by
   rw [soCent_eq_span_wedge hX hμ0 hμ hu hw huw hspan]
@@ -158,7 +158,7 @@ theorem finrank_soCent_one_of_le_two [FiniteDimensional K V] (hQ : IsNondeg Q)
     rw [this, finrank_bot]
   · set J := IsomCent.wedge (bform Q) (e 0) (e 1)
     have hJ : J ∈ soCent Q 1 :=
-      mem_soCent.2 ⟨IsomCent.isSkew_wedge ⟨bform_comm Q⟩ _ _, by rw [mul_one, one_mul]⟩
+      mem_soCent.2 ⟨(IsomCent.isSkewAdjoint_wedge ⟨bform_comm Q⟩ _ _).eq, by rw [mul_one, one_mul]⟩
     have h01 : bform Q (e 0) (e 1) = 0 := he (by decide)
     have h10 : bform Q (e 1) (e 0) = 0 := he (by decide)
     have hJ0 : J (e 0) = -bform Q (e 0) (e 0) • e 1 := by
@@ -209,7 +209,7 @@ theorem le_finrank_soCent_one [FiniteDimensional K V] (hQ : IsNondeg Q) :
   set i₀ : Fin (finrank K V) := ⟨0, hpos⟩
   let f : Fin (finrank K V - 1) → soCent Q 1 := fun i =>
     ⟨IsomCent.wedge (bform Q) (e i₀) (e ⟨i + 1, by omega⟩),
-      mem_soCent.2 ⟨IsomCent.isSkew_wedge ⟨bform_comm Q⟩ _ _, by rw [mul_one, one_mul]⟩⟩
+      mem_soCent.2 ⟨(IsomCent.isSkewAdjoint_wedge ⟨bform_comm Q⟩ _ _).eq, by rw [mul_one, one_mul]⟩⟩
   have hf : LinearIndependent K f := by
     rw [Fintype.linearIndependent_iff]
     intro c hc i
@@ -241,7 +241,8 @@ theorem finrank_le_two_of_commute [CharZero K] [IsAlgClosed K] [FiniteDimensiona
   have h := IsomCent.finrank_eigenspace_neg_one_le_two (B := bform Q) hB hQ (X := -1)
     (fun u v => by simp [LinearMap.neg_apply])
     (Module.End.isSemisimple_neg.2 Module.End.isSemisimple_id)
-    (fun Y₁ Y₂ h₁ h₂ _ _ _ _ => hab Y₁ (mem_soCent.2 ⟨h₁, by simp⟩) Y₂ (mem_soCent.2 ⟨h₂, by simp⟩))
+    (fun Y₁ Y₂ h₁ h₂ _ _ _ _ =>
+      hab Y₁ (mem_soCent.2 ⟨h₁.eq, by simp⟩) Y₂ (mem_soCent.2 ⟨h₂.eq, by simp⟩))
   have : (-1 : Module.End K V).eigenspace (-1) = ⊤ := by
     ext x; simp
   rwa [this, finrank_top] at h
@@ -279,14 +280,14 @@ open IsomCent
 /-- Induction form of `finrank_soCent_of_commute`, with `dim E₋₁` even in place of `det X = 1`. -/
 private theorem finrank_soCent_aux (n : ℕ) : ∀ {V : Type u} [AddCommGroup V] [Module K V]
     [FiniteDimensional K V] (Q : QuadraticForm K V) (X : Module.End K V), finrank K V = n →
-    IsNondeg Q → IsIsom (bform Q) X → X.IsSemisimple → Even (finrank K (X.eigenspace (-1))) →
+    IsNondeg Q → (bform Q).IsOrthogonal X → X.IsSemisimple → Even (finrank K (X.eigenspace (-1))) →
     (∀ M₁ ∈ soCent Q X, ∀ M₂ ∈ soCent Q X, Commute M₁ M₂) → finrank K (soCent Q X) = n / 2 := by
   induction n using Nat.strong_induction_on with
   | _ n ih =>
   intro V _ _ _ Q X hn hQ hX hss hev hab
   have hB : (bform Q).IsSymm := ⟨bform_comm Q⟩
   have hL : LieAbelian (bform Q) X := fun Y₁ Y₂ h₁ h₂ c₁ c₂ _ _ =>
-    hab Y₁ (mem_soCent.2 ⟨h₁, c₁.eq.symm⟩) Y₂ (mem_soCent.2 ⟨h₂, c₂.eq.symm⟩)
+    hab Y₁ (mem_soCent.2 ⟨h₁.eq, c₁.eq.symm⟩) Y₂ (mem_soCent.2 ⟨h₂.eq, c₂.eq.symm⟩)
   have hcM : ∀ M ∈ soCent Q X, Commute X M := fun M hM => (mem_soCent.1 hM).2.symm
   by_cases hA : ∃ μ, X.HasEigenvalue μ ∧ μ * μ ≠ 1
   · -- split off `U = span {u, w}`, `u ∈ E_μ`, `w ∈ E_{μ⁻¹}`, `μ ≠ ±1`
@@ -441,12 +442,12 @@ field of characteristic `0`, if `X` is a semisimple isometry of the nondegenerat
 `det X = 1` and `so(V)_X` is abelian, then `dim so(V)_X = ⌊dim V / 2⌋`. -/
 theorem finrank_soCent_of_commute {V : Type u} [AddCommGroup V] [Module K V]
     [FiniteDimensional K V] {Q : QuadraticForm K V} {X : Module.End K V} (hQ : IsNondeg Q)
-    (hX : IsIsom (bform Q) X) (hss : X.IsSemisimple) (hdet : LinearMap.det X = 1)
+    (hX : (bform Q).IsOrthogonal X) (hss : X.IsSemisimple) (hdet : LinearMap.det X = 1)
     (hab : ∀ M₁ ∈ soCent Q X, ∀ M₂ ∈ soCent Q X, Commute M₁ M₂) :
     finrank K (soCent Q X) = finrank K V / 2 := by
   have hB : (bform Q).IsSymm := ⟨bform_comm Q⟩
   have hL : LieAbelian (bform Q) X := fun Y₁ Y₂ h₁ h₂ c₁ c₂ _ _ =>
-    hab Y₁ (mem_soCent.2 ⟨h₁, c₁.eq.symm⟩) Y₂ (mem_soCent.2 ⟨h₂, c₂.eq.symm⟩)
+    hab Y₁ (mem_soCent.2 ⟨h₁.eq, c₁.eq.symm⟩) Y₂ (mem_soCent.2 ⟨h₂.eq, c₂.eq.symm⟩)
   have hd := det_restrict_neg_one (B := bform Q) hB hQ hX hss hL hX hdet (Commute.refl X)
     fun z hz => by rw [Module.End.mem_eigenspace_iff.1 hz, one_smul]
   have hneg : X.restrict (mapsTo_eigenspace_of_commute (Commute.refl X) (-1)) =

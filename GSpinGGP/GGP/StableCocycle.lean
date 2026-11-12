@@ -158,7 +158,7 @@ theorem galIso_trans_symm_eq_self_of_odd [FiniteDimensional F V₁] (hQ₁ : IsN
   have hdimE : Module.finrank Kb E = Module.finrank F (fixedSub x) :=
     GGPData.finrank_eigenspace_bc_one Q₁ x
   have hBsymm : (bform (Q₁.baseChange Kb)).IsSymm := ⟨fun u v => bform_comm (Q₁.baseChange Kb) u v⟩
-  have hpair := (pairing_eigenspace hBsymm hQL (isIsom_specP (bcGSpin Q₁ x)) hsemiL 1).2
+  have hpair := (pairing_eigenspace hBsymm hQL (isOrthogonal_specP (bcGSpin Q₁ x)) hsemiL 1).2
   rw [inv_one] at hpair
   obtain ⟨c, hc2, hcE⟩ : ∃ c : Kb, c * c = 1 ∧ ∀ v ∈ E, a v = c • v := by
     obtain ⟨k, hk⟩ := id hodd

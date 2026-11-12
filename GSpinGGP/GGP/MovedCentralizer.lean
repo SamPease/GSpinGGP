@@ -471,7 +471,7 @@ commuting with `P(x)_{F̄}` and vanishing on `W'_x ⊗ F̄` is `ad u` for some `
 of the moved part `𝔩_x = ker movedCentMap` (`exists_lift_skew`, `range_gspinBC`,
 `mem_movedCent_baseChange`): `[u, ι v] = ι (Y v)`. -/
 theorem exists_movedCent_lift (x : ↥(GSpin d.QW)) (Y : Module.End Kb Wb)
-    (hs : IsomCent.IsSkew (bform Qb) Y)
+    (hs : (bform Qb).IsSkewAdjoint Y)
     (hc : Commute ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb) Y)
     (hf : ∀ z ∈ Module.End.eigenspace
       ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb) 1, Y z = 0) :
@@ -483,7 +483,7 @@ theorem exists_movedCent_lift (x : ↥(GSpin d.QW)) (Y : Module.End Kb Wb)
   have hX : (specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb =
       (specP Qb xb : _ →ₗ[Kb] _) :=
     LinearMap.ext fun w => (GGPData.specP_bcUnits d x w).symm
-  obtain ⟨Yh, hYh0, hYh⟩ := exists_lift_skew hQ Y hs
+  obtain ⟨Yh, hYh0, hYh⟩ := exists_lift_skew hQ Y hs.eq
   have hYh0' := hYh0
   rw [← LieSubalgebra.mem_toSubmodule, ← range_gspinBC d.QW hQ] at hYh0'
   obtain ⟨u, rfl⟩ := hYh0'
@@ -580,7 +580,7 @@ local notation "Qb" => d.QW.baseChange (AlgebraicClosure F)
 on `ker (P(x)_{F̄} − 1)`. -/
 theorem movedCent_baseChange_props (x : ↥(GSpin d.QW))
     {Z : (gspin d.QW).toSubmodule} (hZ : Z ∈ LinearMap.ker (movedCentMap d.QW x)) :
-    IsomCent.IsSkew (bform Qb) ((adV d.QW (Z : CliffordAlgebra d.QW)).baseChange Kb) ∧
+    (bform Qb).IsSkewAdjoint ((adV d.QW (Z : CliffordAlgebra d.QW)).baseChange Kb) ∧
       Commute ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb)
         ((adV d.QW (Z : CliffordAlgebra d.QW)).baseChange Kb) ∧
       ∀ z ∈ Module.End.eigenspace
@@ -591,7 +591,7 @@ theorem movedCent_baseChange_props (x : ↥(GSpin d.QW))
   have hk : ∀ v ∈ fixedSub x, adV d.QW (Z : CliffordAlgebra d.QW) v = 0 := fun v hv => by
     rw [adV_apply, hf v hv, sub_self, map_zero]
   refine ⟨?_, ?_, fun z hz => ?_⟩
-  · rw [hbf]; exact IsomCent.IsSkew.baseChange _ (bform_adV Z.2)
+  · rw [hbf]; exact LinearMap.IsSkewAdjoint.baseChange _ (LinearMap.isSkewAdjoint_iff.2 (bform_adV Z.2))
   · rw [Commute, SemiconjBy, ← LinearMap.baseChange_mul, ← LinearMap.baseChange_mul,
       (commute_iff_adV d.nondeg x Z.2).mp hc]
   · rw [← specP_bcGSpin, eigenspace_bc_one] at hz
@@ -608,7 +608,7 @@ on every skew endomorphism commuting with `P(x)_{F̄}` and vanishing on `ker (P(
 theorem eq_zero_of_forall_movedCent (x : ↥(GSpin d.QW)) (γ : Module.End Kb Wb →ₗ[Kb] Kb)
     (hγ : ∀ Z ∈ LinearMap.ker (movedCentMap d.QW x),
       γ ((adV d.QW (Z : CliffordAlgebra d.QW)).baseChange Kb) = 0)
-    (Y : Module.End Kb Wb) (hs : IsomCent.IsSkew (bform Qb) Y)
+    (Y : Module.End Kb Wb) (hs : (bform Qb).IsSkewAdjoint Y)
     (hc : Commute ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb) Y)
     (hf : ∀ z ∈ Module.End.eigenspace
       ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb) 1, Y z = 0) :
@@ -642,7 +642,7 @@ on `End(W_{F̄})`, each nonzero at some skew endomorphism commuting with `P(x)_{
 `Submodule.exists_forall_notMem_of_forall_ne_top`; `eq_zero_of_forall_movedCent`). -/
 theorem exists_movedCent_forall_ne_zero (x : ↥(GSpin d.QW)) {ι : Type*} [Finite ι]
     (γ : ι → Module.End Kb Wb →ₗ[Kb] Kb)
-    (hγ : ∀ k, ∃ Y : Module.End Kb Wb, IsomCent.IsSkew (bform Qb) Y ∧
+    (hγ : ∀ k, ∃ Y : Module.End Kb Wb, (bform Qb).IsSkewAdjoint Y ∧
       Commute ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb) Y ∧
       (∀ z ∈ Module.End.eigenspace
         ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb) 1, Y z = 0) ∧
@@ -863,7 +863,7 @@ theorem commute_bc_incl_iff_of_torusOf_eq {x t : GSpin d.QW} (hx : d.IsGammaElt 
 commuting with `x` and killing `W'_x` is semisimple.  Over `F̄`, `P(x)` is semisimple with abelian
 moved Lie centralizer (`lieAbelian_specP_baseChange`), and `adV X` is skew, commutes with `P(x)`
 and vanishes on `ker (P(x) − 1) = W'_x ⊗ F̄`, hence is semisimple
-(`IsomCent.isSemisimple_of_isSkew_of_commute_of_lieAbelian`); then so is `X`
+(`IsomCent.isSemisimple_of_isSkewAdjoint_of_commute_of_lieAbelian`); then so is `X`
 (`isSemisimple_mulLeft_of_isSemisimple_adV_baseChange`).  Lie-algebra form of
 `isSS_of_mem_torusOf`. -/
 theorem isSS_of_commute_of_isGammaElt {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
@@ -880,17 +880,18 @@ theorem isSS_of_commute_of_isGammaElt {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x
   have hxss : Module.End.IsSemisimple ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange
       (AlgebraicClosure F)) :=
     isSemisimple_baseChange (isSemisimple_specP_of_isSS d.QW x hx.1)
-  have hXi : IsomCent.IsIsom (bform (d.QW.baseChange (AlgebraicClosure F)))
+  have hXi : LinearMap.IsOrthogonal (bform (d.QW.baseChange (AlgebraicClosure F)))
       ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange (AlgebraicClosure F)) := by
-    rw [← specP_bcGSpin]; exact Steinberg.isIsom_specP _
-  have hsk : IsomCent.IsSkew (bform (d.QW.baseChange (AlgebraicClosure F)))
+    rw [← specP_bcGSpin]; exact Steinberg.isOrthogonal_specP _
+  have hsk : LinearMap.IsSkewAdjoint (bform (d.QW.baseChange (AlgebraicClosure F)))
       ((adV d.QW X).baseChange (AlgebraicClosure F)) := by
-    rw [hbf]; exact IsomCent.IsSkew.baseChange _ (bform_adV hX)
+    rw [hbf]; exact LinearMap.IsSkewAdjoint.baseChange _
+      (LinearMap.isSkewAdjoint_iff.2 (bform_adV hX))
   have hcomm : Commute ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange
       (AlgebraicClosure F)) ((adV d.QW X).baseChange (AlgebraicClosure F)) := by
     rw [Commute, SemiconjBy, ← LinearMap.baseChange_mul, ← LinearMap.baseChange_mul,
       (commute_iff_adV d.nondeg x hX).mp hc]
-  refine IsomCent.isSemisimple_of_isSkew_of_commute_of_lieAbelian hB hQ hXi hxss
+  refine IsomCent.isSemisimple_of_isSkewAdjoint_of_commute_of_lieAbelian hB hQ hXi hxss
     (lieAbelian_specP_baseChange x hx) hsk hcomm fun z hz => ?_
   have he := eigenspace_bc_one d.QW x
   rw [specP_bcGSpin] at he

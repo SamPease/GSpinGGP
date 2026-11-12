@@ -113,7 +113,7 @@ theorem commute_of_fixes_eigenspace_one (hQ : IsNondeg Q) {x : GSpin Q}
     (htW : ∀ w ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) 1, specP Q t w = w)
     (hzx : Commute z x) : Commute z t := by
   have hB : (bform Q).IsSymm := ⟨fun u v => bform_comm Q u v⟩
-  have hiso : ∀ g : GSpin Q, IsomCent.IsIsom (bform Q) (specP Q g : V →ₗ[K] V) :=
+  have hiso : ∀ g : GSpin Q, (bform Q).IsOrthogonal (specP Q g : V →ₗ[K] V) :=
     fun g u v => bform_specP g u v
   have hpnd : (polarBilin Q).Nondegenerate :=
     QuadraticMap.nondegenerate_polar_iff.mpr ((isNondeg_iff_nondegenerate _).1 hQ)

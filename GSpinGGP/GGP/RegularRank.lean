@@ -59,7 +59,7 @@ theorem finrank_soCentMat_of_commute [CharZero K] [IsAlgClosed K] {Φ X : Matrix
     rw [IsNondeg, LinearMap.BilinForm.nondegenerate_iff_det_ne_zero b]
     convert hΦd
     exact hJ
-  have hXi : IsomCent.IsIsom (bform Q) (Matrix.toLin' X) := fun u v => by
+  have hXi : (bform Q).IsOrthogonal (Matrix.toLin' X) := fun u v => by
     rw [hbf, hbf]
     conv_rhs => rw [← hiso]
     simp only [Matrix.toLinearMap₂'_apply', Matrix.toLin'_apply, Matrix.dotProduct_mulVec,
@@ -95,7 +95,7 @@ variable {V : Type*} [AddCommGroup V] [Module F V] [FiniteDimensional F V]
 /-- **`dim so(V)_X = ⌊dim V/2⌋` over any field of characteristic `0`**: `X` a semisimple isometry
 of the nondegenerate form `Q` with `det X = 1` and `so(V)_X` abelian. -/
 theorem finrank_soCent_of_commute_of_charZero {Q : QuadraticForm F V} (hQ : IsNondeg Q)
-    {X : Module.End F V} (hX : IsomCent.IsIsom (bform Q) X) (hss : X.IsSemisimple)
+    {X : Module.End F V} (hX : (bform Q).IsOrthogonal X) (hss : X.IsSemisimple)
     (hdet : LinearMap.det X = 1) (hab : ∀ M₁ ∈ soCent Q X, ∀ M₂ ∈ soCent Q X, Commute M₁ M₂) :
     finrank F (soCent Q X) = finrank F V / 2 := by
   set n := finrank F V

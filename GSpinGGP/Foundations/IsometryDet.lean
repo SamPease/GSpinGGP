@@ -25,7 +25,7 @@ variable {K : Type*} [Field K] {V : Type*} [AddCommGroup V] [Module K V]
 /-- **Paired subspaces.** If `B` pairs `E` and `E'` perfectly and the isometry `h` preserves
 both, then `det (h|_E) * det (h|_{E'}) = 1`. -/
 theorem det_mul_det_of_pairing [FiniteDimensional K V] {E E' : Submodule K V}
-    {h : V →ₗ[K] V} (hi : IsIsom B h) (hE : Set.MapsTo h E E) (hE' : Set.MapsTo h E' E')
+    {h : V →ₗ[K] V} (hi : B.IsOrthogonal h) (hE : Set.MapsTo h E E) (hE' : Set.MapsTo h E' E')
     (hl : ∀ w ∈ E', (∀ u ∈ E, B u w = 0) → w = 0)
     (hr : ∀ u ∈ E, (∀ w ∈ E', B u w = 0) → u = 0) :
     LinearMap.det (h.restrict hE) * LinearMap.det (h.restrict hE') = 1 := by
@@ -108,7 +108,7 @@ variable {X : Module.End K V}
 /-- Eigenspaces `E_μ` and `E_{μ⁻¹}` of a semisimple isometry `X` are paired perfectly by a
 nondegenerate symmetric `B`. -/
 theorem pairing_eigenspace [IsAlgClosed K] [FiniteDimensional K V] (hB : B.IsSymm)
-    (hnd : B.Nondegenerate) (hX : IsIsom B X)
+    (hnd : B.Nondegenerate) (hX : B.IsOrthogonal X)
     (hss : X.IsSemisimple) (μ : K) :
     (∀ w ∈ X.eigenspace μ⁻¹, (∀ u ∈ X.eigenspace μ, B u w = 0) → w = 0) ∧
       (∀ u ∈ X.eigenspace μ, (∀ w ∈ X.eigenspace μ⁻¹, B u w = 0) → u = 0) := by
@@ -131,7 +131,7 @@ variable [CharZero K] [IsAlgClosed K] [FiniteDimensional K V]
 isometry `X` (algebraically closed field of characteristic `0`): the other eigenspaces pair off
 as `E_μ, E_{μ⁻¹}` and contribute `det · det = 1` (`det_mul_det_of_pairing`). -/
 theorem det_eq_det_one_mul_det_neg_one (hB : B.IsSymm) (hnd : B.Nondegenerate)
-    (hX : IsIsom B X) (hss : X.IsSemisimple) {h : Module.End K V} (hi : IsIsom B h)
+    (hX : B.IsOrthogonal X) (hss : X.IsSemisimple) {h : Module.End K V} (hi : B.IsOrthogonal h)
     (hc : Commute X h) :
     LinearMap.det h = LinearMap.det (h.restrict (mapsTo_eigenspace_of_commute hc 1)) *
       LinearMap.det (h.restrict (mapsTo_eigenspace_of_commute hc (-1))) := by
@@ -229,30 +229,6 @@ theorem det_restrict_congr {W : Type*} [AddCommGroup W] [Module K W] (f : W →�
     LinearMap.det (f.restrict hf) = LinearMap.det (f.restrict hf') := by
   subst h; rfl
 
-/-- An isometry stays an isometry after extension of scalars. -/
-theorem IsIsom.baseChange (L : Type*) [Field L] [Algebra K L] {h : V →ₗ[K] V}
-    (hh : IsIsom B h) : IsIsom (B.baseChange L) (h.baseChange L) := by
-  intro u v
-  induction u using TensorProduct.induction_on with
-  | zero => simp
-  | tmul a x =>
-    induction v using TensorProduct.induction_on with
-    | zero => simp
-    | tmul b y => simp [LinearMap.BilinForm.baseChange_tmul, hh x y]
-    | add v w hv hw => simp only [map_add, LinearMap.add_apply] at hv hw ⊢; rw [hv, hw]
-  | add u w hu hw => simp only [map_add, LinearMap.add_apply] at hu hw ⊢; rw [hu, hw]
-
-/-- A skew endomorphism stays skew after extension of scalars. -/
-theorem IsSkew.baseChange (L : Type*) [Field L] [Algebra K L] {h : V →ₗ[K] V}
-    (hh : IsSkew B h) : IsSkew (B.baseChange L) (h.baseChange L) := by
-  intro u v
-  induction u using TensorProduct.inductionOn with
-  | tmul a x =>
-    induction v using TensorProduct.inductionOn with
-    | tmul b y => simp [LinearMap.BilinForm.baseChange_tmul, hh x y]
-    | add v w hv hw => simp only [map_add] at hv hw ⊢; rw [hv, hw, neg_add]
-  | add u w hu hw => simp only [map_add, LinearMap.add_apply] at hu hw ⊢; rw [hu, hw, neg_add]
-
 /-- Over a perfect field, semisimplicity survives extension of scalars to the algebraic closure
 (squarefree polynomials stay squarefree). -/
 theorem isSemisimple_baseChange_algebraicClosure [PerfectField K] [FiniteDimensional K V]
@@ -272,8 +248,8 @@ open Module.End in
 isometry `h` commuting with a semisimple isometry `X` of a nondegenerate symmetric form: base
 change to `K̄` and `det_eq_det_one_mul_det_neg_one`. -/
 theorem det_eq_det_one_mul_det_neg_one_of_charZero [CharZero K] [FiniteDimensional K V]
-    (hB : B.IsSymm) (hnd : B.Nondegenerate) {X : Module.End K V} (hX : IsIsom B X)
-    (hss : X.IsSemisimple) {h : Module.End K V} (hi : IsIsom B h) (hc : Commute X h) :
+    (hB : B.IsSymm) (hnd : B.Nondegenerate) {X : Module.End K V} (hX : B.IsOrthogonal X)
+    (hss : X.IsSemisimple) {h : Module.End K V} (hi : B.IsOrthogonal h) (hc : Commute X h) :
     LinearMap.det h = LinearMap.det (h.restrict (mapsTo_eigenspace_of_commute hc 1)) *
       LinearMap.det (h.restrict (mapsTo_eigenspace_of_commute hc (-1))) := by
   set L := AlgebraicClosure K
@@ -317,15 +293,16 @@ theorem commute_of_commute_baseChange {K L : Type*} [Field K] [Field L] [Algebra
   simpa [Module.End.mul_apply, LinearMap.baseChange_tmul] using this
 
 /-- Skewness for the associated bilinear form `b = ½ polar` is skewness for `polar`. -/
-theorem isSkew_associated_iff {K : Type*} [Field K] [Invertible (2 : K)] {V : Type*}
+theorem isSkewAdjoint_associated_iff {K : Type*} [Field K] [Invertible (2 : K)] {V : Type*}
     [AddCommGroup V] [Module K V] (Q : QuadraticForm K V) (Y : Module.End K V) :
-    IsomCent.IsSkew (QuadraticMap.associated Q) Y ↔
-      ∀ u v, QuadraticMap.polar Q (Y u) v = -QuadraticMap.polar Q u (Y v) := by
+    (QuadraticMap.associated Q).IsSkewAdjoint Y ↔ (QuadraticMap.polarBilin Q).IsSkewAdjoint Y := by
   have h2 : (2 : K) ≠ 0 := (isUnit_of_invertible (2 : K)).ne_zero
-  have hp : ∀ x y, QuadraticMap.polar Q x y = 2 * QuadraticMap.associated Q x y := fun x y => by
-    have h := congr($(QuadraticMap.two_nsmul_associated K Q) x y)
-    simp only [LinearMap.smul_apply, QuadraticMap.polarBilin_apply_apply] at h
-    rw [← h, two_nsmul, two_mul]
+  have hp : ∀ x y, QuadraticMap.polarBilin Q x y = 2 * QuadraticMap.associated Q x y :=
+    fun x y => by
+      have h := congr($(QuadraticMap.two_nsmul_associated K Q) x y)
+      simp only [LinearMap.smul_apply] at h
+      rw [← h, two_nsmul, two_mul]
+  rw [LinearMap.isSkewAdjoint_iff, LinearMap.isSkewAdjoint_iff]
   refine forall_congr' fun u => forall_congr' fun v => ?_
   rw [hp, hp, ← mul_neg]
   exact (mul_right_inj' h2).symm

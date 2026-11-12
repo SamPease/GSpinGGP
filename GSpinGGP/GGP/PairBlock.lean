@@ -23,7 +23,7 @@ open CliffordAlgebra
 variable {K : Type*} [Field K] [Invertible (2 : K)] {V : Type*} [AddCommGroup V] [Module K V]
   {Q : QuadraticForm K V}
 
-theorem isIsom_specP (g : GSpin Q) : IsomCent.IsIsom (bform Q) (specP Q g : V →ₗ[K] V) :=
+theorem isOrthogonal_specP (g : GSpin Q) : (bform Q).IsOrthogonal (specP Q g : V →ₗ[K] V) :=
   fun u v => bform_specP g u v
 
 theorem commute_toLinearMap {g x : GSpin Q} (h : Commute (specP Q g) (specP Q x)) :
@@ -149,13 +149,13 @@ theorem polar_eq_zero_of_eigen {μ ν : K} (h : μ * ν ≠ 1) {u v : V}
     (hu : u ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) μ)
     (hv : v ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) ν) :
     QuadraticMap.polar Q u v = 0 := by
-  rw [polar_eq_two_mul_bform, IsomCent.bform_eigen_eq_zero (Steinberg.isIsom_specP x) h hu hv,
+  rw [polar_eq_two_mul_bform, IsomCent.bform_eigen_eq_zero (Steinberg.isOrthogonal_specP x) h hu hv,
     mul_zero]
 
 theorem eq_zero_of_eigen {μ : K} (h : μ * μ ≠ 1) {u : V}
     (hu : u ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) μ) : Q u = 0 := by
   rw [← QuadraticMap.associated_eq_self_apply K Q u]
-  exact IsomCent.bform_eigen_eq_zero (Steinberg.isIsom_specP x) h hu hu
+  exact IsomCent.bform_eigen_eq_zero (Steinberg.isOrthogonal_specP x) h hu hu
 
 /-- `x` commutes with `ι(u) ι(w)` for `u ∈ E_μ`, `w ∈ E_ν`, `μ ν = 1`. -/
 theorem commute_ι_mul_ι {μ ν : K} (h : μ * ν = 1) {u w : V}
@@ -208,7 +208,7 @@ theorem pairing_left (hQ : IsNondeg Q) (hss : Module.End.IsSemisimple (specP Q x
     (μ : K) (w : V) (hw : w ∈ Eig x μ⁻¹) (h : ∀ v ∈ Eig x μ, QuadraticMap.polar Q w v = 0) :
     w = 0 := by
   refine (IsomCent.pairing_eigenspace ⟨fun u v => bform_comm Q u v⟩ hQ
-    (Steinberg.isIsom_specP x) hss μ).1 w hw fun u hu => ?_
+    (Steinberg.isOrthogonal_specP x) hss μ).1 w hw fun u hu => ?_
   have := h u hu
   rw [polar_eq_two_mul_bform, bform_comm] at this
   exact (mul_eq_zero.mp this).resolve_left two_ne_zero
@@ -217,7 +217,7 @@ theorem pairing_right (hQ : IsNondeg Q) (hss : Module.End.IsSemisimple (specP Q 
     (μ : K) (u : V) (hu : u ∈ Eig x μ) (h : ∀ w ∈ Eig x μ⁻¹, QuadraticMap.polar Q u w = 0) :
     u = 0 := by
   refine (IsomCent.pairing_eigenspace ⟨fun u v => bform_comm Q u v⟩ hQ
-    (Steinberg.isIsom_specP x) hss μ).2 u hu fun w hw => ?_
+    (Steinberg.isOrthogonal_specP x) hss μ).2 u hu fun w hw => ?_
   have := h w hw
   rw [polar_eq_two_mul_bform] at this
   exact (mul_eq_zero.mp this).resolve_left two_ne_zero

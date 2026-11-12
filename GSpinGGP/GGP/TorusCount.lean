@@ -648,7 +648,7 @@ theorem commute_of_commute_specP_of_fixes (hQ : IsNondeg Q) (x : GSpin Q)
   have hss := isSemisimple_specP_of_isSS Q x hx
   have hB : (bform Q).IsSymm := ⟨fun u v => bform_comm Q u v⟩
   have hdet := IsomCent.det_eq_det_one_mul_det_neg_one_of_charZero hB hQ
-    (Steinberg.isIsom_specP x) hss (Steinberg.isIsom_specP g) (Steinberg.commute_toLinearMap hc)
+    (Steinberg.isOrthogonal_specP x) hss (Steinberg.isOrthogonal_specP g) (Steinberg.commute_toLinearMap hc)
   have hone : ∀ (E : Submodule K V) (hE : ∀ v ∈ E, specP Q g v = v)
       (h : Set.MapsTo (specP Q g : V →ₗ[K] V) E E),
       LinearMap.det ((specP Q g : V →ₗ[K] V).restrict h) = 1 := by
@@ -742,7 +742,9 @@ theorem exists_regular_movedCent {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x) :
   have hapos : ∀ i j : Fin n, (((i : ℕ) + 1 : ℕ) : Kb) + (((j : ℕ) + 1 : ℕ) : Kb) ≠ 0 :=
     fun i j => by rw [← Nat.cast_add]; exact Nat.cast_ne_zero.mpr (by omega)
   obtain ⟨D, hDW, hDe, hDf, hDs⟩ := hF.exists_skew_diag fun i => (((i : ℕ) + 1 : ℕ) : Kb)
-  have hsD : IsomCent.IsSkew (bform Qb) D := (isSkew_associated_iff _ _).mpr hDs
+  have hsD : (bform Qb).IsSkewAdjoint D :=
+    (isSkewAdjoint_associated_iff _ _).mpr (LinearMap.isSkewAdjoint_iff.mpr fun u v => by
+      simpa only [QuadraticMap.polarBilin_apply_apply] using hDs u v)
   have hcD : Commute Pb D := hF.commute_of_diag hPW hPe hPf hDW hDe hDf
   have hfD : ∀ z ∈ Module.End.eigenspace Pb 1, D z = 0 := fun z hz => by
     rw [hDW z hz, zero_smul]
@@ -753,7 +755,7 @@ theorem exists_regular_movedCent {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x) :
   have hab : ∀ i j : Fin n, (((i : ℕ) + 1 : ℕ) : Kb) ≠ -(((j : ℕ) + 1 : ℕ) : Kb) :=
     fun i j h => hapos i j (by rw [h, neg_add_cancel])
   -- a skew map commuting with `P(x)_{F̄}` and killing `W'_x ⊗ F̄` is diagonal in the frame
-  have hdiag : ∀ Y : Module.End Kb Wb, IsomCent.IsSkew (bform Qb) Y → Commute Pb Y →
+  have hdiag : ∀ Y : Module.End Kb Wb, (bform Qb).IsSkewAdjoint Y → Commute Pb Y →
       (∀ z ∈ Module.End.eigenspace Pb 1, Y z = 0) →
       (∀ i, Y (e i) = QuadraticMap.polar Qb (Y (e i)) (f i) • e i) ∧
       ∀ i, Y (f i) = (-QuadraticMap.polar Qb (Y (e i)) (f i)) • f i := by
@@ -769,7 +771,11 @@ theorem exists_regular_movedCent {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x) :
       calc QuadraticMap.polar Qb (f i) (Y (e i)) = QuadraticMap.polar Qb (f i) (c • e i) := by
             rw [← he i]
         _ = c := by rw [QuadraticMap.polar_smul_right, hF.polar_fe]; simp
-    rw [(isSkew_associated_iff _ _).mp hsY, h1]
+    have hp : ∀ u v, QuadraticMap.polar Qb (Y u) v = -QuadraticMap.polar Qb u (Y v) :=
+      fun u v => by
+        simpa only [QuadraticMap.polarBilin_apply_apply] using
+          LinearMap.isSkewAdjoint_iff.mp ((isSkewAdjoint_associated_iff _ _).mp hsY) u v
+    rw [hp, h1]
   -- the functionals `αᵢ`, `αᵢ − αⱼ`, `αᵢ + αⱼ`
   let β : Fin n → Module.End Kb Wb →ₗ[Kb] Kb := fun i =>
     { toFun := fun Y => QuadraticMap.polar Qb (Y (e i)) (f i)

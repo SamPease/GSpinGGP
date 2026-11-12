@@ -189,7 +189,10 @@ variable (A : Type*) [Ring A] [Algebra F A] [Module.Finite F A] [TopologicalSpac
 
 include F
 
-/-- The ambient algebra is a topological ring (Mathlib `IsModuleTopology.isTopologicalRing`). -/
+/-- The ambient algebra is a topological ring: Mathlib's `IsModuleTopology.isTopologicalRing`,
+packaged as a theorem with the instance arguments fixed. `haveI`/`letI` inline their argument, and inlining
+the Mathlib term (with its synthesized `Module.Finite` argument) makes later unification markedly
+slower, so the `haveI`/`letI` uses go through this constant. -/
 theorem isTopologicalRing_of_moduleTopology : IsTopologicalRing A :=
   IsModuleTopology.isTopologicalRing F A
 
@@ -379,6 +382,15 @@ theorem isSS_zero : IsSS F (0 : A) := by
   exact Module.End.isSemisimple_zero
 
 variable {F}
+
+/-- An element annihilated by a squarefree polynomial is semisimple. -/
+theorem isSS_of_aeval_eq_zero {x : A} {p : Polynomial F} (hp : Squarefree p)
+    (h : Polynomial.aeval x p = 0) : IsSS F x := by
+  refine Module.End.isSemisimple_of_squarefree_aeval_eq_zero hp ?_
+  have := Polynomial.aeval_algHom_apply (Algebra.lmul F A) x p
+  rw [h, map_zero] at this
+  rw [← this]
+  rfl
 
 /-- The centralizer `𝔤_x = {X ∈ 𝔤 | xX = Xx}`. For a unit `x` this is the Lie algebra
 `Lie(G_x)` of the centralizer (fixed points of `Ad x`); for `x = X ∈ 𝔤` it is `Z_𝔤(X)`
