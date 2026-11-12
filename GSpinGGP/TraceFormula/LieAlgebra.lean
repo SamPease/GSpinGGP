@@ -10,8 +10,8 @@ import GSpinGGP.GGP.Descent
 
 This file holds the *definitions* of the Lie-algebra objects on
 `𝔤⁰ = so(W) ⊕ so(V)` that the two cited theorems mention, followed by two statements from the literature for `SO(W) × SO(V)`, stated here for our objects
-as `sorry` theorems, and the existence of the `exp`-compatible measures (`exists_isExpCompatH`,
-`exists_isExpCompatT`, also `sorry`).
+as `sorry` theorems, and the existence of the `exp`-compatible measure on `𝔥⁰` (`exists_isExpCompatH`,
+also `sorry`; its torus analogue `exists_isExpCompatT` is proved in `TraceFormula/ExpCompatT.lean`).
 (The definitions live here, not in `TraceFormula/Lie.lean`, because those statements mention them
 and `Lie.lean` imports this file.)  All definitions are real definitions; measures and functions
 that are pinned only by a property are chosen by the epsilon pattern, as elsewhere in the project.
@@ -457,14 +457,6 @@ open Classical in
 /-- The measure on `𝔱⁰(F)` (epsilon; `0` if none). -/
 def measLieTorus (T : Subgroup ↥(GSpin d.QW)) : Measure ↥(d.lieTorus T) :=
   if h : ∃ μ, d.IsExpCompatT T μ then h.choose else 0
-
-/-- **An `exp`-compatible Haar measure on `𝔱⁰(F)` exists** for the tori `T = T_x` of
-`Γ(G,H)` (BP §1.6, §11.1; Thesis §12.1): `T(F)` is commutative, so `exp` is a homomorphism on a
-small lattice of `𝔱⁰(F)`, a homeomorphism onto an open compact subgroup of `T(F)/A_{G,H}(F)`
-(`𝔱 = Lie(A_{G,H}) ⊕ 𝔱⁰`), and it carries an additive Haar measure to a multiple of the
-probability Haar measure there.  Not proved here. -/
-theorem exists_isExpCompatT (T : d.GammaTorus) : ∃ μ, d.IsExpCompatT T.1 μ := by
-  sorry
 
 /-- `X ∈ 𝔱⁰_♮(F)` (Lie version of `T_♮`): `X` has no eigenvalue `0` on `W'' = (W')^⊥`,
 i.e. `ker X = W'`, and `X` is regular in `so(W'')`: every `Y ∈ so(W)` commuting with `X` and
