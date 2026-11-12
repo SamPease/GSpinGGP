@@ -956,8 +956,8 @@ theorem orbitChoice_eq_of_orbitMap (X : CliffordAlgebra d.QW)
 
 /-- **Reduction of `cTheta_toSO`** at `X` to two uniqueness statements: uniqueness of the regular
 coefficients of local expansions on `𝔤⁰` at `diagLie X` (`hgerm`; Harish-Chandra 1999 Cor 5.10,
-BP §4.5, Lie-algebra case) and: at most one regular nilpotent orbit of `𝔤⁰_X`
-meeting the recipe (`horb`).  The remaining hypotheses are compatibility conditions on a map `E`
+BP §4.5, Lie-algebra case) and the fact that at most one regular nilpotent orbit of `𝔤⁰_X` meets
+the recipe (`horb`).  The remaining hypotheses are compatibility conditions on a map `E`
 of nilpotent orbits (as in `orbitChoice_eq_of_orbitMap`), the main one being that every local
 expansion `c'` of `θ` at `ad X` gives the local expansion `c' ∘ E` of `θ ∘ ad` at `X` (`htr`;
 `ad` composed with the rescaling of each factor that turns `bilin` into the trace form).
