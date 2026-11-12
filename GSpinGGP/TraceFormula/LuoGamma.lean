@@ -51,6 +51,22 @@ def specPU : ↥(GSpin d.QW) →* (Module.End F d.luoOf.W)ˣ :=
     ((d.specPU g : (Module.End F d.luoOf.W)ˣ) : Module.End F d.luoOf.W) =
       (specP d.QW g : (Fin d.m → F) →ₗ[F] (Fin d.m → F)) := rfl
 
+/-- `P(g) ∈ SO(W)`. -/
+theorem specPU_mem_SOu (g : ↥(GSpin d.QW)) : d.specPU g ∈ LuoDatum.SOu d.luoOf.QW := by
+  change LinearMap.GeneralLinearGroup.generalLinearEquiv F _
+    ((LinearMap.GeneralLinearGroup.generalLinearEquiv F _).symm (specP d.QW g)) ∈ SOGrp d.QW
+  rw [MulEquiv.apply_symm_apply, ← range_specP_eq_SOGrp d.nondeg]
+  exact ⟨g, rfl⟩
+
+/-- Every element of `SO(W)` is some `P(t)` (`range_specP_eq_SOGrp`). -/
+theorem exists_specP_eq_of_mem_SOu {s : (Module.End F d.luoOf.W)ˣ}
+    (hs : s ∈ LuoDatum.SOu d.luoOf.QW) :
+    ∃ t : ↥(GSpin d.QW), (specP d.QW t : (Fin d.m → F) →ₗ[F] (Fin d.m → F)) = s.val := by
+  change LinearMap.GeneralLinearGroup.generalLinearEquiv F _ s ∈ SOGrp d.QW at hs
+  rw [← range_specP_eq_SOGrp d.nondeg] at hs
+  obtain ⟨t, ht⟩ := hs
+  exact ⟨t, by rw [ht]; rfl⟩
+
 /-- `t ↦ (P(t), P(t) ⊕ 1)` is `diagU ∘ P`. -/
 theorem toGbarU_comp_diag : d.toGbarU.comp d.diag = d.luoOf.diagU.comp d.specPU := by
   ext t : 2
@@ -164,11 +180,7 @@ theorem torusW_adV_eq_map (hx : d.IsGammaElt x) (hZ : Z ∈ gspin d.QW)
   ext s
   constructor
   · rintro ⟨hSO, hcomm, hfix⟩
-    change LinearMap.GeneralLinearGroup.generalLinearEquiv F _ s ∈ SOGrp d.QW at hSO
-    rw [← range_specP_eq_SOGrp d.nondeg] at hSO
-    obtain ⟨t, ht⟩ := hSO
-    have hs : (specP d.QW t : (Fin d.m → F) →ₗ[F] (Fin d.m → F)) = s.val := by
-      rw [ht]; rfl
+    obtain ⟨t, hs⟩ := d.exists_specP_eq_of_mem_SOu hSO
     have hfix' : ∀ w ∈ fixedSub x, s.val w = w := fun w hw =>
       hfix w (by rw [← hker] at hw; exact hw)
     have hc := hreg s.val hcomm hfix'
@@ -181,10 +193,7 @@ theorem torusW_adV_eq_map (hx : d.IsGammaElt x) (hZ : Z ∈ gspin d.QW)
     · rw [coe_specPU, hs]
   · rintro ⟨t, ht, rfl⟩
     refine ⟨?_, ?_, fun w hw => ?_⟩
-    · change LinearMap.GeneralLinearGroup.generalLinearEquiv F _
-        ((LinearMap.GeneralLinearGroup.generalLinearEquiv F _).symm (specP d.QW t)) ∈ SOGrp d.QW
-      rw [MulEquiv.apply_symm_apply, ← range_specP_eq_SOGrp d.nondeg]
-      exact ⟨t, rfl⟩
+    · exact d.specPU_mem_SOu t
     · rw [coe_specPU]
       exact (commute_iff_adV d.nondeg t hZ).mp
         (d.commute_of_mem_torusOf_of_moved hx hZ hZx hZf ht).eq
@@ -266,11 +275,7 @@ theorem torusW_adV_eq_map_of_commute_iff (hZ : Z ∈ gspin d.QW)
   ext s
   constructor
   · rintro ⟨hSO, hcomm, hfix⟩
-    change LinearMap.GeneralLinearGroup.generalLinearEquiv F _ s ∈ SOGrp d.QW at hSO
-    rw [← range_specP_eq_SOGrp d.nondeg] at hSO
-    obtain ⟨t, ht⟩ := hSO
-    have hs : (specP d.QW t : (Fin d.m → F) →ₗ[F] (Fin d.m → F)) = s.val := by
-      rw [ht]; rfl
+    obtain ⟨t, hs⟩ := d.exists_specP_eq_of_mem_SOu hSO
     have htZ : ((t : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) * Z =
         Z * ((t : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) :=
       (commute_iff_adV d.nondeg t hZ).mpr (by rw [hs]; exact hcomm)
@@ -281,10 +286,7 @@ theorem torusW_adV_eq_map_of_commute_iff (hZ : Z ∈ gspin d.QW)
     · rw [coe_specPU, hs]
   · rintro ⟨t, ht, rfl⟩
     refine ⟨?_, ?_, fun w hw => ?_⟩
-    · change LinearMap.GeneralLinearGroup.generalLinearEquiv F _
-        ((LinearMap.GeneralLinearGroup.generalLinearEquiv F _).symm (specP d.QW t)) ∈ SOGrp d.QW
-      rw [MulEquiv.apply_symm_apply, ← range_specP_eq_SOGrp d.nondeg]
-      exact ⟨t, rfl⟩
+    · exact d.specPU_mem_SOu t
     · rw [coe_specPU]
       have htx : Commute ((t : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW)
           ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) :=

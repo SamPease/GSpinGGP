@@ -668,38 +668,43 @@ section SteinbergFix
 variable {K : Type*} [Field K] [CharZero K] [Invertible (2 : K)]
   {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V] {Q : QuadraticForm K V}
 
+/-- **An element whose image commutes with `P(x)` and has determinant `1` on `W'_x` commutes with
+`x`**, for `x` semisimple: in Steinberg's description (`steinberg_centralizer_connected`) the
+determinant on `W₋₁` is then `1` too, since `det P(g) = 1` is the product of the determinants on
+`W'_x` and `W₋₁` (`det_eq_det_one_mul_det_neg_one_of_charZero`). -/
+theorem commute_of_commute_specP_of_det_fixedSub (hQ : IsNondeg Q) (x : GSpin Q)
+    (hx : Module.End.IsSemisimple
+      (LinearMap.mulLeft K ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)))
+    {g : GSpin Q} (hc : Commute (specP Q g) (specP Q x))
+    (hdet : LinearMap.det ((specP Q g : V →ₗ[K] V).restrict (mapsTo_fixedSub_of_commute hc)) = 1) :
+    Commute g x := by
+  have hss := isSemisimple_specP_of_isSS Q x hx
+  have hB : (bform Q).IsSymm := ⟨fun u v => bform_comm Q u v⟩
+  have hdet' := IsomCent.det_eq_det_one_mul_det_neg_one_of_charZero hB hQ
+    (Steinberg.isOrthogonal_specP x) hss (Steinberg.isOrthogonal_specP g) (Steinberg.commute_toLinearMap hc)
+  have h1 : LinearMap.det ((specP Q g : V →ₗ[K] V).restrict
+      (IsomCent.mapsTo_eigenspace_of_commute (Steinberg.commute_toLinearMap hc) 1)) = 1 :=
+    (Steinberg.det_restrict_eq rfl (Steinberg.fixedSub_eq_eigenspace x).symm _ _).trans hdet
+  rw [h1, one_mul, det_specP] at hdet'
+  have h := (Steinberg.commute_iff hQ x hx g).mpr ⟨hc,
+    ⟨mapsTo_fixedSub_of_commute hc, hdet⟩,
+    ⟨mapsTo_negFixedSub_of_commute hc,
+      (Steinberg.det_restrict_eq rfl (Steinberg.negFixedSub_eq_eigenspace x) _ _).trans
+        hdet'.symm⟩⟩
+  exact Subtype.ext h
+
 /-- **An element whose image commutes with `P(x)` and fixes `W'_x` commutes with `x`**, for `x`
-semisimple: in Steinberg's description (`steinberg_centralizer_connected`) the determinant on
-`W'_x` is `1` since `P(g)` is the identity there, and so the determinant on `W₋₁` is `1` since
-`det P(g) = 1` is the product of the two (`det_eq_det_one_mul_det_neg_one_of_charZero`). -/
+semisimple (`commute_of_commute_specP_of_det_fixedSub`: the determinant on `W'_x` is `1` since
+`P(g)` is the identity there). -/
 theorem commute_of_commute_specP_of_fixes (hQ : IsNondeg Q) (x : GSpin Q)
     (hx : Module.End.IsSemisimple
       (LinearMap.mulLeft K ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)))
     {g : GSpin Q} (hc : Commute (specP Q g) (specP Q x))
     (hfix : ∀ v ∈ fixedSub x, specP Q g v = v) : Commute g x := by
-  have hss := isSemisimple_specP_of_isSS Q x hx
-  have hB : (bform Q).IsSymm := ⟨fun u v => bform_comm Q u v⟩
-  have hdet := IsomCent.det_eq_det_one_mul_det_neg_one_of_charZero hB hQ
-    (Steinberg.isOrthogonal_specP x) hss (Steinberg.isOrthogonal_specP g) (Steinberg.commute_toLinearMap hc)
-  have hone : ∀ (E : Submodule K V) (hE : ∀ v ∈ E, specP Q g v = v)
-      (h : Set.MapsTo (specP Q g : V →ₗ[K] V) E E),
-      LinearMap.det ((specP Q g : V →ₗ[K] V).restrict h) = 1 := by
-    intro E hE h
-    have : (specP Q g : V →ₗ[K] V).restrict h = LinearMap.id :=
-      LinearMap.ext fun v => Subtype.ext (hE v v.2)
-    rw [this, LinearMap.det_id]
-  have hE1 : ∀ v ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) 1, specP Q g v = v :=
-    fun v hv => hfix v (by rw [Steinberg.fixedSub_eq_eigenspace]; exact hv)
-  have h1 : LinearMap.det ((specP Q g : V →ₗ[K] V).restrict
-      (IsomCent.mapsTo_eigenspace_of_commute (Steinberg.commute_toLinearMap hc) 1)) = 1 :=
-    hone _ hE1 _
-  rw [h1, one_mul, det_specP] at hdet
-  have h := (Steinberg.commute_iff hQ x hx g).mpr ⟨hc,
-    ⟨mapsTo_fixedSub_of_commute hc, hone _ hfix _⟩,
-    ⟨mapsTo_negFixedSub_of_commute hc,
-      (Steinberg.det_restrict_eq rfl (Steinberg.negFixedSub_eq_eigenspace x) _ _).trans
-        hdet.symm⟩⟩
-  exact Subtype.ext h
+  refine commute_of_commute_specP_of_det_fixedSub hQ x hx hc ?_
+  have : (specP Q g : V →ₗ[K] V).restrict (mapsTo_fixedSub_of_commute hc) = LinearMap.id :=
+    LinearMap.ext fun v => Subtype.ext (hfix v v.2)
+  rw [this, LinearMap.det_id]
 
 end SteinbergFix
 
