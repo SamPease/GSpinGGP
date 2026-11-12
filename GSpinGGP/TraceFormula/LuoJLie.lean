@@ -462,6 +462,120 @@ theorem conj_mem_lieH_of_mem_HbarU {u : L.Ambˣ} (hu : u ∈ L.HbarU) {Y : L.Amb
 
 end HConj
 
+
+section KernelInv
+
+open JLie
+
+variable {F : Type} [NontriviallyNormedField F] [PAdicField F] (L : LuoDatum F)
+
+/-- `Y ↦ u⁻¹ Y u` on `𝔥(F)`, `u ∈ H̄(F)`, as a linear homeomorphism (`conj_mem_lieH_of_mem_HbarU`). -/
+def conjLieH (u : ↥L.Hbar) : ↥L.lieH ≃L[F] ↥L.lieH :=
+  haveI := t2Space_of_moduleTopology F L.Amb
+  haveI := isTopologicalRing_of_moduleTopology F L.Amb
+  haveI := IsModuleTopology.toContinuousSMul F L.Amb
+  LinearEquiv.toContinuousLinearEquiv
+    { toFun := fun Y => ⟨((((u : ↥L.Gbar) : L.Ambˣ)⁻¹ : L.Ambˣ) : L.Amb) * Y *
+          (((u : ↥L.Gbar) : L.Ambˣ) : L.Amb), (L.conj_mem_lieH_of_mem_HbarU u.2 Y.2).1⟩
+      map_add' := fun Y Z => Subtype.ext (by simp [mul_add, add_mul])
+      map_smul' := fun c Y => Subtype.ext (by simp)
+      invFun := fun Y => ⟨(((u : ↥L.Gbar) : L.Ambˣ) : L.Amb) * Y *
+          ((((u : ↥L.Gbar) : L.Ambˣ)⁻¹ : L.Ambˣ) : L.Amb), by
+        have h := (L.conj_mem_lieH_of_mem_HbarU (L.HbarU.inv_mem u.2) Y.2).1
+        rwa [inv_inv] at h⟩
+      left_inv := fun Y => Subtype.ext (by simp [mul_assoc])
+      right_inv := fun Y => Subtype.ext (by simp [mul_assoc]) }
+
+@[simp] theorem coe_conjLieH (u : ↥L.Hbar) (Y : ↥L.lieH) :
+    ((L.conjLieH u Y : ↥L.lieH) : L.Amb) = ((((u : ↥L.Gbar) : L.Ambˣ)⁻¹ : L.Ambˣ) : L.Amb) * Y *
+      (((u : ↥L.Gbar) : L.Ambˣ) : L.Amb) := rfl
+
+@[simp] theorem coe_conjLieH_symm (u : ↥L.Hbar) (Y : ↥L.lieH) :
+    (((L.conjLieH u).symm Y : ↥L.lieH) : L.Amb) = (((u : ↥L.Gbar) : L.Ambˣ) : L.Amb) * Y *
+      ((((u : ↥L.Gbar) : L.Ambˣ)⁻¹ : L.Ambˣ) : L.Amb) := rfl
+
+/-- **`exp`-compatible measures on `𝔥(F)` are `Ad(H̄(F))`-invariant** when `μ_H` is invariant under
+conjugation (unimodular): `exp(u⁻¹ X u) = u⁻¹ e^X u` (`expA_units_conj`) carries the defining
+identity near `0` for `Ad(u)_* μ` to that for `μ`, and two Haar measures agreeing near `0` are
+equal (`Measure.eq_of_isAddHaarMeasure_of_eqOn_nhds`). -/
+theorem map_conjLieH_eq {μH : Measure ↥L.Hbar} {μ : Measure ↥L.lieH}
+    (hconj : ∀ u : ↥L.Hbar, μH.map (fun h => u⁻¹ * h * u) = μH) (hexp : L.IsExpCompatH μH μ)
+    (u : ↥L.Hbar) : μ.map (L.conjLieH u) = μ := by
+  have := submodule_isTopologicalAddGroup L.lieH
+  obtain ⟨_, _, _, _, _⟩ := submodule_topology L.lieH
+  have hμ := hexp.1
+  obtain ⟨U, hU, hUS⟩ := hexp.2
+  set Φ := L.conjLieH u
+  have hΦ : (μ.map Φ).IsAddHaarMeasure :=
+    Φ.toLinearEquiv.toAddEquiv.isAddHaarMeasure_map μ Φ.continuous Φ.symm.continuous
+  have hU' : U ∩ Φ.symm ⁻¹' U ∈ 𝓝 (0 : ↥L.lieH) :=
+    inter_mem hU (Φ.symm.continuous.continuousAt.preimage_mem_nhds (by rwa [map_zero]))
+  refine Measure.eq_of_isAddHaarMeasure_of_eqOn_nhds _ _ hU' fun S hS hSU => ?_
+  have hpre : Φ ⁻¹' S = Φ.symm '' S := (Φ.toEquiv.image_symm_eq_preimage S).symm
+  rw [Measure.map_apply Φ.continuous.measurable hS]
+  have hS' : Φ ⁻¹' S ⊆ U := by
+    rw [hpre]; rintro _ ⟨Y, hY, rfl⟩; exact (hSU hY).2
+  rw [hUS _ (Φ.continuous.measurable hS) hS', hUS S hS (hSU.trans Set.inter_subset_left)]
+  -- the `exp`-images correspond under `h ↦ u⁻¹ h u`
+  set c : ↥L.Hbar ≃ₜ ↥L.Hbar :=
+    { toFun := fun h => u⁻¹ * h * u
+      invFun := fun h => u * h * u⁻¹
+      left_inv := fun h => by group
+      right_inv := fun h => by group
+      continuous_toFun := by fun_prop
+      continuous_invFun := by fun_prop }
+  have hset : {h : ↥L.Hbar | ∃ X ∈ Φ ⁻¹' S, (((h : ↥L.Gbar) : L.Ambˣ) : L.Amb) =
+      expA F (X : L.Amb)} = c ⁻¹' {h | ∃ X ∈ S, (((h : ↥L.Gbar) : L.Ambˣ) : L.Amb) =
+      expA F (X : L.Amb)} := by
+    set w : L.Ambˣ := ((u : ↥L.Gbar) : L.Ambˣ)
+    have hexpc : ∀ X : L.Amb, expA F (((w⁻¹ : L.Ambˣ) : L.Amb) * X * (w : L.Amb)) =
+        ((w⁻¹ : L.Ambˣ) : L.Amb) * expA F X * (w : L.Amb) := fun X => by
+      have := expA_units_conj (F := F) w⁻¹ X
+      rwa [inv_inv] at this
+    have hc : ∀ h : ↥L.Hbar, (((c h : ↥L.Gbar) : L.Ambˣ) : L.Amb) =
+        ((w⁻¹ : L.Ambˣ) : L.Amb) * (((h : ↥L.Gbar) : L.Ambˣ) : L.Amb) * (w : L.Amb) := fun h => rfl
+    ext h
+    simp only [Set.mem_setOf_eq, Set.mem_preimage]
+    constructor
+    · rintro ⟨X, hX, hh⟩
+      refine ⟨Φ X, hX, ?_⟩
+      rw [hc, hh, coe_conjLieH, hexpc]
+    · rintro ⟨Y, hY, hh⟩
+      refine ⟨Φ.symm Y, by simpa using hY, ?_⟩
+      rw [coe_conjLieH_symm]
+      have := congrArg (fun a => (w : L.Amb) * a * ((w⁻¹ : L.Ambˣ) : L.Amb)) hh
+      simp only [hc] at this
+      rw [expA_units_conj, ← this]
+      simp [mul_assoc]
+  have hc : μH.map c.toMeasurableEquiv = μH := hconj u
+  rw [hset, show (⇑c ⁻¹' {h : ↥L.Hbar | ∃ X ∈ S, (((h : ↥L.Gbar) : L.Ambˣ) : L.Amb) =
+      expA F (X : L.Amb)}) = (⇑c.toMeasurableEquiv ⁻¹' {h : ↥L.Hbar | ∃ X ∈ S,
+      (((h : ↥L.Gbar) : L.Ambˣ) : L.Amb) = expA F (X : L.Amb)}) from rfl,
+    ← MeasurableEquiv.map_apply, hc]
+
+/-- **`K^Lie(f, ·)` is left `H̄(F)`-invariant** (Luo §4): change of variables `Y ↦ u⁻¹ Y u` on
+`𝔥(F)`, which preserves `μ_𝔥` (`map_conjLieH_eq`) and `λ` (`conj_mem_lieH_of_mem_HbarU`). -/
+theorem kernelLie_mul_left (ψ : NontrivialAddChar F) {μH : Measure ↥L.Hbar}
+    {μ : Measure ↥L.lieH} (hconj : ∀ u : ↥L.Hbar, μH.map (fun h => u⁻¹ * h * u) = μH)
+    (hexp : L.IsExpCompatH μH μ) (f : ↥L.lie → ℂ) {u : ↥L.Gbar} (hu : u ∈ L.Hbar)
+    (x : ↥L.Gbar) : L.kernelLie ψ μ f (u * x) = L.kernelLie ψ μ f x := by
+  set Φ := L.conjLieH ⟨u, hu⟩
+  have hme : MeasurableEmbedding (Φ : ↥L.lieH → ↥L.lieH) := Φ.toHomeomorph.measurableEmbedding
+  unfold kernelLie
+  conv_rhs => rw [← L.map_conjLieH_eq hconj hexp ⟨u, hu⟩, hme.integral_map]
+  refine integral_congr_ae (Eventually.of_forall fun Y => ?_)
+  have hlam : L.lam (((((u : ↥L.Gbar) : L.Ambˣ))⁻¹ : L.Ambˣ) * (Y : L.Amb) *
+      (((u : ↥L.Gbar) : L.Ambˣ) : L.Amb)) = L.lam Y :=
+    (L.conj_mem_lieH_of_mem_HbarU (Subgroup.mem_subgroupOf.1 hu) Y.2).2
+  change L.extFn f (L.conjInv (u * x) Y) * ψ (L.lam Y) =
+    L.extFn f (L.conjInv x (((((u : ↥L.Gbar) : L.Ambˣ))⁻¹ : L.Ambˣ) * (Y : L.Amb) *
+      (((u : ↥L.Gbar) : L.Ambˣ) : L.Amb))) * ψ (L.lam (((((u : ↥L.Gbar) : L.Ambˣ))⁻¹ : L.Ambˣ) *
+        (Y : L.Amb) * (((u : ↥L.Gbar) : L.Ambˣ) : L.Amb)))
+  rw [hlam]
+  congr 2
+
+end KernelInv
+
 end LuoDatum
 
 /-! ## Scalar multiples of elements of `K^× · N_F` -/
@@ -863,15 +977,40 @@ theorem toGbar_surjective (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) :
   obtain ⟨y, rfl⟩ := e.surjective x
   exact ⟨Quotient.out y, (congrFun he y).symm⟩
 
-/-- **(L4) reduced to two statements**: `exists_JLie_transfer` holds as soon as
-* (invariance) `K^Lie(f, ·)` is left `H(F)`-invariant for `f ∈ S_scusp(𝔤⁰(F))`, and
-* (`exp`-compatibility) the push-forwards of `Measure.haar` on `H(F)/A_{G,H}(F)` and of `dX` on
-  `𝔥⁰(F)` along `H(F)/A_{G,H}(F) ≃ H̄(F)` and `ad : 𝔥⁰ ≃ 𝔥` are `exp`-compatible.
-The measures are `μ_H = (e_H)_* dh`, `μ_𝔥 = ad_* dX` and the push-forward of `weilMeasureHG`
-(`exists_weil_Hbar`); the kernels agree at matched points (`kernelLie_toGbar`). -/
+set_option maxHeartbeats 3000000 in
+-- instance paths of `Measure.haar` on `H(F)/A_{G,H}(F)` differ from those in `Basic`
+/-- The push-forward of `Measure.haar` along `H(F)/A_{G,H}(F) ≃ H̄(F)` is conjugation invariant
+(`H(F)/A_{G,H}(F)` is unimodular, `isMulRightInvariant_haar_HmodAGH`). -/
+theorem map_conj_map_haar (eH : d.HmodAGH ≃ₜ* ↥d.luoOf.Hbar) (u : ↥d.luoOf.Hbar) :
+    ((Measure.haar : Measure d.HmodAGH).map eH).map (fun h => u⁻¹ * h * u) =
+      (Measure.haar : Measure d.HmodAGH).map eH := by
+  have i2 : BorelSpace d.HmodAGH := d.borelSpace_HmodAGH
+  have hR := d.isMulRightInvariant_haar_HmodAGH
+  set q₀ := eH.symm u
+  have hc : (fun h => u⁻¹ * h * u) ∘ eH = eH ∘ (fun q => q₀⁻¹ * q * q₀) := by
+    funext q; simp [q₀, map_mul, map_inv]
+  have hq : (Measure.haar : Measure d.HmodAGH).map (fun q => q₀⁻¹ * q * q₀) = Measure.haar := by
+    have m1 : Measurable (· * q₀ : d.HmodAGH → d.HmodAGH) := (continuous_mul_const q₀).measurable
+    have m2 : Measurable (q₀⁻¹ * · : d.HmodAGH → d.HmodAGH) :=
+      (continuous_const_mul q₀⁻¹).measurable
+    have hL : (Measure.haar : Measure d.HmodAGH).map (q₀⁻¹ * ·) = Measure.haar :=
+      map_mul_left_eq_self _ _
+    have hRR : (Measure.haar : Measure d.HmodAGH).map (· * q₀) = Measure.haar :=
+      map_mul_right_eq_self _ _
+    calc (Measure.haar : Measure d.HmodAGH).map (fun q => q₀⁻¹ * q * q₀)
+        = ((Measure.haar : Measure d.HmodAGH).map (q₀⁻¹ * ·)).map (· * q₀) :=
+          (Measure.map_map m1 m2).symm
+      _ = Measure.haar := by rw [hL, hRR]
+  have hme : Measurable (eH : d.HmodAGH → ↥d.luoOf.Hbar) := eH.continuous.measurable
+  rw [Measure.map_map (by fun_prop) hme, hc, ← Measure.map_map hme (by fun_prop), hq]
+
+/-- **(L4) reduced to `exp`-compatibility**: `exists_JLie_transfer` holds as soon as the
+push-forwards of `Measure.haar` on `H(F)/A_{G,H}(F)` and of `dX` on `𝔥⁰(F)` along
+`H(F)/A_{G,H}(F) ≃ H̄(F)` and `ad : 𝔥⁰ ≃ 𝔥` are `exp`-compatible.  The measures are
+`μ_H = (e_H)_* dh`, `μ_𝔥 = ad_* dX` and the push-forward of `weilMeasureHG`
+(`exists_weil_Hbar`); the kernels agree at matched points (`kernelLie_toGbar`), and Luo's kernel
+is left `H̄(F)`-invariant (`LuoDatum.kernelLie_mul_left`). -/
 theorem exists_JLie_transfer_of (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
-    (hinv : ∀ f : ↥d.lieZero → ℂ, d.IsLieScusp f → ∀ h ∈ d.H, ∀ g : ↥d.G,
-      d.kernelLie ψ f (h * g) = d.kernelLie ψ f g)
     (hexp : ∀ eH : d.HmodAGH ≃ₜ* ↥d.luoOf.Hbar,
       (∀ h : ↥d.H, ((eH (QuotientGroup.mk h) : ↥d.luoOf.Gbar)) = d.toGbar (h : ↥d.G)) →
         d.luoOf.IsExpCompatH ((Measure.haar : Measure d.HmodAGH).map eH)
@@ -883,19 +1022,14 @@ theorem exists_JLie_transfer_of (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.
       ∀ f : ↥d.lieZero → ℂ, d.IsLieScusp f →
         d.distribJLie ψ f = d.luoOf.distribJLie ψ μ𝔥 m (f ∘ d.toSO.symm) := by
   obtain ⟨eH, m, heH, hm, hint⟩ := d.exists_weil_Hbar hW hV
+  have hE := hexp eH heH
   refine ⟨(Measure.haar : Measure d.HmodAGH).map eH, d.measH0.map d.toSOHCLE, m,
     eH.toMulEquiv.isHaarMeasure_map Measure.haar eH.continuous eH.symm.continuous,
-    hexp eH heH, hm, fun f hf => ?_⟩
+    hE, hm, fun f _ => ?_⟩
   have hK : ∀ g, d.luoOf.kernelLie ψ (d.measH0.map d.toSOHCLE) (f ∘ d.toSO.symm) (d.toGbar g) =
       d.kernelLie ψ f g := fun g => d.kernelLie_toGbar ψ d.measH0 f g
-  refine hint _ _ hK fun hb hhb x => ?_
-  obtain ⟨g, rfl⟩ := d.toGbar_surjective hW hV x
-  obtain ⟨h, hh, hhu⟩ := d.exists_mem_H_toGbarU_eq (Subgroup.mem_subgroupOf.1 hhb)
-  have e : hb * d.toGbar g = d.toGbar (h * g) := by
-    rw [map_mul]
-    congr 1
-    exact Subtype.ext hhu.symm
-  rw [e, hK, hK, hinv f hf h hh g]
+  exact hint _ _ hK fun hb hhb x =>
+    d.luoOf.kernelLie_mul_left ψ (d.map_conj_map_haar eH) hE _ hhb x
 
 end Kernel
 
