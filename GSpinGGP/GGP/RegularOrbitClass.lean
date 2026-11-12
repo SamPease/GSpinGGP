@@ -9,21 +9,24 @@ import TauCeti.LinearAlgebra.QuadraticForm.OrthogonalGroup.Basic
 import TauCeti.LinearAlgebra.BilinearForm.Isometry
 
 /-!
-# Rational classification of single-block nilpotent skew maps
+# Rational classification of single-block nilpotent skew maps and of the orbit `O_ν`
 
 Let `(V, q)` be a nondegenerate quadratic space of odd dimension `2k + 1` over a field of
-characteristic `≠ 2`, and `N ∈ so(V)` nilpotent with `N^{2k} ≠ 0` (one Jordan block; over `F̄` these
-are the regular nilpotent elements of `so(V)`).
+characteristic `≠ 2`, and `N ∈ so(V)` nilpotent with `N^{2k} ≠ 0` (one Jordan block).
 
-* `exists_normal_vector`: there is `v` with `b(v, N^j v) = 0` for `j < 2k` (and `b(v, N^{2k} v) ≠ 0`);
-  in the basis `v, N v, …, N^{2k} v` the Gram matrix is anti-diagonal with entries `(-1)^i β`.
+* `exists_normal_vector`: there is `v` with `b(v, N^j v) = 0` for `j < 2k` (and `b(v, N^{2k} v) ≠ 0`,
+  `bform_top_ne_zero`); in the basis `v, N v, …, N^{2k} v` the Gram matrix is `β · antiDiag k`
+  (`gdet_chainBasis`).
 * `exists_isometryEquiv_conj_of_pow_ne_zero`: two such pairs `(V₁, N₁)`, `(V₂, N₂)` with `V₁ ≅ V₂`
-  are isometric: `β₂/β₁` is a square since `β^{2k+1}` is the discriminant up to a constant.
+  are isometric: `β₂/β₁` is a square since `β^{2k+1}` is the Gram determinant up to a constant.
 * `exists_isometry_det_one_conj_of_pow_ne_zero`: on one space the isometry can be taken in `SO(V)`
   (compose with `−1`, which commutes with `N` and has determinant `−1`).
-
-This is the uniqueness of the rational regular nilpotent orbit of an odd orthogonal group
-(Waldspurger 2001, I.6; Collingwood–McGovern Thm. 5.1.6 over `F̄`).
+* `exists_isometry_det_one_conj_of_isInOrbitNu`: Luo's orbit `O_ν` (`IsInOrbitNu`, after
+  Waldspurger 2010 §7.1 / Luo §2.1) on a space of dimension `2k + 2` is a single `SO(V)`-orbit.
+* `eq_zero_of_finrank_le_two`: a nilpotent skew map in dimension `≤ 2` is `0`.
+* `exists_isometry_det_one_conj_of_pow_ne_zero_sub`, `exists_isometry_det_one_conj_of_isInOrbitNu_sub`:
+  the same on an orthogonal summand `U` of `V = U ⊥ B`, by an element of `SO(V)` fixing `B` pointwise
+  (`extendById`).
 -/
 
 noncomputable section
