@@ -132,6 +132,53 @@ theorem conj_mem_soSub [Module.Finite K V] {Q : QuadraticForm K V} (g : GSpin Q)
     rw [show cliffTrace Q (a * X * b) = cliffTrace Q (b * (a * X)) from trace_mulLeft_comm Q _ _,
       ← mul_assoc, hba, one_mul, hXt]
 
+section Quadratic
+
+variable [FiniteDimensional K V]
+
+/-- A traceless element of `gspin(V)` with `ad X = 0` is `0` (for nondegenerate `Q`): it is a
+scalar (`eq_algebraMap_of_adV_eq_zero`), and a traceless scalar vanishes. -/
+theorem eq_zero_of_mem_soSub_of_adV_eq_zero {Q : QuadraticForm K V} (hQ : IsNondeg Q)
+    {X : CliffordAlgebra Q} (hX : X ∈ soSub Q) (h0 : adV Q X = 0) : X = 0 := by
+  obtain ⟨r, rfl⟩ := eq_algebraMap_of_adV_eq_zero hQ hX.1 h0
+  have h2 := hX.2
+  rw [Algebra.algebraMap_eq_smul_one, cliffTrace_smul, cliffTrace_one] at h2
+  rw [(mul_eq_zero.mp h2).resolve_right (cast_finrank_cliffordAlgebra_ne_zero Q), map_zero]
+
+/-- The bivectors lie in `so_Cliff(V)`: they are commutators of generators. -/
+theorem quadraticLieSubalgebra_le_soSub (Q : QuadraticForm K V) :
+    quadraticLieSubalgebra Q ≤ soSub Q := by
+  have h := quadraticLieSubalgebra_toSubmodule_le_of_bivector_mem Q
+    (P := (soSub Q).toSubmodule) fun a b => by
+      rw [bivector_def]
+      exact (soSub Q).smul_mem _ (commutator_ι_mem_soSub Q a b)
+  exact fun X hX => h hX
+
+/-- **`so_Cliff(V)` is spanned by the bivectors** (for nondegenerate `Q`): an `X ∈ so_Cliff(V)` and
+the quadratic lift `Y` of `ad X` (`exists_mem_quadratic_commutator_eq`) differ by an element of
+`so_Cliff(V)` killed by `ad`, which is `0` (`eq_zero_of_mem_soSub_of_adV_eq_zero`). -/
+theorem soSub_eq_quadraticLieSubalgebra {Q : QuadraticForm K V} (hQ : IsNondeg Q) :
+    soSub Q = quadraticLieSubalgebra Q := by
+  refine le_antisymm (fun X hX => ?_) (quadraticLieSubalgebra_le_soSub Q)
+  obtain ⟨Y, hYq, hY⟩ := exists_mem_quadratic_commutator_eq hQ (adV Q X) fun u w => by
+    rw [bform_adV hX.1]
+  have hYs := quadraticLieSubalgebra_le_soSub Q hYq
+  have := eq_zero_of_mem_soSub_of_adV_eq_zero hQ (sub_mem hX hYs) (by
+    ext v; apply ι_injective Q
+    rw [map_sub, LinearMap.sub_apply, map_sub, ι_adV hYs.1, hY, sub_self, LinearMap.zero_apply,
+      map_zero])
+  rwa [sub_eq_zero.mp this]
+
+/-- The algebra map `C(Q) → C(Q₂)` of an isometry maps `so_Cliff(Q)` into `so_Cliff(Q₂)`
+(`soSub_eq_quadraticLieSubalgebra`, Tau Ceti's `map_mem_quadraticLieSubalgebra`). -/
+theorem map_mem_soSub {V₂ : Type*} [AddCommGroup V₂] [Module K V₂] [FiniteDimensional K V₂]
+    {Q : QuadraticForm K V} {Q₂ : QuadraticForm K V₂} (hQ : IsNondeg Q) (f : Q →qᵢ Q₂)
+    {X : CliffordAlgebra Q} (hX : X ∈ soSub Q) : map f X ∈ soSub Q₂ := by
+  rw [soSub_eq_quadraticLieSubalgebra hQ] at hX
+  exact quadraticLieSubalgebra_le_soSub Q₂ (map_mem_quadraticLieSubalgebra f hX)
+
+end Quadratic
+
 end SO
 
 /-! ## 2. Functoriality of `P` under `GSpin.map` -/

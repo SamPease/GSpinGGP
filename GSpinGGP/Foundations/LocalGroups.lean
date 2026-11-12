@@ -284,6 +284,46 @@ theorem totallyDisconnectedSpace_subgroup (G : Subgroup Aˣ) : TotallyDisconnect
 
 end Topology
 
+section SubmoduleTopology
+
+variable [PAdicField F] {A : Type*} [Ring A] [Algebra F A] [Module.Finite F A]
+  [TopologicalSpace A] [IsModuleTopology F A]
+
+/-- A subspace of the ambient algebra is a topological additive group. -/
+theorem submodule_isTopologicalAddGroup (p : Submodule F A) : IsTopologicalAddGroup ↥p :=
+  haveI := isTopologicalRing_of_moduleTopology F A
+  IsInducing.subtypeVal.isTopologicalAddGroup p.subtype
+
+/-- A subspace `p ≅ F^n` of the ambient algebra carries the module topology. -/
+theorem submodule_isModuleTopology (p : Submodule F A) : IsModuleTopology F ↥p := by
+  haveI := t2Space_of_moduleTopology F A
+  haveI := isTopologicalRing_of_moduleTopology F A
+  have hind : IsInducing (p.subtype : ↥p → A) := IsInducing.subtypeVal
+  haveI : IsTopologicalAddGroup ↥p := hind.isTopologicalAddGroup p.subtype
+  haveI : ContinuousSMul F ↥p :=
+    hind.continuousSMul continuous_id (fun {c x} => p.subtype.map_smul c x)
+  haveI : T2Space ↥p := (IsEmbedding.mk hind Subtype.val_injective).t2Space
+  exact isModuleTopologyOfFiniteDimensional (𝕜 := F) (E := ↥p)
+
+/-- The topological properties of a subspace `p ≅ F^n` of the ambient algebra used for Haar
+measures. -/
+theorem submodule_topology (p : Submodule F A) :
+    LocallyCompactSpace ↥p ∧ TotallyDisconnectedSpace ↥p ∧ SigmaCompactSpace ↥p ∧
+      SecondCountableTopology ↥p ∧ TopologicalSpace.PseudoMetrizableSpace ↥p := by
+  haveI := submodule_isTopologicalAddGroup p
+  haveI := submodule_isModuleTopology p
+  haveI : ProperSpace F := .of_nontriviallyNormedField_of_weaklyLocallyCompactSpace F
+  haveI := t2Space_of_moduleTopology F A
+  let e : ↥p ≃L[F] (Fin (Module.finrank F ↥p) → F) :=
+    ContinuousLinearEquiv.ofFinrankEq (by simp)
+  exact ⟨e.toHomeomorph.isClosedEmbedding.locallyCompactSpace,
+    e.toHomeomorph.symm.totallyDisconnectedSpace,
+    e.toHomeomorph.isClosedEmbedding.sigmaCompactSpace,
+    e.toHomeomorph.isEmbedding.secondCountableTopology,
+    e.toHomeomorph.isEmbedding.pseudoMetrizableSpace⟩
+
+end SubmoduleTopology
+
 /-- Elements of a group of points coerce directly to the ambient algebra, so that e.g.
 `lieCentralizer 𝔤 x` typechecks for `x : ↥G`. -/
 instance subgroupCoeAmbient {A : Type*} [Monoid A] (G : Subgroup Aˣ) : CoeOut ↥G A :=

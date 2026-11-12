@@ -28,37 +28,19 @@ variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
 
 /-- A Lie subalgebra of the ambient algebra is a topological additive group. -/
 theorem isTopologicalAddGroup_lieSubalgebra (𝔤 : LieSubalgebra F A) : IsTopologicalAddGroup ↥𝔤 :=
-  haveI := isTopologicalRing_of_moduleTopology F A
-  IsInducing.subtypeVal.isTopologicalAddGroup 𝔤.incl.toLinearMap
+  submodule_isTopologicalAddGroup 𝔤.toSubmodule
 
 /-- `𝔤 ≅ F^n` gives `𝔤` the instances needed for self-dual measures and for
-`eqOn_of_isJHat`. -/
-theorem isModuleTopology_lieSubalgebra (𝔤 : LieSubalgebra F A) : IsModuleTopology F ↥𝔤 := by
-  haveI := t2Space_of_moduleTopology F A
-  haveI := isTopologicalRing_of_moduleTopology F A
-  have hind : IsInducing (𝔤.incl.toLinearMap : ↥𝔤 → A) := IsInducing.subtypeVal
-  haveI : IsTopologicalAddGroup ↥𝔤 := hind.isTopologicalAddGroup 𝔤.incl.toLinearMap
-  haveI : ContinuousSMul F ↥𝔤 :=
-    hind.continuousSMul continuous_id (fun {c x} => 𝔤.incl.toLinearMap.map_smul c x)
-  haveI : T2Space ↥𝔤 := (IsEmbedding.mk hind Subtype.val_injective).t2Space
-  exact isModuleTopologyOfFiniteDimensional (𝕜 := F) (E := ↥𝔤)
+`eqOn_of_isJHat` (`submodule_isModuleTopology`). -/
+theorem isModuleTopology_lieSubalgebra (𝔤 : LieSubalgebra F A) : IsModuleTopology F ↥𝔤 :=
+  submodule_isModuleTopology 𝔤.toSubmodule
 
 /-- The topological properties of a Lie subalgebra `𝔤 ≅ F^n` used for Haar measures and
-`eqOn_of_isJHat`. -/
+`eqOn_of_isJHat` (`submodule_topology`). -/
 theorem lieSubalgebra_topology (𝔤 : LieSubalgebra F A) :
     LocallyCompactSpace ↥𝔤 ∧ TotallyDisconnectedSpace ↥𝔤 ∧ SigmaCompactSpace ↥𝔤 ∧
-      SecondCountableTopology ↥𝔤 ∧ TopologicalSpace.PseudoMetrizableSpace ↥𝔤 := by
-  haveI := isTopologicalAddGroup_lieSubalgebra 𝔤
-  haveI := isModuleTopology_lieSubalgebra 𝔤
-  haveI : ProperSpace F := .of_nontriviallyNormedField_of_weaklyLocallyCompactSpace F
-  haveI := t2Space_of_moduleTopology F A
-  let e : ↥𝔤 ≃L[F] (Fin (Module.finrank F ↥𝔤) → F) :=
-    ContinuousLinearEquiv.ofFinrankEq (by simp)
-  exact ⟨e.toHomeomorph.isClosedEmbedding.locallyCompactSpace,
-    e.toHomeomorph.symm.totallyDisconnectedSpace,
-    e.toHomeomorph.isClosedEmbedding.sigmaCompactSpace,
-    e.toHomeomorph.isEmbedding.secondCountableTopology,
-    e.toHomeomorph.isEmbedding.pseudoMetrizableSpace⟩
+      SecondCountableTopology ↥𝔤 ∧ TopologicalSpace.PseudoMetrizableSpace ↥𝔤 :=
+  submodule_topology 𝔤.toSubmodule
 
 /-- The self-dual measure on a Lie subalgebra on which `b` is nondegenerate is self-dual
 (it exists, `exists_isSelfDual`). -/

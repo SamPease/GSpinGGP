@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.TraceFormula.LuoGamma
+import GSpinGGP.Foundations.HaarLocal
 
 /-!
 # The Lie algebras of the tori of `Γ(G,H)` and of Luo's `𝒯`
@@ -10,15 +11,12 @@ import GSpinGGP.TraceFormula.LuoGamma
 Ingredients of `torusIntegralLie_toSO` (Thesis §12.1–12.2; Luo §7.1): for a torus
 `T ⊆ GSpin(W)(F)` and its image `T' = φ(T)` under `φ : t ↦ (P(t), P(t) ⊕ 1)`,
 
-* `soSub_eq_quadraticLieSubalgebra`: `so_Cliff(W)` (the traceless part of `gspin(W)`) is the span
-  of the bivectors (Tau Ceti's `quadraticLieSubalgebra`), so `C(W) → C(V)` maps it into
-  `so_Cliff(V)` (`map_mem_soSub`) and `X ↦ (X, X)` maps it into `𝔤⁰` (`diagLie_mem_lieZero`);
 * `toSOLin_diagLie`: `ad (X, X) = (ad X, ad X ⊕ 0)`;
 * `deltaLie_eq_delta`, `weylDiscLie_toSOLin`: `Δ` and `D^G` are transported by `ad`;
 * `commonFixed_eq_fixedOf_map`, `mem_lieTorus_map_iff`, `lieTorusEquiv`, `lieTorusCLE`: `ad`
   maps `𝔱⁰ = lieTorus T` onto Luo's `𝔱 = lieTorus T'` (a linear homeomorphism);
 * `LuoDatum.IsExpCompatT.unique`, `IsExpCompatT.unique`: the measure `ν(T) dX` is unique
-  (`Measure.eq_of_isAddHaarMeasure_of_eqOn_nhds`);
+  (`Measure.eq_of_isAddHaarMeasure_of_eq_near_zero`);
 * `exists_conj_eq_map_of_isNaturalTorusCorr`: a torus of `𝒯` naturally corresponding to `T` is the
   image of a `GSpin(W)(F)`-conjugate of `T`, so the `H̄(F)`-conjugator reduces to `GSpin(W)(F)`.
 -/
@@ -31,103 +29,10 @@ attribute [local instance 100] LieRing.ofAssociativeRing LieAlgebra.ofAssociativ
 
 namespace GSpinGGP
 
-section SoQuadratic
-
-variable {K : Type*} [Field K] [Invertible (2 : K)]
-variable {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
-
-/-- The bivectors lie in `so_Cliff(V)`: they are commutators of generators. -/
-theorem quadraticLieSubalgebra_le_soSub (Q : QuadraticForm K V) :
-    (quadraticLieSubalgebra Q).toSubmodule ≤ (soSub Q).toSubmodule :=
-  quadraticLieSubalgebra_toSubmodule_le_of_bivector_mem Q fun a b => by
-    rw [bivector_def]
-    exact (soSub Q).smul_mem _ (commutator_ι_mem_soSub Q a b)
-
-/-- **`so_Cliff(V)` is spanned by the bivectors** (for nondegenerate `Q`): an `X ∈ so_Cliff(V)` and
-the quadratic lift `Y` of `ad X` (`exists_mem_quadratic_commutator_eq`) differ by a scalar
-(`eq_algebraMap_of_adV_eq_zero`), which is traceless, hence `0`. -/
-theorem soSub_eq_quadraticLieSubalgebra {Q : QuadraticForm K V} (hQ : IsNondeg Q) :
-    (soSub Q).toSubmodule = (quadraticLieSubalgebra Q).toSubmodule := by
-  refine le_antisymm (fun X hX => ?_) (quadraticLieSubalgebra_le_soSub Q)
-  have hX' : X ∈ soSub Q := hX
-  obtain ⟨Y, hYq, hY⟩ := exists_mem_quadratic_commutator_eq hQ (adV Q X) fun u w => by
-    rw [bform_adV hX'.1]
-  have hYs : Y ∈ soSub Q := quadraticLieSubalgebra_le_soSub Q hYq
-  have hD : X - Y ∈ gspin Q := sub_mem hX'.1 hYs.1
-  have hD0 : adV Q (X - Y) = 0 := by
-    ext v
-    apply ι_injective Q
-    rw [map_sub, LinearMap.sub_apply, map_sub, ι_adV hYs.1, hY, sub_self, LinearMap.zero_apply,
-      map_zero]
-  obtain ⟨r, hr⟩ := eq_algebraMap_of_adV_eq_zero hQ hD hD0
-  have htr : cliffTrace Q (X - Y) = 0 := by
-    rw [sub_eq_add_neg, cliffTrace_add, ← neg_one_smul K Y, cliffTrace_smul, hX'.2, hYs.2]
-    ring
-  rw [hr, Algebra.algebraMap_eq_smul_one, cliffTrace_smul, cliffTrace_one] at htr
-  have hr0 : r = 0 := (mul_eq_zero.mp htr).resolve_right (cast_finrank_cliffordAlgebra_ne_zero Q)
-  rw [hr0, map_zero, sub_eq_zero] at hr
-  rw [hr]
-  exact hYq
-
-/-- The algebra map `C(Q₁) → C(Q₂)` of an isometry maps `so_Cliff(Q₁)` into `so_Cliff(Q₂)`
-(`soSub_eq_quadraticLieSubalgebra`, Tau Ceti's `map_mem_quadraticLieSubalgebra`). -/
-theorem map_mem_soSub {V₂ : Type*} [AddCommGroup V₂] [Module K V₂] [FiniteDimensional K V₂]
-    {Q : QuadraticForm K V} {Q₂ : QuadraticForm K V₂} (hQ : IsNondeg Q) (f : Q →qᵢ Q₂)
-    {X : CliffordAlgebra Q} (hX : X ∈ soSub Q) : map f X ∈ soSub Q₂ := by
-  have hXq : X ∈ quadraticLieSubalgebra Q := by
-    have : X ∈ (soSub Q).toSubmodule := hX
-    rw [soSub_eq_quadraticLieSubalgebra hQ] at this
-    exact this
-  exact quadraticLieSubalgebra_le_soSub Q₂ (map_mem_quadraticLieSubalgebra f hXq)
-
-end SoQuadratic
-
-section HaarLocal
-
-/-- **Two additive Haar measures that agree near `0` are equal**: `ν = c • μ`
-(`isAddLeftInvariant_eq_smul`), and a compact neighbourhood `K ⊆ U` of `0` has
-`0 < μ K < ∞`, so `c = 1`. -/
-theorem _root_.MeasureTheory.Measure.eq_of_isAddHaarMeasure_of_eqOn_nhds {E : Type*} [AddGroup E]
-    [TopologicalSpace E] [IsTopologicalAddGroup E] [LocallyCompactSpace E]
-    [SecondCountableTopology E] [T2Space E] [MeasurableSpace E] [BorelSpace E]
-    (μ ν : Measure E) [μ.IsAddHaarMeasure] [ν.IsAddHaarMeasure] {U : Set E} (hU : U ∈ 𝓝 0)
-    (h : ∀ S, MeasurableSet S → S ⊆ U → μ S = ν S) : μ = ν := by
-  have hc : ν = Measure.addHaarScalarFactor ν μ • μ := Measure.isAddLeftInvariant_eq_smul ν μ
-  obtain ⟨K, hK, hKU, hKc⟩ := local_compact_nhds hU
-  have h0 : μ K ≠ 0 := (Measure.measure_pos_of_mem_nhds μ hK).ne'
-  have htop : μ K ≠ ⊤ := hKc.measure_lt_top.ne
-  have hK' := h K hKc.isClosed.measurableSet hKU
-  rw [hc, Measure.smul_apply, ENNReal.smul_def, smul_eq_mul] at hK'
-  have h1 : ((Measure.addHaarScalarFactor ν μ : NNReal) : ENNReal) = 1 := by
-    have := (ENNReal.mul_eq_right h0 htop).mp hK'.symm
-    exact this
-  rw [hc, ENNReal.coe_eq_one.mp h1, one_smul]
-
-/-- A subspace `p` of a finite-dimensional `F`-algebra `A` (module topology) is a locally
-compact, second countable, Hausdorff additive topological group. -/
-theorem submodule_topology {F : Type*} [NontriviallyNormedField F] [PAdicField F] {A : Type*}
-    [Ring A] [Algebra F A] [Module.Finite F A] [TopologicalSpace A] [IsModuleTopology F A]
-    (p : Submodule F A) :
-    IsTopologicalAddGroup ↥p ∧ T2Space ↥p ∧ LocallyCompactSpace ↥p ∧
-      SecondCountableTopology ↥p := by
-  have := isTopologicalRing_of_moduleTopology F A
-  have : ContinuousSMul F A := IsModuleTopology.toContinuousSMul F A
-  have := t2Space_of_moduleTopology F A
-  have : ProperSpace F := .of_nontriviallyNormedField_of_weaklyLocallyCompactSpace F
-  let e : ↥p ≃L[F] (Fin (Module.finrank F ↥p) → F) := ContinuousLinearEquiv.ofFinrankEq (by simp)
-  exact ⟨inferInstance, inferInstance, e.toHomeomorph.isClosedEmbedding.locallyCompactSpace,
-    e.toHomeomorph.isEmbedding.secondCountableTopology⟩
-
-end HaarLocal
 
 namespace GGPData
 
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F] (d : GGPData F)
-
-/-- `X ↦ (X, X)` maps `so_Cliff(W)` into `𝔤⁰ = so_Cliff(W) ⊕ so_Cliff(V)`. -/
-theorem diagLie_mem_lieZero {X : CliffordAlgebra d.QW} (hX : X ∈ soSub d.QW) :
-    d.diagLie X ∈ d.lieZero :=
-  ⟨hX, map_mem_soSub d.nondeg _ hX⟩
 
 /-- `ad (map inl X) = ad X ⊕ 0` on `V = W ⊕ Z` for `X ∈ gspin(W)`: `X` is even, so its image
 commutes with `Z = Wᗮ` (`map_even_commute_ι`). -/
@@ -290,13 +195,12 @@ def lieTorusEquiv (T : Subgroup ↥(GSpin d.QW)) :
 /-- `ad : 𝔱⁰ ≃ 𝔱` is a homeomorphism (finite dimension). -/
 def lieTorusCLE (T : Subgroup ↥(GSpin d.QW)) :
     ↥(d.lieTorus T) ≃L[F] ↥(d.luoOf.lieTorus (T.map (d.toGbarU.comp d.diag))) :=
-  haveI := t2Space_of_moduleTopology F (CliffordAlgebra d.QW)
-  haveI := isTopologicalRing_of_moduleTopology F (CliffordAlgebra d.QW)
-  haveI := IsModuleTopology.toContinuousSMul F (CliffordAlgebra d.QW)
-  haveI := t2Space_of_moduleTopology F d.luoOf.Amb
-  haveI := isTopologicalRing_of_moduleTopology F d.luoOf.Amb
-  haveI := IsModuleTopology.toContinuousSMul F d.luoOf.Amb
-  (d.lieTorusEquiv T).toContinuousLinearEquiv
+  haveI := submodule_isModuleTopology (d.lieTorus T)
+  haveI := submodule_isModuleTopology (d.luoOf.lieTorus (T.map (d.toGbarU.comp d.diag)))
+  { d.lieTorusEquiv T with
+    continuous_toFun := IsModuleTopology.continuous_of_linearMap (d.lieTorusEquiv T).toLinearMap
+    continuous_invFun :=
+      IsModuleTopology.continuous_of_linearMap (d.lieTorusEquiv T).symm.toLinearMap }
 
 @[simp] theorem coe_lieTorusCLE (T : Subgroup ↥(GSpin d.QW)) :
     ⇑(d.lieTorusCLE T) = ⇑(d.lieTorusEquiv T) := rfl
@@ -304,26 +208,25 @@ def lieTorusCLE (T : Subgroup ↥(GSpin d.QW)) :
 /-! ### Uniqueness of `ν(T) dX` -/
 
 /-- **The measure `ν(T) dX` on Luo's `𝔱(F)` is unique**: two `exp`-compatible Haar measures agree
-on the small measurable sets, hence everywhere (`Measure.eq_of_isAddHaarMeasure_of_eqOn_nhds`). -/
+on the small measurable sets with the same set function, hence everywhere
+(`Measure.eq_of_isAddHaarMeasure_of_eq_near_zero`). -/
 theorem _root_.GSpinGGP.LuoDatum.IsExpCompatT.unique {L : LuoDatum F} {T : Subgroup L.Ambˣ}
     {μ ν : Measure ↥(L.lieTorus T)} (hμ : L.IsExpCompatT T μ) (hν : L.IsExpCompatT T ν) :
     μ = ν := by
-  obtain ⟨_, _, _, _⟩ := submodule_topology (L.lieTorus T)
-  obtain ⟨hμH, U, hU, hμU⟩ := hμ
-  obtain ⟨hνH, U', hU', hνU⟩ := hν
-  exact Measure.eq_of_isAddHaarMeasure_of_eqOn_nhds μ ν (inter_mem hU hU') fun S hS hSU =>
-    (hμU S hS (hSU.trans Set.inter_subset_left)).trans
-      (hνU S hS (hSU.trans Set.inter_subset_right)).symm
+  have := submodule_isTopologicalAddGroup (L.lieTorus T)
+  obtain ⟨_, _, _, _, _⟩ := submodule_topology (L.lieTorus T)
+  have := hμ.1
+  have := hν.1
+  exact Measure.eq_of_isAddHaarMeasure_of_eq_near_zero _ hμ.2 hν.2
 
 /-- **The measure `ν(T) dX` on `𝔱⁰(F)` is unique** (as `LuoDatum.IsExpCompatT.unique`). -/
 theorem IsExpCompatT.unique {T : Subgroup ↥(GSpin d.QW)} {μ ν : Measure ↥(d.lieTorus T)}
     (hμ : d.IsExpCompatT T μ) (hν : d.IsExpCompatT T ν) : μ = ν := by
-  obtain ⟨_, _, _, _⟩ := submodule_topology (d.lieTorus T)
-  obtain ⟨hμH, U, hU, hμU⟩ := hμ
-  obtain ⟨hνH, U', hU', hνU⟩ := hν
-  exact Measure.eq_of_isAddHaarMeasure_of_eqOn_nhds μ ν (inter_mem hU hU') fun S hS hSU =>
-    (hμU S hS (hSU.trans Set.inter_subset_left)).trans
-      (hνU S hS (hSU.trans Set.inter_subset_right)).symm
+  have := submodule_isTopologicalAddGroup (d.lieTorus T)
+  obtain ⟨_, _, _, _, _⟩ := submodule_topology (d.lieTorus T)
+  have := hμ.1
+  have := hν.1
+  exact Measure.eq_of_isAddHaarMeasure_of_eq_near_zero _ hμ.2 hν.2
 
 /-- If `𝔱⁰(F)` carries an `exp`-compatible measure, `measLieTorus T` is it. -/
 theorem measLieTorus_eq {T : Subgroup ↥(GSpin d.QW)} {μ : Measure ↥(d.lieTorus T)}
