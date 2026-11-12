@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Foundations.CentralizerIso
 import GSpinGGP.Foundations.ExpLocal
+import GSpinGGP.Foundations.ModuleTopologyPAdic
 import GSpinGGP.TraceFormula.JHatSelfDual
 
 /-!
@@ -14,7 +15,7 @@ and the orbit measure (`orbitMeasure`). Along a `CentralizerIso` `ι : (G_x, �
 
 * `isSelfDual_map_iff`, `isJHat_comp_iff`: the defining conditions are transported (change of
   variables; choice-free);
-* `isSelfDual_unique`: a self-dual measure is unique (`sorry`, Weil);
+* `isSelfDual_unique`: a self-dual measure is unique (Weil);
 * `selfDualMeasure_map`, `selfDualHaar_map`: hence the chosen self-dual measures correspond;
 * `isOrbitMeasure_map_iff`: the defining conditions of orbit measures are transported (uses
   `selfDualMeasure_map` for the Kirillov forms on complements of centralizers);
@@ -42,17 +43,39 @@ variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
 
 Source: Weil, *Basic Number Theory*, 3rd ed., Ch. VII §2, pp. 104–105 ("the" self-dual Haar
 measure for a given identification of `G` with `G*`), together with the uniqueness of Haar measure.
-Weil's identification `V ≅ V*` needs `B` nondegenerate; for degenerate `B` the statement holds
-vacuously, since then no self-dual measure exists.
+Weil's identification `V ≅ V*` needs `B` nondegenerate; the argument below does not use this.
 
-**Status: `sorry`** (general harmonic analysis; a short proof from the uniqueness of Haar measure,
-Mathlib `MeasureTheory.Measure.isAddLeftInvariant_eq_smul`, and a test function `1_L`, `L` a
-compact open subgroup). -/
+Proof: by uniqueness of Haar measure (`V` is locally compact and second countable),
+`ν = c μ` with `c > 0`; then `f(0) = c² f(0)` for a test function `f` with `f(0) ≠ 0`
+(`exists_isTestFn_ne_zero`), so `c = 1`. -/
 theorem isSelfDual_unique {V : Type*} [AddCommGroup V] [Module F V] [FiniteDimensional F V]
     [TopologicalSpace V] [IsModuleTopology F V] [MeasurableSpace V] [BorelSpace V]
     {B : LinearMap.BilinForm F V} {ψ : NontrivialAddChar F} {μ ν : Measure V}
     (hμ : IsSelfDual μ B ψ) (hν : IsSelfDual ν B ψ) : μ = ν := by
-  sorry
+  haveI := IsModuleTopology.isTopologicalAddGroup F V
+  haveI := TauCeti.ModuleTopology.locallyCompactSpace (Module.finBasis F V)
+  haveI := secondCountableTopology_of_finiteDimensional F V
+  haveI := hμ.1
+  haveI := hν.1
+  have hc := Measure.isAddLeftInvariant_eq_smul ν μ
+  set c := Measure.addHaarScalarFactor ν μ
+  obtain ⟨f, hf, hf0⟩ := exists_isTestFn_ne_zero F V
+  have h1 := hμ.2 f hf 0
+  have h2 := hν.2 f hf 0
+  have hfour : fourierWRT ν B ψ f = fun Y => (c : ℂ) * fourierWRT μ B ψ f Y := by
+    funext Y
+    rw [fourierWRT, fourierWRT, hc, integral_smul_nnreal_measure, NNReal.smul_def,
+      Complex.real_smul]
+  rw [hfour, hc, integral_smul_nnreal_measure, NNReal.smul_def, Complex.real_smul] at h2
+  simp only [mul_assoc] at h2
+  rw [integral_const_mul, h1, ← mul_assoc] at h2
+  have hc2 : ((c : ℝ) : ℂ) * (c : ℂ) = 1 := mul_right_cancel₀ hf0 (h2.trans (one_mul _).symm)
+  have hc1 : c = 1 := by
+    have : (c : ℝ) * c = 1 := by exact_mod_cast hc2
+    have hpos : (0 : ℝ) ≤ c := c.2
+    have : (c : ℝ) = 1 := by nlinarith
+    exact_mod_cast this
+  rw [hc, hc1, one_smul]
 
 /-- One direction of `isSelfDual_map_iff`. -/
 theorem IsSelfDual.map {V V' : Type*} [AddCommGroup V] [Module F V] [TopologicalSpace V]
