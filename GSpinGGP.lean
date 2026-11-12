@@ -55,6 +55,7 @@ import GSpinGGP.TraceFormula.SOLieFacts
 import GSpinGGP.TraceFormula.LuoTransfer
 import GSpinGGP.TraceFormula.LuoGamma
 import GSpinGGP.TraceFormula.LuoWeyl
+import GSpinGGP.TraceFormula.LuoClass
 import GSpinGGP.Literature.Kottwitz
 import GSpinGGP.Literature.KottwitzClay
 import GSpinGGP.Literature.Kottwitz1986
