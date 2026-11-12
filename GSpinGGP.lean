@@ -8,6 +8,7 @@ import GSpinGGP.Foundations.JHatTranslate
 import GSpinGGP.Foundations.LieEquivAd
 import GSpinGGP.Foundations.CentralizerIso
 import GSpinGGP.Foundations.ExpLocal
+import GSpinGGP.Foundations.ExpHaar
 import GSpinGGP.Foundations.GSpinExp
 import GSpinGGP.Foundations.GSpinExpAd
 import GSpinGGP.Foundations.OrbitChart
@@ -56,6 +57,7 @@ import GSpinGGP.TraceFormula.StronglyCuspidal
 import GSpinGGP.TraceFormula.DeltaIntegrability
 import GSpinGGP.TraceFormula.EllipticRepresentations
 import GSpinGGP.TraceFormula.LieAlgebra
+import GSpinGGP.TraceFormula.ExpCompatT
 import GSpinGGP.TraceFormula.SelfDual
 import GSpinGGP.TraceFormula.SOLie
 import GSpinGGP.TraceFormula.SOLieFacts
