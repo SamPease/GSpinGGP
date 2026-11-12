@@ -84,7 +84,7 @@ theorem eigen_of_diag (hF : IsHypFrame Q W e f) (hkW : ∀ w ∈ W, k w = c • 
     rw [hv, h3] at h2
     rw [← h2, hv] at h1
     have h4 : (μ - c) • (v - frameSum Q e f v) = 0 := by
-      rw [sub_smul, smul_sub, smul_sub, h1]
+      rw [sub_smul, smul_sub, smul_sub, h1, smul_sub]
       abel
     rw [← sub_eq_zero]
     exact (smul_eq_zero.1 h4).resolve_left (sub_ne_zero.2 hμ)
@@ -101,6 +101,7 @@ variable (hF : IsHypFrame Q W e f) (hkW : ∀ w ∈ W, k w = c • w)
   (hb : Function.Injective b) (hab : ∀ i j, a i ≠ b j) {h : V →ₗ[K] V} (hc : Commute k h)
 include hF hkW hke hkf hac hbc ha hb hab hc
 
+omit hbc hb in
 /-- A map commuting with a *regular* frame-diagonal `k` (the `c, aᵢ, bᵢ` distinct) scales each
 `eᵢ`. -/
 theorem eq_smul_e_of_commute_diag (i : Fin n) : h (e i) = polar Q (h (e i)) (f i) • e i := by
@@ -118,6 +119,7 @@ theorem eq_smul_e_of_commute_diag (i : Fin n) : h (e i) = polar Q (h (e i)) (f i
     rw [h1, h2, zero_smul, zero_smul, add_zero]
   · simp
 
+omit hac ha in
 /-- A map commuting with a regular frame-diagonal `k` scales each `fᵢ`. -/
 theorem eq_smul_f_of_commute_diag (i : Fin n) : h (f i) = polar Q (h (f i)) (e i) • f i := by
   have hv : k (h (f i)) = b i • h (f i) := by
@@ -149,12 +151,12 @@ theorem commute_of_commute_diag {k' : V →ₗ[K] V} {c' : K} {a' b' : Fin n →
   refine hF.linearMap_ext (fun w hw => ?_) (fun i => ?_) (fun i => ?_)
   · rw [Module.End.mul_apply, Module.End.mul_apply,
       hkW' _ (hF.mapsTo_of_commute_diag hkW hke hkf hac hbc hc hw), hkW' w hw, map_smul]
-  · rw [Module.End.mul_apply, Module.End.mul_apply,
-      hF.eq_smul_e_of_commute_diag hkW hke hkf hac hbc ha hb hab hc i, map_smul, hke', hke',
-      map_smul, hF.eq_smul_e_of_commute_diag hkW hke hkf hac hbc ha hb hab hc i, smul_comm]
-  · rw [Module.End.mul_apply, Module.End.mul_apply,
-      hF.eq_smul_f_of_commute_diag hkW hke hkf hac hbc ha hb hab hc i, map_smul, hkf', hkf',
-      map_smul, hF.eq_smul_f_of_commute_diag hkW hke hkf hac hbc ha hb hab hc i, smul_comm]
+  · have he := hF.eq_smul_e_of_commute_diag hkW hke hkf hac ha hab hc i
+    rw [Module.End.mul_apply, Module.End.mul_apply, hke', map_smul, he, map_smul, hke',
+      smul_comm]
+  · have hf := hF.eq_smul_f_of_commute_diag hkW hke hkf hbc hb hab hc i
+    rw [Module.End.mul_apply, Module.End.mul_apply, hkf', map_smul, hf, map_smul, hkf',
+      smul_comm]
 
 end Diag
 
