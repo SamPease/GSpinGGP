@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Literature.Kottwitz
+import GSpinGGP.Literature.Kottwitz1986
 import GSpinGGP.GGP.TorusCommute
 import GSpinGGP.GGP.MovedCentralizer
 import GSpinGGP.GGP.Steinberg
@@ -12,7 +13,8 @@ import GSpinGGP.GGP.TwistDescent
 # The Galois action on `S_x(F̄)`
 
 The Galois action on `F̄ ⊗ V` (`galV`), on `C(V)_{F̄}` (`galC`) and on `GSpin(V)(F̄)` (`galGS`);
-`S_x(F̄)` is Galois-stable (`galGL_mem_torusBarFbar`) and, for `x ∈ Γ(G,H)`, commutative
+`S_x(F̄)` and `(SO(W)_{W'_x})(F̄)` are Galois-stable (`galGL_mem_torusBarFbar`,
+`galGL_mem_fixerBar`) and, for `x ∈ Γ(G,H)`, commutative
 (`torusBarFbar_commute`).  Own work, elementary.
 -/
 
@@ -370,6 +372,15 @@ theorem galGL_mem_torusBarFbar (x : ↥(GSpin d.QW)) (σ : GalF F) :
     ∀ s ∈ d.torusBarFbar x, galGL d.m σ s ∈ d.torusBarFbar x := by
   rintro s ⟨g, hg, rfl⟩
   exact ⟨_, galGS_mem_torusFbar x σ hg, specMatFbar_galGS σ g⟩
+
+/-- **`(SO(W)_{W'_x})(F̄)` is Galois-stable**: `σ` fixes `W'_x ⊗ F̄` (it is defined over `F`) and
+commutes with `P`, so `σ(g)` fixes `W'_x ⊗ F̄` when `g` does. -/
+theorem galGL_mem_fixerBar (x : ↥(GSpin d.QW)) (σ : GalF F) :
+    ∀ s ∈ d.fixerBar x, galGL d.m σ s ∈ d.fixerBar x := by
+  rintro s ⟨g, hg, rfl⟩
+  refine ⟨galGS d.QW σ g, fun w hw => ?_, specMatFbar_galGS σ g⟩
+  have hw' := galV_mem_baseChange σ⁻¹ _ hw
+  rw [← galV_galV_inv σ w, specP_galGS, hg _ hw']
 
 /-! ### `T_y` from `S_y(F̄)` -/
 

@@ -83,7 +83,8 @@ Applied to `G = SO(W)_{W'_x} ≅ SO(W''_x)` (connected reductive), with `F̄`-po
 The statement is written in cocycles: every continuous cocycle `c` with values in
 `(SO(W)_{W'_x})(F̄)` is cohomologous in `(SO(W)_{W'_x})(F̄)` to a cocycle with values in `S_x(F̄)`.
 That `fixerBar d x` and `torusBarFbar d x` are the `F̄`-points of these `F`-groups (with the
-entrywise Galois action) is not formalized; the facts above about them are used only here.
+entrywise Galois action) is not formalized (both are Galois-stable, `galGL_mem_fixerBar`,
+`galGL_mem_torusBarFbar`); the facts above about them are used only here.
 `fixerBar d x` is all of `(SO(W)_{W'_x})(F̄)` because `P` is onto `SO(W)(F̄)` over `F̄`
 (`range_specP_eq_SOGrp`, from the theorem `gspin_specP_surjective_SO`). -/
 axiom exists_rel_torusBar_of_fixerBar (d : GGPData F) (x : ↥(GSpin d.QW))
