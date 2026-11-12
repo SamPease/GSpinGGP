@@ -101,6 +101,8 @@ import GSpinGGP.GGP.MovedCentralizer
 import GSpinGGP.Foundations.IsometrySemisimple
 import GSpinGGP.GGP.GSpinSemisimple
 import GSpinGGP.GGP.TorusTransport
+import GSpinGGP.GGP.CentralizerTransport
+import GSpinGGP.GGP.GermTransfer
 import GSpinGGP.GGP.TwistSymm
 import GSpinGGP.GGP.Levi
 import GSpinGGP.TraceFormula.Basic
