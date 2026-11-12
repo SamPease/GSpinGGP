@@ -301,24 +301,6 @@ theorem gammaIntegrand_scalar_mul_of_mem_QC {χ : CentralCharOn d} {θ : ↥d.G 
 
 open scoped TensorProduct
 
-omit [NontriviallyNormedField F] [PAdicField F] in
-/-- `W'_x = ker(P(x) − 1)` is the set of `v` with `ι(v)` commuting with `x`. -/
-theorem mem_fixedSub_iff_commute_ι {K V : Type*} [Field K] [Invertible (2 : K)] [AddCommGroup V]
-    [Module K V] {Q : QuadraticForm K V} (x : GSpin Q) (v : V) :
-    v ∈ fixedSub x ↔ ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * CliffordAlgebra.ι Q v =
-      CliffordAlgebra.ι Q v * ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) := by
-  have hP : v ∈ fixedSub x ↔ specP Q x v = v := by simp [fixedSub, sub_eq_zero]
-  rw [hP]
-  constructor
-  · intro h
-    have h' := congrArg (CliffordAlgebra.ι Q) h
-    rw [ι_specP] at h'
-    conv_rhs => rw [← h']
-    simp [mul_assoc]
-  · intro h
-    apply CliffordAlgebra.ι_injective Q
-    rw [ι_specP, h, mul_assoc, Units.mul_inv, mul_one]
-
 /-- The space `{Z ∈ gspin(W) : [Z, ι(U)] = 0}`; for `U = W'_x`, the moved part of `𝔤_x` is the
 kernel of `ad x` on it. -/
 def movedLieSub (U : Submodule F (Fin d.m → F)) : Submodule F (CliffordAlgebra d.QW) :=
