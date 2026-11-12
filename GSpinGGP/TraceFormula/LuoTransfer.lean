@@ -27,7 +27,8 @@ The identification is own work, stated step by step (most steps are `sorry` here
   (`lam_toSO`);
 * (L3) `muG`: the push-forward of `Measure.haar` on `G(F)/A_G(F)` to `Ḡ(F)`, a Haar measure
   (`muG_isHaarMeasure`, proved);
-* (L4) `exists_JLie_transfer`: `J^Lie` of `d` is Luo's `J^Lie` for compatible measures;
+* (L4) `exists_JLie_transfer` (proved, in `TraceFormula/LuoJLieExp.lean`): `J^Lie` of `d` is
+  Luo's `J^Lie` for compatible measures;
 * (L5) `isThetaFLie_of_SO` (proved): a `θ` representing the orbital pairing on `so(W) ⊕ so(V)`
   gives one on `𝔤⁰`;
 * `isThetaFLie_eqOn_regular`: `θ_f` is unique on `𝔤⁰_reg`;
@@ -485,23 +486,9 @@ theorem muG_isHaarMeasure (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) :
   rw [← he]
   exact e.toMulEquiv.isHaarMeasure_map Measure.haar e.continuous e.symm.continuous
 
-/-! ## (L4) `J^Lie` -/
+/-! ## (L4) `J^Lie`: `exists_JLie_transfer` is in `TraceFormula/LuoJLieExp.lean` -/
 
 variable (ψ : NontrivialAddChar F)
-
-/-- **(L4) `J^Lie` of `d` is Luo's `J^Lie`** for `muG`, a Haar measure `μH` on `H̄(F)`, the
-`exp`-compatible `μ_𝔥` and the quotient measure: `H(F)/A_{G,H}(F) ≃ H̄(F)` (Hilbert 90 and
-`ker P ∩ H = A_{G,H}`, through `quotHG_equiv_SO`), `ad : 𝔥⁰ ≃ 𝔥 = so(W) ⊕ 𝔫`, `λ` (`lam_toSO`),
-`measH0` and `weilMeasureHG` push forward to an `exp`-compatible pair and its Weil
-measure (independence of the `exp`-compatible pair), and change of variables.  Not proved here. -/
-theorem exists_JLie_transfer (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) :
-    ∃ (μH : Measure ↥d.luoOf.Hbar) (μ𝔥 : Measure ↥d.luoOf.lieH)
-      (m : Measure (CosetSpace d.luoOf.Hbar.subtype)),
-      μH.IsHaarMeasure ∧ d.luoOf.IsExpCompatH μH μ𝔥 ∧
-      IsWeilMeasure d.luoOf.Hbar.subtype d.muG μH m ∧
-      ∀ f : ↥d.lieZero → ℂ, d.IsLieScusp f →
-        d.distribJLie ψ f = d.luoOf.distribJLie ψ μ𝔥 m (f ∘ d.toSO.symm) := by
-  sorry
 
 /-! ## (L5) `θ_f` -/
 
