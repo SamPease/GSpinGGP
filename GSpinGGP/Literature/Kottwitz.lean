@@ -31,9 +31,10 @@ The bookkeeping of Thesis §6.6–6.7, set up as follows: inner forms are indexe
 
 * `finite_H1_torusBar`: `H¹(F, S_x)` is finite (Borel–Serre; Serre, *Cohomologie galoisienne*,
   III §4.3 Thm. 4).
-* `kottwitzSign_twistIdx_mul`: `β ↦ e(G_{q_x(β)})` is multiplicative on `H¹(F, S_x)`
-  (Kottwitz 1983 and BP (12.1.6), for the inner forms indexed by `H¹(F, SO(W))`; see its
-  docstring).
+* `finite_H1_normalizerBar`: `H¹(F, N_x)` is finite, `N_x = N_{SO(W)}(S_x)` (Borel–Serre).
+
+Not an axiom: that `β ↦ e(G_{q_x(β)})` is multiplicative on `H¹(F, S_x)` (Kottwitz 1983,
+BP (12.1.6)) is the theorem `kottwitzSign_twistIdx_mul` (`GGP/KottwitzSign.lean`).
 -/
 
 noncomputable section
@@ -296,8 +297,9 @@ characteristic `0` and `A` a `k`-group of type (ALA), `H¹(k, A)` is finite; in 
 is finite for `G` linear algebraic over `k`.)  Applied to the linear algebraic `F`-group
 `N_x = N_{SO(W)}(S_x)` (the normalizer of the `F`-torus `S_x` in `SO(W)`), whose `F̄`-points with
 their Galois action are `normalizerBar d x` (`range (specMatFbar d.QW)` is `SO(W)(F̄)` by
-`range_specP_eq_SOGrp`, from the theorem `gspin_specP_surjective_SO`; Galois stability of `S_x(F̄)` and of `SO(W)(F̄)` is
-proved, `galGL_mem_torusBarFbar`, `isGalStable_range_specMatFbar`; that it is the group of `F̄`-points
+`range_specP_eq_SOGrp`, from the theorem `gspin_specP_surjective_SO`; Galois stability of
+`S_x(F̄)`, of `SO(W)(F̄)` and of `N_x(F̄)` is proved, `galGL_mem_torusBarFbar`,
+`isGalStable_range_specMatFbar`, `isGalStable_normalizerBar`; that it is the group of `F̄`-points
 of an `F`-group is not formalized).  Stated for `x ∈ Γ(G,H)`, where `S_x` is a torus.  (`N_x/S_x` is
 not finite in general: `Z_{SO(W)}(S_x)` contains `SO(W'_x)`; so this does not follow from
 `finite_H1_torusBar`.) -/

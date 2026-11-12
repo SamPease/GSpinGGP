@@ -163,6 +163,11 @@ variable (d : GGPData F)
 def diagLie (X : CliffordAlgebra d.QW) : d.ambient :=
   (X, CliffordAlgebra.map (QuadraticMap.Isometry.inl d.QW d.QZ) X)
 
+/-- `X ↦ (X, X)` maps `so_Cliff(W)` into `𝔤⁰ = so_Cliff(W) ⊕ so_Cliff(V)`. -/
+theorem diagLie_mem_lieZero {X : CliffordAlgebra d.QW} (hX : X ∈ soSub d.QW) :
+    d.diagLie X ∈ d.lieZero :=
+  ⟨hX, map_mem_soSub d.nondeg _ hX⟩
+
 /-- **`𝔥⁰ = 𝔥 ∩ 𝔤⁰ = so(W) ⊕ 𝔫`** (Thesis §5.2): the `X = (X_W, X_V) ∈ 𝔤⁰` with
 `X_V − X_W ∈ 𝔫` (`X_W` embedded diagonally), the Lie algebra of `H̄ = SO(W) ⋉ N`. -/
 def lieH0 : Submodule F d.ambient where

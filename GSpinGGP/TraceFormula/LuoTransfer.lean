@@ -149,14 +149,8 @@ theorem toSO_bijective : Function.Bijective d.toSOFun := by
   -- scalar is `0`.
   have hinj : ∀ {U : Type} [AddCommGroup U] [Module F U] [Module.Finite F U]
       {Q : QuadraticForm F U}, IsNondeg Q → ∀ {X : CliffordAlgebra Q}, X ∈ soSub Q →
-      adV Q X = 0 → X = 0 := by
-    intro U _ _ _ Q hQ X hX h0
-    obtain ⟨r, rfl⟩ := eq_algebraMap_of_adV_eq_zero hQ hX.1 h0
-    have h2 := (mem_soSub.mp hX).2
-    rw [Algebra.algebraMap_eq_smul_one, cliffTrace_smul, cliffTrace_one] at h2
-    have hr : r = 0 :=
-      (mul_eq_zero.mp h2).resolve_right (cast_finrank_cliffordAlgebra_ne_zero Q)
-    rw [hr, map_zero]
+      adV Q X = 0 → X = 0 :=
+    fun hQ _ hX h0 => eq_zero_of_mem_soSub_of_adV_eq_zero hQ hX h0
   -- `adV` maps the traceless part onto `so`: lift to `gspin` and subtract the trace part.
   have hsurj : ∀ {U : Type} [AddCommGroup U] [Module F U] [Module.Finite F U]
       {Q : QuadraticForm F U}, IsNondeg Q → ∀ M : Module.End F U,

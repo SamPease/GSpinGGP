@@ -1,4 +1,5 @@
 import GSpinGGP.Foundations.LocalGroups
+import GSpinGGP.Foundations.HaarLocal
 import GSpinGGP.Foundations.RankSemicontinuity
 import GSpinGGP.Foundations.Determinant
 import GSpinGGP.Foundations.SubgroupTransport
@@ -61,6 +62,7 @@ import GSpinGGP.TraceFormula.LuoTransfer
 import GSpinGGP.TraceFormula.LuoGamma
 import GSpinGGP.TraceFormula.LuoWeyl
 import GSpinGGP.TraceFormula.LuoClass
+import GSpinGGP.TraceFormula.LuoTorus
 import GSpinGGP.Literature.Kottwitz
 import GSpinGGP.Literature.KottwitzClay
 import GSpinGGP.Literature.Kottwitz1986
@@ -135,3 +137,4 @@ import GSpinGGP.Sanity.Witnesses
 import GSpinGGP.Sanity.NilpotentOrbit
 import GSpinGGP.Sanity.LieAudit
 import GSpinGGP.Sanity.InvariantSetsAudit
+import GSpinGGP.Sanity.AxiomRedTeam
