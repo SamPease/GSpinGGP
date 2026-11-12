@@ -158,7 +158,47 @@ theorem commute_of_commute_diag {k' : V →ₗ[K] V} {c' : K} {a' b' : Fin n →
     rw [Module.End.mul_apply, Module.End.mul_apply, hkf', map_smul, hf, map_smul, hkf',
       smul_comm]
 
+omit hac hbc ha hb hab hc in
+/-- Two frame-diagonal maps commute. -/
+theorem commute_of_diag {k' : V →ₗ[K] V} {c' : K} {a' b' : Fin n → K}
+    (hkW' : ∀ w ∈ W, k' w = c' • w) (hke' : ∀ i, k' (e i) = a' i • e i)
+    (hkf' : ∀ i, k' (f i) = b' i • f i) : Commute k k' := by
+  refine hF.linearMap_ext (fun w hw => ?_) (fun i => ?_) (fun i => ?_)
+  · rw [Module.End.mul_apply, Module.End.mul_apply, hkW' w hw, hkW w hw, map_smul, map_smul,
+      hkW w hw, hkW' w hw, smul_comm]
+  · rw [Module.End.mul_apply, Module.End.mul_apply, hke', hke, map_smul, map_smul, hke, hke',
+      smul_comm]
+  · rw [Module.End.mul_apply, Module.End.mul_apply, hkf', hkf, map_smul, map_smul, hkf, hkf',
+      smul_comm]
+
 end Diag
+
+/-- **A skew frame-diagonal map with prescribed values**: `D v = Σ aⱼ (polar(v, fⱼ) eⱼ −
+polar(v, eⱼ) fⱼ)` kills `W`, scales `eᵢ` by `aᵢ` and `fᵢ` by `−aᵢ`, and is skew for `polar`. -/
+theorem exists_skew_diag (hF : IsHypFrame Q W e f) (a : Fin n → K) :
+    ∃ D : V →ₗ[K] V, (∀ w ∈ W, D w = (0 : K) • w) ∧ (∀ i, D (e i) = a i • e i) ∧
+      (∀ i, D (f i) = (-a i) • f i) ∧ ∀ u v, polar Q (D u) v = -polar Q u (D v) := by
+  classical
+  let D : V →ₗ[K] V := ∑ j, (a j • ((polarBilin Q).flip (f j)).smulRight (e j) -
+    a j • ((polarBilin Q).flip (e j)).smulRight (f j))
+  have hD : ∀ v, D v = ∑ j, ((a j * polar Q v (f j)) • e j - (a j * polar Q v (e j)) • f j) :=
+    fun v => by simp [D, LinearMap.sum_apply, smul_smul]
+  refine ⟨D, fun w hw => ?_, fun i => ?_, fun i => ?_, fun u v => ?_⟩
+  · rw [hD, zero_smul]
+    refine Finset.sum_eq_zero fun j _ => ?_
+    rw [((hF.mem_iff w).1 hw j).1, ((hF.mem_iff w).1 hw j).2]
+    simp
+  · rw [hD]
+    simp [hF.polar_ee, hF.polar_ef]
+  · rw [hD]
+    simp [hF.polar_ff, hF.polar_fe, neg_smul]
+  · rw [hD, hD, ← polarBilin_apply_apply, ← polarBilin_apply_apply, map_sum, map_sum,
+      LinearMap.sum_apply, ← Finset.sum_neg_distrib]
+    refine Finset.sum_congr rfl fun j _ => ?_
+    simp only [map_sub, map_smul, LinearMap.sub_apply, LinearMap.smul_apply,
+      polarBilin_apply_apply, smul_eq_mul]
+    rw [polar_comm Q (e j) v, polar_comm Q (f j) v]
+    ring
 
 end IsHypFrame
 
