@@ -118,16 +118,8 @@ theorem weylCardOf_eq_luo_of_centralizer {T : Subgroup ↥(GSpin d.QW)}
     obtain ⟨g, hg⟩ := d.exists_specP_eq_of_mem_SOu s.2
     exact ⟨g, Subtype.ext (Units.ext (by rw [hψ, coe_specPU, hg]))⟩
   have hker : ψ.ker ≤ T := by
-    intro g hg
-    apply hsc
-    rw [← ker_specP d.nondeg, MonoidHom.mem_ker]
-    have h1 : d.specPU g = 1 := by
-      rw [← hψ, MonoidHom.mem_ker.mp hg]; rfl
-    apply LinearEquiv.toLinearMap_injective
-    have := congrArg (fun u : (Module.End F d.luoOf.W)ˣ => (u : Module.End F d.luoOf.W)) h1
-    simp only [coe_specPU, Units.val_one] at this
-    rw [this]
-    rfl
+    rw [MonoidHom.ker_codRestrict, ker_specPU]
+    exact hsc
   have hcomm : ∀ a b : ↥(GSpin d.QW), Commute (ψ a) (ψ b) →
       Commute (specP d.QW a) (specP d.QW b) := by
     intro a b hab

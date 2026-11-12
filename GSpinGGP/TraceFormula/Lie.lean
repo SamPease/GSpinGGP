@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import GSpinGGP.TraceFormula.Scusp
 import GSpinGGP.TraceFormula.Geometric
 import GSpinGGP.TraceFormula.LieAlgebra
-import GSpinGGP.TraceFormula.LuoTransfer
+import GSpinGGP.TraceFormula.LuoClass
 import GSpinGGP.Literature.Fourier
 import GSpinGGP.TraceFormula.SelfDual
 
@@ -25,7 +25,8 @@ This file holds:
 * §1 `jqcLie`: `J^Lie_qc` on the `θ_f` (Prop 12.4.1(ii)), well defined by Thesis Thm 11.6.1;
 * §2 Prop 12.5.1 (`prop_11_8_1_of_jqc`, SORRY; `prop_11_8_1`) and Thm 12.2.2 on `𝔤⁰`
   (`distribJLie_eq_mGeomLie`, from Luo Thm 7.3.3 for the special orthogonal triple through
-  `TraceFormula/LuoTransfer.lean`; Prop 12.5.1 and the endgame are the thesis's route, not used);
+  `TraceFormula/LuoTransfer.lean` and `TraceFormula/LuoClass.lean`; Prop 12.5.1 and the endgame
+  are the thesis's route, not used);
 * §3 the descent from `G` to `𝔤⁰` near `1` (`exists_lie_descent`, SORRY; Prop 12.4.1(i) and
   Prop 12.1.1(iv));
 * §4 the triples with a hyperbolic-plane factor (`geomAt_near_of_isHypPlane_V`, elementary, proved
@@ -131,7 +132,7 @@ theorem prop_11_8_1 (h : HYP ψ d) (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane
 /-- **Thesis Thm 12.2.2 on `𝔤⁰`: `J^Lie = J^Lie_geom`**,
 for triples without a hyperbolic-plane factor.  Proved from Luo Thm 7.3.3 for the special
 orthogonal triple (the literature axiom `luo_lie_geomExpansion_SO`) and the identification of
-`𝔤⁰` with `so(W) ⊕ so(V)` (`distribJLie_eq_mGeomLie_of_luo`, `TraceFormula/LuoTransfer.lean`);
+`𝔤⁰` with `so(W) ⊕ so(V)` (`distribJLie_eq_mGeomLie_of_luo`, `TraceFormula/LuoClass.lean`);
 the induction hypothesis `h` is not needed on this route.  (The thesis's own route, Prop 12.5.1
 and the endgame of §12.5, is `prop_11_8_1` with `lie_endgame`.) -/
 theorem distribJLie_eq_mGeomLie (h : HYP ψ d) (hW : ¬ IsHypPlane d.QW)
