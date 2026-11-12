@@ -543,6 +543,48 @@ theorem kernelLie_toGbar (μ : Measure ↥d.lieH0) (f : ↥d.lieZero → ℂ) (g
     f (d.adLie0 g⁻¹ (d.lieH0Incl X)) * ψ (d.lamLie X)
   rw [← h1, d.extFn_toSOLin, ← d.lam_toSO]
 
+/-- `G(F) → Ḡ(F)` is onto (`Pbar_surjective`). -/
+theorem toGbar_surjective (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) :
+    Function.Surjective d.toGbar := by
+  obtain ⟨e, he⟩ := d.exists_continuousMulEquiv_toGbar hW hV
+  intro x
+  obtain ⟨y, rfl⟩ := e.surjective x
+  exact ⟨Quotient.out y, (congrFun he y).symm⟩
+
+/-- **(L4) reduced to two statements**: `exists_JLie_transfer` holds as soon as
+* (invariance) `K^Lie(f, ·)` is left `H(F)`-invariant for `f ∈ S_scusp(𝔤⁰(F))`, and
+* (`exp`-compatibility) the push-forwards of `Measure.haar` on `H(F)/A_{G,H}(F)` and of `dX` on
+  `𝔥⁰(F)` along `H(F)/A_{G,H}(F) ≃ H̄(F)` and `ad : 𝔥⁰ ≃ 𝔥` are `exp`-compatible.
+The measures are `μ_H = (e_H)_* dh`, `μ_𝔥 = ad_* dX` and the push-forward of `weilMeasureHG`
+(`exists_weil_Hbar`); the kernels agree at matched points (`kernelLie_toGbar`). -/
+theorem exists_JLie_transfer_of (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
+    (hinv : ∀ f : ↥d.lieZero → ℂ, d.IsLieScusp f → ∀ h ∈ d.H, ∀ g : ↥d.G,
+      d.kernelLie ψ f (h * g) = d.kernelLie ψ f g)
+    (hexp : ∀ eH : d.HmodAGH ≃ₜ* ↥d.luoOf.Hbar,
+      (∀ h : ↥d.H, ((eH (QuotientGroup.mk h) : ↥d.luoOf.Gbar)) = d.toGbar (h : ↥d.G)) →
+        d.luoOf.IsExpCompatH ((Measure.haar : Measure d.HmodAGH).map eH)
+          (d.measH0.map d.toSOHCLE)) :
+    ∃ (μH : Measure ↥d.luoOf.Hbar) (μ𝔥 : Measure ↥d.luoOf.lieH)
+      (m : Measure (CosetSpace d.luoOf.Hbar.subtype)),
+      μH.IsHaarMeasure ∧ d.luoOf.IsExpCompatH μH μ𝔥 ∧
+      IsWeilMeasure d.luoOf.Hbar.subtype d.muG μH m ∧
+      ∀ f : ↥d.lieZero → ℂ, d.IsLieScusp f →
+        d.distribJLie ψ f = d.luoOf.distribJLie ψ μ𝔥 m (f ∘ d.toSO.symm) := by
+  obtain ⟨eH, m, heH, hm, hint⟩ := d.exists_weil_Hbar hW hV
+  refine ⟨(Measure.haar : Measure d.HmodAGH).map eH, d.measH0.map d.toSOHCLE, m,
+    eH.toMulEquiv.isHaarMeasure_map Measure.haar eH.continuous eH.symm.continuous,
+    hexp eH heH, hm, fun f hf => ?_⟩
+  have hK : ∀ g, d.luoOf.kernelLie ψ (d.measH0.map d.toSOHCLE) (f ∘ d.toSO.symm) (d.toGbar g) =
+      d.kernelLie ψ f g := fun g => d.kernelLie_toGbar ψ d.measH0 f g
+  refine hint _ _ hK fun hb hhb x => ?_
+  obtain ⟨g, rfl⟩ := d.toGbar_surjective hW hV x
+  obtain ⟨h, hh, hhu⟩ := d.exists_mem_H_toGbarU_eq (Subgroup.mem_subgroupOf.1 hhb)
+  have e : hb * d.toGbar g = d.toGbar (h * g) := by
+    rw [map_mul]
+    congr 1
+    exact Subtype.ext hhu.symm
+  rw [e, hK, hK, hinv f hf h hh g]
+
 end Kernel
 
 end GGPData
