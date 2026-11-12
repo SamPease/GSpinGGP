@@ -92,7 +92,7 @@ import GSpinGGP
 | `Literature/` | results assumed from the literature (Harish-Chandra, Waldspurger, Beuzart-Plessis, Arthur, Kottwitz, …) |
 | `TraceFormula/` | quasi-characters, `θ_f`, the distributions `J` and `J^Lie`, `m_geom`, spectral and geometric expansions |
 | `Main.lean` | the multiplicity formula and the deduction of the main theorem |
-| `Sanity/` | checks of definitions on small examples |
+| `Sanity/` | checks of definitions, and of the literature axioms (`Sanity/AxiomRedTeam.lean`), on small examples |
 
 ## Building
 
