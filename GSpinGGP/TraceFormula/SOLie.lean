@@ -459,8 +459,8 @@ def orbitalPairing (ψ : NontrivialAddChar F) (μG : Measure ↥L.Gbar) (f f' : 
   ∫ x : ↥L.Gbar, (∫ X : ↥L.lie, L.extFn f (L.conjInv x X) * f' X ∂L.measLie ψ) ∂μG
 
 /-- **The trace form is nondegenerate on `so(W) ⊕ so(V)`** (for `V` nondegenerate): on each factor
-`(X, Y) ↦ tr(XY)` separates skew maps (`exists_mem_skewAdjoint_trace_mul_ne_zero`, rank-one skew
-maps `u ∧ w`). -/
+`(X, Y) ↦ tr(XY)` separates skew maps (rank-one skew maps `u ∧ w`,
+`LinearMap.BilinForm.exists_mem_skewAdjoint_trace_mul_ne_zero`). -/
 theorem restrictForm_lie_traceForm_nondegenerate (hV : IsNondeg L.QV) :
     (restrictForm L.lie L.traceForm).Nondegenerate := by
   have hsymm : ∀ X Y : ↥L.lie, restrictForm L.lie L.traceForm X Y =
@@ -476,20 +476,20 @@ theorem restrictForm_lie_traceForm_nondegenerate (hV : IsNondeg L.QV) :
     have h2 : ⅟(2 : F) ≠ 0 := Invertible.ne_zero (⅟(2 : F))
     have e1 : L.fstA (X : L.Amb) = 0 := by
       by_contra hne
-      obtain ⟨Y, hY, hYt⟩ := exists_mem_skewAdjoint_trace_mul_ne_zero
-        ⟨QuadraticMap.associated_isSymm F L.QW⟩ L.nondeg X.2.1 hne
+      obtain ⟨Y, hY, hYt⟩ := LinearMap.BilinForm.exists_mem_skewAdjoint_trace_mul_ne_zero
+        ⟨QuadraticMap.associated_isSymm F L.QW⟩ L.nondeg.1 X.2.1 hne
       have := hval Y 0 ⟨hY, zero_mem (skewAdjointLieSubalgebra (bform L.QV))⟩
       rw [mul_zero, map_zero, add_zero] at this
       exact hYt ((mul_eq_zero.mp this).resolve_left h2)
     have e2 : L.sndA (X : L.Amb) = 0 := by
       by_contra hne
-      obtain ⟨Y, hY, hYt⟩ := exists_mem_skewAdjoint_trace_mul_ne_zero
-        ⟨QuadraticMap.associated_isSymm F L.QV⟩ hV X.2.2 hne
+      obtain ⟨Y, hY, hYt⟩ := LinearMap.BilinForm.exists_mem_skewAdjoint_trace_mul_ne_zero
+        ⟨QuadraticMap.associated_isSymm F L.QV⟩ hV.1 X.2.2 hne
       have := hval 0 Y ⟨zero_mem (skewAdjointLieSubalgebra (bform L.QW)), hY⟩
       rw [mul_zero, map_zero, zero_add] at this
       exact hYt ((mul_eq_zero.mp this).resolve_left h2)
     exact Subtype.ext (Prod.ext e1 e2)
-  exact ⟨hL, fun Y hY => hL Y fun X => by rw [hsymm]; exact hY X⟩
+  exact (LinearMap.IsSymm.isRefl ⟨hsymm⟩).nondegenerate_iff_separatingLeft.mpr hL
 
 /-- A self-dual measure exists on `so(W) ⊕ so(V)` for the trace form (`V` nondegenerate). -/
 theorem exists_isSelfDual_lie (hV : IsNondeg L.QV) (ψ : NontrivialAddChar F) :

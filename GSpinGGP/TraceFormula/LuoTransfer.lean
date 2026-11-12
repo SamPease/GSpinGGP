@@ -741,10 +741,7 @@ theorem isSS_toSOLin {X : d.ambient} (hX : X ∈ d.lieZero) (hs : IsSS F X) :
     · change d.luoOf.sndA (Polynomial.aeval (d.toSOLin X) q) = 0
       rw [← Polynomial.aeval_algHom_apply, sndA_toSOLin]
       exact hV
-  refine Module.End.isSemisimple_of_squarefree_aeval_eq_zero hq ?_
-  have h := Polynomial.aeval_algHom_apply (Algebra.lmul F d.luoOf.Amb) (d.toSOLin X) q
-  rw [hq0, map_zero] at h
-  exact h
+  exact isSS_of_aeval_eq_zero hq hq0
 
 /-- **`ad` maps regular semisimple elements of `𝔤⁰` to regular semisimple elements of
 `so(W) ⊕ so(V)`**: semisimplicity by `isSS_toSOLin`; the centralizer of `ad X` pulls back along the
