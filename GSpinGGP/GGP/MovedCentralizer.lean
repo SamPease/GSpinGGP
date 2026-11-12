@@ -18,6 +18,10 @@ For `x ∈ GSpin(W)(F)`, the *moved part* of the Lie centralizer is
   `mem_torusOf_of_commute`: commuting with `x` and `ι(W'_x)` puts `g` in `T_x`;
 * `movedPartAbelian_of_isGammaElt`: `𝔩_x` is abelian for `x ∈ Γ(G,H)`;
 * `gspinBC`, `movedCentMap`, `gspinBC_commute_of_mem`: `𝔩_x ⊗ F̄` and its commutativity;
+* `GGPData.exists_movedCent_lift`, `GGPData.eq_zero_of_forall_movedCent`: a skew endomorphism of
+  `W_{F̄}` commuting with `P(x)` and vanishing on `W'_x ⊗ F̄` is `ad` of an element of `𝔩_x ⊗ F̄`,
+  so the `(ad Z)_{F̄}`, `Z ∈ 𝔩_x`, span all of them; `GGPData.exists_movedCent_forall_ne_zero`:
+  some `Z ∈ 𝔩_x` avoids finitely many such hyperplanes (`F` infinite);
 * `lieAbelian_specP_baseChange_of_movedPartAbelian`: if `𝔩_x` is abelian, so is the Lie algebra
   of `S_x` over `F̄` (`IsomCent.LieAbelian`);
 * `GGPData.isSS_of_commute_of_isGammaElt`: for `x ∈ Γ(G,H)`, every `X ∈ gspin(W)` commuting with
@@ -431,6 +435,77 @@ theorem gspinBC_commute_of_mem {m : ℕ} {Q : QuadraticForm F (Fin m → F)} {x 
 
 end WD
 
+namespace GGPData
+
+section MovedCentLift
+
+open CliffordAlgebra
+open scoped TensorProduct
+
+variable (d : GGPData F)
+
+open scoped TensorProduct
+
+local notation "Kb" => AlgebraicClosure F
+
+set_option hygiene false in
+local notation "Wb" => AlgebraicClosure F ⊗[F] (Fin d.m → F)
+
+set_option hygiene false in
+local notation "Qb" => d.QW.baseChange (AlgebraicClosure F)
+
+/-- `ad` commutes with base change: `ad (1 ⊗ Z) = (ad Z)_{F̄}` for `Z ∈ gspin(W)`. -/
+theorem adV_gspinBC_tmul {Z : (gspin d.QW).toSubmodule} :
+    adV Qb (gspinBC d.QW (1 ⊗ₜ Z)) = (adV d.QW (Z : CliffordAlgebra d.QW)).baseChange Kb := by
+  refine TensorProduct.AlgebraTensorModule.ext fun z v => ?_
+  have e1 : ∀ w : Fin d.m → F, z ⊗ₜ[F] w = z • ((1 : Kb) ⊗ₜ[F] w) := fun w => by
+    rw [TensorProduct.smul_tmul', smul_eq_mul, mul_one]
+  rw [LinearMap.baseChange_tmul, e1, e1, map_smul]
+  congr 1
+  rw [adV_apply, gspinBC_tmul, ofBaseChange_tmul_eq, map_one, one_mul, ← bcHom_ι, ← map_mul,
+    ← map_mul, ← map_sub, ← ι_adV Z.2, bcHom_ι, ιInv_ι]
+
+
+/-- **The `F̄`-span of the rational moved centralizer**: a skew endomorphism `Y` of `W_{F̄}`
+commuting with `P(x)_{F̄}` and vanishing on `W'_x ⊗ F̄` is `ad u` for some `u` in the base change
+of the moved part `𝔩_x = ker movedCentMap` (`exists_lift_skew`, `range_gspinBC`,
+`mem_movedCent_baseChange`): `[u, ι v] = ι (Y v)`. -/
+theorem exists_movedCent_lift (x : ↥(GSpin d.QW)) (Y : Module.End Kb Wb)
+    (hs : (bform Qb).IsSkewAdjoint Y)
+    (hc : Commute ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb) Y)
+    (hf : ∀ z ∈ Module.End.eigenspace
+      ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb) 1, Y z = 0) :
+    ∃ u ∈ (LinearMap.ker (movedCentMap d.QW x)).baseChange Kb,
+      ∀ v, gspinBC d.QW u * ι Qb v - ι Qb v * gspinBC d.QW u = ι Qb (Y v) := by
+  have hQ := isNondeg_baseChange _ d.nondeg
+  let xb : GSpin Qb :=
+    ⟨bcUnits d.QW (x : (CliffordAlgebra d.QW)ˣ), TorusTransfer.bcUnits_mem_GSpin d.QW x⟩
+  have hX : (specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb =
+      (specP Qb xb : _ →ₗ[Kb] _) :=
+    LinearMap.ext fun w => (GGPData.specP_bcUnits d x w).symm
+  obtain ⟨Yh, hYh0, hYh⟩ := exists_lift_skew hQ Y hs.eq
+  have hYh0' := hYh0
+  rw [← LieSubalgebra.mem_toSubmodule, ← range_gspinBC d.QW hQ] at hYh0'
+  obtain ⟨u, rfl⟩ := hYh0'
+  refine ⟨u, mem_movedCent_baseChange d.QW x u ?_ ?_, hYh⟩
+  · rw [hX] at hc
+    exact commute_of_lift hQ xb hc hYh0 hYh
+  · intro w hw
+    have h1 : (1 : Kb) ⊗ₜ[F] w ∈ Module.End.eigenspace
+        ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb) 1 := by
+      rw [Module.End.mem_eigenspace_iff, one_smul, LinearMap.baseChange_tmul]
+      congr 1
+      have := LinearMap.mem_ker.mp hw
+      rw [LinearMap.sub_apply, sub_eq_zero] at this
+      exact this
+    have := hYh (1 ⊗ₜ w)
+    rw [hf _ h1, map_zero, sub_eq_zero] at this
+    exact this
+
+end MovedCentLift
+
+end GGPData
+
 open CliffordAlgebra in
 open scoped TensorProduct in
 /-- **The Lie algebra of `S_x` is abelian over `F̄` if the moved part `𝔩_x` is** (own work).  Route: a skew endomorphism `Y`
@@ -444,41 +519,8 @@ theorem lieAbelian_specP_baseChange_of_movedPartAbelian {d : GGPData F} (x : ↥
     IsomCent.LieAbelian (bform (d.QW.baseChange (AlgebraicClosure F)))
       ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange (AlgebraicClosure F)) := by
   intro Y₁ Y₂ hs₁ hs₂ hc₁ hc₂ hf₁ hf₂
-  have hQ := isNondeg_baseChange _ d.nondeg
-  let xb : GSpin (d.QW.baseChange (AlgebraicClosure F)) :=
-    ⟨bcUnits d.QW (x : (CliffordAlgebra d.QW)ˣ), TorusTransfer.bcUnits_mem_GSpin d.QW x⟩
-  have hX : (specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange (AlgebraicClosure F) =
-      (specP (d.QW.baseChange (AlgebraicClosure F)) xb : _ →ₗ[AlgebraicClosure F] _) :=
-    LinearMap.ext fun w => (GGPData.specP_bcUnits d x w).symm
-  have key : ∀ Y : Module.End (AlgebraicClosure F) (AlgebraicClosure F ⊗[F] (Fin d.m → F)),
-      LinearMap.IsSkewAdjoint (bform (d.QW.baseChange (AlgebraicClosure F))) Y →
-      Commute ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange
-        (AlgebraicClosure F)) Y →
-      (∀ z ∈ Module.End.eigenspace ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange
-        (AlgebraicClosure F)) 1, Y z = 0) →
-      ∃ u ∈ (LinearMap.ker (movedCentMap d.QW x)).baseChange (AlgebraicClosure F),
-        ∀ v, gspinBC d.QW u * ι _ v - ι _ v * gspinBC d.QW u = ι _ (Y v) := by
-    intro Y hs hc hf
-    obtain ⟨Yh, hYh0, hYh⟩ := exists_lift_skew hQ Y hs.eq
-    have hYh0' := hYh0
-    rw [← LieSubalgebra.mem_toSubmodule, ← range_gspinBC d.QW hQ] at hYh0'
-    obtain ⟨u, rfl⟩ := hYh0'
-    refine ⟨u, mem_movedCent_baseChange d.QW x u ?_ ?_, hYh⟩
-    · rw [hX] at hc
-      exact commute_of_lift hQ xb hc hYh0 hYh
-    · intro w hw
-      have h1 : (1 : AlgebraicClosure F) ⊗ₜ[F] w ∈ Module.End.eigenspace
-          ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange (AlgebraicClosure F)) 1 := by
-        rw [Module.End.mem_eigenspace_iff, one_smul, LinearMap.baseChange_tmul]
-        congr 1
-        have := LinearMap.mem_ker.mp hw
-        rw [LinearMap.sub_apply, sub_eq_zero] at this
-        exact this
-      have := hYh (1 ⊗ₜ w)
-      rw [hf _ h1, map_zero, sub_eq_zero] at this
-      exact this
-  obtain ⟨u₁, hu₁, h₁⟩ := key Y₁ hs₁ hc₁ hf₁
-  obtain ⟨u₂, hu₂, h₂⟩ := key Y₂ hs₂ hc₂ hf₂
+  obtain ⟨u₁, hu₁, h₁⟩ := d.exists_movedCent_lift x Y₁ hs₁ hc₁ hf₁
+  obtain ⟨u₂, hu₂, h₂⟩ := d.exists_movedCent_lift x Y₂ hs₂ hc₂ hf₂
   have h12 := gspinBC_commute_of_mem hx hu₁ hu₂
   refine LinearMap.ext fun v => ι_injective (d.QW.baseChange (AlgebraicClosure F)) ?_
   rw [Module.End.mul_apply, Module.End.mul_apply, ← sub_eq_zero, ← h₁, ← h₂, ← h₂, ← h₁]
@@ -516,6 +558,116 @@ theorem finrank_eigenspace_bc_one {V' : Type*} [AddCommGroup V'] [Module F V'] [
         AlgebraicClosure F ⊗[F] V' →ₗ[AlgebraicClosure F] _) 1) = Module.finrank F (fixedSub x) := by
   rw [eigenspace_bc_one, fixedSub, ← LinearMap.ker_baseChange_of_flat]
   exact (LinearMap.tensorKerEquiv _ _ _).finrank_eq.symm.trans Module.finrank_baseChange
+
+
+section MovedCentSpan
+
+open CliffordAlgebra
+
+variable (d : GGPData F)
+
+open scoped TensorProduct
+
+local notation "Kb" => AlgebraicClosure F
+
+set_option hygiene false in
+local notation "Wb" => AlgebraicClosure F ⊗[F] (Fin d.m → F)
+
+set_option hygiene false in
+local notation "Qb" => d.QW.baseChange (AlgebraicClosure F)
+
+/-- The moved part `ad Z`, `Z ∈ 𝔩_x`, over `F̄`: skew, commuting with `P(x)_{F̄}`, and vanishing
+on `ker (P(x)_{F̄} − 1)`. -/
+theorem movedCent_baseChange_props (x : ↥(GSpin d.QW))
+    {Z : (gspin d.QW).toSubmodule} (hZ : Z ∈ LinearMap.ker (movedCentMap d.QW x)) :
+    (bform Qb).IsSkewAdjoint ((adV d.QW (Z : CliffordAlgebra d.QW)).baseChange Kb) ∧
+      Commute ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb)
+        ((adV d.QW (Z : CliffordAlgebra d.QW)).baseChange Kb) ∧
+      ∀ z ∈ Module.End.eigenspace
+        ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb) 1,
+        (adV d.QW (Z : CliffordAlgebra d.QW)).baseChange Kb z = 0 := by
+  obtain ⟨hc, hf⟩ := mem_ker_movedCentMap hZ
+  have hbf : bform Qb = (bform d.QW).baseChange Kb := QuadraticForm.associated_baseChange _
+  have hk : ∀ v ∈ fixedSub x, adV d.QW (Z : CliffordAlgebra d.QW) v = 0 := fun v hv => by
+    rw [adV_apply, hf v hv, sub_self, map_zero]
+  refine ⟨?_, ?_, fun z hz => ?_⟩
+  · rw [hbf]; exact LinearMap.IsSkewAdjoint.baseChange _ (LinearMap.isSkewAdjoint_iff.2 (bform_adV Z.2))
+  · rw [Commute, SemiconjBy, ← LinearMap.baseChange_mul, ← LinearMap.baseChange_mul,
+      (commute_iff_adV d.nondeg x Z.2).mp hc]
+  · rw [← specP_bcGSpin, eigenspace_bc_one] at hz
+    obtain ⟨u, rfl⟩ := Submodule.toBaseChange_surjective' Kb _ hz
+    clear hz
+    induction u using TensorProduct.inductionOn with
+    | tmul k v =>
+      rw [Submodule.coe_toBaseChange_tmul, LinearMap.baseChange_tmul, hk v v.2,
+        TensorProduct.tmul_zero]
+    | add u v hu hv => rw [map_add, Submodule.coe_add, map_add, hu, hv, add_zero]
+
+/-- A `F̄`-linear functional on `End(W_{F̄})` vanishing on `(ad Z)_{F̄}` for all `Z ∈ 𝔩_x` vanishes
+on every skew endomorphism commuting with `P(x)_{F̄}` and vanishing on `ker (P(x)_{F̄} − 1)`. -/
+theorem eq_zero_of_forall_movedCent (x : ↥(GSpin d.QW)) (γ : Module.End Kb Wb →ₗ[Kb] Kb)
+    (hγ : ∀ Z ∈ LinearMap.ker (movedCentMap d.QW x),
+      γ ((adV d.QW (Z : CliffordAlgebra d.QW)).baseChange Kb) = 0)
+    (Y : Module.End Kb Wb) (hs : (bform Qb).IsSkewAdjoint Y)
+    (hc : Commute ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb) Y)
+    (hf : ∀ z ∈ Module.End.eigenspace
+      ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb) 1, Y z = 0) :
+    γ Y = 0 := by
+  obtain ⟨u, hu, hY⟩ := d.exists_movedCent_lift x Y hs hc hf
+  have hYu : Y = adV Qb (gspinBC d.QW u) :=
+    LinearMap.ext fun v => by rw [adV_apply, hY, ιInv_ι]
+  rw [hYu]
+  clear hs hc hf hY hYu
+  rw [Submodule.baseChange_eq_span] at hu
+  induction hu using Submodule.span_induction with
+  | mem y hy =>
+    obtain ⟨Z, hZ, rfl⟩ := hy
+    rw [TensorProduct.mk_apply, adV_gspinBC_tmul]
+    exact hγ Z hZ
+  | zero => simp
+  | add a b _ _ ha hb => rw [map_add, map_add, map_add, ha, hb, add_zero]
+  | smul c a _ ha => rw [map_smul, map_smul, map_smul, ha, smul_zero]
+
+/-- `Z ↦ (ad Z)_{F̄}` on the moved part `𝔩_x = ker movedCentMap`, as an `F`-linear map. -/
+def movedCentAd (x : ↥(GSpin d.QW)) :
+    ↥(LinearMap.ker (movedCentMap d.QW x)) →ₗ[F] Module.End Kb Wb where
+  toFun Z := (adV d.QW ((Z : (gspin d.QW).toSubmodule) : CliffordAlgebra d.QW)).baseChange Kb
+  map_add' Z Z' := by simp only [Submodule.coe_add, map_add, LinearMap.baseChange_add]
+  map_smul' c Z := by
+    simp only [SetLike.val_smul, map_smul, LinearMap.baseChange_smul, RingHom.id_apply]
+
+/-- **Avoiding finitely many hyperplanes in `𝔩_x`**: given finitely many `F̄`-linear functionals
+on `End(W_{F̄})`, each nonzero at some skew endomorphism commuting with `P(x)_{F̄}` and vanishing on
+`ker (P(x)_{F̄} − 1)`, some `Z ∈ 𝔩_x` has `(ad Z)_{F̄}` outside all their kernels (`F` is infinite,
+`Submodule.exists_forall_notMem_of_forall_ne_top`; `eq_zero_of_forall_movedCent`). -/
+theorem exists_movedCent_forall_ne_zero (x : ↥(GSpin d.QW)) {ι : Type*} [Finite ι]
+    (γ : ι → Module.End Kb Wb →ₗ[Kb] Kb)
+    (hγ : ∀ k, ∃ Y : Module.End Kb Wb, (bform Qb).IsSkewAdjoint Y ∧
+      Commute ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb) Y ∧
+      (∀ z ∈ Module.End.eigenspace
+        ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb) 1, Y z = 0) ∧
+      γ k Y ≠ 0) :
+    ∃ Z ∈ LinearMap.ker (movedCentMap d.QW x),
+      ∀ k, γ k ((adV d.QW (Z : CliffordAlgebra d.QW)).baseChange Kb) ≠ 0 := by
+  let p : ι → Submodule F ↥(LinearMap.ker (movedCentMap d.QW x)) := fun k =>
+    { carrier := {Z | γ k (d.movedCentAd x Z) = 0}
+      add_mem' := fun {Z Z'} hZ hZ' => by
+        simp only [Set.mem_setOf_eq, map_add] at hZ hZ' ⊢; rw [hZ, hZ', add_zero]
+      zero_mem' := by simp only [Set.mem_setOf_eq, map_zero]
+      smul_mem' := fun c Z hZ => by
+        simp only [Set.mem_setOf_eq, map_smul] at hZ ⊢
+        rw [LinearMap.map_smul_of_tower, hZ, smul_zero] }
+  have hne : ∀ k, p k ≠ ⊤ := by
+    intro k htop
+    obtain ⟨Y, hs, hc, hf, hY⟩ := hγ k
+    refine hY (d.eq_zero_of_forall_movedCent x (γ k) (fun Z hZ => ?_) Y hs hc hf)
+    have : (⟨Z, hZ⟩ : ↥(LinearMap.ker (movedCentMap d.QW x))) ∈ p k := htop ▸ Submodule.mem_top
+    exact this
+  haveI : Infinite F := Infinite.of_injective (Nat.cast : ℕ → F) Nat.cast_injective
+  obtain ⟨Z, hZ⟩ := Submodule.exists_forall_notMem_of_forall_ne_top p hne
+  exact ⟨Z, Z.2, fun k h => hZ k h⟩
+
+end MovedCentSpan
 
 end GGPData
 

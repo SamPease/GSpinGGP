@@ -24,6 +24,12 @@ Ingredients of the torus-class count (`torusClass_count`, Thesis (6.7.2)–(6.7.
   with torus transport (`HasTorusTransport`, from Thesis Prop. 6.6.1(ii)),
   `n_τ(x) = w(x) · Σ_{c meets x} |W(T_c)|⁻¹`; `meets_refl_iff`: the classes meeting `x` form a stable
   class of tori.
+* `commute_of_commute_specP_of_fixes`, `GGPData.mem_torusOf_of_specP`: `S_x(F) ⊆ P(T_x(F))` (an
+  element whose image commutes with `P(x)` and fixes `W'_x` commutes with `x`: Steinberg's
+  description, with `det P(g)|_{W₋₁} = 1` from `det P(g) = 1`).
+* `GGPData.exists_regular_movedCent`: a regular element `Z` of the moved Lie centralizer `𝔩_x`:
+  `ker (ad Z) = W'_x` and every endomorphism commuting with `ad Z` commutes with `P(x)` (eigen-frame
+  over `F̄`, and `F` infinite).
 -/
 
 noncomputable section
@@ -622,6 +628,216 @@ theorem meets_refl_iff (hT : HasTorusTransport τ) {x x₂ : ↥(GSpin d.QW)} (h
       hT'.2.trans hx₂T⟩
 
 end StableCount
+
+end GGPData
+
+section SteinbergFix
+
+variable {K : Type*} [Field K] [CharZero K] [Invertible (2 : K)]
+  {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V] {Q : QuadraticForm K V}
+
+/-- **An element whose image commutes with `P(x)` and fixes `W'_x` commutes with `x`**, for `x`
+semisimple: in Steinberg's description (`steinberg_centralizer_connected`) the determinant on
+`W'_x` is `1` since `P(g)` is the identity there, and so the determinant on `W₋₁` is `1` since
+`det P(g) = 1` is the product of the two (`det_eq_det_one_mul_det_neg_one_of_charZero`). -/
+theorem commute_of_commute_specP_of_fixes (hQ : IsNondeg Q) (x : GSpin Q)
+    (hx : Module.End.IsSemisimple
+      (LinearMap.mulLeft K ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)))
+    {g : GSpin Q} (hc : Commute (specP Q g) (specP Q x))
+    (hfix : ∀ v ∈ fixedSub x, specP Q g v = v) : Commute g x := by
+  have hss := isSemisimple_specP_of_isSS Q x hx
+  have hB : (bform Q).IsSymm := ⟨fun u v => bform_comm Q u v⟩
+  have hdet := IsomCent.det_eq_det_one_mul_det_neg_one_of_charZero hB hQ
+    (Steinberg.isOrthogonal_specP x) hss (Steinberg.isOrthogonal_specP g) (Steinberg.commute_toLinearMap hc)
+  have hone : ∀ (E : Submodule K V) (hE : ∀ v ∈ E, specP Q g v = v)
+      (h : Set.MapsTo (specP Q g : V →ₗ[K] V) E E),
+      LinearMap.det ((specP Q g : V →ₗ[K] V).restrict h) = 1 := by
+    intro E hE h
+    have : (specP Q g : V →ₗ[K] V).restrict h = LinearMap.id :=
+      LinearMap.ext fun v => Subtype.ext (hE v v.2)
+    rw [this, LinearMap.det_id]
+  have hE1 : ∀ v ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) 1, specP Q g v = v :=
+    fun v hv => hfix v (by rw [Steinberg.fixedSub_eq_eigenspace]; exact hv)
+  have h1 : LinearMap.det ((specP Q g : V →ₗ[K] V).restrict
+      (IsomCent.mapsTo_eigenspace_of_commute (Steinberg.commute_toLinearMap hc) 1)) = 1 :=
+    hone _ hE1 _
+  rw [h1, one_mul, det_specP] at hdet
+  have h := (Steinberg.commute_iff hQ x hx g).mpr ⟨hc,
+    ⟨mapsTo_fixedSub_of_commute hc, hone _ hfix _⟩,
+    ⟨mapsTo_negFixedSub_of_commute hc,
+      (Steinberg.det_restrict_eq rfl (Steinberg.negFixedSub_eq_eigenspace x) _ _).trans
+        hdet.symm⟩⟩
+  exact Subtype.ext h
+
+end SteinbergFix
+
+namespace GGPData
+
+section Regular
+
+variable (d : GGPData F)
+
+/-- **`S_x(F) ⊆ P(T_x(F))`**: for semisimple `x`, an element `g ∈ GSpin(W)(F)` with `P(g)`
+commuting with `P(x)` and fixing `W'_x` pointwise lies in `T_x(F)`
+(`commute_of_commute_specP_of_fixes`). -/
+theorem mem_torusOf_of_specP {x : ↥(GSpin d.QW)}
+    (hx : IsSS F (((x : (CliffordAlgebra d.QW)ˣ)) : CliffordAlgebra d.QW)) {g : ↥(GSpin d.QW)}
+    (hc : Commute (specP d.QW g) (specP d.QW x)) (hfix : ∀ v ∈ fixedSub x, specP d.QW g v = v) :
+    g ∈ d.torusOf x :=
+  ⟨Subgroup.mem_centralizer_singleton_iff.mpr
+    (commute_of_commute_specP_of_fixes d.nondeg x hx hc hfix).eq, hfix⟩
+
+
+open scoped TensorProduct
+
+
+set_option hygiene false in
+local notation "Wb" => AlgebraicClosure F ⊗[F] (Fin d.m → F)
+
+set_option hygiene false in
+local notation "Qb" => d.QW.baseChange (AlgebraicClosure F)
+
+/-- **A regular element of the moved part of the Lie centralizer** (own work): for `x ∈ Γ(G,H)`
+there is `Z ∈ gspin(W)` commuting with `x` with `ker (ad Z) = W'_x`, such that every endomorphism of
+`W` commuting with `ad Z` commutes with `P(x)`.
+
+Over `F̄`, `P(x)` is diagonal in a hyperbolic eigen-frame `eᵢ, fᵢ` with complement `W'_x ⊗ F̄`
+(`exists_hypFrame_torusFbar`).  The moved Lie centralizer is abelian
+(`lieAbelian_specP_baseChange`) and contains the regular diagonal map
+`D = diag(i + 1 on eᵢ, −(i + 1) on fᵢ, 0 on W'_x)` (`IsHypFrame.exists_skew_diag`), so every
+`(ad Z)_{F̄}`, `Z ∈ 𝔩_x`, is diagonal in the frame, `αᵢ(Z)` on `eᵢ` and `−αᵢ(Z)` on `fᵢ`.  The
+functionals `αᵢ`, `αᵢ − αⱼ` (`i ≠ j`), `αᵢ + αⱼ` are nonzero at `D`, so some `Z ∈ 𝔩_x` avoids all
+their kernels (`exists_movedCent_forall_ne_zero`).  Then `(ad Z)_{F̄}` is a regular frame-diagonal
+map, and the conclusions follow from `IsHypFrame.mem_of_diag` and
+`IsHypFrame.commute_of_commute_diag`. -/
+theorem exists_regular_movedCent {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x) :
+    ∃ Z ∈ gspin d.QW,
+      ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) * Z =
+        Z * ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) ∧
+      LinearMap.ker (adV d.QW Z) = fixedSub x ∧
+      ∀ s : Module.End F (Fin d.m → F), Commute s (adV d.QW Z) →
+        Commute s (specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)) := by
+  classical
+  obtain ⟨n, e, f, hF, hT⟩ := exists_hypFrame_torusFbar x hx
+  have hPw : ∀ w, specP Qb (bcGSpin d.QW x) w =
+      (specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb w := fun w =>
+    LinearMap.congr_fun (specP_bcGSpin d.QW x) w
+  rw [specP_bcGSpin] at hF hT
+  -- `P(x)_{F̄}` is diagonal in the frame
+  have hxT : specP Qb (bcGSpin d.QW x) ∈ hypTorus (Module.End.eigenspace
+      ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb) 1) e f := by
+    rw [← hT]; exact ⟨_, bcGSpin_mem_torusFbar (d.self_mem_torusOf x), rfl⟩
+  obtain ⟨hxW, t, hxt⟩ := hxT
+  generalize hPb : (specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb = Pb
+    at hF hPw hxW
+  have hPW : ∀ w ∈ Module.End.eigenspace Pb 1, Pb w = (1 : Kb) • w := fun w hw => by
+    rw [← hPw, hxW w hw, one_smul]
+  have hPe : ∀ i, Pb (e i) = (t i : Kb) • e i := fun i => by rw [← hPw, (hxt i).1]
+  have hPf : ∀ i, Pb (f i) = (((t i)⁻¹ : Kbˣ) : Kb) • f i := fun i => by rw [← hPw, (hxt i).2]
+  -- the regular diagonal element `D`
+  have ha0 : ∀ i : Fin n, (((i : ℕ) + 1 : ℕ) : Kb) ≠ 0 := fun i =>
+    Nat.cast_ne_zero.mpr (Nat.succ_ne_zero _)
+  have hainj : Function.Injective fun i : Fin n => (((i : ℕ) + 1 : ℕ) : Kb) := fun i j hij => by
+    simp only [Nat.cast_inj, add_left_inj] at hij; exact Fin.ext hij
+  have hapos : ∀ i j : Fin n, (((i : ℕ) + 1 : ℕ) : Kb) + (((j : ℕ) + 1 : ℕ) : Kb) ≠ 0 :=
+    fun i j => by rw [← Nat.cast_add]; exact Nat.cast_ne_zero.mpr (by omega)
+  obtain ⟨D, hDW, hDe, hDf, hDs⟩ := hF.exists_skew_diag fun i => (((i : ℕ) + 1 : ℕ) : Kb)
+  have hsD : (bform Qb).IsSkewAdjoint D :=
+    (isSkewAdjoint_associated_iff _ _).mpr (LinearMap.isSkewAdjoint_iff.mpr fun u v => by
+      simpa only [QuadraticMap.polarBilin_apply_apply] using hDs u v)
+  have hcD : Commute Pb D := hF.commute_of_diag hPW hPe hPf hDW hDe hDf
+  have hfD : ∀ z ∈ Module.End.eigenspace Pb 1, D z = 0 := fun z hz => by
+    rw [hDW z hz, zero_smul]
+  have hL : IsomCent.LieAbelian (bform Qb) Pb := hPb ▸ lieAbelian_specP_baseChange x hx
+  have hneg : ∀ i : Fin n, -(((i : ℕ) + 1 : ℕ) : Kb) ≠ 0 := fun i => neg_ne_zero.mpr (ha0 i)
+  have hnegi : Function.Injective fun i : Fin n => -(((i : ℕ) + 1 : ℕ) : Kb) := fun i j h =>
+    hainj (neg_inj.mp h)
+  have hab : ∀ i j : Fin n, (((i : ℕ) + 1 : ℕ) : Kb) ≠ -(((j : ℕ) + 1 : ℕ) : Kb) :=
+    fun i j h => hapos i j (by rw [h, neg_add_cancel])
+  -- a skew map commuting with `P(x)_{F̄}` and killing `W'_x ⊗ F̄` is diagonal in the frame
+  have hdiag : ∀ Y : Module.End Kb Wb, (bform Qb).IsSkewAdjoint Y → Commute Pb Y →
+      (∀ z ∈ Module.End.eigenspace Pb 1, Y z = 0) →
+      (∀ i, Y (e i) = QuadraticMap.polar Qb (Y (e i)) (f i) • e i) ∧
+      ∀ i, Y (f i) = (-QuadraticMap.polar Qb (Y (e i)) (f i)) • f i := by
+    intro Y hsY hcY hfY
+    have hcom : Commute D Y := (hL _ _ hsY hsD hcY hcD hfY hfD).symm
+    have he := hF.eq_smul_e_of_commute_diag hDW hDe hDf ha0 hainj hab hcom
+    have hf := hF.eq_smul_f_of_commute_diag hDW hDe hDf hneg hnegi hab hcom
+    refine ⟨he, fun i => ?_⟩
+    rw [hf i]
+    congr 1
+    set c := QuadraticMap.polar Qb (Y (e i)) (f i)
+    have h1 : QuadraticMap.polar Qb (f i) (Y (e i)) = c := by
+      calc QuadraticMap.polar Qb (f i) (Y (e i)) = QuadraticMap.polar Qb (f i) (c • e i) := by
+            rw [← he i]
+        _ = c := by rw [QuadraticMap.polar_smul_right, hF.polar_fe]; simp
+    have hp : ∀ u v, QuadraticMap.polar Qb (Y u) v = -QuadraticMap.polar Qb u (Y v) :=
+      fun u v => by
+        simpa only [QuadraticMap.polarBilin_apply_apply] using
+          LinearMap.isSkewAdjoint_iff.mp ((isSkewAdjoint_associated_iff _ _).mp hsY) u v
+    rw [hp, h1]
+  -- the functionals `αᵢ`, `αᵢ − αⱼ`, `αᵢ + αⱼ`
+  let β : Fin n → Module.End Kb Wb →ₗ[Kb] Kb := fun i =>
+    { toFun := fun Y => QuadraticMap.polar Qb (Y (e i)) (f i)
+      map_add' := fun Y Y' => by simp [QuadraticMap.polar_add_left]
+      map_smul' := fun c Y => by simp [QuadraticMap.polar_smul_left] }
+  have hβ : ∀ i Y, β i Y = QuadraticMap.polar Qb (Y (e i)) (f i) := fun _ _ => rfl
+  have hβD : ∀ i, β i D = (((i : ℕ) + 1 : ℕ) : Kb) := fun i => by
+    rw [hβ, hDe, QuadraticMap.polar_smul_left, hF.polar_ef]; simp
+  let γ : Fin n ⊕ ({p : Fin n × Fin n // p.1 ≠ p.2} ⊕ (Fin n × Fin n)) →
+      Module.End Kb Wb →ₗ[Kb] Kb :=
+    Sum.elim β (Sum.elim (fun p => β p.1.1 - β p.1.2) (fun p => β p.1 + β p.2))
+  have hγD : ∀ k, γ k D ≠ 0 := by
+    rintro (i | ⟨⟨i, j⟩, hij⟩ | ⟨i, j⟩)
+    · simp only [γ, Sum.elim_inl]; rw [hβD]; exact ha0 i
+    · simp only [γ, Sum.elim_inr, Sum.elim_inl, LinearMap.sub_apply]
+      rw [hβD, hβD, sub_ne_zero]; exact fun h => hij (hainj h)
+    · simp only [γ, Sum.elim_inr, LinearMap.add_apply]
+      rw [hβD, hβD]; exact hapos i j
+  subst hPb
+  obtain ⟨Z, hZ𝔩, hZγ⟩ := d.exists_movedCent_forall_ne_zero x γ fun k =>
+    ⟨D, hsD, hcD, hfD, hγD k⟩
+  obtain ⟨hsY, hcY, hYW0⟩ := d.movedCent_baseChange_props x hZ𝔩
+  obtain ⟨hZe, hZf⟩ := hdiag _ hsY hcY hYW0
+  set Y := (adV d.QW (Z : CliffordAlgebra d.QW)).baseChange Kb with hY
+  set α : Fin n → Kb := fun i => QuadraticMap.polar Qb (Y (e i)) (f i) with hα
+  have hYW : ∀ w ∈ Module.End.eigenspace
+      ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb) 1,
+      Y w = (0 : Kb) • w := fun w hw => by
+    rw [hYW0 w hw, zero_smul]
+  have hα0 : ∀ i, α i ≠ 0 := fun i => hZγ (.inl i)
+  have hαn : ∀ i, -α i ≠ 0 := fun i => neg_ne_zero.mpr (hα0 i)
+  have hαinj : Function.Injective α := fun i j h => by
+    by_contra hij
+    refine hZγ (.inr (.inl ⟨(i, j), hij⟩)) ?_
+    simp only [γ, Sum.elim_inr, Sum.elim_inl, LinearMap.sub_apply, hβ]
+    exact sub_eq_zero.mpr h
+  have hαninj : Function.Injective fun i => -α i := fun i j h => hαinj (neg_inj.mp h)
+  have hαab : ∀ i j, α i ≠ -α j := fun i j h => by
+    refine hZγ (.inr (.inr (i, j))) ?_
+    simp only [γ, Sum.elim_inr, LinearMap.add_apply, hβ]
+    change α i + α j = 0
+    rw [h, neg_add_cancel]
+  obtain ⟨hcx, hfx⟩ := mem_ker_movedCentMap hZ𝔩
+  refine ⟨_, Z.2, hcx, ?_, fun s hs => ?_⟩
+  · ext v
+    constructor
+    · intro hv
+      have h0 : Y (1 ⊗ₜ v) = (0 : Kb) • (1 ⊗ₜ v) := by
+        rw [hY, LinearMap.baseChange_tmul, LinearMap.mem_ker.mp hv, TensorProduct.tmul_zero,
+          zero_smul]
+      have hmem := hF.mem_of_diag hYW hZe hZf hα0 hαn h0
+      rw [Module.End.mem_eigenspace_iff, one_smul, LinearMap.baseChange_tmul] at hmem
+      exact (d.mem_fixedSub_iff).mpr (Module.Flat.tensorProduct_mk_injective F _ Kb hmem)
+    · intro hv
+      rw [LinearMap.mem_ker, adV_apply, hfx v hv, sub_self, map_zero]
+  · have hsb : Commute Y (s.baseChange Kb) := by
+      rw [Commute, SemiconjBy, hY, ← LinearMap.baseChange_mul, ← LinearMap.baseChange_mul,
+        hs.eq]
+    have := hF.commute_of_commute_diag hYW hZe hZf hα0 hαn hαinj hαninj hαab hsb hPW hPe hPf
+    exact (commute_of_commute_baseChange this).symm
+
+end Regular
 
 end GGPData
 
