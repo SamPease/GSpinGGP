@@ -1,6 +1,7 @@
 import GSpinGGP.Foundations.LocalGroups
 import GSpinGGP.Foundations.RankSemicontinuity
 import GSpinGGP.Foundations.Determinant
+import GSpinGGP.Foundations.SubgroupTransport
 import GSpinGGP.Foundations.JHatTranslate
 import GSpinGGP.Foundations.CentralizerIso
 import GSpinGGP.Foundations.ExpLocal
@@ -47,6 +48,7 @@ import GSpinGGP.TraceFormula.EllipticRepresentations
 import GSpinGGP.TraceFormula.LieAlgebra
 import GSpinGGP.TraceFormula.SelfDual
 import GSpinGGP.TraceFormula.SOLie
+import GSpinGGP.TraceFormula.SOLieFacts
 import GSpinGGP.TraceFormula.LuoTransfer
 import GSpinGGP.Literature.Kottwitz
 import GSpinGGP.Literature.KottwitzClay
