@@ -2,6 +2,7 @@ import GSpinGGP.Foundations.LocalGroups
 import GSpinGGP.Foundations.RankSemicontinuity
 import GSpinGGP.Foundations.Determinant
 import GSpinGGP.Foundations.SubgroupTransport
+import GSpinGGP.Foundations.CayleyTransform
 import GSpinGGP.Foundations.JHatTranslate
 import GSpinGGP.Foundations.LieEquivAd
 import GSpinGGP.Foundations.CentralizerIso
@@ -53,6 +54,7 @@ import GSpinGGP.TraceFormula.SOLie
 import GSpinGGP.TraceFormula.SOLieFacts
 import GSpinGGP.TraceFormula.LuoTransfer
 import GSpinGGP.TraceFormula.LuoGamma
+import GSpinGGP.TraceFormula.LuoWeyl
 import GSpinGGP.Literature.Kottwitz
 import GSpinGGP.Literature.KottwitzClay
 import GSpinGGP.Literature.Kottwitz1986
