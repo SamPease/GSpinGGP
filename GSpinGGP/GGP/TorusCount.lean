@@ -10,10 +10,12 @@ import GSpinGGP.GGP.TwistSymm
 
 Ingredients of the torus-class count (`torusClass_count`, Thesis (6.7.2)–(6.7.5)).
 
-* `commute_torusOf_of_commute`: for `x ∈ Γ(G,H)`, an element of `GSpin(W)(F)` commuting with `x`
-  commutes with all of `T_x(F)` (by base change, from `Steinberg.commute_of_fixes_eigenspace_one`).
-  Consequently (not formalized here) `N(T_x)` acts freely, through `W(T_x) = N(T_x)/Z(T_x)`, on the
-  elements `t` with `T_t = T_x`.
+* `commute_torusOf_of_commute_of_movedPartAbelian`, `commute_torusOf_of_commute`: for semisimple
+  `x` with abelian moved Lie centralizer (e.g. `x ∈ Γ(G,H)`), an element of `GSpin(W)(F)`
+  commuting with `x` commutes with all of `T_x(F)` (by base change, from
+  `Steinberg.commute_of_fixes_eigenspace_one`).  Consequently (not formalized here) `N(T_x)` acts
+  freely, through `W(T_x) = N(T_x)/Z(T_x)`, on the elements `t` with `T_t = T_x`.
+* `isClosed_torusOf`, `sigmaCompactSpace_torusOf`: `T_x(F)` is a closed, σ-compact subgroup.
 * `finite_conj_torusOf`: only finitely many `t ∈ T_x(F)` are `GSpin(W)(F̄)`-conjugate to `x`.
 * `finite_weylQuot`, `weylCardOf_pos`: `W(T_x)` is finite, so `|W(T_x)| ≥ 1`.
 * `torusOf_conj`, `isSS_conj`: conjugation moves tori and preserves semisimplicity.
@@ -67,19 +69,49 @@ theorem bcGSpin_mem_torusFbar {x t : ↥(GSpin d.QW)} (ht : t ∈ d.torusOf x) :
       exact ht.2 v v.2
     | add u v hu hv => rw [map_add, Submodule.coe_add, map_add, hu, hv]
 
-/-- **Centralizers of elements of `Γ(G,H)` centralize their torus**: for `x ∈ Γ(G,H)`, an element
-`z` of `GSpin(W)(F)` commuting with `x` commutes with every `t ∈ T_x(F)`. -/
-theorem commute_torusOf_of_commute {x z t : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
-    (hzx : Commute z x) (ht : t ∈ d.torusOf x) : Commute z t := by
+/-- **The torus of `x` is central in the centralizer of `x`**, for semisimple `x` with abelian moved
+Lie centralizer: an element `z` of `GSpin(W)(F)` commuting with `x` commutes with every
+`t ∈ T_x(F)` (`Steinberg.commute_of_fixes_eigenspace_one` over `F̄`). -/
+theorem commute_torusOf_of_commute_of_movedPartAbelian {x z t : ↥(GSpin d.QW)}
+    (hss : IsSS F (((x : (CliffordAlgebra d.QW)ˣ)) : CliffordAlgebra d.QW))
+    (hA : MovedPartAbelian d.QW x) (hzx : Commute z x) (ht : t ∈ d.torusOf x) : Commute z t := by
   have h := Steinberg.commute_of_fixes_eigenspace_one (x := bcGSpin d.QW x)
     (isNondeg_baseChange _ d.nondeg)
-    (by rw [specP_bcGSpin]; exact isSemisimple_specP_baseChange x hx.1)
-    (by rw [specP_bcGSpin]; exact lieAbelian_specP_baseChange x hx)
+    (by rw [specP_bcGSpin]; exact isSemisimple_specP_baseChange x hss)
+    (by rw [specP_bcGSpin]; exact lieAbelian_specP_baseChange_of_movedPartAbelian x hA)
     (t := bcGSpin d.QW t) (z := bcGSpin d.QW z)
     (Subtype.ext (bcGSpin_mem_torusFbar ht).1.eq)
     (fun w hw => (bcGSpin_mem_torusFbar ht).2 w (by rwa [GGPData.eigenspace_bc_one] at hw))
     (hzx.map (bcGSpin d.QW))
   exact bcGSpin_injective d.QW (by rw [map_mul, map_mul, h.eq])
+
+/-- `T_x(F)` is closed in `GSpin(W)(F)`: a centralizer and a pointwise stabilizer (`P` is
+continuous, `continuous_specP_apply`). -/
+theorem isClosed_torusOf (x : ↥(GSpin d.QW)) : IsClosed (d.torusOf x : Set ↥(GSpin d.QW)) := by
+  have : T2Space ↥(GSpin d.QW) := subgroup_t2Space F (CliffordAlgebra d.QW) (GSpin d.QW)
+  have h1 : IsClosed ((Subgroup.centralizer {x} : Subgroup ↥(GSpin d.QW)) : Set ↥(GSpin d.QW)) :=
+    Set.isClosed_centralizer _
+  have h2 : IsClosed (fixerOf d.QW (fixedSub x) : Set ↥(GSpin d.QW)) := by
+    have e : (fixerOf d.QW (fixedSub x) : Set ↥(GSpin d.QW)) =
+        ⋂ w ∈ fixedSub x, {g : ↥(GSpin d.QW) | specP d.QW g w = w} := by
+      ext g; simp [fixerOf]
+    rw [e]
+    exact isClosed_biInter fun w _ =>
+      isClosed_eq (continuous_specP_apply continuous_id w) continuous_const
+  exact h1.inter h2
+
+/-- `T_x(F)` is σ-compact: a closed subgroup of `GSpin(W)(F)`, which is a closed subgroup of
+`C(W)^×` (`isClosed_GSpin`, `subgroup_sigmaCompactSpace_of_isClosed`). -/
+theorem sigmaCompactSpace_torusOf (x : ↥(GSpin d.QW)) : SigmaCompactSpace ↥(d.torusOf x) := by
+  have := subgroup_sigmaCompactSpace_of_isClosed F _ _ (isClosed_GSpin d.QW)
+  exact (isClosed_torusOf x).sigmaCompactSpace
+
+/-- **Centralizers of elements of `Γ(G,H)` centralize their torus**: for `x ∈ Γ(G,H)`, an element
+`z` of `GSpin(W)(F)` commuting with `x` commutes with every `t ∈ T_x(F)`. -/
+theorem commute_torusOf_of_commute {x z t : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
+    (hzx : Commute z x) (ht : t ∈ d.torusOf x) : Commute z t :=
+  commute_torusOf_of_commute_of_movedPartAbelian hx.1 (movedPartAbelian_of_isGammaElt d x hx)
+    hzx ht
 
 /-- Two `GSpin(W)(F̄)`-conjugates `t, t₀` of `x` with the same image in `SO(W)` differ by a
 scalar `c` with `c ^ dim C(W) = 1` (`exists_eq_mul_scalarGSpin_of_specP_eq`,

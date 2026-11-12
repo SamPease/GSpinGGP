@@ -4,6 +4,7 @@ import GSpinGGP.Foundations.Determinant
 import GSpinGGP.Foundations.SubgroupTransport
 import GSpinGGP.Foundations.CayleyTransform
 import GSpinGGP.Foundations.JHatTranslate
+import GSpinGGP.Foundations.LieEquivAd
 import GSpinGGP.Foundations.CentralizerIso
 import GSpinGGP.Foundations.ExpLocal
 import GSpinGGP.TraceFormula.JHatSelfDual
