@@ -10,6 +10,9 @@ import TauCeti.LinearAlgebra.BilinearForm.Isometry
 # Skew-adjoint and orthogonal endomorphisms: unfolding and extension of scalars
 
 * `LinearMap.isSkewAdjoint_iff`: `B.IsSkewAdjoint f ↔ ∀ u v, B (f u) v = -B u (f v)`.
+* `LinearMap.IsOrthogonal.isAdjointPair`, `LinearMap.IsOrthogonal.isAdjointPair_inv`,
+  `LinearMap.IsSkewAdjoint.conj_units`: an orthogonal unit is adjoint to its inverse, and
+  conjugation by it preserves skew-adjointness.
 * `LinearMap.IsAdjointPair.baseChange`, `LinearMap.IsSkewAdjoint.baseChange`,
   `LinearMap.IsOrthogonal.baseChange`: these notions survive extension of scalars to any
   commutative algebra.
@@ -63,5 +66,33 @@ theorem IsOrthogonal.baseChange (A : Type*) [CommRing A] [Algebra R A] {f : M �
   TauCeti.BilinForm.IsIsometry.baseChange A h
 
 end BaseChange
+
+
+section Units
+
+variable {R M : Type*} [CommRing R] [AddCommGroup M] [Module R M] {B : LinearMap.BilinForm R M}
+  {u : (Module.End R M)ˣ}
+
+/-- The inverse of an orthogonal unit is its adjoint: `B (u⁻¹ x) y = B x (u y)`. -/
+theorem IsOrthogonal.isAdjointPair_inv (h : B.IsOrthogonal (u : Module.End R M)) :
+    IsAdjointPair B B ((u⁻¹ : (Module.End R M)ˣ) : Module.End R M) (u : Module.End R M) :=
+  fun x y => by
+    rw [← h, ← Module.End.mul_apply, Units.mul_inv, Module.End.one_apply]
+
+/-- An orthogonal unit is adjoint to its inverse: `B (u x) y = B x (u⁻¹ y)`. -/
+theorem IsOrthogonal.isAdjointPair (h : B.IsOrthogonal (u : Module.End R M)) :
+    IsAdjointPair B B (u : Module.End R M) ((u⁻¹ : (Module.End R M)ˣ) : Module.End R M) :=
+  fun x y => by
+    rw [← h x, ← Module.End.mul_apply (u : Module.End R M), Units.mul_inv, Module.End.one_apply]
+
+/-- Conjugation by an orthogonal unit preserves skew-adjointness. -/
+theorem IsSkewAdjoint.conj_units (h : B.IsOrthogonal (u : Module.End R M)) {f : Module.End R M}
+    (hf : B.IsSkewAdjoint f) :
+    B.IsSkewAdjoint (((u⁻¹ : (Module.End R M)ˣ) : Module.End R M) * f * (u : Module.End R M)) := by
+  have := (h.isAdjointPair.comp hf).comp h.isAdjointPair_inv
+  intro x y
+  simpa using this x y
+
+end Units
 
 end LinearMap

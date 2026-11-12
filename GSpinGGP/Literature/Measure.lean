@@ -29,6 +29,9 @@ where `ι` is the closed embedding `H/A_{G,H} ↪ G/A_G`. The Haar measure on
 * `IsWeilMeasure.smul_left`, `IsWeilMeasure.smul_right`: rescaling `ν` by `c` rescales `m` by
   `c`; rescaling `μ` by `c` rescales `m` by `c⁻¹`;
 * `IsWeilMeasure.integral_complex`: the formula for `ℂ`-valued `φ ∈ C_c(Γ)`;
+* `CosetSpace.mapEquiv`, `CosetSpace.mapHomeomorph`, `integral_map_mapHomeomorph`,
+  `IsWeilMeasure.map`: transport along isomorphisms of topological groups `S ≃ S'`, `Γ ≃ Γ'`
+  compatible with the embeddings;
 * `isWeilMeasure_of_subsingleton` (sanity): for trivial `S` the Weil measure is the pushforward
   of `ν`;
 * **axiom** `weil_quotient_radon` (existence, and uniqueness among measures finite on compacts;
@@ -227,6 +230,130 @@ theorem IsWeilMeasure.integral_complex [OpensMeasurableSpace Γ] [IsFiniteMeasur
     exact c
 
 end Weil
+
+section Transport
+
+variable {S Γ S' Γ' : Type*} [Group S] [Group Γ] [Group S'] [Group Γ']
+
+namespace CosetSpace
+
+/-- The bijection `ι(S)\Γ ≃ ι'(S')\Γ'` induced by group isomorphisms `eS : S ≃* S'`,
+`eΓ : Γ ≃* Γ'` with `ι' ∘ eS = eΓ ∘ ι`: `ι(S)γ ↦ ι'(S') eΓ(γ)`. -/
+def mapEquiv (ι : S →* Γ) (ι' : S' →* Γ') (eS : S ≃* S') (eΓ : Γ ≃* Γ')
+    (h : ∀ s, ι' (eS s) = eΓ (ι s)) : CosetSpace ι ≃ CosetSpace ι' :=
+  Quotient.congr eΓ.toEquiv fun x y => by
+    rw [QuotientGroup.rightRel_apply, QuotientGroup.rightRel_apply]
+    constructor
+    · rintro ⟨s, hs⟩
+      refine ⟨eS s, ?_⟩
+      rw [h, hs]
+      simp [map_mul, map_inv]
+    · rintro ⟨s, hs⟩
+      refine ⟨eS.symm s, ?_⟩
+      apply eΓ.injective
+      have h' : ι' s = eΓ (ι (eS.symm s)) := by rw [← h, MulEquiv.apply_symm_apply]
+      rw [← h', hs]
+      simp [map_mul, map_inv]
+
+theorem mapEquiv_mk (ι : S →* Γ) (ι' : S' →* Γ') (eS : S ≃* S') (eΓ : Γ ≃* Γ')
+    (h : ∀ s, ι' (eS s) = eΓ (ι s)) (γ : Γ) :
+    mapEquiv ι ι' eS eΓ h (mk ι γ) = mk ι' (eΓ γ) := rfl
+
+variable [TopologicalSpace Γ] [TopologicalSpace Γ']
+
+/-- `mapEquiv` is a homeomorphism when `eΓ` is. -/
+def mapHomeomorph (ι : S →* Γ) (ι' : S' →* Γ') (eS : S ≃* S') (eΓ : Γ ≃ₜ* Γ')
+    (h : ∀ s, ι' (eS s) = eΓ (ι s)) : CosetSpace ι ≃ₜ CosetSpace ι' where
+  toEquiv := mapEquiv ι ι' eS eΓ.toMulEquiv h
+  continuous_toFun := continuous_of_comp_mk ι ((continuous_mk ι').comp eΓ.continuous)
+  continuous_invFun := continuous_of_comp_mk ι' <| by
+    have : ((mapEquiv ι ι' eS eΓ.toMulEquiv h).symm ∘ mk ι') = mk ι ∘ eΓ.symm := by
+      funext γ'
+      apply (mapEquiv ι ι' eS eΓ.toMulEquiv h).injective
+      rw [Function.comp_apply, Equiv.apply_symm_apply, Function.comp_apply, mapEquiv_mk]
+      exact congrArg (mk ι') (eΓ.apply_symm_apply γ').symm
+    change Continuous (⇑(mapEquiv ι ι' eS eΓ.toMulEquiv h).symm ∘ mk ι')
+    rw [this]
+    exact (continuous_mk ι).comp eΓ.symm.continuous
+
+@[simp] theorem mapHomeomorph_mk (ι : S →* Γ) (ι' : S' →* Γ') (eS : S ≃* S') (eΓ : Γ ≃ₜ* Γ')
+    (h : ∀ s, ι' (eS s) = eΓ (ι s)) (γ : Γ) :
+    mapHomeomorph ι ι' eS eΓ h (mk ι γ) = mk ι' (eΓ γ) := rfl
+
+/-- The representative of the image coset is `eΓ` of the representative, up to `ι(S)` on the
+left. -/
+theorem exists_out_mapHomeomorph {ι : S →* Γ} {ι' : S' →* Γ'} (eS : S ≃* S') (eΓ : Γ ≃ₜ* Γ')
+    (h : ∀ s, ι' (eS s) = eΓ (ι s)) (q : CosetSpace ι) :
+    ∃ s : S, out ι' (mapHomeomorph ι ι' eS eΓ h q) = eΓ (ι s * out ι q) := by
+  have hq : mapHomeomorph ι ι' eS eΓ h q = mk ι' (eΓ (out ι q)) := by
+    conv_lhs => rw [← mk_out ι q]
+    rfl
+  obtain ⟨s', hs'⟩ := exists_out_mk ι' (eΓ (out ι q))
+  refine ⟨(eS.symm s')⁻¹, ?_⟩
+  have hι : ι' s' = eΓ (ι (eS.symm s')) := by rw [← h, MulEquiv.apply_symm_apply]
+  rw [hq]
+  symm
+  calc eΓ (ι (eS.symm s')⁻¹ * out ι q) = (ι' s')⁻¹ * eΓ (out ι q) := by
+        rw [map_mul, map_inv, map_inv, ← hι]
+    _ = out ι' (mk ι' (eΓ (out ι q))) := by
+        conv_lhs => rw [hs']
+        exact inv_mul_cancel_left _ _
+
+end CosetSpace
+
+variable [TopologicalSpace Γ] [TopologicalSpace Γ']
+
+/-- Integrals over `ι'(S')\Γ'` of a left `ι'(S')`-invariant function at the chosen representatives,
+against a push-forward along `CosetSpace.mapHomeomorph`, are integrals over `ι(S)\Γ` at `eΓ` of the
+representatives. -/
+theorem integral_map_mapHomeomorph {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    {ι : S →* Γ} {ι' : S' →* Γ'} (eS : S ≃* S') (eΓ : Γ ≃ₜ* Γ')
+    (h : ∀ s, ι' (eS s) = eΓ (ι s)) (m : Measure (CosetSpace ι)) (K : Γ' → E)
+    (hK : ∀ s x, K (ι' s * x) = K x) :
+    ∫ q, K (CosetSpace.out ι' q) ∂(m.map (CosetSpace.mapHomeomorph ι ι' eS eΓ h)) =
+      ∫ q, K (eΓ (CosetSpace.out ι q)) ∂m := by
+  rw [(CosetSpace.mapHomeomorph ι ι' eS eΓ h).measurableEmbedding.integral_map]
+  refine integral_congr_ae (Filter.Eventually.of_forall fun q => ?_)
+  obtain ⟨s, hs⟩ := CosetSpace.exists_out_mapHomeomorph eS eΓ h q
+  change K (CosetSpace.out ι' (CosetSpace.mapHomeomorph ι ι' eS eΓ h q)) = _
+  rw [hs, map_mul, ← h, hK]
+
+variable [TopologicalSpace S] [TopologicalSpace S']
+  [MeasurableSpace S] [BorelSpace S] [MeasurableSpace Γ] [BorelSpace Γ]
+  [MeasurableSpace S'] [BorelSpace S'] [MeasurableSpace Γ'] [BorelSpace Γ']
+
+/-- **Transport of Weil measures** along isomorphisms of topological groups `eS : S ≃ₜ* S'`,
+`eΓ : Γ ≃ₜ* Γ'` with `ι' ∘ eS = eΓ ∘ ι`: if `m` is a Weil measure on `ι(S)\Γ` for `ν` and a
+right invariant `μ`, then its push-forward to `ι'(S')\Γ'` is a Weil measure for the push-forwards
+of `ν` and `μ`.  The representatives `out (ē q)` and `eΓ (out q)` differ by an element of
+`ι'(S')`, absorbed by right invariance of `μ` (`integral_fibre_eq_of_rel`). -/
+theorem IsWeilMeasure.map [MeasurableMul S] {ι : S →* Γ} {ι' : S' →* Γ'} {ν : Measure Γ}
+    {μ : Measure S} [μ.IsMulRightInvariant] {m : Measure (CosetSpace ι)}
+    (hm : IsWeilMeasure ι ν μ m) (eS : S ≃ₜ* S') (eΓ : Γ ≃ₜ* Γ')
+    (h : ∀ s, ι' (eS s) = eΓ (ι s)) :
+    IsWeilMeasure ι' (ν.map eΓ) (μ.map eS)
+      (m.map (CosetSpace.mapHomeomorph ι ι' eS.toMulEquiv eΓ h)) := by
+  intro φ hφ hφc
+  set ē := CosetSpace.mapHomeomorph ι ι' eS.toMulEquiv eΓ h
+  have hΓ : MeasurableEmbedding (eΓ : Γ → Γ') := eΓ.toHomeomorph.measurableEmbedding
+  have hS : MeasurableEmbedding (eS : S → S') := eS.toHomeomorph.measurableEmbedding
+  rw [hΓ.integral_map, show (∫ x, φ (eΓ x) ∂ν) = ∫ x, (φ ∘ eΓ) x ∂ν from rfl,
+    hm (φ ∘ eΓ) (hφ.comp eΓ.continuous) (hφc.comp_homeomorph eΓ.toHomeomorph),
+    ē.measurableEmbedding.integral_map]
+  refine integral_congr_ae (Filter.Eventually.of_forall fun q => ?_)
+  obtain ⟨s₀, hs₀⟩ := CosetSpace.exists_out_mapHomeomorph eS.toMulEquiv eΓ h q
+  change ∫ s, φ (eΓ (ι s * CosetSpace.out ι q)) ∂μ =
+    ∫ s', φ (ι' s' * CosetSpace.out ι' (ē q)) ∂(μ.map eS)
+  rw [hS.integral_map]
+  have e : ∀ s, ι' (eS s) * CosetSpace.out ι' (ē q) =
+      eΓ (ι s * (ι s₀ * CosetSpace.out ι q)) := fun s => by
+    rw [hs₀, map_mul eΓ (ι s), ← h]
+  change _ = ∫ s, φ (ι' (eS s) * CosetSpace.out ι' (ē q)) ∂μ
+  simp_rw [e]
+  exact (integral_fibre_eq_of_rel ι μ (φ ∘ eΓ)
+    ((CosetSpace.rel_iff ι _ _).2 ⟨s₀, rfl⟩)).symm
+
+end Transport
 
 section Sanity
 
