@@ -36,8 +36,7 @@ theorem isExpCompatH_measH0 : d.IsExpCompatH d.measH0 := by
   rw [dite_eq_left_of_eq_true (eq_true h)]
   exact h.choose_spec
 
--- elaborating `Measure.haar` on `H(F)/A_{G,H}(F)` against `H̄(F)` is slow (see `LuoJLie.lean`)
-set_option maxHeartbeats 1000000 in
+set_option maxHeartbeats 1000000 in -- `Measure.haar` on `H(F)/A_{G,H}(F)` elaborates slowly
 /-- **`exp`-compatibility transfers to Luo's side** (Thesis §5.2, §12.4): for an isomorphism
 `e_H : H(F)/A_{G,H}(F) ≃ H̄(F)` induced by `G → Ḡ`, the push-forwards `(e_H)_* dh` and
 `ad_* measH0` are `exp`-compatible. Near `0`, `e_H` carries `{e^X A_{G,H}(F) : X ∈ S}` onto

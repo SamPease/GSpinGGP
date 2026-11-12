@@ -8,7 +8,7 @@ import GSpinGGP.TraceFormula.SOLieFacts
 /-!
 # Towards (L4): `J^Lie` of the general spin triple is Luo's `J^Lie`
 
-Ingredients for `exists_JLie_transfer` (`TraceFormula/LuoTransfer.lean`), which identifies
+Ingredients for `exists_JLie_transfer` (`TraceFormula/LuoJLieExp.lean`), which identifies
 `J^Lie` of the general spin triple with Luo's `J^Lie` of the special orthogonal triple when
 neither `W` nor `V` is a hyperbolic plane.
 

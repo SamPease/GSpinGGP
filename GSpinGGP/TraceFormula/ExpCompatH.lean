@@ -31,8 +31,7 @@ namespace GGPData
 
 variable (d : GGPData F)
 
--- the proof juggles two auxiliary subalgebras and several `exp` neighbourhoods
-set_option maxHeartbeats 400000 in
+set_option maxHeartbeats 400000 in -- two auxiliary subalgebras, several `exp` neighbourhoods
 /-- **`Lie(H) = 𝔥⁰ ⊕ F·(1,1)` near `0`, the logarithm direction** (Thesis §5.2): for `W` near `0`
 with `e^W ∈ H(F)`, `W − (t, t) ∈ 𝔥⁰` for a scalar `t`. Write `W = (a₁ + S₁, a₂ + S₂)` with `aᵢ`
 scalars and `Sᵢ ∈ so` (`W ∈ 𝔤`, `eventually_mem_lie_of_expA_mem`), and `φ : C(W) → C(V)`.
@@ -245,11 +244,11 @@ theorem eventually_exists_sub_algebraMap_mem_lieH0 :
     abel
   refine ⟨c₁, ⟨?_, ?_⟩⟩
   · refine ⟨?_, ?_⟩
-    · show W.1 - algebraMap F _ c₁ ∈ soSub d.QW
+    · change W.1 - algebraMap F _ c₁ ∈ soSub d.QW
       rw [← hW1e, Algebra.algebraMap_eq_smul_one, add_sub_cancel_left]; exact hS₁'
-    · show W.2 - algebraMap F _ c₁ ∈ soSub d.QV
+    · change W.2 - algebraMap F _ c₁ ∈ soSub d.QV
       rw [← hW2e, Algebra.algebraMap_eq_smul_one, add_sub_cancel_left]; exact hS₂'
-  · show (W.2 - algebraMap F _ c₁) - φ (W.1 - algebraMap F _ c₁) ∈ lieFlagUnip d.flag
+  · change (W.2 - algebraMap F _ c₁) - φ (W.1 - algebraMap F _ c₁) ∈ lieFlagUnip d.flag
     have e : (W.2 - algebraMap F _ c₁) - φ (W.1 - algebraMap F _ c₁) = S₂ - φ S₁ := by
       rw [← hW2e, ← hW1e, Algebra.algebraMap_eq_smul_one, Algebra.algebraMap_eq_smul_one,
         add_sub_cancel_left, add_sub_cancel_left]
