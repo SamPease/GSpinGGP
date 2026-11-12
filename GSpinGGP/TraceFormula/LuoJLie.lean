@@ -6,16 +6,30 @@ import GSpinGGP.TraceFormula.LuoTorus
 import GSpinGGP.TraceFormula.SOLieFacts
 
 /-!
-# Towards (L4): the measures of `J^Lie` on `H(F)\G(F)/A_G(F)` and on `H̄(F)\Ḡ(F)`
+# Towards (L4): `J^Lie` of the general spin triple is Luo's `J^Lie`
 
 Ingredients for `exists_JLie_transfer` (`TraceFormula/LuoTransfer.lean`), which identifies
 `J^Lie` of the general spin triple with Luo's `J^Lie` of the special orthogonal triple when
 neither `W` nor `V` is a hyperbolic plane.
 
-* `CosetSpace.mapEquiv`, `IsWeilMeasure.map`: Weil measures are transported by isomorphisms of
-  topological groups compatible with the embeddings.
+* `CosetSpace.mapHomeomorph`, `integral_map_mapHomeomorph`, `IsWeilMeasure.map`: Weil measures and
+  integrals over coset spaces are transported by isomorphisms of topological groups compatible
+  with the embeddings.
+* `LuoDatum.conj_mem_lieH_of_mem_HbarU`: `H̄ = SO(W) ⋉ N` normalizes `𝔥 = so(W) ⊕ 𝔫` and fixes
+  `λ` (Luo §2.1).
+* `LuoDatum.map_conjLieH_eq`, `LuoDatum.kernelLie_mul_left`: an `exp`-compatible measure on `𝔥(F)`
+  is `Ad(H̄(F))`-invariant (for conjugation invariant `μ_H`), so Luo's kernel `K^Lie(f, ·)` is left
+  `H̄(F)`-invariant.
+* `exists_smul_sub_one_isNilpotent_of_mem_flagUnipSO`: an element of `F^× · N_F` has a scalar
+  multiple in `N_F`.
+* `luoOf_flagSub`, `mem_Nset_iff_mem_flagUnipSO`, `toGbarU_mem_HbarU`, `exists_mem_H_toGbarU_eq`:
+  `P(H(F)) = H̄(F)`; `exists_continuousMulEquiv_HmodAGH`: `H(F)/A_{G,H}(F) ≃ H̄(F)` as topological
+  groups.
+* `exists_weil_Hbar`: the Weil measure of `J` on `H(F)\G(F)/A_G(F)` gives one on `H̄(F)\Ḡ(F)`.
+* `toSOLin_mem_lieH_iff`, `toSOHCLE`: `ad : 𝔥⁰ ≃ 𝔥`; `kernelLie_toGbar`: the kernels of `J^Lie`
+  agree at matched points.
+* `exists_JLie_transfer_of`: (L4) follows from the `exp`-compatibility of the transported measures.
 -/
-
 noncomputable section
 
 open MeasureTheory Topology Filter
@@ -189,7 +203,7 @@ theorem conj_mem_skewAdjoint (hu : u ∈ SOu Q) {M : Module.End K U}
     ((u⁻¹ : (Module.End K U)ˣ) : Module.End K U) * M * (u : Module.End K U) ∈
       skewAdjointLieSubalgebra (bform Q) := by
   have hM' := (LinearMap.mem_skewAdjointSubmodule (B := bform Q) M).1 hM
-  show _ ∈ (bform Q).skewAdjointSubmodule
+  change _ ∈ (bform Q).skewAdjointSubmodule
   rw [LinearMap.mem_skewAdjointSubmodule]
   intro x y
   have e : ∀ z, (((u⁻¹ : (Module.End K U)ˣ) : Module.End K U) * M * (u : Module.End K U)) z =
@@ -233,11 +247,11 @@ theorem bform_zV_zV {i j : ℤ} (hi : |i| ≤ L.r) (hj : |j| ≤ L.r) (hij : i +
     bform L.QV (L.zV i) (L.zV j) = 0 := by
   rw [bform_prod]
   change bform L.QW 0 0 + bform L.QZ (L.z i) (L.z j) = 0
-  rw [L.gram i j hi hj, if_neg hij]
-  simp
+  rw [L.gram i j hi hj]
+  simp [hij]
 
-/-- `z_i ∈ Z_{r-i+1}` for `1 ≤ i ≤ r`. -/
-theorem zV_mem_flagSub {i : ℕ} (hi1 : 1 ≤ i) (hir : i ≤ L.r) :
+/-- `z_i ∈ Z_{r-i+1}` for `i ≤ r`. -/
+theorem zV_mem_flagSub {i : ℕ} (hir : i ≤ L.r) :
     L.zV (i : ℤ) ∈ L.flagSub (L.r - i + 1) :=
   Submodule.subset_span ⟨⟨L.r - i, by omega⟩, by
     simp only
@@ -273,7 +287,7 @@ theorem apply_zV_sub_mem_flagSub {n : Module.End K L.V}
     {i : ℕ} (hi : i < L.r) : n (L.zV (i : ℤ)) ∈ L.flagSub (L.r - i) := by
   rcases Nat.eq_zero_or_pos i with rfl | hpos
   · simpa using h2 _ L.zV_zero_mem_orthogonal
-  · have := L.zV_mem_flagSub hpos hi.le
+  · have := L.zV_mem_flagSub hi.le
     rw [show L.r - i + 1 = (L.r - i) + 1 from rfl] at this
     exact h1 (L.r - i) (by omega) _ this
 
@@ -286,7 +300,7 @@ theorem extLie_mem_skewAdjoint {A : Module.End K L.W}
     (hA : A ∈ skewAdjointLieSubalgebra (bform L.QW)) :
     L.extLie A ∈ skewAdjointLieSubalgebra (bform L.QV) := by
   have hA' := (LinearMap.mem_skewAdjointSubmodule (B := bform L.QW) A).1 hA
-  show _ ∈ (bform L.QV).skewAdjointSubmodule
+  change _ ∈ (bform L.QV).skewAdjointSubmodule
   rw [LinearMap.mem_skewAdjointSubmodule]
   intro x y
   rw [Pi.neg_apply, map_neg, bform_prod, bform_prod, extLie_apply, extLie_apply, hA' x.1 y.1,
@@ -469,7 +483,8 @@ open JLie
 
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F] (L : LuoDatum F)
 
-/-- `Y ↦ u⁻¹ Y u` on `𝔥(F)`, `u ∈ H̄(F)`, as a linear homeomorphism (`conj_mem_lieH_of_mem_HbarU`). -/
+/-- `Y ↦ u⁻¹ Y u` on `𝔥(F)`, `u ∈ H̄(F)`, as a linear homeomorphism
+(`conj_mem_lieH_of_mem_HbarU`). -/
 def conjLieH (u : ↥L.Hbar) : ↥L.lieH ≃L[F] ↥L.lieH :=
   haveI := t2Space_of_moduleTopology F L.Amb
   haveI := isTopologicalRing_of_moduleTopology F L.Amb
@@ -535,7 +550,7 @@ theorem map_conjLieH_eq {μH : Measure ↥L.Hbar} {μ : Measure ↥L.lieH}
     have hc : ∀ h : ↥L.Hbar, (((c h : ↥L.Gbar) : L.Ambˣ) : L.Amb) =
         ((w⁻¹ : L.Ambˣ) : L.Amb) * (((h : ↥L.Gbar) : L.Ambˣ) : L.Amb) * (w : L.Amb) := fun h => rfl
     ext h
-    simp only [Set.mem_setOf_eq, Set.mem_preimage]
+    simp only [Set.mem_preimage]
     constructor
     · rintro ⟨X, hX, hh⟩
       refine ⟨Φ X, hX, ?_⟩
@@ -624,7 +639,7 @@ theorem luoScale_ne_zero (i : ℤ) : d.luoScale i ≠ 0 := by
 (the basis vectors are rescaled by nonzero scalars). -/
 theorem luoOf_flagSub {k : ℕ} (hk : k ≤ d.r) :
     d.luoOf.flagSub k = d.flag.sub ⟨k, Nat.lt_succ_of_le hk⟩ := by
-  show Submodule.span F (Set.range fun j : Fin k => d.luoOf.zV ((d.r : ℤ) - (j : ℕ))) =
+  change Submodule.span F (Set.range fun j : Fin k => d.luoOf.zV ((d.r : ℤ) - (j : ℕ))) =
     Submodule.span F (Set.range fun j : Fin k => d.zV ((d.r : ℤ) - (j : ℕ)))
   apply le_antisymm
   · refine Submodule.span_le.2 ?_
@@ -660,7 +675,7 @@ theorem specPV_mem_SOu (b : GSpin d.QV) {n : (Module.End F d.luoOf.V)ˣ}
   change LinearMap.GeneralLinearGroup.generalLinearEquiv F _ n ∈ SOGrp d.QV
   have e : LinearMap.GeneralLinearGroup.generalLinearEquiv F d.luoOf.V n = specP d.QV b :=
     LinearEquiv.ext fun v => by
-      show (n : Module.End F d.luoOf.V) v = _
+      change (n : Module.End F d.luoOf.V) v = _
       rw [hn]; rfl
   rw [e, ← range_specP_eq_SOGrp d.nondeg_QV]
   exact ⟨b, rfl⟩
@@ -676,7 +691,7 @@ theorem mem_Nset_iff_mem_flagUnipSO {b : GSpin d.QV} {n : (Module.End F d.luoOf.
     rw [d.luoOf_flagSub hk]; rfl
   have horth : ∀ v : d.V, v ∈ (bform d.luoOf.QV).orthogonal (d.luoOf.flagSub d.luoOf.r) ↔
       v ∈ (bform d.QV).orthogonal d.flag.top := fun v => by
-    show v ∈ (bform d.QV).orthogonal (d.luoOf.flagSub d.r) ↔ _
+    change v ∈ (bform d.QV).orthogonal (d.luoOf.flagSub d.r) ↔ _
     rw [d.luoOf_flagSub_r]
   constructor
   · rintro ⟨-, h1, h2⟩
@@ -798,7 +813,7 @@ theorem exists_continuousMulEquiv_HmodAGH (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsH
   set f : d.HmodAGH →* ↥d.luoOf.Gbar := e.toMulEquiv.toMonoidHom.comp d.toGmodAG
   have hfmk : ∀ h : ↥d.H, f (QuotientGroup.mk h) = d.toGbar (h : ↥d.G) := by
     intro h
-    show e (QuotientGroup.mk (h : ↥d.G)) = _
+    change e (QuotientGroup.mk (h : ↥d.G)) = _
     rw [he]
     exact d.toGbar_out_mk hW hV _
   have hmem : ∀ q, f q ∈ d.luoOf.Hbar := by
@@ -816,7 +831,7 @@ theorem exists_continuousMulEquiv_HmodAGH (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsH
     obtain ⟨g, hg, hgu⟩ := d.exists_mem_H_toGbarU_eq (u := ((u : ↥d.luoOf.Gbar) : d.luoOf.Ambˣ))
       (Subgroup.mem_subgroupOf.1 u.2)
     refine ⟨QuotientGroup.mk ⟨g, hg⟩, Subtype.ext (Subtype.ext ?_)⟩
-    show ((f (QuotientGroup.mk ⟨g, hg⟩) : ↥d.luoOf.Gbar) : d.luoOf.Ambˣ) = _
+    change ((f (QuotientGroup.mk ⟨g, hg⟩) : ↥d.luoOf.Gbar) : d.luoOf.Ambˣ) = _
     rw [hfmk]
     exact hgu
   let h := hφemb.toHomeomorphOfSurjective hsurj
@@ -825,7 +840,8 @@ theorem exists_continuousMulEquiv_HmodAGH (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsH
     fun q => rfl⟩
 
 set_option maxHeartbeats 3000000 in
--- diagnosing: instance unification on the coset spaces
+-- unifying the Haar and Weil measures on `G(F)/A_G(F)`, `H(F)/A_{G,H}(F)` with those of `Basic`
+-- (and `BorelSpace` synthesis on these quotients) exceeds the default budget in this file
 /-- **The measures of `J` and `J^Lie` on `H̄(F)\Ḡ(F)`**: there are an isomorphism of topological
 groups `H(F)/A_{G,H}(F) ≃ H̄(F)` (`exists_continuousMulEquiv_HmodAGH`), the Haar measure
 `μ_H` it carries `Measure.haar` to, and a Weil measure `m` on `H̄(F)\Ḡ(F)` for `muG` and `μ_H`
@@ -878,7 +894,7 @@ theorem adV_mem_lieN_iff {Z : CliffordAlgebra d.QV} (hZ : Z ∈ soSub d.QV) :
     rw [d.luoOf_flagSub hk]; rfl
   have horth : ∀ v : d.V, v ∈ (bform d.luoOf.QV).orthogonal (d.luoOf.flagSub d.luoOf.r) ↔
       v ∈ (bform d.QV).orthogonal d.flag.top := fun v => by
-    show v ∈ (bform d.QV).orthogonal (d.luoOf.flagSub d.r) ↔ _
+    change v ∈ (bform d.QV).orthogonal (d.luoOf.flagSub d.r) ↔ _
     rw [d.luoOf_flagSub_r]
   constructor
   · rintro ⟨-, h1, h2⟩
@@ -947,7 +963,7 @@ variable (ψ : NontrivialAddChar F)
 theorem extFn_toSOLin (f : ↥d.lieZero → ℂ) (Z : ↥d.lieZero) :
     d.luoOf.extFn (f ∘ d.toSO.symm) (d.toSOLin Z) = f Z := by
   unfold LuoDatum.extFn
-  rw [dif_pos (d.toSO_mem Z)]
+  rw [dite_eq_left_of_eq_true (eq_true (d.toSO_mem Z))]
   simp only [Function.comp_apply]
   congr 1
   exact d.toSO.symm_apply_eq.2 (Subtype.ext rfl)
@@ -978,7 +994,7 @@ theorem toGbar_surjective (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) :
   exact ⟨Quotient.out y, (congrFun he y).symm⟩
 
 set_option maxHeartbeats 3000000 in
--- instance paths of `Measure.haar` on `H(F)/A_{G,H}(F)` differ from those in `Basic`
+-- unifying `Measure.haar` on `H(F)/A_{G,H}(F)` with the one of `Basic` exceeds the default budget
 /-- The push-forward of `Measure.haar` along `H(F)/A_{G,H}(F) ≃ H̄(F)` is conjugation invariant
 (`H(F)/A_{G,H}(F)` is unimodular, `isMulRightInvariant_haar_HmodAGH`). -/
 theorem map_conj_map_haar (eH : d.HmodAGH ≃ₜ* ↥d.luoOf.Hbar) (u : ↥d.luoOf.Hbar) :
