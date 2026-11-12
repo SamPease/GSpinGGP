@@ -714,31 +714,37 @@ theorem isSS_toSOLin {X : d.ambient} (hX : X ∈ d.lieZero) (hs : IsSS F X) :
       rw [pow_succ', Module.End.mul_apply, pow_succ', Module.End.mul_apply, ← ih]
       simp only [D, LieAlgebra.ad_apply, Ring.lie_def, Prod.snd_sub, Prod.snd_mul]
   have hW : Polynomial.aeval (adV d.QW X.1) q = 0 := by
-    ext v
-    apply ι_injective d.QW
-    have key : ι d.QW (Polynomial.aeval (adV d.QW X.1) q v) =
-        (Polynomial.aeval D q (ι d.QW v, 0)).1 := by
+    refine LinearMap.ext fun v => ?_
+    apply CliffordAlgebra.ι_injective d.QW
+    have key : CliffordAlgebra.ι d.QW (Polynomial.aeval (adV d.QW X.1) q v) =
+        (Polynomial.aeval D q (CliffordAlgebra.ι d.QW v, 0)).1 := by
       rw [Polynomial.aeval_eq_sum_range, Polynomial.aeval_eq_sum_range]
-      simp only [LinearMap.coeFn_sum, Finset.sum_apply, LinearMap.smul_apply, map_sum, map_smul,
+      simp only [LinearMap.sum_apply, LinearMap.smul_apply, map_sum, map_smul,
         Prod.fst_sum, Prod.smul_fst, hfst, ι_adV_pow hX.1.1]
     rw [key, h0]
     simp
   have hV : Polynomial.aeval (adV d.QV X.2) q = 0 := by
-    ext v
-    apply ι_injective d.QV
-    have key : ι d.QV (Polynomial.aeval (adV d.QV X.2) q v) =
-        (Polynomial.aeval D q (0, ι d.QV v)).2 := by
+    refine LinearMap.ext fun v => ?_
+    apply CliffordAlgebra.ι_injective d.QV
+    have key : CliffordAlgebra.ι d.QV (Polynomial.aeval (adV d.QV X.2) q v) =
+        (Polynomial.aeval D q (0, CliffordAlgebra.ι d.QV v)).2 := by
       rw [Polynomial.aeval_eq_sum_range, Polynomial.aeval_eq_sum_range]
-      simp only [LinearMap.coeFn_sum, Finset.sum_apply, LinearMap.smul_apply, map_sum, map_smul,
+      simp only [LinearMap.sum_apply, LinearMap.smul_apply, map_sum, map_smul,
         Prod.snd_sum, Prod.smul_snd, hsnd, ι_adV_pow hX.2.1]
     rw [key, h0]
     simp
-  refine isSS_of_aeval_eq_zero hq ?_
-  refine Prod.ext ?_ ?_
-  · change d.luoOf.fstA (Polynomial.aeval (d.toSOLin X) q) = 0
-    rw [← Polynomial.aeval_algHom_apply, fstA_toSOLin, hW]
-  · change d.luoOf.sndA (Polynomial.aeval (d.toSOLin X) q) = 0
-    rw [← Polynomial.aeval_algHom_apply, sndA_toSOLin, hV]
+  have hq0 : Polynomial.aeval (d.toSOLin X) q = 0 := by
+    refine Prod.ext ?_ ?_
+    · change d.luoOf.fstA (Polynomial.aeval (d.toSOLin X) q) = 0
+      rw [← Polynomial.aeval_algHom_apply, fstA_toSOLin]
+      exact hW
+    · change d.luoOf.sndA (Polynomial.aeval (d.toSOLin X) q) = 0
+      rw [← Polynomial.aeval_algHom_apply, sndA_toSOLin]
+      exact hV
+  refine Module.End.isSemisimple_of_squarefree_aeval_eq_zero hq ?_
+  have h := Polynomial.aeval_algHom_apply (Algebra.lmul F d.luoOf.Amb) (d.toSOLin X) q
+  rw [hq0, map_zero] at h
+  exact h
 
 /-- **`ad` maps regular semisimple elements of `𝔤⁰` to regular semisimple elements of
 `so(W) ⊕ so(V)`**: semisimplicity by `isSS_toSOLin`; the centralizer of `ad X` pulls back along the
@@ -791,6 +797,9 @@ theorem isThetaFLie_of_SO (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
   have : IsTopologicalAddGroup ↥d.luoOf.lie :=
     inferInstanceAs (IsTopologicalAddGroup ↥d.luoOf.lie.toSubmodule)
   have : T2Space ↥d.luoOf.lie := inferInstance
+  have : ContinuousSMul F ↥d.lieZero := inferInstanceAs (ContinuousSMul F ↥d.lieZero.toSubmodule)
+  have : IsTopologicalAddGroup ↥d.lieZero :=
+    inferInstanceAs (IsTopologicalAddGroup ↥d.lieZero.toSubmodule)
   -- `so(W) ⊕ so(V) ≅ F^n`: locally compact and second countable
   have : ProperSpace F := .of_nontriviallyNormedField_of_weaklyLocallyCompactSpace F
   let eF : ↥d.luoOf.lie ≃L[F] (Fin (Module.finrank F ↥d.luoOf.lie) → F) :=
@@ -804,11 +813,11 @@ theorem isThetaFLie_of_SO (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
   -- `ad` carries `measLie0` to a multiple of `measLie`
   have : (Measure.map e (d.measLie0 ψ)).IsAddHaarMeasure := e.isAddHaarMeasure_map _
   set c := Measure.addHaarScalarFactor (Measure.map e (d.measLie0 ψ)) (d.luoOf.measLie ψ)
-  have hc : Measure.map e (d.measLie0 ψ) = c • d.luoOf.measLie ψ :=
+  have hc : Measure.map e (d.measLie0 ψ) = (c : ENNReal) • d.luoOf.measLie ψ :=
     Measure.isAddLeftInvariant_eq_smul _ _
   set em := e.toHomeomorph.toMeasurableEquiv
   have hint : ∀ k : ↥d.luoOf.lie → ℂ, ∫ X, k (d.toSO X) ∂d.measLie0 ψ =
-      ((c : ℝ≥0∞).toReal : ℝ) • ∫ Y, k Y ∂d.luoOf.measLie ψ := by
+      ((c : ENNReal).toReal : ℝ) • ∫ Y, k Y ∂d.luoOf.measLie ψ := by
     intro k
     rw [← integral_smul_measure, ← hc]
     exact (integral_map_equiv em k).symm
@@ -839,10 +848,10 @@ theorem isThetaFLie_of_SO (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
       have hcj : d.luoOf.conjInv (d.toGbar g) Y = d.toSOLin (d.adLie0 g⁻¹ (d.toSO.symm Y)) := by
         rw [d.toSOLin_adLie0_inv, d.toSOLin_toSO_symm]
       have hm : d.luoOf.conjInv (d.toGbar g) Y ∈ d.luoOf.lie := hcj ▸ d.toSO_mem _
-      rw [LuoDatum.extFn, dif_pos hm]
+      rw [LuoDatum.extFn, dite_eq_left_of_eq_true (eq_true hm)]
       simp only [Function.comp_apply]
       congr 2
-      rw [Equiv.symm_apply_eq]
+      rw [eq_comm, Equiv.symm_apply_eq]
       exact Subtype.ext hcj
     obtain ⟨φ, hφ⟩ := d.exists_continuousMulEquiv_toGbar hW hV
     have hmu : d.muG = Measure.map φ Measure.haar := by rw [hφ]; rfl
@@ -853,6 +862,8 @@ theorem isThetaFLie_of_SO (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
     have h3' := h3 _ hf''
     simp only [Function.comp_apply] at h3'
     rw [h3', LuoDatum.orbitalPairing, orbitalPairingLie, hmu,
+      show Measure.map (⇑φ) (Measure.haar : Measure d.GmodAG) =
+        Measure.map (⇑φ.toHomeomorph) Measure.haar from rfl,
       φ.toHomeomorph.measurableEmbedding.integral_map, ← integral_smul]
     refine integral_congr_ae (Eventually.of_forall fun x => ?_)
     have hI := hint fun Y => f (d.adLie0 (Quotient.out x)⁻¹ (d.toSO.symm Y)) * f' (d.toSO.symm Y)
@@ -861,9 +872,8 @@ theorem isThetaFLie_of_SO (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
     rw [hI]
     congr 1
     refine integral_congr_ae (Eventually.of_forall fun Y => ?_)
-    rw [hpt]
-    simp only [Function.comp_apply, hφ]
-    rfl
+    dsimp only
+    rw [hpt, show φ.toHomeomorph x = d.toGbar (Quotient.out x) from congrFun hφ x]
 
 /-! ## (L6)–(L9) `m^Lie_geom` -/
 
