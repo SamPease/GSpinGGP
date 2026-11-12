@@ -209,12 +209,12 @@ theorem inrU_mul_diagU (g : (Module.End K L.W)ˣ) (n : (Module.End K L.V)ˣ) :
     L.inrU n * L.diagU g =
       L.diagU g * L.inrU ((Units.map L.extGrp g)⁻¹ * n * Units.map L.extGrp g) := by
   refine Units.ext (Prod.ext ?_ ?_)
-  · show (1 : Module.End K L.W) * (g : Module.End K L.W) = (g : Module.End K L.W) * 1
+  · change (1 : Module.End K L.W) * (g : Module.End K L.W) = (g : Module.End K L.W) * 1
     rw [one_mul, mul_one]
-  · show (n : Module.End K L.V) * ((Units.map L.extGrp g : (Module.End K L.V)ˣ) : Module.End K L.V) =
-      ((Units.map L.extGrp g : (Module.End K L.V)ˣ) : Module.End K L.V) *
-        ((((Units.map L.extGrp g)⁻¹ : (Module.End K L.V)ˣ) : Module.End K L.V) *
-          (n : Module.End K L.V) * ((Units.map L.extGrp g : (Module.End K L.V)ˣ) : Module.End K L.V))
+  · set e := Units.map L.extGrp g
+    change (n : Module.End K L.V) * (e : Module.End K L.V) = (e : Module.End K L.V) *
+      (((e⁻¹ : (Module.End K L.V)ˣ) : Module.End K L.V) * (n : Module.End K L.V) *
+        (e : Module.End K L.V))
     rw [← mul_assoc, ← mul_assoc, Units.mul_inv, one_mul]
 
 /-- **Normal form for `H̄ = SO(W) ⋉ N`** (Luo §2.1): the elements of `H̄` are exactly the
