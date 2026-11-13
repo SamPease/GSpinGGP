@@ -71,6 +71,8 @@ import GSpinGGP.TraceFormula.ExpIntertwine
 import GSpinGGP.TraceFormula.LuoJLie
 import GSpinGGP.TraceFormula.LuoJLieExp
 import GSpinGGP.TraceFormula.OrbitSpecUnique
+import GSpinGGP.TraceFormula.JHatScale
+import GSpinGGP.TraceFormula.CThetaTransport
 import GSpinGGP.Literature.Kottwitz
 import GSpinGGP.Literature.KottwitzClay
 import GSpinGGP.Literature.Kottwitz1986
