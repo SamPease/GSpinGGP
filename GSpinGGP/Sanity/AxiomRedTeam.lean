@@ -8,6 +8,7 @@ import GSpinGGP.Sanity.AxiomRedTeam.Luo
 import GSpinGGP.Sanity.AxiomRedTeam.Galois
 import GSpinGGP.Sanity.AxiomRedTeam.Measure
 import GSpinGGP.Sanity.AxiomRedTeam.WholeSystem
+import GSpinGGP.Sanity.AxiomRedTeam.BPQuasiCharacter
 
 /-!
 # Checks of the literature axioms on small instances
@@ -66,6 +67,8 @@ the axiom it tests; the computations of germs at `toyD` use `exists_isSelfDual` 
   subgroups.
 * `integral_eq_mul_integral_compact_integral`: V for `P = G`, `K = 1` (`integral_formula_top_bot`).
   Not covered: proper `P`.
+* `bp_sqrt_weylDisc_mul_locallyBounded`: V at `toyD`, every quasi-character
+  (`toyD_locallyBounded`); nonvacuous for `θ = 1`. Not covered: nonzero nilpotent orbits.
 * `bp_integrable_kernel_scusp`: V when `A_G = G` (`bp_conclusion_of_AG_eq_top`, hyperbolic `V`,
   `toyD`). Not covered: `G/A_G` noncompact.
 
