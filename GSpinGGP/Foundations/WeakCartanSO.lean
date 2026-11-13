@@ -74,12 +74,12 @@ theorem good_one {S : Finset (Fin n)} : Good Q b S 1 1 :=
 
 section Moves
 
-variable [IsUltrametricDist F] [FiniteDimensional F V] (hb : IsOrthoBasis Q b)
+variable [IsUltrametricDist F] (hb : IsOrthoBasis Q b)
 include hb
 
 omit [CharZero F] in
 /-- A reflection in a basis vector is bounded and moves only that basis vector. -/
-theorem good_reflection {S : Finset (Fin n)} {j : Fin n} (hj : j ∈ S) :
+theorem good_reflection [FiniteDimensional F V] {S : Finset (Fin n)} {j : Fin n} (hj : j ∈ S) :
     letI := invertibleOfNonzero (hb.apply_ne_zero j)
     Good Q b S (1 + ‖(Q (b j))⁻¹‖ * polarBound Q b)
       (TauCeti.QuadraticMap.reflection Q (b j)) := by
@@ -99,7 +99,7 @@ theorem good_reflection {S : Finset (Fin n)} {j : Fin n} (hj : j ∈ S) :
     exact TauCeti.QuadraticMap.reflection_apply_of_polar_eq_zero Q (b j)
       (hb.polar_eq_zero j k hkj.symm)
 
-omit [FiniteDimensional F V] in
+
 /-- An Eichler transvection `E_{u,w}` with `‖u‖ ≤ 1`, `‖w‖ ≤ R` is bounded, and fixes every basis
 vector orthogonal to `u` and `w`. -/
 theorem good_transvection {S : Finset (Fin n)} {u w : V} (hu : Q u = 0) (huw : polar Q u w = 0)
@@ -149,7 +149,7 @@ end Moves
 
 section Orbit
 
-variable [IsUltrametricDist F] [FiniteDimensional F V] (hb : IsOrthoBasis Q b) {i₀ i₁ : Fin n} (hne : i₀ ≠ i₁) {ν : F}
+variable [IsUltrametricDist F] (hb : IsOrthoBasis Q b) {i₀ i₁ : Fin n} (hne : i₀ ≠ i₁) {ν : F}
   (h₀ : Q (b i₀) = ν) (h₁ : Q (b i₁) = -ν) {S' : Finset (Fin n)} (h₀S : i₀ ∉ S') (h₁S : i₁ ∉ S')
 
 omit [CharZero F] [IsUltrametricDist F] in
@@ -309,7 +309,7 @@ theorem reflection_pair_apply (α β : F) {y : V} (hy : InY b S' y) :
   module
 
 /-- **Step A.** After possibly swapping `u` and `u'`, the `u`-coordinate dominates. -/
-theorem stage_swap (α β : F) {y : V} (hy : InY b S' y) :
+theorem stage_swap [FiniteDimensional F V] (α β : F) {y : V} (hy : InY b S' y) :
     ∃ g, Good Q b (insert i₀ (insert i₁ S')) (1 + ‖(Q (b i₁))⁻¹‖ * polarBound Q b) g ∧
       ∃ α' β' : F, ‖β'‖ ≤ ‖α'‖ ∧
         g (α • (b i₀ + b i₁) + β • (b i₀ - b i₁) + y) =
@@ -453,9 +453,9 @@ theorem apply_pair_add (α β : F) {y : V} (hy : InY b S' y) :
 
 end Stages
 
-omit [CharZero F] [IsUltrametricDist F] [FiniteDimensional F V] in
+omit [CharZero F] [IsUltrametricDist F] in
 /-- The normal form `a u + c u'` with `4ac = 1` and `‖c‖ ≤ ‖a‖` is
-`(2λ)⁻¹ u + (λ/2) u'` with `0 < ‖λ‖ ≤ 1`. -/
+`(2t)⁻¹ u + (t/2) u'` with `0 < ‖t‖ ≤ 1`. -/
 theorem exists_param [CharZero F] {a c : F} (hac : 4 * a * c = 1) (hca : ‖c‖ ≤ ‖a‖) :
     ∃ t : F, t ≠ 0 ∧ ‖t‖ ≤ 1 ∧ a = (2 * t)⁻¹ ∧ c = t / 2 := by
   have ha : a ≠ 0 := by rintro rfl; simp at hac
@@ -475,7 +475,7 @@ section Assembly
 
 include hb hne h₀ h₁ h₀S h₁S
 
-omit [IsUltrametricDist F] [FiniteDimensional F V] in
+omit [IsUltrametricDist F] in
 /-- Every vector supported on `{i₀, i₁} ∪ S'` is `α u + β u' + y` with `y ∈ Y`. -/
 theorem exists_pair_decomp {v : V} (hv : ∀ j, j ≠ i₀ → j ≠ i₁ → j ∉ S' → b.repr v j = 0) :
     ∃ (α β : F) (y : V), InY b S' y ∧ v = α • (b i₀ + b i₁) + β • (b i₀ - b i₁) + y := by
@@ -493,7 +493,7 @@ theorem exists_pair_decomp {v : V} (hv : ∀ j, j ≠ i₀ → j ≠ i₁ → j 
   simp [Ne.symm hj₀, Ne.symm hj₁, hv j hj₀ hj₁ hj]
 
 /-- The orbit lemma before fixing the determinant: an isometry of determinant `±1`. -/
-theorem orbit_core :
+theorem orbit_core [FiniteDimensional F V] :
     ∃ M, ∀ v : V, (∀ j, j ≠ i₀ → j ≠ i₁ → j ∉ S' → b.repr v j = 0) → Q v = ν →
       ∃ g, Good Q b (insert i₀ (insert i₁ S')) M g ∧ ∃ t : F, t ≠ 0 ∧ ‖t‖ ≤ 1 ∧
         g v = (2 * t)⁻¹ • (b i₀ + b i₁) + (t / 2) • (b i₀ - b i₁) := by
@@ -580,7 +580,7 @@ of operator norm at most `M`, fixing the basis vectors outside `{i₀, i₁} ∪
 `(2t)⁻¹ u + (t/2) u'` (`u = b i₀ + b i₁`, `u' = b i₀ - b i₁`) with `0 < ‖t‖ ≤ 1`. This vector is
 the image of `b i₀ = (u + u')/2` under the inverse of the torus element `u ↦ t u`,
 `u' ↦ t⁻¹ u'`. -/
-theorem orbit_lemma (hS' : S'.Nonempty) :
+theorem orbit_lemma [FiniteDimensional F V] (hS' : S'.Nonempty) :
     ∃ M, ∀ v : V, (∀ j, j ≠ i₀ → j ≠ i₁ → j ∉ S' → b.repr v j = 0) → Q v = ν →
       ∃ g ∈ TauCeti.QuadraticMap.specialOrthogonalGroup Q,
         basisOpNorm b (g : V →ₗ[F] V) ≤ M ∧
