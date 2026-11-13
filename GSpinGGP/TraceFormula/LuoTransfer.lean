@@ -142,6 +142,25 @@ theorem isSS_of_isSemisimple_adV {Q : QuadraticForm F V} (hQ : IsNondeg Q)
   isSemisimple_mulLeft_of_isSemisimple_adV_baseChange hQ hX
     (IsomCent.isSemisimple_baseChange_algebraicClosure h)
 
+open Classical in
+/-- **A choice transported by a surjection**: if `E` maps the elements satisfying `p` exactly onto
+those satisfying `q`, at most one element satisfies `p`, and `E z = z'`, then `E` maps the chosen
+element of `p` (default `z`) to the chosen element of `q` (default `z'`). -/
+theorem map_dite_choose_eq {α β : Type*} (E : α → β) (hsurj : Function.Surjective E)
+    {p : α → Prop} {q : β → Prop} (hpq : ∀ a, q (E a) ↔ p a)
+    (huniq : ∀ a a', p a → p a' → a = a') {z : α} {z' : β} (hz : E z = z') :
+    E (if h : ∃ a, p a then h.choose else z) = if h : ∃ b, q b then h.choose else z' := by
+  by_cases h : ∃ a, p a
+  · have h' : ∃ b, q b := ⟨E h.choose, (hpq _).mpr h.choose_spec⟩
+    rw [dif_pos h, dif_pos h']
+    obtain ⟨a, ha⟩ := hsurj h'.choose
+    have hp : p a := (hpq a).mp (ha ▸ h'.choose_spec)
+    rw [← ha, huniq _ _ h.choose_spec hp]
+  · have h' : ¬ ∃ b, q b := fun ⟨b, hb⟩ => by
+      obtain ⟨a, rfl⟩ := hsurj b
+      exact h ⟨a, (hpq a).mp hb⟩
+    rw [dif_neg h, dif_neg h', hz]
+
 end Converse
 
 
@@ -1048,31 +1067,9 @@ theorem orbitChoice_eq_of_orbitMap (X : CliffordAlgebra d.QW)
       (∃ Y ∈ nilOrbitSet O, d.OrbitSpecAt (LinearMap.ker (adV d.QW X)) (Y : d.ambient)) →
       (∃ Y ∈ nilOrbitSet O', d.OrbitSpecAt (LinearMap.ker (adV d.QW X)) (Y : d.ambient)) →
       O = O') :
-    E (d.orbitChoiceLie X) = d.luoOf.orbitChoice (d.toSOLin (d.diagLie X)) := by
-  classical
-  unfold orbitChoiceLie LuoDatum.orbitChoice
-  by_cases h : ∃ O ∈ NilReg (lieGrpCentralizer d.G (d.diagLie X))
-      (lieCentralizer d.lieZero (d.diagLie X)),
-      ∃ Y ∈ nilOrbitSet O, d.OrbitSpecAt (LinearMap.ker (adV d.QW X)) (Y : d.ambient)
-  · have h' : ∃ O ∈ NilReg (lieGrpCentralizer d.luoOf.Gbar (d.toSOLin (d.diagLie X)))
-        (lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X))),
-        ∃ Y ∈ nilOrbitSet O, d.luoOf.OrbitSpec (LinearMap.ker (d.luoOf.fstA
-          (d.toSOLin (d.diagLie X)))) (Y : d.luoOf.Amb) :=
-      ⟨E h.choose, (hreg _).mpr h.choose_spec.1, (hspec _).mpr h.choose_spec.2⟩
-    simp only [h, h', ↓reduceDIte]
-    obtain ⟨O₂, hO₂⟩ := hsurj h'.choose
-    have hr : O₂ ∈ NilReg _ _ := (hreg O₂).mp (hO₂ ▸ h'.choose_spec.1)
-    have hs := (hspec O₂).mp (hO₂ ▸ h'.choose_spec.2)
-    rw [← hO₂, huniq _ _ h.choose_spec.1 hr h.choose_spec.2 hs]
-  · have h' : ¬ ∃ O ∈ NilReg (lieGrpCentralizer d.luoOf.Gbar (d.toSOLin (d.diagLie X)))
-        (lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X))),
-        ∃ Y ∈ nilOrbitSet O, d.luoOf.OrbitSpec (LinearMap.ker (d.luoOf.fstA
-          (d.toSOLin (d.diagLie X)))) (Y : d.luoOf.Amb) := by
-      rintro ⟨O', hr, hs⟩
-      obtain ⟨O, rfl⟩ := hsurj O'
-      exact h ⟨O, (hreg O).mp hr, (hspec O).mp hs⟩
-    simp only [h, h', ↓reduceDIte]
-    exact hzero
+    E (d.orbitChoiceLie X) = d.luoOf.orbitChoice (d.toSOLin (d.diagLie X)) :=
+  map_dite_choose_eq E hsurj (fun O => and_congr (hreg O) (hspec O))
+    (fun O O' h h' => huniq O O' h.1 h'.1 h.2 h'.2) hzero
 
 /-- **Reduction of `cTheta_toSO`** at `X` to two uniqueness statements: uniqueness of the regular
 coefficients of local expansions on `𝔤⁰` at `diagLie X` (`hgerm`; Harish-Chandra 1999 Cor 5.10,

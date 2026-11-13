@@ -553,6 +553,41 @@ theorem isOpen_setOf_isRegularSS_lieCentralizer_lieZero {D : d.ambient} (hD : D 
   ext Z
   exact d.isRegularSS_lieCentralizer_lieZero_iff Z.2
 
+/-- **The regular set of `(so(W) ⊕ so(V))_{ad D}` is open** for semisimple `D ∈ 𝔤⁰`, given
+constants `a, b ≠ 0` with `bilin(Y, Z) = B((a · 1, b · 1) ad Y, ad Z)` on `𝔤⁰` (`hform`): the image
+of the open regular set of `𝔤⁰_D` (`isOpen_setOf_isRegularSS_lieCentralizer_lieZero`) under the
+homeomorphism `ad` (`adCentralizerIso`). -/
+theorem isOpen_setOf_isRegularSS_lieCentralizer_toSOLin (hW : ¬ IsHypPlane d.QW)
+    (hV : ¬ IsHypPlane d.QV) {D : d.ambient} (hD : D ∈ d.lieZero) (hss : IsSS F D) {a b : F}
+    (ha : a ≠ 0) (hb : b ≠ 0)
+    (hform : ∀ Y ∈ d.lieZero, ∀ Z ∈ d.lieZero,
+      scaleForm d.luoOf.traceForm (d.luoOf.scalarUnit ha hb : d.luoOf.Amb) (d.toSOLin Y)
+        (d.toSOLin Z) = d.bilin Y Z) :
+    IsOpen {Z : ↥(lieCentralizer d.luoOf.lie (d.toSOLin D)) |
+      IsRegularSS (lieCentralizer d.luoOf.lie (d.toSOLin D)) (Z : d.luoOf.Amb)} := by
+  let ι := d.adCentralizerIso hW hV hD (d.luoOf.scalarUnit ha hb) hform
+  have e𝔤₀ : lieCentralizer (lieCentralizer d.lieZero D) ((1 : d.ambientˣ) : d.ambient)
+      = lieCentralizer d.lieZero D := by rw [Units.val_one, lieCentralizer_one]
+  have e𝔤₁ : lieCentralizer (lieCentralizer d.luoOf.lie (d.toSOLin D))
+      ((1 : d.luoOf.Ambˣ) : d.luoOf.Amb) = lieCentralizer d.luoOf.lie (d.toSOLin D) := by
+    rw [Units.val_one, lieCentralizer_one]
+  have hopen₀ : IsOpen {Z : ↥(lieCentralizer (lieCentralizer d.lieZero D)
+      ((1 : d.ambientˣ) : d.ambient)) | IsRegularSS (lieCentralizer (lieCentralizer d.lieZero
+        D) ((1 : d.ambientˣ) : d.ambient)) (Z : d.ambient)} := by
+    rw [e𝔤₀]
+    exact d.isOpen_setOf_isRegularSS_lieCentralizer_lieZero hD hss
+  have hopen' : IsOpen {Z : ↥(lieCentralizer (lieCentralizer d.luoOf.lie
+      (d.toSOLin D)) ((1 : d.luoOf.Ambˣ) : d.luoOf.Amb)) |
+      IsRegularSS (lieCentralizer (lieCentralizer d.luoOf.lie (d.toSOLin D))
+        ((1 : d.luoOf.Ambˣ) : d.luoOf.Amb)) (Z : d.luoOf.Amb)} := by
+    convert hopen₀.preimage ι.continuous_linEquiv_symm using 1
+    ext Z'
+    simp only [Set.mem_ofPred_eq, Set.mem_preimage]
+    rw [← ι.isRegularSS_iff _ (ι.linEquiv.symm Z').2, ← CentralizerIso.linEquiv_apply,
+      LinearEquiv.apply_symm_apply]
+  rw [← e𝔤₁]
+  exact hopen'
+
 end GGPData
 
 namespace GGPData
@@ -628,24 +663,15 @@ theorem exists_nilOrbitEquiv_toSOLin (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPla
     restrictForm_lieCentralizer_nondegenerate_of_isSS
       (d.luoOf.restrictForm_lie_traceForm_nondegenerate d.nondeg_QV)
       d.luoOf.traceForm_invariant hXm (LieAlgebra.ad_isSemisimple_of_isSemisimple_mulLeft hss)
-  have hopen₀ : IsOpen {Z : ↥(lieCentralizer (lieCentralizer d.lieZero D)
-      ((1 : d.ambientˣ) : d.ambient)) | IsRegularSS (lieCentralizer (lieCentralizer d.lieZero
-        D) ((1 : d.ambientˣ) : d.ambient)) (Z : d.ambient)} := by
-    rw [e𝔤₀]
-    exact d.isOpen_setOf_isRegularSS_lieCentralizer_lieZero hD hssD
+  have hopen₁ : IsOpen {Z : ↥(lieCentralizer d.luoOf.lie (d.toSOLin D)) |
+      IsRegularSS (lieCentralizer d.luoOf.lie (d.toSOLin D)) (Z : d.luoOf.Amb)} :=
+    d.isOpen_setOf_isRegularSS_lieCentralizer_toSOLin hW hV hD hssD ha hb hform
   have hopen' : IsOpen {Z : ↥(lieCentralizer (lieCentralizer d.luoOf.lie
       (d.toSOLin D)) ((1 : d.luoOf.Ambˣ) : d.luoOf.Amb)) |
       IsRegularSS (lieCentralizer (lieCentralizer d.luoOf.lie (d.toSOLin D))
         ((1 : d.luoOf.Ambˣ) : d.luoOf.Amb)) (Z : d.luoOf.Amb)} := by
-    convert hopen₀.preimage ι.continuous_linEquiv_symm using 1
-    ext Z'
-    simp only [Set.mem_ofPred_eq, Set.mem_preimage]
-    rw [← ι.isRegularSS_iff _ (ι.linEquiv.symm Z').2, ← CentralizerIso.linEquiv_apply,
-      LinearEquiv.apply_symm_apply]
-  have hopen₁ : IsOpen {Z : ↥(lieCentralizer d.luoOf.lie (d.toSOLin D)) |
-      IsRegularSS (lieCentralizer d.luoOf.lie (d.toSOLin D)) (Z : d.luoOf.Amb)} := by
-    rw [← e𝔤₁]
-    exact hopen'
+    rw [e𝔤₁]
+    exact hopen₁
   have hnd' : (restrictForm (lieCentralizer (lieCentralizer d.luoOf.lie (d.toSOLin D))
       ((1 : d.luoOf.Ambˣ) : d.luoOf.Amb))
         (scaleForm d.luoOf.traceForm (c : d.luoOf.Amb))).Nondegenerate

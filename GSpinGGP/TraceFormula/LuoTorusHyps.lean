@@ -16,8 +16,8 @@ import GSpinGGP.Foundations.CommutantSquarefree
   `(Z_G(X), 𝔤_X) ≃ (Z_G(uXu⁻¹), 𝔤_{uXu⁻¹})`;
 * `germLie_conj`: germs of a Lie quasi-character are conjugation invariant (the orbits matched by
   `Ad u`);
-* `isInOrbitNu_conj_iff`: Luo's orbit `O_ν` is carried to itself by isometries;
-  `LuoDatum.orbitSpec_unitConj_diagU`: Luo's recipe is `SO(W)`-invariant;
+* `LuoDatum.orbitSpec_unitConj_diagU`: Luo's recipe is `SO(W)`-invariant
+  (`SingleBlock.isInOrbitNu_conj_iff`);
 * `LuoDatum.cTheta_unitConj_diagU`, `cTheta_toSOLin_diagLie_conj`: Luo's `c_θ` is invariant under
   conjugation by `SO(W)`; `germLie0_diagLie_conj` (`hgerm`): the germs of `θ ∘ ad` at `X` and at
   `gXg⁻¹` agree (both are Luo's `c_θ`, `cTheta_toSO`);
@@ -42,24 +42,11 @@ section UnitConj
 variable {F : Type*} [CommRing F] {A : Type*} [Ring A] [Algebra F A]
 
 variable (F) in
-/-- Conjugation `a ↦ u a u⁻¹` by a unit, as an `F`-linear map. -/
-def unitConj (u : Aˣ) : A →ₗ[F] A where
-  toFun a := (u : A) * a * ((u⁻¹ : Aˣ) : A)
-  map_add' a c := by simp [mul_add, add_mul]
-  map_smul' r a := by simp
+/-- Conjugation `a ↦ u a u⁻¹` by a unit, as an algebra automorphism (`ConjAct`). -/
+def unitConj (u : Aˣ) : A ≃ₐ[F] A := MulSemiringAction.toAlgEquiv F A (ConjAct.toConjAct u)
 
-@[simp] theorem unitConj_apply (u : Aˣ) (a : A) :
+theorem unitConj_apply (u : Aˣ) (a : A) :
     unitConj F u a = (u : A) * a * ((u⁻¹ : Aˣ) : A) := rfl
-
-theorem unitConj_mul (u : Aˣ) (a c : A) :
-    unitConj F u (a * c) = unitConj F u a * unitConj F u c := by
-  simp [mul_assoc]
-
-theorem unitConj_inv_unitConj (u : Aˣ) (a : A) : unitConj F u⁻¹ (unitConj F u a) = a := by
-  simp [mul_assoc]
-
-theorem unitConj_unitConj_inv (u : Aˣ) (a : A) : unitConj F u (unitConj F u⁻¹ a) = a := by
-  simp [mul_assoc]
 
 end UnitConj
 
@@ -77,15 +64,17 @@ def conjCentralizerIso {G : Subgroup Aˣ} {𝔤 : LieSubalgebra F A} {b : Linear
     (hb : ∀ Y Z : A, b (unitConj F u Y) (unitConj F u Z) = b Y Z) (X : A) :
     CentralizerIso (lieGrpCentralizer G X) (lieCentralizer 𝔤 X) b
       (lieGrpCentralizer G (unitConj F u X)) (lieCentralizer 𝔤 (unitConj F u X)) b 1 1 :=
-  CentralizerIso.ofSubalgebra ⊤ ⊤ (unitConj F u) (unitConj F u⁻¹) (fun _ _ => trivial)
-    (fun _ _ => trivial) (by simp) (fun a _ c _ => unitConj_mul u a c)
-    (fun a _ => unitConj_inv_unitConj u a) (fun a _ => unitConj_unitConj_inv u a)
+  CentralizerIso.ofSubalgebra ⊤ ⊤ (unitConj F u).toLinearMap (unitConj F u⁻¹).toLinearMap
+    (fun _ _ => trivial) (fun _ _ => trivial) (map_one (unitConj F u))
+    (fun a _ c _ => map_mul (unitConj F u) a c)
+    (fun a _ => by simp [unitConj_apply, mul_assoc]) (fun a _ => by simp [unitConj_apply, mul_assoc])
     (fun _ _ => trivial) (fun _ _ => trivial)
     (fun Y hY => by
       rw [mem_lieCentralizer_units_one] at hY ⊢
       obtain ⟨hY𝔤, hXY⟩ := mem_lieCentralizer.mp hY
       refine mem_lieCentralizer.mpr ⟨hG u hu Y hY𝔤, ?_⟩
-      rw [← unitConj_mul, ← unitConj_mul, hXY])
+      change unitConj F u X * unitConj F u Y = unitConj F u Y * unitConj F u X
+      rw [← map_mul, ← map_mul, hXY])
     (fun Y hY => by
       rw [mem_lieCentralizer_units_one] at hY ⊢
       obtain ⟨hY𝔤, hXY⟩ := mem_lieCentralizer.mp hY
@@ -93,7 +82,10 @@ def conjCentralizerIso {G : Subgroup Aˣ} {𝔤 : LieSubalgebra F A} {b : Linear
       · have := hG u⁻¹ (inv_mem hu) Y hY𝔤
         rwa [inv_inv] at this
       · have h := congrArg (unitConj F u⁻¹) hXY
-        rwa [unitConj_mul, unitConj_mul, unitConj_inv_unitConj] at h)
+        simp only [map_mul] at h
+        have e : unitConj F u⁻¹ (unitConj F u X) = X := by simp [unitConj_apply, mul_assoc]
+        rw [e] at h
+        exact h)
     (fun _ _ => trivial) (fun _ _ => trivial)
     (fun v hv w hw => by
       rw [grpCentralizer_one] at hv ⊢
@@ -101,16 +93,16 @@ def conjCentralizerIso {G : Subgroup Aˣ} {𝔤 : LieSubalgebra F A} {b : Linear
       subst hw'
       refine ⟨G.mul_mem (G.mul_mem hu hv.1) (inv_mem hu), ?_⟩
       have h := congrArg (unitConj F u) hv.2
-      rw [unitConj_mul, unitConj_mul] at h
-      simpa [mul_assoc] using h)
+      simp only [map_mul, unitConj_apply] at h
+      simpa [mul_assoc, unitConj_apply] using h)
     (fun v hv w hw => by
       rw [grpCentralizer_one] at hv ⊢
       have hw' : w = u⁻¹ * v * u⁻¹⁻¹ := Units.ext (by rw [hw]; rfl)
       subst hw'
       refine ⟨G.mul_mem (G.mul_mem (inv_mem hu) hv.1) (inv_mem (inv_mem hu)), ?_⟩
       have h := congrArg (unitConj F u⁻¹) hv.2
-      rw [unitConj_mul, unitConj_mul, unitConj_inv_unitConj] at h
-      simpa [mul_assoc] using h)
+      simp only [map_mul, unitConj_apply] at h
+      simpa [mul_assoc, unitConj_apply] using h)
     (fun Y _ Z _ => hb Y Z)
 
 /-- **Germs of a Lie quasi-character are conjugation invariant**: for `u ∈ G(F)` and `X ∈ 𝔤`
@@ -194,7 +186,8 @@ theorem germLie_conj [PerfectField F] {G : Subgroup Aˣ} {𝔤 : LieSubalgebra F
     rintro c' ⟨hfin, ω', hω', hexp⟩
     obtain ⟨ωr, hωr, hregadd⟩ := exists_nhds_isRegularSS_add F 𝔤 hss
     haveI : ContinuousAdd A := IsModuleTopology.toContinuousAdd F A
-    have hcont : Continuous (unitConj F u) := IsModuleTopology.continuous_of_linearMap _
+    have hcont : Continuous (unitConj F u) :=
+      IsModuleTopology.continuous_of_linearMap (unitConj F u).toLinearMap
     refine ⟨?_, unitConj F u ⁻¹' ω' ∩ ωr, inter_mem
       (hcont.continuousAt.preimage_mem_nhds (by simpa using hω')) hωr,
       fun Y hY hYc hYr Z hZ => ?_⟩
@@ -227,79 +220,6 @@ theorem germLie_conj [PerfectField F] {G : Subgroup Aˣ} {𝔤 : LieSubalgebra F
 
 end GermConj
 
-section OrbitNuConj
-
-variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
-  {V : Type*} [AddCommGroup V] [Module F V] [FiniteDimensional F V]
-
-/-- `x ⊥ span{e}` iff `b(e, x) = 0`. -/
-theorem mem_orthogonal_span_singleton_iff (B : LinearMap.BilinForm F V) {e x : V} :
-    x ∈ B.orthogonal (Submodule.span F {e}) ↔ B e x = 0 := by
-  rw [LinearMap.BilinForm.mem_orthogonal_iff]
-  constructor
-  · intro h
-    exact h e (Submodule.mem_span_singleton_self e)
-  · intro h n hn
-    obtain ⟨c, rfl⟩ := Submodule.mem_span_singleton.mp hn
-    change B (c • e) x = 0
-    rw [map_smul, LinearMap.smul_apply, h, smul_zero]
-
-/-- One direction of `isInOrbitNu_conj_iff`. -/
-theorem isInOrbitNu_conj_of {Q : QuadraticForm F V} (σ : V ≃ₗ[F] V) (hσ : ∀ v, Q (σ v) = Q v)
-    {U : Submodule F V} {ν : F} {N : V →ₗ[F] V} (h : IsInOrbitNu Q U ν N) :
-    IsInOrbitNu Q (U.map (σ : V →ₗ[F] V)) ν (σ.conj N) := by
-  obtain ⟨d₀, U₁, h1, h2, h3, h4, h5, h6, h7, ⟨u, hu, hu'⟩, e, he, hQe, hsplit⟩ := h
-  have hb : ∀ a c, bform Q (σ a) (σ c) = bform Q a c := fun a c => by
-    simp only [bform, QuadraticMap.associated_apply]
-    rw [← map_add, hσ, hσ, hσ]
-  have hconj : ∀ v, σ.conj N v = σ (N (σ.symm v)) := fun v => rfl
-  have hpow : ∀ k : ℕ, ∀ v, (σ.conj N ^ k) v = σ ((N ^ k) (σ.symm v)) := by
-    intro k
-    induction k with
-    | zero => intro v; simp
-    | succ k ih => intro v; rw [pow_succ, Module.End.mul_apply, ih, hconj, pow_succ,
-        Module.End.mul_apply, LinearEquiv.symm_apply_apply]
-  refine ⟨σ d₀, U₁.map (σ : V →ₗ[F] V), ⟨d₀, h1, rfl⟩, by rwa [hσ], Submodule.map_mono h3,
-    ?_, ?_, ?_, ?_, ⟨σ u, ⟨u, hu, rfl⟩, ?_⟩, σ e, ⟨e, he, rfl⟩, by rw [hσ, hQe], ?_⟩
-  · rintro _ ⟨w, hw, rfl⟩
-    rw [LinearEquiv.coe_coe, hb]
-    exact h4 w hw
-  · rw [← h5, Submodule.map_sup, Submodule.map_span, Set.image_singleton, LinearEquiv.coe_coe]
-  · rw [hconj, LinearEquiv.symm_apply_apply, h6, map_zero]
-  · rintro _ ⟨w, hw, rfl⟩
-    rw [LinearEquiv.coe_coe, hconj, LinearEquiv.symm_apply_apply]
-    exact ⟨_, h7 w hw, rfl⟩
-  · rw [LinearEquiv.finrank_map_eq, hpow, LinearEquiv.symm_apply_apply]
-    exact fun h0 => hu' (σ.injective (by rw [h0, map_zero]))
-  · set S := U₁ ⊓ (bform Q).orthogonal (Submodule.span F {e})
-    have hS : U₁.map (σ : V →ₗ[F] V) ⊓ (bform Q).orthogonal (Submodule.span F {σ e}) =
-        S.map (σ : V →ₗ[F] V) := by
-      ext x
-      simp only [Submodule.mem_inf, S, Submodule.mem_map_equiv, mem_orthogonal_span_singleton_iff]
-      rw [← hb e (σ.symm x), LinearEquiv.apply_symm_apply]
-    rw [hS]
-    let iso : (Q.comp S.subtype).IsometryEquiv (Q.comp (S.map (σ : V →ₗ[F] V)).subtype) :=
-      { toLinearEquiv := σ.submoduleMap S
-        map_app' := fun v => hσ v }
-    unfold IsSplitQF at hsplit ⊢
-    rw [← LinearEquiv.finrank_eq iso.toLinearEquiv,
-      ← QuadClassify.wittIndex_eq_of_isometryEquiv iso]
-    exact hsplit
-
-/-- **Luo's orbit `O_ν` is intrinsic**: an isometry `σ` of `Q` carries `N ∈ O_ν` on `U` to
-`σ N σ⁻¹ ∈ O_ν` on `σ U`. -/
-theorem isInOrbitNu_conj_iff {Q : QuadraticForm F V} (σ : V ≃ₗ[F] V) (hσ : ∀ v, Q (σ v) = Q v)
-    {U : Submodule F V} {ν : F} {N : V →ₗ[F] V} :
-    IsInOrbitNu Q (U.map (σ : V →ₗ[F] V)) ν (σ.conj N) ↔ IsInOrbitNu Q U ν N := by
-  refine ⟨fun h => ?_, isInOrbitNu_conj_of σ hσ⟩
-  have hσ' : ∀ v, Q (σ.symm v) = Q v := fun v => by
-    rw [← hσ (σ.symm v), LinearEquiv.apply_symm_apply]
-  have := isInOrbitNu_conj_of σ.symm hσ' h
-  rwa [← Submodule.map_comp, show ((σ.symm : V →ₗ[F] V) ∘ₗ (σ : V →ₗ[F] V)) = LinearMap.id
-    from by ext; simp, Submodule.map_id,
-    show σ.symm.conj (σ.conj N) = N from by ext v; simp [LinearEquiv.conj_apply]] at this
-
-end OrbitNuConj
 
 namespace LuoDatum
 
@@ -312,63 +232,67 @@ theorem traceForm_unitConj (u : L.Ambˣ) (Y Z : L.Amb) :
     rw [← map_mul, Units.inv_mul, map_one]
   have hV : L.sndA ((u⁻¹ : L.Ambˣ) : L.Amb) * L.sndA (u : L.Amb) = 1 := by
     rw [← map_mul, Units.inv_mul, map_one]
-  simp only [traceForm, LinearMap.mk₂_apply, ← map_mul, ← unitConj_mul]
-  simp only [unitConj_apply, map_mul]
-  have e1 : LinearMap.trace F L.W (L.fstA (u : L.Amb) * (L.fstA Y * L.fstA Z) *
-      L.fstA ((u⁻¹ : L.Ambˣ) : L.Amb)) = LinearMap.trace F L.W (L.fstA Y * L.fstA Z) := by
-    rw [LinearMap.trace_mul_comm, ← mul_assoc, hW, one_mul]
-  have e2 : LinearMap.trace F L.V (L.sndA (u : L.Amb) * (L.sndA Y * L.sndA Z) *
-      L.sndA ((u⁻¹ : L.Ambˣ) : L.Amb)) = LinearMap.trace F L.V (L.sndA Y * L.sndA Z) := by
-    rw [LinearMap.trace_mul_comm, ← mul_assoc, hV, one_mul]
-  rw [e1, e2]
+  have keyW : ∀ P R : Module.End F L.W, LinearMap.trace F L.W
+      (L.fstA (u : L.Amb) * P * L.fstA ((u⁻¹ : L.Ambˣ) : L.Amb) *
+        (L.fstA (u : L.Amb) * R * L.fstA ((u⁻¹ : L.Ambˣ) : L.Amb))) =
+      LinearMap.trace F L.W (P * R) := by
+    intro P R
+    have e : L.fstA (u : L.Amb) * P * L.fstA ((u⁻¹ : L.Ambˣ) : L.Amb) *
+        (L.fstA (u : L.Amb) * R * L.fstA ((u⁻¹ : L.Ambˣ) : L.Amb)) =
+        L.fstA (u : L.Amb) * (P * R) * L.fstA ((u⁻¹ : L.Ambˣ) : L.Amb) := by
+      simp only [mul_assoc]
+      rw [← mul_assoc _ (L.fstA (u : L.Amb)), hW, one_mul]
+    rw [e, LinearMap.trace_mul_comm, ← mul_assoc, hW, one_mul]
+  have keyV : ∀ P R : Module.End F L.V, LinearMap.trace F L.V
+      (L.sndA (u : L.Amb) * P * L.sndA ((u⁻¹ : L.Ambˣ) : L.Amb) *
+        (L.sndA (u : L.Amb) * R * L.sndA ((u⁻¹ : L.Ambˣ) : L.Amb))) =
+      LinearMap.trace F L.V (P * R) := by
+    intro P R
+    have e : L.sndA (u : L.Amb) * P * L.sndA ((u⁻¹ : L.Ambˣ) : L.Amb) *
+        (L.sndA (u : L.Amb) * R * L.sndA ((u⁻¹ : L.Ambˣ) : L.Amb)) =
+        L.sndA (u : L.Amb) * (P * R) * L.sndA ((u⁻¹ : L.Ambˣ) : L.Amb) := by
+      simp only [mul_assoc]
+      rw [← mul_assoc _ (L.sndA (u : L.Amb)), hV, one_mul]
+    rw [e, LinearMap.trace_mul_comm, ← mul_assoc, hV, one_mul]
+  simp only [traceForm, LinearMap.mk₂_apply, unitConj_apply, map_mul]
+  rw [keyW, keyV]
 
 /-- `diagU p ∈ Ḡ` for `p ∈ SO(W)`. -/
 theorem diagU_mem_Gbar {p : (Module.End F L.W)ˣ} (hp : p ∈ SOu L.QW) : L.diagU p ∈ L.Gbar :=
   Subgroup.mem_inf.mpr ⟨Subgroup.mem_comap.mpr (by rw [unitFst_diagU]; exact hp),
     Subgroup.mem_comap.mpr (by rw [unitSnd_diagU]; exact L.extU_mem_SOu hp)⟩
 
-/-- `p ∈ SO(W)` as a linear isometry. -/
-abbrev soEquiv {U : Type*} [AddCommGroup U] [Module F U] (p : (Module.End F U)ˣ) : U ≃ₗ[F] U :=
-  LinearMap.GeneralLinearGroup.generalLinearEquiv F U p
-
-theorem fstA_unitConj_diagU (p : (Module.End F L.W)ˣ) (Y : L.Amb) :
-    L.fstA (unitConj F (L.diagU p) Y) = (soEquiv p).conj (L.fstA Y) :=
-  LinearMap.ext fun _ => rfl
-
-theorem sndA_unitConj_diagU (p : (Module.End F L.W)ˣ) (Y : L.Amb) :
-    L.sndA (unitConj F (L.diagU p) Y) = (soEquiv (Units.map L.extGrp p)).conj (L.sndA Y) :=
-  LinearMap.ext fun _ => rfl
-
-theorem ker_conj {U : Type*} [AddCommGroup U] [Module F U] (σ : U ≃ₗ[F] U) (N : Module.End F U) :
-    LinearMap.ker (σ.conj N) = (LinearMap.ker N).map (σ : U →ₗ[F] U) := by
-  ext x
-  rw [Submodule.mem_map_equiv, LinearMap.mem_ker, LinearMap.mem_ker, LinearEquiv.conj_apply,
-    LinearMap.comp_apply, LinearMap.comp_apply, LinearEquiv.coe_coe, LinearEquiv.coe_coe,
-    LinearEquiv.map_eq_zero_iff]
-
 /-- **Luo's recipe is invariant under `SO(W)`**: conjugating by `diagU p`, `p ∈ SO(W)`, and
-moving `U` by `p` (`isInOrbitNu_conj_iff` on `W` and on `V`, where `p` acts as `p ⊕ 1`). -/
+moving `U` by `p` (`SingleBlock.isInOrbitNu_conj_iff` on `W` and on `V`, where `p` acts as
+`p ⊕ 1`). -/
 theorem orbitSpec_unitConj_diagU {p : (Module.End F L.W)ˣ} (hp : p ∈ SOu L.QW)
     (U : Submodule F L.W) (Y : L.Amb) :
-    L.OrbitSpec (U.map (soEquiv p : L.W →ₗ[F] L.W)) (unitConj F (L.diagU p) Y) ↔
-      L.OrbitSpec U Y := by
+    L.OrbitSpec (U.map (p : Module.End F L.W)) (unitConj F (L.diagU p) Y) ↔ L.OrbitSpec U Y := by
   have hpV := L.extU_mem_SOu hp
-  have hprod : (U.map (soEquiv p : L.W →ₗ[F] L.W)).prod (⊤ : Submodule F L.Zs) =
-      (U.prod ⊤).map (soEquiv (Units.map L.extGrp p) : L.V →ₗ[F] L.V) := by
+  set σW : L.QW.IsometryEquiv L.QW :=
+    ⟨LinearMap.GeneralLinearGroup.generalLinearEquiv F _ p, fun v => hp.1 v⟩
+  set σV : L.QV.IsometryEquiv L.QV :=
+    ⟨LinearMap.GeneralLinearGroup.generalLinearEquiv F _ (Units.map L.extGrp p), fun v => hpV.1 v⟩
+  have hf : L.fstA (unitConj F (L.diagU p) Y) = σW.toLinearEquiv.conj (L.fstA Y) :=
+    LinearMap.ext fun _ => rfl
+  have hs : L.sndA (unitConj F (L.diagU p) Y) = σV.toLinearEquiv.conj (L.sndA Y) :=
+    LinearMap.ext fun _ => rfl
+  have e1 : U.map (p : Module.End F L.W) = U.map (σW.toLinearEquiv : L.W →ₗ[F] L.W) := rfl
+  have hprod : (U.map (σW.toLinearEquiv : L.W →ₗ[F] L.W)).prod (⊤ : Submodule F L.Zs) =
+      (U.prod ⊤).map (σV.toLinearEquiv : L.V →ₗ[F] L.V) := by
     ext ⟨w, z⟩
     rw [Submodule.mem_map_equiv, Submodule.mem_prod, Submodule.mem_prod, Submodule.mem_map_equiv]
     simp only [Submodule.mem_top, and_true]
     rfl
   unfold OrbitSpec
-  rw [hprod, LinearEquiv.finrank_map_eq, LinearEquiv.finrank_map_eq, fstA_unitConj_diagU,
-    sndA_unitConj_diagU, isInOrbitNu_conj_iff (soEquiv p) (fun v => hp.1 v),
-    isInOrbitNu_conj_iff (soEquiv (Units.map L.extGrp p)) (fun v => hpV.1 v)]
+  rw [e1, hprod, LinearEquiv.finrank_map_eq, LinearEquiv.finrank_map_eq, hf, hs,
+    SingleBlock.isInOrbitNu_conj_iff σV, SingleBlock.isInOrbitNu_conj_iff σW]
 
 /-- **Luo's `c_θ` is invariant under conjugation by `SO(W)`** (diagonally in `Ḡ`), given
-uniqueness of the regular germ coefficients at `M` (`germLie_unique_SO`), of the orbit selected by
-Luo's recipe at `M' = p M p⁻¹` (`huniq'`), orbit measures at `M'` (`hum`) and openness of the
-regular set of `𝔤_{M'}` (`hopen`): `germLie_conj` for `Ad(diagU p)`, which carries the recipe at
-`M` to the recipe at `M'` (`orbitSpec_unitConj_diagU`, `ker M' = p ker M`). -/
+uniqueness of the orbit selected by Luo's recipe at `M' = p M p⁻¹` (`huniq'`) and of orbit measures
+at `M'` (`hum`), and openness of the regular set of `𝔤_{M'}` (`hopen`): `germLie_conj` for
+`Ad(diagU p)`, using `germLie_unique_SO` at `M`; `Ad(diagU p)` carries the recipe at `M` to the
+recipe at `M'` (`orbitSpec_unitConj_diagU`, `ker M' = p ker M`, `map_dite_choose_eq`). -/
 theorem cTheta_unitConj_diagU (hQV : IsNondeg L.QV) (ψ : NontrivialAddChar F) {θ : ↥L.lie → ℂ}
     (hθ : IsLieQuasiCharacter L.Gbar L.lie L.traceForm ψ θ) {p : (Module.End F L.W)ˣ}
     (hp : p ∈ SOu L.QW) {M : L.Amb} (hM : M ∈ L.lie) (hss : IsSS F M)
@@ -396,8 +320,22 @@ theorem cTheta_unitConj_diagU (hQV : IsNondeg L.QV) (ψ : NontrivialAddChar F) {
     (L.traceForm_unitConj _) hM hss hnd hopen hum
     (germLie_unique_SO L hQV ψ θ M hM hss)
   have hker : LinearMap.ker (L.fstA (unitConj F (L.diagU p) M)) =
-      (LinearMap.ker (L.fstA M)).map (soEquiv p : L.W →ₗ[F] L.W) := by
-    rw [fstA_unitConj_diagU, ker_conj]
+      (LinearMap.ker (L.fstA M)).map (p : Module.End F L.W) := by
+    ext v
+    rw [LinearMap.mem_ker, Submodule.mem_map]
+    have hpp : ∀ w, (p : Module.End F L.W) (((p⁻¹ : (Module.End F L.W)ˣ) : Module.End F L.W) w) = w :=
+      fun w => by rw [← Module.End.mul_apply, Units.mul_inv, Module.End.one_apply]
+    have hpp' : ∀ w, ((p⁻¹ : (Module.End F L.W)ˣ) : Module.End F L.W) ((p : Module.End F L.W) w) = w :=
+      fun w => by rw [← Module.End.mul_apply, Units.inv_mul, Module.End.one_apply]
+    change (p : Module.End F L.W) (L.fstA M (((p⁻¹ : (Module.End F L.W)ˣ) : Module.End F L.W) v)) = 0
+      ↔ _
+    constructor
+    · intro h
+      refine ⟨_, ?_, hpp v⟩
+      rw [LinearMap.mem_ker]
+      simpa [hpp'] using congrArg ((p⁻¹ : (Module.End F L.W)ˣ) : Module.End F L.W) h
+    · rintro ⟨w, hw, rfl⟩
+      rw [hpp', LinearMap.mem_ker.mp hw, map_zero]
   have hspecK : ∀ O, (∃ Y ∈ nilOrbitSet (E O),
       L.OrbitSpec (LinearMap.ker (L.fstA (unitConj F (L.diagU p) M))) (Y : L.Amb)) ↔
       ∃ Y ∈ nilOrbitSet O, L.OrbitSpec (LinearMap.ker (L.fstA M)) (Y : L.Amb) := fun O => by
@@ -407,24 +345,13 @@ theorem cTheta_unitConj_diagU (hQV : IsNondeg L.QV) (ψ : NontrivialAddChar F) {
   rw [← hgerm (L.orbitChoice M)]
   congr 1
   unfold orbitChoice
-  by_cases h : ∃ O ∈ NilReg (lieGrpCentralizer L.Gbar M) (lieCentralizer L.lie M),
-      ∃ Y ∈ nilOrbitSet O, L.OrbitSpec (LinearMap.ker (L.fstA M)) (Y : L.Amb)
-  · have h' : ∃ O ∈ NilReg (lieGrpCentralizer L.Gbar (unitConj F (L.diagU p) M))
-        (lieCentralizer L.lie (unitConj F (L.diagU p) M)), ∃ Y ∈ nilOrbitSet O,
-          L.OrbitSpec (LinearMap.ker (L.fstA (unitConj F (L.diagU p) M))) (Y : L.Amb) :=
-      ⟨E h.choose, (hreg _).mpr h.choose_spec.1, (hspecK _).mpr h.choose_spec.2⟩
-    simp only [h, h', ↓reduceDIte]
-    exact huniq' _ _ h'.choose_spec.1 ((hreg _).mpr h.choose_spec.1) h'.choose_spec.2
-      ((hspecK _).mpr h.choose_spec.2)
-  · have h' : ¬ ∃ O ∈ NilReg (lieGrpCentralizer L.Gbar (unitConj F (L.diagU p) M))
-        (lieCentralizer L.lie (unitConj F (L.diagU p) M)), ∃ Y ∈ nilOrbitSet O,
-          L.OrbitSpec (LinearMap.ker (L.fstA (unitConj F (L.diagU p) M))) (Y : L.Amb) := by
-      rintro ⟨O', hO', hs⟩
-      refine h ⟨E.symm O', (hreg _).mp ?_, (hspecK _).mp ?_⟩
-      · rwa [Equiv.apply_symm_apply]
-      · rwa [Equiv.apply_symm_apply]
-    simp only [h, h', ↓reduceDIte]
-    exact hzero.symm
+  refine (map_dite_choose_eq (p := fun O => O ∈ NilReg _ _ ∧ ∃ Y ∈ nilOrbitSet O,
+      L.OrbitSpec (LinearMap.ker (L.fstA M)) (Y : L.Amb))
+    (q := fun O => O ∈ NilReg _ _ ∧ ∃ Y ∈ nilOrbitSet O,
+      L.OrbitSpec (LinearMap.ker (L.fstA (unitConj F (L.diagU p) M))) (Y : L.Amb))
+    E E.surjective (fun O => and_congr (hreg O) (hspecK O))
+    (fun O O' h h' => E.injective (huniq' _ _ ((hreg O).mpr h.1) ((hreg O').mpr h'.1)
+      ((hspecK O).mpr h.2) ((hspecK O').mpr h'.2))) hzero).symm
 
 end LuoDatum
 
@@ -432,39 +359,6 @@ namespace GGPData
 
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F] (d : GGPData F)
   (ψ : NontrivialAddChar F)
-
-/-- **The regular set of `(so(W) ⊕ so(V))_{ad D}` is open** for semisimple `D ∈ 𝔤⁰`: the image of
-the open regular set of `𝔤⁰_D` (`isOpen_setOf_isRegularSS_lieCentralizer_lieZero`) under the
-homeomorphism `ad` (`adCentralizerIso`). -/
-theorem isOpen_setOf_isRegularSS_lieCentralizer_toSOLin (hW : ¬ IsHypPlane d.QW)
-    (hV : ¬ IsHypPlane d.QV) {D : d.ambient} (hD : D ∈ d.lieZero) (hss : IsSS F D) :
-    IsOpen {Z : ↥(lieCentralizer d.luoOf.lie (d.toSOLin D)) |
-      IsRegularSS (lieCentralizer d.luoOf.lie (d.toSOLin D)) (Z : d.luoOf.Amb)} := by
-  let ι := d.adCentralizerIso hW hV hD
-    (d.luoOf.scalarUnit (formConst_ne_zero (Module.finrank F (Fin d.m → F)))
-      (formConst_ne_zero (Module.finrank F d.V)))
-    (fun _ hY _ hZ => d.scaleForm_traceForm_toSOLin hY hZ)
-  have e𝔤₀ : lieCentralizer (lieCentralizer d.lieZero D) ((1 : d.ambientˣ) : d.ambient)
-      = lieCentralizer d.lieZero D := by rw [Units.val_one, lieCentralizer_one]
-  have e𝔤₁ : lieCentralizer (lieCentralizer d.luoOf.lie (d.toSOLin D))
-      ((1 : d.luoOf.Ambˣ) : d.luoOf.Amb) = lieCentralizer d.luoOf.lie (d.toSOLin D) := by
-    rw [Units.val_one, lieCentralizer_one]
-  have hopen₀ : IsOpen {Z : ↥(lieCentralizer (lieCentralizer d.lieZero D)
-      ((1 : d.ambientˣ) : d.ambient)) | IsRegularSS (lieCentralizer (lieCentralizer d.lieZero
-        D) ((1 : d.ambientˣ) : d.ambient)) (Z : d.ambient)} := by
-    rw [e𝔤₀]
-    exact d.isOpen_setOf_isRegularSS_lieCentralizer_lieZero hD hss
-  have hopen' : IsOpen {Z : ↥(lieCentralizer (lieCentralizer d.luoOf.lie
-      (d.toSOLin D)) ((1 : d.luoOf.Ambˣ) : d.luoOf.Amb)) |
-      IsRegularSS (lieCentralizer (lieCentralizer d.luoOf.lie (d.toSOLin D))
-        ((1 : d.luoOf.Ambˣ) : d.luoOf.Amb)) (Z : d.luoOf.Amb)} := by
-    convert hopen₀.preimage ι.continuous_linEquiv_symm using 1
-    ext Z'
-    simp only [Set.mem_ofPred_eq, Set.mem_preimage]
-    rw [← ι.isRegularSS_iff _ (ι.linEquiv.symm Z').2, ← CentralizerIso.linEquiv_apply,
-      LinearEquiv.apply_symm_apply]
-  rw [← e𝔤₁]
-  exact hopen'
 
 /-- **At most one regular nilpotent orbit of `(so(W) ⊕ so(V))_{ad X}` meets Luo's recipe**, for
 `X ∈ 𝔱⁰_♮` of a torus of `Γ(G,H)`: `orbitSpecAt_orbit_unique` transported along the orbit map of
@@ -526,6 +420,8 @@ theorem cTheta_toSOLin_diagLie_conj (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlan
   have hD' := d.diagLie_mem_lieZero hX'.1.1
   have hssD' := d.isSS_diagLie (d.isSS_of_isGammaEltLie T' hX')
   have hopen := d.isOpen_setOf_isRegularSS_lieCentralizer_toSOLin hW hV hD' hssD'
+    (formConst_ne_zero (Module.finrank F (Fin d.m → F))) (formConst_ne_zero (Module.finrank F d.V))
+    (fun _ hY _ hZ => d.scaleForm_traceForm_toSOLin hY hZ)
   have huniq := d.orbitSpec_orbit_unique_toSOLin ψ hW hV T' hX'
   have hM' := d.toSOLin_diagLie_conj g hX.1.1
   rw [hM'] at hopen huniq ⊢

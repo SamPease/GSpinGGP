@@ -9,7 +9,7 @@ import GSpinGGP.Foundations.Determinant
 /-!
 # Endomorphisms with commutative commutant
 
-For an endomorphism `f` of a finite-dimensional space over a field `K` of characteristic `0`:
+For an endomorphism `f` of a finite-dimensional space over a perfect field `K`:
 
 * `commute_of_squarefree_charpoly`: if the characteristic polynomial of `f` is squarefree, any
   two endomorphisms commuting with `f` commute;
@@ -122,7 +122,7 @@ theorem commute_of_finrank_eigenspace_le_one [IsAlgClosed K] {f : Module.End K V
 /-- **Squarefree characteristic polynomial = eigenspaces are lines**, for a semisimple `f` over
 an algebraically closed field: `dim E_μ = dim E_μ^{max} = mult_μ(χ_f)`
 (`finrank_maxGenEigenspace_eq`), and a split polynomial is squarefree iff its roots are simple. -/
-theorem squarefree_charpoly_iff_finrank_eigenspace_le_one [IsAlgClosed K] [CharZero K]
+theorem squarefree_charpoly_iff_finrank_eigenspace_le_one [IsAlgClosed K]
     {f : Module.End K V} (hf : f.IsSemisimple) :
     Squarefree f.charpoly ↔ ∀ μ, finrank K (f.eigenspace μ) ≤ 1 := by
   classical
@@ -138,7 +138,8 @@ end Eigen
 
 section Descent
 
-variable {K V : Type*} [Field K] [CharZero K] [AddCommGroup V] [Module K V] [FiniteDimensional K V]
+variable {K V : Type*} [Field K] [PerfectField K] [AddCommGroup V] [Module K V]
+  [FiniteDimensional K V]
 
 /-- `X ↦ X M − M X` on matrices (one component). -/
 def commMatMap {n : Type*} [Fintype n] [DecidableEq n] {R : Type*} [CommRing R]
@@ -151,13 +152,11 @@ theorem mem_ker_commMatMap {n : Type*} [Fintype n] [DecidableEq n] {R : Type*} [
   simp [sub_eq_zero, Commute, SemiconjBy, eq_comm]
 
 theorem commute_toLin'_iff {n : Type*} [Fintype n] [DecidableEq n] {R : Type*} [CommRing R]
-    {X Y : Matrix n n R} : Commute (Matrix.toLin' X) (Matrix.toLin' Y) ↔ Commute X Y := by
-  have e : ∀ Z : Matrix n n R, Matrix.toLin' Z = Matrix.toLinAlgEquiv' Z := fun _ => rfl
-  rw [e, e]
-  exact ⟨fun h => by simpa using h.map Matrix.toLinAlgEquiv'.symm, fun h => h.map _⟩
+    {X Y : Matrix n n R} : Commute (Matrix.toLin' X) (Matrix.toLin' Y) ↔ Commute X Y :=
+  commute_map_iff (f := Matrix.toLinAlgEquiv' (R := R) (n := n)) (EquivLike.injective _)
 
-/-- **A squarefree characteristic polynomial makes the commutant commutative** (characteristic
-`0`): over `K̄`, `χ_f` stays squarefree, so `f` is semisimple with eigenspaces of dimension `≤ 1`
+/-- **A squarefree characteristic polynomial makes the commutant commutative** (`K` perfect):
+over `K̄`, `χ_f` stays squarefree, so `f` is semisimple with eigenspaces of dimension `≤ 1`
 (`squarefree_charpoly_iff_finrank_eigenspace_le_one`), and endomorphisms commuting with `f`
 commute (`commute_of_finrank_eigenspace_le_one`); descend through matrices. -/
 theorem commute_of_squarefree_charpoly {f : Module.End K V} (hsq : Squarefree f.charpoly)
@@ -165,7 +164,6 @@ theorem commute_of_squarefree_charpoly {f : Module.End K V} (hsq : Squarefree f.
   classical
   let L := AlgebraicClosure K
   let φ := algebraMap K L
-  have : CharZero L := charZero_of_injective_algebraMap φ.injective
   let b := Module.finBasis K V
   let T := LinearMap.toMatrixAlgEquiv b
   let Mp := φ.mapMatrix (m := Fin (finrank K V))
@@ -189,7 +187,7 @@ theorem commute_of_squarefree_charpoly {f : Module.End K V} (hsq : Squarefree f.
   simpa using this.map T.symm
 
 /-- **A semisimple endomorphism with commutative commutant has a squarefree characteristic
-polynomial** (characteristic `0`): the commutant of the matrix over `K̄` is spanned by that over `K`
+polynomial** (`K` perfect): the commutant of the matrix over `K̄` is spanned by that over `K`
 (`ker_map_matrix_eq_span`), hence commutative; so every eigenspace over `K̄` is a line
 (`exists_not_commute_of_one_lt_finrank_eigenspace`), and `χ_f` is squarefree over `K̄`
 (`squarefree_charpoly_iff_finrank_eigenspace_le_one`), hence over `K`. -/
@@ -199,7 +197,6 @@ theorem squarefree_charpoly_of_commute {f : Module.End K V} (hf : f.IsSemisimple
   classical
   let L := AlgebraicClosure K
   let φ := algebraMap K L
-  have : CharZero L := charZero_of_injective_algebraMap φ.injective
   let b := Module.finBasis K V
   let T := LinearMap.toMatrixAlgEquiv b
   set M := T f
