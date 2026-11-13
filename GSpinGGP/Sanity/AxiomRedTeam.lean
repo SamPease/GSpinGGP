@@ -45,6 +45,11 @@ the axiom it tests; the computations of germs at `toyD` use `exists_isSelfDual` 
   clause.
 * `luo_lie_geomExpansion_SO`: V on the smallest Luo datum, all measures and `f`
   (`luo_conclusion_L0`). Not covered: nontrivial tori.
+* `germLie_unique_SO`: V on the smallest Luo datum, every `θ` (`L0_germLie_unique`), nonvacuous
+  (`L0_hasGermExpansionLie`); the hypothesis `X ∈ 𝔤` is needed
+  (`L0_germLie_unique_needs_mem_lie`); consequences on any Luo datum
+  (`false_of_orbitMeasure_eq_lie`, `germLie_unique_SO_forces_jHat_ne_zero`). Not covered: several
+  orbits.
 * `jantzen_finrank_soCentMat_ge`: V for `n = 3` (`jantzen_ge_three`). Not covered: `n ≥ 4`.
 * `jantzen_regularNil_partition`: V for `n = 3`, `Φ` antidiagonal (`jantzen_partition_three`); C
   at `n = 4` with the previous axiom (`partition_four_via_axioms`). Not covered: `n ≥ 5`.
