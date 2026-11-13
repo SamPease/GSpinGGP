@@ -41,9 +41,9 @@ variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
 /-- **An isomorphism of the descent data at `x` and `y`**: an `F`-linear map of the ambient algebras
 restricting to a bijection `𝔤_x(F) → 𝔤'_y(F)` that respects the commutator, the forms `b`, `b'`,
 nilpotency, regular semisimplicity in `𝔤_x` and `𝔤'_y`, and the maps `Y ↦ e^Y X e^{-Y}`
-(`orbitMap`), together with a bijection `G_x(F) → G'_y(F)` intertwining the adjoint actions.
-This is what an isomorphism `G_x ≃ G'_y` defined over `F` (restriction of an isomorphism of the
-ambient algebras over `F̄`) induces on `F`-points. -/
+(`orbitMap`) for `Y` near `0`, together with a bijection `G_x(F) → G'_y(F)` intertwining the
+adjoint actions. An isomorphism `G_x ≃ G'_y` defined over `F` induces such data on `F`-points, and
+so does `ad : so_Cliff(W) → so(W)` (which is not the restriction of an algebra isomorphism). -/
 structure CentralizerIso (G : Subgroup Aˣ) (𝔤 : LieSubalgebra F A) (b : LinearMap.BilinForm F A)
     (G' : Subgroup A'ˣ) (𝔤' : LieSubalgebra F A') (b' : LinearMap.BilinForm F A')
     (x : Aˣ) (y : A'ˣ) where
@@ -59,8 +59,10 @@ structure CentralizerIso (G : Subgroup Aˣ) (𝔤 : LieSubalgebra F A) (b : Line
     IsRegularSS (lieCentralizer 𝔤' (y : A')) (lin X) ↔ IsRegularSS (lieCentralizer 𝔤 (x : A)) X
   /-- `ι(e^Y X e^{-Y}) = e^{ι Y} ι(X) e^{-ι Y}` for `Y` near `0` (only the charts near `0` enter
   the orbit measures).  It is required only near `0`: for a map that is not the restriction of an
-  algebra isomorphism (e.g. `ad : so_Cliff(W) → so(W)`, whose eigenvalues are twice those of left
-  multiplication) the two exponential series need not converge for the same `Y`. -/
+  algebra isomorphism the two exponential series need not converge for the same `Y`: for
+  `ad : so_Cliff(W) → so(W)` the eigenvalues of `ad Y` are twice those of left multiplication by
+  `Y`, so in residue characteristic `2` `ad Y` can have smaller spectral radius than left
+  multiplication. -/
   map_orbitMap : ∃ U ∈ 𝓝 (0 : A), ∀ X ∈ lieCentralizer 𝔤 (x : A), ∀ Y ∈ lieCentralizer 𝔤 (x : A),
     Y ∈ U → lin (orbitMap F X Y) = orbitMap F (lin X) (lin Y)
   /-- The map on groups. -/
@@ -237,6 +239,19 @@ theorem linEquiv_mem_nilOrbitSet_iff (hG : ∀ g ∈ G, ∀ Y ∈ 𝔤, (g : A) 
     exact ⟨(ι.isNilpotent_iff X X.2).mp hn', (ι.nilOrbitMap_bijective hG).1 hq'⟩
   · rintro ⟨hn, rfl⟩
     exact ⟨(ι.isNilpotent_iff X X.2).mpr hn, rfl⟩
+
+/-- `ι` carries the elements of the orbit `O` onto those of `ι O`. -/
+theorem exists_mem_nilOrbitSet_nilOrbitEquiv_iff
+    (hG : ∀ g ∈ G, ∀ Y ∈ 𝔤, (g : A) * Y * (↑g⁻¹ : A) ∈ 𝔤)
+    (O : NilOrbit (grpCentralizer G x) (lieCentralizer 𝔤 (x : A))) (P : A' → Prop) :
+    (∃ Y' ∈ nilOrbitSet (ι.nilOrbitEquiv hG O), P (Y' : A')) ↔
+      ∃ Y ∈ nilOrbitSet O, P (ι.lin (Y : A)) := by
+  constructor
+  · rintro ⟨Y', hY', hP⟩
+    obtain ⟨Y, rfl⟩ := ι.linEquiv.surjective Y'
+    exact ⟨Y, (ι.linEquiv_mem_nilOrbitSet_iff hG O Y).mp hY', hP⟩
+  · rintro ⟨Y, hY, hP⟩
+    exact ⟨ι.linEquiv Y, (ι.linEquiv_mem_nilOrbitSet_iff hG O Y).mpr hY, hP⟩
 
 /-- Conjugation by `g ∈ G_x(F)` on `𝔤_x` corresponds under `ι` to conjugation by `ι g` on
 `𝔤'_y`, as an identity of preimages. -/

@@ -22,12 +22,10 @@ which turns `bilin` into `B` (`scaleForm_traceForm_toSOLin`).
   `LuoDatum.eventually_mem_lie_of_expA_mem`: `Ḡ(F) = SO(W) × SO(V)` and `so(W) ⊕ so(V)` correspond
   under `exp` near `0`; hence orbit measures on centralizers are unique
   (`isOrbitMeasure_unique_luo`).
-* `isNilpotent_toSOLin_iff`, `isSS_toSOLin_iff`: `ad` detects nilpotent and semisimple elements of
-  `𝔤⁰` (Jordan decomposition in `gspin`).
 * `adCentralizerIso`: `ad : (Z_G(D), 𝔤⁰_D, bilin) ≃ (Ḡ_{ad D}, 𝔤_{ad D}, B(c ·, ·))` is an
   isomorphism of descent data (`CentralizerIso`).
-* `restrictForm_lieCentralizer_nondegenerate_of_isSS`,
-  `isOpen_setOf_isRegularSS_lieCentralizer_lieZero`: the remaining hypotheses of `jHat_map`.
+* `isOpen_setOf_isRegularSS_lieCentralizer_lieZero`: the regular set of `𝔤⁰_D` is open (with
+  `restrictForm_lieCentralizer_nondegenerate_of_isSS`, the remaining hypotheses of `jHat_map`).
 * `eight_mul_scalarTrace_mul`: `8 τ(Y Z) = tr(ad Y ad Z)` on `so_Cliff(V)` (`τ` the scalar part).
 * `cTheta_toSO_of_germUnique`: the conclusion of `cTheta_toSO` from uniqueness of the regular
   coefficients of Lie-algebra local expansions on `𝔤⁰` at `X` alone.
@@ -84,7 +82,7 @@ theorem eventually_mem_lie_of_expA_mem :
     (eventually_isAdjointPair_neg_of_isOrthogonal_expA (F := F) (bform L.QV))
   filter_upwards [hf, hs, e1, e2] with Y h1 h2 k1 k2 g hg hgY
   refine ⟨?_, ?_⟩
-  · show L.fstA Y ∈ (bform L.QW).skewAdjointSubmodule
+  · change L.fstA Y ∈ (bform L.QW).skewAdjointSubmodule
     rw [LinearMap.mem_skewAdjointSubmodule]
     refine k1 ?_
     have e : expA F (L.fstA Y) = ((L.unitFst g : (Module.End F L.W)ˣ) : Module.End F L.W) := by
@@ -94,7 +92,7 @@ theorem eventually_mem_lie_of_expA_mem :
       rfl
     rw [e]
     exact isOrthogonal_of_mem_SOu hg.1
-  · show L.sndA Y ∈ (bform L.QV).skewAdjointSubmodule
+  · change L.sndA Y ∈ (bform L.QV).skewAdjointSubmodule
     rw [LinearMap.mem_skewAdjointSubmodule]
     refine k2 ?_
     have e : expA F (L.sndA Y) = ((L.unitSnd g : (Module.End F L.V)ˣ) : Module.End F L.V) := by
@@ -110,22 +108,6 @@ end LuoDatum
 namespace GGPData
 
 variable (d : GGPData F)
-
-/-- `ad(g Y g⁻¹) = P(g) ad(Y) P(g)⁻¹` for `g ∈ G(F)` and `Y ∈ 𝔤` (`adV_conj` on each factor). -/
-theorem toSOLin_conj (g : ↥d.G) {Y : d.ambient} (hY : Y ∈ d.lie) :
-    d.toSOLin (((g : d.ambientˣ) : d.ambient) * Y *
-        (((g : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient)) =
-      ((d.toGbarU g : d.luoOf.Ambˣ) : d.luoOf.Amb) * d.toSOLin Y *
-        (((d.toGbarU g)⁻¹ : d.luoOf.Ambˣ) : d.luoOf.Amb) := by
-  have hinv : (d.toGbarU g)⁻¹ = d.toGbarU g⁻¹ := (map_inv d.toGbarU g).symm
-  rw [hinv]
-  refine Prod.ext (LinearMap.ext fun v => ?_) (LinearMap.ext fun v => ?_)
-  · have h := adV_conj (d.fst g) hY.1 v
-    rw [← map_inv] at h
-    exact h
-  · have h := adV_conj (d.snd g) hY.2 v
-    rw [← map_inv] at h
-    exact h
 
 /-- **`e^Y ∈ Ḡ(F)` for `Y ∈ so(W) ⊕ so(V)` near `0`**: `Y = ad Z` with `Z ∈ 𝔤⁰` near `0`
 (`toSOCLE`), `e^Z ∈ G(F)` (`eventually_expA_mem_G`) and its image in `Ḡ(F)` is
@@ -171,135 +153,6 @@ theorem isOrbitMeasure_unique_luo (Y : d.luoOf.Amb) {b : LinearMap.BilinForm F d
 
 end GGPData
 
-/-! ## `ad` detects nilpotent and semisimple elements of `𝔤⁰` -/
-
-section Converse
-
-/-- In a product of algebras, nilpotency is componentwise. -/
-theorem isNilpotent_prod_iff {A₁ A₂ : Type*} [Ring A₁] [Ring A₂] {Y : A₁ × A₂} :
-    IsNilpotent Y ↔ IsNilpotent Y.1 ∧ IsNilpotent Y.2 := by
-  constructor
-  · rintro ⟨n, hn⟩
-    exact ⟨⟨n, by rw [← Prod.pow_fst, hn]; rfl⟩, ⟨n, by rw [← Prod.pow_snd, hn]; rfl⟩⟩
-  · rintro ⟨⟨a, ha⟩, ⟨b, hb⟩⟩
-    refine ⟨a + b, Prod.ext ?_ ?_⟩
-    · rw [Prod.pow_fst, pow_add, ha, zero_mul]; rfl
-    · rw [Prod.pow_snd, pow_add, hb, mul_zero]; rfl
-
-/-- A nilpotent difference `y − s` of commuting semisimple elements is `0`. -/
-theorem eq_zero_of_isNilpotent_of_eq_sub {B : Type*} [Ring B] [Algebra F B] [FiniteDimensional F B]
-    {y s n : B} (hy : IsSS F y) (hs : IsSS F s) (hc : Commute y s) (hn : IsNilpotent n)
-    (h : n = y - s) : n = 0 := by
-  have hcomm : Commute (Algebra.lmul F B y) (Algebra.lmul F B s) := hc.map (Algebra.lmul F B)
-  have hsem : (Algebra.lmul F B n).IsSemisimple := by
-    rw [h, map_sub]
-    exact Module.End.IsSemisimple.sub_of_commute hcomm hy hs
-  have hnl : IsNilpotent (Algebra.lmul F B n) := hn.map (Algebra.lmul F B)
-  have h0 := Module.End.eq_zero_of_isNilpotent_isSemisimple hnl hsem
-  exact Algebra.lmul_injective (R := F) (h0.trans (map_zero _).symm)
-
-/-- In a product of finite-dimensional algebras, an element with semisimple components is
-semisimple: in its Jordan decomposition `Y = s + n` (`exists_jordan_algebra`) each component of
-`n` is the difference of two commuting semisimple elements, hence semisimple and nilpotent, hence
-`0`. -/
-theorem isSS_prod {A₁ A₂ : Type*} [Ring A₁] [Algebra F A₁] [FiniteDimensional F A₁] [Ring A₂]
-    [Algebra F A₂] [FiniteDimensional F A₂] {Y : A₁ × A₂} (h1 : IsSS F Y.1) (h2 : IsSS F Y.2) :
-    IsSS F Y := by
-  obtain ⟨s, hs, n, -, hss, hnil, hY⟩ := exists_jordan_algebra (F := F) Y
-  have hc : Commute Y s := Algebra.commute_of_mem_adjoin_self hs
-  have e1 : n.1 = 0 := eq_zero_of_isNilpotent_of_eq_sub h1
-    (isSS_algHom (AlgHom.fst F A₁ A₂) hss) (hc.map (AlgHom.fst F A₁ A₂))
-    (hnil.map (AlgHom.fst F A₁ A₂)) (by rw [hY]; simp)
-  have e2 : n.2 = 0 := eq_zero_of_isNilpotent_of_eq_sub h2
-    (isSS_algHom (AlgHom.snd F A₁ A₂) hss) (hc.map (AlgHom.snd F A₁ A₂))
-    (hnil.map (AlgHom.snd F A₁ A₂)) (by rw [hY]; simp)
-  have hn0 : n = 0 := Prod.ext e1 e2
-  rw [hY, hn0, add_zero]
-  exact hss
-
-/-- `IsSS F M` (left multiplication by `M` on `End U` semisimple) implies `M` semisimple on `U`. -/
-theorem isSemisimple_of_isSS_end {U : Type*} [AddCommGroup U] [Module F U] [Module.Finite F U]
-    {M : Module.End F U} (h : IsSS F M) : M.IsSemisimple := by
-  set p := minpoly F (LinearMap.mulLeft F M)
-  have hsq : Squarefree p := Module.End.IsSemisimple.minpoly_squarefree h
-  have h0 : Polynomial.aeval (Algebra.lmul F (Module.End F U) M) p = 0 := minpoly.aeval F _
-  rw [Polynomial.aeval_algHom_apply] at h0
-  have h1 : Polynomial.aeval M p = 0 :=
-    Algebra.lmul_injective (R := F) (h0.trans (map_zero _).symm)
-  exact Module.End.isSemisimple_of_squarefree_aeval_eq_zero hsq h1
-
-variable {V : Type*} [AddCommGroup V] [Module F V] [Module.Finite F V]
-
-/-- **`X ∈ so_Cliff(V)` is nilpotent if `ad X` is** (converse of `isNilpotent_adV`): in the Jordan
-decomposition `X = s + n` in `gspin(V)`, `ad s = ad X − ad n` is semisimple and nilpotent, so `s` is
-a scalar (`eq_algebraMap_of_adV_eq_zero`), which vanishes since `X` and `n` are traceless. -/
-theorem isNilpotent_of_isNilpotent_adV {Q : QuadraticForm F V} (hQ : IsNondeg Q)
-    {X : CliffordAlgebra Q} (hX : X ∈ soSub Q) (h : IsNilpotent (adV Q X)) : IsNilpotent X := by
-  obtain ⟨s, -, n, hn, hss, hnil, rfl, hsg, hng⟩ := exists_jordan_gspin hX.1
-  have hc : (s + n) * n = n * (s + n) := (Algebra.commute_of_mem_adjoin_self hn).eq
-  have hcV : Commute (adV Q (s + n)) (adV Q n) := by
-    have h' := adV_commutator hX.1 hng
-    rw [hc, sub_self, map_zero, eq_comm, sub_eq_zero] at h'
-    exact h'
-  have hsV : adV Q s = adV Q (s + n) - adV Q n := by rw [map_add, add_sub_cancel_right]
-  have hnilV : IsNilpotent (adV Q s) := hsV ▸ hcV.isNilpotent_sub h (isNilpotent_adV hng hnil)
-  have h0 : adV Q s = 0 :=
-    Module.End.eq_zero_of_isNilpotent_isSemisimple hnilV (isSemisimple_adV hsg hss)
-  obtain ⟨r, hr⟩ := eq_algebraMap_of_adV_eq_zero hQ hsg h0
-  have htr := hX.2
-  rw [cliffTrace_add, hr, cliffTrace_algebraMap, cliffTrace_eq_zero_of_isNilpotent Q hnil,
-    add_zero] at htr
-  have hr0 : r = 0 := (mul_eq_zero.mp htr).resolve_right (cast_finrank_cliffordAlgebra_ne_zero Q)
-  rw [hr, hr0, map_zero, zero_add]
-  exact hnil
-
-/-- **`X ∈ gspin(V)` is semisimple if `ad X` is** (over `F`; the semisimplicity over `F̄` needed by
-`isSemisimple_mulLeft_of_isSemisimple_adV_baseChange` follows, `F` being perfect). -/
-theorem isSS_of_isSemisimple_adV {Q : QuadraticForm F V} (hQ : IsNondeg Q)
-    {X : CliffordAlgebra Q} (hX : X ∈ gspin Q) (h : (adV Q X).IsSemisimple) : IsSS F X :=
-  isSemisimple_mulLeft_of_isSemisimple_adV_baseChange hQ hX
-    (IsomCent.isSemisimple_baseChange_algebraicClosure h)
-
-end Converse
-
-namespace GGPData
-
-variable (d : GGPData F)
-
-/-- `ad Y` is nilpotent iff `Y` is, for `Y ∈ 𝔤⁰`. -/
-theorem isNilpotent_toSOLin_iff {Y : d.ambient} (hY : Y ∈ d.lieZero) :
-    IsNilpotent (d.toSOLin Y) ↔ IsNilpotent Y := by
-  constructor
-  · intro h
-    have h1 : IsNilpotent (adV d.QW Y.1) := h.map d.luoOf.fstA
-    have h2 : IsNilpotent (adV d.QV Y.2) := h.map d.luoOf.sndA
-    exact isNilpotent_prod_iff.mpr ⟨isNilpotent_of_isNilpotent_adV d.nondeg hY.1 h1,
-      isNilpotent_of_isNilpotent_adV d.nondeg_QV hY.2 h2⟩
-  · intro h
-    obtain ⟨⟨a, ha⟩, ⟨b, hb⟩⟩ := isNilpotent_prod_iff.mp h
-    obtain ⟨a', ha'⟩ := isNilpotent_adV hY.1.1 ⟨a, ha⟩
-    obtain ⟨b', hb'⟩ := isNilpotent_adV hY.2.1 ⟨b, hb⟩
-    refine ⟨a' + b', Prod.ext ?_ ?_⟩
-    · change d.luoOf.fstA (d.toSOLin Y ^ (a' + b')) = 0
-      rw [map_pow, fstA_toSOLin]
-      exact pow_eq_zero_of_le (Nat.le_add_right a' b') ha'
-    · change d.luoOf.sndA (d.toSOLin Y ^ (a' + b')) = 0
-      rw [map_pow, sndA_toSOLin]
-      exact pow_eq_zero_of_le (Nat.le_add_left b' a') hb'
-
-/-- `ad Y` is semisimple iff `Y` is, for `Y ∈ 𝔤⁰`. -/
-theorem isSS_toSOLin_iff {Y : d.ambient} (hY : Y ∈ d.lieZero) :
-    IsSS F (d.toSOLin Y) ↔ IsSS F Y := by
-  refine ⟨fun h => ?_, d.isSS_toSOLin hY⟩
-  have h1 : IsSS F (d.luoOf.fstA (d.toSOLin Y)) := isSS_algHom _ h
-  have h2 : IsSS F (d.luoOf.sndA (d.toSOLin Y)) := isSS_algHom _ h
-  rw [fstA_toSOLin] at h1
-  rw [sndA_toSOLin] at h2
-  exact isSS_prod (isSS_of_isSemisimple_adV d.nondeg hY.1.1 (isSemisimple_of_isSS_end h1))
-    (isSS_of_isSemisimple_adV d.nondeg_QV hY.2.1 (isSemisimple_of_isSS_end h2))
-
-end GGPData
-
 /-! ## `ad` as an isomorphism of descent data at a point of `𝔤⁰` -/
 
 theorem mem_lieCentralizer_units_one {A : Type*} [Ring A] [Algebra F A] {𝔤 : LieSubalgebra F A}
@@ -309,11 +162,6 @@ theorem mem_lieCentralizer_units_one {A : Type*} [Ring A] [Algebra F A] {𝔤 : 
 namespace GGPData
 
 variable (d : GGPData F)
-
-/-- `ad` is injective on `𝔤⁰` (`toSO_bijective`). -/
-theorem eq_of_toSOLin_eq {Y Z : d.ambient} (hY : Y ∈ d.lieZero) (hZ : Z ∈ d.lieZero)
-    (h : d.toSOLin Y = d.toSOLin Z) : Y = Z :=
-  congrArg Subtype.val (d.toSO_bijective.1 (a₁ := ⟨Y, hY⟩) (a₂ := ⟨Z, hZ⟩) (Subtype.ext h))
 
 /-- `D`, `Y ∈ 𝔤⁰` commute iff `ad D`, `ad Y` do. -/
 theorem commute_iff_toSOLin {D Y : d.ambient} (hD : D ∈ d.lieZero) (hY : Y ∈ d.lieZero) :
@@ -352,11 +200,6 @@ theorem isLieAbelian_iff_of_toSOLin {L₀ : LieSubalgebra F d.ambient}
     obtain ⟨Y₁, hY₁, rfl⟩ := d.exists_toSOLin_eq (h₁ _ m₁)
     obtain ⟨Y₂, hY₂, rfl⟩ := d.exists_toSOLin_eq (h₁ _ m₂)
     exact (d.commute_iff_toSOLin hY₁ hY₂).mp (hab _ ((h _ hY₁).mp m₁) _ ((h _ hY₂).mp m₂))
-
-/-- Conjugation by `G(F)` preserves `𝔤⁰`. -/
-theorem conj_mem_lieZero_of_mem : ∀ g ∈ d.G, ∀ Y ∈ d.lieZero,
-    (g : d.ambient) * Y * (↑g⁻¹ : d.ambient) ∈ d.lieZero :=
-  fun g hg _ hY => d.conj_mem_lie0 ⟨g, hg⟩ hY
 
 open Classical in
 /-- `u ↦ P(u)` on `G(F)`, extended by `1`. -/
@@ -492,60 +335,6 @@ def adCentralizerIso (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) {D : d.
 end GGPData
 
 /-! ## The form on centralizers -/
-
-/-- **An invariant form stays nondegenerate on the centralizer of a semisimple element**: if `b`
-is nondegenerate on `𝔤` and invariant (`b([X, Y], Z) = b(X, [Y, Z])`) and `ad X` is semisimple on
-`𝔤`, then `b` is nondegenerate on `𝔤_X`: `𝔤 = ker(ad X) + im(ad X)` (Fitting decomposition, with
-`ker (ad X)^n = ker (ad X)`), and `b(Y, [X, W]) = b([Y, X], W) = 0` for `Y ∈ 𝔤_X`. -/
-theorem restrictForm_lieCentralizer_nondegenerate_of_isSS {A : Type*} [Ring A] [Algebra F A]
-    [Module.Finite F A] {𝔤 : LieSubalgebra F A} {b : LinearMap.BilinForm F A}
-    (hnd : (restrictForm 𝔤 b).Nondegenerate)
-    (hinv : ∀ X Y Z : A, b (X * Y - Y * X) Z = b X (Y * Z - Z * Y))
-    {X : A} (hX𝔤 : X ∈ 𝔤) (hX : IsSS F X) :
-    (restrictForm (lieCentralizer 𝔤 X) b).Nondegenerate := by
-  set f : Module.End F ↥𝔤 := LieAlgebra.ad F ↥𝔤 ⟨X, hX𝔤⟩
-  have hAd := LieAlgebra.ad_isSemisimple_of_isSemisimple_mulLeft hX
-  have hinvt : 𝔤.toSubmodule ∈ Module.End.invtSubmodule (LieAlgebra.ad F A X) := by
-    rw [Module.End.mem_invtSubmodule]
-    intro Y hY
-    have := 𝔤.lie_mem hX𝔤 hY
-    exact this
-  have hf : f.IsSemisimple := hAd.restrict hinvt
-  have hdec : ∀ W : ↥𝔤, ∃ k r : ↥𝔤, W = k + f r ∧ f k = 0 := by
-    obtain ⟨N, hN⟩ := Filter.eventually_atTop.mp (LinearMap.eventually_isCompl_ker_pow_range_pow f)
-    have hc := hN (N + 1) (Nat.le_succ N)
-    intro W
-    obtain ⟨k, hk, r, hr, hkr⟩ := Submodule.mem_sup.mp (hc.sup_eq_top ▸ Submodule.mem_top (x := W))
-    rw [ker_pow_eq_ker_of_isSemisimple hf (Nat.succ_pos N)] at hk
-    obtain ⟨w, rfl⟩ := hr
-    refine ⟨k, (f ^ N) w, ?_, hk⟩
-    rw [← hkr, pow_succ', Module.End.mul_apply]
-  have hcomm : ∀ {k : ↥𝔤}, f k = 0 → (k : A) ∈ lieCentralizer 𝔤 X := fun {k} hk => by
-    have h := congrArg Subtype.val hk
-    simp only [f, LieAlgebra.ad_apply, LieSubalgebra.coe_bracket, Ring.lie_def,
-      ZeroMemClass.coe_zero, sub_eq_zero] at h
-    exact mem_lieCentralizer.mpr ⟨k.2, h⟩
-  have hfr : ∀ r : ↥𝔤, ((f r : ↥𝔤) : A) = X * r - r * X := fun r => by
-    simp [f, Ring.lie_def]
-  refine ⟨fun Y hY => ?_, fun Z hZ => ?_⟩
-  · obtain ⟨hY𝔤, hYX⟩ := mem_lieCentralizer.mp Y.2
-    have h0 : (⟨Y, hY𝔤⟩ : ↥𝔤) = 0 := hnd.1 _ fun W => by
-      obtain ⟨k, r, rfl, hk⟩ := hdec W
-      have h1 : b (Y : A) (k : A) = 0 := hY ⟨k, hcomm hk⟩
-      change b (Y : A) ((k : A) + ((f r : ↥𝔤) : A)) = 0
-      rw [map_add, hfr, ← hinv, hYX, sub_self, map_zero, LinearMap.zero_apply, add_zero]
-      exact h1
-    exact Subtype.ext (show (Y : A) = 0 from congrArg Subtype.val h0)
-  · obtain ⟨hZ𝔤, hZX⟩ := mem_lieCentralizer.mp Z.2
-    have h0 : (⟨Z, hZ𝔤⟩ : ↥𝔤) = 0 := hnd.2 _ fun W => by
-      obtain ⟨k, r, rfl, hk⟩ := hdec W
-      have h1 : b (k : A) (Z : A) = 0 := hZ ⟨k, hcomm hk⟩
-      change b ((k : A) + ((f r : ↥𝔤) : A)) (Z : A) = 0
-      have h2 : b (X * r - r * X) Z = 0 := by
-        rw [← neg_sub, map_neg, LinearMap.neg_apply, hinv, hZX, sub_self, map_zero, neg_zero]
-      rw [map_add, LinearMap.add_apply, hfr, h2, add_zero]
-      exact h1
-    exact Subtype.ext (show (Z : A) = 0 from congrArg Subtype.val h0)
 
 namespace LuoDatum
 
@@ -687,11 +476,7 @@ theorem exists_lieCentralizer_eq {D : d.ambient} (hD : D ∈ d.lie) (hss : IsSS 
   obtain ⟨t, htU, ht0⟩ := (hev.and self_mem_nhdsWithin).exists
   have ht0' : t ≠ 0 := ht0
   obtain ⟨⟨htU₁, htU₂⟩, htU₃⟩ := htU
-  have hsst : IsSS F (t • D) := by
-    unfold IsSS
-    rw [show LinearMap.mulLeft F (t • D) = t • LinearMap.mulLeft F D from LinearMap.ext fun x => by
-      simp only [LinearMap.mulLeft_apply, LinearMap.smul_apply, smul_mul_assoc]]
-    exact Module.End.IsSemisimple_smul t hss
+  have hsst : IsSS F (t • D) := isSS_smul t hss
   obtain ⟨g, hg⟩ := hexp _ htU₃ (d.lie.smul_mem t hD)
   refine ⟨g, by rw [hg]; exact hssU _ htU₂ hsst, ?_⟩
   ext Y
@@ -769,24 +554,6 @@ namespace GGPData
 
 variable (d : GGPData F) (ψ : NontrivialAddChar F)
 
-/-- `ι` carries the elements of the orbit `O` onto those of `ι O`. -/
-theorem _root_.GSpinGGP.CentralizerIso.exists_mem_nilOrbitSet_nilOrbitEquiv_iff {A A' : Type*}
-    [Ring A] [Algebra F A] [TopologicalSpace A] [Module.Finite F A] [IsModuleTopology F A]
-    [Ring A'] [Algebra F A'] [TopologicalSpace A'] [Module.Finite F A'] [IsModuleTopology F A']
-    {G : Subgroup Aˣ} {𝔤 : LieSubalgebra F A} {b : LinearMap.BilinForm F A}
-    {G' : Subgroup A'ˣ} {𝔤' : LieSubalgebra F A'} {b' : LinearMap.BilinForm F A'}
-    {x : Aˣ} {y : A'ˣ} (ι : CentralizerIso G 𝔤 b G' 𝔤' b' x y)
-    (hG : ∀ g ∈ G, ∀ Y ∈ 𝔤, (g : A) * Y * (↑g⁻¹ : A) ∈ 𝔤)
-    (O : NilOrbit (grpCentralizer G x) (lieCentralizer 𝔤 (x : A))) (P : A' → Prop) :
-    (∃ Y' ∈ nilOrbitSet (ι.nilOrbitEquiv hG O), P (Y' : A')) ↔
-      ∃ Y ∈ nilOrbitSet O, P (ι.lin (Y : A)) := by
-  constructor
-  · rintro ⟨Y', hY', hP⟩
-    obtain ⟨Y, rfl⟩ := ι.linEquiv.surjective Y'
-    exact ⟨Y, (ι.linEquiv_mem_nilOrbitSet_iff hG O Y).mp hY', hP⟩
-  · rintro ⟨Y, hY, hP⟩
-    exact ⟨ι.linEquiv Y, (ι.linEquiv_mem_nilOrbitSet_iff hG O Y).mpr hY, hP⟩
-
 /-- **`cTheta_toSO`'s conclusion from Lie germ uniqueness on `𝔤⁰`**, given constants `a, b ≠ 0`
 with `bilin(Y, Z) = B((a · 1, b · 1) ad Y, ad Z)` on `𝔤⁰` (`hform`; `B` the trace form).  The
 orbit map is `E = c · (ad ∘ ·)`, `c = (a · 1, b · 1)`: `ad` is an isomorphism of descent data
@@ -831,8 +598,10 @@ theorem cTheta_toSO_of_germUnique_of_form (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsH
   have hbc : ∀ Y Z : d.luoOf.Amb, d.luoOf.traceForm ((c : d.luoOf.Amb) * Y) Z =
       d.luoOf.traceForm Y ((c : d.luoOf.Amb) * Z) := LuoDatum.traceForm_scalarUnit ha hb
   -- descent data
-  have hG₀ := conj_mem_lieCentralizer_of_mem_lieGrpCentralizer d.conj_mem_lieZero_of_mem
-    (d.diagLie X)
+  have hG₀ : ∀ g ∈ lieGrpCentralizer d.G (d.diagLie X), ∀ Y ∈ lieCentralizer d.lieZero
+      (d.diagLie X), (g : d.ambient) * Y * (↑g⁻¹ : d.ambient) ∈
+        lieCentralizer d.lieZero (d.diagLie X) :=
+    fun _ hg _ hY => d.conj_mem_lieCentralizer_lieZero hg hY
   have hG₁ := conj_mem_lieCentralizer_of_mem_lieGrpCentralizer
     d.luoOf.conj_mem_lie_of_mem_Gbar (d.toSOLin (d.diagLie X))
   have e𝔤₀ : lieCentralizer (lieCentralizer d.lieZero (d.diagLie X)) ((1 : d.ambientˣ) : d.ambient)
@@ -849,7 +618,7 @@ theorem cTheta_toSO_of_germUnique_of_form (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsH
       d.luoOf.traceForm).Nondegenerate :=
     restrictForm_lieCentralizer_nondegenerate_of_isSS
       (d.luoOf.restrictForm_lie_traceForm_nondegenerate d.nondeg_QV)
-      d.luoOf.traceForm_invariant hXm hss
+      d.luoOf.traceForm_invariant hXm (LieAlgebra.ad_isSemisimple_of_isSemisimple_mulLeft hss)
   have hopen₀ : IsOpen {Z : ↥(lieCentralizer (lieCentralizer d.lieZero (d.diagLie X))
       ((1 : d.ambientˣ) : d.ambient)) | IsRegularSS (lieCentralizer (lieCentralizer d.lieZero
         (d.diagLie X)) ((1 : d.ambientˣ) : d.ambient)) (Z : d.ambient)} := by
@@ -917,7 +686,7 @@ theorem cTheta_toSO_of_germUnique_of_form (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsH
     exact (d.luoOf.orbitSpec_iff_of_smul ha hb K (LuoDatum.fstA_scalarUnit_mul ha hb _)
       (LuoDatum.sndA_scalarUnit_mul ha hb _)).trans (d.orbitSpecAt_iff_orbitSpec_toSOLin K _).symm
   · -- the zero orbit
-    show nilScale (c : d.luoOf.Amb) hc hc𝔤 (β₁ (ι.nilOrbitMap (β₀ (Quotient.mk _ _)))) = _
+    change nilScale (c : d.luoOf.Amb) hc hc𝔤 (β₁ (ι.nilOrbitMap (β₀ (Quotient.mk _ _)))) = _
     rw [nilOrbitCongr_mk, ι.nilOrbitMap_mk, nilOrbitCongr_mk, nilScale_mk]
     exact congrArg (Quotient.mk _) (Subtype.ext (by
       change (c : d.luoOf.Amb) * d.toSOLin 0 = 0
@@ -960,17 +729,6 @@ open CliffordAlgebra
 
 variable {V : Type*} [AddCommGroup V] [Module F V] [Module.Finite F V]
 
-theorem polar_eq_two_mul_associated (Q : QuadraticForm F V) (x y : V) :
-    QuadraticMap.polar Q x y = 2 * QuadraticMap.associated Q x y := by
-  rw [QuadraticMap.associated_apply]
-  simp only [Module.End.smul_def]
-  change _ = 2 * (⅟(2 : Module.End F F) (QuadraticMap.polar Q x y))
-  rw [show (⅟(2 : Module.End F F)) = (⅟(2 : F)) • (1 : Module.End F F) from ?_]
-  · simp [QuadraticMap.polar]
-  · refine invOf_eq_right_inv ?_
-    rw [show (2 : Module.End F F) = (2 : F) • 1 by simp [two_smul, one_add_one_eq_two]]
-    rw [smul_mul_smul_comm, mul_invOf_self, one_smul, one_mul]
-
 /-- `tr(ad(ι x ι y) ∘ M) = polar(y, M x) − polar(x, M y)` (`ad(ι x ι y)` has rank `≤ 2`). -/
 theorem trace_adV_ι_mul_ι_mul (Q : QuadraticForm F V) (x y : V) (M : Module.End F V) :
     LinearMap.trace F V (adV Q (ι Q x * ι Q y) * M) =
@@ -1008,11 +766,9 @@ theorem eight_mul_scalarTrace_mul {Q : QuadraticForm F V} (hQ : IsNondeg Q)
     obtain ⟨⟨a, b⟩, rfl⟩ := hx
     simp only [bivector_def, smul_mul_assoc, map_smul, sub_mul, map_sub, smul_eq_mul]
     rw [scalarTrace_ι_mul_ι_mul_sub Q a b hZ.1, trace_adV_ι_mul_ι_mul,
-      trace_adV_ι_mul_ι_mul, polar_eq_two_mul_associated, polar_eq_two_mul_associated]
-    have hs : QuadraticMap.associated Q b (adV Q Z a) =
-        -QuadraticMap.associated Q a (adV Q Z b) := by
-      rw [show QuadraticMap.associated Q b (adV Q Z a) = bform Q (adV Q Z a) b from
-        bform_comm Q _ _]
+      trace_adV_ι_mul_ι_mul, polar_eq_two_mul_bform, polar_eq_two_mul_bform]
+    have hs : bform Q b (adV Q Z a) = -bform Q a (adV Q Z b) := by
+      rw [bform_comm Q b]
       exact bform_adV hZ.1 a b
     rw [hs]
     simp only [invOf_eq_inv]

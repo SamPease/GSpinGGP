@@ -23,9 +23,6 @@ import GSpinGGP.TraceFormula.LieAlgebra
   of the identity defining `ĵ` acquire the factor `κ`, so `κ` need not be computed.
 * `isOrbitMeasure_unique_lieCentralizer`: uniqueness of orbit measures for the centralizer
   `(Z_G(X), 𝔤_X)` of a Lie algebra element, when `exp` and `log` match `G` and `𝔤` near `0`.
-* `eventually_isAdjointPair_neg_of_isOrthogonal_expA`: if `e^Y` is an isometry of a bilinear form
-  and `Y` is near `0`, then `Y` is skew (the adjoint pairs form a subalgebra of `End U × End Uᵐᵒᵖ`,
-  which `exp` detects near `0`).
 -/
 
 noncomputable section
@@ -83,8 +80,8 @@ end Congr
 section Scale
 
 /-- The form `b(c ·, ·)`. -/
-def scaleForm (b : LinearMap.BilinForm F A) (c : A) : LinearMap.BilinForm F A :=
-  b.compl₁₂ (LinearMap.mulLeft F c) LinearMap.id
+abbrev scaleForm (b : LinearMap.BilinForm F A) (c : A) : LinearMap.BilinForm F A :=
+  b.compLeft (LinearMap.mulLeft F c)
 
 @[simp] theorem scaleForm_apply (b : LinearMap.BilinForm F A) (c X Y : A) :
     scaleForm b c X Y = b (c * X) Y := rfl
@@ -93,16 +90,12 @@ variable {G : Subgroup Aˣ} {𝔤 : LieSubalgebra F A}
 
 /-- The inverse of a central unit is central. -/
 theorem inv_mul_eq_mul_inv_of_central {c : Aˣ} (hc : ∀ a : A, (c : A) * a = a * c) (a : A) :
-    ((c⁻¹ : Aˣ) : A) * a = a * ((c⁻¹ : Aˣ) : A) := by
-  calc ((c⁻¹ : Aˣ) : A) * a = ((c⁻¹ : Aˣ) : A) * (a * c) * ((c⁻¹ : Aˣ) : A) := by
-        rw [mul_assoc, mul_assoc a, Units.mul_inv, mul_one]
-    _ = ((c⁻¹ : Aˣ) : A) * (c * a) * ((c⁻¹ : Aˣ) : A) := by rw [hc]
-    _ = a * ((c⁻¹ : Aˣ) : A) := by rw [← mul_assoc, Units.inv_mul, one_mul]
+    ((c⁻¹ : Aˣ) : A) * a = a * ((c⁻¹ : Aˣ) : A) :=
+  (Commute.units_inv_left (hc a)).eq
 
 theorem isNilpotent_mul_of_central {c : A} (hc : ∀ a : A, c * a = a * c) {Y : A}
-    (hY : IsNilpotent Y) : IsNilpotent (c * Y) := by
-  obtain ⟨n, hn⟩ := hY
-  exact ⟨n, by rw [(show Commute c Y from hc Y).mul_pow, hn, mul_zero]⟩
+    (hY : IsNilpotent Y) : IsNilpotent (c * Y) :=
+  Commute.isNilpotent_mul_left (hc Y) hY
 
 /-- Multiplication by `c` on `𝔤`, for a unit `c` with `c 𝔤 = 𝔤`. -/
 def scaleEquiv (c : Aˣ) (hc𝔤 : ∀ Y ∈ 𝔤, (c : A) * Y ∈ 𝔤)
@@ -579,71 +572,5 @@ theorem isOrbitMeasure_unique_lieCentralizer
 
 end LieCentralizerOrbit
 
-/-! ## `exp` detects skew endomorphisms near `0` -/
-
-section SkewExp
-
-variable {U : Type*} [AddCommGroup U] [Module F U] [Module.Finite F U]
-
-/-- The pairs `(T, T')` adjoint for `B` (`B(T u, v) = B(u, T' v)`), as a subalgebra of
-`End U × End Uᵐᵒᵖ`. -/
-def adjointPairSubalgebra (B : LinearMap.BilinForm F U) :
-    Subalgebra F (Module.End F U × (Module.End F U)ᵐᵒᵖ) where
-  carrier := {Z | LinearMap.IsAdjointPair B B ⇑Z.1 ⇑(MulOpposite.unop Z.2 : Module.End F U)}
-  mul_mem' := fun {Z W} hZ hW u v => by
-    change B (Z.1 (W.1 u)) v = B u ((MulOpposite.unop W.2) ((MulOpposite.unop Z.2) v))
-    rw [hZ, hW]
-  add_mem' := fun {Z W} hZ hW u v => by
-    change B ((Z.1 + W.1) u) v = B u ((MulOpposite.unop Z.2 + MulOpposite.unop W.2) v)
-    rw [LinearMap.add_apply, LinearMap.add_apply, map_add, map_add, LinearMap.add_apply, hZ, hW]
-  algebraMap_mem' := fun r u v => by
-    change B ((algebraMap F (Module.End F U) r) u) v =
-      B u ((algebraMap F (Module.End F U) r) v)
-    simp [Module.algebraMap_end_apply]
-
-/-- **`exp` detects skew endomorphisms near `0`**: if `e^Y` is an isometry of `B` and `Y` is
-near `0`, then `(Y, −Y)` is an adjoint pair, i.e. `Y` is skew for `B`.  In
-`End U × End Uᵐᵒᵖ`, `e^{(Y, −Y)} = (e^Y, e^{−Y})` is an adjoint pair (`e^{−Y} = (e^Y)⁻¹`), and
-`exp` detects subalgebras near `0` (`exists_nhds_mem_of_expA_mem`). -/
-theorem eventually_isAdjointPair_neg_of_isOrthogonal_expA
-    [TopologicalSpace (Module.End F U)] [IsModuleTopology F (Module.End F U)]
-    (B : LinearMap.BilinForm F U) :
-    ∀ᶠ Y in 𝓝 (0 : Module.End F U), LinearMap.IsOrthogonal B ⇑(expA F Y : Module.End F U) →
-      LinearMap.IsAdjointPair B B ⇑Y ⇑(-Y) := by
-  let E := Module.End F U
-  let A₂ := E × Eᵐᵒᵖ
-  letI : TopologicalSpace A₂ := moduleTopology F A₂
-  haveI : IsModuleTopology F A₂ := ⟨rfl⟩
-  haveI := IsModuleTopology.toContinuousAdd F A₂
-  haveI := IsModuleTopology.toContinuousAdd F E
-  obtain ⟨V, hV, hmem⟩ := exists_nhds_mem_of_expA_mem F (A := A₂)
-  have h1 := eventually_map_expA (F := F) (A := A₂) (B := E) (LinearMap.fst F E Eᵐᵒᵖ)
-    (fun Z n => Prod.pow_fst Z n)
-  have h2 := eventually_map_expA (F := F) (A := A₂) (B := E)
-    ((MulOpposite.opLinearEquiv F).symm.toLinearMap ∘ₗ LinearMap.snd F E Eᵐᵒᵖ)
-    (fun Z n => by
-      simp only [LinearMap.coe_comp, Function.comp_apply, LinearEquiv.coe_coe,
-        MulOpposite.coe_opLinearEquiv_symm]
-      change MulOpposite.unop ((Z ^ n : E × Eᵐᵒᵖ).2) = MulOpposite.unop (Z : E × Eᵐᵒᵖ).2 ^ n
-      rw [Prod.pow_snd, MulOpposite.unop_pow])
-  let j : E →ₗ[F] A₂ :=
-    LinearMap.prod LinearMap.id ((MulOpposite.opLinearEquiv F).toLinearMap ∘ₗ (-LinearMap.id))
-  have hj : Continuous j := IsModuleTopology.continuous_of_linearMap j
-  have hjt : Filter.Tendsto j (𝓝 0) (𝓝 0) := hj.tendsto' 0 0 (map_zero j)
-  obtain ⟨Ui, hUi, hinv⟩ := expA_mul_expA_neg F (A := E)
-  filter_upwards [hjt hV, hjt.eventually h1, hjt.eventually h2, hUi] with Y hYV hY1 hY2 hYi horth
-  have e1 : (expA F (j Y)).1 = expA F Y := hY1
-  have e2 : MulOpposite.unop (expA F (j Y)).2 = expA F (-Y) := hY2
-  have hP : expA F (j Y) ∈ adjointPairSubalgebra B := by
-    intro u v
-    change B ((expA F (j Y)).1 u) v = B u ((MulOpposite.unop (expA F (j Y)).2) v)
-    rw [e1, e2]
-    have hv : expA F Y (expA F (-Y) v) = v := by
-      rw [← Module.End.mul_apply, hinv Y hYi, Module.End.one_apply]
-    conv_lhs => rw [← hv]
-    exact horth u _
-  exact hmem (j Y) hYV _ hP
-
-end SkewExp
 
 end GSpinGGP

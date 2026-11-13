@@ -55,6 +55,95 @@ set_option linter.unusedSectionVars false
 
 namespace GSpinGGP
 
+/-! ## `ad` detects nilpotent and semisimple elements of `𝔤⁰` -/
+
+section Converse
+
+variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
+
+/-- In a product of algebras, nilpotency is componentwise. -/
+theorem isNilpotent_prod_iff {A₁ A₂ : Type*} [Ring A₁] [Ring A₂] {Y : A₁ × A₂} :
+    IsNilpotent Y ↔ IsNilpotent Y.1 ∧ IsNilpotent Y.2 := by
+  constructor
+  · rintro ⟨n, hn⟩
+    exact ⟨⟨n, by rw [← Prod.pow_fst, hn]; rfl⟩, ⟨n, by rw [← Prod.pow_snd, hn]; rfl⟩⟩
+  · rintro ⟨⟨a, ha⟩, ⟨b, hb⟩⟩
+    refine ⟨a + b, Prod.ext ?_ ?_⟩
+    · rw [Prod.pow_fst, pow_add, ha, zero_mul]; rfl
+    · rw [Prod.pow_snd, pow_add, hb, mul_zero]; rfl
+
+/-- A nilpotent difference `y − s` of commuting semisimple elements is `0`. -/
+theorem eq_zero_of_isNilpotent_of_eq_sub {B : Type*} [Ring B] [Algebra F B] [FiniteDimensional F B]
+    {y s n : B} (hy : IsSS F y) (hs : IsSS F s) (hc : Commute y s) (hn : IsNilpotent n)
+    (h : n = y - s) : n = 0 := by
+  have hcomm : Commute (Algebra.lmul F B y) (Algebra.lmul F B s) := hc.map (Algebra.lmul F B)
+  have hsem : (Algebra.lmul F B n).IsSemisimple := by
+    rw [h, map_sub]
+    exact Module.End.IsSemisimple.sub_of_commute hcomm hy hs
+  have hnl : IsNilpotent (Algebra.lmul F B n) := hn.map (Algebra.lmul F B)
+  have h0 := Module.End.eq_zero_of_isNilpotent_isSemisimple hnl hsem
+  exact Algebra.lmul_injective (R := F) (h0.trans (map_zero _).symm)
+
+/-- In a product of finite-dimensional algebras, an element with semisimple components is
+semisimple: in its Jordan decomposition `Y = s + n` (`exists_jordan_algebra`) each component of
+`n` is the difference of two commuting semisimple elements, hence semisimple and nilpotent, hence
+`0`. -/
+theorem isSS_prod {A₁ A₂ : Type*} [Ring A₁] [Algebra F A₁] [FiniteDimensional F A₁] [Ring A₂]
+    [Algebra F A₂] [FiniteDimensional F A₂] {Y : A₁ × A₂} (h1 : IsSS F Y.1) (h2 : IsSS F Y.2) :
+    IsSS F Y := by
+  obtain ⟨s, hs, n, -, hss, hnil, hY⟩ := exists_jordan_algebra (F := F) Y
+  have hc : Commute Y s := Algebra.commute_of_mem_adjoin_self hs
+  have e1 : n.1 = 0 := eq_zero_of_isNilpotent_of_eq_sub h1
+    (isSS_algHom (AlgHom.fst F A₁ A₂) hss) (hc.map (AlgHom.fst F A₁ A₂))
+    (hnil.map (AlgHom.fst F A₁ A₂)) (by rw [hY]; simp)
+  have e2 : n.2 = 0 := eq_zero_of_isNilpotent_of_eq_sub h2
+    (isSS_algHom (AlgHom.snd F A₁ A₂) hss) (hc.map (AlgHom.snd F A₁ A₂))
+    (hnil.map (AlgHom.snd F A₁ A₂)) (by rw [hY]; simp)
+  have hn0 : n = 0 := Prod.ext e1 e2
+  rw [hY, hn0, add_zero]
+  exact hss
+
+/-- `IsSS F M` (left multiplication by `M` on `End U` semisimple) implies `M` semisimple on `U`. -/
+theorem isSemisimple_of_isSS_end {U : Type*} [AddCommGroup U] [Module F U] [Module.Finite F U]
+    {M : Module.End F U} (h : IsSS F M) : M.IsSemisimple :=
+  Module.End.isSemisimple_of_squarefree_aeval_eq_zero h.minpoly_squarefree
+    (aeval_minpoly_mulLeft M)
+
+variable {V : Type*} [AddCommGroup V] [Module F V] [Module.Finite F V]
+
+/-- **`X ∈ so_Cliff(V)` is nilpotent if `ad X` is** (converse of `isNilpotent_adV`): in the Jordan
+decomposition `X = s + n` in `gspin(V)`, `ad s = ad X − ad n` is semisimple and nilpotent, so `s` is
+a scalar (`eq_algebraMap_of_adV_eq_zero`), which vanishes since `X` and `n` are traceless. -/
+theorem isNilpotent_of_isNilpotent_adV {Q : QuadraticForm F V} (hQ : IsNondeg Q)
+    {X : CliffordAlgebra Q} (hX : X ∈ soSub Q) (h : IsNilpotent (adV Q X)) : IsNilpotent X := by
+  obtain ⟨s, -, n, hn, hss, hnil, rfl, hsg, hng⟩ := exists_jordan_gspin hX.1
+  have hc : (s + n) * n = n * (s + n) := (Algebra.commute_of_mem_adjoin_self hn).eq
+  have hcV : Commute (adV Q (s + n)) (adV Q n) := by
+    have h' := adV_commutator hX.1 hng
+    rw [hc, sub_self, map_zero, eq_comm, sub_eq_zero] at h'
+    exact h'
+  have hsV : adV Q s = adV Q (s + n) - adV Q n := by rw [map_add, add_sub_cancel_right]
+  have hnilV : IsNilpotent (adV Q s) := hsV ▸ hcV.isNilpotent_sub h (isNilpotent_adV hng hnil)
+  have h0 : adV Q s = 0 :=
+    Module.End.eq_zero_of_isNilpotent_isSemisimple hnilV (isSemisimple_adV hsg hss)
+  obtain ⟨r, hr⟩ := eq_algebraMap_of_adV_eq_zero hQ hsg h0
+  have htr := hX.2
+  rw [cliffTrace_add, hr, cliffTrace_algebraMap, cliffTrace_eq_zero_of_isNilpotent Q hnil,
+    add_zero] at htr
+  have hr0 : r = 0 := (mul_eq_zero.mp htr).resolve_right (cast_finrank_cliffordAlgebra_ne_zero Q)
+  rw [hr, hr0, map_zero, zero_add]
+  exact hnil
+
+/-- **`X ∈ gspin(V)` is semisimple if `ad X` is** (over `F`; the semisimplicity over `F̄` needed by
+`isSemisimple_mulLeft_of_isSemisimple_adV_baseChange` follows, `F` being perfect). -/
+theorem isSS_of_isSemisimple_adV {Q : QuadraticForm F V} (hQ : IsNondeg Q)
+    {X : CliffordAlgebra Q} (hX : X ∈ gspin Q) (h : (adV Q X).IsSemisimple) : IsSS F X :=
+  isSemisimple_mulLeft_of_isSemisimple_adV_baseChange hQ hX
+    (IsomCent.isSemisimple_baseChange_algebraicClosure h)
+
+end Converse
+
+
 namespace GGPData
 
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F] (d : GGPData F)
@@ -192,6 +281,11 @@ theorem toSO_bijective : Function.Bijective d.toSOFun := by
     obtain ⟨Y₁, hY₁, e₁⟩ := hsurj d.nondeg (d.luoOf.fstA (M : d.luoOf.Amb)) M.2.1
     obtain ⟨Y₂, hY₂, e₂⟩ := hsurj d.nondeg_QV (d.luoOf.sndA (M : d.luoOf.Amb)) M.2.2
     exact ⟨⟨(Y₁, Y₂), hY₁, hY₂⟩, Subtype.ext (Prod.ext e₁ e₂)⟩
+
+/-- `ad` is injective on `𝔤⁰` (`toSO_bijective`). -/
+theorem eq_of_toSOLin_eq {Y Z : d.ambient} (hY : Y ∈ d.lieZero) (hZ : Z ∈ d.lieZero)
+    (h : d.toSOLin Y = d.toSOLin Z) : Y = Z :=
+  congrArg Subtype.val (d.toSO_bijective.1 (a₁ := ⟨Y, hY⟩) (a₂ := ⟨Z, hZ⟩) (Subtype.ext h))
 
 /-- `ad : 𝔤⁰ → so(W) ⊕ so(V)` as a linear map. -/
 def toSOLinRestr : ↥d.lieZero →ₗ[F] ↥d.luoOf.lie :=
@@ -652,19 +746,30 @@ theorem isThetaFLie_eqOn_regular {f θ θ' : ↥d.lieZero → ℂ} (hθ : d.IsTh
 
 /-! ## (L5) `θ_f`: the transfer -/
 
-/-- **`ad` is equivariant**: `ad(g⁻¹ X g) = P(g)⁻¹ ad(X) P(g)` (`adV_conj` on each factor). -/
-theorem toSOLin_adLie0_inv (g : ↥d.G) (X : ↥d.lieZero) :
-    d.toSOLin (d.adLie0 g⁻¹ X : d.ambient) = d.luoOf.conjInv (d.toGbar g) (d.toSOLin X) := by
-  have hinv : ((d.toGbar g)⁻¹ : ↥d.luoOf.Gbar) = d.toGbar g⁻¹ := (map_inv d.toGbar g).symm
-  unfold LuoDatum.conjInv
+/-- `ad(g Y g⁻¹) = P(g) ad(Y) P(g)⁻¹` for `g ∈ G(F)` and `Y ∈ 𝔤` (`adV_conj` on each factor). -/
+theorem toSOLin_conj (g : ↥d.G) {Y : d.ambient} (hY : Y ∈ d.lie) :
+    d.toSOLin (((g : d.ambientˣ) : d.ambient) * Y *
+        (((g : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient)) =
+      ((d.toGbarU g : d.luoOf.Ambˣ) : d.luoOf.Amb) * d.toSOLin Y *
+        (((d.toGbarU g)⁻¹ : d.luoOf.Ambˣ) : d.luoOf.Amb) := by
+  have hinv : (d.toGbarU g)⁻¹ = d.toGbarU g⁻¹ := (map_inv d.toGbarU g).symm
   rw [hinv]
   refine Prod.ext (LinearMap.ext fun v => ?_) (LinearMap.ext fun v => ?_)
-  · have h := adV_conj (d.fst g⁻¹) X.2.1.1 v
-    rw [map_inv, inv_inv] at h
+  · have h := adV_conj (d.fst g) hY.1 v
+    rw [← map_inv] at h
     exact h
-  · have h := adV_conj (d.snd g⁻¹) X.2.2.1 v
-    rw [map_inv, inv_inv] at h
+  · have h := adV_conj (d.snd g) hY.2 v
+    rw [← map_inv] at h
     exact h
+
+/-- **`ad` is equivariant**: `ad(g⁻¹ X g) = P(g)⁻¹ ad(X) P(g)` (`toSOLin_conj` at `g⁻¹`). -/
+theorem toSOLin_adLie0_inv (g : ↥d.G) (X : ↥d.lieZero) :
+    d.toSOLin (d.adLie0 g⁻¹ X : d.ambient) = d.luoOf.conjInv (d.toGbar g) (d.toSOLin X) := by
+  have h := d.toSOLin_conj g⁻¹ (d.lieZero_le_lie X.2)
+  have e1 : ((d.toGbar g)⁻¹ : ↥d.luoOf.Gbar) = d.toGbar g⁻¹ := (map_inv d.toGbar g).symm
+  unfold LuoDatum.conjInv
+  rw [coe_adLie0, h, e1, ← map_inv d.toGbarU g⁻¹, inv_inv]
+  rfl
 
 /-- `ad` preserves commutators on `𝔤⁰` (`adV_commutator` on each factor). -/
 theorem toSOLin_commutator {X Y : d.ambient} (hX : X ∈ d.lieZero) (hY : Y ∈ d.lieZero) :
@@ -728,6 +833,39 @@ theorem isSS_toSOLin {X : d.ambient} (hX : X ∈ d.lieZero) (hs : IsSS F X) :
       rw [← Polynomial.aeval_algHom_apply, sndA_toSOLin]
       exact hV
   exact isSS_of_aeval_eq_zero hq hq0
+
+/-- `ad Y` is nilpotent iff `Y` is, for `Y ∈ 𝔤⁰`. -/
+theorem isNilpotent_toSOLin_iff {Y : d.ambient} (hY : Y ∈ d.lieZero) :
+    IsNilpotent (d.toSOLin Y) ↔ IsNilpotent Y := by
+  constructor
+  · intro h
+    have h1 : IsNilpotent (adV d.QW Y.1) := h.map d.luoOf.fstA
+    have h2 : IsNilpotent (adV d.QV Y.2) := h.map d.luoOf.sndA
+    exact isNilpotent_prod_iff.mpr ⟨isNilpotent_of_isNilpotent_adV d.nondeg hY.1 h1,
+      isNilpotent_of_isNilpotent_adV d.nondeg_QV hY.2 h2⟩
+  · intro h
+    obtain ⟨⟨a, ha⟩, ⟨b, hb⟩⟩ := isNilpotent_prod_iff.mp h
+    obtain ⟨a', ha'⟩ := isNilpotent_adV hY.1.1 ⟨a, ha⟩
+    obtain ⟨b', hb'⟩ := isNilpotent_adV hY.2.1 ⟨b, hb⟩
+    refine ⟨a' + b', Prod.ext ?_ ?_⟩
+    · change d.luoOf.fstA (d.toSOLin Y ^ (a' + b')) = 0
+      rw [map_pow, fstA_toSOLin]
+      exact pow_eq_zero_of_le (Nat.le_add_right a' b') ha'
+    · change d.luoOf.sndA (d.toSOLin Y ^ (a' + b')) = 0
+      rw [map_pow, sndA_toSOLin]
+      exact pow_eq_zero_of_le (Nat.le_add_left b' a') hb'
+
+/-- `ad Y` is semisimple iff `Y` is, for `Y ∈ 𝔤⁰`. -/
+theorem isSS_toSOLin_iff {Y : d.ambient} (hY : Y ∈ d.lieZero) :
+    IsSS F (d.toSOLin Y) ↔ IsSS F Y := by
+  refine ⟨fun h => ?_, d.isSS_toSOLin hY⟩
+  have h1 : IsSS F (d.luoOf.fstA (d.toSOLin Y)) := isSS_algHom _ h
+  have h2 : IsSS F (d.luoOf.sndA (d.toSOLin Y)) := isSS_algHom _ h
+  rw [fstA_toSOLin] at h1
+  rw [sndA_toSOLin] at h2
+  exact isSS_prod (isSS_of_isSemisimple_adV d.nondeg hY.1.1 (isSemisimple_of_isSS_end h1))
+    (isSS_of_isSemisimple_adV d.nondeg_QV hY.2.1 (isSemisimple_of_isSS_end h2))
+
 
 /-- **`ad` maps regular semisimple elements of `𝔤⁰` to regular semisimple elements of
 `so(W) ⊕ so(V)`**: semisimplicity by `isSS_toSOLin`; the centralizer of `ad X` pulls back along the
@@ -980,13 +1118,12 @@ theorem cTheta_toSO_of_transport {θ : ↥d.luoOf.lie → ℂ}
 /-- **(L6, L7) The germs `c_θ(X)` agree.**  For a quasi-character `θ` on `so(W) ⊕ so(V)` and
 `X ∈ 𝔱⁰_♮` of a torus of `Γ^Lie(G,H)`, the germ of `θ ∘ ad` at `X` for the orbit `orbitChoiceLie X`
 (`germLie` for `(G, 𝔤⁰, bilin)`) is Luo's `c_θ(ad X)` (`germLie` for `(Ḡ, 𝔤, B)` and the orbit
-`orbitChoice`).  Ingredients: (L6) on `so(W) ⊕ so(V)`, `bilin = (k_W tr_W, k_V tr_V)` with
-`k_W, k_V ∈ F^×` (one constant for each factor, so the scaling argument is applied to `so(W)` and
-`so(V)` separately), and `ĵ_{aB}(O, ·) = ĵ_B(aO, ·)` with `aO = O` for regular nilpotent orbits, so
-the germs do not depend on the choice of invariant form; `Z_G(X)(F) → Ḡ_X(F)` is onto, so the
-nilpotent
-orbits of `𝔤⁰_X` are the same; (L7) `OrbitSpecAt` is Luo's and Waldspurger's recipe (`O_{ν₀}` on
-`V'_X`, `O_{−ν₀}` on `W'_X`), with `ν₀ = q(z₀) = ν`.  Not proved here. -/
+`orbitChoice`).  Ingredients: (L6) `bilin = B(c ·, ·)` on `𝔤⁰` for a central unit `c` (one constant
+for each factor) and `ĵ_{B(c ·, ·)}(O, ·) = ĵ_B(c O, ·)`; `ad` is an isomorphism of descent data
+`Z_G(X) → Ḡ_{ad X}`; (L7) `OrbitSpecAt` is Luo's and Waldspurger's recipe (`O_{ν₀}` on `V'_X`,
+`O_{−ν₀}` on `W'_X`), with `ν₀ = q(z₀) = ν`.  `cTheta_toSO_of_germUnique`
+(`TraceFormula/CThetaTransport.lean`) proves this conclusion from the uniqueness of the regular
+coefficients of Lie-algebra local expansions on `𝔤⁰` at `X`.  Not proved here. -/
 theorem cTheta_toSO (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) {θ : ↥d.luoOf.lie → ℂ}
     (hθ : IsLieQuasiCharacter d.luoOf.Gbar d.luoOf.lie d.luoOf.traceForm ψ θ)
     (T : d.GammaTorus) (X : CliffordAlgebra d.QW) (hX : d.IsGammaEltLie T.1 X) :

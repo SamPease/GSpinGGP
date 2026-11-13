@@ -320,4 +320,69 @@ lemma exists_nhds_expA_conj_mem :
   rw [show ad X = LinearMap.mulLeft F X - LinearMap.mulRight F X from rfl, hAd X hX.1] at this
   simpa [mul_assoc] using this
 
+/-! ## `exp` detects skew endomorphisms near `0` -/
+
+section SkewExp
+
+variable {F}
+
+variable {U : Type*} [AddCommGroup U] [Module F U] [Module.Finite F U]
+
+/-- The pairs `(T, T')` adjoint for `B` (`B(T u, v) = B(u, T' v)`), as a subalgebra of
+`End U × End Uᵐᵒᵖ`. -/
+def adjointPairSubalgebra (B : LinearMap.BilinForm F U) :
+    Subalgebra F (Module.End F U × (Module.End F U)ᵐᵒᵖ) where
+  carrier := {Z | LinearMap.IsAdjointPair B B ⇑Z.1 ⇑(MulOpposite.unop Z.2 : Module.End F U)}
+  mul_mem' := fun {_ _} hZ hW => hZ.mul hW
+  add_mem' := fun {_ _} hZ hW => hZ.add hW
+  algebraMap_mem' := fun r => by
+    change LinearMap.IsAdjointPair B B ⇑(r • (1 : Module.End F U)) ⇑(r • (1 : Module.End F U))
+    rw [LinearMap.coe_smul]
+    exact (LinearMap.isAdjointPair_one (B := B)).smul r
+
+/-- **`exp` detects skew endomorphisms near `0`**: if `e^Y` is an isometry of `B` and `Y` is
+near `0`, then `(Y, −Y)` is an adjoint pair, i.e. `Y` is skew for `B`.  In
+`End U × End Uᵐᵒᵖ`, `e^{(Y, −Y)} = (e^Y, e^{−Y})` is an adjoint pair (`e^{−Y} = (e^Y)⁻¹`), and
+`exp` detects subalgebras near `0` (`exists_nhds_mem_of_expA_mem`). -/
+theorem eventually_isAdjointPair_neg_of_isOrthogonal_expA
+    [TopologicalSpace (Module.End F U)] [IsModuleTopology F (Module.End F U)]
+    (B : LinearMap.BilinForm F U) :
+    ∀ᶠ Y in 𝓝 (0 : Module.End F U), LinearMap.IsOrthogonal B ⇑(expA F Y : Module.End F U) →
+      LinearMap.IsAdjointPair B B ⇑Y ⇑(-Y) := by
+  let E := Module.End F U
+  let A₂ := E × Eᵐᵒᵖ
+  let _ : TopologicalSpace A₂ := moduleTopology F A₂
+  have : IsModuleTopology F A₂ := ⟨rfl⟩
+  have := IsModuleTopology.toContinuousAdd F A₂
+  have := IsModuleTopology.toContinuousAdd F E
+  obtain ⟨V, hV, hmem⟩ := exists_nhds_mem_of_expA_mem F (A := A₂)
+  have h1 := eventually_map_expA (F := F) (A := A₂) (B := E) (LinearMap.fst F E Eᵐᵒᵖ)
+    (fun Z n => Prod.pow_fst Z n)
+  have h2 := eventually_map_expA (F := F) (A := A₂) (B := E)
+    ((MulOpposite.opLinearEquiv F).symm.toLinearMap ∘ₗ LinearMap.snd F E Eᵐᵒᵖ)
+    (fun Z n => by
+      simp only [LinearMap.coe_comp, Function.comp_apply, LinearEquiv.coe_coe,
+        MulOpposite.coe_opLinearEquiv_symm]
+      change MulOpposite.unop ((Z ^ n : E × Eᵐᵒᵖ).2) = MulOpposite.unop (Z : E × Eᵐᵒᵖ).2 ^ n
+      rw [Prod.pow_snd, MulOpposite.unop_pow])
+  let j : E →ₗ[F] A₂ :=
+    LinearMap.prod LinearMap.id ((MulOpposite.opLinearEquiv F).toLinearMap ∘ₗ (-LinearMap.id))
+  have hj : Continuous j := IsModuleTopology.continuous_of_linearMap j
+  have hjt : Filter.Tendsto j (𝓝 0) (𝓝 0) := hj.tendsto' 0 0 (map_zero j)
+  obtain ⟨Ui, hUi, hinv⟩ := expA_mul_expA_neg F (A := E)
+  filter_upwards [hjt hV, hjt.eventually h1, hjt.eventually h2, hUi] with Y hYV hY1 hY2 hYi horth
+  have e1 : (expA F (j Y)).1 = expA F Y := hY1
+  have e2 : MulOpposite.unop (expA F (j Y)).2 = expA F (-Y) := hY2
+  have hP : expA F (j Y) ∈ adjointPairSubalgebra B := by
+    intro u v
+    change B ((expA F (j Y)).1 u) v = B u ((MulOpposite.unop (expA F (j Y)).2) v)
+    rw [e1, e2]
+    have hv : expA F Y (expA F (-Y) v) = v := by
+      rw [← Module.End.mul_apply, hinv Y hYi, Module.End.one_apply]
+    conv_lhs => rw [← hv]
+    exact horth u _
+  exact hmem (j Y) hYV _ hP
+
+end SkewExp
+
 end GSpinGGP
