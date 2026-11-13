@@ -2,17 +2,28 @@
 Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import GSpinGGP.TraceFormula.LuoTorusConj
+import GSpinGGP.TraceFormula.LuoTorusIntegral
 import GSpinGGP.TraceFormula.CThetaTransport
 import GSpinGGP.Foundations.CommutantSquarefree
 
 /-!
 # The torus integrals of `θ ∘ ad` and of `θ` agree (step (L8) of `LuoTransfer`)
 
+`torusIntegralLie_toSO` (Thesis §12.1; Luo §7.1), from the reduction
+`torusIntegralLie_toSO_of_germ_conj` and its two hypotheses:
+
 * `unitConj`, `conjCentralizerIso`: conjugation by `u ∈ G(F)` is an isomorphism of descent data
   `(Z_G(X), 𝔤_X) ≃ (Z_G(uXu⁻¹), 𝔤_{uXu⁻¹})`;
 * `germLie_conj`: germs of a Lie quasi-character are conjugation invariant (the orbits matched by
-  `Ad u`).
+  `Ad u`);
+* `isInOrbitNu_conj_iff`: Luo's orbit `O_ν` is carried to itself by isometries;
+  `LuoDatum.orbitSpec_unitConj_diagU`: Luo's recipe is `SO(W)`-invariant;
+* `LuoDatum.cTheta_unitConj_diagU`, `cTheta_toSOLin_diagLie_conj`: Luo's `c_θ` is invariant under
+  conjugation by `SO(W)`; `germLie0_diagLie_conj` (`hgerm`): the germs of `θ ∘ ad` at `X` and at
+  `gXg⁻¹` agree (both are Luo's `c_θ`, `cTheta_toSO`);
+* `commClause_iff_squarefree`, `isGammaEltLie_iff_isNat` (`hnat`): `ad` carries `𝔱⁰_♮` onto Luo's
+  `𝔱_♮` (regularity in `𝔱⁰` is a squarefree characteristic polynomial on `W''`,
+  `Foundations/CommutantSquarefree.lean`).
 -/
 
 noncomputable section
@@ -271,7 +282,8 @@ theorem isInOrbitNu_conj_of {Q : QuadraticForm F V} (σ : V ≃ₗ[F] V) (hσ : 
       { toLinearEquiv := σ.submoduleMap S
         map_app' := fun v => hσ v }
     unfold IsSplitQF at hsplit ⊢
-    rw [← LinearEquiv.finrank_eq iso.toLinearEquiv, ← QuadClassify.wittIndex_eq_of_isometryEquiv iso]
+    rw [← LinearEquiv.finrank_eq iso.toLinearEquiv,
+      ← QuadClassify.wittIndex_eq_of_isometryEquiv iso]
     exact hsplit
 
 /-- **Luo's orbit `O_ν` is intrinsic**: an isometry `σ` of `Q` carries `N ∈ O_ν` on `U` to
@@ -457,7 +469,8 @@ theorem isOpen_setOf_isRegularSS_lieCentralizer_toSOLin (hW : ¬ IsHypPlane d.QW
 /-- **At most one regular nilpotent orbit of `(so(W) ⊕ so(V))_{ad X}` meets Luo's recipe**, for
 `X ∈ 𝔱⁰_♮` of a torus of `Γ(G,H)`: `orbitSpecAt_orbit_unique` transported along the orbit map of
 `exists_nilOrbitEquiv_toSOLin` (for any `ψ`; the statement does not involve it). -/
-theorem orbitSpec_orbit_unique_toSOLin (ψ : NontrivialAddChar F) (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
+theorem orbitSpec_orbit_unique_toSOLin (ψ : NontrivialAddChar F) (hW : ¬ IsHypPlane d.QW)
+    (hV : ¬ IsHypPlane d.QV)
     (T : d.GammaTorus) {X : CliffordAlgebra d.QW} (hX : d.IsGammaEltLie T.1 X) :
     ∀ O O' : NilOrbit (lieGrpCentralizer d.luoOf.Gbar (d.toSOLin (d.diagLie X)))
         (lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X))), O ∈ NilReg _ _ →
@@ -521,7 +534,8 @@ theorem cTheta_toSOLin_diagLie_conj (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlan
 
 /-- **The germs at `X` and at `g X g⁻¹` agree** (the hypothesis `hgerm` of
 `torusIntegralLie_toSO_of_germ_conj`), for `x ∈ Γ(G,H)`, `g ∈ GSpin(W)(F)` and `X ∈ 𝔱⁰_♮(T_x)`
-(then `gXg⁻¹ ∈ 𝔱⁰_♮(T_{gxg⁻¹})`): both germs are Luo's `c_θ` (`cTheta_toSO`), and `c_θ(ad(gXg⁻¹)) = c_θ(ad X)`
+(then `gXg⁻¹ ∈ 𝔱⁰_♮(T_{gxg⁻¹})`): both germs are Luo's `c_θ` (`cTheta_toSO`), and
+`c_θ(ad(gXg⁻¹)) = c_θ(ad X)`
 (`cTheta_toSOLin_diagLie_conj`). -/
 theorem germLie0_diagLie_conj (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
     (θ : ↥d.luoOf.lie → ℂ)
@@ -539,7 +553,8 @@ theorem germLie0_diagLie_conj (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV
       (((g : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW)) := by
     rw [d.torusOf_conj]
     exact d.isGammaEltLie_conj g hX
-  rw [d.cTheta_toSO ψ hW hV hθ ⟨_, g * x * g⁻¹, hx', rfl⟩ _ hX', d.cTheta_toSO ψ hW hV hθ ⟨_, x, hx, rfl⟩ _ hX]
+  rw [d.cTheta_toSO ψ hW hV hθ ⟨_, g * x * g⁻¹, hx', rfl⟩ _ hX',
+    d.cTheta_toSO ψ hW hV hθ ⟨_, x, hx, rfl⟩ _ hX]
   exact d.cTheta_toSOLin_diagLie_conj ψ hW hV hθ ⟨_, x, hx, rfl⟩ ⟨_, g * x * g⁻¹, hx', rfl⟩ g hX hX'
 
 end GGPData
@@ -554,8 +569,8 @@ every `Y ∈ so(W)` commuting with `X` and killing `W'` lies in `𝔱⁰` iff `X
 characteristic polynomial on `W'' = X(W)`.  `X` is semisimple, `W = W' ⊥ W''`.
 `⇐`: `ad Y` and `P(t)`, `t ∈ T_x`, commute with `X`, so on `W''` they commute
 (`commute_of_squarefree_charpoly`), and on `W'` `ad Y = 0`, `P(t) = 1`.
-`⇒`: a skew map of `W''` commuting with `X|_{W''}`, extended by `0` on `W'`, is `ad Y` with `Y` as in
-the clause, so it lies in `𝔱⁰`, which is abelian (`movedPartAbelian_of_isGammaElt`); hence all
+`⇒`: a skew map of `W''` commuting with `X|_{W''}`, extended by `0` on `W'`, is `ad Y` with `Y` as
+in the clause, so it lies in `𝔱⁰`, which is abelian (`movedPartAbelian_of_isGammaElt`); hence all
 endomorphisms of `W''` commuting with `X` commute (`commute_of_commute_of_isSkewAdjoint`) and the
 characteristic polynomial is squarefree (`squarefree_charpoly_of_commute`). -/
 theorem commClause_iff_squarefree {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
@@ -597,7 +612,8 @@ theorem commClause_iff_squarefree {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
   constructor
   · -- `⇒`
     intro hcl
-    have hss₀ : A₀.IsSemisimple := hss.restrict (p := R) ((Module.End.mem_invtSubmodule A).mpr hRA)
+    have hss₀ : Module.End.IsSemisimple A₀ :=
+      hss.restrict (p := R) ((Module.End.mem_invtSubmodule A).mpr hRA)
     have hA₀inj : Function.Injective A₀ := by
       rw [← LinearMap.ker_eq_bot, LinearMap.ker_eq_bot']
       intro r hr
@@ -627,12 +643,12 @@ theorem commClause_iff_squarefree {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
     let ext : Module.End F R → Module.End F (Fin d.m → F) := fun S => R.subtype ∘ₗ S ∘ₗ π
     have hext : ∀ S k r (hk : k ∈ LinearMap.ker A) (hr : r ∈ R),
         ext S (k + r) = (S ⟨r, hr⟩ : Fin d.m → F) := fun S k r hk hr => by
-      simp only [ext, LinearMap.comp_apply, map_add, hπk k hk, hπr r hr, zero_add,
+      simp only [ext, LinearMap.comp_apply, map_add, hπk k hk, hπr r hr, zero_add, map_zero,
         Submodule.subtype_apply]
     have hext0 : ∀ S k, k ∈ LinearMap.ker A → ext S k = 0 := fun S k hk => by
-      simpa using hext S k 0 hk R.zero_mem
+      simp only [ext, LinearMap.comp_apply, hπk k hk, map_zero]
     have hextr : ∀ S r (hr : r ∈ R), ext S r = (S ⟨r, hr⟩ : Fin d.m → F) := fun S r hr => by
-      simpa using hext S 0 r (LinearMap.ker A).zero_mem hr
+      simp only [ext, LinearMap.comp_apply, hπr r hr, Submodule.subtype_apply]
     have key : ∀ S : Module.End F R, BR.IsSkewAdjoint S → Commute A₀ S →
         ∃ Y ∈ soSub d.QW, adV d.QW Y = ext S ∧ Y ∈ d.lieTorus T := by
       intro S hS hSc
@@ -649,8 +665,9 @@ theorem commClause_iff_squarefree {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
         rw [this, map_neg]
       have hlie : d.luoOf.pair (ext S) 0 ∈ d.luoOf.lie :=
         ⟨(LinearMap.mem_skewAdjointSubmodule _).2 fun u w => by
-            change bform d.QW (ext S u) w = bform d.QW u (-(ext S w))
-            rw [hsk, map_neg],
+            have := hsk u w
+            rw [← map_neg] at this
+            exact this,
           (skewAdjointLieSubalgebra (bform d.luoOf.QV)).zero_mem⟩
       obtain ⟨Z, hZ, hZM⟩ := d.exists_toSOLin_eq hlie
       have hadZ : adV d.QW Z.1 = ext S := congrArg Prod.fst hZM
@@ -686,7 +703,7 @@ theorem commClause_iff_squarefree {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
       rw [Ring.lie_def] at h
       have h' := congrArg (adV d.QW) h
       rw [adV_commutator hY₁.1 hY₂.1, hY₁a, hY₂a] at h'
-      have h0 : adV d.QW (0 : CliffordAlgebra d.QW) = 0 := by ext; simp [adV_apply]
+      have h0 : adV d.QW (0 : CliffordAlgebra d.QW) = 0 := by ext; simp
       rw [h0, sub_eq_zero] at h'
       refine LinearMap.ext fun r => Subtype.ext ?_
       have := LinearMap.congr_fun h' (r : Fin d.m → F)
@@ -703,7 +720,7 @@ theorem commClause_iff_squarefree {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
     have hBA : Bm * A = A * Bm := by
       have h := adV_commutator hY.1 hXg
       rw [hYX, sub_self] at h
-      have h0 : adV d.QW (0 : CliffordAlgebra d.QW) = 0 := by ext; simp [adV_apply]
+      have h0 : adV d.QW (0 : CliffordAlgebra d.QW) = 0 := by ext; simp
       rw [h0] at h
       exact sub_eq_zero.mp h.symm
     have hPA : (specP d.QW t : Module.End F (Fin d.m → F)) * A =
@@ -716,11 +733,71 @@ theorem commClause_iff_squarefree {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
     have hPk : specP d.QW t k = k := by
       have : k ∈ fixedSub t := (Submodule.mem_iInf _).mp hkT ⟨t, ht⟩
       exact (d.mem_fixedSub_iff).mp this
-    have hBk : Bm k = 0 := hYf k hkT
+    have hBk : adV d.QW Y k = 0 := hYf k hkT
     have hr' := congrArg Subtype.val (LinearMap.congr_fun hPB.eq ⟨r, hr⟩)
     simp only [Module.End.mul_apply, LinearMap.restrict_apply] at hr'
-    simp only [Module.End.mul_apply, map_add, hBk, hPk, map_zero, zero_add]
+    simp only [Module.End.mul_apply, map_add]
+    erw [hPk, hBk]
+    simp only [map_zero, zero_add]
     exact hr'
+
+/-- **`ad` carries `𝔱⁰_♮(T_x)` onto Luo's `𝔱_♮(φ(T_x))`** for `x ∈ Γ(G,H)` (the hypothesis `hnat` of
+`torusIntegralLie_toSO_of_germ_conj`): the first two clauses correspond (`mem_lieTorus_map_iff`,
+`commonFixed_eq_fixedOf_map`), the third by `commClause_iff_squarefree`. -/
+theorem isGammaEltLie_iff_isNat {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
+    (X : ↥(d.lieTorus (d.torusOf x))) :
+    d.IsGammaEltLie (d.torusOf x) X ↔
+      d.luoOf.IsNat ((d.torusOf x).map (d.toGbarU.comp d.diag)) (d.toSOLin (d.diagLie X)) := by
+  have hXs : (X : CliffordAlgebra d.QW) ∈ soSub d.QW := X.2.1
+  have hfst : d.luoOf.fstA (d.toSOLin (d.diagLie X)) = adV d.QW X := by
+    rw [d.toSOLin_diagLie hXs.1]
+    rfl
+  have hsq : ∀ {B : Module.End F (Fin d.m → F)}, B = adV d.QW X →
+      (Squarefree (LinearMap.charpoly (B.restrict (p := LinearMap.range B)
+        (q := LinearMap.range B) (fun v _ => LinearMap.mem_range_self _ v))) ↔
+      Squarefree (LinearMap.charpoly ((adV d.QW X).restrict (p := LinearMap.range (adV d.QW X))
+        (q := LinearMap.range (adV d.QW X)) (fun v _ => LinearMap.mem_range_self _ v)))) := by
+    rintro _ rfl
+    rfl
+  have hfix := d.commonFixed_eq_fixedOf_map (d.torusOf x)
+  have hmem := d.mem_lieTorus_map_iff (d.torusOf x) hXs
+  constructor
+  · rintro ⟨h1, h2, h3⟩
+    refine ⟨hmem.mp h1, by rw [hfst, ← hfix]; exact h2, (hsq hfst).mpr ?_⟩
+    exact (d.commClause_iff_squarefree hx h1 h2).mp h3
+  · rintro ⟨h1, h2, h3⟩
+    have h1' := hmem.mpr h1
+    have h2' : LinearMap.ker (adV d.QW X) = commonFixed (d.torusOf x) := by
+      rw [← hfst, hfix]; exact h2
+    exact ⟨h1', h2', (d.commClause_iff_squarefree hx h1' h2').mpr ((hsq hfst).mp h3)⟩
+
+variable (ψ : NontrivialAddChar F)
+
+/-- **(L8) The torus integrals agree**, for a bijection of classes matching each torus with its
+image (`IsNaturalTorusCorr`, as given by `gammaClass_equiv`) and the measures
+`ν(T) dX`: on each torus, `ad` maps `𝔱⁰ = lieTorus T` onto Luo's `𝔱` (embedded diagonally), carries
+`measLieTorus` (`exp`-compatible with the probability measure on `T(F)/A_{G,H}(F)`) to the
+`exp`-compatible measure for the probability measure on `H''(F)`, `𝔱⁰_♮` (`IsGammaEltLie`) to `𝔱_♮`
+(`IsNat`), `D^G` (`weylDiscLie` on `𝔤⁰` vs on `so(W) ⊕ so(V)`) and `Δ` to the same values, and (by
+the hypothesis `hc`, i.e. `cTheta_toSO`) `c_θ` to `c_θ`; the representatives of the classes differ
+by conjugation, which preserves the integrands and measures.  Proof:
+`torusIntegralLie_toSO_of_germ_conj` with `isGammaEltLie_iff_isNat` and `germLie0_diagLie_conj`. -/
+theorem torusIntegralLie_toSO (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
+    (e : GammaClass d ≃ d.luoOf.GammaClass)
+    (hen : ∀ c, d.IsNaturalTorusCorr (Quot.out c).1 (Quot.out (e c)).1) :
+    ∃ μT : ∀ T : d.luoOf.GammaTorus, Measure ↥(d.luoOf.lieTorus T.1),
+      (∀ T, d.luoOf.IsExpCompatT T.1 (μT T)) ∧
+      ∀ θ : ↥d.luoOf.lie → ℂ,
+        IsLieQuasiCharacter d.luoOf.Gbar d.luoOf.lie d.luoOf.traceForm ψ θ →
+        (∀ (T : d.GammaTorus) (X : CliffordAlgebra d.QW), d.IsGammaEltLie T.1 X →
+          d.germLie0 ψ (θ ∘ d.toSO) (d.diagLie X) (d.orbitChoiceLie X) =
+            d.luoOf.cTheta ψ θ (d.toSOLin (d.diagLie X))) →
+        ∀ (c : GammaClass d) (s : ℝ), 0 < s →
+          d.torusIntegralLie ψ (θ ∘ d.toSO) (Quot.out c).1 s =
+            ∫ X : ↥(d.luoOf.lieTorus (Quot.out (e c)).1),
+              d.luoOf.gammaIntegrand ψ θ (Quot.out (e c)).1 s X ∂μT (Quot.out (e c)) := by
+  exact d.torusIntegralLie_toSO_of_germ_conj ψ (fun _ hx X => d.isGammaEltLie_iff_isNat hx X)
+    (fun θ hθ x g hx X hX => d.germLie0_diagLie_conj ψ hW hV θ hθ x g hx X hX) e hen
 
 end GGPData
 

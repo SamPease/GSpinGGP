@@ -19,8 +19,7 @@ when neither `W` nor `V` is a hyperbolic plane; `TraceFormula/LuoClass.lean` ded
 `distribJLie_eq_mGeomLie_of_luo`: `J^Lie(f) = m^Lie_geom(θ_f)` for `f ∈ S_scusp(𝔤⁰(F))` (Thesis
 Thm 12.2.2 on `𝔤⁰`).
 
-The identification is own work, stated step by step (one step, `torusIntegralLie_toSO`, is still
-`sorry`):
+The identification is own work, stated step by step:
 * (L1) `toSO`: `X ↦ (ad_W X_W, ad_V X_V)` maps `𝔤⁰` onto `so(W) ⊕ so(V)` (`toSO_mem` is proved;
   `toSO_bijective` and the transfer of strong cuspidality `isScusp_toSO` are proved);
 * (L2) `luoOf`: the admissible pair of `d` with Luo's basis `z^L_i = ν^{-i} z_i`,
@@ -40,7 +39,8 @@ The identification is own work, stated step by step (one step, `torusIntegralLie
   correspond (`orbitChoice_eq_of_orbitMap`) and the germs agree (`cTheta_toSO_of_transport`) given
   uniqueness of regular germ coefficients on `𝔤⁰`, uniqueness of the regular orbit meeting the
   recipe, and a transport of local expansions;
-* (L8) `gammaClass_equiv` (proved, in `TraceFormula/LuoClass.lean`), `torusIntegralLie_toSO`:
+* (L8) `gammaClass_equiv` (proved, in `TraceFormula/LuoClass.lean`), `torusIntegralLie_toSO`
+  (proved, in `TraceFormula/LuoTorusHyps.lean`):
   `Γ^Lie` (tori, `|W(H,T)|`, `ν(T) dX`, `D^G`, `Δ`, `𝔱_♮`) agree; `mGeomLieS_toSO` is proved from
   them;
 * (L9) `mGeomLie_congr_regularSet` (proved): `m^Lie_geom(θ)` depends only on `θ|_{𝔤⁰_reg}`.
@@ -1120,30 +1120,6 @@ theorem cTheta_toSO_of_transport {θ : ↥d.luoOf.lie → ℂ}
 `t ↦ (P(t), P(t) ⊕ 1)` (the natural correspondence of tori). -/
 def IsNaturalTorusCorr (T : Subgroup ↥(GSpin d.QW)) (T' : Subgroup d.luoOf.Ambˣ) : Prop :=
   ∃ h ∈ d.luoOf.HbarU, T' = (T.map (d.toGbarU.comp d.diag)).map (MulAut.conj h).toMonoidHom
-
-/-- **(L8) The torus integrals agree**, for a bijection of classes matching each torus with its
-image (`IsNaturalTorusCorr`, as given by `gammaClass_equiv`) and the measures
-`ν(T) dX`: on each torus, `ad` maps `𝔱⁰ = lieTorus T` onto Luo's `𝔱` (embedded diagonally), carries
-`measLieTorus` (`exp`-compatible with the probability measure on `T(F)/A_{G,H}(F)`) to the
-`exp`-compatible measure for the probability measure on `H''(F)`, `𝔱⁰_♮` (`IsGammaEltLie`) to `𝔱_♮`
-(`IsNat`), `D^G` (`weylDiscLie` on `𝔤⁰` vs on `so(W) ⊕ so(V)`) and `Δ` to the same values, and (by
-the hypothesis `hc`, i.e. `cTheta_toSO`) `c_θ` to `c_θ`; the representatives of the classes differ
-by conjugation, which preserves the integrands and measures.  Not proved here. -/
-theorem torusIntegralLie_toSO (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
-    (e : GammaClass d ≃ d.luoOf.GammaClass)
-    (hen : ∀ c, d.IsNaturalTorusCorr (Quot.out c).1 (Quot.out (e c)).1) :
-    ∃ μT : ∀ T : d.luoOf.GammaTorus, Measure ↥(d.luoOf.lieTorus T.1),
-      (∀ T, d.luoOf.IsExpCompatT T.1 (μT T)) ∧
-      ∀ θ : ↥d.luoOf.lie → ℂ,
-        IsLieQuasiCharacter d.luoOf.Gbar d.luoOf.lie d.luoOf.traceForm ψ θ →
-        (∀ (T : d.GammaTorus) (X : CliffordAlgebra d.QW), d.IsGammaEltLie T.1 X →
-          d.germLie0 ψ (θ ∘ d.toSO) (d.diagLie X) (d.orbitChoiceLie X) =
-            d.luoOf.cTheta ψ θ (d.toSOLin (d.diagLie X))) →
-        ∀ (c : GammaClass d) (s : ℝ), 0 < s →
-          d.torusIntegralLie ψ (θ ∘ d.toSO) (Quot.out c).1 s =
-            ∫ X : ↥(d.luoOf.lieTorus (Quot.out (e c)).1),
-              d.luoOf.gammaIntegrand ψ θ (Quot.out (e c)).1 s X ∂μT (Quot.out (e c)) := by
-  sorry
 
 /-- A local expansion of `θ` at a semisimple `X` is one of every `θ'` agreeing with `θ` on
 `𝔤⁰_reg(F)`: the expansion is only evaluated at `X + Y` with `Y ∈ 𝔤⁰_X` small and regular, which

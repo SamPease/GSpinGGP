@@ -95,8 +95,8 @@ theorem exists_not_commute_of_one_lt_finrank_eigenspace {f : Module.End K V}
     Submodule.projectionOnto_apply_left hc (b j)
   simp only [g, g', Module.End.mul_apply, LinearMap.smulRight_apply, LinearMap.comp_apply,
     hπb, Module.Basis.coord_apply, Module.Basis.repr_self, map_smul] at h
-  simp [h01] at h
-  exact b.ne_zero i₁ h
+  have h' : (b i₁ : V) = 0 := by simpa [h01] using h
+  exact b.ne_zero i₁ (Subtype.ext h')
 
 /-- **On lines, everything commutes**: over an algebraically closed field, if `f` is semisimple
 and its eigenspaces have dimension `≤ 1`, then endomorphisms commuting with `f` commute (they
@@ -185,7 +185,6 @@ theorem commute_of_squarefree_charpoly {f : Module.End K V} (hsq : Squarefree f.
   have key := commute_of_finrank_eigenspace_le_one hss h1 (hc hg) (hc hg')
   have key' : Commute (Mp (T g)) (Mp (T g')) := commute_toLin'_iff.mp key
   have : Commute (T g) (T g') := by
-    show T g * T g' = T g' * T g
     exact hMinj (by rw [map_mul, map_mul]; exact key'.eq)
   simpa using this.map T.symm
 
@@ -208,7 +207,8 @@ theorem squarefree_charpoly_of_commute {f : Module.End K V} (hf : f.IsSemisimple
   have hχ : A.charpoly = f.charpoly.map φ := by
     rw [Matrix.charpoly_toLin', Matrix.charpoly_map,
       show M = LinearMap.toMatrix b b f from rfl, LinearMap.charpoly_toMatrix]
-  have hss : Module.End.IsSemisimple A := isSemisimple_toLin'_map (isSemisimple_toLin'_toMatrix b hf)
+  have hss : Module.End.IsSemisimple A :=
+    isSemisimple_toLin'_map (isSemisimple_toLin'_toMatrix b hf)
   -- the commutant of `M` over `K` is commutative
   have hcK : ∀ X₁ ∈ LinearMap.ker (commMatMap M), ∀ X₂ ∈ LinearMap.ker (commMatMap M),
       Commute X₁ X₂ := by
