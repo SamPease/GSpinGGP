@@ -626,4 +626,122 @@ theorem scalarUnit_mul_mem_lieCentralizer {a b : F} (ha : a ≠ 0) (hb : b ≠ 0
 
 end LuoDatum
 
+namespace GGPData
+
+variable (d : GGPData F)
+
+/-! ## Semisimplicity of `X ∈ 𝔱⁰_♮` and openness of the regular set of `𝔤⁰_X` -/
+
+/-- `X ∈ 𝔱⁰_♮` is semisimple (`isSS_of_commute_of_isGammaElt`: it commutes with the
+`Γ`-element defining the torus and kills its fixed space). -/
+theorem isSS_of_isGammaEltLie (T : d.GammaTorus) {X : CliffordAlgebra d.QW}
+    (hX : d.IsGammaEltLie T.1 X) : IsSS F X := by
+  obtain ⟨_, x, hx, rfl⟩ := T
+  refine d.isSS_of_commute_of_isGammaElt hx hX.1.1.1 (hX.1.2.1 x (d.self_mem_torusOf x))
+    fun v hv => hX.1.2.2 v ?_
+  rw [d.commonFixed_torusOf]
+  exact hv
+
+/-- `(X, X)` is semisimple when `X` is. -/
+theorem isSS_diagLie {X : CliffordAlgebra d.QW} (hX : IsSS F X) : IsSS F (d.diagLie X) :=
+  isSS_prod (Y := d.diagLie X) hX
+    (isSS_algHom (CliffordAlgebra.map (QuadraticMap.Isometry.inl d.QW d.QZ)) hX)
+
+/-- For semisimple `D ∈ 𝔤`, some semisimple `g ∈ G(F)` (`g = e^{tD}`, `t ≠ 0` small) has the same
+centralizer in `𝔤` as `D` (`exists_nhds_commute_of_commute_expA`). -/
+theorem exists_lieCentralizer_eq {D : d.ambient} (hD : D ∈ d.lie) (hss : IsSS F D) :
+    ∃ g : ↥d.G, IsSS F ((g : d.ambientˣ) : d.ambient) ∧
+      lieCentralizer d.lie ((g : d.ambientˣ) : d.ambient) = lieCentralizer d.lie D := by
+  haveI := IsModuleTopology.toContinuousSMul F d.ambient
+  obtain ⟨U₁, hU₁, hcomm⟩ := exists_nhds_commute_of_commute_expA F (A := d.ambient)
+  obtain ⟨U₂, hU₂, hssU⟩ := exists_nhds_isSS_expA F (A := d.ambient)
+  obtain ⟨U₃, hU₃, hexp⟩ := (eventually_expA_mem_G d).exists_mem
+  have ht : Tendsto (fun t : F => t • D) (𝓝[≠] 0) (𝓝 0) := by
+    have hc : Continuous (fun t : F => t • D) := continuous_id.smul continuous_const
+    have h := hc.tendsto 0
+    simp only [zero_smul] at h
+    exact h.mono_left nhdsWithin_le_nhds
+  have hev : ∀ᶠ t in 𝓝[≠] (0 : F), t • D ∈ U₁ ∩ U₂ ∩ U₃ :=
+    ht (Filter.inter_mem (Filter.inter_mem hU₁ hU₂) hU₃)
+  obtain ⟨t, htU, ht0⟩ := (hev.and self_mem_nhdsWithin).exists
+  have ht0' : t ≠ 0 := ht0
+  obtain ⟨⟨htU₁, htU₂⟩, htU₃⟩ := htU
+  have hsst : IsSS F (t • D) := by
+    unfold IsSS
+    rw [show LinearMap.mulLeft F (t • D) = t • LinearMap.mulLeft F D from LinearMap.ext fun x => by
+      simp only [LinearMap.mulLeft_apply, LinearMap.smul_apply, smul_mul_assoc]]
+    exact Module.End.IsSemisimple_smul t hss
+  obtain ⟨g, hg⟩ := hexp _ htU₃ (d.lie.smul_mem t hD)
+  refine ⟨g, by rw [hg]; exact hssU _ htU₂ hsst, ?_⟩
+  ext Y
+  rw [mem_lieCentralizer, mem_lieCentralizer]
+  refine and_congr_right fun _ => ⟨fun h => ?_, fun h => ?_⟩
+  · have h1 : Commute Y (expA F (t • D)) := by rw [← hg]; exact h.symm
+    have h2 : Y * (t • D) = (t • D) * Y := (hcomm _ htU₁ Y h1).eq
+    rw [mul_smul_comm, smul_mul_assoc] at h2
+    exact (smul_right_injective _ ht0' h2).symm
+  · have h1 : Commute Y (t • D) := (show Commute Y D from h.symm).smul_right t
+    have h2 := (commute_expA_of_commute (F := F) h1).eq
+    rw [← hg] at h2
+    exact h2.symm
+
+/-- Regular semisimplicity in `𝔤⁰_D` and in `𝔤_D = 𝔷 ⊕ 𝔤⁰_D` agree (the centre `𝔷` is central). -/
+theorem isRegularSS_lieCentralizer_lieZero_iff {D Z : d.ambient}
+    (_hZ : Z ∈ lieCentralizer d.lieZero D) :
+    IsRegularSS (lieCentralizer d.lieZero D) Z ↔ IsRegularSS (lieCentralizer d.lie D) Z := by
+  unfold IsRegularSS
+  refine and_congr_right fun _ => ?_
+  rw [isLieAbelian_iff_forall_commute, isLieAbelian_iff_forall_commute]
+  have dec : ∀ {Y}, Y ∈ lieCentralizer (lieCentralizer d.lie D) Z → ∃ z ∈ d.lieCenter,
+      ∃ A ∈ lieCentralizer (lieCentralizer d.lieZero D) Z, Y = z + A := by
+    intro Y hY
+    obtain ⟨hY1, hYZ⟩ := mem_lieCentralizer.mp hY
+    obtain ⟨hYl, hYD⟩ := mem_lieCentralizer.mp hY1
+    have hs : Y ∈ d.lieCenter ⊔ d.lie0 := by rw [← lie_eq_center_sup_lie0]; exact hYl
+    obtain ⟨z, hz, A, hA, rfl⟩ := Submodule.mem_sup.mp hs
+    refine ⟨z, hz, A, mem_lieCentralizer.mpr ⟨mem_lieCentralizer.mpr ⟨hA, ?_⟩, ?_⟩, rfl⟩
+    · rw [mul_add, add_mul, d.commute_of_mem_lieCenter hz D] at hYD
+      exact add_left_cancel hYD
+    · rw [mul_add, add_mul, d.commute_of_mem_lieCenter hz Z] at hYZ
+      exact add_left_cancel hYZ
+  constructor
+  · intro h Y₁ h₁ Y₂ h₂
+    obtain ⟨z₁, hz₁, A₁, hA₁, rfl⟩ := dec h₁
+    obtain ⟨z₂, hz₂, A₂, hA₂, rfl⟩ := dec h₂
+    have hAA := h A₁ hA₁ A₂ hA₂
+    have c1 := d.commute_of_mem_lieCenter hz₁
+    have c2 := d.commute_of_mem_lieCenter hz₂
+    calc (z₁ + A₁) * (z₂ + A₂) = z₁ * z₂ + z₁ * A₂ + (A₁ * z₂ + A₁ * A₂) := by noncomm_ring
+      _ = z₂ * z₁ + A₂ * z₁ + (z₂ * A₁ + A₂ * A₁) := by rw [c1 z₂, c1 A₂, ← c2 A₁, hAA]
+      _ = (z₂ + A₂) * (z₁ + A₁) := by noncomm_ring
+  · intro h Y₁ h₁ Y₂ h₂
+    have sub : ∀ {Y}, Y ∈ lieCentralizer (lieCentralizer d.lieZero D) Z →
+        Y ∈ lieCentralizer (lieCentralizer d.lie D) Z := fun {Y} hY => by
+      obtain ⟨hY1, hYZ⟩ := mem_lieCentralizer.mp hY
+      obtain ⟨hY0, hYD⟩ := mem_lieCentralizer.mp hY1
+      exact mem_lieCentralizer.mpr ⟨mem_lieCentralizer.mpr ⟨d.lieZero_le_lie hY0, hYD⟩, hYZ⟩
+    exact h Y₁ (sub h₁) Y₂ (sub h₂)
+
+/-- **The regular semisimple set of `𝔤⁰_D` is open** for semisimple `D ∈ 𝔤⁰`: it is the preimage
+of that of `𝔤_g` (`isOpen_setOf_isRegularSS_lieCentralizer`) for `g ∈ G(F)` semisimple with
+`𝔤_g = 𝔤_D` (`exists_lieCentralizer_eq`). -/
+theorem isOpen_setOf_isRegularSS_lieCentralizer_lieZero {D : d.ambient} (hD : D ∈ d.lieZero)
+    (hss : IsSS F D) :
+    IsOpen {Z : ↥(lieCentralizer d.lieZero D) |
+      IsRegularSS (lieCentralizer d.lieZero D) (Z : d.ambient)} := by
+  obtain ⟨g, hg, hcent⟩ := d.exists_lieCentralizer_eq (d.lieZero_le_lie hD) hss
+  have hO := isOpen_setOf_isRegularSS_lieCentralizer d g hg
+  rw [hcent] at hO
+  have hmem : ∀ Z : ↥(lieCentralizer d.lieZero D), (Z : d.ambient) ∈ lieCentralizer d.lie D :=
+    fun Z => mem_lieCentralizer.mpr ⟨d.lieZero_le_lie (mem_lieCentralizer.mp Z.2).1,
+      (mem_lieCentralizer.mp Z.2).2⟩
+  have hc : Continuous fun Z : ↥(lieCentralizer d.lieZero D) =>
+      (⟨Z, hmem Z⟩ : ↥(lieCentralizer d.lie D)) :=
+    Continuous.subtype_mk continuous_subtype_val _
+  convert hO.preimage hc using 1
+  ext Z
+  exact d.isRegularSS_lieCentralizer_lieZero_iff Z.2
+
+end GGPData
+
 end GSpinGGP
