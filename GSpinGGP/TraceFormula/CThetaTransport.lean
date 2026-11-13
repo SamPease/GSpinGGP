@@ -7,6 +7,7 @@ import GSpinGGP.TraceFormula.ExpIntertwine
 import GSpinGGP.TraceFormula.LuoJLie
 import GSpinGGP.TraceFormula.JHatScale
 import GSpinGGP.Literature.HarishChandra
+import TauCeti.LinearAlgebra.CliffordAlgebra.ScalarTrace.Basic
 
 /-!
 # Transport of local expansions from `so(W) ⊕ so(V)` to `𝔤⁰` (Thesis §6.5, (L6))
@@ -928,5 +929,76 @@ theorem cTheta_toSO_of_germUnique_of_form (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsH
     exact ι.jHat_map hG₀ ψ hnd' hopen' hu' (β₀ O) Y hY' hYr'
 
 end GGPData
+
+/-! ## The trace form of `C(V)` on `so_Cliff(V)` -/
+
+section CliffTraceForm
+
+open CliffordAlgebra
+
+variable {V : Type*} [AddCommGroup V] [Module F V] [Module.Finite F V]
+
+theorem polar_eq_two_mul_associated (Q : QuadraticForm F V) (x y : V) :
+    QuadraticMap.polar Q x y = 2 * QuadraticMap.associated Q x y := by
+  rw [QuadraticMap.associated_apply]
+  simp only [Module.End.smul_def]
+  change _ = 2 * (⅟(2 : Module.End F F) (QuadraticMap.polar Q x y))
+  rw [show (⅟(2 : Module.End F F)) = (⅟(2 : F)) • (1 : Module.End F F) from ?_]
+  · simp [QuadraticMap.polar]
+  · refine invOf_eq_right_inv ?_
+    rw [show (2 : Module.End F F) = (2 : F) • 1 by simp [two_smul, one_add_one_eq_two]]
+    rw [smul_mul_smul_comm, mul_invOf_self, one_smul, one_mul]
+
+/-- `tr(ad(ι x ι y) ∘ M) = polar(y, M x) − polar(x, M y)` (`ad(ι x ι y)` has rank `≤ 2`). -/
+theorem trace_adV_ι_mul_ι_mul (Q : QuadraticForm F V) (x y : V) (M : Module.End F V) :
+    LinearMap.trace F V (adV Q (ι Q x * ι Q y) * M) =
+      QuadraticMap.polar Q y (M x) - QuadraticMap.polar Q x (M y) := by
+  have e : adV Q (ι Q x * ι Q y) * M =
+      (QuadraticMap.polarBilin Q y ∘ₗ M).smulRight x -
+        (QuadraticMap.polarBilin Q x ∘ₗ M).smulRight y := by
+    ext w
+    simp [adV_ι_mul_ι]
+  rw [e, map_sub, LinearMap.trace_smulRight, LinearMap.trace_smulRight]
+  simp
+
+/-- `τ(ι a ι b Z) − τ(ι b ι a Z) = −B(a, ad Z b)` for `Z ∈ gspin(V)` (`τ` the scalar part,
+cyclic). -/
+theorem scalarTrace_ι_mul_ι_mul_sub (Q : QuadraticForm F V) (a b : V) {Z : CliffordAlgebra Q}
+    (hZ : Z ∈ gspin Q) :
+    scalarTrace Q (ι Q a * ι Q b * Z) - scalarTrace Q (ι Q b * ι Q a * Z) =
+      -QuadraticMap.associated Q a (adV Q Z b) := by
+  have e1 : scalarTrace Q (ι Q b * ι Q a * Z) = scalarTrace Q (ι Q a * (Z * ι Q b)) := by
+    rw [mul_assoc, scalarTrace_mul_comm, mul_assoc]
+  rw [e1, ← map_sub, mul_assoc, ← mul_sub, show ι Q b * Z - Z * ι Q b = -ι Q (adV Q Z b) by
+    rw [ι_adV hZ]; abel, mul_neg, map_neg, scalarTrace_ι_mul_ι]
+
+/-- **`8 τ(Y Z) = tr(ad Y ∘ ad Z)` on `so_Cliff(V)`** (`τ` the scalar part of `C(V)`): by
+bilinearity on bivectors `Y = ½(ι a ι b − ι b ι a)` (which span `so_Cliff(V)`), where both sides
+are `−4 B(a, ad Z b)`. -/
+theorem eight_mul_scalarTrace_mul {Q : QuadraticForm F V} (hQ : IsNondeg Q)
+    {Y Z : CliffordAlgebra Q} (hY : Y ∈ soSub Q) (hZ : Z ∈ soSub Q) :
+    8 * scalarTrace Q (Y * Z) = LinearMap.trace F V (adV Q Y * adV Q Z) := by
+  rw [soSub_eq_quadraticLieSubalgebra hQ] at hY
+  change Y ∈ (quadraticLieSubalgebra Q).toSubmodule at hY
+  rw [quadraticLieSubalgebra_toSubmodule] at hY
+  induction hY using Submodule.span_induction with
+  | mem x hx =>
+    obtain ⟨⟨a, b⟩, rfl⟩ := hx
+    simp only [bivector_def, smul_mul_assoc, map_smul, sub_mul, map_sub, smul_eq_mul]
+    rw [scalarTrace_ι_mul_ι_mul_sub Q a b hZ.1, trace_adV_ι_mul_ι_mul,
+      trace_adV_ι_mul_ι_mul, polar_eq_two_mul_associated, polar_eq_two_mul_associated]
+    have hs : QuadraticMap.associated Q b (adV Q Z a) = -QuadraticMap.associated Q a (adV Q Z b) := by
+      rw [show QuadraticMap.associated Q b (adV Q Z a) = bform Q (adV Q Z a) b from bform_comm Q _ _]
+      exact bform_adV hZ.1 a b
+    rw [hs]
+    simp only [invOf_eq_inv]
+    ring
+  | zero => simp
+  | add x y _ _ hx hy => rw [add_mul, map_add, mul_add, hx, hy, map_add, add_mul, map_add]
+  | smul r x _ hx =>
+    rw [smul_mul_assoc, map_smul, smul_eq_mul, mul_left_comm, hx, map_smul, smul_mul_assoc,
+      map_smul, smul_eq_mul]
+
+end CliffTraceForm
 
 end GSpinGGP
