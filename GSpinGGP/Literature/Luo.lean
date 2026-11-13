@@ -182,13 +182,14 @@ connected: over `F̄`, on each factor it is `∏ GL(V_λ) × SO(V₀)` (`V_λ` t
 paired with `V_{−λ}`; `∏ GL(V_λ)` if `V₀ = 0`).  So `Ḡ_X` is HC's connected reductive `G` and BP's
 `Z_G(X)⁰`.  `B` restricted to `𝔤_X` is symmetric, `Ḡ_X`-invariant and nondegenerate
 (`restrictForm_lieCentralizer_nondegenerate_of_isSS` with
-`restrictForm_lie_traceForm_nondegenerate`, which uses `hQV`).  `ĵ(O, ·)` (`jHat`: Kirillov-normalized orbit measure, self-dual measure for
-`ψ ∘ B`) is a nonzero multiple of HC's `μ̂_O` when a measure satisfying `IsOrbitMeasure` exists for
-`O` (otherwise `ĵ(O, ·) = 0`); for regular `O` that existence is implied by this axiom, as for
-`germ_unique` (`germLie_unique_SO_forces_jHat_ne_zero`, `Sanity/AxiomRedTeam/Luo.lean`).  Another
-invariant form or normalization of measures rescales the functions, which does not affect independence.  `IsRegularSS` on `𝔤_X` (semisimple with
-abelian centralizer) is HC's `𝔤_X'`.  `X ∈ 𝔤` is needed: otherwise `X + Y ∉ 𝔤`, the expansion
-condition is empty, and every `c` would be an expansion.
+`restrictForm_lie_traceForm_nondegenerate`, which uses `hQV`).  `ĵ(O, ·)` (`jHat`:
+Kirillov-normalized orbit measure, self-dual measure for `ψ ∘ B`) is a nonzero multiple of HC's
+`μ̂_O` when a measure satisfying `IsOrbitMeasure` exists for `O` (otherwise `ĵ(O, ·) = 0`); for
+regular `O` that existence is implied by this axiom, as for `germ_unique`
+(`germLie_unique_SO_forces_jHat_ne_zero`, `Sanity/AxiomRedTeam/Luo.lean`).  Another invariant form
+or normalization of measures rescales the functions, which does not affect independence.
+`IsRegularSS` on `𝔤_X` (semisimple with abelian centralizer) is HC's `𝔤_X'`.  `X ∈ 𝔤` is needed:
+otherwise `X + Y ∉ 𝔤`, the expansion condition is empty, and every `c` would be an expansion.
 
 Only uniqueness on `Nil_reg` is asserted (that is all `germLie` reads). -/
 axiom germLie_unique_SO {F : Type} [NontriviallyNormedField F] [PAdicField F]

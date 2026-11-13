@@ -870,8 +870,8 @@ theorem scaleForm_traceForm_toSOLin {Y Z : d.ambient} (hY : Y ∈ d.lieZero) (hZ
 
 /-- **`cTheta_toSO`'s conclusion from Lie germ uniqueness on `𝔤⁰` alone** (`hgerm`, discharged by
 `germLie0_unique`: transport along `ad` of the axiom `germLie_unique_SO` for `so(W) ⊕ so(V)`): all
-other hypotheses of `cTheta_toSO_of_transport` are proved — the uniqueness of the orbit picked by the
-recipe (`orbitSpecAt_orbit_unique`) and the transport of local expansions along
+other hypotheses of `cTheta_toSO_of_transport` are proved — the uniqueness of the orbit picked by
+the recipe (`orbitSpecAt_orbit_unique`) and the transport of local expansions along
 `E = c · ad`, with `c = (2^{dim W}/4, 2^{dim V}/4)` (`cTheta_toSO_of_germUnique_of_form`,
 `scaleForm_traceForm_toSOLin`). -/
 theorem cTheta_toSO_of_germUnique (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
