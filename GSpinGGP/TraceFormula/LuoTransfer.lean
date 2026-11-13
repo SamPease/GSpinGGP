@@ -19,8 +19,8 @@ when neither `W` nor `V` is a hyperbolic plane; `TraceFormula/LuoClass.lean` ded
 `distribJLie_eq_mGeomLie_of_luo`: `J^Lie(f) = m^Lie_geom(θ_f)` for `f ∈ S_scusp(𝔤⁰(F))` (Thesis
 Thm 12.2.2 on `𝔤⁰`).
 
-The identification is own work, stated step by step (two steps, `cTheta_toSO` and
-`torusIntegralLie_toSO`, are still `sorry`):
+The identification is own work, stated step by step (one step, `torusIntegralLie_toSO`, is still
+`sorry`):
 * (L1) `toSO`: `X ↦ (ad_W X_W, ad_V X_V)` maps `𝔤⁰` onto `so(W) ⊕ so(V)` (`toSO_mem` is proved;
   `toSO_bijective` and the transfer of strong cuspidality `isScusp_toSO` are proved);
 * (L2) `luoOf`: the admissible pair of `d` with Luo's basis `z^L_i = ν^{-i} z_i`,
@@ -33,12 +33,13 @@ The identification is own work, stated step by step (two steps, `cTheta_toSO` an
 * (L5) `isThetaFLie_of_SO` (proved): a `θ` representing the orbital pairing on `so(W) ⊕ so(V)`
   gives one on `𝔤⁰`;
 * `isThetaFLie_eqOn_regular` (proved): `θ_f` is unique on `𝔤⁰_reg`;
-* (L6, L7) `cTheta_toSO`: the germs `c_{θ,O_X}(X)` agree (trace form vs `bilin`, `Z_G(X)` vs
-  `Ḡ_X`, the orbit choice `orbitChoiceLie` vs Luo's and Waldspurger's `O_{±ν₀}`);
-  proved: the recipes agree (`orbitSpecAt_iff_orbitSpec_toSOLin`) and are stable under scaling
-  each factor; the chosen orbits correspond (`orbitChoice_eq_of_orbitMap`) and the germs agree
-  (`cTheta_toSO_of_transport`) given uniqueness of regular germ coefficients on `𝔤⁰`, uniqueness of
-  the regular orbit meeting the recipe, and a transport of local expansions;
+* (L6, L7) `cTheta_toSO` (proved, in `TraceFormula/CThetaTransport.lean`): the germs
+  `c_{θ,O_X}(X)` agree (trace form vs `bilin`, `Z_G(X)` vs `Ḡ_X`, the orbit choice
+  `orbitChoiceLie` vs Luo's and Waldspurger's `O_{±ν₀}`); here: the recipes agree
+  (`orbitSpecAt_iff_orbitSpec_toSOLin`) and are stable under scaling each factor; the chosen orbits
+  correspond (`orbitChoice_eq_of_orbitMap`) and the germs agree (`cTheta_toSO_of_transport`) given
+  uniqueness of regular germ coefficients on `𝔤⁰`, uniqueness of the regular orbit meeting the
+  recipe, and a transport of local expansions;
 * (L8) `gammaClass_equiv` (proved, in `TraceFormula/LuoClass.lean`), `torusIntegralLie_toSO`:
   `Γ^Lie` (tori, `|W(H,T)|`, `ν(T) dX`, `D^G`, `Δ`, `𝔱_♮`) agree; `mGeomLieS_toSO` is proved from
   them;
@@ -1114,22 +1115,6 @@ theorem cTheta_toSO_of_transport {θ : ↥d.luoOf.lie → ℂ}
   exact germLie_eq_of_transport E hreg (hθ.2 ⟨_, hXm⟩ hss) htr hgerm _
 
 /-! ## (L6)–(L9) `m^Lie_geom` -/
-
-/-- **(L6, L7) The germs `c_θ(X)` agree.**  For a quasi-character `θ` on `so(W) ⊕ so(V)` and
-`X ∈ 𝔱⁰_♮` of a torus of `Γ^Lie(G,H)`, the germ of `θ ∘ ad` at `X` for the orbit `orbitChoiceLie X`
-(`germLie` for `(G, 𝔤⁰, bilin)`) is Luo's `c_θ(ad X)` (`germLie` for `(Ḡ, 𝔤, B)` and the orbit
-`orbitChoice`).  Ingredients: (L6) `bilin = B(c ·, ·)` on `𝔤⁰` for a central unit `c` (one constant
-for each factor) and `ĵ_{B(c ·, ·)}(O, ·) = ĵ_B(c O, ·)`; `ad` is an isomorphism of descent data
-`Z_G(X) → Ḡ_{ad X}`; (L7) `OrbitSpecAt` is Luo's and Waldspurger's recipe (`O_{ν₀}` on `V'_X`,
-`O_{−ν₀}` on `W'_X`), with `ν₀ = q(z₀) = ν`.  `cTheta_toSO_of_germUnique`
-(`TraceFormula/CThetaTransport.lean`) proves this conclusion from the uniqueness of the regular
-coefficients of Lie-algebra local expansions on `𝔤⁰` at `X`.  Not proved here. -/
-theorem cTheta_toSO (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) {θ : ↥d.luoOf.lie → ℂ}
-    (hθ : IsLieQuasiCharacter d.luoOf.Gbar d.luoOf.lie d.luoOf.traceForm ψ θ)
-    (T : d.GammaTorus) (X : CliffordAlgebra d.QW) (hX : d.IsGammaEltLie T.1 X) :
-    d.germLie0 ψ (θ ∘ d.toSO) (d.diagLie X) (d.orbitChoiceLie X) =
-      d.luoOf.cTheta ψ θ (d.toSOLin (d.diagLie X)) := by
-  sorry
 
 /-- The torus `T'` of Luo's `𝒯` is `H̄(F)`-conjugate to the image of `T ⊆ GSpin(W)(F)` under
 `t ↦ (P(t), P(t) ⊕ 1)` (the natural correspondence of tori). -/
