@@ -8,6 +8,7 @@ import GSpinGGP.Sanity.AxiomRedTeam.Luo
 import GSpinGGP.Sanity.AxiomRedTeam.Galois
 import GSpinGGP.Sanity.AxiomRedTeam.Measure
 import GSpinGGP.Sanity.AxiomRedTeam.WholeSystem
+import GSpinGGP.Sanity.AxiomRedTeam.Tits
 
 /-!
 # Checks of the literature axioms on small instances
@@ -58,6 +59,9 @@ the axiom it tests; the computations of germs at `toyD` use `exists_isSelfDual` 
 * `finite_H1_normalizerBar`: V for `dim W = 0` (`finite_H1_dim_zero`). Not covered: `dim W > 0`.
 * `exists_rel_torusBar_of_fixerBar`: V for central `x` (`exists_rel_central`). Not covered:
   noncentral `x`.
+* `tits_iwasawa`: V for anisotropic `W`, `V` (`tits_iwasawa_check_of_wittIndex_zero`), at `toyD`
+  (`toyD_tits_iwasawa_check`); C at `toyD` (`toyD_tits_iwasawa_consistent`). Not covered: proper
+  `P₀`.
 * `kottwitz_nilpotent_sq_smul`: V for `N = 0` and on `toyData` (`kottwitz_sq_smul_toy`). Not
   covered: `N ≠ 0`.
 * `exists_isSelfDual`: hypothesis needed (`not_isSelfDual_zero`); P on the zero space. Not covered:

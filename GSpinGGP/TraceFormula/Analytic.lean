@@ -6,6 +6,8 @@ import GSpinGGP.TraceFormula.Basic
 import GSpinGGP.Literature.Measure
 import GSpinGGP.GGP.Germs
 import GSpinGGP.HarmonicAnalysis.LogNorm
+import GSpinGGP.TraceFormula.SpinorNorm
+import GSpinGGP.Literature.Tits
 
 /-!
 # The local trace formula: analytic objects and estimates
@@ -43,7 +45,9 @@ of Thesis Ch. 8 and 10 and proves the bookkeeping around it.
   `kernelK_bound_scusp` (Thm 10.1.1(ii)), `prop_6_7_1_iii` (Thesis Prop 8.4.1(iii)),
   `lemma_6_5_1_i/ii/iii` (Thesis Lemma 8.2.1), `exists_good_minimal_parabolic` (Thesis
   Prop 8.1.1(i)).
-* `sorry` (a standard structural fact, Bruhat–Tits): `exists_iwasawaDatum`.
+* From the literature axiom `tits_iwasawa` (Tits, Corvallis 1979, §3.3.2): `exists_iwasawaDatum`,
+  with the general lemmas `exists_compactOpenSubgroup_ge` (a compact subgroup of a totally
+  disconnected locally compact group lies in a compact open one) and `IsotropicFlag.exists_isFull`.
 
 ## Conventions on `H\G` (see the docstrings of `logNormHG`, `lemma_6_5_1_i`)
 
@@ -189,7 +193,91 @@ theorem exists_subgroup_biInvariant_on [T2Space G₀] [LocallyCompactSpace G₀]
   obtain ⟨K, hKo, hKc, hKO⟩ := exists_compactOpenSubgroup_subset hOo h1O
   exact ⟨K, hKo, hKc, fun c hc k hk k' hk' => hUf c hc k (hOU (hKO hk)) k' (hOU (hKO hk'))⟩
 
+/-- In a totally disconnected locally compact Hausdorff group, every compact subgroup `K₀` lies in
+a compact open subgroup: `K₀ N` with `N = ⋂_{k ∈ K₀} k U k⁻¹` for a compact open subgroup `U`
+(`N` is open by compactness of `K₀`, and normalized by `K₀`). -/
+theorem exists_compactOpenSubgroup_ge [T2Space G₀] [LocallyCompactSpace G₀]
+    [TotallyDisconnectedSpace G₀] (K₀ : Subgroup G₀) (hK₀ : IsCompact (K₀ : Set G₀)) :
+    ∃ K : Subgroup G₀, IsOpen (K : Set G₀) ∧ IsCompact (K : Set G₀) ∧ K₀ ≤ K := by
+  obtain ⟨U, hUo, hUc, -⟩ := exists_compactOpenSubgroup_subset (G₀ := G₀) isOpen_univ trivial
+  have hev : ∀ᶠ x in 𝓝 (1 : G₀), ∀ k ∈ (K₀ : Set G₀), k⁻¹ * x * k ∈ U := by
+    apply hK₀.eventually_forall_of_forall_eventually
+    intro k _
+    have hc : Continuous fun p : G₀ × G₀ => p.2⁻¹ * p.1 * p.2 := by fun_prop
+    exact hc.continuousAt.preimage_mem_nhds (by simpa using hUo.mem_nhds U.one_mem)
+  let N : Subgroup G₀ := ⨅ k : K₀, U.comap (MulAut.conj (k : G₀)⁻¹).toMonoidHom
+  have hmemN : ∀ x, x ∈ N ↔ ∀ k ∈ K₀, k⁻¹ * x * k ∈ U := by
+    intro x
+    simp only [N, Subgroup.mem_iInf, Subgroup.mem_comap, MulEquiv.coe_toMonoidHom,
+      MulAut.conj_apply, inv_inv, Subtype.forall]
+  have hNo : IsOpen (N : Set G₀) :=
+    Subgroup.isOpen_of_mem_nhds N (hev.mono fun x hx => (hmemN x).2 hx)
+  have hNU : (N : Set G₀) ⊆ U := fun x hx => by
+    simpa using (hmemN x).1 hx 1 K₀.one_mem
+  have hNc : IsCompact (N : Set G₀) :=
+    hUc.of_isClosed_subset (Subgroup.isClosed_of_isOpen N hNo) hNU
+  have hnorm : K₀ ≤ Subgroup.normalizer (N : Set G₀) := by
+    intro k hk
+    rw [Subgroup.mem_normalizer_iff]
+    intro h
+    rw [hmemN, hmemN]
+    constructor
+    · intro H k' hk'
+      have := H (k⁻¹ * k') (K₀.mul_mem (K₀.inv_mem hk) hk')
+      simpa [mul_assoc] using this
+    · intro H k' hk'
+      have := H (k * k') (K₀.mul_mem hk hk')
+      simpa [mul_assoc] using this
+  refine ⟨K₀ ⊔ N, Subgroup.isOpen_mono le_sup_right hNo, ?_, le_sup_left⟩
+  rw [Subgroup.coe_mul_of_left_le_normalizer_right K₀ N hnorm]
+  exact hK₀.mul hNc
+
 end VanDantzig
+
+section FullFlag
+
+/-- **Full isotropic flags exist**: take a totally isotropic subspace of dimension the Witt index
+and the flag spanned by the initial segments of a basis of it. -/
+theorem IsotropicFlag.exists_isFull {K : Type*} [Field K] [Invertible (2 : K)] {V : Type*}
+    [AddCommGroup V] [Module K V] [FiniteDimensional K V] (Q : QuadraticForm K V) :
+    ∃ Fl : IsotropicFlag Q, Fl.IsFull := by
+  have hne : {n | ∃ U : Submodule K V, IsTotallyIsotropic Q U ∧ Module.finrank K U = n}.Nonempty :=
+    ⟨0, ⊥, fun u hu => by rw [(Submodule.mem_bot K).mp hu, map_zero], finrank_bot K V⟩
+  have hbdd : BddAbove
+      {n | ∃ U : Submodule K V, IsTotallyIsotropic Q U ∧ Module.finrank K U = n} :=
+    ⟨Module.finrank K V, by rintro n ⟨U, -, rfl⟩; exact Submodule.finrank_le U⟩
+  obtain ⟨U, hUi, hUw⟩ := Nat.sSup_mem hne hbdd
+  set w := wittIndex Q with hw
+  have hUw' : Module.finrank K U = w := hUw
+  let b : Module.Basis (Fin w) K U := Module.finBasisOfFinrankEq K U hUw'
+  let v : Fin w → V := fun j => (b j : V)
+  have hv : LinearIndependent K v :=
+    b.linearIndependent.map' U.subtype (Submodule.ker_subtype U)
+  have hle : ∀ i : Fin (w + 1), (i : ℕ) ≤ w := fun i => Nat.lt_succ_iff.mp i.2
+  let sub : Fin (w + 1) → Submodule K V := fun i =>
+    Submodule.span K (Set.range (v ∘ Fin.castLE (hle i)))
+  have hfin : ∀ i, Module.finrank K (sub i) = (i : ℕ) := fun i => by
+    rw [finrank_span_eq_card (hv.comp _ (Fin.castLE_injective _)), Fintype.card_fin]
+  have hmono : Monotone sub := by
+    intro i j hij
+    apply Submodule.span_mono
+    rintro _ ⟨l, rfl⟩
+    exact ⟨Fin.castLE hij l, rfl⟩
+  refine ⟨⟨w, sub, ?_, ?_, ?_⟩, rfl, hfin⟩
+  · exact Submodule.finrank_eq_zero.mp (hfin 0)
+  · intro i j hij
+    refine lt_of_le_of_ne (hmono hij.le) fun h => ?_
+    have := congrArg (fun S : Submodule K V => Module.finrank K S) h
+    simp only [hfin] at this
+    exact (Fin.val_injective this ▸ hij).false
+  · intro i u hu
+    have hsub : sub i ≤ U := by
+      rw [Submodule.span_le]
+      rintro _ ⟨l, rfl⟩
+      exact (b (Fin.castLE (hle i) l)).2
+    exact hUi u (hsub hu)
+
+end FullFlag
 
 namespace GGPData
 
@@ -411,7 +499,8 @@ def xiHG (C : Set ↥d.G) (q : d.HGQuot) : ℝ :=
 /-- An Iwasawa datum (BP §1.5, Thesis §2.3): full isotropic flags `F_W`, `F_V` (so that
 `P₀ = whittB F_W F_V` is a minimal parabolic subgroup), a compact open subgroup `K` of `G(F)`, and
 the Iwasawa decomposition `G(F) = P₀(F) K`.  Its existence (with `K` a special maximal compact
-subgroup) is Bruhat–Tits (`exists_iwasawaDatum`, used for `distribJ_convergent`).  Harish-Chandra's
+subgroup) is Bruhat–Tits, as stated by Tits (`exists_iwasawaDatum`, used for
+`distribJ_convergent`).  Harish-Chandra's
 `Ξ^G` built from different data are equivalent functions (they are matrix coefficients of
 positive `K`-fixed vectors of `i_{P₀}^G 1`).  The field `AG_le_P0` is automatic and recorded only
 for convenience (see its docstring). -/
@@ -556,11 +645,18 @@ end IwasawaDatum
 
 /-- **An Iwasawa datum exists** (BP §1.5, Thesis §2.3): `G(F)` has a minimal parabolic subgroup
 `P₀` (the stabilizer of full isotropic flags of `W` and `V`) and a compact open subgroup `K` with
-`G(F) = P₀(F) K` (Bruhat–Tits: `K` a special maximal compact subgroup; Thesis §2.3 uses it
-without citation).  A `sorry` theorem rather than a literature axiom until it is matched to an
-exact statement in a source; not proved here. -/
+`G(F) = P₀(F) K`.  From Tits's statement `G(F) = K₀ P₀(F)` with `K₀` compact (`tits_iwasawa`,
+Tits, Corvallis 1979, §3.3.2): invert, and enlarge `K₀` to a compact open subgroup
+(`exists_compactOpenSubgroup_ge`); `A_G ⊆ P₀` is `AG_le_whittB`. -/
 theorem exists_iwasawaDatum : Nonempty d.IwasawaDatum := by
-  sorry
+  have : TotallyDisconnectedSpace ↥d.G := totallyDisconnectedSpace_subgroup F d.ambient d.G
+  obtain ⟨FW, hW⟩ := IsotropicFlag.exists_isFull d.QW
+  obtain ⟨FV, hV⟩ := IsotropicFlag.exists_isFull d.QV
+  obtain ⟨K₀, hK₀, hdec⟩ := tits_iwasawa d FW FV hW hV
+  obtain ⟨K, hKo, hKc, hle⟩ := exists_compactOpenSubgroup_ge K₀ hK₀
+  refine ⟨⟨FW, FV, hW, hV, K, hKo, hKc, fun g => ?_, d.AG_le_whittB FW FV⟩⟩
+  obtain ⟨k, hk, p, hp, h⟩ := hdec g⁻¹
+  exact ⟨p⁻¹, inv_mem hp, k⁻¹, hle (inv_mem hk), by rw [← mul_inv_rev, ← h, inv_inv]⟩
 
 /-! ## 3. Harish-Chandra Schwartz spaces (Thesis §2.3) -/
 

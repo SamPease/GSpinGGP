@@ -89,6 +89,7 @@ import GSpinGGP.GGP.CliffordDescent
 import GSpinGGP.Literature.Localization
 import GSpinGGP.Literature.Waldspurger
 import GSpinGGP.Literature.Parabolic
+import GSpinGGP.Literature.Tits
 import GSpinGGP.TraceFormula.InvariantSets
 import GSpinGGP.GGP.Triple
 import GSpinGGP.GGP.TorusIntegral
