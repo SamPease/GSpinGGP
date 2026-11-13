@@ -1,5 +1,4 @@
 import GSpinGGP.Foundations.LocalGroups
-import GSpinGGP.Harmonic.LogNorm
 import GSpinGGP.Foundations.HaarLocal
 import GSpinGGP.Foundations.RankSemicontinuity
 import GSpinGGP.Foundations.Determinant
@@ -143,6 +142,7 @@ import GSpinGGP.TraceFormula.Geometric
 import GSpinGGP.TraceFormula.Lie
 import GSpinGGP.TraceFormula.Spine
 import GSpinGGP.TraceFormula
+import GSpinGGP.HarmonicAnalysis.LogNorm
 import GSpinGGP.Main
 import GSpinGGP.Sanity.Witnesses
 import GSpinGGP.Sanity.NilpotentOrbit
