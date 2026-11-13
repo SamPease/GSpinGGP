@@ -332,7 +332,7 @@ def torusQuotConj (T : Subgroup ↥(GSpin d.QW)) (g : ↥(GSpin d.QW)) :
     d.TorusQuot T ≃ₜ* d.TorusQuot (T.map (MulAut.conj g).toMonoidHom) :=
   (d.torusConjHomeomorph T g).quotientCongr _ _ (d.map_scalarsIn_torusConjHomeomorph T g)
 
-set_option maxHeartbeats 400000 in -- two measure maps and the coset bookkeeping
+set_option maxHeartbeats 1600000 in -- cumulative: two measure maps, coset bookkeeping
 /-- **Conjugation carries `ν(T) dX` to `ν(gTg⁻¹) dX`**: `X ↦ g X g⁻¹` maps
 `{e^X A_{G,H}(F) : X ∈ S}` onto `{e^Y A_{G,H}(F) : Y ∈ g S g⁻¹}` (`expA_units_conj`), and
 `T(F)/A_{G,H}(F) ≃ (gTg⁻¹)(F)/A_{G,H}(F)` carries probability Haar measure to probability Haar
