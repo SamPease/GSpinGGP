@@ -97,7 +97,7 @@ theorem torusIntegralLie_eq_luo {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
 
 /-- **Reduction of `torusIntegralLie_toSO`** to two statements about the tori of `Γ(G,H)`:
 `ad` carries `𝔱⁰_♮` onto Luo's `𝔱_♮` (`hnat`), and the torus integrals of `θ ∘ ad` are invariant
-under `GSpin(W)(F)`-conjugation of the torus (`hconj`). The measures are the `exp`-compatible ones
+under `GSpin(W)(F)`-conjugation between tori of `Γ(G,H)` (`hconj`). The measures are the `exp`-compatible ones
 (`exists_luo_isExpCompatT`); the representative of `e c` is `φ(g T g⁻¹)` with `T` the
 representative of `c` (`exists_conj_eq_map_of_isNaturalTorusCorr`), and `g T g⁻¹` is a torus of
 `Γ(G,H)` (`exists_isGammaElt_torusOf_eq_conj`), where `torusIntegralLie_eq_luo` applies. -/
@@ -107,9 +107,10 @@ theorem torusIntegralLie_toSO_of
         d.luoOf.IsNat ((d.torusOf x).map (d.toGbarU.comp d.diag)) (d.toSOLin (d.diagLie X)))
     (hconj : ∀ θ : ↥d.luoOf.lie → ℂ,
       IsLieQuasiCharacter d.luoOf.Gbar d.luoOf.lie d.luoOf.traceForm ψ θ →
-      ∀ (x : ↥(GSpin d.QW)), d.IsGammaElt x → ∀ (g : ↥(GSpin d.QW)) (s : ℝ),
-        d.torusIntegralLie ψ (θ ∘ d.toSO) ((d.torusOf x).map (MulAut.conj g).toMonoidHom) s =
-          d.torusIntegralLie ψ (θ ∘ d.toSO) (d.torusOf x) s)
+      ∀ (x x' g : ↥(GSpin d.QW)), d.IsGammaElt x → d.IsGammaElt x' →
+        d.torusOf x' = (d.torusOf x).map (MulAut.conj g).toMonoidHom → ∀ s : ℝ,
+          d.torusIntegralLie ψ (θ ∘ d.toSO) (d.torusOf x') s =
+            d.torusIntegralLie ψ (θ ∘ d.toSO) (d.torusOf x) s)
     (e : GammaClass d ≃ d.luoOf.GammaClass)
     (hen : ∀ c, d.IsNaturalTorusCorr (Quot.out c).1 (Quot.out (e c)).1) :
     ∃ μT : ∀ T : d.luoOf.GammaTorus, Measure ↥(d.luoOf.lieTorus T.1),
@@ -135,7 +136,7 @@ theorem torusIntegralLie_toSO_of
   obtain ⟨g, hg⟩ := d.exists_conj_eq_map_of_isNaturalTorusCorr (Quot.out (e c)) (hen c)
   rw [← hxT] at hg ⊢
   obtain ⟨x', hx', hx'T⟩ := d.exists_isGammaElt_torusOf_eq_conj (Quot.out (e c)) hg
-  rw [← hconj θ hθ x hx g s, ← hx'T]
+  rw [← hconj θ hθ x x' g hx hx' hx'T s]
   rw [← hx'T] at hg
   exact d.torusIntegralLie_eq_luo ψ hx' (hnat x' hx') (hc ⟨_, x', hx', rfl⟩) hg (hμT _) s
 
