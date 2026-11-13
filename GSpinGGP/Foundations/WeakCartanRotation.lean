@@ -139,6 +139,150 @@ theorem pairTorus_inv_apply_left (t : Fˣ) :
 
 end Torus
 
+section TorusBound
+
+variable [IsUltrametricDist F] (hb : IsOrthoBasis Q b) {i₀ i₁ : Fin n} (hne : i₀ ≠ i₁) {ν : F}
+  (h₀ : Q (b i₀) = ν) (h₁ : Q (b i₁) = -ν)
+
+theorem one_le_norm_two_inv : 1 ≤ ‖(2 : F)‖⁻¹ :=
+  one_le_inv₀ (norm_pos_iff.2 two_ne_zero) |>.2 norm_two_le_one
+
+omit [CharZero F] in
+theorem norm_add_inv_div_two_le (t : Fˣ) (σ : F) (hσ : ‖σ‖ = 1) :
+    ‖((t : F) + σ * (t : F)⁻¹) / 2‖ ≤ ‖(2 : F)‖⁻¹ * max ‖(t : F)‖ ‖(t : F)‖⁻¹ := by
+  rw [norm_div, div_eq_inv_mul]
+  refine mul_le_mul_of_nonneg_left ((IsUltrametricDist.norm_add_le_max _ _).trans ?_)
+    (inv_nonneg.2 (norm_nonneg _))
+  rw [norm_mul, hσ, one_mul, norm_inv]
+
+include hb hne h₀ h₁
+
+/-- The torus is bounded: `‖a(t)‖ ≤ ‖2‖⁻¹ max(‖t‖, ‖t‖⁻¹)`. -/
+theorem basisOpNorm_pairTorus_le (t : Fˣ) :
+    basisOpNorm b (pairTorus hb hne h₀ h₁ t : V →ₗ[F] V) ≤
+      ‖(2 : F)‖⁻¹ * max ‖(t : F)‖ ‖(t : F)‖⁻¹ := by
+  have h1 : 1 ≤ ‖(2 : F)‖⁻¹ * max ‖(t : F)‖ ‖(t : F)‖⁻¹ := by
+    have : 1 ≤ max ‖(t : F)‖ ‖(t : F)‖⁻¹ := by
+      rcases le_total ‖(t : F)‖ 1 with h | h
+      · exact le_max_of_le_right (one_le_inv₀ (norm_pos_iff.2 t.ne_zero) |>.2 h)
+      · exact le_max_of_le_left h
+    nlinarith [one_le_norm_two_inv (F := F)]
+  have hc1 := norm_add_inv_div_two_le t 1 norm_one
+  have hc2 := norm_add_inv_div_two_le t (-1) (by simp)
+  simp only [one_mul, neg_one_mul, ← sub_eq_add_neg] at hc1 hc2
+  refine (basisOpNorm_le_iff (by positivity)).2 fun m => ?_
+  rw [LinearEquiv.coe_coe]
+  by_cases hm₀ : m = i₀
+  · subst hm₀
+    rw [pairTorus_apply_left]
+    refine (basisNorm_add_le _ _).trans (max_le ?_ ?_) <;>
+      rw [basisNorm_smul, basisNorm_basis, mul_one] <;> assumption
+  by_cases hm₁ : m = i₁
+  · subst hm₁
+    rw [pairTorus_apply_right]
+    refine (basisNorm_add_le _ _).trans (max_le ?_ ?_) <;>
+      rw [basisNorm_smul, basisNorm_basis, mul_one] <;> assumption
+  rw [pairTorus_apply_basis_of_ne hb hne h₀ h₁ t hm₀ hm₁, basisNorm_basis]
+  exact h1
+
+/-- For `‖t‖ ≤ 1` the bound is `‖2‖⁻¹ ‖t‖⁻¹`, for `a(t)` and for `a(t)⁻¹`. -/
+theorem basisOpNorm_pairTorus_le_of_le_one (t : Fˣ) (ht : ‖(t : F)‖ ≤ 1) :
+    basisOpNorm b (pairTorus hb hne h₀ h₁ t : V →ₗ[F] V) ≤ ‖(2 : F)‖⁻¹ * ‖(t : F)‖⁻¹ ∧
+      basisOpNorm b (((pairTorus hb hne h₀ h₁ t)⁻¹ : V ≃ₗ[F] V) : V →ₗ[F] V) ≤
+        ‖(2 : F)‖⁻¹ * ‖(t : F)‖⁻¹ := by
+  have ht0 : 0 < ‖(t : F)‖ := norm_pos_iff.2 t.ne_zero
+  have hmax : max ‖(t : F)‖ ‖(t : F)‖⁻¹ = ‖(t : F)‖⁻¹ :=
+    max_eq_right (ht.trans (one_le_inv₀ ht0 |>.2 ht))
+  refine ⟨(basisOpNorm_pairTorus_le hb hne h₀ h₁ t).trans_eq (by rw [hmax]), ?_⟩
+  rw [← pairTorus_inv]
+  refine (basisOpNorm_pairTorus_le hb hne h₀ h₁ t⁻¹).trans_eq ?_
+  rw [Units.val_inv_eq_inv_val, norm_inv, inv_inv, max_comm, hmax]
+
+end TorusBound
+
+/-! ## Rotations of a plane `⟨b i₁, b k⟩` -/
+
+section PlaneRotation
+
+variable (hb : IsOrthoBasis Q b) {i₁ k : Fin n} (hk : i₁ ≠ k)
+
+include hb hk
+
+theorem apply_basis_add_smul (μ : F) :
+    Q (b i₁ + μ • b k) = Q (b i₁) + μ ^ 2 * Q (b k) := by
+  rw [QuadraticMap.map_add (⇑Q), QuadraticMap.map_smul, polar_smul_right,
+    hb.polar_eq_zero i₁ k hk, smul_zero, add_zero, smul_eq_mul, _root_.sq]
+
+/-- The rotation `r_{b i₁ + μ b k} r_{b i₁}` of the plane `⟨b i₁, b k⟩`. With
+`s = Q (b k) / Q (b i₁)` it sends `b i₁ ↦ ((1 - sμ²) b i₁ + 2μ b k)/(1 + sμ²)`; this is the
+rational parametrization of the rotations of the plane. -/
+def planeRot (μ : F) (hD : Q (b i₁) + μ ^ 2 * Q (b k) ≠ 0) : V ≃ₗ[F] V :=
+  letI := invertibleOfNonzero (show Q (b i₁ + μ • b k) ≠ 0 by
+    rwa [apply_basis_add_smul hb hk])
+  letI := invertibleOfNonzero (hb.apply_ne_zero i₁)
+  TauCeti.QuadraticMap.reflection Q (b i₁ + μ • b k) * TauCeti.QuadraticMap.reflection Q (b i₁)
+
+theorem planeRot_mem_specialOrthogonalGroup [FiniteDimensional F V] (μ : F)
+    (hD : Q (b i₁) + μ ^ 2 * Q (b k) ≠ 0) :
+    planeRot hb hk μ hD ∈ TauCeti.QuadraticMap.specialOrthogonalGroup Q := by
+  let := invertibleOfNonzero (show Q (b i₁ + μ • b k) ≠ 0 by
+    rwa [apply_basis_add_smul hb hk])
+  let := invertibleOfNonzero (hb.apply_ne_zero i₁)
+  refine TauCeti.QuadraticMap.mem_specialOrthogonalGroup_iff.2
+    ⟨mul_mem (TauCeti.QuadraticMap.reflection_mem_orthogonalGroup Q _)
+      (TauCeti.QuadraticMap.reflection_mem_orthogonalGroup Q _), ?_⟩
+  rw [planeRot, map_mul, TauCeti.QuadraticMap.det_reflection,
+    TauCeti.QuadraticMap.det_reflection]
+  simp
+
+/-- The rotation moves only the coordinates `i₁`, `k`:
+`γ z = z + z_{i₁} X + z_k Y` with `X = γ b i₁ - b i₁`, `Y = γ b k - b k`. -/
+theorem planeRot_apply (μ : F) (hD : Q (b i₁) + μ ^ 2 * Q (b k) ≠ 0) (z : V) :
+    planeRot hb hk μ hD z = z +
+      b.repr z i₁ • ((-(2 * μ ^ 2 * Q (b k)) / (Q (b i₁) + μ ^ 2 * Q (b k))) • b i₁ +
+        (2 * μ * Q (b i₁) / (Q (b i₁) + μ ^ 2 * Q (b k))) • b k) +
+      b.repr z k • ((-(2 * μ * Q (b k)) / (Q (b i₁) + μ ^ 2 * Q (b k))) • b i₁ +
+        (-(2 * μ ^ 2 * Q (b k)) / (Q (b i₁) + μ ^ 2 * Q (b k))) • b k) := by
+  let := invertibleOfNonzero (show Q (b i₁ + μ • b k) ≠ 0 by
+    rwa [apply_basis_add_smul hb hk])
+  let := invertibleOfNonzero (hb.apply_ne_zero i₁)
+  have hq₁ := hb.apply_ne_zero i₁
+  set q₁ := Q (b i₁)
+  set qe := Q (b k)
+  set D := q₁ + μ ^ 2 * qe with hDdef
+  set c₁ := b.repr z i₁
+  set ce := b.repr z k
+  have p1 : polar Q (b i₁) z = c₁ * (2 * q₁) := by
+    rw [polar_comm, hb.polar_basis_right, polar_basis_self]
+  have p2 : polar Q (b k) z = ce * (2 * qe) := by
+    rw [polar_comm, hb.polar_basis_right, polar_basis_self]
+  have p3 : polar Q (b i₁) (b i₁) = 2 * q₁ := polar_basis_self _
+  have p4 : polar Q (b k) (b i₁) = 0 := hb.polar_eq_zero k i₁ hk.symm
+  simp only [planeRot, LinearEquiv.mul_apply, TauCeti.QuadraticMap.reflection_apply, invOf_eq_inv,
+    apply_basis_add_smul hb hk, polar_add_left, polar_smul_left, polar_sub_right,
+    polar_smul_right, p1, p2, p3, p4, smul_eq_mul]
+  rw [← hDdef]
+  have e1 : -(q₁⁻¹ * (c₁ * (2 * q₁))) - D⁻¹ * (c₁ * (2 * q₁) + μ * (ce * (2 * qe)) -
+      q₁⁻¹ * (c₁ * (2 * q₁)) * (2 * q₁ + μ * 0)) =
+      c₁ * (-(2 * μ ^ 2 * qe) / D) + ce * (-(2 * μ * qe) / D) := by
+    field_simp
+    rw [hDdef]; ring
+  have e2 : -(D⁻¹ * (c₁ * (2 * q₁) + μ * (ce * (2 * qe)) -
+      q₁⁻¹ * (c₁ * (2 * q₁)) * (2 * q₁ + μ * 0))) * μ =
+      c₁ * (2 * μ * q₁ / D) + ce * (-(2 * μ ^ 2 * qe) / D) := by
+    field_simp
+    ring
+  calc z - (q₁⁻¹ * (c₁ * (2 * q₁))) • b i₁ -
+        (D⁻¹ * (c₁ * (2 * q₁) + μ * (ce * (2 * qe)) - q₁⁻¹ * (c₁ * (2 * q₁)) *
+          (2 * q₁ + μ * 0))) • (b i₁ + μ • b k)
+      = z + (-(q₁⁻¹ * (c₁ * (2 * q₁))) - D⁻¹ * (c₁ * (2 * q₁) + μ * (ce * (2 * qe)) -
+          q₁⁻¹ * (c₁ * (2 * q₁)) * (2 * q₁ + μ * 0))) • b i₁ +
+          (-(D⁻¹ * (c₁ * (2 * q₁) + μ * (ce * (2 * qe)) -
+            q₁⁻¹ * (c₁ * (2 * q₁)) * (2 * q₁ + μ * 0))) * μ) • b k := by module
+    _ = _ := by rw [e1, e2]; module
+
+end PlaneRotation
+
 end WeakCartan
 
 end GSpinGGP
