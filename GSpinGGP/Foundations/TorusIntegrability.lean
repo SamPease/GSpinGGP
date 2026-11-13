@@ -5,7 +5,24 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import GSpinGGP.Foundations.LocalGroups
 
 /-!
-# Scratch
+# Local integrability of powers of eigenvalue-type functions (BP Lemma B.1.2)
+
+General `p`-adic (in fact: locally compact nontrivially normed field) integrability lemmas behind
+BP Astérisque 418, Lemma B.1.2(i),(ii) (stated there without proof), proved directly from the
+scaling of Haar measure. `|·|_F` is the normalized absolute value `absF`.
+
+* `distribHaarChar_eq_absF_pow`, `addHaar_smul_absF`: `d(c • v) = |c|_F^{dim V} dv`;
+  `setLIntegral_smul_set`: the corresponding change of variables.
+* `locallyIntegrable_of_homogeneous`: a function homogeneous of degree `κ > −dim V`
+  (`f(c • x) = |c|_F^κ f(x)`) and locally integrable off `0` is locally integrable.
+* `locallyIntegrable_prod_gauge_rpow`: `v ↦ ∏_i N_i(π_i v)^{a_i}` is locally integrable for linear
+  maps `π_i` and gauges `N_i` (continuous, positive off `0`, `N_i(c y) = |c|_F N_i(y)`), provided
+  `∑_{j∈J} a_j > −codim ⋂_{j∈J} ker π_j` for all nonempty `J` (general form of B.1.2(ii)).
+* `locallyIntegrable_prod_absF_rpow`: B.1.2(ii) (first part) for linearly independent forms over `F`.
+* `integrable_of_chart`: integrability on a compact group from local integrability in a measure
+  chart near `0` at every translate (the passage from the Lie algebra to the group in B.1.2(i)).
+* Transport: `locallyIntegrable_comp_linearEquiv`, `locallyIntegrable_comp_fst`,
+  `locallyIntegrable_comp_prodEquivOfIsCompl`.
 -/
 
 noncomputable section
@@ -319,7 +336,7 @@ variable {V : Type*} [NormedAddCommGroup V] [NormedSpace F V] [FiniteDimensional
 
 /-- Local integrability for additive Haar measures is invariant under linear isomorphisms of
 finite-dimensional `F`-vector spaces. -/
-theorem LocallyIntegrable.comp_linearEquiv (μ : Measure V) [μ.IsAddHaarMeasure]
+theorem locallyIntegrable_comp_linearEquiv (μ : Measure V) [μ.IsAddHaarMeasure]
     (ν : Measure W) [ν.IsAddHaarMeasure] (e : V ≃ₗ[F] W) {g : W → ℝ}
     (hg : LocallyIntegrable g ν) : LocallyIntegrable (g ∘ e) μ := by
   haveI : ProperSpace F := .of_nontriviallyNormedField_of_weaklyLocallyCompactSpace F
@@ -338,10 +355,10 @@ theorem LocallyIntegrable.comp_linearEquiv (μ : Measure V) [μ.IsAddHaarMeasure
     exact hi.smul_measure_nnreal
   exact (locallyIntegrable_map_homeomorph E.toHomeomorph).mp h1
 
-omit [NormedSpace F V] [FiniteDimensional F V] in
+omit [NormedSpace F V] [FiniteDimensional F V] [BorelSpace V] [BorelSpace W] in
 /-- A function of the first coordinate, locally integrable there, is locally integrable on a
 product with a locally finite measure on the second factor. -/
-theorem LocallyIntegrable.comp_fst [LocallyCompactSpace W] (μ : Measure V) [SFinite μ]
+theorem locallyIntegrable_comp_fst [LocallyCompactSpace W] (μ : Measure V) [SFinite μ]
     (ν : Measure W) [IsLocallyFiniteMeasure ν] [SFinite ν] {g : V → ℝ}
     (hg : LocallyIntegrable g μ) : LocallyIntegrable (fun z : V × W => g z.1) (μ.prod ν) := by
   rintro ⟨x, y⟩
@@ -355,7 +372,7 @@ theorem LocallyIntegrable.comp_fst [LocallyCompactSpace W] (μ : Measure V) [SFi
 
 /-- If `V = C ⊕ K` and `g` is locally integrable on `C`, then `v ↦ g(c)`, `v = c + k`, is
 locally integrable on `V` (all measures additive Haar measures). -/
-theorem LocallyIntegrable.comp_prodEquivOfIsCompl (μ : Measure V) [μ.IsAddHaarMeasure]
+theorem locallyIntegrable_comp_prodEquivOfIsCompl (μ : Measure V) [μ.IsAddHaarMeasure]
     {C K : Submodule F V} (h : IsCompl C K) [MeasurableSpace C] [BorelSpace C]
     [MeasurableSpace K] [BorelSpace K] (μC : Measure C) [μC.IsAddHaarMeasure]
     (μK : Measure K) [μK.IsAddHaarMeasure] {g : C → ℝ} (hg : LocallyIntegrable g μC) :
@@ -364,8 +381,8 @@ theorem LocallyIntegrable.comp_prodEquivOfIsCompl (μ : Measure V) [μ.IsAddHaar
   haveI : CompleteSpace F := complete_of_proper
   haveI : ProperSpace C := FiniteDimensional.proper F C
   haveI : ProperSpace K := FiniteDimensional.proper F K
-  have h1 := LocallyIntegrable.comp_fst μC μK hg
-  exact LocallyIntegrable.comp_linearEquiv μ (μC.prod μK)
+  have h1 := locallyIntegrable_comp_fst μC μK hg
+  exact locallyIntegrable_comp_linearEquiv μ (μC.prod μK)
     (Submodule.prodEquivOfIsCompl C K h).symm h1
 
 end Transport
@@ -514,7 +531,7 @@ theorem locallyIntegrable_prod_gauge_rpow (N : ∀ i, E i → ℝ) (hNc : ∀ i,
     rw [hC.inf_eq_bot, Submodule.mem_bot] at h2
     exact Subtype.ext h2
   have hA := caseA (Measure.addHaar : Measure C) ρ hcondC hkerC
-  have hB := LocallyIntegrable.comp_prodEquivOfIsCompl μ hC.symm (Measure.addHaar : Measure C)
+  have hB := locallyIntegrable_comp_prodEquivOfIsCompl μ hC.symm (Measure.addHaar : Measure C)
     (Measure.addHaar : Measure Kr) hA
   convert hB using 2 with v
   refine Finset.prod_congr rfl fun i hi => ?_
@@ -527,5 +544,167 @@ theorem locallyIntegrable_prod_gauge_rpow (N : ∀ i, E i → ℝ) (hNc : ∀ i,
   rw [hv, map_add, hKr _ x.2.2 i hi, add_zero]
 
 end Gauge
+
+section Forms
+
+/-- Linearly independent linear forms `φ_j`, `j ∈ J`, have joint rank `|J|`. -/
+theorem finrank_range_pi_of_linearIndependent {K W : Type*} [Field K] [AddCommGroup W]
+    [Module K W] {ι : Type*} {φ : ι → Module.Dual K W}
+    (hφ : LinearIndependent K φ) (J : Finset ι) :
+    Module.finrank K (LinearMap.range (LinearMap.pi fun j : J => φ j)) = J.card := by
+  classical
+  have hsurj : LinearMap.range (LinearMap.pi fun j : J => φ j) = ⊤ := by
+    by_contra hne
+    obtain ⟨f, hf0, hf⟩ :=
+      Submodule.exists_dual_map_eq_bot_of_lt_top (lt_top_iff_ne_top.mpr hne) inferInstance
+    have hcomb : ∑ j : J, f (Pi.single j 1) • φ j = 0 := by
+      ext v
+      have hv : f ((LinearMap.pi fun j : J => φ j) v) = 0 := by
+        have : f ((LinearMap.pi fun j : J => φ j) v) ∈
+            (LinearMap.range (LinearMap.pi fun j : J => φ j)).map f :=
+          ⟨_, ⟨v, rfl⟩, rfl⟩
+        rwa [hf, Submodule.mem_bot] at this
+      have hpi : (LinearMap.pi fun j : J => φ j) v = ∑ j : J, φ j v • Pi.single j 1 := by
+        ext i
+        simp [Finset.sum_apply, Pi.single_apply]
+      rw [hpi, map_sum] at hv
+      simp only [map_smul, smul_eq_mul] at hv
+      simp only [LinearMap.sum_apply, LinearMap.smul_apply, smul_eq_mul, LinearMap.zero_apply]
+      rw [← hv]
+      exact Finset.sum_congr rfl fun j _ => mul_comm _ _
+    have h0 := Fintype.linearIndependent_iff.mp
+      (hφ.comp (fun j : J => (j : ι)) Subtype.val_injective) _ hcomb
+    apply hf0
+    refine LinearMap.pi_ext fun j x => ?_
+    have : (Pi.single j x : J → K) = x • Pi.single j 1 := by
+      rw [← Pi.single_smul, smul_eq_mul, mul_one]
+    rw [this, map_smul, h0 j, smul_zero, LinearMap.zero_apply]
+  rw [hsurj, finrank_top, Module.finrank_fintype_fun_eq_card, Fintype.card_coe]
+
+
+/-- `|·|_F` is continuous at `0`. -/
+theorem continuousAt_absF_zero : ContinuousAt (absF (F := F)) 0 := by
+  obtain ⟨ϖ, hϖ0, hϖ1⟩ := NormedField.exists_norm_lt_one F
+  have hϖ : ϖ ≠ 0 := norm_pos_iff.mp hϖ0
+  have hq0 := absF_pos hϖ
+  have hq1 := absF_lt_one_of_norm_lt_one hϖ1
+  rw [ContinuousAt, absF_zero]
+  refine Metric.tendsto_nhds.mpr fun ε hε => ?_
+  obtain ⟨k, hk⟩ := exists_pow_lt_of_lt_one hε hq1
+  filter_upwards [closedBall_mem_nhds (0 : F) (pow_pos hϖ0 k)] with x hx
+  rw [mem_closedBall, dist_zero_right] at hx
+  rw [Real.dist_eq, sub_zero, abs_of_nonneg (absF_nonneg x)]
+  refine lt_of_le_of_lt ?_ hk
+  rw [← absF_pow]
+  exact absF_le_absF_of_norm_le (by rwa [norm_pow])
+
+/-- Over an ultrametric local field, `|·|_F` is continuous. -/
+theorem continuous_absF [IsUltrametricDist F] : Continuous (absF (F := F)) := by
+  refine continuous_iff_continuousAt.mpr fun a => ?_
+  by_cases ha : a = 0
+  · rw [ha]; exact continuousAt_absF_zero
+  · exact continuousAt_absF ha
+
+variable {V : Type*} [NormedAddCommGroup V] [NormedSpace F V] [FiniteDimensional F V]
+  [MeasurableSpace V] [BorelSpace V]
+
+/-- **BP Astérisque 418, Lemma B.1.2(ii), first part, for forms defined over `F`**: for linearly
+independent `λ_1, …, λ_n ∈ V^*` and `σ > 0`, `v ↦ ∏ |λ_i(v)|_F^{σ−1}` is locally integrable on `V`.
+(For forms defined over an extension of `F` use `locallyIntegrable_prod_gauge_rpow` with
+`N = |·|_E`.) -/
+theorem locallyIntegrable_prod_absF_rpow [IsUltrametricDist F] (μ : Measure V)
+    [μ.IsAddHaarMeasure] {ι : Type*} [Fintype ι] {φ : ι → Module.Dual F V}
+    (hφ : LinearIndependent F φ) {σ : ℝ} (hσ : 0 < σ) :
+    LocallyIntegrable (fun v => ∏ i, absF (φ i v) ^ (σ - 1)) μ := by
+  refine locallyIntegrable_prod_gauge_rpow (E := fun _ => F) (fun _ => absF)
+    (fun _ => continuous_absF) (fun _ _ hy => absF_pos hy) (fun _ c y => absF_mul c y)
+    (fun _ => σ - 1) Finset.univ μ φ fun J _ hJ => ?_
+  rw [finrank_range_pi_of_linearIndependent hφ, Finset.sum_const, nsmul_eq_mul]
+  have : (0 : ℝ) < J.card := by exact_mod_cast hJ.card_pos
+  nlinarith
+
+end Forms
+
+section Chart
+
+/-- **Integrability on a compact group from local integrability in a measure chart** (the
+group-to-Lie-algebra step of BP Astérisque 418, Lemma B.1.2(i)). Let `Q` be a compact group with a
+finite left-invariant measure `ν`, and `Φ : 𝔤 → Q` a chart near `0`: continuous on an open
+`U ∋ 0`, with `Φ(W)` a neighbourhood of `1` for every neighbourhood `W` of `0`, and carrying
+`μ` to `ν`: `μ(S) = ν(Φ(S))` for measurable `S ⊆ U` (as `exp` does, `ExpHaar`). If `f` is
+measurable and, for every `q₀ ∈ Q`, `X ↦ f(q₀ Φ(X))` is integrable near `0`, then `f` is
+`ν`-integrable. -/
+theorem integrable_of_chart {Q : Type*} [Group Q] [TopologicalSpace Q] [IsTopologicalGroup Q]
+    [CompactSpace Q] [MeasurableSpace Q] [BorelSpace Q] (ν : Measure Q) [ν.IsMulLeftInvariant]
+    [IsFiniteMeasure ν] {𝔤 : Type*} [TopologicalSpace 𝔤] [Zero 𝔤] [MeasurableSpace 𝔤]
+    [OpensMeasurableSpace 𝔤] (μ : Measure 𝔤) (Φ : 𝔤 → Q) {U : Set 𝔤} (hUo : IsOpen U)
+    (hU0 : (0 : 𝔤) ∈ U) (hΦc : ContinuousOn Φ U)
+    (hΦn : ∀ W ∈ 𝓝 (0 : 𝔤), Φ '' W ∈ 𝓝 (1 : Q))
+    (hΦμ : ∀ S ⊆ U, MeasurableSet S → μ S = ν (Φ '' S))
+    {f : Q → ℝ} (hf : AEStronglyMeasurable f ν)
+    (hloc : ∀ q₀ : Q, IntegrableAtFilter (fun X => f (q₀ * Φ X)) (𝓝 0) μ) :
+    Integrable f ν := by
+  classical
+  -- for each `q₀`, a neighbourhood `q₀ Φ(W)` on which `f` is integrable
+  have key : ∀ q₀ : Q, ∃ O ∈ 𝓝 q₀, IntegrableOn f O ν := by
+    intro q₀
+    obtain ⟨W₀, hW₀, hint⟩ := hloc q₀
+    set W := interior W₀ ∩ U
+    have hWo : IsOpen W := isOpen_interior.inter hUo
+    have hW : W ∈ 𝓝 (0 : 𝔤) := inter_mem (interior_mem_nhds.mpr hW₀) (hUo.mem_nhds hU0)
+    have hWU : W ⊆ U := inter_subset_right
+    have hWm : MeasurableSet W := hWo.measurableSet
+    set Φ' : 𝔤 → Q := W.piecewise Φ (fun _ => 1)
+    have hΦ'm : Measurable Φ' :=
+      (hΦc.mono hWU).measurable_piecewise continuousOn_const hWm
+    have hΦ'W : ∀ X ∈ W, Φ' X = Φ X := fun X hX => piecewise_eq_of_mem _ _ _ hX
+    -- `Φ` carries `μ|W` to `ν|Φ(W)`
+    have hmap1 : (μ.restrict W).map Φ' = ν.restrict (Φ '' W) := by
+      ext B hB
+      rw [Measure.map_apply hΦ'm hB, Measure.restrict_apply (hΦ'm hB),
+        Measure.restrict_apply hB]
+      rw [hΦμ _ (inter_subset_right.trans hWU) ((hΦ'm hB).inter hWm)]
+      congr 1
+      ext y
+      simp only [mem_image, mem_inter_iff, mem_preimage]
+      constructor
+      · rintro ⟨X, ⟨hXB, hXW⟩, rfl⟩
+        exact ⟨by rw [← hΦ'W X hXW]; exact hXB, X, hXW, rfl⟩
+      · rintro ⟨hyB, X, hXW, rfl⟩
+        exact ⟨X, ⟨by rw [hΦ'W X hXW]; exact hyB, hXW⟩, rfl⟩
+    -- left translation by `q₀`
+    set O : Set Q := (q₀⁻¹ * ·) ⁻¹' (Φ '' W)
+    have hmap2 : (ν.restrict (Φ '' W)).map (q₀ * ·) = ν.restrict O := by
+      ext B hB
+      rw [Measure.map_apply (measurable_const_mul q₀) hB,
+        Measure.restrict_apply (measurable_const_mul q₀ hB), Measure.restrict_apply hB,
+        ← measure_preimage_mul ν q₀ (B ∩ O)]
+      congr 1
+      ext y
+      simp [O]
+    have hmap : (μ.restrict W).map (fun X => q₀ * Φ' X) = ν.restrict O := by
+      rw [← hmap2, ← hmap1, Measure.map_map (measurable_const_mul q₀) hΦ'm]
+      rfl
+    refine ⟨O, ?_, ?_⟩
+    · refine (continuous_const.mul continuous_id).continuousAt.preimage_mem_nhds ?_
+      simpa using hΦn W hW
+    · refine ⟨hf.restrict, ?_⟩
+      show ∫⁻ y in O, ‖f y‖ₑ ∂ν < ∞
+      have hm : Measurable fun X => q₀ * Φ' X := (measurable_const_mul q₀).comp hΦ'm
+      have hae : AEMeasurable (fun y => ‖f y‖ₑ) ((μ.restrict W).map fun X => q₀ * Φ' X) := by
+        rw [hmap]; exact hf.restrict.enorm
+      rw [← hmap, lintegral_map' hae hm.aemeasurable]
+      have hW0 : IntegrableOn (fun X => f (q₀ * Φ X)) W μ :=
+        hint.mono_set (inter_subset_left.trans interior_subset)
+      calc ∫⁻ X in W, ‖f (q₀ * Φ' X)‖ₑ ∂μ = ∫⁻ X in W, ‖f (q₀ * Φ X)‖ₑ ∂μ :=
+            setLIntegral_congr_fun hWm fun X hX => by rw [hΦ'W X hX]
+        _ < ∞ := hW0.2
+  choose O hO hOi using key
+  obtain ⟨t, -, ht⟩ := isCompact_univ.elim_nhds_subcover O fun q _ => hO q
+  have : IntegrableOn f (⋃ q ∈ t, O q) ν := integrableOn_finset_iUnion.mpr fun q _ => hOi q
+  rw [← integrableOn_univ]
+  exact this.mono_set ht
+
+end Chart
 
 end GSpinGGP
