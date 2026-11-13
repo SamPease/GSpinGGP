@@ -88,6 +88,7 @@ import GSpinGGP
 | Folder | Contents |
 |---|---|
 | `Foundations/` | p-adic groups and their representations; `GSpin` via Clifford algebras; quadratic forms, and the links to Tau Ceti and Mathlib (local fields, the Lipschitz group) |
+| `HarmonicAnalysis/` | group-agnostic harmonic analysis on locally compact groups (log-norms, BP §1.2) |
 | `GGP/` | GGP triples, inner forms, semisimple descent, Levi subgroups |
 | `Literature/` | results assumed from the literature (Harish-Chandra, Waldspurger, Beuzart-Plessis, Arthur, Kottwitz, …) |
 | `TraceFormula/` | quasi-characters, `θ_f`, the distributions `J` and `J^Lie`, `m_geom`, spectral and geometric expansions |

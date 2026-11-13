@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import GSpinGGP.TraceFormula.Basic
 import GSpinGGP.Literature.Measure
 import GSpinGGP.GGP.Germs
+import GSpinGGP.HarmonicAnalysis.LogNorm
 
 /-!
 # The local trace formula: analytic objects and estimates
@@ -33,6 +34,11 @@ of Thesis Ch. 8 and 10 and proves the bookkeeping around it.
   `scuspTestFn_subset_scuspSchwartz` (`C_c^∞` strongly cuspidal functions are Schwartz), and the
   supporting lemmas: continuity of `λ` and `ξ`, properties of `δ_{P₀}` and a lower bound for
   `Ξ^G` on compact sets, van Dantzig's theorem, uniform local constancy, log-norm lemmas.
+* Log-norm calculus (BP §1.2), from the general `IsLogNorm` API of `HarmonicAnalysis/LogNorm.lean`:
+  `isLogNorm_logNormG`, `isLogNorm_logNormModAG`, `isLogNorm_logNormMod`; for `σ_{S\G}`,
+  left `S`-invariance and `σ_{S\G}(gh) ≤ σ_{S\G}(g) + σ_G(h)`; for `σ_{H\G}` (`logNormHG`),
+  `1 ≤ σ_{H\G} ≤ σ_{A_G\G} ≤ σ_G`, bounded change under right translation by a compact set
+  (`exists_logNormHG_mul_le_add`), upper semicontinuity and measurability.
 * `sorry` (own work, Thesis Ch. 8 and 10, adapted from BP Ch. 6, 8): `kernelK_bound` (Thm 10.1.1(i)),
   `kernelK_bound_scusp` (Thm 10.1.1(ii)), `prop_6_7_1_iii` (Thesis Prop 8.4.1(iii)),
   `lemma_6_5_1_i/ii/iii` (Thesis Lemma 8.2.1), `exists_good_minimal_parabolic` (Thesis
@@ -189,23 +195,13 @@ namespace GGPData
 
 variable (d : GGPData F)
 
-/-! ## 1. Log-norms modulo subgroups (BP §1.2) -/
+/-! ## 1. Log-norms modulo subgroups (BP §1.2)
+
+General results are in `HarmonicAnalysis/LogNorm.lean`. -/
 
 /-- The log-norm `σ_G` of `G(F)` (BP §1.2, Thesis §2.2): `LocalGroups.logNorm`, built from the
 operator norm of left multiplication on `C(W) × C(V)`. -/
 def logNormG (g : ↥d.G) : ℝ := logNorm F d.G g
-
-/-- The log-norm modulo a subgroup `S` (BP §1.2, Thesis §2.2): `σ_{S\G}(g) = inf_{a ∈ S} σ_G(a g)`. -/
-def logNormModSub (S : Subgroup ↥d.G) (g : ↥d.G) : ℝ :=
-  ⨅ a : S, d.logNormG ((a : ↥d.G) * g)
-
-/-- `σ(g) = σ_{A_{G,H}\G}(g) = inf_{a ∈ A_{G,H}(F)} σ_G(a g)` (Thesis §8.1–8.2
-"norms modulo `A_{G,H}`"). -/
-def logNormMod (g : ↥d.G) : ℝ := d.logNormModSub d.AGH g
-
-/-- `σ_{A_G\G}(g) = inf_{a ∈ A_G(F)} σ_G(a g)`: the log-norm in the definition of
-`𝒞(A_G(F)\G(F), χ⁻¹)` (Thesis §2.3). -/
-def logNormModAG (g : ↥d.G) : ℝ := d.logNormModSub d.AG g
 
 theorem one_le_logNormG (g : ↥d.G) : 1 ≤ d.logNormG g := one_le_logNorm _ g
 
@@ -221,16 +217,82 @@ theorem continuous_logNormG : Continuous d.logNormG := by
   exact continuous_const.add
     (h3.log fun g => (zero_lt_one.trans_le (one_le_maxNorm (F := F) d.G g)).ne')
 
-theorem one_le_logNormModSub (S : Subgroup ↥d.G) (g : ↥d.G) : 1 ≤ d.logNormModSub S g :=
-  le_ciInf fun _ => d.one_le_logNormG _
+/-- `σ_G` is subadditive: `σ(gh) ≤ σ(g) + σ(h)` (BP §1.2, exact here: `logNorm_mul_le`). -/
+theorem logNormG_mul_le (g h : ↥d.G) : d.logNormG (g * h) ≤ d.logNormG g + d.logNormG h :=
+  logNorm_mul_le _ g h
 
-/-- `σ_{S\G}(a g) ≤ σ_G(g)` for `a ∈ S`. -/
-theorem logNormModSub_mul_le (S : Subgroup ↥d.G) (a : ↥d.G) (ha : a ∈ S) (g : ↥d.G) :
-    d.logNormModSub S (a * g) ≤ d.logNormG g := by
-  have hb : BddBelow (Set.range fun b : S => d.logNormG ((b : ↥d.G) * (a * g))) :=
-    ⟨1, by rintro _ ⟨b, rfl⟩; exact d.one_le_logNormG _⟩
-  have := ciInf_le hb ⟨a⁻¹, S.inv_mem ha⟩
-  simpa [logNormModSub] using this
+/-- `σ_G(g⁻¹) = σ_G(g)`. -/
+theorem logNormG_inv (g : ↥d.G) : d.logNormG g⁻¹ = d.logNormG g := logNorm_inv _ g
+
+/-- `log max(1, ‖g‖, ‖g⁻¹‖)` is a group seminorm on `G(F)` (`maxNorm_mul_le`, `maxNorm_inv`),
+and `σ_G = 1 + logMaxNorm`. -/
+def logMaxNorm : GroupSeminorm ↥d.G where
+  toFun g := Real.log (maxNorm F d.G g)
+  map_one' := by
+    have h : maxNorm F d.G 1 = 1 := by
+      have hn : ‖lmulPi F (((1 : ↥d.G) : d.ambientˣ) : d.ambient)‖ ≤ 1 := by
+        simp only [OneMemClass.coe_one, Units.val_one, lmulPi_one]
+        exact ContinuousLinearMap.norm_id_le
+      simp only [maxNorm, inv_one]
+      exact max_eq_left (max_le hn hn)
+    simp [h]
+  mul_le' g h := by
+    have hg := one_le_maxNorm (F := F) d.G g
+    have hh := one_le_maxNorm (F := F) d.G h
+    rw [← Real.log_mul (by positivity) (by positivity)]
+    exact Real.log_le_log (by linarith [one_le_maxNorm (F := F) d.G (g * h)])
+      (maxNorm_mul_le d.G g h)
+  inv' g := by simp only [maxNorm_inv]
+
+/-- `σ_G` is a log-norm on `G(F)` in the sense of `IsLogNorm`: it is `1 + logMaxNorm` with
+`logMaxNorm` a group seminorm, and it is continuous. -/
+theorem isLogNorm_logNormG : IsLogNorm d.logNormG :=
+  GroupSeminorm.isLogNorm_one_add d.logMaxNorm fun _ hK =>
+    hK.bddAbove_image (by
+      have : Continuous fun g : ↥d.G => d.logNormG g - 1 :=
+        d.continuous_logNormG.sub continuous_const
+      exact (this.congr fun g => by simp [logNormG, logNorm]; rfl).continuousOn)
+
+/-- The log-norm modulo a subgroup `S` (BP §1.2, Thesis §2.2):
+`σ_{S\G}(g) = inf_{a ∈ S} σ_G(a g)`. -/
+def logNormModSub (S : Subgroup ↥d.G) (g : ↥d.G) : ℝ := infLeft d.logNormG S g
+
+/-- `σ(g) = σ_{A_{G,H}\G}(g) = inf_{a ∈ A_{G,H}(F)} σ_G(a g)` (Thesis §8.1–8.2
+"norms modulo `A_{G,H}`"). -/
+def logNormMod (g : ↥d.G) : ℝ := d.logNormModSub d.AGH g
+
+/-- `σ_{A_G\G}(g) = inf_{a ∈ A_G(F)} σ_G(a g)`: the log-norm in the definition of
+`𝒞(A_G(F)\G(F), χ⁻¹)` (Thesis §2.3). -/
+def logNormModAG (g : ↥d.G) : ℝ := d.logNormModSub d.AG g
+
+/-- `σ_{S\G} ≤ σ_G`. -/
+theorem logNormModSub_le (S : Subgroup ↥d.G) (g : ↥d.G) : d.logNormModSub S g ≤ d.logNormG g :=
+  d.isLogNorm_logNormG.infLeft_le S g
+
+/-- `σ_{S\G}` is left `S`-invariant. -/
+theorem logNormModSub_mul_left (S : Subgroup ↥d.G) {a : ↥d.G} (ha : a ∈ S) (g : ↥d.G) :
+    d.logNormModSub S (a * g) = d.logNormModSub S g :=
+  d.isLogNorm_logNormG.infLeft_mul_left S ha g
+
+/-- `σ_{S\G}(gh) ≤ σ_{S\G}(g) + σ_G(h)`. -/
+theorem logNormModSub_mul_le_add (S : Subgroup ↥d.G) (g h : ↥d.G) :
+    d.logNormModSub S (g * h) ≤ d.logNormModSub S g + d.logNormG h :=
+  d.isLogNorm_logNormG.infLeft_mul_le S g h
+
+/-- Right translation by a compact set changes `σ_{S\G}` by a bounded amount. -/
+theorem exists_logNormModSub_mul_le_add (S : Subgroup ↥d.G) {K : Set ↥d.G} (hK : IsCompact K) :
+    ∃ C, 0 ≤ C ∧ ∀ g, ∀ k ∈ K, d.logNormModSub S (g * k) ≤ d.logNormModSub S g + C ∧
+      d.logNormModSub S g ≤ d.logNormModSub S (g * k) + C :=
+  d.isLogNorm_logNormG.exists_infLeft_mul_le_add S hK
+
+/-- `σ_{A_G\G}` is a log-norm on `G(F)` (`A_G` is central). -/
+theorem isLogNorm_logNormModAG : IsLogNorm d.logNormModAG :=
+  d.isLogNorm_logNormG.isLogNorm_infLeft d.AG
+
+/-- `σ_{A_{G,H}\G}` is a log-norm on `G(F)` (`A_{G,H}` is central). -/
+theorem isLogNorm_logNormMod : IsLogNorm d.logNormMod :=
+  haveI : d.AGH.Normal := Subgroup.normal_of_le_center (d.AGH_le_AG.trans d.AG_le_center)
+  d.isLogNorm_logNormG.isLogNorm_infLeft d.AGH
 
 /-- The class of `g ∈ G(F)` in `H(F)\G(F)/A_G(F)`. -/
 def mkHG (g : ↥d.G) : d.HGQuot := CosetSpace.mk d.toGmodAG (QuotientGroup.mk g)
@@ -244,6 +306,38 @@ def repHG (q : d.HGQuot) : ↥d.G := Quotient.out (CosetSpace.out d.toGmodAG q :
   rw [QuotientGroup.out_eq']
   exact CosetSpace.mk_out _ q
 
+/-- Two elements of `G(F)` have the same class in `H(F)\G(F)/A_G(F)` iff they differ by
+`H(F)` on the left and `A_G(F)` on the right. -/
+theorem mkHG_eq_mkHG_iff (g g' : ↥d.G) :
+    d.mkHG g = d.mkHG g' ↔ ∃ h ∈ d.H, ∃ a ∈ d.AG, g' = h * g * a := by
+  unfold mkHG
+  rw [CosetSpace.mk_eq_mk_iff, CosetSpace.rel_iff]
+  constructor
+  · rintro ⟨s, hs⟩
+    induction s using QuotientGroup.induction_on with
+    | H h =>
+      rw [toGmodAG_mk, ← QuotientGroup.mk_mul, eq_comm, QuotientGroup.eq] at hs
+      exact ⟨h, h.2, _, hs, by group⟩
+  · rintro ⟨h, hh, a, ha, rfl⟩
+    refine ⟨QuotientGroup.mk ⟨h, hh⟩, ?_⟩
+    rw [toGmodAG_mk, ← QuotientGroup.mk_mul, eq_comm, QuotientGroup.eq]
+    simpa [mul_assoc] using ha
+
+/-- Right translation descends to `H(F)\G(F)/A_G(F)`. -/
+theorem mkHG_mul_eq_of_eq {g g' : ↥d.G} (hgg : d.mkHG g = d.mkHG g') (k : ↥d.G) :
+    d.mkHG (g * k) = d.mkHG (g' * k) := by
+  obtain ⟨h, hh, a, ha, rfl⟩ := (d.mkHG_eq_mkHG_iff g g').1 hgg
+  refine (d.mkHG_eq_mkHG_iff _ _).2 ⟨h, hh, k⁻¹ * a * k, ?_, by group⟩
+  have hc := Subgroup.mem_center_iff.mp (d.AG_le_center ha) k
+  rwa [mul_assoc, ← hc, inv_mul_cancel_left]
+
+/-- `mkHG` is surjective. -/
+theorem mkHG_surjective : Function.Surjective d.mkHG := fun q => ⟨d.repHG q, d.mkHG_repHG q⟩
+
+/-- `G(F) → H(F)\G(F)/A_G(F)` is a quotient map. -/
+theorem isQuotientMap_mkHG : IsQuotientMap d.mkHG :=
+  isQuotientMap_quotient_mk'.comp (QuotientGroup.isQuotientMap_mk d.AG)
+
 /-- The log-norm on `H(F)\G(F)/A_G(F)` (BP §1.2; Thesis §8.4, §10.1, where it is written
 `σ_{H\G}`): the infimum of `σ_G` over all representatives `h x a` (`h ∈ H(F)`, `a ∈ A_G(F)`).
 
@@ -251,8 +345,56 @@ It is `A_G(F)`-invariant by construction.  This is the reading under which Thesi
 is meaningful: with the log-norm of `H(F)\G(F)` itself, `σ_{H\G}(xa) → ∞` along
 `A_G(F)/A_{G,H}(F)` while `K(f, xa) = K(f, x)` and `Ξ^{H\G}(xa) = Ξ^{H\G}(x)`, so the bound of
 Thm 10.1.1(ii) would force `K(f,·) = 0`. -/
-def logNormHG (q : d.HGQuot) : ℝ :=
-  ⨅ g : {g : ↥d.G // d.mkHG g = q}, d.logNormG g
+def logNormHG (q : d.HGQuot) : ℝ := fiberInf d.logNormG d.mkHG q
+
+/-- `σ_{H\G} ≥ 1`. -/
+theorem one_le_logNormHG (q : d.HGQuot) : 1 ≤ d.logNormHG q :=
+  d.isLogNorm_logNormG.one_le_fiberInf_of_surjective _ d.mkHG_surjective q
+
+/-- `σ_{H\G}(x) ≤ σ_G(x)`. -/
+theorem logNormHG_mkHG_le (g : ↥d.G) : d.logNormHG (d.mkHG g) ≤ d.logNormG g :=
+  d.isLogNorm_logNormG.fiberInf_le _ g
+
+/-- `σ_{H\G}(x) ≤ σ_{A_G\G}(x)`. -/
+theorem logNormHG_mkHG_le_logNormModAG (g : ↥d.G) :
+    d.logNormHG (d.mkHG g) ≤ d.logNormModAG g :=
+  d.isLogNorm_logNormG.fiberInf_le_infLeft _ (fun a ha g => by
+    refine ((d.mkHG_eq_mkHG_iff _ _).2 ⟨1, d.H.one_mem, a, ha, ?_⟩).symm
+    rw [one_mul, (Subgroup.mem_center_iff.mp (d.AG_le_center ha) g)]) g
+
+/-- `σ_{H\G}(xk) ≤ σ_{H\G}(x) + σ_G(k)`. -/
+theorem logNormHG_mkHG_mul_le (g k : ↥d.G) :
+    d.logNormHG (d.mkHG (g * k)) ≤ d.logNormHG (d.mkHG g) + d.logNormG k :=
+  d.isLogNorm_logNormG.fiberInf_mul_le _ (fun _ _ h => d.mkHG_mul_eq_of_eq h k) g
+
+/-- `σ_{H\G}(x) ≤ σ_{H\G}(xk) + σ_G(k)`. -/
+theorem logNormHG_mkHG_le_mul_add (g k : ↥d.G) :
+    d.logNormHG (d.mkHG g) ≤ d.logNormHG (d.mkHG (g * k)) + d.logNormG k :=
+  d.isLogNorm_logNormG.fiberInf_le_mul_add _ (fun _ _ h => d.mkHG_mul_eq_of_eq h k⁻¹) g
+
+/-- **Right translation by a compact set** changes `σ_{H\G}` by a bounded amount (used in BP
+Prop 6.7.1(i)(b) and Thesis Prop 8.4.1). -/
+theorem exists_logNormHG_mul_le_add {K : Set ↥d.G} (hK : IsCompact K) :
+    ∃ C, 0 ≤ C ∧ ∀ g, ∀ k ∈ K,
+      d.logNormHG (d.mkHG (g * k)) ≤ d.logNormHG (d.mkHG g) + C ∧
+      d.logNormHG (d.mkHG g) ≤ d.logNormHG (d.mkHG (g * k)) + C :=
+  d.isLogNorm_logNormG.exists_fiberInf_mul_le_add _
+    (fun k _ _ h => d.mkHG_mul_eq_of_eq h k) hK
+
+/-- `σ_{H\G}` is upper semicontinuous on `H(F)\G(F)/A_G(F)`. -/
+theorem upperSemicontinuous_logNormHG : UpperSemicontinuous d.logNormHG :=
+  d.isLogNorm_logNormG.upperSemicontinuous_fiberInf _ d.isQuotientMap_mkHG
+    d.continuous_logNormG (fun p : ↥d.H × ↥d.AG => fun g => (p.1 : ↥d.G) * g * p.2)
+    (fun _ => by fun_prop)
+    (fun g g' => by
+      rw [d.mkHG_eq_mkHG_iff]
+      constructor
+      · rintro ⟨h, hh, a, ha, rfl⟩; exact ⟨(⟨h, hh⟩, ⟨a, ha⟩), rfl⟩
+      · rintro ⟨⟨h, a⟩, rfl⟩; exact ⟨h, h.2, a, a.2, rfl⟩)
+
+/-- `σ_{H\G}` is Borel measurable. -/
+theorem measurable_logNormHG : Measurable d.logNormHG :=
+  d.upperSemicontinuous_logNormHG.measurable
 
 /-- `Ξ^{H\G}_C(x) = vol_{H\G}(xC)^{-1/2}` (Thesis §8.4), for a compact
 `C ⊆ G(F)` with nonempty interior, the volume being taken for the Weil measure on
@@ -739,9 +881,10 @@ theorem scuspTestFn_subset_scuspSchwartz (IW : d.IwasawaDatum) :
       obtain ⟨a, ha, c, hc, rfl⟩ := Set.mem_mul.mp hg
       have hxi0 : 0 ≤ (IW.xiHC (a * c))⁻¹ := inv_nonneg.2 (IW.xiHC_nonneg _)
       have hσ : d.logNormModAG (a * c) ≤ max L 0 :=
-        (d.logNormModSub_mul_le d.AG a ha c).trans ((hL' c hc).trans (le_max_left _ _))
+        ((d.logNormModSub_mul_left d.AG ha c).trans_le (d.logNormModSub_le d.AG c)).trans
+          ((hL' c hc).trans (le_max_left _ _))
       have hσ0 : 0 ≤ d.logNormModAG (a * c) :=
-        zero_le_one.trans (d.one_le_logNormModSub d.AG _)
+        zero_le_one.trans (d.isLogNorm_logNormG.one_le_infLeft d.AG _)
       have hf' : ‖f (a * c)‖ ≤ max M 0 := (hnorm a ha c).trans_le ((hM' c hc).trans (le_max_left _ _))
       exact mul_le_mul (mul_le_mul hf' hBg hxi0 (le_max_right _ _))
         (pow_le_pow_left₀ hσ0 hσ n) (pow_nonneg hσ0 n)
