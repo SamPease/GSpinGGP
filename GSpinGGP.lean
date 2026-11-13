@@ -10,6 +10,7 @@ import GSpinGGP.Foundations.CentralizerIso
 import GSpinGGP.Foundations.ExpLocal
 import GSpinGGP.Foundations.ExpHaar
 import GSpinGGP.Foundations.TorusIntegrability
+import GSpinGGP.Foundations.EvaluationSpan
 import GSpinGGP.Foundations.GSpinExp
 import GSpinGGP.Foundations.GSpinExpAd
 import GSpinGGP.Foundations.OrbitChart
@@ -145,6 +146,7 @@ import GSpinGGP.TraceFormula.Analytic
 import GSpinGGP.TraceFormula.Interface
 import GSpinGGP.TraceFormula.GermTranslate
 import GSpinGGP.TraceFormula.TorusDescent
+import GSpinGGP.TraceFormula.GermBound
 import GSpinGGP.TraceFormula.MGeom
 import GSpinGGP.TraceFormula.MGeomLimit
 import GSpinGGP.TraceFormula.Scusp
