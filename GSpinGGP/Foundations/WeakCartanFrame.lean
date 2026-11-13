@@ -7,9 +7,11 @@ import GSpinGGP.Foundations.WeakCartanRotation
 /-!
 # Frames, split tori and chambers for the weak Cartan decomposition of `SO(V₀)`
 
-Let `b` be an orthogonal basis of anisotropic vectors of a quadratic space `(V, Q)`. A *frame of
+Let `b` be an orthogonal basis of anisotropic vectors of a quadratic space `(V, Q)` (over a
+non-archimedean, p-adic, field for the decomposition itself). A *frame of
 length `l`* is the statement that the first `l + 1` basis vectors have `Q (b i) = (-1)ⁱ ν`
-and that no vector orthogonal to them has `Q = (-1)^{l+1} ν` (maximality). The *level* `j ≤ l`
+and that no vector with coordinates `≤ l` zero (equivalently, orthogonal to them, given
+`IsOrthoBasis`) has `Q = (-1)^{l+1} ν` (maximality). The *level* `j ≤ l`
 is the subgroup `G_j = fixer Q b j` of `SO(Q)` fixing `b 0, …, b (j-1)`; it is the special
 orthogonal group of `span (b j, b (j+1), …)` relative to `v₀ = b j`, and `G_{j+1}` is the
 stabilizer of `v₀`. This is the set-up of the weak Cartan decomposition (Thesis Prop. 8.3.1,
@@ -48,7 +50,8 @@ variable {V : Type*} [AddCommGroup V] [Module F V] {n : ℕ} {b : Module.Basis (
 /-! ## Frames and levels -/
 
 /-- The first `l + 1` vectors of `b` form a maximal frame for `ν`: `Q (b i) = (-1)ⁱ ν` for
-`i ≤ l`, and no vector orthogonal to them (coordinates `≤ l` zero) has `Q = (-1)^{l+1} ν`. -/
+`i ≤ l`, and no vector with coordinates `≤ l` zero (equivalently orthogonal to them, given
+`IsOrthoBasis`) has `Q = (-1)^{l+1} ν`. -/
 structure IsFrame (Q : QuadraticForm F V) (b : Module.Basis (Fin n) F V) (ν : F) (l : ℕ) :
     Prop where
   lt : l < n
