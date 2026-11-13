@@ -48,6 +48,9 @@ import GSpinGGP.GGP.LieRank
 import GSpinGGP.GGP.RegularNilpotentConverse
 import GSpinGGP.Foundations.SingleBlock
 import GSpinGGP.Foundations.OrthogonalSum
+import GSpinGGP.Foundations.BasisNorm
+import GSpinGGP.Foundations.WeakCartanSO
+import GSpinGGP.Foundations.WeakCartanRotation
 import GSpinGGP.GGP.RegularOrbitClass
 import GSpinGGP.GGP.OrbitSpecQd
 import GSpinGGP.GGP.RegularRank
