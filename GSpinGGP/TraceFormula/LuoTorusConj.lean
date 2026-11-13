@@ -285,6 +285,117 @@ theorem weylDiscLie_diagLie_conj (g : ↥(GSpin d.QW)) {X : CliffordAlgebra d.QW
   simp only [Subgroup.coe_inv, inv_inv] at this
   exact this
 
+/-- Conjugation by `g` as an isomorphism of topological groups `T ≃ gTg⁻¹`. -/
+def torusConjHomeomorph (T : Subgroup ↥(GSpin d.QW)) (g : ↥(GSpin d.QW)) :
+    ↥T ≃ₜ* ↥(T.map (MulAut.conj g).toMonoidHom) :=
+  { (MulAut.conj g).subgroupMap T with
+    continuous_toFun := by
+      refine Continuous.subtype_mk ?_ _
+      change Continuous fun t : ↥T => g * (t : ↥(GSpin d.QW)) * g⁻¹
+      fun_prop
+    continuous_invFun := by
+      refine Continuous.subtype_mk ?_ _
+      change Continuous fun t : ↥(T.map (MulAut.conj g).toMonoidHom) =>
+        g⁻¹ * (t : ↥(GSpin d.QW)) * g⁻¹⁻¹
+      fun_prop }
+
+@[simp] theorem coe_torusConjHomeomorph (T : Subgroup ↥(GSpin d.QW)) (g : ↥(GSpin d.QW))
+    (t : ↥T) : ((d.torusConjHomeomorph T g t : ↥(T.map (MulAut.conj g).toMonoidHom)) :
+      ↥(GSpin d.QW)) = g * t * g⁻¹ := rfl
+
+/-- Conjugation carries the scalars of `T` onto the scalars of `gTg⁻¹` (they are central). -/
+theorem map_scalarsIn_torusConjHomeomorph (T : Subgroup ↥(GSpin d.QW)) (g : ↥(GSpin d.QW)) :
+    (d.scalarsIn T).map (d.torusConjHomeomorph T g).toMulEquiv.toMonoidHom =
+      d.scalarsIn (T.map (MulAut.conj g).toMonoidHom) := by
+  have hc : ∀ c : Fˣ, g * scalarGSpin d.QW c * g⁻¹ = scalarGSpin d.QW c := fun c => by
+    rw [(scalarGSpin_commute d.QW c g).eq.symm, mul_inv_cancel_right]
+  have hmem : ∀ {T' : Subgroup ↥(GSpin d.QW)} (s : ↥T'),
+      s ∈ d.scalarsIn T' ↔ ∃ c, scalarGSpin d.QW c = (s : ↥(GSpin d.QW)) := fun _ => Iff.rfl
+  ext s'
+  constructor
+  · rintro ⟨s, hs, rfl⟩
+    obtain ⟨c, hcs⟩ := (hmem s).mp hs
+    refine (hmem _).mpr ⟨c, ?_⟩
+    change _ = g * (s : ↥(GSpin d.QW)) * g⁻¹
+    rw [← hcs, hc]
+  · intro hs'
+    obtain ⟨c, hcs⟩ : ∃ c, scalarGSpin d.QW c = (s' : ↥(GSpin d.QW)) := hs'
+    obtain ⟨_, t, ht, rfl⟩ := s'
+    have htc : t = scalarGSpin d.QW c := by
+      have h : g * t * g⁻¹ = g * scalarGSpin d.QW c * g⁻¹ := by rw [hc]; exact hcs.symm
+      exact mul_left_cancel (mul_right_cancel h)
+    subst htc
+    exact ⟨⟨_, ht⟩, (hmem _).mpr ⟨c, rfl⟩, Subtype.ext rfl⟩
+
+/-- `T(F)/A_{G,H}(F) ≃ (gTg⁻¹)(F)/A_{G,H}(F)`, induced by conjugation. -/
+def torusQuotConj (T : Subgroup ↥(GSpin d.QW)) (g : ↥(GSpin d.QW)) :
+    d.TorusQuot T ≃ₜ* d.TorusQuot (T.map (MulAut.conj g).toMonoidHom) :=
+  (d.torusConjHomeomorph T g).quotientCongr _ _ (d.map_scalarsIn_torusConjHomeomorph T g)
+
+set_option maxHeartbeats 400000 in -- two measure maps and the coset bookkeeping
+/-- **Conjugation carries `ν(T) dX` to `ν(gTg⁻¹) dX`**: `X ↦ g X g⁻¹` maps
+`{e^X A_{G,H}(F) : X ∈ S}` onto `{e^Y A_{G,H}(F) : Y ∈ g S g⁻¹}` (`expA_units_conj`), and
+`T(F)/A_{G,H}(F) ≃ (gTg⁻¹)(F)/A_{G,H}(F)` carries probability Haar measure to probability Haar
+measure. -/
+theorem isExpCompatT_map_lieTorusConj {T : Subgroup ↥(GSpin d.QW)} [CompactSpace (d.TorusQuot T)]
+    (g : ↥(GSpin d.QW)) {μ : Measure ↥(d.lieTorus T)} (hμ : d.IsExpCompatT T μ) :
+    d.IsExpCompatT (T.map (MulAut.conj g).toMonoidHom) (μ.map (d.lieTorusConj g rfl)) := by
+  set T₁ := T.map (MulAut.conj g).toMonoidHom with hT₁
+  letI : MeasurableSpace (d.TorusQuot T) := borel _
+  haveI : BorelSpace (d.TorusQuot T) := ⟨rfl⟩
+  letI : MeasurableSpace (d.TorusQuot T₁) := borel _
+  haveI : BorelSpace (d.TorusQuot T₁) := ⟨rfl⟩
+  have := submodule_isTopologicalAddGroup (d.lieTorus T)
+  have := submodule_isTopologicalAddGroup (d.lieTorus T₁)
+  obtain ⟨hμH, U, hU, hUS⟩ := hμ
+  let e := d.lieTorusConj g (T' := T₁) rfl
+  refine ⟨e.toLinearEquiv.toAddEquiv.isAddHaarMeasure_map _ e.continuous e.symm.continuous,
+    e.symm ⁻¹' U, e.symm.continuous.continuousAt.preimage_mem_nhds (by rw [map_zero]; exact hU),
+    fun S' hS' hS'U => ?_⟩
+  have hSm : MeasurableSet (e ⁻¹' S') := e.continuous.measurable hS'
+  have hSU : e ⁻¹' S' ⊆ U := fun X hX => by
+    have := hS'U hX
+    rwa [Set.mem_preimage, ContinuousLinearEquiv.symm_apply_apply] at this
+  rw [Measure.map_apply e.continuous.measurable hS', hUS _ hSm hSU]
+  let E := d.torusQuotConj T g
+  haveI : CompactSpace (d.TorusQuot T₁) := E.toHomeomorph.compactSpace
+  rw [← map_probHaar E]
+  let eM : d.TorusQuot T ≃ᵐ d.TorusQuot T₁ := E.toHomeomorph.toMeasurableEquiv
+  have hmap : (probHaar (d.TorusQuot T)).map E = (probHaar (d.TorusQuot T)).map eM := rfl
+  rw [hmap, MeasurableEquiv.map_apply]
+  congr 1
+  ext q
+  simp only [Set.mem_ofPred_eq, Set.mem_preimage]
+  set a := ((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW)
+  constructor
+  · rintro ⟨X, hX, t, ht, rfl⟩
+    refine ⟨e X, hX, d.torusConjHomeomorph T g t, ?_, ?_⟩
+    · change a * (((t : GSpin d.QW) : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) *
+          (((g : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) =
+        expA F (a * (X : CliffordAlgebra d.QW) *
+          (((g : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW))
+      rw [ht, expA_units_conj]
+    · exact (d.torusConjHomeomorph T g).quotientCongr_mk (d.scalarsIn T)
+        (d.scalarsIn (T.map (MulAut.conj g).toMonoidHom))
+        (d.map_scalarsIn_torusConjHomeomorph T g) t
+  · rintro ⟨Y, hY, t₁, ht₁, hq⟩
+    set X := e.symm Y with hXdef
+    have hXS : X ∈ e ⁻¹' S' := by
+      rw [Set.mem_preimage, hXdef, ContinuousLinearEquiv.apply_symm_apply]; exact hY
+    obtain ⟨t, rfl⟩ := (d.torusConjHomeomorph T g).surjective t₁
+    refine ⟨X, hXS, t, ?_, ?_⟩
+    · have ht' : a * (((t : GSpin d.QW) : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) *
+          (((g : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) =
+          expA F (Y : CliffordAlgebra d.QW) := ht₁
+      change _ = expA F (((g⁻¹ : GSpin d.QW) : (CliffordAlgebra d.QW)ˣ) * (Y : CliffordAlgebra d.QW) *
+          ((((g⁻¹ : GSpin d.QW) : (CliffordAlgebra d.QW)ˣ))⁻¹ : (CliffordAlgebra d.QW)ˣ))
+      rw [expA_units_conj, ← ht']
+      simp [a, mul_assoc]
+    · exact E.injective ((show E q = _ from hq).trans
+        ((d.torusConjHomeomorph T g).quotientCongr_mk (d.scalarsIn T)
+          (d.scalarsIn (T.map (MulAut.conj g).toMonoidHom))
+          (d.map_scalarsIn_torusConjHomeomorph T g) t).symm)
+
 end GGPData
 
 end GSpinGGP
