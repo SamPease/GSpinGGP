@@ -150,7 +150,7 @@ theorem isGammaElt_scalar_mul_iff (c : Fˣ) (t : ↥(GSpin d.QW)) :
 theorem coe_diag_scalar_mul (c : Fˣ) (t : ↥(GSpin d.QW)) :
     (((d.diag (scalarGSpin d.QW c * t) : ↥d.G) : d.ambientˣ) : d.ambient) =
       algebraMap F d.ambient (c : F) * (((d.diag t : ↥d.G) : d.ambientˣ) : d.ambient) := by
-  rw [map_mul, Subgroup.coe_mul, Units.val_mul, coe_diag_scalarGSpin]
+  rw [map_mul, Subgroup.coe_mul, Units.val_mul, GGPData.coe_diag_scalarGSpin]
 
 /-- For a nonzero scalar `c`: `y (c a) = (c a) y ↔ y a = a y`. -/
 theorem algebraMap_mul_commute_iff {A : Type*} [Ring A] [Algebra F A] {c : F} (hc : c ≠ 0)
@@ -182,7 +182,7 @@ theorem weylDisc_diag_scalar_mul (c : Fˣ) (t : ↥(GSpin d.QW)) :
       conjAd F (d.diag t : d.ambientˣ) := by
     rw [map_mul, Subgroup.coe_mul]
     refine conjAd_central_mul _ _ fun a => ?_
-    rw [coe_diag_scalarGSpin]
+    rw [GGPData.coe_diag_scalarGSpin]
     exact Algebra.commutes _ _
   unfold weylDisc
   rw [h]
@@ -245,7 +245,7 @@ theorem germ_scalar_mul_of_mem_QC {χ : CentralCharOn d} {θ : ↥d.G → ℂ}
       germ d.G d.lie d.bilin ψ θ (d.diag t) (orbitChoice d t) := by
   set z := d.diag (scalarGSpin d.QW c) with hzdef
   have hz : (((z : d.G) : d.ambientˣ) : d.ambient) = algebraMap F d.ambient (c : F) :=
-    coe_diag_scalarGSpin c
+    GGPData.coe_diag_scalarGSpin c
   have hx : ((d.diag (scalarGSpin d.QW c * t) : d.ambientˣ) : d.ambient) =
       algebraMap F d.ambient (c : F) * ((d.diag t : d.ambientˣ) : d.ambient) :=
     coe_diag_scalar_mul d c t

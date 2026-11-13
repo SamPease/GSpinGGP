@@ -13,7 +13,7 @@ elements `x, x'` of `G(F)` with the same centralizers in `G` and `𝔤`, used bo
 central elements (Thesis §6.7) and for the `A_{G,H}(F)`-invariance of the integrand of
 `m_{geom,s}` (Thesis §6.5):
 
-* scalars: `isRegularSS_algebraMap_mul`, `isSS_algebraMap`, `coe_diag_scalarGSpin`,
+* scalars: `isRegularSS_algebraMap_mul`, `isSS_algebraMap`,
   `grpCentralizer_eq_of_central`, `lieCentralizer_eq_of_central`;
 * `isSS_diag_of_isSS`: `x` semisimple in `GSpin(W)(F)` ⇒ `diag x` semisimple in `G(F)`;
 * `germ_eq_germ_of_translate`: germs only see the local behaviour (uniqueness of local
@@ -63,16 +63,6 @@ theorem isSS_algebraMap {A : Type*} [Ring A] [Algebra F A] (a : F) :
   unfold IsSS
   rw [hL]
   exact Module.End.IsSemisimple_smul a Module.End.isSemisimple_id
-
-/-- The central scalar `c ∈ GSpin(W)` embeds diagonally as the scalar `c` of `C(W) × C(V)`. -/
-theorem coe_diag_scalarGSpin (c : Fˣ) :
-    (((d.diag (scalarGSpin d.QW c) : d.G) : d.ambientˣ) : d.ambient) =
-      algebraMap F d.ambient (c : F) := by
-  refine Prod.ext ?_ ?_
-  · rfl
-  · show CliffordAlgebra.map (QuadraticMap.Isometry.inl d.QW d.QZ)
-        (algebraMap F (CliffordAlgebra d.QW) (c : F)) = _
-    exact AlgHom.commutes _ _
 
 /-- `G_x = G` for `x` central in the ambient algebra. -/
 theorem grpCentralizer_eq_of_central {A : Type*} [Ring A] (G : Subgroup Aˣ) {x : Aˣ}

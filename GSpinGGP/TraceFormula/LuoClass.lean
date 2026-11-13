@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.TraceFormula.LuoWeyl
+import GSpinGGP.TraceFormula.LuoJLieExp
 
 /-!
 # The classes of tori of `Γ(G,H)` and of Luo's `Γ^Lie(Ḡ, H̄)`; `J^Lie = m^Lie_geom(θ_f)`

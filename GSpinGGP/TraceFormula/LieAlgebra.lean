@@ -10,8 +10,9 @@ import GSpinGGP.GGP.Descent
 
 This file holds the *definitions* of the Lie-algebra objects on
 `𝔤⁰ = so(W) ⊕ so(V)` that the two cited theorems mention, followed by two statements from the literature for `SO(W) × SO(V)`, stated here for our objects
-as `sorry` theorems, and the existence of the `exp`-compatible measure on `𝔥⁰` (`exists_isExpCompatH`,
-also `sorry`; its torus analogue `exists_isExpCompatT` is proved in `TraceFormula/ExpCompatT.lean`).
+as `sorry` theorems.  The existence of the `exp`-compatible measures on `𝔥⁰` and `𝔱⁰`
+(`exists_isExpCompatH`, `exists_isExpCompatT`) is proved in `TraceFormula/ExpCompatH.lean` and
+`TraceFormula/ExpCompatT.lean`.
 (The definitions live here, not in `TraceFormula/Lie.lean`, because those statements mention them
 and `Lie.lean` imports this file.)  All definitions are real definitions; measures and functions
 that are pinned only by a property are chosen by the epsilon pattern, as elsewhere in the project.
@@ -223,14 +224,6 @@ open Classical in
 /-- The measure `dX` on `𝔥⁰(F)` of `J^Lie` (epsilon; `0` if none). -/
 def measH0 : Measure ↥d.lieH0 :=
   if h : ∃ μ, d.IsExpCompatH μ then h.choose else 0
-
-/-- **An `exp`-compatible Haar measure on `𝔥⁰(F)` exists** (BP §1.6, Thesis §10.1, §12.4): near
-`0`, `X ↦ e^X` is a homeomorphism from a neighbourhood of `0` in `𝔥⁰(F)` onto a neighbourhood of `1` in
-`H(F)/A_{G,H}(F)` (`𝔥 = Lie(A_{G,H}) ⊕ 𝔥⁰`), and on a small enough lattice it carries an additive
-Haar measure to a Haar measure (the Jacobian `j^H` is `1` near `0` in the `p`-adic case).
-Not proved here. -/
-theorem exists_isExpCompatH : ∃ μ, d.IsExpCompatH μ := by
-  sorry
 
 /-- **`exp` preserves measures on the part of `𝔥⁰(F)` conjugate into a small neighbourhood of `0`**
 (the Jacobian `j^H = 1` there). There is a neighbourhood `ω₀` of `0` such that for every measurable

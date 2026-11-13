@@ -7,6 +7,7 @@ import GSpinGGP.Foundations.Representations
 import GSpinGGP.Foundations.GSpin
 import GSpinGGP.Literature.Measure
 import GSpinGGP.GGP.Centralizers
+import GSpinGGP.Foundations.SoCentralizer
 
 /-!
 # The local trace formula: basic objects (`J`, `θ_f`, test functions)
@@ -725,10 +726,8 @@ theorem trace_map_inl_mul_N (x : CliffordAlgebra d.QW) {n : GSpin d.QV} (hn : n 
   set y := ((n : (CliffordAlgebra d.QV)ˣ) : CliffordAlgebra d.QV)
   have hnil : IsNilpotent (X * (y - 1)) := isNilpotent_of_mem_wtFil_one d.flag.isWtFil
     (by simpa using mul_mem_wtFil (d.map_inl_mem_wtFil_zero x) (d.coe_sub_one_mem_wtFil_one hn))
-  have hL : IsNilpotent (LinearMap.mulLeft F (X * (y - 1))) := by
-    obtain ⟨k, hk⟩ := hnil
-    exact ⟨k, by rw [LinearMap.pow_mulLeft, hk]; ext; simp⟩
-  have h0 := (LinearMap.isNilpotent_trace_of_isNilpotent hL).eq_zero
+  have h0 : LinearMap.trace F _ (LinearMap.mulLeft F (X * (y - 1))) = 0 :=
+    cliffTrace_eq_zero_of_isNilpotent d.QV hnil
   have e : X * y = X + X * (y - 1) := by noncomm_ring
   rw [e, trace_mulLeft_eq_comp, map_add, ← trace_mulLeft_eq_comp, ← trace_mulLeft_eq_comp, h0,
     add_zero]

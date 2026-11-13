@@ -58,6 +58,7 @@ import GSpinGGP.TraceFormula.DeltaIntegrability
 import GSpinGGP.TraceFormula.EllipticRepresentations
 import GSpinGGP.TraceFormula.LieAlgebra
 import GSpinGGP.TraceFormula.ExpCompatT
+import GSpinGGP.TraceFormula.ExpCompatH
 import GSpinGGP.TraceFormula.SelfDual
 import GSpinGGP.TraceFormula.SOLie
 import GSpinGGP.TraceFormula.SOLieFacts
@@ -68,6 +69,7 @@ import GSpinGGP.TraceFormula.LuoClass
 import GSpinGGP.TraceFormula.LuoTorus
 import GSpinGGP.TraceFormula.ExpIntertwine
 import GSpinGGP.TraceFormula.LuoJLie
+import GSpinGGP.TraceFormula.LuoJLieExp
 import GSpinGGP.TraceFormula.OrbitSpecUnique
 import GSpinGGP.Literature.Kottwitz
 import GSpinGGP.Literature.KottwitzClay

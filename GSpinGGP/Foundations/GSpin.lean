@@ -3876,6 +3876,16 @@ theorem incl_scalarGSpin (c : Kˣ) : d.incl (scalarGSpin d.QW c) = scalarGSpin d
   rw [incl, GSpin.coe_map]
   simp [scalarGSpin]
 
+variable {d} in
+/-- The central scalar `c ∈ GSpin(W)` embeds diagonally as the scalar `c` of `C(W) × C(V)`. -/
+theorem coe_diag_scalarGSpin (c : Kˣ) :
+    (((d.diag (scalarGSpin d.QW c) : d.G) : d.ambientˣ) : d.ambient) =
+      algebraMap K d.ambient (c : K) := by
+  refine Prod.ext rfl ?_
+  change (((d.incl (scalarGSpin d.QW c) : GSpin d.QV) : (CliffordAlgebra d.QV)ˣ) :
+    CliffordAlgebra d.QV) = _
+  rw [incl_scalarGSpin]; rfl
+
 /-- `Z_{G,H} = Z_G ∩ H = A_{G,H}` is the diagonal `G_m`.
 Proof: for `g = (a, b)` central with `n = a⁻¹ b ∈ N`: if `dim V ≥ 3`, `P(b)` is a scalar `c`
 (`specP_eq_smul_of_mem_center`), and `P(n) z₀ − z₀ = (c − 1) z₀ ∈ Z_r` (isotropic) forces `c = 1`;
@@ -3987,13 +3997,7 @@ theorem center_inf_H_eq_AGH : Subgroup.center d.G ⊓ d.H = d.AGH := by
     · change _ ∈ Subgroup.center d.G
       rw [Subgroup.mem_center_iff]
       intro h
-      have hx : (((d.diag (scalarGSpin d.QW c) : d.G) : d.ambientˣ) : d.ambient) =
-          algebraMap K d.ambient c := by
-        refine Prod.ext ?_ ?_
-        · rfl
-        · show (((d.incl (scalarGSpin d.QW c) : GSpin d.QV) : (CliffordAlgebra d.QV)ˣ) :
-            CliffordAlgebra d.QV) = _
-          rw [incl_scalarGSpin]; rfl
+      have hx := coe_diag_scalarGSpin (d := d) c
       apply Subtype.ext; apply Units.ext
       simp only [Subgroup.coe_mul, Units.val_mul, hx, Algebra.commutes]
     · show d.nPart _ ∈ d.N

@@ -19,7 +19,8 @@ when neither `W` nor `V` is a hyperbolic plane; `TraceFormula/LuoClass.lean` ded
 `distribJLie_eq_mGeomLie_of_luo`: `J^Lie(f) = m^Lie_geom(θ_f)` for `f ∈ S_scusp(𝔤⁰(F))` (Thesis
 Thm 12.2.2 on `𝔤⁰`).
 
-The identification is own work, stated step by step (most steps are `sorry` here):
+The identification is own work, stated step by step (two steps, `cTheta_toSO` and
+`torusIntegralLie_toSO`, are still `sorry`):
 * (L1) `toSO`: `X ↦ (ad_W X_W, ad_V X_V)` maps `𝔤⁰` onto `so(W) ⊕ so(V)` (`toSO_mem` is proved;
   `toSO_bijective` and the transfer of strong cuspidality `isScusp_toSO` are proved);
 * (L2) `luoOf`: the admissible pair of `d` with Luo's basis `z^L_i = ν^{-i} z_i`,
@@ -27,10 +28,11 @@ The identification is own work, stated step by step (most steps are `sorry` here
   (`lam_toSO`);
 * (L3) `muG`: the push-forward of `Measure.haar` on `G(F)/A_G(F)` to `Ḡ(F)`, a Haar measure
   (`muG_isHaarMeasure`, proved);
-* (L4) `exists_JLie_transfer`: `J^Lie` of `d` is Luo's `J^Lie` for compatible measures;
+* (L4) `exists_JLie_transfer` (proved, in `TraceFormula/LuoJLieExp.lean`): `J^Lie` of `d` is
+  Luo's `J^Lie` for compatible measures;
 * (L5) `isThetaFLie_of_SO` (proved): a `θ` representing the orbital pairing on `so(W) ⊕ so(V)`
   gives one on `𝔤⁰`;
-* `isThetaFLie_eqOn_regular`: `θ_f` is unique on `𝔤⁰_reg`;
+* `isThetaFLie_eqOn_regular` (proved): `θ_f` is unique on `𝔤⁰_reg`;
 * (L6, L7) `cTheta_toSO`: the germs `c_{θ,O_X}(X)` agree (trace form vs `bilin`, `Z_G(X)` vs
   `Ḡ_X`, the orbit choice `orbitChoiceLie` vs Luo's and Waldspurger's `O_{±ν₀}`);
   proved: the recipes agree (`orbitSpecAt_iff_orbitSpec_toSOLin`) and are stable under scaling
@@ -485,23 +487,9 @@ theorem muG_isHaarMeasure (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) :
   rw [← he]
   exact e.toMulEquiv.isHaarMeasure_map Measure.haar e.continuous e.symm.continuous
 
-/-! ## (L4) `J^Lie` -/
+/-! ## (L4) `J^Lie`: `exists_JLie_transfer` is in `TraceFormula/LuoJLieExp.lean` -/
 
 variable (ψ : NontrivialAddChar F)
-
-/-- **(L4) `J^Lie` of `d` is Luo's `J^Lie`** for `muG`, a Haar measure `μH` on `H̄(F)`, the
-`exp`-compatible `μ_𝔥` and the quotient measure: `H(F)/A_{G,H}(F) ≃ H̄(F)` (Hilbert 90 and
-`ker P ∩ H = A_{G,H}`, through `quotHG_equiv_SO`), `ad : 𝔥⁰ ≃ 𝔥 = so(W) ⊕ 𝔫`, `λ` (`lam_toSO`),
-`measH0` and `weilMeasureHG` push forward to an `exp`-compatible pair and its Weil
-measure (independence of the `exp`-compatible pair), and change of variables.  Not proved here. -/
-theorem exists_JLie_transfer (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) :
-    ∃ (μH : Measure ↥d.luoOf.Hbar) (μ𝔥 : Measure ↥d.luoOf.lieH)
-      (m : Measure (CosetSpace d.luoOf.Hbar.subtype)),
-      μH.IsHaarMeasure ∧ d.luoOf.IsExpCompatH μH μ𝔥 ∧
-      IsWeilMeasure d.luoOf.Hbar.subtype d.muG μH m ∧
-      ∀ f : ↥d.lieZero → ℂ, d.IsLieScusp f →
-        d.distribJLie ψ f = d.luoOf.distribJLie ψ μ𝔥 m (f ∘ d.toSO.symm) := by
-  sorry
 
 /-! ## (L5) `θ_f` -/
 

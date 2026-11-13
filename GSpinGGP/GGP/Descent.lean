@@ -100,6 +100,13 @@ theorem disjoint_span_one_soSub [Module.Finite K V] (Q : QuadraticForm K V) :
   rw [cliffTrace_smul, cliffTrace_one] at h
   rw [(mul_eq_zero.mp h).resolve_right (cast_finrank_cliffordAlgebra_ne_zero Q), zero_smul]
 
+/-- A scalar in `so(V)` is `0` (`tr(L_a) = a · dim C(V)`, and `dim C(V) = 2^{dim V}` is a unit). -/
+theorem eq_zero_of_algebraMap_mem_soSub [Module.Finite K V] {Q : QuadraticForm K V} {a : K}
+    (h : algebraMap K _ a ∈ soSub Q) : a = 0 := by
+  have h2 := (mem_soSub.mp h).2
+  rw [cliffTrace_algebraMap] at h2
+  exact (mul_eq_zero.mp h2).resolve_right (cast_finrank_cliffordAlgebra_ne_zero Q)
+
 /-- Conjugation by `g ∈ GSpin(V)` preserves `gspin(V)` and `so(V)` (the adjoint action;
 Thesis Prop. 5.1.3.1). -/
 theorem conj_mem_soSub [Module.Finite K V] {Q : QuadraticForm K V} (g : GSpin Q)

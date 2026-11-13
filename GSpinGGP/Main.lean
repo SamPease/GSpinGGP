@@ -394,14 +394,7 @@ theorem diag_central_commute (t : ↥(GSpin d.QW)) (ht : IsCentralW d t) (a : d.
     (((d.diag t : d.G) : d.ambientˣ) : d.ambient) * a =
       a * (((d.diag t : d.G) : d.ambientˣ) : d.ambient) := by
   obtain ⟨c, rfl⟩ := ht
-  have h : (((d.diag (scalarGSpin d.QW c) : d.G) : d.ambientˣ) : d.ambient) =
-      algebraMap F d.ambient (c : F) := by
-    refine Prod.ext ?_ ?_
-    · rfl
-    · show CliffordAlgebra.map (QuadraticMap.Isometry.inl d.QW d.QZ)
-          (algebraMap F (CliffordAlgebra d.QW) (c : F)) = _
-      exact AlgHom.commutes _ _
-  rw [h]
+  rw [GGPData.coe_diag_scalarGSpin c]
   exact Algebra.commutes _ _
 
 /-- `D^G(z) = 1` for central `z`: `Ad z = 1`, so the trailing coefficient is that of `X^{dim 𝔤}`. -/
@@ -2011,7 +2004,7 @@ theorem charG_diag_scalar_mul (π : UnitaryRep ↥d.G) (hπ : IsTempered π)
     charG d π (d.diag (scalarGSpin d.QW c) * y) = charG d π y := by
   set z := d.diag (scalarGSpin d.QW c)
   have hz : (((z : d.G) : d.ambientˣ) : d.ambient) = algebraMap F d.ambient (c : F) :=
-    coe_diag_scalarGSpin c
+    GGPData.coe_diag_scalarGSpin c
   have hzc : ∀ g : ↥d.G, z * g = g * z := fun g => by
     refine Subtype.ext (Units.ext ?_)
     simp only [Subgroup.coe_mul, Units.val_mul, hz]
@@ -2062,7 +2055,7 @@ theorem germ_baseChar_central {IF : InnerFormSystem d} (P : TemperedPacketFamily
   obtain ⟨c, rfl⟩ := ht
   set z := d.diag (scalarGSpin d.QW c) with hzdef
   have hz : (((z : d.G) : d.ambientˣ) : d.ambient) = algebraMap F d.ambient (c : F) :=
-    coe_diag_scalarGSpin c
+    GGPData.coe_diag_scalarGSpin c
   have h1 : (((d.diag 1 : d.G) : d.ambientˣ) : d.ambient) = 1 := by rw [map_one]; rfl
   have hzc : ∀ a : d.ambient, (((z : d.G) : d.ambientˣ) : d.ambient) * a =
       a * (((z : d.G) : d.ambientˣ) : d.ambient) := fun a => by
