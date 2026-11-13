@@ -10,17 +10,27 @@ import GSpinGGP.Literature.HarishChandra
 import TauCeti.LinearAlgebra.CliffordAlgebra.ScalarTrace.Basic
 
 /-!
-# Transport of local expansions from `so(W) ⊕ so(V)` to `𝔤⁰` (Thesis §6.5, (L6))
+# Transport of local expansions from `so(W) ⊕ so(V)` to `𝔤⁰` (Thesis §6.5, (L6), (L7))
 
-For `X ∈ so(W)` with `ad X` semisimple, local expansions of a quasi-character `θ` on
-`so(W) ⊕ so(V)` at `ad X` (Luo's normalization: the trace form) give local expansions of `θ ∘ ad`
-on `𝔤⁰ = so(W) ⊕ so(V)` at `X` (the trace form `bilin` of `C(W) × C(V)`).  The map of nilpotent
-orbits is `ad`, followed by the rescaling of each factor that turns `bilin` into the trace form.
+For `X ∈ 𝔱⁰_♮`, local expansions of a quasi-character `θ` on `so(W) ⊕ so(V)` at `ad X` (Luo's
+normalization: the trace form `B = ½ (tr_W + tr_V)`) give local expansions of `θ ∘ ad` on
+`𝔤⁰ = so_Cliff(W) ⊕ so_Cliff(V)` at `X` (the trace form `bilin` of `C(W) × C(V)`).  The map of
+nilpotent orbits is `ad`, followed by multiplication by `c = (2^{dim W}/4 · 1, 2^{dim V}/4 · 1)`,
+which turns `bilin` into `B` (`scaleForm_traceForm_toSOLin`).
 
 * `LuoDatum.conj_mem_lie_of_mem_Gbar`, `eventually_expA_mem_Gbar`,
   `LuoDatum.eventually_mem_lie_of_expA_mem`: `Ḡ(F) = SO(W) × SO(V)` and `so(W) ⊕ so(V)` correspond
-  under `exp` near `0`;
-* `isOrbitMeasure_unique_luo`: hence orbit measures on centralizers `(Ḡ_Y, 𝔤_Y)` are unique.
+  under `exp` near `0`; hence orbit measures on centralizers are unique
+  (`isOrbitMeasure_unique_luo`).
+* `isNilpotent_toSOLin_iff`, `isSS_toSOLin_iff`: `ad` detects nilpotent and semisimple elements of
+  `𝔤⁰` (Jordan decomposition in `gspin`).
+* `adCentralizerIso`: `ad : (Z_G(D), 𝔤⁰_D, bilin) ≃ (Ḡ_{ad D}, 𝔤_{ad D}, B(c ·, ·))` is an
+  isomorphism of descent data (`CentralizerIso`).
+* `restrictForm_lieCentralizer_nondegenerate_of_isSS`,
+  `isOpen_setOf_isRegularSS_lieCentralizer_lieZero`: the remaining hypotheses of `jHat_map`.
+* `eight_mul_scalarTrace_mul`: `8 τ(Y Z) = tr(ad Y ad Z)` on `so_Cliff(V)` (`τ` the scalar part).
+* `cTheta_toSO_of_germUnique`: the conclusion of `cTheta_toSO` from uniqueness of the regular
+  coefficients of Lie-algebra local expansions on `𝔤⁰` at `X` alone.
 -/
 
 noncomputable section
@@ -848,7 +858,7 @@ theorem cTheta_toSO_of_germUnique_of_form (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsH
         ((1 : d.luoOf.Ambˣ) : d.luoOf.Amb)) (Z : d.luoOf.Amb)} := by
     convert hopen₀.preimage ι.continuous_linEquiv_symm using 1
     ext Z'
-    simp only [Set.mem_setOf_eq, Set.mem_preimage]
+    simp only [Set.mem_ofPred_eq, Set.mem_preimage]
     rw [← ι.isRegularSS_iff _ (ι.linEquiv.symm Z').2, ← CentralizerIso.linEquiv_apply,
       LinearEquiv.apply_symm_apply]
   have hopen₁ : IsOpen {Z : ↥(lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X))) |
