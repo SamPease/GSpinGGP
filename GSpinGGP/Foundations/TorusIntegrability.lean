@@ -36,6 +36,7 @@ namespace GSpinGGP
 
 variable {F : Type*} [NontriviallyNormedField F] [LocallyCompactSpace F]
 
+/-- `|a^n|_F = |a|_F^n`. -/
 lemma absF_pow (a : F) (n : ℕ) : absF (a ^ n) = absF a ^ n := by
   induction n with
   | zero => simp [absF_one]
@@ -395,27 +396,32 @@ variable {ι : Type*} {E : ι → Type*} [∀ i, NormedAddCommGroup (E i)] [∀ 
 
 /-- **Local integrability of products of powers of gauges of linear maps** (a general form of
 BP Astérisque 418, Lemma B.1.2(ii)). Let `π_i : V → E_i` (`i ∈ s`) be linear maps and
-`N_i : E_i → ℝ` continuous *gauges*: positive off `0` and homogeneous for the normalized
-absolute value, `N_i(c • y) = |c|_F N_i(y)`. Suppose that for every nonempty `J ⊆ s`
-`∑_{j ∈ J} a_j > −codim (⋂_{j∈J} ker π_j)` (the codimension is the rank of `(π_j)_{j ∈ J}`).
+`N_i : E_i → ℝ` continuous *gauges* of degree `e_i > 0`: positive off `0` and homogeneous for the
+normalized absolute value, `N_i(c • y) = |c|_F^{e_i} N_i(y)`. Suppose that for every nonempty
+`J ⊆ s`, `∑_{j ∈ J} e_j a_j > −codim (⋂_{j∈J} ker π_j)` (the codimension is the rank of
+`(π_j)_{j ∈ J}`).
 Then `v ↦ ∏_{i ∈ s} N_i(π_i v)^{a_i}` is locally integrable for any additive Haar measure.
 
-Instances: BP's case, `N_i = |·|` on a finite extension `E ⊇ F` (normalized to extend `|·|_F`) and
-`π_i = λ_i` linear forms with values in `E`, linearly independent over `E`, `a_i = s − 1 > −1`
-(the rank of `(λ_j)_{j∈J}` over `F` is at least `|J|`); and the anisotropic blocks of a torus,
-`π_i` the projection to a block `𝔱_i ⊆ K_i` (`K_i` a field) and `N_i` a root of `|N_{K_i/F}|_F`.
+Intended applications (only the first case below, forms over `F`, is derived here:
+`locallyIntegrable_prod_absF_rpow`): BP's case, `N_i = |·|` on a finite extension `E ⊇ F`
+(normalized to extend `|·|_F`, degree `1`) and `π_i = λ_i` linear forms with values in `E`,
+linearly independent over `E`, `a_i = s − 1 > −1` (the rank of `(λ_j)_{j∈J}` over `F` is at least
+`|J|`); and the anisotropic blocks of a torus, `π_i` the projection to a block `𝔱_i` acting on
+`W_i` and `N_i = |det(·|_{W_i})|_F`, of degree `dim W_i`, nonzero off `0` when `W_i` is a vector
+space over a field containing `𝔱_i`.
 
 Proof: strong induction on `s`. Choosing a complement `C` of `⋂_{i∈s} ker π_i` reduces to the
-case of trivial common kernel; then the function is homogeneous of degree `∑_{i∈s} a_i > −dim V`
+case of trivial common kernel; then the function is homogeneous of degree
+`∑_{i∈s} e_i a_i > −dim V`
 (`locallyIntegrable_of_homogeneous`), and near `v₀ ≠ 0` it is the product of the function for
 the smaller family `{i : π_i v₀ = 0}` and a function continuous near `v₀`. -/
 theorem locallyIntegrable_prod_gauge_rpow (N : ∀ i, E i → ℝ) (hNc : ∀ i, Continuous (N i))
-    (hNpos : ∀ i y, y ≠ 0 → 0 < N i y) (hNhom : ∀ i (c : F) y, N i (c • y) = absF c * N i y)
-    (a : ι → ℝ) (s : Finset ι) {V : Type u} [NormedAddCommGroup V] [NormedSpace F V]
+    (hNpos : ∀ i y, y ≠ 0 → 0 < N i y) (e : ι → ℝ) (he : ∀ i, 0 < e i)
+    (hNhom : ∀ i (c : F) y, N i (c • y) = absF c ^ e i * N i y) (a : ι → ℝ) (s : Finset ι) {V : Type u} [NormedAddCommGroup V] [NormedSpace F V]
     [FiniteDimensional F V] [MeasurableSpace V] [BorelSpace V]
     (μ : Measure V) [μ.IsAddHaarMeasure] (π : ∀ i, V →ₗ[F] E i)
     (hcond : ∀ J ⊆ s, J.Nonempty →
-      -(Module.finrank F (LinearMap.range (LinearMap.pi fun j : J => π j)) : ℝ) < ∑ j ∈ J, a j) :
+      -(Module.finrank F (LinearMap.range (LinearMap.pi fun j : J => π j)) : ℝ) < ∑ j ∈ J, e j * a j) :
     LocallyIntegrable (fun v => ∏ i ∈ s, N i (π i v) ^ a i) μ := by
   classical
   haveI : ProperSpace F := .of_nontriviallyNormedField_of_weaklyLocallyCompactSpace F
@@ -424,7 +430,7 @@ theorem locallyIntegrable_prod_gauge_rpow (N : ∀ i, E i → ℝ) (hNc : ∀ i,
     intro i y
     by_cases hy : y = 0
     · have := hNhom i 0 y
-      rw [zero_smul, absF_zero, zero_mul, ← hy] at this
+      rw [zero_smul, absF_zero, Real.zero_rpow (he i).ne', zero_mul, ← hy] at this
       rw [this]
     · exact (hNpos i y hy).le
   induction s using Finset.strongInduction generalizing V with
@@ -433,7 +439,7 @@ theorem locallyIntegrable_prod_gauge_rpow (N : ∀ i, E i → ℝ) (hNc : ∀ i,
   have caseA : ∀ {W : Type u} [NormedAddCommGroup W] [NormedSpace F W] [FiniteDimensional F W]
       [MeasurableSpace W] [BorelSpace W] (μW : Measure W) [μW.IsAddHaarMeasure]
       (ρ : ∀ i, W →ₗ[F] E i), (∀ J ⊆ s, J.Nonempty →
-        -(Module.finrank F (LinearMap.range (LinearMap.pi fun j : J => ρ j)) : ℝ) < ∑ j ∈ J, a j) →
+        -(Module.finrank F (LinearMap.range (LinearMap.pi fun j : J => ρ j)) : ℝ) < ∑ j ∈ J, e j * a j) →
       (∀ w, (∀ i ∈ s, ρ i w = 0) → w = 0) →
       LocallyIntegrable (fun w => ∏ i ∈ s, N i (ρ i w) ^ a i) μW := by
     intro W _ _ _ _ _ μW _ ρ hc hker
@@ -442,7 +448,7 @@ theorem locallyIntegrable_prod_gauge_rpow (N : ∀ i, E i → ℝ) (hNc : ∀ i,
       (hNc i).comp (ρ i).continuous_of_finiteDimensional
     rcases s.eq_empty_or_nonempty with hs | hs
     · simp only [hs, Finset.prod_empty]; exact locallyIntegrable_const 1
-    refine locallyIntegrable_of_homogeneous (F := F) μW (κ := ∑ i ∈ s, a i) ?_ ?_ ?_
+    refine locallyIntegrable_of_homogeneous (F := F) μW (κ := ∑ i ∈ s, e i * a i) ?_ ?_ ?_
     · have h := hc s subset_rfl hs
       have hk : LinearMap.ker (LinearMap.pi fun j : s => ρ j) = ⊥ := by
         rw [eq_bot_iff]
@@ -456,7 +462,9 @@ theorem locallyIntegrable_prod_gauge_rpow (N : ∀ i, E i → ℝ) (hNc : ∀ i,
     · intro c hc w
       simp only [map_smul, hNhom]
       rw [Real.rpow_sum_of_pos (absF_pos hc), ← Finset.prod_mul_distrib]
-      exact Finset.prod_congr rfl fun i _ => Real.mul_rpow (absF_nonneg _) (hN0 _ _)
+      refine Finset.prod_congr rfl fun i _ => ?_
+      rw [Real.mul_rpow (Real.rpow_nonneg (absF_nonneg _) _) (hN0 _ _),
+        ← Real.rpow_mul (absF_nonneg _)]
     · intro v₀ hv₀
       have hv₀' : v₀ ≠ 0 := hv₀
       set t := s.filter (fun i => ρ i v₀ = 0)
@@ -507,7 +515,7 @@ theorem locallyIntegrable_prod_gauge_rpow (N : ∀ i, E i → ℝ) (hNc : ∀ i,
   set ρ : ∀ i, C →ₗ[F] E i := fun i => (π i).comp C.subtype
   have hcondC : ∀ J ⊆ s, J.Nonempty →
       -(Module.finrank F (LinearMap.range (LinearMap.pi fun j : J => ρ j)) : ℝ) <
-        ∑ j ∈ J, a j := by
+        ∑ j ∈ J, e j * a j := by
     intro J hJ hJne
     have hrange : LinearMap.range (LinearMap.pi fun j : J => ρ j) =
         LinearMap.range (LinearMap.pi fun j : J => π j) := by
@@ -617,9 +625,10 @@ theorem locallyIntegrable_prod_absF_rpow [IsUltrametricDist F] (μ : Measure V)
     (hφ : LinearIndependent F φ) {σ : ℝ} (hσ : 0 < σ) :
     LocallyIntegrable (fun v => ∏ i, absF (φ i v) ^ (σ - 1)) μ := by
   refine locallyIntegrable_prod_gauge_rpow (E := fun _ => F) (fun _ => absF)
-    (fun _ => continuous_absF) (fun _ _ hy => absF_pos hy) (fun _ c y => absF_mul c y)
+    (fun _ => continuous_absF) (fun _ _ hy => absF_pos hy) (fun _ => 1) (fun _ => one_pos)
+    (fun _ c y => by rw [Real.rpow_one]; exact absF_mul c y)
     (fun _ => σ - 1) Finset.univ μ φ fun J _ hJ => ?_
-  rw [finrank_range_pi_of_linearIndependent hφ, Finset.sum_const, nsmul_eq_mul]
+  rw [finrank_range_pi_of_linearIndependent hφ, Finset.sum_const, nsmul_eq_mul, one_mul]
   have : (0 : ℝ) < J.card := by exact_mod_cast hJ.card_pos
   nlinarith
 
@@ -632,8 +641,8 @@ group-to-Lie-algebra step of BP Astérisque 418, Lemma B.1.2(i)). Let `Q` be a c
 finite left-invariant measure `ν`, and `Φ : 𝔤 → Q` a chart near `0`: continuous on an open
 `U ∋ 0`, with `Φ(W)` a neighbourhood of `1` for every neighbourhood `W` of `0`, and carrying
 `μ` to `ν`: `μ(S) = ν(Φ(S))` for measurable `S ⊆ U` (as `exp` does, `ExpHaar`). If `f` is
-measurable and, for every `q₀ ∈ Q`, `X ↦ f(q₀ Φ(X))` is integrable near `0`, then `f` is
-`ν`-integrable. -/
+measurable and, for every `q₀ ∈ Q`, `|f(q₀ Φ(X))|` is bounded near `0` by a function `g`
+integrable near `0`, then `f` is `ν`-integrable. -/
 theorem integrable_of_chart {Q : Type*} [Group Q] [TopologicalSpace Q] [IsTopologicalGroup Q]
     [CompactSpace Q] [MeasurableSpace Q] [BorelSpace Q] (ν : Measure Q) [ν.IsMulLeftInvariant]
     [IsFiniteMeasure ν] {𝔤 : Type*} [TopologicalSpace 𝔤] [Zero 𝔤] [MeasurableSpace 𝔤]
@@ -642,16 +651,20 @@ theorem integrable_of_chart {Q : Type*} [Group Q] [TopologicalSpace Q] [IsTopolo
     (hΦn : ∀ W ∈ 𝓝 (0 : 𝔤), Φ '' W ∈ 𝓝 (1 : Q))
     (hΦμ : ∀ S ⊆ U, MeasurableSet S → μ S = ν (Φ '' S))
     {f : Q → ℝ} (hf : AEStronglyMeasurable f ν)
-    (hloc : ∀ q₀ : Q, IntegrableAtFilter (fun X => f (q₀ * Φ X)) (𝓝 0) μ) :
+    (hloc : ∀ q₀ : Q, ∃ g : 𝔤 → ℝ, IntegrableAtFilter g (𝓝 0) μ ∧
+      ∀ᶠ X in 𝓝 0, ‖f (q₀ * Φ X)‖ ≤ g X) :
     Integrable f ν := by
   classical
   -- for each `q₀`, a neighbourhood `q₀ Φ(W)` on which `f` is integrable
   have key : ∀ q₀ : Q, ∃ O ∈ 𝓝 q₀, IntegrableOn f O ν := by
     intro q₀
-    obtain ⟨W₀, hW₀, hint⟩ := hloc q₀
+    obtain ⟨g, ⟨W₁, hW₁, hint⟩, hbd⟩ := hloc q₀
+    set W₀ := W₁ ∩ {X | ‖f (q₀ * Φ X)‖ ≤ g X}
+    have hW₀ : W₀ ∈ 𝓝 (0 : 𝔤) := inter_mem hW₁ hbd
     set W := interior W₀ ∩ U
     have hWo : IsOpen W := isOpen_interior.inter hUo
     have hW : W ∈ 𝓝 (0 : 𝔤) := inter_mem (interior_mem_nhds.mpr hW₀) (hUo.mem_nhds hU0)
+    have hWW₀ : W ⊆ W₀ := inter_subset_left.trans interior_subset
     have hWU : W ⊆ U := inter_subset_right
     have hWm : MeasurableSet W := hWo.measurableSet
     set Φ' : 𝔤 → Q := W.piecewise Φ (fun _ => 1)
@@ -694,10 +707,11 @@ theorem integrable_of_chart {Q : Type*} [Group Q] [TopologicalSpace Q] [IsTopolo
       have hae : AEMeasurable (fun y => ‖f y‖ₑ) ((μ.restrict W).map fun X => q₀ * Φ' X) := by
         rw [hmap]; exact hf.restrict.enorm
       rw [← hmap, lintegral_map' hae hm.aemeasurable]
-      have hW0 : IntegrableOn (fun X => f (q₀ * Φ X)) W μ :=
-        hint.mono_set (inter_subset_left.trans interior_subset)
-      calc ∫⁻ X in W, ‖f (q₀ * Φ' X)‖ₑ ∂μ = ∫⁻ X in W, ‖f (q₀ * Φ X)‖ₑ ∂μ :=
-            setLIntegral_congr_fun hWm fun X hX => by rw [hΦ'W X hX]
+      have hW0 : IntegrableOn g W μ := hint.mono_set (hWW₀.trans inter_subset_left)
+      calc ∫⁻ X in W, ‖f (q₀ * Φ' X)‖ₑ ∂μ ≤ ∫⁻ X in W, ‖g X‖ₑ ∂μ := by
+            refine setLIntegral_mono' hWm fun X hX => ?_
+            rw [hΦ'W X hX, ← ofReal_norm, ← ofReal_norm]
+            exact ENNReal.ofReal_le_ofReal ((hWW₀ hX).2.trans (Real.le_norm_self _))
         _ < ∞ := hW0.2
   choose O hO hOi using key
   obtain ⟨t, -, ht⟩ := isCompact_univ.elim_nhds_subcover O fun q _ => hO q
