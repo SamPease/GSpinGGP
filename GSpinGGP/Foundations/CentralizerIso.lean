@@ -57,11 +57,12 @@ structure CentralizerIso (G : Subgroup Aˣ) (𝔤 : LieSubalgebra F A) (b : Line
   isNilpotent_iff : ∀ X ∈ lieCentralizer 𝔤 (x : A), IsNilpotent (lin X) ↔ IsNilpotent X
   isRegularSS_iff : ∀ X ∈ lieCentralizer 𝔤 (x : A),
     IsRegularSS (lieCentralizer 𝔤' (y : A')) (lin X) ↔ IsRegularSS (lieCentralizer 𝔤 (x : A)) X
-  /-- `ι(e^Y X e^{-Y}) = e^{ι Y} ι(X) e^{-ι Y}`. Where the exponential series of `Y` diverges,
-  `expA` is `0` and so is that of `ι Y` (`ι` is the restriction of an algebra isomorphism over `F̄`,
-  so `Y`, `ι Y` have the same spectral radius), and both sides are `0`. -/
-  map_orbitMap : ∀ X ∈ lieCentralizer 𝔤 (x : A), ∀ Y ∈ lieCentralizer 𝔤 (x : A),
-    lin (orbitMap F X Y) = orbitMap F (lin X) (lin Y)
+  /-- `ι(e^Y X e^{-Y}) = e^{ι Y} ι(X) e^{-ι Y}` for `Y` near `0` (only the charts near `0` enter
+  the orbit measures).  It is required only near `0`: for a map that is not the restriction of an
+  algebra isomorphism (e.g. `ad : so_Cliff(W) → so(W)`, whose eigenvalues are twice those of left
+  multiplication) the two exponential series need not converge for the same `Y`. -/
+  map_orbitMap : ∃ U ∈ 𝓝 (0 : A), ∀ X ∈ lieCentralizer 𝔤 (x : A), ∀ Y ∈ lieCentralizer 𝔤 (x : A),
+    Y ∈ U → lin (orbitMap F X Y) = orbitMap F (lin X) (lin Y)
   /-- The map on groups. -/
   grp : Aˣ → A'ˣ
   grp_mapsTo : Set.MapsTo grp (grpCentralizer G x) (grpCentralizer G' y)
@@ -259,12 +260,24 @@ theorem preimage_conjAd_image (hG : ∀ g ∈ G, ∀ Y ∈ 𝔤, (g : A) * Y * (
   · rintro ⟨s, hs, he⟩
     exact ⟨_, hs, by rw [linEquiv_apply, he]⟩
 
+/-- The neighbourhood of `0` on which `ι` intertwines the charts (`map_orbitMap`). -/
+def orbitNhd : Set A := ι.map_orbitMap.choose
+
+theorem orbitNhd_mem_nhds : ι.orbitNhd ∈ 𝓝 (0 : A) := ι.map_orbitMap.choose_spec.1
+
+theorem map_orbitMap_of_mem {X Y : A} (hX : X ∈ lieCentralizer 𝔤 (x : A))
+    (hY : Y ∈ lieCentralizer 𝔤 (x : A)) (hYU : Y ∈ ι.orbitNhd) :
+    ι.lin (orbitMap F X Y) = orbitMap F (ι.lin X) (ι.lin Y) :=
+  ι.map_orbitMap.choose_spec.2 X hX Y hY hYU
+
 /-- `ι` carries the chart `Y ↦ e^Y X e^{-Y}` on a subspace `C ⊆ 𝔤_x` to the chart at `ι X` on
-`ι C`, as an identity of preimages, on sets `S` on which the chart stays in `𝔤_x`. -/
+`ι C`, as an identity of preimages, on sets `S` near `0` (in `orbitNhd`) on which the chart stays
+in `𝔤_x`. -/
 theorem preimage_orbitMap_image (X : ↥(lieCentralizer 𝔤 (x : A)))
     (C : Submodule F ↥(lieCentralizer 𝔤 (x : A))) (S : Set ↥C)
     (hS : ∀ Y ∈ S, orbitMap F (X : A) ((Y : ↥(lieCentralizer 𝔤 (x : A))) : A) ∈
-      lieCentralizer 𝔤 (x : A)) :
+      lieCentralizer 𝔤 (x : A))
+    (hSU : ∀ Y ∈ S, ((Y : ↥(lieCentralizer 𝔤 (x : A))) : A) ∈ ι.orbitNhd) :
     ι.linEquiv ⁻¹' (Subtype.val ⁻¹'
         ((fun Y' : ↥(C.map (ι.linEquiv :
             ↥(lieCentralizer 𝔤 (x : A)) →ₗ[F] ↥(lieCentralizer 𝔤' (y : A')))) ↦
@@ -279,9 +292,10 @@ theorem preimage_orbitMap_image (X : ↥(lieCentralizer 𝔤 (x : A)))
   constructor
   · rintro ⟨Y, hY, he⟩
     refine ⟨Y, hY, ι.bijOn.injOn (hS Y hY) Z.2 ?_⟩
-    rw [ι.map_orbitMap _ X.2 _ (Y : ↥(lieCentralizer 𝔤 (x : A))).2, he]
+    rw [ι.map_orbitMap_of_mem X.2 (Y : ↥(lieCentralizer 𝔤 (x : A))).2 (hSU Y hY), he]
   · rintro ⟨Y, hY, he⟩
-    exact ⟨Y, hY, by rw [← ι.map_orbitMap _ X.2 _ (Y : ↥(lieCentralizer 𝔤 (x : A))).2, he]⟩
+    exact ⟨Y, hY, by
+      rw [← ι.map_orbitMap_of_mem X.2 (Y : ↥(lieCentralizer 𝔤 (x : A))).2 (hSU Y hY), he]⟩
 
 /-- **`ι⁻¹` is continuous at `0`**: for every neighbourhood `U` of `0` in `A` there is a
 neighbourhood `U'` of `0` in `A'` with `X ∈ U` whenever `X ∈ 𝔤_x` and `ι X ∈ U'` (finite
@@ -441,7 +455,7 @@ noncomputable def ofSubalgebra (S : Subalgebra F A) (S' : Subalgebra F A') (f : 
             _ (mem_lieCentralizer.mpr ⟨h𝔤' _ hZ₂y, hc hS₂ hXZ₂⟩)
           rw [← hmul' _ _ hS₁ hS₂, ← hmul' _ _ hS₂ hS₁] at this
           rw [← hinv' _ (S'.mul_mem hS₁ hS₂), this, hinv' _ (S'.mul_mem hS₂ hS₁)]
-    map_orbitMap := fun X hX Y hY => by
+    map_orbitMap := ⟨Set.univ, Filter.univ_mem, fun X hX Y hY _ => by
       have hXS := h𝔤S X hX
       have hexp : ∀ {Z : A}, Z ∈ S → f (expA F Z) = expA F (f Z) := fun hZ =>
         map_expA_of_leftInverse f f' (hpow hZ)
@@ -450,7 +464,7 @@ noncomputable def ofSubalgebra (S : Subalgebra F A) (S' : Subalgebra F A') (f : 
       have hnYS : -Y ∈ S := S.neg_mem hYS
       rw [orbitMap, orbitMap, hmul _ (S.mul_mem (expA_mem_subalgebra S hYS) hXS) _
         (expA_mem_subalgebra S hnYS), hmul _ (expA_mem_subalgebra S hYS) _ hXS, hexp hYS,
-        hexp hnYS, map_neg]
+        hexp hnYS, map_neg]⟩
     grp := unitsMap f
     grp_mapsTo := fun u hu => hG u hu _ (coe_unitsMap (hunit u hu))
     grp_surjOn := fun v hv => by

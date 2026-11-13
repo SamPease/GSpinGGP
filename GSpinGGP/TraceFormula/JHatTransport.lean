@@ -270,7 +270,8 @@ theorem isOrbitMeasure_map_iff (ψ : NontrivialAddChar F)
       h3' (ι.linEquiv X) ((ι.linEquiv_mem_nilOrbitSet_iff hG O X).mpr hX) _ hC'
     haveI := IsModuleTopology.toContinuousAdd F A'
     have hlin : Continuous ι.lin := IsModuleTopology.continuous_of_linearMap ι.lin
-    refine ⟨U₀ ∩ ι.lin ⁻¹' U', Filter.inter_mem hU₀
+    refine ⟨(U₀ ∩ ι.orbitNhd) ∩ ι.lin ⁻¹' U', Filter.inter_mem
+      (Filter.inter_mem hU₀ ι.orbitNhd_mem_nhds)
       (hlin.continuousAt.preimage_mem_nhds (by rwa [map_zero])), fun S hS hSU => ?_⟩
     have hSm : MeasurableSet (ι.linEquiv.submoduleMap C '' S) := by
       rw [LinearEquiv.image_eq_preimage_symm]
@@ -278,7 +279,8 @@ theorem isOrbitMeasure_map_iff (ψ : NontrivialAddChar F)
     have := hUS' (ι.linEquiv.submoduleMap C '' S) hSm (by
       rintro _ ⟨Y, hY, rfl⟩
       simpa using (hSU Y hY).2)
-    rwa [hmap, ι.preimage_orbitMap_image X C S (fun Y hY => hstay X Y (hSU Y hY).1), hsd,
+    rwa [hmap, ι.preimage_orbitMap_image X C S (fun Y hY => hstay X Y (hSU Y hY).1.1)
+      (fun Y hY => (hSU Y hY).1.2), hsd,
       Set.preimage_image_eq _ (ι.linEquiv.submoduleMap C).injective] at this
   · intro X' hX' C' hC'
     obtain ⟨X, rfl⟩ := ι.linEquiv.surjective X'
@@ -290,16 +292,19 @@ theorem isOrbitMeasure_map_iff (ψ : NontrivialAddChar F)
     have hX : X ∈ nilOrbitSet O := (ι.linEquiv_mem_nilOrbitSet_iff hG O X).mp hX'
     obtain ⟨U, hU, hUS⟩ :=
       h3 X hX C ((Submodule.orderIsoMapComap ι.linEquiv).isCompl_iff.mpr hC')
-    obtain ⟨U', hU', hUU'⟩ := ι.exists_nhds_of_mem_nhds (Filter.inter_mem hU hU₀)
+    obtain ⟨U', hU', hUU'⟩ := ι.exists_nhds_of_mem_nhds
+      (Filter.inter_mem hU (Filter.inter_mem hU₀ ι.orbitNhd_mem_nhds))
     refine ⟨U', hU', fun S' hS' hS'U => ?_⟩
     obtain ⟨S, rfl⟩ : ∃ S, ι.linEquiv.submoduleMap C '' S = S' :=
       ⟨_, Set.image_preimage_eq S' (ι.linEquiv.submoduleMap C).surjective⟩
-    have hSU : ∀ Y ∈ S, ((Y : ↥(lieCentralizer 𝔤 (x : A))) : A) ∈ U ∩ U₀ := fun Y hY =>
-      hUU' _ (Y : ↥(lieCentralizer 𝔤 (x : A))).2 (by simpa using hS'U _ ⟨Y, hY, rfl⟩)
+    have hSU : ∀ Y ∈ S, ((Y : ↥(lieCentralizer 𝔤 (x : A))) : A) ∈ U ∩ (U₀ ∩ ι.orbitNhd) :=
+      fun Y hY =>
+        hUU' _ (Y : ↥(lieCentralizer 𝔤 (x : A))).2 (by simpa using hS'U _ ⟨Y, hY, rfl⟩)
     have hSm : MeasurableSet S := by
       have := hS'.preimage (hcont C).1
       rwa [Set.preimage_image_eq _ (ι.linEquiv.submoduleMap C).injective] at this
-    rw [hmap, ι.preimage_orbitMap_image X C S (fun Y hY => hstay X Y (hSU Y hY).2),
+    rw [hmap, ι.preimage_orbitMap_image X C S (fun Y hY => hstay X Y (hSU Y hY).2.1)
+      (fun Y hY => (hSU Y hY).2.2),
       hUS S hSm (fun Y hY => (hSU Y hY).1), hsd,
       Set.preimage_image_eq _ (ι.linEquiv.submoduleMap C).injective]
 
