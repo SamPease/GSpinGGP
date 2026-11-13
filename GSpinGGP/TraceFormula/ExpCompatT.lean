@@ -71,15 +71,8 @@ theorem exists_isExpCompatT (T : d.GammaTorus) : ∃ μ, d.IsExpCompatT T.1 μ :
       ((j t : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) =
         algebraMap F (CliffordAlgebra d.QW) c :=
     fun c hc => ⟨⟨scalarGSpin d.QW (Units.mk0 c hc), d.scalar_mem_torusOf x _⟩, rfl⟩
-  have h𝔤 : ∀ t : F, algebraMap F (CliffordAlgebra d.QW) t ∈ d.lieTorus T → t = 0 := by
-    intro t ht
-    have h1 : algebraMap F (CliffordAlgebra d.QW) t ∈
-        Submodule.span F {(1 : CliffordAlgebra d.QW)} := by
-      rw [Algebra.algebraMap_eq_smul_one]
-      exact Submodule.smul_mem _ _ (Submodule.subset_span rfl)
-    have h0 := Submodule.disjoint_def.mp (disjoint_span_one_soSub d.QW) _ h1 ht.1
-    rw [Algebra.algebraMap_eq_smul_one, smul_eq_zero] at h0
-    exact h0.resolve_right one_ne_zero
+  have h𝔤 : ∀ t : F, algebraMap F (CliffordAlgebra d.QW) t ∈ d.lieTorus T → t = 0 :=
+    fun t ht => eq_zero_of_algebraMap_mem_soSub ht.1
   have hexp : ∀ᶠ X in 𝓝 (0 : CliffordAlgebra d.QW), X ∈ d.lieTorus T →
       ∃ t : ↥T, ((j t : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) = expA F X := by
     obtain ⟨U₁, hU₁, h₁⟩ := MovedPart.exists_nhds_expA_mem_GSpin (F := F) d.QW

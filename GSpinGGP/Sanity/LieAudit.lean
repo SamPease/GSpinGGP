@@ -50,20 +50,6 @@ local notation "𝕋" => (toyD (F := F))
 
 /-! ## 1. The Lie algebra objects of the toy datum are zero-dimensional -/
 
-theorem cliffTrace_algebraMap {V : Type*} [AddCommGroup V] [Module F V] [Module.Finite F V]
-    (Q : QuadraticForm F V) (a : F) :
-    cliffTrace Q (algebraMap F _ a) = a * (finrank F (CliffordAlgebra Q) : F) := by
-  rw [Algebra.algebraMap_eq_smul_one, cliffTrace_smul, cliffTrace_one]
-
-/-- A scalar in `so(V)` is `0` (`tr(L_a) = a · dim C(V)` and `char F = 0`). -/
-theorem eq_zero_of_algebraMap_mem_soSub {V : Type*} [AddCommGroup V] [Module F V]
-    [Module.Finite F V] {Q : QuadraticForm F V} {a : F} (h : algebraMap F _ a ∈ soSub Q) :
-    a = 0 := by
-  have h2 := (mem_soSub.mp h).2
-  rw [cliffTrace_algebraMap] at h2
-  have hpos : 0 < finrank F (CliffordAlgebra Q) := Module.finrank_pos
-  exact (mul_eq_zero.mp h2).resolve_right (Nat.cast_ne_zero.mpr hpos.ne')
-
 /-- `so(W) = 0` for the toy datum (`W = 0`). -/
 theorem toyD_soSub_W {X : CliffordAlgebra (𝕋).QW} (hX : X ∈ soSub (𝕋).QW) : X = 0 := by
   obtain ⟨a, rfl⟩ := toy_cliffW_scalar (K := F) X

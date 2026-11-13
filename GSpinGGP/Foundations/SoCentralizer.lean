@@ -128,6 +128,19 @@ theorem cliffTrace_one [Module.Finite K V] (Q : QuadraticForm K V) :
   simp only [cliffTrace, LinearMap.mulLeft_one]
   exact LinearMap.trace_id K _
 
+theorem cliffTrace_algebraMap [Module.Finite K V] (Q : QuadraticForm K V) (a : K) :
+    cliffTrace Q (algebraMap K _ a) = a * (finrank K (CliffordAlgebra Q) : K) := by
+  rw [Algebra.algebraMap_eq_smul_one, cliffTrace_smul, cliffTrace_one]
+
+omit [Invertible (2 : K)] in
+/-- A nilpotent element of `C(V)` has trace `0` (left multiplication by it is nilpotent). -/
+theorem cliffTrace_eq_zero_of_isNilpotent [Module.Finite K V] (Q : QuadraticForm K V)
+    {x : CliffordAlgebra Q} (hx : IsNilpotent x) : cliffTrace Q x = 0 := by
+  have hL : IsNilpotent (LinearMap.mulLeft K x) := by
+    obtain ⟨k, hk⟩ := hx
+    exact ⟨k, by rw [LinearMap.pow_mulLeft, hk]; ext; simp⟩
+  exact (LinearMap.isNilpotent_trace_of_isNilpotent hL).eq_zero
+
 omit [Invertible (2 : K)] in
 theorem cliffTrace_commutator [Module.Finite K V] (Q : QuadraticForm K V) (x y : CliffordAlgebra Q) :
     cliffTrace Q (x * y - y * x) = 0 := by
