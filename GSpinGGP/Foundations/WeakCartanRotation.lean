@@ -283,6 +283,227 @@ theorem planeRot_apply (μ : F) (hD : Q (b i₁) + μ ^ 2 * Q (b k) ≠ 0) (z : 
 
 end PlaneRotation
 
+
+section PlaneRotationFacts
+
+variable (hb : IsOrthoBasis Q b) {i₁ k : Fin n} (hk : i₁ ≠ k)
+include hb hk
+
+theorem planeRot_apply_of_ne (μ : F) (hD : Q (b i₁) + μ ^ 2 * Q (b k) ≠ 0) {m : Fin n}
+    (hm₁ : m ≠ i₁) (hmk : m ≠ k) : planeRot hb hk μ hD (b m) = b m := by
+  rw [planeRot_apply]
+  simp [hm₁, hmk]
+
+theorem planeRot_apply_left (μ : F) (hD : Q (b i₁) + μ ^ 2 * Q (b k) ≠ 0) :
+    planeRot hb hk μ hD (b i₁) =
+      (1 - 2 * μ ^ 2 * Q (b k) / (Q (b i₁) + μ ^ 2 * Q (b k))) • b i₁ +
+        (2 * μ * Q (b i₁) / (Q (b i₁) + μ ^ 2 * Q (b k))) • b k := by
+  rw [planeRot_apply]
+  simp [hk.symm]
+  module
+
+theorem planeRot_apply_right (μ : F) (hD : Q (b i₁) + μ ^ 2 * Q (b k) ≠ 0) :
+    planeRot hb hk μ hD (b k) =
+      (-(2 * μ * Q (b k)) / (Q (b i₁) + μ ^ 2 * Q (b k))) • b i₁ +
+        (1 - 2 * μ ^ 2 * Q (b k) / (Q (b i₁) + μ ^ 2 * Q (b k))) • b k := by
+  rw [planeRot_apply]
+  simp [hk]
+  module
+
+end PlaneRotationFacts
+
+omit [CharZero F] in
+theorem exists_basisOpNorm_eq (hn : 0 < n) (f : V →ₗ[F] V) :
+    ∃ m, basisNorm b (f (b m)) = basisOpNorm b f := by
+  have : (Finset.univ : Finset (Fin n)).Nonempty := ⟨⟨0, hn⟩, Finset.mem_univ _⟩
+  obtain ⟨m, -, hm⟩ := Finset.exists_max_image Finset.univ (fun m => basisNorm b (f (b m))) this
+  exact ⟨m, le_antisymm (basisNorm_apply_basis_le_basisOpNorm f m)
+    ((basisOpNorm_le_iff (basisNorm_nonneg _)).2 fun k => hm k (Finset.mem_univ k))⟩
+
+/-- A vector with `Q x = c ≠ 0` is not too short: `min 1 (‖c‖ / c_Q) ≤ ‖x‖`. -/
+theorem min_le_basisNorm_of_apply [IsUltrametricDist F] (hb : IsOrthoBasis Q b) {x : V} {c : F}
+    (hx : Q x = c) (hc : c ≠ 0) : min 1 (‖c‖ / formBound Q b) ≤ basisNorm b x := by
+  have hfB := hb.norm_apply_le x
+  rw [hx] at hfB
+  have hc0 : 0 < ‖c‖ := norm_pos_iff.2 hc
+  have hfB0 : 0 < formBound Q b := by
+    by_contra h
+    have : formBound Q b = 0 := le_antisymm (not_lt.1 h) (norm_nonneg _)
+    rw [this, zero_mul] at hfB
+    linarith
+  rcases le_total 1 (basisNorm b x) with h | h
+  · exact (min_le_left _ _).trans h
+  · refine (min_le_right _ _).trans ?_
+    rw [div_le_iff₀ hfB0]
+    have hN := basisNorm_nonneg (b := b) x
+    have h2 : basisNorm b x ^ 2 ≤ basisNorm b x := by nlinarith
+    calc ‖c‖ ≤ formBound Q b * basisNorm b x ^ 2 := hfB
+      _ ≤ formBound Q b * basisNorm b x := mul_le_mul_of_nonneg_left h2 hfB0.le
+      _ = _ := mul_comm _ _
+
+
+section RotationLemma
+
+variable [IsUltrametricDist F]
+
+theorem repr_pairTorus_apply_of_ne (hb : IsOrthoBasis Q b) {i₀ i₁ : Fin n} (hne : i₀ ≠ i₁)
+    {ν : F} (h₀ : Q (b i₀) = ν) (h₁ : Q (b i₁) = -ν) (t : Fˣ) (x : V) {k : Fin n}
+    (hk₀ : k ≠ i₀) (hk₁ : k ≠ i₁) :
+    b.repr (pairTorus hb hne h₀ h₁ t x) k = b.repr x k := by
+  rw [pairTorus_apply]
+  simp [Ne.symm hk₀, Ne.symm hk₁]
+
+/-- The bounds on the rotation `γ = planeRot` with parameter `μ = κ t`: `‖γ‖ ≤ 1`,
+`γ b i₁ = a b i₁ + B b k` with `‖a‖ ≤ 1`, `‖B‖ = ‖2κt‖`, and `‖a(t)⁻¹ γ a(t)‖ ≤ ‖2‖⁻¹`. -/
+theorem planeRot_bounds (hb : IsOrthoBasis Q b) {i₀ i₁ : Fin n} (hne : i₀ ≠ i₁) {ν : F}
+    (h₀ : Q (b i₀) = ν) (h₁ : Q (b i₁) = -ν) {k : Fin n} (hk : i₁ ≠ k) (hk₀ : k ≠ i₀)
+    {κ : F} (hκ1 : ‖κ‖ < 1) (hκs : ‖κ‖ * (formBound Q b * ‖(Q (b i₁))⁻¹‖) ≤ 1)
+    (t : Fˣ) (ht : ‖(t : F)‖ ≤ 1) :
+    ∃ hD : Q (b i₁) + (κ * t) ^ 2 * Q (b k) ≠ 0,
+      basisOpNorm b (planeRot hb hk (κ * t) hD : V →ₗ[F] V) ≤ 1 ∧
+      (∃ a B : F, ‖a‖ ≤ 1 ∧ ‖B‖ = ‖(2 : F)‖ * ‖κ‖ * ‖(t : F)‖ ∧
+        planeRot hb hk (κ * t) hD (b i₁) = a • b i₁ + B • b k) ∧
+      basisOpNorm b (((pairTorus hb hne h₀ h₁ t)⁻¹ * planeRot hb hk (κ * t) hD *
+        pairTorus hb hne h₀ h₁ t : V ≃ₗ[F] V) : V →ₗ[F] V) ≤ ‖(2 : F)‖⁻¹ := by
+  set q₁ := Q (b i₁) with hq₁def
+  set qk := Q (b k) with hqkdef
+  set μ : F := κ * t with hμ
+  set r := ‖κ‖
+  have hr0 : 0 ≤ r := norm_nonneg _
+  have hq₁ : q₁ ≠ 0 := hb.apply_ne_zero i₁
+  have hq₁n : 0 < ‖q₁‖ := norm_pos_iff.2 hq₁
+  have ht0 : 0 < ‖(t : F)‖ := norm_pos_iff.2 t.ne_zero
+  have h2 : 0 < ‖(2 : F)‖ := norm_pos_iff.2 two_ne_zero
+  have h21 : ‖(2 : F)‖ ≤ 1 := norm_two_le_one
+  have hqk : ‖qk‖ ≤ (formBound Q b * ‖q₁⁻¹‖) * ‖q₁‖ := by
+    rw [mul_assoc, ← norm_mul, inv_mul_cancel₀ hq₁, norm_one, mul_one]
+    exact norm_apply_basis_le k
+  have hμn : ‖μ‖ = r * ‖(t : F)‖ := by rw [hμ, norm_mul]
+  -- `‖μ² qk‖ ≤ r ‖t‖² ‖q₁‖ < ‖q₁‖`
+  have hμqk : ‖μ ^ 2 * qk‖ ≤ r * ‖(t : F)‖ ^ 2 * ‖q₁‖ := by
+    rw [norm_mul, norm_pow, hμn]
+    calc (r * ‖(t : F)‖) ^ 2 * ‖qk‖ ≤ (r * ‖(t : F)‖) ^ 2 *
+          ((formBound Q b * ‖q₁⁻¹‖) * ‖q₁‖) := by gcongr
+      _ = r * ‖(t : F)‖ ^ 2 * ‖q₁‖ * (r * (formBound Q b * ‖q₁⁻¹‖)) := by ring
+      _ ≤ r * ‖(t : F)‖ ^ 2 * ‖q₁‖ * 1 := by gcongr
+      _ = _ := mul_one _
+  have hμqk' : ‖μ ^ 2 * qk‖ < ‖q₁‖ := hμqk.trans_lt (by
+    have : r * ‖(t : F)‖ ^ 2 < 1 := by
+      calc r * ‖(t : F)‖ ^ 2 ≤ r * 1 := by gcongr; exact pow_le_one₀ ht0.le ht
+        _ < 1 := by rw [mul_one]; exact hκ1
+    nlinarith)
+  have hDn : ‖q₁ + μ ^ 2 * qk‖ = ‖q₁‖ := by
+    rw [IsUltrametricDist.norm_add_eq_max_of_norm_ne_norm hμqk'.ne', max_eq_left hμqk'.le]
+  have hD : q₁ + μ ^ 2 * qk ≠ 0 := by
+    intro h; rw [h, norm_zero] at hDn; exact hq₁n.ne' hDn.symm
+  set D := q₁ + μ ^ 2 * qk with hDdef
+  -- the coefficients
+  have hcX : ‖-(2 * μ ^ 2 * qk) / D‖ ≤ ‖(2 : F)‖ * r * ‖(t : F)‖ ^ 2 := by
+    rw [norm_div, hDn, norm_neg, mul_assoc, norm_mul, div_le_iff₀ hq₁n]
+    calc ‖(2 : F)‖ * ‖μ ^ 2 * qk‖ ≤ ‖(2 : F)‖ * (r * ‖(t : F)‖ ^ 2 * ‖q₁‖) := by gcongr
+      _ = _ := by ring
+  have hB : ‖2 * μ * q₁ / D‖ = ‖(2 : F)‖ * r * ‖(t : F)‖ := by
+    rw [norm_div, hDn, norm_mul, norm_mul, hμn]; field_simp
+  have hcY : ‖-(2 * μ * qk) / D‖ ≤ ‖(2 : F)‖ * ‖(t : F)‖ := by
+    rw [norm_div, hDn, norm_neg, norm_mul, norm_mul, hμn, div_le_iff₀ hq₁n]
+    calc ‖(2 : F)‖ * (r * ‖(t : F)‖) * ‖qk‖ ≤ ‖(2 : F)‖ * (r * ‖(t : F)‖) *
+          ((formBound Q b * ‖q₁⁻¹‖) * ‖q₁‖) := by gcongr
+      _ = ‖(2 : F)‖ * ‖(t : F)‖ * ‖q₁‖ * (r * (formBound Q b * ‖q₁⁻¹‖)) := by ring
+      _ ≤ ‖(2 : F)‖ * ‖(t : F)‖ * ‖q₁‖ * 1 := by gcongr
+      _ = _ := by ring
+  have ht2 : ‖(t : F)‖ ^ 2 ≤ 1 := pow_le_one₀ ht0.le ht
+  have hcX1 : ‖-(2 * μ ^ 2 * qk) / D‖ ≤ 1 := hcX.trans (by
+    calc ‖(2 : F)‖ * r * ‖(t : F)‖ ^ 2 ≤ 1 * 1 * 1 := by gcongr
+      _ = 1 := by ring)
+  have ha : ‖1 - 2 * μ ^ 2 * qk / D‖ ≤ 1 := by
+    rw [sub_eq_add_neg, ← neg_div]
+    exact (IsUltrametricDist.norm_add_le_max _ _).trans (max_le norm_one.le hcX1)
+  have hB1 : ‖2 * μ * q₁ / D‖ ≤ 1 := by
+    rw [hB]
+    calc ‖(2 : F)‖ * r * ‖(t : F)‖ ≤ 1 * 1 * 1 := by gcongr
+      _ = 1 := by ring
+  have hcY1 : ‖-(2 * μ * qk) / D‖ ≤ 1 := hcY.trans (by
+    calc ‖(2 : F)‖ * ‖(t : F)‖ ≤ 1 * 1 := by gcongr
+      _ = 1 := by ring)
+  refine ⟨hD, ?_, ⟨_, _, ha, hB, planeRot_apply_left hb hk μ hD⟩, ?_⟩
+  · -- `‖γ‖ ≤ 1`
+    refine (basisOpNorm_le_iff zero_le_one).2 fun m => ?_
+    rw [LinearEquiv.coe_coe]
+    by_cases hm₁ : m = i₁
+    · subst hm₁
+      rw [planeRot_apply_left]
+      refine (basisNorm_add_le _ _).trans (max_le ?_ ?_) <;>
+        rw [basisNorm_smul, basisNorm_basis, mul_one] <;> assumption
+    by_cases hmk : m = k
+    · subst hmk
+      rw [planeRot_apply_right]
+      refine (basisNorm_add_le _ _).trans (max_le ?_ ?_) <;>
+        rw [basisNorm_smul, basisNorm_basis, mul_one] <;> assumption
+    rw [planeRot_apply_of_ne hb hk μ hD hm₁ hmk, basisNorm_basis]
+  · -- `‖a(t)⁻¹ γ a(t)‖ ≤ ‖2‖⁻¹`
+    set T := pairTorus hb hne h₀ h₁ t
+    obtain ⟨hT, hTi⟩ := basisOpNorm_pairTorus_le_of_le_one hb hne h₀ h₁ t ht
+    have h2i : 1 ≤ ‖(2 : F)‖⁻¹ := one_le_norm_two_inv
+    have hTk : T⁻¹ (b k) = b k := by
+      rw [← pairTorus_inv]; exact pairTorus_apply_basis_of_ne hb hne h₀ h₁ _ hk₀ hk.symm
+    have hTb₁ : basisNorm b (T⁻¹ (b i₁)) ≤ ‖(2 : F)‖⁻¹ * ‖(t : F)‖⁻¹ := by
+      have := basisNorm_apply_basis_le_basisOpNorm (b := b) (((T⁻¹ : V ≃ₗ[F] V)) : V →ₗ[F] V) i₁
+      exact this.trans hTi
+    refine (basisOpNorm_le_iff (by positivity)).2 fun m => ?_
+    set x := T (b m) with hx
+    have hxn : basisNorm b x ≤ ‖(2 : F)‖⁻¹ * ‖(t : F)‖⁻¹ :=
+      (basisNorm_apply_basis_le_basisOpNorm (b := b) (T : V →ₗ[F] V) m).trans hT
+    have hxk : ‖b.repr x k‖ ≤ 1 := by
+      rw [hx, repr_pairTorus_apply_of_ne hb hne h₀ h₁ t _ hk₀ hk.symm]
+      exact (norm_repr_le_basisNorm _ _).trans (basisNorm_basis m).le
+    have hCm : (((T⁻¹ * planeRot hb hk μ hD * T : V ≃ₗ[F] V)) : V →ₗ[F] V) (b m) =
+        b m + b.repr x i₁ • ((-(2 * μ ^ 2 * qk) / D) • T⁻¹ (b i₁) + (2 * μ * q₁ / D) • b k) +
+          b.repr x k • ((-(2 * μ * qk) / D) • T⁻¹ (b i₁) +
+            (-(2 * μ ^ 2 * qk) / D) • b k) := by
+      rw [LinearEquiv.coe_coe, LinearEquiv.mul_apply, LinearEquiv.mul_apply, ← hx,
+        planeRot_apply]
+      simp only [map_add, map_smul, hTk]
+      rw [hx, ← LinearEquiv.mul_apply, inv_mul_cancel]; rfl
+    rw [hCm]
+    refine (basisNorm_add_le _ _).trans (max_le ((basisNorm_add_le _ _).trans
+      (max_le (by rw [basisNorm_basis]; exact h2i) ?_)) ?_)
+    · rw [basisNorm_smul]
+      have hX : basisNorm b ((-(2 * μ ^ 2 * qk) / D) • T⁻¹ (b i₁) + (2 * μ * q₁ / D) • b k) ≤
+          ‖(t : F)‖ := by
+        refine (basisNorm_add_le _ _).trans (max_le ?_ ?_)
+        · rw [basisNorm_smul]
+          calc ‖-(2 * μ ^ 2 * qk) / D‖ * basisNorm b (T⁻¹ (b i₁))
+              ≤ (‖(2 : F)‖ * r * ‖(t : F)‖ ^ 2) * (‖(2 : F)‖⁻¹ * ‖(t : F)‖⁻¹) :=
+                mul_le_mul hcX hTb₁ (basisNorm_nonneg _) (by positivity)
+            _ = r * ‖(t : F)‖ := by field_simp
+            _ ≤ 1 * ‖(t : F)‖ := by gcongr
+            _ = _ := one_mul _
+        · rw [basisNorm_smul, basisNorm_basis, mul_one, hB]
+          calc ‖(2 : F)‖ * r * ‖(t : F)‖ ≤ 1 * 1 * ‖(t : F)‖ := by gcongr
+            _ = _ := by ring
+      calc ‖b.repr x i₁‖ * basisNorm b ((-(2 * μ ^ 2 * qk) / D) • T⁻¹ (b i₁) +
+            (2 * μ * q₁ / D) • b k)
+          ≤ (‖(2 : F)‖⁻¹ * ‖(t : F)‖⁻¹) * ‖(t : F)‖ :=
+            mul_le_mul ((norm_repr_le_basisNorm _ _).trans hxn) hX (basisNorm_nonneg _)
+              (by positivity)
+        _ = ‖(2 : F)‖⁻¹ := by field_simp
+    · rw [basisNorm_smul]
+      have hY : basisNorm b ((-(2 * μ * qk) / D) • T⁻¹ (b i₁) +
+          (-(2 * μ ^ 2 * qk) / D) • b k) ≤ 1 := by
+        refine (basisNorm_add_le _ _).trans (max_le ?_ ?_)
+        · rw [basisNorm_smul]
+          calc ‖-(2 * μ * qk) / D‖ * basisNorm b (T⁻¹ (b i₁))
+              ≤ (‖(2 : F)‖ * ‖(t : F)‖) * (‖(2 : F)‖⁻¹ * ‖(t : F)‖⁻¹) :=
+                mul_le_mul hcY hTb₁ (basisNorm_nonneg _) (by positivity)
+            _ = 1 := by field_simp
+        · rw [basisNorm_smul, basisNorm_basis, mul_one]; exact hcX1
+      calc ‖b.repr x k‖ * basisNorm b ((-(2 * μ * qk) / D) • T⁻¹ (b i₁) +
+            (-(2 * μ ^ 2 * qk) / D) • b k) ≤ 1 * 1 :=
+            mul_le_mul hxk hY (basisNorm_nonneg _) zero_le_one
+        _ ≤ _ := by rw [mul_one]; exact h2i
+
+end RotationLemma
+
 end WeakCartan
 
 end GSpinGGP
