@@ -204,6 +204,8 @@ on `T_♮ = {t | t ∈ Γ(G,H), T_t = T}` because `T(F) = A_{G,H}(F)·K` for a c
 (`χ` is trivial on `A_{G,H}(F)`, so `θ(ag) = θ(g)` on `G_reg(F)` and germs at `x` and `ax` agree).
 BP Prop 4.5.1 is stated for the averaged `c_θ`; the bound for each individual `c_{θ,O}` is the
 thesis's own reading of it, so this is an assumption of the thesis, not a citation of BP.
+Proved ingredient: `exists_finset_bound_nilReg_coeff` (`TraceFormula/GermBound.lean`), which bounds
+one regular coefficient of a local expansion by its values at finitely many regular points of `𝔤_x`.
 Status: SORRY (own work from BP Prop 4.5.1, GSpin input). -/
 theorem germ_bound_of_mem_QC {χ : CentralCharOn d} {θ : ↥d.G → ℂ} (hθ : θ ∈ QC d χ)
     (T : Subgroup ↥(GSpin d.QW)) :
