@@ -261,4 +261,122 @@ theorem exists_lieCentralizer_fixed_swap {Q : QuadraticForm K V} (hQ : IsNondeg 
 
 end FixedSwap
 
+/-! ## Block endomorphisms -/
+
+section SumEnd
+
+variable {K : Type*} [Field K]
+variable {V : Type*} [AddCommGroup V] [Module K V] {U U' : Submodule K V}
+
+theorem sumEnd_mul (h : IsCompl U U') (A C : Module.End K U) (A' C' : Module.End K U') :
+    sumEnd h A A' * sumEnd h C C' = sumEnd h (A * C) (A' * C') := by
+  symm
+  refine LinearMap.ofIsCompl_eq h (fun u => ?_) (fun u => ?_)
+  · simp [Module.End.mul_apply, sumEnd_left]
+  · simp [Module.End.mul_apply, sumEnd_right]
+
+theorem sumEnd_one (h : IsCompl U U') : sumEnd h (1 : Module.End K U) 1 = 1 :=
+  LinearMap.ofIsCompl_eq h (fun _ => rfl) (fun _ => rfl)
+
+theorem sumEnd_zero (h : IsCompl U U') : sumEnd h (0 : Module.End K U) 0 = 0 :=
+  LinearMap.ofIsCompl_eq h (fun _ => by simp) (fun _ => by simp)
+
+theorem sumEnd_pow (h : IsCompl U U') (A : Module.End K U) (A' : Module.End K U') (k : ℕ) :
+    sumEnd h A A' ^ k = sumEnd h (A ^ k) (A' ^ k) := by
+  induction k with
+  | zero => rw [pow_zero, pow_zero, pow_zero, sumEnd_one]
+  | succ k ih => rw [pow_succ, ih, sumEnd_mul, ← pow_succ, ← pow_succ]
+
+/-- `0 ⊕ A'` is nilpotent when `A'` is. -/
+theorem isNilpotent_sumEnd_zero (h : IsCompl U U') {A' : Module.End K U'} (hA' : IsNilpotent A') :
+    IsNilpotent (sumEnd h 0 A') := by
+  obtain ⟨k, hk⟩ := hA'
+  refine ⟨k + 1, ?_⟩
+  rw [sumEnd_pow, zero_pow (Nat.succ_ne_zero k), pow_succ, hk, zero_mul, sumEnd_zero]
+
+end SumEnd
+
+/-! ## The part of a skew endomorphism on `(ker E)^⊥` -/
+
+section KillPart
+
+variable {K : Type*} [Field K] [Invertible (2 : K)]
+variable {V : Type*} [AddCommGroup V] [Module K V]
+
+/-- For skew `E` with `V = ker E ⊥ (ker E)^⊥` and skew `N` commuting with `E`, the endomorphism
+`M = 0 ⊕ N|_{(ker E)^⊥}` is skew, commutes with `E`, kills `ker E`, agrees with `N` on
+`(ker E)^⊥`, and is nilpotent if `N` is. -/
+theorem exists_killPart {Q : QuadraticForm K V} {E N : Module.End K V}
+    (hE : ∀ u w, bform Q (E u) w = -bform Q u (E w))
+    (hN : ∀ u w, bform Q (N u) w = -bform Q u (N w)) (hNE : N * E = E * N)
+    (hc : IsCompl (LinearMap.ker E) ((bform Q).orthogonal (LinearMap.ker E))) :
+    ∃ M : Module.End K V, (∀ u w, bform Q (M u) w = -bform Q u (M w)) ∧ M * E = E * M ∧
+      (IsNilpotent N → IsNilpotent M) ∧ (∀ a ∈ LinearMap.ker E, M a = 0) ∧
+      ∀ b ∈ (bform Q).orthogonal (LinearMap.ker E), M b = N b := by
+  set A := LinearMap.ker E
+  set B := (bform Q).orthogonal A
+  have horth : ∀ u ∈ A, ∀ w ∈ B, bform Q u w = 0 := fun u hu w hw => hw u hu
+  have hEA : Set.MapsTo E A A := fun a ha => by
+    simp only [SetLike.mem_coe, A, LinearMap.mem_ker] at ha ⊢; rw [ha, map_zero]
+  have hNA : Set.MapsTo N A A := fun a ha => by
+    simp only [SetLike.mem_coe, A, LinearMap.mem_ker] at ha ⊢
+    rw [← Module.End.mul_apply, ← hNE, Module.End.mul_apply, ha, map_zero]
+  have hEB := mapsTo_orthogonal_of_skew hE hEA
+  have hNB := mapsTo_orthogonal_of_skew hN hNA
+  have hNmem : N ∈ soCent Q E := mem_soCent.2 ⟨hN, hNE⟩
+  have h0 : (0 : Module.End K A) ∈ soCent (Q.comp A.subtype) (E.restrict hEA) :=
+    mem_soCent.2 ⟨fun _ _ => by simp, by simp⟩
+  have hM := sumEnd_mem_soCent horth hc hEA hEB h0 (restrict_mem_soCent hEB hNmem hNB)
+  refine ⟨_, (mem_soCent.1 hM).1, (mem_soCent.1 hM).2,
+    fun hNn => isNilpotent_sumEnd_zero hc (Module.End.isNilpotent.restrict hNB hNn),
+    fun a ha => ?_, fun b hb => ?_⟩
+  · simpa using sumEnd_left hc 0 (N.restrict hNB) ⟨a, ha⟩
+  · exact sumEnd_right hc 0 (N.restrict hNB) ⟨b, hb⟩
+
+theorem soCent_one_add (Q : QuadraticForm K V) (N : Module.End K V) :
+    soCent Q (1 + N) = soCent Q N := by
+  ext M
+  simp only [mem_soCent, mul_add, add_mul, mul_one, one_mul, add_right_inj]
+
+end KillPart
+
+/-! ## Isometries fixing `U^⊥` -/
+
+section FixOrth
+
+variable {K : Type*} [Field K] [Invertible (2 : K)]
+variable {V : Type*} [AddCommGroup V] [Module K V]
+
+/-- An isometry fixing `U^⊥` pointwise preserves `U`, when `V = U ⊥ U^⊥` is nondegenerate. -/
+theorem isometry_mem_of_fix_orthogonal {Q : QuadraticForm K V} (hQ : IsNondeg Q)
+    {U : Submodule K V} (hc : IsCompl U ((bform Q).orthogonal U)) (g : Q.IsometryEquiv Q)
+    (hg : ∀ b ∈ (bform Q).orthogonal U, g b = b) {u : V} (hu : u ∈ U) : g u ∈ U := by
+  obtain ⟨a, ha, b, hb, hab⟩ :=
+    Submodule.mem_sup.1 (hc.sup_eq_top ▸ Submodule.mem_top (x := g u))
+  have hb0 : b = 0 := by
+    refine (isNondeg_iff Q).1 hQ b fun v => ?_
+    obtain ⟨a', ha', b', hb', rfl⟩ :=
+      Submodule.mem_sup.1 (hc.sup_eq_top ▸ Submodule.mem_top (x := v))
+    have h1 : bform Q b a' = 0 := by rw [bform_comm]; exact hb a' ha'
+    have h2 : bform Q (g u) b' = 0 := by
+      rw [← hg b' hb']
+      exact (bform_isometry g.toIsometry u b').trans (hb' u hu)
+    have h3 : bform Q a b' = 0 := hb' a ha
+    rw [← hab, map_add, LinearMap.add_apply, h3, zero_add] at h2
+    rw [map_add, h1, zero_add, h2]
+  rw [← hab, hb0, add_zero]; exact ha
+
+/-- An isometry fixing `U^⊥` pointwise and conjugating `N` to `N'` on `U` conjugates them on all
+of `V`, if `N` maps `U^⊥` into itself and `N = N'` there. -/
+theorem isometry_conj_of_fix_orthogonal {Q : QuadraticForm K V} {U : Submodule K V}
+    (hc : IsCompl U ((bform Q).orthogonal U)) (g : Q.IsometryEquiv Q)
+    (hg : ∀ b ∈ (bform Q).orthogonal U, g b = b) {N N' : Module.End K V}
+    (hU : ∀ u ∈ U, g (N u) = N' (g u))
+    (hB : ∀ b ∈ (bform Q).orthogonal U, N b ∈ (bform Q).orthogonal U ∧ N' b = N b) (v : V) :
+    g (N v) = N' (g v) := by
+  obtain ⟨a, ha, b, hb, rfl⟩ := Submodule.mem_sup.1 (hc.sup_eq_top ▸ Submodule.mem_top (x := v))
+  rw [map_add, map_add, map_add, map_add, hU a ha, hg b hb, hg _ (hB b hb).1, (hB b hb).2]
+
+end FixOrth
+
 end GSpinGGP

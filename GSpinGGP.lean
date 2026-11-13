@@ -68,6 +68,7 @@ import GSpinGGP.TraceFormula.LuoClass
 import GSpinGGP.TraceFormula.LuoTorus
 import GSpinGGP.TraceFormula.ExpIntertwine
 import GSpinGGP.TraceFormula.LuoJLie
+import GSpinGGP.TraceFormula.OrbitSpecUnique
 import GSpinGGP.Literature.Kottwitz
 import GSpinGGP.Literature.KottwitzClay
 import GSpinGGP.Literature.Kottwitz1986
