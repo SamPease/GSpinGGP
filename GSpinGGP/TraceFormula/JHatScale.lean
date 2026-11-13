@@ -3,6 +3,8 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.TraceFormula.JHatTransport
+import GSpinGGP.Foundations.OrbitChart
+import GSpinGGP.TraceFormula.LieAlgebra
 
 /-!
 # `ĵ(O, ·)` under rescaling of the form by a central unit, and under equal descent data
@@ -19,6 +21,11 @@ import GSpinGGP.TraceFormula.JHatTransport
   nondegenerate on `𝔤`, the regular set of `𝔤` is open and orbit measures for `b` are unique.  The
   two self-dual measures differ by a constant `κ > 0` (uniqueness of Haar measure), and both sides of
   the identity defining `ĵ` acquire the factor `κ`, so `κ` need not be computed.
+* `isOrbitMeasure_unique_lieCentralizer`: uniqueness of orbit measures for the centralizer
+  `(Z_G(X), 𝔤_X)` of a Lie algebra element, when `exp` and `log` match `G` and `𝔤` near `0`.
+* `eventually_isAdjointPair_neg_of_isOrthogonal_expA`: if `e^Y` is an isometry of a bilinear form
+  and `Y` is near `0`, then `Y` is skew (the adjoint pairs form a subalgebra of `End U × End Uᵐᵒᵖ`,
+  which `exp` detects near `0`).
 -/
 
 noncomputable section
@@ -506,5 +513,137 @@ theorem jHat_scale (ψ : NontrivialAddChar F) (c : Aˣ)
     simp only [h, h', ↓reduceDIte]
 
 end ScaleMeasure
+
+/-! ## Orbit measures on centralizers of Lie algebra elements -/
+
+section LieCentralizerOrbit
+
+variable {G : Subgroup Aˣ} {𝔤 : LieSubalgebra F A}
+
+/-- `e^Y ∈ Z_G(X)` for `Y ∈ 𝔤_X` near `0`, when `e^Y ∈ G` for `Y ∈ 𝔤` near `0`. -/
+theorem eventually_expA_mem_lieGrpCentralizer
+    (hexp : ∀ᶠ Y in 𝓝 (0 : A), Y ∈ 𝔤 → ∃ g ∈ G, (g : A) = expA F Y) (X : A) :
+    ∀ᶠ Y in 𝓝 (0 : A), Y ∈ lieCentralizer 𝔤 X →
+      ∃ g ∈ lieGrpCentralizer G X, (g : A) = expA F Y := by
+  filter_upwards [hexp] with Y hY hYX
+  obtain ⟨hY𝔤, hYc⟩ := mem_lieCentralizer.mp hYX
+  obtain ⟨g, hg, hgY⟩ := hY hY𝔤
+  refine ⟨g, ⟨hg, ?_⟩, hgY⟩
+  rw [hgY]
+  exact (commute_expA_of_commute (F := F) (show Commute X Y from hYc)).eq.symm
+
+/-- `e^Y ∈ Z_G(X)` with `Y` near `0` forces `Y ∈ 𝔤_X`, when `e^Y ∈ G` with `Y` near `0` forces
+`Y ∈ 𝔤`. -/
+theorem eventually_mem_lieCentralizer_of_expA_mem_lieGrpCentralizer
+    (hlog : ∀ᶠ Y in 𝓝 (0 : A), ∀ g ∈ G, (g : A) = expA F Y → Y ∈ 𝔤) (X : A) :
+    ∀ᶠ Y in 𝓝 (0 : A), ∀ g ∈ lieGrpCentralizer G X, (g : A) = expA F Y →
+      Y ∈ lieCentralizer 𝔤 X := by
+  obtain ⟨U, hU, hc⟩ := exists_nhds_commute_of_commute_expA F (A := A)
+  filter_upwards [hlog, hU] with Y hY hYU g hgX hgY
+  refine mem_lieCentralizer.mpr ⟨hY g hgX.1 hgY, ?_⟩
+  have h : Commute X (expA F Y) := by
+    rw [← hgY]
+    exact hgX.2.symm
+  exact (hc Y hYU X h).eq
+
+/-- Conjugation by `Z_G(X)` preserves `𝔤_X` when conjugation by `G` preserves `𝔤`. -/
+theorem conj_mem_lieCentralizer_of_mem_lieGrpCentralizer
+    (hG : ∀ g ∈ G, ∀ Y ∈ 𝔤, (g : A) * Y * (↑g⁻¹ : A) ∈ 𝔤) (X : A) :
+    ∀ g ∈ lieGrpCentralizer G X, ∀ Y ∈ lieCentralizer 𝔤 X,
+      (g : A) * Y * (↑g⁻¹ : A) ∈ lieCentralizer 𝔤 X := by
+  intro g hg Y hY
+  obtain ⟨hgG, hgX⟩ := hg
+  obtain ⟨hY𝔤, hYX⟩ := mem_lieCentralizer.mp hY
+  have hc : Commute X (g : A) := hgX.symm
+  refine mem_lieCentralizer.mpr ⟨hG g hgG Y hY𝔤, ?_⟩
+  exact ((hc.mul_right hYX).mul_right hc.units_inv_right).eq
+
+/-- **Uniqueness of orbit measures on `(Z_G(X), 𝔤_X)`** for any `X ∈ A`, when conjugation by `G`
+preserves `𝔤` and `exp` matches `G` with `𝔤` near `0` (`hexp`, `hlog`): the general uniqueness
+`IsOrbitMeasure.eq_of_eventually_conj_eq_orbitMap`, with the local surjectivity
+`eventually_conj_eq_orbitMap` for `(Z_G(X), 𝔤_X)`. -/
+theorem isOrbitMeasure_unique_lieCentralizer
+    (hG : ∀ g ∈ G, ∀ Y ∈ 𝔤, (g : A) * Y * (↑g⁻¹ : A) ∈ 𝔤)
+    (hexp : ∀ᶠ Y in 𝓝 (0 : A), Y ∈ 𝔤 → ∃ g ∈ G, (g : A) = expA F Y)
+    (hlog : ∀ᶠ Y in 𝓝 (0 : A), ∀ g ∈ G, (g : A) = expA F Y → Y ∈ 𝔤) (X : A)
+    {b : LinearMap.BilinForm F A} {ψ : NontrivialAddChar F}
+    {O : NilOrbit (lieGrpCentralizer G X) (lieCentralizer 𝔤 X)}
+    {μ ν : Measure ↥(lieCentralizer 𝔤 X)}
+    (hμ : IsOrbitMeasure (lieGrpCentralizer G X) (lieCentralizer 𝔤 X) b ψ O μ)
+    (hν : IsOrbitMeasure (lieGrpCentralizer G X) (lieCentralizer 𝔤 X) b ψ O ν) : μ = ν :=
+  IsOrbitMeasure.eq_of_eventually_conj_eq_orbitMap
+    (conj_mem_lieCentralizer_of_mem_lieGrpCentralizer hG X)
+    (fun Y _ C hC _ hU => eventually_conj_eq_orbitMap F
+      (eventually_expA_mem_lieGrpCentralizer hexp X)
+      (eventually_mem_lieCentralizer_of_expA_mem_lieGrpCentralizer hlog X) Y C hC hU) hμ hν
+
+end LieCentralizerOrbit
+
+/-! ## `exp` detects skew endomorphisms near `0` -/
+
+section SkewExp
+
+variable {U : Type*} [AddCommGroup U] [Module F U] [Module.Finite F U]
+
+/-- The pairs `(T, T')` adjoint for `B` (`B(T u, v) = B(u, T' v)`), as a subalgebra of
+`End U × End Uᵐᵒᵖ`. -/
+def adjointPairSubalgebra (B : LinearMap.BilinForm F U) :
+    Subalgebra F (Module.End F U × (Module.End F U)ᵐᵒᵖ) where
+  carrier := {Z | LinearMap.IsAdjointPair B B ⇑Z.1 ⇑(MulOpposite.unop Z.2 : Module.End F U)}
+  mul_mem' := fun {Z W} hZ hW u v => by
+    change B (Z.1 (W.1 u)) v = B u ((MulOpposite.unop W.2) ((MulOpposite.unop Z.2) v))
+    rw [hZ, hW]
+  add_mem' := fun {Z W} hZ hW u v => by
+    change B ((Z.1 + W.1) u) v = B u ((MulOpposite.unop Z.2 + MulOpposite.unop W.2) v)
+    rw [LinearMap.add_apply, LinearMap.add_apply, map_add, map_add, LinearMap.add_apply, hZ, hW]
+  algebraMap_mem' := fun r u v => by
+    change B ((algebraMap F (Module.End F U) r) u) v =
+      B u ((algebraMap F (Module.End F U) r) v)
+    simp [Module.algebraMap_end_apply]
+
+/-- **`exp` detects skew endomorphisms near `0`**: if `e^Y` is an isometry of `B` and `Y` is
+near `0`, then `(Y, −Y)` is an adjoint pair, i.e. `Y` is skew for `B`.  In
+`End U × End Uᵐᵒᵖ`, `e^{(Y, −Y)} = (e^Y, e^{−Y})` is an adjoint pair (`e^{−Y} = (e^Y)⁻¹`), and
+`exp` detects subalgebras near `0` (`exists_nhds_mem_of_expA_mem`). -/
+theorem eventually_isAdjointPair_neg_of_isOrthogonal_expA
+    [TopologicalSpace (Module.End F U)] [IsModuleTopology F (Module.End F U)]
+    (B : LinearMap.BilinForm F U) :
+    ∀ᶠ Y in 𝓝 (0 : Module.End F U), LinearMap.IsOrthogonal B ⇑(expA F Y : Module.End F U) →
+      LinearMap.IsAdjointPair B B ⇑Y ⇑(-Y) := by
+  let E := Module.End F U
+  let A₂ := E × Eᵐᵒᵖ
+  letI : TopologicalSpace A₂ := moduleTopology F A₂
+  haveI : IsModuleTopology F A₂ := ⟨rfl⟩
+  haveI := IsModuleTopology.toContinuousAdd F A₂
+  haveI := IsModuleTopology.toContinuousAdd F E
+  obtain ⟨V, hV, hmem⟩ := exists_nhds_mem_of_expA_mem F (A := A₂)
+  have h1 := eventually_map_expA (F := F) (A := A₂) (B := E) (LinearMap.fst F E Eᵐᵒᵖ)
+    (fun Z n => Prod.pow_fst Z n)
+  have h2 := eventually_map_expA (F := F) (A := A₂) (B := E)
+    ((MulOpposite.opLinearEquiv F).symm.toLinearMap ∘ₗ LinearMap.snd F E Eᵐᵒᵖ)
+    (fun Z n => by
+      simp only [LinearMap.coe_comp, Function.comp_apply, LinearEquiv.coe_coe,
+        MulOpposite.coe_opLinearEquiv_symm]
+      change MulOpposite.unop ((Z ^ n : E × Eᵐᵒᵖ).2) = MulOpposite.unop (Z : E × Eᵐᵒᵖ).2 ^ n
+      rw [Prod.pow_snd, MulOpposite.unop_pow])
+  let j : E →ₗ[F] A₂ :=
+    LinearMap.prod LinearMap.id ((MulOpposite.opLinearEquiv F).toLinearMap ∘ₗ (-LinearMap.id))
+  have hj : Continuous j := IsModuleTopology.continuous_of_linearMap j
+  have hjt : Filter.Tendsto j (𝓝 0) (𝓝 0) := hj.tendsto' 0 0 (map_zero j)
+  obtain ⟨Ui, hUi, hinv⟩ := expA_mul_expA_neg F (A := E)
+  filter_upwards [hjt hV, hjt.eventually h1, hjt.eventually h2, hUi] with Y hYV hY1 hY2 hYi horth
+  have e1 : (expA F (j Y)).1 = expA F Y := hY1
+  have e2 : MulOpposite.unop (expA F (j Y)).2 = expA F (-Y) := hY2
+  have hP : expA F (j Y) ∈ adjointPairSubalgebra B := by
+    intro u v
+    change B ((expA F (j Y)).1 u) v = B u ((MulOpposite.unop (expA F (j Y)).2) v)
+    rw [e1, e2]
+    have hv : expA F Y (expA F (-Y) v) = v := by
+      rw [← Module.End.mul_apply, hinv Y hYi, Module.End.one_apply]
+    conv_lhs => rw [← hv]
+    exact horth u _
+  exact hmem (j Y) hYV _ hP
+
+end SkewExp
 
 end GSpinGGP
