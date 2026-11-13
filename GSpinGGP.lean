@@ -52,6 +52,8 @@ import GSpinGGP.Foundations.OrthogonalSum
 import GSpinGGP.Foundations.BasisNorm
 import GSpinGGP.Foundations.WeakCartanSO
 import GSpinGGP.Foundations.WeakCartanRotation
+import GSpinGGP.Foundations.WeakCartanFrame
+import GSpinGGP.Foundations.WeakCartanTheorem
 import GSpinGGP.GGP.RegularOrbitClass
 import GSpinGGP.GGP.OrbitSpecQd
 import GSpinGGP.GGP.RegularRank
