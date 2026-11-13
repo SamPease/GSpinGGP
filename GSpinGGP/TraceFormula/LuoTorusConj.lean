@@ -12,7 +12,11 @@ For `g ∈ GSpin(W)(F)` and a subgroup `T`, with `T₁ = g T g⁻¹`:
 * `specP_mem_commonFixed_map_conj`, `specP_inv_mem_commonFixed`: `W'_{T₁} = P(g) W'_T`;
 * `conj_mem_lieTorus`, `lieTorusConj`: `X ↦ g X g⁻¹` maps `𝔱⁰(T)` onto `𝔱⁰(T₁)`;
 * `isGammaEltLie_conj`: it maps `𝔱⁰_♮(T)` into `𝔱⁰_♮(T₁)`;
-* `deltaLie_conj`, `weylDiscLie_conj`: `Δ` and `D^G` are conjugation invariant.
+* `deltaLie_conj`, `weylDiscLie_diagLie_conj`: `Δ` and `D^G` are conjugation invariant;
+* `isExpCompatT_map_lieTorusConj`: conjugation carries `ν(T) dX` to `ν(gTg⁻¹) dX`;
+* `torusIntegralLie_conj_of`: the torus integrals over `T_x` and `T_{x'} = g T_x g⁻¹` agree if the
+  germs are conjugation invariant; `torusIntegralLie_toSO_of_germ_conj`: the resulting reduction
+  of `torusIntegralLie_toSO`.
 -/
 
 noncomputable section
@@ -395,6 +399,98 @@ theorem isExpCompatT_map_lieTorusConj {T : Subgroup ↥(GSpin d.QW)} [CompactSpa
         ((d.torusConjHomeomorph T g).quotientCongr_mk (d.scalarsIn T)
           (d.scalarsIn (T.map (MulAut.conj g).toMonoidHom))
           (d.map_scalarsIn_torusConjHomeomorph T g) t).symm)
+
+theorem map_conj_inv_map_conj (T : Subgroup ↥(GSpin d.QW)) (g : ↥(GSpin d.QW)) :
+    (T.map (MulAut.conj g).toMonoidHom).map (MulAut.conj g⁻¹).toMonoidHom = T := by
+  rw [Subgroup.map_map]
+  convert Subgroup.map_id T
+  ext t
+  simp [mul_assoc]
+
+/-- `X ∈ 𝔱⁰_♮(T)` iff `g X g⁻¹ ∈ 𝔱⁰_♮(gTg⁻¹)`. -/
+theorem isGammaEltLie_conj_iff {T : Subgroup ↥(GSpin d.QW)} (g : ↥(GSpin d.QW))
+    {X : CliffordAlgebra d.QW} :
+    d.IsGammaEltLie (T.map (MulAut.conj g).toMonoidHom)
+        (((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) * X *
+          (((g : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW)) ↔
+      d.IsGammaEltLie T X := by
+  refine ⟨fun h => ?_, d.isGammaEltLie_conj g⟩
+  have h' := d.isGammaEltLie_conj g⁻¹ h
+  rw [map_conj_inv_map_conj] at h'
+  convert h' using 1
+  simp [mul_assoc]
+
+variable (ψ : NontrivialAddChar F)
+
+/-- **The torus integral is invariant under conjugating the torus**, given that the germs are
+(`hgerm`): for `x ∈ Γ(G,H)` and `T_{x'} = g T_x g⁻¹`, `X ↦ g X g⁻¹` carries `ν(T_x) dX` to
+`ν(T_{x'}) dX` (`isExpCompatT_map_lieTorusConj`), `𝔱⁰_♮(T_x)` onto `𝔱⁰_♮(T_{x'})`
+(`isGammaEltLie_conj_iff`), and preserves `D^G` and `Δ` (`weylDiscLie_diagLie_conj`,
+`deltaLie_conj`). -/
+theorem torusIntegralLie_conj_of {θ' : ↥d.lieZero → ℂ} {x x' g : ↥(GSpin d.QW)}
+    (hx : d.IsGammaElt x) (hT : d.torusOf x' = (d.torusOf x).map (MulAut.conj g).toMonoidHom)
+    (hgerm : ∀ X : CliffordAlgebra d.QW, d.IsGammaEltLie (d.torusOf x) X →
+      d.germLie0 ψ θ' (d.diagLie (((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) * X *
+          (((g : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW)))
+        (d.orbitChoiceLie (((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) * X *
+          (((g : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW))) =
+        d.germLie0 ψ θ' (d.diagLie X) (d.orbitChoiceLie X))
+    (s : ℝ) :
+    d.torusIntegralLie ψ θ' (d.torusOf x') s = d.torusIntegralLie ψ θ' (d.torusOf x) s := by
+  haveI : CompactSpace (d.TorusQuot (d.torusOf x)) := hx.2.2
+  rw [hT]
+  obtain ⟨μ, hμ⟩ := d.exists_isExpCompatT ⟨_, x, hx, rfl⟩
+  let c := d.lieTorusConj g (T := d.torusOf x) rfl
+  let cM := c.toHomeomorph.toMeasurableEquiv
+  have hmap : μ.map c = μ.map cM := rfl
+  unfold torusIntegralLie
+  rw [d.measLieTorus_eq (d.isExpCompatT_map_lieTorusConj g hμ), d.measLieTorus_eq hμ, hmap,
+    integral_map_equiv]
+  refine integral_congr_ae (Eventually.of_forall fun X => ?_)
+  change d.gammaIntegrandLie ψ θ' _ s (((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) *
+      (X : CliffordAlgebra d.QW) *
+      (((g : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW)) =
+    d.gammaIntegrandLie ψ θ' (d.torusOf x) s X
+  unfold gammaIntegrandLie
+  by_cases h : d.IsGammaEltLie (d.torusOf x) X
+  · rw [ite_eq_left ((d.isGammaEltLie_conj_iff g).mpr h), ite_eq_left h, hgerm _ h,
+      d.weylDiscLie_diagLie_conj g X.2.1, d.deltaLie_conj g X.2.1.1]
+  · rw [ite_eq_right h, ite_eq_right (fun h' => h ((d.isGammaEltLie_conj_iff g).mp h'))]
+
+/-- **Reduction of `torusIntegralLie_toSO`** to `ad` matching `𝔱⁰_♮` with `𝔱_♮` (`hnat`) and the
+invariance of the germs `c_{θ, O_X}(X)` of `θ ∘ ad` under `X ↦ g X g⁻¹` between tori of
+`Γ(G,H)` (`hgerm`): `torusIntegralLie_toSO_of` with `torusIntegralLie_conj_of`. -/
+theorem torusIntegralLie_toSO_of_germ_conj
+    (hnat : ∀ (x : ↥(GSpin d.QW)), d.IsGammaElt x → ∀ X : ↥(d.lieTorus (d.torusOf x)),
+      d.IsGammaEltLie (d.torusOf x) X ↔
+        d.luoOf.IsNat ((d.torusOf x).map (d.toGbarU.comp d.diag)) (d.toSOLin (d.diagLie X)))
+    (hgerm : ∀ θ : ↥d.luoOf.lie → ℂ,
+      IsLieQuasiCharacter d.luoOf.Gbar d.luoOf.lie d.luoOf.traceForm ψ θ →
+      ∀ (x x' g : ↥(GSpin d.QW)), d.IsGammaElt x → d.IsGammaElt x' →
+        d.torusOf x' = (d.torusOf x).map (MulAut.conj g).toMonoidHom →
+        ∀ X : CliffordAlgebra d.QW, d.IsGammaEltLie (d.torusOf x) X →
+          d.germLie0 ψ (θ ∘ d.toSO)
+              (d.diagLie (((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) * X *
+                (((g : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW)))
+              (d.orbitChoiceLie (((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) * X *
+                (((g : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW))) =
+            d.germLie0 ψ (θ ∘ d.toSO) (d.diagLie X) (d.orbitChoiceLie X))
+    (e : GammaClass d ≃ d.luoOf.GammaClass)
+    (hen : ∀ c, d.IsNaturalTorusCorr (Quot.out c).1 (Quot.out (e c)).1) :
+    ∃ μT : ∀ T : d.luoOf.GammaTorus, Measure ↥(d.luoOf.lieTorus T.1),
+      (∀ T, d.luoOf.IsExpCompatT T.1 (μT T)) ∧
+      ∀ θ : ↥d.luoOf.lie → ℂ,
+        IsLieQuasiCharacter d.luoOf.Gbar d.luoOf.lie d.luoOf.traceForm ψ θ →
+        (∀ (T : d.GammaTorus) (X : CliffordAlgebra d.QW), d.IsGammaEltLie T.1 X →
+          d.germLie0 ψ (θ ∘ d.toSO) (d.diagLie X) (d.orbitChoiceLie X) =
+            d.luoOf.cTheta ψ θ (d.toSOLin (d.diagLie X))) →
+        ∀ (c : GammaClass d) (s : ℝ), 0 < s →
+          d.torusIntegralLie ψ (θ ∘ d.toSO) (Quot.out c).1 s =
+            ∫ X : ↥(d.luoOf.lieTorus (Quot.out (e c)).1),
+              d.luoOf.gammaIntegrand ψ θ (Quot.out (e c)).1 s X ∂μT (Quot.out (e c)) :=
+  d.torusIntegralLie_toSO_of ψ hnat
+    (fun θ hθ x x' g hx hx' hT s =>
+      d.torusIntegralLie_conj_of ψ hx hT (hgerm θ hθ x x' g hx hx' hT) s) e hen
 
 end GGPData
 
