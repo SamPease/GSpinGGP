@@ -9,13 +9,13 @@ import TauCeti.Analysis.Normed.Module.QuadraticMap
 # The relative Cartan decomposition of `SO(V₀)` with respect to `SO(W)`
 
 Over a non-archimedean (p-adic) field `F`, let `b` be an orthogonal basis of anisotropic vectors
-whose first `l + 1` vectors form a maximal frame for `ν` (`IsFrame`). For `v₀ = b 0`, `W = v₀^⊥`, `G = SO(Q)` and `H = SO(W) = Stab_G(v₀)`
-(`fixer Q b 1`), `relCartan_SO` says: there are compact sets `C_H ⊆ H` and `C ⊆ G` with
-`G = C_H · A_H⁻ · A⁻ · C`, where `A` (`multiTorus hb hf 0`) and `A_H` (`multiTorus hb hf 1`)
-are the split tori of the frame and `A⁻`, `A_H⁻` their contracting chambers (`InChamber`).
-This is the orthogonal analogue of Prop. 11.0.1 in §11 of Beuzart-Plessis's thèse (proved there
-for unitary groups), used for the weak Cartan decomposition of Thesis Prop. 8.3.1 (which also
-covers `ℝ`; only the non-archimedean case is treated here).
+whose first `l + 1` vectors form a maximal frame for `ν` (`IsFrame`). For `v₀ = b 0`, `W = v₀^⊥`,
+`G = SO(Q)` and `H = SO(W) = Stab_G(v₀)` (`fixer Q b 1`), `relCartan_SO` says: there are compact
+sets `C_H ⊆ H` and `C ⊆ G` with `G = C_H · A_H⁻ · A⁻ · C`, where `A` (`multiTorus hb hf 0`) and
+`A_H` (`multiTorus hb hf 1`) are the split tori of the frame and `A⁻`, `A_H⁻` their contracting
+chambers (`InChamber`). This is the orthogonal analogue of Prop. 11.0.1 in §11 of Beuzart-Plessis's
+thèse (proved there for unitary groups), used for the weak Cartan decomposition of Thesis Prop.
+8.3.1 (which also covers `ℝ`; only the non-archimedean case is treated here).
 
 The proof is by downward induction on the level `j` (the group `G_j = fixer Q b j`,
 `relCartan_SO_level_bdd`), for all frames at once:
@@ -25,8 +25,8 @@ The proof is by downward induction on the level `j` (the group `G_j = fixer Q b 
 * `orbit_step`: `G_j = G_{j+1} · a(λ) · C` with `‖λ‖ ≤ 1` (from `orbit_lemma`; directly when
   `span (b j, b (j+1), …)` is a hyperbolic plane);
 * the induction hypothesis is applied to the frame `signBasis id b = ((-1)ⁱ b i)`, whose tori
-  are those of `b` with inverted parameters, and then inverted; this puts the compact factor of `G_{j+2}` on the
-  right, where it commutes with `a(λ)`;
+  are those of `b` with inverted parameters, and then inverted; this puts the compact factor of
+  `G_{j+2}` on the right, where it commutes with `a(λ)`;
 * with at least two pairs, `rotation_lemma` and the norm estimate `norm_param_le` bound `λ` by
   the first coordinate `t₁` of the `G_{j+2}`-torus, `‖λ‖ max(‖t₁‖, ‖t₁‖⁻¹) ≤ C`; after a fixed
   rescaling of `λ` the chamber adjustment `inChamber_cons` applies.
@@ -681,16 +681,16 @@ theorem relCartan_SO (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l) :
 
 /-! ## The weak Cartan decomposition of `SO(W) × SO(V₀)` -/
 
-/-- **The weak Cartan decomposition of `G₀ = SO(W) × SO(V₀)`** (Thesis Prop. 8.3.1 for the
-special orthogonal groups over a non-archimedean (p-adic) field, for the pair of minimal
-parabolics stabilizing the flags of `A_H` and `A`). Scope: this is about `SO`, not `GSpin`; the
-tori and flags are explicit, the pair is the good `P̄_W × P̄_{V₀}` from the proof of Thesis
-Prop. 8.1.1(i), and no parabolic subgroup, goodness or `A₀` is formalised. Elements of `G₀` are written as pairs `(x, y)` with `x ∈ H = SO(W)` (`fixer Q b 1`) and
-`y ∈ SO(V₀)`; `H₀ = SO(W)` is embedded diagonally. With `A₀ = A_H × A` and
-`A₀⁺ = (A_H⁻)⁻¹ × (A⁻)⁻¹` (the chamber expanding both flags), there are compact sets
-`C_H ⊆ H`, `C ⊆ SO(V₀)` with `(x, y) ∈ (h, h) · A₀⁺ · (C_H × C)`. The proof applies
-`relCartan_SO` to the frame with signs `+, −, −, +, +, −, −, …`, which reverses the flag of `A`
-and keeps that of `A_H`, to `x⁻¹ y`. -/
+/-- **The weak Cartan decomposition of `G₀ = SO(W) × SO(V₀)`** (Thesis Prop. 8.3.1 for the special
+orthogonal groups over a non-archimedean (p-adic) field, for the pair of minimal parabolics
+stabilizing the flags of `A_H` and `A`). Scope: this is about `SO`, not `GSpin`; the tori and flags
+are explicit, the pair is the good `P̄_W × P̄_{V₀}` from the proof of Thesis Prop. 8.1.1(i), and no
+parabolic subgroup, goodness or `A₀` is formalised. Elements of `G₀` are written as pairs `(x, y)`
+with `x ∈ H = SO(W)` (`fixer Q b 1`) and `y ∈ SO(V₀)`; `H₀ = SO(W)` is embedded diagonally. With
+`A₀ = A_H × A` and `A₀⁺ = (A_H⁻)⁻¹ × (A⁻)⁻¹` (the chamber expanding both flags), there are compact
+sets `C_H ⊆ H`, `C ⊆ SO(V₀)` with `(x, y) ∈ (h, h) · A₀⁺ · (C_H × C)`. The proof applies
+`relCartan_SO` to the frame with signs `+, −, −, +, +, −, −, …`, which reverses the flag of `A` and
+keeps that of `A_H`, to `x⁻¹ y`. -/
 theorem weakCartan_G0_SO (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l) :
     ∃ C_H C : Set (V ≃ₗ[F] V), IsCompact C_H ∧ C_H ⊆ fixer Q b 1 ∧ IsCompact C ∧
       C ⊆ TauCeti.QuadraticMap.specialOrthogonalGroup Q ∧
