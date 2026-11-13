@@ -24,8 +24,10 @@ the orthogonal analogue of Prop. 11.0.1 in §11 of Beuzart-Plessis's thèse).
   `⟨u₁⟩ ⊂ ⟨u₁, u₂⟩ ⊂ …`, i.e. `|α| ≤ 1` for every root `α` of that flag stabilizer:
   `tᵢ / tₖ` and `tᵢ tₖ` for `i < k`, and `tᵢ` when the anisotropic part of level `j` is nonzero
   (types B, D and, for one pair without anisotropic part, the torus T).
-* `signBasis b`: the basis `((-1)ⁱ b i)`; it is again a frame, it has the same fixers and the
-  same tori with inverted parameters (`multiTorus_signBasis`), so both flags are reversed.
+* `signBasis e b`: the basis `((-1)^{e i} b i)`; it is again a frame with the same fixers, and
+  the torus of a pair is unchanged or inverted according as its two signs agree or not
+  (`levelTorus_signBasis`, `multiTorus_signBasis_of_even`, `multiTorus_signBasis_of_odd`). For
+  `e = id` both flags are reversed.
 * `inChamber_cons`: the chamber adjustment for the induction.
 -/
 
@@ -207,26 +209,28 @@ end Multi
 
 section Sign
 
-/-- The basis `((-1)ⁱ b i)`. -/
-def signBasis (b : Module.Basis (Fin n) F V) : Module.Basis (Fin n) F V :=
-  b.unitsSMul fun i => (-1) ^ i.val
+variable (e : ℕ → ℕ)
 
-theorem signBasis_apply (i : Fin n) : signBasis b i = ((-1 : F) ^ i.val) • b i := by
+/-- The basis `((-1)^{e i} b i)`. -/
+def signBasis (b : Module.Basis (Fin n) F V) : Module.Basis (Fin n) F V :=
+  b.unitsSMul fun i => (-1) ^ e i.val
+
+theorem signBasis_apply (i : Fin n) : signBasis e b i = ((-1 : F) ^ e i.val) • b i := by
   rw [signBasis, Module.Basis.unitsSMul_apply, Units.smul_def]; simp
 
 theorem sign_sq (i : ℕ) : ((-1 : F) ^ i) * (-1) ^ i = 1 := by
   rw [← mul_pow]; simp
 
-theorem apply_signBasis (i : Fin n) : Q (signBasis b i) = Q (b i) := by
+theorem apply_signBasis (i : Fin n) : Q (signBasis e b i) = Q (b i) := by
   rw [signBasis_apply, QuadraticMap.map_smul, smul_eq_mul, sign_sq, one_mul]
 
 theorem signBasis_repr (x : V) (i : Fin n) :
-    (signBasis b).repr x i = (-1 : F) ^ i.val * b.repr x i := by
+    (signBasis e b).repr x i = (-1 : F) ^ e i.val * b.repr x i := by
   rw [signBasis, Module.Basis.repr_unitsSMul, Units.smul_def]
   simp [← inv_pow]
 
 theorem _root_.GSpinGGP.IsOrthoBasis.signBasis (hb : IsOrthoBasis Q b) :
-    IsOrthoBasis Q (signBasis b) where
+    IsOrthoBasis Q (signBasis e b) where
   isOrtho i j hij := by
     rw [signBasis_apply, signBasis_apply]
     rw [← QuadraticMap.isOrtho_polarBilin, QuadraticMap.polarBilin_apply_apply, polar_smul_left,
@@ -235,7 +239,7 @@ theorem _root_.GSpinGGP.IsOrthoBasis.signBasis (hb : IsOrthoBasis Q b) :
   apply_ne_zero i := by rw [apply_signBasis]; exact hb.apply_ne_zero i
 
 theorem IsFrame.signBasis {ν : F} {l : ℕ} (hf : IsFrame Q b ν l) :
-    IsFrame Q (signBasis b) ν l where
+    IsFrame Q (signBasis e b) ν l where
   lt := hf.lt
   apply_eq i hi := by rw [apply_signBasis]; exact hf.apply_eq i hi
   maximal x hx := hf.maximal x fun i hi => by
@@ -243,67 +247,92 @@ theorem IsFrame.signBasis {ν : F} {l : ℕ} (hf : IsFrame Q b ν l) :
     rw [signBasis_repr] at this
     exact (mul_eq_zero.1 this).resolve_left (pow_ne_zero _ (by norm_num))
 
-theorem fixer_signBasis (j : ℕ) : fixer Q (signBasis b) j = fixer Q b j := by
+theorem fixer_signBasis (j : ℕ) : fixer Q (signBasis e b) j = fixer Q b j := by
   ext g
   simp only [mem_fixer_iff, signBasis_apply, map_smul]
   refine and_congr_right fun _ => forall_congr' fun i => imp_congr_right fun _ => ?_
   exact smul_right_inj (pow_ne_zero _ (by norm_num))
 
-/-- Changing the relative sign of the pair inverts the torus. -/
+/-- Changing the signs of the basis: the torus of the pair `(b j, b (j+1))` is unchanged if the
+two signs agree and inverted if they differ. -/
 theorem levelTorus_signBasis {ν : F} {l : ℕ} (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l)
     (j : ℕ) (t : Fˣ) :
-    levelTorus hb.signBasis hf.signBasis j t = levelTorus hb hf j t⁻¹ := by
+    levelTorus (hb.signBasis e) (hf.signBasis e) j t =
+      levelTorus hb hf j (if Odd (e j + e (j + 1)) then t⁻¹ else t) := by
+  set t' : Fˣ := if Odd (e j + e (j + 1)) then t⁻¹ else t
+  set σ : F := (-1) ^ e j with hσd
+  set σ' : F := (-1) ^ e (j + 1) with hσd'
+  have hσ : σ * σ = 1 := sign_sq _
+  have hσ' : σ' * σ' = 1 := sign_sq _
+  have hσ2 : σ ^ 2 = 1 := by rw [_root_.sq]; exact hσ
+  have hσ2' : σ' ^ 2 = 1 := by rw [_root_.sq]; exact hσ'
+  have hc : ((t' : F) + (t' : F)⁻¹) / 2 = ((t : F) + (t : F)⁻¹) / 2 := by
+    simp only [t']; split_ifs <;> simp [add_comm]
+  have hs : ((t' : F) - (t' : F)⁻¹) / 2 = σ * σ' * (((t : F) - (t : F)⁻¹) / 2) := by
+    have hδ : σ * σ' = (-1) ^ (e j + e (j + 1)) := by rw [pow_add]
+    simp only [t']; split_ifs with h
+    · rw [hδ, h.neg_one_pow]; simp; ring
+    · rw [hδ, (Nat.not_odd_iff_even.1 h).neg_one_pow]; ring
   by_cases hj : j + 1 ≤ l
   · rw [levelTorus_of_le _ _ hj, levelTorus_of_le _ _ hj]
     refine b.ext' fun m => ?_
-    have hσ : ((-1 : F) ^ j) * (-1) ^ j = 1 := sign_sq j
     by_cases hm₀ : m = ⟨j, hf.idx_lt (by omega)⟩
     · subst hm₀
-      have e := pairTorus_apply_left hb.signBasis
-        (idx_ne (hf.idx_lt (by omega)) (hf.idx_lt hj)) (hf.signBasis.apply_left hj)
-        (hf.signBasis.apply_right hj) t
-      simp only [signBasis_apply, map_smul, pow_succ] at e
-      rw [pairTorus_apply_left]
-      have e2 := congrArg (fun v => ((-1 : F) ^ j) • v) e
-      simp only [smul_smul, hσ, one_smul] at e2
-      rw [e2]
-      simp only [Units.val_inv_eq_inv_val, inv_inv, smul_add, smul_smul]
-      rw [show ((-1 : F) ^ j * ((((t : F) - (t : F)⁻¹) / 2) * ((-1) ^ j * -1))) =
-        ((t : F)⁻¹ - t) / 2 by linear_combination (((t : F) - (t : F)⁻¹) / 2 * (-1)) * hσ,
-        show ((-1 : F) ^ j * ((((t : F) + (t : F)⁻¹) / 2) * (-1) ^ j)) =
-        ((t : F)⁻¹ + t) / 2 by linear_combination (((t : F) + (t : F)⁻¹) / 2) * hσ]
+      have e0 := pairTorus_apply_left (hb.signBasis e)
+        (idx_ne (hf.idx_lt (by omega)) (hf.idx_lt hj)) ((hf.signBasis e).apply_left hj)
+        ((hf.signBasis e).apply_right hj) t
+      simp only [signBasis_apply, map_smul] at e0
+      rw [← hσd, ← hσd'] at e0
+      rw [pairTorus_apply_left, hc, hs]
+      calc _ = σ • σ • _ := by rw [smul_smul, hσ, one_smul]
+        _ = _ := by
+          rw [e0, smul_add, smul_smul, smul_smul, smul_smul, smul_smul]
+          congr 1 <;> congr 1 <;> (ring_nf; try simp only [hσ2]; try ring)
     by_cases hm₁ : m = ⟨j + 1, hf.idx_lt hj⟩
     · subst hm₁
-      have e := pairTorus_apply_right hb.signBasis
-        (idx_ne (hf.idx_lt (by omega)) (hf.idx_lt hj)) (hf.signBasis.apply_left hj)
-        (hf.signBasis.apply_right hj) t
-      simp only [signBasis_apply, map_smul, pow_succ] at e
-      rw [pairTorus_apply_right]
-      have e2 := congrArg (fun v => (-((-1 : F) ^ j)) • v) e
-      simp only [smul_smul] at e2
-      rw [show -(-1 : F) ^ j * ((-1) ^ j * -1) = 1 by linear_combination hσ, one_smul] at e2
-      rw [e2]
-      simp only [Units.val_inv_eq_inv_val, inv_inv, smul_add, smul_smul]
-      rw [show -((-1 : F) ^ j) * ((((t : F) - (t : F)⁻¹) / 2) * (-1) ^ j) =
-        ((t : F)⁻¹ - t) / 2 by linear_combination (-(((t : F) - (t : F)⁻¹) / 2)) * hσ,
-        show -((-1 : F) ^ j) * ((((t : F) + (t : F)⁻¹) / 2) * ((-1) ^ j * -1)) =
-        ((t : F)⁻¹ + t) / 2 by linear_combination (((t : F) + (t : F)⁻¹) / 2) * hσ]
-    · have e := pairTorus_apply_basis_of_ne hb.signBasis
-        (idx_ne (hf.idx_lt (by omega)) (hf.idx_lt hj)) (hf.signBasis.apply_left hj)
-        (hf.signBasis.apply_right hj) t hm₀ hm₁
-      rw [signBasis_apply, map_smul] at e
+      have e0 := pairTorus_apply_right (hb.signBasis e)
+        (idx_ne (hf.idx_lt (by omega)) (hf.idx_lt hj)) ((hf.signBasis e).apply_left hj)
+        ((hf.signBasis e).apply_right hj) t
+      simp only [signBasis_apply, map_smul] at e0
+      rw [← hσd, ← hσd'] at e0
+      rw [pairTorus_apply_right, hc, hs]
+      calc _ = σ' • σ' • _ := by rw [smul_smul, hσ', one_smul]
+        _ = _ := by
+          rw [e0, smul_add, smul_smul, smul_smul, smul_smul, smul_smul]
+          congr 1 <;> congr 1 <;> (ring_nf; try simp only [hσ2']; try ring)
+    · have e0 := pairTorus_apply_basis_of_ne (hb.signBasis e)
+        (idx_ne (hf.idx_lt (by omega)) (hf.idx_lt hj)) ((hf.signBasis e).apply_left hj)
+        ((hf.signBasis e).apply_right hj) t hm₀ hm₁
+      rw [signBasis_apply, map_smul] at e0
       rw [pairTorus_apply_basis_of_ne _ _ _ _ _ hm₀ hm₁]
-      exact (smul_right_injective V (pow_ne_zero m.val (by norm_num : (-1 : F) ≠ 0))) e
+      exact (smul_right_injective V (pow_ne_zero _ (by norm_num : (-1 : F) ≠ 0))) e0
   · simp [levelTorus_of_not_le _ _ hj]
 
-theorem multiTorus_signBasis {ν : F} {l : ℕ} (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l)
-    (ts : List Fˣ) :
-    ∀ j, multiTorus hb.signBasis hf.signBasis j ts = multiTorus hb hf j (ts.map (·⁻¹)) := by
+/-- If every pair of level `j` changes relative sign, the level-`j` torus is inverted. -/
+theorem multiTorus_signBasis_of_odd {ν : F} {l : ℕ} (hb : IsOrthoBasis Q b)
+    (hf : IsFrame Q b ν l) (ts : List Fˣ) :
+    ∀ j, (∀ k, Odd (e (j + 2 * k) + e (j + 2 * k + 1))) →
+      multiTorus (hb.signBasis e) (hf.signBasis e) j ts = multiTorus hb hf j (ts.map (·⁻¹)) := by
   induction ts with
-  | nil => intro j; rfl
+  | nil => intro j _; rfl
   | cons t ts ih =>
-    intro j
-    rw [List.map_cons, multiTorus_cons, multiTorus_cons, ih, levelTorus_signBasis]
+    intro j h
+    rw [List.map_cons, multiTorus_cons, multiTorus_cons, ih (j + 2) (fun k => by
+      have := h (k + 1); rwa [show j + 2 * (k + 1) = j + 2 + 2 * k by ring] at this),
+      levelTorus_signBasis, ite_eq_left (by simpa using h 0)]
+
+/-- If no pair of level `j` changes relative sign, the level-`j` torus is unchanged. -/
+theorem multiTorus_signBasis_of_even {ν : F} {l : ℕ} (hb : IsOrthoBasis Q b)
+    (hf : IsFrame Q b ν l) (ts : List Fˣ) :
+    ∀ j, (∀ k, Even (e (j + 2 * k) + e (j + 2 * k + 1))) →
+      multiTorus (hb.signBasis e) (hf.signBasis e) j ts = multiTorus hb hf j ts := by
+  induction ts with
+  | nil => intro j _; rfl
+  | cons t ts ih =>
+    intro j h
+    rw [multiTorus_cons, multiTorus_cons, ih (j + 2) (fun k => by
+      have := h (k + 1); rwa [show j + 2 * (k + 1) = j + 2 + 2 * k by ring] at this),
+      levelTorus_signBasis, ite_eq_right (Nat.not_odd_iff_even.2 (by simpa using h 0))]
 
 end Sign
 

@@ -23,12 +23,15 @@ The proof is by downward induction on the level `j` (the group `G_j = fixer Q b 
   maximality), so `G_l` is bounded (`exists_bound_fixer_top`);
 * `orbit_step`: `G_j = G_{j+1} · a(λ) · C` with `‖λ‖ ≤ 1` (from `orbit_lemma`; directly when
   `span (b j, b (j+1), …)` is a hyperbolic plane);
-* the induction hypothesis is applied to the frame `signBasis b`, whose tori are those of `b`
+* the induction hypothesis is applied to the frame `signBasis id b = ((-1)ⁱ b i)`, whose tori are those of `b`
   with inverted parameters, and then inverted; this puts the compact factor of `G_{j+2}` on the
   right, where it commutes with `a(λ)`;
 * with at least two pairs, `rotation_lemma` and the norm estimate `norm_param_le` bound `λ` by
   the first coordinate `t₁` of the `G_{j+2}`-torus, `‖λ‖ max(‖t₁‖, ‖t₁‖⁻¹) ≤ C`; after a fixed
   rescaling of `λ` the chamber adjustment `inChamber_cons` applies.
+
+`weakCartan_G0_SO` deduces the weak Cartan decomposition of `SO(W) × SO(V₀)` relative to the
+diagonal `SO(W)` (Thesis Prop. 8.3.1 for special orthogonal groups).
 -/
 
 noncomputable section
@@ -509,20 +512,23 @@ theorem relCartan_SO_level_bdd (d : ℕ) :
     set κ := adjBound Q b
     have hκ : 0 ≤ κ := mul_nonneg (norm_nonneg _) (norm_nonneg _)
     -- the induction hypothesis for the frame with alternating signs, inverted
-    obtain ⟨M₂', hM₂'⟩ := ih (signBasis b) hb.signBasis hf.signBasis (j + 1) (by omega)
+    obtain ⟨M₂', hM₂'⟩ := ih (signBasis id b) (hb.signBasis id) (hf.signBasis id) (j + 1) (by omega)
     obtain ⟨M₂, hM₂⟩ := exists_basisOpNorm_le_of_isCompact (b := b)
-      (isCompact_specialOrthogonal_setOf_basisOpNorm_le hb.signBasis M₂')
+      (isCompact_specialOrthogonal_setOf_basisOpNorm_le (hb.signBasis id) M₂')
     have hdec : ∀ h ∈ fixer Q b (j + 1), ∃ k ∈ fixer Q b (j + 1),
         basisOpNorm b (k : V →ₗ[F] V) ≤ κ * M₂ ∧ ∃ s, InChamber n l (j + 1) s ∧
           ∃ t, InChamber n l (j + 2) t ∧ ∃ k' ∈ fixer Q b (j + 2),
             basisOpNorm b (k' : V →ₗ[F] V) ≤ κ * M₂ ∧
               h = k * multiTorus hb hf (j + 1) s * multiTorus hb hf (j + 2) t * k' := by
       intro h hh
-      rw [← fixer_signBasis] at hh
+      have hodd : ∀ i k, Odd (id (i + 2 * k) + id (i + 2 * k + 1)) := fun i k =>
+        ⟨i + 2 * k, by simp only [id]; ring⟩
+      rw [← fixer_signBasis id] at hh
       obtain ⟨k₁, hk₁, hk₁M, s₁, hs₁, s₂, hs₂, c₁, hc₁, hc₁M, he⟩ := hM₂' h⁻¹ (inv_mem hh)
-      have hk₁' : k₁ ∈ fixer Q b (j + 2) := by rw [← fixer_signBasis]; exact hk₁
-      have hc₁' : c₁ ∈ fixer Q b (j + 1) := by rw [← fixer_signBasis]; exact hc₁
-      rw [multiTorus_signBasis hb hf, multiTorus_signBasis hb hf, multiTorus_map_inv hb hf,
+      have hk₁' : k₁ ∈ fixer Q b (j + 2) := by rw [← fixer_signBasis id]; exact hk₁
+      have hc₁' : c₁ ∈ fixer Q b (j + 1) := by rw [← fixer_signBasis id]; exact hc₁
+      rw [multiTorus_signBasis_of_odd id hb hf _ _ (hodd _),
+        multiTorus_signBasis_of_odd id hb hf _ _ (hodd _), multiTorus_map_inv hb hf,
         multiTorus_map_inv hb hf] at he
       refine ⟨c₁⁻¹, inv_mem hc₁', bnd_inv hb (mem_orthogonalGroup_of_mem_fixer hc₁')
         (hM₂ c₁ ⟨hc₁.1, hc₁M⟩), s₂, hs₂, s₁, hs₁, k₁⁻¹, inv_mem hk₁',
@@ -669,6 +675,42 @@ theorem relCartan_SO (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l) :
   obtain ⟨C_H, C, h1, h2, h3, h4, h5⟩ := relCartan_SO_level hb hf (Nat.zero_le l)
   rw [fixer_zero] at h4 h5
   exact ⟨C_H, C, h1, h2, h3, h4, h5⟩
+
+/-! ## The weak Cartan decomposition of `SO(W) × SO(V₀)` -/
+
+/-- **The weak Cartan decomposition of `G₀ = SO(W) × SO(V₀)`** (Thesis Prop. 8.3.1 for the
+special orthogonal groups, for the pair of minimal parabolics stabilizing the flags of `A_H` and
+`A`). Elements of `G₀` are written as pairs `(x, y)` with `x ∈ H = SO(W)` (`fixer Q b 1`) and
+`y ∈ SO(V₀)`; `H₀ = SO(W)` is embedded diagonally. With `A₀ = A_H × A` and
+`A₀⁺ = (A_H⁻)⁻¹ × (A⁻)⁻¹` (the chamber expanding both flags), there are compact sets
+`C_H ⊆ H`, `C ⊆ SO(V₀)` with `(x, y) ∈ (h, h) · A₀⁺ · (C_H × C)`. The proof applies
+`relCartan_SO` to the frame with signs `+, −, −, +, +, −, −, …`, which reverses the flag of `A`
+and keeps that of `A_H`, to `x⁻¹ y`. -/
+theorem weakCartan_G0_SO (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l) :
+    ∃ C_H C : Set (V ≃ₗ[F] V), IsCompact C_H ∧ C_H ⊆ fixer Q b 1 ∧ IsCompact C ∧
+      C ⊆ TauCeti.QuadraticMap.specialOrthogonalGroup Q ∧
+        ∀ x ∈ fixer Q b 1, ∀ y ∈ TauCeti.QuadraticMap.specialOrthogonalGroup Q,
+          ∃ h ∈ fixer Q b 1, ∃ s, InChamber n l 1 s ∧ ∃ t, InChamber n l 0 t ∧
+            ∃ k_H ∈ C_H, ∃ k ∈ C, x = h * (multiTorus hb hf 1 s)⁻¹ * k_H ∧
+              y = h * (multiTorus hb hf 0 t)⁻¹ * k := by
+  set e : ℕ → ℕ := fun i => (i + 1) / 2
+  have hodd : ∀ k, Odd (e (0 + 2 * k) + e (0 + 2 * k + 1)) := fun k =>
+    Nat.odd_iff.2 (by simp only [e]; omega)
+  have heven : ∀ k, Even (e (1 + 2 * k) + e (1 + 2 * k + 1)) := fun k =>
+    Nat.even_iff.2 (by simp only [e]; omega)
+  obtain ⟨C_H, C, h1, h2, h3, h4, h5⟩ := relCartan_SO (hb.signBasis e) (hf.signBasis e)
+  rw [fixer_signBasis] at h2
+  refine ⟨C_H⁻¹, C, h1.inv, fun z hz => by simpa using inv_mem (h2 hz), h3, h4,
+    fun x hx y hy => ?_⟩
+  obtain ⟨k₁, hk₁, s, hs, t, ht, c, hc, he⟩ :=
+    h5 (x⁻¹ * y) (mul_mem (inv_mem hx.1) hy)
+  rw [multiTorus_signBasis_of_even e hb hf s 1 heven,
+    multiTorus_signBasis_of_odd e hb hf t 0 hodd, multiTorus_map_inv] at he
+  refine ⟨x * k₁ * multiTorus hb hf 1 s, mul_mem (mul_mem hx (h2 hk₁))
+    (multiTorus_mem_fixer hb hf s 1), s, hs, t, ht, k₁⁻¹, by simpa using hk₁, c, hc,
+    by group, ?_⟩
+  have : y = x * (x⁻¹ * y) := by group
+  rw [this, he]; group
 
 end WeakCartan
 
