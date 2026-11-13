@@ -29,6 +29,7 @@ namespace GGPData
 
 variable (d : GGPData F)
 
+set_option maxHeartbeats 500000 in -- cumulative: several `exp` nbhds and two measure maps
 /-- **`exp`-compatibility transfers to Luo's side** (Thesis §5.2, §12.4): for an isomorphism
 `e_H : H(F)/A_{G,H}(F) ≃ H̄(F)` induced by `G → Ḡ`, the push-forwards `(e_H)_* dh` and
 `ad_* measH0` are `exp`-compatible. Near `0`, `e_H` carries `{e^X A_{G,H}(F) : X ∈ S}` onto

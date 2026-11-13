@@ -109,7 +109,6 @@ theorem eventually_mul_mem_flagUnipSO (Fl : IsotropicFlag Q) :
         ((b : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) = expA F (p.1 + p.2) →
         a * b ∈ flagUnipSO Fl := by
   haveI : IsModuleTopology F (Module.End F V) := ⟨rfl⟩
-  set O := (bform Q).orthogonal Fl.top with hO
   let S := flagStabEnd Fl
   let I := flagRaising Fl
   have hIS : ∀ T ∈ I, T ∈ S := fun T hT => flagRaising_le_flagStabEnd Fl hT
@@ -154,7 +153,7 @@ theorem eventually_mul_mem_flagUnipSO (Fl : IsotropicFlag Q) :
   set N := adV Q p.2 with hNdef
   have hAS : A ∈ S := by
     refine ⟨hAflag, fun v hv => ?_⟩
-    rw [hO, LinearMap.BilinForm.mem_orthogonal_iff] at hv ⊢
+    rw [LinearMap.BilinForm.mem_orthogonal_iff] at hv ⊢
     intro t ht
     change bform Q t (A v) = 0
     rw [bform_comm, bform_adV hA, bform_comm]
@@ -605,8 +604,8 @@ theorem eventually_exists_sub_algebraMap_mem_lieH0 :
     linear_combination -this
   subst hc
   -- `ad(S₂ − φ S₁)` is flag-raising
-  have hone : algebraMap F (CliffordAlgebra d.QV) c₁ ∈ gspin d.QV :=
-    (gspin d.QV).algebraMap_mem c₁
+  have hone : algebraMap F (CliffordAlgebra d.QV) c₁ ∈ gspin d.QV := by
+    rw [Algebra.algebraMap_eq_smul_one]; exact (gspin d.QV).smul_mem c₁ (one_mem_gspin d.QV)
   have hPa : ((specP d.QV (d.incl (d.fst h)) : d.V ≃ₗ[F] d.V) : Module.End F d.V) =
       expA F (adV d.QV (φ W.1)) := by
     refine h3 (show φ W.1 ∈ gspin d.QV by rw [hφW1]; exact add_mem hone hφS₁.1) _ ?_
