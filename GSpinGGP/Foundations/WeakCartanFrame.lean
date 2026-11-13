@@ -111,11 +111,11 @@ variable (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l)
 theorem levelTorus_of_le {j : ℕ} (hj : j + 1 ≤ l) (t : Fˣ) :
     levelTorus hb hf j t = pairTorus hb (idx_ne (hf.idx_lt (by omega)) (hf.idx_lt hj))
       (hf.apply_left hj) (hf.apply_right hj) t := by
-  rw [levelTorus, dif_pos hj]
+  rw [levelTorus, dite_eq_left hj]
 
 theorem levelTorus_of_not_le {j : ℕ} (hj : ¬ j + 1 ≤ l) (t : Fˣ) :
     levelTorus hb hf j t = 1 := by
-  rw [levelTorus, dif_neg hj]
+  rw [levelTorus, dite_eq_right hj]
 
 theorem levelTorus_mul (j : ℕ) (s t : Fˣ) :
     levelTorus hb hf j (s * t) = levelTorus hb hf j s * levelTorus hb hf j t := by
@@ -225,7 +225,8 @@ theorem signBasis_repr (x : V) (i : Fin n) :
   rw [signBasis, Module.Basis.repr_unitsSMul, Units.smul_def]
   simp [← inv_pow]
 
-theorem _root_.GSpinGGP.IsOrthoBasis.signBasis (hb : IsOrthoBasis Q b) : IsOrthoBasis Q (signBasis b) where
+theorem _root_.GSpinGGP.IsOrthoBasis.signBasis (hb : IsOrthoBasis Q b) :
+    IsOrthoBasis Q (signBasis b) where
   isOrtho i j hij := by
     rw [signBasis_apply, signBasis_apply]
     rw [← QuadraticMap.isOrtho_polarBilin, QuadraticMap.polarBilin_apply_apply, polar_smul_left,

@@ -86,7 +86,7 @@ theorem IsFrame.anisotropic (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l) {x :
     intro i hi
     rw [hy, map_sub, map_smul, Finsupp.sub_apply, Finsupp.smul_apply, b.repr_self]
     rcases lt_or_eq_of_le hi with hi | hi
-    · rw [hx i hi, Finsupp.single_apply, if_neg (by simp [il, Fin.ext_iff]; omega)]; simp
+    · rw [hx i hi, Finsupp.single_apply, ite_eq_right (by simp [il, Fin.ext_iff]; omega)]; simp
     · have : i = il := Fin.ext hi
       subst this; simp [c]
   have hpol : polar Q (b il) y = 0 := by
@@ -102,7 +102,7 @@ theorem IsFrame.anisotropic (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l) {x :
     by_contra hx0
     have hy0 : y ≠ 0 := hxy ▸ hx0
     obtain ⟨m, hm⟩ : ∃ m, b.repr y m ≠ 0 := by
-      by_contra h; push_neg at h
+      by_contra h; push Not at h
       exact hy0 (b.repr.injective (by ext m; simp [h m]))
     have hml : l < m.val := by
       by_contra h; exact hm (hyl m (by omega))
@@ -112,7 +112,7 @@ theorem IsFrame.anisotropic (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l) {x :
     set α := ((-1) ^ (l + 1) * ν - Q (b m)) / polar Q y (b m)
     refine hf.maximal (α • y + b m) (fun i hi => ?_) ?_
     · rw [map_add, map_smul, Finsupp.add_apply, Finsupp.smul_apply, hyl i hi, b.repr_self,
-        Finsupp.single_apply, if_neg (by simp [Fin.ext_iff]; omega)]
+        Finsupp.single_apply, ite_eq_right (by simp [Fin.ext_iff]; omega)]
       simp
     · rw [QuadraticMap.map_add Q, QuadraticMap.map_smul, hQy, polar_smul_left]
       simp only [smul_eq_mul, mul_zero, zero_add, α]
@@ -167,7 +167,7 @@ theorem exists_bound_fixer_top (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l) :
   · refine le_max_of_le_right ?_
     let y : P := ⟨b.equivFun (g (b m)), fun i hi => by
       simpa using repr_apply_eq_zero_of_mem_fixer hb hg hi (x := b m)
-        (by rw [b.repr_self, Finsupp.single_apply, if_neg (by simp [Fin.ext_iff]; omega)])⟩
+        (by rw [b.repr_self, Finsupp.single_apply, ite_eq_right (by simp [Fin.ext_iff]; omega)])⟩
     have h1 := hcle y
     have hQy : Q' y = Q (b m) := by
       simp only [Q', y, QuadraticMap.comp_apply, LinearMap.comp_apply, Submodule.subtype_apply,
@@ -193,7 +193,7 @@ theorem isClosed_fixer (j : ℕ) : IsClosed (fixer Q b j : Set (V ≃ₗ[F] V)) 
     convert isClosed_eq hφ
       (continuous_const : Continuous fun _ : V ≃ₗ[F] V => b.equivFun (b i)) using 1
     ext g
-    simp only [φ, Set.mem_setOf_eq, LinearMap.comp_apply, LinearMap.applyₗ_apply_apply,
+    simp only [φ, Set.mem_ofPred_eq, LinearMap.comp_apply, LinearMap.applyₗ_apply_apply,
       LinearEquiv.coe_coe]
     exact b.equivFun.injective.eq_iff.symm
   have : (fixer Q b j : Set (V ≃ₗ[F] V)) =
@@ -215,7 +215,7 @@ theorem isCompact_fixerBall (hb : IsOrthoBasis Q b) (j : ℕ) (M : ℝ) :
   convert (isCompact_specialOrthogonal_setOf_basisOpNorm_le hb M).inter_right
     (isClosed_fixer (Q := Q) (b := b) j) using 1
   ext g
-  simp only [fixerBall, Set.mem_setOf_eq, Set.mem_inter_iff, SetLike.mem_coe]
+  simp only [fixerBall, Set.mem_ofPred_eq, Set.mem_inter_iff, SetLike.mem_coe]
   exact ⟨fun ⟨h1, h2⟩ => ⟨⟨h1.1, h2⟩, h1⟩, fun ⟨⟨_, h2⟩, h1⟩ => ⟨h1, h2⟩⟩
 
 /-! ## The orbit step -/
@@ -241,7 +241,7 @@ theorem orbit_step (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l) {j : ℕ} (hj
   have hv : ∀ g ∈ fixer Q b j, (∀ k : Fin n, k.val < j → b.repr (g⁻¹ (b i₀)) k = 0) ∧
       Q (g⁻¹ (b i₀)) = (-1) ^ j * ν := fun g hg => by
     refine ⟨fun k hk => repr_apply_eq_zero_of_mem_fixer hb (inv_mem hg) hk ?_, ?_⟩
-    · rw [b.repr_self, Finsupp.single_apply, if_neg (by simp [i₀, Fin.ext_iff]; omega)]
+    · rw [b.repr_self, Finsupp.single_apply, ite_eq_right (by simp [i₀, Fin.ext_iff]; omega)]
     · rw [TauCeti.QuadraticMap.map_app_of_mem_orthogonalGroup
         (mem_orthogonalGroup_of_mem_fixer (inv_mem hg)), h₀]
   -- assembling `g = h₀ a(λ) c` from `c g⁻¹ (b j) = a(λ)⁻¹ (b j)`
@@ -301,29 +301,29 @@ theorem orbit_step (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l) {j : ℕ} (hj
       exact inv_eq_of_mul_eq_one_right (by linear_combination hQv)
     have he : (1 : V ≃ₗ[F] V) (g⁻¹ (b i₀)) = (pairTorus hb hne h₀ h₁ lam)⁻¹ (b i₀) := by
       rw [pairTorus_inv_apply_left]
-      show v = _
+      change v = _
       refine b.repr.injective (Finsupp.ext fun k => ?_)
       simp only [map_add, map_smul, map_sub, Finsupp.add_apply, Finsupp.smul_apply,
         Finsupp.sub_apply, b.repr_self, Finsupp.single_apply, smul_eq_mul]
       rw [mul_inv, hinv]
       by_cases hk0 : k = i₀
       · subst hk0
-        simp only [if_pos rfl, if_neg hne.symm, Units.val_mk0]
+        simp only [ite_eq_right hne.symm]
         change x = _
         field_simp
-        simp only [ite_true, mul_one, one_mul]
+        simp only [ite_true]
         rw [show (lam : F) = x - y from rfl]; ring
       by_cases hk1 : k = i₁
       · subst hk1
-        simp only [if_pos rfl, if_neg hne, Units.val_mk0]
+        simp only [ite_eq_right hne]
         change y = _
         field_simp
-        simp only [ite_true, mul_one, one_mul]
+        simp only [ite_true]
         rw [show (lam : F) = x - y from rfl]; ring
-      rw [hother k hk0 hk1, if_neg (Ne.symm hk0), if_neg (Ne.symm hk1)]; ring
+      rw [hother k hk0 hk1, ite_eq_right (Ne.symm hk0), ite_eq_right (Ne.symm hk1)]; ring
     obtain ⟨hh, hg'⟩ := hassemble g hg lam 1 (one_mem _) he
     refine ⟨_, hh, lam, fun h => absurd h hn, 1, one_mem _, basisOpNorm_id_le, ?_⟩
-    simpa using hg'
+    simp
 
 /-! ## The norm estimate for the parameter `λ` -/
 
@@ -442,7 +442,7 @@ theorem norm_param_le (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l) {j : ℕ} 
       _ = κ * M * M * ‖(2 : F)‖⁻¹ * ε⁻¹ := by field_simp
   -- `a'⁻¹ w₂ = k' x`
   have hk'x : a'⁻¹ w₂ = k' x := by
-    show _ = k' ((k'⁻¹ * a'⁻¹) w₂)
+    change _ = k' ((k'⁻¹ * a'⁻¹) w₂)
     rw [← LinearEquiv.mul_apply, mul_inv_cancel_left]
   have hn2 : ‖(lam : F)‖ * basisNorm b (a'⁻¹ w₂) ≤ M * C₀ := by
     rw [hk'x]
@@ -461,10 +461,10 @@ theorem norm_param_le (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l) {j : ℕ} 
   set c1 : F := ((t : F)⁻¹ - t) / 2
   have hc0 : ‖c0‖ ≤ basisNorm b (a'⁻¹ w₂) := by
     refine le_trans (le_of_eq ?_) (norm_repr_le_basisNorm _ ⟨j + 2, hf.idx_lt (by omega)⟩)
-    rw [ha'inv]; simp [w₂, w₃, Finsupp.single_apply, Fin.ext_iff]
+    rw [ha'inv]; simp [w₂, w₃, Fin.ext_iff]
   have hc1 : ‖c1‖ ≤ basisNorm b (a'⁻¹ w₂) := by
     refine le_trans (le_of_eq ?_) (norm_repr_le_basisNorm _ ⟨j + 3, hf.idx_lt (by omega)⟩)
-    rw [ha'inv]; simp [w₂, w₃, Finsupp.single_apply, Fin.ext_iff]
+    rw [ha'inv]; simp [w₂, w₃, Fin.ext_iff]
   have ht : ‖(t : F)‖ ≤ basisNorm b (a'⁻¹ w₂) := by
     have : (t : F) = c0 + -c1 := by simp only [c0, c1]; ring
     rw [this]
