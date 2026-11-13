@@ -62,12 +62,12 @@ def torusQuotHomeomorph (T : Subgroup ↥(GSpin d.QW)) [CompactSpace (d.TorusQuo
     ((d.torusQuotHomeomorph T q : ↥(T.map (d.toGbarU.comp d.diag))) : d.luoOf.Ambˣ) =
       d.torusQuotMap T q := rfl
 
-set_option maxHeartbeats 400000 in -- cumulative: `exp` nbhds and two measure maps
 /-- **`ad : 𝔱⁰ ≃ 𝔱` carries `ν(T) dX` to `ν(φ(T)) dX`** (Thesis §12.1; Luo §7.1) for
 `x ∈ Γ(G,H)`, `T = T_x`: if `μ` on `𝔱⁰(F)` is compatible through `exp` with the probability Haar
 measure on `T(F)/A_{G,H}(F)`, then `ad_* μ` on Luo's `𝔱(F)` is compatible through `exp` with the
 probability Haar measure on `φ(T)(F)`. Near `0`, `T(F)/A_{G,H}(F) ≃ φ(T)(F)`
-(`torusQuotHomeomorph`, which carries probability Haar measure to probability Haar measure) maps
+(`torusQuotHomeomorph`, which carries probability Haar measure to probability Haar measure,
+`probHaar_preimage`) maps
 `{e^X A_{G,H}(F) : X ∈ S}` onto `{e^{ad X} : X ∈ S}`: `φ(e^X) = e^{ad X}`
 (`eventually_toGbarU_diag_eq_expA`) and `e^X ∈ T(F)` (`eventually_exists_mem_torusOf_eq_expA`). -/
 theorem isExpCompatT_map_lieTorusCLE {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
@@ -104,14 +104,11 @@ theorem isExpCompatT_map_lieTorusCLE {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
     (by rw [map_zero]; exact hU₀n), fun S' hS' hS'U => ?_⟩
   have hSm : MeasurableSet (e ⁻¹' S') := e.continuous.measurable hS'
   have hSU : e ⁻¹' S' ⊆ U₀ := fun X hX => by simpa using hS'U hX
-  rw [Measure.map_apply e.continuous.measurable hS', hUS _ hSm (hSU.trans
-    (Set.inter_subset_left.trans Set.inter_subset_left))]
+  refine (Measure.map_apply e.continuous.measurable hS').trans ((hUS _ hSm (hSU.trans
+    (Set.inter_subset_left.trans Set.inter_subset_left))).trans ?_)
   let E := d.torusQuotHomeomorph T
   haveI : CompactSpace ↥(T.map (d.toGbarU.comp d.diag)) := E.toHomeomorph.compactSpace
-  rw [← map_probHaar E]
-  let eM : d.TorusQuot T ≃ᵐ ↥(T.map (d.toGbarU.comp d.diag)) := E.toHomeomorph.toMeasurableEquiv
-  have hmap : (probHaar (d.TorusQuot T)).map E = (probHaar (d.TorusQuot T)).map eM := rfl
-  rw [hmap, MeasurableEquiv.map_apply]
+  refine Eq.trans ?_ (probHaar_preimage E _)
   congr 1
   ext q
   simp only [Set.mem_ofPred_eq, Set.mem_preimage]
@@ -122,20 +119,14 @@ theorem isExpCompatT_map_lieTorusCLE {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
     change ((d.torusQuotMap T (t : d.TorusQuot T) : d.luoOf.Ambˣ) : d.luoOf.Amb) = _
     exact hX0.2 X.2.1 (t : ↥(GSpin d.QW)) ht
   · rintro ⟨Y, hY, hq⟩
-    set X := e.symm Y with hXdef
-    have hXS : X ∈ e ⁻¹' S' := by simpa [hXdef] using hY
-    have hX0 := hSU hXS
+    obtain ⟨X, rfl⟩ := e.surjective Y
+    have hX0 := hSU hY
     obtain ⟨t, ht⟩ := hX0.1.2 X.2
-    refine ⟨X, hXS, t, ht, ?_⟩
-    apply E.injective
-    apply Subtype.ext; apply Units.ext
-    change (((eM q : ↥(T.map (d.toGbarU.comp d.diag))) : d.luoOf.Ambˣ) : d.luoOf.Amb) =
-      ((d.torusQuotMap T (t : d.TorusQuot T) : d.luoOf.Ambˣ) : d.luoOf.Amb)
-    rw [hq]
+    refine ⟨X, hY, t, ht, E.injective (Subtype.ext (Units.ext ?_))⟩
+    refine hq.trans ?_
     change _ = ((d.toGbarU (d.diag (t : ↥(GSpin d.QW))) : d.luoOf.Ambˣ) : d.luoOf.Amb)
-    rw [hX0.2 X.2.1 (t : ↥(GSpin d.QW)) ht, hXdef]
-    change _ = expA F (((e (e.symm Y)) : d.luoOf.Amb))
-    rw [ContinuousLinearEquiv.apply_symm_apply]
+    rw [hX0.2 X.2.1 (t : ↥(GSpin d.QW)) ht]
+    rfl
 
 /-- **Every torus of Luo's `𝒯` carries an `exp`-compatible measure** `ν(T) dX` (Luo §7.1): such a
 torus is `φ(T_x)` for some `x ∈ Γ(G,H)` (`exists_isGammaElt_torusOf_eq_of_luo`), `𝔱⁰(F)` carries
