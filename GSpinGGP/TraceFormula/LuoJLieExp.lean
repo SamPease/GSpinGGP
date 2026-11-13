@@ -29,14 +29,6 @@ namespace GGPData
 
 variable (d : GGPData F)
 
-/-- `measH0` is `exp`-compatible (`exists_isExpCompatH`). -/
-theorem isExpCompatH_measH0 : d.IsExpCompatH d.measH0 := by
-  have h := d.exists_isExpCompatH
-  unfold measH0
-  rw [dite_eq_left_of_eq_true (eq_true h)]
-  exact h.choose_spec
-
-set_option maxHeartbeats 1000000 in -- `Measure.haar` on `H(F)/A_{G,H}(F)` elaborates slowly
 /-- **`exp`-compatibility transfers to Luo's side** (Thesis §5.2, §12.4): for an isomorphism
 `e_H : H(F)/A_{G,H}(F) ≃ H̄(F)` induced by `G → Ḡ`, the push-forwards `(e_H)_* dh` and
 `ad_* measH0` are `exp`-compatible. Near `0`, `e_H` carries `{e^X A_{G,H}(F) : X ∈ S}` onto
@@ -47,31 +39,26 @@ theorem isExpCompatH_map_toSOHCLE (eH : d.HmodAGH ≃ₜ* ↥d.luoOf.Hbar)
     (heH : ∀ h : ↥d.H, ((eH (QuotientGroup.mk h) : ↥d.luoOf.Gbar)) = d.toGbar (h : ↥d.G)) :
     d.luoOf.IsExpCompatH ((Measure.haar : Measure d.HmodAGH).map eH)
       (d.measH0.map d.toSOHCLE) := by
-  haveI := submodule_isTopologicalAddGroup d.lieH0
-  obtain ⟨_, _, _, _, _⟩ := submodule_topology d.lieH0
-  haveI := submodule_isTopologicalAddGroup d.luoOf.lieH
-  obtain ⟨_, _, _, _, _⟩ := submodule_topology d.luoOf.lieH
   obtain ⟨hμ, U, hU, hUS⟩ := d.isExpCompatH_measH0
-  set e := d.toSOHCLE with he
+  let e := d.toSOHCLE
+  have he : e = d.toSOHCLE := rfl
   refine ⟨e.toLinearEquiv.toAddEquiv.isAddHaarMeasure_map _ e.continuous e.symm.continuous, ?_⟩
   -- the neighbourhood of `0` in `𝔥⁰` where the exponential facts hold
   have hval : Tendsto (fun X : ↥d.lieH0 => (X : d.ambient)) (𝓝 0) (𝓝 0) :=
     continuous_subtype_val.tendsto' 0 0 rfl
   have hev := hval.eventually
     ((d.eventually_exists_mem_H_eq_expA).and d.eventually_toGbarU_eq_expA_toSOLin)
-  set U₀ := U ∩ {X : ↥d.lieH0 | (X : d.ambient) ∈ d.lieH0 →
+  let U₀ := U ∩ {X : ↥d.lieH0 | (X : d.ambient) ∈ d.lieH0 →
       ∃ h : ↥d.H, (((h : ↥d.G) : d.ambientˣ) : d.ambient) = expA F (X : d.ambient)} ∩
     {X : ↥d.lieH0 | (X : d.ambient) ∈ d.lie → ∀ g : ↥d.G,
       ((g : d.ambientˣ) : d.ambient) = expA F (X : d.ambient) →
-        ((d.toGbarU g : d.luoOf.Ambˣ) : d.luoOf.Amb) = expA F (d.toSOLin X)} with hU₀
+        ((d.toGbarU g : d.luoOf.Ambˣ) : d.luoOf.Amb) = expA F (d.toSOLin X)}
   have hU₀n : U₀ ∈ 𝓝 (0 : ↥d.lieH0) :=
     inter_mem (inter_mem hU (hev.mono fun X hX => hX.1)) (hev.mono fun X hX => hX.2)
   refine ⟨e.symm ⁻¹' U₀, e.symm.continuous.continuousAt.preimage_mem_nhds
     (by rw [map_zero]; exact hU₀n), fun S' hS' hS'U => ?_⟩
   have hSm : MeasurableSet (e ⁻¹' S') := e.continuous.measurable hS'
-  have hSU : e ⁻¹' S' ⊆ U₀ := fun X hX => by
-    have := hS'U hX
-    simpa using this
+  have hSU : e ⁻¹' S' ⊆ U₀ := fun X hX => by simpa using hS'U hX
   rw [Measure.map_apply e.continuous.measurable hS', hUS _ hSm (hSU.trans
     (Set.inter_subset_left.trans Set.inter_subset_left))]
   let eM : d.HmodAGH ≃ᵐ ↥d.luoOf.Hbar := eH.toHomeomorph.toMeasurableEquiv
@@ -119,8 +106,8 @@ theorem exists_JLie_transfer (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
       μH.IsHaarMeasure ∧ d.luoOf.IsExpCompatH μH μ𝔥 ∧
       IsWeilMeasure d.luoOf.Hbar.subtype d.muG μH m ∧
       ∀ f : ↥d.lieZero → ℂ, d.IsLieScusp f →
-        d.distribJLie ψ f = d.luoOf.distribJLie ψ μ𝔥 m (f ∘ d.toSO.symm) := by
-  exact d.exists_JLie_transfer_of ψ hW hV d.isExpCompatH_map_toSOHCLE
+        d.distribJLie ψ f = d.luoOf.distribJLie ψ μ𝔥 m (f ∘ d.toSO.symm) :=
+  d.exists_JLie_transfer_of ψ hW hV d.isExpCompatH_map_toSOHCLE
 
 end GGPData
 
