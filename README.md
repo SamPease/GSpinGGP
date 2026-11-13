@@ -48,12 +48,14 @@ As of November 2026:
   below), plus some smaller lemmas. A `sorry` is a step this project still owes.
 - Results from the literature are assumed as `axiom`s in `GSpinGGP/Literature/`, each with a
   docstring citing its source; they are where the formalization stops, and are not meant to be
-  proved here. `local_ggp` uses 20 of the 20. There are two classes.
+  proved here. `local_ggp` uses 20 of the 21 (the other, `bp_sqrt_weylDisc_mul_locallyBounded`,
+  BP Prop 4.1.1(ii), is an input of the germ bound `germ_bound_of_mem_QC`, still a `sorry`).
+  There are two classes.
   A *verbatim* axiom is a statement printed in its source, for the group the source treats,
   specialized (one, `bp_integrable_kernel_scusp`, is stated without proof in its source).
   A *derived* axiom is a short, explicit combination of such statements, or a printed statement
   whose hypotheses are checked for our object in the docstring only; the docstring quotes the
-  ingredients and gives the steps. 8 of the 20 are derived (`scripts/derived-axioms.txt`):
+  ingredients and gives the steps. 8 of the 21 are derived (`scripts/derived-axioms.txt`):
   the two on characters and the one on multiplicity one (sources state them for irreducible
   admissible smooth representations, the axioms for irreducible unitary ones);
   the three on Galois cohomology (applied to groups of `F̄`-points whose description as algebraic

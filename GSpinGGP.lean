@@ -82,6 +82,7 @@ import GSpinGGP.TraceFormula.JHatScale
 import GSpinGGP.TraceFormula.CThetaTransport
 import GSpinGGP.Literature.Kottwitz
 import GSpinGGP.Literature.KottwitzClay
+import GSpinGGP.Literature.BPQuasiCharacter
 import GSpinGGP.Literature.Kottwitz1986
 import GSpinGGP.Literature.Luo
 import GSpinGGP.GGP.KottwitzDelta
@@ -142,6 +143,8 @@ import GSpinGGP.TraceFormula.Interface
 import GSpinGGP.TraceFormula.GermTranslate
 import GSpinGGP.TraceFormula.TorusDescent
 import GSpinGGP.TraceFormula.GermBound
+import GSpinGGP.TraceFormula.JHatHomogeneous
+import GSpinGGP.TraceFormula.GermHomogeneous
 import GSpinGGP.TraceFormula.MGeom
 import GSpinGGP.TraceFormula.MGeomLimit
 import GSpinGGP.TraceFormula.Scusp
