@@ -502,6 +502,99 @@ theorem planeRot_bounds (hb : IsOrthoBasis Q b) {i₀ i₁ : Fin n} (hne : i₀ 
             mul_le_mul hxk hY (basisNorm_nonneg _) zero_le_one
         _ ≤ _ := by rw [mul_one]; exact h2i
 
+
+/-- **The rotation lemma** (Thesis Prop. 8.3.1, second step; the orthogonal analogue of
+Beuzart-Plessis's Lemme 11.0.3). Let `a(t)` be the torus of the pair `(b i₀, b i₁)` and `S'` a set
+of further indices. There is `ε > 0` such that for every isometry `h` fixing the basis vectors
+outside `{i₁} ∪ S'` and every unit `t` with `‖t‖ ≤ 1` there is `γ ∈ SO(Q)` fixing the same basis
+vectors (so `γ` fixes `b i₀`) with `‖a(t)⁻¹ γ a(t)‖ ≤ ‖2‖⁻¹`, `‖hγ‖ ≤ ‖h‖` and
+`ε ‖t‖ ‖hγ‖ ≤ ‖hγ (b i₁)‖`. -/
+theorem rotation_lemma [FiniteDimensional F V] (hb : IsOrthoBasis Q b) {i₀ i₁ : Fin n}
+    (hne : i₀ ≠ i₁) {ν : F} (h₀ : Q (b i₀) = ν) (h₁ : Q (b i₁) = -ν) {S' : Finset (Fin n)}
+    (h₀S : i₀ ∉ S') :
+    ∃ ε > 0, ∀ h : V ≃ₗ[F] V, h ∈ TauCeti.QuadraticMap.orthogonalGroup Q →
+      (∀ m, m ≠ i₁ → m ∉ S' → h (b m) = b m) → ∀ t : Fˣ, ‖(t : F)‖ ≤ 1 →
+      ∃ γ ∈ TauCeti.QuadraticMap.specialOrthogonalGroup Q,
+        (∀ m, m ≠ i₁ → m ∉ S' → γ (b m) = b m) ∧
+        basisOpNorm b (((pairTorus hb hne h₀ h₁ t)⁻¹ * γ * pairTorus hb hne h₀ h₁ t :
+          V ≃ₗ[F] V) : V →ₗ[F] V) ≤ ‖(2 : F)‖⁻¹ ∧
+        basisOpNorm b ((h * γ : V ≃ₗ[F] V) : V →ₗ[F] V) ≤ basisOpNorm b (h : V →ₗ[F] V) ∧
+        ε * ‖(t : F)‖ * basisOpNorm b ((h * γ : V ≃ₗ[F] V) : V →ₗ[F] V) ≤
+          basisNorm b ((h * γ) (b i₁)) := by
+  have hν : ν ≠ 0 := fun h => hb.apply_ne_zero i₀ (h₀.trans h)
+  have hn : 0 < n := lt_of_le_of_lt (Nat.zero_le _) i₀.2
+  set smax := formBound Q b * ‖(Q (b i₁))⁻¹‖ with hsmax
+  have hsmax0 : 0 ≤ smax := mul_nonneg (norm_nonneg _) (norm_nonneg _)
+  have hfB0 : 0 < formBound Q b :=
+    (norm_pos_iff.2 (hb.apply_ne_zero i₁)).trans_le (norm_apply_basis_le i₁)
+  obtain ⟨κ, hκ0, hκ⟩ := NormedField.exists_norm_lt F (inv_pos.2 (by linarith : 0 < smax + 1))
+  have hκ1 : ‖κ‖ < 1 := hκ.trans_le (inv_le_one_of_one_le₀ (by linarith))
+  have hκs : ‖κ‖ * smax ≤ 1 := by
+    have hpos : 0 < smax + 1 := by linarith
+    have h' := mul_lt_mul_of_pos_right hκ hpos
+    rw [inv_mul_cancel₀ hpos.ne'] at h'
+    nlinarith [norm_nonneg κ]
+  set m₀ := min 1 (‖-ν‖ / formBound Q b) with hm₀
+  have hm₀0 : 0 < m₀ := lt_min one_pos (div_pos (norm_pos_iff.2 (neg_ne_zero.2 hν)) hfB0)
+  have h2 : 0 < ‖(2 : F)‖ := norm_pos_iff.2 two_ne_zero
+  refine ⟨min m₀ (‖(2 : F)‖ * ‖κ‖), lt_min hm₀0 (mul_pos h2 hκ0), fun h hO hfix t ht => ?_⟩
+  set ε := min m₀ (‖(2 : F)‖ * ‖κ‖)
+  have hε1 : ε ≤ 1 := (min_le_left _ _).trans (min_le_left _ _)
+  have hε0 : 0 ≤ ε := (lt_min hm₀0 (mul_pos h2 hκ0)).le
+  have ht0 : 0 ≤ ‖(t : F)‖ := norm_nonneg _
+  have hh0 := basisOpNorm_nonneg (b := b) (h : V →ₗ[F] V)
+  by_cases hc : ε * ‖(t : F)‖ * basisOpNorm b (h : V →ₗ[F] V) ≤ basisNorm b (h (b i₁))
+  · refine ⟨1, one_mem _, fun _ _ _ => rfl, ?_, by simp, by simpa using hc⟩
+    simp only [mul_one, inv_mul_cancel]
+    exact basisOpNorm_id_le.trans one_le_norm_two_inv
+  rw [not_le] at hc
+  obtain ⟨k, hk⟩ := exists_basisOpNorm_eq (b := b) hn (h : V →ₗ[F] V)
+  rw [LinearEquiv.coe_coe] at hk
+  have hk₁ : i₁ ≠ k := by
+    rintro rfl
+    have : ε * ‖(t : F)‖ * basisOpNorm b (h : V →ₗ[F] V) ≤ basisOpNorm b (h : V →ₗ[F] V) := by
+      calc ε * ‖(t : F)‖ * basisOpNorm b (h : V →ₗ[F] V) ≤ 1 * 1 *
+            basisOpNorm b (h : V →ₗ[F] V) := by gcongr
+        _ = _ := by ring
+    linarith
+  have hkS : k ∈ S' := by
+    by_contra hkS
+    rw [hfix k (Ne.symm hk₁) hkS, basisNorm_basis] at hk
+    have hlow := min_le_basisNorm_of_apply hb
+      (show Q (h (b i₁)) = -ν by rw [TauCeti.QuadraticMap.mem_orthogonalGroup_iff.1 hO, h₁])
+      (neg_ne_zero.2 hν)
+    rw [← hk, mul_one] at hc
+    have : ε * ‖(t : F)‖ ≤ m₀ := by
+      calc ε * ‖(t : F)‖ ≤ m₀ * 1 := mul_le_mul (min_le_left _ _) ht ht0 hm₀0.le
+        _ = m₀ := mul_one _
+    linarith
+  have hk₀ : k ≠ i₀ := fun hk => h₀S (hk ▸ hkS)
+  obtain ⟨hD, hγ1, ⟨a, B, ha, hB, hγb⟩, hconj⟩ :=
+    planeRot_bounds hb hne h₀ h₁ hk₁ hk₀ hκ1 (by rw [← hsmax]; exact hκs) t ht
+  set γ := planeRot hb hk₁ (κ * t) hD
+  have hhγ : basisOpNorm b ((h * γ : V ≃ₗ[F] V) : V →ₗ[F] V) ≤ basisOpNorm b (h : V →ₗ[F] V) :=
+    (basisOpNorm_mul_le h γ).trans (by nlinarith [basisOpNorm_nonneg (b := b) (γ : V →ₗ[F] V)])
+  refine ⟨γ, planeRot_mem_specialOrthogonalGroup hb hk₁ _ hD,
+    fun m hm₁ hmS => planeRot_apply_of_ne hb hk₁ _ hD hm₁ (fun hmk => hmS (hmk ▸ hkS)),
+    hconj, hhγ, ?_⟩
+  -- the dominant term `B h (b k)`
+  have hdom : basisNorm b (a • h (b i₁)) < basisNorm b (B • h (b k)) := by
+    rw [basisNorm_smul, basisNorm_smul, hB, hk]
+    calc ‖a‖ * basisNorm b (h (b i₁)) ≤ 1 * basisNorm b (h (b i₁)) :=
+          mul_le_mul_of_nonneg_right ha (basisNorm_nonneg _)
+      _ < ε * ‖(t : F)‖ * basisOpNorm b (h : V →ₗ[F] V) := by rw [one_mul]; exact hc
+      _ ≤ ‖(2 : F)‖ * ‖κ‖ * ‖(t : F)‖ * basisOpNorm b (h : V →ₗ[F] V) := by
+          gcongr; exact min_le_right _ _
+  have heq : basisNorm b ((h * γ) (b i₁)) =
+      ‖(2 : F)‖ * ‖κ‖ * ‖(t : F)‖ * basisOpNorm b (h : V →ₗ[F] V) := by
+    rw [LinearEquiv.mul_apply, hγb, map_add, map_smul, map_smul, add_comm,
+      basisNorm_add_eq_left hdom, basisNorm_smul, hB, hk]
+  rw [heq]
+  calc ε * ‖(t : F)‖ * basisOpNorm b ((h * γ : V ≃ₗ[F] V) : V →ₗ[F] V)
+      ≤ ε * ‖(t : F)‖ * basisOpNorm b (h : V →ₗ[F] V) := by gcongr
+    _ ≤ ‖(2 : F)‖ * ‖κ‖ * ‖(t : F)‖ * basisOpNorm b (h : V →ₗ[F] V) := by
+        gcongr; exact min_le_right _ _
+
 end RotationLemma
 
 end WeakCartan
