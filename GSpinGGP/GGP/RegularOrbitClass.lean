@@ -521,6 +521,64 @@ theorem exists_isometry_det_one_conj_of_isInOrbitNu_sub (hQ : IsNondeg Q) {U B :
   rw [h1, h2]
   exact congrArg Subtype.val (hf2 ⟨u, hu⟩)
 
+/-- One direction of `isInOrbitNu_conj_iff`. -/
+theorem isInOrbitNu_conj_of (σ : Q.IsometryEquiv Q) {U : Submodule F W} {ν : F}
+    {N : Module.End F W} (h : IsInOrbitNu Q U ν N) :
+    IsInOrbitNu Q (U.map (σ.toLinearEquiv : W →ₗ[F] W)) ν (σ.toLinearEquiv.conj N) := by
+  set τ := σ.toLinearEquiv
+  obtain ⟨d₀, U₁, h1, h2, h3, h4, h5, h6, h7, ⟨u, hu, hu'⟩, e, he, hQe, hsplit⟩ := h
+  have hσ : ∀ v, Q (τ v) = Q v := fun v => σ.map_app v
+  have hb : ∀ a c, bform Q (τ a) (τ c) = bform Q a c := fun a c => by
+    simp only [bform, QuadraticMap.associated_apply]
+    rw [← map_add, hσ, hσ, hσ]
+  have hconj : ∀ v, τ.conj N v = τ (N (τ.symm v)) := fun v => rfl
+  have hpow : ∀ k : ℕ, ∀ v, (τ.conj N ^ k) v = τ ((N ^ k) (τ.symm v)) := by
+    intro k
+    induction k with
+    | zero => intro v; simp
+    | succ k ih => intro v; rw [pow_succ, Module.End.mul_apply, ih, hconj, pow_succ,
+        Module.End.mul_apply, LinearEquiv.symm_apply_apply]
+  refine ⟨τ d₀, U₁.map (τ : W →ₗ[F] W), ⟨d₀, h1, rfl⟩, by rwa [hσ], Submodule.map_mono h3,
+    ?_, ?_, ?_, ?_, ⟨τ u, ⟨u, hu, rfl⟩, ?_⟩, τ e, ⟨e, he, rfl⟩, by rw [hσ, hQe], ?_⟩
+  · rintro _ ⟨w, hw, rfl⟩
+    rw [LinearEquiv.coe_coe, hb]
+    exact h4 w hw
+  · rw [← h5, Submodule.map_sup, Submodule.map_span, Set.image_singleton, LinearEquiv.coe_coe]
+  · rw [hconj, LinearEquiv.symm_apply_apply, h6, map_zero]
+  · rintro _ ⟨w, hw, rfl⟩
+    rw [LinearEquiv.coe_coe, hconj, LinearEquiv.symm_apply_apply]
+    exact ⟨_, h7 w hw, rfl⟩
+  · rw [LinearEquiv.finrank_map_eq, hpow, LinearEquiv.symm_apply_apply]
+    exact fun h0 => hu' (τ.injective (by rw [h0, map_zero]))
+  · set S := U₁ ⊓ (bform Q).orthogonal (F ∙ e)
+    have hS : U₁.map (τ : W →ₗ[F] W) ⊓ (bform Q).orthogonal (F ∙ τ e) =
+        S.map (τ : W →ₗ[F] W) := by
+      ext x
+      simp only [Submodule.mem_inf, S, Submodule.mem_map_equiv, mem_orthogonal_span_singleton]
+      rw [← hb e (τ.symm x), LinearEquiv.apply_symm_apply]
+    rw [hS]
+    let iso : (Q.comp S.subtype).IsometryEquiv (Q.comp (S.map (τ : W →ₗ[F] W)).subtype) :=
+      { toLinearEquiv := τ.submoduleMap S
+        map_app' := fun v => hσ v }
+    unfold IsSplitQF at hsplit ⊢
+    rw [← LinearEquiv.finrank_eq iso.toLinearEquiv,
+      ← QuadClassify.wittIndex_eq_of_isometryEquiv iso]
+    exact hsplit
+
+/-- **Luo's orbit `O_ν` is intrinsic**: an isometry `σ` of `Q` carries `N ∈ O_ν` on `U` to
+`σ N σ⁻¹ ∈ O_ν` on `σ U`, and conversely. -/
+theorem isInOrbitNu_conj_iff (σ : Q.IsometryEquiv Q) {U : Submodule F W} {ν : F}
+    {N : Module.End F W} :
+    IsInOrbitNu Q (U.map (σ.toLinearEquiv : W →ₗ[F] W)) ν (σ.toLinearEquiv.conj N) ↔
+      IsInOrbitNu Q U ν N := by
+  refine ⟨fun h => ?_, isInOrbitNu_conj_of σ⟩
+  have := isInOrbitNu_conj_of σ.symm h
+  have e1 : σ.symm.toLinearEquiv = σ.toLinearEquiv.symm := rfl
+  rwa [e1, ← Submodule.map_comp, show ((σ.toLinearEquiv.symm : W →ₗ[F] W) ∘ₗ
+      (σ.toLinearEquiv : W →ₗ[F] W)) = LinearMap.id from by ext; simp, Submodule.map_id,
+    show σ.toLinearEquiv.symm.conj (σ.toLinearEquiv.conj N) = N from by
+      ext v; simp [LinearEquiv.conj_apply]] at this
+
 end Sub
 
 end SingleBlock
