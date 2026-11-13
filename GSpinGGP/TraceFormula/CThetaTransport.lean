@@ -478,4 +478,152 @@ def adCentralizerIso (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) {D : d.
 
 end GGPData
 
+/-! ## The form on centralizers -/
+
+/-- **An invariant form stays nondegenerate on the centralizer of a semisimple element**: if `b`
+is nondegenerate on `𝔤` and invariant (`b([X, Y], Z) = b(X, [Y, Z])`) and `ad X` is semisimple on
+`𝔤`, then `b` is nondegenerate on `𝔤_X`: `𝔤 = ker(ad X) + im(ad X)` (Fitting decomposition, with
+`ker (ad X)^n = ker (ad X)`), and `b(Y, [X, W]) = b([Y, X], W) = 0` for `Y ∈ 𝔤_X`. -/
+theorem restrictForm_lieCentralizer_nondegenerate_of_isSS {A : Type*} [Ring A] [Algebra F A]
+    [Module.Finite F A] {𝔤 : LieSubalgebra F A} {b : LinearMap.BilinForm F A}
+    (hnd : (restrictForm 𝔤 b).Nondegenerate)
+    (hinv : ∀ X Y Z : A, b (X * Y - Y * X) Z = b X (Y * Z - Z * Y))
+    {X : A} (hX𝔤 : X ∈ 𝔤) (hX : IsSS F X) :
+    (restrictForm (lieCentralizer 𝔤 X) b).Nondegenerate := by
+  set f : Module.End F ↥𝔤 := LieAlgebra.ad F ↥𝔤 ⟨X, hX𝔤⟩
+  have hAd := LieAlgebra.ad_isSemisimple_of_isSemisimple_mulLeft hX
+  have hinvt : 𝔤.toSubmodule ∈ Module.End.invtSubmodule (LieAlgebra.ad F A X) := by
+    rw [Module.End.mem_invtSubmodule]
+    intro Y hY
+    have := 𝔤.lie_mem hX𝔤 hY
+    exact this
+  have hf : f.IsSemisimple := hAd.restrict hinvt
+  have hdec : ∀ W : ↥𝔤, ∃ k r : ↥𝔤, W = k + f r ∧ f k = 0 := by
+    obtain ⟨N, hN⟩ := Filter.eventually_atTop.mp (LinearMap.eventually_isCompl_ker_pow_range_pow f)
+    have hc := hN (N + 1) (Nat.le_succ N)
+    intro W
+    obtain ⟨k, hk, r, hr, hkr⟩ := Submodule.mem_sup.mp (hc.sup_eq_top ▸ Submodule.mem_top (x := W))
+    rw [ker_pow_eq_ker_of_isSemisimple hf (Nat.succ_pos N)] at hk
+    obtain ⟨w, rfl⟩ := hr
+    refine ⟨k, (f ^ N) w, ?_, hk⟩
+    rw [← hkr, pow_succ', Module.End.mul_apply]
+  have hcomm : ∀ {k : ↥𝔤}, f k = 0 → (k : A) ∈ lieCentralizer 𝔤 X := fun {k} hk => by
+    have h := congrArg Subtype.val hk
+    simp only [f, LieAlgebra.ad_apply, LieSubalgebra.coe_bracket, Ring.lie_def,
+      ZeroMemClass.coe_zero, sub_eq_zero] at h
+    exact mem_lieCentralizer.mpr ⟨k.2, h⟩
+  have hfr : ∀ r : ↥𝔤, ((f r : ↥𝔤) : A) = X * r - r * X := fun r => by
+    simp [f, Ring.lie_def]
+  refine ⟨fun Y hY => ?_, fun Z hZ => ?_⟩
+  · obtain ⟨hY𝔤, hYX⟩ := mem_lieCentralizer.mp Y.2
+    have h0 : (⟨Y, hY𝔤⟩ : ↥𝔤) = 0 := hnd.1 _ fun W => by
+      obtain ⟨k, r, rfl, hk⟩ := hdec W
+      have h1 : b (Y : A) (k : A) = 0 := hY ⟨k, hcomm hk⟩
+      change b (Y : A) ((k : A) + ((f r : ↥𝔤) : A)) = 0
+      rw [map_add, hfr, ← hinv, hYX, sub_self, map_zero, LinearMap.zero_apply, add_zero]
+      exact h1
+    exact Subtype.ext (show (Y : A) = 0 from congrArg Subtype.val h0)
+  · obtain ⟨hZ𝔤, hZX⟩ := mem_lieCentralizer.mp Z.2
+    have h0 : (⟨Z, hZ𝔤⟩ : ↥𝔤) = 0 := hnd.2 _ fun W => by
+      obtain ⟨k, r, rfl, hk⟩ := hdec W
+      have h1 : b (k : A) (Z : A) = 0 := hZ ⟨k, hcomm hk⟩
+      change b ((k : A) + ((f r : ↥𝔤) : A)) (Z : A) = 0
+      have h2 : b (X * r - r * X) Z = 0 := by
+        rw [← neg_sub, map_neg, LinearMap.neg_apply, hinv, hZX, sub_self, map_zero, neg_zero]
+      rw [map_add, LinearMap.add_apply, hfr, h2, add_zero]
+      exact h1
+    exact Subtype.ext (show (Z : A) = 0 from congrArg Subtype.val h0)
+
+namespace LuoDatum
+
+variable (L : LuoDatum F)
+
+/-- The trace form is invariant: `B([X, Y], Z) = B(X, [Y, Z])`. -/
+theorem traceForm_invariant (X Y Z : L.Amb) :
+    L.traceForm (X * Y - Y * X) Z = L.traceForm X (Y * Z - Z * Y) := by
+  have e1 : LinearMap.trace F L.W (L.fstA Y * (L.fstA X * L.fstA Z)) =
+      LinearMap.trace F L.W (L.fstA X * (L.fstA Z * L.fstA Y)) := by
+    rw [LinearMap.trace_mul_comm, mul_assoc]
+  have e2 : LinearMap.trace F L.V (L.sndA Y * (L.sndA X * L.sndA Z)) =
+      LinearMap.trace F L.V (L.sndA X * (L.sndA Z * L.sndA Y)) := by
+    rw [LinearMap.trace_mul_comm, mul_assoc]
+  simp only [traceForm, LinearMap.mk₂_apply, LinearMap.sub_apply, map_sub, map_mul, mul_assoc,
+    e1, e2]
+
+/-- The unit `(a · 1_W, b · 1_V)` of `End W × End V` (`a, b ≠ 0`), central. -/
+def scalarUnit {a b : F} (ha : a ≠ 0) (hb : b ≠ 0) : L.Ambˣ where
+  val := L.pair (a • 1) (b • 1)
+  inv := L.pair (a⁻¹ • 1) (b⁻¹ • 1)
+  val_inv := Prod.ext (by
+      change (a • (1 : Module.End F L.W)) * (a⁻¹ • 1) = 1
+      rw [smul_mul_smul_comm, mul_inv_cancel₀ ha, one_smul, one_mul])
+    (by
+      change (b • (1 : Module.End F L.V)) * (b⁻¹ • 1) = 1
+      rw [smul_mul_smul_comm, mul_inv_cancel₀ hb, one_smul, one_mul])
+  inv_val := Prod.ext (by
+      change (a⁻¹ • (1 : Module.End F L.W)) * (a • 1) = 1
+      rw [smul_mul_smul_comm, inv_mul_cancel₀ ha, one_smul, one_mul])
+    (by
+      change (b⁻¹ • (1 : Module.End F L.V)) * (b • 1) = 1
+      rw [smul_mul_smul_comm, inv_mul_cancel₀ hb, one_smul, one_mul])
+
+variable {L}
+
+theorem fstA_scalarUnit_mul {a b : F} (ha : a ≠ 0) (hb : b ≠ 0) (Y : L.Amb) :
+    L.fstA ((L.scalarUnit ha hb : L.Amb) * Y) = a • L.fstA Y := by
+  rw [map_mul]
+  change (a • (1 : Module.End F L.W)) * L.fstA Y = _
+  rw [smul_mul_assoc, one_mul]
+
+theorem sndA_scalarUnit_mul {a b : F} (ha : a ≠ 0) (hb : b ≠ 0) (Y : L.Amb) :
+    L.sndA ((L.scalarUnit ha hb : L.Amb) * Y) = b • L.sndA Y := by
+  rw [map_mul]
+  change (b • (1 : Module.End F L.V)) * L.sndA Y = _
+  rw [smul_mul_assoc, one_mul]
+
+theorem fstA_scalarUnit_inv_mul {a b : F} (ha : a ≠ 0) (hb : b ≠ 0) (Y : L.Amb) :
+    L.fstA (((L.scalarUnit ha hb)⁻¹ : L.Ambˣ) * Y) = a⁻¹ • L.fstA Y := by
+  rw [map_mul]
+  change (a⁻¹ • (1 : Module.End F L.W)) * L.fstA Y = _
+  rw [smul_mul_assoc, one_mul]
+
+theorem sndA_scalarUnit_inv_mul {a b : F} (ha : a ≠ 0) (hb : b ≠ 0) (Y : L.Amb) :
+    L.sndA (((L.scalarUnit ha hb)⁻¹ : L.Ambˣ) * Y) = b⁻¹ • L.sndA Y := by
+  rw [map_mul]
+  change (b⁻¹ • (1 : Module.End F L.V)) * L.sndA Y = _
+  rw [smul_mul_assoc, one_mul]
+
+theorem scalarUnit_central {a b : F} (ha : a ≠ 0) (hb : b ≠ 0) (Y : L.Amb) :
+    (L.scalarUnit ha hb : L.Amb) * Y = Y * (L.scalarUnit ha hb : L.Amb) := by
+  refine Prod.ext ?_ ?_
+  · change (a • (1 : Module.End F L.W)) * L.fstA Y = L.fstA Y * (a • 1)
+    rw [smul_mul_assoc, one_mul, mul_smul_comm, mul_one]
+  · change (b • (1 : Module.End F L.V)) * L.sndA Y = L.sndA Y * (b • 1)
+    rw [smul_mul_assoc, one_mul, mul_smul_comm, mul_one]
+
+/-- `B(c Y, Z) = B(Y, c Z)` for `c = (a · 1, b · 1)`. -/
+theorem traceForm_scalarUnit {a b : F} (ha : a ≠ 0) (hb : b ≠ 0) (Y Z : L.Amb) :
+    L.traceForm ((L.scalarUnit ha hb : L.Amb) * Y) Z =
+      L.traceForm Y ((L.scalarUnit ha hb : L.Amb) * Z) := by
+  simp only [traceForm, LinearMap.mk₂_apply, fstA_scalarUnit_mul, sndA_scalarUnit_mul,
+    smul_mul_assoc, mul_smul_comm]
+
+/-- `(a · 1, b · 1)` and its inverse preserve `𝔤_Y`. -/
+theorem scalarUnit_mul_mem_lieCentralizer {a b : F} (ha : a ≠ 0) (hb : b ≠ 0) {Y M : L.Amb}
+    (hM : M ∈ lieCentralizer L.lie Y) :
+    (L.scalarUnit ha hb : L.Amb) * M ∈ lieCentralizer L.lie Y ∧
+      (((L.scalarUnit ha hb)⁻¹ : L.Ambˣ) : L.Amb) * M ∈ lieCentralizer L.lie Y := by
+  obtain ⟨hM𝔤, hMY⟩ := mem_lieCentralizer.mp hM
+  have hc := scalarUnit_central (L := L) ha hb
+  have hci := inv_mul_eq_mul_inv_of_central hc
+  refine ⟨mem_lieCentralizer.mpr ⟨⟨?_, ?_⟩, ?_⟩, mem_lieCentralizer.mpr ⟨⟨?_, ?_⟩, ?_⟩⟩
+  · rw [fstA_scalarUnit_mul]; exact Submodule.smul_mem _ a hM𝔤.1
+  · rw [sndA_scalarUnit_mul]; exact Submodule.smul_mem _ b hM𝔤.2
+  · rw [← mul_assoc, ← hc, mul_assoc, hMY, mul_assoc]
+  · rw [fstA_scalarUnit_inv_mul]; exact Submodule.smul_mem _ a⁻¹ hM𝔤.1
+  · rw [sndA_scalarUnit_inv_mul]; exact Submodule.smul_mem _ b⁻¹ hM𝔤.2
+  · rw [← mul_assoc, ← hci, mul_assoc, hMY, mul_assoc]
+
+end LuoDatum
+
 end GSpinGGP
