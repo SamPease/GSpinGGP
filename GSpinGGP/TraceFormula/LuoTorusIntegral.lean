@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.TraceFormula.LuoTorusExp
+import GSpinGGP.TraceFormula.LuoTorusConj
 
 /-!
 # The torus integrals of `m^Lie_geom` and of Luo's `m^Lie_geom`
@@ -11,7 +12,9 @@ import GSpinGGP.TraceFormula.LuoTorusExp
   integral over `𝔱(F)` for `φ(T)`, by the change of variables `ad : 𝔱⁰ ≃ 𝔱`, given that `ad`
   carries `𝔱⁰_♮` onto `𝔱_♮` and the germs match;
 * `torusIntegralLie_toSO_of`: the conclusion of `torusIntegralLie_toSO` from that matching and the
-  invariance of the torus integrals under `GSpin(W)(F)`-conjugation of the torus.
+  invariance of the torus integrals under `GSpin(W)(F)`-conjugation of the torus;
+  `torusIntegralLie_toSO_of_germ_conj`: the same from that matching and the conjugation invariance
+  of the germs (`torusIntegralLie_conj_of`).
 -/
 
 noncomputable section
@@ -29,36 +32,6 @@ variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 namespace GGPData
 
 variable (d : GGPData F)
-
-/-- The kernel of `φ : t ↦ (P(t), P(t) ⊕ 1)` on `GSpin(W)(F)` is the scalars `F^×`. -/
-theorem ker_toGbarU_comp_diag : (d.toGbarU.comp d.diag).ker = (scalarGSpin d.QW).range := by
-  ext t
-  rw [MonoidHom.mem_ker, toGbarU_comp_diag_eq_one_iff, ← MonoidHom.mem_ker, ker_specP d.nondeg]
-
-/-- The scalars `F^×` lie in every torus `T_x` and in its conjugates. -/
-theorem range_scalarGSpin_le_map_conj (x g : ↥(GSpin d.QW)) :
-    (scalarGSpin d.QW).range ≤ (d.torusOf x).map (MulAut.conj g).toMonoidHom := by
-  rintro _ ⟨c, rfl⟩
-  refine ⟨scalarGSpin d.QW c, d.scalar_mem_torusOf x c, ?_⟩
-  simp only [MulEquiv.coe_toMonoidHom, MulAut.conj_apply]
-  rw [(scalarGSpin_commute d.QW c g).eq.symm, mul_inv_cancel_right]
-
-/-- **A conjugate of a torus of `Γ(G,H)` whose image is a torus of Luo's `𝒯` is again a torus of
-`Γ(G,H)`**: if `φ(g T_x g⁻¹)` is a Luo torus, it is `φ(T_{x'})` for some `x' ∈ Γ(G,H)`
-(`exists_isGammaElt_torusOf_eq_of_luo`), and `T_{x'} = g T_x g⁻¹` as both contain
-`ker φ = F^×`. -/
-theorem exists_isGammaElt_torusOf_eq_conj {x g : ↥(GSpin d.QW)} (T' : d.luoOf.GammaTorus)
-    (hT' : T'.1 = ((d.torusOf x).map (MulAut.conj g).toMonoidHom).map (d.toGbarU.comp d.diag)) :
-    ∃ x', d.IsGammaElt x' ∧ d.torusOf x' = (d.torusOf x).map (MulAut.conj g).toMonoidHom := by
-  obtain ⟨X, hX, hXT⟩ := T'.2
-  obtain ⟨x', hx', hx'X⟩ := d.exists_isGammaElt_torusOf_eq_of_luo hX
-  refine ⟨x', hx', Subgroup.map_injective_of_ker_le (f := d.toGbarU.comp d.diag) ?_ ?_ ?_⟩
-  · rw [ker_toGbarU_comp_diag]
-    rintro _ ⟨c, rfl⟩
-    exact d.scalar_mem_torusOf x' c
-  · rw [ker_toGbarU_comp_diag]
-    exact d.range_scalarGSpin_le_map_conj x g
-  · rw [← hx'X, hXT, hT']
 
 variable (ψ : NontrivialAddChar F)
 
@@ -97,20 +70,20 @@ theorem torusIntegralLie_eq_luo {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
 
 /-- **Reduction of `torusIntegralLie_toSO`** to two statements about the tori of `Γ(G,H)`:
 `ad` carries `𝔱⁰_♮` onto Luo's `𝔱_♮` (`hnat`), and the torus integrals of `θ ∘ ad` are invariant
-under `GSpin(W)(F)`-conjugation between tori of `Γ(G,H)` (`hconj`). The measures are the `exp`-compatible ones
-(`exists_luo_isExpCompatT`); the representative of `e c` is `φ(g T g⁻¹)` with `T` the
-representative of `c` (`exists_conj_eq_map_of_isNaturalTorusCorr`), and `g T g⁻¹` is a torus of
-`Γ(G,H)` (`exists_isGammaElt_torusOf_eq_conj`), where `torusIntegralLie_eq_luo` applies. -/
+under `GSpin(W)(F)`-conjugation of the tori of `Γ(G,H)` (`hconj`). The measures are the
+`exp`-compatible ones (`exists_luo_isExpCompatT`); the representative of `e c` is `φ(g T_x g⁻¹)`
+with `T_x` the representative of `c` (`exists_conj_eq_map_of_isNaturalTorusCorr`), and
+`g T_x g⁻¹ = T_{gxg⁻¹}` is a torus of `Γ(G,H)` (`torusOf_conj`, `isGammaElt_conj`), where
+`torusIntegralLie_eq_luo` applies. -/
 theorem torusIntegralLie_toSO_of
     (hnat : ∀ (x : ↥(GSpin d.QW)), d.IsGammaElt x → ∀ X : ↥(d.lieTorus (d.torusOf x)),
       d.IsGammaEltLie (d.torusOf x) X ↔
         d.luoOf.IsNat ((d.torusOf x).map (d.toGbarU.comp d.diag)) (d.toSOLin (d.diagLie X)))
     (hconj : ∀ θ : ↥d.luoOf.lie → ℂ,
       IsLieQuasiCharacter d.luoOf.Gbar d.luoOf.lie d.luoOf.traceForm ψ θ →
-      ∀ (x x' g : ↥(GSpin d.QW)), d.IsGammaElt x → d.IsGammaElt x' →
-        d.torusOf x' = (d.torusOf x).map (MulAut.conj g).toMonoidHom → ∀ s : ℝ,
-          d.torusIntegralLie ψ (θ ∘ d.toSO) (d.torusOf x') s =
-            d.torusIntegralLie ψ (θ ∘ d.toSO) (d.torusOf x) s)
+      ∀ (x g : ↥(GSpin d.QW)), d.IsGammaElt x → ∀ s : ℝ,
+        d.torusIntegralLie ψ (θ ∘ d.toSO) ((d.torusOf x).map (MulAut.conj g).toMonoidHom) s =
+          d.torusIntegralLie ψ (θ ∘ d.toSO) (d.torusOf x) s)
     (e : GammaClass d ≃ d.luoOf.GammaClass)
     (hen : ∀ c, d.IsNaturalTorusCorr (Quot.out c).1 (Quot.out (e c)).1) :
     ∃ μT : ∀ T : d.luoOf.GammaTorus, Measure ↥(d.luoOf.lieTorus T.1),
@@ -135,10 +108,47 @@ theorem torusIntegralLie_toSO_of
   obtain ⟨x, hx, hxT⟩ := (Quot.out c).2
   obtain ⟨g, hg⟩ := d.exists_conj_eq_map_of_isNaturalTorusCorr (Quot.out (e c)) (hen c)
   rw [← hxT] at hg ⊢
-  obtain ⟨x', hx', hx'T⟩ := d.exists_isGammaElt_torusOf_eq_conj (Quot.out (e c)) hg
-  rw [← hconj θ hθ x x' g hx hx' hx'T s]
-  rw [← hx'T] at hg
-  exact d.torusIntegralLie_eq_luo ψ hx' (hnat x' hx') (hc ⟨_, x', hx', rfl⟩) hg (hμT _) s
+  have hx' := d.isGammaElt_conj hx g
+  rw [← hconj θ hθ x g hx s, ← d.torusOf_conj]
+  rw [← d.torusOf_conj] at hg
+  exact d.torusIntegralLie_eq_luo ψ hx' (hnat _ hx') (hc ⟨_, _, hx', rfl⟩) hg (hμT _) s
+
+/-- **Reduction of `torusIntegralLie_toSO`** to `ad` matching `𝔱⁰_♮` with `𝔱_♮` (`hnat`) and the
+invariance of the germs `c_{θ, O_X}(X)` of `θ ∘ ad` under `X ↦ g X g⁻¹` on the tori of
+`Γ(G,H)` (`hgerm`): `torusIntegralLie_toSO_of` with `torusIntegralLie_conj_of`. When neither `W`
+nor `V` is a hyperbolic plane, `hgerm` reduces by `cTheta_toSO` (at `T_x` and at
+`T_{gxg⁻¹} = g T_x g⁻¹`) to the invariance of Luo's `c_θ` under conjugation by `φ(g)`. -/
+theorem torusIntegralLie_toSO_of_germ_conj
+    (hnat : ∀ (x : ↥(GSpin d.QW)), d.IsGammaElt x → ∀ X : ↥(d.lieTorus (d.torusOf x)),
+      d.IsGammaEltLie (d.torusOf x) X ↔
+        d.luoOf.IsNat ((d.torusOf x).map (d.toGbarU.comp d.diag)) (d.toSOLin (d.diagLie X)))
+    (hgerm : ∀ θ : ↥d.luoOf.lie → ℂ,
+      IsLieQuasiCharacter d.luoOf.Gbar d.luoOf.lie d.luoOf.traceForm ψ θ →
+      ∀ (x g : ↥(GSpin d.QW)), d.IsGammaElt x →
+        ∀ X : CliffordAlgebra d.QW, d.IsGammaEltLie (d.torusOf x) X →
+          d.germLie0 ψ (θ ∘ d.toSO)
+              (d.diagLie (((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) * X *
+                (((g : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) :
+                  CliffordAlgebra d.QW)))
+              (d.orbitChoiceLie (((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) * X *
+                (((g : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) :
+                  CliffordAlgebra d.QW))) =
+            d.germLie0 ψ (θ ∘ d.toSO) (d.diagLie X) (d.orbitChoiceLie X))
+    (e : GammaClass d ≃ d.luoOf.GammaClass)
+    (hen : ∀ c, d.IsNaturalTorusCorr (Quot.out c).1 (Quot.out (e c)).1) :
+    ∃ μT : ∀ T : d.luoOf.GammaTorus, Measure ↥(d.luoOf.lieTorus T.1),
+      (∀ T, d.luoOf.IsExpCompatT T.1 (μT T)) ∧
+      ∀ θ : ↥d.luoOf.lie → ℂ,
+        IsLieQuasiCharacter d.luoOf.Gbar d.luoOf.lie d.luoOf.traceForm ψ θ →
+        (∀ (T : d.GammaTorus) (X : CliffordAlgebra d.QW), d.IsGammaEltLie T.1 X →
+          d.germLie0 ψ (θ ∘ d.toSO) (d.diagLie X) (d.orbitChoiceLie X) =
+            d.luoOf.cTheta ψ θ (d.toSOLin (d.diagLie X))) →
+        ∀ (c : GammaClass d) (s : ℝ), 0 < s →
+          d.torusIntegralLie ψ (θ ∘ d.toSO) (Quot.out c).1 s =
+            ∫ X : ↥(d.luoOf.lieTorus (Quot.out (e c)).1),
+              d.luoOf.gammaIntegrand ψ θ (Quot.out (e c)).1 s X ∂μT (Quot.out (e c)) :=
+  d.torusIntegralLie_toSO_of ψ hnat
+    (fun θ hθ x g hx s => d.torusIntegralLie_conj_of ψ hx g (hgerm θ hθ x g hx) s) e hen
 
 end GGPData
 

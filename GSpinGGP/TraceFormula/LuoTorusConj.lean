@@ -2,7 +2,9 @@
 Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import GSpinGGP.TraceFormula.LuoTorusIntegral
+import GSpinGGP.TraceFormula.ExpCompatT
+import GSpinGGP.TraceFormula.LuoTorus
+import GSpinGGP.GGP.TorusIntegral
 
 /-!
 # Conjugating a torus of `Γ(G,H)`
@@ -14,9 +16,9 @@ For `g ∈ GSpin(W)(F)` and a subgroup `T`, with `T₁ = g T g⁻¹`:
 * `isGammaEltLie_conj`: it maps `𝔱⁰_♮(T)` into `𝔱⁰_♮(T₁)`;
 * `deltaLie_conj`, `weylDiscLie_diagLie_conj`: `Δ` and `D^G` are conjugation invariant;
 * `isExpCompatT_map_lieTorusConj`: conjugation carries `ν(T) dX` to `ν(gTg⁻¹) dX`;
-* `torusIntegralLie_conj_of`: the torus integrals over `T_x` and `T_{x'} = g T_x g⁻¹` agree if the
-  germs are conjugation invariant; `torusIntegralLie_toSO_of_germ_conj`: the resulting reduction
-  of `torusIntegralLie_toSO`.
+* `isGammaElt_conj`: `Γ(G,H)` is stable under conjugation;
+* `torusIntegralLie_conj_of`: the torus integrals over `T_x` and `g T_x g⁻¹` agree if the germs
+  are conjugation invariant.
 -/
 
 noncomputable section
@@ -29,77 +31,19 @@ attribute [local instance 100] LieRing.ofAssociativeRing LieAlgebra.ofAssociativ
 
 namespace GSpinGGP
 
-section WeylDisc
-
-variable {F : Type} [NontriviallyNormedField F] [PAdicField F] {A : Type*} [Ring A] [Algebra F A]
-  [Module.Finite F A]
-
-/-- **`D^G` is invariant under conjugation** by a unit `u` normalizing `𝔤`: `ad (u X u⁻¹)` on `𝔤`
-is conjugate to `ad X` by `Ad u` (`LinearEquiv.charpoly_conj`). -/
-theorem weylDiscLie_units_conj (𝔤 : LieSubalgebra F A) (u : Aˣ)
-    (hu : ∀ Y ∈ 𝔤, (u : A) * Y * ((u⁻¹ : Aˣ) : A) ∈ 𝔤)
-    (hu' : ∀ Y ∈ 𝔤, ((u⁻¹ : Aˣ) : A) * Y * (u : A) ∈ 𝔤) {X : A} (hX : X ∈ 𝔤) :
-    weylDiscLie 𝔤 ((u : A) * X * ((u⁻¹ : Aˣ) : A)) = weylDiscLie 𝔤 X := by
-  have hX' : (u : A) * X * ((u⁻¹ : Aˣ) : A) ∈ 𝔤 := hu X hX
-  have h1 : ∀ Z ∈ 𝔤, ∀ Y ∈ 𝔤.toSubmodule,
-      (LinearMap.mulLeft F Z - LinearMap.mulRight F Z) Y ∈ 𝔤.toSubmodule := by
-    intro Z hZ Y hY
-    have := 𝔤.lie_mem hZ hY
-    rwa [Ring.lie_def] at this
-  let c : ↥𝔤 ≃ₗ[F] ↥𝔤 :=
-    { toFun := fun Y => ⟨(u : A) * Y * ((u⁻¹ : Aˣ) : A), hu _ Y.2⟩
-      invFun := fun Y => ⟨((u⁻¹ : Aˣ) : A) * Y * (u : A), hu' _ Y.2⟩
-      map_add' := fun Y Z => Subtype.ext (by simp [mul_add, add_mul])
-      map_smul' := fun r Y => Subtype.ext (by simp)
-      left_inv := fun Y => Subtype.ext (by simp [mul_assoc])
-      right_inv := fun Y => Subtype.ext (by simp [mul_assoc]) }
-  unfold weylDiscLie
-  rw [dite_eq_left (h1 _ hX'), dite_eq_left (h1 _ hX)]
-  congr 2
-  rw [← LinearEquiv.charpoly_conj c.symm]
-  congr 1
-  refine LinearMap.ext fun Y => Subtype.ext ?_
-  change ((u⁻¹ : Aˣ) : A) * ((u : A) * X * ((u⁻¹ : Aˣ) : A) * ((u : A) * Y * ((u⁻¹ : Aˣ) : A)) -
-      (u : A) * Y * ((u⁻¹ : Aˣ) : A) * ((u : A) * X * ((u⁻¹ : Aˣ) : A))) * (u : A) =
-    X * Y - Y * X
-  simp only [mul_sub, sub_mul, mul_assoc, Units.inv_mul_cancel_left, Units.inv_mul, mul_one]
-
-end WeylDisc
-
-
-section DetRange
-
-variable {K V : Type*} [Field K] [AddCommGroup V] [Module K V]
-
-/-- The determinant of an endomorphism on its range is invariant under conjugation. -/
-theorem LinearMap.det_restrict_range_conj (f : Module.End K V) (e : V ≃ₗ[K] V) :
-    LinearMap.det ((e.conj f).restrict (p := LinearMap.range (e.conj f))
-        (q := LinearMap.range (e.conj f)) (fun v _ => LinearMap.mem_range_self _ v)) =
-      LinearMap.det (f.restrict (p := LinearMap.range f) (q := LinearMap.range f)
-        (fun v _ => LinearMap.mem_range_self _ v)) := by
-  let eR : ↥(LinearMap.range f) ≃ₗ[K] ↥(LinearMap.range (e.conj f)) :=
-    { toFun := fun v => ⟨e v, by
-        obtain ⟨u, hu⟩ := v.2
-        exact ⟨e u, by rw [LinearEquiv.conj_apply_apply, LinearEquiv.symm_apply_apply, hu]⟩⟩
-      invFun := fun w => ⟨e.symm w, by
-        obtain ⟨u, hu⟩ := w.2
-        exact ⟨e.symm u, by rw [← hu, LinearEquiv.conj_apply_apply, LinearEquiv.symm_apply_apply]⟩⟩
-      map_add' := fun v w => Subtype.ext (map_add e _ _)
-      map_smul' := fun c v => Subtype.ext (map_smul e c _)
-      left_inv := fun v => Subtype.ext (e.symm_apply_apply _)
-      right_inv := fun w => Subtype.ext (e.apply_symm_apply _) }
-  rw [← LinearMap.det_conj _ eR]
-  congr 1
-
-end DetRange
-
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
 namespace GGPData
 
 variable (d : GGPData F)
 
-local notation "uW" g => (((g : GSpin d.QW) : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW)
+/-- `(gTg⁻¹)g⁻¹ = T`. -/
+theorem map_conj_inv_map_conj (T : Subgroup ↥(GSpin d.QW)) (g : ↥(GSpin d.QW)) :
+    (T.map (MulAut.conj g).toMonoidHom).map (MulAut.conj g⁻¹).toMonoidHom = T := by
+  rw [Subgroup.map_map]
+  convert Subgroup.map_id T
+  ext t
+  simp [mul_assoc]
 
 /-- `P(g)` maps `W'_T` into `W'_{gTg⁻¹}`. -/
 theorem specP_mem_commonFixed_map_conj {T : Subgroup ↥(GSpin d.QW)} (g : ↥(GSpin d.QW))
@@ -110,9 +54,8 @@ theorem specP_mem_commonFixed_map_conj {T : Subgroup ↥(GSpin d.QW)} (g : ↥(G
   have h := LinearMap.mem_ker.mp ((Submodule.mem_iInf _).mp hw ⟨t, ht⟩)
   have h' : specP d.QW t w = w := by simpa [sub_eq_zero] using h
   have e : specP d.QW (g * t * g⁻¹) (specP d.QW g w) = specP d.QW g w := by
-    have e1 : specP d.QW g⁻¹ (specP d.QW g w) = w := by
-      rw [← LinearEquiv.mul_apply, ← map_mul, inv_mul_cancel, map_one]; rfl
-    rw [map_mul, LinearEquiv.mul_apply, e1, map_mul, LinearEquiv.mul_apply, h']
+    rw [map_mul, LinearEquiv.mul_apply, show specP d.QW g⁻¹ (specP d.QW g w) = w by simp, map_mul,
+      LinearEquiv.mul_apply, h']
   refine LinearMap.mem_ker.mpr ?_
   simp only [MulEquiv.coe_toMonoidHom, MulAut.conj_apply, LinearMap.sub_apply, LinearMap.id_coe,
     id_eq, LinearEquiv.coe_coe]
@@ -122,14 +65,10 @@ theorem specP_mem_commonFixed_map_conj {T : Subgroup ↥(GSpin d.QW)} (g : ↥(G
 theorem specP_inv_mem_commonFixed {T : Subgroup ↥(GSpin d.QW)} (g : ↥(GSpin d.QW))
     {w : Fin d.m → F} (hw : w ∈ commonFixed (T.map (MulAut.conj g).toMonoidHom)) :
     specP d.QW g⁻¹ w ∈ commonFixed T := by
-  have hT : (T.map (MulAut.conj g).toMonoidHom).map (MulAut.conj g⁻¹).toMonoidHom = T := by
-    rw [Subgroup.map_map]
-    convert Subgroup.map_id T
-    ext t
-    simp [mul_assoc]
   have := d.specP_mem_commonFixed_map_conj g⁻¹ hw
-  rwa [hT] at this
+  rwa [map_conj_inv_map_conj] at this
 
+/-- The value of `g t g⁻¹` in `C(W)`. -/
 theorem coe_conj_gspin (g t : ↥(GSpin d.QW)) :
     (((MulAut.conj g t : ↥(GSpin d.QW)) : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) =
       ((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) *
@@ -161,13 +100,11 @@ def lieTorusConj {T T' : Subgroup ↥(GSpin d.QW)} (g : ↥(GSpin d.QW))
   haveI := submodule_isModuleTopology (d.lieTorus T)
   haveI := submodule_isModuleTopology (d.lieTorus T')
   have hT : T = T'.map (MulAut.conj g⁻¹).toMonoidHom := by
-    rw [hT', Subgroup.map_map]
-    convert (Subgroup.map_id T).symm
-    ext t
-    simp [mul_assoc]
+    rw [hT', map_conj_inv_map_conj]
   let e : ↥(d.lieTorus T) ≃ₗ[F] ↥(d.lieTorus T') :=
     { toFun := fun X => ⟨_, hT' ▸ d.conj_mem_lieTorus g X.2⟩
-      invFun := fun Y => ⟨((g⁻¹ : GSpin d.QW) : (CliffordAlgebra d.QW)ˣ) * (Y : CliffordAlgebra d.QW) *
+      invFun := fun Y => ⟨((g⁻¹ : GSpin d.QW) : (CliffordAlgebra d.QW)ˣ) *
+          (Y : CliffordAlgebra d.QW) *
           ((((g⁻¹ : GSpin d.QW) : (CliffordAlgebra d.QW)ˣ))⁻¹ : (CliffordAlgebra d.QW)ˣ),
         hT ▸ d.conj_mem_lieTorus g⁻¹ Y.2⟩
       map_add' := fun X Y => Subtype.ext (by simp [mul_add, add_mul])
@@ -183,14 +120,6 @@ def lieTorusConj {T T' : Subgroup ↥(GSpin d.QW)} (g : ↥(GSpin d.QW))
     ((d.lieTorusConj g hT' X : ↥(d.lieTorus T')) : CliffordAlgebra d.QW) =
       ((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) * X *
         (((g : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) := rfl
-
-theorem specP_inv_apply_specP (g : ↥(GSpin d.QW)) (w : Fin d.m → F) :
-    specP d.QW g⁻¹ (specP d.QW g w) = w := by
-  rw [← LinearEquiv.mul_apply, ← map_mul, inv_mul_cancel, map_one]; rfl
-
-theorem specP_apply_specP_inv (g : ↥(GSpin d.QW)) (w : Fin d.m → F) :
-    specP d.QW g (specP d.QW g⁻¹ w) = w := by
-  rw [← LinearEquiv.mul_apply, ← map_mul, mul_inv_cancel, map_one]; rfl
 
 /-- **`X ↦ g X g⁻¹` maps `𝔱⁰_♮(T)` into `𝔱⁰_♮(gTg⁻¹)`**: `ker ad(gXg⁻¹) = P(g) ker ad X`, and
 an element of `so_Cliff(W)` commuting with `gXg⁻¹` and killing `W'_{gTg⁻¹}` is `g Y g⁻¹` with `Y`
@@ -208,10 +137,9 @@ theorem isGammaEltLie_conj {T : Subgroup ↥(GSpin d.QW)} (g : ↥(GSpin d.QW))
     constructor
     · intro hv
       have h0 : adV d.QW X (specP d.QW g⁻¹ v) = 0 := by
-        have := congrArg (specP d.QW g⁻¹) hv
-        rwa [specP_inv_apply_specP, map_zero] at this
+        simpa using congrArg (specP d.QW g⁻¹) hv
       have := d.specP_mem_commonFixed_map_conj g (hker ▸ (LinearMap.mem_ker.mpr h0))
-      rwa [specP_apply_specP_inv] at this
+      rwa [specP_inv_apply_apply] at this
     · intro hv
       have := d.specP_inv_mem_commonFixed g hv
       rw [← hker, LinearMap.mem_ker] at this
@@ -255,14 +183,9 @@ theorem deltaLie_conj (g : ↥(GSpin d.QW)) {X : CliffordAlgebra d.QW} (hX : X �
     d.deltaLie (((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) * X *
         (((g : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW)) =
       d.deltaLie X := by
-  have key : ∀ f f' : Module.End F (Fin d.m → F), f' = (specP d.QW g).conj f →
-      absF (LinearMap.det (f'.restrict (p := LinearMap.range f') (q := LinearMap.range f')
-        (fun v _ => LinearMap.mem_range_self _ v))) =
-      absF (LinearMap.det (f.restrict (p := LinearMap.range f) (q := LinearMap.range f)
-        (fun v _ => LinearMap.mem_range_self _ v))) := by
-    rintro f _ rfl
-    rw [LinearMap.det_restrict_range_conj]
-  exact key _ _ (d.adV_conj_eq_conj g hX)
+  change absF (detIm (adV d.QW _)) = absF (detIm (adV d.QW X))
+  rw [d.adV_conj_eq_conj g hX]
+  exact congrArg absF (detIm_conj (adV d.QW X) (specP d.QW g))
 
 /-- `(gXg⁻¹, gXg⁻¹) = (g, g) (X, X) (g, g)⁻¹` in `C(W) × C(V)`. -/
 theorem diagLie_conj (g : ↥(GSpin d.QW)) (X : CliffordAlgebra d.QW) :
@@ -283,25 +206,25 @@ theorem weylDiscLie_diagLie_conj (g : ↥(GSpin d.QW)) {X : CliffordAlgebra d.QW
         (((g : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW))) =
       weylDiscLie d.lieZero (d.diagLie X) := by
   rw [d.diagLie_conj]
-  refine weylDiscLie_units_conj d.lieZero _ (fun Y hY => d.conj_mem_lie0 _ hY) (fun Y hY => ?_)
+  refine weylDiscLie_units_conj d.lieZero _ (le_antisymm ?_ fun Y hY => ?_)
     (d.diagLie_mem_lieZero hX)
-  have := d.conj_mem_lie0 (d.diag g)⁻¹ hY
-  simp only [Subgroup.coe_inv, inv_inv] at this
-  exact this
+  · rintro _ ⟨Y, hY, rfl⟩
+    exact d.conj_mem_lie0 _ hY
+  · have := d.conj_mem_lie0 (d.diag g)⁻¹ hY
+    simp only [Subgroup.coe_inv, inv_inv] at this
+    exact ⟨_, this, by simp [mul_assoc]⟩
 
 /-- Conjugation by `g` as an isomorphism of topological groups `T ≃ gTg⁻¹`. -/
 def torusConjHomeomorph (T : Subgroup ↥(GSpin d.QW)) (g : ↥(GSpin d.QW)) :
     ↥T ≃ₜ* ↥(T.map (MulAut.conj g).toMonoidHom) :=
-  { (MulAut.conj g).subgroupMap T with
-    continuous_toFun := by
-      refine Continuous.subtype_mk ?_ _
-      change Continuous fun t : ↥T => g * (t : ↥(GSpin d.QW)) * g⁻¹
-      fun_prop
-    continuous_invFun := by
-      refine Continuous.subtype_mk ?_ _
-      change Continuous fun t : ↥(T.map (MulAut.conj g).toMonoidHom) =>
-        g⁻¹ * (t : ↥(GSpin d.QW)) * g⁻¹⁻¹
-      fun_prop }
+  ContinuousMulEquiv.subgroupMap
+    { MulAut.conj g with
+      continuous_toFun := by
+        change Continuous fun t : ↥(GSpin d.QW) => g * t * g⁻¹
+        fun_prop
+      continuous_invFun := by
+        change Continuous fun t : ↥(GSpin d.QW) => g⁻¹ * t * g⁻¹⁻¹
+        fun_prop } T
 
 @[simp] theorem coe_torusConjHomeomorph (T : Subgroup ↥(GSpin d.QW)) (g : ↥(GSpin d.QW))
     (t : ↥T) : ((d.torusConjHomeomorph T g t : ↥(T.map (MulAut.conj g).toMonoidHom)) :
@@ -336,11 +259,10 @@ def torusQuotConj (T : Subgroup ↥(GSpin d.QW)) (g : ↥(GSpin d.QW)) :
     d.TorusQuot T ≃ₜ* d.TorusQuot (T.map (MulAut.conj g).toMonoidHom) :=
   (d.torusConjHomeomorph T g).quotientCongr _ _ (d.map_scalarsIn_torusConjHomeomorph T g)
 
-set_option maxHeartbeats 1600000 in -- cumulative: two measure maps, coset bookkeeping
 /-- **Conjugation carries `ν(T) dX` to `ν(gTg⁻¹) dX`**: `X ↦ g X g⁻¹` maps
 `{e^X A_{G,H}(F) : X ∈ S}` onto `{e^Y A_{G,H}(F) : Y ∈ g S g⁻¹}` (`expA_units_conj`), and
 `T(F)/A_{G,H}(F) ≃ (gTg⁻¹)(F)/A_{G,H}(F)` carries probability Haar measure to probability Haar
-measure. -/
+measure (`probHaar_preimage`). -/
 theorem isExpCompatT_map_lieTorusConj {T : Subgroup ↥(GSpin d.QW)} [CompactSpace (d.TorusQuot T)]
     (g : ↥(GSpin d.QW)) {μ : Measure ↥(d.lieTorus T)} (hμ : d.IsExpCompatT T μ) :
     d.IsExpCompatT (T.map (MulAut.conj g).toMonoidHom) (μ.map (d.lieTorusConj g rfl)) := by
@@ -360,52 +282,45 @@ theorem isExpCompatT_map_lieTorusConj {T : Subgroup ↥(GSpin d.QW)} [CompactSpa
   have hSU : e ⁻¹' S' ⊆ U := fun X hX => by
     have := hS'U hX
     rwa [Set.mem_preimage, ContinuousLinearEquiv.symm_apply_apply] at this
-  rw [Measure.map_apply e.continuous.measurable hS', hUS _ hSm hSU]
+  refine (Measure.map_apply e.continuous.measurable hS').trans ((hUS _ hSm hSU).trans ?_)
   let E := d.torusQuotConj T g
   haveI : CompactSpace (d.TorusQuot T₁) := E.toHomeomorph.compactSpace
-  rw [← map_probHaar E]
-  let eM : d.TorusQuot T ≃ᵐ d.TorusQuot T₁ := E.toHomeomorph.toMeasurableEquiv
-  have hmap : (probHaar (d.TorusQuot T)).map E = (probHaar (d.TorusQuot T)).map eM := rfl
-  rw [hmap, MeasurableEquiv.map_apply]
+  refine Eq.trans ?_ (probHaar_preimage E _)
   congr 1
   ext q
   simp only [Set.mem_ofPred_eq, Set.mem_preimage]
-  set a := ((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW)
   constructor
   · rintro ⟨X, hX, t, ht, rfl⟩
     refine ⟨e X, hX, d.torusConjHomeomorph T g t, ?_, ?_⟩
-    · change a * (((t : GSpin d.QW) : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) *
+    · change ((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) *
+          (((t : GSpin d.QW) : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) *
           (((g : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) =
-        expA F (a * (X : CliffordAlgebra d.QW) *
+        expA F (((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) *
+          (X : CliffordAlgebra d.QW) *
           (((g : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW))
       rw [ht, expA_units_conj]
     · exact (d.torusConjHomeomorph T g).quotientCongr_mk (d.scalarsIn T)
         (d.scalarsIn (T.map (MulAut.conj g).toMonoidHom))
         (d.map_scalarsIn_torusConjHomeomorph T g) t
   · rintro ⟨Y, hY, t₁, ht₁, hq⟩
-    set X := e.symm Y with hXdef
-    have hXS : X ∈ e ⁻¹' S' := by
-      rw [Set.mem_preimage, hXdef, ContinuousLinearEquiv.apply_symm_apply]; exact hY
+    obtain ⟨X, rfl⟩ := e.surjective Y
     obtain ⟨t, rfl⟩ := (d.torusConjHomeomorph T g).surjective t₁
-    refine ⟨X, hXS, t, ?_, ?_⟩
-    · have ht' : a * (((t : GSpin d.QW) : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) *
+    refine ⟨X, hY, t, ?_, ?_⟩
+    · have ht' : ((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) *
+          (((t : GSpin d.QW) : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) *
           (((g : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) =
-          expA F (Y : CliffordAlgebra d.QW) := ht₁
-      change _ = expA F (((g⁻¹ : GSpin d.QW) : (CliffordAlgebra d.QW)ˣ) * (Y : CliffordAlgebra d.QW) *
-          ((((g⁻¹ : GSpin d.QW) : (CliffordAlgebra d.QW)ˣ))⁻¹ : (CliffordAlgebra d.QW)ˣ))
-      rw [expA_units_conj, ← ht']
-      simp [a, mul_assoc]
+          expA F (((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) *
+            (X : CliffordAlgebra d.QW) *
+            (((g : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW)) :=
+        ht₁
+      rw [expA_units_conj] at ht'
+      simpa [mul_assoc] using congrArg (fun z =>
+        (((g : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) * z *
+          ((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW)) ht'
     · exact E.injective ((show E q = _ from hq).trans
         ((d.torusConjHomeomorph T g).quotientCongr_mk (d.scalarsIn T)
           (d.scalarsIn (T.map (MulAut.conj g).toMonoidHom))
           (d.map_scalarsIn_torusConjHomeomorph T g) t).symm)
-
-theorem map_conj_inv_map_conj (T : Subgroup ↥(GSpin d.QW)) (g : ↥(GSpin d.QW)) :
-    (T.map (MulAut.conj g).toMonoidHom).map (MulAut.conj g⁻¹).toMonoidHom = T := by
-  rw [Subgroup.map_map]
-  convert Subgroup.map_id T
-  ext t
-  simp [mul_assoc]
 
 /-- `X ∈ 𝔱⁰_♮(T)` iff `g X g⁻¹ ∈ 𝔱⁰_♮(gTg⁻¹)`. -/
 theorem isGammaEltLie_conj_iff {T : Subgroup ↥(GSpin d.QW)} (g : ↥(GSpin d.QW))
@@ -420,15 +335,28 @@ theorem isGammaEltLie_conj_iff {T : Subgroup ↥(GSpin d.QW)} (g : ↥(GSpin d.Q
   convert h' using 1
   simp [mul_assoc]
 
+/-- **`Γ(G,H)` is stable under conjugation**: `g x g⁻¹` is semisimple (`isSS_conj`), and
+`T_{gxg⁻¹} = g T_x g⁻¹` (`torusOf_conj`) is commutative with compact
+`T_{gxg⁻¹}(F)/A_{G,H}(F) ≃ T_x(F)/A_{G,H}(F)` (`torusQuotConj`). -/
+theorem isGammaElt_conj {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x) (g : ↥(GSpin d.QW)) :
+    d.IsGammaElt (g * x * g⁻¹) := by
+  haveI : CompactSpace (d.TorusQuot (d.torusOf x)) := hx.2.2
+  refine ⟨(d.isSS_conj x g).mpr hx.1, ?_, ?_⟩
+  · rw [d.torusOf_conj]
+    rintro _ ⟨a, ha, rfl⟩ _ ⟨b, hb, rfl⟩
+    exact (hx.2.1 a ha b hb).map _
+  · rw [d.torusOf_conj]
+    exact (d.torusQuotConj (d.torusOf x) g).toHomeomorph.compactSpace
+
 variable (ψ : NontrivialAddChar F)
 
 /-- **The torus integral is invariant under conjugating the torus**, given that the germs are
-(`hgerm`): for `x ∈ Γ(G,H)` and `T_{x'} = g T_x g⁻¹`, `X ↦ g X g⁻¹` carries `ν(T_x) dX` to
-`ν(T_{x'}) dX` (`isExpCompatT_map_lieTorusConj`), `𝔱⁰_♮(T_x)` onto `𝔱⁰_♮(T_{x'})`
+(`hgerm`): for `x ∈ Γ(G,H)`, `X ↦ g X g⁻¹` carries `ν(T_x) dX` to `ν(g T_x g⁻¹) dX`
+(`isExpCompatT_map_lieTorusConj`), `𝔱⁰_♮(T_x)` onto `𝔱⁰_♮(g T_x g⁻¹)`
 (`isGammaEltLie_conj_iff`), and preserves `D^G` and `Δ` (`weylDiscLie_diagLie_conj`,
 `deltaLie_conj`). -/
-theorem torusIntegralLie_conj_of {θ' : ↥d.lieZero → ℂ} {x x' g : ↥(GSpin d.QW)}
-    (hx : d.IsGammaElt x) (hT : d.torusOf x' = (d.torusOf x).map (MulAut.conj g).toMonoidHom)
+theorem torusIntegralLie_conj_of {θ' : ↥d.lieZero → ℂ} {x : ↥(GSpin d.QW)}
+    (hx : d.IsGammaElt x) (g : ↥(GSpin d.QW))
     (hgerm : ∀ X : CliffordAlgebra d.QW, d.IsGammaEltLie (d.torusOf x) X →
       d.germLie0 ψ θ' (d.diagLie (((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) * X *
           (((g : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW)))
@@ -436,9 +364,9 @@ theorem torusIntegralLie_conj_of {θ' : ↥d.lieZero → ℂ} {x x' g : ↥(GSpi
           (((g : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW))) =
         d.germLie0 ψ θ' (d.diagLie X) (d.orbitChoiceLie X))
     (s : ℝ) :
-    d.torusIntegralLie ψ θ' (d.torusOf x') s = d.torusIntegralLie ψ θ' (d.torusOf x) s := by
+    d.torusIntegralLie ψ θ' ((d.torusOf x).map (MulAut.conj g).toMonoidHom) s =
+      d.torusIntegralLie ψ θ' (d.torusOf x) s := by
   haveI : CompactSpace (d.TorusQuot (d.torusOf x)) := hx.2.2
-  rw [hT]
   obtain ⟨μ, hμ⟩ := d.exists_isExpCompatT ⟨_, x, hx, rfl⟩
   let c := d.lieTorusConj g (T := d.torusOf x) rfl
   let cM := c.toHomeomorph.toMeasurableEquiv
@@ -456,41 +384,6 @@ theorem torusIntegralLie_conj_of {θ' : ↥d.lieZero → ℂ} {x x' g : ↥(GSpi
   · rw [ite_eq_left ((d.isGammaEltLie_conj_iff g).mpr h), ite_eq_left h, hgerm _ h,
       d.weylDiscLie_diagLie_conj g X.2.1, d.deltaLie_conj g X.2.1.1]
   · rw [ite_eq_right h, ite_eq_right (fun h' => h ((d.isGammaEltLie_conj_iff g).mp h'))]
-
-/-- **Reduction of `torusIntegralLie_toSO`** to `ad` matching `𝔱⁰_♮` with `𝔱_♮` (`hnat`) and the
-invariance of the germs `c_{θ, O_X}(X)` of `θ ∘ ad` under `X ↦ g X g⁻¹` between tori of
-`Γ(G,H)` (`hgerm`): `torusIntegralLie_toSO_of` with `torusIntegralLie_conj_of`. -/
-theorem torusIntegralLie_toSO_of_germ_conj
-    (hnat : ∀ (x : ↥(GSpin d.QW)), d.IsGammaElt x → ∀ X : ↥(d.lieTorus (d.torusOf x)),
-      d.IsGammaEltLie (d.torusOf x) X ↔
-        d.luoOf.IsNat ((d.torusOf x).map (d.toGbarU.comp d.diag)) (d.toSOLin (d.diagLie X)))
-    (hgerm : ∀ θ : ↥d.luoOf.lie → ℂ,
-      IsLieQuasiCharacter d.luoOf.Gbar d.luoOf.lie d.luoOf.traceForm ψ θ →
-      ∀ (x x' g : ↥(GSpin d.QW)), d.IsGammaElt x → d.IsGammaElt x' →
-        d.torusOf x' = (d.torusOf x).map (MulAut.conj g).toMonoidHom →
-        ∀ X : CliffordAlgebra d.QW, d.IsGammaEltLie (d.torusOf x) X →
-          d.germLie0 ψ (θ ∘ d.toSO)
-              (d.diagLie (((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) * X *
-                (((g : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW)))
-              (d.orbitChoiceLie (((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) * X *
-                (((g : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW))) =
-            d.germLie0 ψ (θ ∘ d.toSO) (d.diagLie X) (d.orbitChoiceLie X))
-    (e : GammaClass d ≃ d.luoOf.GammaClass)
-    (hen : ∀ c, d.IsNaturalTorusCorr (Quot.out c).1 (Quot.out (e c)).1) :
-    ∃ μT : ∀ T : d.luoOf.GammaTorus, Measure ↥(d.luoOf.lieTorus T.1),
-      (∀ T, d.luoOf.IsExpCompatT T.1 (μT T)) ∧
-      ∀ θ : ↥d.luoOf.lie → ℂ,
-        IsLieQuasiCharacter d.luoOf.Gbar d.luoOf.lie d.luoOf.traceForm ψ θ →
-        (∀ (T : d.GammaTorus) (X : CliffordAlgebra d.QW), d.IsGammaEltLie T.1 X →
-          d.germLie0 ψ (θ ∘ d.toSO) (d.diagLie X) (d.orbitChoiceLie X) =
-            d.luoOf.cTheta ψ θ (d.toSOLin (d.diagLie X))) →
-        ∀ (c : GammaClass d) (s : ℝ), 0 < s →
-          d.torusIntegralLie ψ (θ ∘ d.toSO) (Quot.out c).1 s =
-            ∫ X : ↥(d.luoOf.lieTorus (Quot.out (e c)).1),
-              d.luoOf.gammaIntegrand ψ θ (Quot.out (e c)).1 s X ∂μT (Quot.out (e c)) :=
-  d.torusIntegralLie_toSO_of ψ hnat
-    (fun θ hθ x x' g hx hx' hT s =>
-      d.torusIntegralLie_conj_of ψ hx hT (hgerm θ hθ x x' g hx hx' hT) s) e hen
 
 end GGPData
 
