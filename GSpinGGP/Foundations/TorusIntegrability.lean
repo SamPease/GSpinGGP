@@ -16,11 +16,12 @@ scaling of Haar measure. `|·|_F` is the normalized absolute value `absF`.
 * `locallyIntegrable_of_homogeneous`: a function homogeneous of degree `κ > −dim V`
   (`f(c • x) = |c|_F^κ f(x)`) and locally integrable off `0` is locally integrable.
 * `locallyIntegrable_prod_gauge_rpow`: `v ↦ ∏_i N_i(π_i v)^{a_i}` is locally integrable for linear
-  maps `π_i` and gauges `N_i` (continuous, positive off `0`, `N_i(c y) = |c|_F N_i(y)`), provided
-  `∑_{j∈J} a_j > −codim ⋂_{j∈J} ker π_j` for all nonempty `J` (general form of B.1.2(ii)).
+  maps `π_i` and gauges `N_i` of degree `e_i > 0` (continuous, positive off `0`,
+  `N_i(c • y) = |c|_F^{e_i} N_i(y)`), provided `∑_{j∈J} e_j a_j > −rank (π_j)_{j∈J}` for all
+  nonempty `J` (a sufficient condition; general form of B.1.2(ii)).
 * `locallyIntegrable_prod_absF_rpow`: B.1.2(ii) (first part) for linearly independent forms over `F`.
-* `integrable_of_chart`: integrability on a compact group from local integrability in a measure
-  chart near `0` at every translate (the passage from the Lie algebra to the group in B.1.2(i)).
+* `integrable_of_chart`: integrability on a compact group from domination, at every translate, in
+  a measure chart near `0` (the passage from the Lie algebra to the group in B.1.2(i)).
 * Transport: `locallyIntegrable_comp_linearEquiv`, `locallyIntegrable_comp_fst`,
   `locallyIntegrable_comp_prodEquivOfIsCompl`.
 -/
@@ -368,8 +369,7 @@ theorem locallyIntegrable_comp_fst [LocallyCompactSpace W] (μ : Measure V) [SFi
   refine ⟨U ×ˢ K, prod_mem_nhds hU hKy, ?_⟩
   rw [IntegrableOn, ← Measure.prod_restrict]
   haveI : IsFiniteMeasure (ν.restrict K) := isFiniteMeasure_restrict.mpr hK.measure_lt_top.ne
-  have := Integrable.mul_prod (L := ℝ) hi (integrable_const (1 : ℝ) (μ := ν.restrict K))
-  simpa using this
+  exact hi.comp_fst _
 
 /-- If `V = C ⊕ K` and `g` is locally integrable on `C`, then `v ↦ g(c)`, `v = c + k`, is
 locally integrable on `V` (all measures additive Haar measures). -/
@@ -401,6 +401,8 @@ normalized absolute value, `N_i(c • y) = |c|_F^{e_i} N_i(y)`. Suppose that for
 `J ⊆ s`, `∑_{j ∈ J} e_j a_j > −codim (⋂_{j∈J} ker π_j)` (the codimension is the rank of
 `(π_j)_{j ∈ J}`).
 Then `v ↦ ∏_{i ∈ s} N_i(π_i v)^{a_i}` is locally integrable for any additive Haar measure.
+The condition over all `J` is sufficient, not necessary (with exponents of mixed sign it is
+stronger than needed).
 
 Intended applications (only the first case below, forms over `F`, is derived here:
 `locallyIntegrable_prod_absF_rpow`): BP's case, `N_i = |·|` on a finite extension `E ⊇ F`
@@ -560,33 +562,16 @@ theorem finrank_range_pi_of_linearIndependent {K W : Type*} [Field K] [AddCommGr
     [Module K W] {ι : Type*} {φ : ι → Module.Dual K W}
     (hφ : LinearIndependent K φ) (J : Finset ι) :
     Module.finrank K (LinearMap.range (LinearMap.pi fun j : J => φ j)) = J.card := by
-  classical
+  have hli : LinearIndependent K (fun j : J => ⇑(φ j)) := by
+    rw [Fintype.linearIndependent_iff]
+    intro c hc
+    exact Fintype.linearIndependent_iff.mp (hφ.comp _ Subtype.val_injective) c
+      (LinearMap.ext fun w => by simpa using congrFun hc w)
+  have hspan := span_flip_eq_top_iff_linearIndependent.mpr hli
   have hsurj : LinearMap.range (LinearMap.pi fun j : J => φ j) = ⊤ := by
-    by_contra hne
-    obtain ⟨f, hf0, hf⟩ :=
-      Submodule.exists_dual_map_eq_bot_of_lt_top (lt_top_iff_ne_top.mpr hne) inferInstance
-    have hcomb : ∑ j : J, f (Pi.single j 1) • φ j = 0 := by
-      ext v
-      have hv : f ((LinearMap.pi fun j : J => φ j) v) = 0 := by
-        have : f ((LinearMap.pi fun j : J => φ j) v) ∈
-            (LinearMap.range (LinearMap.pi fun j : J => φ j)).map f :=
-          ⟨_, ⟨v, rfl⟩, rfl⟩
-        rwa [hf, Submodule.mem_bot] at this
-      have hpi : (LinearMap.pi fun j : J => φ j) v = ∑ j : J, φ j v • Pi.single j 1 := by
-        ext i
-        simp [Finset.sum_apply, Pi.single_apply]
-      rw [hpi, map_sum] at hv
-      simp only [map_smul, smul_eq_mul] at hv
-      simp only [LinearMap.sum_apply, LinearMap.smul_apply, smul_eq_mul, LinearMap.zero_apply]
-      rw [← hv]
-      exact Finset.sum_congr rfl fun j _ => mul_comm _ _
-    have h0 := Fintype.linearIndependent_iff.mp
-      (hφ.comp (fun j : J => (j : ι)) Subtype.val_injective) _ hcomb
-    apply hf0
-    refine LinearMap.pi_ext fun j x => ?_
-    have : (Pi.single j x : J → K) = x • Pi.single j 1 := by
-      rw [← Pi.single_smul, smul_eq_mul, mul_one]
-    rw [this, map_smul, h0 j, smul_zero, LinearMap.zero_apply]
+    rw [eq_top_iff, ← hspan, Submodule.span_le]
+    rintro _ ⟨w, rfl⟩
+    exact ⟨w, rfl⟩
   rw [hsurj, finrank_top, Module.finrank_fintype_fun_eq_card, Fintype.card_coe]
 
 
@@ -618,8 +603,9 @@ variable {V : Type*} [NormedAddCommGroup V] [NormedSpace F V] [FiniteDimensional
 
 /-- **BP Astérisque 418, Lemma B.1.2(ii), first part, for forms defined over `F`**: for linearly
 independent `λ_1, …, λ_n ∈ V^*` and `σ > 0`, `v ↦ ∏ |λ_i(v)|_F^{σ−1}` is locally integrable on `V`.
-(For forms defined over an extension of `F` use `locallyIntegrable_prod_gauge_rpow` with
-`N = |·|_E`.) -/
+BP's complex `s` with `Re s > 0` reduces to real `σ = Re s`, since `|x^{s−1}| = |x|^{Re s − 1}`.
+Stated for ultrametric (`p`-adic) `F`. (For forms defined over an extension of `F` use
+`locallyIntegrable_prod_gauge_rpow` with `N = |·|_E`.) -/
 theorem locallyIntegrable_prod_absF_rpow [IsUltrametricDist F] (μ : Measure V)
     [μ.IsAddHaarMeasure] {ι : Type*} [Fintype ι] {φ : ι → Module.Dual F V}
     (hφ : LinearIndependent F φ) {σ : ℝ} (hσ : 0 < σ) :
@@ -637,12 +623,13 @@ end Forms
 section Chart
 
 /-- **Integrability on a compact group from local integrability in a measure chart** (the
-group-to-Lie-algebra step of BP Astérisque 418, Lemma B.1.2(i)). Let `Q` be a compact group with a
+passage from the Lie algebra to the group in BP Astérisque 418, Lemma B.1.2(i)). Let `Q` be a compact group with a
 finite left-invariant measure `ν`, and `Φ : 𝔤 → Q` a chart near `0`: continuous on an open
 `U ∋ 0`, with `Φ(W)` a neighbourhood of `1` for every neighbourhood `W` of `0`, and carrying
 `μ` to `ν`: `μ(S) = ν(Φ(S))` for measurable `S ⊆ U` (as `exp` does, `ExpHaar`). If `f` is
 measurable and, for every `q₀ ∈ Q`, `|f(q₀ Φ(X))|` is bounded near `0` by a function `g`
-integrable near `0`, then `f` is `ν`-integrable. -/
+integrable near `0`, then `f` is `ν`-integrable. For `T(F)` itself (not compact), apply it on a
+compact open subgroup and its translates. -/
 theorem integrable_of_chart {Q : Type*} [Group Q] [TopologicalSpace Q] [IsTopologicalGroup Q]
     [CompactSpace Q] [MeasurableSpace Q] [BorelSpace Q] (ν : Measure Q) [ν.IsMulLeftInvariant]
     [IsFiniteMeasure ν] {𝔤 : Type*} [TopologicalSpace 𝔤] [Zero 𝔤] [MeasurableSpace 𝔤]
