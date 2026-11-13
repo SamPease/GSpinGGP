@@ -402,7 +402,222 @@ theorem stage_transfer {μ : ℝ} (hμ0 : 0 < μ) (hμν : μ * ‖4 * ν‖ ≤
     by rw [hα']; exact hfin,
     transvection_pairU_apply hb hne h₀ h₁ h₀S h₁S (inY_basis hjS) hu huw α β hy⟩
 
+/-- **Step C.** Clear the `Y`-component with the transvection `E_{u', w}`,
+`w = -(4να)⁻¹ y`. -/
+theorem stage_clear {μ : ℝ} (hμ0 : 0 < μ) (α β : F) (hα : α ≠ 0) {y : V} (hy : InY b S' y)
+    (hμy : μ * basisNorm b y ≤ ‖α‖) :
+    ∃ g, Good Q b (insert i₀ (insert i₁ S'))
+        (1 + polarBound Q b * (μ * ‖4 * ν‖)⁻¹ +
+          formBound Q b * ((μ * ‖4 * ν‖)⁻¹) ^ 2 * polarBound Q b) g ∧
+      ∃ β' : F, g (α • (b i₀ + b i₁) + β • (b i₀ - b i₁) + y) =
+          α • (b i₀ + b i₁) + β' • (b i₀ - b i₁) := by
+  have hν : ν ≠ 0 := fun h => hb.apply_ne_zero i₀ (h₀.trans h)
+  have h4ν : (4 * ν : F) ≠ 0 := mul_ne_zero (by norm_num) hν
+  set w : V := -(4 * ν * α)⁻¹ • y with hw
+  have hwY : InY b S' w := InY.smul _ hy
+  have hv := pairV_isotropic hb hne h₀ h₁
+  have hvw : polar Q (b i₀ - b i₁) w = 0 := by
+    rw [polar_comm]; exact polar_pairV_of_inY hb h₀S h₁S hwY
+  have hR : 0 ≤ (μ * ‖4 * ν‖)⁻¹ := by positivity
+  have hwR : basisNorm b w ≤ (μ * ‖4 * ν‖)⁻¹ := by
+    rw [hw, basisNorm_smul, norm_neg, norm_inv, norm_mul]
+    have hα0 : 0 < ‖α‖ := norm_pos_iff.2 hα
+    have h40 : 0 < ‖4 * ν‖ := norm_pos_iff.2 h4ν
+    rw [inv_mul_le_iff₀ (by positivity), mul_inv]
+    calc basisNorm b y ≤ ‖α‖ * μ⁻¹ := by
+          rw [le_mul_inv_iff₀ hμ0]; linarith [mul_comm μ (basisNorm b y)]
+      _ = ‖4 * ν‖ * ‖α‖ * (μ⁻¹ * ‖4 * ν‖⁻¹) := by field_simp
+  have hpair := basisNorm_pair_le (b := b) (i₀ := i₀) (i₁ := i₁) (-1) (by simp)
+  have hgood := good_transvection (S := insert i₀ (insert i₁ S')) hb hv hvw
+    (by simpa [sub_eq_add_neg] using hpair) hR hwR (fun k hk => by
+      simp only [Finset.mem_insert, not_or] at hk
+      exact ⟨by simpa [sub_eq_add_neg] using polar_basis_pair hb hk.1 hk.2.1 (-1),
+        polar_of_inY_of_not_mem hb hwY hk.2.2⟩)
+  refine ⟨_, hgood, β - 4 * ν * α * Q w - polar Q y w, ?_⟩
+  rw [transvection_pairV_apply hb hne h₀ h₁ h₀S h₁S hwY hv hvw α β hy]
+  have : y + (4 * ν * α) • w = 0 := by
+    rw [hw, smul_smul, mul_neg, mul_inv_cancel₀ (mul_ne_zero h4ν hα), neg_smul, one_smul,
+      add_neg_cancel]
+  rw [this, add_zero]
+
+/-- The value of `Q` on `α u + β u' + y` with `y ∈ Y`. -/
+theorem apply_pair_add (α β : F) {y : V} (hy : InY b S' y) :
+    Q (α • (b i₀ + b i₁) + β • (b i₀ - b i₁) + y) = 4 * ν * α * β + Q y := by
+  rw [QuadraticMap.map_add (⇑Q), QuadraticMap.map_add (⇑Q), QuadraticMap.map_smul,
+    QuadraticMap.map_smul, pairU_isotropic hb hne h₀ h₁, pairV_isotropic hb hne h₀ h₁,
+    polar_smul_left, polar_smul_right, polar_pairU_pairV hb hne h₀ h₁, polar_add_left,
+    polar_smul_left, polar_smul_left, polar_comm Q _ y, polar_comm Q _ y,
+    polar_pairU_of_inY hb h₀S h₁S hy, polar_pairV_of_inY hb h₀S h₁S hy]
+  simp only [smul_eq_mul]
+  ring
+
 end Stages
+
+omit [CharZero F] [IsUltrametricDist F] [FiniteDimensional F V] in
+/-- The normal form `a u + c u'` with `4ac = 1` and `‖c‖ ≤ ‖a‖` is
+`(2λ)⁻¹ u + (λ/2) u'` with `0 < ‖λ‖ ≤ 1`. -/
+theorem exists_param [CharZero F] {a c : F} (hac : 4 * a * c = 1) (hca : ‖c‖ ≤ ‖a‖) :
+    ∃ t : F, t ≠ 0 ∧ ‖t‖ ≤ 1 ∧ a = (2 * t)⁻¹ ∧ c = t / 2 := by
+  have ha : a ≠ 0 := by rintro rfl; simp at hac
+  refine ⟨(2 * a)⁻¹, inv_ne_zero (mul_ne_zero two_ne_zero ha), ?_, by field_simp, ?_⟩
+  · rw [norm_inv, inv_le_one₀ (norm_pos_iff.2 (mul_ne_zero two_ne_zero ha))]
+    have h1 : ‖(4 : F) * a * c‖ = 1 := by rw [hac, norm_one]
+    have h2 : (1 : ℝ) ≤ ‖(2 : F) * a‖ ^ 2 := by
+      calc (1 : ℝ) = ‖(4 : F)‖ * ‖a‖ * ‖c‖ := by rw [← h1, norm_mul, norm_mul]
+        _ ≤ ‖(4 : F)‖ * ‖a‖ * ‖a‖ := by gcongr
+        _ = ‖(2 : F) * a‖ ^ 2 := by
+          rw [norm_mul, show (4 : F) = 2 * 2 by norm_num, norm_mul]; ring
+    nlinarith [norm_nonneg ((2 : F) * a)]
+  · field_simp
+    linear_combination hac
+
+section Assembly
+
+include hb hne h₀ h₁ h₀S h₁S
+
+omit [IsUltrametricDist F] [FiniteDimensional F V] in
+/-- Every vector supported on `{i₀, i₁} ∪ S'` is `α u + β u' + y` with `y ∈ Y`. -/
+theorem exists_pair_decomp {v : V} (hv : ∀ j, j ≠ i₀ → j ≠ i₁ → j ∉ S' → b.repr v j = 0) :
+    ∃ (α β : F) (y : V), InY b S' y ∧ v = α • (b i₀ + b i₁) + β • (b i₀ - b i₁) + y := by
+  refine ⟨(b.repr v i₀ + b.repr v i₁) / 2, (b.repr v i₀ - b.repr v i₁) / 2,
+    v - ((b.repr v i₀ + b.repr v i₁) / 2) • (b i₀ + b i₁) -
+      ((b.repr v i₀ - b.repr v i₁) / 2) • (b i₀ - b i₁), fun j hj => ?_, by abel⟩
+  by_cases hj₀ : j = i₀
+  · subst hj₀
+    simp [hne]
+    ring
+  by_cases hj₁ : j = i₁
+  · subst hj₁
+    simp [hne.symm]
+    ring
+  simp [Ne.symm hj₀, Ne.symm hj₁, hv j hj₀ hj₁ hj]
+
+/-- The orbit lemma before fixing the determinant: an isometry of determinant `±1`. -/
+theorem orbit_core :
+    ∃ M, ∀ v : V, (∀ j, j ≠ i₀ → j ≠ i₁ → j ∉ S' → b.repr v j = 0) → Q v = ν →
+      ∃ g, Good Q b (insert i₀ (insert i₁ S')) M g ∧ ∃ t : F, t ≠ 0 ∧ ‖t‖ ≤ 1 ∧
+        g v = (2 * t)⁻¹ • (b i₀ + b i₁) + (t / 2) • (b i₀ - b i₁) := by
+  have hν : ν ≠ 0 := fun h => hb.apply_ne_zero i₀ (h₀.trans h)
+  have h4ν : 0 < ‖4 * ν‖ := norm_pos_iff.2 (mul_ne_zero (by norm_num) hν)
+  set qi : ℝ := ‖fun j => (Q (b j))⁻¹‖ with hqi
+  have hqi0 : 0 ≤ qi := norm_nonneg _
+  set μ : ℝ := ‖(2 : F)‖ / (‖4 * ν‖ + qi) with hμ
+  have h20 : 0 < ‖(2 : F)‖ := norm_pos_iff.2 two_ne_zero
+  have hμ0 : 0 < μ := div_pos h20 (by positivity)
+  have hμν : μ * ‖4 * ν‖ ≤ ‖(2 : F)‖ := by
+    rw [hμ, div_mul_eq_mul_div, div_le_iff₀ (by positivity)]
+    nlinarith
+  have hμQ : ∀ j, μ ≤ ‖(2 : F)‖ * ‖Q (b j)‖ := by
+    intro j
+    have hQj : 0 < ‖Q (b j)‖ := norm_pos_iff.2 (hb.apply_ne_zero j)
+    have hinv : ‖Q (b j)‖⁻¹ ≤ qi := by
+      have := norm_le_pi_norm (fun j => (Q (b j))⁻¹) j
+      rwa [norm_inv] at this
+    rw [hμ, div_le_iff₀ (by positivity)]
+    have : 1 ≤ ‖Q (b j)‖ * (‖4 * ν‖ + qi) := by
+      have := mul_le_mul_of_nonneg_left hinv hQj.le
+      rw [mul_inv_cancel₀ hQj.ne'] at this
+      nlinarith
+    nlinarith
+  set Mσ := 1 + ‖(Q (b i₁))⁻¹‖ * polarBound Q b
+  set MB := 1 + polarBound Q b * 1 + formBound Q b * 1 ^ 2 * polarBound Q b
+  set MC := 1 + polarBound Q b * (μ * ‖4 * ν‖)⁻¹ +
+    formBound Q b * ((μ * ‖4 * ν‖)⁻¹) ^ 2 * polarBound Q b
+  refine ⟨Mσ * (MC * (MB * Mσ)), fun v hv hQv => ?_⟩
+  obtain ⟨α, β, y, hy, rfl⟩ := exists_pair_decomp hb hne h₀ h₁ h₀S h₁S hv
+  obtain ⟨g₁, hg₁, α₁, β₁, h₁', e₁⟩ := stage_swap hb hne h₀ h₁ h₀S h₁S α β hy
+  obtain ⟨g₂, hg₂, α₂, y₂, hy₂, h₂a, h₂b, e₂⟩ :=
+    stage_transfer hb hne h₀ h₁ h₀S h₁S hμ0 hμν hμQ α₁ β₁ hy h₁'
+  have hQ₂ : Q (α₂ • (b i₀ + b i₁) + β₁ • (b i₀ - b i₁) + y₂) = ν := by
+    rw [← e₂, TauCeti.QuadraticMap.mem_orthogonalGroup_iff.1 hg₂.1, ← e₁,
+      TauCeti.QuadraticMap.mem_orthogonalGroup_iff.1 hg₁.1, hQv]
+  have hα₂ : α₂ ≠ 0 := by
+    rintro rfl
+    have hβ₁ : β₁ = 0 := norm_le_zero_iff.1 (by simpa using h₂a)
+    have hy₂0 : y₂ = 0 := by
+      have : basisNorm b y₂ ≤ 0 := by
+        have := h₂b; rw [norm_zero] at this
+        exact nonpos_of_mul_nonpos_right this hμ0
+      exact basisNorm_eq_zero.1 (le_antisymm this (basisNorm_nonneg _))
+    rw [hβ₁, hy₂0] at hQ₂
+    simp at hQ₂
+    exact hν hQ₂.symm
+  obtain ⟨g₃, hg₃, β₃, e₃⟩ := stage_clear hb hne h₀ h₁ h₀S h₁S hμ0 α₂ β₁ hα₂ hy₂ h₂b
+  have hQ₃ : 4 * α₂ * β₃ = 1 := by
+    have h := hQ₂
+    rw [← TauCeti.QuadraticMap.mem_orthogonalGroup_iff.1 hg₃.1, e₃,
+      show α₂ • (b i₀ + b i₁) + β₃ • (b i₀ - b i₁) =
+        α₂ • (b i₀ + b i₁) + β₃ • (b i₀ - b i₁) + (0 : V) by rw [add_zero],
+      apply_pair_add hb hne h₀ h₁ h₀S h₁S α₂ β₃ (fun _ _ => by simp), map_zero,
+      add_zero] at h
+    have : ν * (4 * α₂ * β₃) = ν * 1 := by linear_combination h
+    exact mul_left_cancel₀ hν this
+  have hMσ : 1 ≤ Mσ := le_add_of_nonneg_right (mul_nonneg (norm_nonneg _) (norm_nonneg _))
+  have hfinal : ∃ g₄, Good Q b (insert i₀ (insert i₁ S')) Mσ g₄ ∧ ∃ t : F, t ≠ 0 ∧
+      ‖t‖ ≤ 1 ∧ g₄ (α₂ • (b i₀ + b i₁) + β₃ • (b i₀ - b i₁)) =
+        (2 * t)⁻¹ • (b i₀ + b i₁) + (t / 2) • (b i₀ - b i₁) := by
+    by_cases hc : ‖β₃‖ ≤ ‖α₂‖
+    · obtain ⟨t, ht0, ht1, ha, hc'⟩ := exists_param hQ₃ hc
+      exact ⟨1, good_one.mono hMσ, t, ht0, ht1, by rw [ha, hc']; rfl⟩
+    · have hQ₃' : 4 * β₃ * α₂ = 1 := by rw [← hQ₃]; ring
+      obtain ⟨t, ht0, ht1, ha, hc'⟩ := exists_param hQ₃' (not_le.1 hc).le
+      let := invertibleOfNonzero (hb.apply_ne_zero i₁)
+      refine ⟨_, good_reflection hb (Finset.mem_insert_of_mem (Finset.mem_insert_self _ _)),
+        t, ht0, ht1, ?_⟩
+      have := reflection_pair_apply hb hne h₀ h₁ h₀S h₁S α₂ β₃ (y := 0) (fun _ _ => by simp)
+      simp only [add_zero] at this
+      rw [this, ha, hc']
+  obtain ⟨g₄, hg₄, t, ht0, ht1, e₄⟩ := hfinal
+  refine ⟨g₄ * (g₃ * (g₂ * g₁)), hg₄.mul (hg₃.mul (hg₂.mul hg₁)), t, ht0, ht1, ?_⟩
+  simp only [LinearEquiv.mul_apply]
+  rw [e₁, e₂, e₃, e₄]
+
+/-- **The orbit lemma** (Thesis Prop. 8.3.1, its first step; the orthogonal analogue of
+Beuzart-Plessis's Lemme 11.0.2). Let `b` be an orthogonal basis of anisotropic vectors, `i₀ ≠ i₁`
+with `Q (b i₀) = ν`, `Q (b i₁) = -ν`, and `S'` a nonempty set of further indices. There is `M`
+such that every `v` supported on `{i₀, i₁} ∪ S'` with `Q v = ν` is moved by some `g ∈ SO(Q)`
+of operator norm at most `M`, fixing the basis vectors outside `{i₀, i₁} ∪ S'`, to
+`(2t)⁻¹ u + (t/2) u'` (`u = b i₀ + b i₁`, `u' = b i₀ - b i₁`) with `0 < ‖t‖ ≤ 1`. This vector is
+the image of `b i₀ = (u + u')/2` under the inverse of the torus element `u ↦ t u`,
+`u' ↦ t⁻¹ u'`. -/
+theorem orbit_lemma (hS' : S'.Nonempty) :
+    ∃ M, ∀ v : V, (∀ j, j ≠ i₀ → j ≠ i₁ → j ∉ S' → b.repr v j = 0) → Q v = ν →
+      ∃ g ∈ TauCeti.QuadraticMap.specialOrthogonalGroup Q,
+        basisOpNorm b (g : V →ₗ[F] V) ≤ M ∧
+        (∀ k, k ≠ i₀ → k ≠ i₁ → k ∉ S' → g (b k) = b k) ∧
+        ∃ t : F, t ≠ 0 ∧ ‖t‖ ≤ 1 ∧
+          g v = (2 * t)⁻¹ • (b i₀ + b i₁) + (t / 2) • (b i₀ - b i₁) := by
+  obtain ⟨j₂, hj₂⟩ := hS'
+  obtain ⟨M, hM⟩ := orbit_core hb hne h₀ h₁ h₀S h₁S
+  set Mρ := 1 + ‖(Q (b j₂))⁻¹‖ * polarBound Q b
+  have hMρ : 1 ≤ Mρ := le_add_of_nonneg_right (mul_nonneg (norm_nonneg _) (norm_nonneg _))
+  refine ⟨Mρ * M, fun v hv hQv => ?_⟩
+  obtain ⟨g, hg, t, ht0, ht1, e⟩ := hM v hv hQv
+  have hS : ∀ k, k ≠ i₀ → k ≠ i₁ → k ∉ S' → k ∉ insert i₀ (insert i₁ S') := by
+    intro k h0 h1 h2; simp [h0, h1, h2]
+  have hM0 : 0 ≤ M := (basisOpNorm_nonneg _).trans hg.2.2.1
+  rcases hg.2.1 with hdet | hdet
+  · exact ⟨g, TauCeti.QuadraticMap.mem_specialOrthogonalGroup_iff.2 ⟨hg.1, hdet⟩,
+      hg.2.2.1.trans (le_mul_of_one_le_left hM0 hMρ),
+      fun k h0 h1 h2 => hg.2.2.2 k (hS k h0 h1 h2), t, ht0, ht1, e⟩
+  · let := invertibleOfNonzero (hb.apply_ne_zero j₂)
+    have hρ := good_reflection hb (S := insert i₀ (insert i₁ S')) (j := j₂)
+      (Finset.mem_insert_of_mem (Finset.mem_insert_of_mem hj₂))
+    have hgρ := hρ.mul hg
+    have hj₂0 : j₂ ≠ i₀ := fun h => h₀S (h ▸ hj₂)
+    have hj₂1 : j₂ ≠ i₁ := fun h => h₁S (h ▸ hj₂)
+    refine ⟨_, TauCeti.QuadraticMap.mem_specialOrthogonalGroup_iff.2 ⟨hgρ.1, ?_⟩, hgρ.2.2.1,
+      fun k h0 h1 h2 => hgρ.2.2.2 k (hS k h0 h1 h2), t, ht0, ht1, ?_⟩
+    · rw [map_mul, hdet, TauCeti.QuadraticMap.det_reflection]; simp
+    · rw [LinearEquiv.mul_apply, e]
+      refine TauCeti.QuadraticMap.reflection_apply_of_polar_eq_zero Q (b j₂) ?_
+      rw [polar_add_right, polar_smul_right, polar_smul_right,
+        show b i₀ - b i₁ = b i₀ + (-1 : F) • b i₁ by simp [sub_eq_add_neg],
+        polar_basis_pair hb hj₂0 hj₂1, show b i₀ + b i₁ = b i₀ + (1 : F) • b i₁ by simp,
+        polar_basis_pair hb hj₂0 hj₂1]
+      simp
+
+end Assembly
 
 end Orbit
 
