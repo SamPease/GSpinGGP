@@ -13,10 +13,11 @@ Continuing `GSpinGGP.Foundations.WeakCartanSO`: `b` is an orthogonal basis of an
 * `pairTorus`: the split torus `a(t)` of the plane `⟨b i₀, b i₁⟩`, `u ↦ t u`, `u' ↦ t⁻¹ u'`
   (Tau Ceti's `hyperbolicPairTorus`), with its matrix entries and the bound
   `‖a(t)‖ ≤ ‖2‖⁻¹ max(‖t‖, ‖t‖⁻¹)`.
-* `pairTorus_inv_apply`: `a(t)⁻¹ (b i₀) = (2t)⁻¹ u + (t/2) u'`, the normal form of the orbit
+* `pairTorus_inv_apply_left`: `a(t)⁻¹ (b i₀) = (2t)⁻¹ u + (t/2) u'`, the normal form of the orbit
   lemma.
-* `rotation_lemma` (the orthogonal analogue of Beuzart-Plessis's Lemme 11.0.3, used for Thesis
-  Prop. 8.3.1): for every isometry `h` fixing `b i₀` and every `t` with `‖t‖ ≤ 1` there is a
+* `rotation_lemma` (the orthogonal analogue of Lemme 11.0.3 in §11 of Beuzart-Plessis's thèse,
+  used for Thesis Prop. 8.3.1): for every isometry `h` fixing the basis vectors outside
+  `{i₁} ∪ S'` (in particular `b i₀`) and every `t` with `‖t‖ ≤ 1` there is a
   rotation `γ` of a plane `⟨b i₁, b k⟩` (a product of two reflections) such that
   `a(t)⁻¹ γ a(t)` is bounded independently of `h` and `t`, `‖hγ‖ ≤ ‖h‖`, and
   `ε ‖t‖ ‖hγ‖ ≤ ‖hγ (b i₁)‖`. The rotation is parametrized rationally (a Cayley-type
@@ -253,9 +254,9 @@ theorem planeRot_apply (μ : F) (hD : Q (b i₁) + μ ^ 2 * Q (b k) ≠ 0) (z : 
   set c₁ := b.repr z i₁
   set ce := b.repr z k
   have p1 : polar Q (b i₁) z = c₁ * (2 * q₁) := by
-    rw [polar_comm, hb.polar_basis_right, polar_basis_self]
+    rw [polar_basis_left Q b hb.isOrtho]; ring
   have p2 : polar Q (b k) z = ce * (2 * qe) := by
-    rw [polar_comm, hb.polar_basis_right, polar_basis_self]
+    rw [polar_basis_left Q b hb.isOrtho]; ring
   have p3 : polar Q (b i₁) (b i₁) = 2 * q₁ := polar_basis_self _
   have p4 : polar Q (b k) (b i₁) = 0 := hb.polar_eq_zero k i₁ hk.symm
   simp only [planeRot, LinearEquiv.mul_apply, TauCeti.QuadraticMap.reflection_apply, invOf_eq_inv,
@@ -503,8 +504,8 @@ theorem planeRot_bounds (hb : IsOrthoBasis Q b) {i₀ i₁ : Fin n} (hne : i₀ 
         _ ≤ _ := by rw [mul_one]; exact h2i
 
 
-/-- **The rotation lemma** (Thesis Prop. 8.3.1, second step; the orthogonal analogue of
-Beuzart-Plessis's Lemme 11.0.3). Let `a(t)` be the torus of the pair `(b i₀, b i₁)` and `S'` a set
+/-- **The rotation lemma** (used for Thesis Prop. 8.3.1; the orthogonal analogue of Lemme 11.0.3 in
+§11 of Beuzart-Plessis's thèse). Let `a(t)` be the torus of the pair `(b i₀, b i₁)` and `S'` a set
 of further indices. There is `ε > 0` such that for every isometry `h` fixing the basis vectors
 outside `{i₁} ∪ S'` and every unit `t` with `‖t‖ ≤ 1` there is `γ ∈ SO(Q)` fixing the same basis
 vectors (so `γ` fixes `b i₀`) with `‖a(t)⁻¹ γ a(t)‖ ≤ ‖2‖⁻¹`, `‖hγ‖ ≤ ‖h‖` and

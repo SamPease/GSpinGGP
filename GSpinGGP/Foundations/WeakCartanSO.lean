@@ -13,9 +13,9 @@ Let `(V, Q)` be a quadratic space over a nonarchimedean field `F` of characteris
 orthogonal basis `b` of anisotropic vectors. Two basis vectors `b i₀`, `b i₁` with
 `Q (b i₀) = ν`, `Q (b i₁) = -ν` span a hyperbolic plane with isotropic vectors
 `u = b i₀ + b i₁`, `u' = b i₀ - b i₁`, and the split torus `a(λ)` of this plane scales `u` by `λ`
-and `u'` by `λ⁻¹`. The orbit lemma (the analogue for orthogonal groups of Beuzart-Plessis's
-Lemme 11.0.2 for unitary groups, used for Thesis Prop. 8.3.1) says that every vector `v` with
-`Q v = ν`, in the span of `b i₀`, `b i₁` and further basis vectors `b j` (`j ∈ S'`, `S'`
+and `u'` by `λ⁻¹`. The orbit lemma (the analogue for orthogonal groups of Lemme 11.0.2 in §11 of
+Beuzart-Plessis's thèse, proved there for unitary groups; used for Thesis Prop. 8.3.1) says
+that every vector `v` with `Q v = ν`, in the span of `b i₀`, `b i₁` and further basis vectors `b j` (`j ∈ S'`, `S'`
 nonempty), is moved by a *bounded* element of `SO(Q)` to `a(λ)⁻¹ (b i₀)` for some `λ` with
 `0 < ‖λ‖ ≤ 1`. The element moves only the basis vectors in the span.
 
@@ -77,28 +77,28 @@ section Moves
 variable [IsUltrametricDist F] (hb : IsOrthoBasis Q b)
 include hb
 
+omit [CharZero F] hb in
+theorem norm_two_le_one : ‖(2 : F)‖ ≤ 1 := by
+  simpa using IsUltrametricDist.norm_natCast_le_one F 2
+
 omit [CharZero F] in
 /-- A reflection in a basis vector is bounded and moves only that basis vector. -/
 theorem good_reflection [FiniteDimensional F V] {S : Finset (Fin n)} {j : Fin n} (hj : j ∈ S) :
     letI := invertibleOfNonzero (hb.apply_ne_zero j)
-    Good Q b S (1 + ‖(Q (b j))⁻¹‖ * polarBound Q b)
-      (TauCeti.QuadraticMap.reflection Q (b j)) := by
+    Good Q b S 1 (TauCeti.QuadraticMap.reflection Q (b j)) := by
   let := invertibleOfNonzero (hb.apply_ne_zero j)
-  have h0 : 0 ≤ ‖(Q (b j))⁻¹‖ * polarBound Q b := mul_nonneg (norm_nonneg _) (norm_nonneg _)
   refine ⟨TauCeti.QuadraticMap.reflection_mem_orthogonalGroup Q (b j), Or.inr ?_, ?_,
     fun k hk => ?_⟩
   · rw [TauCeti.QuadraticMap.det_reflection]
-  · refine (basisOpNorm_le_iff (by positivity)).2 fun i => ?_
-    rw [LinearEquiv.coe_coe, TauCeti.QuadraticMap.reflection_apply]
-    refine (basisNorm_sub_le _ _).trans (max_le (by rw [basisNorm_basis]; exact le_add_of_nonneg_right h0) ?_)
-    rw [basisNorm_smul, basisNorm_basis, mul_one, norm_mul, invOf_eq_inv]
-    have := hb.norm_polar_le (b j) (b i)
-    simp only [basisNorm_basis, mul_one] at this
-    nlinarith [norm_nonneg (Q (b j))⁻¹, norm_nonneg (polar Q (b j) (b i))]
+  · refine (basisOpNorm_le_iff zero_le_one).2 fun i => ?_
+    rw [LinearEquiv.coe_coe, QuadraticMap.reflection_basis_apply Q b hb.isOrtho]
+    refine (basisNorm_sub_le _ _).trans (max_le (by rw [basisNorm_basis]) ?_)
+    rw [basisNorm_smul, basisNorm_basis, mul_one, norm_mul]
+    have := (norm_repr_le_basisNorm (b := b) (b i) j).trans (basisNorm_basis i).le
+    nlinarith [norm_two_le_one (F := F), norm_nonneg (2 : F), norm_nonneg (b.repr (b i) j)]
   · have hkj : k ≠ j := fun h => hk (h ▸ hj)
     exact TauCeti.QuadraticMap.reflection_apply_of_polar_eq_zero Q (b j)
       (hb.polar_eq_zero j k hkj.symm)
-
 
 /-- An Eichler transvection `E_{u,w}` with `‖u‖ ≤ 1`, `‖w‖ ≤ R` is bounded, and fixes every basis
 vector orthogonal to `u` and `w`. -/
@@ -180,7 +180,7 @@ include hb in
 omit [IsUltrametricDist F] in
 theorem polar_basis_eq_zero_of_repr {y : V} {i : Fin n} (hy : b.repr y i = 0) :
     polar Q y (b i) = 0 := by
-  rw [hb.polar_basis_right, hy, zero_mul]
+  rw [polar_comm, QuadraticMap.polar_basis_left Q b hb.isOrtho, hy, mul_zero]
 
 /-- `y` lies in the span of the `b j`, `j ∈ S'`. -/
 def InY (b : Module.Basis (Fin n) F V) (S' : Finset (Fin n)) (y : V) : Prop :=
@@ -219,7 +219,7 @@ include hb in
 omit [IsUltrametricDist F] in
 theorem polar_of_inY_of_not_mem {y : V} (hy : InY b S' y) {k : Fin n} (hk : k ∉ S') :
     polar Q (b k) y = 0 := by
-  rw [polar_comm, hb.polar_basis_right, hy k hk, zero_mul]
+  rw [QuadraticMap.polar_basis_left Q b hb.isOrtho, hy k hk, mul_zero]
 
 include hb in
 omit [IsUltrametricDist F] in
@@ -268,12 +268,6 @@ theorem transvection_pairV_apply {w : V} (hw : InY b S' w)
   simp only [polar_add_left, polar_smul_left, smul_eq_mul, e2, e3, e1, e4, e5]
   module
 
-omit [CharZero F] in
-theorem norm_two_le_one : ‖(2 : F)‖ ≤ 1 := by
-  have := IsUltrametricDist.norm_add_le_max (1 : F) 1
-  rw [one_add_one_eq_two, norm_one, max_self] at this
-  exact this
-
 omit [CharZero F] [IsUltrametricDist F] in
 theorem exists_basisNorm_eq (hn : 0 < n) (y : V) :
     ∃ j, ‖b.repr y j‖ = basisNorm b y := by
@@ -297,26 +291,18 @@ theorem reflection_pair_apply (α β : F) {y : V} (hy : InY b S' y) :
     TauCeti.QuadraticMap.reflection Q (b i₁) (α • (b i₀ + b i₁) + β • (b i₀ - b i₁) + y) =
       β • (b i₀ + b i₁) + α • (b i₀ - b i₁) + y := by
   let := invertibleOfNonzero (hb.apply_ne_zero i₁)
-  have hν : ν ≠ 0 := fun h => hb.apply_ne_zero i₀ (h₀.trans h)
-  have hc : ⅟(Q (b i₁)) * polar Q (b i₁) (α • (b i₀ + b i₁) + β • (b i₀ - b i₁) + y) =
-      2 * α - 2 * β := by
-    rw [invOf_eq_inv]
-    simp only [polar_add_right, polar_smul_right, polar_sub_right, polar_basis_self,
-      hb.polar_eq_zero i₁ i₀ hne.symm, h₁, smul_eq_mul, polar_of_inY_of_not_mem hb hy h₁S]
-    field_simp
-    ring
-  rw [TauCeti.QuadraticMap.reflection_apply, hc]
+  rw [QuadraticMap.reflection_basis_apply Q b hb.isOrtho]
+  simp [hne, hy i₁ h₁S]
   module
 
 /-- **Step A.** After possibly swapping `u` and `u'`, the `u`-coordinate dominates. -/
 theorem stage_swap [FiniteDimensional F V] (α β : F) {y : V} (hy : InY b S' y) :
-    ∃ g, Good Q b (insert i₀ (insert i₁ S')) (1 + ‖(Q (b i₁))⁻¹‖ * polarBound Q b) g ∧
+    ∃ g, Good Q b (insert i₀ (insert i₁ S')) 1 g ∧
       ∃ α' β' : F, ‖β'‖ ≤ ‖α'‖ ∧
         g (α • (b i₀ + b i₁) + β • (b i₀ - b i₁) + y) =
           α' • (b i₀ + b i₁) + β' • (b i₀ - b i₁) + y := by
   by_cases h : ‖β‖ ≤ ‖α‖
-  · exact ⟨1, good_one.mono (le_add_of_nonneg_right (mul_nonneg (norm_nonneg _)
-      (norm_nonneg _))), α, β, h, rfl⟩
+  · exact ⟨1, good_one, α, β, h, rfl⟩
   · let := invertibleOfNonzero (hb.apply_ne_zero i₁)
     exact ⟨_, good_reflection hb (Finset.mem_insert_of_mem (Finset.mem_insert_self _ _)), β, α,
       (not_le.1 h).le, reflection_pair_apply hb hne h₀ h₁ h₀S h₁S α β hy⟩
@@ -360,7 +346,7 @@ theorem stage_transfer {μ : ℝ} (hμ0 : 0 < μ) (hμν : μ * ‖4 * ν‖ ≤
   -- the dominant term
   have hQj : 0 < ‖Q (b j)‖ := norm_pos_iff.2 (hb.apply_ne_zero j)
   have hpol : polar Q y (b j) = b.repr y j * (2 * Q (b j)) := by
-    rw [hb.polar_basis_right, polar_basis_self]
+    rw [polar_comm, QuadraticMap.polar_basis_left Q b hb.isOrtho, mul_comm]
   set D := N * (‖(2 : F)‖ * ‖Q (b j)‖) with hD
   have hpolN : ‖polar Q y (b j)‖ = D := by
     rw [hpol, norm_mul, norm_mul, hj]
@@ -519,7 +505,7 @@ theorem orbit_core [FiniteDimensional F V] :
       rw [mul_inv_cancel₀ hQj.ne'] at this
       nlinarith
     nlinarith
-  set Mσ := 1 + ‖(Q (b i₁))⁻¹‖ * polarBound Q b
+  set Mσ : ℝ := 1
   set MB := 1 + polarBound Q b * 1 + formBound Q b * 1 ^ 2 * polarBound Q b
   set MC := 1 + polarBound Q b * (μ * ‖4 * ν‖)⁻¹ +
     formBound Q b * ((μ * ‖4 * ν‖)⁻¹) ^ 2 * polarBound Q b
@@ -552,7 +538,7 @@ theorem orbit_core [FiniteDimensional F V] :
       add_zero] at h
     have : ν * (4 * α₂ * β₃) = ν * 1 := by linear_combination h
     exact mul_left_cancel₀ hν this
-  have hMσ : 1 ≤ Mσ := le_add_of_nonneg_right (mul_nonneg (norm_nonneg _) (norm_nonneg _))
+  have hMσ : 1 ≤ Mσ := le_rfl
   have hfinal : ∃ g₄, Good Q b (insert i₀ (insert i₁ S')) Mσ g₄ ∧ ∃ t : F, t ≠ 0 ∧
       ‖t‖ ≤ 1 ∧ g₄ (α₂ • (b i₀ + b i₁) + β₃ • (b i₀ - b i₁)) =
         (2 * t)⁻¹ • (b i₀ + b i₁) + (t / 2) • (b i₀ - b i₁) := by
@@ -572,8 +558,8 @@ theorem orbit_core [FiniteDimensional F V] :
   simp only [LinearEquiv.mul_apply]
   rw [e₁, e₂, e₃, e₄]
 
-/-- **The orbit lemma** (Thesis Prop. 8.3.1, its first step; the orthogonal analogue of
-Beuzart-Plessis's Lemme 11.0.2). Let `b` be an orthogonal basis of anisotropic vectors, `i₀ ≠ i₁`
+/-- **The orbit lemma** (used for Thesis Prop. 8.3.1; the orthogonal analogue of Lemme 11.0.2 in
+§11 of Beuzart-Plessis's thèse). Let `b` be an orthogonal basis of anisotropic vectors, `i₀ ≠ i₁`
 with `Q (b i₀) = ν`, `Q (b i₁) = -ν`, and `S'` a nonempty set of further indices. There is `M`
 such that every `v` supported on `{i₀, i₁} ∪ S'` with `Q v = ν` is moved by some `g ∈ SO(Q)`
 of operator norm at most `M`, fixing the basis vectors outside `{i₀, i₁} ∪ S'`, to
@@ -589,8 +575,8 @@ theorem orbit_lemma [FiniteDimensional F V] (hS' : S'.Nonempty) :
           g v = (2 * t)⁻¹ • (b i₀ + b i₁) + (t / 2) • (b i₀ - b i₁) := by
   obtain ⟨j₂, hj₂⟩ := hS'
   obtain ⟨M, hM⟩ := orbit_core hb hne h₀ h₁ h₀S h₁S
-  set Mρ := 1 + ‖(Q (b j₂))⁻¹‖ * polarBound Q b
-  have hMρ : 1 ≤ Mρ := le_add_of_nonneg_right (mul_nonneg (norm_nonneg _) (norm_nonneg _))
+  set Mρ : ℝ := 1
+  have hMρ : 1 ≤ Mρ := le_rfl
   refine ⟨Mρ * M, fun v hv hQv => ?_⟩
   obtain ⟨g, hg, t, ht0, ht1, e⟩ := hM v hv hQv
   have hS : ∀ k, k ≠ i₀ → k ≠ i₁ → k ∉ S' → k ∉ insert i₀ (insert i₁ S') := by

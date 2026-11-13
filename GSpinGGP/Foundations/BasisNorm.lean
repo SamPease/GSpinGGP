@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import Mathlib
 import TauCeti.Topology.Algebra.QuadraticForm.OrthogonalGroup.SpecialOrthogonal
+import TauCeti.LinearAlgebra.QuadraticForm.OrthogonalGroup.OrthogonalBasis
 
 /-!
 # Coordinate norms for a basis, and bounded subsets of orthogonal groups
@@ -12,17 +13,19 @@ For a basis `b` of a finite-dimensional space `V` over a normed field, `basisNor
 sup-norm of the coordinates of `x`, and `basisOpNorm b f` the sup-norm of the matrix of `f`. Over
 an ultrametric field these are the lattice norm of `⊕ 𝒪 bᵢ` and its operator norm.
 
-For an orthogonal basis of a quadratic space the coordinates are `polar Q x bᵢ / polar Q bᵢ bᵢ`,
-which gives the estimates used for the weak Cartan decomposition (Thesis Prop. 8.3.1): `polar Q`
-and `Q` are bounded, and an isometry and its inverse have comparable operator norms.
+For an orthogonal basis of a quadratic space the coordinates are `polar Q bᵢ x / (2 Q bᵢ)`
+(Tau Ceti's `QuadraticMap.polar_basis_left`), which gives the estimates used for the weak Cartan
+decomposition (Thesis Prop. 8.3.1): `polar Q` and `Q` are bounded, and an isometry and its inverse
+have comparable operator norms.
 
 The topology on `V ≃ₗ[F] V` is the forward-and-inverse topology (`instTopologicalSpaceLinearEquiv`).
 On the orthogonal group the inverse is the adjoint, so this is the subspace topology of
-`Module.End F V`: a subset of `O(Q)` is relatively compact exactly when its operator norms are
+`Module.End F V`: a subset of `O(Q)` has compact closure if and only if its operator norms are
 bounded (`isCompact_orthogonal_setOf_basisOpNorm_le`, `exists_basisOpNorm_le_of_isCompact`).
 
 * `basisNorm`, `basisOpNorm`, `basisNorm_apply_le`, `basisOpNorm_mul_le`: the norms.
-* `repr_eq_polar_div`, `norm_polar_le`, `norm_apply_le`: an orthogonal basis.
+* `IsOrthoBasis`, `exists_isOrthoBasis`, `repr_eq_polar_div`, `norm_polar_le`, `norm_apply_le`:
+  an orthogonal basis.
 * `basisOpNorm_symm_le`: `‖g⁻¹‖ ≤ κ ‖g‖` on the orthogonal group.
 * `isCompact_orthogonal_setOf_basisOpNorm_le`,
   `isCompact_specialOrthogonal_setOf_basisOpNorm_le`: bounded sets are relatively compact.
@@ -83,8 +86,7 @@ theorem basisNorm_basis (i : Fin n) : basisNorm b (b i) = 1 := by
   rw [basisNorm, this]
   rw [Pi.norm_single, norm_one]
 
-/-- A vector is determined by its coordinates; two vectors with the same coordinates in the
-basis are equal. -/
+/-- Only the zero vector has coordinate norm zero. -/
 theorem basisNorm_eq_zero {x : V} : basisNorm b x = 0 ↔ x = 0 := by
   simp [basisNorm]
 
@@ -147,34 +149,47 @@ variable [CharZero F] {Q : QuadraticForm F V}
 
 /-- The basis `b` is orthogonal for `Q` and consists of anisotropic vectors. -/
 structure IsOrthoBasis (Q : QuadraticForm F V) (b : Module.Basis (Fin n) F V) : Prop where
-  polar_eq_zero : ∀ i j, i ≠ j → QuadraticMap.polar Q (b i) (b j) = 0
+  isOrtho : ∀ i j, i ≠ j → Q.IsOrtho (b i) (b j)
   apply_ne_zero : ∀ i, Q (b i) ≠ 0
+
+omit [CharZero F] in
+/-- A nondegenerate quadratic space has an orthogonal basis of anisotropic vectors. -/
+theorem exists_isOrthoBasis [CharZero F] [FiniteDimensional F V] (Q : QuadraticForm F V)
+    (hQ : (QuadraticMap.associated (R := F) Q).SeparatingLeft) :
+    ∃ b : Module.Basis (Fin (Module.finrank F V)) F V, IsOrthoBasis Q b := by
+  let _ : Invertible (2 : F) := invertibleOfNonzero two_ne_zero
+  obtain ⟨v, hv₁⟩ :=
+    LinearMap.BilinForm.exists_orthogonal_basis (QuadraticForm.associated_isSymm F Q)
+  have hv₂ := hv₁.not_isOrtho_basis_self_of_separatingLeft hQ
+  simp_rw [QuadraticMap.associated_eq_self_apply] at hv₂
+  refine ⟨v, fun i j hij => ?_, hv₂⟩
+  have h := hv₁ hij
+  simp only [QuadraticMap.associated_apply] at h
+  have h2 : (⅟2 : F) * QuadraticMap.polar Q (v i) (v j) = 0 := by
+    simpa [QuadraticMap.polar, sub_sub] using h
+  have h3 : QuadraticMap.polar Q (v i) (v j) = 0 := by simpa using h2
+  show Q (v i + v j) = Q (v i) + Q (v j)
+  rw [QuadraticMap.polar] at h3
+  linear_combination h3
 
 variable (hb : IsOrthoBasis Q b)
 include hb
 
+omit [CharZero F] in
+theorem IsOrthoBasis.polar_eq_zero (i j : Fin n) (hij : i ≠ j) :
+    QuadraticMap.polar Q (b i) (b j) = 0 :=
+  (hb.isOrtho i j hij).polar_eq_zero
+
 theorem IsOrthoBasis.polar_self_ne_zero (i : Fin n) :
     QuadraticMap.polar Q (b i) (b i) ≠ 0 := by
-  rw [QuadraticMap.polar_self, two_nsmul]
-  intro h
-  exact hb.apply_ne_zero i (by
-    have : (2 : F) * Q (b i) = 0 := by rw [two_mul]; exact h
-    exact (mul_eq_zero.1 this).resolve_left two_ne_zero)
+  rw [QuadraticMap.polar_self, two_nsmul, ← two_mul]
+  exact mul_ne_zero two_ne_zero (hb.apply_ne_zero i)
 
-omit [CharZero F] in
-theorem IsOrthoBasis.polar_basis_right (x : V) (i : Fin n) :
-    QuadraticMap.polar Q x (b i) = b.repr x i * QuadraticMap.polar Q (b i) (b i) := by
-  rw [← QuadraticMap.polarBilin_apply_apply]
-  conv_lhs => rw [← b.sum_repr x]
-  simp only [map_sum, map_smul, LinearMap.sum_apply, LinearMap.smul_apply,
-    QuadraticMap.polarBilin_apply_apply, smul_eq_mul]
-  rw [Finset.sum_eq_single i (fun j _ hj => by rw [hb.polar_eq_zero j i hj, mul_zero])
-    (by simp)]
-
-/-- Coordinates in an orthogonal basis: `xᵢ = polar Q x bᵢ / polar Q bᵢ bᵢ`. -/
+/-- Coordinates in an orthogonal basis: `xᵢ = polar Q bᵢ x / (2 Q bᵢ)`. -/
 theorem IsOrthoBasis.repr_eq_polar_div (x : V) (i : Fin n) :
-    b.repr x i = QuadraticMap.polar Q x (b i) / QuadraticMap.polar Q (b i) (b i) := by
-  rw [hb.polar_basis_right, mul_div_cancel_right₀ _ (hb.polar_self_ne_zero i)]
+    b.repr x i = QuadraticMap.polar Q (b i) x / (2 * Q (b i)) := by
+  rw [QuadraticMap.polar_basis_left Q b hb.isOrtho, mul_div_cancel_left₀ _
+    (mul_ne_zero two_ne_zero (hb.apply_ne_zero i))]
 
 omit [CharZero F] in
 theorem IsOrthoBasis.polar_eq_sum (x y : V) :
@@ -185,7 +200,8 @@ theorem IsOrthoBasis.polar_eq_sum (x y : V) :
   simp only [map_sum, map_smul, LinearMap.sum_apply, LinearMap.smul_apply,
     QuadraticMap.polarBilin_apply_apply, smul_eq_mul]
   refine Finset.sum_congr rfl fun i _ => ?_
-  rw [QuadraticMap.polar_comm, hb.polar_basis_right, mul_assoc]
+  rw [QuadraticMap.polar_basis_left Q b hb.isOrtho, QuadraticMap.polar_self, two_nsmul]
+  ring
 
 theorem IsOrthoBasis.apply_eq_sum (x : V) :
     Q x = ∑ i, b.repr x i ^ 2 * Q (b i) := by
@@ -219,27 +235,23 @@ def adjBound (Q : QuadraticForm F V) (b : Module.Basis (Fin n) F V) : ℝ :=
   formBound Q b * ‖fun i => (Q (b i))⁻¹‖
 
 /-- The inverse of an isometry is its adjoint: in an orthogonal basis its matrix entries are those
-of `g`, transposed and rescaled by `Q bₖ / Q bᵢ`. -/
-theorem IsOrthoBasis.repr_symm_apply (g : V ≃ₗ[F] V) (hg : ∀ x, Q (g x) = Q x) (i k : Fin n) :
-    b.repr (g.symm (b k)) i = b.repr (g (b i)) k * Q (b k) / Q (b i) := by
-  have hpol : ∀ x y, QuadraticMap.polar Q (g x) (g y) = QuadraticMap.polar Q x y := by
-    intro x y; simp only [QuadraticMap.polar, ← map_add, hg]
-  rw [hb.repr_eq_polar_div, hb.repr_eq_polar_div,
-    ← hpol (g.symm (b k)) (b i), LinearEquiv.apply_symm_apply, QuadraticMap.polar_comm]
-  have h1 := hb.polar_self_ne_zero i
-  have h2 := hb.polar_self_ne_zero k
-  have hQi := hb.apply_ne_zero i
-  have hQk := hb.apply_ne_zero k
-  simp only [QuadraticMap.polar_self, two_nsmul] at h1 h2 ⊢
-  field_simp
-
-theorem IsOrthoBasis.basisOpNorm_symm_le (g : V ≃ₗ[F] V) (hg : ∀ x, Q (g x) = Q x) :
+of `g`, transposed and rescaled by `Q bₖ / Q bᵢ` (Tau Ceti's
+`basis_value_mul_repr_orthogonal_eq_basis_value_mul_repr_inv`), so `‖g⁻¹‖ ≤ κ ‖g‖`. -/
+theorem IsOrthoBasis.basisOpNorm_symm_le {g : V ≃ₗ[F] V}
+    (hg : g ∈ TauCeti.QuadraticMap.orthogonalGroup Q) :
     basisOpNorm b (g.symm : V →ₗ[F] V) ≤ adjBound Q b * basisOpNorm b (g : V →ₗ[F] V) := by
   have h0 : 0 ≤ adjBound Q b * basisOpNorm b (g : V →ₗ[F] V) :=
     mul_nonneg (mul_nonneg (norm_nonneg _) (norm_nonneg _)) (basisOpNorm_nonneg _)
   refine (basisOpNorm_le_iff h0).2 fun k => (basisNorm_le_iff h0).2 fun i => ?_
-  rw [LinearEquiv.coe_coe, hb.repr_symm_apply g hg, mul_div_assoc, norm_mul, div_eq_mul_inv,
-    norm_mul, adjBound]
+  have hid := QuadraticMap.basis_value_mul_repr_orthogonal_eq_basis_value_mul_repr_inv Q b
+    hb.isOrtho ⟨g, hg⟩ k i
+  have hQi : (2 : F) * Q (b i) ≠ 0 := mul_ne_zero two_ne_zero (hb.apply_ne_zero i)
+  have he : b.repr (g.symm (b k)) i = 2 * Q (b k) * b.repr (g (b i)) k / (2 * Q (b i)) := by
+    rw [hid, mul_div_cancel_left₀ _ hQi]; rfl
+  rw [LinearEquiv.coe_coe, he, mul_comm (2 * Q (b k)), mul_div_assoc, norm_mul, adjBound]
+  have hq : ‖2 * Q (b k) / (2 * Q (b i))‖ = ‖Q (b k)‖ * ‖(Q (b i))⁻¹‖ := by
+    rw [mul_div_mul_left _ _ (two_ne_zero (α := F)), norm_div, norm_inv, div_eq_mul_inv]
+  rw [hq]
   calc ‖b.repr (g (b i)) k‖ * (‖Q (b k)‖ * ‖(Q (b i))⁻¹‖)
       ≤ basisOpNorm b (g : V →ₗ[F] V) * (formBound Q b * ‖fun i => (Q (b i))⁻¹‖) :=
         mul_le_mul ((norm_repr_le_basisNorm _ k).trans
@@ -283,34 +295,22 @@ section Compact
 
 variable (b)
 
-/-- The matrix of an endomorphism in the basis `b`, row `i` being the coordinates of `f bᵢ`. -/
-def basisMatrix : Module.End F V →ₗ[F] (Fin n → Fin n → F) where
-  toFun f i := b.equivFun (f (b i))
-  map_add' f g := by ext; simp
-  map_smul' c f := by ext; simp
-
-/-- The endomorphism with a given matrix. -/
-def basisMatrixInv : (Fin n → Fin n → F) →ₗ[F] Module.End F V where
-  toFun M := b.constr F fun i => b.equivFun.symm (M i)
-  map_add' M N := by ext x; simp [add_smul, Finset.sum_add_distrib]
-  map_smul' c M := by
-    ext x
-    simp [Finset.smul_sum, smul_smul]
-    refine Finset.sum_congr rfl fun i _ => Finset.sum_congr rfl fun j _ => ?_
-    congr 1
-    ring
+/-- The matrix of an endomorphism in the basis `b`, transposed: row `i` holds the coordinates of
+`f bᵢ`. -/
+def basisMatrix : Module.End F V ≃ₗ[F] (Fin n → Fin n → F) :=
+  (LinearMap.toMatrix b b).trans (Matrix.transposeLinearEquiv (Fin n) (Fin n) F F)
 
 variable {b}
 
-theorem basisOpNorm_eq (f : V →ₗ[F] V) : basisOpNorm b f = ‖basisMatrix b f‖ := rfl
-
-theorem basisMatrixInv_basisMatrix (f : Module.End F V) :
-    basisMatrixInv b (basisMatrix b f) = f :=
-  b.ext fun i => by simp [basisMatrixInv, basisMatrix]
+theorem basisOpNorm_eq (f : V →ₗ[F] V) : basisOpNorm b f = ‖basisMatrix b f‖ := by
+  rw [basisOpNorm]; congr 1; ext i j
+  exact (LinearMap.toMatrix_apply b b f j i).symm
 
 theorem continuous_basisOpNorm :
-    Continuous fun f : Module.End F V => basisOpNorm b f :=
-  continuous_norm.comp (IsModuleTopology.continuous_of_linearMap (basisMatrix b))
+    Continuous fun f : Module.End F V => basisOpNorm b f := by
+  simp_rw [basisOpNorm_eq]
+  exact continuous_norm.comp
+    (IsModuleTopology.continuous_of_linearMap (basisMatrix b).toLinearMap)
 
 variable [FiniteDimensional F V]
 
@@ -318,22 +318,22 @@ variable [FiniteDimensional F V]
 theorem isCompact_setOf_basisOpNorm_le [LocallyCompactSpace F] (M : ℝ) :
     IsCompact {f : Module.End F V | basisOpNorm b f ≤ M} := by
   have : ProperSpace F := ProperSpace.of_locallyCompactSpace F
-  refine ((isCompact_closedBall (0 : Fin n → Fin n → F) M).image
-    (IsModuleTopology.continuous_of_linearMap (basisMatrixInv b))).of_isClosed_subset
-    (isClosed_le continuous_basisOpNorm continuous_const) fun f hf => ?_
-  exact ⟨basisMatrix b f, by simpa [basisOpNorm_eq] using hf, basisMatrixInv_basisMatrix f⟩
+  have h : {f : Module.End F V | basisOpNorm b f ≤ M} =
+      (basisMatrix b).symm '' Metric.closedBall 0 M := by
+    ext f
+    refine ⟨fun hf => ⟨basisMatrix b f, by simpa [basisOpNorm_eq] using hf, by simp⟩, ?_⟩
+    rintro ⟨x, hx, rfl⟩
+    simpa [basisOpNorm_eq] using hx
+  rw [h]
+  exact (isCompact_closedBall _ _).image
+    (IsModuleTopology.continuous_of_linearMap (basisMatrix b).symm.toLinearMap)
 
-/-- **Bounded subsets of `O(Q)` are relatively compact.** For an orthogonal basis `b`, the
-isometries of operator norm at most `M` form a compact subset of `V ≃ₗ[F] V`. The inverse of an
-isometry is bounded through `basisOpNorm_symm_le`, so the forward-and-inverse topology of
-`V ≃ₗ[F] V` agrees on `O(Q)` with the topology of `Module.End F V`. -/
-theorem isCompact_orthogonal_setOf_basisOpNorm_le [CharZero F] [LocallyCompactSpace F]
-    {Q : QuadraticForm F V} (hb : IsOrthoBasis Q b) (M : ℝ) :
-    IsCompact {g : V ≃ₗ[F] V | g ∈ TauCeti.QuadraticMap.orthogonalGroup Q ∧
-      basisOpNorm b (g : V →ₗ[F] V) ≤ M} := by
-  set M' := max M (adjBound Q b * M)
-  let C : Set (Module.End F V) := {f | basisOpNorm b f ≤ M'}
-  have hC : IsCompact C := isCompact_setOf_basisOpNorm_le M'
+/-- Linear automorphisms with the forward and the inverse map in a compact set `C` of
+endomorphisms form a compact set (the argument of Tau Ceti's `isCompact_orthogonalGroup`). -/
+theorem isCompact_setOf_coe_mem_inv_mem [T2Space F] {C : Set (Module.End F V)}
+    (hC : IsCompact C) :
+    IsCompact {g : V ≃ₗ[F] V | (g : Module.End F V) ∈ C ∧
+      ((g⁻¹ : V ≃ₗ[F] V) : Module.End F V) ∈ C} := by
   let T : Set (Module.End F V × Module.End F V) :=
     (C ×ˢ C) ∩ {p | p.1 * p.2 = 1 ∧ p.2 * p.1 = 1}
   have hT : IsCompact T :=
@@ -346,23 +346,34 @@ theorem isCompact_orthogonal_setOf_basisOpNorm_le [CharZero F] [LocallyCompactSp
     ⟨(continuous_fst.comp continuous_subtype_val).congr fun p => by simp [Φ],
       (continuous_snd.comp continuous_subtype_val).congr fun p =>
         LinearMap.ext fun x => by simp [Φ]⟩
-  have hclosed : IsClosed {g : V ≃ₗ[F] V | g ∈ TauCeti.QuadraticMap.orthogonalGroup Q ∧
-      basisOpNorm b (g : V →ₗ[F] V) ≤ M} :=
-    (TauCeti.QuadraticMap.isClosed_orthogonalGroup Q).inter
-      (isClosed_le (continuous_basisOpNorm.comp TauCeti.continuous_linearEquiv_toLinearMap)
-        continuous_const)
-  refine (isCompact_range hΦ).of_isClosed_subset hclosed fun g ⟨hg, hgM⟩ => ?_
-  have hg' : ∀ x, Q (g x) = Q x := TauCeti.QuadraticMap.mem_orthogonalGroup_iff.1 hg
-  have hinvM : basisOpNorm b (g.symm : V →ₗ[F] V) ≤ M' :=
-    (hb.basisOpNorm_symm_le g hg').trans <| (mul_le_mul_of_nonneg_left hgM
-      (mul_nonneg (norm_nonneg _) (norm_nonneg _))).trans (le_max_right _ _)
-  refine ⟨⟨((g : Module.End F V), (g.symm : Module.End F V)),
-    ⟨hgM.trans (le_max_left _ _), hinvM⟩,
-    LinearMap.ext fun x => by simp, LinearMap.ext fun x => by simp⟩,
-    LinearEquiv.ext fun x => by simp [Φ]⟩
+  convert isCompact_range hΦ using 1
+  ext g
+  refine ⟨fun ⟨h1, h2⟩ => ⟨⟨((g : Module.End F V), ((g⁻¹ : V ≃ₗ[F] V) : Module.End F V)),
+    ⟨h1, h2⟩, LinearMap.ext fun x => by simp, LinearMap.ext fun x => by simp⟩,
+    LinearEquiv.ext fun x => by simp [Φ]⟩, ?_⟩
+  rintro ⟨p, rfl⟩
+  refine ⟨by simpa [Φ] using p.2.1.1, ?_⟩
+  convert p.2.1.2 using 1
+  exact LinearMap.ext fun x => rfl
 
-/-- **Bounded subsets of `SO(Q)` are relatively compact** (Fact 1.3 of the weak Cartan
-decomposition). -/
+/-- **Bounded subsets of `O(Q)` are relatively compact.** For an orthogonal basis `b`, the
+isometries of operator norm at most `M` form a compact subset of `V ≃ₗ[F] V`. The inverse of an
+isometry is bounded through `basisOpNorm_symm_le`, so the forward-and-inverse topology of
+`V ≃ₗ[F] V` agrees on `O(Q)` with the topology of `Module.End F V`. -/
+theorem isCompact_orthogonal_setOf_basisOpNorm_le [CharZero F] [LocallyCompactSpace F]
+    {Q : QuadraticForm F V} (hb : IsOrthoBasis Q b) (M : ℝ) :
+    IsCompact {g : V ≃ₗ[F] V | g ∈ TauCeti.QuadraticMap.orthogonalGroup Q ∧
+      basisOpNorm b (g : V →ₗ[F] V) ≤ M} := by
+  set M' := max M (adjBound Q b * M)
+  refine (isCompact_setOf_coe_mem_inv_mem
+    (isCompact_setOf_basisOpNorm_le (b := b) M')).of_isClosed_subset
+    ((TauCeti.QuadraticMap.isClosed_orthogonalGroup Q).inter
+      (isClosed_le (continuous_basisOpNorm.comp TauCeti.continuous_linearEquiv_toLinearMap)
+        continuous_const)) fun g ⟨hg, hgM⟩ => ⟨hgM.trans (le_max_left _ _), ?_⟩
+  exact (hb.basisOpNorm_symm_le hg).trans <| (mul_le_mul_of_nonneg_left hgM
+    (mul_nonneg (norm_nonneg _) (norm_nonneg _))).trans (le_max_right _ _)
+
+/-- **Bounded subsets of `SO(Q)` are relatively compact** (used for Thesis Prop. 8.3.1). -/
 theorem isCompact_specialOrthogonal_setOf_basisOpNorm_le [CharZero F] [LocallyCompactSpace F]
     {Q : QuadraticForm F V} (hb : IsOrthoBasis Q b) (M : ℝ) :
     IsCompact {g : V ≃ₗ[F] V | g ∈ TauCeti.QuadraticMap.specialOrthogonalGroup Q ∧
