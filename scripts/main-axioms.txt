@@ -5,6 +5,7 @@ GSpinGGP.exists_isSelfDual
 GSpinGGP.exists_rel_torusBar_of_fixerBar
 GSpinGGP.finite_H1_normalizerBar
 GSpinGGP.finite_H1_torusBar
+GSpinGGP.germLie_unique_SO
 GSpinGGP.germ_unique
 GSpinGGP.hc_character_exists
 GSpinGGP.hc_character_isQuasiCharacter
