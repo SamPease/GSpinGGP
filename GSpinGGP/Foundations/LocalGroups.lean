@@ -575,6 +575,34 @@ def weylDiscLie (𝔤 : LieSubalgebra F A) (X : A) : ℝ :=
       ((LinearMap.mulLeft F X - LinearMap.mulRight F X).restrict h)).trailingCoeff
   else 0
 
+/-- **`D^G` is invariant under conjugation** by a unit `u` normalizing `𝔤`: `ad (u X u⁻¹)` on `𝔤`
+is conjugate to `ad X` by `Ad u` (`LinearEquiv.charpoly_conj`). -/
+theorem weylDiscLie_units_conj (𝔤 : LieSubalgebra F A) (u : Aˣ)
+    (hu : 𝔤.toSubmodule.map (conjAd F u).toLinearMap = 𝔤.toSubmodule) {X : A} (hX : X ∈ 𝔤) :
+    weylDiscLie 𝔤 ((u : A) * X * ((u⁻¹ : Aˣ) : A)) = weylDiscLie 𝔤 X := by
+  have h1 : ∀ Z ∈ 𝔤, ∀ Y ∈ 𝔤.toSubmodule,
+      (LinearMap.mulLeft F Z - LinearMap.mulRight F Z) Y ∈ 𝔤.toSubmodule := by
+    intro Z hZ Y hY
+    have := 𝔤.lie_mem hZ hY
+    rwa [Ring.lie_def] at this
+  have hX' : (u : A) * X * ((u⁻¹ : Aˣ) : A) ∈ 𝔤 := by
+    have : conjAd F u X ∈ 𝔤.toSubmodule.map (conjAd F u).toLinearMap := ⟨X, hX, rfl⟩
+    rw [hu] at this
+    exact this
+  let c : ↥𝔤.toSubmodule ≃ₗ[F] ↥𝔤.toSubmodule :=
+    (conjAd F u).toLinearEquiv.ofSubmodules _ _ hu
+  unfold weylDiscLie
+  rw [dite_eq_left (h1 _ hX'), dite_eq_left (h1 _ hX)]
+  congr 2
+  rw [← LinearEquiv.charpoly_conj c.symm]
+  congr 1
+  refine LinearMap.ext fun Y => Subtype.ext ?_
+  change ((u⁻¹ : Aˣ) : A) * ((u : A) * X * ((u⁻¹ : Aˣ) : A) * ((u : A) * Y * ((u⁻¹ : Aˣ) : A)) -
+      (u : A) * Y * ((u⁻¹ : Aˣ) : A) * ((u : A) * X * ((u⁻¹ : Aˣ) : A))) * ((u⁻¹⁻¹ : Aˣ) : A) =
+    X * Y - Y * X
+  simp only [inv_inv, mul_sub, sub_mul, mul_assoc, Units.inv_mul_cancel_left, Units.inv_mul,
+    mul_one]
+
 end Algebraic
 
 /-! ### Semisimplicity of inverses, products and sums -/
