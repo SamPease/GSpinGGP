@@ -609,6 +609,14 @@ theorem traceForm_scalarUnit {a b : F} (ha : a ≠ 0) (hb : b ≠ 0) (Y Z : L.Am
   simp only [traceForm, LinearMap.mk₂_apply, fstA_scalarUnit_mul, sndA_scalarUnit_mul,
     smul_mul_assoc, mul_smul_comm]
 
+/-- `B((a · 1, b · 1) P, R) = ½ (a tr(P_W R_W) + b tr(P_V R_V))`. -/
+theorem traceForm_scalarUnit_mul {a b : F} (ha : a ≠ 0) (hb : b ≠ 0) (P R : L.Amb) :
+    L.traceForm ((L.scalarUnit ha hb : L.Amb) * P) R = ⅟(2 : F) *
+      (a * LinearMap.trace F L.W (L.fstA P * L.fstA R) +
+        b * LinearMap.trace F L.V (L.sndA P * L.sndA R)) := by
+  simp only [traceForm, LinearMap.mk₂_apply, fstA_scalarUnit_mul, sndA_scalarUnit_mul,
+    smul_mul_assoc, map_smul, smul_eq_mul]
+
 /-- `(a · 1, b · 1)` and its inverse preserve `𝔤_Y`. -/
 theorem scalarUnit_mul_mem_lieCentralizer {a b : F} (ha : a ≠ 0) (hb : b ≠ 0) {Y M : L.Amb}
     (hM : M ∈ lieCentralizer L.lie Y) :
@@ -1000,5 +1008,71 @@ theorem eight_mul_scalarTrace_mul {Q : QuadraticForm F V} (hQ : IsNondeg Q)
       map_smul, smul_eq_mul]
 
 end CliffTraceForm
+
+namespace GGPData
+
+variable (d : GGPData F) (ψ : NontrivialAddChar F)
+
+/-- `bilin(Y, Z) = tr_{C(W)}(L_{Y_W Z_W}) + tr_{C(V)}(L_{Y_V Z_V})`. -/
+theorem bilin_eq_cliffTrace_add (Y Z : d.ambient) :
+    d.bilin Y Z = cliffTrace d.QW (Y.1 * Z.1) + cliffTrace d.QV (Y.2 * Z.2) := by
+  rw [bilin_apply]
+  have e : LinearMap.mulLeft F (Y * Z) =
+      (LinearMap.mulLeft F (Y.1 * Z.1)).prodMap (LinearMap.mulLeft F (Y.2 * Z.2)) :=
+    LinearMap.ext fun _ => rfl
+  rw [e, LinearMap.trace_prodMap']
+
+/-- The constant comparing `bilin` with the trace form on a factor of dimension `n`:
+`2ⁿ / 4` (`tr_{C}(L_{YZ}) = 2ⁿ τ(YZ) = (2ⁿ/8) tr(ad Y ad Z)` and `B = ½ tr`). -/
+def formConst (n : ℕ) : F := (2 : F) ^ n / 4
+
+theorem formConst_ne_zero (n : ℕ) : (formConst n : F) ≠ 0 :=
+  div_ne_zero (pow_ne_zero _ two_ne_zero) (by norm_num)
+
+/-- **`bilin` is the rescaled trace form on `𝔤⁰`**: for `Y, Z ∈ 𝔤⁰`,
+`bilin(Y, Z) = B((2^{dim W}/4 · 1_W, 2^{dim V}/4 · 1_V) ad Y, ad Z)`, `B` Luo's trace form
+`½ (tr_W + tr_V)`: on each factor `tr_{C}(L_{YZ}) = 2ⁿ τ(YZ)` (Tau Ceti's
+`trace_mulLeft_eq_two_pow_mul_scalarTrace`) and `8 τ(YZ) = tr(ad Y ad Z)`
+(`eight_mul_scalarTrace_mul`). -/
+theorem scaleForm_traceForm_toSOLin {Y Z : d.ambient} (hY : Y ∈ d.lieZero) (hZ : Z ∈ d.lieZero) :
+    scaleForm d.luoOf.traceForm
+        (d.luoOf.scalarUnit (formConst_ne_zero (Module.finrank F (Fin d.m → F)))
+          (formConst_ne_zero (Module.finrank F d.V)) : d.luoOf.Amb) (d.toSOLin Y) (d.toSOLin Z) =
+      d.bilin Y Z := by
+  have h1 := eight_mul_scalarTrace_mul d.nondeg hY.1 hZ.1
+  have h2 := eight_mul_scalarTrace_mul d.nondeg_QV hY.2 hZ.2
+  rw [bilin_eq_cliffTrace_add, cliffTrace, cliffTrace,
+    CliffordAlgebra.trace_mulLeft_eq_two_pow_mul_scalarTrace,
+    CliffordAlgebra.trace_mulLeft_eq_two_pow_mul_scalarTrace]
+  rw [scaleForm_apply, LuoDatum.traceForm_scalarUnit_mul]
+  have e1 : LinearMap.trace F d.luoOf.W (d.luoOf.fstA (d.toSOLin Y) * d.luoOf.fstA (d.toSOLin Z)) =
+      LinearMap.trace F (Fin d.m → F) (adV d.QW Y.1 * adV d.QW Z.1) := rfl
+  have e2 : LinearMap.trace F d.luoOf.V (d.luoOf.sndA (d.toSOLin Y) * d.luoOf.sndA (d.toSOLin Z)) =
+      LinearMap.trace F d.V (adV d.QV Y.2 * adV d.QV Z.2) := rfl
+  rw [e1, e2, ← h1, ← h2]
+  simp only [formConst, invOf_eq_inv]
+  ring
+
+/-- **`cTheta_toSO`'s conclusion from Lie germ uniqueness on `𝔤⁰` alone** (`hgerm`, the
+Lie-algebra case of Harish-Chandra 1999 Cor 5.10 / BP §4.5 for `(G, 𝔤⁰, bilin)`): all other
+hypotheses of `cTheta_toSO_of_transport` are proved — the uniqueness of the orbit picked by the
+recipe (`orbitSpecAt_orbit_unique`) and the transport of local expansions along
+`E = c · ad`, with `c = (2^{dim W}/4, 2^{dim V}/4)` (`cTheta_toSO_of_germUnique_of_form`,
+`scaleForm_traceForm_toSOLin`). -/
+theorem cTheta_toSO_of_germUnique (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
+    {θ : ↥d.luoOf.lie → ℂ}
+    (hθ : IsLieQuasiCharacter d.luoOf.Gbar d.luoOf.lie d.luoOf.traceForm ψ θ)
+    (T : d.GammaTorus) (X : CliffordAlgebra d.QW) (hX : d.IsGammaEltLie T.1 X)
+    (hgerm : ∀ c c'' : NilOrbit (lieGrpCentralizer d.G (d.diagLie X))
+        (lieCentralizer d.lieZero (d.diagLie X)) → ℂ,
+      HasGermExpansionLie d.G d.lieZero d.bilin ψ (θ ∘ d.toSO) (d.diagLie X) c →
+      HasGermExpansionLie d.G d.lieZero d.bilin ψ (θ ∘ d.toSO) (d.diagLie X) c'' →
+      ∀ O ∈ NilReg _ _, c O = c'' O) :
+    d.germLie0 ψ (θ ∘ d.toSO) (d.diagLie X) (d.orbitChoiceLie X) =
+      d.luoOf.cTheta ψ θ (d.toSOLin (d.diagLie X)) :=
+  d.cTheta_toSO_of_germUnique_of_form ψ hW hV hθ T X hX _ _
+    (fun _ hY _ hZ => d.scaleForm_traceForm_toSOLin hY hZ) hgerm
+
+end GGPData
 
 end GSpinGGP
