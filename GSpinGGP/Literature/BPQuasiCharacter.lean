@@ -25,18 +25,18 @@ of `0` in `𝔤_x(F)` and coefficients `c_{θ,O}(x)`, `O ∈ Nil(𝔤_x)`, with
 * Expansion: Lean asks for it at every semisimple `x` (`IsSS`, semisimplicity in the faithful
   representation on `C(W) × C(V)`), for `Y` in some neighbourhood `ω` of `0`, `Y ∈ 𝔤_x`, `Y` regular
   in `𝔤_x`, with finitely many nonzero coefficients (BP's `Nil(𝔤_x)` is finite). BP's condition
-  follows. Let `V ⊆ 𝔤_x(F)` be the set of `Y` whose semisimple part is `G_x(F)`-conjugate to a
-  semisimple element of `ω ∩ 𝔤_x`. The `G_x(F)`-saturation of `ω ∩ 𝔤_{x,ss}` is open in
-  `𝔤_{x,ss}` (a union of conjugates of an open set), so `V` is the preimage of an open subset of
-  `Γ(𝔤_x)`, i.e. open for the invariant topology (BP §1.7, arXiv p. 37), and it contains `0`. The
-  `G_x`-excellent open sets containing `0` form a basis of neighbourhoods of `0` for that topology
-  (BP §3.3, arXiv p. 74), so there is one, `ω_x ⊆ V`, which may also be taken inside the
-  neighbourhood of `0` where `x e^Y` is regular iff `Y` is regular in `𝔤_x`. A regular
-  `Y ∈ ω_x` is semisimple, so `Y = g Y' g⁻¹` with `g ∈ G_x(F)`, `Y' ∈ ω ∩ 𝔤_x` regular; as
-  `θ` is invariant and `ĵ(O, ·)` is `G_x(F)`-invariant, `θ(x e^Y) = θ(x e^{Y'}) =
-  ∑ c_O ĵ(O, Y') = ∑ c_O ĵ(O, Y)`. The orbits `Nil(𝔤_x)` are those of `Z_G(x)(F)` in Lean and of
-  `G_x(F)` in BP; they agree, `Z_G(x)` being connected for `GSpin` (Steinberg: the derived group
-  is simply connected).
+  follows. Shrink `ω` first so that, for `Y' ∈ ω ∩ 𝔤_x`, `x e^{Y'}` is regular in `G` iff `Y'` is
+  regular in `𝔤_x` (and `e` is the exponential there). Let `V ⊆ 𝔤_x(F)` be the set of `Y` whose
+  semisimple part is `G_x(F)`-conjugate to a semisimple element of `ω ∩ 𝔤_x`. The
+  `G_x(F)`-saturation of `ω ∩ 𝔤_{x,ss}` is open in `𝔤_{x,ss}` (a union of conjugates of an open
+  set), so `V` is the preimage of an open subset of `Γ(𝔤_x)`, i.e. open for the invariant topology
+  (BP §1.7, arXiv p. 37), and it contains `0`. The `G_x`-excellent open sets containing `0` form a
+  basis of neighbourhoods of `0` for that topology (BP §3.3, arXiv p. 74), so there is one, `ω_x ⊆
+  V`. A `Y ∈ ω_{x,reg}` is semisimple, so `Y = g Y' g⁻¹` with `g ∈ G_x(F)`, `Y' ∈ ω ∩ 𝔤_x` regular
+  in `𝔤_x`; then `x e^{Y'}` and its conjugate `x e^Y` lie in `G_reg(F)`, and as `θ` is invariant
+  there and `ĵ(O, ·)` is `G_x(F)`-invariant, `θ(x e^Y) = θ(x e^{Y'}) = ∑ c_O ĵ(O, Y') = ∑ c_O ĵ(O,
+  Y)`. The orbits `Nil(𝔤_x)` are those of `Z_G(x)(F)` in Lean and of `G_x(F)` in BP; they agree,
+  `Z_G(x)` being connected for `GSpin` (Steinberg: the derived group is simply connected).
 * Smoothness: at regular `x`, `Nil(𝔤_x) = {0}` and `ĵ(0, ·) = 1`, so the Lean expansion and
   invariance make `θ` locally constant on `G_reg(F)`.
 * `ĵ`: on `𝔤_{x,reg}` the Lean `jHat` is BP's `ĵ(O, ·)` when the measure `orbitMeasure` exists
