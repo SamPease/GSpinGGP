@@ -70,6 +70,14 @@ theorem adV_commutator {Q : QuadraticForm K V} {X Y : CliffordAlgebra Q} (hX : X
     ι_adV hX (adV Q Y v), ι_adV hY (adV Q X v), ι_adV hY v, ι_adV hX v]
   noncomm_ring
 
+/-- Commuting elements of `gspin(V)` have commuting `adV`. -/
+theorem adV_commute_of_commute {Q : QuadraticForm K V} {Z W : CliffordAlgebra Q}
+    (hZ : Z ∈ gspin Q) (hW : W ∈ gspin Q) (h : W * Z = Z * W) :
+    adV Q Z * adV Q W = adV Q W * adV Q Z := by
+  have := adV_commutator hZ hW
+  rw [← h, sub_self, map_zero, eq_comm, sub_eq_zero] at this
+  exact this
+
 /-- The kernel of `adV` on `gspin(V)` is the scalars (`V` nondegenerate, finite-dimensional). -/
 theorem eq_algebraMap_of_adV_eq_zero [Module.Finite K V] {Q : QuadraticForm K V} (hQ : IsNondeg Q)
     {X : CliffordAlgebra Q} (hX : X ∈ gspin Q) (h0 : adV Q X = 0) :

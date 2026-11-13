@@ -466,6 +466,27 @@ lemma mem_lieCentralizer {K : Type*} [Field K] [Algebra K A] {𝔤 : LieSubalgeb
   change X ∈ 𝔤 ∧ X ∈ Subalgebra.centralizer K {x} ↔ _
   simp [Subalgebra.mem_centralizer_iff, eq_comm]
 
+omit [Algebra F A] in
+/-- Centralizers in a product `𝔤 = 𝔤₁ × 𝔤₂ ⊆ A × B` are products of centralizers. -/
+theorem mem_lieCentralizer_prod {K B : Type*} [Field K] [Algebra K A] [Ring B] [Algebra K B]
+    {𝔤 : LieSubalgebra K (A × B)} {𝔤₁ : LieSubalgebra K A} {𝔤₂ : LieSubalgebra K B}
+    (h : ∀ Z, Z ∈ 𝔤 ↔ Z.1 ∈ 𝔤₁ ∧ Z.2 ∈ 𝔤₂) (a Z : A × B) :
+    Z ∈ lieCentralizer 𝔤 a ↔ Z.1 ∈ lieCentralizer 𝔤₁ a.1 ∧ Z.2 ∈ lieCentralizer 𝔤₂ a.2 := by
+  simp only [mem_lieCentralizer, h, Prod.ext_iff, Prod.fst_mul, Prod.snd_mul]
+  tauto
+
+omit [Algebra F A] in
+/-- `dim 𝔤 = dim 𝔤₁ + dim 𝔤₂` for `𝔤 = 𝔤₁ × 𝔤₂ ⊆ A × B`. -/
+theorem finrank_prod_of_mem_iff {K B : Type*} [Field K] [Algebra K A] [Ring B] [Algebra K B]
+    [FiniteDimensional K A] [FiniteDimensional K B]
+    {𝔤 : LieSubalgebra K (A × B)} {𝔤₁ : LieSubalgebra K A} {𝔤₂ : LieSubalgebra K B}
+    (h : ∀ Z, Z ∈ 𝔤 ↔ Z.1 ∈ 𝔤₁ ∧ Z.2 ∈ 𝔤₂) :
+    Module.finrank K 𝔤 = Module.finrank K 𝔤₁ + Module.finrank K 𝔤₂ := by
+  have e : 𝔤.toSubmodule = 𝔤₁.toSubmodule.prod 𝔤₂.toSubmodule := by ext Z; exact h Z
+  change Module.finrank K 𝔤.toSubmodule =
+    Module.finrank K 𝔤₁.toSubmodule + Module.finrank K 𝔤₂.toSubmodule
+  rw [e, (Submodule.prodEquiv _ _).finrank_eq, Module.finrank_prod]
+
 /-- `𝔤_0 = 𝔤`. -/
 @[simp] theorem lieCentralizer_zero {K : Type*} [Field K] [Algebra K A] (𝔤 : LieSubalgebra K A) :
     lieCentralizer 𝔤 0 = 𝔤 := by

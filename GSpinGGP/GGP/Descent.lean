@@ -161,6 +161,54 @@ theorem quadraticLieSubalgebra_le_soSub (Q : QuadraticForm K V) :
       exact (soSub Q).smul_mem _ (commutator_ι_mem_soSub Q a b)
   exact fun X hX => h hX
 
+/-- **`adV` maps `so_Cliff(V)` onto the skew endomorphisms** (a combination of bivectors,
+`exists_mem_quadratic_commutator_eq`). -/
+theorem exists_mem_soSub_adV_eq {Q : QuadraticForm K V} (hQ : IsNondeg Q) (M : Module.End K V)
+    (hMs : ∀ u w, bform Q (M u) w = -bform Q u (M w)) : ∃ Z ∈ soSub Q, adV Q Z = M := by
+  obtain ⟨Z, hZq, hZ⟩ := exists_mem_quadratic_commutator_eq hQ M hMs
+  have hZs := quadraticLieSubalgebra_le_soSub Q hZq
+  exact ⟨Z, hZs, by ext v; apply ι_injective Q; rw [ι_adV hZs.1, hZ]⟩
+
+/-- `adV` is injective on `so_Cliff(V)`. -/
+theorem eq_of_mem_soSub_of_adV_eq {Q : QuadraticForm K V} (hQ : IsNondeg Q)
+    {Z Z' : CliffordAlgebra Q} (hZ : Z ∈ soSub Q) (hZ' : Z' ∈ soSub Q) (h : adV Q Z = adV Q Z') :
+    Z = Z' :=
+  sub_eq_zero.mp (eq_zero_of_mem_soSub_of_adV_eq_zero hQ (sub_mem hZ hZ')
+    (by rw [map_sub, h, sub_self]))
+
+/-- **`dim so_Cliff(V)_{X,Y} = dim (so(V)_{adV X} ⊓ so(V)_{adV Y})`**: `adV` is a bijection
+between them (`exists_mem_soSub_adV_eq`, `commute_of_adV_commute`,
+`eq_zero_of_mem_soSub_of_adV_eq_zero`).  The `so_Cliff` form of
+`finrank_lieCentralizer_lieCentralizer_gspin`, without the scalars. -/
+theorem finrank_lieCentralizer_lieCentralizer_soSub {Q : QuadraticForm K V} (hQ : IsNondeg Q)
+    {X Y : CliffordAlgebra Q} (hX : X ∈ soSub Q) (hY : Y ∈ soSub Q) :
+    finrank K ↥(lieCentralizer (lieCentralizer (soSub Q) X) Y) =
+      finrank K ↥(soCent Q (adV Q X) ⊓ soCent Q (adV Q Y)) := by
+  have hmem : ∀ {Z}, Z ∈ lieCentralizer (lieCentralizer (soSub Q) X) Y ↔
+      Z ∈ soSub Q ∧ X * Z = Z * X ∧ Y * Z = Z * Y := by
+    intro Z; rw [mem_lieCentralizer, mem_lieCentralizer, and_assoc]
+  let φ : ↥(lieCentralizer (lieCentralizer (soSub Q) X) Y) →ₗ[K]
+      ↥(soCent Q (adV Q X) ⊓ soCent Q (adV Q Y)) :=
+    { toFun := fun Z => ⟨adV Q Z, by
+        obtain ⟨hZ, hXZ, hYZ⟩ := hmem.mp Z.2
+        exact Submodule.mem_inf.mpr
+          ⟨mem_soCent.2 ⟨bform_adV hZ.1, adV_commute_of_commute hZ.1 hX.1 hXZ⟩,
+            mem_soCent.2 ⟨bform_adV hZ.1, adV_commute_of_commute hZ.1 hY.1 hYZ⟩⟩⟩
+      map_add' := fun A B => Subtype.ext (map_add (adV Q) A.1 B.1)
+      map_smul' := fun c A => Subtype.ext (map_smul (adV Q) c A.1) }
+  have hinj : Function.Injective φ := fun A B h =>
+    Subtype.ext (eq_of_mem_soSub_of_adV_eq hQ (hmem.mp A.2).1 (hmem.mp B.2).1
+      (congrArg Subtype.val h))
+  have hsurj : Function.Surjective φ := by
+    rintro ⟨M, hM⟩
+    obtain ⟨hMX, hMY⟩ := Submodule.mem_inf.mp hM
+    obtain ⟨hMs, hMXc⟩ := mem_soCent.mp hMX
+    obtain ⟨-, hMYc⟩ := mem_soCent.mp hMY
+    obtain ⟨Z, hZ, rfl⟩ := exists_mem_soSub_adV_eq hQ M hMs
+    exact ⟨⟨Z, hmem.mpr ⟨hZ, (commute_of_adV_commute hQ hZ.1 hX.1 hMXc).symm,
+      (commute_of_adV_commute hQ hZ.1 hY.1 hMYc).symm⟩⟩, rfl⟩
+  exact (LinearEquiv.ofBijective φ ⟨hinj, hsurj⟩).finrank_eq
+
 /-- **`so_Cliff(V)` is spanned by the bivectors** (for nondegenerate `Q`): an `X ∈ so_Cliff(V)` and
 the quadratic lift `Y` of `ad X` (`exists_mem_quadratic_commutator_eq`) differ by an element of
 `so_Cliff(V)` killed by `ad`, which is `0` (`eq_zero_of_mem_soSub_of_adV_eq_zero`). -/
