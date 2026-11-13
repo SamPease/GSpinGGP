@@ -1,4 +1,5 @@
 import GSpinGGP.Foundations.LocalGroups
+import GSpinGGP.Harmonic.LogNorm
 import GSpinGGP.Foundations.HaarLocal
 import GSpinGGP.Foundations.RankSemicontinuity
 import GSpinGGP.Foundations.Determinant
