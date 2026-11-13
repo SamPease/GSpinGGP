@@ -554,15 +554,168 @@ namespace GGPData
 
 variable (d : GGPData F) (ψ : NontrivialAddChar F)
 
+/-- **The orbit map `E = c · ad` at a semisimple `D ∈ 𝔤⁰`**, given constants `a, b ≠ 0` with
+`bilin(Y, Z) = B((a · 1, b · 1) ad Y, ad Z)` on `𝔤⁰` (`hform`; `B` the trace form),
+`c = (a · 1, b · 1)`.  `ad` is an isomorphism of descent data
+`(Z_G(D), 𝔤⁰_D, bilin) ≃ (Ḡ_{ad D}, 𝔤_{ad D}, B(c ·, ·))` (`adCentralizerIso`), so it transports
+`ĵ` (`CentralizerIso.jHat_map`), and
+`ĵ_{B(c ·, ·)}(O, ·) = ĵ_B(c O, ·)` (`jHat_scale`).  The hypotheses of these on `𝔤_{ad D}`: `B` is
+nondegenerate there (`ad D` is semisimple), the regular set is open
+(`isOpen_setOf_isRegularSS_lieCentralizer_lieZero`, transported by `ad`), orbit measures are unique
+(`isOrbitMeasure_unique_luo`).  `E` matches regular orbits, Luo's recipe with `OrbitSpecAt`
+(`orbitSpec_iff_of_smul`: the recipe is invariant under `c`), the zero orbits, the regular sets,
+and the functions `ĵ`. -/
+theorem exists_nilOrbitEquiv_toSOLin (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
+    {D : d.ambient} (hD : D ∈ d.lieZero) (hssD : IsSS F D) {a b : F} (ha : a ≠ 0) (hb : b ≠ 0)
+    (hform : ∀ Y ∈ d.lieZero, ∀ Z ∈ d.lieZero,
+      scaleForm d.luoOf.traceForm (d.luoOf.scalarUnit ha hb : d.luoOf.Amb) (d.toSOLin Y)
+        (d.toSOLin Z) = d.bilin Y Z) :
+    ∃ E : NilOrbit (lieGrpCentralizer d.G D) (lieCentralizer d.lieZero D) ≃
+        NilOrbit (lieGrpCentralizer d.luoOf.Gbar (d.toSOLin D))
+          (lieCentralizer d.luoOf.lie (d.toSOLin D)),
+      (∀ O, E O ∈ NilReg _ _ ↔ O ∈ NilReg _ _) ∧
+      (∀ (K : Submodule F (Fin d.m → F)) (O), (∃ Y ∈ nilOrbitSet (E O),
+          d.luoOf.OrbitSpec K (Y : d.luoOf.Amb)) ↔
+        ∃ Y ∈ nilOrbitSet O, d.OrbitSpecAt K (Y : d.ambient)) ∧
+      E (Quotient.mk (nilSetoid _ _) ⟨0, LieSubalgebra.zero_mem _, IsNilpotent.zero⟩) =
+        Quotient.mk (nilSetoid _ _) ⟨0, LieSubalgebra.zero_mem _, IsNilpotent.zero⟩ ∧
+      (∀ Y ∈ lieCentralizer d.lieZero D, IsRegularSS (lieCentralizer d.lieZero D) Y ↔
+        IsRegularSS (lieCentralizer d.luoOf.lie (d.toSOLin D)) (d.toSOLin Y)) ∧
+      ∀ O, ∀ Y ∈ lieCentralizer d.lieZero D, IsRegularSS (lieCentralizer d.lieZero D) Y →
+        jHat (lieGrpCentralizer d.luoOf.Gbar (d.toSOLin D))
+            (lieCentralizer d.luoOf.lie (d.toSOLin D)) d.luoOf.traceForm ψ (E O) (d.toSOLin Y) =
+          jHat (lieGrpCentralizer d.G D) (lieCentralizer d.lieZero D) d.bilin ψ O Y := by
+  classical
+  have hXm : d.toSOLin D ∈ d.luoOf.lie := d.toSO_mem ⟨_, hD⟩
+  have hss : IsSS F (d.toSOLin D) := d.isSS_toSOLin hD hssD
+  -- the scaling unit
+  set c := d.luoOf.scalarUnit ha hb with hc_def
+  have hc : ∀ a' : d.luoOf.Amb, (c : d.luoOf.Amb) * a' = a' * c :=
+    LuoDatum.scalarUnit_central ha hb
+  have hc𝔤 : ∀ Y ∈ lieCentralizer d.luoOf.lie (d.toSOLin D),
+      (c : d.luoOf.Amb) * Y ∈ lieCentralizer d.luoOf.lie (d.toSOLin D) :=
+    fun _ hY => (LuoDatum.scalarUnit_mul_mem_lieCentralizer ha hb hY).1
+  have hc𝔤' : ∀ Y ∈ lieCentralizer d.luoOf.lie (d.toSOLin D),
+      ((c⁻¹ : d.luoOf.Ambˣ) : d.luoOf.Amb) * Y ∈
+        lieCentralizer d.luoOf.lie (d.toSOLin D) :=
+    fun _ hY => (LuoDatum.scalarUnit_mul_mem_lieCentralizer ha hb hY).2
+  have hbc : ∀ Y Z : d.luoOf.Amb, d.luoOf.traceForm ((c : d.luoOf.Amb) * Y) Z =
+      d.luoOf.traceForm Y ((c : d.luoOf.Amb) * Z) := LuoDatum.traceForm_scalarUnit ha hb
+  -- descent data
+  have hG₀ : ∀ g ∈ lieGrpCentralizer d.G D, ∀ Y ∈ lieCentralizer d.lieZero
+      D, (g : d.ambient) * Y * (↑g⁻¹ : d.ambient) ∈
+        lieCentralizer d.lieZero D :=
+    fun _ hg _ hY => d.conj_mem_lieCentralizer_lieZero hg hY
+  have hG₁ := conj_mem_lieCentralizer_of_mem_lieGrpCentralizer
+    d.luoOf.conj_mem_lie_of_mem_Gbar (d.toSOLin D)
+  have e𝔤₀ : lieCentralizer (lieCentralizer d.lieZero D) ((1 : d.ambientˣ) : d.ambient)
+      = lieCentralizer d.lieZero D := by rw [Units.val_one, lieCentralizer_one]
+  have e𝔤₁ : lieCentralizer (lieCentralizer d.luoOf.lie (d.toSOLin D))
+      ((1 : d.luoOf.Ambˣ) : d.luoOf.Amb) =
+        lieCentralizer d.luoOf.lie (d.toSOLin D) := by
+    rw [Units.val_one, lieCentralizer_one]
+  have eG₀ := grpCentralizer_one (lieGrpCentralizer d.G D)
+  have eG₁ := grpCentralizer_one (lieGrpCentralizer d.luoOf.Gbar (d.toSOLin D))
+  let ι := d.adCentralizerIso hW hV hD c hform
+  -- hypotheses of `jHat_scale` and `jHat_map` on `𝔤_{ad X}`
+  have hnd₁ : (restrictForm (lieCentralizer d.luoOf.lie (d.toSOLin D))
+      d.luoOf.traceForm).Nondegenerate :=
+    restrictForm_lieCentralizer_nondegenerate_of_isSS
+      (d.luoOf.restrictForm_lie_traceForm_nondegenerate d.nondeg_QV)
+      d.luoOf.traceForm_invariant hXm (LieAlgebra.ad_isSemisimple_of_isSemisimple_mulLeft hss)
+  have hopen₀ : IsOpen {Z : ↥(lieCentralizer (lieCentralizer d.lieZero D)
+      ((1 : d.ambientˣ) : d.ambient)) | IsRegularSS (lieCentralizer (lieCentralizer d.lieZero
+        D) ((1 : d.ambientˣ) : d.ambient)) (Z : d.ambient)} := by
+    rw [e𝔤₀]
+    exact d.isOpen_setOf_isRegularSS_lieCentralizer_lieZero hD hssD
+  have hopen' : IsOpen {Z : ↥(lieCentralizer (lieCentralizer d.luoOf.lie
+      (d.toSOLin D)) ((1 : d.luoOf.Ambˣ) : d.luoOf.Amb)) |
+      IsRegularSS (lieCentralizer (lieCentralizer d.luoOf.lie (d.toSOLin D))
+        ((1 : d.luoOf.Ambˣ) : d.luoOf.Amb)) (Z : d.luoOf.Amb)} := by
+    convert hopen₀.preimage ι.continuous_linEquiv_symm using 1
+    ext Z'
+    simp only [Set.mem_ofPred_eq, Set.mem_preimage]
+    rw [← ι.isRegularSS_iff _ (ι.linEquiv.symm Z').2, ← CentralizerIso.linEquiv_apply,
+      LinearEquiv.apply_symm_apply]
+  have hopen₁ : IsOpen {Z : ↥(lieCentralizer d.luoOf.lie (d.toSOLin D)) |
+      IsRegularSS (lieCentralizer d.luoOf.lie (d.toSOLin D)) (Z : d.luoOf.Amb)} := by
+    rw [← e𝔤₁]
+    exact hopen'
+  have hnd' : (restrictForm (lieCentralizer (lieCentralizer d.luoOf.lie (d.toSOLin D))
+      ((1 : d.luoOf.Ambˣ) : d.luoOf.Amb))
+        (scaleForm d.luoOf.traceForm (c : d.luoOf.Amb))).Nondegenerate
+      := by
+    rw [e𝔤₁]
+    exact restrictForm_scaleForm_nondegenerate c hc𝔤 hc𝔤' hnd₁
+  have hu' : ∀ O' μ ν, IsOrbitMeasure (grpCentralizer (lieGrpCentralizer d.luoOf.Gbar
+      (d.toSOLin D)) 1) (lieCentralizer (lieCentralizer d.luoOf.lie
+        (d.toSOLin D)) ((1 : d.luoOf.Ambˣ) : d.luoOf.Amb))
+        (scaleForm d.luoOf.traceForm (c : d.luoOf.Amb)) ψ O' μ →
+      IsOrbitMeasure (grpCentralizer (lieGrpCentralizer d.luoOf.Gbar
+      (d.toSOLin D)) 1) (lieCentralizer (lieCentralizer d.luoOf.lie
+        (d.toSOLin D)) ((1 : d.luoOf.Ambˣ) : d.luoOf.Amb))
+        (scaleForm d.luoOf.traceForm (c : d.luoOf.Amb)) ψ O' ν → μ = ν := by
+    rw [eG₁, e𝔤₁]
+    exact fun _ _ _ h1 h2 => d.isOrbitMeasure_unique_luo _ h1 h2
+  have hu₁ : ∀ O' μ ν, IsOrbitMeasure (lieGrpCentralizer d.luoOf.Gbar (d.toSOLin D))
+      (lieCentralizer d.luoOf.lie (d.toSOLin D)) d.luoOf.traceForm ψ O' μ →
+      IsOrbitMeasure (lieGrpCentralizer d.luoOf.Gbar (d.toSOLin D))
+      (lieCentralizer d.luoOf.lie (d.toSOLin D)) d.luoOf.traceForm ψ O' ν → μ = ν :=
+    fun _ _ _ h1 h2 => d.isOrbitMeasure_unique_luo _ h1 h2
+  -- the orbit map
+  let β₀ := nilOrbitCongr eG₀.symm e𝔤₀.symm
+  let ν := ι.nilOrbitEquiv hG₀
+  let β₁ := nilOrbitCongr eG₁ e𝔤₁
+  let σ := nilScaleEquiv (G := lieGrpCentralizer d.luoOf.Gbar (d.toSOLin D)) c hc
+    hc𝔤 hc𝔤'
+  let E := β₀.trans (ν.trans (β₁.trans σ))
+  have hE : ∀ O, E O = nilScale (c : d.luoOf.Amb) hc hc𝔤 (β₁ (ν (β₀ O))) := fun _ => rfl
+  have hrss : ∀ Y ∈ lieCentralizer d.lieZero D, IsRegularSS (lieCentralizer d.lieZero D) Y ↔
+      IsRegularSS (lieCentralizer d.luoOf.lie (d.toSOLin D)) (d.toSOLin Y) := by
+    intro Y hY
+    have hY' : Y ∈ lieCentralizer (lieCentralizer d.lieZero D) ((1 : d.ambientˣ) : d.ambient) :=
+      mem_lieCentralizer_units_one.mpr hY
+    have := ι.isRegularSS_iff Y hY'
+    rw [e𝔤₀, e𝔤₁] at this
+    exact this.symm
+  refine ⟨E, fun O => ?_, fun K O => ?_, ?_, hrss, fun O Y hY hYr => ?_⟩
+  · -- regular orbits
+    rw [hE, nilScale_mem_nilReg_iff c hc hc𝔤 hG₁, nilOrbitCongr_mem_nilReg_iff,
+      ι.nilOrbitEquiv_mem_nilReg_iff hG₀ hG₁, nilOrbitCongr_mem_nilReg_iff]
+  · -- Luo's recipe
+    rw [hE]
+    refine (exists_mem_nilOrbitSet_nilScale_iff c hc hc𝔤 hc𝔤' _
+      (fun Y => d.luoOf.OrbitSpec K Y)).trans ?_
+    refine (exists_mem_nilOrbitSet_nilOrbitCongr_iff eG₁ e𝔤₁ _
+      (fun Y => d.luoOf.OrbitSpec K ((c : d.luoOf.Amb) * Y))).trans ?_
+    refine (ι.exists_mem_nilOrbitSet_nilOrbitEquiv_iff hG₀ (β₀ O)
+      (fun Y => d.luoOf.OrbitSpec K ((c : d.luoOf.Amb) * Y))).trans ?_
+    refine (exists_mem_nilOrbitSet_nilOrbitCongr_iff eG₀.symm e𝔤₀.symm O
+      (fun Y => d.luoOf.OrbitSpec K ((c : d.luoOf.Amb) * ι.lin Y))).trans ?_
+    refine exists_congr fun Y => and_congr_right fun _ => ?_
+    exact (d.luoOf.orbitSpec_iff_of_smul ha hb K (LuoDatum.fstA_scalarUnit_mul ha hb _)
+      (LuoDatum.sndA_scalarUnit_mul ha hb _)).trans (d.orbitSpecAt_iff_orbitSpec_toSOLin K _).symm
+  · -- the zero orbit
+    change nilScale (c : d.luoOf.Amb) hc hc𝔤 (β₁ (ι.nilOrbitMap (β₀ (Quotient.mk _ _)))) = _
+    rw [nilOrbitCongr_mk, ι.nilOrbitMap_mk, nilOrbitCongr_mk, nilScale_mk]
+    exact congrArg (Quotient.mk _) (Subtype.ext (by
+      change (c : d.luoOf.Amb) * d.toSOLin 0 = 0
+      rw [map_zero, mul_zero]))
+  · -- `ĵ`
+    have hY1 : d.toSOLin Y ∈ lieCentralizer d.luoOf.lie (d.toSOLin D) :=
+      (d.toSOLin_mem_lieCentralizer_iff hD (mem_lieCentralizer.mp hY).1).mpr hY
+    have hY' : Y ∈ lieCentralizer (lieCentralizer d.lieZero D)
+        ((1 : d.ambientˣ) : d.ambient) := mem_lieCentralizer_units_one.mpr hY
+    have hYr' : IsRegularSS (lieCentralizer (lieCentralizer d.lieZero D)
+        ((1 : d.ambientˣ) : d.ambient)) Y := by rw [e𝔤₀]; exact hYr
+    rw [hE, ← jHat_scale ψ c hc hc𝔤 hc𝔤' hbc hnd₁ hopen₁ hu₁ _ _ hY1 ((hrss Y hY).mp hYr),
+      jHat_nilOrbitCongr eG₁ e𝔤₁, ← jHat_nilOrbitCongr eG₀.symm e𝔤₀.symm _ ψ O Y]
+    exact ι.jHat_map hG₀ ψ hnd' hopen' hu' (β₀ O) Y hY' hYr'
+
 /-- **`cTheta_toSO`'s conclusion from Lie germ uniqueness on `𝔤⁰`**, given constants `a, b ≠ 0`
 with `bilin(Y, Z) = B((a · 1, b · 1) ad Y, ad Z)` on `𝔤⁰` (`hform`; `B` the trace form).  The
-orbit map is `E = c · (ad ∘ ·)`, `c = (a · 1, b · 1)`: `ad` is an isomorphism of descent data
-`(Z_G(X), 𝔤⁰_X, bilin) ≃ (Ḡ_{ad X}, 𝔤_{ad X}, B(c ·, ·))` (`adCentralizerIso`), so it transports
-`ĵ` (`CentralizerIso.jHat_map`), and `ĵ_{B(c ·, ·)}(O, ·) = ĵ_B(c O, ·)` (`jHat_scale`).  The
-hypotheses of these on `𝔤_{ad X}`: `B` is nondegenerate there (`ad X` is semisimple), the regular
-set is open (`isOpen_setOf_isRegularSS_lieCentralizer_lieZero`, transported by `ad`), orbit measures
-are unique (`isOrbitMeasure_unique_luo`).  Luo's recipe is invariant under `c`
-(`orbitSpec_iff_of_smul`) and is `OrbitSpecAt` under `ad`; `horb` is `orbitSpecAt_orbit_unique`. -/
+orbit map is `E = c · (ad ∘ ·)`, `c = (a · 1, b · 1)` (`exists_nilOrbitEquiv_toSOLin`); `horb` is
+`orbitSpecAt_orbit_unique`. -/
 theorem cTheta_toSO_of_germUnique_of_form (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
     {θ : ↥d.luoOf.lie → ℂ}
     (hθ : IsLieQuasiCharacter d.luoOf.Gbar d.luoOf.lie d.luoOf.traceForm ψ θ)
@@ -584,140 +737,25 @@ theorem cTheta_toSO_of_germUnique_of_form (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsH
   have hXm : d.toSOLin (d.diagLie X) ∈ d.luoOf.lie := d.toSO_mem ⟨_, hD⟩
   have hssD : IsSS F (d.diagLie X) := d.isSS_diagLie (d.isSS_of_isGammaEltLie T hX)
   have hss : IsSS F (d.toSOLin (d.diagLie X)) := d.isSS_toSOLin hD hssD
-  -- the scaling unit
-  set c := d.luoOf.scalarUnit ha hb with hc_def
-  have hc : ∀ a' : d.luoOf.Amb, (c : d.luoOf.Amb) * a' = a' * c :=
-    LuoDatum.scalarUnit_central ha hb
-  have hc𝔤 : ∀ Y ∈ lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X)),
-      (c : d.luoOf.Amb) * Y ∈ lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X)) :=
-    fun _ hY => (LuoDatum.scalarUnit_mul_mem_lieCentralizer ha hb hY).1
-  have hc𝔤' : ∀ Y ∈ lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X)),
-      ((c⁻¹ : d.luoOf.Ambˣ) : d.luoOf.Amb) * Y ∈
-        lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X)) :=
-    fun _ hY => (LuoDatum.scalarUnit_mul_mem_lieCentralizer ha hb hY).2
-  have hbc : ∀ Y Z : d.luoOf.Amb, d.luoOf.traceForm ((c : d.luoOf.Amb) * Y) Z =
-      d.luoOf.traceForm Y ((c : d.luoOf.Amb) * Z) := LuoDatum.traceForm_scalarUnit ha hb
-  -- descent data
-  have hG₀ : ∀ g ∈ lieGrpCentralizer d.G (d.diagLie X), ∀ Y ∈ lieCentralizer d.lieZero
-      (d.diagLie X), (g : d.ambient) * Y * (↑g⁻¹ : d.ambient) ∈
-        lieCentralizer d.lieZero (d.diagLie X) :=
-    fun _ hg _ hY => d.conj_mem_lieCentralizer_lieZero hg hY
-  have hG₁ := conj_mem_lieCentralizer_of_mem_lieGrpCentralizer
-    d.luoOf.conj_mem_lie_of_mem_Gbar (d.toSOLin (d.diagLie X))
-  have e𝔤₀ : lieCentralizer (lieCentralizer d.lieZero (d.diagLie X)) ((1 : d.ambientˣ) : d.ambient)
-      = lieCentralizer d.lieZero (d.diagLie X) := by rw [Units.val_one, lieCentralizer_one]
-  have e𝔤₁ : lieCentralizer (lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X)))
-      ((1 : d.luoOf.Ambˣ) : d.luoOf.Amb) =
-        lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X)) := by
-    rw [Units.val_one, lieCentralizer_one]
-  have eG₀ := grpCentralizer_one (lieGrpCentralizer d.G (d.diagLie X))
-  have eG₁ := grpCentralizer_one (lieGrpCentralizer d.luoOf.Gbar (d.toSOLin (d.diagLie X)))
-  let ι := d.adCentralizerIso hW hV hD c hform
-  -- hypotheses of `jHat_scale` and `jHat_map` on `𝔤_{ad X}`
-  have hnd₁ : (restrictForm (lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X)))
-      d.luoOf.traceForm).Nondegenerate :=
-    restrictForm_lieCentralizer_nondegenerate_of_isSS
-      (d.luoOf.restrictForm_lie_traceForm_nondegenerate d.nondeg_QV)
-      d.luoOf.traceForm_invariant hXm (LieAlgebra.ad_isSemisimple_of_isSemisimple_mulLeft hss)
-  have hopen₀ : IsOpen {Z : ↥(lieCentralizer (lieCentralizer d.lieZero (d.diagLie X))
-      ((1 : d.ambientˣ) : d.ambient)) | IsRegularSS (lieCentralizer (lieCentralizer d.lieZero
-        (d.diagLie X)) ((1 : d.ambientˣ) : d.ambient)) (Z : d.ambient)} := by
-    rw [e𝔤₀]
-    exact d.isOpen_setOf_isRegularSS_lieCentralizer_lieZero hD hssD
-  have hopen' : IsOpen {Z : ↥(lieCentralizer (lieCentralizer d.luoOf.lie
-      (d.toSOLin (d.diagLie X))) ((1 : d.luoOf.Ambˣ) : d.luoOf.Amb)) |
-      IsRegularSS (lieCentralizer (lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X)))
-        ((1 : d.luoOf.Ambˣ) : d.luoOf.Amb)) (Z : d.luoOf.Amb)} := by
-    convert hopen₀.preimage ι.continuous_linEquiv_symm using 1
-    ext Z'
-    simp only [Set.mem_ofPred_eq, Set.mem_preimage]
-    rw [← ι.isRegularSS_iff _ (ι.linEquiv.symm Z').2, ← CentralizerIso.linEquiv_apply,
-      LinearEquiv.apply_symm_apply]
-  have hopen₁ : IsOpen {Z : ↥(lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X))) |
-      IsRegularSS (lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X))) (Z : d.luoOf.Amb)} := by
-    rw [← e𝔤₁]
-    exact hopen'
-  have hnd' : (restrictForm (lieCentralizer (lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X)))
-      ((1 : d.luoOf.Ambˣ) : d.luoOf.Amb))
-        (scaleForm d.luoOf.traceForm (c : d.luoOf.Amb))).Nondegenerate
-      := by
-    rw [e𝔤₁]
-    exact restrictForm_scaleForm_nondegenerate c hc𝔤 hc𝔤' hnd₁
-  have hu' : ∀ O' μ ν, IsOrbitMeasure (grpCentralizer (lieGrpCentralizer d.luoOf.Gbar
-      (d.toSOLin (d.diagLie X))) 1) (lieCentralizer (lieCentralizer d.luoOf.lie
-        (d.toSOLin (d.diagLie X))) ((1 : d.luoOf.Ambˣ) : d.luoOf.Amb))
-        (scaleForm d.luoOf.traceForm (c : d.luoOf.Amb)) ψ O' μ →
-      IsOrbitMeasure (grpCentralizer (lieGrpCentralizer d.luoOf.Gbar
-      (d.toSOLin (d.diagLie X))) 1) (lieCentralizer (lieCentralizer d.luoOf.lie
-        (d.toSOLin (d.diagLie X))) ((1 : d.luoOf.Ambˣ) : d.luoOf.Amb))
-        (scaleForm d.luoOf.traceForm (c : d.luoOf.Amb)) ψ O' ν → μ = ν := by
-    rw [eG₁, e𝔤₁]
-    exact fun _ _ _ h1 h2 => d.isOrbitMeasure_unique_luo _ h1 h2
-  have hu₁ : ∀ O' μ ν, IsOrbitMeasure (lieGrpCentralizer d.luoOf.Gbar (d.toSOLin (d.diagLie X)))
-      (lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X))) d.luoOf.traceForm ψ O' μ →
-      IsOrbitMeasure (lieGrpCentralizer d.luoOf.Gbar (d.toSOLin (d.diagLie X)))
-      (lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X))) d.luoOf.traceForm ψ O' ν → μ = ν :=
-    fun _ _ _ h1 h2 => d.isOrbitMeasure_unique_luo _ h1 h2
-  -- the orbit map
-  let β₀ := nilOrbitCongr eG₀.symm e𝔤₀.symm
-  let ν := ι.nilOrbitEquiv hG₀
-  let β₁ := nilOrbitCongr eG₁ e𝔤₁
-  let σ := nilScaleEquiv (G := lieGrpCentralizer d.luoOf.Gbar (d.toSOLin (d.diagLie X))) c hc
-    hc𝔤 hc𝔤'
-  let E := β₀.trans (ν.trans (β₁.trans σ))
-  have hE : ∀ O, E O = nilScale (c : d.luoOf.Amb) hc hc𝔤 (β₁ (ν (β₀ O))) := fun _ => rfl
+  obtain ⟨E, hreg, hspec, hzero, hrss, hj⟩ :=
+    d.exists_nilOrbitEquiv_toSOLin ψ hW hV hD hssD ha hb hform
   refine d.cTheta_toSO_of_transport ψ hθ X hXm hss hgerm (d.orbitSpecAt_orbit_unique T hX) E
-    E.surjective (fun O => ?_) (fun O => ?_) ?_ (fun c' hc' => ?_)
-  · -- regular orbits
-    rw [hE, nilScale_mem_nilReg_iff c hc hc𝔤 hG₁, nilOrbitCongr_mem_nilReg_iff,
-      ι.nilOrbitEquiv_mem_nilReg_iff hG₀ hG₁, nilOrbitCongr_mem_nilReg_iff]
-  · -- Luo's recipe
-    rw [hE]
-    set K : Submodule F (Fin d.m → F) := LinearMap.ker (adV d.QW X)
-    refine (exists_mem_nilOrbitSet_nilScale_iff c hc hc𝔤 hc𝔤' _
-      (fun Y => d.luoOf.OrbitSpec K Y)).trans ?_
-    refine (exists_mem_nilOrbitSet_nilOrbitCongr_iff eG₁ e𝔤₁ _
-      (fun Y => d.luoOf.OrbitSpec K ((c : d.luoOf.Amb) * Y))).trans ?_
-    refine (ι.exists_mem_nilOrbitSet_nilOrbitEquiv_iff hG₀ (β₀ O)
-      (fun Y => d.luoOf.OrbitSpec K ((c : d.luoOf.Amb) * Y))).trans ?_
-    refine (exists_mem_nilOrbitSet_nilOrbitCongr_iff eG₀.symm e𝔤₀.symm O
-      (fun Y => d.luoOf.OrbitSpec K ((c : d.luoOf.Amb) * ι.lin Y))).trans ?_
-    refine exists_congr fun Y => and_congr_right fun _ => ?_
-    exact (d.luoOf.orbitSpec_iff_of_smul ha hb K (LuoDatum.fstA_scalarUnit_mul ha hb _)
-      (LuoDatum.sndA_scalarUnit_mul ha hb _)).trans (d.orbitSpecAt_iff_orbitSpec_toSOLin K _).symm
-  · -- the zero orbit
-    change nilScale (c : d.luoOf.Amb) hc hc𝔤 (β₁ (ι.nilOrbitMap (β₀ (Quotient.mk _ _)))) = _
-    rw [nilOrbitCongr_mk, ι.nilOrbitMap_mk, nilOrbitCongr_mk, nilScale_mk]
-    exact congrArg (Quotient.mk _) (Subtype.ext (by
-      change (c : d.luoOf.Amb) * d.toSOLin 0 = 0
-      rw [map_zero, mul_zero]))
-  · -- transport of the expansion
-    obtain ⟨hfin, ω', hω', hexp⟩ := hc'
-    have hcont : Continuous d.toSOLin := IsModuleTopology.continuous_of_linearMap d.toSOLin
-    refine ⟨?_, d.toSOLin ⁻¹' ω', hcont.continuousAt.preimage_mem_nhds (by rwa [map_zero]),
-      fun Y hYω hY hYr Z hZ => ?_⟩
-    · rw [Function.support_comp_eq_preimage]
-      exact hfin.preimage E.injective.injOn
-    have hY1 : d.toSOLin Y ∈ lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X)) :=
-      (d.toSOLin_mem_lieCentralizer_iff hD (mem_lieCentralizer.mp hY).1).mpr hY
-    have hY' : Y ∈ lieCentralizer (lieCentralizer d.lieZero (d.diagLie X))
-        ((1 : d.ambientˣ) : d.ambient) := mem_lieCentralizer_units_one.mpr hY
-    have hYr' : IsRegularSS (lieCentralizer (lieCentralizer d.lieZero (d.diagLie X))
-        ((1 : d.ambientˣ) : d.ambient)) Y := by rw [e𝔤₀]; exact hYr
-    have hYr1 : IsRegularSS (lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X)))
-        (d.toSOLin Y) := by
-      have := (ι.isRegularSS_iff Y hY').mpr hYr'
-      rwa [e𝔤₁] at this
-    have hZ' : ((d.toSO Z : ↥d.luoOf.lie) : d.luoOf.Amb) =
-        d.toSOLin (d.diagLie X) + d.toSOLin Y := by
-      rw [coe_toSO, hZ, map_add]
-    rw [Function.comp_apply, hexp _ hYω hY1 hYr1 _ hZ', ← finsum_comp_equiv E]
-    refine finsum_congr fun O => ?_
-    simp only [Function.comp_apply]
-    congr 1
-    rw [hE, ← jHat_scale ψ c hc hc𝔤 hc𝔤' hbc hnd₁ hopen₁ hu₁ _ _ hY1 hYr1,
-      jHat_nilOrbitCongr eG₁ e𝔤₁, ← jHat_nilOrbitCongr eG₀.symm e𝔤₀.symm _ ψ O Y]
-    exact ι.jHat_map hG₀ ψ hnd' hopen' hu' (β₀ O) Y hY' hYr'
+    E.surjective hreg (hspec _) hzero (fun c' hc' => ?_)
+  obtain ⟨hfin, ω', hω', hexp⟩ := hc'
+  have hcont : Continuous d.toSOLin := IsModuleTopology.continuous_of_linearMap d.toSOLin
+  refine ⟨?_, d.toSOLin ⁻¹' ω', hcont.continuousAt.preimage_mem_nhds (by rwa [map_zero]),
+    fun Y hYω hY hYr Z hZ => ?_⟩
+  · rw [Function.support_comp_eq_preimage]
+    exact hfin.preimage E.injective.injOn
+  have hY1 : d.toSOLin Y ∈ lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X)) :=
+    (d.toSOLin_mem_lieCentralizer_iff hD (mem_lieCentralizer.mp hY).1).mpr hY
+  have hZ' : ((d.toSO Z : ↥d.luoOf.lie) : d.luoOf.Amb) =
+      d.toSOLin (d.diagLie X) + d.toSOLin Y := by
+    rw [coe_toSO, hZ, map_add]
+  rw [Function.comp_apply, hexp _ hYω hY1 ((hrss Y hY).mp hYr) _ hZ', ← finsum_comp_equiv E]
+  refine finsum_congr fun O => ?_
+  simp only [Function.comp_apply]
+  rw [hj O Y hY hYr]
 
 end GGPData
 
@@ -844,6 +882,78 @@ theorem cTheta_toSO_of_germUnique (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane 
       d.luoOf.cTheta ψ θ (d.toSOLin (d.diagLie X)) :=
   d.cTheta_toSO_of_germUnique_of_form ψ hW hV hθ T X hX _ _
     (fun _ hY _ hZ => d.scaleForm_traceForm_toSOLin hY hZ) hgerm
+
+/-- **Uniqueness of the regular coefficients of Lie-algebra local expansions on `𝔤⁰`**, for
+`(G, 𝔤⁰, bilin)` at a semisimple `D ∈ 𝔤⁰` (neither `W` nor `V` a hyperbolic plane): two local
+expansions of `θ'` at `D` agree on `Nil_reg(𝔤⁰_D)`.  From Harish-Chandra's linear independence on
+`so(W) ⊕ so(V)` (`germLie_unique_SO`) by transport along `ad`: with the orbit map `E = c · ad` of
+`exists_nilOrbitEquiv_toSOLin` (`c = (2^{dim W}/4, 2^{dim V}/4)`, `scaleForm_traceForm_toSOLin`), a
+local expansion `c₀` of `θ'` at `D` gives the local expansion `c₀ ∘ E⁻¹` of `θ' ∘ ad⁻¹` at `ad D`
+(`ĵ(O, Y) = ĵ(E O, ad Y)`; `ad` is a homeomorphism `𝔤⁰ ≃ so(W) ⊕ so(V)`, `toSOCLE`), and `E` matches
+the regular orbits. -/
+theorem germLie0_unique (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) (θ' : ↥d.lieZero → ℂ)
+    {D : d.ambient} (hD : D ∈ d.lieZero) (hssD : IsSS F D)
+    (c c'' : NilOrbit (lieGrpCentralizer d.G D) (lieCentralizer d.lieZero D) → ℂ)
+    (hc : HasGermExpansionLie d.G d.lieZero d.bilin ψ θ' D c)
+    (hc'' : HasGermExpansionLie d.G d.lieZero d.bilin ψ θ' D c'') :
+    ∀ O ∈ NilReg (lieGrpCentralizer d.G D) (lieCentralizer d.lieZero D), c O = c'' O := by
+  classical
+  obtain ⟨E, hreg, -, -, hrss, hj⟩ := d.exists_nilOrbitEquiv_toSOLin ψ hW hV hD hssD
+    (formConst_ne_zero (Module.finrank F (Fin d.m → F))) (formConst_ne_zero (Module.finrank F d.V))
+    (fun _ hY _ hZ => d.scaleForm_traceForm_toSOLin hY hZ)
+  have hXm : d.toSOLin D ∈ d.luoOf.lie := d.toSO_mem ⟨_, hD⟩
+  have hss : IsSS F (d.toSOLin D) := d.isSS_toSOLin hD hssD
+  have htr : ∀ c₀, HasGermExpansionLie d.G d.lieZero d.bilin ψ θ' D c₀ →
+      HasGermExpansionLie d.luoOf.Gbar d.luoOf.lie d.luoOf.traceForm ψ (θ' ∘ d.toSO.symm)
+        (d.toSOLin D) (c₀ ∘ E.symm) := by
+    rintro c₀ ⟨hfin, ω, hω, hexp⟩
+    have hS : {Y' : ↥d.luoOf.lie | ((d.toSOCLE.symm Y' : ↥d.lieZero) : d.ambient) ∈ ω} ∈
+        𝓝 (0 : ↥d.luoOf.lie) := by
+      have hcont : Continuous fun Y' : ↥d.luoOf.lie =>
+          ((d.toSOCLE.symm Y' : ↥d.lieZero) : d.ambient) :=
+        continuous_subtype_val.comp d.toSOCLE.symm.continuous
+      exact hcont.continuousAt.preimage_mem_nhds (by simpa using hω)
+    obtain ⟨ω', hω', hω'S⟩ := (mem_nhds_subtype _ _ _).mp hS
+    refine ⟨?_, ω', hω', fun Y' hY'ω hY' hY'r Z' hZ' => ?_⟩
+    · rw [Function.support_comp_eq_preimage]
+      exact hfin.preimage E.symm.injective.injOn
+    have hY'm : Y' ∈ d.luoOf.lie := (mem_lieCentralizer.mp hY').1
+    set Y : d.ambient := (d.toSO.symm ⟨Y', hY'm⟩ : d.ambient) with hYdef
+    have hY0 : Y ∈ d.lieZero := (d.toSO.symm ⟨Y', hY'm⟩).2
+    have hYY' : d.toSOLin Y = Y' := d.toSOLin_toSO_symm _
+    have hYω : Y ∈ ω := hω'S (a := ⟨Y', hY'm⟩) hY'ω
+    have hY : Y ∈ lieCentralizer d.lieZero D :=
+      (d.toSOLin_mem_lieCentralizer_iff hD hY0).mp (hYY' ▸ hY')
+    have hYr : IsRegularSS (lieCentralizer d.lieZero D) Y := (hrss Y hY).mpr (hYY' ▸ hY'r)
+    have hZ : ((d.toSO.symm Z' : ↥d.lieZero) : d.ambient) = D + Y := by
+      refine d.eq_of_toSOLin_eq (d.toSO.symm Z').2 (d.lieZero.add_mem hD hY0) ?_
+      rw [d.toSOLin_toSO_symm, map_add, hYY', hZ']
+    rw [Function.comp_apply, hexp Y hYω hY hYr _ hZ, ← finsum_comp_equiv E]
+    refine finsum_congr fun O => ?_
+    simp only [Function.comp_apply, Equiv.symm_apply_apply]
+    rw [← hYY', hj O Y hY hYr]
+  intro O hO
+  have h := germLie_unique_SO d.luoOf d.nondeg_QV ψ (θ' ∘ d.toSO.symm) (d.toSOLin D) hXm hss _ _
+    (htr c hc) (htr c'' hc'') (E O) ((hreg O).mpr hO)
+  simpa using h
+
+/-- **(L6, L7) The germs `c_θ(X)` agree.**  For a quasi-character `θ` on `so(W) ⊕ so(V)` and
+`X ∈ 𝔱⁰_♮` of a torus of `Γ^Lie(G,H)`, the germ of `θ ∘ ad` at `X` for the orbit `orbitChoiceLie X`
+(`germLie` for `(G, 𝔤⁰, bilin)`) is Luo's `c_θ(ad X)` (`germLie` for `(Ḡ, 𝔤, B)` and the orbit
+`orbitChoice`).  Ingredients: (L6) `bilin = B(c ·, ·)` on `𝔤⁰` for a central unit `c` (one constant
+for each factor) and `ĵ_{B(c ·, ·)}(O, ·) = ĵ_B(c O, ·)`; `ad` is an isomorphism of descent data
+`Z_G(X) → Ḡ_{ad X}`; (L7) `OrbitSpecAt` is Luo's and Waldspurger's recipe (`O_{ν₀}` on `V'_X`,
+`O_{−ν₀}` on `W'_X`), with `ν₀ = q(z₀) = ν`.  Proof: `cTheta_toSO_of_germUnique`, with the
+uniqueness of Lie germs on `𝔤⁰` (`germLie0_unique`, from Harish-Chandra's linear independence on
+`so(W) ⊕ so(V)`, `germLie_unique_SO`). -/
+theorem cTheta_toSO (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) {θ : ↥d.luoOf.lie → ℂ}
+    (hθ : IsLieQuasiCharacter d.luoOf.Gbar d.luoOf.lie d.luoOf.traceForm ψ θ)
+    (T : d.GammaTorus) (X : CliffordAlgebra d.QW) (hX : d.IsGammaEltLie T.1 X) :
+    d.germLie0 ψ (θ ∘ d.toSO) (d.diagLie X) (d.orbitChoiceLie X) =
+      d.luoOf.cTheta ψ θ (d.toSOLin (d.diagLie X)) :=
+  d.cTheta_toSO_of_germUnique ψ hW hV hθ T X hX
+    (d.germLie0_unique ψ hW hV _ (d.diagLie_mem_lieZero hX.1.1)
+      (d.isSS_diagLie (d.isSS_of_isGammaEltLie T hX)))
 
 end GGPData
 

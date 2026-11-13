@@ -5,9 +5,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import GSpinGGP.TraceFormula.SOLie
 
 /-!
-# The geometric expansion of `J^Lie` for the special orthogonal triple
+# The special orthogonal triple: the geometric expansion of `J^Lie`, uniqueness of Lie germs
 
-One literature axiom, `luo_lie_geomExpansion_SO`, about the special orthogonal GGP triple `(Ḡ, H̄, ξ)` on
+Two literature axioms about `Ḡ = SO(W) × SO(V)` and `𝔤 = so(W) ⊕ so(V)` of an admissible pair, with
+the objects of `TraceFormula/SOLie.lean` (defined on the quadratic spaces, not on `GSpin`):
+
+* `germLie_unique_SO` (verbatim): uniqueness of the regular coefficients of local expansions on
+  `𝔤` at a semisimple point (Harish-Chandra 1999 Cor 5.10; BP §4.5);
+* `luo_lie_geomExpansion_SO` (derived), described below.
+
+`luo_lie_geomExpansion_SO` is about the special orthogonal GGP triple `(Ḡ, H̄, ξ)` on
 `𝔤 = so(W) ⊕ so(V)` of an admissible pair, with the objects of `TraceFormula/SOLie.lean` (defined
 on the quadratic spaces, not on `GSpin`).  It is a **derived axiom**: it combines several
 published statements about the quasi-character `θ_f` of a strongly cuspidal `f`, all for this
@@ -146,5 +153,48 @@ axiom luo_lie_geomExpansion_SO {F : Type} [NontriviallyNormedField F] [PAdicFiel
       IsLieQuasiCharacter L.Gbar L.lie L.traceForm ψ θ ∧
       -- (d) Luo Thm 7.3.3 with Prop 7.1.2(3)
       Tendsto (L.mGeomLieS ψ μT θ) (𝓝[>] (0 : ℝ)) (𝓝 (L.distribJLie ψ μ𝔥 m f))
+
+/-- **Linear independence of the `ĵ(O, ·)` on the Lie algebra (Harish-Chandra), for
+`Ḡ = SO(W) × SO(V)`.**  At a semisimple `X ∈ 𝔤 = so(W) ⊕ so(V)`, the coefficients of a local
+expansion `θ(X + Y) = ∑_O c_O ĵ(O, Y)` (`HasGermExpansionLie`, with `ĵ` for `(Ḡ_X, 𝔤_X)` and the
+trace form `B = ½(tr_W + tr_V)`) are unique on the regular orbits `O ∈ Nil_reg(𝔤_X)`: two expansions
+give `∑_O (c_O − c'_O) ĵ(O, Y) = 0` (a finite sum) for all `Y` regular in `𝔤_X` in a neighbourhood
+of `0` in `𝔤_X`, and the functions `ĵ(O, ·)`, `O ∈ Nil(𝔤_X)`, are linearly independent there.
+
+Sources: Harish-Chandra, *Admissible invariant distributions on reductive p-adic groups* (1999),
+Cor 5.10 (p. 36): "Let `V` be an open neighborhood of `0` in `𝔤`. Then the functions `μ̂_O`, indexed
+by `O ∈ 𝒪(0)`, are linearly independent on `V ∩ 𝔤'`" (repeated as the last sentence of Thm 5.11 =
+Theorem 4, p. 36 and p. 3).  HC's setting (Introduction, pp. 1–3): a `p`-adic field of
+characteristic `0`, `G` the group of rational points of a connected reductive group, `𝔤` its Lie
+algebra with a symmetric, nondegenerate, `G`-invariant bilinear form `B`, `𝒪(0)` the nilpotent
+`G`-orbits, `μ̂_O` the function representing the Fourier transform of the invariant measure on `O`,
+`𝔤' = {η ≠ 0}` the regular set.  Beuzart-Plessis, Astérisque 418 (2020), §4.5, p. 96: "It follows
+from the homogeneity property of the functions `ĵ(O, ·)` and their linear independence that the
+coefficients `c_{θ,O}(x)`, `O ∈ Nil_reg(𝔤_x)`, are uniquely defined", and for the Lie algebra:
+"Similarly, to any quasi-character `θ` on `𝔤(F)` we associate a function `c_θ : 𝔤_ss(F) → ℂ`".
+Thesis §4.2.
+
+HC's hypotheses, for Cor 5.10 applied to `𝔤_X = lieCentralizer L.lie X`: `F` is `p`-adic of
+characteristic `0` (`PAdicField`).  For `X ∈ 𝔤` semisimple, the centralizer of `X` in `Ḡ` is
+reductive with Lie algebra `𝔤_X` (HC Cor 2.2, p. 14: "`M` is reductive with Lie algebra `𝔪`"), and
+`Ḡ_X = lieGrpCentralizer L.Gbar X` is its group of rational points; if it is not connected, its
+nilpotent orbits are finite disjoint unions of orbits of the identity component (of finite index;
+cf. HC's footnote 4, p. 75), and sums of the `μ̂` over disjoint sets of orbits are still linearly
+independent.  `B` restricted to `𝔤_X` is symmetric, `Ḡ_X`-invariant and nondegenerate
+(`restrictForm_lieCentralizer_nondegenerate_of_isSS` with `restrictForm_lie_traceForm_nondegenerate`,
+which uses `hQV`).  `ĵ(O, ·)` (`jHat`: Kirillov-normalized orbit measure, self-dual measure for
+`ψ ∘ B`) is a nonzero multiple of HC's `μ̂_O`; another invariant form or normalization of measures
+rescales the functions, which does not affect independence.  `IsRegularSS` on `𝔤_X` (semisimple with
+abelian centralizer) is HC's `𝔤_X'`.  `X ∈ 𝔤` is needed: otherwise `X + Y ∉ 𝔤`, the expansion
+condition is empty, and every `c` would be an expansion.
+
+Only uniqueness on `Nil_reg` is asserted (that is all `germLie` reads). -/
+axiom germLie_unique_SO {F : Type} [NontriviallyNormedField F] [PAdicField F]
+    (L : LuoDatum F) (hQV : IsNondeg L.QV) (ψ : NontrivialAddChar F) (θ : ↥L.lie → ℂ)
+    (X : L.Amb) (hX : X ∈ L.lie) (hss : IsSS F X)
+    (c c' : NilOrbit (lieGrpCentralizer L.Gbar X) (lieCentralizer L.lie X) → ℂ)
+    (hc : HasGermExpansionLie L.Gbar L.lie L.traceForm ψ θ X c)
+    (hc' : HasGermExpansionLie L.Gbar L.lie L.traceForm ψ θ X c') :
+    ∀ O ∈ NilReg (lieGrpCentralizer L.Gbar X) (lieCentralizer L.lie X), c O = c' O
 
 end GSpinGGP

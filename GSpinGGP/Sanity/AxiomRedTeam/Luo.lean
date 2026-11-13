@@ -5,9 +5,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import GSpinGGP.Sanity.Witnesses
 import GSpinGGP.Literature.Luo
 import GSpinGGP.TraceFormula.LuoTransfer
+import GSpinGGP.Sanity.AxiomRedTeam.HarishChandra
 
 /-!
-# Check of `luo_lie_geomExpansion_SO` on the smallest Luo datum
+# Checks of `luo_lie_geomExpansion_SO` and `germLie_unique_SO` on the smallest Luo datum
 
 The Luo datum `L0 = toyD.luoOf`: `W = 0`, `V` a line, so `SO(V) = 1`, `so(V) = 0`, `Ḡ = H̄ = 1`,
 `𝔤 = 𝔥 = 0`, the only `Γ`-torus is trivial and the only nilpotent orbit is `0`.  Without the axiom,
@@ -16,6 +17,16 @@ every `f`, the conclusion holds with `θ ≡ μ_Ḡ(Ḡ) f(0)` (`luo_conclusion_
 `J^Lie(f)` and `m^Lie_{geom,s}(θ)` equal `μ_Ḡ(Ḡ) f(0)`.  This checks that the normalizations of
 `distribJLie`, `orbitalPairing`, `mGeomLieS` (Weyl group order, measures on tori, `Δ`, `c_θ`) agree
 in the degenerate case.
+
+`germLie_unique_SO` (Lie germ uniqueness): verified at `L0` for every `θ` (`L0_germLie_unique`,
+from `L0_coeff_eq`: every expansion has coefficient `θ(0)`), with satisfiable hypotheses
+(`L0_hasGermExpansionLie`).  The hypothesis `X ∈ 𝔤` is needed: at `X = 1 ∉ 𝔤` every `c` is an
+expansion of `θ = 0`, and the statement without it proves `False`
+(`L0_germLie_unique_needs_mem_lie`).  Two consequences of the axiom on any Luo datum: distinct
+orbits, one regular, have distinct orbit measures (`false_of_orbitMeasure_eq_lie`), and `ĵ(O, ·)`
+is not eventually `0` near `0` on regular elements for `O` regular
+(`germLie_unique_SO_forces_jHat_ne_zero`), so an orbit measure of `O` in the sense of
+`IsOrbitMeasure` exists.
 
 Not covered: any datum with a nontrivial torus or a nonzero nilpotent orbit.
 -/
@@ -435,5 +446,147 @@ theorem luo_conclusion_L0 (ψ : NontrivialAddChar F)
     rw [show (L0 (F := F)).mGeomLieS ψ μT (fun _ => c) = fun _ => c from funext h1, h2]
     exact tendsto_const_nhds
 
+/-! ## `germLie_unique_SO` -/
+
+/-- **`germLie_unique_SO` at `L0`, for every function `θ`**: two expansions of `θ` at `X ∈ 𝔤`
+have the same coefficients, both `θ(0)` (`L0_coeff_eq`). -/
+theorem L0_germLie_unique (ψ : NontrivialAddChar F) (θ : ↥(L0 (F := F)).lie → ℂ)
+    (X : (L0 (F := F)).Amb) (hX : X ∈ (L0 (F := F)).lie)
+    (c c' : NilOrbit (lieGrpCentralizer (L0 (F := F)).Gbar X)
+      (lieCentralizer (L0 (F := F)).lie X) → ℂ)
+    (hc : HasGermExpansionLie (L0 (F := F)).Gbar (L0 (F := F)).lie (L0 (F := F)).traceForm ψ θ X c)
+    (hc' : HasGermExpansionLie (L0 (F := F)).Gbar (L0 (F := F)).lie (L0 (F := F)).traceForm ψ θ X
+      c') :
+    ∀ O ∈ NilReg (lieGrpCentralizer (L0 (F := F)).Gbar X) (lieCentralizer (L0 (F := F)).lie X),
+      c O = c' O := fun O _ =>
+  (L0_coeff_eq ψ θ X hX hc O).trans (L0_coeff_eq ψ θ X hX hc' O).symm
+
+/-- The axiom's instance at `L0` (agrees with `L0_germLie_unique`; its hypotheses are satisfiable
+by `L0_hasGermExpansionLie`). -/
+example (ψ : NontrivialAddChar F) (θ : ↥(L0 (F := F)).lie → ℂ)
+    (X : (L0 (F := F)).Amb) (hX : X ∈ (L0 (F := F)).lie) (hss : IsSS F X)
+    (c c' : NilOrbit (lieGrpCentralizer (L0 (F := F)).Gbar X)
+      (lieCentralizer (L0 (F := F)).lie X) → ℂ)
+    (hc : HasGermExpansionLie (L0 (F := F)).Gbar (L0 (F := F)).lie (L0 (F := F)).traceForm ψ θ X c)
+    (hc' : HasGermExpansionLie (L0 (F := F)).Gbar (L0 (F := F)).lie (L0 (F := F)).traceForm ψ θ X
+      c') :
+    ∀ O ∈ NilReg _ _, c O = c' O :=
+  germLie_unique_SO (L0 (F := F)) (toyD (F := F)).nondeg_QV ψ θ X hX hss c c' hc hc'
+
+/-- In `L0`, the zero orbit of `𝔤_X` is regular (`𝔤_X = 0`). -/
+theorem L0_zeroOrbit_mem_nilReg (G : Subgroup (L0 (F := F)).Ambˣ) (X : (L0 (F := F)).Amb) :
+    zeroOrbit G (lieCentralizer (L0 (F := F)).lie X) ∈
+      NilReg G (lieCentralizer (L0 (F := F)).lie X) := by
+  change IsRegularNil _ (Quotient.out (zeroOrbit G (lieCentralizer (L0 (F := F)).lie X))).1
+  refine ⟨(Quotient.out (zeroOrbit G _)).2.1, (Quotient.out (zeroOrbit G _)).2.2, ?_⟩
+  rw [Module.finrank_zero_of_subsingleton, lieRank]
+  simp [Module.finrank_zero_of_subsingleton]
+
+/-- `1 ∉ 𝔤` in `L0` (`so(V) = 0` and `V ≠ 0`). -/
+theorem L0_one_not_mem_lie : (1 : (L0 (F := F)).Amb) ∉ (L0 (F := F)).lie := by
+  intro h
+  have h1 := L0_val_eq_zero (F := F) h
+  have h2 : ((1 : (L0 (F := F)).Amb).2 : Module.End F (L0 (F := F)).V) e0 = e0 := rfl
+  rw [h1] at h2
+  change (0 : Module.End F (L0 (F := F)).V) e0 = e0 at h2
+  rw [LinearMap.zero_apply] at h2
+  have h3 := congrArg (fun v : (L0 (F := F)).V => v.2 0) h2
+  simp [e0] at h3
+
+/-- **The hypothesis `X ∈ 𝔤` of `germLie_unique_SO` is needed.**  At `L0` and the semisimple
+`X = 1 ∉ 𝔤`, no `Z ∈ 𝔤` is `X + Y` with `Y ∈ 𝔤_X`, so every `c` is an expansion of `θ = 0`;
+the statement without `hX` would give `1 = 0` at the regular zero orbit. -/
+theorem L0_germLie_unique_needs_mem_lie (ψ : NontrivialAddChar F)
+    (h : ∀ (X : (L0 (F := F)).Amb), IsSS F X →
+      ∀ c c' : NilOrbit (lieGrpCentralizer (L0 (F := F)).Gbar X)
+          (lieCentralizer (L0 (F := F)).lie X) → ℂ,
+        HasGermExpansionLie (L0 (F := F)).Gbar (L0 (F := F)).lie (L0 (F := F)).traceForm ψ 0 X c →
+        HasGermExpansionLie (L0 (F := F)).Gbar (L0 (F := F)).lie (L0 (F := F)).traceForm ψ 0 X
+          c' →
+        ∀ O ∈ NilReg _ _, c O = c' O) : False := by
+  have hss : IsSS F (1 : (L0 (F := F)).Amb) := by
+    unfold IsSS
+    rw [LinearMap.mulLeft_one]
+    exact Module.End.isSemisimple_id
+  have hexp : ∀ c : NilOrbit (lieGrpCentralizer (L0 (F := F)).Gbar 1)
+      (lieCentralizer (L0 (F := F)).lie 1) → ℂ,
+      HasGermExpansionLie (L0 (F := F)).Gbar (L0 (F := F)).lie (L0 (F := F)).traceForm ψ 0 1 c :=
+    fun c => ⟨Set.toFinite _, Set.univ, Filter.univ_mem, fun Y _ hY _ Z hZ => by
+      exfalso
+      have hY0 : Y = 0 := L0_val_eq_zero (F := F) (mem_lieCentralizer.mp hY).1
+      rw [hY0, add_zero] at hZ
+      exact L0_one_not_mem_lie (hZ ▸ Z.2)⟩
+  have := h 1 hss (fun _ => 1) 0 (hexp _) (hexp _) _ (L0_zeroOrbit_mem_nilReg _ 1)
+  simp at this
+
+end GSpinGGP.AxiomRedTeam
+
+/-! ## Consequences of `germLie_unique_SO` on any Luo datum -/
+
+namespace GSpinGGP.AxiomRedTeam
+
+open GSpinGGP
+
+variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
+
+/-- Under `germLie_unique_SO`, two distinct nilpotent orbits of `𝔤_X`, one of them regular, have
+distinct orbit measures (otherwise `ĵ(O, ·) = ĵ(O', ·)` and `θ = 0` has two expansions). -/
+theorem false_of_orbitMeasure_eq_lie (L : LuoDatum F) (hQV : IsNondeg L.QV)
+    (ψ : NontrivialAddChar F) (X : L.Amb) (hX : X ∈ L.lie) (hss : IsSS F X)
+    (O O' : NilOrbit (lieGrpCentralizer L.Gbar X) (lieCentralizer L.lie X))
+    (hO : O ∈ NilReg _ _) (hne : O ≠ O')
+    (h : orbitMeasure (lieGrpCentralizer L.Gbar X) (lieCentralizer L.lie X) L.traceForm ψ O =
+      orbitMeasure (lieGrpCentralizer L.Gbar X) (lieCentralizer L.lie X) L.traceForm ψ O') :
+    False := by
+  classical
+  have hj := jHat_eq_of_orbitMeasure_eq (lieGrpCentralizer L.Gbar X) (lieCentralizer L.lie X)
+    L.traceForm ψ O O' h
+  set c : NilOrbit (lieGrpCentralizer L.Gbar X) (lieCentralizer L.lie X) → ℂ :=
+    fun P => (if P = O then 1 else 0) - (if P = O' then 1 else 0)
+  have hfin : (Function.support c).Finite := by
+    refine (Set.toFinite ({O, O'} : Set _)).subset fun P hP => ?_
+    by_contra hP'
+    simp only [Set.mem_insert_iff, Set.mem_singleton_iff, not_or] at hP'
+    exact hP (by simp [c, hP'.1, hP'.2])
+  have hexp : HasGermExpansionLie L.Gbar L.lie L.traceForm ψ 0 X c := by
+    refine ⟨hfin, Set.univ, Filter.univ_mem, fun Y _ _ _ Z _ => ?_⟩
+    have hsupp : (Function.support fun P => c P * jHat (lieGrpCentralizer L.Gbar X)
+        (lieCentralizer L.lie X) L.traceForm ψ P Y) ⊆ (({O, O'} : Finset _) : Set _) := by
+      intro P hP
+      by_contra h'
+      simp only [Finset.coe_insert, Finset.coe_singleton, Set.mem_insert_iff,
+        Set.mem_singleton_iff, not_or] at h'
+      exact hP (by simp [c, h'.1, h'.2])
+    rw [finsum_eq_sum_of_support_subset _ hsupp, Finset.sum_pair hne]
+    simp [c, hne, Ne.symm hne, hj]
+  have h0 : HasGermExpansionLie L.Gbar L.lie L.traceForm ψ 0 X 0 :=
+    ⟨by simp, Set.univ, Filter.univ_mem, fun _ _ _ _ _ _ => by simp⟩
+  have := germLie_unique_SO L hQV ψ 0 X hX hss c 0 hexp h0 O hO
+  simp [c, hne] at this
+
+/-- Under `germLie_unique_SO`, for `O` regular, `ĵ(O, ·)` is not eventually `0` near `0` on the
+regular semisimple elements of `𝔤_X` (otherwise `0` and `δ_O` are two expansions of `θ = 0`).
+Since `ĵ(O, ·)` is `0` when no orbit measure of `O` exists, this implies that one exists. -/
+theorem germLie_unique_SO_forces_jHat_ne_zero (L : LuoDatum F) (hQV : IsNondeg L.QV)
+    (ψ : NontrivialAddChar F) (X : L.Amb) (hX : X ∈ L.lie) (hss : IsSS F X)
+    (O : NilOrbit (lieGrpCentralizer L.Gbar X) (lieCentralizer L.lie X))
+    (hO : O ∈ NilReg (lieGrpCentralizer L.Gbar X) (lieCentralizer L.lie X)) :
+    ∀ ω ∈ 𝓝 (0 : L.Amb), ∃ Y ∈ ω, Y ∈ lieCentralizer L.lie X ∧
+      IsRegularSS (lieCentralizer L.lie X) Y ∧
+      jHat (lieGrpCentralizer L.Gbar X) (lieCentralizer L.lie X) L.traceForm ψ O Y ≠ 0 := by
+  classical
+  intro ω hω
+  by_contra hcon
+  push Not at hcon
+  have h0 : HasGermExpansionLie L.Gbar L.lie L.traceForm ψ 0 X 0 :=
+    ⟨by simp, ω, hω, fun _ _ _ _ _ _ => by simp⟩
+  have h1 : HasGermExpansionLie L.Gbar L.lie L.traceForm ψ 0 X (Pi.single O 1) := by
+    refine ⟨(Set.finite_singleton O).subset fun O' hO' => ?_, ω, hω, fun Y hYω hYc hYr Z _ => ?_⟩
+    · by_contra h; exact hO' (Pi.single_eq_of_ne h _)
+    · rw [finsum_eq_single _ O (fun O' hO' => by rw [Pi.single_eq_of_ne hO', zero_mul]),
+        Pi.single_eq_same, one_mul, hcon Y hYω hYc hYr]
+      rfl
+  have := germLie_unique_SO L hQV ψ 0 X hX hss 0 (Pi.single O 1) h0 h1 O hO
+  simp at this
 
 end GSpinGGP.AxiomRedTeam
