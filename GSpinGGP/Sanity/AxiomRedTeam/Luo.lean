@@ -25,8 +25,9 @@ expansion of `θ = 0`, and the statement without it proves `False`
 (`L0_germLie_unique_needs_mem_lie`).  Two consequences of the axiom on any Luo datum: distinct
 orbits, one regular, have distinct orbit measures (`false_of_orbitMeasure_eq_lie`), and `ĵ(O, ·)`
 is not eventually `0` near `0` on regular elements for `O` regular
-(`germLie_unique_SO_forces_jHat_ne_zero`), so an orbit measure of `O` in the sense of
-`IsOrbitMeasure` exists.
+(`germLie_unique_SO_forces_jHat_ne_zero`, compiled).  Since `ĵ(O, ·) = 0` when no measure satisfies
+`IsOrbitMeasure` for `O`, this means such a measure exists; that last step is informal (not a Lean
+theorem).
 
 Not covered: any datum with a nontrivial torus or a nonzero nilpotent orbit.
 -/

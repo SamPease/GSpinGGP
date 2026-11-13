@@ -27,8 +27,13 @@ which turns `bilin` into `B` (`scaleForm_traceForm_toSOLin`).
 * `isOpen_setOf_isRegularSS_lieCentralizer_lieZero`: the regular set of `𝔤⁰_D` is open (with
   `restrictForm_lieCentralizer_nondegenerate_of_isSS`, the remaining hypotheses of `jHat_map`).
 * `eight_mul_scalarTrace_mul`: `8 τ(Y Z) = tr(ad Y ad Z)` on `so_Cliff(V)` (`τ` the scalar part).
+* `exists_nilOrbitEquiv_toSOLin`: the orbit map `E = c · ad` at a semisimple `D ∈ 𝔤⁰`, matching
+  regular orbits, Luo's recipe, zero orbits, regular sets and `ĵ`.
 * `cTheta_toSO_of_germUnique`: the conclusion of `cTheta_toSO` from uniqueness of the regular
   coefficients of Lie-algebra local expansions on `𝔤⁰` at `X` alone.
+* `germLie0_unique`: that uniqueness, at any semisimple `D ∈ 𝔤⁰`, transported along `ad` from the
+  literature axiom `germLie_unique_SO` on `so(W) ⊕ so(V)` (Harish-Chandra 1999 Cor 5.10).
+* `cTheta_toSO` (L6, L7): proved from the two previous items.
 -/
 
 noncomputable section
@@ -863,9 +868,9 @@ theorem scaleForm_traceForm_toSOLin {Y Z : d.ambient} (hY : Y ∈ d.lieZero) (hZ
   simp only [formConst, invOf_eq_inv]
   ring
 
-/-- **`cTheta_toSO`'s conclusion from Lie germ uniqueness on `𝔤⁰` alone** (`hgerm`, the
-Lie-algebra case of Harish-Chandra 1999 Cor 5.10 / BP §4.5 for `(G, 𝔤⁰, bilin)`): all other
-hypotheses of `cTheta_toSO_of_transport` are proved — the uniqueness of the orbit picked by the
+/-- **`cTheta_toSO`'s conclusion from Lie germ uniqueness on `𝔤⁰` alone** (`hgerm`, discharged by
+`germLie0_unique`: transport along `ad` of the axiom `germLie_unique_SO` for `so(W) ⊕ so(V)`): all
+other hypotheses of `cTheta_toSO_of_transport` are proved — the uniqueness of the orbit picked by the
 recipe (`orbitSpecAt_orbit_unique`) and the transport of local expansions along
 `E = c · ad`, with `c = (2^{dim W}/4, 2^{dim V}/4)` (`cTheta_toSO_of_germUnique_of_form`,
 `scaleForm_traceForm_toSOLin`). -/

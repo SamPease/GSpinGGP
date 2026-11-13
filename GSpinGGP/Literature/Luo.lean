@@ -176,15 +176,17 @@ Thesis §4.2.
 
 HC's hypotheses, for Cor 5.10 applied to `𝔤_X = lieCentralizer L.lie X`: `F` is `p`-adic of
 characteristic `0` (`PAdicField`).  For `X ∈ 𝔤` semisimple, the centralizer of `X` in `Ḡ` is
-reductive with Lie algebra `𝔤_X` (HC Cor 2.2, p. 14: "`M` is reductive with Lie algebra `𝔪`"), and
-`Ḡ_X = lieGrpCentralizer L.Gbar X` is its group of rational points; if it is not connected, its
-nilpotent orbits are finite disjoint unions of orbits of the identity component (of finite index;
-cf. HC's footnote 4, p. 75), and sums of the `μ̂` over disjoint sets of orbits are still linearly
-independent.  `B` restricted to `𝔤_X` is symmetric, `Ḡ_X`-invariant and nondegenerate
-(`restrictForm_lieCentralizer_nondegenerate_of_isSS` with `restrictForm_lie_traceForm_nondegenerate`,
-which uses `hQV`).  `ĵ(O, ·)` (`jHat`: Kirillov-normalized orbit measure, self-dual measure for
-`ψ ∘ B`) is a nonzero multiple of HC's `μ̂_O`; another invariant form or normalization of measures
-rescales the functions, which does not affect independence.  `IsRegularSS` on `𝔤_X` (semisimple with
+reductive with Lie algebra `𝔤_X` (proof of HC Cor 2.2, p. 14: "`M` is reductive with Lie algebra
+`𝔪`"), and `Ḡ_X = lieGrpCentralizer L.Gbar X` is its group of rational points.  `Z_Ḡ(X)` is
+connected: over `F̄`, on each factor it is `∏ GL(V_λ) × SO(V₀)` (`V_λ` the eigenspaces of `X`,
+paired with `V_{−λ}`; `∏ GL(V_λ)` if `V₀ = 0`).  So `Ḡ_X` is HC's connected reductive `G` and BP's
+`Z_G(X)⁰`.  `B` restricted to `𝔤_X` is symmetric, `Ḡ_X`-invariant and nondegenerate
+(`restrictForm_lieCentralizer_nondegenerate_of_isSS` with
+`restrictForm_lie_traceForm_nondegenerate`, which uses `hQV`).  `ĵ(O, ·)` (`jHat`: Kirillov-normalized orbit measure, self-dual measure for
+`ψ ∘ B`) is a nonzero multiple of HC's `μ̂_O` when a measure satisfying `IsOrbitMeasure` exists for
+`O` (otherwise `ĵ(O, ·) = 0`); for regular `O` that existence is implied by this axiom, as for
+`germ_unique` (`germLie_unique_SO_forces_jHat_ne_zero`, `Sanity/AxiomRedTeam/Luo.lean`).  Another
+invariant form or normalization of measures rescales the functions, which does not affect independence.  `IsRegularSS` on `𝔤_X` (semisimple with
 abelian centralizer) is HC's `𝔤_X'`.  `X ∈ 𝔤` is needed: otherwise `X + Y ∉ 𝔤`, the expansion
 condition is empty, and every `c` would be an expansion.
 
