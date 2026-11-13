@@ -19,8 +19,8 @@ import GSpinGGP.TraceFormula.LieAlgebra
   chart at `X`.
 * `jHat_scale`: **`ĵ_{b(c ·, ·)}(O, X) = ĵ_b(c O, X)`** for `X` regular semisimple, when `b` is
   nondegenerate on `𝔤`, the regular set of `𝔤` is open and orbit measures for `b` are unique.  The
-  two self-dual measures differ by a constant `κ > 0` (uniqueness of Haar measure), and both sides of
-  the identity defining `ĵ` acquire the factor `κ`, so `κ` need not be computed.
+  two self-dual measures differ by a constant `κ > 0` (uniqueness of Haar measure), and both sides
+  of the identity defining `ĵ` acquire the factor `κ`, so `κ` need not be computed.
 * `isOrbitMeasure_unique_lieCentralizer`: uniqueness of orbit measures for the centralizer
   `(Z_G(X), 𝔤_X)` of a Lie algebra element, when `exp` and `log` match `G` and `𝔤` near `0`.
 * `eventually_isAdjointPair_neg_of_isOrthogonal_expA`: if `e^Y` is an isometry of a bilinear form

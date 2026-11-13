@@ -113,7 +113,8 @@ variable (d : GGPData F)
 
 /-- `ad(g Y g⁻¹) = P(g) ad(Y) P(g)⁻¹` for `g ∈ G(F)` and `Y ∈ 𝔤` (`adV_conj` on each factor). -/
 theorem toSOLin_conj (g : ↥d.G) {Y : d.ambient} (hY : Y ∈ d.lie) :
-    d.toSOLin (((g : d.ambientˣ) : d.ambient) * Y * (((g : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient)) =
+    d.toSOLin (((g : d.ambientˣ) : d.ambient) * Y *
+        (((g : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient)) =
       ((d.toGbarU g : d.luoOf.Ambˣ) : d.luoOf.Amb) * d.toSOLin Y *
         (((d.toGbarU g)⁻¹ : d.luoOf.Ambˣ) : d.luoOf.Amb) := by
   have hinv : (d.toGbarU g)⁻¹ = d.toGbarU g⁻¹ := (map_inv d.toGbarU g).symm
@@ -162,7 +163,8 @@ theorem isOrbitMeasure_unique_luo (Y : d.luoOf.Amb) {b : LinearMap.BilinForm F d
     {O : NilOrbit (lieGrpCentralizer d.luoOf.Gbar Y) (lieCentralizer d.luoOf.lie Y)}
     {μ ν : Measure ↥(lieCentralizer d.luoOf.lie Y)}
     (hμ : IsOrbitMeasure (lieGrpCentralizer d.luoOf.Gbar Y) (lieCentralizer d.luoOf.lie Y) b ψ O μ)
-    (hν : IsOrbitMeasure (lieGrpCentralizer d.luoOf.Gbar Y) (lieCentralizer d.luoOf.lie Y) b ψ O ν) :
+    (hν : IsOrbitMeasure (lieGrpCentralizer d.luoOf.Gbar Y) (lieCentralizer d.luoOf.lie Y) b ψ O
+      ν) :
     μ = ν :=
   isOrbitMeasure_unique_lieCentralizer d.luoOf.conj_mem_lie_of_mem_Gbar d.eventually_expA_mem_Gbar
     d.luoOf.eventually_mem_lie_of_expA_mem Y hμ hν
@@ -836,7 +838,8 @@ theorem cTheta_toSO_of_germUnique_of_form (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsH
   have e𝔤₀ : lieCentralizer (lieCentralizer d.lieZero (d.diagLie X)) ((1 : d.ambientˣ) : d.ambient)
       = lieCentralizer d.lieZero (d.diagLie X) := by rw [Units.val_one, lieCentralizer_one]
   have e𝔤₁ : lieCentralizer (lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X)))
-      ((1 : d.luoOf.Ambˣ) : d.luoOf.Amb) = lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X)) := by
+      ((1 : d.luoOf.Ambˣ) : d.luoOf.Amb) =
+        lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X)) := by
     rw [Units.val_one, lieCentralizer_one]
   have eG₀ := grpCentralizer_one (lieGrpCentralizer d.G (d.diagLie X))
   have eG₁ := grpCentralizer_one (lieGrpCentralizer d.luoOf.Gbar (d.toSOLin (d.diagLie X)))
@@ -866,7 +869,8 @@ theorem cTheta_toSO_of_germUnique_of_form (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsH
     rw [← e𝔤₁]
     exact hopen'
   have hnd' : (restrictForm (lieCentralizer (lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X)))
-      ((1 : d.luoOf.Ambˣ) : d.luoOf.Amb)) (scaleForm d.luoOf.traceForm (c : d.luoOf.Amb))).Nondegenerate
+      ((1 : d.luoOf.Ambˣ) : d.luoOf.Amb))
+        (scaleForm d.luoOf.traceForm (c : d.luoOf.Amb))).Nondegenerate
       := by
     rw [e𝔤₁]
     exact restrictForm_scaleForm_nondegenerate c hc𝔤 hc𝔤' hnd₁
@@ -1005,8 +1009,10 @@ theorem eight_mul_scalarTrace_mul {Q : QuadraticForm F V} (hQ : IsNondeg Q)
     simp only [bivector_def, smul_mul_assoc, map_smul, sub_mul, map_sub, smul_eq_mul]
     rw [scalarTrace_ι_mul_ι_mul_sub Q a b hZ.1, trace_adV_ι_mul_ι_mul,
       trace_adV_ι_mul_ι_mul, polar_eq_two_mul_associated, polar_eq_two_mul_associated]
-    have hs : QuadraticMap.associated Q b (adV Q Z a) = -QuadraticMap.associated Q a (adV Q Z b) := by
-      rw [show QuadraticMap.associated Q b (adV Q Z a) = bform Q (adV Q Z a) b from bform_comm Q _ _]
+    have hs : QuadraticMap.associated Q b (adV Q Z a) =
+        -QuadraticMap.associated Q a (adV Q Z b) := by
+      rw [show QuadraticMap.associated Q b (adV Q Z a) = bform Q (adV Q Z a) b from
+        bform_comm Q _ _]
       exact bform_adV hZ.1 a b
     rw [hs]
     simp only [invOf_eq_inv]
