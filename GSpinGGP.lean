@@ -71,6 +71,9 @@ import GSpinGGP.TraceFormula.LuoGamma
 import GSpinGGP.TraceFormula.LuoWeyl
 import GSpinGGP.TraceFormula.LuoClass
 import GSpinGGP.TraceFormula.LuoTorus
+import GSpinGGP.TraceFormula.LuoTorusExp
+import GSpinGGP.TraceFormula.LuoTorusIntegral
+import GSpinGGP.TraceFormula.LuoTorusConj
 import GSpinGGP.TraceFormula.ExpIntertwine
 import GSpinGGP.TraceFormula.LuoJLie
 import GSpinGGP.TraceFormula.LuoJLieExp

@@ -30,6 +30,46 @@ namespace GGPData
 
 variable (d : GGPData F)
 
+/-- **`e^X ∈ T_x` for `X ∈ 𝔱⁰` near `0`**: `e^X ∈ GSpin(W)(F)` for `X ∈ so_Cliff(W)` small
+(`MovedPart.exists_nhds_expA_mem_GSpin`), and `e^X` commutes with `x` and fixes `W'_x`, as `X`
+commutes with `x ∈ T_x` and kills `W'_x`. -/
+theorem eventually_exists_mem_torusOf_eq_expA (x : ↥(GSpin d.QW)) :
+    ∀ᶠ X in 𝓝 (0 : CliffordAlgebra d.QW), X ∈ d.lieTorus (d.torusOf x) →
+      ∃ t : ↥(d.torusOf x),
+        (((t : GSpin d.QW) : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) = expA F X := by
+  letI := isTopologicalRing_of_moduleTopology F (CliffordAlgebra d.QW)
+  set T := d.torusOf x with hT
+  have hxT : x ∈ T := ⟨Subgroup.mem_centralizer_iff.mpr fun h hh => by
+    rw [Set.mem_singleton_iff] at hh; rw [hh], fun v hv => by
+    simpa [sub_eq_zero] using LinearMap.mem_ker.mp hv⟩
+  obtain ⟨U₁, hU₁, h₁⟩ := MovedPart.exists_nhds_expA_mem_GSpin (F := F) d.QW
+  filter_upwards [hU₁] with X hX hXT
+  obtain ⟨g, hg⟩ := h₁ X hX hXT.1.1
+  have hcomm : ∀ y : CliffordAlgebra d.QW, Commute y X → Commute y (expA F X) :=
+    fun y h => commute_expA_of_commute (F := F) h
+  refine ⟨⟨g, ⟨Subgroup.mem_centralizer_iff.mpr fun h hh => ?_, fun w hw => ?_⟩⟩, hg⟩
+  · rw [Set.mem_singleton_iff] at hh
+    subst hh
+    apply Subtype.ext
+    apply Units.ext
+    simp only [Subgroup.coe_mul, Units.val_mul]
+    rw [hg]
+    exact (hcomm _ (hXT.2.1 h hxT)).eq
+  · have hwc : w ∈ commonFixed T := by
+      refine (Submodule.mem_iInf _).mpr fun t => ?_
+      have := t.2.2 w hw
+      exact LinearMap.mem_ker.mpr (by simp [this])
+    have had := hXT.2.2 w hwc
+    have hc : Commute (CliffordAlgebra.ι d.QW w) X := by
+      have := ι_adV hXT.1.1 w
+      rw [had, map_zero] at this
+      exact (sub_eq_zero.mp this.symm).symm
+    apply CliffordAlgebra.ι_injective d.QW
+    have e : ((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) * CliffordAlgebra.ι d.QW w =
+        CliffordAlgebra.ι d.QW w * ((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) := by
+      rw [hg]; exact (hcomm _ hc).eq.symm
+    rw [ι_specP, e, mul_assoc, Units.mul_inv, mul_one]
+
 /-- **An `exp`-compatible Haar measure on `𝔱⁰(F)` exists** for the tori `T = T_x` of
 `Γ(G,H)` (BP §1.6, §11.1; Thesis §12.1): `T(F)` is commutative, so `exp` is a homomorphism on a
 small lattice of `𝔱⁰(F)`, a homeomorphism onto an open compact subgroup of `T(F)/A_{G,H}(F)`
@@ -74,34 +114,8 @@ theorem exists_isExpCompatT (T : d.GammaTorus) : ∃ μ, d.IsExpCompatT T.1 μ :
   have h𝔤 : ∀ t : F, algebraMap F (CliffordAlgebra d.QW) t ∈ d.lieTorus T → t = 0 :=
     fun t ht => eq_zero_of_algebraMap_mem_soSub ht.1
   have hexp : ∀ᶠ X in 𝓝 (0 : CliffordAlgebra d.QW), X ∈ d.lieTorus T →
-      ∃ t : ↥T, ((j t : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) = expA F X := by
-    obtain ⟨U₁, hU₁, h₁⟩ := MovedPart.exists_nhds_expA_mem_GSpin (F := F) d.QW
-    filter_upwards [hU₁] with X hX hXT
-    obtain ⟨g, hg⟩ := h₁ X hX hXT.1.1
-    have hcomm : ∀ y : CliffordAlgebra d.QW, Commute y X → Commute y (expA F X) :=
-      fun y h => commute_expA_of_commute (F := F) h
-    refine ⟨⟨g, ⟨Subgroup.mem_centralizer_iff.mpr fun h hh => ?_, fun w hw => ?_⟩⟩, hg⟩
-    · rw [Set.mem_singleton_iff] at hh
-      subst hh
-      apply Subtype.ext
-      apply Units.ext
-      simp only [Subgroup.coe_mul, Units.val_mul]
-      rw [hg]
-      exact (hcomm _ (hXT.2.1 h hxT)).eq
-    · have hwc : w ∈ commonFixed T := by
-        refine (Submodule.mem_iInf _).mpr fun t => ?_
-        have := t.2.2 w hw
-        exact LinearMap.mem_ker.mpr (by simp [this])
-      have had := hXT.2.2 w hwc
-      have hc : Commute (CliffordAlgebra.ι d.QW w) X := by
-        have := ι_adV hXT.1.1 w
-        rw [had, map_zero] at this
-        exact (sub_eq_zero.mp this.symm).symm
-      apply CliffordAlgebra.ι_injective d.QW
-      have e : ((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) * CliffordAlgebra.ι d.QW w =
-          CliffordAlgebra.ι d.QW w * ((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) := by
-        rw [hg]; exact (hcomm _ hc).eq.symm
-      rw [ι_specP, e, mul_assoc, Units.mul_inv, mul_one]
+      ∃ t : ↥T, ((j t : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) = expA F X :=
+    d.eventually_exists_mem_torusOf_eq_expA x
   have hlog : ∀ᶠ W in 𝓝 (0 : CliffordAlgebra d.QW), ∀ t : ↥T,
       ((j t : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) = expA F W →
       ∃ c : F, W - algebraMap F (CliffordAlgebra d.QW) c ∈ d.lieTorus T := by

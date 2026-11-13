@@ -33,6 +33,14 @@ theorem map_probHaar {R : Type*} [CompactSpace Q] [Group R] [TopologicalSpace R]
     (Measure.isProbabilityMeasure_map_iff e.continuous.measurable.aemeasurable).mpr inferInstance
   exact Measure.isHaarMeasure_eq_of_isProbabilityMeasure _ _
 
+/-- `probHaar Q (e⁻¹ t) = probHaar R t` for a continuous group isomorphism `e` of compact groups
+(`map_probHaar`). -/
+theorem probHaar_preimage {R : Type*} [CompactSpace Q] [Group R] [TopologicalSpace R]
+    [IsTopologicalGroup R] [MeasurableSpace R] [BorelSpace R] [CompactSpace R] (e : Q ≃ₜ* R)
+    (t : Set R) : probHaar Q (e ⁻¹' t) = probHaar R t := by
+  rw [← map_probHaar e]
+  exact (MeasurableEquiv.map_apply e.toHomeomorph.toMeasurableEquiv t).symm
+
 end ProbHaar
 
 namespace GGPData
