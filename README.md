@@ -48,9 +48,9 @@ As of November 2026:
   below), plus some smaller lemmas. A `sorry` is a step this project still owes.
 - Results from the literature are assumed as `axiom`s in `GSpinGGP/Literature/`, each with a
   docstring citing its source; they are where the formalization stops, and are not meant to be
-  proved here. `local_ggp` uses 20 of the 21 (the other, `bp_sqrt_weylDisc_mul_locallyBounded`,
-  BP Prop 4.1.1(ii), is an input of the germ bound `germ_bound_of_mem_QC`, still a `sorry`).
-  There are two classes.
+  proved here. `local_ggp` uses 20 of the 21. The other,
+  `bp_sqrt_weylDisc_mul_locallyBounded` (BP Prop 4.1.1(ii)), is an input of the germ bound
+  `germ_bound_of_mem_QC`, still a `sorry`. There are two classes.
   A *verbatim* axiom is a statement printed in its source, for the group the source treats,
   specialized (one, `bp_integrable_kernel_scusp`, is stated without proof in its source).
   A *derived* axiom is a short, explicit combination of such statements, or a printed statement
