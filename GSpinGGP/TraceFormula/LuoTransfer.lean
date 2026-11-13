@@ -19,8 +19,7 @@ when neither `W` nor `V` is a hyperbolic plane; `TraceFormula/LuoClass.lean` ded
 `distribJLie_eq_mGeomLie_of_luo`: `J^Lie(f) = m^Lie_geom(θ_f)` for `f ∈ S_scusp(𝔤⁰(F))` (Thesis
 Thm 12.2.2 on `𝔤⁰`).
 
-The identification is own work, stated step by step (one step, `torusIntegralLie_toSO`, is still
-`sorry`):
+The identification is own work, stated step by step:
 * (L1) `toSO`: `X ↦ (ad_W X_W, ad_V X_V)` maps `𝔤⁰` onto `so(W) ⊕ so(V)` (`toSO_mem` is proved;
   `toSO_bijective` and the transfer of strong cuspidality `isScusp_toSO` are proved);
 * (L2) `luoOf`: the admissible pair of `d` with Luo's basis `z^L_i = ν^{-i} z_i`,
@@ -40,7 +39,8 @@ The identification is own work, stated step by step (one step, `torusIntegralLie
   correspond (`orbitChoice_eq_of_orbitMap`) and the germs agree (`cTheta_toSO_of_transport`) given
   uniqueness of regular germ coefficients on `𝔤⁰`, uniqueness of the regular orbit meeting the
   recipe, and a transport of local expansions;
-* (L8) `gammaClass_equiv` (proved, in `TraceFormula/LuoClass.lean`), `torusIntegralLie_toSO`:
+* (L8) `gammaClass_equiv` (proved, in `TraceFormula/LuoClass.lean`), `torusIntegralLie_toSO`
+  (proved, in `TraceFormula/LuoTorusHyps.lean`):
   `Γ^Lie` (tori, `|W(H,T)|`, `ν(T) dX`, `D^G`, `Δ`, `𝔱_♮`) agree; `mGeomLieS_toSO` is proved from
   them;
 * (L9) `mGeomLie_congr_regularSet` (proved): `m^Lie_geom(θ)` depends only on `θ|_{𝔤⁰_reg}`.
@@ -141,6 +141,25 @@ theorem isSS_of_isSemisimple_adV {Q : QuadraticForm F V} (hQ : IsNondeg Q)
     {X : CliffordAlgebra Q} (hX : X ∈ gspin Q) (h : (adV Q X).IsSemisimple) : IsSS F X :=
   isSemisimple_mulLeft_of_isSemisimple_adV_baseChange hQ hX
     (IsomCent.isSemisimple_baseChange_algebraicClosure h)
+
+open Classical in
+/-- **A choice transported by a surjection**: if `E` maps the elements satisfying `p` exactly onto
+those satisfying `q`, at most one element satisfies `p`, and `E z = z'`, then `E` maps the chosen
+element of `p` (default `z`) to the chosen element of `q` (default `z'`). -/
+theorem map_dite_choose_eq {α β : Type*} (E : α → β) (hsurj : Function.Surjective E)
+    {p : α → Prop} {q : β → Prop} (hpq : ∀ a, q (E a) ↔ p a)
+    (huniq : ∀ a a', p a → p a' → a = a') {z : α} {z' : β} (hz : E z = z') :
+    E (if h : ∃ a, p a then h.choose else z) = if h : ∃ b, q b then h.choose else z' := by
+  by_cases h : ∃ a, p a
+  · have h' : ∃ b, q b := ⟨E h.choose, (hpq _).mpr h.choose_spec⟩
+    rw [dif_pos h, dif_pos h']
+    obtain ⟨a, ha⟩ := hsurj h'.choose
+    have hp : p a := (hpq a).mp (ha ▸ h'.choose_spec)
+    rw [← ha, huniq _ _ h.choose_spec hp]
+  · have h' : ¬ ∃ b, q b := fun ⟨b, hb⟩ => by
+      obtain ⟨a, rfl⟩ := hsurj b
+      exact h ⟨a, (hpq a).mp hb⟩
+    rw [dif_neg h, dif_neg h', hz]
 
 end Converse
 
@@ -1048,31 +1067,9 @@ theorem orbitChoice_eq_of_orbitMap (X : CliffordAlgebra d.QW)
       (∃ Y ∈ nilOrbitSet O, d.OrbitSpecAt (LinearMap.ker (adV d.QW X)) (Y : d.ambient)) →
       (∃ Y ∈ nilOrbitSet O', d.OrbitSpecAt (LinearMap.ker (adV d.QW X)) (Y : d.ambient)) →
       O = O') :
-    E (d.orbitChoiceLie X) = d.luoOf.orbitChoice (d.toSOLin (d.diagLie X)) := by
-  classical
-  unfold orbitChoiceLie LuoDatum.orbitChoice
-  by_cases h : ∃ O ∈ NilReg (lieGrpCentralizer d.G (d.diagLie X))
-      (lieCentralizer d.lieZero (d.diagLie X)),
-      ∃ Y ∈ nilOrbitSet O, d.OrbitSpecAt (LinearMap.ker (adV d.QW X)) (Y : d.ambient)
-  · have h' : ∃ O ∈ NilReg (lieGrpCentralizer d.luoOf.Gbar (d.toSOLin (d.diagLie X)))
-        (lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X))),
-        ∃ Y ∈ nilOrbitSet O, d.luoOf.OrbitSpec (LinearMap.ker (d.luoOf.fstA
-          (d.toSOLin (d.diagLie X)))) (Y : d.luoOf.Amb) :=
-      ⟨E h.choose, (hreg _).mpr h.choose_spec.1, (hspec _).mpr h.choose_spec.2⟩
-    simp only [h, h', ↓reduceDIte]
-    obtain ⟨O₂, hO₂⟩ := hsurj h'.choose
-    have hr : O₂ ∈ NilReg _ _ := (hreg O₂).mp (hO₂ ▸ h'.choose_spec.1)
-    have hs := (hspec O₂).mp (hO₂ ▸ h'.choose_spec.2)
-    rw [← hO₂, huniq _ _ h.choose_spec.1 hr h.choose_spec.2 hs]
-  · have h' : ¬ ∃ O ∈ NilReg (lieGrpCentralizer d.luoOf.Gbar (d.toSOLin (d.diagLie X)))
-        (lieCentralizer d.luoOf.lie (d.toSOLin (d.diagLie X))),
-        ∃ Y ∈ nilOrbitSet O, d.luoOf.OrbitSpec (LinearMap.ker (d.luoOf.fstA
-          (d.toSOLin (d.diagLie X)))) (Y : d.luoOf.Amb) := by
-      rintro ⟨O', hr, hs⟩
-      obtain ⟨O, rfl⟩ := hsurj O'
-      exact h ⟨O, (hreg O).mp hr, (hspec O).mp hs⟩
-    simp only [h, h', ↓reduceDIte]
-    exact hzero
+    E (d.orbitChoiceLie X) = d.luoOf.orbitChoice (d.toSOLin (d.diagLie X)) :=
+  map_dite_choose_eq E hsurj (fun O => and_congr (hreg O) (hspec O))
+    (fun O O' h h' => huniq O O' h.1 h'.1 h.2 h'.2) hzero
 
 /-- **Reduction of `cTheta_toSO`** at `X` to two uniqueness statements: uniqueness of the regular
 coefficients of local expansions on `𝔤⁰` at `diagLie X` (`hgerm`; Harish-Chandra 1999 Cor 5.10,
@@ -1120,30 +1117,6 @@ theorem cTheta_toSO_of_transport {θ : ↥d.luoOf.lie → ℂ}
 `t ↦ (P(t), P(t) ⊕ 1)` (the natural correspondence of tori). -/
 def IsNaturalTorusCorr (T : Subgroup ↥(GSpin d.QW)) (T' : Subgroup d.luoOf.Ambˣ) : Prop :=
   ∃ h ∈ d.luoOf.HbarU, T' = (T.map (d.toGbarU.comp d.diag)).map (MulAut.conj h).toMonoidHom
-
-/-- **(L8) The torus integrals agree**, for a bijection of classes matching each torus with its
-image (`IsNaturalTorusCorr`, as given by `gammaClass_equiv`) and the measures
-`ν(T) dX`: on each torus, `ad` maps `𝔱⁰ = lieTorus T` onto Luo's `𝔱` (embedded diagonally), carries
-`measLieTorus` (`exp`-compatible with the probability measure on `T(F)/A_{G,H}(F)`) to the
-`exp`-compatible measure for the probability measure on `H''(F)`, `𝔱⁰_♮` (`IsGammaEltLie`) to `𝔱_♮`
-(`IsNat`), `D^G` (`weylDiscLie` on `𝔤⁰` vs on `so(W) ⊕ so(V)`) and `Δ` to the same values, and (by
-the hypothesis `hc`, i.e. `cTheta_toSO`) `c_θ` to `c_θ`; the representatives of the classes differ
-by conjugation, which preserves the integrands and measures.  Not proved here. -/
-theorem torusIntegralLie_toSO (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
-    (e : GammaClass d ≃ d.luoOf.GammaClass)
-    (hen : ∀ c, d.IsNaturalTorusCorr (Quot.out c).1 (Quot.out (e c)).1) :
-    ∃ μT : ∀ T : d.luoOf.GammaTorus, Measure ↥(d.luoOf.lieTorus T.1),
-      (∀ T, d.luoOf.IsExpCompatT T.1 (μT T)) ∧
-      ∀ θ : ↥d.luoOf.lie → ℂ,
-        IsLieQuasiCharacter d.luoOf.Gbar d.luoOf.lie d.luoOf.traceForm ψ θ →
-        (∀ (T : d.GammaTorus) (X : CliffordAlgebra d.QW), d.IsGammaEltLie T.1 X →
-          d.germLie0 ψ (θ ∘ d.toSO) (d.diagLie X) (d.orbitChoiceLie X) =
-            d.luoOf.cTheta ψ θ (d.toSOLin (d.diagLie X))) →
-        ∀ (c : GammaClass d) (s : ℝ), 0 < s →
-          d.torusIntegralLie ψ (θ ∘ d.toSO) (Quot.out c).1 s =
-            ∫ X : ↥(d.luoOf.lieTorus (Quot.out (e c)).1),
-              d.luoOf.gammaIntegrand ψ θ (Quot.out (e c)).1 s X ∂μT (Quot.out (e c)) := by
-  sorry
 
 /-- A local expansion of `θ` at a semisimple `X` is one of every `θ'` agreeing with `θ` on
 `𝔤⁰_reg(F)`: the expansion is only evaluated at `X + Y` with `Y ∈ 𝔤⁰_X` small and regular, which
