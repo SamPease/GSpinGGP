@@ -10,7 +10,7 @@ import GSpinGGP.Literature.HarishChandra
 import TauCeti.LinearAlgebra.CliffordAlgebra.ScalarTrace.Basic
 
 /-!
-# Transport of local expansions from `so(W) ⊕ so(V)` to `𝔤⁰` (Thesis §6.5, (L6), (L7))
+# Transport of local expansions from `so(W) ⊕ so(V)` to `𝔤⁰` (steps (L6), (L7) of `LuoTransfer`)
 
 For `X ∈ 𝔱⁰_♮`, local expansions of a quasi-character `θ` on `so(W) ⊕ so(V)` at `ad X` (Luo's
 normalization: the trace form `B = ½ (tr_W + tr_V)`) give local expansions of `θ ∘ ad` on
