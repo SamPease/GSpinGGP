@@ -39,6 +39,10 @@ the orthogonal analogue of Prop. 11.0.1 in §11 of Beuzart-Plessis's thèse).
   `j` lies in its torus `hypTorus`.
 * `exists_isFrame`: in a nondegenerate quadratic space every anisotropic vector starts a maximal
   frame of an orthogonal basis.
+* `basisNat`, `multiTorus_apply_add`, `multiTorus_apply_sub`, `multiTorus_apply_pairE`,
+  `multiTorus_apply_pairF`: the eigenvectors `b (j+2k) ± b (j+2k+1)` of the level-`j` torus;
+  `basisOpNorm_multiTorus_le`: a bound for its norm.
+* `InChamber.rel_of_lt`, `InChamber.norm_le_one`, `InChamber.max_le_head`: chamber inequalities.
 -/
 
 noncomputable section
@@ -335,7 +339,7 @@ def numPairs (l j : ℕ) : ℕ := (l + 1 - j) / 2
 Here `r = numPairs l j` is the number of coordinates. -/
 def InChamber (n l j : ℕ) (ts : List Fˣ) : Prop :=
   ts.length = numPairs l j ∧
-    ts.Pairwise (fun s t => ‖(s : F)‖ ≤ ‖(t : F)‖ ∧ ‖(s : F) * t‖ ≤ 1) ∧
+    ts.Pairwise (fun s t : Fˣ => ‖(s : F)‖ ≤ ‖(t : F)‖ ∧ ‖(s : F) * t‖ ≤ 1) ∧
     (j + 2 * ts.length < n → ∀ t ∈ ts, ‖(t : F)‖ ≤ 1)
 
 theorem inChamber_nil {n l j : ℕ} (h : l ≤ j) : InChamber (F := F) n l j [] :=
@@ -535,6 +539,217 @@ theorem multiTorus_mem_hypTorus (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l) 
     · rw [levelTorus_of_not_le hb hf hk]; exact one_mem _
 
 end HypFrame
+
+/-! ## Basis vectors indexed by `ℕ`, and eigenvectors of the split tori
+
+`basisNat b m` is `b m` for `m < n` and `0` otherwise. Inductions over the frame (and over the
+levels `j`, `j + 2`, …) then need no bound proofs on indices: a statement about `basisNat b m` for
+`m ≥ n` holds trivially. The eigenvector statements for the `Fin (numPairs l j)`-indexed vectors
+`pairE`, `pairF` of the hyperbolic frame of level `j` follow (`multiTorus_apply_pairE`,
+`multiTorus_apply_pairF`). -/
+
+/-- The basis vector `b m`, and `0` for `m ≥ n`. -/
+def basisNat (b : Module.Basis (Fin n) F V) (m : ℕ) : V := if h : m < n then b ⟨m, h⟩ else 0
+
+theorem basisNat_of_lt {m : ℕ} (h : m < n) : basisNat b m = b ⟨m, h⟩ := by simp [basisNat, h]
+
+theorem basisNat_of_le {m : ℕ} (h : n ≤ m) : basisNat b m = 0 := by simp [basisNat]; omega
+
+theorem basisNorm_basisNat_le (m : ℕ) : basisNorm b (basisNat b m) ≤ 1 := by
+  unfold basisNat
+  split_ifs
+  · rw [basisNorm_basis]
+  · rw [basisNorm_zero]; exact zero_le_one
+
+/-- Elements of `fixer Q b j` fix `basisNat b m` for `m < j`. -/
+theorem apply_basisNat_of_mem_fixer {j : ℕ} {g : V ≃ₗ[F] V} (hg : g ∈ fixer Q b j) {m : ℕ}
+    (hm : m < j) : g (basisNat b m) = basisNat b m := by
+  unfold basisNat
+  split_ifs with h
+  · exact hg.2 _ hm
+  · exact map_zero g
+
+/-! ## Eigenvectors of the split tori -/
+
+section Eigen
+
+variable (hb : IsOrthoBasis Q b) {ν : F} {l : ℕ} (hf : IsFrame Q b ν l)
+
+theorem levelTorus_apply_basisNat_of_ne (j : ℕ) (t : Fˣ) {m : ℕ} (hm : m ≠ j) (hm' : m ≠ j + 1) :
+    levelTorus hb hf j t (basisNat b m) = basisNat b m := by
+  by_cases hj : j + 1 ≤ l
+  · rw [levelTorus_of_le hb hf hj]
+    unfold basisNat
+    split_ifs with h
+    · exact pairTorus_apply_basis_of_ne _ _ _ _ _ (by simp [Fin.ext_iff]; omega)
+        (by simp [Fin.ext_iff]; omega)
+    · exact map_zero _
+  · rw [levelTorus_of_not_le hb hf hj]; rfl
+
+theorem levelTorus_apply_add {j : ℕ} (hj : j + 1 ≤ l) (t : Fˣ) :
+    levelTorus hb hf j t (basisNat b j + basisNat b (j + 1)) =
+      (t : F) • (basisNat b j + basisNat b (j + 1)) := by
+  rw [levelTorus_of_le hb hf hj, basisNat_of_lt (hf.idx_lt (by omega)),
+    basisNat_of_lt (hf.idx_lt hj),
+    map_add, pairTorus_apply_left, pairTorus_apply_right]
+  module
+
+theorem levelTorus_apply_sub {j : ℕ} (hj : j + 1 ≤ l) (t : Fˣ) :
+    levelTorus hb hf j t (basisNat b j - basisNat b (j + 1)) =
+      (t : F)⁻¹ • (basisNat b j - basisNat b (j + 1)) := by
+  rw [levelTorus_of_le hb hf hj, basisNat_of_lt (hf.idx_lt (by omega)),
+    basisNat_of_lt (hf.idx_lt hj),
+    map_sub, pairTorus_apply_left, pairTorus_apply_right]
+  module
+
+theorem multiTorus_apply_basisNat_of_lt (ts : List Fˣ) (j : ℕ) {m : ℕ} (hm : m < j) :
+    multiTorus hb hf j ts (basisNat b m) = basisNat b m :=
+  apply_basisNat_of_mem_fixer (multiTorus_mem_fixer hb hf ts j) hm
+
+theorem multiTorus_apply_basisNat_of_ge :
+    ∀ (ts : List Fˣ) (j : ℕ) {m : ℕ}, j + 2 * ts.length ≤ m →
+      multiTorus hb hf j ts (basisNat b m) = basisNat b m
+  | [], _, _, _ => rfl
+  | t :: ts, j, m, hm => by
+    simp only [List.length_cons] at hm
+    rw [multiTorus_cons, LinearEquiv.mul_apply,
+      levelTorus_apply_basisNat_of_ne hb hf j t (by omega) (by omega),
+      multiTorus_apply_basisNat_of_ge ts (j + 2) (by omega)]
+
+/-- `u_k = b (j+2k) + b (j+2k+1)` is an eigenvector of the level-`j` torus, eigenvalue `t_k`. -/
+theorem multiTorus_apply_add :
+    ∀ (ts : List Fˣ) (j k : ℕ) (hk : k < ts.length), j + 2 * k + 1 ≤ l →
+      multiTorus hb hf j ts (basisNat b (j + 2 * k) + basisNat b (j + 2 * k + 1)) =
+        (ts[k] : F) • (basisNat b (j + 2 * k) + basisNat b (j + 2 * k + 1))
+  | t :: ts, j, 0, _, hl => by
+    simp only [mul_zero, add_zero] at hl ⊢
+    rw [multiTorus_cons, LinearEquiv.mul_apply, levelTorus_apply_add hb hf hl, map_smul, map_add,
+      multiTorus_apply_basisNat_of_lt hb hf ts (j + 2) (by omega),
+      multiTorus_apply_basisNat_of_lt hb hf ts (j + 2) (by omega)]
+    rfl
+  | t :: ts, j, k + 1, hk, hl => by
+    have e1 : j + 2 * (k + 1) = j + 2 + 2 * k := by ring
+    rw [e1, multiTorus_cons, LinearEquiv.mul_apply, map_add,
+      levelTorus_apply_basisNat_of_ne hb hf j t (by omega) (by omega),
+      levelTorus_apply_basisNat_of_ne hb hf j t (by omega) (by omega),
+      multiTorus_apply_add ts (j + 2) k (by simpa using hk) (by omega)]
+    rfl
+
+/-- `v_k = b (j+2k) - b (j+2k+1)` is an eigenvector of the level-`j` torus, eigenvalue `t_k⁻¹`. -/
+theorem multiTorus_apply_sub :
+    ∀ (ts : List Fˣ) (j k : ℕ) (hk : k < ts.length), j + 2 * k + 1 ≤ l →
+      multiTorus hb hf j ts (basisNat b (j + 2 * k) - basisNat b (j + 2 * k + 1)) =
+        (ts[k] : F)⁻¹ • (basisNat b (j + 2 * k) - basisNat b (j + 2 * k + 1))
+  | t :: ts, j, 0, _, hl => by
+    simp only [mul_zero, add_zero] at hl ⊢
+    rw [multiTorus_cons, LinearEquiv.mul_apply, levelTorus_apply_sub hb hf hl, map_smul, map_sub,
+      multiTorus_apply_basisNat_of_lt hb hf ts (j + 2) (by omega),
+      multiTorus_apply_basisNat_of_lt hb hf ts (j + 2) (by omega)]
+    rfl
+  | t :: ts, j, k + 1, hk, hl => by
+    have e1 : j + 2 * (k + 1) = j + 2 + 2 * k := by ring
+    rw [e1, multiTorus_cons, LinearEquiv.mul_apply, map_sub,
+      levelTorus_apply_basisNat_of_ne hb hf j t (by omega) (by omega),
+      levelTorus_apply_basisNat_of_ne hb hf j t (by omega) (by omega),
+      multiTorus_apply_sub ts (j + 2) k (by simpa using hk) (by omega)]
+    rfl
+
+theorem multiTorus_mem_orthogonalGroup (ts : List Fˣ) (j : ℕ) :
+    multiTorus hb hf j ts ∈ TauCeti.QuadraticMap.orthogonalGroup Q :=
+  mem_orthogonalGroup_of_mem_fixer (multiTorus_mem_fixer hb hf ts j)
+
+/-- `pairE hf j i` is an eigenvector of the level-`j` torus, with eigenvalue `t_i`. -/
+theorem multiTorus_apply_pairE {j : ℕ} {ts : List Fˣ} (hlen : ts.length = numPairs l j)
+    (i : Fin (numPairs l j)) :
+    multiTorus hb hf j ts (pairE hf j i) = (ts[i.val]'(by omega) : F) • pairE hf j i := by
+  have e : pairE hf j i = basisNat b (j + 2 * i) + basisNat b (j + 2 * i + 1) := by
+    rw [pairE, basisNat_of_lt, basisNat_of_lt]
+  rw [e]
+  exact multiTorus_apply_add hb hf ts j i (by omega) (add_one_le_of_lt_numPairs i.2)
+
+/-- `pairF hf j i` is an eigenvector of the level-`j` torus, with eigenvalue `t_i⁻¹`. -/
+theorem multiTorus_apply_pairF {j : ℕ} {ts : List Fˣ} (hlen : ts.length = numPairs l j)
+    (i : Fin (numPairs l j)) :
+    multiTorus hb hf j ts (pairF hf j i) = (ts[i.val]'(by omega) : F)⁻¹ • pairF hf j i := by
+  have e : pairF hf j i = (4 * ((-1) ^ (j + 2 * i.val) * ν))⁻¹ •
+      (basisNat b (j + 2 * i) - basisNat b (j + 2 * i + 1)) := by
+    rw [pairF, basisNat_of_lt, basisNat_of_lt]
+  rw [e, map_smul, multiTorus_apply_sub hb hf ts j i (by omega) (add_one_le_of_lt_numPairs i.2),
+    smul_comm]
+
+end Eigen
+
+section UltraFrame
+
+variable [IsUltrametricDist F] {ν : F} {l : ℕ} (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l)
+
+theorem basisNorm_basisNat_add_le (p q : ℕ) : basisNorm b (basisNat b p + basisNat b q) ≤ 1 :=
+  (basisNorm_add_le _ _).trans (max_le (basisNorm_basisNat_le p) (basisNorm_basisNat_le q))
+
+theorem basisNorm_basisNat_sub_le (p q : ℕ) : basisNorm b (basisNat b p - basisNat b q) ≤ 1 :=
+  (basisNorm_sub_le _ _).trans (max_le (basisNorm_basisNat_le p) (basisNorm_basisNat_le q))
+
+/-- A bound for the torus: if every coordinate satisfies `‖2‖⁻¹ max(|t|, |t|⁻¹) ≤ R` and
+`1 ≤ R`, then `‖multiTorus j ts‖ ≤ R ^ length`. -/
+theorem basisOpNorm_multiTorus_le {R : ℝ} (hR : 1 ≤ R) :
+    ∀ (ts : List Fˣ) (j : ℕ), (∀ t ∈ ts, ‖(2 : F)‖⁻¹ * max ‖(t : F)‖ ‖(t : F)‖⁻¹ ≤ R) →
+      basisOpNorm b ((multiTorus hb hf j ts : V ≃ₗ[F] V) : V →ₗ[F] V) ≤ R ^ ts.length
+  | [], _, _ => by simpa using basisOpNorm_id_le (b := b)
+  | t :: ts, j, h => by
+    rw [multiTorus_cons, List.length_cons, pow_succ]
+    refine (basisOpNorm_mul_le _ _).trans (mul_le_mul
+      (basisOpNorm_multiTorus_le hR ts (j + 2) fun t ht => h t (List.mem_cons_of_mem _ ht))
+      ?_ (basisOpNorm_nonneg _) (pow_nonneg (zero_le_one.trans hR) _))
+    by_cases hj : j + 1 ≤ l
+    · rw [levelTorus_of_le hb hf hj]
+      exact (basisOpNorm_pairTorus_le hb _ _ _ t).trans (h t List.mem_cons_self)
+    · rw [levelTorus_of_not_le hb hf hj]
+      exact basisOpNorm_id_le.trans hR
+
+end UltraFrame
+
+/-! ## Chambers -/
+
+section Chamber
+
+variable {l : ℕ}
+
+theorem InChamber.rel_of_lt {j : ℕ} {ts : List Fˣ} (h : InChamber n l j ts) {k m : ℕ}
+    (hkm : k < m) (hm : m < ts.length) :
+    ‖(ts[k] : F)‖ ≤ ‖(ts[m] : F)‖ ∧ ‖(ts[k] : F) * ts[m]‖ ≤ 1 :=
+  List.pairwise_iff_getElem.1 h.2.1 k m (by omega) hm hkm
+
+/-- Every coordinate but the last has absolute value `≤ 1`, and the last one too when the
+anisotropic part is nonzero. -/
+theorem InChamber.norm_le_one {j : ℕ} {ts : List Fˣ} (h : InChamber n l j ts) {k : ℕ}
+    (hk : k < ts.length) (h' : k + 1 < ts.length ∨ j + 2 * ts.length < n) :
+    ‖(ts[k] : F)‖ ≤ 1 := by
+  rcases h' with h' | h'
+  · obtain ⟨h1, h2⟩ := h.rel_of_lt (Nat.lt_succ_self k) h'
+    rw [norm_mul] at h2
+    nlinarith [mul_le_mul_of_nonneg_left h1 (norm_nonneg (ts[k] : F)), norm_nonneg (ts[k] : F)]
+  · exact h.2.2 h' _ (List.getElem_mem hk)
+
+/-- On the chamber, every coordinate is controlled by the first: `max(|t_k|, |t_k|⁻¹) ≤
+max(|t_0|, |t_0|⁻¹)`. -/
+theorem InChamber.max_le_head {j : ℕ} {ts : List Fˣ} (hts : InChamber n l j ts)
+    (h0 : 0 < ts.length) {t : Fˣ} (ht : t ∈ ts) :
+    max ‖(t : F)‖ ‖(t : F)‖⁻¹ ≤ max ‖(ts[0] : F)‖ ‖(ts[0] : F)‖⁻¹ := by
+  obtain ⟨k, hk, rfl⟩ := List.getElem_of_mem ht
+  rcases Nat.eq_zero_or_pos k with rfl | hk0
+  · exact le_rfl
+  obtain ⟨h1, h2⟩ := hts.rel_of_lt hk0 hk
+  have p0 : (0 : ℝ) < ‖(ts[0] : F)‖ := norm_pos_iff.2 (Units.ne_zero _)
+  have pk : (0 : ℝ) < ‖(ts[k] : F)‖ := norm_pos_iff.2 (Units.ne_zero _)
+  rw [norm_mul] at h2
+  refine max_le (le_max_of_le_right ?_) (le_max_of_le_right ?_)
+  · calc ‖(ts[k] : F)‖ = (‖(ts[0] : F)‖ * ‖(ts[k] : F)‖) * ‖(ts[0] : F)‖⁻¹ := by
+          rw [mul_comm ‖(ts[0] : F)‖, mul_assoc, mul_inv_cancel₀ p0.ne', mul_one]
+      _ ≤ (1 : ℝ) * ‖(ts[0] : F)‖⁻¹ := mul_le_mul_of_nonneg_right h2 (inv_nonneg.2 p0.le)
+      _ = _ := one_mul _
+  · exact inv_anti₀ p0 h1
+
+end Chamber
 
 /-! ## Existence of maximal frames -/
 
