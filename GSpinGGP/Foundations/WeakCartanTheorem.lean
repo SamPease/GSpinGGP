@@ -62,13 +62,13 @@ theorem repr_apply_eq_zero_of_mem_fixer (hb : IsOrthoBasis Q b) {j : ℕ} {g : V
 theorem fixer_zero : fixer Q b 0 = TauCeti.QuadraticMap.specialOrthogonalGroup Q := by
   ext g; simp [mem_fixer_iff]
 
-theorem bnd_mul [IsUltrametricDist F] {x y : V ≃ₗ[F] V} {A B : ℝ}
+private theorem basisOpNorm_mul_le_of_le [IsUltrametricDist F] {x y : V ≃ₗ[F] V} {A B : ℝ}
     (hx : basisOpNorm b (x : V →ₗ[F] V) ≤ A) (hy : basisOpNorm b (y : V →ₗ[F] V) ≤ B) :
     basisOpNorm b ((x * y : V ≃ₗ[F] V) : V →ₗ[F] V) ≤ A * B :=
   (basisOpNorm_mul_le x y).trans
     (mul_le_mul hx hy (basisOpNorm_nonneg _) ((basisOpNorm_nonneg _).trans hx))
 
-theorem bnd_inv (hb : IsOrthoBasis Q b) {x : V ≃ₗ[F] V}
+private theorem basisOpNorm_inv_le_of_le (hb : IsOrthoBasis Q b) {x : V ≃ₗ[F] V}
     (hxO : x ∈ TauCeti.QuadraticMap.orthogonalGroup Q) {A : ℝ}
     (hx : basisOpNorm b (x : V →ₗ[F] V) ≤ A) :
     basisOpNorm b ((x⁻¹ : V ≃ₗ[F] V) : V →ₗ[F] V) ≤ adjBound Q b * A :=
@@ -235,7 +235,7 @@ theorem orbit_step (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l) {j : ℕ} (hj
   have hj1n : j + 1 < n := hf.idx_lt hj
   set i₀ : Fin n := ⟨j, hjn⟩
   set i₁ : Fin n := ⟨j + 1, hj1n⟩
-  have hne : i₀ ≠ i₁ := idx_ne hjn hj1n
+  have hne : i₀ ≠ i₁ := Fin.ne_of_val_ne (Nat.ne_add_one j)
   have h₀ : Q (b i₀) = (-1) ^ j * ν := hf.apply_left hj
   have h₁ : Q (b i₁) = -((-1) ^ j * ν) := hf.apply_right hj
   have hν : (-1) ^ j * ν ≠ 0 := h₀ ▸ hb.apply_ne_zero i₀
@@ -314,16 +314,14 @@ theorem orbit_step (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l) {j : ℕ} (hj
       · subst hk0
         simp only [ite_eq_right hne.symm]
         change x = _
-        field_simp
-        simp only [ite_true]
-        rw [show (lam : F) = x - y from rfl]; ring
+        rw [ite_true, show (lam : F) = x - y from rfl]
+        ring
       by_cases hk1 : k = i₁
       · subst hk1
         simp only [ite_eq_right hne]
         change y = _
-        field_simp
-        simp only [ite_true]
-        rw [show (lam : F) = x - y from rfl]; ring
+        rw [ite_true, show (lam : F) = x - y from rfl]
+        ring
       rw [hother k hk0 hk1, ite_eq_right (Ne.symm hk0), ite_eq_right (Ne.symm hk1)]; ring
     obtain ⟨hh, hg'⟩ := hassemble g hg lam 1 (one_mem _) he
     refine ⟨_, hh, lam, fun h => absurd h hn, 1, one_mem _, basisOpNorm_id_le, ?_⟩
@@ -531,9 +529,11 @@ theorem relCartan_SO_level_bdd (d : ℕ) :
       rw [multiTorus_signBasis_of_odd id hb hf _ _ (hodd _),
         multiTorus_signBasis_of_odd id hb hf _ _ (hodd _), multiTorus_map_inv hb hf,
         multiTorus_map_inv hb hf] at he
-      refine ⟨c₁⁻¹, inv_mem hc₁', bnd_inv hb (mem_orthogonalGroup_of_mem_fixer hc₁')
-        (hM₂ c₁ ⟨hc₁.1, hc₁M⟩), s₂, hs₂, s₁, hs₁, k₁⁻¹, inv_mem hk₁',
-        bnd_inv hb (mem_orthogonalGroup_of_mem_fixer hk₁') (hM₂ k₁ ⟨hk₁.1, hk₁M⟩), ?_⟩
+      refine ⟨c₁⁻¹, inv_mem hc₁',
+        basisOpNorm_inv_le_of_le hb (mem_orthogonalGroup_of_mem_fixer hc₁')
+          (hM₂ c₁ ⟨hc₁.1, hc₁M⟩), s₂, hs₂, s₁, hs₁, k₁⁻¹, inv_mem hk₁',
+        basisOpNorm_inv_le_of_le hb (mem_orthogonalGroup_of_mem_fixer hk₁')
+          (hM₂ k₁ ⟨hk₁.1, hk₁M⟩), ?_⟩
       rw [← inv_inv h, he]
       group
     obtain ⟨M₁, hM₁⟩ := orbit_step hb hf hj
@@ -545,7 +545,7 @@ theorem relCartan_SO_level_bdd (d : ℕ) :
       have ht0 : t = [] := List.eq_nil_of_length_eq_zero (by rw [ht.1]; simp [numPairs]; omega)
       subst ht0
       refine ⟨k, hk, hkM.trans (le_max_left _ _), s, hs, [lam], inChamber_single hj hl hlam,
-        k' * c, mul_mem (fixer_anti (by omega) hk') hc, (bnd_mul hk'M hcM).trans
+        k' * c, mul_mem (fixer_anti (by omega) hk') hc, (basisOpNorm_mul_le_of_le hk'M hcM).trans
           (le_max_right _ _), ?_⟩
       have hcomm := levelTorus_commute hb hf hk' lam
       rw [multiTorus_cons, multiTorus_nil]
@@ -557,7 +557,7 @@ theorem relCartan_SO_level_bdd (d : ℕ) :
       have hj1n : j + 1 < n := hf.idx_lt hj
       set i₀ : Fin n := ⟨j, hjn⟩
       set i₁ : Fin n := ⟨j + 1, hj1n⟩
-      have hne : i₀ ≠ i₁ := idx_ne hjn hj1n
+      have hne : i₀ ≠ i₁ := Fin.ne_of_val_ne (Nat.ne_add_one j)
       have h₀ : Q (b i₀) = (-1) ^ j * ν := hf.apply_left hj
       have h₁ : Q (b i₁) = -((-1) ^ j * ν) := hf.apply_right hj
       set S' : Finset (Fin n) := Finset.univ.filter fun m => j + 2 ≤ m.val
@@ -629,7 +629,8 @@ theorem relCartan_SO_level_bdd (d : ℕ) :
           (fixer_anti (by omega) hk')) (inv_mem (mul_mem (mul_mem (inv_mem
             (levelTorus_mem_fixer hb hf j lam)) (fixer_anti (by omega) hγ))
             (levelTorus_mem_fixer hb hf j lam)))) hc,
-        ((bnd_mul (bnd_mul (bnd_mul hBM hk'M) (bnd_inv hb hc₂O hc₂M)) hcM)).trans
+        ((basisOpNorm_mul_le_of_le (basisOpNorm_mul_le_of_le (basisOpNorm_mul_le_of_le hBM hk'M)
+          (basisOpNorm_inv_le_of_le hb hc₂O hc₂M)) hcM)).trans
           (le_max_right _ _), ?_⟩
       have hL : levelTorus hb hf j lam' = A * (levelTorus hb hf j πu⁻¹)⁻¹ := by
         rw [← levelTorus_inv, inv_inv, ← levelTorus_mul]
