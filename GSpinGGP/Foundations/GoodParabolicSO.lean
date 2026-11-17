@@ -20,7 +20,8 @@ contracting chambers `InChamber n l 1 s`, `InChamber n l 0 t`. Norms are the coo
 norm `‖·‖ = basisOpNorm b`.
 
 This file proves Thesis Prop. 8.1.1(iii) in the codimension-one case, i.e. the inequalities
-(Thesis (8.1.7), (8.1.8); BP Prop. 6.4.1, (6.4.7), (6.4.8)), in multiplicative form:
+(the two inequalities of Thesis Prop. 8.1.1(iii) and BP Prop. 6.4.1(iii), for the codimension-one
+group `G₀`), in multiplicative form:
 
 * `norm_le_of_mem_chamber` (I): `‖h‖ + ‖a_W‖ + ‖a_V‖ ≪ max(1, ‖h a_W‖, ‖h a_V‖)^N`;
 * `norm_le_conj_of_mem_chamber` (II): `‖h‖ ≪ max(1, ‖a_W⁻¹ h a_W‖, ‖a_V⁻¹ h a_V‖)`,
@@ -357,10 +358,10 @@ theorem norm_polar_level_le {j : ℕ} {ts : List Fˣ} (hts : InChamber n l j ts)
       ((norm_sub_le_max_of_ultra _ _).trans (max_le A1 A2)) (by positivity)
 
 include hb in
-/-- One step of the induction (Thesis (8.1.11), with the chamber of the orthogonal group): from
-the bound for `b_{j+2k}` to the bound for `b_{j+2k+1}`, at level `j`. When `|t_k| > 1` (the last
-pair of a level without anisotropic part), `b_{j+2k+1}` is the last basis vector and is fixed by
-the isometry `T'` (the torus of the other level). -/
+/-- One step of the induction (as in the proof of Thesis Prop. 8.1.1(iii), with the chamber of the
+orthogonal group): from the bound for `b_{j+2k}` to the bound for `b_{j+2k+1}`, at level `j`.
+When `|t_k| > 1` (the last pair of a level without anisotropic part), `b_{j+2k+1}` is the last
+basis vector and is fixed by the isometry `T'` (the torus of the other level). -/
 theorem step_level {j : ℕ} {ts : List Fˣ} (hts : InChamber n l j ts) {T' : V ≃ₗ[F] V}
     (hT' : T' ∈ TauCeti.QuadraticMap.orthogonalGroup Q) (h : V ≃ₗ[F] V) {k : ℕ}
     (hk : k < ts.length) {E : ℝ}
@@ -399,8 +400,8 @@ variable [IsUltrametricDist F] (hb : IsOrthoBasis Q b) {ν : F} {l : ℕ} (hf : 
 
 include hb in
 /-- The coefficients `polar(h b_i, b_p)`, `i ≤ p`, of `h ∈ H` are bounded by
-`max(1, ‖a_V⁻¹ h a_V‖, ‖a_W⁻¹ h a_W‖)` on the chamber (Thesis (8.1.11), corrected for the
-chamber of the orthogonal group). -/
+`max(1, ‖a_V⁻¹ h a_V‖, ‖a_W⁻¹ h a_W‖)` on the chamber (the induction in the proof of Thesis
+Prop. 8.1.1(iii), with the chamber of the orthogonal group). -/
 theorem norm_polar_le_conj {s t : List Fˣ} (hs : InChamber n l 1 s) (ht : InChamber n l 0 t)
     {h : V ≃ₗ[F] V} (hh : h ∈ fixer Q b 1) :
     ∀ i p, i ≤ p → ‖polar Q (h (bn b i)) (bn b p)‖ ≤ ‖(2 : F)‖⁻¹ * polarBound Q b *
@@ -490,8 +491,8 @@ theorem basisOpNorm_conj_inv_le {T h : V ≃ₗ[F] V}
   exact hb.basisOpNorm_symm_le (mul_mem (mul_mem hT hh) (inv_mem hT))
 
 include hb in
-/-- **Thesis Prop. 8.1.1(iii), inequality (8.1.2), in codimension one** (BP Prop. 6.4.1(iii),
-(6.4.8)), for `G₀ = SO(W) × SO(V₀)` and the good minimal parabolic `P̄₀ = P̄_W × P̄_{V₀}` of the
+/-- **Thesis Prop. 8.1.1(iii), second inequality, in codimension one** (BP Prop. 6.4.1(iii)),
+for `G₀ = SO(W) × SO(V₀)` and the good minimal parabolic `P̄₀ = P̄_W × P̄_{V₀}` of the
 frame, over a non-archimedean field: `σ(h) ≪ σ(a⁻¹ h a)` for `h ∈ H = SO(W)` and
 `a = (a_W, a_V) ∈ A₀⁺`, in the form `‖h‖ ≤ C max(1, ‖a_V⁻¹ h a_V‖, ‖a_W⁻¹ h a_W‖)` with
 `a_V = (multiTorus hb hf 0 t)⁻¹`, `a_W = (multiTorus hb hf 1 s)⁻¹`, `s`, `t` in the contracting
@@ -600,8 +601,8 @@ theorem InChamber.max_le_head {j : ℕ} {ts : List Fˣ} (hts : InChamber n l j t
 
 include hb in
 /-- The first coordinate of the `V₀`-torus is read off from `h a_V`: for `h ∈ H`,
-`|2ν| max(|t₀|, |t₀|⁻¹) ≤ c_P ‖h a_V‖` (Thesis (8.1.9): `b(h a_V u₁, w₀) = a¹ ν`, used for
-`u_{±1}` so that no chamber condition is needed). -/
+`|2ν| max(|t₀|, |t₀|⁻¹) ≤ c_P ‖h a_V‖` (as in the proof of Thesis Prop. 8.1.1(iii):
+`b(h a_V u₁, w₀) = a¹ ν`, used for `u_{±1}` so that no chamber condition is needed). -/
 theorem norm_head_le {t : List Fˣ} (h0 : 0 < t.length) (hlen : t.length = numPairs l 0)
     {h : V ≃ₗ[F] V} (hh : h ∈ fixer Q b 1) :
     ‖2 * ν‖ * max ‖(t[0] : F)‖ ‖(t[0] : F)‖⁻¹ ≤
@@ -665,8 +666,8 @@ theorem norm_head_le {t : List Fˣ} (h0 : 0 < t.length) (hlen : t.length = numPa
   exact max_le h2 h1
 
 include hb in
-/-- **Thesis Prop. 8.1.1(iii), inequality (8.1.1), in codimension one** (BP Prop. 6.4.1(iii),
-(6.4.7)), for `G₀ = SO(W) × SO(V₀)` and the good minimal parabolic `P̄₀ = P̄_W × P̄_{V₀}` of the
+/-- **Thesis Prop. 8.1.1(iii), first inequality, in codimension one** (BP Prop. 6.4.1(iii)),
+for `G₀ = SO(W) × SO(V₀)` and the good minimal parabolic `P̄₀ = P̄_W × P̄_{V₀}` of the
 frame, over a non-archimedean field: `σ(h) + σ(a) ≪ σ(h a)` for `h ∈ H = SO(W)` and
 `a = (a_W, a_V) ∈ A₀⁺`, in the form
 `max(‖h‖, ‖a_W‖, ‖a_V‖) ≤ C max(1, ‖h a_W‖, ‖h a_V‖)^N`, with `a_V = (multiTorus hb hf 0 t)⁻¹`,
