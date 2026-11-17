@@ -3785,6 +3785,29 @@ theorem fst_pair (p : GSpin d.QW × GSpin d.QV) : d.fst (d.pair p) = p.1 := rfl
 /-- `snd ∘ pair = Prod.snd` (`rfl`). -/
 theorem snd_pair (p : GSpin d.QW × GSpin d.QV) : d.snd (d.pair p) = p.2 := rfl
 
+/-- The underlying first component of `g ∈ G ⊆ (C(W) × C(V))^×`. -/
+theorem val_fst (g : d.G) :
+    (((g : d.ambientˣ) : d.ambient)).1 = (((d.fst g : GSpin d.QW) : (CliffordAlgebra d.QW)ˣ) :
+      CliffordAlgebra d.QW) := rfl
+
+/-- The underlying second component of `g ∈ G ⊆ (C(W) × C(V))^×`. -/
+theorem val_snd (g : d.G) :
+    (((g : d.ambientˣ) : d.ambient)).2 = (((d.snd g : GSpin d.QV) : (CliffordAlgebra d.QV)ˣ) :
+      CliffordAlgebra d.QV) := rfl
+
+/-- The underlying first component of `g⁻¹`. -/
+theorem val_inv_fst (g : d.G) : (((g⁻¹ : d.G) : d.ambientˣ) : d.ambient).1 =
+    ((((d.fst g : GSpin d.QW) : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) :
+      CliffordAlgebra d.QW) := rfl
+
+/-- The underlying second component of `g⁻¹`. -/
+theorem val_inv_snd (g : d.G) : (((g⁻¹ : d.G) : d.ambientˣ) : d.ambient).2 =
+    ((((d.snd g : GSpin d.QV) : (CliffordAlgebra d.QV)ˣ)⁻¹ : (CliffordAlgebra d.QV)ˣ) :
+      CliffordAlgebra d.QV) := rfl
+
+/-- The central scalars `(c₁, c₂) ∈ G_m × G_m ⊆ G`. -/
+def scalarPair (c₁ c₂ : Kˣ) : d.G := d.pair (scalarGSpin d.QW c₁, scalarGSpin d.QV c₂)
+
 /-- `A_G(K)`, the `K`-points of the maximal split central torus of `G = GSpin(W) × GSpin(V)`
 (Thesis §2.1 "split component", §7.1): `A_{GSpin(W)} × A_{GSpin(V)}`, where
 `A_{GSpin(U)}` is all of `GSpin(U)` for a hyperbolic plane `U` and the scalars otherwise

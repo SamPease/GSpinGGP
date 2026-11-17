@@ -7,6 +7,7 @@ import GSpinGGP.Foundations.GSpin
 import GSpinGGP.Foundations.LocalGroups
 import GSpinGGP.Foundations.ExpHaar
 import GSpinGGP.Foundations.QuadraticForms
+import GSpinGGP.Foundations.BasisNorm
 import TauCeti.Algebra.CentralSimple.Opposite
 import TauCeti.LinearAlgebra.CliffordAlgebra.CentralSimple.Basic
 import TauCeti.LinearAlgebra.CliffordAlgebra.CentralSimple.Even
@@ -28,7 +29,8 @@ with an elementary proof. Write `‖x‖` for the operator norm of left multipli
   `TauCeti.CliffordAlgebra.isSimpleRing_even_of_odd_finrank`).
 
 Since `ker P` is the scalars and `‖c g‖ = |c| ‖g‖`, rescaling `g` by a scalar makes `‖g‖` and
-`‖g⁻¹‖` both `≪ max(1, ‖P(g)‖)ᴺ`; this is used in `TraceFormula/NormDescent.lean`.
+`‖g⁻¹‖` both `≪ max(1, ‖P(g)‖)ᴺ` (`exists_scalar_norm_le`); this is used in
+`TraceFormula/LogNormDescent.lean`.
 
 ## Main results
 
@@ -36,7 +38,11 @@ Since `ker P` is the scalars and `‖c g‖ = |c| ‖g‖`, rescaling `g` by a s
   back along an injective linear map dominates any other pulled-back seminorm.
 * `exists_norm_mul_norm_le_of_isSimpleRing`: `‖a‖ ‖b‖ ≤ C ‖(a sᵢ b)ᵢ‖` in a finite-dimensional
   central simple algebra, for a spanning family `(sᵢ)`.
+* `exists_norm_toContinuousLinearMap_le_basisOpNorm`,
+  `exists_basisOpNorm_le_norm_toContinuousLinearMap`: the operator norm on `End(V)` is equivalent to
+  the matrix sup norm `basisOpNorm b` of `Foundations/BasisNorm.lean`.
 * `exists_norm_specP_le`, `exists_norm_mul_norm_inv_le`: the two estimates above.
+* `exists_scalar_norm_le`: the rescaled form.
 
 The general lemmas hold over any complete nontrivially normed field; the `GSpin` estimates are
 stated over a `p`-adic field, where `lmulPi` is defined.
@@ -69,6 +75,30 @@ theorem _root_.LinearMap.exists_norm_le_mul_norm_of_injective (f : E →ₗ[𝕜
   simpa [hc, h, e] using this
 
 end Comparison
+
+section BasisComparison
+
+variable {𝕜 : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜]
+variable {U : Type*} [NormedAddCommGroup U] [NormedSpace 𝕜 U] [FiniteDimensional 𝕜 U]
+
+/-- The operator norm on `Und(V)` (`V` a finite-dimensional normed space) and the sup norm
+`basisOpNorm b` of the matrix in a basis `b` are equivalent: `‖f‖ ≤ C ‖f‖_b`. -/
+theorem exists_norm_toContinuousLinearMap_le_basisOpNorm {n : ℕ} (b : Module.Basis (Fin n) 𝕜 U) : ∃ C, 0 ≤ C ∧ ∀ f : U →ₗ[𝕜] U,
+      ‖LinearMap.toContinuousLinearMap f‖ ≤ C * basisOpNorm b f := by
+  obtain ⟨C, hC, h⟩ := LinearMap.exists_norm_le_mul_norm_of_injective
+    (basisMatrix b).toLinearMap (LinearMap.toContinuousLinearMap (𝕜 := 𝕜) (E := U)
+      (F' := U)).toLinearMap (basisMatrix b).injective
+  exact ⟨C, hC, fun f => by simpa [basisOpNorm_eq] using h f⟩
+
+/-- The converse comparison: `‖f‖_b ≤ C ‖f‖`. -/
+theorem exists_basisOpNorm_le_norm_toContinuousLinearMap {n : ℕ} (b : Module.Basis (Fin n) 𝕜 U) : ∃ C, 0 ≤ C ∧ ∀ f : U →ₗ[𝕜] U,
+      basisOpNorm b f ≤ C * ‖LinearMap.toContinuousLinearMap f‖ := by
+  obtain ⟨C, hC, h⟩ := LinearMap.exists_norm_le_mul_norm_of_injective
+    (LinearMap.toContinuousLinearMap (𝕜 := 𝕜) (E := U) (F' := U)).toLinearMap
+    (basisMatrix b).toLinearMap (LinearMap.toContinuousLinearMap (𝕜 := 𝕜)).injective
+  exact ⟨C, hC, fun f => by simpa [basisOpNorm_eq] using h f⟩
+
+end BasisComparison
 
 /-! ### Products of sup norms -/
 

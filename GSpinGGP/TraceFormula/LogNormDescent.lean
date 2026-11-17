@@ -76,6 +76,15 @@ theorem glMaxNorm_mul_le (f g : E ≃ₗ[F] E) : glMaxNorm (f * g) ≤ glMaxNorm
 
 end GLNorm
 
+/-- `1 + log A ≤ (1 + log K + n)(1 + log B)` when `1 ≤ A ≤ K Bⁿ`, `1 ≤ K`, `1 ≤ B`. -/
+theorem one_add_log_le_of_le_mul_pow {A B K : ℝ} {n : ℕ} (hA : 1 ≤ A) (hB : 1 ≤ B) (hK : 1 ≤ K)
+    (h : A ≤ K * B ^ n) : 1 + Real.log A ≤ (1 + Real.log K + n) * (1 + Real.log B) := by
+  have hlA := Real.log_le_log (by linarith) h
+  rw [Real.log_mul (by linarith) (by positivity), Real.log_pow] at hlA
+  have hK0 := Real.log_nonneg hK
+  have hB0 := Real.log_nonneg hB
+  nlinarith
+
 /-! ### `G → SO(W) × SO(V)` -/
 
 namespace GGPData
@@ -127,12 +136,12 @@ theorem logNormSO_mul_le (h k : d.GLWV) :
 
 /-! ### The scalars -/
 
-/-- The central scalars `Z(F) = F^× × F^× ⊆ G(F)`: pairs `(c₁, c₂)` of scalars of `C(W)`, `C(V)`.
+/-- The central scalars `Z(F) = F^× × F^× ⊆ G(F)`: the elements `scalarPair c₁ c₂`.
 This is `ker p` (`scalars_eq_ker`). -/
 def scalars : Subgroup d.G := (d.pair.comp ((scalarGSpin d.QW).prodMap (scalarGSpin d.QV))).range
 
-theorem pair_mem_scalars (c₁ c₂ : Fˣ) :
-    d.pair (scalarGSpin d.QW c₁, scalarGSpin d.QV c₂) ∈ d.scalars := ⟨(c₁, c₂), rfl⟩
+theorem scalarPair_mem_scalars (c₁ c₂ : Fˣ) : d.scalarPair c₁ c₂ ∈ d.scalars :=
+  ⟨(c₁, c₂), rfl⟩
 
 theorem pair_fst_snd (g : d.G) : d.pair (d.fst g, d.snd g) = g := rfl
 
@@ -168,20 +177,6 @@ theorem scalars_le_AG : d.scalars ≤ d.AG := by
 
 /-! ### Norms on `C(W) × C(V)` -/
 
-theorem coe_fst (g : d.G) : ((g : d.ambientˣ) : d.ambient).1 =
-    ((d.fst g : GSpin d.QW) : (CliffordAlgebra d.QW)ˣ) := rfl
-
-theorem coe_snd (g : d.G) : ((g : d.ambientˣ) : d.ambient).2 =
-    ((d.snd g : GSpin d.QV) : (CliffordAlgebra d.QV)ˣ) := rfl
-
-theorem coe_inv_fst (g : d.G) : (((g⁻¹ : d.G) : d.ambientˣ) : d.ambient).1 =
-    ((((d.fst g : GSpin d.QW) : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) :
-      CliffordAlgebra d.QW) := rfl
-
-theorem coe_inv_snd (g : d.G) : (((g⁻¹ : d.G) : d.ambientˣ) : d.ambient).2 =
-    ((((d.snd g : GSpin d.QV) : (CliffordAlgebra d.QV)ˣ)⁻¹ : (CliffordAlgebra d.QV)ˣ) :
-      CliffordAlgebra d.QV) := rfl
-
 theorem lmulPi_prod_injective :
     Function.Injective ((lmulPiₗ F ∘ₗ LinearMap.fst F _ _).prod
       (lmulPiₗ F ∘ₗ LinearMap.snd F _ _) : d.ambient →ₗ[F] _) := by
@@ -205,15 +200,6 @@ theorem exists_max_norm_lmulPi_le : ∃ C, 0 ≤ C ∧ ∀ x : d.ambient,
       d.ambient →ₗ[F] _) (lmulPi_injective F (A := d.ambient))
   exact ⟨C, hC, fun x => (le_of_eq (by rw [Prod.norm_def]; rfl)).trans (h x)⟩
 
-/-- `1 + log A ≤ (1 + log K + n)(1 + log B)` when `1 ≤ A ≤ K Bⁿ`, `1 ≤ K`, `1 ≤ B`. -/
-theorem one_add_log_le_of_le_mul_pow {A B K : ℝ} {n : ℕ} (hA : 1 ≤ A) (hB : 1 ≤ B) (hK : 1 ≤ K)
-    (h : A ≤ K * B ^ n) : 1 + Real.log A ≤ (1 + Real.log K + n) * (1 + Real.log B) := by
-  have hlA := Real.log_le_log (by linarith) h
-  rw [Real.log_mul (by linarith) (by positivity), Real.log_pow] at hlA
-  have hK0 := Real.log_nonneg hK
-  have hB0 := Real.log_nonneg hB
-  nlinarith
-
 /-! ### The comparison -/
 
 /-- **`σ_{SO}(p(g)) ≪ σ_G(g)`** (the easy half; `exists_norm_specP_le`). -/
@@ -235,8 +221,8 @@ theorem exists_logNormSO_pSO_le :
     (le_max_right _ _).trans (le_max_right _ _)
   have b1 := hb ((g : d.ambientˣ) : d.ambient)
   have b2 := hb (((g⁻¹ : d.G) : d.ambientˣ) : d.ambient)
-  rw [coe_fst, coe_snd] at b1
-  rw [coe_inv_fst, coe_inv_snd] at b2
+  rw [val_fst, val_snd] at b1
+  rw [val_inv_fst, val_inv_snd] at b2
   -- the four factor norms are `≤ Cb m`
   have f1 : ‖lmulPi F ((d.fst g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW)‖ ≤ Cb * m :=
     (le_max_left _ _).trans (b1.trans (mul_le_mul_of_nonneg_left hg hCb))
@@ -308,7 +294,7 @@ theorem exists_logNorm_scalars_mul_le :
     (Real.log_nonneg hK)) (Nat.cast_nonneg _), fun g => ?_⟩
   obtain ⟨c₁, hc₁, hc₁'⟩ := hW (d.fst g)
   obtain ⟨c₂, hc₂, hc₂'⟩ := hV (d.snd g)
-  refine ⟨_, d.pair_mem_scalars c₁ c₂, ?_⟩
+  refine ⟨_, d.scalarPair_mem_scalars c₁ c₂, ?_⟩
   have hM : 1 ≤ max (glMaxNorm (specP d.QW (d.fst g))) (glMaxNorm (specP d.QV (d.snd g))) :=
     le_max_of_le_left (one_le_glMaxNorm _)
   have hMW : max 1 (linEquivNorm (specP d.QW (d.fst g))) ≤
@@ -332,12 +318,12 @@ theorem exists_logNorm_scalars_mul_le :
   have b2 := bnd _ _ _ _ (le_max_right _ _) hCV (Nat.le_add_left _ _) (le_max_left _ _) hMV hc₂
   have b3 := bnd _ _ _ _ (le_max_left _ _) hCW (Nat.le_add_right _ _) (le_max_left _ _) hMW hc₁'
   have b4 := bnd _ _ _ _ (le_max_right _ _) hCV (Nat.le_add_left _ _) (le_max_left _ _) hMV hc₂'
-  have e1 : d.fst (d.pair (scalarGSpin d.QW c₁, scalarGSpin d.QV c₂) * g) =
+  have e1 : d.fst (d.scalarPair c₁ c₂ * g) =
       scalarGSpin d.QW c₁ * d.fst g := by rw [map_mul]; rfl
-  have e2 : d.snd (d.pair (scalarGSpin d.QW c₁, scalarGSpin d.QV c₂) * g) =
+  have e2 : d.snd (d.scalarPair c₁ c₂ * g) =
       scalarGSpin d.QV c₂ * d.snd g := by rw [map_mul]; rfl
   obtain ⟨hamb, hamb'⟩ := hfs _ _ _ e1 e2
-  have hmax : maxNorm F d.G (d.pair (scalarGSpin d.QW c₁, scalarGSpin d.QV c₂) * g) ≤
+  have hmax : maxNorm F d.G (d.scalarPair c₁ c₂ * g) ≤
       K * M ^ (NW + NV) := by
     have hKN : Ca * (max CW CV * M ^ (NW + NV)) ≤ K * M ^ (NW + NV) := by
       rw [← mul_assoc]
@@ -385,7 +371,7 @@ theorem logNormModScalars_equiv :
 /-- **`σ_{A_G\G}(g) ∼ σ_{p(A_G)\SO}(p(g))`**: the log-norm `σ_{A_G\G}` of
 `𝒞(A_G(F)\G(F), χ⁻¹)` (`GGPData.logNormModAG` is `infLeft (logNorm F d.G) d.AG`) is equivalent to
 `inf_{a ∈ A_G} σ_{SO}(p(a g))`, the log-norm of `p(A_G)\SO(W) × SO(V)` at `p(g)`; here `p(A_G)` is
-trivial unless `W` or `V` is a hyperbolic plane `U`, when it contains `SO(U)`. -/
+trivial unless `W` or `V` is a hyperbolic plane `U`, when it contains `p(GSpin(U))`. -/
 theorem logNormModAG_equiv :
     ∃ c C, 0 ≤ c ∧ 0 ≤ C ∧ ∀ g : d.G,
       infLeft (d.logNormSO ∘ d.pSO) d.AG g ≤ c * infLeft (logNorm F d.G) d.AG g ∧

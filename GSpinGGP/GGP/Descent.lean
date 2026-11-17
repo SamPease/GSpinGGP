@@ -662,19 +662,6 @@ theorem disjoint_lieCenter_lie0 : Disjoint d.lieCenter d.lie0 := by
   have hb := h2 (b • 1) (Submodule.smul_mem _ _ (Submodule.subset_span rfl)) (by simpa using h0.2)
   ext <;> simp [ha, hb]
 
-/-- The underlying first component of `g ∈ G ⊆ (C(W) × C(V))^×`. -/
-theorem val_fst (g : d.G) :
-    (((g : d.ambientˣ) : d.ambient)).1 = (((d.fst g : GSpin d.QW) : (CliffordAlgebra d.QW)ˣ) :
-      CliffordAlgebra d.QW) := rfl
-
-/-- The underlying second component of `g ∈ G ⊆ (C(W) × C(V))^×`. -/
-theorem val_snd (g : d.G) :
-    (((g : d.ambientˣ) : d.ambient)).2 = (((d.snd g : GSpin d.QV) : (CliffordAlgebra d.QV)ˣ) :
-      CliffordAlgebra d.QV) := rfl
-
-/-- The central scalars `(c₁, c₂) ∈ G_m × G_m ⊆ G`. -/
-def scalarPair (c₁ c₂ : Kˣ) : d.G := d.pair (scalarGSpin d.QW c₁, scalarGSpin d.QV c₂)
-
 /-- The scalars `(c₁, c₂)` commute with the whole ambient algebra `C(W) × C(V)`. -/
 theorem scalarPair_commute (c₁ c₂ : Kˣ) (X : d.ambient) :
     ((d.scalarPair c₁ c₂ : d.ambientˣ) : d.ambient) * X =
