@@ -162,4 +162,5 @@ import GSpinGGP.Sanity.Witnesses
 import GSpinGGP.Sanity.NilpotentOrbit
 import GSpinGGP.Sanity.LieAudit
 import GSpinGGP.Sanity.InvariantSetsAudit
+import GSpinGGP.Sanity.WeakCartanFrame
 import GSpinGGP.Sanity.AxiomRedTeam
