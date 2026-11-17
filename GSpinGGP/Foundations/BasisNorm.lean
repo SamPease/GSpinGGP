@@ -33,6 +33,10 @@ bounded (`isCompact_orthogonal_setOf_basisOpNorm_le`, `exists_basisOpNorm_le_of_
 * `isCompact_orthogonal_setOf_basisOpNorm_le`,
   `isCompact_specialOrthogonal_setOf_basisOpNorm_le`: bounded sets are relatively compact.
 * `exists_basisOpNorm_le_of_isCompact`: compact sets are bounded.
+* `LinearMap.exists_norm_le_mul_norm_of_injective`: all norms on a finite-dimensional space are
+  equivalent; `exists_norm_toContinuousLinearMap_le_basisOpNorm`,
+  `exists_basisOpNorm_le_norm_toContinuousLinearMap`: `basisOpNorm b` is equivalent to the operator
+  norm.
 * `polar_apply_eq_mul_conj`, `norm_polar_le_of_eigen`, `norm_polar_le_of_fixed`: for eigenvectors
   `x`, `y` of an isometry `A`, `polar(h x, y)` is controlled by the norm of `A h A⁻¹`.
 -/
@@ -462,6 +466,53 @@ theorem exists_basisOpNorm_le_of_isCompact {K : Set (V ≃ₗ[F] V)} (hK : IsCom
   exact ⟨M, fun g hg => hM ⟨g, hg, rfl⟩⟩
 
 end Compact
+
+/-! ### Comparison of norms on a finite-dimensional space -/
+
+section Comparison
+
+variable {𝕜 : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜]
+variable {E X Y : Type*} [AddCommGroup E] [Module 𝕜 E] [FiniteDimensional 𝕜 E]
+  [NormedAddCommGroup X] [NormedSpace 𝕜 X] [NormedAddCommGroup Y] [NormedSpace 𝕜 Y]
+
+/-- On a finite-dimensional space `E`, if `f : E → X` is injective then `‖g x‖ ≤ C ‖f x‖` for any
+linear `g : E → Y`: all norms on `E` are equivalent. -/
+theorem _root_.LinearMap.exists_norm_le_mul_norm_of_injective (f : E →ₗ[𝕜] X) (g : E →ₗ[𝕜] Y)
+    (hf : Function.Injective f) : ∃ C, 0 ≤ C ∧ ∀ x, ‖g x‖ ≤ C * ‖f x‖ := by
+  let e := LinearEquiv.ofInjective f hf
+  let h : LinearMap.range f →ₗ[𝕜] Y := g ∘ₗ e.symm.toLinearMap
+  let hc : LinearMap.range f →L[𝕜] Y := ⟨h, LinearMap.continuous_of_finiteDimensional h⟩
+  refine ⟨‖hc‖, norm_nonneg _, fun x => ?_⟩
+  have := hc.le_opNorm (e x)
+  simpa [hc, h, e] using this
+
+end Comparison
+
+section BasisComparison
+
+variable {𝕜 : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜]
+variable {U : Type*} [NormedAddCommGroup U] [NormedSpace 𝕜 U] [FiniteDimensional 𝕜 U]
+
+/-- The operator norm on `End(U)` (`U` a finite-dimensional normed space) and the sup norm
+`basisOpNorm b` of the matrix in a basis `b` are equivalent: `‖f‖ ≤ C ‖f‖_b`. -/
+theorem exists_norm_toContinuousLinearMap_le_basisOpNorm {n : ℕ} (b : Module.Basis (Fin n) 𝕜 U) :
+    ∃ C, 0 ≤ C ∧ ∀ f : U →ₗ[𝕜] U,
+      ‖LinearMap.toContinuousLinearMap f‖ ≤ C * basisOpNorm b f := by
+  obtain ⟨C, hC, h⟩ := LinearMap.exists_norm_le_mul_norm_of_injective
+    (basisMatrix b).toLinearMap (LinearMap.toContinuousLinearMap (𝕜 := 𝕜) (E := U)
+      (F' := U)).toLinearMap (basisMatrix b).injective
+  exact ⟨C, hC, fun f => by simpa [basisOpNorm_eq] using h f⟩
+
+/-- The converse comparison: `‖f‖_b ≤ C ‖f‖`. -/
+theorem exists_basisOpNorm_le_norm_toContinuousLinearMap {n : ℕ} (b : Module.Basis (Fin n) 𝕜 U) :
+    ∃ C, 0 ≤ C ∧ ∀ f : U →ₗ[𝕜] U,
+      basisOpNorm b f ≤ C * ‖LinearMap.toContinuousLinearMap f‖ := by
+  obtain ⟨C, hC, h⟩ := LinearMap.exists_norm_le_mul_norm_of_injective
+    (LinearMap.toContinuousLinearMap (𝕜 := 𝕜) (E := U) (F' := U)).toLinearMap
+    (basisMatrix b).toLinearMap (LinearMap.toContinuousLinearMap (𝕜 := 𝕜)).injective
+  exact ⟨C, hC, fun f => by simpa [basisOpNorm_eq] using h f⟩
+
+end BasisComparison
 
 /-! ## Conjugation by an isometry with eigenvectors -/
 

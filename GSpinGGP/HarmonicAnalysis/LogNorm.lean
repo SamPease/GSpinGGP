@@ -38,7 +38,9 @@ reductive group.
   fibres are the orbits of a family of continuous maps.
 * `infLeft`: `1 ≤ σ_{S\G} ≤ σ`, left `S`-invariance, `σ_{S\G}(gh) ≤ σ_{S\G}(g) + σ(h)`; for
   normal `S`, `σ_{S\G}(gh) ≤ σ_{S\G}(g) + σ_{S\G}(h)` and `σ_{S\G}(g⁻¹) = σ_{S\G}(g)`;
-  `fiberInf_le_infLeft` compares the two constructions.
+  `fiberInf_le_infLeft` compares the two constructions; `le_mul_infLeft` and
+  `infLeft_le_of_nonneg` compare `inf_{s ∈ S} τ(s g)` for different functions `τ ≥ 0`;
+  `infLeft_map` pushes it along a homomorphism; `one_add_log_le_of_le_mul_pow`.
 -/
 
 open Set Topology
@@ -347,5 +349,47 @@ theorem IsLogNorm.isLogNorm_infLeft [S.Normal] : IsLogNorm (infLeft σ S) where
     exact ⟨C, by rintro _ ⟨k, hk, rfl⟩; exact (hσ.infLeft_le S k).trans (hC ⟨k, hk, rfl⟩)⟩
 
 end InfLeft
+
+section InfLeftCompare
+
+variable {τ : G → ℝ} (S : Subgroup G)
+
+omit [TopologicalSpace G] in
+/-- `inf_{s ∈ S} τ(s g) ≤ τ(s g)` for a function `τ ≥ 0` (no log-norm axioms needed). -/
+theorem infLeft_le_of_nonneg (hτ : ∀ g, 0 ≤ τ g) {s : G} (hs : s ∈ S) (g : G) :
+    infLeft τ S g ≤ τ (s * g) :=
+  ciInf_le ⟨0, by rintro _ ⟨t, rfl⟩; exact hτ _⟩ (⟨s, hs⟩ : S)
+
+omit [TopologicalSpace G] in
+/-- If `a ≤ c τ(s g)` for every `s ∈ S` (with `c ≥ 0`), then `a ≤ c inf_{s ∈ S} τ(s g)`. -/
+theorem le_mul_infLeft {a c : ℝ} (hc : 0 ≤ c) {g : G} (h : ∀ s ∈ S, a ≤ c * τ (s * g)) :
+    a ≤ c * infLeft τ S g := by
+  rw [infLeft, Real.mul_iInf_of_nonneg hc]
+  exact le_ciInf fun s => h s s.2
+
+omit [TopologicalSpace G] in
+/-- `inf_{s ∈ p(S)} τ(s p(g)) = inf_{s ∈ S} τ(p(s g))` for a homomorphism `p` and `τ ≥ 0`: the
+push-forward of `τ` to `p(S)\G'` at `p(g)` is the push-forward of `τ ∘ p` to `S\G` at `g`. -/
+theorem infLeft_map {G' : Type*} [Group G'] (p : G →* G') {τ' : G' → ℝ} (hτ : ∀ x, 0 ≤ τ' x)
+    (g : G) : infLeft τ' (S.map p) (p g) = infLeft (τ' ∘ p) S g := by
+  apply le_antisymm
+  · refine le_ciInf fun s => ?_
+    exact (ciInf_le ⟨0, by rintro _ ⟨t, rfl⟩; exact hτ _⟩ (⟨p s, s, s.2, rfl⟩ : S.map p)).trans_eq (by simp)
+  · refine le_ciInf fun t => ?_
+    obtain ⟨s, hs, ht⟩ := t.2
+    refine (ciInf_le ⟨0, by rintro _ ⟨t, rfl⟩; exact hτ _⟩ (⟨s, hs⟩ : S)).trans_eq ?_
+    simp [ht]
+
+end InfLeftCompare
+
+/-- `1 + log A ≤ (1 + log K + n)(1 + log B)` when `1 ≤ A ≤ K Bⁿ`, `1 ≤ K`, `1 ≤ B`: a polynomial
+bound `A ≪ Bⁿ` gives `1 + log A ≪ 1 + log B`. -/
+theorem one_add_log_le_of_le_mul_pow {A B K : ℝ} {n : ℕ} (hA : 1 ≤ A) (hB : 1 ≤ B) (hK : 1 ≤ K)
+    (h : A ≤ K * B ^ n) : 1 + Real.log A ≤ (1 + Real.log K + n) * (1 + Real.log B) := by
+  have hlA := Real.log_le_log (by linarith) h
+  rw [Real.log_mul (by linarith) (by positivity), Real.log_pow] at hlA
+  have hK0 := Real.log_nonneg hK
+  have hB0 := Real.log_nonneg hB
+  nlinarith
 
 end GSpinGGP

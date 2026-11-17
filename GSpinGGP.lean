@@ -157,6 +157,8 @@ import GSpinGGP.TraceFormula.Lie
 import GSpinGGP.TraceFormula.Spine
 import GSpinGGP.TraceFormula
 import GSpinGGP.HarmonicAnalysis.LogNorm
+import GSpinGGP.Foundations.NormDescent
+import GSpinGGP.TraceFormula.LogNormDescent
 import GSpinGGP.Main
 import GSpinGGP.Sanity.Witnesses
 import GSpinGGP.Sanity.NilpotentOrbit

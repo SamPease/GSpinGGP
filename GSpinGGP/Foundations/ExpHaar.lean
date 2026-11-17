@@ -159,6 +159,13 @@ lemma lmulPi_zero : lmulPi F (0 : A) = 0 := map_zero (lmulPiₗ F)
 lemma lmulPi_injective : Function.Injective (lmulPi F : A → VA →L[F] VA) :=
   Function.LeftInverse.injective (lmulPiInv_lmulPi F)
 
+lemma norm_lmulPi_smul (c : F) (a : A) : ‖lmulPi F (c • a)‖ = ‖c‖ * ‖lmulPi F a‖ := by
+  change ‖lmulPiₗ F (c • a)‖ = _
+  rw [map_smul, norm_smul]; rfl
+
+lemma norm_lmulPi_pos {a : A} (ha : a ≠ 0) : 0 < ‖lmulPi F a‖ :=
+  norm_pos_iff.2 fun h => ha (lmulPi_injective F (by rw [h, lmulPi_zero]))
+
 lemma norm_lmulPi_add_le (a b : A) :
     ‖lmulPi F (a + b)‖ ≤ max ‖lmulPi F a‖ ‖lmulPi F b‖ := by
   rw [lmulPi_add]; exact IsUltrametricDist.norm_add_le_max _ _
