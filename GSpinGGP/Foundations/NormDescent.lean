@@ -288,7 +288,8 @@ theorem exists_norm_mul_norm_inv_le (hQ : IsNondeg Q) :
     obtain ⟨C₁, hC₁, h₁⟩ := exists_norm_mul_norm_le_of_isSimpleRing
       (lmulPiₗ F ∘ₗ (even Q).val.toLinearMap)
       ((lmulPi_injective F).comp Subtype.val_injective) e e.span_eq
-    obtain ⟨C₂, N, hC₂, h₂⟩ := exists_norm_conj_family_le (F := F) fun i => (e i : CliffordAlgebra Q)
+    obtain ⟨C₂, N, hC₂, h₂⟩ := exists_norm_conj_family_le (F := F)
+      fun i => (e i : CliffordAlgebra Q)
     refine ⟨C₁ * C₂, N, by positivity, fun g => ?_⟩
     have hg : ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∈ even Q := g.2.1
     have hg' : (((g : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∈
@@ -301,7 +302,8 @@ theorem exists_norm_mul_norm_inv_le (hQ : IsNondeg Q) :
 theorem exists_norm_specP_le :
     ∃ C, 0 ≤ C ∧ ∀ g : GSpin Q, linEquivNorm (specP Q g) ≤
       C * (‖lmulPi F ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)‖ *
-        ‖lmulPi F (((g : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)‖) := by
+        ‖lmulPi F (((g : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) :
+          CliffordAlgebra Q)‖) := by
   obtain ⟨Cι, hCι, hι⟩ := exists_norm_lmulPi_ι_le (F := F) (Q := Q)
   obtain ⟨C₀, hC₀, h₀⟩ := LinearMap.exists_norm_le_mul_norm_of_injective (lmulPiₗ F) (ιInv Q)
     (lmulPi_injective F)
