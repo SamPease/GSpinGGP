@@ -13,6 +13,7 @@ Continuing `GSpinGGP.Foundations.WeakCartanSO`: `b` is an orthogonal basis of an
 * `pairTorus`: the split torus `a(t)` of the plane `⟨b i₀, b i₁⟩`, `u ↦ t u`, `u' ↦ t⁻¹ u'`
   (Tau Ceti's `hyperbolicPairTorus`), with its matrix entries and the bound
   `‖a(t)‖ ≤ ‖2‖⁻¹ max(‖t‖, ‖t‖⁻¹)`.
+* `pairTorus_commute`: an isometry fixing `b i₀` and `b i₁` commutes with `a(t)`.
 * `pairTorus_inv_apply_left`: `a(t)⁻¹ (b i₀) = (2t)⁻¹ u + (t/2) u'`, the normal form of the orbit
   lemma.
 * `rotation_lemma` (the orthogonal analogue of Lemme 11.0.3 in §11 of Beuzart-Plessis's thèse,
@@ -139,6 +140,22 @@ theorem pairTorus_inv_apply_left (t : Fˣ) :
   module
 
 end Torus
+
+/-- An isometry fixing `b i₀` and `b i₁` commutes with the split torus of the pair. -/
+theorem pairTorus_commute (hb : IsOrthoBasis Q b) {i₀ i₁ : Fin n} (hne : i₀ ≠ i₁) {ν : F}
+    (h₀ : Q (b i₀) = ν) (h₁ : Q (b i₁) = -ν) {x : V ≃ₗ[F] V}
+    (hx : x ∈ TauCeti.QuadraticMap.orthogonalGroup Q) (hx₀ : x (b i₀) = b i₀)
+    (hx₁ : x (b i₁) = b i₁) (t : Fˣ) :
+    x * pairTorus hb hne h₀ h₁ t = pairTorus hb hne h₀ h₁ t * x := by
+  have hu : x (b i₀ + b i₁) = b i₀ + b i₁ := by rw [map_add, hx₀, hx₁]
+  have hv : x ((4 * ν)⁻¹ • (b i₀ - b i₁)) = (4 * ν)⁻¹ • (b i₀ - b i₁) := by
+    rw [map_smul, map_sub, hx₀, hx₁]
+  have hp : ∀ y w, x w = w → polar Q (x y) w = polar Q y w := fun y w hw => by
+    conv_lhs => rw [← hw]
+    exact TauCeti.QuadraticMap.polar_apply_of_mem_orthogonalGroup hx y w
+  ext y
+  rw [LinearEquiv.mul_apply, LinearEquiv.mul_apply, pairTorus_apply, pairTorus_apply,
+    hp y _ hu, hp y _ hv, map_add, map_add, map_smul, map_smul, hu, hv]
 
 section TorusBound
 

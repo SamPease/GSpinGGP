@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import Mathlib
 import TauCeti.Topology.Algebra.QuadraticForm.OrthogonalGroup.SpecialOrthogonal
 import TauCeti.LinearAlgebra.QuadraticForm.OrthogonalGroup.OrthogonalBasis
+import TauCeti.LinearAlgebra.QuadraticForm.OrthogonalBasis
 
 /-!
 # Coordinate norms for a basis, and bounded subsets of orthogonal groups
@@ -25,7 +26,9 @@ bounded (`isCompact_orthogonal_setOf_basisOpNorm_le`, `exists_basisOpNorm_le_of_
 
 * `basisNorm`, `basisOpNorm`, `basisNorm_apply_le`, `basisOpNorm_mul_le`: the norms.
 * `IsOrthoBasis`, `exists_isOrthoBasis`, `repr_eq_polar_div`, `norm_polar_le`, `norm_apply_le`:
-  an orthogonal basis.
+  an orthogonal basis; `IsOrthoBasis.unitsSMul`: rescaling it by units;
+  `exists_isOrthoBasis_append`: an orthogonal family of anisotropic vectors in a nondegenerate
+  space extends to such a basis.
 * `basisOpNorm_symm_le`: `‖g⁻¹‖ ≤ κ ‖g‖` on the orthogonal group.
 * `isCompact_orthogonal_setOf_basisOpNorm_le`,
   `isCompact_specialOrthogonal_setOf_basisOpNorm_le`: bounded sets are relatively compact.
@@ -171,6 +174,73 @@ theorem exists_isOrthoBasis [CharZero F] [FiniteDimensional F V] (Q : QuadraticF
   show Q (v i + v j) = Q (v i) + Q (v j)
   rw [QuadraticMap.polar] at h3
   linear_combination h3
+
+omit [CharZero F] in
+/-- Rescaling the vectors of an orthogonal basis by units (`Module.Basis.unitsSMul`) gives an
+orthogonal basis. -/
+theorem IsOrthoBasis.unitsSMul (hb : IsOrthoBasis Q b) (w : Fin n → Fˣ) :
+    IsOrthoBasis Q (b.unitsSMul w) where
+  isOrtho i j hij := by
+    rw [← QuadraticMap.isOrtho_polarBilin, QuadraticMap.polarBilin_apply_apply,
+      Module.Basis.unitsSMul_apply, Module.Basis.unitsSMul_apply, Units.smul_def, Units.smul_def,
+      QuadraticMap.polar_smul_left, QuadraticMap.polar_smul_right,
+      (hb.isOrtho i j hij).polar_eq_zero, smul_zero, smul_zero]
+  apply_ne_zero i := by
+    rw [Module.Basis.unitsSMul_apply, Units.smul_def, QuadraticMap.map_smul, smul_eq_mul]
+    exact mul_ne_zero (mul_ne_zero (w i).ne_zero (w i).ne_zero) (hb.apply_ne_zero i)
+
+/-- **Extension to an orthogonal basis.** In a nondegenerate quadratic space, an orthogonal
+family `w₀, …, w_{k-1}` of anisotropic vectors is the beginning of an orthogonal basis of
+anisotropic vectors: the span `U` of the `wᵢ` is nondegenerate, hence so is `U^⊥`, and
+`V = U ⊕ U^⊥` (Tau Ceti's `QuadraticMap.Nondegenerate.nondegenerate_restrict_orthogonal`,
+`isCompl_orthogonal`); an orthogonal basis of `U^⊥`
+(`QuadraticMap.Nondegenerate.exists_orthogonal_basis`) completes the family. -/
+theorem exists_isOrthoBasis_append [FiniteDimensional F V] (hQ : Q.Nondegenerate) {k : ℕ}
+    {w : Fin k → V} (hw : ∀ i j, i ≠ j → Q.IsOrtho (w i) (w j)) (hw0 : ∀ i, Q (w i) ≠ 0) :
+    ∃ (m : ℕ) (c : Fin m → V) (b : Module.Basis (Fin (k + m)) F V),
+      IsOrthoBasis Q b ∧ ⇑b = Fin.append w c := by
+  let _ : Invertible (2 : F) := invertibleOfNonzero two_ne_zero
+  have hself : ∀ x, Q x ≠ 0 → Q.polarBilin x x ≠ 0 := fun x hx => by
+    rw [QuadraticMap.polarBilin_apply_apply, QuadraticMap.polar_self, two_smul, ← two_mul]
+    exact mul_ne_zero two_ne_zero hx
+  have hli : LinearIndependent F w := LinearMap.BilinForm.linearIndependent_of_iIsOrtho
+    (fun i j hij => QuadraticMap.isOrtho_polarBilin.mpr (hw i j hij)) fun i => hself _ (hw0 i)
+  set U := Submodule.span F (Set.range w)
+  have hres : ∀ (N : Submodule F V) (x y : N), (Q.restrict N).IsOrtho x y ↔ Q.IsOrtho x y := by
+    intro N x y; simp [QuadraticMap.isOrtho_def]
+  have hU : (Q.restrict U).Nondegenerate := by
+    refine QuadraticMap.nondegenerate_of_isOrthoᵢ (b := Module.Basis.span hli)
+      (fun i j hij => QuadraticMap.associated_isOrtho.mpr ?_) fun i => ?_
+    · rw [hres, Module.Basis.coe_span_apply, Module.Basis.coe_span_apply]; exact hw i j hij
+    · rw [QuadraticMap.restrict_apply, Module.Basis.coe_span_apply]; exact hw0 i
+  set U' := LinearMap.BilinForm.orthogonal Q.polarBilin U
+  obtain ⟨bc, hbc, hbc0⟩ := (hQ.nondegenerate_restrict_orthogonal hU).exists_orthogonal_basis
+  have hc : IsCompl U U' := hU.isCompl_orthogonal
+  let c : Fin (finrank F U') → V := fun i => bc i
+  have hortho : ∀ i j, i ≠ j → Q.IsOrtho (Fin.append w c i) (Fin.append w c j) := by
+    have hwc : ∀ i j, Q.IsOrtho (w i) (c j) := fun i j =>
+      QuadraticMap.isOrtho_polarBilin.mp ((bc j).2 (w i) (Submodule.subset_span ⟨i, rfl⟩))
+    intro i j hij
+    induction i using Fin.addCases <;> induction j using Fin.addCases <;>
+      simp only [Fin.append_left, Fin.append_right]
+    · exact hw _ _ fun h => hij (by rw [h])
+    · exact hwc _ _
+    · exact QuadraticMap.isOrtho_comm.mp (hwc _ _)
+    · exact (hres _ _ _).mp (hbc _ _ fun h => hij (by rw [h]))
+  have hani : ∀ i, Q (Fin.append w c i) ≠ 0 := by
+    intro i
+    induction i using Fin.addCases <;> simp only [Fin.append_left, Fin.append_right]
+    · exact hw0 _
+    · exact hbc0 _
+  have hli' : LinearIndependent F (Fin.append w c) :=
+    LinearMap.BilinForm.linearIndependent_of_iIsOrtho
+      (fun i j hij => QuadraticMap.isOrtho_polarBilin.mpr (hortho i j hij))
+      fun i => hself _ (hani i)
+  have hcard : Fintype.card (Fin (k + finrank F U')) = finrank F V := by
+    rw [Fintype.card_fin, ← Submodule.finrank_add_eq_of_isCompl hc, finrank_span_eq_card hli,
+      Fintype.card_fin]
+  refine ⟨_, c, basisOfLinearIndependentOfCardEqFinrank' _ hli' hcard, ?_, by simp⟩
+  exact ⟨fun i j hij => by simpa using hortho i j hij, fun i => by simpa using hani i⟩
 
 variable (hb : IsOrthoBasis Q b)
 include hb

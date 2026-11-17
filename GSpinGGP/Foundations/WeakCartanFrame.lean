@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Foundations.WeakCartanRotation
+import GSpinGGP.Foundations.HypFrame
 
 /-!
 # Frames, split tori and chambers for the weak Cartan decomposition of `SO(V₀)`
@@ -26,11 +27,18 @@ the orthogonal analogue of Prop. 11.0.1 in §11 of Beuzart-Plessis's thèse).
   `⟨u₁⟩ ⊂ ⟨u₁, u₂⟩ ⊂ …`, i.e. `|α| ≤ 1` for every root `α` of that flag stabilizer:
   `tᵢ / tₖ` and `tᵢ tₖ` for `i < k`, and `tᵢ` when the anisotropic part of level `j` is nonzero
   (types B, D and, for one pair without anisotropic part, the torus T).
+* `IsFrame.unitsSMul`, `fixer_unitsSMul`: rescaling the basis by units `wᵢ` (Mathlib's
+  `Module.Basis.unitsSMul`) keeps the fixers, and keeps the frame when `wᵢ² = 1` on it.
 * `signBasis e b`: the basis `((-1)^{e i} b i)`; it is again a frame with the same fixers, and
   the torus of a pair is unchanged or inverted according as its two signs agree or not
   (`levelTorus_signBasis`, `multiTorus_signBasis_of_even`, `multiTorus_signBasis_of_odd`). For
   `e = id` both flags are reversed.
 * `inChamber_cons`: the chamber adjustment for the induction.
+* `isHypFrame_pair`, `multiTorus_mem_hypTorus`: the pairs of level `j` form a hyperbolic frame
+  (`IsHypFrame`) with complement the span of the other basis vectors, and the split torus of level
+  `j` lies in its torus `hypTorus`.
+* `exists_isFrame`: in a nondegenerate quadratic space every anisotropic vector starts a maximal
+  frame of an orthogonal basis.
 -/
 
 noncomputable section
@@ -98,23 +106,23 @@ theorem IsFrame.apply_right (hf : IsFrame Q b ν l) {j : ℕ} (hj : j + 1 ≤ l)
     Q (b ⟨j + 1, hf.idx_lt hj⟩) = -((-1) ^ j * ν) := by
   rw [hf.apply_eq _ hj]; simp only [pow_succ]; ring
 
-theorem idx_ne {j : ℕ} (h₀ : j < n) (h₁ : j + 1 < n) :
-    (⟨j, h₀⟩ : Fin n) ≠ ⟨j + 1, h₁⟩ := by
-  simp [Fin.ext_iff]
+private theorem mk_ne_mk_add_one {j : ℕ} (h₀ : j < n) (h₁ : j + 1 < n) :
+    (⟨j, h₀⟩ : Fin n) ≠ ⟨j + 1, h₁⟩ :=
+  Fin.ne_of_val_ne (Nat.ne_add_one j)
 
 /-- The split torus `a(t)` of the hyperbolic plane `⟨b j, b (j+1)⟩` (for `j + 1 ≤ l`; the
 identity otherwise). -/
 def levelTorus (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l) (j : ℕ) (t : Fˣ) :
     V ≃ₗ[F] V :=
   if hj : j + 1 ≤ l then
-    pairTorus hb (idx_ne (hf.idx_lt (by omega)) (hf.idx_lt hj)) (hf.apply_left hj)
+    pairTorus hb (mk_ne_mk_add_one (hf.idx_lt (by omega)) (hf.idx_lt hj)) (hf.apply_left hj)
       (hf.apply_right hj) t
   else 1
 
 variable (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l)
 
 theorem levelTorus_of_le {j : ℕ} (hj : j + 1 ≤ l) (t : Fˣ) :
-    levelTorus hb hf j t = pairTorus hb (idx_ne (hf.idx_lt (by omega)) (hf.idx_lt hj))
+    levelTorus hb hf j t = pairTorus hb (mk_ne_mk_add_one (hf.idx_lt (by omega)) (hf.idx_lt hj))
       (hf.apply_left hj) (hf.apply_right hj) t := by
   rw [levelTorus, dite_eq_left hj]
 
@@ -145,22 +153,6 @@ theorem levelTorus_mem_fixer (j : ℕ) (t : Fˣ) : levelTorus hb hf j t ∈ fixe
 end Level
 
 /-! ## Commutation with the pair torus -/
-
-/-- An isometry fixing `b i₀` and `b i₁` commutes with the split torus of the pair. -/
-theorem pairTorus_commute (hb : IsOrthoBasis Q b) {i₀ i₁ : Fin n} (hne : i₀ ≠ i₁) {ν : F}
-    (h₀ : Q (b i₀) = ν) (h₁ : Q (b i₁) = -ν) {x : V ≃ₗ[F] V}
-    (hx : x ∈ TauCeti.QuadraticMap.orthogonalGroup Q) (hx₀ : x (b i₀) = b i₀)
-    (hx₁ : x (b i₁) = b i₁) (t : Fˣ) :
-    x * pairTorus hb hne h₀ h₁ t = pairTorus hb hne h₀ h₁ t * x := by
-  have hu : x (b i₀ + b i₁) = b i₀ + b i₁ := by rw [map_add, hx₀, hx₁]
-  have hv : x ((4 * ν)⁻¹ • (b i₀ - b i₁)) = (4 * ν)⁻¹ • (b i₀ - b i₁) := by
-    rw [map_smul, map_sub, hx₀, hx₁]
-  have hp : ∀ y w, x w = w → polar Q (x y) w = polar Q y w := fun y w hw => by
-    conv_lhs => rw [← hw]
-    exact TauCeti.QuadraticMap.polar_apply_of_mem_orthogonalGroup hx y w
-  ext y
-  rw [LinearEquiv.mul_apply, LinearEquiv.mul_apply, pairTorus_apply, pairTorus_apply,
-    hp y _ hu, hp y _ hv, map_add, map_add, map_smul, map_smul, hu, hv]
 
 theorem levelTorus_commute {ν : F} {l : ℕ} (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l)
     {j : ℕ} {x : V ≃ₗ[F] V} (hx : x ∈ fixer Q b (j + 2)) (t : Fˣ) :
@@ -212,6 +204,27 @@ end Multi
 
 section Sign
 
+/-- `Q (wᵢ bᵢ) = wᵢ² Q bᵢ`. -/
+theorem apply_unitsSMul (w : Fin n → Fˣ) (i : Fin n) :
+    Q (b.unitsSMul w i) = (w i : F) ^ 2 * Q (b i) := by
+  rw [Module.Basis.unitsSMul_apply, Units.smul_def, QuadraticMap.map_smul, smul_eq_mul, _root_.sq]
+
+/-- Rescaling the basis by units with `wᵢ² = 1` for `i ≤ l` keeps the frame. -/
+theorem IsFrame.unitsSMul {ν : F} {l : ℕ} (hf : IsFrame Q b ν l) (w : Fin n → Fˣ)
+    (hw : ∀ i : Fin n, i.val ≤ l → (w i : F) ^ 2 = 1) : IsFrame Q (b.unitsSMul w) ν l where
+  lt := hf.lt
+  apply_eq i hi := by rw [apply_unitsSMul, hw i hi, one_mul]; exact hf.apply_eq i hi
+  maximal x hx := hf.maximal x fun i hi => by
+    have := hx i hi
+    rwa [Module.Basis.repr_unitsSMul, smul_eq_zero_iff_eq] at this
+
+/-- Rescaling the basis by units does not change the fixers. -/
+theorem fixer_unitsSMul (w : Fin n → Fˣ) (j : ℕ) : fixer Q (b.unitsSMul w) j = fixer Q b j := by
+  ext g
+  simp only [mem_fixer_iff, Module.Basis.unitsSMul_apply, Units.smul_def, map_smul]
+  refine and_congr_right fun _ => forall_congr' fun i => imp_congr_right fun _ => ?_
+  exact smul_right_inj (w i).ne_zero
+
 variable (e : ℕ → ℕ)
 
 /-- The basis `((-1)^{e i} b i)`. -/
@@ -221,40 +234,16 @@ def signBasis (b : Module.Basis (Fin n) F V) : Module.Basis (Fin n) F V :=
 theorem signBasis_apply (i : Fin n) : signBasis e b i = ((-1 : F) ^ e i.val) • b i := by
   rw [signBasis, Module.Basis.unitsSMul_apply, Units.smul_def]; simp
 
-theorem sign_sq (i : ℕ) : ((-1 : F) ^ i) * (-1) ^ i = 1 := by
-  rw [← mul_pow]; simp
-
-theorem apply_signBasis (i : Fin n) : Q (signBasis e b i) = Q (b i) := by
-  rw [signBasis_apply, QuadraticMap.map_smul, smul_eq_mul, sign_sq, one_mul]
-
-theorem signBasis_repr (x : V) (i : Fin n) :
-    (signBasis e b).repr x i = (-1 : F) ^ e i.val * b.repr x i := by
-  rw [signBasis, Module.Basis.repr_unitsSMul, Units.smul_def]
-  simp [← inv_pow]
-
 theorem _root_.GSpinGGP.IsOrthoBasis.signBasis (hb : IsOrthoBasis Q b) :
-    IsOrthoBasis Q (signBasis e b) where
-  isOrtho i j hij := by
-    rw [signBasis_apply, signBasis_apply]
-    rw [← QuadraticMap.isOrtho_polarBilin, QuadraticMap.polarBilin_apply_apply, polar_smul_left,
-      polar_smul_right, hb.polar_eq_zero i j hij]
-    simp
-  apply_ne_zero i := by rw [apply_signBasis]; exact hb.apply_ne_zero i
+    IsOrthoBasis Q (signBasis e b) :=
+  hb.unitsSMul _
 
 theorem IsFrame.signBasis {ν : F} {l : ℕ} (hf : IsFrame Q b ν l) :
-    IsFrame Q (signBasis e b) ν l where
-  lt := hf.lt
-  apply_eq i hi := by rw [apply_signBasis]; exact hf.apply_eq i hi
-  maximal x hx := hf.maximal x fun i hi => by
-    have := hx i hi
-    rw [signBasis_repr] at this
-    exact (mul_eq_zero.1 this).resolve_left (pow_ne_zero _ (by norm_num))
+    IsFrame Q (signBasis e b) ν l :=
+  hf.unitsSMul _ fun i _ => by simp [← pow_mul]
 
-theorem fixer_signBasis (j : ℕ) : fixer Q (signBasis e b) j = fixer Q b j := by
-  ext g
-  simp only [mem_fixer_iff, signBasis_apply, map_smul]
-  refine and_congr_right fun _ => forall_congr' fun i => imp_congr_right fun _ => ?_
-  exact smul_right_inj (pow_ne_zero _ (by norm_num))
+theorem fixer_signBasis (j : ℕ) : fixer Q (signBasis e b) j = fixer Q b j :=
+  fixer_unitsSMul _ j
 
 /-- Changing the signs of the basis: the torus of the pair `(b j, b (j+1))` is unchanged if the
 two signs agree and inverted if they differ. -/
@@ -265,16 +254,14 @@ theorem levelTorus_signBasis {ν : F} {l : ℕ} (hb : IsOrthoBasis Q b) (hf : Is
   set t' : Fˣ := if Odd (e j + e (j + 1)) then t⁻¹ else t
   set σ : F := (-1) ^ e j with hσd
   set σ' : F := (-1) ^ e (j + 1) with hσd'
-  have hσ : σ * σ = 1 := sign_sq _
-  have hσ' : σ' * σ' = 1 := sign_sq _
-  have hσ2 : σ ^ 2 = 1 := by rw [_root_.sq]; exact hσ
-  have hσ2' : σ' ^ 2 = 1 := by rw [_root_.sq]; exact hσ'
+  have hσ : σ * σ = 1 := by rw [← mul_pow]; norm_num
+  have hσ' : σ' * σ' = 1 := by rw [← mul_pow]; norm_num
   have hc : ((t' : F) + (t' : F)⁻¹) / 2 = ((t : F) + (t : F)⁻¹) / 2 := by
     simp only [t']; split_ifs <;> simp [add_comm]
   have hs : ((t' : F) - (t' : F)⁻¹) / 2 = σ * σ' * (((t : F) - (t : F)⁻¹) / 2) := by
     have hδ : σ * σ' = (-1) ^ (e j + e (j + 1)) := by rw [pow_add]
     simp only [t']; split_ifs with h
-    · rw [hδ, h.neg_one_pow]; simp; ring
+    · rw [hδ, h.neg_one_pow, Units.val_inv_eq_inv_val, inv_inv]; ring
     · rw [hδ, (Nat.not_odd_iff_even.1 h).neg_one_pow]; ring
   by_cases hj : j + 1 ≤ l
   · rw [levelTorus_of_le _ _ hj, levelTorus_of_le _ _ hj]
@@ -282,7 +269,7 @@ theorem levelTorus_signBasis {ν : F} {l : ℕ} (hb : IsOrthoBasis Q b) (hf : Is
     by_cases hm₀ : m = ⟨j, hf.idx_lt (by omega)⟩
     · subst hm₀
       have e0 := pairTorus_apply_left (hb.signBasis e)
-        (idx_ne (hf.idx_lt (by omega)) (hf.idx_lt hj)) ((hf.signBasis e).apply_left hj)
+        (mk_ne_mk_add_one (hf.idx_lt (by omega)) (hf.idx_lt hj)) ((hf.signBasis e).apply_left hj)
         ((hf.signBasis e).apply_right hj) t
       simp only [signBasis_apply, map_smul] at e0
       rw [← hσd, ← hσd'] at e0
@@ -290,11 +277,13 @@ theorem levelTorus_signBasis {ν : F} {l : ℕ} (hb : IsOrthoBasis Q b) (hf : Is
       calc _ = σ • σ • _ := by rw [smul_smul, hσ, one_smul]
         _ = _ := by
           rw [e0, smul_add, smul_smul, smul_smul, smul_smul, smul_smul]
-          congr 1 <;> congr 1 <;> (ring_nf; try simp only [hσ2]; try ring)
+          congr 1 <;> congr 1
+          · linear_combination ((t : F) + (t : F)⁻¹) / 2 * hσ
+          · ring
     by_cases hm₁ : m = ⟨j + 1, hf.idx_lt hj⟩
     · subst hm₁
       have e0 := pairTorus_apply_right (hb.signBasis e)
-        (idx_ne (hf.idx_lt (by omega)) (hf.idx_lt hj)) ((hf.signBasis e).apply_left hj)
+        (mk_ne_mk_add_one (hf.idx_lt (by omega)) (hf.idx_lt hj)) ((hf.signBasis e).apply_left hj)
         ((hf.signBasis e).apply_right hj) t
       simp only [signBasis_apply, map_smul] at e0
       rw [← hσd, ← hσd'] at e0
@@ -302,9 +291,11 @@ theorem levelTorus_signBasis {ν : F} {l : ℕ} (hb : IsOrthoBasis Q b) (hf : Is
       calc _ = σ' • σ' • _ := by rw [smul_smul, hσ', one_smul]
         _ = _ := by
           rw [e0, smul_add, smul_smul, smul_smul, smul_smul, smul_smul]
-          congr 1 <;> congr 1 <;> (ring_nf; try simp only [hσ2']; try ring)
+          congr 1 <;> congr 1
+          · ring
+          · linear_combination ((t : F) + (t : F)⁻¹) / 2 * hσ'
     · have e0 := pairTorus_apply_basis_of_ne (hb.signBasis e)
-        (idx_ne (hf.idx_lt (by omega)) (hf.idx_lt hj)) ((hf.signBasis e).apply_left hj)
+        (mk_ne_mk_add_one (hf.idx_lt (by omega)) (hf.idx_lt hj)) ((hf.signBasis e).apply_left hj)
         ((hf.signBasis e).apply_right hj) t hm₀ hm₁
       rw [signBasis_apply, map_smul] at e0
       rw [pairTorus_apply_basis_of_ne _ _ _ _ _ hm₀ hm₁]
@@ -401,6 +392,208 @@ theorem InChamber.norm_head_le_one {n l j : ℕ} (hl : j + 3 ≤ l) (hn : l < n)
             mul_le_mul_of_nonneg_left h1.1 (norm_nonneg _)
         _ ≤ 1 := by rw [← norm_mul]; exact h1.2
     nlinarith [norm_nonneg (s : F)]
+
+/-! ## The hyperbolic frame of a level
+
+The pairs `(b (j+2i), b (j+2i+1))`, `i < numPairs l j`, give the hyperbolic frame
+`eᵢ = b (j+2i) + b (j+2i+1)`, `fᵢ = (4 (-1)^{j+2i} ν)⁻¹ (b (j+2i) - b (j+2i+1))` of
+`HypFrame.lean` (`isHypFrame_pair`), whose complement is the span of the other basis vectors, and
+the split torus of level `j` lies in its torus (`multiTorus_mem_hypTorus`). -/
+
+section HypFrame
+
+variable {ν : F} {l : ℕ}
+
+
+theorem le_of_lt_numPairs {j i : ℕ} (hi : i < numPairs l j) :
+    j + 2 * i + 1 ≤ l := by
+  simp only [numPairs] at hi; omega
+
+/-- The isotropic vectors `b (j+2i) + b (j+2i+1)` of the pairs of level `j`. -/
+def pairE (hf : IsFrame Q b ν l) (j : ℕ) (i : Fin (numPairs l j)) : V :=
+  b ⟨j + 2 * i, hf.idx_lt (by have := le_of_lt_numPairs i.2; omega)⟩ +
+    b ⟨j + 2 * i + 1, hf.idx_lt (le_of_lt_numPairs i.2)⟩
+
+/-- The isotropic vectors `(4 (-1)^{j+2i} ν)⁻¹ (b (j+2i) - b (j+2i+1))` of the pairs of level
+`j`, dual to `pairE`. -/
+def pairF (hf : IsFrame Q b ν l) (j : ℕ) (i : Fin (numPairs l j)) : V :=
+  (4 * ((-1) ^ (j + 2 * i.val) * ν))⁻¹ •
+    (b ⟨j + 2 * i, hf.idx_lt (by have := le_of_lt_numPairs i.2; omega)⟩ -
+      b ⟨j + 2 * i + 1, hf.idx_lt (le_of_lt_numPairs i.2)⟩)
+
+/-- The span of the basis vectors outside the pairs of level `j`. -/
+def pairCompl (b : Module.Basis (Fin n) F V) (l j : ℕ) : Submodule F V :=
+  Submodule.span F (b '' {m | ¬ (j ≤ m.val ∧ m.val < j + 2 * numPairs l j)})
+
+private theorem polar_basis_basis (hb : IsOrthoBasis Q b) (p q : Fin n) :
+    polar Q (b p) (b q) = if p.val = q.val then 2 * Q (b p) else 0 := by
+  rw [polar_basis_left Q b hb.isOrtho, b.repr_self, Finsupp.single_apply]
+  by_cases h : q = p
+  · subst h; simp
+  · rw [ite_eq_right h, ite_eq_right (fun h' => h (Fin.ext h'.symm)), mul_zero]
+
+/-- **The pairs of level `j` form a hyperbolic frame**, with complement the span of the other
+basis vectors. -/
+theorem isHypFrame_pair (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l) (j : ℕ) :
+    IsHypFrame Q (pairCompl b l j) (pairE hf j) (pairF hf j) where
+  polar_ee i k := by
+    by_cases hik : i = k
+    · subst hik
+      have hj := le_of_lt_numPairs i.2
+      rw [polar_self, pairE, pairU_isotropic hb (mk_ne_mk_add_one _ _) (hf.apply_left hj)
+        (hf.apply_right hj), smul_zero]
+    · have := Fin.val_ne_of_ne hik
+      simp only [pairE, polar_add_left, polar_add_right, polar_basis_basis hb]
+      split_ifs <;> first | omega | simp
+  polar_ff i k := by
+    by_cases hik : i = k
+    · subst hik
+      have hj := le_of_lt_numPairs i.2
+      rw [polar_self, pairF, pairV_scaled_isotropic hb (mk_ne_mk_add_one _ _) (hf.apply_left hj)
+        (hf.apply_right hj), smul_zero]
+    · have := Fin.val_ne_of_ne hik
+      simp only [pairF, polar_smul_left, polar_smul_right, polar_sub_left, polar_sub_right,
+        polar_basis_basis hb]
+      split_ifs <;> first | omega | simp
+  polar_ef i k := by
+    by_cases hik : i = k
+    · subst hik
+      have hj := le_of_lt_numPairs i.2
+      rw [ite_eq_left_iff.2 (fun h => absurd rfl h), pairE, pairF]
+      exact polar_pairU_pairV_scaled hb (mk_ne_mk_add_one _ _) (hf.apply_left hj)
+        (hf.apply_right hj)
+    · have := Fin.val_ne_of_ne hik
+      simp only [pairE, pairF, polar_smul_right, polar_add_left, polar_sub_right,
+        polar_basis_basis hb, ite_eq_right hik]
+      split_ifs <;> first | omega | simp
+  mem_iff v := by
+    have hrepr : ∀ m : Fin n, polar Q v (b m) = 0 ↔ b.repr v m = 0 := fun m => by
+      rw [polar_comm, polar_basis_left Q b hb.isOrtho]
+      simp [hb.apply_ne_zero m]
+    have hpair : ∀ i : Fin (numPairs l j),
+        (polar Q v (pairE hf j i) = 0 ∧ polar Q v (pairF hf j i) = 0) ↔
+          (b.repr v ⟨j + 2 * i, hf.idx_lt (by have := le_of_lt_numPairs i.2; omega)⟩ = 0 ∧
+            b.repr v ⟨j + 2 * i + 1, hf.idx_lt (le_of_lt_numPairs i.2)⟩ = 0) := fun i => by
+      have hν : ν ≠ 0 := fun h => hb.apply_ne_zero _ ((hf.apply_eq ⟨0, hf.idx_lt (Nat.zero_le _)⟩
+        (Nat.zero_le _)).trans (by simp [h]))
+      rw [← hrepr, ← hrepr, pairE, pairF, polar_add_right, polar_smul_right, polar_sub_right,
+        smul_eq_mul, mul_eq_zero, inv_eq_zero]
+      have h4 : (4 * ((-1) ^ (j + 2 * i.val) * ν) : F) ≠ 0 :=
+        mul_ne_zero (by norm_num) (mul_ne_zero (pow_ne_zero _ (by norm_num)) hν)
+      constructor
+      · rintro ⟨h1, h2 | h2⟩
+        · exact absurd h2 h4
+        · exact ⟨by linear_combination (h1 + h2) / 2, by linear_combination (h1 - h2) / 2⟩
+      · rintro ⟨h1, h2⟩
+        exact ⟨by rw [h1, h2, add_zero], Or.inr (by rw [h1, h2, sub_zero])⟩
+    rw [pairCompl, Basis.mem_span_image]
+    constructor
+    · intro hS i
+      rw [hpair]
+      have hi := le_of_lt_numPairs i.2
+      refine ⟨by_contra fun h => ?_, by_contra fun h => ?_⟩ <;>
+      · have := hS (Finsupp.mem_support_iff.2 h)
+        simp only [Set.mem_ofPred_eq] at this
+        omega
+    · intro h m hm
+      by_contra hmS
+      simp only [Set.mem_ofPred_eq, not_not] at hmS
+      have hi : (m.val - j) / 2 < numPairs l j := by simp only [numPairs] at hmS ⊢; omega
+      have hi' := le_of_lt_numPairs hi
+      have := (hpair ⟨_, hi⟩).1 (h _)
+      rcases Nat.even_or_odd (m.val - j) with ⟨r, hr⟩ | ⟨r, hr⟩
+      · have hm' : m = ⟨j + 2 * ((m.val - j) / 2), hf.idx_lt (by omega)⟩ := Fin.ext (by simp; omega)
+        exact Finsupp.mem_support_iff.1 hm (hm' ▸ this.1)
+      · have hm' : m = ⟨j + 2 * ((m.val - j) / 2) + 1, hf.idx_lt (by omega)⟩ :=
+          Fin.ext (by simp; omega)
+        exact Finsupp.mem_support_iff.1 hm (hm' ▸ this.2)
+
+/-- The torus of the `i`-th pair of level `j` is the torus of that pair of the hyperbolic frame. -/
+theorem levelTorus_eq_pairTorus [Invertible (2 : F)] (hb : IsOrthoBasis Q b)
+    (hf : IsFrame Q b ν l) (j : ℕ) (i : Fin (numPairs l j)) (t : Fˣ) :
+    levelTorus hb hf (j + 2 * i) t = ((isHypFrame_pair hb hf j).pairTorus i t : V ≃ₗ[F] V) := by
+  rw [levelTorus_of_le hb hf (le_of_lt_numPairs i.2)]
+  rfl
+
+/-- **The split torus of level `j` lies in the torus of the hyperbolic frame of level `j`.** -/
+theorem multiTorus_mem_hypTorus (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l) (j : ℕ)
+    (ts : List Fˣ) :
+    multiTorus hb hf j ts ∈ hypTorus (pairCompl b l j) (pairE hf j) (pairF hf j) := by
+  let _ : Invertible (2 : F) := invertibleOfNonzero two_ne_zero
+  suffices H : ∀ (k : ℕ) (ts : List Fˣ),
+      multiTorus hb hf (j + 2 * k) ts ∈ hypTorus (pairCompl b l j) (pairE hf j) (pairF hf j) by
+    simpa using H 0 ts
+  intro k ts
+  induction ts generalizing k with
+  | nil => exact one_mem _
+  | cons t ts ih =>
+    rw [multiTorus_cons, show j + 2 * k + 2 = j + 2 * (k + 1) by ring]
+    refine mul_mem (ih (k + 1)) ?_
+    by_cases hk : j + 2 * k + 1 ≤ l
+    · have hk' : k < numPairs l j := by simp only [numPairs]; omega
+      rw [show k = ((⟨k, hk'⟩ : Fin (numPairs l j)) : ℕ) from rfl, levelTorus_eq_pairTorus]
+      exact (isHypFrame_pair hb hf j).pairTorus_mem_hypTorus _ t
+    · rw [levelTorus_of_not_le hb hf hk]; exact one_mem _
+
+end HypFrame
+
+/-! ## Existence of maximal frames -/
+
+/-- **Existence of a maximal frame.** In a nondegenerate quadratic space, every anisotropic `v₀`
+is the first vector of an orthogonal basis of anisotropic vectors whose first `l + 1` vectors form
+a maximal frame for `ν = Q v₀`. Greedily: take orthogonal `w₀ = v₀, w₁, …, w_l` with
+`Q wᵢ = (-1)ⁱ ν` and `l` as large as possible (it is bounded by the dimension, since such a family
+is linearly independent); then `(-1)^{l+1} ν` is not represented by `{w₀, …, w_l}^⊥`, and an
+orthogonal basis of that complement completes the family (`exists_isOrthoBasis_append`). -/
+theorem exists_isFrame (hQ : Q.Nondegenerate) {v₀ : V} (hv₀ : Q v₀ ≠ 0) :
+    ∃ (n l : ℕ) (b : Module.Basis (Fin n) F V), IsOrthoBasis Q b ∧
+      ∃ hf : IsFrame Q b (Q v₀) l, b ⟨0, (Nat.zero_le l).trans_lt hf.lt⟩ = v₀ := by
+  classical
+  let _ : Invertible (2 : F) := invertibleOfNonzero two_ne_zero
+  -- `P k`: an orthogonal family `w₀ = v₀, …, w_k` with `Q wᵢ = (-1)ⁱ Q v₀`
+  let P : ℕ → Prop := fun k => ∃ w : Fin (k + 1) → V, w 0 = v₀ ∧
+    (∀ i, Q (w i) = (-1) ^ i.val * Q v₀) ∧ ∀ i j, i ≠ j → Q.IsOrtho (w i) (w j)
+  have hP0 : P 0 := ⟨fun _ => v₀, rfl, fun i => by simp [Fin.fin_one_eq_zero i],
+    fun i j h => (h (Fin.ext (by have := i.2; have := j.2; omega))).elim⟩
+  have hbound : ∀ k, P k → k + 1 ≤ finrank F V := by
+    rintro k ⟨w, -, hwQ, hwo⟩
+    have hli : LinearIndependent F w := LinearMap.BilinForm.linearIndependent_of_iIsOrtho
+      (fun i j hij => isOrtho_polarBilin.mpr (hwo i j hij)) fun i => by
+        rw [polarBilin_apply_apply, polar_self, two_smul, ← two_mul, hwQ]
+        exact mul_ne_zero two_ne_zero (mul_ne_zero (pow_ne_zero _ (by norm_num)) hv₀)
+    simpa using hli.fintype_card_le_finrank
+  set l := Nat.findGreatest P (finrank F V)
+  obtain ⟨w, hw0, hwQ, hwo⟩ : P l := Nat.findGreatest_spec (Nat.zero_le _) hP0
+  have hmax : ¬ P (l + 1) := fun h => by
+    have h1 := hbound (l + 1) h
+    have h2 := Nat.le_findGreatest (P := P) (by omega : l + 1 ≤ finrank F V) h
+    omega
+  obtain ⟨m, c, b, hb, hbw⟩ := exists_isOrthoBasis_append hQ hwo fun i => by
+    rw [hwQ]; exact mul_ne_zero (pow_ne_zero _ (by norm_num)) hv₀
+  have hbw' : ∀ i : Fin (l + 1 + m), (hi : i.val ≤ l) → b i = w ⟨i.val, by omega⟩ := by
+    intro i hi
+    have hi' : i = Fin.castAdd m ⟨i.val, by omega⟩ := Fin.ext rfl
+    rw [hbw]; conv_lhs => rw [hi']
+    rw [Fin.append_left]
+  have hf : IsFrame Q b (Q v₀) l :=
+    { lt := by omega
+      apply_eq := fun i hi => by rw [hbw' i hi, hwQ]
+      maximal := fun x hx hQx => hmax ⟨Fin.snoc w x, ?_, fun i => ?_, fun i j hij => ?_⟩ }
+  · exact ⟨_, _, b, hb, hf, by rw [hbw' _ (Nat.zero_le _)]; exact hw0⟩
+  · rw [← Fin.castSucc_zero, Fin.snoc_castSucc, hw0]
+  · induction i using Fin.lastCases with
+    | last => rw [Fin.snoc_last, hQx, Fin.val_last]
+    | cast i => rw [Fin.snoc_castSucc, hwQ, Fin.val_castSucc]
+  · -- `x` is orthogonal to the `wᵢ`
+    have hxo : ∀ i, Q.IsOrtho (w i) x := fun i => by
+      rw [← isOrtho_polarBilin, polarBilin_apply_apply, ← hbw' ⟨i.val, by omega⟩ (by simp; omega),
+        polar_basis_left Q b hb.isOrtho, hx _ (by simp; omega), mul_zero]
+    induction i using Fin.lastCases <;> induction j using Fin.lastCases <;>
+      simp only [Fin.snoc_last, Fin.snoc_castSucc]
+    · exact absurd rfl hij
+    · exact isOrtho_comm.mp (hxo _)
+    · exact hxo _
+    · exact hwo _ _ fun h => hij (by rw [h])
 
 end WeakCartan
 
