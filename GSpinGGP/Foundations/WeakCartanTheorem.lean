@@ -344,15 +344,9 @@ theorem multiTorus_cons_apply_pair (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν 
     (hj : j + 1 ≤ l) (t : Fˣ) (ts : List Fˣ) :
     multiTorus hb hf j (t :: ts) (b ⟨j, hf.idx_lt (by omega)⟩ + b ⟨j + 1, hf.idx_lt hj⟩) =
       (t : F) • (b ⟨j, hf.idx_lt (by omega)⟩ + b ⟨j + 1, hf.idx_lt hj⟩) := by
-  have hfix := multiTorus_mem_fixer hb hf ts (j + 2)
-  have e0 := hfix.2 ⟨j, hf.idx_lt (by omega)⟩ (by simp)
-  have e1 := hfix.2 ⟨j + 1, hf.idx_lt hj⟩ (by simp)
-  rw [multiTorus_cons, LinearEquiv.mul_apply, levelTorus_of_le hb hf hj, map_add,
-    pairTorus_apply_left, pairTorus_apply_right]
-  simp only [map_add, map_smul, e0, e1]
-  have ht : (t : F) ≠ 0 := t.ne_zero
-  rw [smul_add]
-  module
+  have h := multiTorus_apply_add hb hf (t :: ts) j 0 (by simp) (by simpa using hj)
+  simp only [mul_zero, add_zero] at h
+  rwa [basisNat_of_lt (hf.idx_lt (by omega)), basisNat_of_lt (hf.idx_lt hj)] at h
 
 /-- **The norm estimate.** Let `h = k · a_{j+1}(s, …) · a_{j+2}(t, …) · k'` with `k ∈ G_{j+1}`,
 `k' ∈ G_{j+2}` of norm at most `M` and the torus parameters in their chambers, and suppose

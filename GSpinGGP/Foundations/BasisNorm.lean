@@ -37,6 +37,8 @@ bounded (`isCompact_orthogonal_setOf_basisOpNorm_le`, `exists_basisOpNorm_le_of_
   equivalent; `exists_norm_toContinuousLinearMap_le_basisOpNorm`,
   `exists_basisOpNorm_le_norm_toContinuousLinearMap`: `basisOpNorm b` is equivalent to the operator
   norm.
+* `polar_apply_eq_mul_conj`, `norm_polar_le_of_eigen`, `norm_polar_le_of_fixed`: for eigenvectors
+  `x`, `y` of an isometry `A`, `polar(h x, y)` is controlled by the norm of `A h A⁻¹`.
 -/
 
 noncomputable section
@@ -511,5 +513,75 @@ theorem exists_basisOpNorm_le_norm_toContinuousLinearMap {n : ℕ} (b : Module.B
   exact ⟨C, hC, fun f => by simpa [basisOpNorm_eq] using h f⟩
 
 end BasisComparison
+
+/-! ## Conjugation by an isometry with eigenvectors -/
+
+section Conj
+
+open QuadraticMap
+
+variable {Q : QuadraticForm F V}
+
+/-- If `A x = α x` and `A y = β y` for an isometry `A`, then
+`polar(h x, y) = α β polar((A h A⁻¹) x, y)`. -/
+theorem polar_apply_eq_mul_conj {A : V ≃ₗ[F] V}
+    (hA : A ∈ TauCeti.QuadraticMap.orthogonalGroup Q) (h : V ≃ₗ[F] V) {x y : V} {α β : F}
+    (hx : A x = α • x) (hy : A y = β • y) :
+    polar Q (h x) y = α * β * polar Q ((A * h * A⁻¹) x) y := by
+  have h1 : (A * h * A⁻¹) (A x) = A (h x) := by
+    simp only [LinearEquiv.mul_apply]
+    rw [show A⁻¹ (A x) = x from A.symm_apply_apply x]
+  rw [← TauCeti.QuadraticMap.polar_apply_of_mem_orthogonalGroup hA (h x) y, ← h1, hx, hy,
+    map_smul, polar_smul_left, polar_smul_right, smul_eq_mul, smul_eq_mul]
+  ring
+
+variable [IsUltrametricDist F]
+
+theorem IsOrthoBasis.norm_polar_apply_le (hb : IsOrthoBasis Q b) (g : V ≃ₗ[F] V) (x y : V) :
+    ‖polar Q (g x) y‖ ≤
+      polarBound Q b * basisOpNorm b (g : V →ₗ[F] V) * basisNorm b x * basisNorm b y := by
+  refine (hb.norm_polar_le _ _).trans ?_
+  have h1 := basisNorm_apply_le (b := b) (g : V →ₗ[F] V) x
+  have hp : 0 ≤ polarBound Q b := norm_nonneg _
+  calc polarBound Q b * basisNorm b (g x) * basisNorm b y
+      ≤ polarBound Q b * (basisOpNorm b (g : V →ₗ[F] V) * basisNorm b x) * basisNorm b y :=
+        mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_left h1 hp) (basisNorm_nonneg y)
+    _ = _ := by ring
+
+/-- The basic estimate: for eigenvectors `x`, `y` of an isometry `A`, of norm `≤ 1` and with
+eigenvalues `α`, `β` such that `|α β| ≤ 1`, the coefficient `polar(h x, y)` is bounded by the
+norm of `A h A⁻¹`. -/
+theorem norm_polar_le_of_eigen (hb : IsOrthoBasis Q b) {A : V ≃ₗ[F] V}
+    (hA : A ∈ TauCeti.QuadraticMap.orthogonalGroup Q) (h : V ≃ₗ[F] V) {x y : V} {α β : F}
+    (hx : A x = α • x) (hy : A y = β • y) (hαβ : ‖α * β‖ ≤ 1) (hxn : basisNorm b x ≤ 1)
+    (hyn : basisNorm b y ≤ 1) :
+    ‖polar Q (h x) y‖ ≤
+      polarBound Q b * basisOpNorm b ((A * h * A⁻¹ : V ≃ₗ[F] V) : V →ₗ[F] V) := by
+  set N := basisOpNorm b ((A * h * A⁻¹ : V ≃ₗ[F] V) : V →ₗ[F] V)
+  have hp : 0 ≤ polarBound Q b * N := mul_nonneg (norm_nonneg _) (basisOpNorm_nonneg _)
+  have hxy : basisNorm b x * basisNorm b y ≤ 1 := by
+    nlinarith [basisNorm_nonneg (b := b) x, basisNorm_nonneg (b := b) y]
+  have h2 : ‖polar Q ((A * h * A⁻¹) x) y‖ ≤ polarBound Q b * N := by
+    refine (hb.norm_polar_apply_le (A * h * A⁻¹) x y).trans ?_
+    calc polarBound Q b * N * basisNorm b x * basisNorm b y
+        = (polarBound Q b * N) * (basisNorm b x * basisNorm b y) := by ring
+      _ ≤ (polarBound Q b * N) * 1 := mul_le_mul_of_nonneg_left hxy hp
+      _ = _ := mul_one _
+  rw [polar_apply_eq_mul_conj hA h hx hy, norm_mul]
+  calc ‖α * β‖ * ‖polar Q ((A * h * A⁻¹) x) y‖ ≤ 1 * (polarBound Q b * N) :=
+        mul_le_mul hαβ h2 (norm_nonneg _) zero_le_one
+    _ = _ := one_mul _
+
+/-- A fixed vector pair: if an isometry `T` fixes `x` and `y`, `polar(h x, y)` is bounded by the
+norm of `T h T⁻¹`. -/
+theorem norm_polar_le_of_fixed (hb : IsOrthoBasis Q b) {T : V ≃ₗ[F] V}
+    (hT : T ∈ TauCeti.QuadraticMap.orthogonalGroup Q) (h : V ≃ₗ[F] V) {x y : V} (hx : T x = x)
+    (hy : T y = y) (hxn : basisNorm b x ≤ 1) (hyn : basisNorm b y ≤ 1) :
+    ‖polar Q (h x) y‖ ≤
+      polarBound Q b * basisOpNorm b ((T * h * T⁻¹ : V ≃ₗ[F] V) : V →ₗ[F] V) :=
+  norm_polar_le_of_eigen hb hT h (α := 1) (β := 1) (by rw [one_smul]; exact hx)
+    (by rw [one_smul]; exact hy) (by simp) hxn hyn
+
+end Conj
 
 end GSpinGGP
