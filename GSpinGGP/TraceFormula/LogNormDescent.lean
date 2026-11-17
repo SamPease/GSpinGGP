@@ -188,7 +188,7 @@ theorem lmulPi_prod_injective :
   intro x y hxy
   have h1 := congrArg Prod.fst hxy
   have h2 := congrArg Prod.snd hxy
-  exact Prod.ext (lmulPi_injective h1) (lmulPi_injective h2)
+  exact Prod.ext (lmulPi_injective F h1) (lmulPi_injective F h2)
 
 /-- `‖(x₁, x₂)‖ ≪ max(‖x₁‖, ‖x₂‖)` for the norms of left multiplication. -/
 theorem exists_norm_lmulPi_ambient_le : ∃ C, 0 ≤ C ∧ ∀ x : d.ambient,
@@ -202,7 +202,7 @@ theorem exists_max_norm_lmulPi_le : ∃ C, 0 ≤ C ∧ ∀ x : d.ambient,
     max ‖lmulPi F x.1‖ ‖lmulPi F x.2‖ ≤ C * ‖lmulPi F x‖ := by
   obtain ⟨C, hC, h⟩ := LinearMap.exists_norm_le_mul_norm_of_injective (lmulPiₗ F)
     ((lmulPiₗ F ∘ₗ LinearMap.fst F _ _).prod (lmulPiₗ F ∘ₗ LinearMap.snd F _ _) :
-      d.ambient →ₗ[F] _) (lmulPi_injective (A := d.ambient))
+      d.ambient →ₗ[F] _) (lmulPi_injective F (A := d.ambient))
   exact ⟨C, hC, fun x => (le_of_eq (by rw [Prod.norm_def]; rfl)).trans (h x)⟩
 
 /-- `1 + log A ≤ (1 + log K + n)(1 + log B)` when `1 ≤ A ≤ K Bⁿ`, `1 ≤ K`, `1 ≤ B`. -/

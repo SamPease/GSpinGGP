@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import Mathlib
 import GSpinGGP.Foundations.GSpin
 import GSpinGGP.Foundations.LocalGroups
+import GSpinGGP.Foundations.ExpHaar
 import GSpinGGP.Foundations.QuadraticForms
 import TauCeti.Algebra.CentralSimple.Opposite
 import TauCeti.LinearAlgebra.CliffordAlgebra.CentralSimple.Basic
@@ -170,10 +171,6 @@ theorem linEquivNorm_mul_le (f g : V ≃ₗ[F] V) :
   rw [this]
   exact ContinuousLinearMap.opNorm_comp_le _ _
 
-theorem lmulPi_injective {A : Type*} [Ring A] [Algebra F A] [Module.Finite F A]
-    [TopologicalSpace A] [IsModuleTopology F A] : Function.Injective (lmulPiₗ F (A := A)) :=
-  Function.LeftInverse.injective (g := lmulPiInv F) fun a => lmulPiInv_lmulPi F a
-
 variable [Invertible (2 : F)]
 
 /-- `‖ι(v)‖ ≤ C ‖v‖`. -/
@@ -281,7 +278,7 @@ theorem exists_norm_mul_norm_inv_le (hQ : IsNondeg Q) :
     have := CliffordAlgebra.isSimpleRing_of_even_finrank hQ' hV
     let e := Module.finBasis F (CliffordAlgebra Q)
     obtain ⟨C₁, hC₁, h₁⟩ := exists_norm_mul_norm_le_of_isSimpleRing (lmulPiₗ F)
-      lmulPi_injective e e.span_eq
+      (lmulPi_injective F) e e.span_eq
     obtain ⟨C₂, N, hC₂, h₂⟩ := exists_norm_conj_family_le (F := F) e
     exact ⟨C₁ * C₂, N, by positivity, fun g => (h₁ _ _).trans
       ((mul_le_mul_of_nonneg_left (h₂ g) hC₁).trans_eq (by ring))⟩
@@ -290,7 +287,7 @@ theorem exists_norm_mul_norm_inv_le (hQ : IsNondeg Q) :
     let e := Module.finBasis F (even Q)
     obtain ⟨C₁, hC₁, h₁⟩ := exists_norm_mul_norm_le_of_isSimpleRing
       (lmulPiₗ F ∘ₗ (even Q).val.toLinearMap)
-      (lmulPi_injective.comp Subtype.val_injective) e e.span_eq
+      ((lmulPi_injective F).comp Subtype.val_injective) e e.span_eq
     obtain ⟨C₂, N, hC₂, h₂⟩ := exists_norm_conj_family_le (F := F) fun i => (e i : CliffordAlgebra Q)
     refine ⟨C₁ * C₂, N, by positivity, fun g => ?_⟩
     have hg : ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∈ even Q := g.2.1
@@ -307,7 +304,7 @@ theorem exists_norm_specP_le :
         ‖lmulPi F (((g : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)‖) := by
   obtain ⟨Cι, hCι, hι⟩ := exists_norm_lmulPi_ι_le (F := F) (Q := Q)
   obtain ⟨C₀, hC₀, h₀⟩ := LinearMap.exists_norm_le_mul_norm_of_injective (lmulPiₗ F) (ιInv Q)
-    lmulPi_injective
+    (lmulPi_injective F)
   refine ⟨C₀ * Cι, by positivity, fun g => ?_⟩
   refine ContinuousLinearMap.opNorm_le_bound _ (by positivity) fun v => ?_
   change ‖specP Q g v‖ ≤ _
@@ -349,9 +346,7 @@ theorem norm_lmulPi_smul (c : F) (x : CliffordAlgebra Q) :
   rw [map_smul, norm_smul]; rfl
 
 theorem norm_lmulPi_pos {x : CliffordAlgebra Q} (hx : x ≠ 0) : 0 < ‖lmulPi F x‖ := by
-  refine norm_pos_iff.2 fun h => hx (lmulPi_injective (F := F) ?_)
-  change lmulPi F x = lmulPi F 0
-  rw [h]; exact (map_zero (lmulPiₗ F (A := CliffordAlgebra Q))).symm
+  exact norm_pos_iff.2 fun h => hx (lmulPi_injective F (by rw [h, lmulPi_zero]))
 
 /-- **Norm descent on `GSpin(V)`**: every `g ∈ GSpin(V)` has a scalar multiple `c g` with
 `‖c g‖, ‖(c g)⁻¹‖ ≤ C max(1, ‖P(g)‖)ᴺ` (`exists_norm_mul_norm_inv_le`, rescaled so that
