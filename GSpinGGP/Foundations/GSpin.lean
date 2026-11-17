@@ -885,6 +885,22 @@ theorem scalarGSpin_mem_center (Q : QuadraticForm K V) (c : Kˣ) :
   apply Subtype.ext; apply Units.ext
   simp [scalarGSpin, Algebra.commutes]
 
+omit [Invertible (2 : K)] in
+/-- `c g = c • g` in `C(V)` for a scalar `c`. -/
+theorem coe_scalarGSpin_mul {Q : QuadraticForm K V} (c : Kˣ) (g : GSpin Q) :
+    (((scalarGSpin Q c * g : GSpin Q) : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) =
+      (c : K) • ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) := by
+  simp [scalarGSpin, Algebra.smul_def]
+
+omit [Invertible (2 : K)] in
+/-- `(c g)⁻¹ = c⁻¹ • g⁻¹` in `C(V)` for a scalar `c`. -/
+theorem coe_inv_scalarGSpin_mul {Q : QuadraticForm K V} (c : Kˣ) (g : GSpin Q) :
+    ((((scalarGSpin Q c * g : GSpin Q) : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) :
+      CliffordAlgebra Q) =
+      ((c⁻¹ : Kˣ) : K) • (((g : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) :
+        CliffordAlgebra Q) := by
+  simp [scalarGSpin, Algebra.smul_def, Algebra.commutes]
+
 /-- A `2`-dimensional quadratic space has an orthogonal basis indexed by `Fin 2`. -/
 theorem exists_orthogonal_basis_fin_two [Module.Finite K V] (Q : QuadraticForm K V)
     (hV : finrank K V = 2) :
@@ -3784,29 +3800,6 @@ theorem fst_pair (p : GSpin d.QW × GSpin d.QV) : d.fst (d.pair p) = p.1 := rfl
 
 /-- `snd ∘ pair = Prod.snd` (`rfl`). -/
 theorem snd_pair (p : GSpin d.QW × GSpin d.QV) : d.snd (d.pair p) = p.2 := rfl
-
-/-- The underlying first component of `g ∈ G ⊆ (C(W) × C(V))^×`. -/
-theorem val_fst (g : d.G) :
-    (((g : d.ambientˣ) : d.ambient)).1 = (((d.fst g : GSpin d.QW) : (CliffordAlgebra d.QW)ˣ) :
-      CliffordAlgebra d.QW) := rfl
-
-/-- The underlying second component of `g ∈ G ⊆ (C(W) × C(V))^×`. -/
-theorem val_snd (g : d.G) :
-    (((g : d.ambientˣ) : d.ambient)).2 = (((d.snd g : GSpin d.QV) : (CliffordAlgebra d.QV)ˣ) :
-      CliffordAlgebra d.QV) := rfl
-
-/-- The underlying first component of `g⁻¹`. -/
-theorem val_inv_fst (g : d.G) : (((g⁻¹ : d.G) : d.ambientˣ) : d.ambient).1 =
-    ((((d.fst g : GSpin d.QW) : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) :
-      CliffordAlgebra d.QW) := rfl
-
-/-- The underlying second component of `g⁻¹`. -/
-theorem val_inv_snd (g : d.G) : (((g⁻¹ : d.G) : d.ambientˣ) : d.ambient).2 =
-    ((((d.snd g : GSpin d.QV) : (CliffordAlgebra d.QV)ˣ)⁻¹ : (CliffordAlgebra d.QV)ˣ) :
-      CliffordAlgebra d.QV) := rfl
-
-/-- The central scalars `(c₁, c₂) ∈ G_m × G_m ⊆ G`. -/
-def scalarPair (c₁ c₂ : Kˣ) : d.G := d.pair (scalarGSpin d.QW c₁, scalarGSpin d.QV c₂)
 
 /-- `A_G(K)`, the `K`-points of the maximal split central torus of `G = GSpin(W) × GSpin(V)`
 (Thesis §2.1 "split component", §7.1): `A_{GSpin(W)} × A_{GSpin(V)}`, where

@@ -34,13 +34,8 @@ Since `ker P` is the scalars and `‖c g‖ = |c| ‖g‖`, rescaling `g` by a s
 
 ## Main results
 
-* `LinearMap.exists_norm_le_mul_norm_of_injective`: on a finite-dimensional space, a norm pulled
-  back along an injective linear map dominates any other pulled-back seminorm.
 * `exists_norm_mul_norm_le_of_isSimpleRing`: `‖a‖ ‖b‖ ≤ C ‖(a sᵢ b)ᵢ‖` in a finite-dimensional
   central simple algebra, for a spanning family `(sᵢ)`.
-* `exists_norm_toContinuousLinearMap_le_basisOpNorm`,
-  `exists_basisOpNorm_le_norm_toContinuousLinearMap`: the operator norm on `End(V)` is equivalent to
-  the matrix sup norm `basisOpNorm b` of `Foundations/BasisNorm.lean`.
 * `exists_norm_specP_le`, `exists_norm_mul_norm_inv_le`: the two estimates above.
 * `exists_scalar_norm_le`: the rescaled form.
 
@@ -55,55 +50,10 @@ open scoped TensorProduct
 
 namespace GSpinGGP
 
-/-! ### Comparison of norms on a finite-dimensional space -/
-
-section Comparison
-
-variable {𝕜 : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜]
-variable {E X Y : Type*} [AddCommGroup E] [Module 𝕜 E] [FiniteDimensional 𝕜 E]
-  [NormedAddCommGroup X] [NormedSpace 𝕜 X] [NormedAddCommGroup Y] [NormedSpace 𝕜 Y]
-
-/-- On a finite-dimensional space `E`, if `f : E → X` is injective then `‖g x‖ ≤ C ‖f x‖` for any
-linear `g : E → Y`: all norms on `E` are equivalent. -/
-theorem _root_.LinearMap.exists_norm_le_mul_norm_of_injective (f : E →ₗ[𝕜] X) (g : E →ₗ[𝕜] Y)
-    (hf : Function.Injective f) : ∃ C, 0 ≤ C ∧ ∀ x, ‖g x‖ ≤ C * ‖f x‖ := by
-  let e := LinearEquiv.ofInjective f hf
-  let h : LinearMap.range f →ₗ[𝕜] Y := g ∘ₗ e.symm.toLinearMap
-  let hc : LinearMap.range f →L[𝕜] Y := ⟨h, LinearMap.continuous_of_finiteDimensional h⟩
-  refine ⟨‖hc‖, norm_nonneg _, fun x => ?_⟩
-  have := hc.le_opNorm (e x)
-  simpa [hc, h, e] using this
-
-end Comparison
-
-section BasisComparison
-
-variable {𝕜 : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜]
-variable {U : Type*} [NormedAddCommGroup U] [NormedSpace 𝕜 U] [FiniteDimensional 𝕜 U]
-
-/-- The operator norm on `Und(V)` (`V` a finite-dimensional normed space) and the sup norm
-`basisOpNorm b` of the matrix in a basis `b` are equivalent: `‖f‖ ≤ C ‖f‖_b`. -/
-theorem exists_norm_toContinuousLinearMap_le_basisOpNorm {n : ℕ} (b : Module.Basis (Fin n) 𝕜 U) : ∃ C, 0 ≤ C ∧ ∀ f : U →ₗ[𝕜] U,
-      ‖LinearMap.toContinuousLinearMap f‖ ≤ C * basisOpNorm b f := by
-  obtain ⟨C, hC, h⟩ := LinearMap.exists_norm_le_mul_norm_of_injective
-    (basisMatrix b).toLinearMap (LinearMap.toContinuousLinearMap (𝕜 := 𝕜) (E := U)
-      (F' := U)).toLinearMap (basisMatrix b).injective
-  exact ⟨C, hC, fun f => by simpa [basisOpNorm_eq] using h f⟩
-
-/-- The converse comparison: `‖f‖_b ≤ C ‖f‖`. -/
-theorem exists_basisOpNorm_le_norm_toContinuousLinearMap {n : ℕ} (b : Module.Basis (Fin n) 𝕜 U) : ∃ C, 0 ≤ C ∧ ∀ f : U →ₗ[𝕜] U,
-      basisOpNorm b f ≤ C * ‖LinearMap.toContinuousLinearMap f‖ := by
-  obtain ⟨C, hC, h⟩ := LinearMap.exists_norm_le_mul_norm_of_injective
-    (LinearMap.toContinuousLinearMap (𝕜 := 𝕜) (E := U) (F' := U)).toLinearMap
-    (basisMatrix b).toLinearMap (LinearMap.toContinuousLinearMap (𝕜 := 𝕜)).injective
-  exact ⟨C, hC, fun f => by simpa [basisOpNorm_eq] using h f⟩
-
-end BasisComparison
-
 /-! ### Products of sup norms -/
 
-/-- `‖x‖ ‖y‖ ≤ ‖(xᵢ yⱼ)ᵢⱼ‖` for the sup norms on `𝕜^ι`, `𝕜^κ`, `𝕜^{ι × κ}`. -/
-theorem norm_mul_norm_le_norm_mul {𝕜 : Type*} [NormedField 𝕜] {ι κ : Type*} [Fintype ι]
+/-- `‖x‖ ‖y‖ ≤ ‖x ⊗ y‖` for the sup norms (outer product `(xᵢ yⱼ)ᵢⱼ`) on `𝕜^ι`, `𝕜^κ`, `𝕜^{ι × κ}`. -/
+theorem norm_mul_norm_le_norm_outer {𝕜 : Type*} [NormedField 𝕜] {ι κ : Type*} [Fintype ι]
     [Fintype κ] (x : ι → 𝕜) (y : κ → 𝕜) :
     ‖x‖ * ‖y‖ ≤ ‖fun p : ι × κ => x p.1 * y p.2‖ := by
   set T := ‖fun p : ι × κ => x p.1 * y p.2‖
@@ -156,11 +106,12 @@ theorem exists_norm_mul_norm_le_of_isSimpleRing (ν : B →ₗ[𝕜] X) (hν : F
     e.equivFun.toLinearMap ν e.equivFun.injective
   refine ⟨C₂ * C₂ * C₁, by positivity, fun a b => ?_⟩
   have hT : ‖e.equivFun a‖ * ‖e.equivFun b‖ ≤ ‖T.equivFun (a ⊗ₜ MulOpposite.op b)‖ := by
-    refine (norm_mul_norm_le_norm_mul _ _).trans (le_of_eq ?_)
+    refine (norm_mul_norm_le_norm_outer _ _).trans (le_of_eq ?_)
     congr 1
     funext p
     obtain ⟨i, j⟩ := p
-    simp [T, Basis.mulOpposite_repr_op, mul_comm]
+    simp only [Basis.equivFun_apply, Basis.tensorProduct_repr_tmul_apply,
+      Basis.mulOpposite_repr_op, smul_eq_mul, mul_comm, T]
   have hfab : f (a ⊗ₜ MulOpposite.op b) = fun i => ν (a * s i * b) := by
     funext i; simp [f, φ]
   have := h₁ (a ⊗ₜ MulOpposite.op b)
@@ -182,26 +133,17 @@ variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
 variable {V : Type*} [NormedAddCommGroup V] [NormedSpace F V] [FiniteDimensional F V]
   {Q : QuadraticForm F V}
 
-/-- The operator norm of a linear automorphism of the finite-dimensional normed space `V`. -/
-def linEquivNorm (f : V ≃ₗ[F] V) : ℝ := ‖LinearMap.toContinuousLinearMap (f : V →ₗ[F] V)‖
-
-theorem linEquivNorm_nonneg (f : V ≃ₗ[F] V) : 0 ≤ linEquivNorm f := norm_nonneg _
-
-theorem norm_apply_le_linEquivNorm (f : V ≃ₗ[F] V) (v : V) : ‖f v‖ ≤ linEquivNorm f * ‖v‖ :=
-  (LinearMap.toContinuousLinearMap (f : V →ₗ[F] V)).le_opNorm v
-
 /-- `‖f g‖ ≤ ‖f‖ ‖g‖` for the product `f * g = f ∘ g` of the group `V ≃ₗ V`. -/
-theorem linEquivNorm_mul_le (f g : V ≃ₗ[F] V) :
-    linEquivNorm (f * g) ≤ linEquivNorm f * linEquivNorm g := by
-  unfold linEquivNorm
+theorem norm_toContinuousLinearMap_mul_le (f g : V ≃ₗ[F] V) :
+    ‖LinearMap.toContinuousLinearMap ((f * g : V ≃ₗ[F] V) : V →ₗ[F] V)‖ ≤
+      ‖LinearMap.toContinuousLinearMap (f : V →ₗ[F] V)‖ *
+        ‖LinearMap.toContinuousLinearMap (g : V →ₗ[F] V)‖ := by
   have : LinearMap.toContinuousLinearMap ((f * g : V ≃ₗ[F] V) : V →ₗ[F] V) =
       (LinearMap.toContinuousLinearMap (f : V →ₗ[F] V)).comp
         (LinearMap.toContinuousLinearMap (g : V →ₗ[F] V)) := by
     ext v; rfl
   rw [this]
   exact ContinuousLinearMap.opNorm_comp_le _ _
-
-variable [Invertible (2 : F)]
 
 /-- `‖ι(v)‖ ≤ C ‖v‖`. -/
 theorem exists_norm_lmulPi_ι_le :
@@ -210,7 +152,7 @@ theorem exists_norm_lmulPi_ι_le :
     Function.injective_id
 
 /-- The maximum `max(1, ‖P(g)‖)`. -/
-local notation "Mx" g => max 1 (linEquivNorm (specP Q g))
+local notation "Mx" g => max 1 ‖LinearMap.toContinuousLinearMap (specP Q g : V →ₗ[F] V)‖
 
 /-- **Conjugation by `g ∈ GSpin(V)` is polynomially bounded in `P(g)`**: for each `x ∈ C(V)` there
 are `C`, `N` with `‖g x g⁻¹‖ ≤ C max(1, ‖P(g)‖)ᴺ` for all `g`. (`x ↦ g x g⁻¹` is the algebra
@@ -229,8 +171,9 @@ theorem exists_norm_conj_le (x : CliffordAlgebra Q) :
     refine ⟨Cι * ‖v‖, 1, by positivity, fun g => ?_⟩
     rw [← ι_specP, pow_one]
     calc ‖lmulPi F (ι Q (specP Q g v))‖ ≤ Cι * ‖specP Q g v‖ := hι _
-      _ ≤ Cι * (linEquivNorm (specP Q g) * ‖v‖) :=
-          mul_le_mul_of_nonneg_left (norm_apply_le_linEquivNorm _ _) hCι
+      _ ≤ Cι * (‖LinearMap.toContinuousLinearMap (specP Q g : V →ₗ[F] V)‖ * ‖v‖) :=
+          mul_le_mul_of_nonneg_left
+            ((LinearMap.toContinuousLinearMap (specP Q g : V →ₗ[F] V)).le_opNorm v) hCι
       _ ≤ Cι * ((Mx g) * ‖v‖) := mul_le_mul_of_nonneg_left
           (mul_le_mul_of_nonneg_right (le_max_right _ _) (norm_nonneg _)) hCι
       _ = Cι * ‖v‖ * (Mx g) := by ring
@@ -330,7 +273,7 @@ theorem exists_norm_mul_norm_inv_le (hQ : IsNondeg Q) :
 /-- **`‖P(g)‖ ≪ ‖g‖ ‖g⁻¹‖` on `GSpin(V)`** (the easy half of norm descent), since
 `ι(P(g) v) = g ι(v) g⁻¹`. -/
 theorem exists_norm_specP_le :
-    ∃ C, 0 ≤ C ∧ ∀ g : GSpin Q, linEquivNorm (specP Q g) ≤
+    ∃ C, 0 ≤ C ∧ ∀ g : GSpin Q, ‖LinearMap.toContinuousLinearMap (specP Q g : V →ₗ[F] V)‖ ≤
       C * (‖lmulPi F ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)‖ *
         ‖lmulPi F (((g : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) :
           CliffordAlgebra Q)‖) := by
@@ -358,28 +301,6 @@ theorem exists_norm_specP_le :
           (mul_le_mul_of_nonneg_left h3 (norm_nonneg _))) (norm_nonneg _)
     _ = _ := by ring
 
-omit [PAdicField F] [FiniteDimensional F V] [Invertible (2 : F)] in
-theorem coe_scalarGSpin_mul (c : Fˣ) (g : GSpin Q) :
-    (((scalarGSpin Q c * g : GSpin Q) : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) =
-      (c : F) • ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) := by
-  simp [scalarGSpin, Algebra.smul_def]
-
-omit [PAdicField F] [FiniteDimensional F V] [Invertible (2 : F)] in
-theorem coe_inv_scalarGSpin_mul (c : Fˣ) (g : GSpin Q) :
-    ((((scalarGSpin Q c * g : GSpin Q) : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) :
-      CliffordAlgebra Q) =
-      ((c⁻¹ : Fˣ) : F) • (((g : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) :
-        CliffordAlgebra Q) := by
-  simp [scalarGSpin, Algebra.smul_def, Algebra.commutes]
-
-theorem norm_lmulPi_smul (c : F) (x : CliffordAlgebra Q) :
-    ‖lmulPi F (c • x)‖ = ‖c‖ * ‖lmulPi F x‖ := by
-  change ‖lmulPiₗ F (c • x)‖ = _
-  rw [map_smul, norm_smul]; rfl
-
-theorem norm_lmulPi_pos {x : CliffordAlgebra Q} (hx : x ≠ 0) : 0 < ‖lmulPi F x‖ := by
-  exact norm_pos_iff.2 fun h => hx (lmulPi_injective F (by rw [h, lmulPi_zero]))
-
 /-- **Norm descent on `GSpin(V)`**: every `g ∈ GSpin(V)` has a scalar multiple `c g` with
 `‖c g‖, ‖(c g)⁻¹‖ ≤ C max(1, ‖P(g)‖)ᴺ` (`exists_norm_mul_norm_inv_le`, rescaled so that
 `1 ≤ ‖c g‖ < ‖c₀‖` for a fixed `c₀ ∈ F` with `‖c₀‖ > 1`). -/
@@ -396,7 +317,7 @@ theorem exists_scalar_norm_le (hQ : IsNondeg Q) :
   have hM : 1 ≤ (Mx g) ^ N := one_le_pow₀ (le_max_left _ _)
   set a := ‖lmulPi F ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)‖
   set b := ‖lmulPi F (((g : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)‖
-  have ha : 0 < a := norm_lmulPi_pos (Units.ne_zero _)
+  have ha : 0 < a := norm_lmulPi_pos F (Units.ne_zero _)
   have hb : 0 ≤ b := norm_nonneg _
   obtain ⟨k, hk1, hk2⟩ := exists_mem_Ico_zpow ha hc₀
   let c : Fˣ := Units.mk0 (c₀ ^ (-k)) (zpow_ne_zero _ hc₀0)
@@ -409,11 +330,11 @@ theorem exists_scalar_norm_le (hQ : IsNondeg Q) :
       add_comm]
     exact hk2.le
   refine ⟨c, ?_, ?_⟩
-  · rw [coe_scalarGSpin_mul, norm_lmulPi_smul]
+  · rw [coe_scalarGSpin_mul, norm_lmulPi_smul F]
     calc ‖(c : F)‖ * a ≤ ‖c₀‖ * 1 := by rw [mul_one]; exact hca2
       _ ≤ max ‖c₀‖ CA * (Mx g) ^ N :=
         mul_le_mul (le_max_left _ _) hM zero_le_one (le_max_of_le_left (norm_nonneg _))
-  · rw [coe_inv_scalarGSpin_mul, norm_lmulPi_smul]
+  · rw [coe_inv_scalarGSpin_mul, norm_lmulPi_smul F]
     have hcpos : 0 < ‖(c : F)‖ := norm_pos_iff.2 c.ne_zero
     calc ‖((c⁻¹ : Fˣ) : F)‖ * b = (a * b) / (‖(c : F)‖ * a) := by
           rw [Units.val_inv_eq_inv_val, norm_inv]; field_simp
