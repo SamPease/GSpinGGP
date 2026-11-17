@@ -204,11 +204,6 @@ end Multi
 
 section Sign
 
-/-- `Q (wᵢ bᵢ) = wᵢ² Q bᵢ`. -/
-theorem apply_unitsSMul (w : Fin n → Fˣ) (i : Fin n) :
-    Q (b.unitsSMul w i) = (w i : F) ^ 2 * Q (b i) := by
-  rw [Module.Basis.unitsSMul_apply, Units.smul_def, QuadraticMap.map_smul, smul_eq_mul, _root_.sq]
-
 /-- Rescaling the basis by units with `wᵢ² = 1` for `i ≤ l` keeps the frame. -/
 theorem IsFrame.unitsSMul {ν : F} {l : ℕ} (hf : IsFrame Q b ν l) (w : Fin n → Fˣ)
     (hw : ∀ i : Fin n, i.val ≤ l → (w i : F) ^ 2 = 1) : IsFrame Q (b.unitsSMul w) ν l where
@@ -404,22 +399,26 @@ section HypFrame
 
 variable {ν : F} {l : ℕ}
 
-
-theorem le_of_lt_numPairs {j i : ℕ} (hi : i < numPairs l j) :
+theorem add_one_le_of_lt_numPairs {j i : ℕ} (hi : i < numPairs l j) :
     j + 2 * i + 1 ≤ l := by
   simp only [numPairs] at hi; omega
 
+private theorem pair_idx_ne {j i k : ℕ} (h : i ≠ k) :
+    j + 2 * i ≠ j + 2 * k ∧ j + 2 * i + 1 ≠ j + 2 * k ∧ j + 2 * i ≠ j + 2 * k + 1 ∧
+      j + 2 * i + 1 ≠ j + 2 * k + 1 := by
+  omega
+
 /-- The isotropic vectors `b (j+2i) + b (j+2i+1)` of the pairs of level `j`. -/
 def pairE (hf : IsFrame Q b ν l) (j : ℕ) (i : Fin (numPairs l j)) : V :=
-  b ⟨j + 2 * i, hf.idx_lt (by have := le_of_lt_numPairs i.2; omega)⟩ +
-    b ⟨j + 2 * i + 1, hf.idx_lt (le_of_lt_numPairs i.2)⟩
+  b ⟨j + 2 * i, hf.idx_lt (by have := add_one_le_of_lt_numPairs i.2; omega)⟩ +
+    b ⟨j + 2 * i + 1, hf.idx_lt (add_one_le_of_lt_numPairs i.2)⟩
 
 /-- The isotropic vectors `(4 (-1)^{j+2i} ν)⁻¹ (b (j+2i) - b (j+2i+1))` of the pairs of level
 `j`, dual to `pairE`. -/
 def pairF (hf : IsFrame Q b ν l) (j : ℕ) (i : Fin (numPairs l j)) : V :=
   (4 * ((-1) ^ (j + 2 * i.val) * ν))⁻¹ •
-    (b ⟨j + 2 * i, hf.idx_lt (by have := le_of_lt_numPairs i.2; omega)⟩ -
-      b ⟨j + 2 * i + 1, hf.idx_lt (le_of_lt_numPairs i.2)⟩)
+    (b ⟨j + 2 * i, hf.idx_lt (by have := add_one_le_of_lt_numPairs i.2; omega)⟩ -
+      b ⟨j + 2 * i + 1, hf.idx_lt (add_one_le_of_lt_numPairs i.2)⟩)
 
 /-- The span of the basis vectors outside the pairs of level `j`. -/
 def pairCompl (b : Module.Basis (Fin n) F V) (l j : ℕ) : Submodule F V :=
@@ -439,41 +438,40 @@ theorem isHypFrame_pair (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l) (j : ℕ
   polar_ee i k := by
     by_cases hik : i = k
     · subst hik
-      have hj := le_of_lt_numPairs i.2
+      have hj := add_one_le_of_lt_numPairs i.2
       rw [polar_self, pairE, pairU_isotropic hb (mk_ne_mk_add_one _ _) (hf.apply_left hj)
         (hf.apply_right hj), smul_zero]
-    · have := Fin.val_ne_of_ne hik
-      simp only [pairE, polar_add_left, polar_add_right, polar_basis_basis hb]
-      split_ifs <;> first | omega | simp
+    · obtain ⟨h1, h2, h3, h4⟩ := pair_idx_ne (j := j) (Fin.val_ne_of_ne hik)
+      simp only [pairE, polar_add_left, polar_add_right, polar_basis_basis hb, h1, h2, h3, h4,
+        ↓reduceIte, add_zero]
   polar_ff i k := by
     by_cases hik : i = k
     · subst hik
-      have hj := le_of_lt_numPairs i.2
+      have hj := add_one_le_of_lt_numPairs i.2
       rw [polar_self, pairF, pairV_scaled_isotropic hb (mk_ne_mk_add_one _ _) (hf.apply_left hj)
         (hf.apply_right hj), smul_zero]
-    · have := Fin.val_ne_of_ne hik
+    · obtain ⟨h1, h2, h3, h4⟩ := pair_idx_ne (j := j) (Fin.val_ne_of_ne hik)
       simp only [pairF, polar_smul_left, polar_smul_right, polar_sub_left, polar_sub_right,
-        polar_basis_basis hb]
-      split_ifs <;> first | omega | simp
+        polar_basis_basis hb, h1, h2, h3, h4, ↓reduceIte, sub_self, smul_zero]
   polar_ef i k := by
     by_cases hik : i = k
     · subst hik
-      have hj := le_of_lt_numPairs i.2
+      have hj := add_one_le_of_lt_numPairs i.2
       rw [ite_eq_left_iff.2 (fun h => absurd rfl h), pairE, pairF]
       exact polar_pairU_pairV_scaled hb (mk_ne_mk_add_one _ _) (hf.apply_left hj)
         (hf.apply_right hj)
-    · have := Fin.val_ne_of_ne hik
+    · obtain ⟨h1, h2, h3, h4⟩ := pair_idx_ne (j := j) (Fin.val_ne_of_ne hik)
       simp only [pairE, pairF, polar_smul_right, polar_add_left, polar_sub_right,
-        polar_basis_basis hb, ite_eq_right hik]
-      split_ifs <;> first | omega | simp
+        polar_basis_basis hb, ite_eq_right hik, h1, h2, h3, h4, ↓reduceIte, add_zero, sub_self,
+        smul_zero]
   mem_iff v := by
     have hrepr : ∀ m : Fin n, polar Q v (b m) = 0 ↔ b.repr v m = 0 := fun m => by
       rw [polar_comm, polar_basis_left Q b hb.isOrtho]
       simp [hb.apply_ne_zero m]
     have hpair : ∀ i : Fin (numPairs l j),
         (polar Q v (pairE hf j i) = 0 ∧ polar Q v (pairF hf j i) = 0) ↔
-          (b.repr v ⟨j + 2 * i, hf.idx_lt (by have := le_of_lt_numPairs i.2; omega)⟩ = 0 ∧
-            b.repr v ⟨j + 2 * i + 1, hf.idx_lt (le_of_lt_numPairs i.2)⟩ = 0) := fun i => by
+          (b.repr v ⟨j + 2 * i, hf.idx_lt (by have := add_one_le_of_lt_numPairs i.2; omega)⟩ = 0 ∧
+            b.repr v ⟨j + 2 * i + 1, hf.idx_lt (add_one_le_of_lt_numPairs i.2)⟩ = 0) := fun i => by
       have hν : ν ≠ 0 := fun h => hb.apply_ne_zero _ ((hf.apply_eq ⟨0, hf.idx_lt (Nat.zero_le _)⟩
         (Nat.zero_le _)).trans (by simp [h]))
       rw [← hrepr, ← hrepr, pairE, pairF, polar_add_right, polar_smul_right, polar_sub_right,
@@ -490,7 +488,7 @@ theorem isHypFrame_pair (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l) (j : ℕ
     constructor
     · intro hS i
       rw [hpair]
-      have hi := le_of_lt_numPairs i.2
+      have hi := add_one_le_of_lt_numPairs i.2
       refine ⟨by_contra fun h => ?_, by_contra fun h => ?_⟩ <;>
       · have := hS (Finsupp.mem_support_iff.2 h)
         simp only [Set.mem_ofPred_eq] at this
@@ -499,20 +497,21 @@ theorem isHypFrame_pair (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l) (j : ℕ
       by_contra hmS
       simp only [Set.mem_ofPred_eq, not_not] at hmS
       have hi : (m.val - j) / 2 < numPairs l j := by simp only [numPairs] at hmS ⊢; omega
-      have hi' := le_of_lt_numPairs hi
+      have hi' := add_one_le_of_lt_numPairs hi
       have := (hpair ⟨_, hi⟩).1 (h _)
       rcases Nat.even_or_odd (m.val - j) with ⟨r, hr⟩ | ⟨r, hr⟩
-      · have hm' : m = ⟨j + 2 * ((m.val - j) / 2), hf.idx_lt (by omega)⟩ := Fin.ext (by simp; omega)
+      · have hm' : m = ⟨j + 2 * ((m.val - j) / 2), hf.idx_lt (by omega)⟩ :=
+          Fin.ext (by dsimp only; omega)
         exact Finsupp.mem_support_iff.1 hm (hm' ▸ this.1)
       · have hm' : m = ⟨j + 2 * ((m.val - j) / 2) + 1, hf.idx_lt (by omega)⟩ :=
-          Fin.ext (by simp; omega)
+          Fin.ext (by dsimp only; omega)
         exact Finsupp.mem_support_iff.1 hm (hm' ▸ this.2)
 
 /-- The torus of the `i`-th pair of level `j` is the torus of that pair of the hyperbolic frame. -/
 theorem levelTorus_eq_pairTorus [Invertible (2 : F)] (hb : IsOrthoBasis Q b)
     (hf : IsFrame Q b ν l) (j : ℕ) (i : Fin (numPairs l j)) (t : Fˣ) :
     levelTorus hb hf (j + 2 * i) t = ((isHypFrame_pair hb hf j).pairTorus i t : V ≃ₗ[F] V) := by
-  rw [levelTorus_of_le hb hf (le_of_lt_numPairs i.2)]
+  rw [levelTorus_of_le hb hf (add_one_le_of_lt_numPairs i.2)]
   rfl
 
 /-- **The split torus of level `j` lies in the torus of the hyperbolic frame of level `j`.** -/
@@ -539,13 +538,14 @@ end HypFrame
 
 /-! ## Existence of maximal frames -/
 
+omit [CharZero F] in
 /-- **Existence of a maximal frame.** In a nondegenerate quadratic space, every anisotropic `v₀`
 is the first vector of an orthogonal basis of anisotropic vectors whose first `l + 1` vectors form
 a maximal frame for `ν = Q v₀`. Greedily: take orthogonal `w₀ = v₀, w₁, …, w_l` with
 `Q wᵢ = (-1)ⁱ ν` and `l` as large as possible (it is bounded by the dimension, since such a family
 is linearly independent); then `(-1)^{l+1} ν` is not represented by `{w₀, …, w_l}^⊥`, and an
 orthogonal basis of that complement completes the family (`exists_isOrthoBasis_append`). -/
-theorem exists_isFrame (hQ : Q.Nondegenerate) {v₀ : V} (hv₀ : Q v₀ ≠ 0) :
+theorem exists_isFrame [NeZero (2 : F)] (hQ : Q.Nondegenerate) {v₀ : V} (hv₀ : Q v₀ ≠ 0) :
     ∃ (n l : ℕ) (b : Module.Basis (Fin n) F V), IsOrthoBasis Q b ∧
       ∃ hf : IsFrame Q b (Q v₀) l, b ⟨0, (Nat.zero_le l).trans_lt hf.lt⟩ = v₀ := by
   classical

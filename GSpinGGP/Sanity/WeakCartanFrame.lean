@@ -63,4 +63,15 @@ example := relCartan_SO (isOrthoBasis_Qp p) (isFrame_Qp p)
 
 example : numPairs 1 0 = 1 := rfl
 
+/-- The existence theorem applies to this form and the anisotropic vector `e₀`: it is
+nondegenerate, having an orthogonal basis of anisotropic vectors. -/
+example : ∃ (n l : ℕ) (b : Module.Basis (Fin n) ℚ_[p] (Fin 3 → ℚ_[p])),
+    IsOrthoBasis (Qp p) b ∧ ∃ hf : IsFrame (Qp p) b (Qp p (Pi.single 0 1)) l,
+      b ⟨0, (Nat.zero_le l).trans_lt hf.lt⟩ = Pi.single 0 1 := by
+  let _ : Invertible (2 : ℚ_[p]) := invertibleOfNonzero two_ne_zero
+  refine exists_isFrame (nondegenerate_of_isOrthoᵢ (b := Pi.basisFun ℚ_[p] (Fin 3))
+    (fun i j hij => associated_isOrtho.mpr ((isOrthoBasis_Qp p).isOrtho i j hij))
+    (isOrthoBasis_Qp p).apply_ne_zero) ?_
+  simpa using (isOrthoBasis_Qp p).apply_ne_zero 0
+
 end GSpinGGP.Sanity.WeakCartanFrame

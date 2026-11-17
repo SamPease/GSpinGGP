@@ -156,24 +156,20 @@ structure IsOrthoBasis (Q : QuadraticForm F V) (b : Module.Basis (Fin n) F V) : 
   apply_ne_zero : ∀ i, Q (b i) ≠ 0
 
 omit [CharZero F] in
-/-- A nondegenerate quadratic space has an orthogonal basis of anisotropic vectors. -/
-theorem exists_isOrthoBasis [CharZero F] [FiniteDimensional F V] (Q : QuadraticForm F V)
-    (hQ : (QuadraticMap.associated (R := F) Q).SeparatingLeft) :
+/-- A nondegenerate quadratic space has an orthogonal basis of anisotropic vectors (Tau Ceti's
+`QuadraticMap.Nondegenerate.exists_orthogonal_basis`). -/
+theorem exists_isOrthoBasis [NeZero (2 : F)] [FiniteDimensional F V] (Q : QuadraticForm F V)
+    (hQ : Q.Nondegenerate) :
     ∃ b : Module.Basis (Fin (Module.finrank F V)) F V, IsOrthoBasis Q b := by
   let _ : Invertible (2 : F) := invertibleOfNonzero two_ne_zero
-  obtain ⟨v, hv₁⟩ :=
-    LinearMap.BilinForm.exists_orthogonal_basis (QuadraticForm.associated_isSymm F Q)
-  have hv₂ := hv₁.not_isOrtho_basis_self_of_separatingLeft hQ
-  simp_rw [QuadraticMap.associated_eq_self_apply] at hv₂
-  refine ⟨v, fun i j hij => ?_, hv₂⟩
-  have h := hv₁ hij
-  simp only [QuadraticMap.associated_apply] at h
-  have h2 : (⅟2 : F) * QuadraticMap.polar Q (v i) (v j) = 0 := by
-    simpa [QuadraticMap.polar, sub_sub] using h
-  have h3 : QuadraticMap.polar Q (v i) (v j) = 0 := by simpa using h2
-  show Q (v i + v j) = Q (v i) + Q (v j)
-  rw [QuadraticMap.polar] at h3
-  linear_combination h3
+  obtain ⟨b, hb, hb0⟩ := hQ.exists_orthogonal_basis
+  exact ⟨b, hb, hb0⟩
+
+omit [CharZero F] in
+/-- `Q (wᵢ bᵢ) = wᵢ² Q bᵢ`. -/
+theorem apply_unitsSMul (w : Fin n → Fˣ) (i : Fin n) :
+    Q (b.unitsSMul w i) = (w i : F) ^ 2 * Q (b i) := by
+  rw [Module.Basis.unitsSMul_apply, Units.smul_def, QuadraticMap.map_smul, smul_eq_mul, _root_.sq]
 
 omit [CharZero F] in
 /-- Rescaling the vectors of an orthogonal basis by units (`Module.Basis.unitsSMul`) gives an
@@ -186,17 +182,18 @@ theorem IsOrthoBasis.unitsSMul (hb : IsOrthoBasis Q b) (w : Fin n → Fˣ) :
       QuadraticMap.polar_smul_left, QuadraticMap.polar_smul_right,
       (hb.isOrtho i j hij).polar_eq_zero, smul_zero, smul_zero]
   apply_ne_zero i := by
-    rw [Module.Basis.unitsSMul_apply, Units.smul_def, QuadraticMap.map_smul, smul_eq_mul]
-    exact mul_ne_zero (mul_ne_zero (w i).ne_zero (w i).ne_zero) (hb.apply_ne_zero i)
+    rw [apply_unitsSMul]
+    exact mul_ne_zero (pow_ne_zero _ (w i).ne_zero) (hb.apply_ne_zero i)
 
+omit [CharZero F] in
 /-- **Extension to an orthogonal basis.** In a nondegenerate quadratic space, an orthogonal
 family `w₀, …, w_{k-1}` of anisotropic vectors is the beginning of an orthogonal basis of
 anisotropic vectors: the span `U` of the `wᵢ` is nondegenerate, hence so is `U^⊥`, and
 `V = U ⊕ U^⊥` (Tau Ceti's `QuadraticMap.Nondegenerate.nondegenerate_restrict_orthogonal`,
 `isCompl_orthogonal`); an orthogonal basis of `U^⊥`
 (`QuadraticMap.Nondegenerate.exists_orthogonal_basis`) completes the family. -/
-theorem exists_isOrthoBasis_append [FiniteDimensional F V] (hQ : Q.Nondegenerate) {k : ℕ}
-    {w : Fin k → V} (hw : ∀ i j, i ≠ j → Q.IsOrtho (w i) (w j)) (hw0 : ∀ i, Q (w i) ≠ 0) :
+theorem exists_isOrthoBasis_append [NeZero (2 : F)] [FiniteDimensional F V] (hQ : Q.Nondegenerate)
+    {k : ℕ} {w : Fin k → V} (hw : ∀ i j, i ≠ j → Q.IsOrtho (w i) (w j)) (hw0 : ∀ i, Q (w i) ≠ 0) :
     ∃ (m : ℕ) (c : Fin m → V) (b : Module.Basis (Fin (k + m)) F V),
       IsOrthoBasis Q b ∧ ⇑b = Fin.append w c := by
   let _ : Invertible (2 : F) := invertibleOfNonzero two_ne_zero
