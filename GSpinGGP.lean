@@ -166,6 +166,7 @@ import GSpinGGP.HarmonicAnalysis.RelativeXi
 import GSpinGGP.HarmonicAnalysis.PolynomialGrowth
 import GSpinGGP.HarmonicAnalysis.QuotientUnimodular
 import GSpinGGP.Foundations.CosetSpaceTranslate
+import GSpinGGP.Foundations.CosetSpaceTopology
 import GSpinGGP.Foundations.NormDescent
 import GSpinGGP.TraceFormula.GoodParabolicLift
 import GSpinGGP.TraceFormula.LogNormDescent
