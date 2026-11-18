@@ -943,6 +943,67 @@ theorem A0_eq_id {a : GSpin d.QW}
       (fun j hj => hlow _ j hj rfl) (by simp only [Set.mem_ofPred_eq]; omega)
       (hWan m (by omega))
 
+include hb h0 in
+/-- **`H ∩ Ū_min = 1`** for the explicit good minimal parabolic (Thesis Prop. 8.1.1(i); the proof
+of `H ∩ P̄_min = GSpin(W_an)` there). For `g = (a, a n) ∈ H ∩ Ū_min`: `n ∈ N` fixes the opposite
+flag `z_{-r}, …, z_{-1}`, hence acts trivially (`N ∩ P̄ = 1`), so `n = 1`; then `a` fixes
+`w₀ = z₀`, and alternately the flags of `V` and of `W` force it to fix `w₁, …, w_l`, and finally
+`W_an`; so `a` is a unipotent scalar, `a = 1`. -/
+theorem H_inf_whittU_eq_bot : d.H ⊓ d.whittU (flagW hb hf h0) (flagV hb hf h0) = ⊥ := by
+  rw [eq_bot_iff]
+  rintro g ⟨hgH, hgU⟩
+  rw [Subgroup.mem_bot]
+  obtain ⟨haU, hbU⟩ := hgU
+  replace haU : d.fst g ∈ flagUnip (flagW hb hf h0) := haU
+  replace hbU : d.snd g ∈ flagUnip (flagV hb hf h0) := hbU
+  set a := d.fst g with ha
+  set bb := d.snd g with hbb'
+  have hnn : d.nPart g ∈ d.N := hgH
+  set nn := d.nPart g with hnn'
+  have hbb : bb = d.incl a * nn := by rw [hnn', nPart, mul_inv_cancel_left]
+  have hlen : (flagV hb hf h0).len = d.r + numPairs l 0 := rfl
+  -- step 1: `n` fixes `z_{-r}, …, z_{-1}`
+  have hfix : ∀ k : Fin d.r, specP d.QV nn (zb (d := d) k) = zb (d := d) k := by
+    intro k
+    have hk := k.2
+    apply d.specP_zb_of_mem_N hnn k
+    have hv : zb (d := d) k ∈ (flagV hb hf h0).sub (Fin.succ ⟨k, by rw [hlen]; omega⟩) := by
+      rw [← eV_of_lt hf (i := ⟨k, by omega⟩) hk]
+      exact IsotropicFlag.mem_ofFamily_sub (by simp)
+    have hcl := hbU.2.1 ⟨k, by rw [hlen]; omega⟩ _ hv
+    have hsub : (flagV hb hf h0).sub (Fin.castSucc ⟨k, by rw [hlen]; omega⟩) =
+        Submodule.span F (Set.range (d.zV ∘ fun j : Fin k => -((d.r : ℤ) - (j : ℕ)))) := by
+      change Submodule.span F (Set.range (eV hf ∘ Fin.castLE (IsotropicFlag.castLE_le_aux _))) = _
+      congr 2
+      funext j
+      simp only [Function.comp_apply]
+      rw [eV_of_lt hf (by simp; omega)]
+      rfl
+    rw [hsub] at hcl
+    have hfst : (specP d.QV bb (zb (d := d) k) - zb (d := d) k).1 = 0 := by
+      obtain ⟨c, hc⟩ := (Submodule.mem_span_range_iff_exists_fun F).mp hcl
+      rw [← hc]
+      simp [Prod.fst_sum, zV]
+    have e : specP d.QV nn (zb (d := d) k) - zb (d := d) k =
+        specP d.QV bb (zb (d := d) k) - zb (d := d) k := by
+      have h1 : ∀ v : d.V, v.1 = 0 → specP d.QV (d.incl a)⁻¹ v = v := by
+        rintro ⟨w, z⟩ hw
+        simp only at hw
+        rw [hw, ← map_inv]
+        exact d.specP_incl_inr _ z
+      have hnn2 : nn = (d.incl a)⁻¹ * bb := by rw [hbb]; group
+      rw [hnn2, specP_mul_apply]
+      set δ := specP d.QV bb (zb (d := d) k) - zb (d := d) k
+      have : specP d.QV bb (zb (d := d) k) = zb (d := d) k + δ := by simp [δ]
+      rw [this, map_add, h1 _ rfl, h1 _ hfst]
+      abel
+    rw [e]; exact hcl
+  -- step 2: `n = 1`
+  have hn1 : nn = 1 :=
+    eq_one_of_specP_eq_one d.nondeg_QV (d.specP_eq_one_of_mem_N hnn hfix) hnn.2.2.2
+  have hbb1 : bb = d.incl a := by rw [hbb, hn1, mul_one]
+  sorry
+
 end HU
 
 end GGPData
