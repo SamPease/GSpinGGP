@@ -16,5 +16,6 @@ GSpinGGP.jantzen_regularNil_partition
 GSpinGGP.kottwitz_nilpotent_sq_smul
 GSpinGGP.luo_lie_geomExpansion_SO
 GSpinGGP.rodier_germ_one
+GSpinGGP.tits_iwasawa
 GSpinGGP.waldspurger_goodNbhd
 GSpinGGP.weil_quotient_radon
