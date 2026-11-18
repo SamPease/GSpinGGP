@@ -252,8 +252,9 @@ theorem toyD_isNearCentral (c : ↥(𝕋).G) : IsNearCentral (𝕋) c := by
 theorem toyD_not_isTempIndData (η : CentralCharOn (𝕋)) (D : (𝕋).ParIndData) :
     ¬ (𝕋).IsTempIndData η D := fun h => toyD_not_isProperFlagPair _ _ h.proper
 
-/-- Conclusion of the `sorry` statement `locallyIntegrable_absF_det_adV_rpow` at `a = 0`, for every
-`d`, `x` and `t₀ ∈ T_x` (the function is `≡ 1`), proved without it. -/
+/-- Conclusion of `locallyIntegrable_absF_det_adV_rpow` at `a = 0`, for every `d`, `x` and
+`t₀ ∈ T_x` (the function is `≡ 1`), proved directly (it was a `sorry` statement when this check
+was added). -/
 theorem locallyIntegrable_det_adV_rpow_zero (d : GGPData F) {x t₀ : ↥(GSpin d.QW)}
     (ht₀ : t₀ ∈ d.torusOf x) (μ : Measure ↥(d.lieTorus (d.torusOf x))) [μ.IsAddHaarMeasure] :
     LocallyIntegrable (fun X : ↥(d.lieTorus (d.torusOf x)) =>
