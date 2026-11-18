@@ -2,6 +2,7 @@
 Copyright (c) 2026 Samantha Pease. All rights reserved.
 -/
 import Mathlib
+import GSpinGGP.Foundations.VanDantzig
 
 /-!
 # Unitary representations of totally disconnected locally compact groups
@@ -934,25 +935,6 @@ of integrals over compact open neighbourhoods of `K` (outer regularity). This is
 Harish-Chandra character `θ_π` (and `θ_f`) unique as a function up to null sets. -/
 
 section Separation
-
-/-- In a totally disconnected locally compact Hausdorff space, between a compact set and an
-open neighbourhood of it there is a compact open (hence clopen) set. -/
-theorem exists_isCompact_isClopen_between {X : Type*} [TopologicalSpace X] [T2Space X]
-    [LocallyCompactSpace X] [TotallyDisconnectedSpace X] {K U : Set X} (hK : IsCompact K)
-    (hU : IsOpen U) (hKU : K ⊆ U) : ∃ V, IsCompact V ∧ IsClopen V ∧ K ⊆ V ∧ V ⊆ U := by
-  have hloc : ∀ x ∈ K, ∃ W : Set X, IsCompact W ∧ IsClopen W ∧ x ∈ W ∧ W ⊆ U := by
-    intro x hx
-    obtain ⟨C, hC, hxC, hCU⟩ := exists_compact_subset hU (hKU hx)
-    obtain ⟨W, hW, hxW, hWC⟩ :=
-      isTopologicalBasis_isClopen.mem_nhds_iff.mp (isOpen_interior.mem_nhds hxC)
-    exact ⟨W, hC.of_isClosed_subset hW.1 (hWC.trans interior_subset), hW, hxW,
-      hWC.trans (interior_subset.trans hCU)⟩
-  choose! W hWc hWcl hxW hWU using hloc
-  obtain ⟨t, htK, hcover⟩ :=
-    hK.elim_nhds_subcover W (fun x hx => (hWcl x hx).isOpen.mem_nhds (hxW x hx))
-  exact ⟨⋃ x ∈ t, W x, t.isCompact_biUnion fun x hx => hWc x (htK x hx),
-    isClopen_biUnion_finset fun x hx => hWcl x (htK x hx), hcover,
-    Set.iUnion₂_subset fun x hx => hWU x (htK x hx)⟩
 
 /-- The indicator function of a compact open set is a test function. -/
 theorem indicator_mem_testFunctions [T2Space G] {V : Set G} (hVc : IsCompact V)

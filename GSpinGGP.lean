@@ -55,6 +55,7 @@ import GSpinGGP.Foundations.WeakCartanRotation
 import GSpinGGP.Foundations.WeakCartanFrame
 import GSpinGGP.Foundations.WeakCartanTheorem
 import GSpinGGP.Foundations.GoodParabolicSO
+import GSpinGGP.Foundations.VanDantzig
 import GSpinGGP.GGP.RegularOrbitClass
 import GSpinGGP.GGP.OrbitSpecQd
 import GSpinGGP.GGP.RegularRank
@@ -98,6 +99,7 @@ import GSpinGGP.GGP.CliffordDescent
 import GSpinGGP.Literature.Localization
 import GSpinGGP.Literature.Waldspurger
 import GSpinGGP.Literature.Parabolic
+import GSpinGGP.Literature.Tits
 import GSpinGGP.TraceFormula.InvariantSets
 import GSpinGGP.GGP.Triple
 import GSpinGGP.GGP.TorusIntegral

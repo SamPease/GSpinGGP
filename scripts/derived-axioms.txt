@@ -6,3 +6,4 @@ GSpinGGP.hc_character_exists
 GSpinGGP.hc_character_isQuasiCharacter
 GSpinGGP.jantzen_finrank_soCentMat_ge
 GSpinGGP.luo_lie_geomExpansion_SO
+GSpinGGP.tits_iwasawa
