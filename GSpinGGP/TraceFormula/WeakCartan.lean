@@ -8,7 +8,34 @@ import GSpinGGP.TraceFormula.GoodParabolic
 /-!
 # The weak Cartan decomposition of `G` and the reduction from `G` to `G₀`
 
-Scratch header; rewritten at the end.
+Let `d` be a GGP datum, `V = W ⊕ ⟨z₀⟩ ⊕ ⟨z_{±1}, …, z_{±r}⟩`, `V₀ = W ⊕ ⟨z₀⟩` (`GGPData.V0`,
+`iota0 : V₀ → V`, `pi0 : V → V₀`), `G₀ = GSpin(W) × GSpin(V₀)` (the datum `GGPData.base`, with
+`r = 0`), `P = GSpin(W) × P_V` the stabilizer of `⟨z_r⟩ ⊂ ⋯ ⊂ ⟨z_r, …, z_1⟩` and `P = M N` with
+`M = G₀ A` (Thesis §5.2, §8.3). Everything is done at the level of `Ḡ = SO(W) × SO(V)`
+(`GGPData.Pbar`, kernel the central scalars) and pulled back to `G`.
+
+* `GGPData.extV0`: `SO(V₀) ⊆ SO(V)`, `g ↦ g ⊕ 1`; `GGPData.torusZ`: the split torus `A ≅ GL₁^r`
+  of the Levi, `a(τ) z_{±k} = τ_{k-1}^{±1} z_{±k}`.
+* **Reduction from `G` to `G₀`** (Thesis proof of Prop. 8.1.1(iii), Section 8):
+  `GGPData.logNormSO_add_le_of_cone` is the first inequality of Thesis Prop. 8.1.1(iii)
+  (BP (6.4.1)) for `G` on the cone `A₀⁺ A(F)`. For `h ∈ H` and `y` in the cone, `P̄(h) y`
+  preserves the flag; its compression to `Z_r^⊥/Z_r ≅ V₀` is a `G₀`-element (`pi0_compress`) and
+  its diagonal entries on `z_1, …, z_r` are the torus coordinates (`compress_coord`), so the
+  codimension-one case `logNormSO_add_le_of_chamber` (for `d.base`) applies.
+  `GGPData.logNormModAG_le_of_cone` and `GGPData.logNormModAG_le_fiberInf_of_cone` are the forms
+  modulo `A_G` and `σ_{A_G\G} ≪ σ_{H\G}` (Thesis Prop. 8.4.1(ii)(b), nontrivial half).
+* `GGPData.exists_isCompact_logNorm_le`, `GGPData.exists_isCompact_lift`: log-norm balls of `G(F)`
+  are relatively compact, and bounded subsets of `Ḡ` lift to compact subsets of `G(F)` modulo
+  the scalars.
+* **Weak Cartan decomposition** (Thesis Lemma 8.3.2(ii)): `GGPData.exists_weakCartan` for `G`,
+  from its `SO`-level form `GGPData.exists_weakCartan_SO` (`sorry`, with a proof sketch).
+* `GGPData.weakCartanData`: the `WeakCartanData d.mkHG d.logNormModAG` with cone
+  `S = A_G A₀⁺ A(F)` (`GGPData.cone`), taking the polynomial growth of the cone modulo `A_G`
+  (BP (6.7.12)) as hypotheses; `GGPData.prop_6_7_1_iii_of_growth` feeds it to
+  `prop_6_7_1_iii_of_weakCartanData`.
+
+The good pair is the explicit one of `weakCartan_G0_SO` (frame `b` of `V₀` with `b 0 ∈ ⟨z₀⟩`).
+Only `F` `p`-adic is treated.
 -/
 
 noncomputable section
@@ -618,6 +645,170 @@ theorem logNormModAG_le_fiberInf_of_cone (hb0 : ∀ i : Fin n, (i : ℕ) = 0 →
     exact this
 
 end Cone
+
+/-! ## 6. Compact balls of `G(F)` and the lift of bounded sets from `Ḡ` -/
+
+/-- The log-norm balls of `G(F)` are relatively compact: `{σ_G ≤ R}` lies in a compact set.
+(`‖g‖, ‖g⁻¹‖ ≤ s` cuts out a compact set of pairs in `A × A`, `isCompact_lmulPi_ball`.) -/
+theorem exists_isCompact_logNorm_le (R : ℝ) :
+    ∃ K : Set d.G, IsCompact K ∧ ∀ g : d.G, logNorm F d.G g ≤ R → g ∈ K := by
+  set s := Real.exp (R - 1)
+  set S := {a : d.ambient | ‖lmulPi F a‖ ≤ s}
+  have hS : IsCompact S := isCompact_lmulPi_ball F s
+  set T : Set (d.ambient × d.ambient) := (S ×ˢ S) ∩ {p | p.1 * p.2 = 1 ∧ p.2 * p.1 = 1}
+  have hT : IsCompact T :=
+    (hS.prod hS).inter_right
+      ((isClosed_eq (_root_.continuous_fst.mul _root_.continuous_snd) continuous_const).inter
+        (isClosed_eq (_root_.continuous_snd.mul _root_.continuous_fst) continuous_const))
+  have : CompactSpace T := isCompact_iff_compactSpace.mp hT
+  let Φ : T → d.ambientˣ := fun p => ⟨p.1.1, p.1.2, p.2.2.1, p.2.2.2⟩
+  have hΦ : Continuous Φ := Units.continuous_iff.2
+    ⟨_root_.continuous_fst.comp continuous_subtype_val, _root_.continuous_snd.comp continuous_subtype_val⟩
+  refine ⟨Subtype.val ⁻¹' Set.range Φ,
+    d.isClosed_G.isClosedEmbedding_subtypeVal.isCompact_preimage (isCompact_range hΦ),
+    fun g hg => ?_⟩
+  have hm : maxNorm F d.G g ≤ s := by
+    have h0 := lt_of_lt_of_le zero_lt_one (one_le_maxNorm (F := F) d.G g)
+    rw [logNorm] at hg
+    rw [← Real.exp_log h0]
+    exact Real.exp_le_exp.2 (by linarith)
+  have h1 : ‖lmulPi F (((g : d.ambientˣ)) : d.ambient)‖ ≤ s :=
+    (le_max_left _ _).trans ((le_max_right _ _).trans hm)
+  have h2 : ‖lmulPi F ((((g⁻¹ : d.G) : d.ambientˣ)) : d.ambient)‖ ≤ s :=
+    (le_max_right _ _).trans ((le_max_right _ _).trans hm)
+  have hp : (((g : d.ambientˣ) : d.ambient), (((g : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient)) ∈
+      T := ⟨⟨h1, h2⟩, Units.mul_inv _, Units.inv_mul _⟩
+  exact ⟨⟨_, hp⟩, Units.ext rfl⟩
+
+/-- **Lift of bounded sets along `P̄ : G → Ḡ`**: for `M`, there is a compact `K ⊆ G(F)` such that
+every `g` with `σ_{Ḡ}(P̄ g) ≤ M` is `z⁻¹ k` with `z` a central scalar and `k ∈ K`
+(`exists_logNorm_scalars_mul_le`). -/
+theorem exists_isCompact_lift (M : ℝ) :
+    ∃ K : Set d.G, IsCompact K ∧ ∀ g : d.G, d.logNormSO (d.Pbar g) ≤ M →
+      ∃ z ∈ d.scalars, z * g ∈ K := by
+  obtain ⟨C, hC, hz⟩ := d.exists_logNorm_scalars_mul_le
+  obtain ⟨K, hK, hKR⟩ := d.exists_isCompact_logNorm_le (C * M)
+  refine ⟨K, hK, fun g hg => ?_⟩
+  obtain ⟨z, hz, hzg⟩ := hz g
+  exact ⟨z, hz, hKR _ (hzg.trans (mul_le_mul_of_nonneg_left hg hC))⟩
+
+/-! ## 7. The weak Cartan decomposition of `G` (Thesis Lemma 8.3.2(ii)) and the weak Cartan
+data of `H\G/A_G` -/
+
+section WeakCartanG
+
+variable {n l : ℕ} {b : Basis (Fin n) F d.V0} (hb : IsOrthoBasis d.Q0 b) {ν : F}
+  (hf : IsFrame d.Q0 b ν l)
+
+/-- **The cone `A₀⁺ A(F)` in `SO(W) × SO(V)`** (Thesis §8.3, Lemma 8.3.2(ii)), for the good minimal
+parabolic `P̄₀ = P̄_W × P̄_{V₀}` of `G₀` defined by the frame `b` of `V₀` (as in
+`weakCartan_G0_SO`) and the split torus `A` of the Levi `G₀ A` (`torusZ`): the `y = (y_W, y_V)`
+with `y_W ⊕ 1 = (multiTorus hb hf 1 s)⁻¹` on `V₀` and `y_V = a(τ) (y₀ ⊕ 1)`,
+`y₀ = (multiTorus hb hf 0 t)⁻¹`, `s`, `t` in the contracting chambers and `τ` arbitrary. -/
+def coneSO : Set d.GbarGrp :=
+  {y | ∃ (s t : List Fˣ) (τ : Fin d.r → Fˣ), InChamber n l 1 s ∧ InChamber n l 0 t ∧
+    d.base.extZ (y.1 : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) = (multiTorus hb hf 1 s)⁻¹ ∧
+    (y.2 : d.V ≃ₗ[F] d.V) = d.torusZ τ * d.extV0 (multiTorus hb hf 0 t)⁻¹}
+
+/-- **The cone `A_G A₀⁺ A(F)` of `G(F)`**: the preimage of `coneSO` under `P̄`. It contains the
+central scalars `Z(F) = ker P̄` and is stable under them, and when `W` is a hyperbolic plane it is
+stable under `A_G` (then `P̄(A_G) = SO(W) × 1` is the split torus of `SO(W)`, which has no
+chamber condition). -/
+def cone : Set d.G := d.Pbar ⁻¹' d.coneSO hb hf
+
+include hb in
+/-- **Thesis Lemma 8.3.2(ii) at the level of `SO(W) × SO(V)`** (BP Lemma 6.6.2(ii)), for the
+explicit good pair of `weakCartan_G0_SO`: `Ḡ = P̄(H) · A₀⁺A(F) · K̄` with `K̄` bounded for
+`σ_{SO}` (equivalently, relatively compact). Own work; not proved here.
+
+Proof sketch (BP's proof of Lemma 6.6.2(ii)): (a) Iwasawa: `Ḡ = P̄(P) K₁` for the stabilizer
+`P = GSpin(W) × P_V` of `⟨z_r⟩ ⊂ ⋯ ⊂ ⟨z_r, …, z_1⟩` (from `tits_iwasawa` for full flags
+extending that flag, e.g. `z_r, …, z_1, u₁, u₂, …`); (b) Levi decomposition at the level of
+`SO(V)`: every element of `P̄_V` is `P(n) a(τ) (m ⊕ 1)` with `n ∈ N`, `m ∈ SO(V₀)`; (c)
+`weakCartan_G0_SO` for `(W ⊆ V₀, b)` applied to `(P(p_W) ⊕ 1, m)`, the converse of
+`extZ_mem_fixer` (`fixer Q₀ b 1 = SO(W) ⊕ 1`), and `a(τ)` commuting with `SO(V₀) ⊕ 1`. -/
+theorem exists_weakCartan_SO (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1 = 0) :
+    ∃ M, ∀ y : d.GbarGrp, ∃ h ∈ d.H, ∃ x ∈ d.coneSO hb hf, ∃ k : d.GbarGrp,
+      d.logNormSO k ≤ M ∧ y = d.Pbar h * x * k := by
+  sorry
+
+include hb in
+/-- **Thesis Lemma 8.3.2(ii)** (BP Lemma 6.6.2(ii)) for `G = GSpin(W) × GSpin(V)`, for the
+explicit good pair of `weakCartan_G0_SO`: `G(F) = H(F) · A₀⁺A(F) · K` with `K` compact, where
+the cone `A₀⁺A(F)` is taken modulo the central scalars (`cone`, the preimage of `coneSO`).
+From `exists_weakCartan_SO` by lifting along `P̄` (kernel the central scalars, absorbed into the
+cone; bounded sets lift to compact sets, `exists_isCompact_lift`). -/
+theorem exists_weakCartan (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1 = 0) :
+    ∃ K : Set d.G, IsCompact K ∧ ∀ g : d.G, ∃ h ∈ d.H, ∃ x ∈ d.cone hb hf, ∃ k ∈ K,
+      g = h * x * k := by
+  obtain ⟨M, hM⟩ := d.exists_weakCartan_SO hb hf hb0
+  obtain ⟨K, hK, hKl⟩ := d.exists_isCompact_lift M
+  refine ⟨K, hK, fun g => ?_⟩
+  obtain ⟨h, hh, x, hx, k, hk, he⟩ := hM (d.Pbar g)
+  obtain ⟨x₁, rfl⟩ := d.Pbar_surjective x
+  obtain ⟨k₁, rfl⟩ := d.Pbar_surjective k
+  obtain ⟨z, hz, hzk⟩ := hKl k₁ hk
+  have hzker : d.Pbar z = 1 := by rw [d.scalars_eq_ker] at hz; exact hz
+  set w := (h * (x₁ * z⁻¹) * (z * k₁))⁻¹ * g
+  have hw : w ∈ d.scalars := by
+    rw [d.scalars_eq_ker, MonoidHom.mem_ker]
+    simp only [w, map_mul, map_inv, he, hzker]
+    group
+  have hwc := Subgroup.mem_center_iff.mp (d.AG_le_center (d.scalars_le_AG hw))
+  refine ⟨h, hh, x₁ * z⁻¹ * w, ?_, z * k₁, hzk, ?_⟩
+  · show d.Pbar (x₁ * z⁻¹ * w) ∈ d.coneSO hb hf
+    have hwk : d.Pbar w = 1 := by rw [d.scalars_eq_ker] at hw; exact hw
+    rwa [map_mul, map_mul, hwk, map_inv, hzker, inv_one, mul_one, mul_one]
+  · have : g = h * (x₁ * z⁻¹) * (z * k₁) * w := by simp only [w, mul_inv_cancel_left]
+    rw [this, mul_assoc _ (z * k₁), hwc (z * k₁)]
+    group
+
+include hb in
+/-- **The weak Cartan data of `H(F)\G(F)/A_G(F)`** (`WeakCartanData`, the input of BP's proof of
+Prop. 6.7.1(iii) = Thesis Prop. 8.4.1(iii)), with cone `S = A_G A₀⁺ A(F)` (`cone`), from
+* the weak Cartan decomposition `exists_weakCartan` (Thesis Lemma 8.3.2(ii)),
+* `σ_{A_G\G} ≪ σ_{H\G}` on the cone (`logNormModAG_le_fiberInf_of_cone`, Thesis Prop.
+  8.4.1(ii)(b), via the reduction from `G` to `G₀`),
+* and, **taken as hypotheses here**, the polynomial growth of the cone modulo `A_G` (BP (6.7.12)):
+  `CS`, `M`, `N` and `growth`, stated exactly as the field `WeakCartanData.growth` for `S = cone`. -/
+def weakCartanData (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1 = 0) (CS : Set d.G)
+    (hCS : IsCompact CS) (M : ℝ) (N : ℕ)
+    (growth : ∀ R : ℝ, 1 ≤ R → ∃ t : Finset d.G, (t.card : ℝ) ≤ M * (1 + R) ^ N ∧
+      d.mkHG '' {s ∈ d.cone hb hf | d.logNormModAG s < R} ⊆ ⋃ j ∈ t, d.mkHG '' ((j * ·) '' CS)) :
+    WeakCartanData d.mkHG d.logNormModAG where
+  S := d.cone hb hf
+  K := (d.exists_weakCartan hb hf hb0).choose
+  isCompact_K := (d.exists_weakCartan hb hf hb0).choose_spec.1
+  exists_eq_mul g := by
+    obtain ⟨h, hh, x, hx, k, hk, he⟩ := (d.exists_weakCartan hb hf hb0).choose_spec.2 g
+    refine ⟨x, hx, k, hk, ((d.mkHG_eq_mkHG_iff (x * k) g).2 ⟨h, hh, 1, one_mem _, ?_⟩).symm⟩
+    rw [he, mul_one, mul_assoc]
+  c := (d.logNormModAG_le_fiberInf_of_cone hb hf hb0).choose
+  le_fiberInf s hs := by
+    obtain ⟨s', t, τ, -, ht, -, hτ⟩ := hs
+    exact (d.logNormModAG_le_fiberInf_of_cone hb hf hb0).choose_spec.2 s τ t ht hτ
+  CS := CS
+  isCompact_CS := hCS
+  M := M
+  N := N
+  growth := growth
+
+include hb in
+/-- **Thesis Prop. 8.4.1(iii) from the polynomial growth of the cone** (BP Prop. 6.7.1(iii)):
+`prop_6_7_1_iii_of_weakCartanData` applied to `weakCartanData`. The remaining hypotheses are the
+outer regularity of the Weil measure on `H\G/A_G` and the polynomial growth (BP (6.7.12)) of the
+cone modulo `A_G`. -/
+theorem prop_6_7_1_iii_of_growth (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1 = 0)
+    [d.weilMeasureHG.OuterRegular] (CS : Set d.G) (hCS : IsCompact CS) (M : ℝ) (N : ℕ)
+    (growth : ∀ R : ℝ, 1 ≤ R → ∃ t : Finset d.G, (t.card : ℝ) ≤ M * (1 + R) ^ N ∧
+      d.mkHG '' {s ∈ d.cone hb hf | d.logNormModAG s < R} ⊆ ⋃ j ∈ t, d.mkHG '' ((j * ·) '' CS))
+    (C₀ : Set d.G) (hC₀ : IsCompact C₀) (hC₀' : (interior C₀).Nonempty) :
+    ∃ d₀ : ℝ, 0 < d₀ ∧ MeasureTheory.Integrable
+      (fun q : d.HGQuot => d.xiHG C₀ q ^ 2 * d.logNormHG q ^ (-d₀)) d.weilMeasureHG :=
+  d.prop_6_7_1_iii_of_weakCartanData C₀ hC₀ hC₀'
+    (d.weakCartanData hb hf hb0 CS hCS M N growth)
+
+end WeakCartanG
 
 end GGPData
 
