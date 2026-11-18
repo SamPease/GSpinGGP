@@ -41,26 +41,29 @@ satisfying the stability, transfer and genericity hypotheses, which is all the p
 
 As of November 2026:
 
-- The project builds with 33 declarations containing `sorry`. The main theorem `local_ggp`
-  depends on 18 of them. They are of two kinds: the analytic core of the local trace formula
+- The project builds with 32 declarations containing `sorry`. The main theorem `local_ggp`
+  depends on 17 of them. They are of two kinds: the analytic core of the local trace formula
   (Thesis Ch. 8–12, e.g. the bound on the kernel of the distribution `J` and its spectral
   expansion), and published results that the dissertation adapts to general spin groups (see
   below), plus some smaller lemmas. A `sorry` is a step this project still owes.
 - Results from the literature are assumed as `axiom`s in `GSpinGGP/Literature/`, each with a
   docstring citing its source; they are where the formalization stops, and are not meant to be
-  proved here. `local_ggp` uses 20 of the 20. There are two classes.
+  proved here. `local_ggp` uses 21 of the 21. There are two classes.
   A *verbatim* axiom is a statement printed in its source, for the group the source treats,
   specialized (one, `bp_integrable_kernel_scusp`, is stated without proof in its source).
   A *derived* axiom is a short, explicit combination of such statements, or a printed statement
   whose hypotheses are checked for our object in the docstring only; the docstring quotes the
-  ingredients and gives the steps. 8 of the 20 are derived (`scripts/derived-axioms.txt`):
+  ingredients and gives the steps. 9 of the 21 are derived (`scripts/derived-axioms.txt`):
   the two on characters and the one on multiplicity one (sources state them for irreducible
   admissible smooth representations, the axioms for irreducible unitary ones);
   the three on Galois cohomology (applied to groups of `F̄`-points whose description as algebraic
   groups, and for Kottwitz's lemma as a fundamental maximal torus, is argued in the docstring);
   `jantzen_finrank_soCentMat_ge` (four statements of Jantzen combined);
-  and `luo_lie_geomExpansion_SO` (Luo's theorem with properties of `θ_f` from Waldspurger and
-  Beuzart-Plessis, one obtained from a theorem stated without proof by the Weyl integration formula).
+  `luo_lie_geomExpansion_SO` (Luo's theorem with properties of `θ_f` from Waldspurger and
+  Beuzart-Plessis, one obtained from a theorem stated without proof by the Weyl integration formula);
+  and `tits_iwasawa` (the Iwasawa decomposition as stated by Tits, from the valuation of the root
+  datum of Bruhat–Tits; the identification of Tits's `Z(F)U⁺(F)` with a stabilizer of full isotropic
+  flags is our own step).
   No axiom states for general spin groups a result that its source states for another group.
   Where the dissertation adapts a published result (stated for orthogonal or unitary groups, groups
   with compact centre, pure inner forms, …) or combines several, the statement is a theorem with
@@ -86,7 +89,7 @@ import GSpinGGP
 | Folder | Contents |
 |---|---|
 | `Foundations/` | p-adic groups and their representations; `GSpin` via Clifford algebras; quadratic forms, and the links to Tau Ceti and Mathlib (local fields, the Lipschitz group) |
-| `HarmonicAnalysis/` | group-agnostic harmonic analysis on locally compact groups (log-norms, BP §1.2) |
+| `HarmonicAnalysis/` | group-agnostic harmonic analysis on locally compact groups (log-norms, BP §1.2; the function `Ξ^{H\G}` and polynomial growth, BP Prop 6.7.1(i),(iii),(iv)) |
 | `GGP/` | GGP triples, inner forms, semisimple descent, Levi subgroups |
 | `Literature/` | results assumed from the literature (Harish-Chandra, Waldspurger, Beuzart-Plessis, Arthur, Kottwitz, …) |
 | `TraceFormula/` | quasi-characters, `θ_f`, the distributions `J` and `J^Lie`, `m_geom`, spectral and geometric expansions |

@@ -71,6 +71,17 @@ Mathlib has no Witt index. -/
 def wittIndex (Q : QuadraticForm K V) : ℕ :=
   sSup {n | ∃ U : Submodule K V, IsTotallyIsotropic Q U ∧ finrank K U = n}
 
+theorem wittIndex_bdd [FiniteDimensional K V] (Q : QuadraticForm K V) :
+    BddAbove {n | ∃ U : Submodule K V, IsTotallyIsotropic Q U ∧ finrank K U = n} :=
+  ⟨finrank K V, by rintro _ ⟨U, -, rfl⟩; exact Submodule.finrank_le U⟩
+
+/-- The Witt index is attained by a totally isotropic subspace. -/
+theorem exists_wittIndex [FiniteDimensional K V] (Q : QuadraticForm K V) :
+    ∃ U : Submodule K V, IsTotallyIsotropic Q U ∧ finrank K U = wittIndex Q := by
+  have hne : ({n | ∃ U : Submodule K V, IsTotallyIsotropic Q U ∧ finrank K U = n} : Set ℕ).Nonempty :=
+    ⟨0, ⊥, fun u hu => by rw [(Submodule.mem_bot K).1 hu, map_zero], finrank_bot K V⟩
+  exact Nat.sSup_mem hne (wittIndex_bdd Q)
+
 /-- `GSpin(V)` (equivalently `SO(V)`) is quasi-split iff the anisotropic kernel has dimension
 at most `2`, i.e. `dim V - 2 w(V) ≤ 2` (Thesis §5.1.4). -/
 def IsQuasiSplitQF (Q : QuadraticForm K V) : Prop :=
@@ -1694,6 +1705,40 @@ def top (F : IsotropicFlag Q) : Submodule K V := F.sub (Fin.last F.len)
 Borel subgroup (when `GSpin(V)` is quasi-split) (Thesis §4.4). -/
 def IsFull (F : IsotropicFlag Q) : Prop :=
   F.len = wittIndex Q ∧ ∀ i, finrank K (F.sub i) = (i : ℕ)
+
+/-- **Full isotropic flags exist**: take a totally isotropic subspace of dimension the Witt index
+and the flag spanned by the initial segments of a basis of it. -/
+theorem exists_isFull [FiniteDimensional K V] (Q : QuadraticForm K V) :
+    ∃ Fl : IsotropicFlag Q, Fl.IsFull := by
+  obtain ⟨U, hUi, hUw⟩ := exists_wittIndex Q
+  set w := wittIndex Q
+  let b : Module.Basis (Fin w) K U := Module.finBasisOfFinrankEq K U hUw
+  let v : Fin w → V := fun j => (b j : V)
+  have hv : LinearIndependent K v :=
+    b.linearIndependent.map' U.subtype (Submodule.ker_subtype U)
+  have hle : ∀ i : Fin (w + 1), (i : ℕ) ≤ w := fun i => Nat.lt_succ_iff.mp i.2
+  let sub : Fin (w + 1) → Submodule K V := fun i =>
+    Submodule.span K (Set.range (v ∘ Fin.castLE (hle i)))
+  have hfin : ∀ i, finrank K (sub i) = (i : ℕ) := fun i => by
+    rw [finrank_span_eq_card (hv.comp _ (Fin.castLE_injective _)), Fintype.card_fin]
+  have hmono : Monotone sub := by
+    intro i j hij
+    apply Submodule.span_mono
+    rintro _ ⟨l, rfl⟩
+    exact ⟨Fin.castLE hij l, rfl⟩
+  refine ⟨⟨w, sub, ?_, ?_, ?_⟩, rfl, hfin⟩
+  · exact Submodule.finrank_eq_zero.mp (hfin 0)
+  · intro i j hij
+    refine lt_of_le_of_ne (hmono hij.le) fun h => ?_
+    have := congrArg (fun S : Submodule K V => finrank K S) h
+    simp only [hfin] at this
+    exact (Fin.val_injective this ▸ hij).false
+  · intro i u hu
+    have hsub : sub i ≤ U := by
+      rw [Submodule.span_le]
+      rintro _ ⟨l, rfl⟩
+      exact (b (Fin.castLE (hle i) l)).2
+    exact hUi u (hsub hu)
 
 end IsotropicFlag
 
