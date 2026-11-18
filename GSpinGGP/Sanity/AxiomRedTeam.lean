@@ -60,7 +60,8 @@ the axiom it tests; the computations of germs at `toyD` use `exists_isSelfDual` 
 * `exists_rel_torusBar_of_fixerBar`: V for central `x` (`exists_rel_central`). Not covered:
   noncentral `x`.
 * `tits_iwasawa`: V for anisotropic `W`, `V` (`tits_iwasawa_check_of_wittIndex_zero`), at `toyD`
-  (`toyD_tits_iwasawa_check`); C at `toyD` (`toyD_tits_iwasawa_consistent`). Not covered: proper
+  (`toyD_tits_iwasawa_check`); V for `V` a hyperbolic plane (`tits_iwasawa_check_of_isHypPlane_V`),
+  at `hypVData` with a nonempty full flag (`hypVData_tits_iwasawa_check`). Not covered: proper
   `P₀`.
 * `kottwitz_nilpotent_sq_smul`: V for `N = 0` and on `toyData` (`kottwitz_sq_smul_toy`). Not
   covered: `N ≠ 0`.

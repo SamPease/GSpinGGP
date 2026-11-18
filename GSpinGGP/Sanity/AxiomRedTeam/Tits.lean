@@ -2,7 +2,7 @@
 Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import GSpinGGP.Sanity.Witnesses
+import GSpinGGP.Sanity.LieAudit
 import GSpinGGP.Literature.Tits
 
 /-!
@@ -11,10 +11,12 @@ import GSpinGGP.Literature.Tits
 * (V) `tits_iwasawa_check_of_wittIndex_zero`: when `W` and `V` are anisotropic, the only full
   flags are the empty ones, `P₀ = G`, and the conclusion holds with `K = 1`; proved without the
   axiom.  In particular at the toy datum `toyD` (`toyD_tits_iwasawa_check`).
-* (C) `toyD_tits_iwasawa_consistent`: the axiom's `K` at `toyD`, used with `P₀ = G`, gives nothing
-  beyond the trivial decomposition: every `g` is `k p` with `p = k⁻¹ g`.
+* (V) `tits_iwasawa_check_of_isHypPlane_V`: when `V` is a hyperbolic plane, `A_G = G`, so
+  `P₀ = G` for every pair of flags and the conclusion holds with `K = 1`.  At `hypVData`
+  (`hypVData_tits_iwasawa_check`) the hypotheses hold with a *nonempty* full flag in `V`
+  (`V` isotropic), and the conclusion is proved without the axiom.
 
-Not covered: isotropic `W` or `V` (proper `P₀`), where the axiom has content.
+Not covered: proper `P₀` (e.g. `W` a hyperbolic plane, `hypWData`), where the axiom has content.
 -/
 
 noncomputable section
@@ -23,16 +25,15 @@ namespace GSpinGGP.AxiomRedTeam
 
 open GSpinGGP.Sanity
 
-variable {K : Type*} [Field K] [Invertible (2 : K)] {V : Type*} [AddCommGroup V] [Module K V]
-
-/-- The stabilizer of a flag of length `0` (only the zero subspace) is everything. -/
-theorem flagStab_eq_top_of_len_eq_zero {Q : QuadraticForm K V} (Fl : IsotropicFlag Q)
-    (h : Fl.len = 0) : flagStab Fl = ⊤ := by
-  refine eq_top_iff.2 fun g _ i => ?_
-  have hi : i = 0 := Fin.ext (by have := i.2; simp only [Fin.val_zero]; omega)
-  rw [hi, Fl.sub_zero, Submodule.map_bot]
-
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
+
+/-- The conclusion of `tits_iwasawa` holds with `K = 1` whenever `P₀ = G`. -/
+theorem tits_iwasawa_check_of_whittB_eq_top (d : GGPData F) (FW : IsotropicFlag d.QW)
+    (FV : IsotropicFlag d.QV) (hB : d.whittB FW FV = ⊤) :
+    ∃ K : Subgroup ↥d.G, IsCompact (K : Set ↥d.G) ∧
+      ∀ g : ↥d.G, ∃ k ∈ K, ∃ p ∈ d.whittB FW FV, g = k * p :=
+  ⟨⊥, by simp only [Subgroup.coe_bot]; exact isCompact_singleton, fun g =>
+    ⟨1, one_mem _, g, by rw [hB]; trivial, (one_mul g).symm⟩⟩
 
 /-- For anisotropic `W` and `V`, `P₀ = G` for full flags. -/
 theorem whittB_eq_top_of_wittIndex_zero (d : GGPData F) (FW : IsotropicFlag d.QW)
@@ -49,10 +50,9 @@ theorem tits_iwasawa_check_of_wittIndex_zero (d : GGPData F) (FW : IsotropicFlag
     (FV : IsotropicFlag d.QV) (hW : FW.IsFull) (hV : FV.IsFull)
     (h0W : wittIndex d.QW = 0) (h0V : wittIndex d.QV = 0) :
     ∃ K : Subgroup ↥d.G, IsCompact (K : Set ↥d.G) ∧
-      ∀ g : ↥d.G, ∃ k ∈ K, ∃ p ∈ d.whittB FW FV, g = k * p := by
-  have hB := whittB_eq_top_of_wittIndex_zero d FW FV hW hV h0W h0V
-  refine ⟨⊥, by simp only [Subgroup.coe_bot]; exact isCompact_singleton, fun g => ?_⟩
-  exact ⟨1, one_mem _, g, by rw [hB]; trivial, (one_mul g).symm⟩
+      ∀ g : ↥d.G, ∃ k ∈ K, ∃ p ∈ d.whittB FW FV, g = k * p :=
+  tits_iwasawa_check_of_whittB_eq_top d FW FV
+    (whittB_eq_top_of_wittIndex_zero d FW FV hW hV h0W h0V)
 
 local notation "𝕋" => (toyD (F := F))
 
@@ -66,15 +66,29 @@ theorem toyD_tits_iwasawa_check :
     tits_iwasawa_check_of_wittIndex_zero _ _ _ (emptyFlag_isFull toyData_wittIndex_QW)
       (emptyFlag_isFull toyData_wittIndex_QV) toyData_wittIndex_QW toyData_wittIndex_QV⟩
 
-/-- **(C) The axiom at the toy datum** agrees with the direct computation: the `p` it provides is
-`k⁻¹ g`, which lies in `P₀ = G`. -/
-theorem toyD_tits_iwasawa_consistent :
-    ∃ K : Subgroup ↥(𝕋).G, IsCompact (K : Set ↥(𝕋).G) ∧
-      ∀ g : ↥(𝕋).G, ∃ k ∈ K, k⁻¹ * g ∈ (𝕋).whittB (emptyFlag _) (emptyFlag _) := by
-  obtain ⟨K, hK, hdec⟩ := tits_iwasawa (𝕋) (emptyFlag _) (emptyFlag _)
-    (emptyFlag_isFull toyData_wittIndex_QW) (emptyFlag_isFull toyData_wittIndex_QV)
-  refine ⟨K, hK, fun g => ?_⟩
-  obtain ⟨k, hk, p, hp, rfl⟩ := hdec g
-  exact ⟨k, hk, by rwa [inv_mul_cancel_left]⟩
+/-- When `V` is a hyperbolic plane, `P₀ = G` for every pair of flags (`A_G = G` and
+`A_G ⊆ P₀`). -/
+theorem whittB_eq_top_of_isHypPlane_V (d : GGPData F) (hV : IsHypPlane d.QV)
+    (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV) : d.whittB FW FV = ⊤ :=
+  eq_top_iff.2 ((HypVAux.AG_eq_top hV).symm ▸ d.AG_le_whittB FW FV)
+
+/-- **(V) The conclusion of `tits_iwasawa` when `V` is a hyperbolic plane**, without the axiom. -/
+theorem tits_iwasawa_check_of_isHypPlane_V (d : GGPData F) (hV : IsHypPlane d.QV)
+    (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV) :
+    ∃ K : Subgroup ↥d.G, IsCompact (K : Set ↥d.G) ∧
+      ∀ g : ↥d.G, ∃ k ∈ K, ∃ p ∈ d.whittB FW FV, g = k * p :=
+  tits_iwasawa_check_of_whittB_eq_top d FW FV (whittB_eq_top_of_isHypPlane_V d hV FW FV)
+
+/-- **(V) at `hypVData`** (`V` isotropic): the hypotheses of `tits_iwasawa` hold with a full flag
+of length `1` in `V`, and its conclusion is proved without it. -/
+theorem hypVData_tits_iwasawa_check :
+    ∃ (FW : IsotropicFlag (hypVData (F := F)).QW) (FV : IsotropicFlag (hypVData (F := F)).QV),
+      FW.IsFull ∧ FV.IsFull ∧ FV.len = 1 ∧
+      ∃ K : Subgroup ↥(hypVData (F := F)).G, IsCompact (K : Set ↥(hypVData (F := F)).G) ∧
+        ∀ g, ∃ k ∈ K, ∃ p ∈ (hypVData (F := F)).whittB FW FV, g = k * p := by
+  obtain ⟨FW, hW⟩ := IsotropicFlag.exists_isFull (hypVData (F := F)).QW
+  obtain ⟨FV, hV⟩ := IsotropicFlag.exists_isFull (hypVData (F := F)).QV
+  exact ⟨FW, FV, hW, hV, hV.1.trans hypVData_isHypPlane_QV.2.2,
+    tits_iwasawa_check_of_isHypPlane_V _ hypVData_isHypPlane_QV FW FV⟩
 
 end GSpinGGP.AxiomRedTeam

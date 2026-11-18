@@ -55,6 +55,7 @@ import GSpinGGP.Foundations.WeakCartanRotation
 import GSpinGGP.Foundations.WeakCartanFrame
 import GSpinGGP.Foundations.WeakCartanTheorem
 import GSpinGGP.Foundations.GoodParabolicSO
+import GSpinGGP.Foundations.VanDantzig
 import GSpinGGP.GGP.RegularOrbitClass
 import GSpinGGP.GGP.OrbitSpecQd
 import GSpinGGP.GGP.RegularRank
