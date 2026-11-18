@@ -22,8 +22,8 @@ This file isolates the count, for an arbitrary set `T` in a monoid `G` with inte
   and two elements of `T` with the same coordinates differ by an element `e` of a fixed set `E`
   up to a factor `z` in a fixed set `Z` (`a' = z (a e)`), then `{a ∈ T ; τ(a) < R}` is covered by
   `≤ M (1 + R)^{|ι|}` sets `Z · j · E`, `j ∈ T`.
-* `abs_floor_log_norm_le`, `norm_div_lt_exp_of_floor_log_norm_eq`, `abs_log_norm_le_log`: the coordinate
-  `⌊log ‖x‖⌋ ∈ ℤ` of a nonzero element `x` of a normed field: it is bounded by `|log ‖x‖| + 1`,
+* `abs_floor_log_norm_le`, `norm_div_lt_exp_of_floor_log_norm_eq`, `abs_log_norm_le_log`: the
+  coordinate `⌊log ‖x‖⌋ ∈ ℤ` of a nonzero element `x` of a normed field: it is bounded by `|log ‖x‖| + 1`,
   and two elements with the same coordinate have quotient of norm in `(e⁻¹, e)`. With this
   coordinate no uniformizer or discreteness of the value group is needed.
 -/
