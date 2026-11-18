@@ -228,7 +228,8 @@ theorem IsFrame.eq_zero_of_isotropic [NeZero (2 : F)] (hb : IsOrthoBasis Q b) {�
     rw [hy, map_sub, map_smul, Finsupp.sub_apply, Finsupp.smul_apply, b.repr_self,
       Finsupp.single_apply]
     rcases lt_or_eq_of_le hi with h | h
-    · rw [hx i h, ite_eq_right (fun h' => by rw [← h'] at h; exact lt_irrefl _ h), smul_zero, sub_zero]
+    · rw [hx i h, ite_eq_right (fun h' => by rw [← h'] at h; exact lt_irrefl _ h), smul_zero,
+        sub_zero]
     · have : (⟨l, hf.lt⟩ : Fin n) = i := Fin.ext h.symm
       rw [ite_eq_left this, smul_eq_mul, mul_one, ← this, sub_self]
   have hpol : polar Q bl y = 0 := by
@@ -534,7 +535,8 @@ theorem abs_pos_le (k : Fin d.r) : |((d.r : ℤ) - (k : ℕ))| ≤ d.r := by
   have := k.2; rw [abs_le]; constructor <;> omega
 
 theorem polar_zb_zb (k k' : Fin d.r) : polar d.QV (zb (d := d) k) (zb (d := d) k') = 0 := by
-  rw [zb, zb, d.polar_zV_zV (abs_neg_le k) (abs_neg_le k'), ite_eq_right (by have := k.2; have := k'.2; omega)]
+  rw [zb, zb, d.polar_zV_zV (abs_neg_le k) (abs_neg_le k'),
+    ite_eq_right (by have := k.2; have := k'.2; omega)]
 
 theorem polar_zbD_zbD (k k' : Fin d.r) : polar d.QV (zbD (d := d) k) (zbD (d := d) k') = 0 := by
   rw [zbD, zbD, polar_smul_left, polar_smul_right, d.polar_zV_zV (abs_pos_le k) (abs_pos_le k'),
@@ -877,7 +879,8 @@ theorem apply_basis_eq_of_mem_span [NeZero (2 : F)] (hb : IsOrthoBasis Q b) {A :
   · by_contra h
     exact hj (hδ (Finsupp.mem_support_iff.mpr h))
 
-theorem pairE_mem_span [CharZero F] [FiniteDimensional F V] {ν : F} {l : ℕ} (hf : IsFrame Q b ν l) (j : ℕ) (i : Fin (numPairs l j)) {M : ℕ}
+theorem pairE_mem_span [CharZero F] [FiniteDimensional F V] {ν : F} {l : ℕ}
+    (hf : IsFrame Q b ν l) (j : ℕ) (i : Fin (numPairs l j)) {M : ℕ}
     (hM : j + 2 * (i : ℕ) + 1 < M) :
     pairE hf j i ∈ Submodule.span F (b '' {m | m.val < M}) :=
   add_mem (Submodule.subset_span ⟨_, by simp only [Set.mem_ofPred_eq]; omega, rfl⟩)
