@@ -4041,7 +4041,7 @@ theorem bform_zV_eq_zero_of_mem_span {k : ℕ} (τ : Fin k → ℤ) {i : ℤ} (h
 /-- **`N ∩ P̄ = 1` at the level of `SO(V)`.** An element of `N` fixing `z_{-r}, …, z_{-1}` acts
 trivially on `V`: on `Z_r^⊥` it moves vectors into `Z_r = ⟨z_r, …, z_1⟩`, and the move is
 orthogonal to the `z_{-k}`. -/
-theorem specP_eq_one_of_mem_N {nn : GSpin d.QV} (hn : nn ∈ d.N)
+theorem specP_eq_one_of_mem_N_of_fix {nn : GSpin d.QV} (hn : nn ∈ d.N)
     (hfix : ∀ k : Fin d.r,
       specP d.QV nn (d.zV (-((d.r : ℤ) - (k : ℕ)))) = d.zV (-((d.r : ℤ) - (k : ℕ)))) :
     specP d.QV nn = 1 := by

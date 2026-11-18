@@ -25,7 +25,7 @@ Results:
   anisotropic by the maximality of the frame (`WeakCartan.IsFrame.anisotropic`), so the span of
   a flag is a maximal totally isotropic subspace (`IsHypFrame.wittIndex_eq`).
 * `H_inf_whittU_eq_bot`: `H ∩ Ū_min = 1`. The thesis shows `H ∩ P̄_min = GSpin(W_an)`; for the
-  unipotent radical: `N ∩ P̄ = 1` (`specP_eq_one_of_mem_N`), then the frame induction
+  unipotent radical: `N ∩ P̄ = 1` (`specP_eq_one_of_mem_N_of_fix`), then the frame induction
   (`A0_eq_id`) and the unipotence on `W_an`.
 * `isOpen_H_mul_whittB`: `H(F) P̄_min(F)` is open in `G(F)`, from the statement that
   `P̄_W N P̄_V` is a neighbourhood of `1` in `GSpin(V)` (`flagStab_mul_N_mul_flagStab_mem_nhds`,
@@ -601,7 +601,7 @@ theorem H_inf_whittU_eq_bot : d.H ⊓ d.whittU (flagW hb hf h0) (flagV hb hf h0)
     rw [e]; exact hcl
   -- step 2: `n = 1`
   have hn1 : nn = 1 :=
-    eq_one_of_specP_eq_one d.nondeg_QV (d.specP_eq_one_of_mem_N hnn hfix) hnn.2.2.2
+    eq_one_of_specP_eq_one d.nondeg_QV (d.specP_eq_one_of_mem_N_of_fix hnn hfix) hnn.2.2.2
   have hbb1 : bb = d.incl a := by rw [hbb, hn1, mul_one]
   -- step 3: `a` acts trivially on `V₀`, by the induction over the frame
   have hFW : ∀ i : Fin (numPairs l 1), d.A0 a (pairE hf 1 i) - pairE hf 1 i ∈
