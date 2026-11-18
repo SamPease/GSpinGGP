@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import GSpinGGP.TraceFormula.Analytic
 import GSpinGGP.TraceFormula.GoodParabolic
 import TauCeti.LinearAlgebra.Determinant.Basic
+import GSpinGGP.Foundations.LogNormCompact
 
 /-!
 # The weak Cartan decomposition of `G` and the reduction from `G` to `G₀`
@@ -26,7 +27,7 @@ Let `d` be a GGP datum, `V = W ⊕ ⟨z₀⟩ ⊕ ⟨z_{±1}, …, z_{±r}⟩`, 
   `GGPData.logNormModAG_le_of_cone` and `GGPData.logNormModAG_le_fiberInf_of_cone` are the forms
   modulo `A_G` and `σ_{A_G\G} ≪ σ_{H\G}` (Thesis Prop. 8.4.1(ii)(b), nontrivial half).
 * `GGPData.exists_isCompact_lift`: bounded subsets of `Ḡ` lift to compact subsets of `G(F)`
-  modulo the scalars (log-norm balls are relatively compact, `GGPData.exists_isCompact_logNorm_le`).
+  modulo the scalars (log-norm balls are compact, `isCompact_logNorm_le`).
 * **Weak Cartan decomposition** (Thesis Lemma 8.3.2(ii)): `GGPData.exists_weakCartan` for `G`,
   from its `SO`-level form `GGPData.exists_weakCartan_SO` (`sorry`, with a proof sketch).
 * `GGPData.weakCartanData`: the `WeakCartanData d.mkHG d.logNormModAG` with cone
@@ -622,39 +623,7 @@ theorem logNormModAG_le_fiberInf_of_cone (hb0 : ∀ i : Fin n, (i : ℕ) = 0 →
 
 end Cone
 
-/-! ## 6. Compact balls of `G(F)` and the lift of bounded sets from `Ḡ` -/
-
-/-- The log-norm balls of `G(F)` are relatively compact: `{σ_G ≤ R}` lies in a compact set.
-(`‖g‖, ‖g⁻¹‖ ≤ s` cuts out a compact set of pairs in `A × A`, `isCompact_lmulPi_ball`.) -/
-theorem exists_isCompact_logNorm_le (R : ℝ) :
-    ∃ K : Set d.G, IsCompact K ∧ ∀ g : d.G, logNorm F d.G g ≤ R → g ∈ K := by
-  set s := Real.exp (R - 1)
-  set S := {a : d.ambient | ‖lmulPi F a‖ ≤ s}
-  have hS : IsCompact S := isCompact_lmulPi_ball F s
-  set T : Set (d.ambient × d.ambient) := (S ×ˢ S) ∩ {p | p.1 * p.2 = 1 ∧ p.2 * p.1 = 1}
-  have hT : IsCompact T :=
-    (hS.prod hS).inter_right
-      ((isClosed_eq (_root_.continuous_fst.mul _root_.continuous_snd) continuous_const).inter
-        (isClosed_eq (_root_.continuous_snd.mul _root_.continuous_fst) continuous_const))
-  have : CompactSpace T := isCompact_iff_compactSpace.mp hT
-  let Φ : T → d.ambientˣ := fun p => ⟨p.1.1, p.1.2, p.2.2.1, p.2.2.2⟩
-  have hΦ : Continuous Φ := Units.continuous_iff.2
-    ⟨_root_.continuous_fst.comp continuous_subtype_val, _root_.continuous_snd.comp continuous_subtype_val⟩
-  refine ⟨Subtype.val ⁻¹' Set.range Φ,
-    d.isClosed_G.isClosedEmbedding_subtypeVal.isCompact_preimage (isCompact_range hΦ),
-    fun g hg => ?_⟩
-  have hm : maxNorm F d.G g ≤ s := by
-    have h0 := lt_of_lt_of_le zero_lt_one (one_le_maxNorm (F := F) d.G g)
-    rw [logNorm] at hg
-    rw [← Real.exp_log h0]
-    exact Real.exp_le_exp.2 (by linarith)
-  have h1 : ‖lmulPi F (((g : d.ambientˣ)) : d.ambient)‖ ≤ s :=
-    (le_max_left _ _).trans ((le_max_right _ _).trans hm)
-  have h2 : ‖lmulPi F ((((g⁻¹ : d.G) : d.ambientˣ)) : d.ambient)‖ ≤ s :=
-    (le_max_right _ _).trans ((le_max_right _ _).trans hm)
-  have hp : (((g : d.ambientˣ) : d.ambient), (((g : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient)) ∈
-      T := ⟨⟨h1, h2⟩, Units.mul_inv _, Units.inv_mul _⟩
-  exact ⟨⟨_, hp⟩, Units.ext rfl⟩
+/-! ## 6. The lift of bounded sets from `Ḡ` -/
 
 /-- **Lift of bounded sets along `P̄ : G → Ḡ`**: for `M`, there is a compact `K ⊆ G(F)` such that
 every `g` with `σ_{Ḡ}(P̄ g) ≤ M` is `z⁻¹ k` with `z` a central scalar and `k ∈ K`
@@ -663,10 +632,9 @@ theorem exists_isCompact_lift (M : ℝ) :
     ∃ K : Set d.G, IsCompact K ∧ ∀ g : d.G, d.logNormSO (d.Pbar g) ≤ M →
       ∃ z ∈ d.scalars, z * g ∈ K := by
   obtain ⟨C, hC, hz⟩ := d.exists_logNorm_scalars_mul_le
-  obtain ⟨K, hK, hKR⟩ := d.exists_isCompact_logNorm_le (C * M)
-  refine ⟨K, hK, fun g hg => ?_⟩
+  refine ⟨{g | logNorm F d.G g ≤ C * M}, isCompact_logNorm_le d.isClosed_G _, fun g hg => ?_⟩
   obtain ⟨z, hz, hzg⟩ := hz g
-  exact ⟨z, hz, hKR _ (hzg.trans (mul_le_mul_of_nonneg_left hg hC))⟩
+  exact ⟨z, hz, hzg.trans (mul_le_mul_of_nonneg_left hg hC)⟩
 
 /-! ## 7. The weak Cartan decomposition of `G` (Thesis Lemma 8.3.2(ii)) and the weak Cartan
 data of `H\G/A_G` -/
