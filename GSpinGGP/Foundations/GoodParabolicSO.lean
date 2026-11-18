@@ -23,8 +23,8 @@ norm `‖·‖ = basisOpNorm b`.
 The two inequalities of Thesis Prop. 8.1.1(iii) (BP Prop. 6.4.1(iii)) are proved for `G₀`, in
 multiplicative form:
 
-* `norm_le_of_mem_chamber` (I): `max(‖h‖, ‖a_W‖, ‖a_V‖) ≤ C max(1, ‖h a_W‖, ‖h a_V‖)^N`;
-* `norm_le_conj_of_mem_chamber` (II): `‖h‖ ≤ C max(1, ‖a_V⁻¹ h a_V‖, ‖a_W⁻¹ h a_W‖)`,
+* `norm_le_of_mem_chamber` (BP (6.4.1)): `max(‖h‖, ‖a_W‖, ‖a_V‖) ≤ C max(1, ‖h a_W‖, ‖h a_V‖)^N`;
+* `norm_le_conj_of_mem_chamber` (BP (6.4.2)): `‖h‖ ≤ C max(1, ‖a_V⁻¹ h a_V‖, ‖a_W⁻¹ h a_W‖)`,
 
 for `h ∈ H` and `(a_W, a_V) ∈ A₀⁺`. Taking logarithms gives `σ(h) + σ(a) ≪ σ(ha)` and
 `σ(h) ≪ σ(a⁻¹ha)` for the log-norm `σ = 1 + log max(1, ‖·‖)`.
@@ -37,7 +37,7 @@ formalised here.
 The chamber is that of the orthogonal group: its roots are `tᵢ/tₖ`, `tᵢtₖ` (`i < k`) and, when the
 anisotropic part is nonzero, `tᵢ`; there is no root `tᵢ²`. So every parameter `t_k` of a
 contracting chamber has `|t_k| ≤ 1`, except the last parameter of a level without anisotropic part
-(`V₀` resp. `W` split of even dimension), which may have `|t_k| > 1`. The proof of (II) handles the
+(`V₀` resp. `W` split of even dimension), which may have `|t_k| > 1`. The proof of the second inequality handles the
 corresponding frame vector, which is then the last basis vector `w_l`, by the torus of the other
 factor, which fixes `w_l`.
 -/
@@ -56,7 +56,7 @@ variable {F : Type*} [NontriviallyNormedField F] [CharZero F]
 variable {V : Type*} [AddCommGroup V] [Module F V] [FiniteDimensional F V] {n : ℕ}
   {b : Module.Basis (Fin n) F V} {Q : QuadraticForm F V}
 
-/-! ## The induction for (II) -/
+/-! ## The induction for the second inequality -/
 
 section Level
 
@@ -412,7 +412,7 @@ private theorem norm_head_le {t : List Fˣ} (h0 : 0 < t.length) (hlen : t.length
   exact max_le h2 h1
 
 include hb in
-/-- **The `V₀`-half of Thesis Prop. 8.1.1(iii)(I)**: for `h ∈ H = SO(W)` and
+/-- **The `V₀`-half of the first inequality of Thesis Prop. 8.1.1(iii)**: for `h ∈ H = SO(W)` and
 `a_V = (multiTorus hb hf 0 t)⁻¹` with `t` in the contracting chamber of the `V₀`-torus,
 `max(‖h‖, ‖a_V‖) ≤ C max(1, ‖h a_V‖)^N`. The torus coordinates are read off from `h a_V`
 (`norm_head_le`), and then `‖h‖ ≤ ‖h a_V‖ ‖a_V⁻¹‖`. No `W`-torus is involved; together with

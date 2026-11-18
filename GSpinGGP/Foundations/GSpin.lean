@@ -3484,6 +3484,22 @@ def flag : IsotropicFlag d.QV where
 (Thesis §5.2). -/
 def N : Subgroup (GSpin d.QV) := flagUnip d.flag
 
+/-- For `r = 0` the flag `Z_•` is empty: its top `Z_r` is `0`. -/
+theorem flag_top_eq_bot (hr : d.r = 0) : d.flag.top = ⊥ := by
+  change Submodule.span K (Set.range fun j : Fin d.r => d.zV ((d.r : ℤ) - (j : ℕ))) = ⊥
+  rw [Submodule.span_eq_bot]
+  rintro _ ⟨j, rfl⟩
+  exact absurd j.2 (by omega)
+
+/-- For `r = 0`, elements of `N` act trivially on `V`: `P(n) = 1`. -/
+theorem specP_eq_one_of_mem_N (hr : d.r = 0) {n : GSpin d.QV} (hn : n ∈ d.N) :
+    specP d.QV n = 1 := by
+  obtain ⟨-, -, h3, -⟩ := hn
+  refine LinearEquiv.ext fun v => ?_
+  have := h3 v (by rw [d.flag_top_eq_bot hr]; simp)
+  rw [d.flag_top_eq_bot hr, Submodule.mem_bot, sub_eq_zero] at this
+  exact this
+
 /-- Elements of `G` are determined by their two components. -/
 theorem G_ext {g h : d.G} (h1 : d.fst g = d.fst h) (h2 : d.snd g = d.snd h) : g = h := by
   apply Subtype.ext
@@ -3968,11 +3984,7 @@ theorem center_inf_H_eq_AGH : Subgroup.center d.G ⊓ d.H = d.AGH := by
           have := eq_id_of_det_eq_one_of_finrank_le_one hm (det_specP a)
           exact LinearEquiv.ext fun w => congr($this w)
         -- `Z_r = 0`, so `P(n) = 1`
-        have htop : d.flag.top = ⊥ := by
-          change Submodule.span K (Set.range fun j : Fin d.r => d.zV ((d.r : ℤ) - (j : ℕ))) = ⊥
-          rw [Submodule.span_eq_bot]
-          rintro _ ⟨j, rfl⟩
-          exact absurd j.2 (by omega)
+        have htop : d.flag.top = ⊥ := d.flag_top_eq_bot hr
         have hPn1 : ∀ v, specP d.QV ((d.incl a)⁻¹ * b) v = v := by
           intro v
           have h := hn2 v (by rw [htop]; intro t ht; rw [(Submodule.mem_bot K).mp ht]; simp)

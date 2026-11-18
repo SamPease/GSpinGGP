@@ -6,6 +6,7 @@ import GSpinGGP.TraceFormula.Basic
 import GSpinGGP.Literature.Measure
 import GSpinGGP.GGP.Germs
 import GSpinGGP.HarmonicAnalysis.LogNorm
+import GSpinGGP.TraceFormula.GoodParabolicLift
 
 /-!
 # The local trace formula: analytic objects and estimates
@@ -896,6 +897,45 @@ theorem scuspTestFn_subset_scuspSchwartz (IW : d.IwasawaDatum) :
       exact hpos
 
 /-! ## 6. Convergence of `J` (Thesis §10.1) -/
+
+-- The products in `SO(W) × SO(V)` make instance search slow here.
+set_option maxHeartbeats 400000 in
+open WeakCartan in
+/-- **`σ_{A_G\G} ≪ σ_{H\G}` on the chamber of `G₀`** (Thesis Prop. 8.4.1(ii)(b) = BP
+Prop. 6.7.1(ii)(b), for `G = G₀`, i.e. `r = 0`): for `x ∈ G` whose `V₀`-component
+`P̄(x)_V = (multiTorus hb hf 0 t)⁻¹` lies in the expanding chamber,
+`σ_{A_G\G}(x) ≤ C σ_{H\G}(x)`. From `logNormModAG_le_of_chamber` (`σ_{A_G\G}(x) ≪ σ_{A_G\G}(h x)`
+for `h ∈ H`), since `σ_{H\G}(x) = inf_{h, a} σ_G(h x a)`. The reverse inequality
+`σ_{H\G} ≤ σ_{A_G\G}` is immediate. -/
+theorem logNormModAG_le_logNormHG_of_chamber {n : ℕ} {b : Module.Basis (Fin n) F d.V}
+    (hb : IsOrthoBasis d.QV b) {ν : F} {l : ℕ} (hf : IsFrame d.QV b ν l) (hr : d.r = 0)
+    (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1 = 0) :
+    ∃ C, 0 ≤ C ∧ ∀ x : ↥d.G, ∀ t : List Fˣ, InChamber n l 0 t →
+      ((d.Pbar x).2 : d.V ≃ₗ[F] d.V) = (multiTorus hb hf 0 t)⁻¹ →
+      d.logNormModAG x ≤ C * d.logNormHG (d.mkHG x) := by
+  obtain ⟨C, hC, hI⟩ := d.logNormModAG_le_of_chamber hb hf hr hb0
+  refine ⟨C, hC, fun x t ht hx => ?_⟩
+  have key : ∀ g, d.mkHG g = d.mkHG x → d.logNormModAG x ≤ C * d.logNormG g := by
+    intro g hg
+    obtain ⟨h, hh, a, ha, rfl⟩ := (d.mkHG_eq_mkHG_iff x g).1 hg.symm
+    have e : h * x * a = a * (h * x) :=
+      (Subgroup.mem_center_iff.mp (d.AG_le_center ha) (h * x))
+    have h1 := hI h hh x t ht hx
+    have h2 : d.logNormModAG (h * x * a) ≤ d.logNormG (h * x * a) := d.logNormModSub_le _ _
+    rw [e, show d.logNormModAG (a * (h * x)) = d.logNormModAG (h * x) from
+      d.logNormModSub_mul_left d.AG ha _] at h2
+    rw [e]
+    exact (show d.logNormModAG x ≤ C * d.logNormModAG (h * x) from h1).trans
+      (mul_le_mul_of_nonneg_left h2 hC)
+  rcases hC.lt_or_eq with hCp | hC0
+  · have : d.logNormModAG x / C ≤ d.logNormHG (d.mkHG x) := by
+      unfold logNormHG fiberInf
+      haveI : Nonempty {g // d.mkHG g = d.mkHG x} := ⟨⟨x, rfl⟩⟩
+      exact le_ciInf fun g => (div_le_iff₀' hCp).2 (key g.1 g.2)
+    exact (div_le_iff₀' hCp).1 this
+  · have := key x rfl
+    rw [← hC0, zero_mul] at this ⊢
+    exact this
 
 /-- **Thesis Prop 8.4.1(iii)** (adapted from BP Prop 6.7.1(iii)): there is `d > 0` with
 `∫_{H(F)\G(F)/A_G(F)} Ξ^{H\G}(x)² σ_{H\G}(x)^{-d} dx < ∞`.  Stated for every compact `C₀`

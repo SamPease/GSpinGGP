@@ -23,20 +23,22 @@ Since `P̄ : G → SO(W) × SO(V₀)` has central kernel the scalars `Z = F^× �
 expanding chamber of `G₀` is the preimage under `P̄` of the chamber above. The two inequalities of
 Thesis Prop. 8.1.1(iii) (BP Prop. 6.4.1(iii)) for `G₀` are proved here for this preimage:
 
-* (I) `σ(h) + σ(a) ≪ σ(h a)`: at the level of `SO` (`GGPData.logNormSO_add_le_of_chamber`,
+* the first inequality (BP (6.4.1)) `σ(h) + σ(a) ≪ σ(h a)`: at the level of `SO` (`GGPData.logNormSO_add_le_of_chamber`,
   for `σ_{SO}`, with any `W`-component), modulo the scalars (`GGPData.logNormModScalars_add_le`)
   and modulo `A_G` (`GGPData.logNormModAG_le_of_chamber`, the form `σ_{A_G\G}(a) ≪ σ_{A_G\G}(h a)`
-  used in Thesis Prop. 8.4.1(ii)(b), BP (6.7.6));
-* (II) `σ(h) ≪ σ(a⁻¹ h a)`: at the level of `SO` (`GGPData.logNormSO_le_conj_of_chamber`) and
+  behind Thesis Prop. 8.4.1(ii)(b) = BP Prop. 6.7.1(ii)(b), via BP (6.7.6));
+* the second inequality (BP (6.4.2)) `σ(h) ≪ σ(a⁻¹ h a)`: at the level of `SO` (`GGPData.logNormSO_le_conj_of_chamber`) and
   modulo the scalars (`GGPData.logNormModScalars_le_conj`).
 
-The thesis states (I), (II) for the log-norm modulo `A_{G,H}` (the diagonal scalars). Modulo the
+The thesis states both inequalities for the log-norm modulo `A_{G,H}` (the diagonal scalars). Modulo the
 full scalars `Z ⊋ A_{G,H}` the statements are weaker by the term `|log |μ||`, `μ = N(g₂)/N(g₁)`
 (`(P̄, μ)` has finite kernel on `G₀/A_{G,H}`); `μ` is trivial on `H`, so this term does not affect
 the use modulo `A_G` in Thesis Prop. 8.4.1. It is not formalised here.
 
 Only `F` `p`-adic (`PAdicField`) is treated. The reduction from `G` to `G₀` (Thesis proof of
-Prop. 8.1.1(iii), first part) is not formalised here.
+Prop. 8.1.1(iii), first part) is not formalised here. For `r > 0` (then `A_G` is the scalars `Z`)
+that reduction should take its input from `GGPData.logNormModScalars_add_le`, not from
+`GGPData.logNormModAG_le_of_chamber`, which uses `r = 0`.
 -/
 
 noncomputable section
@@ -47,119 +49,7 @@ open Module
 
 namespace GSpinGGP
 
-/-! ## Extension by the identity -/
 
-section ProdCongr
-
-variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
-  {E Z : Type*} [NormedAddCommGroup E] [NormedSpace F E] [FiniteDimensional F E]
-  [NormedAddCommGroup Z] [NormedSpace F Z] [FiniteDimensional F Z]
-
-/-- `max(1, ‖1‖, ‖1⁻¹‖) = 1`. -/
-theorem glMaxNorm_one : glMaxNorm (1 : E ≃ₗ[F] E) = 1 :=
-  le_antisymm (max_le le_rfl (max_le ContinuousLinearMap.norm_id_le
-    ContinuousLinearMap.norm_id_le)) (le_max_left _ _)
-
-/-- `‖f ⊕ 1‖ ≤ max(‖f‖, 1)` for the operator norm on `E × Z` (sup norm). -/
-theorem norm_prodCongr_refl_le (f : E ≃ₗ[F] E) :
-    ‖LinearMap.toContinuousLinearMap
-        ((f.prodCongr (LinearEquiv.refl F Z) : (E × Z) ≃ₗ[F] (E × Z)) : (E × Z) →ₗ[F] (E × Z))‖ ≤
-      max ‖LinearMap.toContinuousLinearMap (f : E →ₗ[F] E)‖ 1 := by
-  refine ContinuousLinearMap.opNorm_le_bound _ (zero_le_one.trans (le_max_right _ _))
-    fun x => ?_
-  have hf := (LinearMap.toContinuousLinearMap (f : E →ₗ[F] E)).le_opNorm x.1
-  rw [LinearMap.coe_toContinuousLinearMap', LinearEquiv.coe_coe] at hf
-  rw [LinearMap.coe_toContinuousLinearMap', LinearEquiv.coe_coe, LinearEquiv.prodCongr_apply,
-    LinearEquiv.refl_apply, Prod.norm_def, Prod.norm_def]
-  have hM : 0 ≤ max ‖LinearMap.toContinuousLinearMap (f : E →ₗ[F] E)‖ 1 :=
-    zero_le_one.trans (le_max_right _ _)
-  refine max_le (hf.trans (mul_le_mul (le_max_left _ _) (le_max_left _ _) (norm_nonneg _) hM)) ?_
-  calc ‖x.2‖ = 1 * ‖x.2‖ := (one_mul _).symm
-    _ ≤ _ := mul_le_mul (le_max_right _ _) (le_max_right _ _) (norm_nonneg _) hM
-
-/-- `‖f‖ ≤ ‖f ⊕ 1‖`. -/
-theorem norm_le_norm_prodCongr_refl (f : E ≃ₗ[F] E) :
-    ‖LinearMap.toContinuousLinearMap (f : E →ₗ[F] E)‖ ≤
-      ‖LinearMap.toContinuousLinearMap
-        ((f.prodCongr (LinearEquiv.refl F Z) : (E × Z) ≃ₗ[F] (E × Z)) : (E × Z) →ₗ[F] (E × Z))‖ := by
-  refine ContinuousLinearMap.opNorm_le_bound _ (norm_nonneg _) fun e => ?_
-  have := (LinearMap.toContinuousLinearMap
-    ((f.prodCongr (LinearEquiv.refl F Z) : (E × Z) ≃ₗ[F] (E × Z)) : (E × Z) →ₗ[F] (E × Z))).le_opNorm
-      (e, 0)
-  rw [LinearMap.coe_toContinuousLinearMap', LinearEquiv.coe_coe, LinearEquiv.prodCongr_apply,
-    LinearEquiv.refl_apply, Prod.norm_def, Prod.norm_def, norm_zero,
-    max_eq_left (norm_nonneg _), max_eq_left (norm_nonneg _)] at this
-  rw [LinearMap.coe_toContinuousLinearMap', LinearEquiv.coe_coe]
-  exact this
-
-/-- `max(1, ‖f ⊕ 1‖, ‖(f ⊕ 1)⁻¹‖) = max(1, ‖f‖, ‖f⁻¹‖)`. -/
-theorem glMaxNorm_prodCongr_refl (f : E ≃ₗ[F] E) :
-    glMaxNorm (f.prodCongr (LinearEquiv.refl F Z)) = glMaxNorm f := by
-  have hinv : ((f.prodCongr (LinearEquiv.refl F Z))⁻¹ : (E × Z) ≃ₗ[F] (E × Z)) =
-      (f⁻¹ : E ≃ₗ[F] E).prodCongr (LinearEquiv.refl F Z) := by
-    ext x <;> rfl
-  unfold glMaxNorm
-  rw [hinv]
-  apply le_antisymm
-  · refine max_le (le_max_left _ _) (max_le ?_ ?_)
-    · exact (norm_prodCongr_refl_le f).trans
-        (max_le (le_max_of_le_right (le_max_left _ _)) (le_max_left _ _))
-    · exact (norm_prodCongr_refl_le (f⁻¹ : E ≃ₗ[F] E)).trans
-        (max_le (le_max_of_le_right (le_max_right _ _)) (le_max_left _ _))
-  · refine max_le (le_max_left _ _) (max_le ?_ ?_)
-    · exact (norm_le_norm_prodCongr_refl (Z := Z) f).trans
-        (le_max_of_le_right (le_max_left _ _))
-    · exact (norm_le_norm_prodCongr_refl (Z := Z) (f⁻¹ : E ≃ₗ[F] E)).trans
-        (le_max_of_le_right (le_max_right _ _))
-
-end ProdCongr
-
-/-! ## Operator norms and matrix norms on the orthogonal group -/
-
-section Basis
-
-variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
-  {V : Type*} [NormedAddCommGroup V] [NormedSpace F V] [FiniteDimensional F V]
-  {n : ℕ} {b : Basis (Fin n) F V} {Q : QuadraticForm F V}
-
-/-- On the orthogonal group, `max(1, ‖g‖, ‖g⁻¹‖)` (operator norms) and `max(1, ‖g‖_b)` (the matrix
-norm in an orthogonal basis) are equivalent: `‖g⁻¹‖_b ≤ κ ‖g‖_b`
-(`IsOrthoBasis.basisOpNorm_symm_le`). -/
-theorem IsOrthoBasis.exists_glMaxNorm_equiv (hb : IsOrthoBasis Q b) :
-    ∃ K, 1 ≤ K ∧ ∀ g ∈ TauCeti.QuadraticMap.orthogonalGroup Q,
-      glMaxNorm g ≤ K * max 1 (basisOpNorm b (g : V →ₗ[F] V)) ∧
-      max 1 (basisOpNorm b (g : V →ₗ[F] V)) ≤ K * glMaxNorm g := by
-  obtain ⟨C, hC, hCb⟩ := exists_norm_toContinuousLinearMap_le_basisOpNorm b
-  obtain ⟨c, hc, hcb⟩ := exists_basisOpNorm_le_norm_toContinuousLinearMap b
-  set κ := max 1 (adjBound Q b)
-  have hκ : 1 ≤ κ := le_max_left _ _
-  refine ⟨max 1 (max (C * κ) c), le_max_left _ _, fun g hg => ⟨?_, ?_⟩⟩
-  · set M := max 1 (basisOpNorm b (g : V →ₗ[F] V))
-    have hM : 1 ≤ M := le_max_left _ _
-    have hK : C * κ ≤ max 1 (max (C * κ) c) := le_max_of_le_right (le_max_left _ _)
-    have hgM : basisOpNorm b (g : V →ₗ[F] V) ≤ M := le_max_right _ _
-    have h1 : ‖LinearMap.toContinuousLinearMap (g : V →ₗ[F] V)‖ ≤ C * κ * M :=
-      (hCb _).trans (by
-        rw [mul_assoc]
-        exact mul_le_mul_of_nonneg_left
-          ((hgM.trans_eq (one_mul M).symm).trans (mul_le_mul_of_nonneg_right hκ
-            (zero_le_one.trans hM))) hC)
-    have h2 : ‖LinearMap.toContinuousLinearMap ((g⁻¹ : V ≃ₗ[F] V) : V →ₗ[F] V)‖ ≤ C * κ * M := by
-      refine (hCb _).trans ?_
-      rw [mul_assoc]
-      refine mul_le_mul_of_nonneg_left ((hb.basisOpNorm_symm_le hg).trans ?_) hC
-      exact mul_le_mul (le_max_right _ _) hgM (basisOpNorm_nonneg _) (zero_le_one.trans hκ)
-    unfold glMaxNorm
-    refine max_le ?_ (max_le ?_ ?_)
-    · exact one_le_mul_of_one_le_of_one_le (le_max_left _ _) hM
-    · exact h1.trans (mul_le_mul_of_nonneg_right hK (zero_le_one.trans hM))
-    · exact h2.trans (mul_le_mul_of_nonneg_right hK (zero_le_one.trans hM))
-  · have hG : 1 ≤ glMaxNorm g := one_le_glMaxNorm g
-    refine max_le (one_le_mul_of_one_le_of_one_le (le_max_left _ _) hG) ?_
-    refine (hcb _).trans (mul_le_mul (le_max_of_le_right (le_max_right _ _))
-      (norm_le_glMaxNorm g) (norm_nonneg _) (zero_le_one.trans (le_max_left _ _)))
-
-end Basis
 
 namespace GGPData
 
@@ -169,46 +59,6 @@ variable (d : GGPData F)
 open WeakCartan
 
 /-! ## `SO(W) ⊆ SO(V₀)` and `H₀` -/
-
-/-- `SO(W) → GL(V)`, `g ↦ g ⊕ 1` on `V = W ⊕ Z`. -/
-def extZ : ((Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) →* (d.V ≃ₗ[F] d.V) where
-  toFun f := f.prodCongr (LinearEquiv.refl F d.Z)
-  map_one' := by ext x <;> rfl
-  map_mul' f g := by ext x <;> rfl
-
-theorem extZ_apply (f : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) (v : d.V) :
-    d.extZ f v = (f v.1, v.2) := rfl
-
-/-- `σ_{SO}(g₁, g₂) = 1 + log max(glMax(g₁ ⊕ 1), glMax(g₂))`: everything on `V`. -/
-theorem logNormSO_eq (g : d.GbarGrp) :
-    d.logNormSO g = 1 + Real.log (max (glMaxNorm (d.extZ (g.1 : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F))))
-      (glMaxNorm (g.2 : d.V ≃ₗ[F] d.V))) := by
-  rw [logNormSO]
-  congr 3
-  exact (glMaxNorm_prodCongr_refl (Z := d.Z) _).symm
-
-/-- For `r = 0` (so `N = 1`), the `V`-component of `P̄(h)`, `h ∈ H`, is the `W`-component extended
-by the identity on `Z`: `H = GSpin(W)` acts on `V₀ = W ⊕ Z` through `SO(W)`. -/
-theorem Pbar_snd_of_mem_H (hr : d.r = 0) {h : d.G} (hh : h ∈ d.H) :
-    ((d.Pbar h).2 : d.V ≃ₗ[F] d.V) = d.extZ ((d.Pbar h).1 : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) := by
-  have htop : d.flag.top = ⊥ := by
-    change Submodule.span F (Set.range fun j : Fin d.r => d.zV ((d.r : ℤ) - (j : ℕ))) = ⊥
-    rw [Submodule.span_eq_bot]
-    rintro _ ⟨j, rfl⟩
-    exact absurd j.2 (by omega)
-  have hn : specP d.QV (d.nPart h) = 1 := by
-    obtain ⟨-, -, h3, -⟩ := hh
-    refine LinearEquiv.ext fun v => ?_
-    have := h3 v (by rw [htop]; simp)
-    rw [htop, Submodule.mem_bot, sub_eq_zero] at this
-    exact this
-  have hs : d.snd h = d.incl (d.fst h) * d.nPart h := by simp [nPart]
-  rw [Pbar_snd, Pbar_fst, hs, map_mul, hn, mul_one]
-  refine LinearEquiv.ext fun v => ?_
-  obtain ⟨w, z⟩ := v
-  have e : ((w, z) : d.V) = (w, 0) + (0, z) := by simp
-  rw [e, map_add, map_add, d.specP_incl_inl, d.specP_incl_inr, extZ_apply, extZ_apply]
-  simp
 
 variable {n : ℕ} {b : Basis (Fin n) F d.V} (hb : IsOrthoBasis d.QV b) {ν : F} {l : ℕ}
   (hf : IsFrame d.QV b ν l)
@@ -230,7 +80,7 @@ theorem extZ_mem_fixer (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1 = 0)
     rw [extZ_apply]
     exact Prod.ext (by simp only [h0, map_zero]) rfl
 
-/-! ## Inequality (I) -/
+/-! ## The first inequality (BP (6.4.1)) -/
 
 -- The products in `SO(W) × SO(V)` make instance search slow here.
 set_option maxHeartbeats 400000 in
@@ -319,7 +169,7 @@ theorem logNormSO_add_le_of_chamber (hr : d.r = 0) (hb0 : ∀ i : Fin n, (i : �
       (max_le bW bV)
   linarith
 
-/-! ## Inequality (II) -/
+/-! ## The second inequality (BP (6.4.2)) -/
 
 include hb in
 /-- **Thesis Prop. 8.1.1(iii), second inequality, for `SO(W) × SO(V₀)` in log-norm form**
@@ -398,17 +248,13 @@ theorem logNormSO_le_conj_of_chamber (hr : d.r = 0)
 
 /-! ## The lift to `G = GSpin(W) × GSpin(V₀)` -/
 
-/-- `σ_{SO}(1) = 1`. -/
-theorem logNormSO_one : d.logNormSO 1 = 1 := by
-  simp only [logNormSO, Prod.fst_one, Prod.snd_one, OneMemClass.coe_one, glMaxNorm_one, max_self,
-    Real.log_one, add_zero]
-
 include hb in
 /-- **Thesis Prop. 8.1.1(iii), first inequality, for `G₀`, modulo the scalars** (BP (6.4.1)):
 `σ_{Z\G}(h) + σ_{Z\G}(x) ≤ C σ_{Z\G}(h x)` for `h ∈ H` and `x ∈ G` whose `V₀`-component
 `P̄(x)_V = (multiTorus hb hf 0 t)⁻¹` lies in the expanding chamber (`t` in the contracting chamber;
 no condition on the `W`-component). Here `σ_{Z\G}(g) = inf_{z ∈ Z} σ_G(z g)`, `Z` the central
-scalars. -/
+scalars. The thesis uses the log-norm modulo `A_{G,H}`; here it is modulo `Z ⊇ A_{G,H}`, which
+differs by `|log |μ||` (`μ = N(g₂)/N(g₁)`, trivial on `H`). -/
 theorem logNormModScalars_add_le (hr : d.r = 0)
     (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1 = 0) :
     ∃ C, 0 ≤ C ∧ ∀ h ∈ d.H, ∀ x : d.G, ∀ t : List Fˣ, InChamber n l 0 t →
@@ -434,7 +280,9 @@ theorem logNormModScalars_add_le (hr : d.r = 0)
 set_option maxHeartbeats 400000 in
 include hb in
 /-- **Thesis Prop. 8.1.1(iii), first inequality, for `G₀`, modulo `A_G`**, in the form used for
-Thesis Prop. 8.4.1(ii)(b) (BP (6.7.6): `σ_{H\G}(a) ∼ σ_G(a)` on the chamber):
+Thesis Prop. 8.4.1(ii)(b) = BP Prop. 6.7.1(ii)(b) (`σ_{H\G}(a) ∼ σ_G(a)` on the chamber), whose
+proof uses BP (6.7.6) `σ_G(a₀ a) ≪ σ_G(h a₀ a)`. Lean measures `σ_G` modulo `A_G` here, the
+convention of `GGPData.logNormHG` on `H\G/A_G`:
 `σ_{A_G\G}(x) ≤ C σ_{A_G\G}(h x)` for `h ∈ H` and `x ∈ G` whose `V₀`-component
 `P̄(x)_V = (multiTorus hb hf 0 t)⁻¹` lies in the expanding chamber (no condition on the
 `W`-component). Here `σ_{A_G\G}(g) = inf_{a ∈ A_G} σ_G(a g)` (`GGPData.logNormModAG`).
@@ -516,7 +364,8 @@ include hb in
 /-- **Thesis Prop. 8.1.1(iii), second inequality, for `G₀`, modulo the scalars** (BP (6.4.2)):
 `σ_{Z\G}(h) ≤ C σ_{Z\G}(x⁻¹ h x)` for `h ∈ H` and `x ∈ G` with `P̄(x)` in the expanding chamber
 `A₀⁺`: `P̄(x)_W ⊕ 1 = (multiTorus hb hf 1 s)⁻¹`, `P̄(x)_V = (multiTorus hb hf 0 t)⁻¹`, `s`, `t`
-in the contracting chambers. -/
+in the contracting chambers. The thesis uses the log-norm modulo `A_{G,H}`; here it is modulo
+`Z ⊇ A_{G,H}`, which differs by `|log |μ||` (`μ = N(g₂)/N(g₁)`, trivial on `H`). -/
 theorem logNormModScalars_le_conj (hr : d.r = 0)
     (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1 = 0) :
     ∃ C, 0 ≤ C ∧ ∀ h ∈ d.H, ∀ x : d.G, ∀ s t : List Fˣ, InChamber n l 1 s → InChamber n l 0 t →
