@@ -459,6 +459,65 @@ namespace GGPData
 
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F] (d : GGPData F)
 
+/-- **`𝔱⁰ = Lie(T_x)` is the whole skew moved commutant**, membership form: for `x ∈ Γ(G,H)`, an
+element `Y ∈ so(W)` whose `ad Y` commutes with `P(x)` and kills `W'_x` lies in `𝔱⁰`.  (`Y` has the
+commutant of some `g ∈ T_x` (`exists_mem_torusOf_commute_iff`), and `T_x` is commutative.) -/
+theorem mem_lieTorus_of_commute_specP {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
+    {Y : CliffordAlgebra d.QW} (hY : Y ∈ soSub d.QW)
+    (hYP : (specP d.QW x : Module.End F (Fin d.m → F)) * adV d.QW Y =
+      adV d.QW Y * (specP d.QW x : Module.End F (Fin d.m → F)))
+    (hY0 : ∀ w ∈ fixedSub x, adV d.QW Y w = 0) : Y ∈ d.lieTorus (d.torusOf x) := by
+  have hYg : Y ∈ gspin d.QW := hY.1
+  have hxY := (commute_iff_adV d.nondeg x hYg).mpr hYP
+  have hkill : ∀ v ∈ fixedSub x, ⁅Y, CliffordAlgebra.ι d.QW v⁆ = 0 := fun v hv => by
+    rw [Ring.lie_def, ← ι_adV hYg, hY0 v hv, map_zero]
+  obtain ⟨g, hgT, hg, -⟩ := exists_mem_torusOf_commute_iff d hYg hxY hkill
+  refine ⟨hY, fun t ht => ?_, fun w hw => hY0 w (by rwa [d.commonFixed_torusOf] at hw)⟩
+  have htg : Commute ((t : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW)
+      ((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) :=
+    congrArg (fun k : ↥(GSpin d.QW) => ((k : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW))
+      (hx.2.1 t ht g hgT).eq
+  exact ((hg _).mp htg).eq
+
+/-- A skew endomorphism of `W` is `ad Y` for some `Y ∈ so(W)` (`exists_toSOLin_eq`). -/
+theorem exists_mem_soSub_adV_eq {S : Module.End F (Fin d.m → F)}
+    (hS : ∀ u w, bform d.QW (S u) w = -bform d.QW u (S w)) :
+    ∃ Y ∈ soSub d.QW, adV d.QW Y = S := by
+  have hlie : d.luoOf.pair S 0 ∈ d.luoOf.lie :=
+    ⟨(LinearMap.mem_skewAdjointSubmodule _).2 fun u w => by
+        have := hS u w
+        rw [← map_neg] at this
+        exact this,
+      (skewAdjointLieSubalgebra (bform d.luoOf.QV)).zero_mem⟩
+  obtain ⟨Z, hZ, hZM⟩ := d.exists_toSOLin_eq hlie
+  exact ⟨Z.1, hZ.1, congrArg Prod.fst hZM⟩
+
+/-- **Lifting skew maps to `𝔱⁰`**: for `x ∈ Γ(G,H)`, every skew endomorphism `S` of `W` commuting
+with `P(x)` and vanishing on `W'_x` is `ad Y` for some `Y ∈ 𝔱⁰ = Lie(T_x)`. -/
+theorem exists_mem_lieTorus_adV_eq {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
+    {S : Module.End F (Fin d.m → F)} (hS : ∀ u w, bform d.QW (S u) w = -bform d.QW u (S w))
+    (hSP : (specP d.QW x : Module.End F (Fin d.m → F)) * S =
+      S * (specP d.QW x : Module.End F (Fin d.m → F)))
+    (hS0 : ∀ w ∈ fixedSub x, S w = 0) :
+    ∃ Y ∈ d.lieTorus (d.torusOf x), adV d.QW Y = S := by
+  obtain ⟨Z, hZ, hadZ⟩ := d.exists_mem_soSub_adV_eq hS
+  exact ⟨Z, d.mem_lieTorus_of_commute_specP hx hZ (by rw [hadZ]; exact hSP)
+    (fun w hw => by rw [hadZ]; exact hS0 w hw), hadZ⟩
+
+/-- For `x ∈ Γ(G,H)`, the maps `ad X`, `X ∈ 𝔱⁰`, commute (`movedPartAbelian_of_isGammaElt`). -/
+theorem commute_adV_of_mem_lieTorus {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
+    {X X' : CliffordAlgebra d.QW} (hX : X ∈ d.lieTorus (d.torusOf x))
+    (hX' : X' ∈ d.lieTorus (d.torusOf x)) : Commute (adV d.QW X) (adV d.QW X') := by
+  have hcent : ∀ {Y}, Y ∈ d.lieTorus (d.torusOf x) →
+      Y ∈ lieCentralizer (gspin d.QW) ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) :=
+    fun hY => mem_lieCentralizer.2 ⟨hY.1.1, hY.2.1 x (d.self_mem_torusOf x)⟩
+  have hkill : ∀ {Y}, Y ∈ d.lieTorus (d.torusOf x) →
+      ∀ v ∈ fixedSub x, ⁅Y, CliffordAlgebra.ι d.QW v⁆ = 0 := fun hY v hv => by
+    rw [Ring.lie_def, ← ι_adV hY.1.1, hY.2.2 v (by rw [d.commonFixed_torusOf]; exact hv), map_zero]
+  have h := movedPartAbelian_of_isGammaElt d x hx X (hcent hX) X' (hcent hX') (hkill hX) (hkill hX')
+  rw [Ring.lie_def, sub_eq_zero] at h
+  exact adV_commute_of_commute hX.1.1 hX'.1.1 h.symm
+
 /-- **Regularity in `𝔱⁰` is a squarefree characteristic polynomial** (the third clause of
 `IsGammaEltLie` vs that of Luo's `IsNat`): for `x ∈ Γ(G,H)`, `X ∈ 𝔱⁰(T_x)` with `ker X = W'`,
 every `Y ∈ so(W)` commuting with `X` and killing `W'` lies in `𝔱⁰` iff `X` has a squarefree
@@ -559,14 +618,7 @@ theorem commClause_iff_squarefree {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
         change bform d.QW (S ⟨r, hr⟩ : Fin d.m → F) r' =
           bform d.QW r (-(S ⟨r', hr'⟩ : Fin d.m → F)) at this
         rw [this, map_neg]
-      have hlie : d.luoOf.pair (ext S) 0 ∈ d.luoOf.lie :=
-        ⟨(LinearMap.mem_skewAdjointSubmodule _).2 fun u w => by
-            have := hsk u w
-            rw [← map_neg] at this
-            exact this,
-          (skewAdjointLieSubalgebra (bform d.luoOf.QV)).zero_mem⟩
-      obtain ⟨Z, hZ, hZM⟩ := d.exists_toSOLin_eq hlie
-      have hadZ : adV d.QW Z.1 = ext S := congrArg Prod.fst hZM
+      obtain ⟨Z, hZs, hadZ⟩ := d.exists_mem_soSub_adV_eq hsk
       have hSA : ext S * A = A * ext S := LinearMap.ext fun v => by
         obtain ⟨k, hk, r, hr, rfl⟩ := hdecomp v
         rw [Module.End.mul_apply, Module.End.mul_apply, map_add, LinearMap.mem_ker.mp hk, zero_add,
@@ -574,12 +626,12 @@ theorem commClause_iff_squarefree {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
         have := congrArg Subtype.val (LinearMap.congr_fun hSc.eq ⟨r, hr⟩)
         simp only [Module.End.mul_apply] at this
         exact this.symm
-      refine ⟨Z.1, hZ.1, hadZ, hcl Z.1 hZ.1 ?_ fun w hw => ?_⟩
-      · have hmem : Z.1 * X - X * Z.1 ∈ soSub d.QW := by
-          have := (soSub d.QW).lie_mem hZ.1 hX.1
+      refine ⟨Z, hZs, hadZ, hcl Z hZs ?_ fun w hw => ?_⟩
+      · have hmem : Z * X - X * Z ∈ soSub d.QW := by
+          have := (soSub d.QW).lie_mem hZs hX.1
           rwa [Ring.lie_def] at this
         have h0 := eq_zero_of_mem_soSub_of_adV_eq_zero d.nondeg hmem (by
-          rw [adV_commutator hZ.1.1 hXg, hadZ, hSA, sub_self])
+          rw [adV_commutator hZs.1 hXg, hadZ, hSA, sub_self])
         exact sub_eq_zero.mp h0
       · rw [hadZ]
         exact hext0 S w (hker ▸ hw)
@@ -588,19 +640,9 @@ theorem commClause_iff_squarefree {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
       intro S₁ S₂ h₁ h₂ hc₁ hc₂
       obtain ⟨Y₁, hY₁, hY₁a, hY₁T⟩ := key S₁ h₁ hc₁
       obtain ⟨Y₂, hY₂, hY₂a, hY₂T⟩ := key S₂ h₂ hc₂
-      have hcent : ∀ {Y}, Y ∈ soSub d.QW → Y ∈ d.lieTorus T →
-          Y ∈ lieCentralizer (gspin d.QW) ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) :=
-        fun hY hYT => mem_lieCentralizer.2 ⟨hY.1, hYT.2.1 x (d.self_mem_torusOf x)⟩
-      have hkill : ∀ {Y}, Y ∈ soSub d.QW → Y ∈ d.lieTorus T →
-          ∀ v ∈ fixedSub x, ⁅Y, CliffordAlgebra.ι d.QW v⁆ = 0 := fun hY hYT v hv => by
-        rw [Ring.lie_def, ← ι_adV hY.1, hYT.2.2 v (by rw [hfixx]; exact hv), map_zero]
-      have h := movedPartAbelian_of_isGammaElt d x hx Y₁ (hcent hY₁ hY₁T) Y₂ (hcent hY₂ hY₂T)
-        (hkill hY₁ hY₁T) (hkill hY₂ hY₂T)
-      rw [Ring.lie_def] at h
-      have h' := congrArg (adV d.QW) h
-      rw [adV_commutator hY₁.1 hY₂.1, hY₁a, hY₂a] at h'
-      have h0 : adV d.QW (0 : CliffordAlgebra d.QW) = 0 := by ext; simp
-      rw [h0, sub_eq_zero] at h'
+      have h' : adV d.QW Y₁ * adV d.QW Y₂ = adV d.QW Y₂ * adV d.QW Y₁ :=
+        (d.commute_adV_of_mem_lieTorus hx hY₁T hY₂T).eq
+      rw [hY₁a, hY₂a] at h'
       refine LinearMap.ext fun r => Subtype.ext ?_
       have := LinearMap.congr_fun h' (r : Fin d.m → F)
       simp only [Module.End.mul_apply] at this
@@ -613,12 +655,7 @@ theorem commClause_iff_squarefree {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
     intro hsq Y hY hYX hYf
     refine ⟨hY, fun t ht => ?_, hYf⟩
     set Bm := adV d.QW Y
-    have hBA : Bm * A = A * Bm := by
-      have h := adV_commutator hY.1 hXg
-      rw [hYX, sub_self] at h
-      have h0 : adV d.QW (0 : CliffordAlgebra d.QW) = 0 := by ext; simp
-      rw [h0] at h
-      exact sub_eq_zero.mp h.symm
+    have hBA : Bm * A = A * Bm := adV_commute_of_commute hY.1 hXg hYX.symm
     have hPA : (specP d.QW t : Module.End F (Fin d.m → F)) * A =
         A * (specP d.QW t : Module.End F (Fin d.m → F)) :=
       (commute_iff_adV d.nondeg t hXg).mp (hX.2.1 t ht)

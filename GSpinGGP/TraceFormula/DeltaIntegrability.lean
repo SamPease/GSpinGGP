@@ -72,89 +72,15 @@ theorem adV_mapsTo_movedSub_inf_ker {x t₀ : ↥(GSpin d.QW)} (ht₀ : t₀ ∈
   exact ⟨d.mapsTo_movedSub_of_commute (commute_specP_adV d.QW hXg (X.2.2.1 x hxT)) v hv1,
     mapsTo_ker_sub_one_of_commute (commute_specP_adV d.QW hXg (X.2.2.1 t₀ ht₀)) v hv2⟩
 
-/-- **`𝔱⁰ = Lie(T_x)` is the whole skew moved commutant**, membership form: for `x ∈ Γ(G,H)`, an
-element `Y ∈ so(W)` whose `ad Y` commutes with `P(x)` and kills `W'_x` lies in `𝔱⁰`.  (`Y` has the
-commutant of some `g ∈ T_x` (`exists_mem_torusOf_commute_iff`), and `T_x` is commutative.) -/
-theorem mem_lieTorus_of_commute_specP {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
-    {Y : CliffordAlgebra d.QW} (hY : Y ∈ soSub d.QW)
-    (hYP : (specP d.QW x : Module.End F (Fin d.m → F)) * adV d.QW Y =
-      adV d.QW Y * (specP d.QW x : Module.End F (Fin d.m → F)))
-    (hY0 : ∀ w ∈ fixedSub x, adV d.QW Y w = 0) : Y ∈ d.lieTorus (d.torusOf x) := by
-  have hYg : Y ∈ gspin d.QW := hY.1
-  have hxY := (commute_iff_adV d.nondeg x hYg).mpr hYP
-  have hkill : ∀ v ∈ fixedSub x, ⁅Y, CliffordAlgebra.ι d.QW v⁆ = 0 := fun v hv => by
-    rw [Ring.lie_def, ← ι_adV hYg, hY0 v hv, map_zero]
-  obtain ⟨g, hgT, hg, -⟩ := exists_mem_torusOf_commute_iff d hYg hxY hkill
-  refine ⟨hY, fun t ht => ?_, fun w hw => hY0 w (by rwa [d.commonFixed_torusOf] at hw)⟩
-  have htg : Commute ((t : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW)
-      ((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) :=
-    congrArg (fun k : ↥(GSpin d.QW) => ((k : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW))
-      (hx.2.1 t ht g hgT).eq
-  exact ((hg _).mp htg).eq
-
-section Lift
-
-attribute [local instance 100] LieRing.ofAssociativeRing LieAlgebra.ofAssociativeAlgebra
-
-/-- **Lifting skew maps to `𝔱⁰`**: for `x ∈ Γ(G,H)`, every skew endomorphism `S` of `W` commuting
-with `P(x)` and vanishing on `W'_x` is `ad Y` for some `Y ∈ 𝔱⁰ = Lie(T_x)`. -/
-theorem exists_mem_lieTorus_adV_eq {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
-    {S : Module.End F (Fin d.m → F)} (hS : ∀ u w, bform d.QW (S u) w = -bform d.QW u (S w))
-    (hSP : (specP d.QW x : Module.End F (Fin d.m → F)) * S =
-      S * (specP d.QW x : Module.End F (Fin d.m → F)))
-    (hS0 : ∀ w ∈ fixedSub x, S w = 0) :
-    ∃ Y ∈ d.lieTorus (d.torusOf x), adV d.QW Y = S := by
-  have hlie : d.luoOf.pair S 0 ∈ d.luoOf.lie :=
-    ⟨(LinearMap.mem_skewAdjointSubmodule _).2 fun u w => by
-        have := hS u w
-        rw [← map_neg] at this
-        exact this,
-      (skewAdjointLieSubalgebra (bform d.luoOf.QV)).zero_mem⟩
-  obtain ⟨Z, hZ, hZM⟩ := d.exists_toSOLin_eq hlie
-  have hadZ : adV d.QW Z.1 = S := congrArg Prod.fst hZM
-  exact ⟨Z.1, d.mem_lieTorus_of_commute_specP hx hZ.1 (by rw [hadZ]; exact hSP)
-    (fun w hw => by rw [hadZ]; exact hS0 w hw), hadZ⟩
-
-end Lift
-
-/-- For `x ∈ Γ(G,H)`, the maps `ad X`, `X ∈ 𝔱⁰`, commute (`movedPartAbelian_of_isGammaElt`). -/
-theorem commute_adV_of_mem_lieTorus {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
-    {X X' : CliffordAlgebra d.QW} (hX : X ∈ d.lieTorus (d.torusOf x))
-    (hX' : X' ∈ d.lieTorus (d.torusOf x)) : Commute (adV d.QW X) (adV d.QW X') := by
-  have hcent : ∀ {Y}, Y ∈ d.lieTorus (d.torusOf x) →
-      Y ∈ lieCentralizer (gspin d.QW) ((x : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) :=
-    fun hY => mem_lieCentralizer.2 ⟨hY.1.1, hY.2.1 x (d.self_mem_torusOf x)⟩
-  have hkill : ∀ {Y}, Y ∈ d.lieTorus (d.torusOf x) →
-      ∀ v ∈ fixedSub x, ⁅Y, CliffordAlgebra.ι d.QW v⁆ = 0 := fun hY v hv => by
-    rw [Ring.lie_def, ← ι_adV hY.1.1, hY.2.2 v (by rw [d.commonFixed_torusOf]; exact hv), map_zero]
-  have h := movedPartAbelian_of_isGammaElt d x hx X (hcent hX) X' (hcent hX') (hkill hX) (hkill hX')
-  rw [Ring.lie_def] at h
-  have h' := congrArg (adV d.QW) h
-  rw [adV_commutator hX.1.1 hX'.1.1] at h'
-  have h0 : adV d.QW (0 : CliffordAlgebra d.QW) = 0 := by ext; simp
-  rw [h0, sub_eq_zero] at h'
-  exact h'
-
-/-- A skew endomorphism has skew odd powers. -/
-theorem bform_pow_odd_skew {M : Module.End F (Fin d.m → F)}
-    (hM : ∀ u w, bform d.QW (M u) w = -bform d.QW u (M w)) (n : ℕ) (u w : Fin d.m → F) :
-    bform d.QW ((M ^ n) u) w = (-1) ^ n * bform d.QW u ((M ^ n) w) := by
-  induction n generalizing u w with
-  | zero => simp
-  | succ n ih =>
-    have e1 : (M ^ (n + 1)) u = (M ^ n) (M u) := by rw [pow_succ, Module.End.mul_apply]
-    have e2 : (M ^ (n + 1)) w = M ((M ^ n) w) := by rw [pow_succ', Module.End.mul_apply]
-    rw [e1, e2, ih, hM, pow_succ]
-    ring
-
 -- the elaboration of the many restricted endomorphisms of `K` and the transport to `F^n` is slow
 set_option maxHeartbeats 800000 in
-/-- **The Lie-algebra estimate at `t₀ ∈ T_x`** (BP Astérisque 418, Lemma B.1.2(ii) for linear
-forms, combined with the eigencharacter computation of Thesis Prop 12.1.1(i)): for `x ∈ Γ(G,H)`,
+/-- **The Lie-algebra estimate at `t₀ ∈ T_x`** (own work: the Lie-algebra step behind Thesis
+Prop 12.1.1(i), whose proof of (12.1.2) cites BP Astérisque 418, Lemma B.1.2(i)): for `x ∈ Γ(G,H)`,
 `t₀ ∈ T_x` and `a > −1/2`, the function `X ↦ |det(ad X |_{K})|_F^a` on `𝔱⁰(F) = Lie(T_x)`, where
 `K = W''_x ∩ ker(P(t₀) − 1)`, is locally integrable for an additive Haar measure.
 
-Over `F̄`, `W''_x` has a basis `e_i, f_i` (`1 ≤ i ≤ n = dim W''_x/2`) on which `𝔱⁰` acts by
+Informal argument (over `F̄`, in the spirit of BP Lemma B.1.2(ii); not the route formalized):
+`W''_x` has a basis `e_i, f_i` (`1 ≤ i ≤ n = dim W''_x/2`) on which `𝔱⁰` acts by
 `ad X e_i = μ_i(X) e_i`, `ad X f_i = −μ_i(X) f_i` with `μ_1, …, μ_n` linearly independent, and
 `K ⊗ F̄` is spanned by the `e_i, f_i` with `λ_i(t₀) = 1`; so `det(ad X|_K) = ∏_{i ∈ I} (−μ_i(X)²)`
 and the claim is B.1.2(ii) for the forms `μ_i`, `i ∈ I`, at `s′ = 2a + 1 > 0` (each `μ_i` counted
@@ -164,14 +90,13 @@ and `P(x)` with eigenvalues `λ, λ, λ⁻¹, λ⁻¹`, the analogous `𝔱⁰` 
 integrand `|μ|^{4a}`, not locally integrable for `a ∈ (−1/2, −1/4]`.  The bound `a > −1/2` is sharp
 (an anisotropic plane gives `|μ|^{2a}`).
 
-Proof here, over `F` without eigencharacters: there is `Z ∈ 𝔱⁰` with `ker (ad Z) = W'_x` whose
-commutant commutes with `P(x)` (`exists_regular_movedCent`, lifted to `𝔱⁰` by
+Proof formalized here (over `F`, without eigencharacters): there is `Z ∈ 𝔱⁰` with `ker (ad Z) =
+W'_x` whose commutant commutes with `P(x)` (`exists_regular_movedCent`, lifted to `𝔱⁰` by
 `exists_mem_lieTorus_adV_eq`).  Then `Y = ad Z` is semisimple and injective on `K`; its commutant on
 `W''_x = im Y` is commutative (`commClause_iff_squarefree`: `𝔱⁰` is abelian), hence so is its
-commutant on `K` (`commute_restrict_of_commute`); every `ad X`, `X ∈ 𝔱⁰`, commutes with `Y`; and
-the odd powers `Y^{2k+1}` are skew, commute with `P(x)` and kill `W'_x`, so they are `ad` of
-elements of `𝔱⁰`.  `locallyIntegrable_absF_det_rpow_of_odd_pow` applies (after transporting `𝔱⁰`
-to `F^n`). -/
+commutant on `K` (`commute_restrict_of_commute`); every `ad X`, `X ∈ 𝔱⁰`, commutes with `Y`; and the
+odd powers `Y^{2k+1}` are skew, commute with `P(x)` and kill `W'_x`, so they are `ad` of elements of
+`𝔱⁰`.  `locallyIntegrable_absF_det_rpow_of_odd_pow` applies (after transporting `𝔱⁰` to `F^n`). -/
 theorem locallyIntegrable_absF_det_adV_rpow {x t₀ : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
     (ht₀ : t₀ ∈ d.torusOf x) {a : ℝ} (ha : -(1 / 2) < a)
     (μ : Measure ↥(d.lieTorus (d.torusOf x))) [μ.IsAddHaarMeasure] :
@@ -183,10 +108,8 @@ theorem locallyIntegrable_absF_det_adV_rpow {x t₀ : ↥(GSpin d.QW)} (hx : d.I
   set Px : Module.End F (Fin d.m → F) := (specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F))
   have hxT : x ∈ (d.torusOf x) := d.self_mem_torusOf x
   -- `W = W'_x ⊕ W''_x`
-  have hss : Module.End.IsSemisimple (Px - 1) :=
-    Module.End.IsSemisimple.sub_of_commute (Commute.one_right _)
-      (isSemisimple_specP_of_isSS d.QW x hx.1) Module.End.isSemisimple_id
-  have hcompl : IsCompl (movedSub x) (fixedSub x) := (isCompl_ker_range_of_isSemisimple hss).symm
+  have hcompl : IsCompl (movedSub x) (fixedSub x) :=
+    (isCompl_fixedSub_movedSub x (fixedSub_inf_movedSub_of_isSS x hx.1)).symm
   -- a regular element `Z ∈ 𝔱⁰`, `Y = ad Z`
   obtain ⟨Z₀, hZ₀g, hZ₀x, hkerZ₀, hreg⟩ := d.exists_regular_movedCent hx
   obtain ⟨Z, hZT, hZad⟩ := d.exists_mem_lieTorus_adV_eq hx (S := adV d.QW Z₀) (bform_adV hZ₀g)
@@ -207,7 +130,7 @@ theorem locallyIntegrable_absF_det_adV_rpow {x t₀ : ↥(GSpin d.QW)} (hx : d.I
   have hodd : ∀ k : ℕ, ∃ X ∈ d.lieTorus (d.torusOf x), adV d.QW X = Y ^ (2 * k + 1) := by
     intro k
     refine d.exists_mem_lieTorus_adV_eq hx (fun u w => ?_) ?_ fun w hw => ?_
-    · rw [d.bform_pow_odd_skew hYskew, pow_succ, pow_mul]; simp
+    · rw [bform_pow_skew hYskew, Odd.neg_one_pow (⟨k, rfl⟩ : Odd (2 * k + 1))]; ring
     · exact ((hregY _ ((Commute.refl Y).pow_left _)).eq).symm
     · rw [pow_succ, Module.End.mul_apply, hY0 w hw, map_zero]
   -- `W''_x = range Y`
@@ -246,12 +169,7 @@ theorem locallyIntegrable_absF_det_adV_rpow {x t₀ : ↥(GSpin d.QW)} (hx : d.I
     have hcl : ∀ Y' ∈ soSub d.QW, Y' * Z = Z * Y' →
         (∀ w ∈ commonFixed (d.torusOf x), adV d.QW Y' w = 0) → Y' ∈ d.lieTorus (d.torusOf x) := by
       intro Y' hY' hY'Z hY'0
-      have hc : Commute (adV d.QW Y') Y := by
-        have h := adV_commutator hY'.1 hZg
-        rw [hY'Z, sub_self, ← hYdef] at h
-        have h0 : adV d.QW (0 : CliffordAlgebra d.QW) = 0 := by ext; simp
-        rw [h0] at h
-        exact sub_eq_zero.mp h.symm
+      have hc : Commute (adV d.QW Y') Y := hYdef ▸ adV_commute_of_commute hY'.1 hZg hY'Z.symm
       exact d.mem_lieTorus_of_commute_specP hx hY' (hregY _ hc).eq.symm
         (fun w hw => hY'0 w (by rw [d.commonFixed_torusOf]; exact hw))
     have hsq := (d.commClause_iff_squarefree hx hZT
@@ -266,9 +184,7 @@ theorem locallyIntegrable_absF_det_adV_rpow {x t₀ : ↥(GSpin d.QW)} (hx : d.I
     intro X
     have h := d.commute_adV_of_mem_lieTorus hx hZT X.2
     rw [← hYdef] at h
-    refine LinearMap.ext fun u => Subtype.ext ?_
-    have := LinearMap.congr_fun h.eq (u : Fin d.m → F)
-    simpa [ρ, A, Module.End.mul_apply] using this
+    exact LinearMap.restrict_commute h hKY (d.adV_mapsTo_movedSub_inf_ker ht₀ X)
   have hρodd : ∀ k : ℕ, A ^ (2 * k + 1) ∈ LinearMap.range ρ := by
     intro k
     obtain ⟨X, hX, hXad⟩ := hodd k

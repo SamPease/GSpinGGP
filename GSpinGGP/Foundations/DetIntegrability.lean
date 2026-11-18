@@ -3,8 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Foundations.TorusIntegrability
-import GSpinGGP.Foundations.CommutantSquarefree
-import Mathlib.Analysis.SpecialFunctions.Pow.NNReal
+import GSpinGGP.Foundations.CyclicCommutant
 
 /-!
 # Local integrability of `|det|^a` on a commutative family of endomorphisms
@@ -20,12 +19,12 @@ maximal torus `𝔱` of `so(W'')` acting on a `𝔱`-stable subspace `K`, the ei
 replaced by a rank count over `F`, without eigencharacters:
 
 * `K` is the direct sum of minimal `A`-invariant subspaces `K_j`
-  (`Module.End.IsSemisimple.exists_isInternal_minimal`); each `ρ(v)` preserves them (it commutes
+  (`Module.End.IsSemisimple.exists_supIndep_minimal`); each `ρ(v)` preserves them (it commutes
   with the projections, which commute with `A`), and `ρ(v)|_{K_j}` is `0` or invertible (its kernel
   is `A`-invariant).  So `|det ρ(v)| = ∏_j |det ρ(v)|_{K_j}|`, a product of gauges of degree
   `dim K_j` (`locallyIntegrable_prod_gauge_rpow`).
 * Rank condition: for `M = ⊕_{j ∈ J} K_j`, the restrictions of `ρ(V)` to `M` contain the odd powers
-  of `A_M = A|_M`.  The commutant of `A_M` is commutative (`commute_restrict_of_commute`), so its
+  of `A_M = A|_M`.  The commutant of `A_M` is commutative (`commute_restrict_of_commute'`), so its
   characteristic polynomial is squarefree and its minimal polynomial has degree `dim M`
   (`finrank_le_natDegree_minpoly_of_squarefree`); hence the odd powers span a space of dimension
   `≥ dim M / 2` (`finrank_le_two_mul_of_odd_pow_mem`): `2 · rank ≥ ∑_{j∈J} dim K_j`.
@@ -39,273 +38,11 @@ set_option linter.style.haveILetI false
 
 namespace GSpinGGP
 
-section Cyclic
-
-variable {K V : Type*} [Field K] [AddCommGroup V] [Module K V] [FiniteDimensional K V]
-
-/-- **A squarefree characteristic polynomial is the minimal polynomial**: if `χ_f` is squarefree
-(`K` perfect), the minimal polynomial of `f` has degree `dim V`.  Over `K̄` every root of `χ_f` is an
-eigenvalue, hence a root of `minpoly f`; `χ_f` is separable, so it divides `minpoly f`. -/
-theorem finrank_le_natDegree_minpoly_of_squarefree [PerfectField K] {f : Module.End K V}
-    (hf : Squarefree f.charpoly) : finrank K V ≤ (minpoly K f).natDegree := by
-  classical
-  let L := AlgebraicClosure K
-  let φ := algebraMap K L
-  let b := Module.finBasis K V
-  set M := LinearMap.toMatrix b b f with hMdef
-  have hχ : M.charpoly = f.charpoly := LinearMap.charpoly_toMatrix f b
-  have hm : minpoly K M = minpoly K f := LinearMap.minpoly_toMatrix b f
-  rcases Nat.eq_zero_or_pos (finrank K V) with h0 | hpos
-  · rw [h0]; exact Nat.zero_le _
-  haveI : Nonempty (Fin (finrank K V)) := ⟨⟨0, hpos⟩⟩
-  set m := minpoly K f
-  have hm0 : m ≠ 0 := minpoly.ne_zero (LinearMap.isIntegral f)
-  have hsep : (f.charpoly.map φ).Separable :=
-    (PerfectField.separable_iff_squarefree.mpr hf).map
-  have hroots : (f.charpoly.map φ).roots ≤ (m.map φ).roots := by
-    rw [Multiset.le_iff_subset (nodup_roots hsep)]
-    intro r hr
-    have hr' : IsRoot (M.map φ).charpoly r := by
-      rw [Matrix.charpoly_map, hχ]; exact isRoot_of_mem_roots hr
-    rw [← Matrix.mem_spectrum_iff_isRoot_charpoly] at hr'
-    have h1 := spectrum.subset_polynomial_aeval (M.map φ) (m.map φ) ⟨r, hr', rfl⟩
-    have h2 : aeval (M.map φ) (m.map φ) = 0 := by
-      rw [aeval_map_algebraMap]
-      have : M.map φ = (Algebra.ofId K L).mapMatrix M := rfl
-      rw [this, aeval_algHom_apply, ← hm, minpoly.aeval, map_zero]
-    rw [h2, spectrum.zero_eq] at h1
-    exact (mem_roots (Polynomial.map_ne_zero hm0)).mpr h1
-  have hdvd := (IsAlgClosed.splits _).dvd_of_roots_le_roots
-    (Polynomial.map_ne_zero f.charpoly_monic.ne_zero) hroots
-  have := natDegree_le_of_dvd hdvd (Polynomial.map_ne_zero hm0)
-  rwa [natDegree_map, natDegree_map, LinearMap.charpoly_natDegree] at this
-
-omit [FiniteDimensional K V] in
-/-- **The commutant passes to invariant subspaces**: if `f` is semisimple, `P ≤ U` are
-`f`-invariant and the endomorphisms of `U` commuting with `f|_U` commute with each other, then so do
-the endomorphisms of `P` commuting with `f|_P` (extend them by `0` on an `f`-invariant complement
-of `P`). -/
-theorem commute_restrict_of_commute {f : Module.End K V} (hf : f.IsSemisimple)
-    {U P : Submodule K V} (hU : ∀ v ∈ U, f v ∈ U) (hP : ∀ v ∈ P, f v ∈ P) (hPU : P ≤ U)
-    (hcomm : ∀ g g' : Module.End K U, Commute (f.restrict hU) g → Commute (f.restrict hU) g' →
-      Commute g g')
-    {g g' : Module.End K P} (hg : Commute (f.restrict hP) g)
-    (hg' : Commute (f.restrict hP) g') : Commute g g' := by
-  obtain ⟨Q, hQ, hPQ⟩ := Module.End.isSemisimple_iff.mp hf P (fun v hv => hP v hv)
-  have hQ' : ∀ v ∈ Q, f v ∈ Q := fun v hv => hQ hv
-  set π := Submodule.projectionOnto P Q hPQ
-  -- `π` intertwines `f` and `f|_P`
-  have hπf : ∀ v, π (f v) = f.restrict hP (π v) := by
-    intro v
-    obtain ⟨p, q, rfl, -⟩ := Submodule.existsUnique_add_of_isCompl hPQ v
-    have e1 : π (p : V) = p := Submodule.projectionOnto_apply_left hPQ p
-    have e2 : π (q : V) = 0 := Submodule.projectionOnto_apply_right hPQ q
-    have e3 : π (f q) = 0 := Submodule.projectionOnto_apply_right hPQ ⟨f q, hQ' q q.2⟩
-    have e4 : π (f p) = f.restrict hP p :=
-      Submodule.projectionOnto_apply_left hPQ (f.restrict hP p)
-    rw [map_add, map_add, map_add, e1, e2, e3, e4, add_zero, add_zero]
-  let ext : Module.End K P → Module.End K U := fun h =>
-    (P.subtype ∘ₗ h ∘ₗ π ∘ₗ U.subtype).codRestrict U fun v => hPU (h _).2
-  have hext : ∀ h u, ((ext h u : U) : V) = h (π u) := fun _ _ => rfl
-  have hcomm_ext : ∀ h : Module.End K P, Commute (f.restrict hP) h →
-      Commute (f.restrict hU) (ext h) := by
-    intro h hh
-    refine LinearMap.ext fun u => Subtype.ext ?_
-    simp only [Module.End.mul_apply]
-    rw [hext, LinearMap.coe_restrict_apply, hext]
-    change f (h (π u)) = h (π (f u))
-    rw [hπf, ← Module.End.mul_apply, ← hh.eq]
-    rfl
-  have hc := hcomm _ _ (hcomm_ext g hg) (hcomm_ext g' hg')
-  refine LinearMap.ext fun p => Subtype.ext ?_
-  have h1 := congrArg Subtype.val (LinearMap.congr_fun hc.eq ⟨p, hPU p.2⟩)
-  simp only [Module.End.mul_apply, hext] at h1
-  have hπp : ∀ p' : P, π (p' : V) = p' := Submodule.projectionOnto_apply_left hPQ
-  have hπU : ∀ p' : P, π ((⟨p', hPU p'.2⟩ : U) : V) = p' := hπp
-  rw [hπU, hπp, hπp] at h1
-  simpa only [Module.End.mul_apply] using h1
-
-/-- **Odd powers span at least half the dimension**: if `f` is injective and its minimal polynomial
-has degree `dim V`, any subspace `R ⊆ End(V)` containing all `f^{2k+1}` has `dim V ≤ 2 dim R`.
-With `r = deg minpoly(f²)`: `minpoly f ∣ minpoly(f²)(X²)`, so `dim V ≤ 2r`, and
-`f, f³, …, f^{2r−1}` are independent (`f · h(f²) = 0` forces `h(f²) = 0`). -/
-theorem finrank_le_two_mul_of_odd_pow_mem {f : Module.End K V} (hinj : Function.Injective f)
-    (hdeg : finrank K V ≤ (minpoly K f).natDegree) (R : Submodule K (Module.End K V))
-    (hR : ∀ k : ℕ, f ^ (2 * k + 1) ∈ R) : finrank K V ≤ 2 * finrank K R := by
-  classical
-  set q := minpoly K (f ^ 2) with hq
-  set r := q.natDegree
-  have hqm : q.Monic := minpoly.monic (LinearMap.isIntegral _)
-  -- `dim V ≤ 2r`
-  have h1 : (minpoly K f).natDegree ≤ 2 * r := by
-    have hX2 : (X ^ 2 : K[X]).natDegree = 2 := natDegree_X_pow 2
-    have hmon : (q.comp (X ^ 2)).Monic := hqm.comp (monic_X_pow 2) (by rw [hX2]; norm_num)
-    have hev : aeval f (q.comp (X ^ 2)) = 0 := by
-      rw [aeval_comp, aeval_X_pow, minpoly.aeval]
-    have := natDegree_le_natDegree (minpoly.degree_le_of_ne_zero K f hmon.ne_zero hev)
-    rwa [natDegree_comp, hX2, mul_comm] at this
-  -- `r ≤ dim R`
-  have h2 : r ≤ finrank K R := by
-    let v : Fin r → R := fun k => ⟨f ^ (2 * (k : ℕ) + 1), hR k⟩
-    have hli : LinearIndependent K v := by
-      rw [Fintype.linearIndependent_iff]
-      intro c hc
-      have hc' : ∑ i, c i • f ^ (2 * (i : ℕ) + 1) = 0 := by
-        have := congrArg Subtype.val hc
-        simpa [v] using this
-      set h : K[X] := ∑ i : Fin r, C (c i) * X ^ (i : ℕ) with hh
-      have hfh : f * aeval (f ^ 2) h = 0 := by
-        rw [← hc', hh, map_sum, Finset.mul_sum]
-        refine Finset.sum_congr rfl fun i _ => ?_
-        rw [map_mul, aeval_C, aeval_X_pow, ← pow_mul, Algebra.algebraMap_eq_smul_one,
-          smul_mul_assoc, one_mul, mul_smul_comm, ← pow_succ']
-      have hev : aeval (f ^ 2) h = 0 := by
-        refine LinearMap.ext fun w => hinj ?_
-        have := LinearMap.congr_fun hfh w
-        simpa only [Module.End.mul_apply, LinearMap.zero_apply, map_zero] using this
-      have hh0 : h = 0 := by
-        by_contra hne
-        have hdeg := minpoly.degree_le_of_ne_zero K (f ^ 2) hne hev
-        have hlt : h.degree < r := degree_sum_fin_lt c
-        rw [← hq, degree_eq_natDegree hqm.ne_zero] at hdeg
-        exact absurd (lt_of_le_of_lt hdeg hlt) (lt_irrefl _)
-      intro i
-      have := congrArg (fun p : K[X] => p.coeff i) hh0
-      simpa [hh, Polynomial.finsetSum_coeff, coeff_C_mul, coeff_X_pow, Fin.val_inj] using this
-    simpa using hli.fintype_card_le_finrank
-  omega
-
-omit [FiniteDimensional K V] in
-/-- An endomorphism preserving two complementary subspaces `p`, `q` commutes with the projection
-onto `p` along `q`. -/
-theorem commute_subtype_comp_projectionOnto {f : Module.End K V} {p q : Submodule K V}
-    (hp : ∀ v ∈ p, f v ∈ p) (hq : ∀ v ∈ q, f v ∈ q) (h : IsCompl p q) :
-    Commute f (p.subtype ∘ₗ Submodule.projectionOnto p q h) := by
-  refine LinearMap.ext fun v => ?_
-  obtain ⟨a, b, rfl, -⟩ := Submodule.existsUnique_add_of_isCompl h v
-  have e1 : Submodule.projectionOnto p q h (a : V) = a := Submodule.projectionOnto_apply_left h a
-  have e2 : Submodule.projectionOnto p q h (b : V) = 0 := Submodule.projectionOnto_apply_right h b
-  have e3 : Submodule.projectionOnto p q h (f b) = 0 :=
-    Submodule.projectionOnto_apply_right h ⟨f b, hq b b.2⟩
-  have e4 : Submodule.projectionOnto p q h (f a) = ⟨f a, hp a a.2⟩ :=
-    Submodule.projectionOnto_apply_left h ⟨f a, hp a a.2⟩
-  simp only [Module.End.mul_apply, LinearMap.comp_apply, map_add, e1, e2, e3, e4, add_zero,
-    Submodule.subtype_apply, map_zero]
-
-omit [FiniteDimensional K V] in
-/-- **The commutant passes to invariant subspaces** (ambient form of
-`commute_restrict_of_commute`): if `f` is semisimple with commutative commutant, then for an
-`f`-invariant `P` the endomorphisms of `P` commuting with `f|_P` commute. -/
-theorem commute_restrict_of_commute' {f : Module.End K V} (hf : f.IsSemisimple)
-    (hcomm : ∀ g g' : Module.End K V, Commute f g → Commute f g' → Commute g g')
-    {P : Submodule K V} (hP : ∀ v ∈ P, f v ∈ P) {g g' : Module.End K P}
-    (hg : Commute (f.restrict hP) g) (hg' : Commute (f.restrict hP) g') : Commute g g' := by
-  obtain ⟨Q, hQ, hPQ⟩ := Module.End.isSemisimple_iff.mp hf P (fun v hv => hP v hv)
-  have hQ' : ∀ v ∈ Q, f v ∈ Q := fun v hv => hQ hv
-  set π := Submodule.projectionOnto P Q hPQ
-  have hπ := commute_subtype_comp_projectionOnto hP hQ' hPQ
-  have hπp : ∀ p' : P, π (p' : V) = p' := Submodule.projectionOnto_apply_left hPQ
-  let ext : Module.End K P → Module.End K V := fun h => P.subtype ∘ₗ h ∘ₗ π
-  have hce : ∀ h : Module.End K P, Commute (f.restrict hP) h → Commute f (ext h) := by
-    intro h hh
-    refine LinearMap.ext fun v => ?_
-    have h1 : π (f v) = f.restrict hP (π v) := Subtype.ext (by
-      have := LinearMap.congr_fun hπ.eq v
-      simp only [Module.End.mul_apply, LinearMap.comp_apply, Submodule.subtype_apply] at this
-      rw [LinearMap.coe_restrict_apply]
-      exact this.symm)
-    change f (h (π v) : V) = (h (π (f v)) : V)
-    rw [h1, ← Module.End.mul_apply h, ← hh.eq]
-    rfl
-  have hc := hcomm _ _ (hce g hg) (hce g' hg')
-  refine LinearMap.ext fun p => Subtype.ext ?_
-  have h1 := LinearMap.congr_fun hc.eq (p : V)
-  simp only [Module.End.mul_apply, ext, LinearMap.comp_apply, Submodule.subtype_apply, hπp] at h1
-  simpa only [Module.End.mul_apply] using h1
-
-/-- **Decomposition into minimal invariant subspaces**: for a semisimple `f`, `V` is the
-independent sum of a finite set of nonzero `f`-invariant subspaces, each minimal among nonzero
-`f`-invariant subspaces.  (Strong induction on the dimension of an invariant subspace: split off
-an invariant subspace of least positive dimension and its invariant complement.) -/
-theorem _root_.Module.End.IsSemisimple.exists_supIndep_minimal {f : Module.End K V}
-    (hf : f.IsSemisimple) :
-    ∃ s : Finset (Submodule K V), s.SupIndep id ∧ s.sup id = ⊤ ∧ ∀ B ∈ s,
-      (∀ v ∈ B, f v ∈ B) ∧ B ≠ ⊥ ∧
-        ∀ N : Submodule K V, (∀ v ∈ N, f v ∈ N) → N ≤ B → N = ⊥ ∨ N = B := by
-  classical
-  suffices H : ∀ (n : ℕ) (P : Submodule K V), finrank K P = n → (∀ v ∈ P, f v ∈ P) →
-      ∃ s : Finset (Submodule K V), s.SupIndep id ∧ s.sup id = P ∧ ∀ B ∈ s,
-        (∀ v ∈ B, f v ∈ B) ∧ B ≠ ⊥ ∧
-          ∀ N : Submodule K V, (∀ v ∈ N, f v ∈ N) → N ≤ B → N = ⊥ ∨ N = B from
-    H _ ⊤ rfl fun _ _ => Submodule.mem_top
-  intro n
-  induction n using Nat.strong_induction_on with
-  | _ n ih =>
-  intro P hPn hP
-  by_cases hP0 : P = ⊥
-  · exact ⟨∅, Finset.supIndep_empty _, by rw [Finset.sup_empty, hP0], by simp⟩
-  -- an invariant subspace of least positive dimension inside `P`
-  have hex : ∃ d, ∃ N : Submodule K V, (∀ v ∈ N, f v ∈ N) ∧ N ≠ ⊥ ∧ N ≤ P ∧ finrank K N = d :=
-    ⟨_, P, hP, hP0, le_rfl, rfl⟩
-  obtain ⟨B₀, hB₀, hB₀0, hB₀P, hB₀d⟩ := Nat.find_spec hex
-  have hmin : ∀ N : Submodule K V, (∀ v ∈ N, f v ∈ N) → N ≤ B₀ → N = ⊥ ∨ N = B₀ := by
-    intro N hN hNB
-    by_cases hN0 : N = ⊥
-    · exact Or.inl hN0
-    refine Or.inr (Submodule.eq_of_le_of_finrank_le hNB ?_)
-    rw [hB₀d]
-    exact Nat.find_min' hex ⟨N, hN, hN0, hNB.trans hB₀P, rfl⟩
-  obtain ⟨C, hC, hBC⟩ := Module.End.isSemisimple_iff.mp hf B₀ (fun v hv => hB₀ v hv)
-  set P' := C ⊓ P
-  have hP' : ∀ v ∈ P', f v ∈ P' := fun v hv => ⟨hC hv.1, hP v hv.2⟩
-  have hsup : B₀ ⊔ P' = P := by
-    rw [← sup_inf_assoc_of_le C hB₀P, hBC.sup_eq_top, top_inf_eq]
-  have hdisj : Disjoint B₀ P' := hBC.disjoint.mono_right inf_le_left
-  have hlt : P' < P := by
-    refine lt_of_le_of_ne inf_le_right fun heq => hB₀0 ?_
-    have : B₀ ≤ P' := heq ▸ hB₀P
-    exact disjoint_self.mp (hdisj.mono_right this)
-  obtain ⟨s, hs, hssup, hsB⟩ := ih _ (hPn ▸ Submodule.finrank_lt_finrank_of_lt hlt) P' rfl hP'
-  have hB₀s : B₀ ∉ s := by
-    intro hm
-    have hle : B₀ ≤ P' := hssup ▸ Finset.le_sup (f := id) hm
-    exact hB₀0 (disjoint_self.mp (hdisj.mono_right hle))
-  refine ⟨insert B₀ s, hs.insert (by rw [hssup]; exact hdisj), ?_, ?_⟩
-  · rw [Finset.sup_insert, hssup]; exact hsup
-  · intro B hB
-    rcases Finset.mem_insert.mp hB with rfl | hB
-    · exact ⟨hB₀, hB₀0, hmin⟩
-    · exact hsB B hB
-
-/-- For an independent family, the dimension of a finite partial sum is the sum of the
-dimensions. -/
-theorem finrank_biSup_eq_sum {ι : Type*} {B : ι → Submodule K V} (hB : iSupIndep B)
-    (J : Finset ι) : finrank K ↥(⨆ j ∈ J, B j) = ∑ j ∈ J, finrank K (B j) := by
-  classical
-  induction J using Finset.induction_on with
-  | empty => simp
-  | insert i J hi ih =>
-    rw [Finset.sum_insert hi, ← ih, Finset.iSup_insert]
-    have hd : Disjoint (B i) (⨆ j ∈ J, B j) := hB.disjoint_biSup (by simpa using hi)
-    have := Submodule.finrank_sup_add_finrank_inf_eq (B i) (⨆ j ∈ J, B j)
-    rw [hd.eq_bot, finrank_bot, add_zero] at this
-    exact this
-
-end Cyclic
-
 section Integrability
 
 universe u
 
 variable {F : Type*} [NontriviallyNormedField F] [LocallyCompactSpace F]
-
-/-- `|∏ x_i|_F = ∏ |x_i|_F`. -/
-theorem absF_prod {ι : Type*} (s : Finset ι) (x : ι → F) :
-    absF (∏ i ∈ s, x i) = ∏ i ∈ s, absF (x i) := by
-  classical
-  induction s using Finset.induction_on with
-  | empty => simp [absF_one]
-  | insert i s hi ih => rw [Finset.prod_insert hi, Finset.prod_insert hi, absF_mul, ih]
 
 /-- **Local integrability of `|det|^a` on a commutative family with odd powers** (the Lie-algebra
 form of BP Astérisque 418, Lemma B.1.2, for a torus whose characters come in pairs `±μ_i`).
@@ -358,7 +95,10 @@ theorem locallyIntegrable_absF_det_rpow_of_odd_pow [IsUltrametricDist F] [Perfec
       by_cases hji : j = i
       · exact hji ▸ le_sup_left
       · exact le_sup_of_le_right (le_iSup₂ (f := fun (j : ↥s) (_ : j ≠ i) => B j) j hji)
-    have hP := commute_subtype_comp_projectionOnto (hBA i) hC hcompl
+    have hP : Commute A ((B i).subtype ∘ₗ Submodule.projectionOnto (B i) C hcompl) :=
+      ((LinearMap.IsIdempotentElem.commute_iff (Submodule.isIdempotentElem_projection hcompl)).mpr
+        ⟨by rw [Submodule.range_projection]; exact hBA i,
+          by rw [Submodule.ker_projection]; exact hC⟩).symm
     have hPρ := hcomm _ _ hP (hρ v)
     have hu' : (B i).subtype (Submodule.projectionOnto (B i) C hcompl u) = u := by
       rw [Submodule.subtype_apply, Submodule.projectionOnto_apply_left hcompl ⟨u, hu⟩]
@@ -418,7 +158,8 @@ theorem locallyIntegrable_absF_det_rpow_of_odd_pow [IsUltrametricDist F] [Perfec
     intro i
     let b := Module.finBasis F (B i)
     have hlin : Continuous fun c : ↥(Cv i) => LinearMap.toMatrix b b (ρb i c) :=
-      ((LinearMap.toMatrix b b).toLinearMap ∘ₗ (ρb i ∘ₗ (Cv i).subtype)).continuous_of_finiteDimensional
+      ((LinearMap.toMatrix b b).toLinearMap ∘ₗ
+        (ρb i ∘ₗ (Cv i).subtype)).continuous_of_finiteDimensional
     refine continuous_absF.comp ?_
     have : Continuous fun c : ↥(Cv i) => (LinearMap.toMatrix b b (ρb i c)).det := hlin.matrix_det
     simpa only [LinearMap.det_toMatrix] using this

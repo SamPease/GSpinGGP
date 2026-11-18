@@ -42,6 +42,7 @@ import GSpinGGP.GGP.RegularNilpotent
 import GSpinGGP.Foundations.SoSplit
 import GSpinGGP.Foundations.MatrixBaseChange
 import GSpinGGP.Foundations.CommutantSquarefree
+import GSpinGGP.Foundations.CyclicCommutant
 import GSpinGGP.Foundations.DetIntegrability
 import GSpinGGP.Foundations.JordanAlgebra
 import GSpinGGP.Foundations.SemisimpleRank
