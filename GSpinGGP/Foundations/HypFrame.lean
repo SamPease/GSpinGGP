@@ -2,6 +2,7 @@ import Mathlib.LinearAlgebra.QuadraticForm.Basic
 import TauCeti.LinearAlgebra.QuadraticForm.Witt.Extension
 import TauCeti.LinearAlgebra.QuadraticForm.OrthogonalGroup.Basic
 import TauCeti.LinearAlgebra.QuadraticForm.OrthogonalGroup.HyperbolicPair
+import TauCeti.LinearAlgebra.QuadraticForm.TotallyIsotropic
 
 /-!
 # Hyperbolic frames and their split tori
@@ -780,5 +781,91 @@ theorem exists_regular_units (K : Type*) [Field K] [CharZero K] (n : ℕ) :
   · simp only [Units.val_mk0]
     rw [← pow_add, h2]
     exact_mod_cast (Nat.one_lt_two_pow (by omega : i.val + 1 + (j.val + 1) ≠ 0)).ne'
+
+/-! ## Hyperbolic frames from their polar relations; maximal totally isotropic halves -/
+
+section OrthFrame
+
+variable {K : Type*} [Field K] {V : Type*} [AddCommGroup V] [Module K V]
+
+/-- The orthogonal complement `{e, f}^⊥` of two families of vectors. -/
+def orthFrame (Q : QuadraticForm K V) {n : ℕ} (e f : Fin n → V) : Submodule K V where
+  carrier := {v | ∀ i, polar Q v (e i) = 0 ∧ polar Q v (f i) = 0}
+  add_mem' ha hb i := ⟨by rw [polar_add_left, (ha i).1, (hb i).1, add_zero],
+    by rw [polar_add_left, (ha i).2, (hb i).2, add_zero]⟩
+  zero_mem' i := ⟨by simp, by simp⟩
+  smul_mem' c v hv i := ⟨by rw [polar_smul_left, (hv i).1, smul_zero],
+    by rw [polar_smul_left, (hv i).2, smul_zero]⟩
+
+theorem mem_orthFrame {Q : QuadraticForm K V} {n : ℕ} {e f : Fin n → V} {v : V} :
+    v ∈ orthFrame Q e f ↔ ∀ i, polar Q v (e i) = 0 ∧ polar Q v (f i) = 0 := Iff.rfl
+
+/-- Families with the polar relations of a hyperbolic frame form one, with complement
+`orthFrame`. -/
+theorem isHypFrame_orthFrame {Q : QuadraticForm K V} {n : ℕ} {e f : Fin n → V}
+    (hee : ∀ i j, polar Q (e i) (e j) = 0) (hff : ∀ i j, polar Q (f i) (f j) = 0)
+    (hef : ∀ i j, polar Q (e i) (f j) = if i = j then 1 else 0) :
+    IsHypFrame Q (orthFrame Q e f) e f :=
+  ⟨hee, hff, hef, fun _ => Iff.rfl⟩
+
+end OrthFrame
+
+section TotallyIsotropic
+
+variable {K : Type*} [Field K] [Invertible (2 : K)] {V : Type*} [AddCommGroup V] [Module K V]
+  {Q : QuadraticForm K V}
+
+/-- The span of a family whose vectors are isotropic and pairwise orthogonal is totally
+isotropic. -/
+theorem isTotallyIsotropic_span_of_polar {ι : Type*} (e : ι → V)
+    (h : ∀ i j, polar Q (e i) (e j) = 0) :
+    Q.IsTotallyIsotropic (Submodule.span K (Set.range e)) := by
+  have hall : ∀ x ∈ Submodule.span K (Set.range e), ∀ y ∈ Submodule.span K (Set.range e),
+      polar Q x y = 0 := by
+    intro x hx y hy
+    induction hx using Submodule.span_induction with
+    | mem x hx =>
+      obtain ⟨i, rfl⟩ := hx
+      induction hy using Submodule.span_induction with
+      | mem y hy => obtain ⟨j, rfl⟩ := hy; exact h i j
+      | zero => simp
+      | add y z _ _ hy hz => rw [polar_add_right, hy, hz, add_zero]
+      | smul c y _ hy => rw [polar_smul_right, hy, smul_zero]
+    | zero => simp
+    | add x z _ _ hx hz => rw [polar_add_left, hx, hz, add_zero]
+    | smul c x _ hx => rw [polar_smul_left, hx, smul_zero]
+  intro x hx
+  have h2 := hall x hx x hx
+  rw [polar_self, two_smul] at h2
+  have : (2 : K) * Q x = 0 := by rw [two_mul]; exact h2
+  exact (mul_eq_zero.mp this).resolve_left (Invertible.ne_zero 2)
+
+variable {W : Submodule K V} {n : ℕ} {e f : Fin n → V}
+
+/-- The isotropic half `⟨e₀, …, e_{n-1}⟩` of a hyperbolic frame is totally isotropic. -/
+theorem IsHypFrame.isTotallyIsotropic_span_e (hF : IsHypFrame Q W e f) :
+    Q.IsTotallyIsotropic (Submodule.span K (Set.range e)) :=
+  isTotallyIsotropic_span_of_polar e hF.polar_ee
+
+/-- **The isotropic half of a hyperbolic frame with anisotropic complement is a maximal totally
+isotropic subspace**: a vector `x` of a larger totally isotropic subspace is orthogonal to the
+`eⱼ`, so `x − Σ polar(x, fⱼ) eⱼ` lies in the complement and is isotropic, hence `0`. -/
+theorem IsHypFrame.maximal_isTotallyIsotropic_span_e (hF : IsHypFrame Q W e f)
+    (hW : (Q.restrict W).Anisotropic) :
+    Maximal Q.IsTotallyIsotropic (Submodule.span K (Set.range e)) := by
+  refine ⟨hF.isTotallyIsotropic_span_e, fun U hU hle x hx => ?_⟩
+  have hpe : ∀ j, polar Q x (e j) = 0 := fun j =>
+    hU.polar_eq_zero hx (hle (Submodule.subset_span ⟨j, rfl⟩))
+  have hfs : frameSum Q e f x ∈ Submodule.span K (Set.range e) := by
+    refine Submodule.sum_mem _ fun j _ => ?_
+    rw [hpe j, zero_smul, add_zero]
+    exact Submodule.smul_mem _ _ (Submodule.subset_span ⟨j, rfl⟩)
+  have hy0 : (⟨x - frameSum Q e f x, hF.proj_mem x⟩ : W) = 0 :=
+    hW _ (hU _ (U.sub_mem hx (hle hfs)))
+  have hy0' : x - frameSum Q e f x = 0 := congrArg Subtype.val hy0
+  rw [sub_eq_zero] at hy0'
+  rw [hy0']; exact hfs
+
+end TotallyIsotropic
 
 end GSpinGGP

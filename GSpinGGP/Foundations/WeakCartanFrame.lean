@@ -417,6 +417,12 @@ def pairE (hf : IsFrame Q b ν l) (j : ℕ) (i : Fin (numPairs l j)) : V :=
   b ⟨j + 2 * i, hf.idx_lt (by have := add_one_le_of_lt_numPairs i.2; omega)⟩ +
     b ⟨j + 2 * i + 1, hf.idx_lt (add_one_le_of_lt_numPairs i.2)⟩
 
+theorem pairE_mem_span (hf : IsFrame Q b ν l) (j : ℕ) (i : Fin (numPairs l j)) {M : ℕ}
+    (hM : j + 2 * (i : ℕ) + 1 < M) :
+    pairE hf j i ∈ Submodule.span F (b '' {m | m.val < M}) :=
+  add_mem (Submodule.subset_span ⟨_, by simp only [Set.mem_ofPred_eq]; omega, rfl⟩)
+    (Submodule.subset_span ⟨_, by simp only [Set.mem_ofPred_eq]; omega, rfl⟩)
+
 /-- The isotropic vectors `(4 (-1)^{j+2i} ν)⁻¹ (b (j+2i) - b (j+2i+1))` of the pairs of level
 `j`, dual to `pairE`. -/
 def pairF (hf : IsFrame Q b ν l) (j : ℕ) (i : Fin (numPairs l j)) : V :=
