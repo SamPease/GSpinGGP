@@ -43,6 +43,14 @@ lemma absF_pow (a : F) (n : ℕ) : absF (a ^ n) = absF a ^ n := by
   | zero => simp [absF_one]
   | succ n ih => rw [pow_succ, absF_mul, ih, pow_succ]
 
+/-- `|∏ x_i|_F = ∏ |x_i|_F`. -/
+theorem absF_prod {ι : Type*} (s : Finset ι) (x : ι → F) :
+    absF (∏ i ∈ s, x i) = ∏ i ∈ s, absF (x i) := by
+  classical
+  induction s using Finset.induction_on with
+  | empty => simp [absF_one]
+  | insert i s hi ih => rw [Finset.prod_insert hi, Finset.prod_insert hi, absF_mul, ih]
+
 section Scaling
 
 variable {V : Type*} [NormedAddCommGroup V] [NormedSpace F V] [FiniteDimensional F V]
