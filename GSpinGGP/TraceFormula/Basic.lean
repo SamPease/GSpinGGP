@@ -2078,12 +2078,10 @@ instance isFiniteMeasureOnCompacts_weilMeasureHG : IsFiniteMeasureOnCompacts d.w
   exact IsWeilMeasure.isFiniteMeasureOnCompacts d.continuous_toGmodAG
     d.isClosedEmbedding_toGmodAG d.weilMeasureHG_spec
 
-/-- **The Weil measure on `H(F)\G(F)/A_G(F)` is regular** (in particular outer regular): the
-quotient is Hausdorff, locally compact and second countable (`CosetSpace.instT2Space`, …), and
-the measure is finite on compact sets (`CosetSpace.regular_of_isFiniteMeasureOnCompacts`). -/
-instance regular_weilMeasureHG : d.weilMeasureHG.Regular :=
-  CosetSpace.regular_of_isFiniteMeasureOnCompacts _ _
-
+/-- **The Weil measure on `H(F)\G(F)/A_G(F)` is outer regular**, found by instance search: the
+quotient is Hausdorff, locally compact and second countable (`CosetSpace.instT2Space`, …), hence
+metrizable, and the measure is finite on compact sets
+(`WeaklyRegular.of_pseudoMetrizableSpace_secondCountable_of_locallyFinite`). -/
 example : d.weilMeasureHG.OuterRegular := inferInstance
 
 end GGPData

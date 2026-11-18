@@ -3,8 +3,6 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Literature.Measure
-import Mathlib.Topology.Algebra.ProperAction.Basic
-import Mathlib.Topology.Metrizable.Urysohn
 
 /-!
 # Topology of a coset space
@@ -18,10 +16,10 @@ orbit spaces:
 * it is Hausdorff if `ι(S)` is closed (`CosetSpace.instT2Space`), since a closed subgroup acts
   properly by left translation.
 
-Consequently, when `Γ` is locally compact and second countable and `ι(S)` is closed, every
-Borel measure on `ι(S)\Γ` that is finite on compact sets is regular (in particular outer
-regular), by Mathlib's `Regular.of_sigmaCompactSpace_of_isLocallyFiniteMeasure` (the space is
-metrizable by Urysohn's theorem and σ-compact); `CosetSpace.regular_of_isFiniteMeasureOnCompacts`.
+Consequently, when `Γ` is locally compact and second countable and `ι(S)` is closed, instance
+search shows every Borel measure on `ι(S)\Γ` that is finite on compact sets to be outer regular
+(the space is metrizable by Urysohn's theorem; Mathlib's
+`WeaklyRegular.of_pseudoMetrizableSpace_secondCountable_of_locallyFinite`).
 -/
 
 open MeasureTheory Topology
@@ -51,13 +49,6 @@ translation (`t2Space_quotient_mulAction_of_properSMul`). -/
 instance instT2Space [IsTopologicalGroup Γ] [IsClosed (ι.range : Set Γ)] :
     T2Space (CosetSpace ι) :=
   t2Space_quotient_mulAction_of_properSMul (G := ι.range) (X := Γ)
-
-/-- On `ι(S)\Γ`, for `Γ` locally compact and second countable and `ι(S)` closed, a Borel
-measure that is finite on compact sets is regular (found by instance search). -/
-theorem regular_of_isFiniteMeasureOnCompacts [IsTopologicalGroup Γ] [LocallyCompactSpace Γ]
-    [SecondCountableTopology Γ] [IsClosed (ι.range : Set Γ)] (μ : Measure (CosetSpace ι))
-    [IsFiniteMeasureOnCompacts μ] : μ.Regular :=
-  inferInstance
 
 end CosetSpace
 
