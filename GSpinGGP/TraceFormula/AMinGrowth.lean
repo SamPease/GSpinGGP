@@ -89,8 +89,9 @@ theorem glMaxNorm_extZ (f : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) :
 variable {n₁ n₂ : ℕ} (W₁ W₂ : Submodule F d.V) (e₁ f₁ : Fin n₁ → d.V) (e₂ f₂ : Fin n₂ → d.V)
 
 /-- **The split torus of two frames**: the `g ∈ G(F)` with `P(g_W) ⊕ 1` in the torus of the
-frame `(e₁, f₁)` and `P(g_V)` in the torus of the frame `(e₂, f₂)` (both frames in `V`). For maximal
-frames this is `A_min(F)`; it contains the scalars `Z(F) = ker P̄`. -/
+frame `(e₁, f₁)` and `P(g_V)` in the torus of the frame `(e₂, f₂)` (both frames in `V`). When
+`(e₁, f₁)` is a maximal frame of `W ⊕ 0` and `(e₂, f₂)` one of `V`, this is `A_min(F)`; it always
+contains the scalars `Z(F) = ker P̄`. -/
 def frameTorus : Subgroup d.G :=
   (hypTorus W₁ e₁ f₁).comap d.PbarW ⊓ (hypTorus W₂ e₂ f₂).comap d.PbarV
 
@@ -170,19 +171,6 @@ theorem PbarV_hypPart_inv_mul (hV : IsHypPlane d.QV) (g : d.G) :
   rw [h1]; rfl
 
 /-! ## Norm estimates -/
-
-omit [PAdicField F] in
-/-- `|log ‖t‖| ≤ log M` when `‖t‖, ‖t⁻¹‖ ≤ M`. -/
-theorem abs_log_norm_le_log {t : F} (ht : t ≠ 0) {M : ℝ} (h1 : ‖t‖ ≤ M) (h2 : ‖t⁻¹‖ ≤ M) :
-    |Real.log ‖t‖| ≤ Real.log M := by
-  have ht' : 0 < ‖t‖ := norm_pos_iff.2 ht
-  have hti : 0 < ‖t⁻¹‖ := norm_pos_iff.2 (inv_ne_zero ht)
-  rw [abs_le]
-  constructor
-  · have := Real.log_le_log hti h2
-    rw [norm_inv, Real.log_inv] at this
-    linarith
-  · exact Real.log_le_log ht' h1
 
 variable {W₁ W₂ e₁ f₁ e₂ f₂}
 

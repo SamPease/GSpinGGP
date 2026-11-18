@@ -22,7 +22,7 @@ This file isolates the count, for an arbitrary set `T` in a monoid `G` with inte
   and two elements of `T` with the same coordinates differ by an element `e` of a fixed set `E`
   up to a factor `z` in a fixed set `Z` (`a' = z (a e)`), then `{a ∈ T ; τ(a) < R}` is covered by
   `≤ M (1 + R)^{|ι|}` sets `Z · j · E`, `j ∈ T`.
-* `abs_floor_log_norm_le`, `norm_div_lt_exp_of_floor_log_norm_eq`: the coordinate
+* `abs_floor_log_norm_le`, `norm_div_lt_exp_of_floor_log_norm_eq`, `abs_log_norm_le_log`: the coordinate
   `⌊log ‖x‖⌋ ∈ ℤ` of a nonzero element `x` of a normed field: it is bounded by `|log ‖x‖| + 1`,
   and two elements with the same coordinate have quotient of norm in `(e⁻¹, e)`. With this
   coordinate no uniformizer or discreteness of the value group is needed.
@@ -125,6 +125,18 @@ theorem norm_div_lt_exp_of_floor_log_norm_eq {x y : 𝕜} (hx : x ≠ 0) (hy : y
   have h2 := Int.lt_floor_add_one (Real.log ‖x‖)
   rw [h] at h2
   linarith
+
+/-- `|log ‖t‖| ≤ log M` when `‖t‖, ‖t⁻¹‖ ≤ M`. -/
+theorem abs_log_norm_le_log {t : 𝕜} (ht : t ≠ 0) {M : ℝ} (h1 : ‖t‖ ≤ M) (h2 : ‖t⁻¹‖ ≤ M) :
+    |Real.log ‖t‖| ≤ Real.log M := by
+  have ht' : 0 < ‖t‖ := norm_pos_iff.2 ht
+  have hti : 0 < ‖t⁻¹‖ := norm_pos_iff.2 (inv_ne_zero ht)
+  rw [abs_le]
+  constructor
+  · have := Real.log_le_log hti h2
+    rw [norm_inv, Real.log_inv] at this
+    linarith
+  · exact Real.log_le_log ht' h1
 
 end NormCoord
 
