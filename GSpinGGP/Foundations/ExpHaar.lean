@@ -18,7 +18,10 @@ the measures).
   `‖e^x − e^y‖ = ‖x − y‖` on a small ball;
 * `exists_expA_isometry`: the same for `expA` on a finite-dimensional algebra `A` (norm
   `‖lmulPi ·‖`), with `exp` onto the ball around `1`;
+* `exists_expA_sub_one_eq_mul`: `e^X − 1 = X u(X)` near `0`, `u` continuous at `0`, `u(0) = 1`;
 * `isEmbedding_units_val`: `Aˣ → A` is a topological embedding;
+* `exists_expA_chart`: the `exp` chart `Φ : 𝔤 → 𝓗/(scalars)` with the hypotheses of
+  `integrable_of_chart`; `setOf_expA_eq_image`: `Φ(S) = e^S`;
 * `exists_isAddHaarMeasure_eq_expA_image`: for a group `𝓗 ⊆ Aˣ` whose Lie algebra near `0` is
   `𝔤 ⊕ F·1`, and every Haar measure on `𝓗/(scalars)`, some additive Haar measure `μ` on `𝔤` has
   `μ(S) = μK(e^S)` for `S` near `0`.
@@ -270,6 +273,117 @@ theorem exists_expA_isometry {U : Set A} (hU : U ∈ 𝓝 (0 : A)) :
     rw [he, expA_zero_eq_one, sub_zero] at this
     rw [← this]; exact hu
 
+/-- **`e^X − 1 = X·u(X)` near `0`**, with `u(X) = ∑ Xⁿ/(n+1)!` continuous at `0`, `u(0) = 1`, and
+commuting with everything that commutes with `X` (it is a limit of polynomials in `X`). The series
+converges in `End(F^d)` for `‖X‖ ≤ 1/(2R)`, `‖1/n!‖ ≤ Rⁿ`, with `‖u(X) − 1‖ ≤ 2R²‖X‖`. -/
+theorem exists_expA_sub_one_eq_mul :
+    ∃ u : A → A, ContinuousAt u 0 ∧ u 0 = 1 ∧ ∀ᶠ X in 𝓝 (0 : A),
+      expA F X - 1 = X * u X ∧ ∀ Z : A, Commute Z X → Commute Z (u X) := by
+  classical
+  letI := isTopologicalRing_of_moduleTopology F A
+  haveI := t2Space_of_moduleTopology F A
+  obtain ⟨R₀, hR₀0, hR₀⟩ := exists_norm_factorial_inv_le F
+  set R := max R₀ 1 with hRdef
+  have hR1 : 1 ≤ R := le_max_right _ _
+  have hR0 : 0 < R := lt_of_lt_of_le one_pos hR1
+  have hR : ∀ n : ℕ, ‖(((n + 1).factorial : F))⁻¹‖ ≤ R ^ (n + 1) := fun n =>
+    (hR₀ _).trans (pow_le_pow_left₀ hR₀0.le (le_max_left _ _) _)
+  set c : ℕ → F := fun n => (((n + 1).factorial : F))⁻¹ with hc
+  set u : A → A := fun X => ∑' n, c n • X ^ n with hu
+  -- the series in `End(F^d)`, for `‖z‖ ≤ 1/(2R)`
+  have hE : ∀ z : VA →L[F] VA, ‖z‖ ≤ 1 / (2 * R) →
+      Summable (fun n => c n • z ^ n) ∧ ‖(∑' n, c n • z ^ n) - 1‖ ≤ 2 * R ^ 2 * ‖z‖ := by
+    intro z hz
+    have hz1 : ‖z‖ ≤ 1 := hz.trans (by rw [div_le_one (by positivity)]; linarith)
+    have hRz : R * ‖z‖ ≤ 1 / 2 := by
+      calc R * ‖z‖ ≤ R * (1 / (2 * R)) := by gcongr
+        _ = 1 / 2 := by field_simp
+    have hzp : ∀ n, ‖z ^ (n + 1)‖ ≤ ‖z‖ ^ (n + 1) := fun n => norm_pow_le' z n.succ_pos
+    have hb : ∀ n, ‖c (n + 1) • z ^ (n + 1)‖ ≤ R ^ 2 * ‖z‖ * (R * ‖z‖) ^ n := fun n => by
+      calc ‖c (n + 1) • z ^ (n + 1)‖ ≤ ‖c (n + 1)‖ * ‖z ^ (n + 1)‖ := (norm_smul _ _).le
+        _ ≤ R ^ (n + 1 + 1) * ‖z‖ ^ (n + 1) := by
+            gcongr
+            · exact hR (n + 1)
+            · exact hzp n
+        _ = R ^ 2 * ‖z‖ * (R * ‖z‖) ^ n := by ring
+    have hg : Summable fun n : ℕ => R ^ 2 * ‖z‖ * (R * ‖z‖) ^ n :=
+      (summable_geometric_of_lt_one (by positivity) (by linarith)).mul_left _
+    have hs1 : Summable fun n => c (n + 1) • z ^ (n + 1) := hg.of_norm_bounded hb
+    have hs : Summable fun n => c n • z ^ n := (summable_nat_add_iff 1).mp hs1
+    refine ⟨hs, ?_⟩
+    have h0 : c 0 • z ^ 0 = 1 := by simp [hc]
+    rw [hs.tsum_eq_zero_add, h0, add_sub_cancel_left]
+    calc ‖∑' n, c (n + 1) • z ^ (n + 1)‖ ≤ ∑' n, R ^ 2 * ‖z‖ * (R * ‖z‖) ^ n :=
+          tsum_of_norm_bounded hg.hasSum hb
+      _ = R ^ 2 * ‖z‖ * (1 - R * ‖z‖)⁻¹ := by
+          rw [tsum_mul_left, tsum_geometric_of_lt_one (by positivity) (by linarith)]
+      _ ≤ R ^ 2 * ‖z‖ * 2 := by
+          gcongr
+          rw [inv_le_comm₀ (by linarith) two_pos]; linarith
+      _ = 2 * R ^ 2 * ‖z‖ := by ring
+  -- pulling back to `A`
+  have hA : ∀ X : A, ‖lmulPi F X‖ ≤ 1 / (2 * R) →
+      HasSum (fun n => c n • X ^ n) (u X) ∧
+        ‖lmulPi F (u X) - 1‖ ≤ 2 * R ^ 2 * ‖lmulPi F X‖ := by
+    intro X hX
+    obtain ⟨hs, hb⟩ := hE _ hX
+    have h1 := hs.hasSum.mapL (lmulPiInv F)
+    have he : (fun n => lmulPiInv F (c n • lmulPi F X ^ n)) = fun n => c n • X ^ n := by
+      funext n
+      have : c n • lmulPi F X ^ n = lmulPi F (c n • X ^ n) := by
+        rw [← lmulPi_pow]; exact (map_smul (lmulPiₗ F) _ _).symm
+      rw [this, lmulPiInv_lmulPi]
+    rw [he] at h1
+    have hux : u X = lmulPiInv F (∑' n, c n • lmulPi F X ^ n) := h1.tsum_eq
+    refine ⟨hux ▸ h1, ?_⟩
+    have h3 : HasSum (fun n => lmulPi F (c n • X ^ n)) (lmulPi F (u X)) :=
+      (hux ▸ h1).map (lmulPiₗ F) (continuous_lmulPi F)
+    have h4 : (fun n => lmulPi F (c n • X ^ n)) = fun n => c n • lmulPi F X ^ n := by
+      funext n
+      rw [show lmulPi F (c n • X ^ n) = c n • lmulPi F (X ^ n) from map_smul (lmulPiₗ F) _ _,
+        lmulPi_pow]
+    rw [h4] at h3
+    rw [h3.unique hs.hasSum]
+    exact hb
+  have hball := lmulPi_ball_mem_nhds F (A := A) (s := 1 / (2 * R)) (by positivity)
+  obtain ⟨Ue, hUe, hexp⟩ := expA_hasSum F (A := A)
+  have hu0 : u 0 = 1 := by
+    rw [hu]
+    simp only
+    rw [tsum_eq_single 0 fun n hn => by rw [zero_pow hn, smul_zero]]
+    simp [hc]
+  refine ⟨u, ?_, hu0, ?_⟩
+  · have hT : Tendsto (fun X => lmulPi F (u X)) (𝓝 0) (𝓝 1) := by
+      rw [tendsto_iff_norm_sub_tendsto_zero]
+      have hz : Tendsto (fun X : A => 2 * R ^ 2 * ‖lmulPi F X‖) (𝓝 0) (𝓝 0) := by
+        have := ((continuous_lmulPi F).norm.tendsto (0 : A)).const_mul (2 * R ^ 2)
+        simpa [lmulPi_zero] using this
+      refine squeeze_zero' (Eventually.of_forall fun _ => norm_nonneg _) ?_ hz
+      filter_upwards [hball] with X hX
+      exact (hA X hX).2
+    have := ((lmulPiInv F).continuous.tendsto _).comp hT
+    rw [ContinuousAt, hu0]
+    convert this using 1
+    · funext X; simp [lmulPiInv_lmulPi]
+    · rw [← lmulPi_one F, lmulPiInv_lmulPi]
+  · filter_upwards [hball, hUe] with X hX hXe
+    have hsum := (hA X hX).1
+    have he := (hasSum_nat_add_iff' 1).mpr (hexp X hXe)
+    refine ⟨?_, fun Z hZ => ?_⟩
+    · have hm := hsum.mul_left X
+      have heq : (fun n => X * (c n • X ^ n)) =
+          fun n => (((n + 1).factorial : F))⁻¹ • X ^ (n + 1) := by
+        funext n; rw [mul_smul_comm, ← pow_succ']
+      rw [heq] at hm
+      have := he.unique hm
+      simpa using this
+    · have h1 := hsum.mul_left Z
+      have h2 := hsum.mul_right Z
+      have heq : (fun n => Z * (c n • X ^ n)) = fun n => (c n • X ^ n) * Z := by
+        funext n; rw [mul_smul_comm, smul_mul_assoc, (hZ.pow_right n).eq]
+      rw [heq] at h1
+      exact h1.unique h2
+
 /-- `lmulPi` of a unit, as a unit of `End(F^d)`. -/
 def lmulPiUnit (u : Aˣ) : (VA →L[F] VA)ˣ :=
   ⟨lmulPi F u, lmulPi F ↑u⁻¹, by rw [← lmulPi_mul, Units.mul_inv, lmulPi_one],
@@ -399,18 +513,21 @@ lemma isOpen_scalarBall (𝔤 : Submodule F A) {s : ℝ} (hs : 0 < s) :
   haveI := isTopologicalRing_of_moduleTopology F A
   exact AddSubgroup.isOpen_of_mem_nhds _ (scalarBall_mem_nhds 𝔤 hs)
 
-/-- **`exp` carries an additive Haar measure to a Haar measure near `0`** (`p`-adic case, Jacobian
-`1`). Let `j : 𝓗 → Aˣ` be a topological embedding of a group, `Z ⊆ 𝓗` the elements mapped to
-scalars (all scalars being in the image), and `𝔤 ⊆ A` a subspace meeting the scalars only in `0`,
-such that near `0`, `e^X ∈ j(𝓗)` for `X ∈ 𝔤`, and `e^W ∈ j(𝓗)` forces `W ∈ 𝔤 ⊕ F·1` (so `𝔤 ⊕ F·1`
-is the Lie algebra of `𝓗`). Then for every Haar measure `μK` on `𝓗/Z` there is an additive Haar
-measure `μ` on `𝔤` with `μ(S) = μK(e^S Z)` for measurable `S` near `0`.
+/-- **The `exp` chart of `𝓗/Z` near `1`, carrying an additive Haar measure to a Haar measure**
+(`p`-adic case, Jacobian `1`). Let `j : 𝓗 → Aˣ` be a topological embedding of a group, `Z ⊆ 𝓗` the
+elements mapped to scalars (all scalars being in the image), and `𝔤 ⊆ A` a subspace meeting the
+scalars only in `0`, such that near `0`, `e^X ∈ j(𝓗)` for `X ∈ 𝔤`, and `e^W ∈ j(𝓗)` forces
+`W ∈ 𝔤 ⊕ F·1` (so `𝔤 ⊕ F·1` is the Lie algebra of `𝓗`). Then for every Haar measure `μK` on `𝓗/Z`
+there are an additive Haar measure `μ` on `𝔤`, an open `U ∋ 0` and a map `Φ : 𝔤 → 𝓗/Z` with
+`Φ(X) = e^X Z` on `U` (`e^X ∈ j(𝓗)` there), continuous on `U`, carrying neighbourhoods of `0` to
+neighbourhoods of `1`, and with `μ(S) = μK(Φ(S))` for measurable `S ⊆ U`. These are the hypotheses
+of `integrable_of_chart`.
 
 Proof: `exp` is an isometry from the ball `‖W‖ ≤ r` onto `‖u − 1‖ ≤ r`, so on the lattices
 `L_s = {X ∈ 𝔤 : ‖X + t‖ ≤ s for some t}` it carries cosets `X + L_s` onto cosets
 `e^X Γ_s`, `Γ_s = {‖h − 1‖ ≤ s}`. The image of an additive Haar measure and `μK` then give equal
 mass to all such cosets, which generate the Borel sets (`Measure.eq_of_forall_vadd_coset`). -/
-theorem exists_isAddHaarMeasure_eq_expA_image
+theorem exists_expA_chart
     {𝓗 : Type*} [Group 𝓗] [TopologicalSpace 𝓗] [IsTopologicalGroup 𝓗]
     (j : 𝓗 →* Aˣ) (hj : Topology.IsEmbedding fun h => ((j h : Aˣ) : A))
     (Z : Subgroup 𝓗) [Z.Normal]
@@ -424,9 +541,10 @@ theorem exists_isAddHaarMeasure_eq_expA_image
     (μK : Measure (𝓗 ⧸ Z)) [μK.IsMulLeftInvariant] [IsFiniteMeasureOnCompacts μK]
     [μK.IsOpenPosMeasure]
     [MeasurableSpace 𝔤] [BorelSpace 𝔤] [SecondCountableTopology 𝔤] [LocallyCompactSpace 𝔤] :
-    ∃ μ : Measure 𝔤, μ.IsAddHaarMeasure ∧ ∃ U ∈ 𝓝 (0 : 𝔤), ∀ S : Set 𝔤, MeasurableSet S →
-      S ⊆ U → μ S = μK {q | ∃ X ∈ S, ∃ h : 𝓗, ((j h : Aˣ) : A) = expA F (X : A) ∧
-        q = (h : 𝓗 ⧸ Z)} := by
+    ∃ μ : Measure 𝔤, μ.IsAddHaarMeasure ∧ ∃ (Φ : 𝔤 → 𝓗 ⧸ Z) (U : Set 𝔤), IsOpen U ∧
+      (0 : 𝔤) ∈ U ∧ ContinuousOn Φ U ∧ (∀ W ∈ 𝓝 (0 : 𝔤), Φ '' W ∈ 𝓝 (1 : 𝓗 ⧸ Z)) ∧
+      (∀ X ∈ U, ∃ h : 𝓗, ((j h : Aˣ) : A) = expA F (X : A) ∧ Φ X = (h : 𝓗 ⧸ Z)) ∧
+      ∀ S ⊆ U, MeasurableSet S → μ S = μK (Φ '' S) := by
   classical
   letI := isTopologicalRing_of_moduleTopology F A
   haveI := t2Space_of_moduleTopology F A
@@ -658,13 +776,13 @@ theorem exists_isAddHaarMeasure_eq_expA_image
       show q (algebraMap F A v) = 0 by rw [hq, hpt, sub_self], add_zero]
   ------------------------------------------------------------------
   -- continuity of the chart on `L_r`
+  have hsmall : ∀ X ∈ (scalarBall 𝔤 hr0.le : Set 𝔤),
+      ((X : A) ∈ 𝔤 → ∃ h, ((j h : Aˣ) : A) = expA F (X : A)) ∧ (X : A) ∈ U6 := by
+    intro X hX
+    obtain ⟨W, hW, hqW⟩ := (hball hr0.le X).mp hX
+    obtain ⟨-, -, -, -, ⟨h5, -, h7⟩, -⟩ := hUW W hW
+    rw [← hqW]; exact ⟨h5, h7⟩
   have hcontΦ : ContinuousOn Φ (scalarBall 𝔤 hr0.le : Set 𝔤) := by
-    have hsmall : ∀ X ∈ (scalarBall 𝔤 hr0.le : Set 𝔤),
-        ((X : A) ∈ 𝔤 → ∃ h, ((j h : Aˣ) : A) = expA F (X : A)) ∧ (X : A) ∈ U6 := by
-      intro X hX
-      obtain ⟨W, hW, hqW⟩ := (hball hr0.le X).mp hX
-      obtain ⟨-, -, -, -, ⟨h5, -, h7⟩, -⟩ := hUW W hW
-      rw [← hqW]; exact ⟨h5, h7⟩
     let ψ : 𝔤 → 𝓗 := fun X =>
       if h : ∃ g : 𝓗, ((j g : Aˣ) : A) = expA F (X : A) then h.choose else 1
     have hψ : ∀ X ∈ (scalarBall 𝔤 hr0.le : Set 𝔤),
@@ -689,11 +807,13 @@ theorem exists_isAddHaarMeasure_eq_expA_image
     intro X hX
     obtain ⟨W, hW, hqW⟩ := (hball hr0.le X).mp hX
     exact ⟨W, hW, hqW⟩
-  have hΓopen : IsOpen (unitBall F j hr0.le hr1 : Set 𝓗) := by
+  have hΓopen' : ∀ {s : ℝ} (hs : 0 < s) (hs1 : s < 1), IsOpen (unitBall F j hs.le hs1 : Set 𝓗) := by
+    intro s hs hs1
     refine Subgroup.isOpen_of_mem_nhds _ (g := 1) ?_
     have hc : Continuous fun h : 𝓗 => ((j h : Aˣ) : A) - 1 := hj.continuous.sub continuous_const
-    exact hc.continuousAt (x := 1) |>.preimage_mem_nhds (t := {a : A | ‖lmulPi F a‖ ≤ r})
-      (by simp only [map_one, Units.val_one, sub_self]; exact lmulPi_ball_mem_nhds F hr0)
+    exact hc.continuousAt (x := 1) |>.preimage_mem_nhds (t := {a : A | ‖lmulPi F a‖ ≤ s})
+      (by simp only [map_one, Units.val_one, sub_self]; exact lmulPi_ball_mem_nhds F hs)
+  have hΓopen : IsOpen (unitBall F j hr0.le hr1 : Set 𝓗) := hΓopen' hr0 hr1
   ------------------------------------------------------------------
   -- the lattices `L n = L_{r/2ⁿ}`
   set s : ℕ → ℝ := fun n => r * (1 / 2) ^ n with hsdef
@@ -802,23 +922,70 @@ theorem exists_isAddHaarMeasure_eq_expA_image
         ENNReal.div_mul_cancel hlam0 hlamT]
   ------------------------------------------------------------------
   haveI : (c • lam).IsAddHaarMeasure := Measure.IsAddHaarMeasure.smul lam hc0 hcT
-  refine ⟨c • lam, inferInstance, L0 ∩ {X : 𝔤 | ‖lmulPi F (X : A)‖ ≤ r},
-    inter_mem (hL0open.mem_nhds (L 0).zero_mem)
-      ((continuous_subtype_val (p := fun a : A => a ∈ 𝔤)).continuousAt (x := (0 : 𝔤))
-        |>.preimage_mem_nhds (t := {a : A | ‖lmulPi F a‖ ≤ r})
-        (by simpa using lmulPi_ball_mem_nhds F (A := A) hr0)), fun S hS hSU => ?_⟩
-  have hSL : S ∩ L0 = S := Set.inter_eq_left.mpr (hSU.trans Set.inter_subset_left)
-  have h1 : (c • lam) S = ν S := by
-    rw [← hext, Measure.smul_apply, Measure.smul_apply, Measure.restrict_apply hS, hSL]
-  rw [h1, hν S hS, hSL]
-  congr 1
-  ext y
+  have hΦ0 : Φ 0 = 1 := by
+    have := hΦ 0 1 (by
+      simp only [map_one, Units.val_one, ZeroMemClass.coe_zero, expA_zero_eq_one F])
+    rw [this]; rfl
+  refine ⟨c • lam, inferInstance, Φ, L0, hL0open, (L 0).zero_mem, hcont', fun W hW => ?_,
+    fun X hX => ?_, fun S hSU hS => ?_⟩
+  · obtain ⟨n, hn⟩ := hbasis W hW
+    have hE := E4 (hs0 n).le (hsr n) 0 (scalarBall 𝔤 hr0.le).zero_mem
+    rw [zero_vadd, hΦ0, one_smul] at hE
+    have hsub : ((QuotientGroup.mk : 𝓗 → 𝓗 ⧸ Z) ''
+        (unitBall F j (hs0 n).le ((hsr n).trans_lt hr1) : Set 𝓗)) ⊆ Φ '' W := by
+      rw [← hE]; exact Set.image_mono hn
+    refine Filter.mem_of_superset ?_ hsub
+    refine (QuotientGroup.isOpenMap_coe _ (hΓopen' (hs0 n) ((hsr n).trans_lt hr1))).mem_nhds ?_
+    exact ⟨1, Subgroup.one_mem _, rfl⟩
+  · have hX' : X ∈ (scalarBall 𝔤 hr0.le : Set 𝔤) := hL0eq ▸ hX
+    obtain ⟨g, hg⟩ := (hsmall X hX').1 X.2
+    exact ⟨g, hg, hΦ X g hg⟩
+  · have hSL : S ∩ L0 = S := Set.inter_eq_left.mpr hSU
+    have h1 : (c • lam) S = ν S := by
+      rw [← hext, Measure.smul_apply, Measure.smul_apply, Measure.restrict_apply hS, hSL]
+    rw [h1, hν S hS, hSL]
+
+/-- The image of a measurable set under the chart of `exists_expA_chart` is the set `e^S Z`. -/
+theorem setOf_expA_eq_image {𝓗 : Type*} [Group 𝓗] (j : 𝓗 →* Aˣ)
+    (hj : Function.Injective fun h => ((j h : Aˣ) : A)) (Z : Subgroup 𝓗) {𝔤 : Submodule F A}
+    {Φ : 𝔤 → 𝓗 ⧸ Z} {U S : Set 𝔤}
+    (hΦU : ∀ X ∈ U, ∃ h : 𝓗, ((j h : Aˣ) : A) = expA F (X : A) ∧ Φ X = (h : 𝓗 ⧸ Z))
+    (hSU : S ⊆ U) :
+    {q | ∃ X ∈ S, ∃ h : 𝓗, ((j h : Aˣ) : A) = expA F (X : A) ∧ q = (h : 𝓗 ⧸ Z)} = Φ '' S := by
+  ext q
   constructor
+  · rintro ⟨X, hXS, h, hh, rfl⟩
+    obtain ⟨h', hh', hΦh'⟩ := hΦU X (hSU hXS)
+    exact ⟨X, hXS, by rw [hΦh', hj (hh'.trans hh.symm)]⟩
   · rintro ⟨X, hXS, rfl⟩
-    obtain ⟨g, hg⟩ := (hUW X (hSU hXS).2).1 X.2
-    exact ⟨X, hXS, g, hg, hΦ X g hg⟩
-  · rintro ⟨X, hXS, g, hg, rfl⟩
-    exact ⟨X, hXS, hΦ X g hg⟩
+    obtain ⟨h, hh, hΦh⟩ := hΦU X (hSU hXS)
+    exact ⟨X, hXS, h, hh, hΦh⟩
+
+/-- **`exp` carries an additive Haar measure to a Haar measure near `0`** (`p`-adic case, Jacobian
+`1`), in the form of an image set: with the hypotheses of `exists_expA_chart`, for every Haar
+measure `μK` on `𝓗/Z` there is an additive Haar measure `μ` on `𝔤` with `μ(S) = μK(e^S Z)` for
+measurable `S` near `0`. -/
+theorem exists_isAddHaarMeasure_eq_expA_image
+    {𝓗 : Type*} [Group 𝓗] [TopologicalSpace 𝓗] [IsTopologicalGroup 𝓗]
+    (j : 𝓗 →* Aˣ) (hj : Topology.IsEmbedding fun h => ((j h : Aˣ) : A))
+    (Z : Subgroup 𝓗) [Z.Normal]
+    (hZ : ∀ h, h ∈ Z ↔ ((j h : Aˣ) : A) ∈ Set.range (algebraMap F A))
+    (hscal : ∀ c : F, c ≠ 0 → ∃ h, ((j h : Aˣ) : A) = algebraMap F A c)
+    (𝔤 : Submodule F A) (h𝔤 : ∀ t : F, algebraMap F A t ∈ 𝔤 → t = 0)
+    (hexp : ∀ᶠ X in 𝓝 (0 : A), X ∈ 𝔤 → ∃ h, ((j h : Aˣ) : A) = expA F X)
+    (hlog : ∀ᶠ W in 𝓝 (0 : A), ∀ h, ((j h : Aˣ) : A) = expA F W →
+      ∃ t : F, W - algebraMap F A t ∈ 𝔤)
+    [T2Space (𝓗 ⧸ Z)] [MeasurableSpace (𝓗 ⧸ Z)] [BorelSpace (𝓗 ⧸ Z)]
+    (μK : Measure (𝓗 ⧸ Z)) [μK.IsMulLeftInvariant] [IsFiniteMeasureOnCompacts μK]
+    [μK.IsOpenPosMeasure]
+    [MeasurableSpace 𝔤] [BorelSpace 𝔤] [SecondCountableTopology 𝔤] [LocallyCompactSpace 𝔤] :
+    ∃ μ : Measure 𝔤, μ.IsAddHaarMeasure ∧ ∃ U ∈ 𝓝 (0 : 𝔤), ∀ S : Set 𝔤, MeasurableSet S →
+      S ⊆ U → μ S = μK {q | ∃ X ∈ S, ∃ h : 𝓗, ((j h : Aˣ) : A) = expA F (X : A) ∧
+        q = (h : 𝓗 ⧸ Z)} := by
+  obtain ⟨μ, hμ, Φ, U, hUo, hU0, -, -, hΦU, hμS⟩ :=
+    exists_expA_chart j hj Z hZ hscal 𝔤 h𝔤 hexp hlog μK
+  refine ⟨μ, hμ, U, hUo.mem_nhds hU0, fun S hS hSU => ?_⟩
+  rw [hμS S hSU hS, setOf_expA_eq_image j hj.injective Z hΦU hSU]
 
 end ExpChart
 

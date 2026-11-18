@@ -9,6 +9,7 @@ import GSpinGGP.Foundations.LieEquivAd
 import GSpinGGP.Foundations.CentralizerIso
 import GSpinGGP.Foundations.ExpLocal
 import GSpinGGP.Foundations.ExpHaar
+import GSpinGGP.Foundations.ExpDet
 import GSpinGGP.Foundations.TorusIntegrability
 import GSpinGGP.Foundations.EvaluationSpan
 import GSpinGGP.Foundations.GSpinExp

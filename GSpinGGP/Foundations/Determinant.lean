@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import Mathlib
+import TauCeti.LinearAlgebra.Determinant.Quotient
 
 /-!
 # Determinants of families of endomorphisms
@@ -13,6 +14,12 @@ import Mathlib
   coefficient of the characteristic polynomial of `f` is `± det (f|_C)`, and `det (f|_C) ≠ 0`;
 * `disjoint_ker_range_of_isSemisimple`, `isCompl_ker_range_of_isSemisimple`: `E = ker f ⊕ im f` for
   semisimple `f`;
+* `mapsTo_ker_sub_one_of_commute`, `mapsTo_range_sub_one_of_commute`: endomorphisms commuting with
+  `A` preserve `ker (A − 1)` and `im (A − 1)`;
+* `comp_comp_subtype_eq_restrict`, `continuous_det_comp_comp_subtype`: restrictions as
+  compressions `π ∘ M ∘ ι` by a projection, and continuity of their determinant;
+* `det_eq_det_restrict_mul_det_restrict`: `det M = det(M|_K) det(M|_R)` for `V = K ⊕ R`, both
+  stable; `det_restrict_restrict`: restriction to a submodule of a submodule;
 * `pow_finrank_eq_one_of_conj_eq_smul`: if `g u g⁻¹ = c • u` for units of a finite-dimensional
   algebra, then `c ^ dim = 1` (by the norm).
 -/
@@ -137,5 +144,68 @@ theorem pow_finrank_eq_one_of_conj_eq_smul {K A : Type*} [Field K] [Ring A] [Alg
   rw [Algebra.smul_def, map_mul, Algebra.norm_algebraMap, Units.val_mul, Units.val_mul,
     map_mul, map_mul, mul_right_comm, ← map_mul, Units.mul_inv, map_one, one_mul] at this
   exact (mul_eq_right₀ ((u.isUnit.map (Algebra.norm K)).ne_zero)).1 this.symm
+
+section Restrict
+
+variable {K V : Type*} [Field K] [AddCommGroup V] [Module K V]
+
+/-- An endomorphism commuting with `A` preserves `ker (A − 1)`. -/
+theorem mapsTo_ker_sub_one_of_commute {A M : Module.End K V} (h : Commute A M) :
+    ∀ v ∈ LinearMap.ker (A - 1), M v ∈ LinearMap.ker (A - 1) := by
+  have := Module.End.mapsTo_genEigenspace_of_comm h 1 1
+  rw [Module.End.genEigenspace_one, one_smul] at this
+  exact fun v hv => this hv
+
+/-- An endomorphism commuting with `A` preserves `im (A − 1)`. -/
+theorem mapsTo_range_sub_one_of_commute {A M : Module.End K V} (h : Commute A M) :
+    ∀ v ∈ LinearMap.range (A - 1), M v ∈ LinearMap.range (A - 1) := by
+  rintro _ ⟨w, rfl⟩
+  exact ⟨M w, LinearMap.congr_fun (h.sub_left (Commute.one_left M)) w⟩
+
+/-- For `M` preserving `P` and `π` a retraction onto `P`, `π ∘ M ∘ ι = M|_P`. -/
+theorem comp_comp_subtype_eq_restrict {P : Submodule K V} {π : V →ₗ[K] P}
+    (hπ : ∀ w : P, π w = w) {M : Module.End K V} (hM : ∀ v ∈ P, M v ∈ P) :
+    π ∘ₗ M ∘ₗ P.subtype = M.restrict hM := by
+  ext w
+  simp only [LinearMap.comp_apply, Submodule.subtype_apply]
+  rw [show M w = ((M.restrict hM w : P) : V) from rfl, hπ]
+
+/-- `M ↦ det(π ∘ M ∘ ι)` for a submodule `P` and a linear map `π : V → P` is continuous. -/
+theorem continuous_det_comp_comp_subtype [TopologicalSpace K] [IsTopologicalRing K]
+    [FiniteDimensional K V] [TopologicalSpace (Module.End K V)]
+    [IsModuleTopology K (Module.End K V)] (P : Submodule K V) (π : V →ₗ[K] P) :
+    Continuous fun M : Module.End K V => LinearMap.det (π ∘ₗ M ∘ₗ P.subtype) := by
+  classical
+  let b := Module.Free.chooseBasis K P
+  refine continuous_det_of_continuous_repr b _ fun v i => ?_
+  let L : Module.End K V →ₗ[K] K :=
+    { toFun := fun M => b.repr (π (M v)) i
+      map_add' := fun M N => by simp
+      map_smul' := fun c M => by simp }
+  exact IsModuleTopology.continuous_of_linearMap L
+
+/-- `det M = det(M|_K) det(M|_R)` for `V = K ⊕ R` with both summands `M`-stable. -/
+theorem det_eq_det_restrict_mul_det_restrict [FiniteDimensional K V] {P R : Submodule K V}
+    (h : IsCompl P R) {M : Module.End K V} (hP : ∀ v ∈ P, M v ∈ P) (hR : ∀ v ∈ R, M v ∈ R) :
+    LinearMap.det M = LinearMap.det (M.restrict hP) * LinearMap.det (M.restrict hR) := by
+  rw [LinearMap.det_eq_det_mul_det P M hP, LinearMap.det_mapQ_of_isCompl h M hP]
+  congr 2
+  exact comp_comp_subtype_eq_restrict (Submodule.projectionOnto_apply_left h.symm) hR
+
+/-- The determinant of a restriction to a submodule `P'` of a submodule `P` is that of the
+restriction to the image of `P'` in `V`. -/
+theorem det_restrict_restrict {M : Module.End K V} {P : Submodule K V} (hP : ∀ v ∈ P, M v ∈ P)
+    {P' : Submodule K P} (hP' : ∀ w ∈ P', M.restrict hP w ∈ P')
+    (hPP' : ∀ v ∈ P'.map P.subtype, M v ∈ P'.map P.subtype) :
+    LinearMap.det ((M.restrict hP).restrict hP') = LinearMap.det (M.restrict hPP') := by
+  let e : P' ≃ₗ[K] P'.map P.subtype := Submodule.equivMapOfInjective _ P.injective_subtype P'
+  have h : e.conj ((M.restrict hP).restrict hP') = M.restrict hPP' := by
+    ext w
+    obtain ⟨k, rfl⟩ := e.surjective w
+    simp [LinearEquiv.conj_apply, e, LinearMap.coe_restrict_apply]
+  rw [← h]
+  exact (LinearMap.det_conj _ e).symm
+
+end Restrict
 
 end GSpinGGP
