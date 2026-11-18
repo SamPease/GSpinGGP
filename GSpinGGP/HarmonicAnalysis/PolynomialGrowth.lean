@@ -356,4 +356,20 @@ theorem hasPolynomialGrowth (hτ : IsLogNorm τ) (hsurj : Function.Surjective π
 
 end WeakCartanData
 
+/-- **BP Prop 6.7.1(iii) from weak Cartan data** (BP pp. 151–152): for an invariant quotient
+`π : G → X` that is a quotient map, an outer regular `μ` (used only for the measurability of `Ξ`),
+a log-norm `τ` on `G` with `σ_X = π_* τ` measurable, and `WeakCartanData π τ`, there is `d > 0`
+with `∫_X Ξ_C(x)² σ_X(x)^{-d} dx < ∞`, for every compact `C` with nonempty interior. -/
+theorem IsInvariantQuotient.exists_integrable_of_weakCartanData [MeasurableSpace X]
+    [TopologicalSpace X] [OpensMeasurableSpace X] [IsTopologicalGroup G] {μ : Measure X}
+    [μ.OuterRegular] (hπ : IsInvariantQuotient π μ) (hq : IsQuotientMap π) {τ : G → ℝ}
+    (hτ : IsLogNorm τ) (hσm : Measurable (fiberInf τ π)) (W : WeakCartanData π τ) {C : Set G}
+    (hC : IsCompact C) (hCi : (interior C).Nonempty) {ξ : X → ℝ}
+    (hξ : ∀ g, ξ (π g) = relXi π μ C g) :
+    ∃ d : ℝ, 0 < d ∧ Integrable (fun x => ξ x ^ 2 * fiberInf τ π x ^ (-d)) μ :=
+  hπ.exists_integrable_of_hasPolynomialGrowth hCi W.isCompact_CS_mul_K hξ
+    (hπ.measurable_of_relXi hq hC hξ).aestronglyMeasurable
+    (hτ.one_le_fiberInf_of_surjective π hq.surjective) hσm
+    (W.hasPolynomialGrowth hτ hq.surjective hπ.descends)
+
 end GSpinGGP

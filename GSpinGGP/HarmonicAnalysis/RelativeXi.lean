@@ -39,7 +39,7 @@ any measure on `X` (no unimodularity, no reductive structure, no compactness of 
   (`IsInvariantQuotient.exists_relXi_le_relXi`), stated without proof in BP p. 147.
   (BP Prop 6.7.1(i)(b), for the log-norm, is `IsLogNorm.exists_fiberInf_mul_le_add` of
   `HarmonicAnalysis/LogNorm.lean`.)
-* `IsInvariantQuotient.ofReal_relXi_sq_le`: on a set `π(gD)`, `Ξ^{H\G}_C(y)² ≤ n / μ(π(gD))`,
+* `IsInvariantQuotient.exists_ofReal_relXi_sq_le`: on a set `π(gD)`, `Ξ^{H\G}_C(y)² ≤ n / μ(π(gD))`,
   which makes `∫_{xD} Ξ^{H\G}_C(y)² dy ≤ n` (the step of BP's proof of 6.7.1(iii) where "on each
   `xC`, `Ξ^{H\G}(x)² = vol(xC)^{-1}` cancels the volume").
 * Measurability: `upperSemicontinuous_relVol` (for an outer regular `μ` and continuous `π`) and
@@ -197,7 +197,7 @@ end Covering
 /-! ### From volumes to `Ξ` -/
 
 /-- If `a ≤ n b` with `n ≥ 1`, then `b⁻¹ ≤ n a⁻¹` (in `ℝ≥0∞`, including `0` and `∞`). -/
-theorem ENNReal.inv_le_natCast_mul_inv {a b : ℝ≥0∞} {n : ℕ} (hn : 0 < n) (h : a ≤ n * b) :
+theorem _root_.ENNReal.inv_le_natCast_mul_inv {a b : ℝ≥0∞} {n : ℕ} (hn : 0 < n) (h : a ≤ n * b) :
     b⁻¹ ≤ n * a⁻¹ := by
   have hn0 : (n : ℝ≥0∞) ≠ 0 := by exact_mod_cast hn.ne'
   rw [← div_eq_mul_inv, ← ENNReal.inv_div (Or.inl (ENNReal.natCast_ne_top n)) (Or.inl hn0),
@@ -205,7 +205,7 @@ theorem ENNReal.inv_le_natCast_mul_inv {a b : ℝ≥0∞} {n : ℕ} (hn : 0 < n)
   exact h
 
 /-- If `a ≤ n b` and `b ≤ m a` (with `n ≥ 1`), then `(b⁻¹).toReal ≤ n (a⁻¹).toReal`. -/
-theorem ENNReal.toReal_inv_le_natCast_mul {a b : ℝ≥0∞} {n m : ℕ} (hn : 0 < n) (hab : a ≤ n * b)
+theorem _root_.ENNReal.toReal_inv_le_natCast_mul {a b : ℝ≥0∞} {n m : ℕ} (hn : 0 < n) (hab : a ≤ n * b)
     (hba : b ≤ m * a) : b⁻¹.toReal ≤ n * a⁻¹.toReal := by
   rcases eq_or_ne a 0 with rfl | ha
   · have : b = 0 := by simpa using hba

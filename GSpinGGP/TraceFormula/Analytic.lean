@@ -944,14 +944,10 @@ theorem prop_6_7_1_iii_of_weakCartanData (C₀ : Set ↥d.G) (hC₀ : IsCompact 
     (W : WeakCartanData d.mkHG d.logNormModAG) :
     ∃ d₀ : ℝ, 0 < d₀ ∧ Integrable
       (fun q : d.HGQuot => d.xiHG C₀ q ^ 2 * d.logNormHG q ^ (-d₀)) d.weilMeasureHG := by
-  have hπ := d.isInvariantQuotient_mkHG
-  have hξm : Measurable (d.xiHG C₀) :=
-    hπ.measurable_of_relXi d.isQuotientMap_mkHG hC₀ (d.xiHG_mkHG C₀)
-  have hgrowth := W.hasPolynomialGrowth d.isLogNorm_logNormModAG d.mkHG_surjective
-    (fun g g' k h => d.mkHG_mul_eq_of_eq h k)
-  rw [← d.logNormHG_eq_fiberInf_logNormModAG] at hgrowth
-  exact hπ.exists_integrable_of_hasPolynomialGrowth hC₀' W.isCompact_CS_mul_K (d.xiHG_mkHG C₀)
-    hξm.aestronglyMeasurable d.one_le_logNormHG d.measurable_logNormHG hgrowth
+  rw [d.logNormHG_eq_fiberInf_logNormModAG]
+  exact d.isInvariantQuotient_mkHG.exists_integrable_of_weakCartanData d.isQuotientMap_mkHG
+    d.isLogNorm_logNormModAG (d.logNormHG_eq_fiberInf_logNormModAG ▸ d.measurable_logNormHG) W
+    hC₀ hC₀' (d.xiHG_mkHG C₀)
 
 /-- **Thesis Prop 8.4.1(iii)** (adapted from BP Prop 6.7.1(iii)): there is `d > 0` with
 `∫_{H(F)\G(F)/A_G(F)} Ξ^{H\G}(x)² σ_{H\G}(x)^{-d} dx < ∞`.  Stated for every compact `C₀`
