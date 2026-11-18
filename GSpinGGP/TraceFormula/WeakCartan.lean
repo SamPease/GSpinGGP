@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.TraceFormula.Analytic
 import GSpinGGP.TraceFormula.GoodParabolic
+import TauCeti.LinearAlgebra.Determinant.Basic
 
 /-!
 # The weak Cartan decomposition of `G` and the reduction from `G` to `G₀`
@@ -24,9 +25,8 @@ Let `d` be a GGP datum, `V = W ⊕ ⟨z₀⟩ ⊕ ⟨z_{±1}, …, z_{±r}⟩`, 
   codimension-one case `logNormSO_add_le_of_chamber` (for `d.base`) applies.
   `GGPData.logNormModAG_le_of_cone` and `GGPData.logNormModAG_le_fiberInf_of_cone` are the forms
   modulo `A_G` and `σ_{A_G\G} ≪ σ_{H\G}` (Thesis Prop. 8.4.1(ii)(b), nontrivial half).
-* `GGPData.exists_isCompact_logNorm_le`, `GGPData.exists_isCompact_lift`: log-norm balls of `G(F)`
-  are relatively compact, and bounded subsets of `Ḡ` lift to compact subsets of `G(F)` modulo
-  the scalars.
+* `GGPData.exists_isCompact_lift`: bounded subsets of `Ḡ` lift to compact subsets of `G(F)`
+  modulo the scalars (log-norm balls are relatively compact, `GGPData.exists_isCompact_logNorm_le`).
 * **Weak Cartan decomposition** (Thesis Lemma 8.3.2(ii)): `GGPData.exists_weakCartan` for `G`,
   from its `SO`-level form `GGPData.exists_weakCartan_SO` (`sorry`, with a proof sketch).
 * `GGPData.weakCartanData`: the `WeakCartanData d.mkHG d.logNormModAG` with cone
@@ -110,6 +110,44 @@ theorem pi0_extV0 (g : d.V0 ≃ₗ[F] d.V0) (v : d.V) : d.pi0 (d.extV0 g v) = g 
 theorem extV0_iota0 (g : d.V0 ≃ₗ[F] d.V0) (x : d.V0) : d.extV0 g (d.iota0 x) = d.iota0 (g x) := by
   rw [extV0_apply, pi0_iota0, ← map_add]; congr 1; abel
 
+/-- `polar(ι₀ x, u) = 0` when `π₀ u = 0` (`u ∈ ⟨z_{±1}, …, z_{±r}⟩`). -/
+theorem polar_iota0_of_pi0_eq_zero (x : d.V0) {u : d.V} (hu : d.pi0 u = 0) :
+    polar d.QV (d.iota0 x) u = 0 := by
+  have hu1 : u.1 = 0 := congrArg Prod.fst hu
+  have hu2 : u.2 ⟨d.r, by omega⟩ = 0 := by
+    have := congrFun (congrArg Prod.snd hu) 0
+    simpa [pi0, zvec] using this
+  have e : d.iota0 x = ((x.1, 0) : d.V) + x.2 0 • d.zV 0 := by
+    rw [iota0_apply, zV]; ext <;> simp
+  rw [e, polar_add_left, polar_smul_left, polar_eq_two_mul_bform d.QV (d.zV 0),
+    bform_comm, bform_zV_eq _ _ (by simp)]
+  simp only [polar_prod, hu1, polar_zero_right, polar_zero_left, add_zero, sub_zero]
+  rw [show (⟨(d.r : ℤ).toNat, by omega⟩ : Fin (2 * d.r + 1)) = ⟨d.r, by omega⟩ from
+    Fin.ext (by simp), hu2]
+  simp
+
+theorem QV_iota0_add (x : d.V0) {u : d.V} (hu : d.pi0 u = 0) :
+    d.QV (d.iota0 x + u) = d.Q0 x + d.QV u := by
+  rw [QuadraticMap.map_add d.QV, d.polar_iota0_of_pi0_eq_zero x hu, add_zero, QV_iota0]
+
+/-- `g ⊕ 1 ∈ SO(V)` for `g ∈ SO(V₀)`. -/
+theorem extV0_mem_SOGrp {g : d.V0 ≃ₗ[F] d.V0} (hg : g ∈ SOGrp d.Q0) : d.extV0 g ∈ SOGrp d.QV := by
+  refine ⟨fun v => ?_, ?_⟩
+  · have hu : d.pi0 (v - d.iota0 (d.pi0 v)) = 0 := by rw [map_sub, pi0_iota0, sub_self]
+    have e1 : d.extV0 g v = d.iota0 (g (d.pi0 v)) + (v - d.iota0 (d.pi0 v)) := by
+      rw [extV0_apply, map_sub]; abel
+    have e2 : v = d.iota0 (d.pi0 v) + (v - d.iota0 (d.pi0 v)) := by abel
+    rw [e1, d.QV_iota0_add _ hu, hg.1]
+    conv_rhs => rw [e2, d.QV_iota0_add _ hu]
+  · have e : ((d.extV0 g : d.V ≃ₗ[F] d.V) : d.V →ₗ[F] d.V) =
+        1 + d.iota0 ∘ₗ (((g : d.V0 →ₗ[F] d.V0) - LinearMap.id) ∘ₗ d.pi0) := rfl
+    rw [e, LinearMap.det_one_add_comp_comm]
+    have e2 : ((g : d.V0 →ₗ[F] d.V0) - LinearMap.id) ∘ₗ d.pi0 ∘ₗ d.iota0 =
+        (g : d.V0 →ₗ[F] d.V0) - 1 := by
+      ext x <;> simp [pi0_iota0]
+    rw [LinearMap.comp_assoc, e2, add_sub_cancel]
+    exact hg.2
+
 /-! ## 2. The split torus `A` of the Levi `M = G₀ A` -/
 
 /-- The coefficient of the torus element `a(τ)` on the coordinate `z_{i - r}`:
@@ -163,6 +201,50 @@ theorem torusZ_iota0 (τ : Fin d.r → Fˣ) (x : d.V0) : d.torusZ τ (d.iota0 x)
     show (d.torusCoeff τ ⟨d.r, hlt⟩ : F) * _ = _
     rw [torusCoeff_r, Units.val_one, one_mul]
   · simp [zvec, show ¬ ((i : ℤ) - d.r = 0) by omega]
+
+theorem torusCoeff_mul_rev (τ : Fin d.r → Fˣ) (i : Fin (2 * d.r + 1)) :
+    d.torusCoeff τ i * d.torusCoeff τ i.rev = 1 := by
+  unfold torusCoeff
+  have := i.2
+  simp only [Fin.val_rev]
+  split_ifs with h1 h2 h3 h4 h5 h6 h7 <;> first
+    | omega
+    | (rw [mul_inv_eq_one]; congr 1; ext; simp only [Fin.val_mk]; omega)
+    | (rw [inv_mul_eq_one]; congr 1; ext; simp only [Fin.val_mk]; omega)
+    | (simp; done)
+
+/-- `a(τ) ∈ SO(V)`. -/
+theorem torusZ_mem_SOGrp (τ : Fin d.r → Fˣ) : d.torusZ τ ∈ SOGrp d.QV := by
+  refine ⟨fun v => ?_, ?_⟩
+  · change d.QW v.1 + d.QZ (fun i => (d.torusCoeff τ i : F) * v.2 i) = d.QW v.1 + d.QZ v.2
+    congr 1
+    simp only [QZ, splitOddForm, Matrix.toQuadraticForm', LinearMap.BilinMap.toQuadraticMap_apply,
+      Matrix.toLinearMap₂'_apply', dotProduct, Matrix.mulVec]
+    refine Finset.sum_congr rfl fun a _ => ?_
+    rw [Finset.mul_sum, Finset.mul_sum]
+    refine Finset.sum_congr rfl fun c _ => ?_
+    unfold splitOddMatrix
+    split_ifs with hac
+    · have hc : c = a.rev := Fin.ext (by simp [Fin.val_rev]; omega)
+      subst hc
+      have := d.torusCoeff_mul_rev τ a
+      have h' : (d.torusCoeff τ a : F) * (d.torusCoeff τ a.rev : F) = 1 := by
+        rw [← Units.val_mul, this, Units.val_one]
+      linear_combination (v.2 a * (d.ν : F) * v.2 a.rev) * h'
+    · simp
+  · have e : ((d.torusZ τ : d.V ≃ₗ[F] d.V) : d.V →ₗ[F] d.V) = LinearMap.prodMap LinearMap.id
+        (Matrix.toLin' (Matrix.diagonal fun i => (d.torusCoeff τ i : F))) := by
+      refine LinearMap.ext fun v => Prod.ext rfl (funext fun i => ?_)
+      simp [torusZ_apply, Matrix.toLin'_apply, Matrix.mulVec_diagonal]
+    rw [e, LinearMap.det_prodMap, LinearMap.det_id, one_mul, LinearMap.det_toLin',
+      Matrix.det_diagonal]
+    refine Finset.prod_involution (fun i _ => i.rev)
+      (fun i _ => by rw [← Units.val_mul, d.torusCoeff_mul_rev, Units.val_one])
+      (fun i _ hi h => hi ?_) (fun _ _ => Finset.mem_univ _) (fun i _ => Fin.rev_rev i)
+    have hlt : d.r < 2 * d.r + 1 := by omega
+    have : (i : ℕ) = d.r := by
+      have := congrArg Fin.val h; simp only [Fin.val_rev] at this; omega
+    rw [show i = ⟨d.r, hlt⟩ from Fin.ext this, torusCoeff_r, Units.val_one]
 
 theorem torusZ_coord (τ : Fin d.r → Fˣ) (j : Fin d.r) (v : d.V) :
     (d.torusZ τ v).2 ⟨d.r + j + 1, by omega⟩ = (τ j : F) * v.2 ⟨d.r + j + 1, by omega⟩ := by
@@ -304,33 +386,6 @@ end Compress
 
 /-! ## 4. Norm bounds -/
 
-section GLNormAux
-
-variable {E : Type*} [NormedAddCommGroup E] [NormedSpace F E] [FiniteDimensional F E]
-
-theorem norm_apply_le_glMaxNorm (f : E ≃ₗ[F] E) (v : E) : ‖f v‖ ≤ glMaxNorm f * ‖v‖ := by
-  have := (LinearMap.toContinuousLinearMap (f : E →ₗ[F] E)).le_opNorm v
-  rw [LinearMap.coe_toContinuousLinearMap', LinearEquiv.coe_coe] at this
-  exact this.trans (mul_le_mul_of_nonneg_right (norm_le_glMaxNorm f) (norm_nonneg _))
-
-theorem norm_inv_apply_le_glMaxNorm (f : E ≃ₗ[F] E) (v : E) : ‖f⁻¹ v‖ ≤ glMaxNorm f * ‖v‖ := by
-  have := norm_apply_le_glMaxNorm f⁻¹ v
-  rwa [glMaxNorm_inv] at this
-
-theorem glMaxNorm_le_of_bound (f : E ≃ₗ[F] E) {M : ℝ} (hM : 1 ≤ M) (h1 : ∀ v, ‖f v‖ ≤ M * ‖v‖)
-    (h2 : ∀ v, ‖f⁻¹ v‖ ≤ M * ‖v‖) : glMaxNorm f ≤ M := by
-  refine max_le hM (max_le ?_ ?_) <;>
-    refine ContinuousLinearMap.opNorm_le_bound _ (zero_le_one.trans hM) fun v => ?_ <;>
-    rw [LinearMap.coe_toContinuousLinearMap', LinearEquiv.coe_coe]
-  · exact h1 v
-  · exact h2 v
-
-end GLNormAux
-
-theorem norm_zvec_le (r : ℕ) (k : ℤ) : ‖(zvec r k : Fin (2 * r + 1) → F)‖ ≤ 1 :=
-  (pi_norm_le_iff_of_nonneg zero_le_one).2 fun i => by
-    unfold zvec; split_ifs <;> simp
-
 theorem norm_pi0_le (v : d.V) : ‖d.pi0 v‖ ≤ ‖v‖ := by
   simp only [pi0, LinearMap.prodMap_apply, LinearMap.id_apply, LinearMap.smulRight_apply,
     LinearMap.proj_apply, Prod.norm_def]
@@ -409,7 +464,8 @@ theorem inv_multiTorus_mem_SOGrp (j : ℕ) (t : List Fˣ) :
   rw [SOGrp_eq_specialOrthogonalGroup]
   exact inv_mem (multiTorus_mem_fixer hb hf t j).1
 
-/-- Elements of `GGPData.G₀`'s image in `SO(W) × SO(V₀)` built from a `G`-element's `W`-part. -/
+/-- The element `(y₁, (multiTorus hb hf 0 t)⁻¹)` of `SO(W) × SO(V₀)` (the group `Ḡ₀` of the datum
+`d.base`): the `G₀`-part of a point of the cone with `W`-component `y₁`. -/
 def coneBase (y1 : SOGrp d.QW) (t : List Fˣ) : d.base.GbarGrp :=
   (y1, ⟨(multiTorus hb hf 0 t)⁻¹, d.inv_multiTorus_mem_SOGrp hb hf 0 t⟩)
 
@@ -423,8 +479,8 @@ condition) and `y₀ = (multiTorus hb hf 0 t)⁻¹` in the expanding chamber of 
 (`InChamber`), and `y_W` arbitrary: `σ_{SO}(P̄ h) + σ_{SO}(y) ≤ C σ_{SO}(P̄(h) y)`.
 
 The Thesis proof of Prop. 8.1.1(iii) reduces (6.4.1) to `G₀` through the inequality
-`σ(n) + σ(a) + σ(h₀a₀) ≪ σ(n h₀ a a₀)` (`a ∈ A(F)`, `a₀ ∈ A₀⁺`), which it states without proof;
-the `σ(a) + σ(h₀a₀)` part is proved here as follows. `P̄(h) y` preserves the flag
+`σ(n) + σ(a) + σ(h₀a₀) ≪ σ(n h₀ a a₀)` (`a ∈ A(F)`, `a₀ ∈ A₀⁺`); the `σ(a) + σ(h₀a₀)` part is
+proved here as follows. `P̄(h) y` preserves the flag
 `Z_•`; its compression to `Z_r^⊥ / Z_r ≅ V₀` is the `G₀`-element `(P(h_W) ⊕ 1) y₀`
 (`pi0_compress`), and its diagonal entries on `z_1, …, z_r` are `τ` (`compress_coord`); so
 `σ(a(τ))` and `σ_{SO}` of the `G₀`-element are `≪ σ_{SO}(P̄(h) y)`, and the codimension-one case
@@ -531,8 +587,6 @@ theorem logNormSO_add_le_of_cone (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1
   have h1 := d.one_le_logNormSO (d.Pbar h * y)
   nlinarith
 
--- The products in `SO(W) × SO(V)` make instance search slow here.
-set_option maxHeartbeats 400000 in
 include hb in
 /-- **Thesis Prop. 8.1.1(iii), first inequality, for `G`, modulo `A_G`**, on the cone
 `A₀⁺ A`, in the form used for Thesis Prop. 8.4.1(ii)(b) (BP (6.7.6)):
@@ -546,71 +600,11 @@ theorem logNormModAG_le_of_cone (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1 
       ((d.Pbar x).2 : d.V ≃ₗ[F] d.V) = d.torusZ τ * d.extV0 (multiTorus hb hf 0 t)⁻¹ →
       infLeft (logNorm F d.G) d.AG x ≤ C * infLeft (logNorm F d.G) d.AG (h * x) := by
   obtain ⟨C₀, hC₀, hI⟩ := d.logNormSO_add_le_of_cone hb hf hb0
-  obtain ⟨c, C, hc, hC, he⟩ := d.logNormModAG_equiv
-  set C₁ := max 1 C₀
-  have hC₁ : 1 ≤ C₁ := le_max_left _ _
-  refine ⟨C * C₁ * c, by positivity, fun h hh x τ t ht hx => ?_⟩
-  have hτ : ∀ g, 0 ≤ d.logNormSO g := fun g => zero_le_one.trans (d.one_le_logNormSO g)
-  -- the comparison on `Ā_G\Ḡ`
-  have hSO : infLeft d.logNormSO d.AGbar (d.Pbar x) ≤
-      C₁ * infLeft d.logNormSO d.AGbar (d.Pbar h * d.Pbar x) := by
-    refine le_mul_infLeft _ (zero_le_one.trans hC₁) fun z hz => ?_
-    by_cases hV : IsHypPlane d.QV
-    · -- `V₀` a hyperbolic plane: `dim W = 1`, `SO(W) = 1`, `A_G ⊇ 1 × GSpin(V₀)`
-      have hm : Module.finrank F (Fin d.m → F) ≤ 1 := by
-        have h2 := hV.1
-        have : Module.finrank F d.V = d.m + (2 * d.r + 1) := by simp
-        rw [Module.finrank_fin_fun]; omega
-      have hx1 : ((d.Pbar x).1 : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) = 1 := by
-        have := eq_id_of_det_eq_one_of_finrank_le_one hm (d.Pbar x).1.2.2
-        exact LinearEquiv.ext fun w => congr($this w)
-      have hmem : (d.Pbar x)⁻¹ ∈ d.AGbar := by
-        refine ⟨d.pair (1, (d.snd x)⁻¹), ⟨(1, (d.snd x)⁻¹),
-          ⟨one_mem _, by unfold splitCentralGSpin; simp only [hV, ↓reduceIte]; trivial⟩, rfl⟩, ?_⟩
-        refine Prod.ext (Subtype.ext ?_) (Subtype.ext ?_)
-        · show specP d.QW 1 = (((d.Pbar x)⁻¹).1 : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F))
-          rw [map_one, Prod.fst_inv, Subgroup.coe_inv, hx1, inv_one]
-        · show specP d.QV (d.snd x)⁻¹ = (((d.Pbar x)⁻¹).2 : d.V ≃ₗ[F] d.V)
-          rw [map_inv]; rfl
-      have h1 : infLeft d.logNormSO d.AGbar (d.Pbar x) ≤ 1 := by
-        have := infLeft_le_of_nonneg d.AGbar hτ hmem (d.Pbar x)
-        rwa [inv_mul_cancel, logNormSO_one] at this
-      exact h1.trans (one_le_mul_of_one_le_of_one_le hC₁ (d.one_le_logNormSO _))
-    · -- otherwise `P̄(A_G)` is trivial on `V₀` and central
-      obtain ⟨a, ha, rfl⟩ := hz
-      have hz2 : ((d.Pbar a).2 : d.V ≃ₗ[F] d.V) = 1 := by
-        obtain ⟨p, hp, rfl⟩ := ha
-        have hp2 := hp.2
-        unfold splitCentralGSpin at hp2
-        simp only [hV, ↓reduceIte] at hp2
-        obtain ⟨c, hc⟩ := hp2
-        show specP d.QV p.2 = 1
-        rw [← hc, specP_scalarGSpin_eq_one]
-      have hcen : ∀ g : d.GbarGrp, d.Pbar a * g = g * d.Pbar a := by
-        intro g
-        obtain ⟨g', rfl⟩ := d.Pbar_surjective g
-        rw [← map_mul, ← map_mul, Subgroup.mem_center_iff.mp (d.AG_le_center ha) g']
-      obtain ⟨y, hyd⟩ : ∃ y, y = d.Pbar a * d.Pbar x := ⟨_, rfl⟩
-      have hy : (y.2 : d.V ≃ₗ[F] d.V) = d.torusZ τ * d.extV0 (multiTorus hb hf 0 t)⁻¹ := by
-        rw [hyd, Prod.snd_mul, Subgroup.coe_mul, hz2, one_mul, hx]
-      have key := hI h hh y τ t ht hy
-      have e : d.Pbar a * (d.Pbar h * d.Pbar x) = d.Pbar h * y := by
-        rw [hyd, ← mul_assoc, hcen, mul_assoc]
-      rw [e]
-      calc infLeft d.logNormSO d.AGbar (d.Pbar x) ≤ d.logNormSO y := by
-            rw [hyd]; exact infLeft_le_of_nonneg d.AGbar hτ ⟨a, ha, rfl⟩ _
-        _ ≤ C₀ * d.logNormSO (d.Pbar h * y) := by linarith [hτ (d.Pbar h)]
-        _ ≤ C₁ * d.logNormSO (d.Pbar h * y) :=
-            mul_le_mul_of_nonneg_right (le_max_right _ _) (hτ _)
-  have e1 := (he x).2
-  have e2 := (he (h * x)).1
-  rw [map_mul] at e2
-  calc infLeft (logNorm F d.G) d.AG x ≤ C * infLeft d.logNormSO d.AGbar (d.Pbar x) := e1
-    _ ≤ C * (C₁ * infLeft d.logNormSO d.AGbar (d.Pbar h * d.Pbar x)) :=
-        mul_le_mul_of_nonneg_left hSO hC
-    _ ≤ C * (C₁ * (c * infLeft (logNorm F d.G) d.AG (h * x))) :=
-        mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left e2 (zero_le_one.trans hC₁)) hC
-    _ = C * C₁ * c * infLeft (logNorm F d.G) d.AG (h * x) := by ring
+  obtain ⟨C, hC, h⟩ := d.logNormModAG_le_of_logNormSO
+    (P := fun g => ∃ (τ : Fin d.r → Fˣ) (t : List Fˣ), InChamber n l 0 t ∧
+      g = d.torusZ τ * d.extV0 (multiTorus hb hf 0 t)⁻¹) hC₀
+    fun h hh y ⟨τ, t, ht, hy⟩ => hI h hh y τ t ht hy
+  exact ⟨C, hC, fun h' hh x τ t ht hx => h h' hh x ⟨τ, t, ht, hx⟩⟩
 
 include hb in
 /-- **`σ_{A_G\G} ≪ σ_{H\G}` on the cone** (the nontrivial half of Thesis Prop. 8.4.1(ii)(b),
@@ -624,27 +618,7 @@ theorem logNormModAG_le_fiberInf_of_cone (hb0 : ∀ i : Fin n, (i : ℕ) = 0 →
   obtain ⟨C, hC, hI⟩ := d.logNormModAG_le_of_cone hb hf hb0
   refine ⟨C, hC, fun x τ t ht hx => ?_⟩
   rw [← logNormHG_eq_fiberInf_logNormModAG]
-  have key : ∀ g, d.mkHG g = d.mkHG x → d.logNormModAG x ≤ C * d.logNormG g := by
-    intro g hg
-    obtain ⟨h, hh, a, ha, rfl⟩ := (d.mkHG_eq_mkHG_iff x g).1 hg.symm
-    have e : h * x * a = a * (h * x) :=
-      (Subgroup.mem_center_iff.mp (d.AG_le_center ha) (h * x))
-    have h1 := hI h hh x τ t ht hx
-    have h2 : d.logNormModAG (h * x * a) ≤ d.logNormG (h * x * a) := d.logNormModSub_le _ _
-    rw [e, show d.logNormModAG (a * (h * x)) = d.logNormModAG (h * x) from
-      d.logNormModSub_mul_left d.AG ha _] at h2
-    rw [e]
-    exact (show d.logNormModAG x ≤ C * d.logNormModAG (h * x) from h1).trans
-      (mul_le_mul_of_nonneg_left h2 hC)
-  rcases hC.lt_or_eq with hCp | hC0
-  · have : d.logNormModAG x / C ≤ d.logNormHG (d.mkHG x) := by
-      unfold logNormHG fiberInf
-      haveI : Nonempty {g // d.mkHG g = d.mkHG x} := ⟨⟨x, rfl⟩⟩
-      exact le_ciInf fun g => (div_le_iff₀' hCp).2 (key g.1 g.2)
-    exact (div_le_iff₀' hCp).1 this
-  · have := key x rfl
-    rw [← hC0, zero_mul] at this ⊢
-    exact this
+  exact d.logNormModAG_le_logNormHG_of_forall hC fun h hh => hI h hh x τ t ht hx
 
 end Cone
 
@@ -713,9 +687,11 @@ def coneSO : Set d.GbarGrp :=
     (y.2 : d.V ≃ₗ[F] d.V) = d.torusZ τ * d.extV0 (multiTorus hb hf 0 t)⁻¹}
 
 /-- **The cone `A_G A₀⁺ A(F)` of `G(F)`**: the preimage of `coneSO` under `P̄`. It contains the
-central scalars `Z(F) = ker P̄` and is stable under them, and when `W` is a hyperbolic plane it is
-stable under `A_G` (then `P̄(A_G) = SO(W) × 1` is the split torus of `SO(W)`, which has no
-chamber condition). -/
+central scalars `Z(F) = ker P̄`, and `A_G · cone = cone` in all cases: if neither `W` nor `V` is a
+hyperbolic plane then `P̄(A_G) = 1`; if `W` is a hyperbolic plane then `P̄(A_G) = SO(W) × 1` is the
+split torus of `SO(W)`, which has no chamber condition; if `V` is a hyperbolic plane (then `r = 0`,
+`dim W = 1`, `l = 1`) then `P̄(A_G) = 1 × SO(V)` and the single coordinate `t₀` of the cone is
+unconstrained. -/
 def cone : Set d.G := d.Pbar ⁻¹' d.coneSO hb hf
 
 include hb in
@@ -797,11 +773,10 @@ def weakCartanData (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1 = 0) (CS : Se
 
 include hb in
 /-- **Thesis Prop. 8.4.1(iii) from the polynomial growth of the cone** (BP Prop. 6.7.1(iii)):
-`prop_6_7_1_iii_of_weakCartanData` applied to `weakCartanData`. The remaining hypotheses are the
-outer regularity of the Weil measure on `H\G/A_G` and the polynomial growth (BP (6.7.12)) of the
-cone modulo `A_G`. -/
+`prop_6_7_1_iii_of_weakCartanData` applied to `weakCartanData`. The remaining hypothesis is the
+polynomial growth (BP (6.7.12)) of the cone modulo `A_G`. -/
 theorem prop_6_7_1_iii_of_growth (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1 = 0)
-    [d.weilMeasureHG.OuterRegular] (CS : Set d.G) (hCS : IsCompact CS) (M : ℝ) (N : ℕ)
+    (CS : Set d.G) (hCS : IsCompact CS) (M : ℝ) (N : ℕ)
     (growth : ∀ R : ℝ, 1 ≤ R → ∃ t : Finset d.G, (t.card : ℝ) ≤ M * (1 + R) ^ N ∧
       d.mkHG '' {s ∈ d.cone hb hf | d.logNormModAG s < R} ⊆ ⋃ j ∈ t, d.mkHG '' ((j * ·) '' CS))
     (C₀ : Set d.G) (hC₀ : IsCompact C₀) (hC₀' : (interior C₀).Nonempty) :

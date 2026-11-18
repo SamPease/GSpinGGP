@@ -142,6 +142,31 @@ theorem glMaxNorm_prodCongr_refl (f : E ≃ₗ[F] E) :
     · exact (norm_le_norm_prodCongr_refl (Z := Z) (f⁻¹ : E ≃ₗ[F] E)).trans
         (le_max_of_le_right (le_max_right _ _))
 
+/-- `‖f v‖ ≤ glMax(f) ‖v‖`. -/
+theorem norm_apply_le_glMaxNorm (f : E ≃ₗ[F] E) (v : E) : ‖f v‖ ≤ glMaxNorm f * ‖v‖ := by
+  have := (LinearMap.toContinuousLinearMap (f : E →ₗ[F] E)).le_opNorm v
+  rw [LinearMap.coe_toContinuousLinearMap', LinearEquiv.coe_coe] at this
+  exact this.trans (mul_le_mul_of_nonneg_right (norm_le_glMaxNorm f) (norm_nonneg _))
+
+/-- `‖f⁻¹ v‖ ≤ glMax(f) ‖v‖`. -/
+theorem norm_inv_apply_le_glMaxNorm (f : E ≃ₗ[F] E) (v : E) : ‖f⁻¹ v‖ ≤ glMaxNorm f * ‖v‖ := by
+  have := norm_apply_le_glMaxNorm f⁻¹ v
+  rwa [glMaxNorm_inv] at this
+
+/-- `glMax(f) ≤ M` from pointwise bounds on `f` and `f⁻¹` (`M ≥ 1`). -/
+theorem glMaxNorm_le_of_bound (f : E ≃ₗ[F] E) {M : ℝ} (hM : 1 ≤ M) (h1 : ∀ v, ‖f v‖ ≤ M * ‖v‖)
+    (h2 : ∀ v, ‖f⁻¹ v‖ ≤ M * ‖v‖) : glMaxNorm f ≤ M := by
+  refine max_le hM (max_le ?_ ?_) <;>
+    refine ContinuousLinearMap.opNorm_le_bound _ (zero_le_one.trans hM) fun v => ?_ <;>
+    rw [LinearMap.coe_toContinuousLinearMap', LinearEquiv.coe_coe]
+  · exact h1 v
+  · exact h2 v
+
+/-- The basis vectors `z_k` of `Z = F^{2r+1}` have sup norm `≤ 1`. -/
+theorem norm_zvec_le (r : ℕ) (k : ℤ) : ‖(zvec r k : Fin (2 * r + 1) → F)‖ ≤ 1 :=
+  (pi_norm_le_iff_of_nonneg zero_le_one).2 fun i => by
+    unfold zvec; split_ifs <;> simp
+
 end GLNorm
 
 section Basis

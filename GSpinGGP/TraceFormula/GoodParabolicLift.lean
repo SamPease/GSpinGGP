@@ -278,33 +278,27 @@ theorem logNormModScalars_add_le (hr : d.r = 0)
 
 -- The products in `SO(W) × SO(V)` make instance search slow here.
 set_option maxHeartbeats 400000 in
-include hb in
-/-- **Thesis Prop. 8.1.1(iii), first inequality, for `G₀`, modulo `A_G`**, in the form used for
-Thesis Prop. 8.4.1(ii)(b) = BP Prop. 6.7.1(ii)(b) (`σ_{H\G}(a) ∼ σ_G(a)` on the chamber), whose
-proof uses BP (6.7.6) `σ_G(a₀ a) ≪ σ_G(h a₀ a)`. Lean measures `σ_G` modulo `A_G` here, the
-convention of `GGPData.logNormHG` on `H\G/A_G`:
-`σ_{A_G\G}(x) ≤ C σ_{A_G\G}(h x)` for `h ∈ H` and `x ∈ G` whose `V₀`-component
-`P̄(x)_V = (multiTorus hb hf 0 t)⁻¹` lies in the expanding chamber (no condition on the
-`W`-component). Here `σ_{A_G\G}(g) = inf_{a ∈ A_G} σ_G(a g)` (`GGPData.logNormModAG`).
-If `V₀` is a hyperbolic plane then `A_G` maps onto `SO(W) × SO(V₀)` and both sides are
-constant; otherwise `P̄(A_G)` acts trivially on `V₀` and the chamber condition is preserved. -/
-theorem logNormModAG_le_of_chamber (hr : d.r = 0)
-    (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1 = 0) :
-    ∃ C, 0 ≤ C ∧ ∀ h ∈ d.H, ∀ x : d.G, ∀ t : List Fˣ, InChamber n l 0 t →
-      ((d.Pbar x).2 : d.V ≃ₗ[F] d.V) = (multiTorus hb hf 0 t)⁻¹ →
+/-- **From `σ_{SO}` to `σ_{A_G\G}`** (any GGP datum): if `σ_{SO}(P̄ h) + σ_{SO}(y) ≤ C₀ σ_{SO}(P̄(h) y)`
+for `h ∈ H` and all `y` whose `V`-component satisfies a predicate `P`, then
+`σ_{A_G\G}(x) ≤ C σ_{A_G\G}(h x)` for `h ∈ H` and `P (P̄(x)_V)`. If `V` is a hyperbolic plane then
+`SO(W) = 1`, `A_G` maps onto `1 × SO(V)` and both sides are bounded; otherwise `P̄(A_G)` is central
+and trivial on `V`, so it preserves `P`. -/
+theorem logNormModAG_le_of_logNormSO {P : (d.V ≃ₗ[F] d.V) → Prop} {C₀ : ℝ} (hC₀ : 0 ≤ C₀)
+    (hI : ∀ h ∈ d.H, ∀ y : d.GbarGrp, P (y.2 : d.V ≃ₗ[F] d.V) →
+      d.logNormSO (d.Pbar h) + d.logNormSO y ≤ C₀ * d.logNormSO (d.Pbar h * y)) :
+    ∃ C, 0 ≤ C ∧ ∀ h ∈ d.H, ∀ x : d.G, P ((d.Pbar x).2 : d.V ≃ₗ[F] d.V) →
       infLeft (logNorm F d.G) d.AG x ≤ C * infLeft (logNorm F d.G) d.AG (h * x) := by
-  obtain ⟨C₀, hC₀, hI⟩ := d.logNormSO_add_le_of_chamber hb hf hr hb0
   obtain ⟨c, C, hc, hC, he⟩ := d.logNormModAG_equiv
   set C₁ := max 1 C₀
   have hC₁ : 1 ≤ C₁ := le_max_left _ _
-  refine ⟨C * C₁ * c, by positivity, fun h hh x t ht hx => ?_⟩
+  refine ⟨C * C₁ * c, by positivity, fun h hh x hx => ?_⟩
   have hτ : ∀ g, 0 ≤ d.logNormSO g := fun g => zero_le_one.trans (d.one_le_logNormSO g)
   -- the comparison on `Ā_G\Ḡ`
   have hSO : infLeft d.logNormSO d.AGbar (d.Pbar x) ≤
       C₁ * infLeft d.logNormSO d.AGbar (d.Pbar h * d.Pbar x) := by
     refine le_mul_infLeft _ (zero_le_one.trans hC₁) fun z hz => ?_
     by_cases hV : IsHypPlane d.QV
-    · -- `V₀` a hyperbolic plane: `dim W = 1`, `SO(W) = 1`, `A_G ⊇ 1 × GSpin(V₀)`
+    · -- `V` a hyperbolic plane: `dim W = 1`, `SO(W) = 1`, `A_G ⊇ 1 × GSpin(V)`
       have hm : Module.finrank F (Fin d.m → F) ≤ 1 := by
         have h2 := hV.1
         have : Module.finrank F d.V = d.m + (2 * d.r + 1) := by simp
@@ -324,7 +318,7 @@ theorem logNormModAG_le_of_chamber (hr : d.r = 0)
         have := infLeft_le_of_nonneg d.AGbar hτ hmem (d.Pbar x)
         rwa [inv_mul_cancel, logNormSO_one] at this
       exact h1.trans (one_le_mul_of_one_le_of_one_le hC₁ (d.one_le_logNormSO _))
-    · -- otherwise `P̄(A_G)` is trivial on `V₀` and central
+    · -- otherwise `P̄(A_G)` is trivial on `V` and central
       obtain ⟨a, ha, rfl⟩ := hz
       have hz2 : ((d.Pbar a).2 : d.V ≃ₗ[F] d.V) = 1 := by
         obtain ⟨p, hp, rfl⟩ := ha
@@ -339,9 +333,9 @@ theorem logNormModAG_le_of_chamber (hr : d.r = 0)
         obtain ⟨g', rfl⟩ := d.Pbar_surjective g
         rw [← map_mul, ← map_mul, Subgroup.mem_center_iff.mp (d.AG_le_center ha) g']
       obtain ⟨y, hyd⟩ : ∃ y, y = d.Pbar a * d.Pbar x := ⟨_, rfl⟩
-      have hy : (y.2 : d.V ≃ₗ[F] d.V) = (multiTorus hb hf 0 t)⁻¹ := by
-        rw [hyd, Prod.snd_mul, Subgroup.coe_mul, hz2, one_mul, hx]
-      have key := hI h hh y t ht hy
+      have hy : P (y.2 : d.V ≃ₗ[F] d.V) := by
+        rwa [hyd, Prod.snd_mul, Subgroup.coe_mul, hz2, one_mul]
+      have key := hI h hh y hy
       have e : d.Pbar a * (d.Pbar h * d.Pbar x) = d.Pbar h * y := by
         rw [hyd, ← mul_assoc, hcen, mul_assoc]
       rw [e]
@@ -359,6 +353,28 @@ theorem logNormModAG_le_of_chamber (hr : d.r = 0)
     _ ≤ C * (C₁ * (c * infLeft (logNorm F d.G) d.AG (h * x))) :=
         mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left e2 (zero_le_one.trans hC₁)) hC
     _ = C * C₁ * c * infLeft (logNorm F d.G) d.AG (h * x) := by ring
+
+
+include hb in
+/-- **Thesis Prop. 8.1.1(iii), first inequality, for `G₀`, modulo `A_G`**, in the form used for
+Thesis Prop. 8.4.1(ii)(b) = BP Prop. 6.7.1(ii)(b) (`σ_{H\G}(a) ∼ σ_G(a)` on the chamber), whose
+proof uses BP (6.7.6) `σ_G(a₀ a) ≪ σ_G(h a₀ a)`. Lean measures `σ_G` modulo `A_G` here, the
+convention of `GGPData.logNormHG` on `H\G/A_G`:
+`σ_{A_G\G}(x) ≤ C σ_{A_G\G}(h x)` for `h ∈ H` and `x ∈ G` whose `V₀`-component
+`P̄(x)_V = (multiTorus hb hf 0 t)⁻¹` lies in the expanding chamber (no condition on the
+`W`-component). Here `σ_{A_G\G}(g) = inf_{a ∈ A_G} σ_G(a g)` (`GGPData.logNormModAG`).
+If `V₀` is a hyperbolic plane then `A_G` maps onto `SO(W) × SO(V₀)` and both sides are
+constant; otherwise `P̄(A_G)` acts trivially on `V₀` and the chamber condition is preserved. -/
+theorem logNormModAG_le_of_chamber (hr : d.r = 0)
+    (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1 = 0) :
+    ∃ C, 0 ≤ C ∧ ∀ h ∈ d.H, ∀ x : d.G, ∀ t : List Fˣ, InChamber n l 0 t →
+      ((d.Pbar x).2 : d.V ≃ₗ[F] d.V) = (multiTorus hb hf 0 t)⁻¹ →
+      infLeft (logNorm F d.G) d.AG x ≤ C * infLeft (logNorm F d.G) d.AG (h * x) := by
+  obtain ⟨C₀, hC₀, hI⟩ := d.logNormSO_add_le_of_chamber hb hf hr hb0
+  obtain ⟨C, hC, h⟩ := d.logNormModAG_le_of_logNormSO
+    (P := fun g => ∃ t, InChamber n l 0 t ∧ g = (multiTorus hb hf 0 t)⁻¹) hC₀
+    fun h hh y ⟨t, ht, hy⟩ => hI h hh y t ht hy
+  exact ⟨C, hC, fun h' hh x t ht hx => h h' hh x ⟨t, ht, hx⟩⟩
 
 include hb in
 /-- **Thesis Prop. 8.1.1(iii), second inequality, for `G₀`, modulo the scalars** (BP (6.4.2)):
