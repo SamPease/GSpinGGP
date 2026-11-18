@@ -6,6 +6,7 @@ import GSpinGGP.TraceFormula.Basic
 import GSpinGGP.Literature.Measure
 import GSpinGGP.GGP.Germs
 import GSpinGGP.HarmonicAnalysis.LogNorm
+import GSpinGGP.HarmonicAnalysis.PolynomialGrowth
 import GSpinGGP.TraceFormula.SpinorNorm
 import GSpinGGP.Literature.Tits
 import GSpinGGP.Foundations.VanDantzig
@@ -42,6 +43,11 @@ of Thesis Ch. 8 and 10 and proves the bookkeeping around it.
   left `S`-invariance and `σ_{S\G}(gh) ≤ σ_{S\G}(g) + σ_G(h)`; for `σ_{H\G}` (`logNormHG`),
   `1 ≤ σ_{H\G} ≤ σ_{A_G\G} ≤ σ_G`, bounded change under right translation by a compact set
   (`exists_logNormHG_mul_le_add`), upper semicontinuity and measurability.
+* The abstract layer of `HarmonicAnalysis/RelativeXi.lean` and `PolynomialGrowth.lean` for
+  `H(F)\G(F)/A_G(F)`: `isInvariantQuotient_mkHG` (the Weil measure is right invariant),
+  `xiHG_mkHG` (`xiHG` is the abstract `Ξ^{H\G}`), `logNormHG_eq_fiberInf_logNormModAG`, and
+  `prop_6_7_1_iii_of_weakCartanData` (Prop 8.4.1(iii) from weak Cartan data and the outer
+  regularity of the Weil measure).
 * `sorry` (own work, Thesis Ch. 8 and 10, adapted from BP Ch. 6, 8): `kernelK_bound` (Thm 10.1.1(i)),
   `kernelK_bound_scusp` (Thm 10.1.1(ii)), `prop_6_7_1_iii` (Thesis Prop 8.4.1(iii)),
   `lemma_6_5_1_i/ii/iii` (Thesis Lemma 8.2.1), `exists_good_minimal_parabolic` (Thesis
@@ -816,6 +822,52 @@ theorem scuspTestFn_subset_scuspSchwartz (IW : d.IwasawaDatum) :
       exact hpos
 
 /-! ## 6. Convergence of `J` (Thesis §10.1) -/
+
+/-! ### `Ξ^{H\G}` and `σ_{H\G}` in the abstract setting of `HarmonicAnalysis/RelativeXi.lean` -/
+
+/-- `G(F) → H(F)\G(F)/A_G(F)` with the Weil measure is an invariant quotient: right translation
+descends, and `weilMeasureHG` is right `G(F)`-invariant (`IsWeilMeasure.isInvariantQuotient`,
+from the uniqueness of the Weil measure). -/
+theorem isInvariantQuotient_mkHG : IsInvariantQuotient d.mkHG d.weilMeasureHG := by
+  have := d.isMulRightInvariant_haar_HmodAGH
+  exact (d.weilMeasureHG_spec.isInvariantQuotient d.continuous_toGmodAG
+    d.isClosedEmbedding_toGmodAG).comp_monoidHom (QuotientGroup.mk' d.AG)
+
+/-- `xiHG` is the abstract `Ξ^{H\G}_C` of `HarmonicAnalysis/RelativeXi.lean` for the quotient
+`mkHG` and the Weil measure: `Ξ^{H\G}_C(x) = vol(xC)^{-1/2}` at `x = mkHG g`. -/
+theorem xiHG_mkHG (C : Set ↥d.G) (g : ↥d.G) :
+    d.xiHG C (d.mkHG g) = relXi d.mkHG d.weilMeasureHG C g := by
+  have hr : d.mkHG (d.repHG (d.mkHG g)) = d.mkHG g := d.mkHG_repHG _
+  have e : (fun c => d.mkHG (d.repHG (d.mkHG g) * c)) '' C = d.mkHG '' ((g * ·) '' C) := by
+    rw [Set.image_image]
+    exact Set.image_congr fun c _ => d.mkHG_mul_eq_of_eq hr c
+  unfold xiHG relXi relVol
+  rw [e]
+
+/-- `σ_{H\G}` (`logNormHG`) is the push-forward of `σ_{A_G\G}` along `mkHG`. -/
+theorem logNormHG_eq_fiberInf_logNormModAG :
+    d.logNormHG = fiberInf d.logNormModAG d.mkHG := by
+  funext q
+  refine (d.isLogNorm_logNormG.fiberInf_infLeft d.mkHG (fun a ha g => ?_) q).symm
+  refine ((d.mkHG_eq_mkHG_iff _ _).2 ⟨1, d.H.one_mem, a, ha, ?_⟩).symm
+  rw [one_mul, (Subgroup.mem_center_iff.mp (d.AG_le_center ha) g)]
+
+/-- **Reduction of Thesis Prop 8.4.1(iii) to weak Cartan data** (BP Prop 6.7.1(iii), proof on
+pp. 151–152): given the weak Cartan decomposition with the comparison `σ_{A_G\G} ≪ σ_{H\G}` on
+the cone and its polynomial growth (`WeakCartanData`, BP (6.7.11), 6.7.1(ii)(b), (6.7.12)), and
+the outer regularity of the Weil measure (used only for the measurability of `xiHG`), the
+integral `∫ Ξ^{H\G}(x)² σ_{H\G}(x)^{-d} dx` converges for some `d > 0`. The outer regularity
+follows from Mathlib once `HGQuot` is shown Hausdorff, locally compact and second countable
+(`weilMeasureHG` is already finite on compact sets, `isFiniteMeasureOnCompacts_weilMeasureHG`). -/
+theorem prop_6_7_1_iii_of_weakCartanData (C₀ : Set ↥d.G) (hC₀ : IsCompact C₀)
+    (hC₀' : (interior C₀).Nonempty) [d.weilMeasureHG.OuterRegular]
+    (W : WeakCartanData d.mkHG d.logNormModAG) :
+    ∃ d₀ : ℝ, 0 < d₀ ∧ Integrable
+      (fun q : d.HGQuot => d.xiHG C₀ q ^ 2 * d.logNormHG q ^ (-d₀)) d.weilMeasureHG := by
+  rw [d.logNormHG_eq_fiberInf_logNormModAG]
+  exact d.isInvariantQuotient_mkHG.exists_integrable_of_weakCartanData d.isQuotientMap_mkHG
+    d.isLogNorm_logNormModAG (d.logNormHG_eq_fiberInf_logNormModAG ▸ d.measurable_logNormHG) W
+    hC₀ hC₀' (d.xiHG_mkHG C₀)
 
 /-- **Thesis Prop 8.4.1(iii)** (adapted from BP Prop 6.7.1(iii)): there is `d > 0` with
 `∫_{H(F)\G(F)/A_G(F)} Ξ^{H\G}(x)² σ_{H\G}(x)^{-d} dx < ∞`.  Stated for every compact `C₀`
