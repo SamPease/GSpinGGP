@@ -721,30 +721,93 @@ theorem specP_zV_sub_mem' {s : ℕ} (hs1 : 1 ≤ s) (hs : s ≤ d.r) {n : GSpin 
     rw [h0, Submodule.mem_bot] at this
     rw [this]; exact zero_mem _
 
-open WeakCartan
+/-- `b(z_i, x) = 0` for `x` a combination of `z_{τ(j)}` with `i + τ(j) ≠ 0`. -/
+theorem bform_zV_eq_zero_of_mem_span {k : ℕ} (τ : Fin k → ℤ) {i : ℤ} (hi : |i| ≤ d.r)
+    (hτ : ∀ j, |τ j| ≤ d.r) (hne : ∀ j, i + τ j ≠ 0) {x : d.V}
+    (hx : x ∈ Submodule.span F (Set.range (d.zV ∘ τ))) : bform d.QV (d.zV i) x = 0 := by
+  obtain ⟨c, rfl⟩ := (Submodule.mem_span_range_iff_exists_fun F).mp hx
+  rw [map_sum]
+  refine Finset.sum_eq_zero fun j _ => ?_
+  rw [map_smul, Function.comp_apply, bform_QV_zV, bform_splitOddForm_zvec _ _ hi (hτ j),
+    ite_eq_right (hne j), smul_zero]
 
-section HU
+/-- **`N ∩ P̄ = 1` at the level of `SO(V)`, first half.** If `n ∈ N` moves `z_{-k}` only by
+earlier vectors `z_{-r}, …, z_{-k-1}` of the opposite flag, it fixes `z_{-k}`. -/
+theorem specP_zb_of_mem_N {nn : GSpin d.QV} (hn : nn ∈ d.N) (k : Fin d.r)
+    (hz : specP d.QV nn (zb (d := d) k) - zb (d := d) k ∈
+      Submodule.span F (Set.range (d.zV ∘ fun j : Fin k => -((d.r : ℤ) - (j : ℕ))))) :
+    specP d.QV nn (zb (d := d) k) = zb (d := d) k := by
+  have hk := k.2
+  rw [← sub_eq_zero]
+  refine d.eq_zero_of_mem_span_zV _ (fun a c h => Fin.ext (by simp at h; omega))
+    (fun j => by have := j.2; rw [abs_le]; constructor <;> omega) hz (fun j => ?_)
+  have hj := j.2
+  rw [neg_neg, map_sub, LinearMap.sub_apply]
+  set s : ℕ := d.r - j with hs
+  have hs' : ((d.r : ℤ) - (j : ℕ)) = ((s : ℕ) : ℤ) := by omega
+  rw [hs']
+  have e : bform d.QV (specP d.QV nn (zb (d := d) k)) (d.zV (s : ℕ)) =
+      bform d.QV (zb (d := d) k) (specP d.QV nn⁻¹ (d.zV (s : ℕ))) := by
+    conv_lhs => arg 2; rw [← specP_inv_apply_apply nn (d.zV (s : ℕ))]
+    rw [bform_specP]
+  have hzs : bform d.QV (zb (d := d) k) (d.zV (s : ℕ)) = 0 := by
+    rw [zb, bform_QV_zV, bform_splitOddForm_zvec _ _ (abs_neg_le k)
+      (by rw [abs_le]; constructor <;> omega), ite_eq_right (by omega)]
+  have hε := d.specP_zV_sub_mem' (s := s) (by omega) (by omega) (d.N.inv_mem hn)
+  have hε0 : bform d.QV (zb (d := d) k) (specP d.QV nn⁻¹ (d.zV (s : ℕ)) - d.zV (s : ℕ)) = 0 :=
+    d.bform_zV_eq_zero_of_mem_span (fun j' : Fin (d.r - s) => (d.r : ℤ) - (j' : ℕ))
+      (abs_neg_le k) (fun j' => by have := j'.2; rw [abs_le]; constructor <;> omega)
+      (fun j' => by have := j'.2; omega) hε
+  rw [e, hzs, sub_zero]
+  rw [map_sub, hzs, sub_zero] at hε0
+  exact hε0
 
-variable {d} {n l : ℕ} {b : Module.Basis (Fin n) F d.V0}
-  (hb : IsOrthoBasis d.Q0 b) (hf : IsFrame d.Q0 b (d.Q0 d.z00) l) (h0 : ∀ h, b ⟨0, h⟩ = d.z00)
-
-/-- **Step 1.** An element `n ∈ N` such that `(a, a n) ∈ G` lies in the stabilizer of the flag
-`z_{-r}, …, z_{-1}` with trivial action on its graded pieces acts trivially on `V`: it stabilizes
-both `⟨z_r, …⟩` and the opposite flag `⟨z_{-r}, …⟩` unipotently. -/
+/-- **`N ∩ P̄ = 1` at the level of `SO(V)`.** An element of `N` fixing `z_{-r}, …, z_{-1}` acts
+trivially on `V`: on `Z_r^⊥` it moves vectors into `Z_r = ⟨z_r, …, z_1⟩`, and the move is
+orthogonal to the `z_{-k}`. -/
 theorem specP_eq_one_of_mem_N {nn : GSpin d.QV} (hn : nn ∈ d.N)
-    (hz : ∀ k : Fin d.r, specP d.QV nn (zb (d := d) k) - zb k ∈
-      Submodule.span F (Set.range fun j : Fin k => zb (d := d) (Fin.castLE (by omega) j))) :
+    (hfix : ∀ k : Fin d.r, specP d.QV nn (zb (d := d) k) = zb (d := d) k) :
     specP d.QV nn = 1 := by
-  set T := specP d.QV nn
-  have hninv : nn⁻¹ ∈ d.N := d.N.inv_mem hn
-  -- `T⁻¹ z_s ∈ z_s + ⟨z_{>s}⟩`, so `b(z_{-k}, T⁻¹ z_s) = 0` for `s > k`
-  have hpair : ∀ (k : Fin d.r) (s : ℕ), 1 ≤ s → s ≤ d.r → (d.r : ℤ) - k ≠ s →
-      bform d.QV (zb (d := d) k) (specP d.QV nn⁻¹ (d.zV (s : ℕ))) = 0 ∨
-        (d.r - (k : ℕ) > s) := by
-    sorry
-  sorry
-
-end HU
+  have horth : ∀ v ∈ (bform d.QV).orthogonal d.flag.top, specP d.QV nn v = v := by
+    intro v hv
+    rw [← sub_eq_zero]
+    have hmem := hn.2.2.1 v hv
+    change _ ∈ Submodule.span F (Set.range fun j : Fin d.r => d.zV ((d.r : ℤ) - (j : ℕ)))
+      at hmem
+    refine d.eq_zero_of_mem_span_zV (fun j : Fin d.r => (d.r : ℤ) - (j : ℕ))
+      (fun a c h => Fin.ext (by simp at h; omega))
+      (fun j => by have := j.2; rw [abs_le]; constructor <;> omega) hmem (fun j => ?_)
+    rw [map_sub, LinearMap.sub_apply, show d.zV (-((d.r : ℤ) - (j : ℕ))) = zb (d := d) j from rfl]
+    have e : bform d.QV (specP d.QV nn v) (zb (d := d) j) = bform d.QV v (zb (d := d) j) := by
+      conv_lhs => rw [← hfix j]
+      rw [bform_specP]
+    rw [e, sub_self]
+  have hsingle : ∀ t : Fin (2 * d.r + 1),
+      specP d.QV nn ((0, Pi.single t 1) : d.V) = (0, Pi.single t 1) := by
+    intro t
+    have ht := t.2
+    have habs : |(t : ℤ) - d.r| ≤ d.r := by rw [abs_le]; constructor <;> omega
+    have e : ((0, Pi.single t 1) : d.V) = d.zV ((t : ℤ) - d.r) := by
+      rw [zV, zvec_eq_single _ habs]
+      congr 2
+      exact Fin.ext (by simp)
+    rw [e]
+    by_cases hneg : (t : ℕ) < d.r
+    · have := hfix ⟨t, hneg⟩
+      rw [zb, show (-((d.r : ℤ) - ((⟨t, hneg⟩ : Fin d.r) : ℕ))) = (t : ℤ) - d.r by
+        simp] at this
+      exact this
+    · exact horth _ (d.zV_nonneg_mem_orthogonal_top (by omega))
+  refine LinearEquiv.ext fun v => ?_
+  obtain ⟨w, z⟩ := v
+  have hv : ((w, z) : d.V) = (w, 0) + ∑ t, z t • ((0, Pi.single t 1) : d.V) := by
+    refine Prod.ext (by simp [Prod.fst_sum]) ?_
+    simp only [Prod.snd_add, Prod.snd_sum, Prod.smul_snd, zero_add]
+    ext t
+    simp [Finset.sum_apply, Pi.single_apply]
+  rw [hv, map_add, map_sum, horth _ (d.inl_mem_orthogonal_top w)]
+  simp only [map_smul, hsingle]
+  rfl
 
 end GGPData
 
