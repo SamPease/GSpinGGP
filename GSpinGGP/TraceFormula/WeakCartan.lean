@@ -502,6 +502,121 @@ theorem logNormSO_add_le_of_cone (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1
   have h1 := d.one_le_logNormSO (d.Pbar h * y)
   nlinarith
 
+-- The products in `SO(W) × SO(V)` make instance search slow here.
+set_option maxHeartbeats 400000 in
+include hb in
+/-- **Thesis Prop. 8.1.1(iii), first inequality, for `G`, modulo `A_G`**, on the cone
+`A₀⁺ A`, in the form used for Thesis Prop. 8.4.1(ii)(b) (BP (6.7.6)):
+`σ_{A_G\G}(x) ≤ C σ_{A_G\G}(h x)` for `h ∈ H` and `x ∈ G` with
+`P̄(x)_V = a(τ) (y₀ ⊕ 1)`, `y₀ = (multiTorus hb hf 0 t)⁻¹` in the expanding chamber of
+`SO(V₀)`, `τ` arbitrary (no condition on the `W`-component). For `r = 0` this is
+`logNormModAG_le_of_chamber` in the coordinates of `V₀ ⊆ V`. -/
+theorem logNormModAG_le_of_cone (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1 = 0) :
+    ∃ C, 0 ≤ C ∧ ∀ h ∈ d.H, ∀ x : d.G, ∀ (τ : Fin d.r → Fˣ) (t : List Fˣ),
+      InChamber n l 0 t →
+      ((d.Pbar x).2 : d.V ≃ₗ[F] d.V) = d.torusZ τ * d.extV0 (multiTorus hb hf 0 t)⁻¹ →
+      infLeft (logNorm F d.G) d.AG x ≤ C * infLeft (logNorm F d.G) d.AG (h * x) := by
+  obtain ⟨C₀, hC₀, hI⟩ := d.logNormSO_add_le_of_cone hb hf hb0
+  obtain ⟨c, C, hc, hC, he⟩ := d.logNormModAG_equiv
+  set C₁ := max 1 C₀
+  have hC₁ : 1 ≤ C₁ := le_max_left _ _
+  refine ⟨C * C₁ * c, by positivity, fun h hh x τ t ht hx => ?_⟩
+  have hτ : ∀ g, 0 ≤ d.logNormSO g := fun g => zero_le_one.trans (d.one_le_logNormSO g)
+  -- the comparison on `Ā_G\Ḡ`
+  have hSO : infLeft d.logNormSO d.AGbar (d.Pbar x) ≤
+      C₁ * infLeft d.logNormSO d.AGbar (d.Pbar h * d.Pbar x) := by
+    refine le_mul_infLeft _ (zero_le_one.trans hC₁) fun z hz => ?_
+    by_cases hV : IsHypPlane d.QV
+    · -- `V₀` a hyperbolic plane: `dim W = 1`, `SO(W) = 1`, `A_G ⊇ 1 × GSpin(V₀)`
+      have hm : Module.finrank F (Fin d.m → F) ≤ 1 := by
+        have h2 := hV.1
+        have : Module.finrank F d.V = d.m + (2 * d.r + 1) := by simp
+        rw [Module.finrank_fin_fun]; omega
+      have hx1 : ((d.Pbar x).1 : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) = 1 := by
+        have := eq_id_of_det_eq_one_of_finrank_le_one hm (d.Pbar x).1.2.2
+        exact LinearEquiv.ext fun w => congr($this w)
+      have hmem : (d.Pbar x)⁻¹ ∈ d.AGbar := by
+        refine ⟨d.pair (1, (d.snd x)⁻¹), ⟨(1, (d.snd x)⁻¹),
+          ⟨one_mem _, by unfold splitCentralGSpin; simp only [hV, ↓reduceIte]; trivial⟩, rfl⟩, ?_⟩
+        refine Prod.ext (Subtype.ext ?_) (Subtype.ext ?_)
+        · show specP d.QW 1 = (((d.Pbar x)⁻¹).1 : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F))
+          rw [map_one, Prod.fst_inv, Subgroup.coe_inv, hx1, inv_one]
+        · show specP d.QV (d.snd x)⁻¹ = (((d.Pbar x)⁻¹).2 : d.V ≃ₗ[F] d.V)
+          rw [map_inv]; rfl
+      have h1 : infLeft d.logNormSO d.AGbar (d.Pbar x) ≤ 1 := by
+        have := infLeft_le_of_nonneg d.AGbar hτ hmem (d.Pbar x)
+        rwa [inv_mul_cancel, logNormSO_one] at this
+      exact h1.trans (one_le_mul_of_one_le_of_one_le hC₁ (d.one_le_logNormSO _))
+    · -- otherwise `P̄(A_G)` is trivial on `V₀` and central
+      obtain ⟨a, ha, rfl⟩ := hz
+      have hz2 : ((d.Pbar a).2 : d.V ≃ₗ[F] d.V) = 1 := by
+        obtain ⟨p, hp, rfl⟩ := ha
+        have hp2 := hp.2
+        unfold splitCentralGSpin at hp2
+        simp only [hV, ↓reduceIte] at hp2
+        obtain ⟨c, hc⟩ := hp2
+        show specP d.QV p.2 = 1
+        rw [← hc, specP_scalarGSpin_eq_one]
+      have hcen : ∀ g : d.GbarGrp, d.Pbar a * g = g * d.Pbar a := by
+        intro g
+        obtain ⟨g', rfl⟩ := d.Pbar_surjective g
+        rw [← map_mul, ← map_mul, Subgroup.mem_center_iff.mp (d.AG_le_center ha) g']
+      obtain ⟨y, hyd⟩ : ∃ y, y = d.Pbar a * d.Pbar x := ⟨_, rfl⟩
+      have hy : (y.2 : d.V ≃ₗ[F] d.V) = d.torusZ τ * d.extV0 (multiTorus hb hf 0 t)⁻¹ := by
+        rw [hyd, Prod.snd_mul, Subgroup.coe_mul, hz2, one_mul, hx]
+      have key := hI h hh y τ t ht hy
+      have e : d.Pbar a * (d.Pbar h * d.Pbar x) = d.Pbar h * y := by
+        rw [hyd, ← mul_assoc, hcen, mul_assoc]
+      rw [e]
+      calc infLeft d.logNormSO d.AGbar (d.Pbar x) ≤ d.logNormSO y := by
+            rw [hyd]; exact infLeft_le_of_nonneg d.AGbar hτ ⟨a, ha, rfl⟩ _
+        _ ≤ C₀ * d.logNormSO (d.Pbar h * y) := by linarith [hτ (d.Pbar h)]
+        _ ≤ C₁ * d.logNormSO (d.Pbar h * y) :=
+            mul_le_mul_of_nonneg_right (le_max_right _ _) (hτ _)
+  have e1 := (he x).2
+  have e2 := (he (h * x)).1
+  rw [map_mul] at e2
+  calc infLeft (logNorm F d.G) d.AG x ≤ C * infLeft d.logNormSO d.AGbar (d.Pbar x) := e1
+    _ ≤ C * (C₁ * infLeft d.logNormSO d.AGbar (d.Pbar h * d.Pbar x)) :=
+        mul_le_mul_of_nonneg_left hSO hC
+    _ ≤ C * (C₁ * (c * infLeft (logNorm F d.G) d.AG (h * x))) :=
+        mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left e2 (zero_le_one.trans hC₁)) hC
+    _ = C * C₁ * c * infLeft (logNorm F d.G) d.AG (h * x) := by ring
+
+include hb in
+/-- **`σ_{A_G\G} ≪ σ_{H\G}` on the cone** (the nontrivial half of Thesis Prop. 8.4.1(ii)(b),
+BP Prop. 6.7.1(ii)(b)), in the form of the field `le_fiberInf` of `WeakCartanData`:
+`σ_{A_G\G}(x) ≤ C σ_{H\G}(x)` for `x` as in `logNormModAG_le_of_cone`, with
+`σ_{H\G} = fiberInf σ_{A_G\G} mkHG` (`logNormHG_eq_fiberInf_logNormModAG`). -/
+theorem logNormModAG_le_fiberInf_of_cone (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1 = 0) :
+    ∃ C, 0 ≤ C ∧ ∀ x : d.G, ∀ (τ : Fin d.r → Fˣ) (t : List Fˣ), InChamber n l 0 t →
+      ((d.Pbar x).2 : d.V ≃ₗ[F] d.V) = d.torusZ τ * d.extV0 (multiTorus hb hf 0 t)⁻¹ →
+      d.logNormModAG x ≤ C * fiberInf d.logNormModAG d.mkHG (d.mkHG x) := by
+  obtain ⟨C, hC, hI⟩ := d.logNormModAG_le_of_cone hb hf hb0
+  refine ⟨C, hC, fun x τ t ht hx => ?_⟩
+  rw [← logNormHG_eq_fiberInf_logNormModAG]
+  have key : ∀ g, d.mkHG g = d.mkHG x → d.logNormModAG x ≤ C * d.logNormG g := by
+    intro g hg
+    obtain ⟨h, hh, a, ha, rfl⟩ := (d.mkHG_eq_mkHG_iff x g).1 hg.symm
+    have e : h * x * a = a * (h * x) :=
+      (Subgroup.mem_center_iff.mp (d.AG_le_center ha) (h * x))
+    have h1 := hI h hh x τ t ht hx
+    have h2 : d.logNormModAG (h * x * a) ≤ d.logNormG (h * x * a) := d.logNormModSub_le _ _
+    rw [e, show d.logNormModAG (a * (h * x)) = d.logNormModAG (h * x) from
+      d.logNormModSub_mul_left d.AG ha _] at h2
+    rw [e]
+    exact (show d.logNormModAG x ≤ C * d.logNormModAG (h * x) from h1).trans
+      (mul_le_mul_of_nonneg_left h2 hC)
+  rcases hC.lt_or_eq with hCp | hC0
+  · have : d.logNormModAG x / C ≤ d.logNormHG (d.mkHG x) := by
+      unfold logNormHG fiberInf
+      haveI : Nonempty {g // d.mkHG g = d.mkHG x} := ⟨⟨x, rfl⟩⟩
+      exact le_ciInf fun g => (div_le_iff₀' hCp).2 (key g.1 g.2)
+    exact (div_le_iff₀' hCp).1 this
+  · have := key x rfl
+    rw [← hC0, zero_mul] at this ⊢
+    exact this
+
 end Cone
 
 end GGPData
