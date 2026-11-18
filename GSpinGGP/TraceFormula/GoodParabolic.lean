@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import GSpinGGP.TraceFormula.Basic
 import GSpinGGP.Foundations.WeakCartanTheorem
 import GSpinGGP.Foundations.QuadraticForms
+import GSpinGGP.Foundations.VanDantzig
 
 /-!
 # The good minimal parabolic subgroup of Thesis Prop. 8.1.1(i)
@@ -712,26 +713,6 @@ end GGPData
 
 open scoped Pointwise Topology
 
-section OpenDoubleCoset
-
-variable {G₀ : Type*} [Group G₀] [TopologicalSpace G₀] [IsTopologicalGroup G₀]
-
-/-- A product `H·B` of two subgroups is open as soon as it is a neighbourhood of `1`: it is
-stable under left multiplication by `H` and right multiplication by `B`. -/
-theorem isOpen_subgroup_mul_of_mem_nhds_one (H B : Subgroup G₀)
-    (h : (H : Set G₀) * (B : Set G₀) ∈ 𝓝 (1 : G₀)) : IsOpen ((H : Set G₀) * (B : Set G₀)) := by
-  rw [isOpen_iff_mem_nhds]
-  rintro _ ⟨x, hx, y, hy, rfl⟩
-  have hc : ContinuousAt (fun z : G₀ => x⁻¹ * z * y⁻¹) (x * y) := by fun_prop
-  have h1 : (fun z : G₀ => x⁻¹ * z * y⁻¹) (x * y) = 1 := by group
-  have hpre := hc.preimage_mem_nhds (h1 ▸ h)
-  refine Filter.mem_of_superset hpre fun z hz => ?_
-  obtain ⟨h', hh', b', hb', e⟩ := hz
-  refine ⟨x * h', H.mul_mem hx hh', b' * y, B.mul_mem hb' hy, ?_⟩
-  have e' : z = x * (h' * b') * y := by dsimp only at e; rw [e]; group
-  rw [e']; group
-
-end OpenDoubleCoset
 
 namespace GGPData
 

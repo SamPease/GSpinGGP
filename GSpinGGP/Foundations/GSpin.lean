@@ -71,6 +71,17 @@ Mathlib has no Witt index. -/
 def wittIndex (Q : QuadraticForm K V) : ℕ :=
   sSup {n | ∃ U : Submodule K V, IsTotallyIsotropic Q U ∧ finrank K U = n}
 
+theorem wittIndex_bdd [FiniteDimensional K V] (Q : QuadraticForm K V) :
+    BddAbove {n | ∃ U : Submodule K V, IsTotallyIsotropic Q U ∧ finrank K U = n} :=
+  ⟨finrank K V, by rintro _ ⟨U, -, rfl⟩; exact Submodule.finrank_le U⟩
+
+/-- The Witt index is attained by a totally isotropic subspace. -/
+theorem exists_wittIndex [FiniteDimensional K V] (Q : QuadraticForm K V) :
+    ∃ U : Submodule K V, IsTotallyIsotropic Q U ∧ finrank K U = wittIndex Q := by
+  have hne : ({n | ∃ U : Submodule K V, IsTotallyIsotropic Q U ∧ finrank K U = n} : Set ℕ).Nonempty :=
+    ⟨0, ⊥, fun u hu => by rw [(Submodule.mem_bot K).1 hu, map_zero], finrank_bot K V⟩
+  exact Nat.sSup_mem hne (wittIndex_bdd Q)
+
 /-- `GSpin(V)` (equivalently `SO(V)`) is quasi-split iff the anisotropic kernel has dimension
 at most `2`, i.e. `dim V - 2 w(V) ≤ 2` (Thesis §5.1.4). -/
 def IsQuasiSplitQF (Q : QuadraticForm K V) : Prop :=
@@ -1784,6 +1795,18 @@ theorem mem_ofFamily_sub {i : Fin (k + 1)} {j : Fin k} (hj : (j : ℕ) < i) :
 /-- The flag of initial segments of a family of length the Witt index is full. -/
 theorem isFull_ofFamily (h : k = wittIndex Q) : (ofFamily v hv hiso).IsFull :=
   ⟨h, finrank_ofFamily_sub⟩
+
+/-- **Full isotropic flags exist**: the flag of initial segments of a basis of a totally isotropic
+subspace of dimension the Witt index (`ofFamily`, `isFull_ofFamily`). -/
+theorem exists_isFull [FiniteDimensional K V] (Q : QuadraticForm K V) :
+    ∃ Fl : IsotropicFlag Q, Fl.IsFull := by
+  obtain ⟨U, hUi, hUw⟩ := exists_wittIndex Q
+  let b : Module.Basis (Fin (wittIndex Q)) K U := Module.finBasisOfFinrankEq K U hUw
+  have hv : LinearIndependent K (fun j => (b j : V)) :=
+    b.linearIndependent.map' U.subtype (Submodule.ker_subtype U)
+  have hiso : IsTotallyIsotropic Q (Submodule.span K (Set.range fun j => (b j : V))) :=
+    fun u hu => hUi u ((Submodule.span_le.mpr (by rintro _ ⟨j, rfl⟩; exact (b j).2)) hu)
+  exact ⟨ofFamily _ hv hiso, isFull_ofFamily rfl⟩
 
 end IsotropicFlag
 
