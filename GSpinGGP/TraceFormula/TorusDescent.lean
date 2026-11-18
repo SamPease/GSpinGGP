@@ -490,24 +490,12 @@ theorem deltaGGP_eq_absF_det_movedSub {x t : ↥(GSpin d.QW)} (hx : d.IsGammaElt
       (((specP d.QW t : (Fin d.m → F) →ₗ[F] (Fin d.m → F)) - 1).restrict hmaps)) := by
   set P : ↥(GSpin d.QW) → Module.End F (Fin d.m → F) :=
     fun g => (specP d.QW g : (Fin d.m → F) →ₗ[F] (Fin d.m → F)) with hPdef
-  have hself : ∀ g : ↥(GSpin d.QW), g ∈ d.torusOf g := fun g =>
-    ⟨Subgroup.mem_centralizer_iff.mpr fun h hh => by
-      rw [Set.mem_singleton_iff] at hh; rw [hh], fun v hv => by
-      simpa [sub_eq_zero] using LinearMap.mem_ker.mp hv⟩
-  have htx : t ∈ d.torusOf x := hTt ▸ hself t
-  have hxt : x ∈ d.torusOf t := hTt.symm ▸ hself x
+  have htx : t ∈ d.torusOf x := hTt ▸ d.self_mem_torusOf t
   have hss : Module.End.IsSemisimple (P x - 1) :=
     Module.End.IsSemisimple.sub_of_commute (Commute.one_right _)
       (isSemisimple_specP_of_isSS d.QW x hx.1) Module.End.isSemisimple_id
   have hcompl : IsCompl (fixedSub x) (movedSub x) := isCompl_ker_range_of_isSemisimple hss
-  have hfix : fixedSub t = fixedSub x := by
-    apply le_antisymm
-    · intro v hv
-      have := hxt.2 v hv
-      simpa [fixedSub, sub_eq_zero] using this
-    · intro v hv
-      have := htx.2 v hv
-      simpa [fixedSub, sub_eq_zero] using this
+  have hfix : fixedSub t = fixedSub x := d.fixedSub_eq_of_torusOf_eq htx hTt
   have hle : movedSub t ≤ movedSub x := by
     rintro _ ⟨v, rfl⟩
     have hv : v ∈ fixedSub x ⊔ movedSub x := hcompl.sup_eq_top ▸ Submodule.mem_top

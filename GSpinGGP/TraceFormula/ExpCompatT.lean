@@ -191,19 +191,9 @@ theorem exists_isExpCompatT (T : d.GammaTorus) : ∃ μ, d.IsExpCompatT T.1 μ :
   haveI : BorelSpace (d.TorusQuot (d.torusOf x)) := ⟨rfl⟩
   obtain ⟨μ, hμ, Φ, U, hUo, hU0, -, -, hΦU, hμS⟩ := d.exists_expA_chart_torusOf hx
   refine ⟨μ, hμ, U, hUo.mem_nhds hU0, fun S hS hSU => ?_⟩
-  rw [hμS S hSU hS]
-  congr 1
-  ext q
-  constructor
-  · rintro ⟨X, hXS, rfl⟩
-    obtain ⟨t, ht, hΦt⟩ := hΦU X (hSU hXS)
-    exact ⟨X, hXS, t, ht, hΦt⟩
-  · rintro ⟨X, hXS, t, ht, rfl⟩
-    obtain ⟨t', ht', hΦt'⟩ := hΦU X (hSU hXS)
-    refine ⟨X, hXS, ?_⟩
-    rw [hΦt']
-    congr 1
-    exact Subtype.ext (Subtype.ext (Units.ext (ht'.trans ht.symm)))
+  exact (hμS S hSU hS).trans (congrArg _ (setOf_expA_eq_image
+    ((GSpin d.QW).subtype.comp (d.torusOf x).subtype)
+    (fun a b h => Subtype.ext (Subtype.ext (Units.ext h))) (d.scalarsIn (d.torusOf x)) hΦU hSU).symm)
 
 end GGPData
 

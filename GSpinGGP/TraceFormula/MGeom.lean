@@ -291,8 +291,8 @@ theorem subsingleton_torusQuot_torusOf_one : Subsingleton (d.TorusQuot (d.torusO
 /-- **Consistency check of `bp_integrable_deltaGGP_rpow` at `x = 1`** (a point of `Γ(G,H)` for
 every `d`): its conclusion holds outright, for every `s`, since `T_1(F)/A_{G,H}(F)` is a point and
 the probability Haar measure is finite.  (For `toyData`, and for `dim W ≤ 2` with `W` split, every
-torus of `Γ(G,H)` is `T_1`; the content of the axiom is `dim W''_x ≥ 2` anisotropic modulo the
-centre.) -/
+torus of `Γ(G,H)` is `T_1`; the content of `bp_integrable_deltaGGP_rpow` is `dim W''_x ≥ 2`
+anisotropic modulo the centre.) -/
 theorem integrable_delta_rpow_torusOf_one (s : ℝ) :
     letI : MeasurableSpace (d.TorusQuot (d.torusOf 1)) := borel _
     haveI : BorelSpace (d.TorusQuot (d.torusOf 1)) := ⟨rfl⟩

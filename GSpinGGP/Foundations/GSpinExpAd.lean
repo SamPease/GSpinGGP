@@ -75,6 +75,18 @@ theorem eventually_specP_eq_expA_adV [TopologicalSpace (Module.End F V)]
   change specP Q g v = ιInv Q (expA F X * (ι Q v * expA F (-X)))
   rw [specP_apply_eq, hg, hginv]
 
+/-- `P(g)` commutes with `adV X` when `g ∈ GSpin(V)` commutes with `X ∈ gspin(V)`:
+`ι(P(g) (adV X v)) = g [X, ι v] g⁻¹ = [X, g ι(v) g⁻¹]`. -/
+theorem commute_specP_adV {g : ↥(GSpin Q)} {X : CliffordAlgebra Q} (hX : X ∈ gspin Q)
+    (hgX : (((g : (CliffordAlgebra Q)ˣ)) : CliffordAlgebra Q) * X =
+      X * (((g : (CliffordAlgebra Q)ˣ)) : CliffordAlgebra Q)) :
+    Commute (specP Q g : V →ₗ[F] V) (adV Q X) := by
+  refine LinearMap.ext fun v => CliffordAlgebra.ι_injective Q ?_
+  have hiX := (Commute.units_inv_left (u := (g : (CliffordAlgebra Q)ˣ)) hgX).eq
+  simp only [Module.End.mul_apply, LinearEquiv.coe_coe]
+  rw [ι_specP, ι_adV hX, ι_adV hX, ι_specP, mul_sub, sub_mul, ← mul_assoc, hgX]
+  simp only [mul_assoc, hiX]
+
 end Clifford
 
 end GSpinGGP

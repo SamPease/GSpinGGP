@@ -54,37 +54,8 @@ variable (d : GGPData F)
 /-- An endomorphism commuting with `P(x)` preserves `W''_x = im(P(x) − 1)`. -/
 theorem mapsTo_movedSub_of_commute {x : ↥(GSpin d.QW)} {M : Module.End F (Fin d.m → F)}
     (h : Commute (specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)) M) :
-    ∀ u ∈ movedSub x, M u ∈ movedSub x := by
-  rintro _ ⟨w, rfl⟩
-  refine ⟨M w, ?_⟩
-  have e : ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)) - LinearMap.id) * M =
-      M * ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)) - LinearMap.id) :=
-    h.sub_left (Commute.one_left M)
-  exact LinearMap.congr_fun e w
-
-/-- `P(g)` commutes with `adV X` when `g` commutes with `X ∈ gspin(W)`. -/
-theorem commute_specP_adV {g : ↥(GSpin d.QW)} {X : CliffordAlgebra d.QW} (hX : X ∈ gspin d.QW)
-    (hgX : (((g : (CliffordAlgebra d.QW)ˣ)) : CliffordAlgebra d.QW) * X =
-      X * (((g : (CliffordAlgebra d.QW)ˣ)) : CliffordAlgebra d.QW)) :
-    Commute (specP d.QW g : (Fin d.m → F) →ₗ[F] (Fin d.m → F)) (adV d.QW X) := by
-  refine LinearMap.ext fun v => CliffordAlgebra.ι_injective d.QW ?_
-  set u : CliffordAlgebra d.QW := (((g : (CliffordAlgebra d.QW)ˣ)) : CliffordAlgebra d.QW)
-  set ui : CliffordAlgebra d.QW :=
-    (((g : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW)
-  have hiX : ui * X = X * ui := by
-    have h1 : ui * u = 1 := Units.inv_mul _
-    have h2 : u * ui = 1 := Units.mul_inv _
-    calc ui * X = ui * X * (u * ui) := by rw [h2, mul_one]
-      _ = ui * (X * u) * ui := by noncomm_ring
-      _ = ui * (u * X) * ui := by rw [hgX]
-      _ = (ui * u) * X * ui := by noncomm_ring
-      _ = X * ui := by rw [h1, one_mul]
-  simp only [Module.End.mul_apply, LinearEquiv.coe_coe]
-  rw [ι_specP, ι_adV hX, ι_adV hX, ι_specP]
-  change u * (X * CliffordAlgebra.ι d.QW v - CliffordAlgebra.ι d.QW v * X) * ui =
-    X * (u * CliffordAlgebra.ι d.QW v * ui) - u * CliffordAlgebra.ι d.QW v * ui * X
-  rw [mul_sub, sub_mul, ← mul_assoc, hgX]
-  simp only [mul_assoc, hiX]
+    ∀ u ∈ movedSub x, M u ∈ movedSub x :=
+  mapsTo_range_sub_one_of_commute h
 
 /-- For `t₀ ∈ T_x`, the elements of `𝔱⁰ = Lie(T_x)` preserve `W''_x ∩ ker(P(t₀) − 1)`. -/
 theorem adV_mapsTo_movedSub_inf_ker {x t₀ : ↥(GSpin d.QW)} (ht₀ : t₀ ∈ d.torusOf x)
@@ -92,28 +63,34 @@ theorem adV_mapsTo_movedSub_inf_ker {x t₀ : ↥(GSpin d.QW)} (ht₀ : t₀ ∈
     ∀ v ∈ movedSub x ⊓ LinearMap.ker ((specP d.QW t₀ : (Fin d.m → F) →ₗ[F] (Fin d.m → F)) - 1),
       adV d.QW (X : CliffordAlgebra d.QW) v ∈
         movedSub x ⊓ LinearMap.ker ((specP d.QW t₀ : (Fin d.m → F) →ₗ[F] (Fin d.m → F)) - 1) := by
-  have hxT : x ∈ d.torusOf x := ⟨Subgroup.mem_centralizer_iff.mpr fun h hh => by
-    rw [Set.mem_singleton_iff] at hh; rw [hh], fun v hv => by
-    simpa [sub_eq_zero] using LinearMap.mem_ker.mp hv⟩
+  have hxT : x ∈ d.torusOf x := d.self_mem_torusOf x
   have hXg := X.2.1.1
   rintro v ⟨hv1, hv2⟩
-  exact ⟨d.mapsTo_movedSub_of_commute (d.commute_specP_adV hXg (X.2.2.1 x hxT)) v hv1,
-    mapsTo_ker_sub_one_of_commute (d.commute_specP_adV hXg (X.2.2.1 t₀ ht₀)) v hv2⟩
+  exact ⟨d.mapsTo_movedSub_of_commute (commute_specP_adV d.QW hXg (X.2.2.1 x hxT)) v hv1,
+    mapsTo_ker_sub_one_of_commute (commute_specP_adV d.QW hXg (X.2.2.1 t₀ ht₀)) v hv2⟩
 
-/-- **The Lie-algebra form of BP Lemma B.1.2(i) at `t₀ ∈ T_x`**: for `x ∈ Γ(G,H)`, `t₀ ∈ T_x` and
-`a > −1/2`, the function `X ↦ |det(ad X |_{K})|_F^a` on `𝔱⁰(F) = Lie(T_x)`, where
+/-- **The Lie-algebra estimate at `t₀ ∈ T_x`** (BP Astérisque 418, Lemma B.1.2(ii) for linear
+forms, combined with the eigencharacter computation of Thesis Prop 12.1.1(i)): for `x ∈ Γ(G,H)`,
+`t₀ ∈ T_x` and `a > −1/2`, the function `X ↦ |det(ad X |_{K})|_F^a` on `𝔱⁰(F) = Lie(T_x)`, where
 `K = W''_x ∩ ker(P(t₀) − 1)`, is locally integrable for an additive Haar measure.
 
 Over `F̄`, `W''_x` has a basis `e_i, f_i` (`1 ≤ i ≤ n = dim W''_x/2`) on which `𝔱⁰` acts by
-`ad X e_i = μ_i(X) e_i`, `ad X f_i = −μ_i(X) f_i` with `μ_1, …, μ_n` linearly independent (`T_x` is
-a maximal torus of `GSpin(W''_x)`, Thesis §6.5), and `K ⊗ F̄` is spanned by the `e_i, f_i` with
-`λ_i(t₀) = 1`; so `det(ad X|_K) = ∏_{i ∈ I} (−μ_i(X)²)`.  Grouping the `i ∈ I` by the simple
-`𝔱⁰`-submodules `K_j` of `K`, `|det(ad X|_K)|^a = ∏_j |det(ad X|_{K_j})|^a`, each factor a gauge of
-degree `dim K_j` (positive off the kernel, `ad X` acting on `K_j` through a field), and
-`2 · rank (ad|_{K_j})_{j ∈ J} ≥ ∑_{j ∈ J} dim K_j` (each `μ_i` counted once for the pair `e_i, f_i`);
-`locallyIntegrable_prod_gauge_rpow` then applies since `2a > −1`.
-Status: SORRY (own work: the eigencharacter computation of Thesis Prop 12.1.1(i), with the rank
-condition from the maximality of `T_x`). -/
+`ad X e_i = μ_i(X) e_i`, `ad X f_i = −μ_i(X) f_i` with `μ_1, …, μ_n` linearly independent, and
+`K ⊗ F̄` is spanned by the `e_i, f_i` with `λ_i(t₀) = 1`; so `det(ad X|_K) = ∏_{i ∈ I} (−μ_i(X)²)`
+and the claim is B.1.2(ii) for the forms `μ_i`, `i ∈ I`, at `s′ = 2a + 1 > 0` (each `μ_i` counted
+twice).  Over `F`: grouping the `i ∈ I` by the simple `𝔱⁰`-submodules `K_j` of `K`,
+`|det(ad X|_K)|^a = ∏_j |det(ad X|_{K_j})|^a`; each factor is a gauge of degree `dim K_j`, positive
+off the kernel because the commutative algebra generated by `ad 𝔱⁰` acts on the simple module `K_j`
+through a field (Schur), where nonzero elements are invertible; and
+`2 · rank (ad|_{K_j})_{j ∈ J} ≥ ∑_{j ∈ J} dim K_j` (each `μ_i` counted once for the pair `e_i, f_i`),
+so `locallyIntegrable_prod_gauge_rpow` applies since `2a > −1`.
+
+The linear independence of the `μ_i` (maximality of `T_x` in `GSpin(W''_x)`) comes from the
+commutativity conjunct of `IsGammaElt`, which is essential: for `W''_x` split of dimension `4` and
+`P(x)` with eigenvalues `λ, λ, λ⁻¹, λ⁻¹`, the analogous `𝔱⁰` would be `1`-dimensional and the
+integrand `|μ|^{4a}`, not locally integrable for `a ∈ (−1/2, −1/4]`.  The bound `a > −1/2` is sharp
+(an anisotropic plane gives `|μ|^{2a}`).
+Status: SORRY (own work: the eigencharacter computation and the rank condition). -/
 theorem locallyIntegrable_absF_det_adV_rpow {x t₀ : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
     (ht₀ : t₀ ∈ d.torusOf x) {a : ℝ} (ha : -(1 / 2) < a)
     (μ : Measure ↥(d.lieTorus (d.torusOf x))) [μ.IsAddHaarMeasure] :
@@ -149,9 +126,7 @@ theorem exists_eventually_deltaGGP_bounds {x t₀ : ↥(GSpin d.QW)} (hx : d.IsG
   haveI : ContinuousAdd (Module.End F ↥W'') := IsModuleTopology.toContinuousAdd F _
   let P : ↥(GSpin d.QW) → Module.End F (Fin d.m → F) :=
     fun g => (specP d.QW g : (Fin d.m → F) →ₗ[F] (Fin d.m → F))
-  have hxT : x ∈ (d.torusOf x) := ⟨Subgroup.mem_centralizer_iff.mpr fun h hh => by
-    rw [Set.mem_singleton_iff] at hh; rw [hh], fun v hv => by
-    simpa [sub_eq_zero] using LinearMap.mem_ker.mp hv⟩
+  have hxT : x ∈ (d.torusOf x) := d.self_mem_torusOf x
   have hPmaps : ∀ t : ↥(GSpin d.QW), t ∈ (d.torusOf x) → ∀ u ∈ W'', P t u ∈ W'' := by
     intro t ht
     have hc : Commute x t := (Subgroup.mem_centralizer_singleton_iff.mp ht.1).symm
@@ -162,11 +137,11 @@ theorem exists_eventually_deltaGGP_bounds {x t₀ : ↥(GSpin d.QW)} (hx : d.IsG
       (isSemisimple_specP_of_isSS d.QW x hx.1) Module.End.isSemisimple_id
   have hcompl : IsCompl W'' (fixedSub x) := (isCompl_ker_range_of_isSemisimple hss).symm
   obtain ⟨π, hπ⟩ : ∃ π : (Fin d.m → F) →ₗ[F] ↥W'', ∀ w : W'', π w = w :=
-    ⟨_, fun w => Submodule.linearProjOfIsCompl_apply_left hcompl w⟩
+    ⟨_, fun w => Submodule.projectionOnto_apply_left hcompl w⟩
   let φ : Module.End F (Fin d.m → F) →ₗ[F] Module.End F ↥W'' :=
     (LinearMap.llcomp F ↥W'' (Fin d.m → F) ↥W'' π).comp (LinearMap.lcomp F (Fin d.m → F) W''.subtype)
   have hφr : ∀ (M : Module.End F (Fin d.m → F)) (h : ∀ v ∈ W'', M v ∈ W''), φ M = M.restrict h :=
-    fun M h => compress_eq_restrict hπ h
+    fun M h => comp_comp_subtype_eq_restrict hπ h
   have hφc : Continuous φ := IsModuleTopology.continuous_of_linearMap φ
   have hadc : Continuous (adV d.QW : CliffordAlgebra d.QW → Module.End F (Fin d.m → F)) :=
     IsModuleTopology.continuous_of_linearMap (adV d.QW)
@@ -216,7 +191,7 @@ theorem exists_eventually_deltaGGP_bounds {x t₀ : ↥(GSpin d.QW)} (hx : d.IsG
   filter_upwards [E2, E3, E4] with X hX2 hX3 hX4 h hhT hh ht
   have hXg : (X : CliffordAlgebra d.QW) ∈ gspin d.QW := X.2.1.1
   have hW : ∀ v ∈ W'', adV d.QW (X : CliffordAlgebra d.QW) v ∈ W'' :=
-    d.mapsTo_movedSub_of_commute (d.commute_specP_adV hXg (X.2.2.1 x hxT))
+    d.mapsTo_movedSub_of_commute (commute_specP_adV d.QW hXg (X.2.2.1 x hxT))
   have hPh : P h = expA F (adV d.QW (X : CliffordAlgebra d.QW)) := hX2 hXg h hh
   have hpow : ∀ n : ℕ, φ (adV d.QW (X : CliffordAlgebra d.QW) ^ n) =
       φ (adV d.QW (X : CliffordAlgebra d.QW)) ^ n := by
@@ -230,7 +205,7 @@ theorem exists_eventually_deltaGGP_bounds {x t₀ : ↥(GSpin d.QW)} (hx : d.IsG
   have hYr : Y = (adV d.QW (X : CliffordAlgebra d.QW)).restrict hW := hYdef.trans (hφr _ hW)
   have hAY : Commute A Y := by
     rw [hYr, hAdef]
-    have hc := d.commute_specP_adV hXg (X.2.2.1 t₀ ht₀)
+    have hc := commute_specP_adV d.QW hXg (X.2.2.1 t₀ ht₀)
     refine LinearMap.ext fun w => Subtype.ext ?_
     have := LinearMap.congr_fun hc.eq w
     simpa [P, LinearMap.coe_restrict_apply] using this
@@ -329,11 +304,13 @@ theorem bp_integrable_deltaGGP_rpow (d : GGPData F) {x : ↥(GSpin d.QW)} (hx : 
       rw [hq₀, hΦh, ← QuotientGroup.mk_mul,
         comp_out_mk_of_invariant (d.scalarsIn (d.torusOf x)) hinv, Real.norm_of_nonneg (hf₀0 _)]
     by_cases ha : 0 ≤ a
-    · have hL0 := d.locallyIntegrable_absF_det_adV_rpow hx t₀.2 (a := 0) (by norm_num) μ
-      obtain ⟨V, hV, hint⟩ := hL0 0
-      refine ⟨fun X => |C'| ^ a * dK X ^ (0 : ℝ), ⟨V, hV, hint.const_mul (|C'| ^ a)⟩, ?_⟩
+    · letI := isTopologicalRing_of_moduleTopology F (CliffordAlgebra d.QW)
+      haveI := t2Space_of_moduleTopology F (CliffordAlgebra d.QW)
+      haveI := submodule_isTopologicalAddGroup (d.lieTorus (d.torusOf x))
+      obtain ⟨_, _, _, _, _⟩ := submodule_topology (d.lieTorus (d.torusOf x))
+      refine ⟨fun _ => |C'| ^ a, (locallyIntegrable_const _) 0, ?_⟩
       filter_upwards [key] with X ⟨t, hnorm, hb⟩
-      rw [hnorm, Real.rpow_zero, mul_one]
+      rw [hnorm]
       by_cases ht : (t : ↥(GSpin d.QW)) ∈ Snat
       · simp only [f₀, Set.indicator_of_mem ht]
         exact Real.rpow_le_rpow (deltaGGP_nonneg d _) ((hb ht).2.2.trans (le_abs_self _)) ha

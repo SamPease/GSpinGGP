@@ -11,12 +11,10 @@ import GSpinGGP.Foundations.TorusIntegrability
 
 For a semisimple endomorphism `A` of a finite-dimensional vector space over a `p`-adic field and
 `Y` commuting with `A`, `|det(A e^Y − 1)|_F` is comparable near `Y = 0` to
-`|det(Y|_{ker(A − 1)})|_F` (`exists_absF_det_mul_expA_sub_one`). This is the passage from the
-group to the Lie algebra in BP Astérisque 418, Lemma B.1.2(i) (near a point `t₀` of a torus, the
-eigencharacters `λ` with `λ(t₀) = 1` contribute `|dλ(X)|`, the others a unit).
-
-Helpers: `continuous_det_compress`, `compress_eq_restrict` (restrictions as compressions by a
-projection), `det_eq_det_restrict_mul_det_restrict` (`det` on `K ⊕ R`), `det_restrict_restrict`.
+`|det(Y|_{ker(A − 1)})|_F` (`exists_absF_det_mul_expA_sub_one`). This is the step reducing
+BP Astérisque 418, Lemma B.1.2(i) to B.1.2(ii) near a point `t₀` of a torus (the eigencharacters
+`λ` with `λ(t₀) = 1` contribute `|dλ(X)|`, the others a unit); BP states B.1.2 without proof.
+The linear algebra used is in `Foundations/Determinant.lean`.
 -/
 
 noncomputable section
@@ -27,50 +25,6 @@ namespace GSpinGGP
 
 variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
 variable {V : Type*} [AddCommGroup V] [Module F V] [FiniteDimensional F V]
-
-/-- An endomorphism commuting with `A` preserves `ker(A − 1)`. -/
-theorem mapsTo_ker_sub_one_of_commute
-    {A M : Module.End F V} (h : Commute A M) :
-    ∀ v ∈ LinearMap.ker (A - 1), M v ∈ LinearMap.ker (A - 1) := by
-  intro v hv
-  rw [LinearMap.mem_ker] at hv ⊢
-  have e : (A - 1) * M = M * (A - 1) := h.sub_left (Commute.one_left M)
-  rw [← Module.End.mul_apply, e, Module.End.mul_apply, hv, map_zero]
-
-/-- `M ↦ det(π ∘ M ∘ ι)` for a submodule `P` and a linear map `π : V → P` is continuous. -/
-theorem continuous_det_compress [TopologicalSpace (Module.End F V)]
-    [IsModuleTopology F (Module.End F V)] (P : Submodule F V) (π : V →ₗ[F] P) :
-    Continuous fun M : Module.End F V => LinearMap.det (π ∘ₗ M ∘ₗ P.subtype) := by
-  classical
-  let b := Module.Free.chooseBasis F P
-  refine continuous_det_of_continuous_repr b _ fun v i => ?_
-  let L : Module.End F V →ₗ[F] F :=
-    { toFun := fun M => b.repr (π (M v)) i
-      map_add' := fun M N => by simp
-      map_smul' := fun c M => by simp }
-  exact IsModuleTopology.continuous_of_linearMap L
-
-/-- For `M` preserving `P` and `π` a retraction onto `P`, `π ∘ M ∘ ι = M|_P`. -/
-theorem compress_eq_restrict {P : Submodule F V} {π : V →ₗ[F] P}
-    (hπ : ∀ w : P, π w = w) {M : Module.End F V} (hM : ∀ v ∈ P, M v ∈ P) :
-    π ∘ₗ M ∘ₗ P.subtype = M.restrict hM := by
-  ext w
-  simp only [LinearMap.comp_apply, Submodule.subtype_apply]
-  rw [show M w = ((M.restrict hM w : P) : V) from rfl, hπ]
-
-/-- `det M = det(M|_K) det(M|_R)` for `V = K ⊕ R` with both summands `M`-stable. -/
-theorem det_eq_det_restrict_mul_det_restrict {K R : Submodule F V} (h : IsCompl K R)
-    {M : Module.End F V} (hK : ∀ v ∈ K, M v ∈ K) (hR : ∀ v ∈ R, M v ∈ R) :
-    LinearMap.det M = LinearMap.det (M.restrict hK) * LinearMap.det (M.restrict hR) := by
-  obtain ⟨e, he⟩ : ∃ e : (K × R) ≃ₗ[F] V, ∀ q : K × R, e q = (q.1 : V) + (q.2 : V) :=
-    ⟨Submodule.prodEquivOfIsCompl K R h, Submodule.coe_prodEquivOfIsCompl' K R h⟩
-  have hφ : e.symm.conj M = (M.restrict hK).prodMap (M.restrict hR) := by
-    refine LinearMap.ext fun q => e.injective ?_
-    show e (e.symm (M (e q))) = _
-    rw [LinearEquiv.apply_symm_apply, he, he, map_add]
-    simp [LinearMap.coe_restrict_apply]
-  have hc : LinearMap.det (e.symm.conj M) = LinearMap.det M := LinearMap.det_conj M e.symm
-  rw [← hc, hφ, LinearMap.det_prodMap]
 
 /-- **`|det(A e^Y − 1)| ≍ |det(Y|_{ker(A−1)})|` near `Y = 0`** for a semisimple `A` and `Y`
 commuting with `A` (`p`-adic `F`). With `K = ker(A − 1)` and `R = im(A − 1)`, `V = K ⊕ R`,
@@ -90,29 +44,24 @@ theorem exists_absF_det_mul_expA_sub_one [TopologicalSpace (Module.End F V)]
   have hss : (A - 1).IsSemisimple :=
     Module.End.IsSemisimple.sub_of_commute (Commute.one_right _) hA Module.End.isSemisimple_id
   have hcompl : IsCompl K R := isCompl_ker_range_of_isSemisimple hss
-  set πK := Submodule.linearProjOfIsCompl K R hcompl
-  set πR := Submodule.linearProjOfIsCompl R K hcompl.symm
-  have hπK : ∀ w : K, πK w = w := fun w => Submodule.linearProjOfIsCompl_apply_left hcompl w
-  have hπR : ∀ w : R, πR w = w := fun w => Submodule.linearProjOfIsCompl_apply_left hcompl.symm w
+  set πK := Submodule.projectionOnto K R hcompl
+  set πR := Submodule.projectionOnto R K hcompl.symm
+  have hπK : ∀ w : K, πK w = w := fun w => Submodule.projectionOnto_apply_left hcompl w
+  have hπR : ∀ w : R, πR w = w := fun w => Submodule.projectionOnto_apply_left hcompl.symm w
   set g₁ := fun M : Module.End F V => LinearMap.det (πK ∘ₗ M ∘ₗ K.subtype)
   set g₂ := fun M : Module.End F V => LinearMap.det (πR ∘ₗ M ∘ₗ R.subtype)
-  have hg₁ : Continuous g₁ := continuous_det_compress K πK
-  have hg₂ : Continuous g₂ := continuous_det_compress R πR
+  have hg₁ : Continuous g₁ := continuous_det_comp_comp_subtype K πK
+  have hg₂ : Continuous g₂ := continuous_det_comp_comp_subtype R πR
   -- stability under endomorphisms commuting with `A`
-  have hstK : ∀ M : Module.End F V, Commute A M → ∀ v ∈ K, M v ∈ K := by
-    intro M hM v hv
-    rw [hKdef, LinearMap.mem_ker] at hv ⊢
-    have : (A - 1) * M = M * (A - 1) := ((hM.sub_left (Commute.one_left M)))
-    rw [← Module.End.mul_apply, this, Module.End.mul_apply, hv, map_zero]
-  have hstR : ∀ M : Module.End F V, Commute A M → ∀ v ∈ R, M v ∈ R := by
-    rintro M hM _ ⟨w, rfl⟩
-    have : (A - 1) * M = M * (A - 1) := ((hM.sub_left (Commute.one_left M)))
-    exact ⟨M w, by rw [← Module.End.mul_apply, this, Module.End.mul_apply]⟩
+  have hstK : ∀ M : Module.End F V, Commute A M → ∀ v ∈ K, M v ∈ K :=
+    fun M hM => mapsTo_ker_sub_one_of_commute hM
+  have hstR : ∀ M : Module.End F V, Commute A M → ∀ v ∈ R, M v ∈ R :=
+    fun M hM => mapsTo_range_sub_one_of_commute hM
   -- the two factors near `0`
   obtain ⟨u, hu0c, hu0, hev⟩ := exists_expA_sub_one_eq_mul F (A := Module.End F V)
   have hg₁1 : g₁ 1 = 1 := by
     show LinearMap.det (πK ∘ₗ (1 : Module.End F V) ∘ₗ K.subtype) = 1
-    rw [compress_eq_restrict hπK (M := 1) (fun v hv => hv)]
+    rw [comp_comp_subtype_eq_restrict hπK (M := 1) (fun v hv => hv)]
     have : (1 : Module.End F V).restrict (p := K) (q := K) (fun v hv => hv) = 1 := by
       ext w; rfl
     rw [this, map_one]
@@ -128,7 +77,7 @@ theorem exists_absF_det_mul_expA_sub_one [TopologicalSpace (Module.End F V)]
   set d₂ := g₂ (A - 1)
   have hd₂ : d₂ ≠ 0 := by
     show LinearMap.det (πR ∘ₗ (A - 1) ∘ₗ R.subtype) ≠ 0
-    rw [compress_eq_restrict hπR (hstR _ (Commute.sub_right (Commute.refl A) (Commute.one_right A)))]
+    rw [comp_comp_subtype_eq_restrict hπR (hstR _ (Commute.sub_right (Commute.refl A) (Commute.one_right A)))]
     rw [Ne, LinearMap.det_eq_zero_iff_ker_ne_bot, not_not, eq_bot_iff]
     intro w hw
     rw [LinearMap.mem_ker] at hw
@@ -146,11 +95,10 @@ theorem exists_absF_det_mul_expA_sub_one [TopologicalSpace (Module.End F V)]
       have := (hg₂.tendsto _).comp hM.tendsto
       rwa [e] at this
     exact (continuousAt_absF (F := F) hd₂).tendsto.comp ht
-  set g₀ := fun M : Module.End F V => LinearMap.det (πK ∘ₗ M ∘ₗ K.subtype)
-  have hT0 : Tendsto (fun Y => absF (g₀ Y)) (𝓝 0) (𝓝 (absF (g₀ 0))) :=
-    (continuous_absF.comp (continuous_det_compress K πK)).tendsto 0
-  have hb0 := hT0.eventually (gt_mem_nhds (lt_add_one (absF (g₀ 0))))
-  refine ⟨1 / 2 * (m / 2), 2 * (2 * m), (absF (g₀ 0) + 1) * 2 * (2 * m), by positivity, ?_⟩
+  have hT0 : Tendsto (fun Y => absF (g₁ Y)) (𝓝 0) (𝓝 (absF (g₁ 0))) :=
+    (continuous_absF.comp hg₁).tendsto 0
+  have hb0 := hT0.eventually (gt_mem_nhds (lt_add_one (absF (g₁ 0))))
+  refine ⟨1 / 2 * (m / 2), 2 * (2 * m), (absF (g₁ 0) + 1) * 2 * (2 * m), by positivity, ?_⟩
   have hb1 := hT1.eventually (Ioo_mem_nhds (by norm_num : (1 / 2 : ℝ) < 1) (by norm_num : (1 : ℝ) < 2))
   have hb2 := hT2.eventually (Ioo_mem_nhds (by linarith : m / 2 < m) (by linarith : m < 2 * m))
   filter_upwards [hev, hb1, hb2, hb0] with Y ⟨hYe, hYc⟩ ⟨h1l, h1u⟩ ⟨h2l, h2u⟩ h0 hAY hY
@@ -174,15 +122,15 @@ theorem exists_absF_det_mul_expA_sub_one [TopologicalSpace (Module.End F V)]
     rw [← Module.End.mul_apply A (expA F Y), hAe.eq, Module.End.mul_apply, hw, hexp]
     simp [Module.End.mul_apply]
   have hK1 : LinearMap.det ((u Y).restrict huK) = g₁ (u Y) :=
-    (congrArg LinearMap.det (compress_eq_restrict hπK huK)).symm
+    (congrArg LinearMap.det (comp_comp_subtype_eq_restrict hπK huK)).symm
   have hR2 : LinearMap.det (M.restrict hMR) = g₂ M :=
-    (congrArg LinearMap.det (compress_eq_restrict hπR hMR)).symm
+    (congrArg LinearMap.det (comp_comp_subtype_eq_restrict hπR hMR)).symm
   have hval : absF (LinearMap.det M) =
       absF (LinearMap.det (Y.restrict hY)) * absF (g₁ (u Y)) * absF (g₂ M) := by
     rw [hdet, hMKeq, map_mul, hK1, hR2, absF_mul, absF_mul]
   have hn := absF_nonneg (LinearMap.det (Y.restrict hY))
-  have hY0 : LinearMap.det (Y.restrict hY) = g₀ Y :=
-    (congrArg LinearMap.det (compress_eq_restrict hπK hY)).symm
+  have hY0 : LinearMap.det (Y.restrict hY) = g₁ Y :=
+    (congrArg LinearMap.det (comp_comp_subtype_eq_restrict hπK hY)).symm
   rw [hval]
   refine ⟨?_, ?_, ?_⟩
   · calc 1 / 2 * (m / 2) * absF (LinearMap.det (Y.restrict hY))
@@ -192,21 +140,8 @@ theorem exists_absF_det_mul_expA_sub_one [TopologicalSpace (Module.End F V)]
           gcongr <;> first | exact absF_nonneg _ | linarith
       _ = _ := by ring
   · rw [hY0] at hn ⊢
-    calc _ ≤ (absF (g₀ 0) + 1) * 2 * (2 * m) := by
+    calc _ ≤ (absF (g₁ 0) + 1) * 2 * (2 * m) := by
           gcongr <;> first | exact absF_nonneg _ | linarith
       _ = _ := by ring
-
-/-- The determinant of a restriction to a submodule of a submodule. -/
-theorem det_restrict_restrict {M : Module.End F V} {U : Submodule F V} (hU : ∀ v ∈ U, M v ∈ U)
-    {K : Submodule F U} (hK : ∀ w ∈ K, M.restrict hU w ∈ K)
-    (hK' : ∀ v ∈ K.map U.subtype, M v ∈ K.map U.subtype) :
-    LinearMap.det ((M.restrict hU).restrict hK) = LinearMap.det (M.restrict hK') := by
-  let e : K ≃ₗ[F] K.map U.subtype := Submodule.equivMapOfInjective _ U.injective_subtype K
-  have h : e.conj ((M.restrict hU).restrict hK) = M.restrict hK' := by
-    ext w
-    obtain ⟨k, rfl⟩ := e.surjective w
-    simp [LinearEquiv.conj_apply, e, LinearMap.coe_restrict_apply]
-  rw [← h]
-  exact (LinearMap.det_conj _ e).symm
 
 end GSpinGGP

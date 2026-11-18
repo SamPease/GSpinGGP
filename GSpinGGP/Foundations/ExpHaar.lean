@@ -18,7 +18,10 @@ the measures).
   `‖e^x − e^y‖ = ‖x − y‖` on a small ball;
 * `exists_expA_isometry`: the same for `expA` on a finite-dimensional algebra `A` (norm
   `‖lmulPi ·‖`), with `exp` onto the ball around `1`;
+* `exists_expA_sub_one_eq_mul`: `e^X − 1 = X u(X)` near `0`, `u` continuous at `0`, `u(0) = 1`;
 * `isEmbedding_units_val`: `Aˣ → A` is a topological embedding;
+* `exists_expA_chart`: the `exp` chart `Φ : 𝔤 → 𝓗/(scalars)` with the hypotheses of
+  `integrable_of_chart`; `setOf_expA_eq_image`: `Φ(S) = e^S`;
 * `exists_isAddHaarMeasure_eq_expA_image`: for a group `𝓗 ⊆ Aˣ` whose Lie algebra near `0` is
   `𝔤 ⊕ F·1`, and every Haar measure on `𝓗/(scalars)`, some additive Haar measure `μ` on `𝔤` has
   `μ(S) = μK(e^S)` for `S` near `0`.
@@ -942,6 +945,22 @@ theorem exists_expA_chart
       rw [← hext, Measure.smul_apply, Measure.smul_apply, Measure.restrict_apply hS, hSL]
     rw [h1, hν S hS, hSL]
 
+/-- The image of a measurable set under the chart of `exists_expA_chart` is the set `e^S Z`. -/
+theorem setOf_expA_eq_image {𝓗 : Type*} [Group 𝓗] (j : 𝓗 →* Aˣ)
+    (hj : Function.Injective fun h => ((j h : Aˣ) : A)) (Z : Subgroup 𝓗) {𝔤 : Submodule F A}
+    {Φ : 𝔤 → 𝓗 ⧸ Z} {U S : Set 𝔤}
+    (hΦU : ∀ X ∈ U, ∃ h : 𝓗, ((j h : Aˣ) : A) = expA F (X : A) ∧ Φ X = (h : 𝓗 ⧸ Z))
+    (hSU : S ⊆ U) :
+    {q | ∃ X ∈ S, ∃ h : 𝓗, ((j h : Aˣ) : A) = expA F (X : A) ∧ q = (h : 𝓗 ⧸ Z)} = Φ '' S := by
+  ext q
+  constructor
+  · rintro ⟨X, hXS, h, hh, rfl⟩
+    obtain ⟨h', hh', hΦh'⟩ := hΦU X (hSU hXS)
+    exact ⟨X, hXS, by rw [hΦh', hj (hh'.trans hh.symm)]⟩
+  · rintro ⟨X, hXS, rfl⟩
+    obtain ⟨h, hh, hΦh⟩ := hΦU X (hSU hXS)
+    exact ⟨X, hXS, h, hh, hΦh⟩
+
 /-- **`exp` carries an additive Haar measure to a Haar measure near `0`** (`p`-adic case, Jacobian
 `1`), in the form of an image set: with the hypotheses of `exists_expA_chart`, for every Haar
 measure `μK` on `𝓗/Z` there is an additive Haar measure `μ` on `𝔤` with `μ(S) = μK(e^S Z)` for
@@ -966,17 +985,7 @@ theorem exists_isAddHaarMeasure_eq_expA_image
   obtain ⟨μ, hμ, Φ, U, hUo, hU0, -, -, hΦU, hμS⟩ :=
     exists_expA_chart j hj Z hZ hscal 𝔤 h𝔤 hexp hlog μK
   refine ⟨μ, hμ, U, hUo.mem_nhds hU0, fun S hS hSU => ?_⟩
-  rw [hμS S hSU hS]
-  congr 1
-  ext q
-  constructor
-  · rintro ⟨X, hXS, rfl⟩
-    obtain ⟨h, hh, hΦh⟩ := hΦU X (hSU hXS)
-    exact ⟨X, hXS, h, hh, hΦh⟩
-  · rintro ⟨X, hXS, h, hh, rfl⟩
-    obtain ⟨h', hh', hΦh'⟩ := hΦU X (hSU hXS)
-    refine ⟨X, hXS, ?_⟩
-    rw [hΦh', hj.injective (hh'.trans hh.symm)]
+  rw [hμS S hSU hS, setOf_expA_eq_image j hj.injective Z hΦU hSU]
 
 end ExpChart
 
