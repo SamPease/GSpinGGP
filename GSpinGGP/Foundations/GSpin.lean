@@ -71,6 +71,17 @@ Mathlib has no Witt index. -/
 def wittIndex (Q : QuadraticForm K V) : ℕ :=
   sSup {n | ∃ U : Submodule K V, IsTotallyIsotropic Q U ∧ finrank K U = n}
 
+theorem wittIndex_bdd [FiniteDimensional K V] (Q : QuadraticForm K V) :
+    BddAbove {n | ∃ U : Submodule K V, IsTotallyIsotropic Q U ∧ finrank K U = n} :=
+  ⟨finrank K V, by rintro _ ⟨U, -, rfl⟩; exact Submodule.finrank_le U⟩
+
+/-- The Witt index is attained by a totally isotropic subspace. -/
+theorem exists_wittIndex [FiniteDimensional K V] (Q : QuadraticForm K V) :
+    ∃ U : Submodule K V, IsTotallyIsotropic Q U ∧ finrank K U = wittIndex Q := by
+  have hne : ({n | ∃ U : Submodule K V, IsTotallyIsotropic Q U ∧ finrank K U = n} : Set ℕ).Nonempty :=
+    ⟨0, ⊥, fun u hu => by rw [(Submodule.mem_bot K).1 hu, map_zero], finrank_bot K V⟩
+  exact Nat.sSup_mem hne (wittIndex_bdd Q)
+
 /-- `GSpin(V)` (equivalently `SO(V)`) is quasi-split iff the anisotropic kernel has dimension
 at most `2`, i.e. `dim V - 2 w(V) ≤ 2` (Thesis §5.1.4). -/
 def IsQuasiSplitQF (Q : QuadraticForm K V) : Prop :=
@@ -1694,6 +1705,40 @@ def top (F : IsotropicFlag Q) : Submodule K V := F.sub (Fin.last F.len)
 Borel subgroup (when `GSpin(V)` is quasi-split) (Thesis §4.4). -/
 def IsFull (F : IsotropicFlag Q) : Prop :=
   F.len = wittIndex Q ∧ ∀ i, finrank K (F.sub i) = (i : ℕ)
+
+/-- **Full isotropic flags exist**: take a totally isotropic subspace of dimension the Witt index
+and the flag spanned by the initial segments of a basis of it. -/
+theorem exists_isFull [FiniteDimensional K V] (Q : QuadraticForm K V) :
+    ∃ Fl : IsotropicFlag Q, Fl.IsFull := by
+  obtain ⟨U, hUi, hUw⟩ := exists_wittIndex Q
+  set w := wittIndex Q
+  let b : Module.Basis (Fin w) K U := Module.finBasisOfFinrankEq K U hUw
+  let v : Fin w → V := fun j => (b j : V)
+  have hv : LinearIndependent K v :=
+    b.linearIndependent.map' U.subtype (Submodule.ker_subtype U)
+  have hle : ∀ i : Fin (w + 1), (i : ℕ) ≤ w := fun i => Nat.lt_succ_iff.mp i.2
+  let sub : Fin (w + 1) → Submodule K V := fun i =>
+    Submodule.span K (Set.range (v ∘ Fin.castLE (hle i)))
+  have hfin : ∀ i, finrank K (sub i) = (i : ℕ) := fun i => by
+    rw [finrank_span_eq_card (hv.comp _ (Fin.castLE_injective _)), Fintype.card_fin]
+  have hmono : Monotone sub := by
+    intro i j hij
+    apply Submodule.span_mono
+    rintro _ ⟨l, rfl⟩
+    exact ⟨Fin.castLE hij l, rfl⟩
+  refine ⟨⟨w, sub, ?_, ?_, ?_⟩, rfl, hfin⟩
+  · exact Submodule.finrank_eq_zero.mp (hfin 0)
+  · intro i j hij
+    refine lt_of_le_of_ne (hmono hij.le) fun h => ?_
+    have := congrArg (fun S : Submodule K V => finrank K S) h
+    simp only [hfin] at this
+    exact (Fin.val_injective this ▸ hij).false
+  · intro i u hu
+    have hsub : sub i ≤ U := by
+      rw [Submodule.span_le]
+      rintro _ ⟨l, rfl⟩
+      exact (b (Fin.castLE (hle i) l)).2
+    exact hUi u (hsub hu)
 
 end IsotropicFlag
 
@@ -3484,6 +3529,22 @@ def flag : IsotropicFlag d.QV where
 (Thesis §5.2). -/
 def N : Subgroup (GSpin d.QV) := flagUnip d.flag
 
+/-- For `r = 0` the flag `Z_•` is empty: its top `Z_r` is `0`. -/
+theorem flag_top_eq_bot (hr : d.r = 0) : d.flag.top = ⊥ := by
+  change Submodule.span K (Set.range fun j : Fin d.r => d.zV ((d.r : ℤ) - (j : ℕ))) = ⊥
+  rw [Submodule.span_eq_bot]
+  rintro _ ⟨j, rfl⟩
+  exact absurd j.2 (by omega)
+
+/-- For `r = 0`, elements of `N` act trivially on `V`: `P(n) = 1`. -/
+theorem specP_eq_one_of_mem_N (hr : d.r = 0) {n : GSpin d.QV} (hn : n ∈ d.N) :
+    specP d.QV n = 1 := by
+  obtain ⟨-, -, h3, -⟩ := hn
+  refine LinearEquiv.ext fun v => ?_
+  have := h3 v (by rw [d.flag_top_eq_bot hr]; simp)
+  rw [d.flag_top_eq_bot hr, Submodule.mem_bot, sub_eq_zero] at this
+  exact this
+
 /-- Elements of `G` are determined by their two components. -/
 theorem G_ext {g h : d.G} (h1 : d.fst g = d.fst h) (h2 : d.snd g = d.snd h) : g = h := by
   apply Subtype.ext
@@ -3968,11 +4029,7 @@ theorem center_inf_H_eq_AGH : Subgroup.center d.G ⊓ d.H = d.AGH := by
           have := eq_id_of_det_eq_one_of_finrank_le_one hm (det_specP a)
           exact LinearEquiv.ext fun w => congr($this w)
         -- `Z_r = 0`, so `P(n) = 1`
-        have htop : d.flag.top = ⊥ := by
-          change Submodule.span K (Set.range fun j : Fin d.r => d.zV ((d.r : ℤ) - (j : ℕ))) = ⊥
-          rw [Submodule.span_eq_bot]
-          rintro _ ⟨j, rfl⟩
-          exact absurd j.2 (by omega)
+        have htop : d.flag.top = ⊥ := d.flag_top_eq_bot hr
         have hPn1 : ∀ v, specP d.QV ((d.incl a)⁻¹ * b) v = v := by
           intro v
           have h := hn2 v (by rw [htop]; intro t ht; rw [(Submodule.mem_bot K).mp ht]; simp)
