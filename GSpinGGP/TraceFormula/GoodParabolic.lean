@@ -9,7 +9,35 @@ import GSpinGGP.Foundations.QuadraticForms
 /-!
 # The good minimal parabolic subgroup of Thesis Prop. 8.1.1(i)
 
-Test file (work in progress).
+Let `z₀ = w₀, w₁, …, w_l` be a maximal frame of `V₀ = W ⊕ ⟨z₀⟩` (`WeakCartan.IsFrame`,
+`q(wᵢ) = (-1)ⁱ ν`; it exists by `WeakCartan.exists_isFrame`), realised on the space
+`V0 = W × F` (`iota0 : V₀ → V`). Following the proof of Thesis Prop. 8.1.1(i) (BP Prop. 6.4.1):
+
+* `flagW`: the flag `⟨u′₁⟩ ⊂ ⟨u′₁, u′₂⟩ ⊂ ⋯` of `W`, `u′ᵢ = w_{2i-1} + w_{2i}`;
+* `flagV`: the flag `⟨z_{-r}⟩ ⊂ ⋯ ⊂ ⟨z_{-r}, …, z_{-1}⟩ ⊂ ⟨z_{-r}, …, z_{-1}, u₁⟩ ⊂ ⋯` of `V`,
+  `uᵢ = w_{2i-2} + w_{2i-1}`; its stabilizer is `P̄_min = P̄_{V₀} T N̄`, with `P̄` opposite to the
+  stabilizer `P` of the flag `⟨z_r⟩ ⊂ ⋯ ⊂ ⟨z_r, …, z_1⟩` defining `N`.
+
+Results:
+
+* `isFull_flagW`, `isFull_flagV`: both flags are full. The complement of the hyperbolic pairs is
+  anisotropic by the maximality of the frame (`WeakCartan.IsFrame.eq_zero_of_isotropic`), so the
+  span of a flag is a maximal totally isotropic subspace (`IsHypFrame.wittIndex_eq`, from Tau
+  Ceti's `QuadraticForm.finrank_eq_wittIndex_of_maximal`).
+* `H_inf_whittU_eq_bot`: `H ∩ Ū_min = 1`. The thesis shows `H ∩ P̄_min = GSpin(W_an)`; for the
+  unipotent radical: `N ∩ P̄ = 1` (`specP_eq_one_of_mem_N`), then the frame induction
+  (`A0_eq_id`) and the unipotence on `W_an`.
+* `isOpen_H_mul_whittB`: `H(F) P̄_min(F)` is open in `G(F)`, from the statement that
+  `P̄_W N P̄_V` is a neighbourhood of `1` in `GSpin(V)` (`flagStab_mul_N_mul_flagStab_mem_nhds`,
+  `sorry`): `H P̄ = {g : g_W⁻¹ g_V ∈ P̄_W N P̄_V}` (`mem_H_mul_whittB_of_nPart`), and a product of
+  two subgroups that is a neighbourhood of `1` is open (`isOpen_subgroup_mul_of_mem_nhds_one`).
+
+General helpers: `IsotropicFlag.ofFamily` (the flag of initial segments of a family with totally
+isotropic span), `orthFrame`/`isHypFrame_orthFrame` (a hyperbolic frame from its polar relations).
+
+The Haar-null complement of `H(F) P̄_min(F)` (the remaining clause of
+`exists_good_minimal_parabolic`) and the `H(F)`-conjugacy of good minimal parabolics are not
+treated here.
 -/
 
 noncomputable section
@@ -656,11 +684,6 @@ theorem eq_one_of_specP_eq_one (hQ : IsNondeg Q) {g : GSpin Q} (h1 : specP Q g =
     isNilpotent_iff_eq_zero, sub_eq_zero, Units.val_eq_one] at hn
   rw [hn, map_one]
 
-/-- `P(g)` preserves `polar`. -/
-theorem polar_specP (g : GSpin Q) (x y : V) :
-    polar Q (specP Q g x) (specP Q g y) = polar Q x y := by
-  simp only [polar, ← map_add, specP_isometry]
-
 end GSpinScalar
 
 namespace GGPData
@@ -825,7 +848,7 @@ theorem specP_incl_iota0 (a : GSpin d.QW) (x : d.V0) :
 
 theorem polar_A0 (a : GSpin d.QW) (x y : d.V0) :
     polar d.Q0 (d.A0 a x) (d.A0 a y) = polar d.Q0 x y := by
-  rw [A0_apply, A0_apply, polar_prod, polar_prod, polar_specP]
+  rw [A0_apply, A0_apply, polar_prod, polar_prod, Steinberg.polar_specP]
 
 end GGPData
 
@@ -1107,6 +1130,90 @@ theorem H_inf_whittU_eq_bot : d.H ⊓ d.whittU (flagW hb hf h0) (flagV hb hf h0)
   · rw [map_one, ← hbb', hbb1, ha1, map_one]
 
 end HU
+
+end GGPData
+
+/-! ## 8. Openness of `H·P̄_min` -/
+
+open scoped Pointwise Topology
+
+section OpenDoubleCoset
+
+variable {G₀ : Type*} [Group G₀] [TopologicalSpace G₀] [IsTopologicalGroup G₀]
+
+/-- A product `H·B` of two subgroups is open as soon as it is a neighbourhood of `1`: it is
+stable under left multiplication by `H` and right multiplication by `B`. -/
+theorem isOpen_subgroup_mul_of_mem_nhds_one (H B : Subgroup G₀)
+    (h : (H : Set G₀) * (B : Set G₀) ∈ 𝓝 (1 : G₀)) : IsOpen ((H : Set G₀) * (B : Set G₀)) := by
+  rw [isOpen_iff_mem_nhds]
+  rintro _ ⟨x, hx, y, hy, rfl⟩
+  have hc : ContinuousAt (fun z : G₀ => x⁻¹ * z * y⁻¹) (x * y) := by fun_prop
+  have h1 : (fun z : G₀ => x⁻¹ * z * y⁻¹) (x * y) = 1 := by group
+  have hpre := hc.preimage_mem_nhds (h1 ▸ h)
+  refine Filter.mem_of_superset hpre fun z hz => ?_
+  obtain ⟨h', hh', b', hb', e⟩ := hz
+  refine ⟨x * h', H.mul_mem hx hh', b' * y, B.mul_mem hb' hy, ?_⟩
+  have e' : z = x * (h' * b') * y := by dsimp only at e; rw [e]; group
+  rw [e']; group
+
+end OpenDoubleCoset
+
+namespace GGPData
+
+variable {F : Type} [NontriviallyNormedField F] [PAdicField F] (d : GGPData F)
+
+/-- **`H·P̄` described through `n(g) = g_W⁻¹ g_V`**: if `n(g) ∈ P̄_W N P̄_V` (with `P̄_W ⊆ GSpin(W)`
+embedded in `GSpin(V)`), then `g ∈ H·P̄`: for `n(g) = q n p`,
+`g = (g_W q, g_W q n) · (q⁻¹, p)`. -/
+theorem mem_H_mul_whittB_of_nPart {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV}
+    {g : d.G} (hg : d.nPart g ∈ (d.incl '' (flagStab FW : Set (GSpin d.QW))) * (d.N : Set _) *
+      (flagStab FV : Set (GSpin d.QV))) :
+    g ∈ (d.H : Set d.G) * (d.whittB FW FV : Set d.G) := by
+  obtain ⟨_, ⟨_, ⟨q, hq, rfl⟩, n, hn, rfl⟩, p, hp, he⟩ := hg
+  set a := d.fst g * q
+  refine ⟨d.pair (a, d.incl a * n), ?_, d.pair (q⁻¹, p), ?_, ?_⟩
+  · show d.nPart _ ∈ d.N
+    rw [nPart, fst_pair, snd_pair, inv_mul_cancel_left]
+    exact hn
+  · exact ⟨show q⁻¹ ∈ flagStab FW from (flagStab FW).inv_mem hq, show p ∈ flagStab FV from hp⟩
+  · refine d.G_ext ?_ ?_
+    · rw [map_mul, fst_pair, fst_pair]
+      simp [a]
+    · rw [map_mul, snd_pair, snd_pair]
+      have : d.snd g = d.incl (d.fst g) * d.nPart g := by rw [nPart, mul_inv_cancel_left]
+      rw [this, ← he]
+      simp only [a, map_mul]
+      group
+
+section Open
+
+variable {d} {n l : ℕ} {b : Module.Basis (Fin n) F d.V0}
+  (hb : IsOrthoBasis d.Q0 b) (hf : WeakCartan.IsFrame d.Q0 b (d.Q0 d.z00) l)
+  (h0 : ∀ h, b ⟨0, h⟩ = d.z00)
+
+/-- **`P̄_W N P̄_V` is a neighbourhood of `1` in `GSpin(V)`** for the explicit flags (equivalently,
+`H·P̄_min` is open in `G`; Thesis Prop. 8.1.1(i), claim (8.1.1.1) and its consequence for
+`P̄_min = P̄₀ T N̄`). The thesis deduces it from `H ∩ P̄_min = GSpin(W_an)` by a dimension count
+(`H P̄_min` is Zariski open). A direct proof: for `x ∈ GSpin(V)` near `1`, solve
+`x · F_V = q n · F_V` (`q ∈ P̄_W`, `n ∈ N`) for the flag `F_V` vector by vector, alternating
+between the flag of `V` and that of `W` as in the frame induction; each step divides by a pairing
+which is nonzero at `x = 1`, and Witt's extension theorem produces `q` and `n`. -/
+theorem flagStab_mul_N_mul_flagStab_mem_nhds :
+    (d.incl '' (flagStab (flagW hb hf h0) : Set (GSpin d.QW))) * (d.N : Set _) *
+      (flagStab (flagV hb hf h0) : Set (GSpin d.QV)) ∈ 𝓝 (1 : GSpin d.QV) := by
+  sorry
+
+/-- **`H·P̄_min` is open in `G(F)`** for the explicit good minimal parabolic (Thesis Prop.
+8.1.1(i)). -/
+theorem isOpen_H_mul_whittB :
+    IsOpen ((d.H : Set d.G) * (d.whittB (flagW hb hf h0) (flagV hb hf h0) : Set d.G)) := by
+  refine isOpen_subgroup_mul_of_mem_nhds_one _ _ ?_
+  have hc : ContinuousAt d.nPart 1 := d.continuous_nPart_GSpin.continuousAt
+  have h1 : d.nPart 1 = 1 := by simp [nPart]
+  have hpre := hc.preimage_mem_nhds (h1 ▸ flagStab_mul_N_mul_flagStab_mem_nhds hb hf h0)
+  exact Filter.mem_of_superset hpre fun g hg => d.mem_H_mul_whittB_of_nPart hg
+
+end Open
 
 end GGPData
 
