@@ -7,8 +7,6 @@ import GSpinGGP.Literature.Measure
 import GSpinGGP.GGP.Germs
 import GSpinGGP.HarmonicAnalysis.LogNorm
 import GSpinGGP.HarmonicAnalysis.PolynomialGrowth
-import GSpinGGP.HarmonicAnalysis.CosetSpaceInvariance
-import GSpinGGP.TraceFormula.ThetaF
 
 /-!
 # The local trace formula: analytic objects and estimates
@@ -938,7 +936,9 @@ theorem logNormHG_eq_fiberInf_logNormModAG :
 pp. 151–152): given the weak Cartan decomposition with the comparison `σ_{A_G\G} ≪ σ_{H\G}` on
 the cone and its polynomial growth (`WeakCartanData`, BP (6.7.11), 6.7.1(ii)(b), (6.7.12)), and
 the outer regularity of the Weil measure (used only for the measurability of `xiHG`), the
-integral `∫ Ξ^{H\G}(x)² σ_{H\G}(x)^{-d} dx` converges for some `d > 0`. -/
+integral `∫ Ξ^{H\G}(x)² σ_{H\G}(x)^{-d} dx` converges for some `d > 0`. The outer regularity
+follows from Mathlib once `HGQuot` is shown Hausdorff, locally compact and second countable
+(`weilMeasureHG` is already finite on compact sets, `isFiniteMeasureOnCompacts_weilMeasureHG`). -/
 theorem prop_6_7_1_iii_of_weakCartanData (C₀ : Set ↥d.G) (hC₀ : IsCompact C₀)
     (hC₀' : (interior C₀).Nonempty) [d.weilMeasureHG.OuterRegular]
     (W : WeakCartanData d.mkHG d.logNormModAG) :

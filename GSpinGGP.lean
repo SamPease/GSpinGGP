@@ -159,7 +159,8 @@ import GSpinGGP.TraceFormula
 import GSpinGGP.HarmonicAnalysis.LogNorm
 import GSpinGGP.HarmonicAnalysis.RelativeXi
 import GSpinGGP.HarmonicAnalysis.PolynomialGrowth
-import GSpinGGP.HarmonicAnalysis.CosetSpaceInvariance
+import GSpinGGP.HarmonicAnalysis.QuotientUnimodular
+import GSpinGGP.Foundations.CosetSpaceTranslate
 import GSpinGGP.Foundations.NormDescent
 import GSpinGGP.TraceFormula.LogNormDescent
 import GSpinGGP.Main

@@ -61,7 +61,7 @@ def HasPolynomialGrowth (π : G → X) (σX : X → ℝ) (D : Set G) : Prop :=
 
 /-- The real inequality behind the summation in BP's proof of 6.7.1(iii):
 `(k + 1)^{-d} (k + 3)^N ≤ 3^N ((k + 1)^{d - N})⁻¹`. -/
-theorem rpow_neg_mul_pow_le (k : ℕ) (N : ℕ) (d : ℝ) :
+private theorem rpow_neg_mul_pow_le (k : ℕ) (N : ℕ) (d : ℝ) :
     ((k : ℝ) + 1) ^ (-d) * ((k : ℝ) + 3) ^ N ≤ 3 ^ N * (((k : ℝ) + 1) ^ (d - N))⁻¹ := by
   have hk : (0 : ℝ) < (k : ℝ) + 1 := by positivity
   have h3 : ((k : ℝ) + 3) ^ N ≤ (3 * ((k : ℝ) + 1)) ^ N :=
@@ -270,17 +270,19 @@ end Integrability
 
 variable [TopologicalSpace G]
 
-/-- **The input of BP's proof of (6.7.7)** (BP pp. 151–152), for a log-norm `τ` on `G` and
-`σ_X = π_* τ = fiberInf τ π`:
+/-- **The input of BP's proof of (6.7.7)** (BP pp. 151–152; Thesis Prop 8.4.1(iii)), for a log-norm
+`τ` on `G` and `σ_X = π_* τ = fiberInf τ π`:
 * `exists_eq_mul`: every `x ∈ X` is `π(s k)` with `s ∈ S`, `k ∈ K` (BP (6.7.11), the weak Cartan
-  decomposition `G = H A₀⁺ A K` of Lemma 6.6.2(ii), with `S = A₀⁺A`);
-* `le_fiberInf`: `τ(s) ≤ c σ_X(π s)` on `S` (the nontrivial half of BP Prop 6.7.1(ii)(b),
-  `σ_{H\G}(a a₀) ∼ σ_G(a a₀)`);
+  decomposition `G = H A₀⁺ A K` of BP Lemma 6.6.2(ii) = Thesis Lemma 8.3.2(ii), with `S = A₀⁺A`);
+* `le_fiberInf`: `τ(s) ≤ c σ_X(π s)` on `S` (the nontrivial half of BP Prop 6.7.1(ii)(b) =
+  Thesis Prop 8.4.1(ii)(b), `σ_{H\G}(a a₀) ∼ σ_G(a a₀)`);
 * `growth`: the image in `X` of `{s ∈ S ; τ(s) < R}` is covered by `≤ M (1 + R)^N` translates
-  `π(j C_S)` (BP (6.7.12), polynomial growth of `A_min = A₀A` with `C_S = C_min`).
+  `π(j C_S)` (BP (6.7.12), polynomial growth of `A_min = A₀A` with `C_S = C_min`; BP leaves it to
+  the reader, and it is not in the thesis text).
 
 For `X = H\G/A_G` the log-norm `τ` must be invariant modulo `A_G` (e.g. `σ_{A_G\G}`): `σ_X` is
-`A_G`-invariant, so the comparison of `le_fiberInf` can only hold modulo `A_G`. -/
+`A_G`-invariant, so the comparison of `le_fiberInf` can only hold modulo `A_G`; and the cone
+should be taken `A_G`-stable, `S = A_G A₀⁺ A`. -/
 structure WeakCartanData (π : G → X) (τ : G → ℝ) where
   /-- the "cone" (BP: `A₀⁺ A`) -/
   S : Set G

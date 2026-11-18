@@ -133,7 +133,8 @@ variable [TopologicalSpace G] [IsTopologicalGroup G]
 
 /-- A compact set `K` is covered by finitely many **right** translates `C j` of a set `C` with
 nonempty interior. (Mathlib's `compact_covered_by_mul_left_translates` is the left version; the
-right one is what a right-invariant measure on `H\G` needs.) -/
+right one is what a right-invariant measure on `H\G` needs. It is also
+`IsCompact.exists_finite_cover_smul` for `Gᵐᵒᵖ` acting on `G`, applied to `interior C`.) -/
 theorem exists_finset_subset_iUnion_image_mul_right {K C : Set G} (hK : IsCompact K)
     (hC : (interior C).Nonempty) : ∃ t : Finset G, K ⊆ ⋃ j ∈ t, (· * j) '' C := by
   obtain ⟨c₀, hc₀⟩ := hC
@@ -197,7 +198,7 @@ end Covering
 /-! ### From volumes to `Ξ` -/
 
 /-- If `a ≤ n b` with `n ≥ 1`, then `b⁻¹ ≤ n a⁻¹` (in `ℝ≥0∞`, including `0` and `∞`). -/
-theorem _root_.ENNReal.inv_le_natCast_mul_inv {a b : ℝ≥0∞} {n : ℕ} (hn : 0 < n) (h : a ≤ n * b) :
+private theorem ennreal_inv_le_natCast_mul_inv {a b : ℝ≥0∞} {n : ℕ} (hn : 0 < n) (h : a ≤ n * b) :
     b⁻¹ ≤ n * a⁻¹ := by
   have hn0 : (n : ℝ≥0∞) ≠ 0 := by exact_mod_cast hn.ne'
   rw [← div_eq_mul_inv, ← ENNReal.inv_div (Or.inl (ENNReal.natCast_ne_top n)) (Or.inl hn0),
@@ -205,7 +206,7 @@ theorem _root_.ENNReal.inv_le_natCast_mul_inv {a b : ℝ≥0∞} {n : ℕ} (hn :
   exact h
 
 /-- If `a ≤ n b` and `b ≤ m a` (with `n ≥ 1`), then `(b⁻¹).toReal ≤ n (a⁻¹).toReal`. -/
-theorem _root_.ENNReal.toReal_inv_le_natCast_mul {a b : ℝ≥0∞} {n m : ℕ} (hn : 0 < n) (hab : a ≤ n * b)
+private theorem ennreal_toReal_inv_le_natCast_mul {a b : ℝ≥0∞} {n m : ℕ} (hn : 0 < n) (hab : a ≤ n * b)
     (hba : b ≤ m * a) : b⁻¹.toReal ≤ n * a⁻¹.toReal := by
   rcases eq_or_ne a 0 with rfl | ha
   · have : b = 0 := by simpa using hba
@@ -213,7 +214,7 @@ theorem _root_.ENNReal.toReal_inv_le_natCast_mul {a b : ℝ≥0∞} {n m : ℕ} 
   have hfin : (n : ℝ≥0∞) * a⁻¹ ≠ ∞ :=
     ENNReal.mul_ne_top (ENNReal.natCast_ne_top n) (ENNReal.inv_ne_top.2 ha)
   calc b⁻¹.toReal ≤ ((n : ℝ≥0∞) * a⁻¹).toReal :=
-        ENNReal.toReal_mono hfin (ENNReal.inv_le_natCast_mul_inv hn hab)
+        ENNReal.toReal_mono hfin (ennreal_inv_le_natCast_mul_inv hn hab)
     _ = n * a⁻¹.toReal := by rw [ENNReal.toReal_mul, ENNReal.toReal_natCast]
 
 /-- Two-sided comparability of volumes gives comparability of `Ξ`:
@@ -222,7 +223,7 @@ theorem relXi_le_of_relVol_le {C : Set G} {g g' : G} {n m : ℕ} (hn : 0 < n)
     (h₁ : relVol π μ C g ≤ n * relVol π μ C g') (h₂ : relVol π μ C g' ≤ m * relVol π μ C g) :
     relXi π μ C g' ≤ Real.sqrt n * relXi π μ C g := by
   rw [relXi_eq_sqrt, relXi_eq_sqrt, ← Real.sqrt_mul (Nat.cast_nonneg n)]
-  exact Real.sqrt_le_sqrt (ENNReal.toReal_inv_le_natCast_mul hn h₁ h₂)
+  exact Real.sqrt_le_sqrt (ennreal_toReal_inv_le_natCast_mul hn h₁ h₂)
 
 section Translation
 
@@ -254,7 +255,7 @@ theorem exists_relXi_le_relXi {C C' : Set G} (hC : IsCompact C) (hCi : (interior
   obtain ⟨m, -, h₂⟩ := hπ.exists_relVol_le hC' hCi
   refine ⟨Real.sqrt n, Real.sqrt_pos.2 (by exact_mod_cast hn), fun g => ?_⟩
   rw [relXi_eq_sqrt, relXi_eq_sqrt, ← Real.sqrt_mul (Nat.cast_nonneg n)]
-  exact Real.sqrt_le_sqrt (ENNReal.toReal_inv_le_natCast_mul hn (h₁ g) (h₂ g))
+  exact Real.sqrt_le_sqrt (ennreal_toReal_inv_le_natCast_mul hn (h₁ g) (h₂ g))
 
 /-- **`Ξ²` on a translate `π(gD)`** (the step of BP's proof of Prop 6.7.1(iii), p. 151, where
 "`∫_{yC} Ξ^{H\G}(x)² dx ≪ vol(yC) Ξ^{H\G}(y)²`"): for `D` compact and `C` with nonempty interior
@@ -264,7 +265,7 @@ theorem exists_ofReal_relXi_sq_le {C D : Set G} (hCi : (interior C).Nonempty) (h
       ENNReal.ofReal (relXi π μ C (g * e) ^ 2) ≤ n * (relVol π μ D g)⁻¹ := by
   obtain ⟨n, hn, h⟩ := hπ.exists_relVol_le (hD.inv.mul hD) hCi
   refine ⟨n, hn, fun g e he => (ofReal_relXi_sq_le_inv C _).trans ?_⟩
-  refine ENNReal.inv_le_natCast_mul_inv hn ((?_ : relVol π μ D g ≤ _).trans (h (g * e)))
+  refine ennreal_inv_le_natCast_mul_inv hn ((?_ : relVol π μ D g ≤ _).trans (h (g * e)))
   calc relVol π μ D g = relVol π μ D (g * e * e⁻¹) := by rw [mul_inv_cancel_right]
     _ = relVol π μ ((e⁻¹ * ·) '' D) (g * e) := relVol_mul D _ _
     _ ≤ relVol π μ (D⁻¹ * D) (g * e) := by
@@ -325,5 +326,18 @@ theorem IsInvariantQuotient.measurable_of_relXi [μ.OuterRegular] (hπ : IsInvar
   exact (hVusc.measurable.ennreal_toReal).pow_const _
 
 end Measurability
+
+/-- An invariant quotient stays invariant after composing with a homomorphism
+`q : G →* Γ` (e.g. `G → G/A` followed by `G/A → H\G/A`). -/
+theorem IsInvariantQuotient.comp_monoidHom {G Γ X : Type*} [Group G] [Group Γ]
+    [MeasurableSpace X] {p : Γ → X} {μ : Measure X} (hp : IsInvariantQuotient p μ)
+    (q : G →* Γ) : IsInvariantQuotient (p ∘ q) μ where
+  descends g g' h hgg := by
+    simp only [Function.comp_apply, map_mul] at hgg ⊢
+    exact hp.descends _ _ _ hgg
+  measure_image_mul_right A h := by
+    have e : (p ∘ q) '' ((· * h) '' A) = p '' ((· * q h) '' (q '' A)) := by
+      simp only [image_image, Function.comp_apply, map_mul]
+    rw [e, hp.measure_image_mul_right, image_comp]
 
 end GSpinGGP
