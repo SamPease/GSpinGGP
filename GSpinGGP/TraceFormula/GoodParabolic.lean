@@ -809,6 +809,142 @@ theorem specP_eq_one_of_mem_N {nn : GSpin d.QV} (hn : nn ∈ d.N)
   simp only [map_smul, hsingle]
   rfl
 
+/-- `P_W(a) ⊕ 1` on `V₀ = W ⊕ ⟨z₀⟩`: the action of `a ∈ GSpin(W) ⊆ GSpin(V)` on `V₀`. -/
+def A0 (a : GSpin d.QW) : d.V0 →ₗ[F] d.V0 :=
+  ((specP d.QW a : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).prodMap
+    LinearMap.id
+
+theorem A0_apply (a : GSpin d.QW) (x : d.V0) : d.A0 a x = (specP d.QW a x.1, x.2) := rfl
+
+theorem specP_incl_iota0 (a : GSpin d.QW) (x : d.V0) :
+    specP d.QV (d.incl a) (d.iota0 x) = d.iota0 (d.A0 a x) := by
+  have e : d.iota0 x = (x.1, 0) + (0, x.2 0 • zvec d.r 0) := by
+    rw [iota0_apply]; simp
+  rw [e, map_add, specP_incl_inl, d.specP_incl_inr, iota0_apply, A0_apply]
+  simp
+
+theorem polar_A0 (a : GSpin d.QW) (x y : d.V0) :
+    polar d.Q0 (d.A0 a x) (d.A0 a y) = polar d.Q0 x y := by
+  rw [A0_apply, A0_apply, polar_prod, polar_prod, polar_specP]
+
+end GGPData
+
+namespace WeakCartan
+
+variable {F : Type*} [NontriviallyNormedField F] {V : Type*} [AddCommGroup V] [Module F V]
+  {n : ℕ} {b : Module.Basis (Fin n) F V} {Q : QuadraticForm F V}
+
+/-- An isometry `A` fixing the basis vectors `b j`, `j ∈ S`, and moving `b m ⊥ b_S` within
+`⟨b_S⟩`, fixes `b m` (the move is orthogonal to `⟨b_S⟩`). -/
+theorem apply_basis_eq_of_mem_span [NeZero (2 : F)] (hb : IsOrthoBasis Q b) {A : V →ₗ[F] V}
+    (hA : ∀ x y, polar Q (A x) (A y) = polar Q x y) {S : Set (Fin n)}
+    (hS : ∀ j ∈ S, A (b j) = b j) {m : Fin n} (hm : m ∉ S)
+    (hδ : A (b m) - b m ∈ Submodule.span F (b '' S)) : A (b m) = b m := by
+  classical
+  rw [← sub_eq_zero]
+  rw [Basis.mem_span_image] at hδ
+  apply b.repr.injective
+  ext j
+  rw [map_zero, Finsupp.zero_apply]
+  by_cases hj : j ∈ S
+  · have hp : polar Q (b j) (A (b m) - b m) = 0 := by
+      rw [polar_sub_right, ← hS j hj, hA, hS j hj, sub_self]
+    rw [polar_basis_left Q b hb.isOrtho] at hp
+    exact (mul_eq_zero.mp hp).resolve_left (mul_ne_zero two_ne_zero (hb.apply_ne_zero j))
+  · by_contra h
+    exact hj (hδ (Finsupp.mem_support_iff.mpr h))
+
+theorem pairE_mem_span [CharZero F] [FiniteDimensional F V] {ν : F} {l : ℕ} (hf : IsFrame Q b ν l) (j : ℕ) (i : Fin (numPairs l j)) {M : ℕ}
+    (hM : j + 2 * (i : ℕ) + 1 < M) :
+    pairE hf j i ∈ Submodule.span F (b '' {m | m.val < M}) :=
+  add_mem (Submodule.subset_span ⟨_, by simp only [Set.mem_ofPred_eq]; omega, rfl⟩)
+    (Submodule.subset_span ⟨_, by simp only [Set.mem_ofPred_eq]; omega, rfl⟩)
+
+end WeakCartan
+
+namespace GGPData
+
+variable {F : Type} [NontriviallyNormedField F] [PAdicField F] {d : GGPData F}
+
+open WeakCartan
+
+section HU
+
+variable {n l : ℕ} {b : Module.Basis (Fin n) F d.V0}
+  (hb : IsOrthoBasis d.Q0 b) (hf : IsFrame d.Q0 b (d.Q0 d.z00) l) (h0 : ∀ h, b ⟨0, h⟩ = d.z00)
+
+theorem eV_of_lt {i : Fin (d.r + numPairs l 0)} (hi : (i : ℕ) < d.r) :
+    eV hf i = zb (d := d) ⟨i, hi⟩ := by
+  obtain ⟨k, rfl⟩ : ∃ k : Fin d.r, Fin.castAdd (numPairs l 0) k = i := ⟨⟨i, hi⟩, Fin.ext rfl⟩
+  rw [eV, Fin.append_left]
+  rfl
+
+theorem eV_of_ge {i : Fin (d.r + numPairs l 0)} (hi : d.r ≤ (i : ℕ)) :
+    eV hf i = d.iota0 (pairE hf 0 ⟨i - d.r, by have := i.2; omega⟩) := by
+  obtain ⟨k, rfl⟩ : ∃ k : Fin (numPairs l 0), Fin.natAdd d.r k = i :=
+    ⟨⟨i - d.r, by have := i.2; omega⟩, Fin.ext (by simp; omega)⟩
+  rw [eV, Fin.append_right]
+  simp
+
+include hb h0 in
+/-- The induction over the frame: `P_W(a) ⊕ 1` fixes `V₀` if it moves each `u_i` (resp. `u′_i`)
+only by earlier frame vectors, and each `w ∈ W_an` only within `⟨u′⟩`. -/
+theorem A0_eq_id {a : GSpin d.QW}
+    (hFV : ∀ i : Fin (numPairs l 0), d.A0 a (pairE hf 0 i) - pairE hf 0 i ∈
+      Submodule.span F (b '' {m | m.val < 2 * (i : ℕ)}))
+    (hFW : ∀ i : Fin (numPairs l 1), d.A0 a (pairE hf 1 i) - pairE hf 1 i ∈
+      Submodule.span F (b '' {m | m.val < 1 + 2 * (i : ℕ)}))
+    (hWan : ∀ m : Fin n, l < m.val →
+      d.A0 a (b m) - b m ∈ Submodule.span F (b '' {m | m.val ≤ l})) :
+    d.A0 a = LinearMap.id := by
+  have hiso := d.polar_A0 a
+  have hlow : ∀ M, ∀ m : Fin n, m.val ≤ l → m.val = M → d.A0 a (b m) = b m := by
+    intro M
+    induction M using Nat.strong_induction_on with
+    | _ M ih =>
+    intro m hml hmM
+    have hS : ∀ j ∈ {j : Fin n | j.val < M}, d.A0 a (b j) = b j :=
+      fun j hj => ih j.val hj j (by simp only [Set.mem_ofPred_eq] at hj; omega) rfl
+    have hm : m ∉ {j : Fin n | j.val < M} := by simp only [Set.mem_ofPred_eq]; omega
+    have hlt := hf.lt
+    rcases Nat.even_or_odd M with ⟨i, hi⟩ | ⟨i, hi⟩
+    · rcases Nat.eq_zero_or_pos i with rfl | hipos
+      · have : m = ⟨0, by omega⟩ := Fin.ext (by simp; omega)
+        rw [this, h0, A0_apply]
+        simp [z00]
+      · obtain ⟨i', rfl⟩ : ∃ i', i = i' + 1 := ⟨i - 1, by omega⟩
+        have hi' : i' < numPairs l 1 := by simp only [numPairs]; omega
+        refine apply_basis_eq_of_mem_span hb hiso hS hm ?_
+        have e : d.A0 a (b m) - b m =
+            d.A0 a (pairE hf 1 ⟨i', hi'⟩) - pairE hf 1 ⟨i', hi'⟩ := by
+          have hm' : m = ⟨1 + 2 * i' + 1, by omega⟩ := Fin.ext (by simp; omega)
+          simp only [pairE, map_add, Fin.val_mk]
+          rw [hS ⟨1 + 2 * i', by omega⟩ (show 1 + 2 * i' < M by omega), ← hm']
+          abel
+        rw [e]
+        exact Submodule.span_mono (Set.image_mono fun j hj => by
+          simp only [Set.mem_ofPred_eq] at hj ⊢; omega) (hFW _)
+    · have hi' : i < numPairs l 0 := by simp only [numPairs]; omega
+      refine apply_basis_eq_of_mem_span hb hiso hS hm ?_
+      have e : d.A0 a (b m) - b m =
+          d.A0 a (pairE hf 0 ⟨i, hi'⟩) - pairE hf 0 ⟨i, hi'⟩ := by
+        have hm' : m = ⟨0 + 2 * i + 1, by omega⟩ := Fin.ext (by simp; omega)
+        simp only [pairE, map_add, Fin.val_mk]
+        rw [hS ⟨0 + 2 * i, by omega⟩ (show 0 + 2 * i < M by omega), ← hm']
+        abel
+      rw [e]
+      exact Submodule.span_mono (Set.image_mono fun j hj => by
+        simp only [Set.mem_ofPred_eq] at hj ⊢; omega) (hFV _)
+  refine b.ext fun m => ?_
+  rw [LinearMap.id_apply]
+  by_cases hml : m.val ≤ l
+  · exact hlow _ m hml rfl
+  · exact apply_basis_eq_of_mem_span hb hiso (S := {j | j.val ≤ l})
+      (fun j hj => hlow _ j hj rfl) (by simp only [Set.mem_ofPred_eq]; omega)
+      (hWan m (by omega))
+
+end HU
+
 end GGPData
 
 end GSpinGGP
