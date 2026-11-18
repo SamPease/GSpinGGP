@@ -1002,7 +1002,109 @@ theorem H_inf_whittU_eq_bot : d.H ⊓ d.whittU (flagW hb hf h0) (flagV hb hf h0)
   have hn1 : nn = 1 :=
     eq_one_of_specP_eq_one d.nondeg_QV (d.specP_eq_one_of_mem_N hnn hfix) hnn.2.2.2
   have hbb1 : bb = d.incl a := by rw [hbb, hn1, mul_one]
-  sorry
+  -- step 3: `a` acts trivially on `V₀`, by the induction over the frame
+  have hFW : ∀ i : Fin (numPairs l 1), d.A0 a (pairE hf 1 i) - pairE hf 1 i ∈
+      Submodule.span F (b '' {m | m.val < 1 + 2 * (i : ℕ)}) := by
+    intro i
+    have hv : eW hf i ∈ (flagW hb hf h0).sub (Fin.succ (⟨i, i.2⟩ : Fin (numPairs l 1))) :=
+      IsotropicFlag.mem_ofFamily_sub (Nat.lt_succ_self (i : ℕ))
+    have hcl := haU.2.1 ⟨i, i.2⟩ _ hv
+    change _ ∈ Submodule.span F
+      (Set.range (eW hf ∘ Fin.castLE (IsotropicFlag.castLE_le_aux _))) at hcl
+    have e : d.A0 a (pairE hf 1 i) - pairE hf 1 i =
+        LinearMap.inl F _ (Fin (2 * 0 + 1) → F) (specP d.QW a (eW hf i) - eW hf i) := by
+      rw [← inl_eW hb hf h0, A0_apply]
+      ext <;> simp
+    rw [e]
+    have hmap := Submodule.mem_map_of_mem
+      (f := LinearMap.inl F (Fin d.m → F) (Fin (2 * 0 + 1) → F)) hcl
+    rw [Submodule.map_span] at hmap
+    refine Submodule.span_le.mpr ?_ hmap
+    rintro _ ⟨_, ⟨j, rfl⟩, rfl⟩
+    simp only [Function.comp_apply, LinearMap.inl_apply]
+    rw [inl_eW hb hf h0]
+    exact pairE_mem_span hf 1 _ (by simp; omega)
+  have hFV : ∀ i : Fin (numPairs l 0), d.A0 a (pairE hf 0 i) - pairE hf 0 i ∈
+      Submodule.span F (b '' {m | m.val < 2 * (i : ℕ)}) := by
+    intro i
+    have hi := i.2
+    have hv : eV hf (Fin.natAdd d.r i) ∈
+        (flagV hb hf h0).sub (Fin.succ (⟨d.r + i, by rw [hlen]; omega⟩ : Fin _)) :=
+      IsotropicFlag.mem_ofFamily_sub (by simp)
+    have hcl := hbU.2.1 ⟨d.r + i, by rw [hlen]; omega⟩ _ hv
+    change _ ∈ Submodule.span F
+      (Set.range (eV hf ∘ Fin.castLE (IsotropicFlag.castLE_le_aux _))) at hcl
+    have hev : eV hf (Fin.natAdd d.r i) = d.iota0 (pairE hf 0 i) := by
+      rw [eV, Fin.append_right]; rfl
+    rw [hev, hbb1, d.specP_incl_iota0, ← map_sub] at hcl
+    have hmap := Submodule.mem_map_of_mem (f := d.pi0) hcl
+    rw [d.pi0_iota0, Submodule.map_span] at hmap
+    refine Submodule.span_le.mpr ?_ hmap
+    rintro _ ⟨_, ⟨j, rfl⟩, rfl⟩
+    simp only [Function.comp_apply]
+    have hj : (j : ℕ) < d.r + i := j.2
+    by_cases hjr : (j : ℕ) < d.r
+    · rw [eV_of_lt hf (by simpa using hjr), zb, d.pi0_zV (by omega)]
+      exact zero_mem _
+    · rw [eV_of_ge hf (by simp; omega), d.pi0_iota0]
+      exact pairE_mem_span hf 0 _ (by simp; omega)
+  have hpolar_ne : ∀ p q : Fin n, p ≠ q → polar d.Q0 (b p) (b q) = 0 := fun p q hpq => by
+    rw [polar_basis_left d.Q0 b hb.isOrtho, b.repr_self, Finsupp.single_apply,
+      ite_eq_right (Ne.symm hpq), mul_zero]
+  have hWan : ∀ m : Fin n, l < m.val →
+      d.A0 a (b m) - b m ∈ Submodule.span F (b '' {m | m.val ≤ l}) := by
+    intro m hm
+    have hm2 : (b m).2 = 0 := snd_basis_eq_zero hb h0 (by omega)
+    have horth : (b m).1 ∈ (bform d.QW).orthogonal (flagW hb hf h0).top := by
+      intro t ht
+      change t ∈ Submodule.span F
+        (Set.range (eW hf ∘ Fin.castLE (IsotropicFlag.castLE_le_aux _))) at ht
+      refine Submodule.span_induction (p := fun t _ => bform d.QW t (b m).1 = 0) ?_ (by simp)
+        (fun x y _ _ hx hy => by rw [map_add, LinearMap.add_apply, hx, hy, add_zero])
+        (fun c x _ hx => by rw [map_smul, LinearMap.smul_apply, hx, smul_zero]) ht
+      rintro _ ⟨j, rfl⟩
+      simp only [Function.comp_apply]
+      have hj : (j : ℕ) < l / 2 := j.2
+      have hp : polar d.QW (eW hf (Fin.castLE (IsotropicFlag.castLE_le_aux _) j)) (b m).1 = 0 := by
+        rw [eW, ← polar_Q0_of_snd (snd_pairE_one hb hf h0 _), pairE, polar_add_left,
+          hpolar_ne _ _ (fun h => by
+            have h' := congrArg Fin.val h
+            try simp only [Fin.val_castLE] at h'
+            omega),
+          hpolar_ne _ _ (fun h => by
+            have h' := congrArg Fin.val h
+            try simp only [Fin.val_castLE] at h'
+            omega),
+          add_zero]
+      rw [polar_eq_two_mul_bform] at hp
+      exact (mul_eq_zero.mp hp).resolve_left two_ne_zero
+    have hcl := haU.2.2.1 _ horth
+    change _ ∈ Submodule.span F
+      (Set.range (eW hf ∘ Fin.castLE (IsotropicFlag.castLE_le_aux _))) at hcl
+    have e : d.A0 a (b m) - b m =
+        LinearMap.inl F _ (Fin (2 * 0 + 1) → F) (specP d.QW a (b m).1 - (b m).1) := by
+      rw [A0_apply]
+      ext <;> simp [hm2]
+    rw [e]
+    have hmap := Submodule.mem_map_of_mem
+      (f := LinearMap.inl F (Fin d.m → F) (Fin (2 * 0 + 1) → F)) hcl
+    rw [Submodule.map_span] at hmap
+    refine Submodule.span_le.mpr ?_ hmap
+    rintro _ ⟨_, ⟨j, rfl⟩, rfl⟩
+    simp only [Function.comp_apply, LinearMap.inl_apply]
+    rw [inl_eW hb hf h0]
+    have hj : (j : ℕ) < l / 2 := j.2
+    exact Submodule.span_mono (Set.image_mono fun q hq => by
+        simp only [Set.mem_ofPred_eq] at hq ⊢; omega)
+      (pairE_mem_span hf 1 _ (M := l + 1) (by simp only [Fin.val_castLE]; omega))
+  have hA := A0_eq_id hb hf h0 hFV hFW hWan
+  have hPa : specP d.QW a = 1 := LinearEquiv.ext fun w => by
+    have := congrArg Prod.fst (LinearMap.congr_fun hA (w, 0))
+    simpa [A0_apply] using this
+  have ha1 : a = 1 := eq_one_of_specP_eq_one d.nondeg hPa haU.2.2.2
+  refine d.G_ext ?_ ?_
+  · rw [map_one, ← ha, ha1]
+  · rw [map_one, ← hbb', hbb1, ha1, map_one]
 
 end HU
 
