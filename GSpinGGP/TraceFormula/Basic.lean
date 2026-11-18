@@ -8,6 +8,7 @@ import GSpinGGP.Foundations.GSpin
 import GSpinGGP.Literature.Measure
 import GSpinGGP.HarmonicAnalysis.QuotientUnimodular
 import GSpinGGP.Foundations.CosetSpaceTranslate
+import GSpinGGP.Foundations.CosetSpaceTopology
 import GSpinGGP.HarmonicAnalysis.RelativeXi
 import GSpinGGP.GGP.Centralizers
 import GSpinGGP.Foundations.SoCentralizer
@@ -1142,6 +1143,12 @@ theorem isClosedEmbedding_toGmodAG : IsClosedEmbedding d.toGmodAG := by
   exact QuotientGroup.isClosedEmbedding_map_of_isClosed_mul d.AGHinH hN d.AGHinH_le_comap_AG
     d.isClosed_H_mul_AG
 
+/-- The image of `H(F)/A_{G,H}(F)` in `G(F)/A_G(F)` is closed (`isClosedEmbedding_toGmodAG`);
+so `H(F)\G(F)/A_G(F)` is Hausdorff (`CosetSpace.instT2Space`). -/
+instance isClosed_range_toGmodAG : IsClosed (d.toGmodAG.range : Set d.GmodAG) := by
+  rw [MonoidHom.coe_range]
+  exact d.isClosedEmbedding_toGmodAG.isClosed_range
+
 /-- The coset space `H(F)\G(F)/A_G(F)` (Thesis §7.1), realised as the right cosets of
 the image of `H(F)/A_{G,H}(F)` in `G(F)/A_G(F)`. -/
 abbrev HGQuot : Type _ := CosetSpace d.toGmodAG
@@ -2070,6 +2077,14 @@ instance isFiniteMeasureOnCompacts_weilMeasureHG : IsFiniteMeasureOnCompacts d.w
   have := d.isMulRightInvariant_haar_HmodAGH
   exact IsWeilMeasure.isFiniteMeasureOnCompacts d.continuous_toGmodAG
     d.isClosedEmbedding_toGmodAG d.weilMeasureHG_spec
+
+/-- **The Weil measure on `H(F)\G(F)/A_G(F)` is regular** (in particular outer regular): the
+quotient is Hausdorff, locally compact and second countable (`CosetSpace.instT2Space`, …), and
+the measure is finite on compact sets (`CosetSpace.regular_of_isFiniteMeasureOnCompacts`). -/
+instance regular_weilMeasureHG : d.weilMeasureHG.Regular :=
+  CosetSpace.regular_of_isFiniteMeasureOnCompacts _ _
+
+example : d.weilMeasureHG.OuterRegular := inferInstance
 
 end GGPData
 
