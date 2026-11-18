@@ -1014,6 +1014,24 @@ theorem Pbar_fst (g : d.G) : ((d.Pbar g).1 : (Fin d.m → K) ≃ₗ[K] (Fin d.m 
 
 theorem Pbar_snd (g : d.G) : ((d.Pbar g).2 : d.V ≃ₗ[K] d.V) = specP d.QV (d.snd g) := rfl
 
+/-- `SO(W) → GL(V)`, `g ↦ g ⊕ 1` on `V = W ⊕ Z`. -/
+def extZ : ((Fin d.m → K) ≃ₗ[K] (Fin d.m → K)) →* (d.V ≃ₗ[K] d.V) where
+  toFun f := f.prodCongr (LinearEquiv.refl K d.Z)
+  map_one' := by ext x <;> rfl
+  map_mul' f g := by ext x <;> rfl
+
+theorem extZ_apply (f : (Fin d.m → K) ≃ₗ[K] (Fin d.m → K)) (v : d.V) :
+    d.extZ f v = (f v.1, v.2) := rfl
+
+/-- For `r = 0` (so `N = 1`), the `V`-component of `P̄(h)`, `h ∈ H`, is the `W`-component extended
+by the identity on `Z`: `H = GSpin(W)` acts on `V₀ = W ⊕ Z` through `SO(W)`. -/
+theorem Pbar_snd_of_mem_H (hr : d.r = 0) {h : d.G} (hh : h ∈ d.H) :
+    ((d.Pbar h).2 : d.V ≃ₗ[K] d.V) = d.extZ ((d.Pbar h).1 : (Fin d.m → K) ≃ₗ[K] (Fin d.m → K)) := by
+  have hn : specP d.QV (d.nPart h) = 1 := d.specP_eq_one_of_mem_N hr hh
+  have hs : d.snd h = d.incl (d.fst h) * d.nPart h := by simp [nPart]
+  rw [Pbar_snd, Pbar_fst, hs, map_mul, hn, mul_one]
+  exact LinearEquiv.ext fun ⟨w, z⟩ => d.specP_incl_apply _ w z
+
 theorem Pbar_surjective : Function.Surjective d.Pbar := by
   rintro ⟨⟨a, ha⟩, ⟨b, hb⟩⟩
   rw [← range_specP_eq_SOGrp d.nondeg] at ha
