@@ -384,6 +384,16 @@ theorem le_mul_infLeft {a c : ℝ} (hc : 0 ≤ c) {g : G} (h : ∀ s ∈ S, a �
   exact le_ciInf fun s => h s s.2
 
 omit [TopologicalSpace G] in
+/-- If `a ≤ c σ(g)` for every `g` in the fiber `π⁻¹(q)` (nonempty, `c ≥ 0`), then
+`a ≤ c fiberInf σ π q`. -/
+theorem le_mul_fiberInf {X : Type*} {π : G → X} {σ : G → ℝ} {a c : ℝ} (hc : 0 ≤ c) {q : X}
+    (hq : ∃ g, π g = q) (h : ∀ g, π g = q → a ≤ c * σ g) : a ≤ c * fiberInf σ π q := by
+  obtain ⟨g₀, hg₀⟩ := hq
+  haveI : Nonempty {g : G // π g = q} := ⟨⟨g₀, hg₀⟩⟩
+  rw [fiberInf, Real.mul_iInf_of_nonneg hc]
+  exact le_ciInf fun g => h g.1 g.2
+
+omit [TopologicalSpace G] in
 /-- `inf_{s ∈ p(S)} τ(s p(g)) = inf_{s ∈ S} τ(p(s g))` for a homomorphism `p` and `τ ≥ 0`: the
 push-forward of `τ` to `p(S)\G'` at `p(g)` is the push-forward of `τ ∘ p` to `S\G` at `g`. -/
 theorem infLeft_map {G' : Type*} [Group G'] (p : G →* G') {τ' : G' → ℝ} (hτ : ∀ x, 0 ≤ τ' x)

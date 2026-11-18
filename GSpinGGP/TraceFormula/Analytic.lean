@@ -837,6 +837,23 @@ theorem scuspTestFn_subset_scuspSchwartz (IW : d.IwasawaDatum) :
 
 /-! ## 6. Convergence of `J` (Thesis §10.1) -/
 
+/-- **`σ_{A_G\G} ≪ σ_{H\G}` from a pointwise bound**: if `σ_{A_G\G}(x) ≤ C σ_{A_G\G}(h x)` for all
+`h ∈ H`, then `σ_{A_G\G}(x) ≤ C σ_{H\G}(x)`, since `σ_{H\G}(x) = inf_{h, a} σ_G(h x a)` and `A_G`
+is central. -/
+theorem logNormModAG_le_logNormHG_of_forall {C : ℝ} (hC : 0 ≤ C) {x : ↥d.G}
+    (hI : ∀ h ∈ d.H, d.logNormModAG x ≤ C * d.logNormModAG (h * x)) :
+    d.logNormModAG x ≤ C * d.logNormHG (d.mkHG x) := by
+  unfold logNormHG
+  refine le_mul_fiberInf hC ⟨x, rfl⟩ fun g hg => ?_
+  obtain ⟨h, hh, a, ha, rfl⟩ := (d.mkHG_eq_mkHG_iff x g).1 hg.symm
+  have e : h * x * a = a * (h * x) :=
+    (Subgroup.mem_center_iff.mp (d.AG_le_center ha) (h * x))
+  have h2 : d.logNormModAG (h * x * a) ≤ d.logNormG (h * x * a) := d.logNormModSub_le _ _
+  rw [e, show d.logNormModAG (a * (h * x)) = d.logNormModAG (h * x) from
+    d.logNormModSub_mul_left d.AG ha _] at h2
+  rw [e]
+  exact (hI h hh).trans (mul_le_mul_of_nonneg_left h2 hC)
+
 -- The products in `SO(W) × SO(V)` make instance search slow here.
 set_option maxHeartbeats 400000 in
 open WeakCartan in
@@ -853,28 +870,9 @@ theorem logNormModAG_le_logNormHG_of_chamber {n : ℕ} {b : Module.Basis (Fin n)
       ((d.Pbar x).2 : d.V ≃ₗ[F] d.V) = (multiTorus hb hf 0 t)⁻¹ →
       d.logNormModAG x ≤ C * d.logNormHG (d.mkHG x) := by
   obtain ⟨C, hC, hI⟩ := d.logNormModAG_le_of_chamber hb hf hr hb0
-  refine ⟨C, hC, fun x t ht hx => ?_⟩
-  have key : ∀ g, d.mkHG g = d.mkHG x → d.logNormModAG x ≤ C * d.logNormG g := by
-    intro g hg
-    obtain ⟨h, hh, a, ha, rfl⟩ := (d.mkHG_eq_mkHG_iff x g).1 hg.symm
-    have e : h * x * a = a * (h * x) :=
-      (Subgroup.mem_center_iff.mp (d.AG_le_center ha) (h * x))
-    have h1 := hI h hh x t ht hx
-    have h2 : d.logNormModAG (h * x * a) ≤ d.logNormG (h * x * a) := d.logNormModSub_le _ _
-    rw [e, show d.logNormModAG (a * (h * x)) = d.logNormModAG (h * x) from
-      d.logNormModSub_mul_left d.AG ha _] at h2
-    rw [e]
-    exact (show d.logNormModAG x ≤ C * d.logNormModAG (h * x) from h1).trans
-      (mul_le_mul_of_nonneg_left h2 hC)
-  rcases hC.lt_or_eq with hCp | hC0
-  · have : d.logNormModAG x / C ≤ d.logNormHG (d.mkHG x) := by
-      unfold logNormHG fiberInf
-      haveI : Nonempty {g // d.mkHG g = d.mkHG x} := ⟨⟨x, rfl⟩⟩
-      exact le_ciInf fun g => (div_le_iff₀' hCp).2 (key g.1 g.2)
-    exact (div_le_iff₀' hCp).1 this
-  · have := key x rfl
-    rw [← hC0, zero_mul] at this ⊢
-    exact this
+  exact ⟨C, hC, fun x t ht hx =>
+    d.logNormModAG_le_logNormHG_of_forall hC fun h hh => hI h hh x t ht hx⟩
+
 /-! ### `Ξ^{H\G}` and `σ_{H\G}` in the abstract setting of `HarmonicAnalysis/RelativeXi.lean` -/
 
 /-- `G(F) → H(F)\G(F)/A_G(F)` with the Weil measure is an invariant quotient: right translation
