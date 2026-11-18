@@ -22,6 +22,8 @@ import GSpinGGP.Foundations.Representations
 import GSpinGGP.Foundations.GSpin
 import GSpinGGP.Foundations.HypPlane
 import GSpinGGP.Foundations.HypFrame
+import GSpinGGP.Foundations.HypTorusNorm
+import GSpinGGP.Foundations.LogNormCompact
 import GSpinGGP.Foundations.SoCentralizer
 import GSpinGGP.Foundations.RegularNilpotent
 import GSpinGGP.Foundations.QuadraticForms
@@ -165,12 +167,14 @@ import GSpinGGP.TraceFormula
 import GSpinGGP.HarmonicAnalysis.LogNorm
 import GSpinGGP.HarmonicAnalysis.RelativeXi
 import GSpinGGP.HarmonicAnalysis.PolynomialGrowth
+import GSpinGGP.HarmonicAnalysis.LatticeGrowth
 import GSpinGGP.HarmonicAnalysis.QuotientUnimodular
 import GSpinGGP.Foundations.CosetSpaceTranslate
 import GSpinGGP.Foundations.CosetSpaceTopology
 import GSpinGGP.Foundations.NormDescent
 import GSpinGGP.TraceFormula.GoodParabolicLift
 import GSpinGGP.TraceFormula.LogNormDescent
+import GSpinGGP.TraceFormula.AMinGrowth
 import GSpinGGP.Main
 import GSpinGGP.Sanity.Witnesses
 import GSpinGGP.Sanity.NilpotentOrbit
