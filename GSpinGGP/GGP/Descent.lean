@@ -1093,19 +1093,31 @@ def quotHG_equiv : DoubleCoset.Quotient (d.H : Set d.G) d.AG ≃
     DoubleCoset.Quotient (d.Hbar : Set d.GbarGrp) d.AGbar :=
   Equiv.ofBijective d.quotHGMap ⟨d.quotHGMap_injective, d.quotHGMap_surjective⟩
 
+/-- If `W` is not a hyperbolic plane, `A_G` has trivial image in `SO(W)`
+(`A_{GSpin(W)}` is then the scalars). -/
+theorem Pbar_fst_eq_one_of_mem_AG (hW : ¬ IsHypPlane d.QW) {z : d.G} (hz : z ∈ d.AG) :
+    (d.Pbar z).1 = 1 := by
+  obtain ⟨⟨a, b⟩, ⟨ha, -⟩, rfl⟩ := hz
+  have ha' : a ∈ (scalarGSpin d.QW).range := by
+    unfold splitCentralGSpin at ha; rwa [ite_eq_right_of_eq_false _ _ (eq_false hW)] at ha
+  obtain ⟨c, rfl⟩ := ha'
+  exact Subtype.ext (specP_scalarGSpin_eq_one c)
+
+/-- If `V` is not a hyperbolic plane, `A_G` has trivial image in `SO(V)`. -/
+theorem Pbar_snd_eq_one_of_mem_AG (hV : ¬ IsHypPlane d.QV) {z : d.G} (hz : z ∈ d.AG) :
+    (d.Pbar z).2 = 1 := by
+  obtain ⟨⟨a, b⟩, ⟨-, hb⟩, rfl⟩ := hz
+  have hb' : b ∈ (scalarGSpin d.QV).range := by
+    unfold splitCentralGSpin at hb; rwa [ite_eq_right_of_eq_false _ _ (eq_false hV)] at hb
+  obtain ⟨c, rfl⟩ := hb'
+  exact Subtype.ext (specP_scalarGSpin_eq_one c)
+
 /-- When neither `W` nor `V` is a hyperbolic plane, `A_G = G_m × G_m` maps to `1` in `Ḡ`. -/
 theorem AGbar_eq_bot (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) : d.AGbar = ⊥ := by
   rw [eq_bot_iff]
-  rintro _ ⟨g, ⟨⟨a, b⟩, ⟨ha, hb⟩, rfl⟩, rfl⟩
-  have ha' : a ∈ (scalarGSpin d.QW).range := by
-    unfold splitCentralGSpin at ha; rwa [ite_eq_right_of_eq_false _ _ (eq_false hW)] at ha
-  have hb' : b ∈ (scalarGSpin d.QV).range := by
-    unfold splitCentralGSpin at hb; rwa [ite_eq_right_of_eq_false _ _ (eq_false hV)] at hb
-  obtain ⟨c₁, rfl⟩ := ha'
-  obtain ⟨c₂, rfl⟩ := hb'
-  refine (Subgroup.mem_bot).mpr (Prod.ext (Subtype.ext ?_) (Subtype.ext ?_))
-  · exact specP_scalarGSpin_eq_one c₁
-  · exact specP_scalarGSpin_eq_one c₂
+  rintro _ ⟨g, hg, rfl⟩
+  exact (Subgroup.mem_bot).mpr
+    (Prod.ext (d.Pbar_fst_eq_one_of_mem_AG hW hg) (d.Pbar_snd_eq_one_of_mem_AG hV hg))
 
 /-- **The special orthogonal quotient, without `Ā_G`**: if neither `W` nor
 `V` is a hyperbolic plane, `H(K)\G(K)/A_G(K) ≃ H̄(K)\Ḡ(K)`.  The hypothesis is needed (e.g.
