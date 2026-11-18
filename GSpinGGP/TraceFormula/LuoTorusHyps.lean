@@ -479,19 +479,6 @@ theorem mem_lieTorus_of_commute_specP {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x
       (hx.2.1 t ht g hgT).eq
   exact ((hg _).mp htg).eq
 
-/-- A skew endomorphism of `W` is `ad Y` for some `Y ∈ so(W)` (`exists_toSOLin_eq`). -/
-theorem exists_mem_soSub_adV_eq {S : Module.End F (Fin d.m → F)}
-    (hS : ∀ u w, bform d.QW (S u) w = -bform d.QW u (S w)) :
-    ∃ Y ∈ soSub d.QW, adV d.QW Y = S := by
-  have hlie : d.luoOf.pair S 0 ∈ d.luoOf.lie :=
-    ⟨(LinearMap.mem_skewAdjointSubmodule _).2 fun u w => by
-        have := hS u w
-        rw [← map_neg] at this
-        exact this,
-      (skewAdjointLieSubalgebra (bform d.luoOf.QV)).zero_mem⟩
-  obtain ⟨Z, hZ, hZM⟩ := d.exists_toSOLin_eq hlie
-  exact ⟨Z.1, hZ.1, congrArg Prod.fst hZM⟩
-
 /-- **Lifting skew maps to `𝔱⁰`**: for `x ∈ Γ(G,H)`, every skew endomorphism `S` of `W` commuting
 with `P(x)` and vanishing on `W'_x` is `ad Y` for some `Y ∈ 𝔱⁰ = Lie(T_x)`. -/
 theorem exists_mem_lieTorus_adV_eq {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
@@ -500,7 +487,7 @@ theorem exists_mem_lieTorus_adV_eq {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
       S * (specP d.QW x : Module.End F (Fin d.m → F)))
     (hS0 : ∀ w ∈ fixedSub x, S w = 0) :
     ∃ Y ∈ d.lieTorus (d.torusOf x), adV d.QW Y = S := by
-  obtain ⟨Z, hZ, hadZ⟩ := d.exists_mem_soSub_adV_eq hS
+  obtain ⟨Z, hZ, hadZ⟩ := GSpinGGP.exists_mem_soSub_adV_eq d.nondeg _ hS
   exact ⟨Z, d.mem_lieTorus_of_commute_specP hx hZ (by rw [hadZ]; exact hSP)
     (fun w hw => by rw [hadZ]; exact hS0 w hw), hadZ⟩
 
@@ -618,7 +605,7 @@ theorem commClause_iff_squarefree {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
         change bform d.QW (S ⟨r, hr⟩ : Fin d.m → F) r' =
           bform d.QW r (-(S ⟨r', hr'⟩ : Fin d.m → F)) at this
         rw [this, map_neg]
-      obtain ⟨Z, hZs, hadZ⟩ := d.exists_mem_soSub_adV_eq hsk
+      obtain ⟨Z, hZs, hadZ⟩ := GSpinGGP.exists_mem_soSub_adV_eq d.nondeg _ hsk
       have hSA : ext S * A = A * ext S := LinearMap.ext fun v => by
         obtain ⟨k, hk, r, hr, rfl⟩ := hdecomp v
         rw [Module.End.mul_apply, Module.End.mul_apply, map_add, LinearMap.mem_ker.mp hk, zero_add,
