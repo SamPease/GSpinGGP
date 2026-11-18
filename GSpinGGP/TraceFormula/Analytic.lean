@@ -11,6 +11,7 @@ import GSpinGGP.HarmonicAnalysis.PolynomialGrowth
 import GSpinGGP.TraceFormula.SpinorNorm
 import GSpinGGP.Literature.Tits
 import GSpinGGP.Foundations.VanDantzig
+import GSpinGGP.TraceFormula.GoodParabolic
 
 /-!
 # The local trace formula: analytic objects and estimates
@@ -51,8 +52,9 @@ of Thesis Ch. 8 and 10 and proves the bookkeeping around it.
   regularity of the Weil measure).
 * `sorry` (own work, Thesis Ch. 8 and 10, adapted from BP Ch. 6, 8): `kernelK_bound` (Thm 10.1.1(i)),
   `kernelK_bound_scusp` (Thm 10.1.1(ii)), `prop_6_7_1_iii` (Thesis Prop 8.4.1(iii)),
-  `lemma_6_5_1_i/ii/iii` (Thesis Lemma 8.2.1), `exists_good_minimal_parabolic` (Thesis
-  Prop 8.1.1(i)).
+  `lemma_6_5_1_i/ii/iii` (Thesis Lemma 8.2.1); `exists_good_minimal_parabolic` (Thesis
+  Prop 8.1.1(i)) is proved from `TraceFormula/GoodParabolic.lean` except for the Haar-null
+  complement of `H(F) P̄(F)` (an inline `sorry`).
 * From the derived literature axiom `tits_iwasawa` (Tits, Corvallis 1979, §3.3.2, with
   Bruhat–Tits): `exists_iwasawaDatum`, with the general lemmas `exists_compactOpenSubgroup_ge`
   (`Foundations/VanDantzig.lean`) and `IsotropicFlag.exists_isFull` (`Foundations/GSpin.lean`).
@@ -744,6 +746,15 @@ theorem exists_good_minimal_parabolic :
       d.H ⊓ d.whittU FW FV = ⊥ ∧
       IsOpen ((d.H : Set ↥d.G) * (d.whittB FW FV : Set ↥d.G)) ∧
       (Measure.haar : Measure ↥d.G) ((d.H : Set ↥d.G) * (d.whittB FW FV : Set ↥d.G))ᶜ = 0 := by
+  -- the flags of a maximal frame `z₀ = w₀, w₁, …, w_l` of `V₀ = W ⊕ ⟨z₀⟩`
+  obtain ⟨n, l, b, hb, hf, h0⟩ := WeakCartan.exists_isFrame
+    ((isNondeg_iff_nondegenerate _).1 d.nondeg_Q0) (v₀ := d.z00)
+    (by rw [d.Q0_z00]; exact d.ν.ne_zero)
+  have h0' : ∀ h, b ⟨0, h⟩ = d.z00 := fun _ => h0
+  refine ⟨flagW hb hf h0', flagV hb hf h0', isFull_flagW hb hf h0', isFull_flagV hb hf h0',
+    H_inf_whittU_eq_bot hb hf h0', isOpen_H_mul_whittB hb hf h0', ?_⟩
+  -- the complement of `H(F) P̄(F)` is Haar-null: not formalized (it needs the Zariski-closed
+  -- complement of the open orbit)
   sorry
 
 /-- **`C_c^∞` strongly cuspidal functions are Harish-Chandra Schwartz**:

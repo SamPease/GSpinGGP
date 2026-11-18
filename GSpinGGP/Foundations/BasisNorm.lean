@@ -264,6 +264,24 @@ theorem IsOrthoBasis.repr_eq_polar_div (x : V) (i : Fin n) :
   rw [QuadraticMap.polar_basis_left Q b hb.isOrtho, mul_div_cancel_left₀ _
     (mul_ne_zero two_ne_zero (hb.apply_ne_zero i))]
 
+/-- An isometry `A` fixing the basis vectors `b j`, `j ∈ S`, and moving `b m` (`m ∉ S`) within
+`⟨b_S⟩`, fixes `b m`: the move is orthogonal to `⟨b_S⟩`. -/
+theorem IsOrthoBasis.apply_eq_of_sub_mem_span {A : V →ₗ[F] V}
+    (hA : ∀ x y, QuadraticMap.polar Q (A x) (A y) = QuadraticMap.polar Q x y) {S : Set (Fin n)}
+    (hS : ∀ j ∈ S, A (b j) = b j) {m : Fin n} (hm : m ∉ S)
+    (hδ : A (b m) - b m ∈ Submodule.span F (b '' S)) : A (b m) = b m := by
+  classical
+  rw [← sub_eq_zero]
+  rw [Basis.mem_span_image] at hδ
+  apply b.repr.injective
+  ext j
+  rw [map_zero, Finsupp.zero_apply]
+  by_cases hj : j ∈ S
+  · rw [hb.repr_eq_polar_div, QuadraticMap.polar_sub_right, ← hS j hj, hA, hS j hj, sub_self,
+      zero_div]
+  · by_contra h
+    exact hj (hδ (Finsupp.mem_support_iff.mpr h))
+
 omit [CharZero F] in
 theorem IsOrthoBasis.polar_eq_sum (x y : V) :
     QuadraticMap.polar Q x y =

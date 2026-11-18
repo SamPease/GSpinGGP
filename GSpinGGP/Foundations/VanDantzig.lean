@@ -170,6 +170,22 @@ theorem exists_compactOpenSubgroup_ge [T2Space G₀] [LocallyCompactSpace G₀]
   rw [Subgroup.coe_mul_of_left_le_normalizer_right K₀ N hnorm]
   exact hK₀.mul hNc
 
+/-- A product `H·B` of two subgroups is open as soon as it is a neighbourhood of `1`:
+`H B = H · interior (H B) · B`. -/
+theorem isOpen_subgroup_mul_of_mem_nhds_one (H B : Subgroup G₀)
+    (h : (H : Set G₀) * (B : Set G₀) ∈ 𝓝 (1 : G₀)) : IsOpen ((H : Set G₀) * (B : Set G₀)) := by
+  have h1 : (1 : G₀) ∈ interior ((H : Set G₀) * (B : Set G₀)) := mem_interior_iff_mem_nhds.2 h
+  have e : (H : Set G₀) * (B : Set G₀) =
+      (H : Set G₀) * interior ((H : Set G₀) * (B : Set G₀)) * (B : Set G₀) := by
+    apply subset_antisymm
+    · rintro _ ⟨x, hx, y, hy, rfl⟩
+      exact ⟨x * 1, ⟨x, hx, 1, h1, rfl⟩, y, hy, by rw [mul_one]⟩
+    · rintro _ ⟨_, ⟨x, hx, z, hz, rfl⟩, y, hy, rfl⟩
+      obtain ⟨u, hu, w, hw, rfl⟩ := interior_subset hz
+      exact ⟨x * u, H.mul_mem hx hu, w * y, B.mul_mem hw hy, by simp only [mul_assoc]⟩
+  rw [e]
+  exact isOpen_interior.mul_left.mul_right
+
 end VanDantzig
 
 end GSpinGGP
