@@ -20,9 +20,9 @@ normed space the operator norm of `y` is comparable to `max_i max(‖tᵢ‖, �
   (`eᵢ`, `fᵢ` are eigenvectors).
 * `IsHypFrame.exists_norm_le_of_mem_hypTorus`: `‖y‖ ≤ C (1 + B)` when all `‖tᵢ^{±1}‖ ≤ B`.
 
-These are the estimates behind the statement that the log-norm of a split torus is equivalent to
-the sup norm of the valuations of its eigenvalues (BP §1.2), used for the polynomial growth of
-`A_min` (BP (6.7.12)).
+These are the estimates behind the standard fact that on a split torus the log-norm (BP §1.2) is
+equivalent to `1 + max_i |log ‖tᵢ‖|`; they are used for the polynomial growth of `A_min`
+(BP (6.7.12)).
 -/
 
 noncomputable section
@@ -73,11 +73,11 @@ theorem hypParam_inv (hF : IsHypFrame Q W e f) {y : V ≃ₗ[K] V} (hy : y ∈ h
   rw [h1] at h
   exact eq_inv_of_mul_eq_one_left h.symm
 
-theorem e_ne_zero (hF : IsHypFrame Q W e f) (i : Fin n) : e i ≠ 0 := fun h => by
-  simpa [h] using hF.polar_ef_self i
+theorem e_ne_zero (hF : IsHypFrame Q W e f) (i : Fin n) : e i ≠ 0 :=
+  hF.linearIndependent.ne_zero (Sum.inl i)
 
-theorem f_ne_zero (hF : IsHypFrame Q W e f) (i : Fin n) : f i ≠ 0 := fun h => by
-  simpa [h] using hF.polar_ef_self i
+theorem f_ne_zero (hF : IsHypFrame Q W e f) (i : Fin n) : f i ≠ 0 :=
+  hF.linearIndependent.ne_zero (Sum.inr i)
 
 end IsHypFrame
 

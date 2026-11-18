@@ -22,8 +22,9 @@ This file isolates the count, for an arbitrary set `T` in a monoid `G` with inte
   and two elements of `T` with the same coordinates differ by an element `e` of a fixed set `E`
   up to a factor `z` in a fixed set `Z` (`a' = z (a e)`), then `{a ∈ T ; τ(a) < R}` is covered by
   `≤ M (1 + R)^{|ι|}` sets `Z · j · E`, `j ∈ T`.
-* `abs_floor_log_norm_le`, `norm_div_lt_exp_of_floor_log_norm_eq`, `abs_log_norm_le_log`: the
-  coordinate `⌊log ‖x‖⌋ ∈ ℤ` of a nonzero element `x` of a normed field: it is bounded by `|log ‖x‖| + 1`,
+* `abs_floor_le_abs_add_one`, `norm_div_lt_exp_of_floor_log_norm_eq`, `abs_log_norm_le_log`: the
+  coordinate `⌊log ‖x‖⌋ ∈ ℤ` of a nonzero element `x` of a normed field: it is bounded by
+  `|log ‖x‖| + 1`,
   and two elements with the same coordinate have quotient of norm in `(e⁻¹, e)`. With this
   coordinate no uniformizer or discreteness of the value group is needed.
 -/
@@ -49,7 +50,7 @@ Suppose that two elements `a, a'` of `T` with the same coordinates satisfy `a' =
 `≤ M (1 + R)^{|ι|}` has `{a ∈ T ; τ(a) < R} ⊆ ⋃_{j ∈ t} Z · j · E`.
 
 This is the counting behind BP (6.7.12) (polynomial growth of `A_min`), with `E` a compact set,
-`Z` the split centre and `v` the valuations of the eigenvalues. -/
+`Z` the split centre and `v` the coordinates `⌊log ‖tᵢ‖⌋` of the eigenvalues `tᵢ`. -/
 theorem exists_finset_cover_of_intCoord {G ι : Type*} [Mul G] [Fintype ι] {T Z E : Set G}
     {τ : G → ℝ} (v : G → ι → ℤ) {c C : ℝ} (hc : 0 < c)
     (hv : ∀ a ∈ T, ∀ i, c * |(v a i : ℝ)| ≤ τ a + C)
@@ -108,12 +109,12 @@ section NormCoord
 
 variable {𝕜 : Type*} [NormedField 𝕜]
 
-/-- The integer coordinate `⌊log ‖x‖⌋` of `x ≠ 0` is bounded by `|log ‖x‖| + 1`. -/
-theorem abs_floor_log_norm_le (x : 𝕜) : |(⌊Real.log ‖x‖⌋ : ℝ)| ≤ |Real.log ‖x‖| + 1 := by
-  have h1 := Int.floor_le (Real.log ‖x‖)
-  have h2 := Int.lt_floor_add_one (Real.log ‖x‖)
+/-- `|⌊r⌋| ≤ |r| + 1` for real `r`. -/
+theorem abs_floor_le_abs_add_one (r : ℝ) : |(⌊r⌋ : ℝ)| ≤ |r| + 1 := by
+  have h1 := Int.floor_le r
+  have h2 := Int.lt_floor_add_one r
   rw [abs_le]
-  constructor <;> cases abs_cases (Real.log ‖x‖) <;> linarith
+  constructor <;> cases abs_cases r <;> linarith
 
 /-- Two nonzero elements with the same coordinate `⌊log ‖·‖⌋` have quotient of norm `< e`. -/
 theorem norm_div_lt_exp_of_floor_log_norm_eq {x y : 𝕜} (hx : x ≠ 0) (hy : y ≠ 0)
@@ -121,10 +122,7 @@ theorem norm_div_lt_exp_of_floor_log_norm_eq {x y : 𝕜} (hx : x ≠ 0) (hy : y
   have hx' : 0 < ‖x‖ := norm_pos_iff.2 hx
   have hy' : 0 < ‖y‖ := norm_pos_iff.2 hy
   rw [norm_div, ← Real.exp_log (div_pos hx' hy'), Real.exp_lt_exp, Real.log_div hx'.ne' hy'.ne']
-  have h1 := Int.floor_le (Real.log ‖y‖)
-  have h2 := Int.lt_floor_add_one (Real.log ‖x‖)
-  rw [h] at h2
-  linarith
+  exact (le_abs_self _).trans_lt (Int.abs_sub_lt_one_of_floor_eq_floor h)
 
 /-- `|log ‖t‖| ≤ log M` when `‖t‖, ‖t⁻¹‖ ≤ M`. -/
 theorem abs_log_norm_le_log {t : 𝕜} (ht : t ≠ 0) {M : ℝ} (h1 : ‖t‖ ≤ M) (h2 : ‖t⁻¹‖ ≤ M) :

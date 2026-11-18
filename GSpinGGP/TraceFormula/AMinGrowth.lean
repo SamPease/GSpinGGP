@@ -23,7 +23,9 @@ compact, and the statement is made modulo `A_G`, for the log-norm `σ_{A_G\G}` o
 (`infLeft (logNorm F d.G) d.AG`, which is `GGPData.logNormModAG` by definition): the set
 `{a ; σ_{A_G\G}(a) < R}` is covered by `≪ (1 + R)^N` sets `A_G(F) j C`, for a fixed compact
 `C ⊆ G(F)`. This is the form required by `WeakCartanData.growth`
-(`HarmonicAnalysis/PolynomialGrowth.lean`).
+(`HarmonicAnalysis/PolynomialGrowth.lean`). Unlike BP, `C` is a log-norm ball of `G(F)` chosen in
+the proof, not an arbitrary `C_min ⊆ A_min(F)`, and the centres `j` lie in `frameTorusModAG`; this
+is what `WeakCartanData.growth` needs.
 
 ## The torus
 
@@ -62,6 +64,63 @@ open scoped Pointwise
 
 namespace GSpinGGP
 
+/-! ## Norm estimates on the torus of a hyperbolic frame -/
+
+section FrameNorm
+
+variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
+  {E : Type*} [NormedAddCommGroup E] [NormedSpace F E] [FiniteDimensional F E]
+  {Q : QuadraticForm F E} {W : Submodule F E} {n : ℕ} {e f : Fin n → E}
+
+namespace IsHypFrame
+
+/-- The coordinates of a torus element: `|⌊log ‖tᵢ‖⌋| ≤ log ‖y‖_{GL} + 1`. -/
+theorem abs_floor_log_hypParam_le (hF : IsHypFrame Q W e f) {y : E ≃ₗ[F] E}
+    (hy : y ∈ hypTorus W e f) (i : Fin n) :
+    |(⌊Real.log ‖hypParam Q e f y i‖⌋ : ℝ)| ≤ Real.log (glMaxNorm y) + 1 := by
+  refine (abs_floor_le_abs_add_one _).trans ?_
+  gcongr
+  exact abs_log_norm_le_log (hF.apply_e_of_mem_hypTorus hy i).2.2
+    ((hF.norm_hypParam_le hy i).trans (norm_le_glMaxNorm y))
+    ((hF.norm_inv_hypParam_le hy i).trans (norm_le_glMaxNorm y))
+
+/-- Torus elements whose parameters lie in the annulus `e⁻¹ ≤ ‖tᵢ‖ ≤ e` are bounded in `GL(E)`. -/
+theorem exists_glMaxNorm_le_of_hypParam (hF : IsHypFrame Q W e f) :
+    ∃ C, 1 ≤ C ∧ ∀ y ∈ hypTorus W e f,
+      (∀ i, ‖hypParam Q e f y i‖ ≤ Real.exp 1 ∧ ‖(hypParam Q e f y i)⁻¹‖ ≤ Real.exp 1) →
+      glMaxNorm y ≤ C := by
+  obtain ⟨C, hC, h⟩ := hF.exists_norm_le_of_mem_hypTorus
+  refine ⟨max 1 (C * (1 + Real.exp 1)), le_max_left _ _, fun y hy hp => ?_⟩
+  have hyi : y⁻¹ ∈ hypTorus W e f := (hypTorus W e f).inv_mem hy
+  have hpi : ∀ i, ‖hypParam Q e f y⁻¹ i‖ ≤ Real.exp 1 ∧
+      ‖(hypParam Q e f y⁻¹ i)⁻¹‖ ≤ Real.exp 1 := fun i => by
+    rw [hF.hypParam_inv hy, inv_inv]; exact ⟨(hp i).2, (hp i).1⟩
+  refine max_le (le_max_left _ _) (max_le ?_ ?_)
+  · exact (h y hy _ (Real.exp_pos 1).le hp).trans (le_max_right _ _)
+  · exact (h _ hyi _ (Real.exp_pos 1).le hpi).trans (le_max_right _ _)
+
+/-- Two torus elements with the same coordinates `⌊log ‖tᵢ‖⌋` differ by a bounded torus element. -/
+theorem glMaxNorm_inv_mul_le_of_floor_eq (hF : IsHypFrame Q W e f) {C : ℝ}
+    (hb : ∀ y ∈ hypTorus W e f, (∀ i, ‖hypParam Q e f y i‖ ≤ Real.exp 1 ∧
+      ‖(hypParam Q e f y i)⁻¹‖ ≤ Real.exp 1) → glMaxNorm y ≤ C)
+    {y y' : E ≃ₗ[F] E} (hy : y ∈ hypTorus W e f) (hy' : y' ∈ hypTorus W e f)
+    (hc : ∀ i, ⌊Real.log ‖hypParam Q e f y i‖⌋ = ⌊Real.log ‖hypParam Q e f y' i‖⌋) :
+    glMaxNorm (y⁻¹ * y') ≤ C := by
+  have hyi := (hypTorus W e f).inv_mem hy
+  refine hb _ (mul_mem hyi hy') fun i => ?_
+  have hp := (hF.apply_e_of_mem_hypTorus hy i).2.2
+  have hp' := (hF.apply_e_of_mem_hypTorus hy' i).2.2
+  rw [hF.hypParam_mul hyi hy', hF.hypParam_inv hy, mul_inv, inv_inv]
+  constructor
+  · rw [mul_comm, ← div_eq_mul_inv]
+    exact (norm_div_lt_exp_of_floor_log_norm_eq hp' hp (hc i).symm).le
+  · rw [← div_eq_mul_inv]
+    exact (norm_div_lt_exp_of_floor_log_norm_eq hp hp' (hc i)).le
+
+end IsHypFrame
+
+end FrameNorm
+
 namespace GGPData
 
 variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
@@ -82,10 +141,6 @@ theorem PbarW_apply (g : d.G) :
 
 theorem PbarV_apply (g : d.G) : d.PbarV g = ((d.Pbar g).2 : d.V ≃ₗ[F] d.V) := rfl
 
-theorem glMaxNorm_extZ (f : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) :
-    glMaxNorm (d.extZ f) = glMaxNorm f :=
-  glMaxNorm_prodCongr_refl (Z := d.Z) f
-
 variable {n₁ n₂ : ℕ} (W₁ W₂ : Submodule F d.V) (e₁ f₁ : Fin n₁ → d.V) (e₂ f₂ : Fin n₂ → d.V)
 
 /-- **The split torus of two frames**: the `g ∈ G(F)` with `P(g_W) ⊕ 1` in the torus of the
@@ -100,24 +155,6 @@ theorem mem_frameTorus {g : d.G} :
       d.PbarW g ∈ hypTorus W₁ e₁ f₁ ∧ d.PbarV g ∈ hypTorus W₂ e₂ f₂ := Iff.rfl
 
 /-! ## `A_G` and the two factors -/
-
-/-- If `W` is not a hyperbolic plane, `A_G` has trivial image in `SO(W)`. -/
-theorem Pbar_fst_eq_one_of_mem_AG (hW : ¬ IsHypPlane d.QW) {z : d.G} (hz : z ∈ d.AG) :
-    (d.Pbar z).1 = 1 := by
-  obtain ⟨⟨a, b⟩, ⟨ha, -⟩, rfl⟩ := hz
-  have ha' : a ∈ (scalarGSpin d.QW).range := by
-    unfold splitCentralGSpin at ha; rwa [ite_eq_right_of_eq_false _ _ (eq_false hW)] at ha
-  obtain ⟨c, rfl⟩ := ha'
-  exact Subtype.ext (specP_scalarGSpin_eq_one c)
-
-/-- If `V` is not a hyperbolic plane, `A_G` has trivial image in `SO(V)`. -/
-theorem Pbar_snd_eq_one_of_mem_AG (hV : ¬ IsHypPlane d.QV) {z : d.G} (hz : z ∈ d.AG) :
-    (d.Pbar z).2 = 1 := by
-  obtain ⟨⟨a, b⟩, ⟨-, hb⟩, rfl⟩ := hz
-  have hb' : b ∈ (scalarGSpin d.QV).range := by
-    unfold splitCentralGSpin at hb; rwa [ite_eq_right_of_eq_false _ _ (eq_false hV)] at hb
-  obtain ⟨c, rfl⟩ := hb'
-  exact Subtype.ext (specP_scalarGSpin_eq_one c)
 
 theorem PbarW_mul_of_mem_AG (hW : ¬ IsHypPlane d.QW) {z : d.G} (hz : z ∈ d.AG) (g : d.G) :
     d.PbarW (z * g) = d.PbarW g := by
@@ -170,35 +207,7 @@ theorem PbarV_hypPart_inv_mul (hV : IsHypPlane d.QV) (g : d.G) :
     rw [this, map_one])
   rw [h1]; rfl
 
-/-! ## Norm estimates -/
-
 variable {W₁ W₂ e₁ f₁ e₂ f₂}
-
-/-- The coordinates of a torus element: `|⌊log ‖tᵢ‖⌋| ≤ log ‖y‖_{GL} + 1`. -/
-theorem abs_floor_log_hypParam_le {n : ℕ} {W' : Submodule F d.V} {e f : Fin n → d.V}
-    (hF : IsHypFrame d.QV W' e f) {y : d.V ≃ₗ[F] d.V} (hy : y ∈ hypTorus W' e f) (i : Fin n) :
-    |(⌊Real.log ‖hypParam d.QV e f y i‖⌋ : ℝ)| ≤ Real.log (glMaxNorm y) + 1 := by
-  refine (abs_floor_log_norm_le _).trans ?_
-  gcongr
-  exact abs_log_norm_le_log (hF.apply_e_of_mem_hypTorus hy i).2.2
-    ((hF.norm_hypParam_le hy i).trans (norm_le_glMaxNorm y))
-    ((hF.norm_inv_hypParam_le hy i).trans (norm_le_glMaxNorm y))
-
-/-- Torus elements whose parameters lie in the annulus `e⁻¹ < ‖tᵢ‖ < e` are bounded in `GL(V)`. -/
-theorem exists_glMaxNorm_le_of_hypParam {n : ℕ} {W' : Submodule F d.V} {e f : Fin n → d.V}
-    (hF : IsHypFrame d.QV W' e f) :
-    ∃ C, 1 ≤ C ∧ ∀ y ∈ hypTorus W' e f,
-      (∀ i, ‖hypParam d.QV e f y i‖ ≤ Real.exp 1 ∧ ‖(hypParam d.QV e f y i)⁻¹‖ ≤ Real.exp 1) →
-      glMaxNorm y ≤ C := by
-  obtain ⟨C, hC, h⟩ := hF.exists_norm_le_of_mem_hypTorus
-  refine ⟨max 1 (C * (1 + Real.exp 1)), le_max_left _ _, fun y hy hp => ?_⟩
-  have hyi : y⁻¹ ∈ hypTorus W' e f := (hypTorus W' e f).inv_mem hy
-  have hpi : ∀ i, ‖hypParam d.QV e f y⁻¹ i‖ ≤ Real.exp 1 ∧
-      ‖(hypParam d.QV e f y⁻¹ i)⁻¹‖ ≤ Real.exp 1 := fun i => by
-    rw [hF.hypParam_inv hy, inv_inv]; exact ⟨(hp i).2, (hp i).1⟩
-  refine max_le (le_max_left _ _) (max_le ?_ ?_)
-  · exact (h y hy _ (Real.exp_pos 1).le hp).trans (le_max_right _ _)
-  · exact (h _ hyi _ (Real.exp_pos 1).le hpi).trans (le_max_right _ _)
 
 /-! ## The covering -/
 
@@ -230,47 +239,39 @@ theorem AG_mul_frameTorus_subset :
 theorem exists_log_glMaxNorm_le :
     ∃ c, 0 ≤ c ∧ ∀ g : d.G,
       (¬ IsHypPlane d.QW → Real.log (glMaxNorm (d.PbarW g)) ≤
-        c * (infLeft (logNorm F d.G) d.AG g + 1)) ∧
+        c * infLeft (logNorm F d.G) d.AG g) ∧
       (¬ IsHypPlane d.QV → Real.log (glMaxNorm (d.PbarV g)) ≤
-        c * (infLeft (logNorm F d.G) d.AG g + 1)) := by
+        c * infLeft (logNorm F d.G) d.AG g) := by
   obtain ⟨c, hc, hle⟩ := d.exists_logNormSO_Pbar_le
-  refine ⟨c, hc, fun g => ?_⟩
-  have hne : Nonempty d.AG := ⟨1⟩
-  obtain ⟨⟨z, hz⟩, hzlt⟩ := exists_lt_of_ciInf_lt (f := fun s : d.AG => logNorm F d.G (s * g))
-    (show infLeft (logNorm F d.G) d.AG g < infLeft (logNorm F d.G) d.AG g + 1 by linarith)
-  have hSO := hle (z * g)
-  have hM := d.one_le_max_glMaxNorm (d.Pbar (z * g))
-  have hlogSO : ∀ x, 1 ≤ x → x ≤ max (glMaxNorm ((d.Pbar (z * g)).1 :
-      (Fin d.m → F) ≃ₗ[F] (Fin d.m → F))) (glMaxNorm ((d.Pbar (z * g)).2 : d.V ≃ₗ[F] d.V)) →
-      Real.log x ≤ c * (infLeft (logNorm F d.G) d.AG g + 1) := by
-    intro x hx hxM
-    have h1 := Real.log_le_log (by linarith) hxM
-    have : d.logNormSO (d.Pbar (z * g)) ≤ c * (infLeft (logNorm F d.G) d.AG g + 1) :=
-      hSO.trans (mul_le_mul_of_nonneg_left hzlt.le hc)
-    rw [logNormSO] at this
-    linarith
-  refine ⟨fun hW => ?_, fun hV => ?_⟩
-  · rw [← d.PbarW_mul_of_mem_AG hW hz, PbarW_apply, glMaxNorm_extZ]
-    exact hlogSO _ (one_le_glMaxNorm _) (le_max_left _ _)
-  · rw [← d.PbarV_mul_of_mem_AG hV hz, PbarV_apply]
-    exact hlogSO _ (one_le_glMaxNorm _) (le_max_right _ _)
+  have key : ∀ g s : d.G, ∀ x, x ≤ max (glMaxNorm (d.PbarW (s * g))) (glMaxNorm (d.PbarV (s * g))) →
+      1 ≤ x → Real.log x ≤ c * logNorm F d.G (s * g) := by
+    intro g s x hx hx1
+    have h1 := Real.log_le_log (by linarith) hx
+    have h2 := hle (s * g)
+    rw [logNormSO_eq] at h2
+    exact h1.trans (by rw [PbarW_apply, PbarV_apply]; linarith)
+  refine ⟨c, hc, fun g => ⟨fun hW => le_mul_infLeft d.AG hc fun s hs => ?_,
+    fun hV => le_mul_infLeft d.AG hc fun s hs => ?_⟩⟩
+  · exact key g s _ (by rw [d.PbarW_mul_of_mem_AG hW hs]; exact le_max_left _ _)
+      (one_le_glMaxNorm _)
+  · exact key g s _ (by rw [d.PbarV_mul_of_mem_AG hV hs]; exact le_max_right _ _)
+      (one_le_glMaxNorm _)
 
-/-- **The coordinates are bounded by `σ_{A_G\G}`**: `|vᵢ(a)| ≤ c (σ_{A_G\G}(a) + 2)` on
+/-- **The coordinates are bounded by `σ_{A_G\G}`**: `|vᵢ(a)| ≤ c (σ_{A_G\G}(a) + 1)` on
 `frameTorusModAG`. -/
 theorem exists_abs_frameCoord_le (hF₁ : IsHypFrame d.QV W₁ e₁ f₁)
     (hF₂ : IsHypFrame d.QV W₂ e₂ f₂) :
     ∃ c, 1 ≤ c ∧ ∀ a ∈ d.frameTorusModAG W₁ W₂ e₁ f₁ e₂ f₂, ∀ i,
-      c⁻¹ * |(d.frameCoord e₁ f₁ e₂ f₂ a i : ℝ)| ≤ infLeft (logNorm F d.G) d.AG a + 2 := by
+      c⁻¹ * |(d.frameCoord e₁ f₁ e₂ f₂ a i : ℝ)| ≤ infLeft (logNorm F d.G) d.AG a + 1 := by
   classical
   obtain ⟨c, hc, hlog⟩ := d.exists_log_glMaxNorm_le
   refine ⟨max c 1, le_max_right _ _, fun a ha i => ?_⟩
   set τ := infLeft (logNorm F d.G) d.AG a
   have hτ0 : 0 ≤ τ := le_ciInf fun s => zero_le_one.trans (one_le_logNorm _ _)
-  have key : ∀ L : ℝ, L ≤ c * (τ + 1) → ∀ x : ℝ, |x| ≤ L + 1 → (max c 1)⁻¹ * |x| ≤ τ + 2 := by
+  have key : ∀ L : ℝ, L ≤ c * τ → ∀ x : ℝ, |x| ≤ L + 1 → (max c 1)⁻¹ * |x| ≤ τ + 1 := by
     intro L hL x hx
     rw [inv_mul_le_iff₀ (zero_lt_one.trans_le (le_max_right _ _))]
-    have h1 : c * (τ + 1) ≤ max c 1 * (τ + 1) :=
-      mul_le_mul_of_nonneg_right (le_max_left _ _) (by linarith)
+    have h1 : c * τ ≤ max c 1 * τ := mul_le_mul_of_nonneg_right (le_max_left _ _) hτ0
     have h2 : 1 ≤ max c 1 := le_max_right _ _
     nlinarith
   cases i with
@@ -279,44 +280,25 @@ theorem exists_abs_frameCoord_le (hF₁ : IsHypFrame d.QV W₁ e₁ f₁)
     · simp only [frameCoord, Sum.elim_inl, hW, ite_true, Int.cast_zero, abs_zero, mul_zero]
       linarith
     · simp only [frameCoord, Sum.elim_inl, hW, ite_false]
-      exact key _ ((hlog a).1 hW) _ (d.abs_floor_log_hypParam_le hF₁ (ha.1 hW) i)
+      exact key _ ((hlog a).1 hW) _ (hF₁.abs_floor_log_hypParam_le (ha.1 hW) i)
   | inr i =>
     by_cases hV : IsHypPlane d.QV
     · simp only [frameCoord, Sum.elim_inr, hV, ite_true, Int.cast_zero, abs_zero, mul_zero]
       linarith
     · simp only [frameCoord, Sum.elim_inr, hV, ite_false]
-      exact key _ ((hlog a).2 hV) _ (d.abs_floor_log_hypParam_le hF₂ (ha.2 hV) i)
-
-/-- Two torus elements with the same coordinates `⌊log ‖tᵢ‖⌋` differ by a bounded torus element. -/
-theorem glMaxNorm_inv_mul_le_of_floor_eq {n : ℕ} {W' : Submodule F d.V}
-    {e f : Fin n → d.V} (hF : IsHypFrame d.QV W' e f) {C : ℝ}
-    (hb : ∀ y ∈ hypTorus W' e f, (∀ i, ‖hypParam d.QV e f y i‖ ≤ Real.exp 1 ∧
-      ‖(hypParam d.QV e f y i)⁻¹‖ ≤ Real.exp 1) → glMaxNorm y ≤ C)
-    {y y' : d.V ≃ₗ[F] d.V} (hy : y ∈ hypTorus W' e f) (hy' : y' ∈ hypTorus W' e f)
-    (hc : ∀ i, ⌊Real.log ‖hypParam d.QV e f y i‖⌋ = ⌊Real.log ‖hypParam d.QV e f y' i‖⌋) :
-    glMaxNorm (y⁻¹ * y') ≤ C := by
-  have hyi := (hypTorus W' e f).inv_mem hy
-  refine hb _ (mul_mem hyi hy') fun i => ?_
-  have hp := (hF.apply_e_of_mem_hypTorus hy i).2.2
-  have hp' := (hF.apply_e_of_mem_hypTorus hy' i).2.2
-  rw [hF.hypParam_mul hyi hy', hF.hypParam_inv hy, mul_inv, inv_inv]
-  constructor
-  · rw [mul_comm, ← div_eq_mul_inv]
-    exact (norm_div_lt_exp_of_floor_log_norm_eq hp' hp (hc i).symm).le
-  · rw [← div_eq_mul_inv]
-    exact (norm_div_lt_exp_of_floor_log_norm_eq hp hp' (hc i)).le
+      exact key _ ((hlog a).2 hV) _ (hF₂.abs_floor_log_hypParam_le (ha.2 hV) i)
 
 /-- **Same coordinates, bounded quotient modulo `A_G`**: there is `B` such that two elements
 `a, a'` of `frameTorusModAG` with the same coordinates have
-`σ_{Ḡ}(P̄(z₀⁻¹ a⁻¹ a')) ≤ B` for some `z₀ ∈ A_G`. -/
+`σ_{Ḡ}(P̄(z₀⁻¹ a⁻¹ a')) ≤ B` for `z₀ = hypPart (a⁻¹ a') ∈ A_G`. -/
 theorem exists_logNormSO_le_of_frameCoord_eq (hF₁ : IsHypFrame d.QV W₁ e₁ f₁)
     (hF₂ : IsHypFrame d.QV W₂ e₂ f₂) :
     ∃ B, ∀ a ∈ d.frameTorusModAG W₁ W₂ e₁ f₁ e₂ f₂, ∀ a' ∈ d.frameTorusModAG W₁ W₂ e₁ f₁ e₂ f₂,
       d.frameCoord e₁ f₁ e₂ f₂ a = d.frameCoord e₁ f₁ e₂ f₂ a' →
       d.logNormSO (d.Pbar ((d.hypPart (a⁻¹ * a'))⁻¹ * (a⁻¹ * a'))) ≤ B := by
   classical
-  obtain ⟨C₁, hC₁, hb₁⟩ := d.exists_glMaxNorm_le_of_hypParam hF₁
-  obtain ⟨C₂, hC₂, hb₂⟩ := d.exists_glMaxNorm_le_of_hypParam hF₂
+  obtain ⟨C₁, hC₁, hb₁⟩ := hF₁.exists_glMaxNorm_le_of_hypParam
+  obtain ⟨C₂, hC₂, hb₂⟩ := hF₂.exists_glMaxNorm_le_of_hypParam
   refine ⟨1 + Real.log (max C₁ C₂), fun a ha a' ha' hcoord => ?_⟩
   set g := a⁻¹ * a'
   have hz₀ : d.hypPart g ∈ d.AG := d.hypPart_mem_AG g
@@ -324,7 +306,7 @@ theorem exists_logNormSO_le_of_frameCoord_eq (hF₁ : IsHypFrame d.QV W₁ e₁ 
     by_cases hW : IsHypPlane d.QW
     · rw [d.PbarW_hypPart_inv_mul hW, glMaxNorm_one]; exact hC₁.trans (le_max_left _ _)
     · rw [d.PbarW_mul_of_mem_AG hW (d.AG.inv_mem hz₀), map_mul, map_inv]
-      refine (d.glMaxNorm_inv_mul_le_of_floor_eq hF₁ hb₁ (ha.1 hW) (ha'.1 hW) fun i => ?_).trans
+      refine (hF₁.glMaxNorm_inv_mul_le_of_floor_eq hb₁ (ha.1 hW) (ha'.1 hW) fun i => ?_).trans
         (le_max_left _ _)
       have := congrFun hcoord (Sum.inl i)
       simpa only [frameCoord, Sum.elim_inl, hW, ite_false] using this
@@ -332,14 +314,14 @@ theorem exists_logNormSO_le_of_frameCoord_eq (hF₁ : IsHypFrame d.QV W₁ e₁ 
     by_cases hV : IsHypPlane d.QV
     · rw [d.PbarV_hypPart_inv_mul hV, glMaxNorm_one]; exact hC₁.trans (le_max_left _ _)
     · rw [d.PbarV_mul_of_mem_AG hV (d.AG.inv_mem hz₀), map_mul, map_inv]
-      refine (d.glMaxNorm_inv_mul_le_of_floor_eq hF₂ hb₂ (ha.2 hV) (ha'.2 hV) fun i => ?_).trans
+      refine (hF₂.glMaxNorm_inv_mul_le_of_floor_eq hb₂ (ha.2 hV) (ha'.2 hV) fun i => ?_).trans
         (le_max_right _ _)
       have := congrFun hcoord (Sum.inr i)
       simpa only [frameCoord, Sum.elim_inr, hV, ite_false] using this
-  rw [PbarW_apply, glMaxNorm_extZ] at hW0
-  rw [PbarV_apply] at hV0
-  have h1 := Real.log_le_log (zero_lt_one.trans_le (d.one_le_max_glMaxNorm _)) (max_le hW0 hV0)
-  rw [logNormSO]
+  have h1 := Real.log_le_log (zero_lt_one.trans_le ((one_le_glMaxNorm _).trans (le_max_left _ _)))
+    (max_le hW0 hV0)
+  rw [logNormSO_eq]
+  rw [PbarW_apply, PbarV_apply] at h1
   linarith
 
 /-- **BP (6.7.12) modulo `A_G`**, covering form: for two hyperbolic frames of `V` there are a
@@ -355,7 +337,7 @@ theorem exists_cover_frameTorus (hF₁ : IsHypFrame d.QV W₁ e₁ f₁)
         ∀ a ∈ d.frameTorusModAG W₁ W₂ e₁ f₁ e₂ f₂, infLeft (logNorm F d.G) d.AG a < R →
           ∃ z ∈ d.AG, ∃ j ∈ t, ∃ e ∈ CS, a = z * (j * e) := by
   obtain ⟨B, hB⟩ := d.exists_logNormSO_le_of_frameCoord_eq hF₁ hF₂
-  obtain ⟨Cd, -, hdesc⟩ := d.exists_logNorm_scalars_mul_le
+  obtain ⟨Cd, hCd, hdesc⟩ := d.exists_logNorm_scalars_mul_le
   obtain ⟨c, hc, hv⟩ := d.exists_abs_frameCoord_le hF₁ hF₂
   set CS : Set d.G := {g | logNorm F d.G g ≤ Cd * B}
   have hE : ∀ a ∈ d.frameTorusModAG W₁ W₂ e₁ f₁ e₂ f₂,
@@ -367,17 +349,9 @@ theorem exists_cover_frameTorus (hF₁ : IsHypFrame d.QV W₁ e₁ f₁)
     obtain ⟨ζ, hζ, hζle⟩ := hdesc ((d.hypPart (a⁻¹ * a'))⁻¹ * (a⁻¹ * a'))
     have hzA : d.hypPart (a⁻¹ * a') * ζ⁻¹ ∈ d.AG :=
       d.AG.mul_mem hz₀ (d.AG.inv_mem (d.scalars_le_AG hζ))
-    refine ⟨_, hzA, _, hζle.trans (mul_le_mul_of_nonneg_left (hB a ha a' ha' hcoord) ?_), ?_⟩
-    · have := d.one_le_logNormSO (d.Pbar ((d.hypPart (a⁻¹ * a'))⁻¹ * (a⁻¹ * a')))
-      have h0 := zero_le_one.trans (one_le_logNorm (F := F) d.G
-        (ζ * ((d.hypPart (a⁻¹ * a'))⁻¹ * (a⁻¹ * a'))))
-      by_contra hneg
-      push Not at hneg
-      have : Cd * d.logNormSO (d.Pbar ((d.hypPart (a⁻¹ * a'))⁻¹ * (a⁻¹ * a'))) < 0 :=
-        mul_neg_of_neg_of_pos hneg (by linarith)
-      linarith
-    · rw [← mul_assoc, ← (Subgroup.mem_center_iff.1 (d.AG_le_center hzA) a), mul_assoc]
-      group
+    refine ⟨_, hzA, _, hζle.trans (mul_le_mul_of_nonneg_left (hB a ha a' ha' hcoord) hCd), ?_⟩
+    rw [← mul_assoc, ← (Subgroup.mem_center_iff.1 (d.AG_le_center hzA) a), mul_assoc]
+    group
   obtain ⟨M, hM⟩ := exists_finset_cover_of_intCoord (d.frameCoord e₁ f₁ e₂ f₂)
     (inv_pos.2 (zero_lt_one.trans_le hc)) hv hE
   exact ⟨CS, isCompact_logNorm_le d.isClosed_G _, M, _, hM⟩
