@@ -22,7 +22,7 @@ The statements in §1 are the interface consumed by
   plus the eigenvalues of `t` on `W''`) and `tendsto_mGeomS_of_mem_QC` (the thesis's induction for
   one `χ`).  `integrable_delta_rpow` is proved from `bp_integrable_deltaGGP_rpow` (the GSpin
   consequence of B.1.2(i), proved through the `exp` chart from its Lie-algebra form
-  `locallyIntegrable_absF_det_adV_rpow`, SORRY), `aestronglyMeasurable_torusFn_of_mem_QC` from
+  `locallyIntegrable_absF_det_adV_rpow`), `aestronglyMeasurable_torusFn_of_mem_QC` from
   inputs in `TraceFormula/TorusDescent.lean`; the others are SORRY.
   `mGeomS_smul` needs no input.
 * `mGeom_congr_regularSet`: `m_geom(θ)` depends only on `θ|_{G_reg}` (germs only see the regular
