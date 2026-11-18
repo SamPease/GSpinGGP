@@ -10,6 +10,7 @@ import GSpinGGP.Foundations.CentralizerIso
 import GSpinGGP.Foundations.ExpLocal
 import GSpinGGP.Foundations.ExpHaar
 import GSpinGGP.Foundations.TorusIntegrability
+import GSpinGGP.Foundations.EvaluationSpan
 import GSpinGGP.Foundations.GSpinExp
 import GSpinGGP.Foundations.GSpinExpAd
 import GSpinGGP.Foundations.OrbitChart
@@ -51,6 +52,9 @@ import GSpinGGP.Foundations.OrthogonalSum
 import GSpinGGP.Foundations.BasisNorm
 import GSpinGGP.Foundations.WeakCartanSO
 import GSpinGGP.Foundations.WeakCartanRotation
+import GSpinGGP.Foundations.WeakCartanFrame
+import GSpinGGP.Foundations.WeakCartanTheorem
+import GSpinGGP.Foundations.GoodParabolicSO
 import GSpinGGP.GGP.RegularOrbitClass
 import GSpinGGP.GGP.OrbitSpecQd
 import GSpinGGP.GGP.RegularRank
@@ -144,6 +148,7 @@ import GSpinGGP.TraceFormula.Analytic
 import GSpinGGP.TraceFormula.Interface
 import GSpinGGP.TraceFormula.GermTranslate
 import GSpinGGP.TraceFormula.TorusDescent
+import GSpinGGP.TraceFormula.GermBound
 import GSpinGGP.TraceFormula.MGeom
 import GSpinGGP.TraceFormula.MGeomLimit
 import GSpinGGP.TraceFormula.Scusp
@@ -153,9 +158,12 @@ import GSpinGGP.TraceFormula.Lie
 import GSpinGGP.TraceFormula.Spine
 import GSpinGGP.TraceFormula
 import GSpinGGP.HarmonicAnalysis.LogNorm
+import GSpinGGP.Foundations.NormDescent
+import GSpinGGP.TraceFormula.LogNormDescent
 import GSpinGGP.Main
 import GSpinGGP.Sanity.Witnesses
 import GSpinGGP.Sanity.NilpotentOrbit
 import GSpinGGP.Sanity.LieAudit
 import GSpinGGP.Sanity.InvariantSetsAudit
+import GSpinGGP.Sanity.WeakCartanFrame
 import GSpinGGP.Sanity.AxiomRedTeam

@@ -885,6 +885,22 @@ theorem scalarGSpin_mem_center (Q : QuadraticForm K V) (c : Kˣ) :
   apply Subtype.ext; apply Units.ext
   simp [scalarGSpin, Algebra.commutes]
 
+omit [Invertible (2 : K)] in
+/-- `c g = c • g` in `C(V)` for a scalar `c`. -/
+theorem coe_scalarGSpin_mul {Q : QuadraticForm K V} (c : Kˣ) (g : GSpin Q) :
+    (((scalarGSpin Q c * g : GSpin Q) : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) =
+      (c : K) • ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) := by
+  simp [scalarGSpin, Algebra.smul_def]
+
+omit [Invertible (2 : K)] in
+/-- `(c g)⁻¹ = c⁻¹ • g⁻¹` in `C(V)` for a scalar `c`. -/
+theorem coe_inv_scalarGSpin_mul {Q : QuadraticForm K V} (c : Kˣ) (g : GSpin Q) :
+    ((((scalarGSpin Q c * g : GSpin Q) : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) :
+      CliffordAlgebra Q) =
+      ((c⁻¹ : Kˣ) : K) • (((g : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) :
+        CliffordAlgebra Q) := by
+  simp [scalarGSpin, Algebra.smul_def, Algebra.commutes]
+
 /-- A `2`-dimensional quadratic space has an orthogonal basis indexed by `Fin 2`. -/
 theorem exists_orthogonal_basis_fin_two [Module.Finite K V] (Q : QuadraticForm K V)
     (hV : finrank K V = 2) :
