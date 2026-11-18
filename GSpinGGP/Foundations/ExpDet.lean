@@ -28,6 +28,15 @@ namespace GSpinGGP
 variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
 variable {V : Type*} [AddCommGroup V] [Module F V] [FiniteDimensional F V]
 
+/-- An endomorphism commuting with `A` preserves `ker(A − 1)`. -/
+theorem mapsTo_ker_sub_one_of_commute
+    {A M : Module.End F V} (h : Commute A M) :
+    ∀ v ∈ LinearMap.ker (A - 1), M v ∈ LinearMap.ker (A - 1) := by
+  intro v hv
+  rw [LinearMap.mem_ker] at hv ⊢
+  have e : (A - 1) * M = M * (A - 1) := h.sub_left (Commute.one_left M)
+  rw [← Module.End.mul_apply, e, Module.End.mul_apply, hv, map_zero]
+
 /-- `M ↦ det(π ∘ M ∘ ι)` for a submodule `P` and a linear map `π : V → P` is continuous. -/
 theorem continuous_det_compress [TopologicalSpace (Module.End F V)]
     [IsModuleTopology F (Module.End F V)] (P : Submodule F V) (π : V →ₗ[F] P) :

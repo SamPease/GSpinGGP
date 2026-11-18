@@ -62,15 +62,6 @@ theorem mapsTo_movedSub_of_commute {x : ↥(GSpin d.QW)} {M : Module.End F (Fin 
     h.sub_left (Commute.one_left M)
   exact LinearMap.congr_fun e w
 
-/-- An endomorphism commuting with `A` preserves `ker(A − 1)`. -/
-theorem mapsTo_ker_sub_one_of_commute {V : Type*} [AddCommGroup V] [Module F V]
-    {A M : Module.End F V} (h : Commute A M) :
-    ∀ v ∈ LinearMap.ker (A - 1), M v ∈ LinearMap.ker (A - 1) := by
-  intro v hv
-  rw [LinearMap.mem_ker] at hv ⊢
-  have e : (A - 1) * M = M * (A - 1) := h.sub_left (Commute.one_left M)
-  rw [← Module.End.mul_apply, e, Module.End.mul_apply, hv, map_zero]
-
 /-- `P(g)` commutes with `adV X` when `g` commutes with `X ∈ gspin(W)`. -/
 theorem commute_specP_adV {g : ↥(GSpin d.QW)} {X : CliffordAlgebra d.QW} (hX : X ∈ gspin d.QW)
     (hgX : (((g : (CliffordAlgebra d.QW)ˣ)) : CliffordAlgebra d.QW) * X =
@@ -131,6 +122,7 @@ theorem locallyIntegrable_absF_det_adV_rpow {x t₀ : ↥(GSpin d.QW)} (hx : d.I
         (d.adV_mapsTo_movedSub_inf_ker ht₀ X))) ^ a) μ := by
   sorry
 
+set_option maxHeartbeats 800000 in
 /-- **The determinant estimate at `t₀ ∈ T_x`, in the `exp` chart**: for `x ∈ Γ(G,H)`, `t₀ ∈ T_x`
 and `X ∈ 𝔱⁰(F)` near `0`, if `h ∈ T_x` has `h = e^X` and `t₀ h ∈ T_♮`, then `Δ(t₀ h)` is bounded
 above by a constant and is comparable to `|det(ad X|_K)|_F`, `K = W''_x ∩ ker(P(t₀) − 1)`.
@@ -138,7 +130,7 @@ On `W''_x`, `P(t₀ h) − 1 = A e^Y − 1` with `A = P(t₀)|_{W''_x}` semisimp
 `Y = ad X|_{W''_x}` (`P(e^X) = e^{ad X}`), so `exists_absF_det_mul_expA_sub_one` applies. -/
 theorem exists_eventually_deltaGGP_bounds {x t₀ : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
     (ht₀ : t₀ ∈ d.torusOf x) :
-    ∃ c C C' : ℝ, 0 < c ∧ ∀ᶠ X in 𝓝 (0 : ↥(d.lieTorus (d.torusOf x))), ∀ h : ↥(GSpin d.QW),
+    ∃ c C C' : ℝ, 0 < c ∧ ∀ᶠ X : ↥(d.lieTorus (d.torusOf x)) in 𝓝 0, ∀ h : ↥(GSpin d.QW),
       h ∈ d.torusOf x →
       (((h : (CliffordAlgebra d.QW)ˣ)) : CliffordAlgebra d.QW) = expA F (X : CliffordAlgebra d.QW) →
       d.IsGammaElt (t₀ * h) ∧ d.torusOf (t₀ * h) = d.torusOf x →
@@ -150,13 +142,13 @@ theorem exists_eventually_deltaGGP_bounds {x t₀ : ↥(GSpin d.QW)} (hx : d.IsG
   classical
   letI : TopologicalSpace (Module.End F (Fin d.m → F)) := moduleTopology F _
   haveI : IsModuleTopology F (Module.End F (Fin d.m → F)) := ⟨rfl⟩
-  set W'' := movedSub x with hW''def
+  let W'' := movedSub x
   letI : TopologicalSpace (Module.End F ↥W'') := moduleTopology F _
   haveI : IsModuleTopology F (Module.End F ↥W'') := ⟨rfl⟩
   haveI : ContinuousAdd (Module.End F (Fin d.m → F)) := IsModuleTopology.toContinuousAdd F _
   haveI : ContinuousAdd (Module.End F ↥W'') := IsModuleTopology.toContinuousAdd F _
-  set P : ↥(GSpin d.QW) → Module.End F (Fin d.m → F) :=
-    fun g => (specP d.QW g : (Fin d.m → F) →ₗ[F] (Fin d.m → F)) with hPdef
+  let P : ↥(GSpin d.QW) → Module.End F (Fin d.m → F) :=
+    fun g => (specP d.QW g : (Fin d.m → F) →ₗ[F] (Fin d.m → F))
   have hxT : x ∈ (d.torusOf x) := ⟨Subgroup.mem_centralizer_iff.mpr fun h hh => by
     rw [Set.mem_singleton_iff] at hh; rw [hh], fun v hv => by
     simpa [sub_eq_zero] using LinearMap.mem_ker.mp hv⟩
@@ -192,8 +184,6 @@ theorem exists_eventually_deltaGGP_bounds {x t₀ : ↥(GSpin d.QW)} (hx : d.IsG
     ⟨_, rfl⟩
   have hA' : A.IsSemisimple := hAdef ▸ hA
   obtain ⟨c, C, C', hc, hev⟩ := exists_absF_det_mul_expA_sub_one (F := F) (V := ↥W'') hA'
-  let dK : ↥(d.lieTorus (d.torusOf x)) → ℝ := fun X => absF (LinearMap.det
-    ((adV d.QW (X : CliffordAlgebra d.QW)).restrict (d.adV_mapsTo_movedSub_inf_ker ht₀ X)))
   have hKeq : (LinearMap.ker (A - 1)).map W''.subtype =
       W'' ⊓ LinearMap.ker (P t₀ - 1) := by
     ext v
@@ -210,7 +200,8 @@ theorem exists_eventually_deltaGGP_bounds {x t₀ : ↥(GSpin d.QW)} (hx : d.IsG
       (hW : ∀ v ∈ W'', adV d.QW (X : CliffordAlgebra d.QW) v ∈ W''),
       Y = (adV d.QW (X : CliffordAlgebra d.QW)).restrict hW →
       ∀ hY : (∀ v ∈ LinearMap.ker (A - 1), Y v ∈ LinearMap.ker (A - 1)),
-      absF (LinearMap.det (Y.restrict hY)) = dK X := by
+      absF (LinearMap.det (Y.restrict hY)) = absF (LinearMap.det
+        ((adV d.QW (X : CliffordAlgebra d.QW)).restrict (d.adV_mapsTo_movedSub_inf_ker ht₀ X))) := by
     intro X Y hW hYe hY
     subst hYe
     have hK' : ∀ v ∈ (LinearMap.ker (A - 1)).map W''.subtype,
@@ -241,7 +232,8 @@ theorem exists_eventually_deltaGGP_bounds {x t₀ : ↥(GSpin d.QW)} (hx : d.IsG
     rw [hYr, hAdef]
     have hc := d.commute_specP_adV hXg (X.2.2.1 t₀ ht₀)
     refine LinearMap.ext fun w => Subtype.ext ?_
-    simpa [LinearMap.coe_restrict_apply] using LinearMap.congr_fun hc.eq w
+    have := LinearMap.congr_fun hc.eq w
+    simpa [P, LinearMap.coe_restrict_apply] using this
   have hY := mapsTo_ker_sub_one_of_commute hAY
   obtain ⟨h1, h2, h3⟩ := hX4 hAY hY
   have hm : ∀ u ∈ W'', (P (t₀ * h) - 1) u ∈ W'' := fun u hu =>
@@ -250,8 +242,9 @@ theorem exists_eventually_deltaGGP_bounds {x t₀ : ↥(GSpin d.QW)} (hx : d.IsG
   have heq : (P (t₀ * h) - 1).restrict hm = A * expA F Y - 1 := by
     rw [hexpY]
     refine LinearMap.ext fun w => Subtype.ext ?_
-    simp [hAdef, hPdef, LinearMap.coe_restrict_apply, map_mul]
-  rw [hΔ, heq, ← hdK X Y hW hYr hY]
+    simp [hAdef, P, LinearMap.coe_restrict_apply, map_mul]
+  rw [hdK X Y hW hYr hY] at h1 h2
+  rw [hΔ, heq]
   exact ⟨h1, h2, h3⟩
 
 end GGPData
@@ -336,9 +329,11 @@ theorem bp_integrable_deltaGGP_rpow (d : GGPData F) {x : ↥(GSpin d.QW)} (hx : 
       rw [hq₀, hΦh, ← QuotientGroup.mk_mul,
         comp_out_mk_of_invariant (d.scalarsIn (d.torusOf x)) hinv, Real.norm_of_nonneg (hf₀0 _)]
     by_cases ha : 0 ≤ a
-    · refine ⟨fun _ => |C'| ^ a, (locallyIntegrable_const _) 0, ?_⟩
+    · have hL0 := d.locallyIntegrable_absF_det_adV_rpow hx t₀.2 (a := 0) (by norm_num) μ
+      obtain ⟨V, hV, hint⟩ := hL0 0
+      refine ⟨fun X => |C'| ^ a * dK X ^ (0 : ℝ), ⟨V, hV, hint.const_mul (|C'| ^ a)⟩, ?_⟩
       filter_upwards [key] with X ⟨t, hnorm, hb⟩
-      rw [hnorm]
+      rw [hnorm, Real.rpow_zero, mul_one]
       by_cases ht : (t : ↥(GSpin d.QW)) ∈ Snat
       · simp only [f₀, Set.indicator_of_mem ht]
         exact Real.rpow_le_rpow (deltaGGP_nonneg d _) ((hb ht).2.2.trans (le_abs_self _)) ha
