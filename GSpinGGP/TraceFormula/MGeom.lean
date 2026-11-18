@@ -20,10 +20,10 @@ The statements in §1 are the interface consumed by
   these from the precisely stated inputs `finite_gammaClass`, `germ_bound_of_mem_QC` (BP Prop
   4.5.1), `aestronglyMeasurable_torusFn_of_mem_QC`, `integrable_delta_rpow` (BP Lemma B.1.2(i)
   plus the eigenvalues of `t` on `W''`) and `tendsto_mGeomS_of_mem_QC` (the thesis's induction for
-  one `χ`).  `integrable_delta_rpow` is proved from the literature axiom
-  `bp_integrable_deltaGGP_rpow` (the GSpin consequence of B.1.2(i); B.1.2(i) itself is about
-  algebraic characters of a torus, which are not available here), `aestronglyMeasurable_torusFn_of_mem_QC` from three SORRY inputs in
-  `TraceFormula/TorusDescent.lean`; the others are SORRY.
+  one `χ`).  `integrable_delta_rpow` is proved from `bp_integrable_deltaGGP_rpow` (the GSpin
+  consequence of B.1.2(i), proved through the `exp` chart from its Lie-algebra form
+  `locallyIntegrable_absF_det_adV_rpow`, SORRY), `aestronglyMeasurable_torusFn_of_mem_QC` from
+  inputs in `TraceFormula/TorusDescent.lean`; the others are SORRY.
   `mGeomS_smul` needs no input.
 * `mGeom_congr_regularSet`: `m_geom(θ)` depends only on `θ|_{G_reg}` (germs only see the regular
   set, by `exists_nhds_mul_expA_mem_regularSet`).
@@ -248,8 +248,8 @@ are linearly independent characters of `T`, and `Δ(t) = ∏ |λ_i(t) − 1|·|�
 
 B.1.2(i) itself is not an axiom: it quantifies over *algebraic* characters of an `F`-torus, which
 this development cannot express, and the naive version for continuous characters is false.
-Its GSpin consequence for the `Γ`-tori `T = T_x` is the literature
-theorem `bp_integrable_deltaGGP_rpow`; for any other subgroup `T` the integrand is `0`.
+Its GSpin consequence for the `Γ`-tori `T = T_x` is the theorem `bp_integrable_deltaGGP_rpow`;
+for any other subgroup `T` the integrand is `0`.
 Status: proved from `bp_integrable_deltaGGP_rpow`. -/
 theorem integrable_delta_rpow (T : Subgroup ↥(GSpin d.QW)) {s : ℝ} (hs : 0 < s) :
     letI : MeasurableSpace (d.TorusQuot T) := borel _

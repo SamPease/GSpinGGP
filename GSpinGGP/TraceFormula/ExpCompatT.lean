@@ -70,14 +70,24 @@ theorem eventually_exists_mem_torusOf_eq_expA (x : ↥(GSpin d.QW)) :
       rw [hg]; exact (hcomm _ hc).eq.symm
     rw [ι_specP, e, mul_assoc, Units.mul_inv, mul_one]
 
-/-- **An `exp`-compatible Haar measure on `𝔱⁰(F)` exists** for the tori `T = T_x` of
-`Γ(G,H)` (BP §1.6, §11.1; Thesis §12.1): `T(F)` is commutative, so `exp` is a homomorphism on a
-small lattice of `𝔱⁰(F)`, a homeomorphism onto an open compact subgroup of `T(F)/A_{G,H}(F)`
-(`𝔱 = Lie(A_{G,H}) ⊕ 𝔱⁰`), and it carries an additive Haar measure to a multiple of the
-probability Haar measure there. Proved via the isometry chart (`exists_isAddHaarMeasure_eq_expA_image`,
-with `j : T(F) → C(W)ˣ`, the scalars `A_{G,H}(F) ⊆ T(F)`, and `𝔱⁰ ⊕ F = Lie(T)` near `0`). -/
-theorem exists_isExpCompatT (T : d.GammaTorus) : ∃ μ, d.IsExpCompatT T.1 μ := by
-  obtain ⟨T, x, hx, rfl⟩ := T
+/-- **The `exp` chart of `T(F)/A_{G,H}(F)`** for the tori `T = T_x` of `Γ(G,H)` (BP §1.6, §11.1;
+Thesis §12.1): an additive Haar measure `μ` on `𝔱⁰(F)` and a map `Φ : 𝔱⁰(F) → T(F)/A_{G,H}(F)`,
+`Φ(X) = e^X A_{G,H}(F)` on an open `U ∋ 0`, continuous there, carrying neighbourhoods of `0` to
+neighbourhoods of `1`, with `μ(S) = vol(Φ(S))` for measurable `S ⊆ U` (probability Haar measure).
+`T(F)` is commutative, so `exp` is a homomorphism on a small lattice of `𝔱⁰(F)`
+(`𝔱 = Lie(A_{G,H}) ⊕ 𝔱⁰`). Proved via `exists_expA_chart`, with `j : T(F) → C(W)ˣ` and the scalars
+`A_{G,H}(F) ⊆ T(F)`. -/
+theorem exists_expA_chart_torusOf {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x) :
+    letI : MeasurableSpace (d.TorusQuot (d.torusOf x)) := borel _
+    haveI : BorelSpace (d.TorusQuot (d.torusOf x)) := ⟨rfl⟩
+    ∃ μ : Measure ↥(d.lieTorus (d.torusOf x)), μ.IsAddHaarMeasure ∧
+      ∃ (Φ : ↥(d.lieTorus (d.torusOf x)) → d.TorusQuot (d.torusOf x))
+        (U : Set ↥(d.lieTorus (d.torusOf x))), IsOpen U ∧ (0 : ↥(d.lieTorus (d.torusOf x))) ∈ U ∧
+        ContinuousOn Φ U ∧ (∀ W ∈ 𝓝 (0 : ↥(d.lieTorus (d.torusOf x))), Φ '' W ∈ 𝓝 1) ∧
+        (∀ X ∈ U, ∃ t : ↥(d.torusOf x),
+          (((t : GSpin d.QW) : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) =
+            expA F (X : CliffordAlgebra d.QW) ∧ Φ X = (t : d.TorusQuot (d.torusOf x))) ∧
+        ∀ S ⊆ U, MeasurableSet S → μ S = probHaar (d.TorusQuot (d.torusOf x)) (Φ '' S) := by
   letI := isTopologicalRing_of_moduleTopology F (CliffordAlgebra d.QW)
   haveI := t2Space_of_moduleTopology F (CliffordAlgebra d.QW)
   haveI := submodule_isTopologicalAddGroup (d.lieTorus (d.torusOf x))
@@ -169,9 +179,31 @@ theorem exists_isExpCompatT (T : d.GammaTorus) : ∃ μ, d.IsExpCompatT T.1 μ :
     rw [e]; exact hcl.preimage hj.continuous
   letI : MeasurableSpace (d.TorusQuot T) := borel _
   haveI : BorelSpace (d.TorusQuot T) := ⟨rfl⟩
-  obtain ⟨μ, hμ, U, hU, hUS⟩ := exists_isAddHaarMeasure_eq_expA_image j hj (d.scalarsIn T) hZ
-    hscal (d.lieTorus T) h𝔤 hexp hlog (probHaar (d.TorusQuot T))
-  exact ⟨μ, hμ, U, hU, hUS⟩
+  exact exists_expA_chart j hj (d.scalarsIn T) hZ hscal (d.lieTorus T) h𝔤 hexp hlog
+    (probHaar (d.TorusQuot T))
+
+/-- **An `exp`-compatible Haar measure on `𝔱⁰(F)` exists** for the tori `T = T_x` of
+`Γ(G,H)` (BP §1.6, §11.1; Thesis §12.1): the measure of the chart `exists_expA_chart_torusOf`, as
+`Φ(S)` is the set `e^S A_{G,H}(F)` of `IsExpCompatT` for `S` in the chart's domain. -/
+theorem exists_isExpCompatT (T : d.GammaTorus) : ∃ μ, d.IsExpCompatT T.1 μ := by
+  obtain ⟨T, x, hx, rfl⟩ := T
+  letI : MeasurableSpace (d.TorusQuot (d.torusOf x)) := borel _
+  haveI : BorelSpace (d.TorusQuot (d.torusOf x)) := ⟨rfl⟩
+  obtain ⟨μ, hμ, Φ, U, hUo, hU0, -, -, hΦU, hμS⟩ := d.exists_expA_chart_torusOf hx
+  refine ⟨μ, hμ, U, hUo.mem_nhds hU0, fun S hS hSU => ?_⟩
+  rw [hμS S hSU hS]
+  congr 1
+  ext q
+  constructor
+  · rintro ⟨X, hXS, rfl⟩
+    obtain ⟨t, ht, hΦt⟩ := hΦU X (hSU hXS)
+    exact ⟨X, hXS, t, ht, hΦt⟩
+  · rintro ⟨X, hXS, t, ht, rfl⟩
+    obtain ⟨t', ht', hΦt'⟩ := hΦU X (hSU hXS)
+    refine ⟨X, hXS, ?_⟩
+    rw [hΦt']
+    congr 1
+    exact Subtype.ext (Subtype.ext (Units.ext (ht'.trans ht.symm)))
 
 end GGPData
 
