@@ -226,7 +226,7 @@ theorem specP_N_coord {n : GSpin d.QV} (hn : n ∈ d.N) (j : Fin d.r) (c : F) :
   rw [map_smul, Prod.smul_snd, Pi.smul_apply, h, smul_eq_mul, mul_one]
 
 /-- For `h ∈ H`: `P(h_V) = (P(h_W) ⊕ 1) · P(n)` with `n = nPart h ∈ N`. -/
-theorem specP_snd_of_mem_H {h : d.G} :
+theorem specP_snd_eq_extZ_mul_nPart {h : d.G} :
     specP d.QV (d.snd h) = d.extZ (specP d.QW (d.fst h)) * specP d.QV (d.nPart h) := by
   have hs : d.snd h = d.incl (d.fst h) * d.nPart h := by simp [nPart]
   rw [hs, map_mul]
@@ -252,7 +252,7 @@ include hh in
 theorem pi0_compress (x : d.V0) :
     d.pi0 ((specP d.QV (d.snd h) * (d.torusZ τ * d.extV0 y0)) (d.iota0 x)) =
       d.base.extZ (specP d.QW (d.fst h)) (y0 x) := by
-  rw [specP_snd_of_mem_H]
+  rw [specP_snd_eq_extZ_mul_nPart]
   simp only [LinearEquiv.mul_apply, extV0_iota0, torusZ_iota0, pi0_extZ]
   rw [d.pi0_specP_N_iota0 hh]
 
@@ -261,7 +261,7 @@ include hh in
 theorem pi0_compress_inv (x : d.V0) :
     d.pi0 ((specP d.QV (d.snd h) * (d.torusZ τ * d.extV0 y0))⁻¹ (d.iota0 x)) =
       y0⁻¹ ((d.base.extZ (specP d.QW (d.fst h)))⁻¹ x) := by
-  rw [specP_snd_of_mem_H, mul_inv_rev, mul_inv_rev, mul_inv_rev, ← map_inv d.extZ,
+  rw [specP_snd_eq_extZ_mul_nPart, mul_inv_rev, mul_inv_rev, mul_inv_rev, ← map_inv d.extZ,
     ← map_inv (specP d.QV), ← map_inv d.extV0, torusZ_inv]
   simp only [LinearEquiv.mul_apply, extZ_iota0, pi0_extV0, pi0_torusZ]
   rw [d.pi0_specP_N_iota0 (d.N.inv_mem hh), map_inv]
@@ -272,7 +272,7 @@ include hh in
 theorem compress_coord (j : Fin d.r) :
     ((specP d.QV (d.snd h) * (d.torusZ τ * d.extV0 y0)) (d.zV ((j : ℤ) + 1))).2
       ⟨d.r + j + 1, by omega⟩ = τ j := by
-  rw [specP_snd_of_mem_H]
+  rw [specP_snd_eq_extZ_mul_nPart]
   have e1 : d.extV0 y0 (d.zV ((j : ℤ) + 1)) = d.zV ((j : ℤ) + 1) := by
     rw [extV0_apply, d.pi0_zV (by omega), map_zero, sub_zero, map_zero, add_zero]
   have e2 : d.torusZ τ (d.zV ((j : ℤ) + 1)) = (τ j : F) • d.zV ((j : ℤ) + 1) := by
@@ -291,7 +291,7 @@ include hh in
 theorem compress_coord_inv (j : Fin d.r) :
     ((specP d.QV (d.snd h) * (d.torusZ τ * d.extV0 y0))⁻¹ (d.zV ((j : ℤ) + 1))).2
       ⟨d.r + j + 1, by omega⟩ = ((τ j)⁻¹ : Fˣ) := by
-  rw [specP_snd_of_mem_H, mul_inv_rev, mul_inv_rev, mul_inv_rev, ← map_inv d.extZ,
+  rw [specP_snd_eq_extZ_mul_nPart, mul_inv_rev, mul_inv_rev, mul_inv_rev, ← map_inv d.extZ,
     ← map_inv (specP d.QV), ← map_inv d.extV0, torusZ_inv]
   have e1 : d.extZ (specP d.QW (d.fst h))⁻¹ (d.zV ((j : ℤ) + 1)) = d.zV ((j : ℤ) + 1) := by
     simp [zV, extZ]
@@ -422,7 +422,9 @@ include hb in
 condition) and `y₀ = (multiTorus hb hf 0 t)⁻¹` in the expanding chamber of `SO(V₀)`
 (`InChamber`), and `y_W` arbitrary: `σ_{SO}(P̄ h) + σ_{SO}(y) ≤ C σ_{SO}(P̄(h) y)`.
 
-Proof (Thesis proof of Prop. 8.1.1(iii), reduction to `G₀`): `P̄(h) y` preserves the flag
+The Thesis proof of Prop. 8.1.1(iii) reduces (6.4.1) to `G₀` through the inequality
+`σ(n) + σ(a) + σ(h₀a₀) ≪ σ(n h₀ a a₀)` (`a ∈ A(F)`, `a₀ ∈ A₀⁺`), which it states without proof;
+the `σ(a) + σ(h₀a₀)` part is proved here as follows. `P̄(h) y` preserves the flag
 `Z_•`; its compression to `Z_r^⊥ / Z_r ≅ V₀` is the `G₀`-element `(P(h_W) ⊕ 1) y₀`
 (`pi0_compress`), and its diagonal entries on `z_1, …, z_r` are `τ` (`compress_coord`); so
 `σ(a(τ))` and `σ_{SO}` of the `G₀`-element are `≪ σ_{SO}(P̄(h) y)`, and the codimension-one case
