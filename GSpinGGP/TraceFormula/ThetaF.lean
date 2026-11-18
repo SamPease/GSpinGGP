@@ -12,11 +12,8 @@ import GSpinGGP.Literature.Measure
 # The quasi-character `θ_f` of a strongly cuspidal function
 
 Theory of the function
-`thetaF d f` defined in `TraceFormula/Basic.lean` (Thesis §4.8, §7.1; BP §5.5–5.6), and the Weil measure on `H(F)\G(F)/A_G(F)`.
+`thetaF d f` defined in `TraceFormula/Basic.lean` (Thesis §4.8, §7.1; BP §5.5–5.6), (the Weil measure on `H(F)\G(F)/A_G(F)` and its properties are in `TraceFormula/Basic.lean`).
 
-* `isMulRightInvariant_haar_quotient_of_le_center` (generic) and
-  `isMulRightInvariant_haar_GmodAG`: Haar measure on `G(F)/A_G(F)` is right invariant, from the
-  unimodularity of `G(F)`, because `A_G` is central; hence `weilMeasureHG_spec` (Thesis §7.1).
 * `isStronglyCuspidal_iff_inline`: bridge to the form of strong cuspidality in
   `bp_thetaF_exists`.
 * `thetaF_unique`: functions representing the same orbital pairing agree on `G_reg(F)`.
@@ -24,7 +21,6 @@ Theory of the function
   `G_reg(F)` (needs `conj_mem_regularSet`, proved from `Ad(G)`-stability of `gspin`, and the
   Harish-Chandra regularity statement `exists_nhds_mul_expA_mem_regularSet`, proved from
   LocalGroups `exists_nhds_isRegularSS_mul_expA`).
-* `isFiniteMeasureOnCompacts_weilMeasureHG` (from the defining formula, `Literature/Measure`).
 * `chiProj` (`P_χ`, Thesis §7.1) with equivariance, support, local constancy, strong
   cuspidality (`chiProj_isStronglyCuspidal`, Fubini over `A_G × U`) and surjectivity onto
   `ScuspTestFn` (`chiProj_surjective`), all proved from the cutoff `agCutoff` along `A_G(F)`
@@ -53,85 +49,6 @@ set_option linter.unusedSectionVars false
 
 namespace GSpinGGP
 
-section RightInvariance
-
-variable {B : Type*} [Group B] [TopologicalSpace B] [IsTopologicalGroup B] [LocallyCompactSpace B]
-  [T2Space B] [SecondCountableTopology B] [MeasurableSpace B] [BorelSpace B]
-
-/-- **Unimodularity passes to the quotient by a closed central subgroup** (used for
-`G(F)/A_G(F)`, Thesis §7.1).  Let `B` be a locally compact, second countable group whose
-Haar measure is right invariant, and `A ≤ Z(B)` closed.  Then Haar measure on `B/A` is right
-invariant.
-
-Proof: Mathlib's induced Haar measure on the extension `1 → A → B → B/A → 1` gives
-`∫_B f = ∫_{B/A} ∫_A f(ḃ a) da dḃ` for `f ∈ C_c(B)`.  For `b ∈ B` the fibre integral of `f(· b)` at
-`ḃ'` equals that of `f` at `ḃ' ḃ`, *because `A` is central* (`b' a b = b' b a`).  Right invariance on
-`B` then gives `∫_{B/A} F(c ḃ) dc = ∫_{B/A} F(c) dc` for the fibre integral `F` of a nonnegative `f`
-with `f(1) > 0`, so the modular character of `B/A` is `1`.  Centrality is essential: in general
-`Δ_{B/A}(ḃ)` differs from `Δ_B(b)` by the modulus of conjugation by `b` on `A`. -/
-theorem isMulRightInvariant_haar_quotient_of_le_center (A : Subgroup B) [A.Normal]
-    (hA : IsClosed (A : Set B)) (hcent : A ≤ Subgroup.center B)
-    [MeasurableSpace (B ⧸ A)] [BorelSpace (B ⧸ A)]
-    [hB : (Measure.haar : Measure B).IsMulRightInvariant] :
-    (Measure.haar : Measure (B ⧸ A)).IsMulRightInvariant := by
-  have H := TopologicalGroup.IsSES.ofClosedSubgroup A hA
-  have : LocallyCompactSpace A := hA.locallyCompactSpace
-  set μA : Measure A := Measure.haar
-  set μC : Measure (B ⧸ A) := Measure.haar
-  set ν : Measure B := H.inducedMeasure μA μC
-  have hν : ν = Measure.haarScalarFactor ν Measure.haar • (Measure.haar : Measure B) :=
-    Measure.isMulLeftInvariant_eq_smul ν Measure.haar
-  have hνR : ∀ (f : B → ℝ) (b : B), ∫ x, f (x * b) ∂ν = ∫ x, f x ∂ν := by
-    intro f b
-    rw [hν, integral_smul_nnreal_measure, integral_smul_nnreal_measure,
-      integral_mul_right_eq_self f b]
-  -- a nonnegative test function with positive integral
-  obtain ⟨f₀, f₀_comp, f₀_nonneg, f₀_one⟩ :
-      ∃ f : C(B, ℝ), HasCompactSupport f ∧ 0 ≤ f ∧ f 1 ≠ 0 := exists_continuous_nonneg_pos 1
-  let f : CompactlySupportedContinuousMap B ℝ := ⟨f₀, f₀_comp⟩
-  set F := H.pushforward μA f with hF
-  have hFint : ∫ c, F c ∂μC = ∫ x, f x ∂ν := by
-    rw [TopologicalGroup.IsSES.integral_inducedMeasure]; rfl
-  have hpos : 0 < ∫ x, f x ∂ν :=
-    f₀.continuous.integral_pos_of_hasCompactSupport_nonneg_nonzero f₀_comp f₀_nonneg f₀_one
-  refine ⟨fun g => ?_⟩
-  obtain ⟨b, rfl⟩ := QuotientGroup.mk_surjective g
-  -- the right translate of `f` by `b`
-  let fb : CompactlySupportedContinuousMap B ℝ :=
-    ⟨⟨fun x => f₀ (x * b), f₀.continuous.comp (continuous_id.mul continuous_const)⟩,
-      f₀_comp.comp_homeomorph (Homeomorph.mulRight b)⟩
-  have hshift : ∀ c : B ⧸ A, H.pushforward μA fb c = F (c * (b : B ⧸ A)) := by
-    intro c
-    obtain ⟨b', rfl⟩ := QuotientGroup.mk_surjective c
-    have e1 := TopologicalGroup.IsSES.pushforward_apply_apply H μA fb b'
-    have e2 := TopologicalGroup.IsSES.pushforward_apply_apply H μA f (b' * b)
-    change H.pushforward μA fb (QuotientGroup.mk' A b') = _
-    rw [e1]
-    have : ((b' : B ⧸ A) * (b : B ⧸ A)) = QuotientGroup.mk' A (b' * b) := rfl
-    rw [this, e2]
-    refine integral_congr_ae (Eventually.of_forall fun a => ?_)
-    simp only [TopologicalGroup.IsSES.pullback_def]
-    change f₀ (b' * (a : B) * b) = f₀ (b' * b * (a : B))
-    have hc := Subgroup.mem_center_iff.mp (hcent a.2) b
-    rw [mul_assoc, ← hc, mul_assoc]
-  have hmapint : ∫ c, F c ∂(Measure.map (· * (b : B ⧸ A)) μC) = ∫ c, F c ∂μC := by
-    rw [integral_map (f := fun c => F c) (measurable_mul_const _).aemeasurable
-      F.continuous.aestronglyMeasurable]
-    simp_rw [← hshift]
-    rw [show ∫ c, H.pushforward μA fb c ∂μC = ∫ x, fb x ∂ν by
-      rw [TopologicalGroup.IsSES.integral_inducedMeasure]; rfl]
-    rw [hFint]
-    exact hνR f₀ b
-  have hfac := Measure.isMulLeftInvariant_eq_smul (Measure.map (· * (b : B ⧸ A)) μC) μC
-  have hne : ∫ c, F c ∂μC ≠ 0 := by rw [hFint]; exact hpos.ne'
-  have hone : Measure.haarScalarFactor (Measure.map (· * (b : B ⧸ A)) μC) μC = 1 := by
-    apply NNReal.coe_injective
-    rw [Measure.haarScalarFactor_eq_integral_div _ _ F.continuous F.hasCompactSupport hne]
-    change (∫ c, F c ∂(Measure.map (· * (b : B ⧸ A)) μC)) / (∫ c, F c ∂μC) = _
-    rw [hmapint, div_self hne, NNReal.coe_one]
-  rw [hfac, hone, one_smul]
-
-end RightInvariance
 
 /-- Abstract form of the `χ`-equivariance of the projection `f₀ ↦ ∫_A χ(a) f₀(a ·)`: for a
 character `c` of a group `S` mapping into the centre of `B` (Thesis §7.1). -/
@@ -265,31 +182,6 @@ instance totallyDisconnectedSpace_G : TotallyDisconnectedSpace ↥d.G :=
 (Thesis §7.1). -/
 instance locallyCompactSpace_AG : LocallyCompactSpace ↥d.AG :=
   d.isClosed_AG.locallyCompactSpace
-
-/-! ### The Haar measure on `G(F)/A_G(F)` is right invariant; the Weil measure -/
-
-/-- The Haar measure on `G(F)/A_G(F)` is right invariant: from the unimodularity of
-`G(F)` (`isMulRightInvariant_haar_G`) because `A_G(F)` is closed and central
-(`isMulRightInvariant_haar_quotient_of_le_center`; Thesis §2.4, §7.1). -/
-instance isMulRightInvariant_haar_GmodAG :
-    (Measure.haar : Measure d.GmodAG).IsMulRightInvariant :=
-  isMulRightInvariant_haar_quotient_of_le_center d.AG d.isClosed_AG d.AG_le_center
-
-/-- **The Weil measure on `H(F)\G(F)/A_G(F)`** (Thesis §7.1):
-`weilMeasureHG d` satisfies the quotient-integral formula for the Haar measures on `G(F)/A_G(F)`
-and `H(F)/A_{G,H}(F)`.  From `weil_quotient` (Bourbaki), `isClosedEmbedding_toGmodAG`, the
-unimodularity of `G(F)` (via `isMulRightInvariant_haar_GmodAG`) and of `H(F)/A_{G,H}(F)`
-(`isMulRightInvariant_haar_HmodAGH`). -/
-theorem weilMeasureHG_spec :
-    IsWeilMeasure d.toGmodAG Measure.haar Measure.haar d.weilMeasureHG :=
-  d.weilMeasureHG_spec_of_isMulRightInvariant d.isMulRightInvariant_haar_GmodAG
-
-/-- **The Weil measure on `H(F)\G(F)/A_G(F)` is finite on compact sets**, from its defining formula (`IsWeilMeasure.isFiniteMeasureOnCompacts`, the
-fact that also derives `weil_quotient` from `weil_quotient_radon`). -/
-instance isFiniteMeasureOnCompacts_weilMeasureHG : IsFiniteMeasureOnCompacts d.weilMeasureHG := by
-  have := d.isMulRightInvariant_haar_HmodAGH
-  exact IsWeilMeasure.isFiniteMeasureOnCompacts d.continuous_toGmodAG
-    d.isClosedEmbedding_toGmodAG d.weilMeasureHG_spec
 
 end GGPData
 

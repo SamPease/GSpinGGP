@@ -48,7 +48,7 @@ variable {G : Type*} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
 
 /-- Evaluating an `N`-invariant function on coset representatives gives its descent:
 `f (out (mk g)) = f g`. -/
-theorem comp_out_mk_of_invariant (N : Subgroup G) {f : G → ℂ}
+theorem comp_out_mk_of_invariant (N : Subgroup G) {β : Type*} {f : G → β}
     (hinv : ∀ g, ∀ n ∈ N, f (g * n) = f g) (g : G) :
     f (Quotient.out (QuotientGroup.mk g : G ⧸ N)) = f g := by
   obtain ⟨n, hn⟩ := QuotientGroup.mk_out_eq_mul N g
@@ -478,6 +478,51 @@ theorem isOpen_torusNat (T : Subgroup ↥(GSpin d.QW)) :
   · rw [hTT]; exact hx.2.1
   · rw [hTT]; exact hx.2.2
 
+/-- **On `T_♮`, `Δ` is computed on `W''_x`**: for `x ∈ Γ(G,H)` and `t` with `T_t = T_x`,
+`W''_t = W''_x` and `Δ(t) = |det((P(t) − 1)|_{W''_x})|_F`.  (`t ∈ T_x` fixes `W'_x`, so
+`W'_x ⊆ W'_t`; `x ∈ T_t` fixes `W'_t`, so `W'_t ⊆ W'_x`; `P(t)` preserves `W''_x` and
+`W = W'_x ⊕ W''_x`, so `W''_t ⊆ W''_x`, with equality by dimension.) -/
+theorem deltaGGP_eq_absF_det_movedSub {x t : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
+    (hTt : d.torusOf t = d.torusOf x)
+    (hmaps : ∀ u ∈ movedSub x,
+      ((specP d.QW t : (Fin d.m → F) →ₗ[F] (Fin d.m → F)) - 1) u ∈ movedSub x) :
+    deltaGGP d t = absF (LinearMap.det
+      (((specP d.QW t : (Fin d.m → F) →ₗ[F] (Fin d.m → F)) - 1).restrict hmaps)) := by
+  set P : ↥(GSpin d.QW) → Module.End F (Fin d.m → F) :=
+    fun g => (specP d.QW g : (Fin d.m → F) →ₗ[F] (Fin d.m → F)) with hPdef
+  have htx : t ∈ d.torusOf x := hTt ▸ d.self_mem_torusOf t
+  have hss : Module.End.IsSemisimple (P x - 1) :=
+    Module.End.IsSemisimple.sub_of_commute (Commute.one_right _)
+      (isSemisimple_specP_of_isSS d.QW x hx.1) Module.End.isSemisimple_id
+  have hcompl : IsCompl (fixedSub x) (movedSub x) := isCompl_ker_range_of_isSemisimple hss
+  have hfix : fixedSub t = fixedSub x := d.fixedSub_eq_of_torusOf_eq htx hTt
+  have hle : movedSub t ≤ movedSub x := by
+    rintro _ ⟨v, rfl⟩
+    have hv : v ∈ fixedSub x ⊔ movedSub x := hcompl.sup_eq_top ▸ Submodule.mem_top
+    obtain ⟨a, ha, u, hu, rfl⟩ := Submodule.mem_sup.mp hv
+    have ha' : (P t - 1) a = 0 := by
+      have := htx.2 a ha
+      simp only [LinearMap.sub_apply, Module.End.one_apply, sub_eq_zero]
+      exact this
+    show (P t - 1) (a + u) ∈ movedSub x
+    rw [map_add, ha', zero_add]
+    exact hmaps u hu
+  have heq : movedSub t = movedSub x := by
+    refine Submodule.eq_of_le_of_finrank_eq hle ?_
+    change Module.finrank F (LinearMap.range (P t - 1)) =
+      Module.finrank F (LinearMap.range (P x - 1))
+    have h1 : Module.finrank F (LinearMap.ker (P t - 1)) =
+        Module.finrank F (LinearMap.ker (P x - 1)) := by
+      change Module.finrank F (fixedSub t) = Module.finrank F (fixedSub x)
+      rw [hfix]
+    have := (LinearMap.finrank_range_add_finrank_ker (P t - 1)).trans
+      (LinearMap.finrank_range_add_finrank_ker (P x - 1)).symm
+    rw [h1] at this
+    exact Nat.add_right_cancel this
+  unfold deltaGGP
+  congr 1
+  exact Steinberg.det_restrict_eq rfl heq _ _
+
 /-! ### Continuity of the integrand on `T_♮` -/
 
 /-- **`Δ(t)^{s−1/2}` is continuous on `T_♮`** (used in the proof of Thesis Prop 12.1.1(i)).
@@ -513,46 +558,11 @@ theorem continuousOn_deltaGGP_rpow (T : Subgroup ↥(GSpin d.QW)) (s : ℝ) :
     Module.End.IsSemisimple.sub_of_commute (Commute.one_right _)
       (isSemisimple_specP_of_isSS d.QW x hx.1) Module.End.isSemisimple_id
   have hdisj : Disjoint (fixedSub x) U := disjoint_ker_range_of_isSemisimple hss
-  have hrn := LinearMap.finrank_range_add_finrank_ker (P t₀ - 1)
-  have hcompl : IsCompl (fixedSub x) U := isCompl_ker_range_of_isSemisimple hss
   -- on `T_♮`, `W''_t = W''_x` and `Δ(t) = |det g(t)|`
   have hΔ : ∀ t : ↥T, d.IsGammaElt (t : ↥(GSpin d.QW)) ∧ d.torusOf (t : ↥(GSpin d.QW)) = T →
       deltaGGP d (t : ↥(GSpin d.QW)) = absF (LinearMap.det (g t)) := by
     rintro t ⟨-, hTt⟩
-    have hfix : fixedSub (t : ↥(GSpin d.QW)) = fixedSub x := by
-      apply le_antisymm
-      · intro v hv
-        have hxt : x ∈ d.torusOf (t : ↥(GSpin d.QW)) := hTt.symm ▸ t₀.2
-        have := hxt.2 v hv
-        simpa [fixedSub, sub_eq_zero] using this
-      · intro v hv
-        have := (hmemT t).2 v hv
-        simpa [fixedSub, sub_eq_zero] using this
-    have hle : movedSub (t : ↥(GSpin d.QW)) ≤ U := by
-      rintro _ ⟨v, rfl⟩
-      have hv : v ∈ fixedSub x ⊔ U := hcompl.sup_eq_top ▸ Submodule.mem_top
-      obtain ⟨a, ha, u, hu, rfl⟩ := Submodule.mem_sup.mp hv
-      have ha' : (P t - 1) a = 0 := by
-        have := (hmemT t).2 a ha
-        simp only [LinearMap.sub_apply, Module.End.one_apply, sub_eq_zero]
-        exact this
-      show (P t - 1) (a + u) ∈ U
-      rw [map_add, ha', zero_add]
-      exact hmaps t u hu
-    have hrnt := LinearMap.finrank_range_add_finrank_ker (P t - 1)
-    have heq : movedSub (t : ↥(GSpin d.QW)) = U := by
-      refine Submodule.eq_of_le_of_finrank_eq hle ?_
-      change Module.finrank F (LinearMap.range (P t - 1)) = Module.finrank F (LinearMap.range (P t₀ - 1))
-      have h1 : Module.finrank F (LinearMap.ker (P t - 1)) =
-          Module.finrank F (LinearMap.ker (P t₀ - 1)) := by
-        change Module.finrank F (fixedSub (t : ↥(GSpin d.QW))) = Module.finrank F (fixedSub x)
-        rw [hfix]
-      have := hrnt.trans hrn.symm
-      rw [h1] at this
-      exact Nat.add_right_cancel this
-    unfold deltaGGP
-    congr 1
-    exact Steinberg.det_restrict_eq rfl heq _ _
+    exact deltaGGP_eq_absF_det_movedSub d hx (hTt.trans hT.symm) (hmaps t)
   -- continuity of `t ↦ det g(t)`
   have hPc : ∀ v, Continuous fun t : ↥T => P t v := fun v =>
     continuous_specP_apply (Q := d.QW) (x := fun t : ↥T => (t : ↥(GSpin d.QW)))

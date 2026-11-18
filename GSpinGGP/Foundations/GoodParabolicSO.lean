@@ -23,8 +23,8 @@ norm `‖·‖ = basisOpNorm b`.
 The two inequalities of Thesis Prop. 8.1.1(iii) (BP Prop. 6.4.1(iii)) are proved for `G₀`, in
 multiplicative form:
 
-* `norm_le_of_mem_chamber` (I): `max(‖h‖, ‖a_W‖, ‖a_V‖) ≤ C max(1, ‖h a_W‖, ‖h a_V‖)^N`;
-* `norm_le_conj_of_mem_chamber` (II): `‖h‖ ≤ C max(1, ‖a_V⁻¹ h a_V‖, ‖a_W⁻¹ h a_W‖)`,
+* `norm_le_of_mem_chamber` (BP (6.4.1)): `max(‖h‖, ‖a_W‖, ‖a_V‖) ≤ C max(1, ‖h a_W‖, ‖h a_V‖)^N`;
+* `norm_le_conj_of_mem_chamber` (BP (6.4.2)): `‖h‖ ≤ C max(1, ‖a_V⁻¹ h a_V‖, ‖a_W⁻¹ h a_W‖)`,
 
 for `h ∈ H` and `(a_W, a_V) ∈ A₀⁺`. Taking logarithms gives `σ(h) + σ(a) ≪ σ(ha)` and
 `σ(h) ≪ σ(a⁻¹ha)` for the log-norm `σ = 1 + log max(1, ‖·‖)`.
@@ -37,7 +37,7 @@ formalised here.
 The chamber is that of the orthogonal group: its roots are `tᵢ/tₖ`, `tᵢtₖ` (`i < k`) and, when the
 anisotropic part is nonzero, `tᵢ`; there is no root `tᵢ²`. So every parameter `t_k` of a
 contracting chamber has `|t_k| ≤ 1`, except the last parameter of a level without anisotropic part
-(`V₀` resp. `W` split of even dimension), which may have `|t_k| > 1`. The proof of (II) handles the
+(`V₀` resp. `W` split of even dimension), which may have `|t_k| > 1`. The proof of the second inequality handles the
 corresponding frame vector, which is then the last basis vector `w_l`, by the torus of the other
 factor, which fixes `w_l`.
 -/
@@ -56,7 +56,7 @@ variable {F : Type*} [NontriviallyNormedField F] [CharZero F]
 variable {V : Type*} [AddCommGroup V] [Module F V] [FiniteDimensional F V] {n : ℕ}
   {b : Module.Basis (Fin n) F V} {Q : QuadraticForm F V}
 
-/-! ## The induction for (II) -/
+/-! ## The induction for the second inequality -/
 
 section Level
 
@@ -412,41 +412,29 @@ private theorem norm_head_le {t : List Fˣ} (h0 : 0 < t.length) (hlen : t.length
   exact max_le h2 h1
 
 include hb in
-/-- **Thesis Prop. 8.1.1(iii), first inequality, in codimension one** (BP Prop. 6.4.1(iii)).
-Scope: the special orthogonal groups `G₀ = SO(W) × SO(V₀)` (not `GSpin`), and only the explicit
-good minimal parabolic `P̄₀ = P̄_W × P̄_{V₀}` of the frame with its Levi `M₀` (the reduction from
-`G` to `G₀` and the independence of the pair are not formalised). Over a non-archimedean field:
-`σ(h) + σ(a) ≪ σ(h a)` for `h ∈ H = SO(W)` and
-`a = (a_W, a_V) ∈ A₀⁺`, in the form
-`max(‖h‖, ‖a_W‖, ‖a_V‖) ≤ C max(1, ‖h a_W‖, ‖h a_V‖)^N`, with `a_V = (multiTorus hb hf 0 t)⁻¹`,
-`a_W = (multiTorus hb hf 1 s)⁻¹` and `t` in the contracting chamber of the `V₀`-torus (no
-condition on `s` is needed). -/
-theorem norm_le_of_mem_chamber :
-    ∃ (C : ℝ) (N : ℕ), ∀ h ∈ fixer Q b 1, ∀ s t : List Fˣ, InChamber n l 0 t →
-      max (basisOpNorm b (h : V →ₗ[F] V)) (max
-        (basisOpNorm b (((multiTorus hb hf 1 s)⁻¹ : V ≃ₗ[F] V) : V →ₗ[F] V))
-        (basisOpNorm b (((multiTorus hb hf 0 t)⁻¹ : V ≃ₗ[F] V) : V →ₗ[F] V))) ≤
-      C * max 1 (max
-        (basisOpNorm b ((h * (multiTorus hb hf 1 s)⁻¹ : V ≃ₗ[F] V) : V →ₗ[F] V))
-        (basisOpNorm b ((h * (multiTorus hb hf 0 t)⁻¹ : V ≃ₗ[F] V) : V →ₗ[F] V))) ^ N := by
+/-- **The `V₀`-half of the first inequality of Thesis Prop. 8.1.1(iii)**: for `h ∈ H = SO(W)` and
+`a_V = (multiTorus hb hf 0 t)⁻¹` with `t` in the contracting chamber of the `V₀`-torus,
+`max(‖h‖, ‖a_V‖) ≤ C max(1, ‖h a_V‖)^N`. The torus coordinates are read off from `h a_V`
+(`norm_head_le`), and then `‖h‖ ≤ ‖h a_V‖ ‖a_V⁻¹‖`. No `W`-torus is involved; together with
+`‖a_W‖ ≤ ‖h⁻¹‖ ‖h a_W‖` this gives `norm_le_of_mem_chamber`. -/
+theorem norm_le_of_mem_chamber_left :
+    ∃ (C : ℝ) (N : ℕ), 1 ≤ C ∧ ∀ h ∈ fixer Q b 1, ∀ t : List Fˣ, InChamber n l 0 t →
+      max (basisOpNorm b (h : V →ₗ[F] V))
+        (basisOpNorm b (((multiTorus hb hf 0 t)⁻¹ : V ≃ₗ[F] V) : V →ₗ[F] V)) ≤
+      C * max 1 (basisOpNorm b ((h * (multiTorus hb hf 0 t)⁻¹ : V ≃ₗ[F] V) : V →ₗ[F] V)) ^ N := by
   set L := numPairs l 0
   set c : ℝ := ‖(2 : F)‖⁻¹ * max 1 (polarBound Q b * ‖2 * ν‖⁻¹)
-  set κ : ℝ := max 1 (adjBound Q b)
   have h2 : 1 ≤ ‖(2 : F)‖⁻¹ := one_le_norm_two_inv
   have hc : 1 ≤ c := one_le_mul_of_one_le_of_one_le h2 (le_max_left _ _)
-  have hκ : 1 ≤ κ := le_max_left _ _
-  refine ⟨κ * c ^ L, L + 2, fun h hh s t ht => ?_⟩
+  have hcL : 1 ≤ c ^ L := one_le_pow₀ hc
+  refine ⟨c ^ L, L + 1, hcL, fun h hh t ht => ?_⟩
   set A := multiTorus hb hf 0 t
-  set B := multiTorus hb hf 1 s
-  set NW := basisOpNorm b ((h * B⁻¹ : V ≃ₗ[F] V) : V →ₗ[F] V)
   set NV := basisOpNorm b ((h * A⁻¹ : V ≃ₗ[F] V) : V →ₗ[F] V)
-  set M := max 1 (max NW NV)
+  set M := max 1 NV
   have hM : 1 ≤ M := le_max_left _ _
   have hM0 : 0 ≤ M := zero_le_one.trans hM
-  have hNW : NW ≤ M := (le_max_left _ _).trans (le_max_right _ _)
-  have hNV : NV ≤ M := (le_max_right _ _).trans (le_max_right _ _)
+  have hNV : NV ≤ M := le_max_right _ _
   have hlen : t.length = L := ht.1
-  have hhO := mem_orthogonalGroup_of_mem_fixer hh
   -- the coordinates of the torus
   have hR : ∀ u ∈ t, ‖(2 : F)‖⁻¹ * max ‖(u : F)‖ ‖(u : F)‖⁻¹ ≤ c * M := by
     intro u hu
@@ -480,7 +468,7 @@ theorem norm_le_of_mem_chamber :
     have := hR u' hu'
     rwa [Units.val_inv_eq_inv_val, norm_inv, inv_inv, max_comm]
   have hpow : (c * M) ^ L = c ^ L * M ^ L := mul_pow _ _ _
-  have hcL : 0 ≤ c ^ L := pow_nonneg (zero_le_one.trans hc) _
+  have hcL0 : 0 ≤ c ^ L := pow_nonneg (zero_le_one.trans hc) _
   -- `‖h‖ ≤ ‖h a_V‖ ‖a_V⁻¹‖`
   have hh' : basisOpNorm b (h : V →ₗ[F] V) ≤ c ^ L * M ^ (L + 1) := by
     have e : h = (h * A⁻¹) * A := by group
@@ -489,25 +477,61 @@ theorem norm_le_of_mem_chamber :
       _ ≤ NV * basisOpNorm b (A : V →ₗ[F] V) := basisOpNorm_mul_le _ _
       _ ≤ M * (c ^ L * M ^ L) := mul_le_mul hNV (hAn.trans_eq hpow) (basisOpNorm_nonneg _) hM0
       _ = c ^ L * M ^ (L + 1) := by ring
+  have hML : M ^ L ≤ M ^ (L + 1) := pow_le_pow_right₀ hM (by omega)
+  exact max_le hh' ((hAin.trans_eq hpow).trans (mul_le_mul_of_nonneg_left hML hcL0))
+
+include hb in
+/-- **Thesis Prop. 8.1.1(iii), first inequality, in codimension one** (BP Prop. 6.4.1(iii)).
+Scope: the special orthogonal groups `G₀ = SO(W) × SO(V₀)` (not `GSpin`), and only the explicit
+good minimal parabolic `P̄₀ = P̄_W × P̄_{V₀}` of the frame with its Levi `M₀` (the reduction from
+`G` to `G₀` and the independence of the pair are not formalised here; the lift to `GSpin` is in
+`GSpinGGP.TraceFormula.GoodParabolicLift`). Over a non-archimedean field:
+`σ(h) + σ(a) ≪ σ(h a)` for `h ∈ H = SO(W)` and
+`a = (a_W, a_V) ∈ A₀⁺`, in the form
+`max(‖h‖, ‖a_W‖, ‖a_V‖) ≤ C max(1, ‖h a_W‖, ‖h a_V‖)^N`, with `a_V = (multiTorus hb hf 0 t)⁻¹`,
+`t` in the contracting chamber of the `V₀`-torus, and `a_W` arbitrary (in particular
+`(multiTorus hb hf 1 s)⁻¹` for any `s`: no condition on the `W`-torus is needed, since
+`‖a_W‖ ≤ ‖h⁻¹‖ ‖h a_W‖`). -/
+theorem norm_le_of_mem_chamber :
+    ∃ (C : ℝ) (N : ℕ), ∀ h ∈ fixer Q b 1, ∀ aW : V ≃ₗ[F] V, ∀ t : List Fˣ, InChamber n l 0 t →
+      max (basisOpNorm b (h : V →ₗ[F] V)) (max (basisOpNorm b (aW : V →ₗ[F] V))
+        (basisOpNorm b (((multiTorus hb hf 0 t)⁻¹ : V ≃ₗ[F] V) : V →ₗ[F] V))) ≤
+      C * max 1 (max (basisOpNorm b ((h * aW : V ≃ₗ[F] V) : V →ₗ[F] V))
+        (basisOpNorm b ((h * (multiTorus hb hf 0 t)⁻¹ : V ≃ₗ[F] V) : V →ₗ[F] V))) ^ N := by
+  obtain ⟨C, N, hC, hCN⟩ := norm_le_of_mem_chamber_left hb hf
+  set κ : ℝ := max 1 (adjBound Q b)
+  have hκ : 1 ≤ κ := le_max_left _ _
+  refine ⟨κ * C, N + 1, fun h hh aW t ht => ?_⟩
+  set NW := basisOpNorm b ((h * aW : V ≃ₗ[F] V) : V →ₗ[F] V)
+  set NV := basisOpNorm b ((h * (multiTorus hb hf 0 t)⁻¹ : V ≃ₗ[F] V) : V →ₗ[F] V)
+  set M := max 1 (max NW NV)
+  have hM : 1 ≤ M := le_max_left _ _
+  have hM0 : 0 ≤ M := zero_le_one.trans hM
+  have hNW : NW ≤ M := (le_max_left _ _).trans (le_max_right _ _)
+  have hMV : max 1 NV ≤ M := max_le (le_max_left _ _) ((le_max_right _ _).trans (le_max_right _ _))
+  have hleft := hCN h hh t ht
+  have hCM : C * max 1 NV ^ N ≤ C * M ^ N :=
+    mul_le_mul_of_nonneg_left (pow_le_pow_left₀ (zero_le_one.trans (le_max_left _ _)) hMV N)
+      (zero_le_one.trans hC)
+  have hh' : basisOpNorm b (h : V →ₗ[F] V) ≤ C * M ^ N :=
+    ((le_max_left _ _).trans hleft).trans hCM
+  have hκC : C ≤ κ * C := le_mul_of_one_le_left (zero_le_one.trans hC) hκ
+  have hMN : M ^ N ≤ M ^ (N + 1) := pow_le_pow_right₀ hM (by omega)
   -- `‖a_W‖ ≤ ‖h⁻¹‖ ‖h a_W‖`
-  have hBn : basisOpNorm b ((B⁻¹ : V ≃ₗ[F] V) : V →ₗ[F] V) ≤ κ * c ^ L * M ^ (L + 2) := by
-    have e : B⁻¹ = h⁻¹ * (h * B⁻¹) := by group
-    have hhi : basisOpNorm b ((h⁻¹ : V ≃ₗ[F] V) : V →ₗ[F] V) ≤ κ * (c ^ L * M ^ (L + 1)) :=
-      (hb.basisOpNorm_symm_le hhO).trans (mul_le_mul (le_max_right _ _) hh'
-        (basisOpNorm_nonneg _) (zero_le_one.trans hκ))
-    calc basisOpNorm b ((B⁻¹ : V ≃ₗ[F] V) : V →ₗ[F] V) = basisOpNorm b
-          ((h⁻¹ * (h * B⁻¹) : V ≃ₗ[F] V) : V →ₗ[F] V) := by rw [← e]
+  have hBn : basisOpNorm b (aW : V →ₗ[F] V) ≤ κ * C * M ^ (N + 1) := by
+    have e : aW = h⁻¹ * (h * aW) := by group
+    have hhi : basisOpNorm b ((h⁻¹ : V ≃ₗ[F] V) : V →ₗ[F] V) ≤ κ * (C * M ^ N) :=
+      (hb.basisOpNorm_symm_le (mem_orthogonalGroup_of_mem_fixer hh)).trans
+        (mul_le_mul (le_max_right _ _) hh' (basisOpNorm_nonneg _) (zero_le_one.trans hκ))
+    calc basisOpNorm b (aW : V →ₗ[F] V) = basisOpNorm b
+          ((h⁻¹ * (h * aW) : V ≃ₗ[F] V) : V →ₗ[F] V) := by rw [← e]
       _ ≤ basisOpNorm b ((h⁻¹ : V ≃ₗ[F] V) : V →ₗ[F] V) * NW := basisOpNorm_mul_le _ _
-      _ ≤ κ * (c ^ L * M ^ (L + 1)) * M := mul_le_mul hhi hNW (basisOpNorm_nonneg _)
-          (by positivity)
-      _ = κ * c ^ L * M ^ (L + 2) := by ring
-  have hM1 : M ^ (L + 1) ≤ M ^ (L + 2) := pow_le_pow_right₀ hM (by omega)
-  have hML : M ^ L ≤ M ^ (L + 2) := pow_le_pow_right₀ hM (by omega)
-  have hκc : c ^ L ≤ κ * c ^ L := le_mul_of_one_le_left hcL hκ
-  refine max_le ?_ (max_le ?_ ?_)
-  · exact hh'.trans (mul_le_mul hκc hM1 (by positivity) (by positivity))
-  · exact hBn
-  · exact (hAin.trans_eq hpow).trans (mul_le_mul hκc hML (by positivity) (by positivity))
+      _ ≤ κ * (C * M ^ N) * M := mul_le_mul hhi hNW (basisOpNorm_nonneg _) (by positivity)
+      _ = κ * C * M ^ (N + 1) := by ring
+  have hup : C * M ^ N ≤ κ * C * M ^ (N + 1) :=
+    mul_le_mul hκC hMN (by positivity) (by positivity)
+  refine max_le (hh'.trans hup) (max_le hBn ?_)
+  exact (((le_max_right _ _).trans hleft).trans hCM).trans hup
 
 end Main
 

@@ -54,6 +54,7 @@ section GLNorm
 
 variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
   {E : Type*} [NormedAddCommGroup E] [NormedSpace F E] [FiniteDimensional F E]
+  {Z : Type*} [NormedAddCommGroup Z] [NormedSpace F Z] [FiniteDimensional F Z]
 
 /-- `max(1, ‖f‖, ‖f⁻¹‖)` for `f ∈ GL(E)` (operator norms). -/
 def glMaxNorm (f : E ≃ₗ[F] E) : ℝ :=
@@ -84,7 +85,109 @@ theorem glMaxNorm_mul_le (f g : E ≃ₗ[F] E) : glMaxNorm (f * g) ≤ glMaxNorm
     exact (norm_toContinuousLinearMap_mul_le _ _).trans (mul_le_mul (norm_inv_le_glMaxNorm g)
       (norm_inv_le_glMaxNorm f) (norm_nonneg _) (by linarith))
 
+/-- `max(1, ‖1‖, ‖1⁻¹‖) = 1`. -/
+theorem glMaxNorm_one : glMaxNorm (1 : E ≃ₗ[F] E) = 1 :=
+  le_antisymm (max_le le_rfl (max_le ContinuousLinearMap.norm_id_le
+    ContinuousLinearMap.norm_id_le)) (le_max_left _ _)
+
+/-- `‖f ⊕ 1‖ ≤ max(‖f‖, 1)` for the operator norm on `E × Z` (sup norm). -/
+theorem norm_prodCongr_refl_le (f : E ≃ₗ[F] E) :
+    ‖LinearMap.toContinuousLinearMap
+        ((f.prodCongr (LinearEquiv.refl F Z) : (E × Z) ≃ₗ[F] (E × Z)) : (E × Z) →ₗ[F] (E × Z))‖ ≤
+      max ‖LinearMap.toContinuousLinearMap (f : E →ₗ[F] E)‖ 1 := by
+  refine ContinuousLinearMap.opNorm_le_bound _ (zero_le_one.trans (le_max_right _ _))
+    fun x => ?_
+  have hf := (LinearMap.toContinuousLinearMap (f : E →ₗ[F] E)).le_opNorm x.1
+  rw [LinearMap.coe_toContinuousLinearMap', LinearEquiv.coe_coe] at hf
+  rw [LinearMap.coe_toContinuousLinearMap', LinearEquiv.coe_coe, LinearEquiv.prodCongr_apply,
+    LinearEquiv.refl_apply, Prod.norm_def, Prod.norm_def]
+  have hM : 0 ≤ max ‖LinearMap.toContinuousLinearMap (f : E →ₗ[F] E)‖ 1 :=
+    zero_le_one.trans (le_max_right _ _)
+  refine max_le (hf.trans (mul_le_mul (le_max_left _ _) (le_max_left _ _) (norm_nonneg _) hM)) ?_
+  calc ‖x.2‖ = 1 * ‖x.2‖ := (one_mul _).symm
+    _ ≤ _ := mul_le_mul (le_max_right _ _) (le_max_right _ _) (norm_nonneg _) hM
+
+/-- `‖f‖ ≤ ‖f ⊕ 1‖`. -/
+theorem norm_le_norm_prodCongr_refl (f : E ≃ₗ[F] E) :
+    ‖LinearMap.toContinuousLinearMap (f : E →ₗ[F] E)‖ ≤
+      ‖LinearMap.toContinuousLinearMap
+        ((f.prodCongr (LinearEquiv.refl F Z) : (E × Z) ≃ₗ[F] (E × Z)) : (E × Z) →ₗ[F] (E × Z))‖ := by
+  refine ContinuousLinearMap.opNorm_le_bound _ (norm_nonneg _) fun e => ?_
+  have := (LinearMap.toContinuousLinearMap
+    ((f.prodCongr (LinearEquiv.refl F Z) : (E × Z) ≃ₗ[F] (E × Z)) : (E × Z) →ₗ[F] (E × Z))).le_opNorm
+      (e, 0)
+  rw [LinearMap.coe_toContinuousLinearMap', LinearEquiv.coe_coe, LinearEquiv.prodCongr_apply,
+    LinearEquiv.refl_apply, Prod.norm_def, Prod.norm_def, norm_zero,
+    max_eq_left (norm_nonneg _), max_eq_left (norm_nonneg _)] at this
+  rw [LinearMap.coe_toContinuousLinearMap', LinearEquiv.coe_coe]
+  exact this
+
+/-- `max(1, ‖f ⊕ 1‖, ‖(f ⊕ 1)⁻¹‖) = max(1, ‖f‖, ‖f⁻¹‖)`. -/
+theorem glMaxNorm_prodCongr_refl (f : E ≃ₗ[F] E) :
+    glMaxNorm (f.prodCongr (LinearEquiv.refl F Z)) = glMaxNorm f := by
+  have hinv : ((f.prodCongr (LinearEquiv.refl F Z))⁻¹ : (E × Z) ≃ₗ[F] (E × Z)) =
+      (f⁻¹ : E ≃ₗ[F] E).prodCongr (LinearEquiv.refl F Z) := by
+    ext x <;> rfl
+  unfold glMaxNorm
+  rw [hinv]
+  apply le_antisymm
+  · refine max_le (le_max_left _ _) (max_le ?_ ?_)
+    · exact (norm_prodCongr_refl_le f).trans
+        (max_le (le_max_of_le_right (le_max_left _ _)) (le_max_left _ _))
+    · exact (norm_prodCongr_refl_le (f⁻¹ : E ≃ₗ[F] E)).trans
+        (max_le (le_max_of_le_right (le_max_right _ _)) (le_max_left _ _))
+  · refine max_le (le_max_left _ _) (max_le ?_ ?_)
+    · exact (norm_le_norm_prodCongr_refl (Z := Z) f).trans
+        (le_max_of_le_right (le_max_left _ _))
+    · exact (norm_le_norm_prodCongr_refl (Z := Z) (f⁻¹ : E ≃ₗ[F] E)).trans
+        (le_max_of_le_right (le_max_right _ _))
+
 end GLNorm
+
+section Basis
+
+variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
+  {V : Type*} [NormedAddCommGroup V] [NormedSpace F V] [FiniteDimensional F V]
+  {n : ℕ} {b : Basis (Fin n) F V} {Q : QuadraticForm F V}
+
+/-- On the orthogonal group, `max(1, ‖g‖, ‖g⁻¹‖)` (operator norms) and `max(1, ‖g‖_b)` (the matrix
+norm in an orthogonal basis) are equivalent: `‖g⁻¹‖_b ≤ κ ‖g‖_b`
+(`IsOrthoBasis.basisOpNorm_symm_le`). -/
+theorem IsOrthoBasis.exists_glMaxNorm_equiv (hb : IsOrthoBasis Q b) :
+    ∃ K, 1 ≤ K ∧ ∀ g ∈ TauCeti.QuadraticMap.orthogonalGroup Q,
+      glMaxNorm g ≤ K * max 1 (basisOpNorm b (g : V →ₗ[F] V)) ∧
+      max 1 (basisOpNorm b (g : V →ₗ[F] V)) ≤ K * glMaxNorm g := by
+  obtain ⟨C, hC, hCb⟩ := exists_norm_toContinuousLinearMap_le_basisOpNorm b
+  obtain ⟨c, hc, hcb⟩ := exists_basisOpNorm_le_norm_toContinuousLinearMap b
+  set κ := max 1 (adjBound Q b)
+  have hκ : 1 ≤ κ := le_max_left _ _
+  refine ⟨max 1 (max (C * κ) c), le_max_left _ _, fun g hg => ⟨?_, ?_⟩⟩
+  · set M := max 1 (basisOpNorm b (g : V →ₗ[F] V))
+    have hM : 1 ≤ M := le_max_left _ _
+    have hK : C * κ ≤ max 1 (max (C * κ) c) := le_max_of_le_right (le_max_left _ _)
+    have hgM : basisOpNorm b (g : V →ₗ[F] V) ≤ M := le_max_right _ _
+    have h1 : ‖LinearMap.toContinuousLinearMap (g : V →ₗ[F] V)‖ ≤ C * κ * M :=
+      (hCb _).trans (by
+        rw [mul_assoc]
+        exact mul_le_mul_of_nonneg_left
+          ((hgM.trans_eq (one_mul M).symm).trans (mul_le_mul_of_nonneg_right hκ
+            (zero_le_one.trans hM))) hC)
+    have h2 : ‖LinearMap.toContinuousLinearMap ((g⁻¹ : V ≃ₗ[F] V) : V →ₗ[F] V)‖ ≤ C * κ * M := by
+      refine (hCb _).trans ?_
+      rw [mul_assoc]
+      refine mul_le_mul_of_nonneg_left ((hb.basisOpNorm_symm_le hg).trans ?_) hC
+      exact mul_le_mul (le_max_right _ _) hgM (basisOpNorm_nonneg _) (zero_le_one.trans hκ)
+    unfold glMaxNorm
+    refine max_le ?_ (max_le ?_ ?_)
+    · exact one_le_mul_of_one_le_of_one_le (le_max_left _ _) hM
+    · exact h1.trans (mul_le_mul_of_nonneg_right hK (zero_le_one.trans hM))
+    · exact h2.trans (mul_le_mul_of_nonneg_right hK (zero_le_one.trans hM))
+  · have hG : 1 ≤ glMaxNorm g := one_le_glMaxNorm g
+    refine max_le (one_le_mul_of_one_le_of_one_le (le_max_left _ _) hG) ?_
+    refine (hcb _).trans (mul_le_mul (le_max_of_le_right (le_max_right _ _))
+      (norm_le_glMaxNorm g) (norm_nonneg _) (zero_le_one.trans (le_max_left _ _)))
+
+end Basis
 
 /-! ### `G → Ḡ = SO(W) × SO(V)` -/
 
@@ -99,6 +202,19 @@ variable (d : GGPData F)
 def logNormSO (h : d.GbarGrp) : ℝ :=
   1 + Real.log (max (glMaxNorm (h.1 : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)))
     (glMaxNorm (h.2 : d.V ≃ₗ[F] d.V)))
+
+/-- `σ_{SO}(g₁, g₂) = 1 + log max(glMax(g₁ ⊕ 1), glMax(g₂))`: everything on `V`. -/
+theorem logNormSO_eq (g : d.GbarGrp) :
+    d.logNormSO g = 1 + Real.log (max (glMaxNorm (d.extZ (g.1 : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F))))
+      (glMaxNorm (g.2 : d.V ≃ₗ[F] d.V))) := by
+  rw [logNormSO]
+  congr 3
+  exact (glMaxNorm_prodCongr_refl (Z := d.Z) _).symm
+
+/-- `σ_{SO}(1) = 1`. -/
+theorem logNormSO_one : d.logNormSO 1 = 1 := by
+  simp only [logNormSO, Prod.fst_one, Prod.snd_one, OneMemClass.coe_one, glMaxNorm_one, max_self,
+    Real.log_one, add_zero]
 
 theorem one_le_max_glMaxNorm (h : d.GbarGrp) :
     1 ≤ max (glMaxNorm (h.1 : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)))
