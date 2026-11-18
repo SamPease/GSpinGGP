@@ -350,6 +350,21 @@ theorem IsLogNorm.isLogNorm_infLeft [S.Normal] : IsLogNorm (infLeft σ S) where
 
 end InfLeft
 
+/-- If `π` is constant on `S`-orbits, the push-forwards of `σ` and of `σ_{S\G}` along `π`
+agree: `π_*(σ_{S\G}) = π_* σ` (e.g. `σ_{H\G/A_G}` is the push-forward of `σ_{A_G\G}`). -/
+theorem IsLogNorm.fiberInf_infLeft {X : Type*} {σ : G → ℝ} (hσ : IsLogNorm σ) (π : G → X)
+    {S : Subgroup G} (hS : ∀ s ∈ S, ∀ g, π (s * g) = π g) (q : X) :
+    fiberInf (infLeft σ S) π q = fiberInf σ π q := by
+  rcases isEmpty_or_nonempty {g : G // π g = q} with h | h
+  · simp only [fiberInf, Real.iInf_of_isEmpty]
+  apply le_antisymm
+  · refine le_ciInf fun g => ?_
+    exact (ciInf_le ⟨1, by rintro _ ⟨g', rfl⟩; exact hσ.one_le_infLeft S _⟩ g).trans
+      (hσ.infLeft_le S g)
+  · refine le_ciInf fun g => ?_
+    have := hσ.fiberInf_le_infLeft π hS g
+    rwa [g.2] at this
+
 section InfLeftCompare
 
 variable {τ : G → ℝ} (S : Subgroup G)
