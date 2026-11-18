@@ -12,6 +12,7 @@ import GSpinGGP.TraceFormula.SpinorNorm
 import GSpinGGP.Literature.Tits
 import GSpinGGP.Foundations.VanDantzig
 import GSpinGGP.TraceFormula.GoodParabolic
+import GSpinGGP.TraceFormula.AMinGrowth
 
 /-!
 # The local trace formula: analytic objects and estimates
@@ -901,6 +902,20 @@ theorem logNormHG_eq_fiberInf_logNormModAG :
   refine (d.isLogNorm_logNormG.fiberInf_infLeft d.mkHG (fun a ha g => ?_) q).symm
   refine ((d.mkHG_eq_mkHG_iff _ _).2 ⟨1, d.H.one_mem, a, ha, ?_⟩).symm
   rw [one_mul, (Subgroup.mem_center_iff.mp (d.AG_le_center ha) g)]
+
+/-- **BP (6.7.12) modulo `A_G`, for `H(F)\G(F)/A_G(F)`**: the `growth` field of
+`WeakCartanData d.mkHG d.logNormModAG` for every cone `S ⊆ A_G · frameTorus` of two hyperbolic
+frames of `V` (`GGPData.exists_growth_frameTorus` with `π = mkHG`). -/
+theorem exists_growth_mkHG_frameTorus {n₁ n₂ : ℕ} {W₁ W₂ : Submodule F d.V}
+    {e₁ f₁ : Fin n₁ → d.V} {e₂ f₂ : Fin n₂ → d.V} (hF₁ : IsHypFrame d.QV W₁ e₁ f₁)
+    (hF₂ : IsHypFrame d.QV W₂ e₂ f₂) :
+    ∃ CS : Set ↥d.G, IsCompact CS ∧ ∃ (M : ℝ) (N : ℕ),
+      ∀ S ⊆ (d.AG : Set ↥d.G) * (d.frameTorus W₁ W₂ e₁ f₁ e₂ f₂ : Set ↥d.G),
+      ∀ R : ℝ, 1 ≤ R → ∃ t : Finset ↥d.G, (t.card : ℝ) ≤ M * (1 + R) ^ N ∧
+        d.mkHG '' {s ∈ S | d.logNormModAG s < R} ⊆ ⋃ j ∈ t, d.mkHG '' ((j * ·) '' CS) :=
+  d.exists_growth_frameTorus hF₁ hF₂ d.mkHG fun z hz g =>
+    ((d.mkHG_eq_mkHG_iff g (z * g)).2 ⟨1, d.H.one_mem, z, hz, by
+      rw [one_mul, (Subgroup.mem_center_iff.mp (d.AG_le_center hz) g)]⟩).symm
 
 /-- **Reduction of Thesis Prop 8.4.1(iii) to weak Cartan data** (BP Prop 6.7.1(iii), proof on
 pp. 151–152): given the weak Cartan decomposition with the comparison `σ_{A_G\G} ≪ σ_{H\G}` on
