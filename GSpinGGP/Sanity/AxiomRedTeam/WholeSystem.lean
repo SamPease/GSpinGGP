@@ -28,7 +28,9 @@ the path of the main theorem meet the definitions in one instance.
   (`toyD_tendsto_mGeomS_of_mem_QC`, `toyD_germ_bound_of_mem_QC`) and for `θ = θ_f`
   (`toyD_tendsto_mGeomS_thetaF`, `toyD_germ_bound_thetaF`); `kernelK_bound_scusp` for every
   Iwasawa datum (`toyD_kernelK_bound_scusp`; on the way `Ξ^G ≡ 1`, `Ξ^{H\G} ≡ 1`);
-  `bp_integrable_deltaGGP_rpow` (`toyD_bp_integrable`); `prop_6_7_1_iii`
+  `locallyIntegrable_absF_det_adV_rpow` at `a = 0` for every `d` (`locallyIntegrable_det_adV_rpow_zero`;
+  the conclusion of `bp_integrable_deltaGGP_rpow`, now proved from it, is also checked at `toyD`:
+  `toyD_bp_integrable`); `prop_6_7_1_iii`
   (`toyD_prop_6_7_1_iii`); `exists_lie_descent` with `Ω = G` (`toyD_exists_lie_descent`).
   `exists_good_nhd_of_not_nearCentral` and `mult_parInd_eq_mGeom` are vacuous there
   (`toyD_isNearCentral`, `toyD_not_isTempIndData`).
@@ -249,6 +251,21 @@ theorem toyD_isNearCentral (c : ↥(𝕋).G) : IsNearCentral (𝕋) c := by
 /-- `mult_parInd_eq_mGeom` is vacuous at `toyD`: there is no proper parabolic. -/
 theorem toyD_not_isTempIndData (η : CentralCharOn (𝕋)) (D : (𝕋).ParIndData) :
     ¬ (𝕋).IsTempIndData η D := fun h => toyD_not_isProperFlagPair _ _ h.proper
+
+/-- Conclusion of `locallyIntegrable_absF_det_adV_rpow` at `a = 0`, for every `d`, `x` and
+`t₀ ∈ T_x` (the function is `≡ 1`), proved directly (it was a `sorry` statement when this check
+was added). -/
+theorem locallyIntegrable_det_adV_rpow_zero (d : GGPData F) {x t₀ : ↥(GSpin d.QW)}
+    (ht₀ : t₀ ∈ d.torusOf x) (μ : Measure ↥(d.lieTorus (d.torusOf x))) [μ.IsAddHaarMeasure] :
+    LocallyIntegrable (fun X : ↥(d.lieTorus (d.torusOf x)) =>
+      absF (LinearMap.det ((adV d.QW (X : CliffordAlgebra d.QW)).restrict
+        (d.adV_mapsTo_movedSub_inf_ker ht₀ X))) ^ (0 : ℝ)) μ := by
+  letI := isTopologicalRing_of_moduleTopology F (CliffordAlgebra d.QW)
+  haveI := t2Space_of_moduleTopology F (CliffordAlgebra d.QW)
+  haveI := submodule_isTopologicalAddGroup (d.lieTorus (d.torusOf x))
+  obtain ⟨_, _, _, _, _⟩ := submodule_topology (d.lieTorus (d.torusOf x))
+  simp only [Real.rpow_zero]
+  exact locallyIntegrable_const 1
 
 /-- Conclusion of `bp_integrable_deltaGGP_rpow` at `toyD`, for every `x` and `s`. -/
 theorem toyD_bp_integrable (x : ↥(GSpin (𝕋).QW)) (s : ℝ) :

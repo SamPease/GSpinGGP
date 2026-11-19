@@ -9,6 +9,7 @@ import GSpinGGP.Foundations.LieEquivAd
 import GSpinGGP.Foundations.CentralizerIso
 import GSpinGGP.Foundations.ExpLocal
 import GSpinGGP.Foundations.ExpHaar
+import GSpinGGP.Foundations.ExpDet
 import GSpinGGP.Foundations.TorusIntegrability
 import GSpinGGP.Foundations.EvaluationSpan
 import GSpinGGP.Foundations.GSpinExp
@@ -21,6 +22,8 @@ import GSpinGGP.Foundations.Representations
 import GSpinGGP.Foundations.GSpin
 import GSpinGGP.Foundations.HypPlane
 import GSpinGGP.Foundations.HypFrame
+import GSpinGGP.Foundations.HypTorusNorm
+import GSpinGGP.Foundations.LogNormCompact
 import GSpinGGP.Foundations.SoCentralizer
 import GSpinGGP.Foundations.RegularNilpotent
 import GSpinGGP.Foundations.QuadraticForms
@@ -41,6 +44,8 @@ import GSpinGGP.GGP.RegularNilpotent
 import GSpinGGP.Foundations.SoSplit
 import GSpinGGP.Foundations.MatrixBaseChange
 import GSpinGGP.Foundations.CommutantSquarefree
+import GSpinGGP.Foundations.CyclicCommutant
+import GSpinGGP.Foundations.DetIntegrability
 import GSpinGGP.Foundations.JordanAlgebra
 import GSpinGGP.Foundations.SemisimpleRank
 import GSpinGGP.Foundations.JointCentralizer
@@ -52,6 +57,10 @@ import GSpinGGP.Foundations.OrthogonalSum
 import GSpinGGP.Foundations.BasisNorm
 import GSpinGGP.Foundations.WeakCartanSO
 import GSpinGGP.Foundations.WeakCartanRotation
+import GSpinGGP.Foundations.WeakCartanFrame
+import GSpinGGP.Foundations.WeakCartanTheorem
+import GSpinGGP.Foundations.GoodParabolicSO
+import GSpinGGP.Foundations.VanDantzig
 import GSpinGGP.GGP.RegularOrbitClass
 import GSpinGGP.GGP.OrbitSpecQd
 import GSpinGGP.GGP.RegularRank
@@ -96,6 +105,7 @@ import GSpinGGP.GGP.CliffordDescent
 import GSpinGGP.Literature.Localization
 import GSpinGGP.Literature.Waldspurger
 import GSpinGGP.Literature.Parabolic
+import GSpinGGP.Literature.Tits
 import GSpinGGP.TraceFormula.InvariantSets
 import GSpinGGP.GGP.Triple
 import GSpinGGP.GGP.TorusIntegral
@@ -142,6 +152,8 @@ import GSpinGGP.TraceFormula.Basic
 import GSpinGGP.TraceFormula.SpinorNorm
 import GSpinGGP.TraceFormula.ThetaF
 import GSpinGGP.TraceFormula.Analytic
+import GSpinGGP.TraceFormula.GoodParabolic
+import GSpinGGP.TraceFormula.WeakCartan
 import GSpinGGP.TraceFormula.Interface
 import GSpinGGP.TraceFormula.GermTranslate
 import GSpinGGP.TraceFormula.TorusDescent
@@ -157,9 +169,21 @@ import GSpinGGP.TraceFormula.Lie
 import GSpinGGP.TraceFormula.Spine
 import GSpinGGP.TraceFormula
 import GSpinGGP.HarmonicAnalysis.LogNorm
+import GSpinGGP.HarmonicAnalysis.RelativeXi
+import GSpinGGP.HarmonicAnalysis.PolynomialGrowth
+import GSpinGGP.HarmonicAnalysis.LatticeGrowth
+import GSpinGGP.HarmonicAnalysis.QuotientUnimodular
+import GSpinGGP.Foundations.CosetSpaceTranslate
+import GSpinGGP.Foundations.CosetSpaceTopology
+import GSpinGGP.Foundations.NormDescent
+import GSpinGGP.TraceFormula.GoodParabolicLift
+import GSpinGGP.TraceFormula.LogNormDescent
+import GSpinGGP.TraceFormula.AMinGrowth
 import GSpinGGP.Main
 import GSpinGGP.Sanity.Witnesses
 import GSpinGGP.Sanity.NilpotentOrbit
 import GSpinGGP.Sanity.LieAudit
 import GSpinGGP.Sanity.InvariantSetsAudit
+import GSpinGGP.Sanity.WeakCartanFrame
+import GSpinGGP.Sanity.RelativeXi
 import GSpinGGP.Sanity.AxiomRedTeam

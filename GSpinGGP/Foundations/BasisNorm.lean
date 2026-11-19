@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import Mathlib
 import TauCeti.Topology.Algebra.QuadraticForm.OrthogonalGroup.SpecialOrthogonal
 import TauCeti.LinearAlgebra.QuadraticForm.OrthogonalGroup.OrthogonalBasis
+import TauCeti.LinearAlgebra.QuadraticForm.OrthogonalBasis
 
 /-!
 # Coordinate norms for a basis, and bounded subsets of orthogonal groups
@@ -25,11 +26,19 @@ bounded (`isCompact_orthogonal_setOf_basisOpNorm_le`, `exists_basisOpNorm_le_of_
 
 * `basisNorm`, `basisOpNorm`, `basisNorm_apply_le`, `basisOpNorm_mul_le`: the norms.
 * `IsOrthoBasis`, `exists_isOrthoBasis`, `repr_eq_polar_div`, `norm_polar_le`, `norm_apply_le`:
-  an orthogonal basis.
+  an orthogonal basis; `IsOrthoBasis.unitsSMul`: rescaling it by units;
+  `exists_isOrthoBasis_append`: an orthogonal family of anisotropic vectors in a nondegenerate
+  space extends to such a basis.
 * `basisOpNorm_symm_le`: `‖g⁻¹‖ ≤ κ ‖g‖` on the orthogonal group.
 * `isCompact_orthogonal_setOf_basisOpNorm_le`,
   `isCompact_specialOrthogonal_setOf_basisOpNorm_le`: bounded sets are relatively compact.
 * `exists_basisOpNorm_le_of_isCompact`: compact sets are bounded.
+* `LinearMap.exists_norm_le_mul_norm_of_injective`: all norms on a finite-dimensional space are
+  equivalent; `exists_norm_toContinuousLinearMap_le_basisOpNorm`,
+  `exists_basisOpNorm_le_norm_toContinuousLinearMap`: `basisOpNorm b` is equivalent to the operator
+  norm.
+* `polar_apply_eq_mul_conj`, `norm_polar_le_of_eigen`, `norm_polar_le_of_fixed`: for eigenvectors
+  `x`, `y` of an isometry `A`, `polar(h x, y)` is controlled by the norm of `A h A⁻¹`.
 -/
 
 noncomputable section
@@ -153,24 +162,88 @@ structure IsOrthoBasis (Q : QuadraticForm F V) (b : Module.Basis (Fin n) F V) : 
   apply_ne_zero : ∀ i, Q (b i) ≠ 0
 
 omit [CharZero F] in
-/-- A nondegenerate quadratic space has an orthogonal basis of anisotropic vectors. -/
-theorem exists_isOrthoBasis [CharZero F] [FiniteDimensional F V] (Q : QuadraticForm F V)
-    (hQ : (QuadraticMap.associated (R := F) Q).SeparatingLeft) :
+/-- A nondegenerate quadratic space has an orthogonal basis of anisotropic vectors (Tau Ceti's
+`QuadraticMap.Nondegenerate.exists_orthogonal_basis`). -/
+theorem exists_isOrthoBasis [NeZero (2 : F)] [FiniteDimensional F V] (Q : QuadraticForm F V)
+    (hQ : Q.Nondegenerate) :
     ∃ b : Module.Basis (Fin (Module.finrank F V)) F V, IsOrthoBasis Q b := by
   let _ : Invertible (2 : F) := invertibleOfNonzero two_ne_zero
-  obtain ⟨v, hv₁⟩ :=
-    LinearMap.BilinForm.exists_orthogonal_basis (QuadraticForm.associated_isSymm F Q)
-  have hv₂ := hv₁.not_isOrtho_basis_self_of_separatingLeft hQ
-  simp_rw [QuadraticMap.associated_eq_self_apply] at hv₂
-  refine ⟨v, fun i j hij => ?_, hv₂⟩
-  have h := hv₁ hij
-  simp only [QuadraticMap.associated_apply] at h
-  have h2 : (⅟2 : F) * QuadraticMap.polar Q (v i) (v j) = 0 := by
-    simpa [QuadraticMap.polar, sub_sub] using h
-  have h3 : QuadraticMap.polar Q (v i) (v j) = 0 := by simpa using h2
-  show Q (v i + v j) = Q (v i) + Q (v j)
-  rw [QuadraticMap.polar] at h3
-  linear_combination h3
+  obtain ⟨b, hb, hb0⟩ := hQ.exists_orthogonal_basis
+  exact ⟨b, hb, hb0⟩
+
+omit [CharZero F] in
+/-- `Q (wᵢ bᵢ) = wᵢ² Q bᵢ`. -/
+theorem apply_unitsSMul (w : Fin n → Fˣ) (i : Fin n) :
+    Q (b.unitsSMul w i) = (w i : F) ^ 2 * Q (b i) := by
+  rw [Module.Basis.unitsSMul_apply, Units.smul_def, QuadraticMap.map_smul, smul_eq_mul, _root_.sq]
+
+omit [CharZero F] in
+/-- Rescaling the vectors of an orthogonal basis by units (`Module.Basis.unitsSMul`) gives an
+orthogonal basis. -/
+theorem IsOrthoBasis.unitsSMul (hb : IsOrthoBasis Q b) (w : Fin n → Fˣ) :
+    IsOrthoBasis Q (b.unitsSMul w) where
+  isOrtho i j hij := by
+    rw [← QuadraticMap.isOrtho_polarBilin, QuadraticMap.polarBilin_apply_apply,
+      Module.Basis.unitsSMul_apply, Module.Basis.unitsSMul_apply, Units.smul_def, Units.smul_def,
+      QuadraticMap.polar_smul_left, QuadraticMap.polar_smul_right,
+      (hb.isOrtho i j hij).polar_eq_zero, smul_zero, smul_zero]
+  apply_ne_zero i := by
+    rw [apply_unitsSMul]
+    exact mul_ne_zero (pow_ne_zero _ (w i).ne_zero) (hb.apply_ne_zero i)
+
+omit [CharZero F] in
+/-- **Extension to an orthogonal basis.** In a nondegenerate quadratic space, an orthogonal
+family `w₀, …, w_{k-1}` of anisotropic vectors is the beginning of an orthogonal basis of
+anisotropic vectors: the span `U` of the `wᵢ` is nondegenerate, hence so is `U^⊥`, and
+`V = U ⊕ U^⊥` (Tau Ceti's `QuadraticMap.Nondegenerate.nondegenerate_restrict_orthogonal`,
+`isCompl_orthogonal`); an orthogonal basis of `U^⊥`
+(`QuadraticMap.Nondegenerate.exists_orthogonal_basis`) completes the family. -/
+theorem exists_isOrthoBasis_append [NeZero (2 : F)] [FiniteDimensional F V] (hQ : Q.Nondegenerate)
+    {k : ℕ} {w : Fin k → V} (hw : ∀ i j, i ≠ j → Q.IsOrtho (w i) (w j)) (hw0 : ∀ i, Q (w i) ≠ 0) :
+    ∃ (m : ℕ) (c : Fin m → V) (b : Module.Basis (Fin (k + m)) F V),
+      IsOrthoBasis Q b ∧ ⇑b = Fin.append w c := by
+  let _ : Invertible (2 : F) := invertibleOfNonzero two_ne_zero
+  have hself : ∀ x, Q x ≠ 0 → Q.polarBilin x x ≠ 0 := fun x hx => by
+    rw [QuadraticMap.polarBilin_apply_apply, QuadraticMap.polar_self, two_smul, ← two_mul]
+    exact mul_ne_zero two_ne_zero hx
+  have hli : LinearIndependent F w := LinearMap.BilinForm.linearIndependent_of_iIsOrtho
+    (fun i j hij => QuadraticMap.isOrtho_polarBilin.mpr (hw i j hij)) fun i => hself _ (hw0 i)
+  set U := Submodule.span F (Set.range w)
+  have hres : ∀ (N : Submodule F V) (x y : N), (Q.restrict N).IsOrtho x y ↔ Q.IsOrtho x y := by
+    intro N x y; simp [QuadraticMap.isOrtho_def]
+  have hU : (Q.restrict U).Nondegenerate := by
+    refine QuadraticMap.nondegenerate_of_isOrthoᵢ (b := Module.Basis.span hli)
+      (fun i j hij => QuadraticMap.associated_isOrtho.mpr ?_) fun i => ?_
+    · rw [hres, Module.Basis.coe_span_apply, Module.Basis.coe_span_apply]; exact hw i j hij
+    · rw [QuadraticMap.restrict_apply, Module.Basis.coe_span_apply]; exact hw0 i
+  set U' := LinearMap.BilinForm.orthogonal Q.polarBilin U
+  obtain ⟨bc, hbc, hbc0⟩ := (hQ.nondegenerate_restrict_orthogonal hU).exists_orthogonal_basis
+  have hc : IsCompl U U' := hU.isCompl_orthogonal
+  let c : Fin (finrank F U') → V := fun i => bc i
+  have hortho : ∀ i j, i ≠ j → Q.IsOrtho (Fin.append w c i) (Fin.append w c j) := by
+    have hwc : ∀ i j, Q.IsOrtho (w i) (c j) := fun i j =>
+      QuadraticMap.isOrtho_polarBilin.mp ((bc j).2 (w i) (Submodule.subset_span ⟨i, rfl⟩))
+    intro i j hij
+    induction i using Fin.addCases <;> induction j using Fin.addCases <;>
+      simp only [Fin.append_left, Fin.append_right]
+    · exact hw _ _ fun h => hij (by rw [h])
+    · exact hwc _ _
+    · exact QuadraticMap.isOrtho_comm.mp (hwc _ _)
+    · exact (hres _ _ _).mp (hbc _ _ fun h => hij (by rw [h]))
+  have hani : ∀ i, Q (Fin.append w c i) ≠ 0 := by
+    intro i
+    induction i using Fin.addCases <;> simp only [Fin.append_left, Fin.append_right]
+    · exact hw0 _
+    · exact hbc0 _
+  have hli' : LinearIndependent F (Fin.append w c) :=
+    LinearMap.BilinForm.linearIndependent_of_iIsOrtho
+      (fun i j hij => QuadraticMap.isOrtho_polarBilin.mpr (hortho i j hij))
+      fun i => hself _ (hani i)
+  have hcard : Fintype.card (Fin (k + finrank F U')) = finrank F V := by
+    rw [Fintype.card_fin, ← Submodule.finrank_add_eq_of_isCompl hc, finrank_span_eq_card hli,
+      Fintype.card_fin]
+  refine ⟨_, c, basisOfLinearIndependentOfCardEqFinrank' _ hli' hcard, ?_, by simp⟩
+  exact ⟨fun i j hij => by simpa using hortho i j hij, fun i => by simpa using hani i⟩
 
 variable (hb : IsOrthoBasis Q b)
 include hb
@@ -190,6 +263,24 @@ theorem IsOrthoBasis.repr_eq_polar_div (x : V) (i : Fin n) :
     b.repr x i = QuadraticMap.polar Q (b i) x / (2 * Q (b i)) := by
   rw [QuadraticMap.polar_basis_left Q b hb.isOrtho, mul_div_cancel_left₀ _
     (mul_ne_zero two_ne_zero (hb.apply_ne_zero i))]
+
+/-- An isometry `A` fixing the basis vectors `b j`, `j ∈ S`, and moving `b m` (`m ∉ S`) within
+`⟨b_S⟩`, fixes `b m`: the move is orthogonal to `⟨b_S⟩`. -/
+theorem IsOrthoBasis.apply_eq_of_sub_mem_span {A : V →ₗ[F] V}
+    (hA : ∀ x y, QuadraticMap.polar Q (A x) (A y) = QuadraticMap.polar Q x y) {S : Set (Fin n)}
+    (hS : ∀ j ∈ S, A (b j) = b j) {m : Fin n} (hm : m ∉ S)
+    (hδ : A (b m) - b m ∈ Submodule.span F (b '' S)) : A (b m) = b m := by
+  classical
+  rw [← sub_eq_zero]
+  rw [Basis.mem_span_image] at hδ
+  apply b.repr.injective
+  ext j
+  rw [map_zero, Finsupp.zero_apply]
+  by_cases hj : j ∈ S
+  · rw [hb.repr_eq_polar_div, QuadraticMap.polar_sub_right, ← hS j hj, hA, hS j hj, sub_self,
+      zero_div]
+  · by_contra h
+    exact hj (hδ (Finsupp.mem_support_iff.mpr h))
 
 omit [CharZero F] in
 theorem IsOrthoBasis.polar_eq_sum (x y : V) :
@@ -393,5 +484,122 @@ theorem exists_basisOpNorm_le_of_isCompact {K : Set (V ≃ₗ[F] V)} (hK : IsCom
   exact ⟨M, fun g hg => hM ⟨g, hg, rfl⟩⟩
 
 end Compact
+
+/-! ### Comparison of norms on a finite-dimensional space -/
+
+section Comparison
+
+variable {𝕜 : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜]
+variable {E X Y : Type*} [AddCommGroup E] [Module 𝕜 E] [FiniteDimensional 𝕜 E]
+  [NormedAddCommGroup X] [NormedSpace 𝕜 X] [NormedAddCommGroup Y] [NormedSpace 𝕜 Y]
+
+/-- On a finite-dimensional space `E`, if `f : E → X` is injective then `‖g x‖ ≤ C ‖f x‖` for any
+linear `g : E → Y`: all norms on `E` are equivalent. -/
+theorem _root_.LinearMap.exists_norm_le_mul_norm_of_injective (f : E →ₗ[𝕜] X) (g : E →ₗ[𝕜] Y)
+    (hf : Function.Injective f) : ∃ C, 0 ≤ C ∧ ∀ x, ‖g x‖ ≤ C * ‖f x‖ := by
+  let e := LinearEquiv.ofInjective f hf
+  let h : LinearMap.range f →ₗ[𝕜] Y := g ∘ₗ e.symm.toLinearMap
+  let hc : LinearMap.range f →L[𝕜] Y := ⟨h, LinearMap.continuous_of_finiteDimensional h⟩
+  refine ⟨‖hc‖, norm_nonneg _, fun x => ?_⟩
+  have := hc.le_opNorm (e x)
+  simpa [hc, h, e] using this
+
+end Comparison
+
+section BasisComparison
+
+variable {𝕜 : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜]
+variable {U : Type*} [NormedAddCommGroup U] [NormedSpace 𝕜 U] [FiniteDimensional 𝕜 U]
+
+/-- The operator norm on `End(U)` (`U` a finite-dimensional normed space) and the sup norm
+`basisOpNorm b` of the matrix in a basis `b` are equivalent: `‖f‖ ≤ C ‖f‖_b`. -/
+theorem exists_norm_toContinuousLinearMap_le_basisOpNorm {n : ℕ} (b : Module.Basis (Fin n) 𝕜 U) :
+    ∃ C, 0 ≤ C ∧ ∀ f : U →ₗ[𝕜] U,
+      ‖LinearMap.toContinuousLinearMap f‖ ≤ C * basisOpNorm b f := by
+  obtain ⟨C, hC, h⟩ := LinearMap.exists_norm_le_mul_norm_of_injective
+    (basisMatrix b).toLinearMap (LinearMap.toContinuousLinearMap (𝕜 := 𝕜) (E := U)
+      (F' := U)).toLinearMap (basisMatrix b).injective
+  exact ⟨C, hC, fun f => by simpa [basisOpNorm_eq] using h f⟩
+
+/-- The converse comparison: `‖f‖_b ≤ C ‖f‖`. -/
+theorem exists_basisOpNorm_le_norm_toContinuousLinearMap {n : ℕ} (b : Module.Basis (Fin n) 𝕜 U) :
+    ∃ C, 0 ≤ C ∧ ∀ f : U →ₗ[𝕜] U,
+      basisOpNorm b f ≤ C * ‖LinearMap.toContinuousLinearMap f‖ := by
+  obtain ⟨C, hC, h⟩ := LinearMap.exists_norm_le_mul_norm_of_injective
+    (LinearMap.toContinuousLinearMap (𝕜 := 𝕜) (E := U) (F' := U)).toLinearMap
+    (basisMatrix b).toLinearMap (LinearMap.toContinuousLinearMap (𝕜 := 𝕜)).injective
+  exact ⟨C, hC, fun f => by simpa [basisOpNorm_eq] using h f⟩
+
+end BasisComparison
+
+/-! ## Conjugation by an isometry with eigenvectors -/
+
+section Conj
+
+open QuadraticMap
+
+variable {Q : QuadraticForm F V}
+
+/-- If `A x = α x` and `A y = β y` for an isometry `A`, then
+`polar(h x, y) = α β polar((A h A⁻¹) x, y)`. -/
+theorem polar_apply_eq_mul_conj {A : V ≃ₗ[F] V}
+    (hA : A ∈ TauCeti.QuadraticMap.orthogonalGroup Q) (h : V ≃ₗ[F] V) {x y : V} {α β : F}
+    (hx : A x = α • x) (hy : A y = β • y) :
+    polar Q (h x) y = α * β * polar Q ((A * h * A⁻¹) x) y := by
+  have h1 : (A * h * A⁻¹) (A x) = A (h x) := by
+    simp only [LinearEquiv.mul_apply]
+    rw [show A⁻¹ (A x) = x from A.symm_apply_apply x]
+  rw [← TauCeti.QuadraticMap.polar_apply_of_mem_orthogonalGroup hA (h x) y, ← h1, hx, hy,
+    map_smul, polar_smul_left, polar_smul_right, smul_eq_mul, smul_eq_mul]
+  ring
+
+variable [IsUltrametricDist F]
+
+theorem IsOrthoBasis.norm_polar_apply_le (hb : IsOrthoBasis Q b) (g : V ≃ₗ[F] V) (x y : V) :
+    ‖polar Q (g x) y‖ ≤
+      polarBound Q b * basisOpNorm b (g : V →ₗ[F] V) * basisNorm b x * basisNorm b y := by
+  refine (hb.norm_polar_le _ _).trans ?_
+  have h1 := basisNorm_apply_le (b := b) (g : V →ₗ[F] V) x
+  have hp : 0 ≤ polarBound Q b := norm_nonneg _
+  calc polarBound Q b * basisNorm b (g x) * basisNorm b y
+      ≤ polarBound Q b * (basisOpNorm b (g : V →ₗ[F] V) * basisNorm b x) * basisNorm b y :=
+        mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_left h1 hp) (basisNorm_nonneg y)
+    _ = _ := by ring
+
+/-- The basic estimate: for eigenvectors `x`, `y` of an isometry `A`, of norm `≤ 1` and with
+eigenvalues `α`, `β` such that `|α β| ≤ 1`, the coefficient `polar(h x, y)` is bounded by the
+norm of `A h A⁻¹`. -/
+theorem norm_polar_le_of_eigen (hb : IsOrthoBasis Q b) {A : V ≃ₗ[F] V}
+    (hA : A ∈ TauCeti.QuadraticMap.orthogonalGroup Q) (h : V ≃ₗ[F] V) {x y : V} {α β : F}
+    (hx : A x = α • x) (hy : A y = β • y) (hαβ : ‖α * β‖ ≤ 1) (hxn : basisNorm b x ≤ 1)
+    (hyn : basisNorm b y ≤ 1) :
+    ‖polar Q (h x) y‖ ≤
+      polarBound Q b * basisOpNorm b ((A * h * A⁻¹ : V ≃ₗ[F] V) : V →ₗ[F] V) := by
+  set N := basisOpNorm b ((A * h * A⁻¹ : V ≃ₗ[F] V) : V →ₗ[F] V)
+  have hp : 0 ≤ polarBound Q b * N := mul_nonneg (norm_nonneg _) (basisOpNorm_nonneg _)
+  have hxy : basisNorm b x * basisNorm b y ≤ 1 := by
+    nlinarith [basisNorm_nonneg (b := b) x, basisNorm_nonneg (b := b) y]
+  have h2 : ‖polar Q ((A * h * A⁻¹) x) y‖ ≤ polarBound Q b * N := by
+    refine (hb.norm_polar_apply_le (A * h * A⁻¹) x y).trans ?_
+    calc polarBound Q b * N * basisNorm b x * basisNorm b y
+        = (polarBound Q b * N) * (basisNorm b x * basisNorm b y) := by ring
+      _ ≤ (polarBound Q b * N) * 1 := mul_le_mul_of_nonneg_left hxy hp
+      _ = _ := mul_one _
+  rw [polar_apply_eq_mul_conj hA h hx hy, norm_mul]
+  calc ‖α * β‖ * ‖polar Q ((A * h * A⁻¹) x) y‖ ≤ 1 * (polarBound Q b * N) :=
+        mul_le_mul hαβ h2 (norm_nonneg _) zero_le_one
+    _ = _ := one_mul _
+
+/-- A fixed vector pair: if an isometry `T` fixes `x` and `y`, `polar(h x, y)` is bounded by the
+norm of `T h T⁻¹`. -/
+theorem norm_polar_le_of_fixed (hb : IsOrthoBasis Q b) {T : V ≃ₗ[F] V}
+    (hT : T ∈ TauCeti.QuadraticMap.orthogonalGroup Q) (h : V ≃ₗ[F] V) {x y : V} (hx : T x = x)
+    (hy : T y = y) (hxn : basisNorm b x ≤ 1) (hyn : basisNorm b y ≤ 1) :
+    ‖polar Q (h x) y‖ ≤
+      polarBound Q b * basisOpNorm b ((T * h * T⁻¹ : V ≃ₗ[F] V) : V →ₗ[F] V) :=
+  norm_polar_le_of_eigen hb hT h (α := 1) (β := 1) (by rw [one_smul]; exact hx)
+    (by rw [one_smul]; exact hy) (by simp) hxn hyn
+
+end Conj
 
 end GSpinGGP

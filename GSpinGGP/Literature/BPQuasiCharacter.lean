@@ -56,6 +56,8 @@ variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
 /-- **BP Astérisque 418, Proposition 4.1.1(ii)** (p. 74; arXiv:1506.01452, p. 81): "For all
 `θ ∈ QC(G(F))` (resp. `θ ∈ QC(𝔤(F))`) the function `(D^G)^{1/2} θ` is locally bounded."
+A *derived* axiom: BP's printed statement for connected reductive groups, applied to `GSpin`;
+that a Lean quasi-character is one of BP's is our step, argued in the module docstring.
 Only the group half is assumed. Here `F` is `p`-adic and `G = GSpin(W) × GSpin(V)` is connected
 reductive; a Lean quasi-character is one of BP's (module docstring), and `D^G = weylDisc d.lie`
 (`|det(1 − Ad z)|_{𝔤/𝔤_z}|_F` at semisimple `z`; the normalization of `|·|_F` does not affect

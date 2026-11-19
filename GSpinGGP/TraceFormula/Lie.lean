@@ -869,16 +869,8 @@ theorem eq_zero_of_isNilpotent (hV : IsHypPlane d.QV) {X : d.ambient} (hX : X �
 
 theorem N_eq_one (hV : IsHypPlane d.QV) {n : GSpin d.QV} (hn : n ∈ d.N) : n = 1 := by
   have hr := (m_r_of_isHypPlane hV).2
-  obtain ⟨-, -, h2, h3⟩ := hn
-  have htop : d.flag.top = ⊥ := by
-    have : Fin.last d.flag.len = 0 := Fin.ext (by simp only [Fin.val_last, Fin.val_zero]; exact hr)
-    unfold IsotropicFlag.top
-    rw [this, d.flag.sub_zero]
-  have hP : specP d.QV n = 1 := by
-    refine LinearEquiv.ext fun v => ?_
-    have := h2 v (by rw [htop, LinearMap.BilinForm.orthogonal_bot]; trivial)
-    rw [htop, Submodule.mem_bot, sub_eq_zero] at this
-    exact this
+  have hP : specP d.QV n = 1 := d.specP_eq_one_of_mem_N hr hn
+  obtain ⟨-, -, -, h3⟩ := hn
   have hk : n ∈ (specP d.QV).ker := hP
   rw [ker_specP d.nondeg_QV] at hk
   obtain ⟨c, hc⟩ := hk

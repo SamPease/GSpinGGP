@@ -6,6 +6,10 @@ import GSpinGGP.Foundations.LocalGroups
 import GSpinGGP.Foundations.Representations
 import GSpinGGP.Foundations.GSpin
 import GSpinGGP.Literature.Measure
+import GSpinGGP.HarmonicAnalysis.QuotientUnimodular
+import GSpinGGP.Foundations.CosetSpaceTranslate
+import GSpinGGP.Foundations.CosetSpaceTopology
+import GSpinGGP.HarmonicAnalysis.RelativeXi
 import GSpinGGP.GGP.Centralizers
 import GSpinGGP.Foundations.SoCentralizer
 
@@ -20,7 +24,9 @@ Contents:
   `toGmodAG : H(F)/A_{G,H}(F) → G(F)/A_G(F)` and the coset space
   `HGQuot = H(F)\G(F)/A_G(F)` (Thesis §7.1);
 * the Weil quotient measure `weilMeasureHG` on `HGQuot`, fixed by the Haar
-  measures on `G/A_G` and `H/A_{G,H}`;
+  measures on `G/A_G` and `H/A_{G,H}`; `weilMeasureHG_spec` (it is a Weil measure, using
+  `isMulRightInvariant_haar_GmodAG`), `isFiniteMeasureOnCompacts_weilMeasureHG`, and the right
+  invariance of Weil measures (`IsWeilMeasure.isInvariantQuotient`);
 * strongly cuspidal test functions `ScuspTestFn d χ` (Thesis §4.5, §7.1, with
   `C_c^∞` mod `A_G` in place of the Harish-Chandra Schwartz space);
 * the kernel `K(f,x)` and the distribution `J(f)` (Thesis §7.1);
@@ -1137,6 +1143,12 @@ theorem isClosedEmbedding_toGmodAG : IsClosedEmbedding d.toGmodAG := by
   exact QuotientGroup.isClosedEmbedding_map_of_isClosed_mul d.AGHinH hN d.AGHinH_le_comap_AG
     d.isClosed_H_mul_AG
 
+/-- The image of `H(F)/A_{G,H}(F)` in `G(F)/A_G(F)` is closed (`isClosedEmbedding_toGmodAG`);
+so `H(F)\G(F)/A_G(F)` is Hausdorff (`CosetSpace.instT2Space`). -/
+instance isClosed_range_toGmodAG : IsClosed (d.toGmodAG.range : Set d.GmodAG) := by
+  rw [MonoidHom.coe_range]
+  exact d.isClosedEmbedding_toGmodAG.isClosed_range
+
 /-- The coset space `H(F)\G(F)/A_G(F)` (Thesis §7.1), realised as the right cosets of
 the image of `H(F)/A_{G,H}(F)` in `G(F)/A_G(F)`. -/
 abbrev HGQuot : Type _ := CosetSpace d.toGmodAG
@@ -2006,7 +2018,7 @@ open scoped Classical in
 unique measure `m` with `∫_{G/A_G} φ = ∫_{H\G/A_G} ∫_{H/A_{G,H}} φ(h x) dh dm(x)` for
 `φ ∈ C_c(G/A_G)`, for the Haar measures `Measure.haar` on `G/A_G` and on `H/A_{G,H}`
 (chosen by the epsilon pattern; `0` if no such measure exists, which does not happen:
-`weilMeasureHG_spec` in `TraceFormula/ThetaF.lean`, from `weil_quotient`). -/
+`weilMeasureHG_spec` below, from `weil_quotient`). -/
 def weilMeasureHG : Measure d.HGQuot :=
   if h : ∃ m, IsWeilMeasure d.toGmodAG (Measure.haar : Measure d.GmodAG)
       (Measure.haar : Measure d.HmodAGH) m then h.choose else 0
@@ -2040,7 +2052,71 @@ theorem weilMeasureHG_spec_of_isMulRightInvariant
   exact d.weilMeasureHG_spec_of_exists
     (weil_quotient d.toGmodAG d.continuous_toGmodAG d.isClosedEmbedding_toGmodAG _ _).exists
 
+
+/-! ### The Haar measure on `G(F)/A_G(F)` is right invariant; the Weil measure -/
+
+/-- The Haar measure on `G(F)/A_G(F)` is right invariant: from the unimodularity of
+`G(F)` (`isMulRightInvariant_haar_G`) because `A_G(F)` is closed and central
+(`isMulRightInvariant_haar_quotient_of_le_center`; Thesis §2.4, §7.1). -/
+instance isMulRightInvariant_haar_GmodAG :
+    (Measure.haar : Measure d.GmodAG).IsMulRightInvariant :=
+  isMulRightInvariant_haar_quotient_of_le_center d.AG d.isClosed_AG d.AG_le_center
+
+/-- **The Weil measure on `H(F)\G(F)/A_G(F)`** (Thesis §7.1):
+`weilMeasureHG d` satisfies the quotient-integral formula for the Haar measures on `G(F)/A_G(F)`
+and `H(F)/A_{G,H}(F)`.  From `weil_quotient` (Bourbaki), `isClosedEmbedding_toGmodAG`, the
+unimodularity of `G(F)` (via `isMulRightInvariant_haar_GmodAG`) and of `H(F)/A_{G,H}(F)`
+(`isMulRightInvariant_haar_HmodAGH`). -/
+theorem weilMeasureHG_spec :
+    IsWeilMeasure d.toGmodAG Measure.haar Measure.haar d.weilMeasureHG :=
+  d.weilMeasureHG_spec_of_isMulRightInvariant d.isMulRightInvariant_haar_GmodAG
+
+/-- **The Weil measure on `H(F)\G(F)/A_G(F)` is finite on compact sets**, from its defining formula (`IsWeilMeasure.isFiniteMeasureOnCompacts`, the
+fact that also derives `weil_quotient` from `weil_quotient_radon`). -/
+instance isFiniteMeasureOnCompacts_weilMeasureHG : IsFiniteMeasureOnCompacts d.weilMeasureHG := by
+  have := d.isMulRightInvariant_haar_HmodAGH
+  exact IsWeilMeasure.isFiniteMeasureOnCompacts d.continuous_toGmodAG
+    d.isClosedEmbedding_toGmodAG d.weilMeasureHG_spec
+
+/-- **The Weil measure on `H(F)\G(F)/A_G(F)` is outer regular**, found by instance search: the
+quotient is Hausdorff, locally compact and second countable (`CosetSpace.instT2Space`, …), hence
+metrizable, and the measure is finite on compact sets
+(`WeaklyRegular.of_pseudoMetrizableSpace_secondCountable_of_locallyFinite`). -/
+example : d.weilMeasureHG.OuterRegular := inferInstance
+
 end GGPData
+
+/-! ### Right invariance of the Weil measure -/
+
+open Set in
+/-- **The Weil measure is right invariant** (Bourbaki, *Intégration* VII §2 no. 6, Thm 3), in
+the form of `IsInvariantQuotient`: `m(π(Aγ)) = m(π(A))` for all `A ⊆ Γ`, `π = CosetSpace.mk ι`. -/
+theorem IsWeilMeasure.isInvariantQuotient {S Γ : Type*}
+    [Group Γ] [TopologicalSpace Γ] [IsTopologicalGroup Γ] [LocallyCompactSpace Γ] [T2Space Γ]
+    [SecondCountableTopology Γ] [MeasurableSpace Γ] [BorelSpace Γ]
+    [Group S] [TopologicalSpace S] [IsTopologicalGroup S] [LocallyCompactSpace S] [T2Space S]
+    [SecondCountableTopology S] [MeasurableSpace S] [BorelSpace S]
+    {ι : S →* Γ} (hι : Continuous ι) (hemb : IsClosedEmbedding ι)
+    {ν : Measure Γ} [ν.IsHaarMeasure] [ν.IsMulRightInvariant]
+    {μ : Measure S} [μ.IsHaarMeasure] [μ.IsMulRightInvariant]
+    {m : Measure (CosetSpace ι)} (h : IsWeilMeasure ι ν μ m) :
+    IsInvariantQuotient (CosetSpace.mk ι) m where
+  descends g g' k hgg := by
+    rw [CosetSpace.mk_eq_mk_iff, QuotientGroup.rightRel_apply] at hgg ⊢
+    have e : g' * k * (g * k)⁻¹ = g' * g⁻¹ := by group
+    rwa [e]
+  measure_image_mul_right A γ := by
+    have hinv : m.map (CosetSpace.mulRight ι γ⁻¹) = m :=
+      (IsWeilMeasure.unique hι hemb h (h.map_mulRight γ⁻¹)).symm
+    have himg : CosetSpace.mk ι '' ((· * γ) '' A) =
+        CosetSpace.mulRight ι γ '' (CosetSpace.mk ι '' A) := by
+      rw [image_image, image_image]; rfl
+    rw [himg, Homeomorph.image_eq_preimage_symm, CosetSpace.mulRight_symm]
+    conv_rhs => rw [← hinv]
+    have hmap : m.map (CosetSpace.mulRight ι γ⁻¹) =
+        m.map (CosetSpace.mulRight ι γ⁻¹).toMeasurableEquiv := rfl
+    rw [hmap, MeasurableEquiv.map_apply]
+    rfl
 
 /-! ## 3. Strongly cuspidal test functions (`C_c^∞` modulo `A_G`) -/
 

@@ -186,19 +186,9 @@ section Witt
 variable {V V₁ V₂ : Type*} [AddCommGroup V] [Module K V] [AddCommGroup V₁] [Module K V₁]
   [AddCommGroup V₂] [Module K V₂]
 
-theorem wittIndex_bdd [FiniteDimensional K V] (Q : QuadraticForm K V) :
-    BddAbove {n | ∃ U : Submodule K V, IsTotallyIsotropic Q U ∧ finrank K U = n} :=
-  ⟨finrank K V, by rintro _ ⟨U, -, rfl⟩; exact Submodule.finrank_le U⟩
-
 theorem le_wittIndex [FiniteDimensional K V] {Q : QuadraticForm K V} {U : Submodule K V}
     (hU : IsTotallyIsotropic Q U) : finrank K U ≤ wittIndex Q :=
   le_csSup (wittIndex_bdd Q) ⟨U, hU, rfl⟩
-
-theorem exists_wittIndex [FiniteDimensional K V] (Q : QuadraticForm K V) :
-    ∃ U : Submodule K V, IsTotallyIsotropic Q U ∧ finrank K U = wittIndex Q := by
-  have hne : ({n | ∃ U : Submodule K V, IsTotallyIsotropic Q U ∧ finrank K U = n} : Set ℕ).Nonempty :=
-    ⟨0, ⊥, fun u hu => by rw [(Submodule.mem_bot K).1 hu, map_zero], finrank_bot K V⟩
-  exact Nat.sSup_mem hne (wittIndex_bdd Q)
 
 /-- `w(Q₁ ⊥ Q₂) ≥ w(Q₁) + w(Q₂)`. -/
 theorem wittIndex_prod_ge [FiniteDimensional K V₁] [FiniteDimensional K V₂]

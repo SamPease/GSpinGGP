@@ -1014,6 +1014,24 @@ theorem Pbar_fst (g : d.G) : ((d.Pbar g).1 : (Fin d.m → K) ≃ₗ[K] (Fin d.m 
 
 theorem Pbar_snd (g : d.G) : ((d.Pbar g).2 : d.V ≃ₗ[K] d.V) = specP d.QV (d.snd g) := rfl
 
+/-- `SO(W) → GL(V)`, `g ↦ g ⊕ 1` on `V = W ⊕ Z`. -/
+def extZ : ((Fin d.m → K) ≃ₗ[K] (Fin d.m → K)) →* (d.V ≃ₗ[K] d.V) where
+  toFun f := f.prodCongr (LinearEquiv.refl K d.Z)
+  map_one' := by ext x <;> rfl
+  map_mul' f g := by ext x <;> rfl
+
+theorem extZ_apply (f : (Fin d.m → K) ≃ₗ[K] (Fin d.m → K)) (v : d.V) :
+    d.extZ f v = (f v.1, v.2) := rfl
+
+/-- For `r = 0` (so `N = 1`), the `V`-component of `P̄(h)`, `h ∈ H`, is the `W`-component extended
+by the identity on `Z`: `H = GSpin(W)` acts on `V₀ = W ⊕ Z` through `SO(W)`. -/
+theorem Pbar_snd_of_mem_H (hr : d.r = 0) {h : d.G} (hh : h ∈ d.H) :
+    ((d.Pbar h).2 : d.V ≃ₗ[K] d.V) = d.extZ ((d.Pbar h).1 : (Fin d.m → K) ≃ₗ[K] (Fin d.m → K)) := by
+  have hn : specP d.QV (d.nPart h) = 1 := d.specP_eq_one_of_mem_N hr hh
+  have hs : d.snd h = d.incl (d.fst h) * d.nPart h := by simp [nPart]
+  rw [Pbar_snd, Pbar_fst, hs, map_mul, hn, mul_one]
+  exact LinearEquiv.ext fun ⟨w, z⟩ => d.specP_incl_apply _ w z
+
 theorem Pbar_surjective : Function.Surjective d.Pbar := by
   rintro ⟨⟨a, ha⟩, ⟨b, hb⟩⟩
   rw [← range_specP_eq_SOGrp d.nondeg] at ha
@@ -1075,19 +1093,31 @@ def quotHG_equiv : DoubleCoset.Quotient (d.H : Set d.G) d.AG ≃
     DoubleCoset.Quotient (d.Hbar : Set d.GbarGrp) d.AGbar :=
   Equiv.ofBijective d.quotHGMap ⟨d.quotHGMap_injective, d.quotHGMap_surjective⟩
 
+/-- If `W` is not a hyperbolic plane, `A_G` has trivial image in `SO(W)`
+(`A_{GSpin(W)}` is then the scalars). -/
+theorem Pbar_fst_eq_one_of_mem_AG (hW : ¬ IsHypPlane d.QW) {z : d.G} (hz : z ∈ d.AG) :
+    (d.Pbar z).1 = 1 := by
+  obtain ⟨⟨a, b⟩, ⟨ha, -⟩, rfl⟩ := hz
+  have ha' : a ∈ (scalarGSpin d.QW).range := by
+    unfold splitCentralGSpin at ha; rwa [ite_eq_right_of_eq_false _ _ (eq_false hW)] at ha
+  obtain ⟨c, rfl⟩ := ha'
+  exact Subtype.ext (specP_scalarGSpin_eq_one c)
+
+/-- If `V` is not a hyperbolic plane, `A_G` has trivial image in `SO(V)`. -/
+theorem Pbar_snd_eq_one_of_mem_AG (hV : ¬ IsHypPlane d.QV) {z : d.G} (hz : z ∈ d.AG) :
+    (d.Pbar z).2 = 1 := by
+  obtain ⟨⟨a, b⟩, ⟨-, hb⟩, rfl⟩ := hz
+  have hb' : b ∈ (scalarGSpin d.QV).range := by
+    unfold splitCentralGSpin at hb; rwa [ite_eq_right_of_eq_false _ _ (eq_false hV)] at hb
+  obtain ⟨c, rfl⟩ := hb'
+  exact Subtype.ext (specP_scalarGSpin_eq_one c)
+
 /-- When neither `W` nor `V` is a hyperbolic plane, `A_G = G_m × G_m` maps to `1` in `Ḡ`. -/
 theorem AGbar_eq_bot (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) : d.AGbar = ⊥ := by
   rw [eq_bot_iff]
-  rintro _ ⟨g, ⟨⟨a, b⟩, ⟨ha, hb⟩, rfl⟩, rfl⟩
-  have ha' : a ∈ (scalarGSpin d.QW).range := by
-    unfold splitCentralGSpin at ha; rwa [ite_eq_right_of_eq_false _ _ (eq_false hW)] at ha
-  have hb' : b ∈ (scalarGSpin d.QV).range := by
-    unfold splitCentralGSpin at hb; rwa [ite_eq_right_of_eq_false _ _ (eq_false hV)] at hb
-  obtain ⟨c₁, rfl⟩ := ha'
-  obtain ⟨c₂, rfl⟩ := hb'
-  refine (Subgroup.mem_bot).mpr (Prod.ext (Subtype.ext ?_) (Subtype.ext ?_))
-  · exact specP_scalarGSpin_eq_one c₁
-  · exact specP_scalarGSpin_eq_one c₂
+  rintro _ ⟨g, hg, rfl⟩
+  exact (Subgroup.mem_bot).mpr
+    (Prod.ext (d.Pbar_fst_eq_one_of_mem_AG hW hg) (d.Pbar_snd_eq_one_of_mem_AG hV hg))
 
 /-- **The special orthogonal quotient, without `Ā_G`**: if neither `W` nor
 `V` is a hyperbolic plane, `H(K)\G(K)/A_G(K) ≃ H̄(K)\Ḡ(K)`.  The hypothesis is needed (e.g.

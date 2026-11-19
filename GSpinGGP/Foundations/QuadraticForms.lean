@@ -1,4 +1,5 @@
 import GSpinGGP.Foundations.GSpin
+import GSpinGGP.Foundations.HypFrame
 import TauCeti.LinearAlgebra.QuadraticForm.Witt.Cancellation
 import TauCeti.LinearAlgebra.QuadraticForm.Representation
 import TauCeti.LinearAlgebra.Matrix.ToQuadraticForm
@@ -270,6 +271,20 @@ theorem wittIndex_eq_regularFormClass_wittIndex {V : Type*} [AddCommGroup V] [Mo
     exact ⟨W, hW, hdim⟩
   · rintro n ⟨U, hU, rfl⟩
     exact QuadraticMap.IsTotallyIsotropic.finrank_le_wittIndex hQ hU
+
+/-- **The Witt index of a hyperbolic frame with anisotropic complement** is the number of its
+pairs (`IsHypFrame.maximal_isTotallyIsotropic_span_e` and Tau Ceti's
+`QuadraticForm.finrank_eq_wittIndex_of_maximal`, Lam I.4.4). -/
+theorem IsHypFrame.wittIndex_eq {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
+    {Q : QuadraticForm K V} {W : Submodule K V} {n : ℕ} {e f : Fin n → V} (hQ : IsNondeg Q)
+    (hF : IsHypFrame Q W e f) (hW : (Q.restrict W).Anisotropic) : wittIndex Q = n := by
+  have hQ' := (isNondeg_iff_nondegenerate Q).1 hQ
+  have hli : LinearIndependent K e := hF.linearIndependent.comp Sum.inl Sum.inl_injective
+  have hfin : finrank K (Submodule.span K (Set.range e)) = n := by
+    rw [finrank_span_eq_card hli, Fintype.card_fin]
+  rw [wittIndex_eq_regularFormClass_wittIndex Q hQ', ← hfin]
+  exact (QuadraticForm.finrank_eq_wittIndex_of_maximal Q hQ'
+    (hF.maximal_isTotallyIsotropic_span_e hW)).symm
 
 /-- **Witt decomposition** (Lam, *Introduction to Quadratic Forms over Fields*, Ch. I §4;
 Thesis §5.1.4): a nondegenerate finite-dimensional quadratic space is `H^w ⊥ V_an` with `V_an`

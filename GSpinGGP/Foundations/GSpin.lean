@@ -71,6 +71,17 @@ Mathlib has no Witt index. -/
 def wittIndex (Q : QuadraticForm K V) : ℕ :=
   sSup {n | ∃ U : Submodule K V, IsTotallyIsotropic Q U ∧ finrank K U = n}
 
+theorem wittIndex_bdd [FiniteDimensional K V] (Q : QuadraticForm K V) :
+    BddAbove {n | ∃ U : Submodule K V, IsTotallyIsotropic Q U ∧ finrank K U = n} :=
+  ⟨finrank K V, by rintro _ ⟨U, -, rfl⟩; exact Submodule.finrank_le U⟩
+
+/-- The Witt index is attained by a totally isotropic subspace. -/
+theorem exists_wittIndex [FiniteDimensional K V] (Q : QuadraticForm K V) :
+    ∃ U : Submodule K V, IsTotallyIsotropic Q U ∧ finrank K U = wittIndex Q := by
+  have hne : ({n | ∃ U : Submodule K V, IsTotallyIsotropic Q U ∧ finrank K U = n} : Set ℕ).Nonempty :=
+    ⟨0, ⊥, fun u hu => by rw [(Submodule.mem_bot K).1 hu, map_zero], finrank_bot K V⟩
+  exact Nat.sSup_mem hne (wittIndex_bdd Q)
+
 /-- `GSpin(V)` (equivalently `SO(V)`) is quasi-split iff the anisotropic kernel has dimension
 at most `2`, i.e. `dim V - 2 w(V) ≤ 2` (Thesis §5.1.4). -/
 def IsQuasiSplitQF (Q : QuadraticForm K V) : Prop :=
@@ -160,6 +171,35 @@ theorem bform_splitOddForm_zvec (r : ℕ) (ν : K) {i j : ℤ} (hi : |i| ≤ r) 
   rw [one_mul, Matrix.transpose_apply]
   simp only [splitOddMatrix]
   split_ifs with h1 h2 h2 <;> first | rfl | (exfalso; omega)
+
+/-- `b(x, z_j) = ν · x_{-j}` in the coordinates of `Z` (index `t` stands for `z_{t-r}`). -/
+theorem bform_splitOddForm_single (r : ℕ) (ν : K) (x : Fin (2 * r + 1) → K)
+    (j : Fin (2 * r + 1)) :
+    bform (splitOddForm r ν) x (Pi.single j 1) = ν * x j.rev := by
+  rw [bform_splitOddForm, dotProduct]
+  rw [Finset.sum_eq_single j.rev]
+  · simp only [Matrix.mulVec, dotProduct, splitOddMatrix]
+    rw [Finset.sum_eq_single j]
+    · have h : ((j.rev : ℕ) + (j : ℕ) = 2 * r) := by simp [Fin.val_rev]; omega
+      simp only [h, ite_true, Pi.single_eq_same]
+      ring
+    · intro k _ hk; simp [Pi.single_apply, hk]
+    · simp
+  · intro i _ hi
+    simp only [Matrix.mulVec, dotProduct, splitOddMatrix]
+    rw [Finset.sum_eq_single j]
+    · have h : ¬ ((i : ℕ) + (j : ℕ) = 2 * r) := by
+        intro h; apply hi; ext; simp [Fin.val_rev]; omega
+      simp [h]
+    · intro k _ hk; simp [Pi.single_apply, hk]
+    · simp
+  · simp
+
+/-- `q(z₀) = ν`. -/
+theorem splitOddForm_zvec_zero (r : ℕ) (ν : K) : splitOddForm r ν (zvec r 0) = ν := by
+  rw [← QuadraticMap.associated_eq_self_apply K, ← bform,
+    bform_splitOddForm_zvec _ _ (by simp) (by simp)]
+  simp
 
 /-- `Z` is nondegenerate when `ν ≠ 0`. -/
 theorem isNondeg_splitOddForm (r : ℕ) {ν : K} (hν : ν ≠ 0) : IsNondeg (splitOddForm r ν) := by
@@ -855,6 +895,18 @@ theorem ker_specP [Module.Finite K V] {Q : QuadraticForm K V} (hQ : IsNondeg Q) 
   · rintro _ ⟨c, rfl⟩
     exact specP_scalarGSpin_eq_one c
 
+/-- An element of `GSpin(V)` acting trivially on `V` with `g − 1` nilpotent is `1`: it is a
+scalar `c` (`ker_specP`), and `c − 1` nilpotent forces `c = 1`. -/
+theorem eq_one_of_specP_eq_one [Module.Finite K V] {Q : QuadraticForm K V} (hQ : IsNondeg Q) {g : GSpin Q} (h1 : specP Q g = 1)
+    (hn : IsNilpotent (((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1)) : g = 1 := by
+  obtain ⟨c, rfl⟩ : g ∈ (scalarGSpin Q).range := by rw [← ker_specP hQ]; exact h1
+  have e : (((scalarGSpin Q c : GSpin Q) : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1 =
+      algebraMap K _ ((c : K) - 1) := by
+    rw [map_sub, map_one]; rfl
+  rw [e, IsNilpotent.map_iff (algebraMap K (CliffordAlgebra Q)).injective,
+    isNilpotent_iff_eq_zero, sub_eq_zero, Units.val_eq_one] at hn
+  rw [hn, map_one]
+
 /-- Two elements of `GSpin(V)` with the same image in `SO(V)` differ by a scalar (`ker_specP`). -/
 theorem exists_eq_mul_scalarGSpin_of_specP_eq [Module.Finite K V] {Q : QuadraticForm K V}
     (hQ : IsNondeg Q) {u v : ↥(GSpin Q)} (h : specP Q u = specP Q v) :
@@ -884,6 +936,22 @@ theorem scalarGSpin_mem_center (Q : QuadraticForm K V) (c : Kˣ) :
   intro g
   apply Subtype.ext; apply Units.ext
   simp [scalarGSpin, Algebra.commutes]
+
+omit [Invertible (2 : K)] in
+/-- `c g = c • g` in `C(V)` for a scalar `c`. -/
+theorem coe_scalarGSpin_mul {Q : QuadraticForm K V} (c : Kˣ) (g : GSpin Q) :
+    (((scalarGSpin Q c * g : GSpin Q) : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) =
+      (c : K) • ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) := by
+  simp [scalarGSpin, Algebra.smul_def]
+
+omit [Invertible (2 : K)] in
+/-- `(c g)⁻¹ = c⁻¹ • g⁻¹` in `C(V)` for a scalar `c`. -/
+theorem coe_inv_scalarGSpin_mul {Q : QuadraticForm K V} (c : Kˣ) (g : GSpin Q) :
+    ((((scalarGSpin Q c * g : GSpin Q) : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) :
+      CliffordAlgebra Q) =
+      ((c⁻¹ : Kˣ) : K) • (((g : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) :
+        CliffordAlgebra Q) := by
+  simp [scalarGSpin, Algebra.smul_def, Algebra.commutes]
 
 /-- A `2`-dimensional quadratic space has an orthogonal basis indexed by `Fin 2`. -/
 theorem exists_orthogonal_basis_fin_two [Module.Finite K V] (Q : QuadraticForm K V)
@@ -1678,6 +1746,67 @@ def top (F : IsotropicFlag Q) : Submodule K V := F.sub (Fin.last F.len)
 Borel subgroup (when `GSpin(V)` is quasi-split) (Thesis §4.4). -/
 def IsFull (F : IsotropicFlag Q) : Prop :=
   F.len = wittIndex Q ∧ ∀ i, finrank K (F.sub i) = (i : ℕ)
+
+/-- **The isotropic flag of initial segments** of a linearly independent family `v₀, …, v_{k-1}`
+with totally isotropic span: `Z_i = ⟨v₀, …, v_{i-1}⟩`. -/
+def ofFamily {k : ℕ} (v : Fin k → V) (hv : LinearIndependent K v)
+    (hiso : IsTotallyIsotropic Q (Submodule.span K (Set.range v))) : IsotropicFlag Q where
+  len := k
+  sub i := Submodule.span K (Set.range (v ∘ Fin.castLE (Fin.is_le i)))
+  sub_zero := by
+    rw [Submodule.span_eq_bot]
+    rintro _ ⟨j, rfl⟩
+    exact j.elim0
+  strictMono := by
+    have hfin : ∀ i : Fin (k + 1), finrank K (Submodule.span K
+        (Set.range (v ∘ Fin.castLE (Fin.is_le i)))) = (i : ℕ) := fun i => by
+      rw [finrank_span_eq_card (hv.comp _ (Fin.castLE_injective _)), Fintype.card_fin]
+    intro i j hij
+    refine lt_of_le_of_ne (Submodule.span_mono ?_) fun h => ?_
+    · rintro _ ⟨l, rfl⟩
+      exact ⟨Fin.castLE (Fin.le_iff_val_le_val.mp hij.le) l, rfl⟩
+    · have := congrArg (fun S : Submodule K V => finrank K S) h
+      simp only [hfin] at this
+      exact (Fin.val_injective this ▸ hij).false
+  isotropic i u hu := hiso u (Submodule.span_mono (Set.range_comp_subset_range _ _) hu)
+
+variable {k : ℕ} {v : Fin k → V} {hv : LinearIndependent K v}
+  {hiso : IsTotallyIsotropic Q (Submodule.span K (Set.range v))}
+
+@[simp]
+theorem ofFamily_len : (ofFamily v hv hiso).len = k := rfl
+
+theorem ofFamily_sub (i : Fin (k + 1)) :
+    (ofFamily v hv hiso).sub i = Submodule.span K (Set.range (v ∘ Fin.castLE (Fin.is_le i))) :=
+  rfl
+
+theorem finrank_ofFamily_sub (i : Fin (k + 1)) :
+    finrank K ((ofFamily v hv hiso).sub i) = (i : ℕ) := by
+  rw [ofFamily_sub, finrank_span_eq_card (hv.comp _ (Fin.castLE_injective _)), Fintype.card_fin]
+
+theorem ofFamily_top : (ofFamily v hv hiso).top = Submodule.span K (Set.range v) := by
+  change Submodule.span K (Set.range (v ∘ Fin.castLE _)) = _
+  congr 2
+
+theorem mem_ofFamily_sub {i : Fin (k + 1)} {j : Fin k} (hj : (j : ℕ) < i) :
+    v j ∈ (ofFamily v hv hiso).sub i :=
+  Submodule.subset_span ⟨⟨j, hj⟩, rfl⟩
+
+/-- The flag of initial segments of a family of length the Witt index is full. -/
+theorem isFull_ofFamily (h : k = wittIndex Q) : (ofFamily v hv hiso).IsFull :=
+  ⟨h, finrank_ofFamily_sub⟩
+
+/-- **Full isotropic flags exist**: the flag of initial segments of a basis of a totally isotropic
+subspace of dimension the Witt index (`ofFamily`, `isFull_ofFamily`). -/
+theorem exists_isFull [FiniteDimensional K V] (Q : QuadraticForm K V) :
+    ∃ Fl : IsotropicFlag Q, Fl.IsFull := by
+  obtain ⟨U, hUi, hUw⟩ := exists_wittIndex Q
+  let b : Module.Basis (Fin (wittIndex Q)) K U := Module.finBasisOfFinrankEq K U hUw
+  have hv : LinearIndependent K (fun j => (b j : V)) :=
+    b.linearIndependent.map' U.subtype (Submodule.ker_subtype U)
+  have hiso : IsTotallyIsotropic Q (Submodule.span K (Set.range fun j => (b j : V))) :=
+    fun u hu => hUi u ((Submodule.span_le.mpr (by rintro _ ⟨j, rfl⟩; exact (b j).2)) hu)
+  exact ⟨ofFamily _ hv hiso, isFull_ofFamily rfl⟩
 
 end IsotropicFlag
 
@@ -3468,6 +3597,22 @@ def flag : IsotropicFlag d.QV where
 (Thesis §5.2). -/
 def N : Subgroup (GSpin d.QV) := flagUnip d.flag
 
+/-- For `r = 0` the flag `Z_•` is empty: its top `Z_r` is `0`. -/
+theorem flag_top_eq_bot (hr : d.r = 0) : d.flag.top = ⊥ := by
+  change Submodule.span K (Set.range fun j : Fin d.r => d.zV ((d.r : ℤ) - (j : ℕ))) = ⊥
+  rw [Submodule.span_eq_bot]
+  rintro _ ⟨j, rfl⟩
+  exact absurd j.2 (by omega)
+
+/-- For `r = 0`, elements of `N` act trivially on `V`: `P(n) = 1`. -/
+theorem specP_eq_one_of_mem_N (hr : d.r = 0) {n : GSpin d.QV} (hn : n ∈ d.N) :
+    specP d.QV n = 1 := by
+  obtain ⟨-, -, h3, -⟩ := hn
+  refine LinearEquiv.ext fun v => ?_
+  have := h3 v (by rw [d.flag_top_eq_bot hr]; simp)
+  rw [d.flag_top_eq_bot hr, Submodule.mem_bot, sub_eq_zero] at this
+  exact this
+
 /-- Elements of `G` are determined by their two components. -/
 theorem G_ext {g h : d.G} (h1 : d.fst g = d.fst h) (h2 : d.snd g = d.snd h) : g = h := by
   apply Subtype.ext
@@ -3585,33 +3730,46 @@ theorem bform_zV_neg_flag (i : Fin d.r) (m : ℕ) (hm : m + i + 1 ≤ d.r) {v : 
     · rfl
   exact hle hv
 
-/-- For `n ∈ N` and `0 ≤ i < r`: `P(n) z_i − z_i ∈ Z_{r-i} = ⟨z_r, …, z_{i+1}⟩`. -/
-theorem specP_zV_sub_mem (i : Fin d.r) {n : GSpin d.QV} (hn : n ∈ d.N) :
-    specP d.QV n (d.zV (i : ℕ)) - d.zV (i : ℕ) ∈
-      Submodule.span K (Set.range fun j : Fin (d.r - i) => d.zV ((d.r : ℤ) - (j : ℕ))) := by
+/-- `z_s ⊥ Z_r = ⟨z_r, …, z_1⟩` for `s ≥ 0`. -/
+theorem zV_nonneg_mem_orthogonal_top {s : ℤ} (hs : 0 ≤ s) :
+    d.zV s ∈ (bform d.QV).orthogonal d.flag.top := by
+  intro t ht
+  change t ∈ Submodule.span K (Set.range fun j : Fin d.r => d.zV ((d.r : ℤ) - (j : ℕ))) at ht
+  refine Submodule.span_induction (p := fun t _ => bform d.QV t (d.zV s) = 0)
+    ?_ (by simp) (fun x y _ _ hx hy => by rw [map_add, LinearMap.add_apply, hx, hy, add_zero])
+    (fun c x _ hx => by rw [map_smul, LinearMap.smul_apply, hx, smul_zero]) ht
+  rintro _ ⟨j, rfl⟩
+  by_cases hsr : s ≤ d.r
+  · have hj : (j : ℕ) < d.r := j.2
+    rw [bform_QV_zV, bform_splitOddForm_zvec _ _ (by rw [abs_le]; omega)
+      (by rw [abs_le]; omega)]
+    split_ifs with h
+    · omega
+    · rfl
+  · have : zvec d.r s = (0 : Fin (2 * d.r + 1) → K) := by
+      ext i; simp only [zvec, Pi.zero_apply]; rw [ite_eq_right (by omega)]
+    simp [zV, this]
+
+/-- For `n ∈ N` and `0 ≤ s ≤ r`: `P(n) z_s − z_s ∈ Z_{r-s} = ⟨z_r, …, z_{s+1}⟩`. -/
+theorem specP_zV_sub_mem {s : ℕ} (hs : s ≤ d.r) {n : GSpin d.QV} (hn : n ∈ d.N) :
+    specP d.QV n (d.zV (s : ℕ)) - d.zV (s : ℕ) ∈
+      Submodule.span K (Set.range fun j : Fin (d.r - s) => d.zV ((d.r : ℤ) - (j : ℕ))) := by
   obtain ⟨-, hn1, hn2, -⟩ := hn
   have hlen : d.flag.len = d.r := rfl
-  by_cases hi : (i : ℕ) = 0
+  by_cases hi : s = 0
   · -- `z_0 ∈ Z_rᗮ`
-    have h0 : d.zV ((i : ℕ) : ℤ) ∈ (bform d.QV).orthogonal d.flag.top := by
-      intro t ht
-      change t ∈ Submodule.span K (Set.range fun j : Fin d.r => d.zV ((d.r : ℤ) - (j : ℕ))) at ht
-      refine Submodule.span_induction (p := fun t _ => bform d.QV t (d.zV ((i : ℕ) : ℤ)) = 0)
-        ?_ (by simp) (fun x y _ _ hx hy => by rw [map_add, LinearMap.add_apply, hx, hy, add_zero])
-        (fun c x _ hx => by rw [map_smul, LinearMap.smul_apply, hx, smul_zero]) ht
-      rintro _ ⟨j, rfl⟩
-      have hj : (j : ℕ) < d.r := j.2
-      rw [bform_QV_zV, bform_splitOddForm_zvec _ _ (by rw [abs_le]; omega)
-        (by rw [abs_le]; omega)]
-      split_ifs with h
-      · omega
-      · rfl
-    have := hn2 _ h0
-    rw [show d.r - (i : ℕ) = d.r by omega]
+    have := hn2 _ (d.zV_nonneg_mem_orthogonal_top (s := ((s : ℕ) : ℤ)) (by positivity))
+    rw [show d.r - s = d.r by omega]
     exact this
-  · have := hn1 ⟨d.r - i, by rw [hlen]; omega⟩ (d.zV ((i : ℕ) : ℤ)) (Submodule.subset_span
-      ⟨⟨d.r - i, show d.r - (i : ℕ) < d.r - i + 1 by omega⟩, by simp only [zV]; congr 2; omega⟩)
-    exact this
+  · rcases lt_or_eq_of_le hs with h | rfl
+    · exact hn1 ⟨d.r - s, by rw [hlen]; omega⟩ (d.zV ((s : ℕ) : ℤ)) (Submodule.subset_span
+        ⟨⟨d.r - s, show d.r - s < d.r - s + 1 by omega⟩, by simp only [zV]; congr 2; omega⟩)
+    · -- `z_r` spans the first step of the flag
+      have := hn1 ⟨0, by rw [hlen]; omega⟩ (d.zV (d.r : ℕ)) (Submodule.subset_span
+        ⟨⟨0, by simp⟩, by simp⟩)
+      have h0 : d.flag.sub (Fin.castSucc ⟨0, by rw [hlen]; omega⟩) = ⊥ := d.flag.sub_zero
+      rw [h0, Submodule.mem_bot] at this
+      rw [this]; exact zero_mem _
 
 /-- The `i`-th summand of `λ` is additive on `N` (Thesis §5.2). -/
 theorem lamTerm_mul (i : Fin d.r) {n n' : GSpin d.QV} (hn : n ∈ d.N) (hn' : n' ∈ d.N) :
@@ -3619,7 +3777,7 @@ theorem lamTerm_mul (i : Fin d.r) {n n' : GSpin d.QV} (hn : n ∈ d.N) (hn' : n'
       bform d.QV (d.zV (-(i : ℤ) - 1)) (specP d.QV n (d.zV (i : ℕ))) +
         bform d.QV (d.zV (-(i : ℤ) - 1)) (specP d.QV n' (d.zV (i : ℕ))) := by
   set y := specP d.QV n' (d.zV (i : ℕ)) - d.zV (i : ℕ)
-  have hy := d.specP_zV_sub_mem i hn'
+  have hy := d.specP_zV_sub_mem (s := i) i.2.le hn'
   -- `P(n) y − y ∈ Z_{r-i-1} ⊥ z_{-i-1}`
   have hny : specP d.QV n y - y ∈
       Submodule.span K (Set.range fun j : Fin (d.r - i - 1) => d.zV ((d.r : ℤ) - (j : ℕ))) := by
@@ -3839,18 +3997,8 @@ def QVfixIso (a : GSpin d.QW) :
   map_app' _ := rfl
 
 /-- `z₀ ⊥ Z_r`, the top of the flag. -/
-theorem zV_zero_mem_orthogonal_top : d.zV 0 ∈ (bform d.QV).orthogonal d.flag.top := by
-  intro t ht
-  change t ∈ Submodule.span K (Set.range fun j : Fin d.r => d.zV ((d.r : ℤ) - (j : ℕ))) at ht
-  refine Submodule.span_induction (p := fun t _ => bform d.QV t (d.zV 0) = 0)
-    ?_ (by simp) (fun x y _ _ hx hy => by rw [map_add, LinearMap.add_apply, hx, hy, add_zero])
-    (fun c x _ hx => by rw [map_smul, LinearMap.smul_apply, hx, smul_zero]) ht
-  rintro _ ⟨j, rfl⟩
-  have hj : (j : ℕ) < d.r := j.2
-  rw [bform_QV_zV, bform_splitOddForm_zvec _ _ (by rw [abs_le]; omega) (by rw [abs_le]; omega)]
-  split_ifs with h
-  · omega
-  · rfl
+theorem zV_zero_mem_orthogonal_top : d.zV 0 ∈ (bform d.QV).orthogonal d.flag.top :=
+  d.zV_nonneg_mem_orthogonal_top le_rfl
 
 /-- `W ⊥ Z_r`. -/
 theorem inl_mem_orthogonal_top (w : Fin d.m → K) :
@@ -3859,6 +4007,85 @@ theorem inl_mem_orthogonal_top (w : Fin d.m → K) :
   have ht1 : t.1 = 0 := (d.span_flag_le _ ht).1
   change bform d.QV t (w, 0) = 0
   rw [bform_prod, ht1]; simp
+
+/-- A combination of `z_{σ(j)}` orthogonal to every `z_{-σ(j)}` is `0`. -/
+theorem eq_zero_of_mem_span_zV {k : ℕ} (σ : Fin k → ℤ) (hσ : Function.Injective σ)
+    (hr : ∀ j, |σ j| ≤ d.r) {x : d.V} (hx : x ∈ Submodule.span K (Set.range (d.zV ∘ σ)))
+    (h : ∀ j, bform d.QV x (d.zV (-σ j)) = 0) : x = 0 := by
+  obtain ⟨c, rfl⟩ := (Submodule.mem_span_range_iff_exists_fun K).mp hx
+  have hc : ∀ j, c j = 0 := by
+    intro j
+    have := h j
+    rw [map_sum, LinearMap.sum_apply, Finset.sum_eq_single j] at this
+    · rw [map_smul, LinearMap.smul_apply, Function.comp_apply, bform_QV_zV,
+        bform_splitOddForm_zvec _ _ (hr j) (by rw [abs_neg]; exact hr j), ite_eq_left (by ring),
+        smul_eq_mul] at this
+      exact (mul_eq_zero.mp this).resolve_right d.ν.ne_zero
+    · intro i _ hij
+      rw [map_smul, LinearMap.smul_apply, Function.comp_apply, bform_QV_zV,
+        bform_splitOddForm_zvec _ _ (hr i) (by rw [abs_neg]; exact hr j),
+        ite_eq_right (fun h => hij (hσ (by linarith))), smul_zero]
+    · simp
+  simp [hc]
+
+/-- `b(z_i, x) = 0` for `x` a combination of `z_{τ(j)}` with `i + τ(j) ≠ 0`. -/
+theorem bform_zV_eq_zero_of_mem_span {k : ℕ} (τ : Fin k → ℤ) {i : ℤ} (hi : |i| ≤ d.r)
+    (hτ : ∀ j, |τ j| ≤ d.r) (hne : ∀ j, i + τ j ≠ 0) {x : d.V}
+    (hx : x ∈ Submodule.span K (Set.range (d.zV ∘ τ))) : bform d.QV (d.zV i) x = 0 := by
+  obtain ⟨c, rfl⟩ := (Submodule.mem_span_range_iff_exists_fun K).mp hx
+  rw [map_sum]
+  refine Finset.sum_eq_zero fun j _ => ?_
+  rw [map_smul, Function.comp_apply, bform_QV_zV, bform_splitOddForm_zvec _ _ hi (hτ j),
+    ite_eq_right (hne j), smul_zero]
+
+/-- **`N ∩ P̄ = 1` at the level of `SO(V)`.** An element of `N` fixing `z_{-r}, …, z_{-1}` acts
+trivially on `V`: on `Z_r^⊥` it moves vectors into `Z_r = ⟨z_r, …, z_1⟩`, and the move is
+orthogonal to the `z_{-k}`. -/
+theorem specP_eq_one_of_mem_N_of_fix {nn : GSpin d.QV} (hn : nn ∈ d.N)
+    (hfix : ∀ k : Fin d.r,
+      specP d.QV nn (d.zV (-((d.r : ℤ) - (k : ℕ)))) = d.zV (-((d.r : ℤ) - (k : ℕ)))) :
+    specP d.QV nn = 1 := by
+  have horth : ∀ v ∈ (bform d.QV).orthogonal d.flag.top, specP d.QV nn v = v := by
+    intro v hv
+    rw [← sub_eq_zero]
+    have hmem := hn.2.2.1 v hv
+    change _ ∈ Submodule.span K (Set.range fun j : Fin d.r => d.zV ((d.r : ℤ) - (j : ℕ)))
+      at hmem
+    refine d.eq_zero_of_mem_span_zV (fun j : Fin d.r => (d.r : ℤ) - (j : ℕ))
+      (fun a c h => Fin.ext (by simp at h; omega))
+      (fun j => by have := j.2; rw [abs_le]; constructor <;> omega) hmem (fun j => ?_)
+    rw [map_sub, LinearMap.sub_apply]
+    have e : bform d.QV (specP d.QV nn v) (d.zV (-((d.r : ℤ) - (j : ℕ)))) =
+        bform d.QV v (d.zV (-((d.r : ℤ) - (j : ℕ)))) := by
+      conv_lhs => rw [← hfix j]
+      rw [bform_specP]
+    rw [e, sub_self]
+  have hsingle : ∀ t : Fin (2 * d.r + 1),
+      specP d.QV nn ((0, Pi.single t 1) : d.V) = (0, Pi.single t 1) := by
+    intro t
+    have ht := t.2
+    have habs : |(t : ℤ) - d.r| ≤ d.r := by rw [abs_le]; constructor <;> omega
+    have e : ((0, Pi.single t 1) : d.V) = d.zV ((t : ℤ) - d.r) := by
+      rw [zV, zvec_eq_single _ habs]
+      congr 2
+      exact Fin.ext (by simp)
+    rw [e]
+    by_cases hneg : (t : ℕ) < d.r
+    · have := hfix ⟨t, hneg⟩
+      rw [show (-((d.r : ℤ) - ((⟨t, hneg⟩ : Fin d.r) : ℕ))) = (t : ℤ) - d.r by
+        simp] at this
+      exact this
+    · exact horth _ (d.zV_nonneg_mem_orthogonal_top (by omega))
+  refine LinearEquiv.ext fun v => ?_
+  obtain ⟨w, z⟩ := v
+  have hv : ((w, z) : d.V) = (w, 0) + ∑ t, z t • ((0, Pi.single t 1) : d.V) := by
+    refine Prod.ext (by simp [Prod.fst_sum]) ?_
+    simp only [Prod.snd_add, Prod.snd_sum, Prod.smul_snd, zero_add]
+    ext t
+    simp [Finset.sum_apply, Pi.single_apply]
+  rw [hv, map_add, map_sum, horth _ (d.inl_mem_orthogonal_top w)]
+  simp only [map_smul, hsingle]
+  rfl
 
 /-- `q(z₀) = ν`. -/
 theorem QV_zV_zero : d.QV (d.zV 0) = d.ν := by
@@ -3952,11 +4179,7 @@ theorem center_inf_H_eq_AGH : Subgroup.center d.G ⊓ d.H = d.AGH := by
           have := eq_id_of_det_eq_one_of_finrank_le_one hm (det_specP a)
           exact LinearEquiv.ext fun w => congr($this w)
         -- `Z_r = 0`, so `P(n) = 1`
-        have htop : d.flag.top = ⊥ := by
-          change Submodule.span K (Set.range fun j : Fin d.r => d.zV ((d.r : ℤ) - (j : ℕ))) = ⊥
-          rw [Submodule.span_eq_bot]
-          rintro _ ⟨j, rfl⟩
-          exact absurd j.2 (by omega)
+        have htop : d.flag.top = ⊥ := d.flag_top_eq_bot hr
         have hPn1 : ∀ v, specP d.QV ((d.incl a)⁻¹ * b) v = v := by
           intro v
           have h := hn2 v (by rw [htop]; intro t ht; rw [(Submodule.mem_bot K).mp ht]; simp)
