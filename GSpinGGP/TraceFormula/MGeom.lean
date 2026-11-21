@@ -7,6 +7,7 @@ import GSpinGGP.TraceFormula.DeltaIntegrability
 import GSpinGGP.TraceFormula.TorusDescent
 import GSpinGGP.GGP.Germs
 import GSpinGGP.GGP.GammaClassFinite
+import GSpinGGP.TraceFormula.GermBoundTorus
 
 /-!
 # `m_geom` on quasi-characters: Thesis Prop 12.1.1
@@ -212,8 +213,8 @@ theorem germ_bound_of_mem_QC {χ : CentralCharOn d} {θ : ↥d.G → ℂ} (hθ :
     (T : Subgroup ↥(GSpin d.QW)) :
     ∃ C : ℝ, ∀ t : ↥(GSpin d.QW), d.IsGammaElt t → d.torusOf t = T →
       ‖(Real.sqrt (weylDisc d.lie (d.diag t : d.ambientˣ)) : ℂ) *
-        germ d.G d.lie d.bilin ψ θ (d.diag t) (orbitChoice d t)‖ ≤ C := by
-  sorry
+        germ d.G d.lie d.bilin ψ θ (d.diag t) (orbitChoice d t)‖ ≤ C :=
+  germ_bound_of_mem_QC_aux ψ d hθ T
 
 /-- **Measurability of the integrand of `m_{geom,s}` on `T(F)/A_{G,H}(F)`** (Thesis §6.5, the
 measure on `Γ(G,H)`).  The integrand `t ↦ D^G(t)^{1/2} c_{θ,O_t}(t) Δ(t)^{s-1/2}` on `T(F)` is

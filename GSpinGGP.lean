@@ -162,6 +162,7 @@ import GSpinGGP.TraceFormula.Interface
 import GSpinGGP.TraceFormula.GermTranslate
 import GSpinGGP.TraceFormula.TorusDescent
 import GSpinGGP.TraceFormula.GermBound
+import GSpinGGP.TraceFormula.GermBoundTorus
 import GSpinGGP.TraceFormula.JHatHomogeneous
 import GSpinGGP.TraceFormula.GermHomogeneous
 import GSpinGGP.TraceFormula.MGeom
