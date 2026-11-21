@@ -1,5 +1,6 @@
 import GSpinGGP.Foundations.LocalGroups
 import GSpinGGP.Foundations.Representations
+import GSpinGGP.Foundations.SmoothRepresentations
 import GSpinGGP.Foundations.GSpin
 import GSpinGGP.Foundations.QuadraticForms
 import GSpinGGP.Foundations.PAdicQuadraticForms
@@ -36,7 +37,9 @@ Galois cohomology `H¹` is **not** modelled.
   the statement without that hypothesis is false, see the docstring).
   Existence of Luo's orbit `O_ν` for a GGP datum — `exists_regularNil_inOrbitNu`, also a theorem
   (`GGP/RegularNilpotent`).
-* (f) Multiplicity at most one (Emory–Takeda + reduction; Yan) — `emoryTakeda_mult_le_one`.
+* (f) Multiplicity at most one for irreducible admissible representations (Pan Yan; Emory–Takeda)
+  — `panYan_mult_le_one`. Its form for tempered unitary `π`, `emoryTakeda_mult_le_one`, is a
+  theorem (`GGP/MultOne.lean`).
 -/
 
 noncomputable section
@@ -340,27 +343,41 @@ section MultOne
 
 variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
 
-/-- **Multiplicity at most one** (Thesis Thm. 5.5.1).
-For every GGP datum `d`, nontrivial additive character `ψ`, and irreducible tempered unitary
-representation `π` of `G(F)`, `m(π) = dim Hom_{H(F)}(π^∞, ξ) ≤ 1`.
+/-- **Uniqueness of Bessel models** (Pan Yan), for irreducible admissible representations. For
+every GGP datum `d`, nontrivial additive character `ψ`, and irreducible admissible smooth
+representations `ρ₀` of `GSpin(W)` and `ρ` of `GSpin(V)`, `dim Hom_H(ρ₀ ⊗ ρ, ξ) ≤ 1`, where
+`ρ₀ ⊗ ρ` is the representation `g ↦ ρ₀(g_W) ⊗ ρ(g_V)` of `G = GSpin(W) × GSpin(V)`
+(`g_W = d.fst g`, `g_V = d.snd g`). (Its form for tempered unitary representations is Thesis
+Thm. 5.5.1, `emoryTakeda_mult_le_one`.)
 
 Source: Pan Yan, *Uniqueness of Bessel models for GSpin groups*, Nagoya Math. J. (2026),
 arXiv:2503.20116, Thm 1.1, p. 2: for a nondegenerate quadratic space `V` over a local field of
 characteristic `0`, a nondegenerate `V₀ ⊂ V` with `V₀^⊥` split of dimension `2r + 1`, the Bessel
 subgroup `H = N_{Q_r} ⋊ GSpin(V₀)` of `GSpin(V) × GSpin(V₀)` and a generic character `ξ` of `H`,
-`dim Hom_H(π ⊗ π₀, ξ) ≤ 1` for all irreducible admissible `π`, `π₀`.  There is no quasi-split
-hypothesis, so inner forms are covered.  Here `(V₀, V) = (W, V)`.  The case `r = 0` is
-Emory–Takeda, *Contragredients and a multiplicity one theorem for general spin groups*, Math. Z. 303
-(2023), Thm 1.1 (arXiv:2104.04814v4, p. 2).
-Dictionary: an irreducible unitary representation of the `p`-adic group `G(F)` has irreducible
-admissible smooth part (Bernstein 1974), of the form `π ⊗ π₀`; all linear forms on it are
-continuous.  The instances on `↥d.G` are the layer-1 theorems of
-`Foundations/LocalGroups` (closedness of `G` is `GGPData.isClosed_G`). -/
-axiom emoryTakeda_mult_le_one (d : GGPData F) (ψ : NontrivialAddChar F) (π : UnitaryRep ↥d.G) :
-    haveI := subgroup_isTopologicalGroup F d.ambient d.G
-    haveI := subgroup_t2Space F d.ambient d.G
-    haveI := subgroup_locallyCompactSpace_of_isClosed F d.ambient d.G d.isClosed_G
-    IsTempered π → multiplicity π d.H (d.xi ψ.toAddChar) ≤ 1
+"for any irreducible admissible representation `π` of `GSpin(V)` and `π₀` of `GSpin(V₀)` …
+`dim_ℂ Hom_H(π ⊗ π₀, ξ) ≤ 1`". There is no quasi-split hypothesis, so inner forms are covered.
+
+Dictionary. `(V₀, V) = (W, V)` and `V₀^⊥ = Z` (`dim Z = 2r + 1`), `π₀ = ρ₀`, `π = ρ`. The two
+factors of `G` are written in the order `GSpin(W) × GSpin(V)` of `d.G`, so `π ⊗ π₀` becomes
+`ρ₀ ⊗ ρ` through the swap `TensorProduct.comm`, which is `H`-equivariant and does not change
+`dim Hom_H`. Pan Yan's basis of `Z` (§3.1: `X_r = ⟨e_1, …, e_r⟩`, `Y_r = ⟨e_{-r}, …, e_{-1}⟩`,
+`⟨e_i, e_{-j}⟩ = δ_{ij}`, `e₀` anisotropic) is ours (Thesis (5.2.1)) under
+`e_i ↔ z_{r+1−i}`, `e_{−i} ↔ (2ν)⁻¹ z_{−(r+1−i)}`, `e₀ ↔ z₀` (Pan Yan's `⟨,⟩` is the polar form
+`q(v₁ + v₂) − q(v₁) − q(v₂) = 2b`, so `⟨z_k, z_{−k}⟩ = 2ν`); then his flag (6) is the flag
+defining `d.N`, `N_{Q_r} = d.N`, and his `H = N_{Q_r} ⋊ GSpin(V₀)` (embedded in `G` as `(a n, a)`, factors
+swapped) is `d.H`. His `ξ(u) = ψ'(x₁ + … + x_{r−1} + z(u))` (§3.1, `l_r(u) = (x₁, …, x_{r−1}, z)`)
+matches `d.lam`: the terms `i ≥ 1` of `d.lam` are `ν · x_{r−i}` and the term `i = 0` is `ν · z(u)`,
+so `d.xi ψ` is Pan Yan's `ξ` for the nontrivial character `ψ' = ψ(ν ·)`. Edge cases: `r = 0`
+(`H = GSpin(W)` diagonal, `ξ = 1`) is the spherical case, Emory–Takeda, *Contragredients and a
+multiplicity one theorem for general spin groups*, Math. Z. 303 (2023), Thm 1.1
+(arXiv:2104.04814v4, p. 2); `m = dim W = 0` is the Whittaker case. -/
+axiom panYan_mult_le_one (d : GGPData F) (ψ : NontrivialAddChar F) {V₀ V₁ : Type*}
+    [AddCommGroup V₀] [Module ℂ V₀] [AddCommGroup V₁] [Module ℂ V₁]
+    (ρ₀ : Representation ℂ (GSpin d.QW) V₀) (ρ : Representation ℂ (GSpin d.QV) V₁)
+    (hirr₀ : ρ₀.IsIrreducible) (hadm₀ : ρ₀.IsAdmissible)
+    (hirr : ρ.IsIrreducible) (hadm : ρ.IsAdmissible) :
+    Representation.multiplicity ((ρ₀.externalTensor ρ).comp (d.fst.prod d.snd)) d.H
+      (d.xi ψ.toAddChar) ≤ 1
 
 end MultOne
 

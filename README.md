@@ -48,7 +48,7 @@ As of November 2026:
   below), plus some smaller lemmas. A `sorry` is a step this project still owes.
 - Results from the literature are assumed as `axiom`s in `GSpinGGP/Literature/`, each with a
   docstring citing its source; they are where the formalization stops, and are not meant to be
-  proved here. `local_ggp` uses 21 of the 23. The other two are
+  proved here. `local_ggp` uses 23 of the 25. The other two are
   `bp_sqrt_weylDisc_mul_locallyBounded` (BP Prop 4.1.1(ii)), intended as an input of the germ
   bound `germ_bound_of_mem_QC`, still a `sorry`, and `exists_iwasawaPair_xi_sq_integrable`
   (Waldspurger 2003, Lemme II.1.5), intended as an input of the estimates of Thesis Ch. 8 and 10.
@@ -57,10 +57,8 @@ As of November 2026:
   specialized (one, `bp_integrable_kernel_scusp`, is stated without proof in its source).
   A *derived* axiom is a short, explicit combination of such statements, or a printed statement
   whose hypotheses are checked for our object in the docstring only; the docstring quotes the
-  ingredients and gives the steps. 12 of the 23 are derived (`scripts/derived-axioms.txt`):
-  the two on characters and the one on multiplicity one (sources state them for irreducible
-  admissible smooth representations, the axioms for irreducible unitary ones);
-  the three on Galois cohomology (applied to groups of `F̄`-points whose description as algebraic
+  ingredients and gives the steps. 9 of the 25 are derived (`scripts/derived-axioms.txt`).
+  They are the three on Galois cohomology (applied to groups of `F̄`-points whose description as algebraic
   groups, and for Kottwitz's lemma as a fundamental maximal torus, is argued in the docstring);
   `jantzen_finrank_soCentMat_ge` (four statements of Jantzen combined);
   `luo_lie_geomExpansion_SO` (Luo's theorem with properties of `θ_f` from Waldspurger and
@@ -78,6 +76,15 @@ As of November 2026:
   and `exists_iwasawaPair_xi_sq_integrable` (Waldspurger's `∫_G Ξ² (1 + σ)^{-d} < ∞` for connected
   reductive groups; the identification of his special maximal compact subgroup, `Ξ`, and `σ` for a
   lattice basis of `C(W) × C(V)` with ours is written in the docstring).
+  The axioms on characters (Harish-Chandra, Beuzart-Plessis) and on multiplicity one (Pan Yan) are
+  stated, as in their sources, for irreducible admissible smooth representations; the exception is
+  `rodier_germ_one` (Rodier, Mœglin–Waldspurger), which is still stated for irreducible tempered
+  unitary representations. The forms of the former for the unitary representations of the main
+  theorem are proved, from Cartier's corollary of
+  Bernstein's theorem (the smooth vectors of an irreducible unitary representation form a dense
+  admissible representation) and Flath's tensor-product theorem, both verbatim axioms
+  (`Foundations/SmoothRepresentations.lean`, `GGP/UnitaryCharacters.lean`,
+  `GGP/MultOne.lean`).
   No axiom states for general spin groups a result that its source states for another group.
   Where the dissertation adapts a published result (stated for orthogonal or unitary groups, groups
   with compact centre, pure inner forms, …) or combines several, the statement is a theorem with

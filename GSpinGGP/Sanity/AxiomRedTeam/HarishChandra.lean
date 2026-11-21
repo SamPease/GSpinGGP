@@ -16,9 +16,11 @@ Unless said otherwise, each conclusion is verified *without* the axiom at the to
 `rodier_germ_one` the axiom's own instance at `toyD` is also shown to agree with that computation.
 
 * `hc_regular_open_dense_conull`: `D^G ≡ 1` on `toyD`, so `G_reg = G` (`toyD_hc_regular_check`).
-* `hc_character_exists`, `hc_character_isQuasiCharacter`: `θ_1 = 1` is a quasi-character
-  (`toyD_hc_character_exists_check`, `toyD_hc_isQuasiCharacter_check`).
-* `emoryTakeda_mult_le_one`: `m(1) = 1` exactly (`toyD_mult_eq_one_check`).
+* `hc_character_exists`, `hc_character_isQuasiCharacter` (theorems from the axioms on admissible
+  representations, checked in `AxiomRedTeam/SmoothRepresentations`): `θ_1 = 1` is a
+  quasi-character (`toyD_hc_character_exists_check`, `toyD_hc_isQuasiCharacter_check`).
+* `emoryTakeda_mult_le_one` (a theorem from `panYan_mult_le_one`): `m(1) = 1` exactly
+  (`toyD_mult_eq_one_check`).
 * `germ_unique`: holds at `toyD` for every function, not only quasi-characters
   (`toyD_germ_unique`), with satisfiable hypotheses (`toyD_germ_unique_nonvacuous`).  Two
   consequences of the axiom on any datum: orbit measures of distinct orbits, one of them regular,

@@ -56,8 +56,8 @@ characters, which makes equality on `G_reg(F)` an equality of distributions), an
 Hidden second input: `vMult` takes `ℕ∞.toNat` constituent by
 constituent while the right-hand side takes it of the total, and these agree only because every
 `m(π_c)` is finite.  That finiteness is not Harish-Chandra's: it is multiplicity at most one for
-irreducible tempered representations (`emoryTakeda_mult_le_one`, itself a cited axiom on the same
-path).  No hypothesis `m(i_P^G(σ)) ≠ ∞` is added, because it could not be
+irreducible tempered representations (`emoryTakeda_mult_le_one`, a theorem from Pan Yan's cited
+Theorem 1.1, on the same path).  No hypothesis `m(i_P^G(σ)) ≠ ∞` is added, because it could not be
 discharged from `emoryTakeda_mult_le_one` (which is for irreducible `π`) without this very
 decomposition.  `K` in `ParIndData` may be any compact open subgroup with `G(F) = P(F) K`
 (`dg = dp dk` holds for each).
