@@ -2,24 +2,24 @@
 Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import GSpinGGP.TraceFormula.Analytic
-import GSpinGGP.GGP.Cocharacter
+import Mathlib
+import TauCeti.MeasureTheory.Measure.Haar.Unique
 
 /-!
 # Harish-Chandra's function `Ξ` for an Iwasawa pair, and Levi data
 
 Harish-Chandra's function is defined (Waldspurger, *La formule de Plancherel pour les groupes
-`p`-adiques*, J. Inst. Math. Jussieu 2 (2003), §II.1, p. 250–251; BP §1.5) from a minimal
+`p`-adiques*, J. Inst. Math. Jussieu 2 (2003), §II.1, pp. 250–251; BP §1.5) from a minimal
 parabolic subgroup `P₀` and a compact subgroup `K` with `G = P₀ K`:
 
   `Ξ(g) = ∫_K δ₀(p₀(kg))^{1/2} dk`,   `dk` the probability Haar measure of `K`,
 
 where `g = p₀(g) k₀(g)` with `p₀(g) ∈ P₀`, `k₀(g) ∈ K`.  Only the decomposition `G = P₀ K`
 enters the definition, so this file works for any locally compact group `G`, closed subgroup
-`P`, and compact open subgroup `K` with `G = P K` (an `IwasawaPair`).  The same construction gives
-`Ξ^G` for `G = GSpin(W) × GSpin(V)` (`IwasawaDatum.toIwasawaPair`, `IwasawaDatum.xiHC_eq_xi`), and
-`Ξ^M` for a Levi subgroup `M` (`LeviDatum.xiM`) or `Ξ^H` for `H = GSpin(W)`, each with its own
-pair.
+`P`, and compact open subgroup `K` with `G = P K` (an `IwasawaPair`).  Harish-Chandra's `Ξ^G` of
+`G = GSpin(W) × GSpin(V)` (`GGPData.IwasawaDatum.xiHC`, `TraceFormula/Analytic.lean`) is the `Ξ`
+of such a pair; `Ξ^M` for a Levi subgroup `M` is `LeviDatum.xiM`; `Ξ^H` for `H = GSpin(W)` would
+be the `Ξ` of a pair of `H` (not built here).
 
 ## Main definitions
 
@@ -28,52 +28,113 @@ pair.
   `μ(E p⁻¹) = δ_P(p) μ(E)`, which is `|det Ad(p)|_{𝔲}|` for `P = M U`, as in Waldspurger 2003
   §I.1); `IwasawaPair.rho g = δ_P(p(g))` (independent of the choice of `p(g)`).
 * `IwasawaPair.xi`: `Ξ(g) = ∫_K δ_P(p(kg))^{1/2} dk` (normalized Haar measure on `K`).
-* `LeviDatum I`: a parabolic subgroup `P ⊇ I.P` with a Levi decomposition `P = M U`, an opposite
-  unipotent subgroup `Ū`, and the *good position* of `K` relative to `M`,
-  `M = (P₀ ∩ M)(K ∩ M)` (Waldspurger 2003 §I.1: "le groupe `M ∩ K` vérifie relativement à `M`
-  les mêmes propriétés que `K` relativement à `G`"); its Iwasawa pair `LeviDatum.levi` on `M`,
-  `Ξ^M = LeviDatum.xiM`, and `δ_P` on `M` (`LeviDatum.deltaP`); `LeviDatum.top` (`P = M = G`).
-* `flagLevi b wt`: the Levi subgroup of a flag stabilizer in `GSpin(V)` attached to a splitting
-  `(b, wt)` of its weight filtration (the centralizer of the weight projections), and
-  `GGPData.flagLeviG`, its product for `G = GSpin(W) × GSpin(V)`.
+* `LeviDatum I`: a parabolic subgroup `P ⊇ P₀` with a Levi decomposition `P = M U`, `U ⊆ P₀`,
+  and the *good position* of `K` relative to `M`, `M = (P₀ ∩ M)(K ∩ M)` (Waldspurger 2003 §I.1);
+  its Iwasawa pair `LeviDatum.levi` on `M`, `Ξ^M = LeviDatum.xiM`, and `δ_P` on `M`
+  (`LeviDatum.deltaP`); `LeviDatum.top` (`P = M = G`).
 
 ## Main results
 
+* Modular characters: trivial on a compact open subgroup and on central elements, locally
+  constant, bounded below on compact sets (`modularCharacter_eq_one_of_mem`, …).
 * `IwasawaPair.rho_mul`: the cocycle relation `δ(p(xy)) = δ(p(x)) δ(p(k(x) y))`.
 * `IwasawaPair.xi_mul_left_mem_K`, `xi_mul_right_mem_K`: `Ξ` is bi-`K`-invariant
-  (Waldspurger 2003, Lemme II.1.1, first assertion).
-* `IwasawaPair.xi_pos`: `Ξ > 0`.
+  (Waldspurger 2003, Lemme II.1.1, first assertion); `IwasawaPair.xi_pos`: `Ξ > 0`.
 * **Doubling principle** `IwasawaPair.integral_xi_mul_mul`: `∫_K Ξ(g₁ k g₂) dk = Ξ(g₁) Ξ(g₂)`
   (Waldspurger 2003, Lemme II.1.3; BP Prop 1.5.1(vi)).  Proved for every Iwasawa pair, not only
   for a special maximal compact `K`: the printed proof uses only that the `K`-fixed vectors of
   `i_{P}^G 1` form a line, i.e. `G = P K`; the proof here is a direct computation with the
   cocycle relation and the left invariance of `dk`.
-* Levi decompositions `P_F = M_F N_F` (`IsFlagSplitting.flagLevi_le_flagStab`,
-  `IsFlagSplitting.exists_mem_flagLevi_mul`) and
-  `P_{F_W} × P_{F_V} = (M_{F_W} × M_{F_V})(N_{F_W} × N_{F_V})` (`GGPData.flagLeviG_le_whittB`,
-  `GGPData.exists_mem_flagLeviG_mul`).  (`M ∩ N = 1`, the opposite unipotent radical and the
-  good position of `K` are not proved here, so no `LeviDatum` for `G` is built yet.)
-* For `G = GSpin(W) × GSpin(V)`: `IwasawaDatum.xiHC_eq_xi`, and hence the doubling principle and
-  bi-`K`-invariance for `xiHC` (`IwasawaDatum.integral_xiHC_mul_mul`, …).
 
 ## Not here
 
 The estimates of Waldspurger 2003 Lemme II.1.1 (second assertion), II.1.5, II.1.6, II.4.4 and
 Prop II.4.5 are stated by Waldspurger for `K` the fixer of a special point of the apartment of a
 maximal split torus `A₀ ⊆ P₀`, `σ` the log-norm of an embedding `τ : G → GL_n` with
-`τ(K) ⊆ GL_n(𝒪)`, and `M̄₀⁺` defined through `H₀` and the simple roots.  None of these objects
-is available for `G = GSpin(W) × GSpin(V)` here, so they are not stated as literature
-assumptions in this file.
+`τ(K) ⊆ GL_n(𝒪)`, and `M̄₀⁺` defined through `H₀` and the simple roots.  They are not stated here.
 -/
 
 open MeasureTheory Topology Filter
-open scoped Pointwise
 
 noncomputable section
 
-set_option linter.unusedSectionVars false
-
 namespace GSpinGGP
+
+/-! ## 0. Modular characters -/
+
+section ModularCharacter
+
+variable {G₀ : Type*} [Group G₀] [TopologicalSpace G₀] [IsTopologicalGroup G₀]
+  [LocallyCompactSpace G₀]
+
+/-- The modular character is trivial on a compact open subgroup `E` (right translation by
+`k ∈ E` maps `E`, a set of finite positive Haar measure, to itself). -/
+theorem modularCharacter_eq_one_of_mem (E : Subgroup G₀) (hEo : IsOpen (E : Set G₀))
+    (hEc : IsCompact (E : Set G₀)) (k : G₀) (hk : k ∈ E) : Measure.modularCharacter k = 1 := by
+  borelize G₀
+  set μ : Measure G₀ := Measure.haar
+  have hcl : closure (E : Set G₀) = E := (Subgroup.isClosed_of_isOpen E hEo).closure_eq
+  have h := Measure.measure_isMulInvariant_eq_smul_of_isCompact_closure
+    (Measure.map (· * k) μ) μ (s := (E : Set G₀)) (by rw [hcl]; exact hEc)
+  have hpre : (· * k) ⁻¹' (E : Set G₀) = E := by
+    ext x
+    simp only [Set.mem_preimage, SetLike.mem_coe]
+    exact ⟨fun hx => by simpa using E.mul_mem hx (E.inv_mem hk), fun hx => E.mul_mem hx hk⟩
+  rw [Measure.map_apply (measurable_mul_const k) hEo.measurableSet, hpre] at h
+  have hpos : μ E ≠ 0 := (hEo.measure_pos μ ⟨1, E.one_mem⟩).ne'
+  have htop : μ E ≠ ⊤ := hEc.measure_lt_top.ne
+  have h1 : ((Measure.haarScalarFactor (Measure.map (· * k) μ) μ : NNReal) : ENNReal) = 1 := by
+    rw [ENNReal.smul_def, smul_eq_mul] at h
+    have h' : 1 * μ E = _ * μ E := (one_mul (μ E)).trans h
+    exact ((ENNReal.mul_left_inj hpos htop).mp h').symm
+  change Measure.modularCharacterFun k = 1
+  rw [Measure.modularCharacterFun_eq_haarScalarFactor μ k]
+  exact_mod_cast h1
+
+/-- A function on a topological group that is invariant under right translation by an open
+subgroup `K` is locally constant (it is constant on each open coset `xK`). -/
+theorem isLocallyConstant_of_mul_right_invariant {G A : Type*} [Group G] [TopologicalSpace G]
+    [ContinuousMul G] {K : Subgroup G} (hK : IsOpen (K : Set G)) {f : G → A}
+    (hf : ∀ x, ∀ k ∈ K, f (x * k) = f x) : IsLocallyConstant f := by
+  rw [IsLocallyConstant.iff_exists_open]
+  intro x
+  refine ⟨(fun y => x⁻¹ * y) ⁻¹' (K : Set G),
+    hK.preimage (continuous_const.mul continuous_id), by simp, fun y hy => ?_⟩
+  have e : y = x * (x⁻¹ * y) := by group
+  rw [e, hf x _ hy]
+
+/-- The modular character is locally constant if there is a compact open subgroup. -/
+theorem isLocallyConstant_modularCharacter (E : Subgroup G₀) (hEo : IsOpen (E : Set G₀))
+    (hEc : IsCompact (E : Set G₀)) :
+    IsLocallyConstant (fun p : G₀ => (Measure.modularCharacter p : ℝ)) := by
+  refine isLocallyConstant_of_mul_right_invariant hEo fun x k hk => ?_
+  rw [map_mul, modularCharacter_eq_one_of_mem E hEo hEc _ hk, mul_one]
+
+/-- On a compact set, the modular character is bounded below by a positive constant (if there
+is a compact open subgroup). -/
+theorem exists_lowerBound_modularCharacter (E : Subgroup G₀) (hEo : IsOpen (E : Set G₀))
+    (hEc : IsCompact (E : Set G₀)) (S : Set G₀) (hS : IsCompact S) :
+    ∃ m : ℝ, 0 < m ∧ ∀ p ∈ S, m ≤ (Measure.modularCharacter p : ℝ) := by
+  rcases S.eq_empty_or_nonempty with rfl | hne
+  · exact ⟨1, one_pos, by simp⟩
+  obtain ⟨p0, -, hmin⟩ :=
+    hS.exists_isMinOn hne (isLocallyConstant_modularCharacter E hEo hEc).continuous.continuousOn
+  exact ⟨_, by exact_mod_cast Measure.modularCharacterFun_pos p0, fun p hp => hmin hp⟩
+
+/-- The modular character is trivial on central elements. -/
+theorem modularCharacter_eq_one_of_central (a : G₀) (ha : ∀ y : G₀, y * a = a * y) :
+    Measure.modularCharacter a = 1 := by
+  borelize G₀
+  have e : (fun y : G₀ => y * a) = fun y => a * y := funext ha
+  have hmap : Measure.map (· * a) (Measure.haar : Measure G₀) = Measure.haar := by
+    rw [e]
+    exact map_mul_left_eq_self (Measure.haar : Measure G₀) a
+  change Measure.modularCharacterFun a = 1
+  rw [Measure.modularCharacterFun_eq_haarScalarFactor (Measure.haar : Measure G₀) a]
+  simp only [hmap, Measure.haarScalarFactor_self]
+
+end ModularCharacter
+
 
 /-! ## 1. Iwasawa pairs and `Ξ` -/
 
@@ -105,9 +166,11 @@ instance compactSpace_K : CompactSpace ↥I.K :=
 /-- `P ∩ K`, as a subgroup of `P`: a compact open subgroup. -/
 abbrev KP : Subgroup ↥I.P := I.K.subgroupOf I.P
 
+omit [IsTopologicalGroup G] [LocallyCompactSpace G] in
 theorem isOpen_KP : IsOpen (I.KP : Set ↥I.P) :=
   I.isOpen_K.preimage continuous_subtypeVal
 
+omit [IsTopologicalGroup G] [LocallyCompactSpace G] in
 theorem isCompact_KP : IsCompact (I.KP : Set ↥I.P) :=
   I.isClosed_P.isClosedEmbedding_subtypeVal.isCompact_preimage I.isCompact_K
 
@@ -148,6 +211,16 @@ theorem delta_eq_of_mul_eq {p p' : ↥I.P} {k k' : G} (hk : k ∈ I.K) (hk' : k'
   field_simp at this
   exact this
 
+/-- `δ_P` is trivial on central elements of `P`. -/
+theorem delta_eq_one_of_central (a : ↥I.P) (ha : ∀ y : ↥I.P, y * a = a * y) : I.delta a = 1 := by
+  unfold delta
+  rw [modularCharacter_eq_one_of_central a ha, NNReal.coe_one]
+
+/-- On a compact subset of `P`, `δ_P` is bounded below by a positive constant. -/
+theorem exists_lowerBound_delta (S : Set ↥I.P) (hS : IsCompact S) :
+    ∃ m : ℝ, 0 < m ∧ ∀ p ∈ S, m ≤ I.delta p :=
+  exists_lowerBound_modularCharacter I.KP I.isOpen_KP I.isCompact_KP S hS
+
 /-- A choice of `P`-component of `g = p k`. -/
 def iwP (g : G) : ↥I.P := ⟨(I.mul_eq g).choose, (I.mul_eq g).choose_spec.1⟩
 
@@ -159,6 +232,7 @@ def iwK (g : G) : ↥I.K := ⟨(I.iwP g : G)⁻¹ * g, by
   rw [e]
   exact hk⟩
 
+omit [IsTopologicalGroup G] [LocallyCompactSpace G] in
 theorem iwP_mul_iwK (g : G) : ((I.iwP g : G)) * (I.iwK g : G) = g := by
   simp [iwK]
 
@@ -202,11 +276,13 @@ def xi (g : G) : ℝ :=
   ((Measure.haar : Measure ↥I.K) Set.univ).toReal⁻¹ *
     ∫ k : ↥I.K, Real.sqrt (I.rho ((k : G) * g)) ∂Measure.haar
 
+omit [LocallyCompactSpace G] in
 /-- The total mass of the Haar measure of `K`, as a positive real. -/
 theorem haar_K_toReal_pos : 0 < ((Measure.haar : Measure ↥I.K) Set.univ).toReal :=
   ENNReal.toReal_pos (Measure.measure_univ_pos.2 (NeZero.ne _)).ne'
     (measure_ne_top _ _)
 
+omit [MeasurableSpace G] [BorelSpace G] in
 theorem continuous_sqrt_rho_mul (g : G) :
     Continuous fun k : ↥I.K => Real.sqrt (I.rho ((k : G) * g)) :=
   Real.continuous_sqrt.comp (I.continuous_rho.comp (continuous_subtypeVal.mul continuous_const))
@@ -252,25 +328,16 @@ theorem integral_sqrt_rho_mul_mul (x g₂ : G) :
   exact integral_mul_left_eq_self (μ := (Measure.haar : Measure ↥I.K))
     (fun k : ↥I.K => Real.sqrt (I.rho ((k : G) * g₂))) (I.iwK x)
 
-variable [SecondCountableTopology G] [T2Space G]
-
-instance secondCountableTopology_K : SecondCountableTopology ↥I.K :=
-  TopologicalSpace.Subtype.secondCountableTopology (I.K : Set G)
-
-/-- `Ξ` is left `K`-invariant (Waldspurger 2003, Lemme II.1.1, first assertion): the Haar measure of
-the compact group `K` is right invariant. -/
+/-- `Ξ` is left `K`-invariant (Waldspurger 2003, Lemme II.1.1, first assertion): the finite Haar
+measure of the compact group `K` is right invariant. -/
 theorem xi_mul_left_mem_K {k : G} (hk : k ∈ I.K) (g : G) : I.xi (k * g) = I.xi g := by
+  have := Measure.isMulRightInvariant_of_isHaarMeasure_of_isFiniteMeasure
+    (Measure.haar : Measure ↥I.K)
   unfold xi
   congr 1
-  have hmap := map_mul_right_haar_of_mem_compact (Q := ↥I.K) ⊤ (by simpa using isCompact_univ)
-    (Subgroup.mem_top (⟨k, hk⟩ : ↥I.K))
-  conv_rhs => rw [← hmap]
-  rw [integral_map (measurable_mul_const _).aemeasurable
-    (I.continuous_sqrt_rho_mul g).aestronglyMeasurable]
-  congr 1
-  funext k'
-  simp [mul_assoc]
-
+  have := integral_mul_right_eq_self (μ := (Measure.haar : Measure ↥I.K))
+    (fun k' : ↥I.K => Real.sqrt (I.rho ((k' : G) * g))) (⟨k, hk⟩ : ↥I.K)
+  simpa [mul_assoc] using this
 
 /-- **The doubling principle** (Waldspurger 2003, Lemme II.1.3, p. 252; BP Prop 1.5.1(vi)):
 `∫_K Ξ(g₁ k g₂) dk = Ξ(g₁) Ξ(g₂)`, `dk` the probability Haar measure on `K`.
@@ -283,7 +350,6 @@ theorem integral_xi_mul_mul (g₁ g₂ : G) :
     ((Measure.haar : Measure ↥I.K) Set.univ).toReal⁻¹ *
         ∫ k : ↥I.K, I.xi (g₁ * (k : G) * g₂) ∂Measure.haar = I.xi g₁ * I.xi g₂ := by
   set μ : Measure ↥I.K := Measure.haar
-  set c : ℝ := (μ Set.univ).toReal⁻¹
   -- Fubini on `K × K`
   have hcont : Continuous (Function.uncurry fun (k k' : ↥I.K) =>
       Real.sqrt (I.rho ((k' : G) * (g₁ * (k : G) * g₂)))) :=
@@ -291,10 +357,8 @@ theorem integral_xi_mul_mul (g₁ g₂ : G) :
       ((continuous_subtypeVal.comp continuous_snd).mul
         ((continuous_const.mul (continuous_subtypeVal.comp continuous_fst)).mul
           continuous_const)))
-  have hint : Integrable (Function.uncurry fun (k k' : ↥I.K) =>
-      Real.sqrt (I.rho ((k' : G) * (g₁ * (k : G) * g₂)))) (μ.prod μ) :=
-    hcont.integrable_of_hasCompactSupport (HasCompactSupport.of_compactSpace _)
-  have hswap := integral_integral_swap hint
+  have hswap := integral_integral_swap_of_hasCompactSupport (μ := μ) (ν := μ) hcont
+    (HasCompactSupport.of_compactSpace _)
   unfold xi
   simp_rw [integral_const_mul]
   rw [hswap]
@@ -313,11 +377,12 @@ end IwasawaPair
 /-! ## 2. Levi data -/
 
 /-- **Levi data** for an Iwasawa pair `I = (P₀, K)`: a parabolic subgroup `P ⊇ P₀` with a Levi
-decomposition `P = M U` (`M` normalizes `U`, `M ∩ U = 1`), an opposite unipotent subgroup `Ū`
-(`M` normalizes it and `P ∩ Ū = 1`), and the good position of `K` relative to `M`:
-`M = (P₀ ∩ M)(K ∩ M)` (Waldspurger 2003 §I.1, for `P` semi-standard and `K` special: "le groupe
-`M ∩ K` vérifie relativement à `M` les mêmes propriétés que `K` relativement à `G`").  The good
-position is a hypothesis: for an arbitrary compact open `K` with `G = P₀ K` it can fail. -/
+decomposition `P = M U` (`M` normalizes `U`, `M ∩ U = 1`), whose unipotent radical lies in `P₀`
+(as the unipotent radical of a parabolic subgroup containing `P₀` does), and the good position of
+`K` relative to `M`: `M = (P₀ ∩ M)(K ∩ M)` (Waldspurger 2003 §I.1, for `P` semi-standard and `K`
+special: "le groupe `M ∩ K` vérifie relativement à `M` les mêmes propriétés que `K` relativement
+à `G`").  The good position is a hypothesis (for an arbitrary compact open `K` with `G = P₀ K` it
+is not known here to hold). -/
 structure LeviDatum {G : Type*} [Group G] [TopologicalSpace G] (I : IwasawaPair G) where
   /-- the parabolic subgroup -/
   P : Subgroup G
@@ -325,21 +390,15 @@ structure LeviDatum {G : Type*} [Group G] [TopologicalSpace G] (I : IwasawaPair 
   M : Subgroup G
   /-- its unipotent radical -/
   U : Subgroup G
-  /-- the opposite unipotent radical -/
-  Ubar : Subgroup G
   P0_le : I.P ≤ P
   M_le : M ≤ P
-  U_le : U ≤ P
+  U_le_P0 : U ≤ I.P
   isClosed_P : IsClosed (P : Set G)
   isClosed_M : IsClosed (M : Set G)
-  isClosed_U : IsClosed (U : Set G)
-  isClosed_Ubar : IsClosed (Ubar : Set G)
   conj_mem_U : ∀ m ∈ M, ∀ u ∈ U, m * u * m⁻¹ ∈ U
-  conj_mem_Ubar : ∀ m ∈ M, ∀ u ∈ Ubar, m * u * m⁻¹ ∈ Ubar
   /-- `P = M U` -/
   mul_eq : ∀ p ∈ P, ∃ m ∈ M, ∃ u ∈ U, p = m * u
   inf_eq_bot : M ⊓ U = ⊥
-  inf_Ubar_eq_bot : P ⊓ Ubar = ⊥
   /-- good position of `K` relative to `M`: `M = (P₀ ∩ M)(K ∩ M)` -/
   goodPos : ∀ m ∈ M, ∃ p ∈ I.P, ∃ k ∈ I.K, p ∈ M ∧ k ∈ M ∧ m = p * k
 
@@ -351,9 +410,6 @@ variable {G : Type*} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
 instance locallyCompactSpace_P : LocallyCompactSpace ↥L.P := L.isClosed_P.locallyCompactSpace
 
 instance locallyCompactSpace_M : LocallyCompactSpace ↥L.M := L.isClosed_M.locallyCompactSpace
-
-instance locallyCompactSpace_Ubar : LocallyCompactSpace ↥L.Ubar :=
-  L.isClosed_Ubar.locallyCompactSpace
 
 /-- The Iwasawa pair `(P₀ ∩ M, K ∩ M)` of the Levi subgroup `M`. -/
 def levi : IwasawaPair ↥L.M where
@@ -382,241 +438,26 @@ def xiM [MeasurableSpace G] [BorelSpace G] (m : ↥L.M) : ℝ := L.levi.xi m
 
 theorem xiM_pos [MeasurableSpace G] [BorelSpace G] (m : ↥L.M) : 0 < L.xiM m := L.levi.xi_pos m
 
-/-- The trivial Levi datum `P = M = G`, `U = Ū = 1` (good position is the Iwasawa decomposition
+/-- The trivial Levi datum `P = M = G`, `U = 1` (good position is the Iwasawa decomposition
 itself). -/
-def top [T1Space G] (I : IwasawaPair G) : LeviDatum I where
+def top (I : IwasawaPair G) : LeviDatum I where
   P := ⊤
   M := ⊤
   U := ⊥
-  Ubar := ⊥
   P0_le := le_top
   M_le := le_rfl
-  U_le := bot_le
+  U_le_P0 := bot_le
   isClosed_P := by simp
   isClosed_M := by simp
-  isClosed_U := by simp
-  isClosed_Ubar := by simp
   conj_mem_U m _ u hu := by
-    rw [Subgroup.mem_bot] at hu ⊢
-    simp [hu]
-  conj_mem_Ubar m _ u hu := by
     rw [Subgroup.mem_bot] at hu ⊢
     simp [hu]
   mul_eq p _ := ⟨p, trivial, 1, Subgroup.one_mem _, (mul_one p).symm⟩
   inf_eq_bot := by simp
-  inf_Ubar_eq_bot := by simp
   goodPos m _ := by
     obtain ⟨p, hp, k, hk, h⟩ := I.mul_eq m
     exact ⟨p, hp, k, hk, trivial, trivial, h⟩
 
 end LeviDatum
-
-/-! ## 3. The Levi subgroup of a flag stabilizer in `GSpin(V)` -/
-
-section FlagLevi
-
-variable {K : Type*} [Field K] [Invertible (2 : K)]
-variable {V : Type*} [AddCommGroup V] [Module K V]
-variable {Q : QuadraticForm K V}
-variable {ι : Type*} [Fintype ι]
-
-/-- The projection onto the weight-`w` part of a basis with weights: `b i ↦ b i` if `wt i = w`,
-`b i ↦ 0` otherwise. -/
-def wtProj (b : Module.Basis ι K V) (wt : ι → ℤ) (w : ℤ) : V →ₗ[K] V :=
-  b.constr K fun i => if wt i = w then b i else 0
-
-omit [Fintype ι] in
-theorem repr_wtProj (b : Module.Basis ι K V) (wt : ι → ℤ) (w : ℤ) (x : V) (i : ι) :
-    b.repr (wtProj b wt w x) i = if wt i = w then b.repr x i else 0 := by
-  have key : (b.coord i).comp (wtProj b wt w) = if wt i = w then b.coord i else 0 := by
-    refine b.ext fun j => ?_
-    simp only [LinearMap.comp_apply, wtProj, Module.Basis.constr_basis, Module.Basis.coord_apply]
-    by_cases hij : i = j
-    · subst hij; split_ifs <;> simp
-    · split_ifs <;> simp [Ne.symm hij]
-  have := congr($key x)
-  simp only [LinearMap.comp_apply, Module.Basis.coord_apply] at this
-  rw [this]
-  split_ifs <;> simp
-
-/-- **The Levi subgroup** attached to a splitting `(b, wt)` of the weight filtration of an
-isotropic flag (Thesis §5.1.2, `P = M N`): the elements of `GSpin(V)` whose image in `SO(V)`
-commutes with every weight projection `wtProj b wt w`, i.e. preserves each weight space of the
-splitting.  It contains the central scalars `K^×`, and lies in the flag stabilizer
-(`IsFlagSplitting.flagLevi_le_flagStab`). -/
-def flagLevi (b : Module.Basis ι K V) (wt : ι → ℤ) : Subgroup (GSpin Q) where
-  carrier := {g | ∀ w : ℤ,
-    (specP Q g : V →ₗ[K] V) ∘ₗ wtProj b wt w = wtProj b wt w ∘ₗ (specP Q g : V →ₗ[K] V)}
-  one_mem' := by intro w; ext v; simp
-  mul_mem' := by
-    intro g h hg hh w
-    rw [map_mul, show ((specP Q g * specP Q h : V ≃ₗ[K] V) : V →ₗ[K] V) =
-      (specP Q g : V →ₗ[K] V) ∘ₗ (specP Q h : V →ₗ[K] V) from rfl, LinearMap.comp_assoc, hh w,
-      ← LinearMap.comp_assoc, hg w, LinearMap.comp_assoc]
-  inv_mem' := by
-    intro g hg w
-    ext v
-    have h := congr($(hg w) (specP Q g⁻¹ v))
-    simp only [LinearMap.comp_apply, LinearEquiv.coe_coe] at h ⊢
-    rw [specP_inv_apply_apply] at h
-    rw [← h]
-    have := specP_inv_apply_apply g⁻¹ (wtProj b wt w (specP Q g⁻¹ v))
-    rwa [inv_inv] at this
-
-omit [Fintype ι] in
-theorem scalarGSpin_mem_flagLevi (b : Module.Basis ι K V) (wt : ι → ℤ) (c : Kˣ) :
-    scalarGSpin Q c ∈ flagLevi (Q := Q) b wt := by
-  intro w
-  rw [specP_scalarGSpin_eq_one]
-  rfl
-
-omit [Fintype ι] in
-/-- A map that is homogeneous of degree `0` for the weights commutes with the weight projections. -/
-theorem wtProj_comp_of_isHomog {b : Module.Basis ι K V} {wt : ι → ℤ} {A : V →ₗ[K] V}
-    (hA : ∀ j, IsHomog b wt (A (b j)) (wt j)) (w : ℤ) :
-    A ∘ₗ wtProj b wt w = wtProj b wt w ∘ₗ A := by
-  refine b.ext fun j => b.repr.injective (Finsupp.ext fun i => ?_)
-  simp only [LinearMap.comp_apply, repr_wtProj]
-  rw [show wtProj b wt w (b j) = if wt j = w then b j else 0 by simp [wtProj]]
-  by_cases hj : wt j = w
-  · rw [ite_eq_left hj]
-    split_ifs with hi
-    · rfl
-    · exact hA j i (by omega)
-  · rw [ite_eq_right hj, map_zero, map_zero, Finsupp.zero_apply]
-    split_ifs with hi
-    · exact (hA j i (by omega)).symm
-    · rfl
-
-/-- **The Levi subgroup lies in the flag stabilizer**: `M_F ⊆ P_F`.  An element preserving each
-weight space preserves the weight filtration `V_{≥w}`, whose members are those of the flag
-(`IsotropicFlag.sub_eq_flagWt`). -/
-theorem IsFlagSplitting.flagLevi_le_flagStab [FiniteDimensional K V] {F : IsotropicFlag Q}
-    {b : Module.Basis ι K V} {wt : ι → ℤ} (hs : IsFlagSplitting F b wt) :
-    flagLevi (Q := Q) b wt ≤ flagStab F := by
-  intro g hg
-  have hpres : ∀ w, ∀ v ∈ flagWt F w, specP Q g v ∈ flagWt F w := by
-    intro w v hv
-    rw [hs.mem_flagWt_iff] at hv ⊢
-    intro i hi
-    have h0 : wtProj b wt (wt i) v = 0 := by
-      refine b.repr.injective (Finsupp.ext fun j => ?_)
-      rw [repr_wtProj, map_zero, Finsupp.zero_apply]
-      split_ifs with hj
-      · exact hv j (by omega)
-      · rfl
-    have h := congr($(hg (wt i)) v)
-    simp only [LinearMap.comp_apply, LinearEquiv.coe_coe, h0, map_zero] at h
-    have := congr(b.repr $h i)
-    rw [repr_wtProj, ite_eq_left rfl, map_zero, Finsupp.zero_apply] at this
-    exact this.symm
-  refine mem_flagStab_iff.mpr fun i v hv => ?_
-  rw [F.sub_eq_flagWt] at hv ⊢
-  exact hpres _ v hv
-
-/-- **Levi decomposition of a flag stabilizer** `P_F = M_F N_F` (Thesis §5.1.2): every `p ∈ P_F`
-is `m u` with `m` in the Levi subgroup `flagLevi b wt` of a splitting and `u` in the unipotent
-radical `flagUnip F`.  From `IsFlagSplitting.exists_levi_decomp` (`p = m y` with `y ∈ K^× N_F`) by
-moving the scalar of `y` into `m` (`exists_smul_sub_one_isNilpotent_of_mem_flagUnipSO`). -/
-theorem IsFlagSplitting.exists_mem_flagLevi_mul [FiniteDimensional K V] (hQ : IsNondeg Q)
-    {F : IsotropicFlag Q} {b : Module.Basis ι K V} {wt : ι → ℤ} (hs : IsFlagSplitting F b wt)
-    {p : GSpin Q} (hp : p ∈ flagStab F) :
-    ∃ m ∈ flagLevi (Q := Q) b wt, ∃ u ∈ flagUnip F, p = m * u := by
-  obtain ⟨m, y, he, hm, hy, hy'⟩ := hs.exists_levi_decomp hQ hp
-  have hySO : y ∈ flagUnipSO F := mem_flagUnipSO_of_raisesFil hy hy'
-  obtain ⟨c, hc⟩ := exists_smul_sub_one_isNilpotent_of_mem_flagUnipSO hQ hySO
-  have hSO' := (flagUnipSO F).mul_mem hySO (scalarGSpin_mem_flagUnipSO F c)
-  refine ⟨m * scalarGSpin Q c⁻¹, (flagLevi b wt).mul_mem
-      (wtProj_comp_of_isHomog hm) (scalarGSpin_mem_flagLevi b wt c⁻¹),
-    y * scalarGSpin Q c, ⟨hSO'.1, hSO'.2.1, hSO'.2.2, by rw [coe_mul_scalarGSpin]; exact hc⟩, ?_⟩
-  have hcen := Subgroup.mem_center_iff.mp (scalarGSpin_mem_center Q c⁻¹)
-  rw [he, mul_assoc, ← mul_assoc (scalarGSpin Q c⁻¹), ← hcen y, mul_assoc y,
-    ← map_mul, inv_mul_cancel, map_one, mul_one]
-
-end FlagLevi
-
-/-! ## 4. The Iwasawa datum of `G = GSpin(W) × GSpin(V)` -/
-
-namespace GGPData
-
-variable {F : Type} [NontriviallyNormedField F] [PAdicField F] {d : GGPData F}
-
-section LeviG
-
-variable (d)
-variable {ιW ιV : Type*} [Fintype ιW] [Fintype ιV]
-
-/-- **The Levi subgroup of `P = P_{F_W} × P_{F_V}`** (`d.whittB F_W F_V`) attached to splittings
-`(b_W, wt_W)`, `(b_V, wt_V)` of the two flags: `M = M_{F_W} × M_{F_V}` (Thesis §5.1.2). -/
-def flagLeviG (bW : Module.Basis ιW F (Fin d.m → F)) (wtW : ιW → ℤ)
-    (bV : Module.Basis ιV F d.V) (wtV : ιV → ℤ) : Subgroup ↥d.G :=
-  (flagLevi (Q := d.QW) bW wtW).comap d.fst ⊓ (flagLevi (Q := d.QV) bV wtV).comap d.snd
-
-theorem pair_fst_snd (g : ↥d.G) : d.pair (d.fst g, d.snd g) = g := by
-  apply Subtype.ext; apply Units.ext; rfl
-
-variable {d}
-
-/-- **Levi decomposition** `P_{F_W} × P_{F_V} = (M_{F_W} × M_{F_V})(N_{F_W} × N_{F_V})`
-(Thesis §5.1.2), factorwise from `IsFlagSplitting.exists_mem_flagLevi_mul`. -/
-theorem exists_mem_flagLeviG_mul {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV}
-    {bW : Module.Basis ιW F (Fin d.m → F)} {wtW : ιW → ℤ}
-    {bV : Module.Basis ιV F d.V} {wtV : ιV → ℤ}
-    (hsW : IsFlagSplitting FW bW wtW) (hsV : IsFlagSplitting FV bV wtV)
-    {p : ↥d.G} (hp : p ∈ d.whittB FW FV) :
-    ∃ m ∈ d.flagLeviG bW wtW bV wtV, ∃ u ∈ d.whittU FW FV, p = m * u := by
-  obtain ⟨mW, hmW, uW, huW, eW⟩ := hsW.exists_mem_flagLevi_mul d.nondeg hp.1
-  obtain ⟨mV, hmV, uV, huV, eV⟩ := hsV.exists_mem_flagLevi_mul d.nondeg_QV hp.2
-  refine ⟨d.pair (mW, mV), ⟨hmW, hmV⟩, d.pair (uW, uV), ⟨huW, huV⟩, ?_⟩
-  rw [← map_mul, Prod.mk_mul_mk, ← eW, ← eV, pair_fst_snd]
-
-/-- `M_{F_W} × M_{F_V} ⊆ P_{F_W} × P_{F_V}`. -/
-theorem flagLeviG_le_whittB {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV}
-    {bW : Module.Basis ιW F (Fin d.m → F)} {wtW : ιW → ℤ}
-    {bV : Module.Basis ιV F d.V} {wtV : ιV → ℤ}
-    (hsW : IsFlagSplitting FW bW wtW) (hsV : IsFlagSplitting FV bV wtV) :
-    d.flagLeviG bW wtW bV wtV ≤ d.whittB FW FV :=
-  fun _ hm => ⟨hsW.flagLevi_le_flagStab hm.1, hsV.flagLevi_le_flagStab hm.2⟩
-
-end LeviG
-
-namespace IwasawaDatum
-
-variable (IW : d.IwasawaDatum)
-
-/-- The Iwasawa pair `(P₀, K)` of an Iwasawa datum. -/
-def toIwasawaPair : IwasawaPair ↥d.G where
-  P := IW.P0
-  K := IW.K
-  isClosed_P := d.isClosed_whittB IW.FW IW.FV
-  isOpen_K := IW.isOpen_K
-  isCompact_K := IW.isCompact_K
-  mul_eq := IW.mul_eq
-
-/-- `xiHC` is the `Ξ` of the Iwasawa pair `(P₀, K)`. -/
-theorem xiHC_eq_xi : IW.xiHC = IW.toIwasawaPair.xi := rfl
-
-/-- `Ξ^G` is bi-`K`-invariant (Waldspurger 2003, Lemme II.1.1, first assertion). -/
-theorem xiHC_mul_left_mem_K {k : ↥d.G} (hk : k ∈ IW.K) (g : ↥d.G) :
-    IW.xiHC (k * g) = IW.xiHC g :=
-  IW.toIwasawaPair.xi_mul_left_mem_K hk g
-
-theorem xiHC_mul_right_mem_K (g : ↥d.G) {k : ↥d.G} (hk : k ∈ IW.K) :
-    IW.xiHC (g * k) = IW.xiHC g :=
-  IW.toIwasawaPair.xi_mul_right_mem_K g hk
-
-theorem xiHC_pos (g : ↥d.G) : 0 < IW.xiHC g := IW.toIwasawaPair.xi_pos g
-
-/-- **The doubling principle for `Ξ^G`** (Waldspurger 2003, Lemme II.1.3; BP Prop 1.5.1(vi)):
-`∫_K Ξ(g₁ k g₂) dk = Ξ(g₁) Ξ(g₂)`, `dk` the probability Haar measure on `K`. -/
-theorem integral_xiHC_mul_mul (g₁ g₂ : ↥d.G) :
-    ((Measure.haar : Measure ↥IW.K) Set.univ).toReal⁻¹ *
-        ∫ k : ↥IW.K, IW.xiHC (g₁ * (k : ↥d.G) * g₂) ∂Measure.haar = IW.xiHC g₁ * IW.xiHC g₂ := by
-  have : SecondCountableTopology ↥d.G := subgroup_secondCountableTopology F d.ambient d.G
-  exact IW.toIwasawaPair.integral_xi_mul_mul g₁ g₂
-
-end IwasawaDatum
-
-end GGPData
 
 end GSpinGGP

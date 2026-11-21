@@ -1394,8 +1394,8 @@ instance secondCountableTopology_whittB : SecondCountableTopology ↥(d.whittB F
 
 /-- The modular character `δ_P` of `P(F) = P_{F_W} × P_{F_V}` (BP §1.5; Mathlib's
 `modularCharacter`, `μ(E p⁻¹) = δ_P(p) μ(E)` for a left Haar measure `μ`, so that
-`δ_P(p) = |det Ad(p)|_{𝔲}|`; the same convention as `IwasawaDatum.deltaP0` in
-`TraceFormula/Analytic.lean`, checked there on `F^× ⋉ F`). -/
+`δ_P(p) = |det Ad(p)|_{𝔲}|`; the same convention as `IwasawaPair.delta` in
+`HarmonicAnalysis/HarishChandraXi.lean`; checked on `F^× ⋉ F` below). -/
 def deltaP (p : ↥(d.whittB FW FV)) : ℝ := (Measure.modularCharacter p : ℝ)
 
 end LeviTop
@@ -1718,7 +1718,7 @@ invariant under right translation.  This is where the normalization by `δ_P^{1/
 `δ_P` the modular character in the convention `μ(E p⁻¹) = δ_P(p) μ(E)`, so that
 `δ_P(p) = |det Ad(p)|_{𝔲}|`) and `G = PK` enter.
 
-Convention check (as for `IwasawaDatum.deltaP0`): for `P = F^× ⋉ F`, `(a, x)(b, y) = (ab, x + ay)`,
+Convention check (as for `IwasawaPair.delta`): for `P = F^× ⋉ F`, `(a, x)(b, y) = (ab, x + ay)`,
 the left Haar measure is `|a|⁻¹ d^×a dx` and `μ(E p⁻¹) = |b| μ(E)` for `p = (b, y)`, i.e.
 `δ_P(b, y) = |b| = |det Ad(p)|_𝔲|`, the normalization for which `δ_P^{1/2}` makes the induction
 unitary.  Status: proved from `integral_K_mul_right` (the integration formula for `G = P K`,
