@@ -913,7 +913,7 @@ theorem trivialRep_hasModel (G : Type) [Group G] [TopologicalSpace G] [IsTopolog
     rw [hξ, one_mul]
     exact trivialRep_ρ_apply G s (v : (trivialRep G).H)
   have hv : (1 : ℂ) ∈ smoothVectors (trivialRep G) :=
-    ⟨⊤, isOpen_univ, fun u _ => trivialRep_ρ_apply G u (1 : ℂ)⟩
+    (mem_smoothVectors_iff _).2 ⟨⊤, isOpen_univ, fun u _ => trivialRep_ρ_apply G u (1 : ℂ)⟩
   rw [hbot] at hℓ
   have := LinearMap.congr_fun ((Submodule.mem_bot ℂ).mp hℓ) ⟨(1 : ℂ), hv⟩
   exact one_ne_zero this

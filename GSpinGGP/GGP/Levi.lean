@@ -354,9 +354,11 @@ theorem UnitaryRep.isIrreducible_comapCME (e : G ≃ₜ* G') (π : UnitaryRep G'
 
 /-- Smooth vectors are the same for `π ∘ e` and `π` (open subgroups correspond under the
 homeomorphism `e`). -/
-theorem smoothVectors_comapCME (e : G ≃ₜ* G') (π : UnitaryRep G') :
+theorem smoothVectors_comapCME [SeparatelyContinuousMul G] [SeparatelyContinuousMul G']
+    (e : G ≃ₜ* G') (π : UnitaryRep G') :
     smoothVectors (π.comapCME e) = smoothVectors π := by
   ext v
+  rw [mem_smoothVectors_iff, mem_smoothVectors_iff]
   constructor
   · rintro ⟨U, hU, hfix⟩
     refine ⟨U.map (e : G ≃* G').toMonoidHom, ?_, ?_⟩
