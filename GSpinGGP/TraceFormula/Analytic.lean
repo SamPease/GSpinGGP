@@ -389,7 +389,7 @@ def xiHC (g : ↥d.G) : ℝ := IW.toIwasawaPair.xi g
 
 /-- **`Ξ^G` depends on `K` only up to constants**: two Iwasawa data with the same flags (hence the
 same `P₀`) give equivalent functions, `c Ξ'(g) ≤ Ξ(g) ≤ C Ξ'(g)` (`IwasawaPair.exists_xi_equiv`;
-Waldspurger 2003 §II.1, BP §1.5). -/
+BP §1.5, p. 24, remark for special `K`; here any compact open `K`). -/
 theorem exists_xiHC_equiv (IW' : d.IwasawaDatum) (hW : IW.FW = IW'.FW) (hV : IW.FV = IW'.FV) :
     ∃ c C : ℝ, 0 < c ∧ 0 < C ∧
       ∀ g : ↥d.G, c * IW'.xiHC g ≤ IW.xiHC g ∧ IW.xiHC g ≤ C * IW'.xiHC g :=

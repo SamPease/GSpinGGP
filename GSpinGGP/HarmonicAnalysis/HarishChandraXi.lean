@@ -44,8 +44,9 @@ pairs of `M` and `H` (not built here).
   `i_{P}^G 1` form a line, i.e. `G = P K`; the proof here is a direct computation with the
   cocycle relation and the left invariance of `dk`.
 * **Independence of `K`** `IwasawaPair.exists_xi_equiv`: for two Iwasawa pairs `(P, K)`, `(P, K')`
-  with the same `P`, `c Ξ_{K'} ≤ Ξ_K ≤ C Ξ_{K'}` for constants `c, C > 0` (Waldspurger 2003, §II.1
-  and BP §1.5 remark without proof that another choice of `K` gives an equivalent function).
+  with the same `P`, `c Ξ_{K'} ≤ Ξ_K ≤ C Ξ_{K'}` for constants `c, C > 0`, for any compact open
+  `K`, `K'` (BP §1.5, p. 24, remarks without proof that other choices, with `K` special maximal
+  compact, give equivalent functions).
   Ingredients: `ρ_K ≤ C ρ_{K'}` (`rho_le_mul_rho`: the ratio is left `P`-invariant, hence
   determined by its values on the compact `K`), and the proportionality of the `K`- and
   `K'`-integrals on `δ_P`-equivariant functions (`exists_integral_K_eq_mul`).
@@ -621,8 +622,9 @@ theorem exists_xi_le_mul_xi [T2Space G] [SecondCountableTopology G] (J : Iwasawa
         exact hmono.trans_eq hJint
     _ = μI⁻¹ * c * C * μJ * J.xi g := by ring
 
-/-- **Independence of `K`** (Waldspurger 2003 §II.1; BP §1.5): for two Iwasawa pairs `(P, K)`,
-`(P, K')` with the same `P`, `Ξ_K` and `Ξ_{K'}` are equivalent: `c Ξ_{K'} ≤ Ξ_K ≤ C Ξ_{K'}`. -/
+/-- **Independence of `K`** (BP §1.5, p. 24, remark for special `K`; here any compact open `K`):
+for two Iwasawa pairs `(P, K)`, `(P, K')` with the same `P`, `Ξ_K` and `Ξ_{K'}` are
+equivalent: `c Ξ_{K'} ≤ Ξ_K ≤ C Ξ_{K'}`. -/
 theorem exists_xi_equiv [T2Space G] [SecondCountableTopology G] (J : IwasawaPair G)
     (hP : I.P = J.P) :
     ∃ c C : ℝ, 0 < c ∧ 0 < C ∧ ∀ g : G, c * J.xi g ≤ I.xi g ∧ I.xi g ≤ C * J.xi g := by
