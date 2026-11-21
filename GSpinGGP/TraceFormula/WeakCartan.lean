@@ -700,13 +700,79 @@ theorem torusZ_mul_extZ (τ : Fin d.r → Fˣ) (f : (Fin d.m → F) ≃ₗ[F] (F
   refine LinearEquiv.ext fun v => ?_
   rfl
 
-include hb in
+include hb hf in
 /-- **`fixer Q₀ b 1 = SO(W) ⊕ 1`** (converse of `extZ_mem_fixer`): an element of `SO(V₀)` fixing
 `w₀ = b 0 ∈ ⟨z₀⟩` is `g_W ⊕ 1` with `g_W ∈ SO(W)`. -/
 theorem exists_extZ_of_mem_fixer (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1 = 0)
     {g : d.V0 ≃ₗ[F] d.V0} (hg : g ∈ fixer d.Q0 b 1) :
     ∃ gW : SOGrp d.QW, d.base.extZ (gW : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) = g := by
-  sorry
+  have hSO : ∀ {g : d.V0 ≃ₗ[F] d.V0}, g ∈ fixer d.Q0 b 1 → g ∈ SOGrp d.Q0 := fun hg => by
+    rw [SOGrp_eq_specialOrthogonalGroup]; exact hg.1
+  have hn : 0 < n := hf.idx_lt (Nat.zero_le l)
+  -- `g` fixes `z₀`
+  have hz : ∀ {g : d.V0 ≃ₗ[F] d.V0}, g ∈ fixer d.Q0 b 1 → g d.z00 = d.z00 := by
+    intro g hg
+    set i0 : Fin n := ⟨0, hn⟩
+    have hfix : g (b i0) = b i0 := hg.2 i0 (by simp [i0])
+    have h1 : (b i0).1 = 0 := hb0 i0 rfl
+    have he : b i0 = (b i0).2 0 • d.z00 := by
+      refine Prod.ext (by simp [h1, z00]) ?_
+      simp only [z00, Prod.smul_snd]
+      exact fin_one_eq _
+    have hc : (b i0).2 0 ≠ 0 := by
+      intro h0; rw [h0, zero_smul] at he; exact b.ne_zero i0 he
+    rw [he, map_smul] at hfix
+    exact smul_right_injective _ hc hfix
+  -- `g` preserves `W × 0`
+  have hW : ∀ {g : d.V0 ≃ₗ[F] d.V0}, g ∈ fixer d.Q0 b 1 → ∀ w : Fin d.m → F,
+      (g ((w, 0) : d.V0)).2 = 0 := by
+    intro g hg w
+    apply d.snd_eq_zero_of_polar_z00
+    have hiso := (hSO hg).1
+    have : polar d.Q0 (g d.z00) (g ((w, 0) : d.V0)) = polar d.Q0 d.z00 (w, 0) := by
+      simp only [polar, ← map_add, hiso]
+    rw [hz hg] at this
+    rw [this, polar_comm, polar_Q0_of_snd rfl]
+    simp [z00]
+  have hgi := inv_mem hg
+  let f : (Fin d.m → F) →ₗ[F] (Fin d.m → F) :=
+    LinearMap.fst F _ _ ∘ₗ (g : d.V0 →ₗ[F] d.V0) ∘ₗ LinearMap.inl F _ _
+  let f' : (Fin d.m → F) →ₗ[F] (Fin d.m → F) :=
+    LinearMap.fst F _ _ ∘ₗ ((g⁻¹ : d.V0 ≃ₗ[F] d.V0) : d.V0 →ₗ[F] d.V0) ∘ₗ LinearMap.inl F _ _
+  have hf1 : ∀ w, g ((w, 0) : d.V0) = (f w, 0) := fun w => Prod.ext rfl (hW hg w)
+  have hf2 : ∀ w, g⁻¹ ((w, 0) : d.V0) = (f' w, 0) := fun w => Prod.ext rfl (hW hgi w)
+  let gW : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F) := LinearEquiv.ofLinearMap f f'
+    (LinearMap.ext fun w => by
+      have h := hf1 (f' w)
+      rw [← hf2, show g ((g⁻¹ : d.V0 ≃ₗ[F] d.V0) ((w, 0) : d.V0)) = (w, 0) by
+        rw [← LinearEquiv.mul_apply, mul_inv_cancel]; rfl] at h
+      exact (congrArg Prod.fst h).symm)
+    (LinearMap.ext fun w => by
+      have h := hf2 (f w)
+      rw [← hf1, show (g⁻¹ : d.V0 ≃ₗ[F] d.V0) (g ((w, 0) : d.V0)) = (w, 0) by
+        rw [← LinearEquiv.mul_apply, inv_mul_cancel]; rfl] at h
+      exact (congrArg Prod.fst h).symm)
+  have hext : d.base.extZ gW = g := by
+    refine LinearEquiv.ext fun v => ?_
+    obtain ⟨w, c⟩ := v
+    have e : ((w, c) : d.V0) = (w, 0) + c 0 • d.z00 := by
+      refine Prod.ext (by simp [z00]) ?_
+      simp only [z00, Prod.snd_add, Prod.smul_snd, zero_add]
+      exact fin_one_eq c
+    rw [e, map_add, map_add, map_smul, map_smul, hz hg, hf1]
+    simp only [extZ_apply, z00, map_zero]
+    rfl
+  refine ⟨⟨gW, fun w => ?_, ?_⟩, hext⟩
+  · have := (hSO hg).1 ((w, 0) : d.V0)
+    rw [hf1] at this
+    show d.QW (f w) = d.QW w
+    simpa [Q0] using this
+  · have h1 := (hSO hg).2
+    rw [← hext] at h1
+    change LinearMap.det ((gW.prodCongr (LinearEquiv.refl F _) : d.V0 ≃ₗ[F] d.V0) :
+      d.V0 →ₗ[F] d.V0) = 1 at h1
+    rwa [LinearEquiv.coe_prodCongr, LinearMap.det_prodMap, LinearEquiv.refl_toLinearMap,
+      LinearMap.det_id, mul_one] at h1
 
 /-- **Iwasawa decomposition for `P = GSpin(W) × P_V`** at the level of `Ḡ`: `Ḡ = P̄(P) K̄`
 with `K̄` bounded for `σ_{SO}`. -/
@@ -752,10 +818,10 @@ theorem exists_weakCartan_SO (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1 = 0
   have hm₀' : m₀ ∈ TauCeti.QuadraticMap.specialOrthogonalGroup d.Q0 := by
     rw [← SOGrp_eq_specialOrthogonalGroup]; exact hm₀
   obtain ⟨h', hh', s, hs, t, ht, kH, hkH, k, hk, hxe, hye⟩ := hWC _ hx0 m₀ hm₀'
-  obtain ⟨a', ha'⟩ := d.exists_extZ_of_mem_fixer hb hb0 hh'
-  obtain ⟨sW, hsW⟩ := d.exists_extZ_of_mem_fixer hb hb0
+  obtain ⟨a', ha'⟩ := d.exists_extZ_of_mem_fixer hb hf hb0 hh'
+  obtain ⟨sW, hsW⟩ := d.exists_extZ_of_mem_fixer hb hf hb0
     (inv_mem (multiTorus_mem_fixer hb hf s 1))
-  obtain ⟨kW, hkW⟩ := d.exists_extZ_of_mem_fixer hb hb0 (hCHs hkH)
+  obtain ⟨kW, hkW⟩ := d.exists_extZ_of_mem_fixer hb hf hb0 (hCHs hkH)
   -- the `W`-part
   have hW : ((d.Pbar p).1 : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) =
       (a' : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) * sW * kW := by
