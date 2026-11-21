@@ -188,7 +188,7 @@ theorem IsFlagSplitting.repr_eq_zero_of_bform (hQ : IsNondeg Q) (hs : IsFlagSpli
     by_cases hk : wt k = -c
     · have h1 : bform Q (b k) (v - x) = 0 := hsum k _ fun l hl => by
         simp only [x, map_sub, Finsupp.sub_apply, repr_wtProj]
-        rw [ite_cond_eq_true _ _ (eq_true (by omega)), sub_self]
+        simp only [show wt l = c by omega, ite_true, sub_self]
       rw [map_sub, hv k hk, zero_sub, neg_eq_zero] at h1
       rw [h1, mul_zero]
     · rw [hs.bform_eq_zero_of_isHomog (x := b k) (a := wt k)
@@ -330,6 +330,63 @@ theorem IsFlagSplitting.isFlagSplitting_oppFlag (hQ : IsNondeg Q) (hs : IsFlagSp
       omega
 
 end Opposite
+
+/-! ## 1b. The determinant characters of `M_F` -/
+
+section WtDet
+
+variable {K : Type*} [Field K]
+variable {V : Type*} [AddCommGroup V] [Module K V]
+variable {ι : Type*} {b : Basis ι K V} {wt : ι → ℤ}
+
+theorem wtProj_comp_self (w : ℤ) : wtProj b wt w ∘ₗ wtProj b wt w = wtProj b wt w :=
+  b.ext fun j => by by_cases h : wt j = w <;> simp [wtProj_basis, h]
+
+variable (b wt) in
+/-- `A` on the weight-`w` space, the identity on the others: `E_w A + (1 − E_w)`.  For `A`
+commuting with `E_w`, its determinant is `det(A|_{V_w})`. -/
+def wtBlock (w : ℤ) (A : V →ₗ[K] V) : V →ₗ[K] V :=
+  wtProj b wt w ∘ₗ A + (LinearMap.id - wtProj b wt w)
+
+theorem wtBlock_comp {w : ℤ} {A B : V →ₗ[K] V} (hA : A ∘ₗ wtProj b wt w = wtProj b wt w ∘ₗ A) :
+    wtBlock b wt w A ∘ₗ wtBlock b wt w B = wtBlock b wt w (A ∘ₗ B) := by
+  have hE : wtProj b wt w * wtProj b wt w = wtProj b wt w := wtProj_comp_self w
+  have hA' : A * wtProj b wt w = wtProj b wt w * A := hA
+  set E := wtProj b wt w
+  change (E * A + (1 - E)) * (E * B + (1 - E)) = E * (A * B) + (1 - E)
+  have hy : E * (1 - E) = 0 := by rw [mul_sub, mul_one, hE, sub_self]
+  have hy' : (1 - E) * E = 0 := by rw [sub_mul, one_mul, hE, sub_self]
+  have hyy : (1 - E) * (1 - E) = 1 - E := by rw [mul_sub, mul_one, hy', sub_zero]
+  have h1 : E * A * (E * B) = E * (A * B) := by
+    rw [mul_assoc, ← mul_assoc A E B, hA', mul_assoc, ← mul_assoc E E, hE]
+  have h2 : E * A * (1 - E) = 0 := by
+    rw [mul_assoc, mul_sub, mul_one, hA', mul_sub, ← mul_assoc E E A, hE, sub_self]
+  have h3 : (1 - E) * (E * B) = 0 := by rw [← mul_assoc, hy', zero_mul]
+  rw [add_mul, mul_add, mul_add, h1, h2, h3, hyy, add_zero, zero_add]
+
+theorem wtBlock_id (w : ℤ) : wtBlock b wt w LinearMap.id = LinearMap.id := by
+  simp [wtBlock]
+
+variable {Q : QuadraticForm K V} [Invertible (2 : K)]
+
+variable (b wt) in
+/-- **The determinant character** `m ↦ det(m|_{V_w})` of the Levi subgroup `M_F` on the weight-`w`
+space of the splitting (for `w > 0` the `GL(Z_i/Z_{i−1})`-factor of `M_F`, Asgari 2002 §2). -/
+def wtDet (w : ℤ) : flagLevi (Q := Q) b wt →* Kˣ :=
+  MonoidHom.toHomUnits
+    { toFun := fun m => LinearMap.det (wtBlock b wt w (specP Q (m : GSpin Q) : V →ₗ[K] V))
+      map_one' := by simp [wtBlock_id]
+      map_mul' := fun m m' => by
+        rw [← map_mul, Subgroup.coe_mul, map_mul]
+        change _ = LinearMap.det (wtBlock b wt w _ ∘ₗ wtBlock b wt w _)
+        rw [wtBlock_comp (m.2 w)]
+        rfl }
+
+theorem wtDet_apply (w : ℤ) (m : flagLevi (Q := Q) b wt) :
+    ((wtDet (Q := Q) b wt w m : Kˣ) : K) =
+      LinearMap.det (wtBlock b wt w (specP Q (m : GSpin Q) : V →ₗ[K] V)) := rfl
+
+end WtDet
 
 /-! ## 2. Levi subgroups of `P = P_{F_W} × P_{F_V}` -/
 
