@@ -662,6 +662,69 @@ split torus of `SO(W)`, which has no chamber condition; if `V` is a hyperbolic p
 unconstrained. -/
 def cone : Set d.G := d.Pbar ⁻¹' d.coneSO hb hf
 
+/-! ### Ingredients of the weak Cartan decomposition of `Ḡ` -/
+
+omit hb hf in
+/-- `glMax` is continuous on `GL(E)` (for the topology of `E ≃ₗ[F] E` induced by `(g, g⁻¹)`). -/
+theorem continuous_glMaxNorm {E : Type*} [NormedAddCommGroup E] [NormedSpace F E]
+    [FiniteDimensional F E] : Continuous (glMaxNorm : (E ≃ₗ[F] E) → ℝ) := by
+  haveI : IsModuleTopology F (Module.End F E) := ⟨rfl⟩
+  have h0 : Continuous fun f : Module.End F E => LinearMap.toContinuousLinearMap f :=
+    IsModuleTopology.continuous_of_linearMap
+      (LinearMap.toContinuousLinearMap : (E →ₗ[F] E) ≃ₗ[F] (E →L[F] E)).toLinearMap
+  have h1 : Continuous fun g : E ≃ₗ[F] E => LinearMap.toContinuousLinearMap (g : E →ₗ[F] E) :=
+    h0.comp TauCeti.continuous_linearEquiv_toLinearMap
+  have h2 : Continuous fun g : E ≃ₗ[F] E =>
+      LinearMap.toContinuousLinearMap ((g⁻¹ : E ≃ₗ[F] E) : E →ₗ[F] E) :=
+    h1.comp continuous_inv
+  exact continuous_const.max (h1.norm.max h2.norm)
+
+omit hb hf in
+/-- `g ↦ g ⊕ 1` on `V₀ = W ⊕ ⟨z₀⟩` is injective. -/
+theorem base_extZ_injective : Function.Injective (d.base.extZ) := fun f g h =>
+  LinearEquiv.ext fun w => congrArg Prod.fst (LinearEquiv.congr_fun h ((w, 0) : d.V0))
+
+omit hb hf in
+/-- `(g ⊕ 1_{z₀}) ⊕ 1 = g ⊕ 1` on `V`. -/
+theorem extV0_base_extZ (f : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) :
+    d.extV0 (d.base.extZ f) = d.extZ f := by
+  refine LinearEquiv.ext fun v => ?_
+  rw [extV0_apply, extZ_apply]
+  refine Prod.ext ?_ ?_
+  · simp [pi0, iota0_apply, extZ_apply]
+  · simp [pi0, iota0_apply, extZ_apply]
+
+omit hb hf in
+theorem torusZ_mul_extZ (τ : Fin d.r → Fˣ) (f : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) :
+    d.torusZ τ * d.extZ f = d.extZ f * d.torusZ τ := by
+  refine LinearEquiv.ext fun v => ?_
+  rfl
+
+include hb in
+/-- **`fixer Q₀ b 1 = SO(W) ⊕ 1`** (converse of `extZ_mem_fixer`): an element of `SO(V₀)` fixing
+`w₀ = b 0 ∈ ⟨z₀⟩` is `g_W ⊕ 1` with `g_W ∈ SO(W)`. -/
+theorem exists_extZ_of_mem_fixer (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1 = 0)
+    {g : d.V0 ≃ₗ[F] d.V0} (hg : g ∈ fixer d.Q0 b 1) :
+    ∃ gW : SOGrp d.QW, d.base.extZ (gW : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) = g := by
+  sorry
+
+/-- **Iwasawa decomposition for `P = GSpin(W) × P_V`** at the level of `Ḡ`: `Ḡ = P̄(P) K̄`
+with `K̄` bounded for `σ_{SO}`. -/
+theorem exists_iwasawa_SO :
+    ∃ M, ∀ y : d.GbarGrp, ∃ p : d.G, d.snd p ∈ flagStab d.flag ∧
+      ∃ k : d.GbarGrp, d.logNormSO k ≤ M ∧ y = d.Pbar p * k := by
+  sorry
+
+/-- **Levi decomposition of `P_V` at the level of `SO(V)`** (Thesis §5.1.2, §8.3): for `p` in the
+stabilizer of `⟨z_r⟩ ⊂ ⋯ ⊂ ⟨z_r, …, z_1⟩`, `P(p) = P(n) a(τ) (m ⊕ 1)` with `n ∈ N`,
+`m ∈ SO(V₀)`. -/
+theorem exists_levi_SO {p : GSpin d.QV} (hp : p ∈ flagStab d.flag) :
+    ∃ nn ∈ d.N, ∃ (τ : Fin d.r → Fˣ) (m : d.V0 ≃ₗ[F] d.V0), m ∈ SOGrp d.Q0 ∧
+      specP d.QV p = specP d.QV nn * (d.torusZ τ * d.extV0 m) := by
+  sorry
+
+-- The products in `SO(W) × SO(V)` make elaboration slow here.
+set_option maxHeartbeats 1600000 in
 include hb in
 /-- **Thesis Lemma 8.3.2(ii) at the level of `SO(W) × SO(V)`** (BP Lemma 6.6.2(ii)), for the
 explicit good pair of `weakCartan_G0_SO`: `Ḡ = P̄(H) · A₀⁺A(F) · K̄` with `K̄` bounded for
@@ -676,7 +739,85 @@ extending that flag, e.g. `z_r, …, z_1, u₁, u₂, …`); (b) Levi decomposit
 theorem exists_weakCartan_SO (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1 = 0) :
     ∃ M, ∀ y : d.GbarGrp, ∃ h ∈ d.H, ∃ x ∈ d.coneSO hb hf, ∃ k : d.GbarGrp,
       d.logNormSO k ≤ M ∧ y = d.Pbar h * x * k := by
-  sorry
+  obtain ⟨M₁, hI⟩ := d.exists_iwasawa_SO
+  obtain ⟨C_H, C, hCH, hCHs, hC, hCs, hWC⟩ := weakCartan_G0_SO hb hf
+  obtain ⟨BH, hBH⟩ := hCH.bddAbove_image continuous_glMaxNorm.continuousOn
+  obtain ⟨BC, hBC⟩ := hC.bddAbove_image continuous_glMaxNorm.continuousOn
+  set B := max (max 1 BH) (3 * max 1 BC)
+  have hB1 : 1 ≤ B := le_max_of_le_left (le_max_left _ _)
+  refine ⟨M₁ + (1 + Real.log B), fun y => ?_⟩
+  obtain ⟨p, hp, k₁, hk₁, rfl⟩ := hI y
+  obtain ⟨nn, hnn, τ, m₀, hm₀, hpV⟩ := d.exists_levi_SO hp
+  have hx0 := d.base.extZ_mem_fixer (b := b) hb0 (d.Pbar p).1
+  have hm₀' : m₀ ∈ TauCeti.QuadraticMap.specialOrthogonalGroup d.Q0 := by
+    rw [← SOGrp_eq_specialOrthogonalGroup]; exact hm₀
+  obtain ⟨h', hh', s, hs, t, ht, kH, hkH, k, hk, hxe, hye⟩ := hWC _ hx0 m₀ hm₀'
+  obtain ⟨a', ha'⟩ := d.exists_extZ_of_mem_fixer hb hb0 hh'
+  obtain ⟨sW, hsW⟩ := d.exists_extZ_of_mem_fixer hb hb0
+    (inv_mem (multiTorus_mem_fixer hb hf s 1))
+  obtain ⟨kW, hkW⟩ := d.exists_extZ_of_mem_fixer hb hb0 (hCHs hkH)
+  -- the `W`-part
+  have hW : ((d.Pbar p).1 : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) =
+      (a' : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) * sW * kW := by
+    apply d.base_extZ_injective
+    rw [hxe, map_mul, map_mul, ha', hsW, hkW]
+  -- lifts
+  obtain ⟨ã, hã⟩ : ∃ ã : GSpin d.QW, specP d.QW ã = a' := by
+    have hmem : ((a' : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F))) ∈ (specP d.QW).range := by
+      rw [range_specP_eq_SOGrp d.nondeg]; exact a'.2
+    exact hmem
+  set h : d.G := d.pair (ã, nn * d.incl ã)
+  have hh : h ∈ d.H := by
+    show (d.incl (d.fst h))⁻¹ * d.snd h ∈ d.N
+    have e : (d.incl (d.fst h))⁻¹ * d.snd h = (d.incl ã)⁻¹ * nn * ((d.incl ã)⁻¹)⁻¹ := by
+      simp only [h, fst_pair, snd_pair, inv_inv, mul_assoc]
+    rw [e]
+    exact flagUnip_conj ((flagStab _).inv_mem (d.incl_mem_flagStab ã)) hnn
+  have hPincl : specP d.QV (d.incl ã) = d.extZ a' := by
+    refine LinearEquiv.ext fun v => ?_
+    rw [d.specP_incl_apply, extZ_apply, hã]
+  set y0 : d.V0 ≃ₗ[F] d.V0 := (multiTorus hb hf 0 t)⁻¹
+  have hxV : d.torusZ τ * d.extV0 y0 ∈ SOGrp d.QV :=
+    mul_mem (d.torusZ_mem_SOGrp τ) (d.extV0_mem_SOGrp (d.inv_multiTorus_mem_SOGrp hb hf 0 t))
+  have hkV : d.extV0 k ∈ SOGrp d.QV := d.extV0_mem_SOGrp (by
+    rw [SOGrp_eq_specialOrthogonalGroup]; exact hCs hk)
+  set x : d.GbarGrp := (sW, ⟨_, hxV⟩)
+  set kk : d.GbarGrp := (kW, ⟨_, hkV⟩)
+  refine ⟨h, hh, x, ⟨s, t, τ, hs, ht, hsW, rfl⟩, kk * k₁, ?_, ?_⟩
+  · -- the bound
+    have hkk : d.logNormSO kk ≤ 1 + Real.log B := by
+      unfold logNormSO
+      have hgW : glMaxNorm (kW : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) ≤ max 1 BH := by
+        have := glMaxNorm_prodCongr_refl (Z := Fin (2 * 0 + 1) → F)
+          (kW : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F))
+        rw [← this]
+        exact le_max_of_le_right (hBH ⟨kH, hkH, by rw [← hkW]; rfl⟩)
+      have hgV : glMaxNorm (d.extV0 k) ≤ 3 * max 1 BC :=
+        (d.glMaxNorm_extV0_le k).trans (by
+          have := hBC ⟨k, hk, rfl⟩
+          have : glMaxNorm k ≤ max 1 BC := le_max_of_le_right this
+          linarith)
+      have h1 : 1 ≤ max (glMaxNorm (kW : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)))
+          (glMaxNorm (d.extV0 k)) := le_max_of_le_left (one_le_glMaxNorm _)
+      have := Real.log_le_log (by linarith) (max_le_max (hgW.trans (le_max_left _ _))
+        (hgV.trans (le_max_right _ _)) |>.trans (max_self B).le)
+      show 1 + Real.log (max (glMaxNorm (kW : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)))
+          (glMaxNorm (d.extV0 k))) ≤ _
+      linarith
+    have := d.logNormSO_mul_le kk k₁
+    linarith
+  · -- the identity
+    rw [← mul_assoc]
+    congr 1
+    refine Prod.ext (Subtype.ext ?_) (Subtype.ext ?_)
+    · show ((d.Pbar p).1 : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) = specP d.QW ã * sW * kW
+      rw [hW, hã]
+    · show specP d.QV (d.snd p) = specP d.QV (nn * d.incl ã) * (d.torusZ τ * d.extV0 y0) *
+        d.extV0 k
+      rw [hpV, hye, map_mul (specP d.QV) nn, hPincl, map_mul d.extV0, map_mul d.extV0, ← ha',
+        extV0_base_extZ]
+      simp only [mul_assoc]
+      rw [← mul_assoc (d.torusZ τ), torusZ_mul_extZ, mul_assoc]
 
 include hb in
 /-- **Thesis Lemma 8.3.2(ii)** (BP Lemma 6.6.2(ii)) for `G = GSpin(W) × GSpin(V)`, for the
