@@ -147,7 +147,7 @@ def ScuspSurjOn (d : GGPData F) (Ω : Set ↥d.G) : Prop :=
               ∂Measure.haar
 
 /-- **The elliptic regular set is relatively compact modulo conjugation and `A_G(F)`**
-(`p`-adic, Harish-Chandra): there is a compact `K ⊆ \overline{G(F)_{ell,reg}}` such that every
+(`p`-adic; standard, no exact reference located): there is a compact `K ⊆ \overline{G(F)_{ell,reg}}` such that every
 elliptic regular `g` is `a · x c x⁻¹` with `a ∈ A_G(F)`, `x ∈ G(F)`, `c ∈ K`.
 
 Proof sketch (not formalized): there are finitely many `G(F)`-conjugacy classes of maximal
@@ -186,15 +186,17 @@ p. 5), so they apply to `G = GSpin(W) × GSpin(V)` and to its centralizers `G_x`
 an elliptic regular `y` near `g` is conjugate into `x exp(ω)`, its centralizer torus `T` lies in
 `G_x`, so `A_{G_x} ⊆ T` and `T/A_G` anisotropic give `A_{G_x} = A_G`.  Take a compact open good `ω`
 and `U = A_G(F) · (x exp ω)^{G(F)}` (it contains `g`, since `ω` is open, `G_x`-invariant and contains
-`0`, so contains the nilpotent part of `log(x⁻¹ g)`).  The translates `a (x exp ω)^{G(F)}`, `a ∈
-A_G(F)`, are open and closed (W1 uses such sets as `G`-domains, e.g. `ω_G` in the proof of Prop. 6.4;
-the precise reference is unverified), pairwise equal or disjoint for `ω` small, and locally finite,
-so `U` is open and closed.
-A `θ₀` as in `ScuspSurjOn d U` meets finitely many translates; on each, its descent to `𝔤_x(F)`
-(W1 §4.1) is a quasi-character with compact support modulo conjugation, which is `θ_φ` (Prop. 6.4),
-lifted to `f` (Lemme 6.2) and translated by `a`; summing gives `f₀`.  Finally W1's `θ_f` (defined by
-weighted orbital integrals, W1 §5.3) represents the orbital pairing (BP Thm 5.5.1(iv) with the Weyl
-integration formula, as in `bp_thetaF_represents`).
+`0`, so contains the nilpotent part of `log(x⁻¹ g)`).  **Unverified:** (a) that `(x exp ω)^{G(F)}` is
+closed (W1 uses such sets as `G`-domains, e.g. `ω_G` in the proof of Prop. 6.4; no precise
+reference located); (b) that the translates `a (x exp ω)^{G(F)}`, `a ∈ A_G(F)`, form a locally
+finite family of sets that are pairwise equal or disjoint, so that `U` is closed (this needs `ω`
+chosen compatibly with the central directions: `exp Z · x exp X = x exp(X + Z)` for small central
+`Z`, which need not stay in `ω`); (c) the splitting of rational classes inside a stable
+neighbourhood.  A `θ₀` as in `ScuspSurjOn d U` meets finitely many translates; on each, its descent
+to `𝔤_x(F)` (W1 §4.1) is a quasi-character with compact support modulo conjugation, which is `θ_φ`
+(Prop. 6.4), lifted to `f` (Lemme 6.2) and translated by `a`; summing gives `f₀`.  Finally W1's
+`θ_f` (defined by weighted orbital integrals, W1 §5.3) represents the orbital pairing (BP Thm
+5.5.1(iv) with the Weyl integration formula, as in `bp_thetaF_represents`).
 
 **Why not axioms.**  W1's `θ_f`, `θ_{f,x,ω}` and very cuspidal functions on `𝔤_x(F)` (with the
 parabolic subgroups of `G_x`) are not defined in this development, so W1 Prop. 6.4 and Lemme 6.2
