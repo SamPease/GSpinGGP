@@ -19,7 +19,7 @@ The statements in §1 are the interface consumed by
   for `θ` in the span `QCfin d` of the `QC(G, χ)`, the integrals `m_{geom,s}(θ)` converge
   absolutely for `s > 0` (hence are linear in `θ`), and the limit `s → 0⁺` exists.  §0b proves
   these from the precisely stated inputs `finite_gammaClass`, `germ_bound_of_mem_QC` (BP Prop
-  4.5.1), `aestronglyMeasurable_torusFn_of_mem_QC`, `integrable_delta_rpow` (BP Lemma B.1.2(i)
+  4.1.1(ii), per orbit), `aestronglyMeasurable_torusFn_of_mem_QC`, `integrable_delta_rpow` (BP Lemma B.1.2(i)
   plus the eigenvalues of `t` on `W''`) and `tendsto_mGeomS_of_mem_QC` (the thesis's induction for
   one `χ`).  `integrable_delta_rpow` is proved from `bp_integrable_deltaGGP_rpow` (the GSpin
   consequence of B.1.2(i), proved through the `exp` chart from its Lie-algebra form
@@ -183,7 +183,7 @@ function `(D^G)^{1/2} c_{θ,O}` is locally bounded (BP Prop 4.5.1), so it suffic
 `∫_{Γ(G,H)} Δ(x)^{s - 1/2} dx` converges for `Re s > 0`, which is BP Lemma B.1.2(i).
 
 Here that argument is split torus by torus into three precisely stated inputs (the first
-proved in `TraceFormula/GermBoundTorus.lean`, the second proved from three SORRY inputs on `T(F)`
+proved from `finite_nilReg` (SORRY) in `TraceFormula/GermBoundTorus.lean`, the second proved from three SORRY inputs on `T(F)`
 in `TraceFormula/TorusDescent.lean`, the third proved from `bp_integrable_deltaGGP_rpow`), whose
 combination is proved
 (`isTorusIntegrable_of_mem_QC`):
@@ -208,7 +208,7 @@ on `T_♮ = {t | t ∈ Γ(G,H), T_t = T}` because `T(F) = A_{G,H}(F)·K` for a c
 BP Prop 4.5.1 is stated for the averaged `c_θ`; the bound for each individual `c_{θ,O}` is
 proved here from BP Prop 4.1.1(ii) (local boundedness of `(D^G)^{1/2} θ`) by evaluating the local
 expansion at finitely many points along rays `x e^{ϖ^{2k} X}` (`germ_bound_of_mem_QC_aux`,
-`TraceFormula/GermBoundTorus.lean`). Status: proved (uses `finite_nilReg`). -/
+`TraceFormula/GermBoundTorus.lean`). Status: proved from `finite_nilReg` (SORRY). -/
 theorem germ_bound_of_mem_QC {χ : CentralCharOn d} {θ : ↥d.G → ℂ} (hθ : θ ∈ QC d χ)
     (T : Subgroup ↥(GSpin d.QW)) :
     ∃ C : ℝ, ∀ t : ↥(GSpin d.QW), d.IsGammaElt t → d.torusOf t = T →

@@ -11,16 +11,15 @@ import GSpinGGP.Foundations.LocalGroups
 The linear algebra behind `D^G(x e^{cX}) = D^G(x) |c|^{δ} D^{G_x}(X)` for small `c ≠ 0`
 (BP Astérisque 418, §3.3; Harish-Chandra).
 
-* `charpoly_eq_mul_of_isCompl`: `charpoly M = charpoly(M|_P) charpoly(M|_R)` for `E = P ⊕ R`,
-  both `M`-stable;
-* `trailingCoeff_charpoly_of_det_ne_zero`: `trailing(charpoly f) = (−1)^{dim} det f` if
-  `det f ≠ 0`;
+The block-diagonal facts (`charpoly_eq_mul_of_isCompl`, `trailingCoeff_charpoly_of_det_ne_zero`)
+are in `Foundations/Determinant.lean`.
+
 * `tendsto_det_comp_comp_subtype`: determinants of compressions converge when the family converges
   pointwise (read through an injective linear map into a space with its module topology);
 * `eventually_absF_eq_of_tendsto`: `|·|_F` is locally constant away from `0` (ultrametric `F`);
-* `eventually_absF_trailingCoeff_charpoly`: let `S`, `D` be commuting semisimple endomorphisms
-  of `E` and `N_c` (`c ∈ F`) endomorphisms commuting with `S` and `D`, vanishing on
-  `ker S ∩ ker D`, with `N_c → S` and `c⁻¹ N_c → −D` on `ker S` as `c → 0`. Then for small
+* `eventually_absF_trailingCoeff_charpoly`: let `S`, `D` be semisimple endomorphisms of `E`
+  with `D` preserving `ker S`, and `N_c` (`c ∈ F`) endomorphisms commuting with `S` and `D`,
+  vanishing on `ker S ∩ ker D`, with `N_c → S` and `c⁻¹ N_c → −D` on `ker S` as `c → 0`. Then for small
   `c ≠ 0`,
   `|trail charpoly N_c| = |trail charpoly S| · |c|^{dim ker S − dim ker D'} ·
   |trail charpoly D'|`, where `D' = D|_{ker S}`.
@@ -34,43 +33,6 @@ set_option linter.unusedSectionVars false
 
 namespace GSpinGGP
 
-section Algebra
-
-variable {K E : Type*} [Field K] [AddCommGroup E] [Module K E] [FiniteDimensional K E]
-
-/-- **Characteristic polynomial of a block-diagonal endomorphism**: for `E = P ⊕ R` with both
-summands `M`-stable, `charpoly M = charpoly(M|_P) charpoly(M|_R)`. -/
-theorem charpoly_eq_mul_of_isCompl {M : Module.End K E} {P R : Submodule K E} (h : IsCompl P R)
-    (hP : ∀ v ∈ P, M v ∈ P) (hR : ∀ v ∈ R, M v ∈ R) :
-    M.charpoly = (M.restrict hP).charpoly * (M.restrict hR).charpoly := by
-  obtain ⟨e, he⟩ : ∃ e : (P × R) ≃ₗ[K] E, ∀ q : P × R, e q = (q.1 : E) + (q.2 : E) :=
-    ⟨Submodule.prodEquivOfIsCompl P R h, Submodule.coe_prodEquivOfIsCompl' P R h⟩
-  have hφ : e.symm.conj M = (M.restrict hP).prodMap (M.restrict hR) := by
-    refine LinearMap.ext fun q => e.injective ?_
-    change e (e.symm (M (e q))) = _
-    rw [LinearEquiv.apply_symm_apply, he, he, map_add]
-    simp [LinearMap.coe_restrict_apply]
-  rw [← LinearEquiv.charpoly_conj e.symm M, hφ, LinearMap.charpoly_prodMap]
-
-/-- If `det f ≠ 0`, the trailing coefficient of `charpoly f` is `(−1)^{dim} det f`. -/
-theorem trailingCoeff_charpoly_of_det_ne_zero {f : Module.End K E} (h : LinearMap.det f ≠ 0) :
-    f.charpoly.trailingCoeff = (-1) ^ Module.finrank K E * LinearMap.det f := by
-  have hc0 : f.charpoly.coeff 0 ≠ 0 := by
-    intro h0
-    have := LinearMap.det_eq_sign_charpoly_coeff f
-    rw [h0, mul_zero] at this
-    exact h this
-  rw [Polynomial.trailingCoeff_eq_coeff_zero hc0, LinearMap.det_eq_sign_charpoly_coeff, ← mul_assoc,
-    ← pow_add, ← two_mul, pow_mul, neg_one_sq, one_pow, one_mul]
-
-/-- The trailing coefficient of the characteristic polynomial of `0` is `1`. -/
-theorem trailingCoeff_charpoly_zero :
-    (0 : Module.End K E).charpoly.trailingCoeff = 1 := by
-  rw [LinearMap.charpoly_zero, Polynomial.trailingCoeff, Polynomial.natTrailingDegree_X_pow,
-    Polynomial.coeff_X_pow_self]
-
-end Algebra
-
 section Limits
 
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
@@ -78,19 +40,8 @@ variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 /-- **`|·|_F` is locally constant away from `0`**: if `f → a ≠ 0`, then eventually
 `|f|_F = |a|_F`. -/
 theorem eventually_absF_eq_of_tendsto {α : Type*} {l : Filter α} {f : α → F} {a : F}
-    (hf : Tendsto f l (𝓝 a)) (ha : a ≠ 0) : ∀ᶠ c in l, absF (f c) = absF a := by
-  have hpos : 0 < ‖a‖ := norm_pos_iff.mpr ha
-  filter_upwards [hf (Metric.ball_mem_nhds a hpos)] with c hc
-  rw [Set.mem_preimage, Metric.mem_ball, dist_eq_norm] at hc
-  refine absF_eq_of_norm_eq ha ?_
-  have := IsUltrametricDist.norm_add_eq_max_of_norm_ne_norm (ne_of_gt hc)
-  rwa [add_sub_cancel, max_eq_left hc.le] at this
-
-/-- `|a^n|_F = |a|_F^n`. -/
-theorem absF_pow' (a : F) (n : ℕ) : absF (a ^ n) = absF a ^ n := by
-  induction n with
-  | zero => simp [absF_one]
-  | succ n ih => rw [pow_succ, absF_mul, ih, pow_succ]
+    (hf : Tendsto f l (𝓝 a)) (ha : a ≠ 0) : ∀ᶠ c in l, absF (f c) = absF a :=
+  hf.eventually (eventually_absF_eq ha)
 
 /-- `|(−1)^n z|_F = |z|_F`. -/
 theorem absF_neg_one_pow_mul (n : ℕ) (z : F) : absF ((-1) ^ n * z) = absF z := by
@@ -127,8 +78,8 @@ variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 variable {E A : Type*} [AddCommGroup E] [Module F E] [FiniteDimensional F E]
   [AddCommGroup A] [Module F A] [TopologicalSpace A] [IsModuleTopology F A]
 
-/-- **Trailing coefficients along a degenerating family.** Let `S`, `D` be commuting semisimple
-endomorphisms of `E`, and `N_c` (`c ∈ F`) endomorphisms which for small `c ≠ 0` commute with `S`
+/-- **Trailing coefficients along a degenerating family.** Let `S`, `D` be semisimple endomorphisms
+of `E` with `D(ker S) ⊆ ker S`, and `N_c` (`c ∈ F`) endomorphisms which for small `c ≠ 0` commute with `S`
 and `D` and vanish on `ker S ∩ ker D`, such that `N_c → S` and, on `ker S`, `c⁻¹ N_c → −D`
 (pointwise, read through an injective linear map `ι` into a space with its module topology).
 Then for small `c ≠ 0`,
@@ -254,7 +205,7 @@ theorem eventually_absF_trailingCoeff_charpoly (ι : E →ₗ[F] A) (hι : Funct
   have habsC : absF (LinearMap.det ((N c).restrict hNC)) =
       absF c ^ Module.finrank F C * absF (LinearMap.det (D.restrict hDC)) := by
     have := hcC
-    rw [hsmulC, LinearMap.det_smul, hnegD, absF_mul, absF_neg_one_pow_mul, absF_pow', absF_inv]
+    rw [hsmulC, LinearMap.det_smul, hnegD, absF_mul, absF_neg_one_pow_mul, absF_pow, absF_inv]
       at this
     have hcpos : 0 < absF c ^ Module.finrank F C := pow_pos (absF_pos hc0') _
     rw [inv_pow] at this

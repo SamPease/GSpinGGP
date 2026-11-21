@@ -7,6 +7,7 @@ import GSpinGGP.TraceFormula.GermHomogeneous
 import GSpinGGP.TraceFormula.TorusDescent
 import GSpinGGP.Literature.BPQuasiCharacter
 import GSpinGGP.Foundations.CharpolyLimit
+import GSpinGGP.Foundations.ExpHaar
 
 /-!
 # The bound on `(D^G)^{1/2} c_{θ,O_t}(t)` on `T_♮`
@@ -132,52 +133,12 @@ theorem mem_nilReg_congr {G₁ G₂ : Subgroup d.ambientˣ} {𝔤₁ 𝔤₂ : L
   cases h
   rfl
 
-/-- `t ↦ diag t` is continuous from `GSpin(W)(F)` to `G(F)`. -/
-theorem continuous_diag : Continuous fun t : ↥(GSpin d.QW) => d.diag t := by
-  refine Continuous.subtype_mk (Units.continuous_iff.mpr ⟨continuous_coe_diag d, ?_⟩) _
-  have : Continuous fun t : ↥(GSpin d.QW) =>
-      (((d.diag t⁻¹ : ↥d.G) : d.ambientˣ) : d.ambient) :=
-    (continuous_coe_diag d).comp continuous_inv
-  simpa [map_inv] using this
-
-/-- **Points `x e^Y`, `Y → 0`, eventually lie in a given neighbourhood of `x` in `G(F)`.** -/
+/-- **Points `x e^Y`, `Y → 0`, eventually lie in a given neighbourhood of `x` in `G(F)`**
+(`eventually_mul_expA_mem` for `G(F) ≤ (C(W) × C(V))ˣ`). -/
 theorem eventually_mem_of_mul_expA (x : ↥d.G) {U : Set ↥d.G} (hU : U ∈ 𝓝 x) :
     ∀ᶠ Y in 𝓝 (0 : d.ambient), ∀ y : ↥d.G,
-      ((y : d.ambientˣ) : d.ambient) = ((x : d.ambientˣ) : d.ambient) * expA F Y → y ∈ U := by
-  have := isTopologicalRing_of_moduleTopology F d.ambient
-  -- the topology of `G(F)` is induced by `g ↦ (g, g⁻¹)` into `A × Aᵐᵒᵖ`
-  have hind : Topology.IsInducing fun g : ↥d.G => Units.embedProduct d.ambient (g : d.ambientˣ) :=
-    Units.isInducing_embedProduct.comp Topology.IsInducing.subtypeVal
-  rw [hind.nhds_eq_comap, Filter.mem_comap] at hU
-  obtain ⟨W, hW, hWU⟩ := hU
-  set a : d.ambient := ((x : d.ambientˣ) : d.ambient)
-  set ai : d.ambient := (((x : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient)
-  have hc : ContinuousAt (fun Y : d.ambient =>
-      ((a * expA F Y, MulOpposite.op (expA F (-Y) * ai)) : d.ambient × d.ambientᵐᵒᵖ)) 0 := by
-    refine ContinuousAt.prodMk (continuousAt_const.mul (continuousAt_expA_at_zero F)) ?_
-    refine MulOpposite.continuous_op.continuousAt.comp (ContinuousAt.mul ?_ continuousAt_const)
-    exact ContinuousAt.comp_of_eq (g := expA F) (f := fun Y : d.ambient => -Y)
-      (continuousAt_expA_at_zero F) continuous_neg.continuousAt neg_zero
-  have h0 : ((a * expA F 0, MulOpposite.op (expA F (-0) * ai)) : d.ambient × d.ambientᵐᵒᵖ) =
-      Units.embedProduct d.ambient (x : d.ambientˣ) := by
-    simp [expA_zero_eq_one, a, ai, Units.embedProduct]
-  obtain ⟨U₁, hU₁, hinv⟩ := expA_mul_expA_neg F (A := d.ambient)
-  have hc' : Tendsto (fun Y : d.ambient =>
-      ((a * expA F Y, MulOpposite.op (expA F (-Y) * ai)) : d.ambient × d.ambientᵐᵒᵖ)) (𝓝 0)
-      (𝓝 (Units.embedProduct d.ambient (x : d.ambientˣ))) := by
-    rw [← h0]; exact hc
-  filter_upwards [hc' hW, hU₁] with Y hY hY₁ y hy
-  refine hWU ?_
-  have hyi : (((y : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient) = expA F (-Y) * ai := by
-    refine Units.inv_eq_of_mul_eq_one_right ?_
-    rw [hy, mul_assoc, ← mul_assoc (expA F Y), hinv Y hY₁, one_mul]
-    exact Units.mul_inv _
-  change Units.embedProduct d.ambient (y : d.ambientˣ) ∈ W
-  have : Units.embedProduct d.ambient (y : d.ambientˣ) =
-      ((a * expA F Y, MulOpposite.op (expA F (-Y) * ai)) : d.ambient × d.ambientᵐᵒᵖ) := by
-    simp [Units.embedProduct, hy, hyi, a]
-  rw [this]
-  exact hY
+      ((y : d.ambientˣ) : d.ambient) = ((x : d.ambientˣ) : d.ambient) * expA F Y → y ∈ U :=
+  eventually_mul_expA_mem F hU
 
 end Basic
 
@@ -185,62 +146,23 @@ end Basic
 
 section Disc
 
-omit [PAdicField F] in
 /-- **The derivative of `c ↦ e^{cX}` at `0` is `X`**: `c⁻¹ (e^{cX} − 1) → X` as `c → 0`, `c ≠ 0`
-(`exp` of the Banach algebra `End(F^d)` through `lmulPi`,
-`hasDerivAt_exp_smul_const_of_mem_ball`). -/
-theorem tendsto_inv_smul_expA_sub_one [PAdicField F] {A : Type*} [Ring A] [Algebra F A]
+(from `e^Y − 1 = Y u(Y)` with `u` continuous at `0`, `u(0) = 1`, `exists_expA_sub_one_eq_mul`). -/
+theorem tendsto_inv_smul_expA_sub_one {A : Type*} [Ring A] [Algebra F A]
     [Module.Finite F A] [TopologicalSpace A] [IsModuleTopology F A] (X : A) :
     Tendsto (fun c : F => c⁻¹ • (expA F (c • X) - 1)) (𝓝[≠] 0) (𝓝 X) := by
   have := isTopologicalRing_of_moduleTopology F A
   have := IsModuleTopology.toContinuousSMul F A
-  obtain ⟨U, hU, -, h⟩ := expA_aux F (A := A)
-  set M := lmulPi F X
-  have hball : (0 : F) • M ∈ Metric.eball
-      (0 : (Fin (Module.finrank F A) → F) →L[F] (Fin (Module.finrank F A) → F))
-      (NormedSpace.expSeries F
-        ((Fin (Module.finrank F A) → F) →L[F] (Fin (Module.finrank F A) → F))).radius := by
-    rw [zero_smul, Metric.mem_eball, edist_self]
-    exact expSeries_radius_pos_of_pAdic F _
-  have hd := (hasDerivAt_exp_smul_const_of_mem_ball (𝕂 := F) M 0 hball).tendsto_slope_zero
-  rw [zero_smul, NormedSpace.exp_zero, one_mul] at hd
-  have hmap := ((lmulPiInv F).continuous.tendsto _).comp hd
-  rw [Function.comp_def, lmulPiInv_lmulPi] at hmap
-  refine hmap.congr' ?_
-  have hcU : ∀ᶠ c in 𝓝[≠] (0 : F), c • X ∈ U :=
-    nhdsWithin_le_nhds ((continuous_id.smul continuous_const).continuousAt.preimage_mem_nhds
-      (by simpa using hU))
-  filter_upwards [hcU] with c hc
-  obtain ⟨-, -, he⟩ := h _ hc
-  have hsm : lmulPi F (c • X) = c • M := (lmulPiₗ F).map_smul c X
-  rw [zero_add, ← hsm, ← he, ← lmulPi_one F]
-  have : c⁻¹ • (lmulPi F (expA F (c • X)) - lmulPi F 1) =
-      lmulPi F (c⁻¹ • (expA F (c • X) - 1)) := by
-    rw [show lmulPi F = lmulPiₗ F from rfl, map_smul, map_sub]
-  rw [this, lmulPiInv_lmulPi]
-
-/-- `Ad g` restricted to `𝔤`. -/
-abbrev adRestrict (g : ↥d.G) : Module.End F d.lie.toSubmodule :=
-  (conjAd F (g : d.ambientˣ)).toLinearEquiv.toLinearMap.restrict (lie_conj_stable d g)
-
-theorem coe_adRestrict (g : ↥d.G) (v : d.lie.toSubmodule) :
-    ((adRestrict d g v : d.lie.toSubmodule) : d.ambient) =
-      ((g : d.ambientˣ) : d.ambient) * v * (((g : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient) := rfl
-
-/-- `1 − Ad g` and `1 − Ad h` commute for commuting `g, h ∈ G(F)`. -/
-theorem commute_oneSubAd {g h : ↥d.G} (hc : Commute g h) :
-    Commute (oneSubAd d g) (oneSubAd d h) := by
-  have hR : Commute (adRestrict d g) (adRestrict d h) := by
-    refine LinearMap.ext fun v => Subtype.ext ?_
-    simp only [mul_apply_eq_comp, coe_adRestrict]
-    have e1 := congrArg (fun k : ↥d.G => ((k : d.ambientˣ) : d.ambient)) hc.eq
-    have e2 := congrArg (fun k : ↥d.G => (((k⁻¹ : ↥d.G) : d.ambientˣ) : d.ambient)) hc.eq
-    simp only [Subgroup.coe_mul, Units.val_mul, mul_inv_rev, InvMemClass.coe_inv] at e1 e2
-    calc _ = (((g : d.ambientˣ) : d.ambient) * ((h : d.ambientˣ) : d.ambient)) * (v : d.ambient) *
-          ((((h : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient) *
-            (((g : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient)) := by simp only [mul_assoc]
-      _ = _ := by rw [e1, e2]; simp only [mul_assoc]
-  exact (Commute.one_left _).sub_left ((Commute.one_right _).sub_right hR)
+  obtain ⟨u, hu, hu0, hev⟩ := exists_expA_sub_one_eq_mul (F := F) (A := A)
+  have hcX : Tendsto (fun c : F => c • X) (𝓝[≠] 0) (𝓝 0) := by
+    have : Tendsto (fun c : F => c • X) (𝓝 0) (𝓝 ((0 : F) • X)) :=
+      (continuous_id.smul continuous_const).tendsto 0
+    rw [zero_smul] at this; exact this.mono_left nhdsWithin_le_nhds
+  have hu' : Tendsto (fun c : F => X * u (c • X)) (𝓝[≠] 0) (𝓝 X) := by
+    simpa [hu0] using tendsto_const_nhds.mul ((hu.tendsto).comp hcX)
+  refine hu'.congr' ?_
+  filter_upwards [hcX.eventually hev, self_mem_nhdsWithin] with c hh hc
+  rw [hh.1, smul_mul_assoc, smul_smul, inv_mul_cancel₀ hc, one_smul]
 
 /-- `ad X` on `𝔤`, for `X ∈ 𝔤`. -/
 def adLie {X : d.ambient} (hX : X ∈ d.lie) : Module.End F d.lie.toSubmodule :=
@@ -269,6 +191,7 @@ theorem commute_oneSubAd_adLie {g : ↥d.G} {X : d.ambient} (hX : X ∈ d.lie)
         _ = gv * v * (gi * X) := by rw [hgX']
         _ = _ := by simp only [mul_assoc]
     rw [mul_sub, sub_mul, h1, h2]
+  rw [oneSubAd_eq_one_sub_adRestrict]
   exact (Commute.one_left _).sub_left hR
 
 /-- **`D^G(x e^{λX}) = D^G(x) |λ|^{δ} D^{G_x}(X)` for small `λ ≠ 0`** (BP Astérisque 418, §3.3 and
@@ -794,7 +717,8 @@ theorem norm_sqrt_weylDisc_mul_germ_le_of_eq (hθ : IsQuasiCharacter d.G d.lie d
 every `t ∈ Γ(G,H)` with `T_t = T_x`, every neighbourhood `U` of `t` and every `B ≥ 0` bounding
 `(D^G)^{1/2}|θ|` on the regular points of `U`, `D^G(t)^{1/2} |c_{θ,O_t}(t)| ≤ K B`. The
 centralizers and `O_t` do not depend on `t ∈ T_♮`, so the directions and constants of
-`exists_finset_bound_nilReg_coeff` at `x` serve every `t`. Uses `finite_nilReg`. -/
+`exists_finset_bound_nilReg_coeff` at `x` serve every `t`. Status: proved from `finite_nilReg`
+(SORRY). -/
 theorem exists_uniform_germ_bound (hθ : IsQuasiCharacter d.G d.lie d.bilin ψ θ)
     {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x) :
     ∃ K : ℝ, 0 ≤ K ∧ ∀ t : ↥(GSpin d.QW), d.IsGammaElt t → d.torusOf t = d.torusOf x →
@@ -853,7 +777,7 @@ on `T(F)` is `A_{G,H}(F)`-invariant and bounded near every point of `T(F)`: at `
 Prop 4.1.1(ii) (`bp_sqrt_weylDisc_mul_locallyBounded`) bounds `(D^G)^{1/2}|θ|` on the regular points
 of a neighbourhood `U` of `t₁`, and `exists_uniform_germ_bound` converts this into a bound at every
 `t ∈ T_♮` near `t₁`. As `T(F)/A_{G,H}(F)` is compact, the function is bounded
-(`exists_bound_of_locallyBounded`). -/
+(`exists_bound_of_locallyBounded`). Status: proved from `finite_nilReg` (SORRY). -/
 theorem germ_bound_of_mem_QC_aux {χ : CentralCharOn d} {θ : ↥d.G → ℂ} (hθ : θ ∈ QC d χ)
     (T : Subgroup ↥(GSpin d.QW)) :
     ∃ C : ℝ, ∀ t : ↥(GSpin d.QW), d.IsGammaElt t → d.torusOf t = T →
