@@ -10,6 +10,7 @@ import GSpinGGP.TraceFormula.MGeom
 import GSpinGGP.TraceFormula.Analytic
 import GSpinGGP.TraceFormula.Scusp
 import GSpinGGP.TraceFormula.Spectral
+import GSpinGGP.GGP.MultOne
 
 /-!
 # Whole-system checks on the toy datum
@@ -20,9 +21,11 @@ the path of the main theorem meet the definitions in one instance.
 * **The multiplicity formula for `π = 1`**, both sides computed separately
   (`toyD_multFormula_trivialRep`): `m(1) = 1` from the definition and `emoryTakeda_mult_le_one`;
   `θ_1(1) = 1` from `rodier_germ_one` and `hc_character_isQuasiCharacter`; `m_geom(θ) = θ(1)` for
-  every `θ ∈ QC(χ)` from the definitions.  In all it uses the axioms `emoryTakeda_mult_le_one`,
-  `rodier_germ_one`, `hc_character_exists`, `hc_character_isQuasiCharacter`,
-  `hc_regular_open_dense_conull`, `jantzen_finrank_soCentMat_ge` (the last three through
+  every `θ ∈ QC(χ)` from the definitions.  In all it uses the axioms `panYan_mult_le_one`,
+  `flath_tensor_decomposition`, `cartier_smoothVectors_dense_admissible` (through the theorem
+  `emoryTakeda_mult_le_one`), `rodier_germ_one`, `hc_character_exists_admissible`,
+  `hc_character_isQuasiCharacter_admissible`, `hc_regular_open_dense_conull`,
+  `jantzen_finrank_soCentMat_ge` (the last three through
   `charG_mem_QC`) and `exists_isSelfDual`.
 * **`sorry` statements, conclusions proved at `toyD`** without them:
   `tendsto_mGeomS_of_mem_QC` and `germ_bound_of_mem_QC` for every `θ ∈ QC(χ)`
@@ -188,8 +191,9 @@ theorem toyD_charG_trivialRep_one (ψ : NontrivialAddChar F) :
   exact h1
 
 /-- **The multiplicity formula for `π = 1` on `toyD`**, both sides computed separately:
-`m(1) = 1 = m_geom(θ_1)`.  Axioms used: `emoryTakeda_mult_le_one`, `rodier_germ_one`,
-`hc_character_exists`, `hc_character_isQuasiCharacter`, `hc_regular_open_dense_conull`,
+`m(1) = 1 = m_geom(θ_1)`.  Axioms used: `panYan_mult_le_one`, `flath_tensor_decomposition`,
+`cartier_smoothVectors_dense_admissible`, `rodier_germ_one`, `hc_character_exists_admissible`,
+`hc_character_isQuasiCharacter_admissible`, `hc_regular_open_dense_conull`,
 `jantzen_finrank_soCentMat_ge`, `exists_isSelfDual`. -/
 theorem toyD_multFormula_trivialRep (ψ : NontrivialAddChar F) :
     ((mult ψ (𝕋) (trivialRep ↥(𝕋).G)).toNat : ℂ) =
@@ -200,17 +204,8 @@ theorem toyD_multFormula_trivialRep (ψ : NontrivialAddChar F) :
 
 /-! ## `kernelK_bound_scusp` -/
 
-theorem toyD_xiHC (IW : (𝕋).IwasawaDatum) (g : ↥(𝕋).G) : IW.xiHC g = 1 := by
-  have hδ : ∀ x : ↥(𝕋).G, IW.toIwasawaPair.rho x = 1 := fun x =>
-    IW.toIwasawaPair.delta_eq_one_of_central _ fun y => Subtype.ext (by
-      simp only [Subgroup.coe_mul]; exact toyD_G_comm _ _)
-  unfold GGPData.IwasawaDatum.xiHC IwasawaPair.xi
-  simp_rw [hδ, Real.sqrt_one]
-  rw [integral_const, smul_eq_mul, mul_one, measureReal_def]
-  have h0 : (Measure.haar : Measure ↥IW.K) Set.univ ≠ 0 :=
-    isOpen_univ.measure_ne_zero Measure.haar Set.univ_nonempty
-  have ht : (Measure.haar : Measure ↥IW.K) Set.univ ≠ ⊤ := measure_ne_top _ _
-  exact inv_mul_cancel₀ (ENNReal.toReal_ne_zero.mpr ⟨h0, ht⟩)
+theorem toyD_xiHC (IW : (𝕋).IwasawaDatum) (g : ↥(𝕋).G) : IW.xiHC g = 1 :=
+  IW.toIwasawaPair.xi_eq_one_of_comm toyD_G_comm g
 
 theorem toyD_xiHG (C₀ : Set ↥(𝕋).G) (hC₀ : C₀.Nonempty) (q : (𝕋).HGQuot) :
     (𝕋).xiHG C₀ q = 1 := by

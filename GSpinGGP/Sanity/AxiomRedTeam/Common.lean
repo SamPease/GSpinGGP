@@ -45,12 +45,7 @@ theorem opOf_trivialRep {f : G → ℂ} (hf : f ∈ testFunctions G) (v : (trivi
 /-- `tr 1(f) = ∫_G f` for the trivial representation. -/
 theorem traceOf_trivialRep {f : G → ℂ} (hf : f ∈ testFunctions G) :
     traceOf (trivialRep G) f = ∫ g, f g ∂(Measure.haar : Measure G) := by
-  have hG : ∀ U ∈ nhds (1 : G), ∃ K : Subgroup G,
-      IsOpen (K : Set G) ∧ IsCompact (K : Set G) ∧ (K : Set G) ⊆ U := fun U hU => by
-    obtain ⟨K, hKc, hKU⟩ :=
-      NonarchimedeanGroup.nhds_one_hasBasis_isCompact_openSubgroup.mem_iff.1 hU
-    exact ⟨K, K.isOpen, hKc, hKU⟩
-  obtain ⟨K, hKo, hKc, hKb⟩ := exists_biInvariant hG hf
+  obtain ⟨K, hKo, hKc, hKb⟩ := exists_biInvariant exists_compactOpenSubgroup_subset hf
   have : FiniteDimensional ℂ (trivialRep G).H := inferInstanceAs (FiniteDimensional ℂ ℂ)
   have hTD : TraceDatum (trivialRep G) f K :=
     ⟨hKo, hKc, hKb, inferInstance, fun v hv => opOf_mem_fixedSpace _ hf hKb hv⟩

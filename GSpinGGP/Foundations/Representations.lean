@@ -246,11 +246,19 @@ theorem mem_smoothVectors_iff (π : UnitaryRep G) {v : π.H} :
     v ∈ smoothVectors π ↔ ∃ U : Subgroup G, IsOpen (U : Set G) ∧ ∀ u ∈ U, π.ρ u v = v := by
   rw [← SetLike.mem_coe, coe_smoothVectors, Set.mem_ofPred_eq]
 
-/-- The action of `G` on `π^∞` (Thesis Ch. 1: "this subspace is `G(F)`-invariant"); it is
+/-- The smooth representation of `G` on `π^∞` (Thesis Ch. 1: "this subspace is `G(F)`-invariant"):
 Tau Ceti's `Subrepresentation.toRepresentation` of `Representation.smoothVectors`. -/
-def smoothAction (π : UnitaryRep G) (g : G) :
+abbrev smoothRep (π : UnitaryRep G) : Representation ℂ G ↥(smoothVectors π) :=
+  π.toRepresentation.smoothVectors.toRepresentation
+
+@[simp]
+theorem smoothRep_apply (π : UnitaryRep G) (g : G) (v : ↥(smoothVectors π)) :
+    ((smoothRep π g v : ↥(smoothVectors π)) : π.H) = π.ρ g v := rfl
+
+/-- The action of `G` on `π^∞`: `smoothRep π g`. -/
+abbrev smoothAction (π : UnitaryRep G) (g : G) :
     ↥(smoothVectors π) →ₗ[ℂ] ↥(smoothVectors π) :=
-  π.toRepresentation.smoothVectors.toRepresentation g
+  smoothRep π g
 
 @[simp]
 theorem smoothAction_apply (π : UnitaryRep G) (g : G) (v : ↥(smoothVectors π)) :
