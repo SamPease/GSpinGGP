@@ -3944,6 +3944,10 @@ theorem fst_pair (p : GSpin d.QW × GSpin d.QV) : d.fst (d.pair p) = p.1 := rfl
 /-- `snd ∘ pair = Prod.snd` (`rfl`). -/
 theorem snd_pair (p : GSpin d.QW × GSpin d.QV) : d.snd (d.pair p) = p.2 := rfl
 
+/-- `pair ∘ (fst, snd) = id`. -/
+theorem pair_fst_snd (g : ↥d.G) : d.pair (d.fst g, d.snd g) = g := by
+  apply Subtype.ext; apply Units.ext; rfl
+
 /-- `A_G(K)`, the `K`-points of the maximal split central torus of `G = GSpin(W) × GSpin(V)`
 (Thesis §2.1 "split component", §7.1): `A_{GSpin(W)} × A_{GSpin(V)}`, where
 `A_{GSpin(U)}` is all of `GSpin(U)` for a hyperbolic plane `U` and the scalars otherwise

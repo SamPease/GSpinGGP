@@ -154,6 +154,7 @@ import GSpinGGP.TraceFormula.Basic
 import GSpinGGP.TraceFormula.SpinorNorm
 import GSpinGGP.TraceFormula.ThetaF
 import GSpinGGP.TraceFormula.Analytic
+import GSpinGGP.TraceFormula.FlagLevi
 import GSpinGGP.TraceFormula.GoodParabolic
 import GSpinGGP.TraceFormula.WeakCartan
 import GSpinGGP.TraceFormula.ConeTorus
@@ -176,6 +177,7 @@ import GSpinGGP.HarmonicAnalysis.RelativeXi
 import GSpinGGP.HarmonicAnalysis.PolynomialGrowth
 import GSpinGGP.HarmonicAnalysis.LatticeGrowth
 import GSpinGGP.HarmonicAnalysis.QuotientUnimodular
+import GSpinGGP.HarmonicAnalysis.HarishChandraXi
 import GSpinGGP.Foundations.CosetSpaceTranslate
 import GSpinGGP.Foundations.CosetSpaceTopology
 import GSpinGGP.Foundations.NormDescent
