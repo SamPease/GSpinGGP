@@ -48,7 +48,8 @@ def IsComplement'.proj [N.Normal] (h : H.IsComplement' N) : G →* H :=
 theorem IsComplement'.proj_mul [N.Normal] (h : H.IsComplement' N) (x : H) {n : G} (hn : n ∈ N) :
     h.proj ((x : G) * n) = x := by
   rw [proj, MonoidHom.comp_apply, QuotientGroup.mk'_apply,
-    show (((x : G) * n : G) : G ⧸ N) = ((x : G) : G ⧸ N) from QuotientGroup.eq.mpr (by simpa using hn)]
+    show (((x : G) * n : G) : G ⧸ N) = ((x : G) : G ⧸ N) from
+      QuotientGroup.eq.mpr (by simpa using hn)]
   exact h.quotientMulEquiv_mk x
 
 theorem IsComplement'.proj_coe [N.Normal] (h : H.IsComplement' N) (x : H) : h.proj x = x := by

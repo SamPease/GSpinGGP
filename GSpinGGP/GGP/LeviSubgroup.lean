@@ -393,12 +393,13 @@ section WtDetContinuous
 variable {K : Type*} [Field K] [Invertible (2 : K)] [TopologicalSpace K] [IsTopologicalRing K]
 variable {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V] [TopologicalSpace V]
   [IsModuleTopology K V]
-variable {Q : QuadraticForm K V} {ι : Type*} [Fintype ι] [DecidableEq ι] {b : Basis ι K V}
-  {wt : ι → ℤ}
+variable {Q : QuadraticForm K V} {ι : Type*} [Finite ι] {b : Basis ι K V} {wt : ι → ℤ}
 
 /-- The determinant characters are continuous. -/
 theorem continuous_wtDet (w : ℤ) :
     Continuous fun m : flagLevi (Q := Q) b wt => ((wtDet (Q := Q) b wt w m : Kˣ) : K) := by
+  classical
+  have := Fintype.ofFinite ι
   simp_rw [wtDet_apply, ← LinearMap.det_toMatrix b]
   refine Continuous.matrix_det (continuous_pi fun i => continuous_pi fun j => ?_)
   simp only [LinearMap.toMatrix_apply, wtBlock, LinearMap.add_apply, LinearMap.comp_apply,
