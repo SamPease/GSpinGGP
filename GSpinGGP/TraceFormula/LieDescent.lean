@@ -192,7 +192,7 @@ integrands vanish off `exp(ω ∩ 𝔱⁰(F))` resp. `ω ∩ 𝔱⁰(F)` (`germ_
 `ω ∩ 𝔤⁰_reg(F)` (both represent the orbital pairing of `f_ω`, the Haar measure of `G(F)` being
 `da·dX` on `A_G(F)·exp(ω)`; `isThetaFLie_eqOn_regular`); for `t = e^X`, `X ∈ ω ∩ 𝔱⁰_♮(F)`:
 `D^G(e^X) = D^G(X)`, `Δ(e^X) = Δ(X)`, the fixed space of `e^X` is `ker X`, `G_{e^X} = G_X`,
-`𝔤_{e^X} = 𝔷 ⊕ 𝔤⁰_X`, and `c_{θ_f,O}(e^X) = c_{θ_F,O}(X)` (Thesis Prop 4.5.1.1(iv)); finally `exp`
+`𝔤_{e^X} = 𝔷 ⊕ 𝔤⁰_X`, and `c_{θ_f,O}(e^X) = c_{θ_F,O}(X)` (BP Prop 4.5.1.1(iv)); finally `exp`
 carries the measure of `𝔱⁰(F)` to the probability measure of `T(F)/A_{G,H}(F)` on
 `ω ∩ 𝔱⁰(F)` (`IsExpCompatT`, extended from a neighbourhood of `0` to the subgroup of elements with
 small eigenvalues, on which `exp` is a homomorphism). -/
