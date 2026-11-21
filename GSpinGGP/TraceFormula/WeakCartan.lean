@@ -37,7 +37,8 @@ Let `d` be a GGP datum, `V = W ⊕ ⟨z₀⟩ ⊕ ⟨z_{±1}, …, z_{±r}⟩`, 
 * `GGPData.weakCartanData`: the `WeakCartanData d.mkHG d.logNormModAG` with cone
   `S = A_G A₀⁺ A(F)` (`GGPData.cone`), taking the polynomial growth of the cone modulo `A_G`
   (BP (6.7.12)) as hypotheses; `GGPData.prop_6_7_1_iii_of_growth` feeds it to
-  `prop_6_7_1_iii_of_weakCartanData`.
+  `prop_6_7_1_iii_of_weakCartanData`. The hypotheses are discharged by
+  `GGPData.exists_growth_cone` (`TraceFormula/ConeTorus.lean`).
 
 The good pair is the explicit one of `weakCartan_G0_SO` (frame `b` of `V₀` with `b 0 ∈ ⟨z₀⟩`).
 Only `F` `p`-adic is treated.
@@ -1378,7 +1379,8 @@ Prop. 6.7.1(iii) = Thesis Prop. 8.4.1(iii)), with cone `S = A_G A₀⁺ A(F)` (`
 * `σ_{A_G\G} ≪ σ_{H\G}` on the cone (`logNormModAG_le_fiberInf_of_cone`, Thesis Prop.
   8.4.1(ii)(b), via the reduction from `G` to `G₀`),
 * and, **taken as hypotheses here**, the polynomial growth of the cone modulo `A_G` (BP (6.7.12)):
-  `CS`, `M`, `N` and `growth`, stated exactly as the field `WeakCartanData.growth` for `S = cone`. -/
+  `CS`, `M`, `N` and `growth`, stated exactly as the field `WeakCartanData.growth` for `S = cone`
+  (supplied by `exists_growth_cone`, `TraceFormula/ConeTorus.lean`). -/
 def weakCartanData (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1 = 0) (CS : Set d.G)
     (hCS : IsCompact CS) (M : ℝ) (N : ℕ)
     (growth : ∀ R : ℝ, 1 ≤ R → ∃ t : Finset d.G, (t.card : ℝ) ≤ M * (1 + R) ^ N ∧

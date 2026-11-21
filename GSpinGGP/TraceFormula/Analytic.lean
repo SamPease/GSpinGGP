@@ -35,9 +35,9 @@ of Thesis Ch. 8 and 10 and proves the bookkeeping around it.
 ## Results
 
 * Proved: `kernelK_integrable` (the integral defining `K(f,x)` converges for
-  `f ∈ ScuspTestFn`), `kernelK_add`, `kernelK_smul`, `distribJ_add`, `distribJ_smul`,
-  `distribJ_convergent` (from `kernelK_bound_scusp`, `prop_6_7_1_iii` and the continuity of
-  `K(f,·)` on `H(F)\G(F)/A_G(F)`, `continuous_kernelK_repHG`),
+  `f ∈ ScuspTestFn`), `kernelK_add`, `kernelK_smul`, `distribJ_smul`, the continuity of
+  `K(f,·)` on `H(F)\G(F)/A_G(F)` (`continuous_kernelK_repHG`; `distribJ_convergent`,
+  `distribJ_add` and Thesis Prop 8.4.1(iii) `prop_6_7_1_iii` are in `TraceFormula/ConeTorus.lean`),
   `scuspTestFn_subset_scuspSchwartz` (`C_c^∞` strongly cuspidal functions are Schwartz), and the
   supporting lemmas: continuity of `λ` and `ξ`, properties of `δ_{P₀}` and a lower bound for
   `Ξ^G` on compact sets, van Dantzig's theorem, uniform local constancy, log-norm lemmas.
@@ -53,7 +53,7 @@ of Thesis Ch. 8 and 10 and proves the bookkeeping around it.
   regularity of the Weil measure it uses is found by instance search from the Hausdorff, locally
   compact and second countable instances on `HGQuot`).
 * `sorry` (own work, Thesis Ch. 8 and 10, adapted from BP Ch. 6, 8): `kernelK_bound` (Thm 10.1.1(i)),
-  `kernelK_bound_scusp` (Thm 10.1.1(ii)), `prop_6_7_1_iii` (Thesis Prop 8.4.1(iii)),
+  `kernelK_bound_scusp` (Thm 10.1.1(ii)),
   `lemma_6_5_1_i/ii/iii` (Thesis Lemma 8.2.1); `exists_good_minimal_parabolic` (Thesis
   Prop 8.1.1(i)) is proved from `TraceFormula/GoodParabolic.lean` except for the Haar-null
   complement of `H(F) P̄(F)` (an inline `sorry`).
@@ -933,16 +933,6 @@ theorem prop_6_7_1_iii_of_weakCartanData (C₀ : Set ↥d.G) (hC₀ : IsCompact 
     d.isLogNorm_logNormModAG (d.logNormHG_eq_fiberInf_logNormModAG ▸ d.measurable_logNormHG) W
     hC₀ hC₀' (d.xiHG_mkHG C₀)
 
-/-- **Thesis Prop 8.4.1(iii)** (adapted from BP Prop 6.7.1(iii)): there is `d > 0` with
-`∫_{H(F)\G(F)/A_G(F)} Ξ^{H\G}(x)² σ_{H\G}(x)^{-d} dx < ∞`.  Stated for every compact `C₀`
-with nonempty interior defining `Ξ^{H\G} = Ξ^{H\G}_{C₀}` (`xiHG`); the thesis fixes one such
-`C₀`, and different choices give equivalent functions (Thesis §8.4).  Own work; not proved
-here. -/
-theorem prop_6_7_1_iii (C₀ : Set ↥d.G) (hC₀ : IsCompact C₀) (hC₀' : (interior C₀).Nonempty) :
-    ∃ d₀ : ℝ, 0 < d₀ ∧
-      Integrable (fun q : d.HGQuot => d.xiHG C₀ q ^ 2 * d.logNormHG q ^ (-d₀)) d.weilMeasureHG := by
-  sorry
-
 /-- **`K(f,·)` is continuous on `H(F)\G(F)/A_G(F)`** for `f` `χ`-equivariant and bi-invariant
 under a compact open subgroup `K'`: it is right `K'`-invariant, hence locally constant on `G(F)`,
 and it is left `H(F)`- and right `A_G(F)`-invariant (`kernelK_mul_left_H`, `kernelK_mul_AG`), so
@@ -977,40 +967,6 @@ theorem continuous_kernelK_repHG (f : ↥d.G → ℂ) (hchi : IsChiEquivariant d
     rfl
   rw [heq]
   exact hφ
-
-/-- **`J(f)` converges** for `f ∈ ScuspTestFn d χ` (Thesis §10.1): `f` is Schwartz
-(`scuspTestFn_subset_scuspSchwartz`), so Thm 10.1.1(ii) (`kernelK_bound_scusp`) bounds
-`|K(f,x)|` by a multiple of `Ξ^{H\G}(x)² σ_{H\G}(x)^{-d}` for every `d > 0`, which is integrable
-for `d` large by Thesis Prop 8.4.1(iii) (`prop_6_7_1_iii`); `K(f,·)` is continuous on
-`H(F)\G(F)/A_G(F)` (`continuous_kernelK_repHG`). -/
-theorem distribJ_convergent (f : ↥d.G → ℂ) (hf : f ∈ ScuspTestFn d χ) :
-    Integrable (fun q : d.HGQuot => kernelK d ψ f (d.repHG q)) d.weilMeasureHG := by
-  obtain ⟨IW⟩ := d.exists_iwasawaDatum
-  have hf' := d.scuspTestFn_subset_scuspSchwartz χ IW hf
-  obtain ⟨⟨K', hK'o, hK'c, hbi⟩, hchi, -⟩ := hf'.1
-  have hC₀' : (interior (K' : Set ↥d.G)).Nonempty :=
-    ⟨1, mem_interior_iff_mem_nhds.2 (hK'o.mem_nhds K'.one_mem)⟩
-  obtain ⟨d₀, hd₀, hint⟩ := d.prop_6_7_1_iii (K' : Set ↥d.G) hK'c hC₀'
-  obtain ⟨C, n, hb⟩ := d.kernelK_bound_scusp χ ψ IW (K' : Set ↥d.G) hK'c hC₀' d₀ hd₀ K' hK'o hK'c
-  refine (hint.const_mul (C * d.schwartzSeminorm IW n f)).mono'
-    (d.continuous_kernelK_repHG χ ψ f hchi hK'o hbi).aestronglyMeasurable
-    (Filter.Eventually.of_forall fun q => ?_)
-  have := hb f hf' hbi (d.repHG q)
-  rw [d.mkHG_repHG] at this
-  simpa only [mul_assoc] using this
-
-/-- `J` is additive on `ScuspTestFn d χ` (Thesis §10.1: `J` is a linear form). -/
-theorem distribJ_add (f g : ↥d.G → ℂ) (hf : f ∈ ScuspTestFn d χ) (hg : g ∈ ScuspTestFn d χ) :
-    distribJ d ψ (f + g) = distribJ d ψ f + distribJ d ψ g := by
-  have e : ∀ q : d.HGQuot, kernelK d ψ (f + g) (d.repHG q) =
-      kernelK d ψ f (d.repHG q) + kernelK d ψ g (d.repHG q) :=
-    fun q => d.kernelK_add χ ψ f g hf hg _
-  unfold distribJ
-  change ∫ q, kernelK d ψ (f + g) (d.repHG q) ∂d.weilMeasureHG =
-    ∫ q, kernelK d ψ f (d.repHG q) ∂d.weilMeasureHG +
-      ∫ q, kernelK d ψ g (d.repHG q) ∂d.weilMeasureHG
-  simp_rw [e]
-  exact integral_add (d.distribJ_convergent χ ψ f hf) (d.distribJ_convergent χ ψ g hg)
 
 /-- `J(c f) = c J(f)` (Thesis §10.1); no hypothesis needed. -/
 theorem distribJ_smul (c : ℂ) (f : ↥d.G → ℂ) :
