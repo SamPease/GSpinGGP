@@ -808,6 +808,16 @@ theorem isHypFrame_orthFrame {Q : QuadraticForm K V} {n : ℕ} {e f : Fin n → 
     IsHypFrame Q (orthFrame Q e f) e f :=
   ⟨hee, hff, hef, fun _ => Iff.rfl⟩
 
+/-- A hyperbolic frame pushed along a map `ι` that preserves the polar forms is a hyperbolic frame,
+with complement `orthFrame`. -/
+theorem IsHypFrame.orthFrame_comp {V' : Type*} [AddCommGroup V'] [Module K V']
+    {Q' : QuadraticForm K V'} {W' : Submodule K V'} {n : ℕ} {e f : Fin n → V'}
+    (hF : IsHypFrame Q' W' e f) {Q : QuadraticForm K V} (ι : V' → V)
+    (hι : ∀ x y, polar Q (ι x) (ι y) = polar Q' x y) :
+    IsHypFrame Q (orthFrame Q (ι ∘ e) (ι ∘ f)) (ι ∘ e) (ι ∘ f) :=
+  isHypFrame_orthFrame (fun i j => (hι _ _).trans (hF.polar_ee i j))
+    (fun i j => (hι _ _).trans (hF.polar_ff i j)) (fun i j => (hι _ _).trans (hF.polar_ef i j))
+
 end OrthFrame
 
 section TotallyIsotropic

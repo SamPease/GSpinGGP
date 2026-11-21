@@ -96,7 +96,7 @@ Inputs from the literature: the spectral expansion of `J^Lie` (Thesis Thm 11.6.1
 §9–10; Luo Thm 6.6.1), the endgame facts (BP §3.4, §11.9, Props 4.5.1, 4.6.1; Luo Lemma B.3.1,
 Prop 7.3.7; Waldspurger 2010 §11.4–11.6), the descent machinery (BP Prop 5.7.1, Prop 4.4.1(v),
 (3.2.5), (3.3.2), (11.1.2), Lemmas 11.1.1–11.1.2, Lemma B.1.2), and the convergence of `J`
-(Thesis Thm 10.1.1; `TraceFormula/Analytic.lean`). -/
+(Thesis Thm 10.1.1; `TraceFormula/Analytic.lean`, `TraceFormula/ConeTorus.lean`). -/
 theorem geomAt_of_hyp (d : GGPData F) (h : HYP ψ d) (χ : CentralCharOn d) : GeomAt ψ d χ := by
   intro f hf
   -- near `A_G(F)` (`Lie.lean`) and away from it (`Geometric.lean`), glued by a clopen cut
