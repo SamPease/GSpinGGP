@@ -84,7 +84,7 @@ theorem pi0_extV0Fun (g : d.V0 ≃ₗ[F] d.V0) (v : d.V) :
 theorem extV0Fun_mul (g h : d.V0 ≃ₗ[F] d.V0) (v : d.V) :
     d.extV0Fun (g * h) v = d.extV0Fun g (d.extV0Fun h v) := by
   rw [d.extV0Fun_apply g, d.pi0_extV0Fun, d.extV0Fun_apply h, d.extV0Fun_apply,
-    LinearEquiv.mul_apply, add_assoc, ← map_add]
+    mul_apply_eq_comp, add_assoc, ← map_add]
   congr 2; abel
 
 theorem extV0Fun_one (v : d.V) : d.extV0Fun 1 v = v := by
@@ -177,9 +177,9 @@ theorem torusCoeff_inv (τ : Fin d.r → Fˣ) (i : Fin (2 * d.r + 1)) :
 theorem torusZ_inv (τ : Fin d.r → Fˣ) : (d.torusZ τ)⁻¹ = d.torusZ τ⁻¹ := by
   rw [inv_eq_iff_mul_eq_one]
   refine LinearEquiv.ext fun v => ?_
-  rw [LinearEquiv.mul_apply, torusZ_apply, torusZ_apply]
+  rw [mul_apply_eq_comp, torusZ_apply, torusZ_apply]
   refine Prod.ext rfl (funext fun i => ?_)
-  simp only [torusCoeff_inv, ← mul_assoc, ← Units.val_mul, LinearEquiv.coe_one, id_eq]
+  simp only [torusCoeff_inv, ← mul_assoc, ← Units.val_mul, FunLike.coe_one_eq_id, id_eq]
   rw [mul_inv_cancel, Units.val_one, one_mul]
 
 theorem torusCoeff_r (τ : Fin d.r → Fˣ) : d.torusCoeff τ ⟨d.r, by omega⟩ = 1 := by
@@ -187,7 +187,7 @@ theorem torusCoeff_r (τ : Fin d.r → Fˣ) : d.torusCoeff τ ⟨d.r, by omega�
 
 theorem torusCoeff_pos (τ : Fin d.r → Fˣ) (j : Fin d.r) :
     d.torusCoeff τ ⟨d.r + j + 1, by omega⟩ = τ j := by
-  rw [torusCoeff, dif_pos (by simp)]
+  rw [torusCoeff, dite_eq_left (by simp)]
   congr 1; ext; simp; omega
 
 theorem pi0_torusZ (τ : Fin d.r → Fˣ) (v : d.V) : d.pi0 (d.torusZ τ v) = d.pi0 v := by
@@ -258,11 +258,11 @@ theorem extV0_coord (g : d.V0 ≃ₗ[F] d.V0) (j : Fin d.r) (v : d.V) :
     (d.extV0 g v).2 ⟨d.r + j + 1, by omega⟩ = v.2 ⟨d.r + j + 1, by omega⟩ := by
   rw [extV0_apply, Prod.snd_add, Pi.add_apply, iota0_apply]
   simp only [Prod.snd_sub, Prod.smul_snd, Pi.sub_apply, Pi.smul_apply, zvec, smul_eq_mul]
-  rw [if_neg (by push_cast; omega)]; simp
+  rw [ite_eq_right (by push_cast; omega)]; simp
 
 theorem zV_coord (j : Fin d.r) : (d.zV ((j : ℤ) + 1)).2 ⟨d.r + j + 1, by omega⟩ = 1 := by
   simp only [zV, zvec]
-  rw [if_pos (by push_cast; ring)]
+  rw [ite_eq_left (by push_cast; ring)]
 
 /-! ## 3. Compression of `P̄(h) a` to `G₀` and its diagonal entries on `Z₊` -/
 
@@ -337,7 +337,7 @@ theorem pi0_compress (x : d.V0) :
     d.pi0 ((specP d.QV (d.snd h) * (d.torusZ τ * d.extV0 y0)) (d.iota0 x)) =
       d.base.extZ (specP d.QW (d.fst h)) (y0 x) := by
   rw [specP_snd_eq_extZ_mul_nPart]
-  simp only [LinearEquiv.mul_apply, extV0_iota0, torusZ_iota0, pi0_extZ]
+  simp only [mul_apply_eq_comp, extV0_iota0, torusZ_iota0, pi0_extZ]
   rw [d.pi0_specP_N_iota0 hh]
 
 include hh in
@@ -347,7 +347,7 @@ theorem pi0_compress_inv (x : d.V0) :
       y0⁻¹ ((d.base.extZ (specP d.QW (d.fst h)))⁻¹ x) := by
   rw [specP_snd_eq_extZ_mul_nPart, mul_inv_rev, mul_inv_rev, mul_inv_rev, ← map_inv d.extZ,
     ← map_inv (specP d.QV), ← map_inv d.extV0, torusZ_inv]
-  simp only [LinearEquiv.mul_apply, extZ_iota0, pi0_extV0, pi0_torusZ]
+  simp only [mul_apply_eq_comp, extZ_iota0, pi0_extV0, pi0_torusZ]
   rw [d.pi0_specP_N_iota0 (d.N.inv_mem hh), map_inv]
 
 include hh in
@@ -366,7 +366,7 @@ theorem compress_coord (j : Fin d.r) :
       obtain rfl : i = ⟨d.r + j + 1, hlt⟩ := Fin.ext hi
       exact d.torusZ_coord τ j _
     · simp [torusZ_apply, zV, zvec, show ¬ ((i : ℤ) - d.r = j + 1) by omega]
-  simp only [LinearEquiv.mul_apply, e1, e2, extZ_coord]
+  simp only [mul_apply_eq_comp, e1, e2, extZ_coord]
   exact d.specP_N_coord hh j _
 
 include hh in
@@ -379,7 +379,7 @@ theorem compress_coord_inv (j : Fin d.r) :
     ← map_inv (specP d.QV), ← map_inv d.extV0, torusZ_inv]
   have e1 : d.extZ (specP d.QW (d.fst h))⁻¹ (d.zV ((j : ℤ) + 1)) = d.zV ((j : ℤ) + 1) := by
     simp [zV, extZ]
-  simp only [LinearEquiv.mul_apply, e1, extV0_coord, torusZ_coord]
+  simp only [mul_apply_eq_comp, e1, extV0_coord, torusZ_coord]
   have := d.specP_N_coord (d.N.inv_mem hh) j 1
   rw [one_smul] at this
   rw [this, mul_one, Pi.inv_apply]
@@ -528,10 +528,10 @@ theorem logNormSO_add_le_of_cone (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1
   have hV0 : glMaxNorm ((d.base.Pbar h₀ * y₀).2 : d.V0 ≃ₗ[F] d.V0) ≤ glMaxNorm g := by
     rw [e2]
     refine glMaxNorm_le_of_bound _ hM (fun x => ?_) (fun x => ?_)
-    · rw [LinearEquiv.mul_apply, ← d.pi0_compress hh τ y0 x, ← hg]
+    · rw [mul_apply_eq_comp, ← d.pi0_compress hh τ y0 x, ← hg]
       exact (d.norm_pi0_le _).trans ((norm_apply_le_glMaxNorm g _).trans
         (mul_le_mul_of_nonneg_left (d.norm_iota0_le x) (by linarith)))
-    · rw [mul_inv_rev, LinearEquiv.mul_apply, ← d.pi0_compress_inv hh τ y0 x, ← hg]
+    · rw [mul_inv_rev, mul_apply_eq_comp, ← d.pi0_compress_inv hh τ y0 x, ← hg]
       exact (d.norm_pi0_le _).trans ((norm_inv_apply_le_glMaxNorm g _).trans
         (mul_le_mul_of_nonneg_left (d.norm_iota0_le x) (by linarith)))
   have e1 : (((d.base.Pbar h₀ * y₀).1 : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F))) =

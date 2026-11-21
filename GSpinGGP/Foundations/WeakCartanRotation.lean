@@ -154,7 +154,7 @@ theorem pairTorus_commute (hb : IsOrthoBasis Q b) {i₀ i₁ : Fin n} (hne : i�
     conv_lhs => rw [← hw]
     exact TauCeti.QuadraticMap.polar_apply_of_mem_orthogonalGroup hx y w
   ext y
-  rw [LinearEquiv.mul_apply, LinearEquiv.mul_apply, pairTorus_apply, pairTorus_apply,
+  rw [mul_apply_eq_comp, mul_apply_eq_comp, pairTorus_apply, pairTorus_apply,
     hp y _ hu, hp y _ hv, map_add, map_add, map_smul, map_smul, hu, hv]
 
 section TorusBound
@@ -276,7 +276,7 @@ theorem planeRot_apply (μ : F) (hD : Q (b i₁) + μ ^ 2 * Q (b k) ≠ 0) (z : 
     rw [polar_basis_left Q b hb.isOrtho]; ring
   have p3 : polar Q (b i₁) (b i₁) = 2 * q₁ := polar_basis_self _
   have p4 : polar Q (b k) (b i₁) = 0 := hb.polar_eq_zero k i₁ hk.symm
-  simp only [planeRot, LinearEquiv.mul_apply, TauCeti.QuadraticMap.reflection_apply, invOf_eq_inv,
+  simp only [planeRot, mul_apply_eq_comp, TauCeti.QuadraticMap.reflection_apply, invOf_eq_inv,
     apply_basis_add_smul hb hk, polar_add_left, polar_smul_left, polar_sub_right,
     polar_smul_right, p1, p2, p3, p4, smul_eq_mul]
   rw [← hDdef]
@@ -478,10 +478,10 @@ theorem planeRot_bounds (hb : IsOrthoBasis Q b) {i₀ i₁ : Fin n} (hne : i₀ 
         b m + b.repr x i₁ • ((-(2 * μ ^ 2 * qk) / D) • T⁻¹ (b i₁) + (2 * μ * q₁ / D) • b k) +
           b.repr x k • ((-(2 * μ * qk) / D) • T⁻¹ (b i₁) +
             (-(2 * μ ^ 2 * qk) / D) • b k) := by
-      rw [LinearEquiv.coe_coe, LinearEquiv.mul_apply, LinearEquiv.mul_apply, ← hx,
+      rw [LinearEquiv.coe_coe, mul_apply_eq_comp, mul_apply_eq_comp, ← hx,
         planeRot_apply]
       simp only [map_add, map_smul, hTk]
-      rw [hx, ← LinearEquiv.mul_apply, inv_mul_cancel]; rfl
+      rw [hx, ← mul_apply_eq_comp, inv_mul_cancel]; rfl
     rw [hCm]
     refine (basisNorm_add_le _ _).trans (max_le ((basisNorm_add_le _ _).trans
       (max_le (by rw [basisNorm_basis]; exact h2i) ?_)) ?_)
@@ -605,7 +605,7 @@ theorem rotation_lemma [FiniteDimensional F V] (hb : IsOrthoBasis Q b) {i₀ i�
           gcongr; exact min_le_right _ _
   have heq : basisNorm b ((h * γ) (b i₁)) =
       ‖(2 : F)‖ * ‖κ‖ * ‖(t : F)‖ * basisOpNorm b (h : V →ₗ[F] V) := by
-    rw [LinearEquiv.mul_apply, hγb, map_add, map_smul, map_smul, add_comm,
+    rw [mul_apply_eq_comp, hγb, map_add, map_smul, map_smul, add_comm,
       basisNorm_add_eq_left hdom, basisNorm_smul, hB, hk]
   rw [heq]
   calc ε * ‖(t : F)‖ * basisOpNorm b ((h * γ : V ≃ₗ[F] V) : V →ₗ[F] V)

@@ -319,7 +319,7 @@ def SOGrp (Q : QuadraticForm K V) : Subgroup (V ≃ₗ[K] V) where
   carrier := {g | (∀ v, Q (g v) = Q v) ∧ LinearMap.det (g : V →ₗ[K] V) = 1}
   one_mem' := ⟨fun _ => rfl, by simp⟩
   mul_mem' := fun {g h} hg hh => ⟨fun v => by
-      rw [LinearEquiv.mul_apply, hg.1, hh.1], by
+      rw [mul_apply_eq_comp, hg.1, hh.1], by
       show LinearMap.det ((g : V →ₗ[K] V) ∘ₗ (h : V →ₗ[K] V)) = 1
       rw [LinearMap.det_comp, hg.2, hh.2, one_mul]⟩
   inv_mem' := fun {g} hg => ⟨fun v => by
@@ -490,7 +490,7 @@ theorem centralizer_eq_map_sup (hQ : IsNondeg Q) (f : Q' →qᵢ Q) (hf : IsNond
     rw [hga]
     refine Subgroup.mul_mem_sup ⟨g', rfl⟩ ⟨?_, fun w hw => ?_⟩
     · show a⁻¹ * g ∈ Subgroup.centralizer {y}
-      rw [Subgroup.mem_centralizer_singleton_iff]
+      rw [Subgroup.mem_centralizer_singleton_iff, commute_iff_eq]
       have hai : a⁻¹ * y = y * a⁻¹ := by
         rw [inv_mul_eq_iff_eq_mul, ← mul_assoc, ha, mul_inv_cancel_right]
       rw [mul_assoc, hg', ← mul_assoc, hai, mul_assoc]
@@ -508,7 +508,7 @@ theorem apply_eq_zero_of_sq_of_isSemisimple {M : Type*} [AddCommGroup M] [Module
   have hp : LinearMap.ker (D * D) ∈ D.invtSubmodule := by
     rw [Module.End.mem_invtSubmodule]
     intro v hv
-    simp only [Submodule.mem_comap, LinearMap.mem_ker, Module.End.mul_apply] at hv ⊢
+    simp only [Submodule.mem_comap, LinearMap.mem_ker, mul_apply_eq_comp] at hv ⊢
     rw [hv, map_zero]
   have hz := Module.End.eq_zero_of_isNilpotent_isSemisimple ⟨2, ?_⟩ (hD.restrict hp)
   · have := congrArg Subtype.val (LinearMap.congr_fun hz ⟨w, show (D * D) w = 0 from hw⟩)
@@ -582,7 +582,7 @@ theorem exists_map_mul_of_commute (hQ : IsNondeg Q) (f : Q' →qᵢ Q) (hf : IsN
   have ha : a * y = y * a := map_commute_of_range f hf hrange g'
   refine ⟨g', a⁻¹ * g, ⟨?_, fun w hw => ?_⟩, (mul_inv_cancel_left a g).symm⟩
   · show a⁻¹ * g ∈ Subgroup.centralizer {y}
-    rw [Subgroup.mem_centralizer_singleton_iff]
+    rw [Subgroup.mem_centralizer_singleton_iff, commute_iff_eq]
     have hai : a⁻¹ * y = y * a⁻¹ := by
       rw [inv_mul_eq_iff_eq_mul, ← mul_assoc, ha, mul_inv_cancel_right]
     rw [mul_assoc, hg, ← mul_assoc, hai, mul_assoc]
@@ -840,7 +840,6 @@ theorem incl_map_fixIsoW (a : GSpin (d.restrictFix x hx).QW) :
         (CliffordAlgebra.map (QuadraticMap.Isometry.inl (d.restrictFix x hx).QW d.QZ) (ι _ w))
     erw [CliffordAlgebra.map_apply_ι, CliffordAlgebra.map_apply_ι, CliffordAlgebra.map_apply_ι,
       CliffordAlgebra.map_apply_ι]
-    rfl
   exact congrArg (fun φ => φ (((a : (CliffordAlgebra (d.restrictFix x hx).QW)ˣ)) :
     CliffordAlgebra (d.restrictFix x hx).QW)) key
 
@@ -1324,7 +1323,7 @@ theorem torusV_eq_map_torusOf (x : GSpin d.QW) : d.torusV x = (d.torusOf x).map 
     refine ⟨?_, fun v hv => ?_⟩
     · have ht : t * x = x * t := Subgroup.mem_centralizer_singleton_iff.mp ht1
       show d.incl t ∈ Subgroup.centralizer {d.incl x}
-      rw [Subgroup.mem_centralizer_singleton_iff, ← map_mul, ← map_mul, ht]
+      rw [Subgroup.mem_centralizer_singleton_iff, commute_iff_eq, ← map_mul, ← map_mul, ht]
     · obtain ⟨w, z⟩ := v
       rw [specP_incl_apply, ht2 w ((d.mem_fixedSub_incl_iff x w z).mp hv)]
 

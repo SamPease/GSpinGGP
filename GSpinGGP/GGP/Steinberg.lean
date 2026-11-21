@@ -64,7 +64,7 @@ theorem ι_aeval_specP {Q : QuadraticForm K V} (x : GSpin Q) (q : K[X]) (v : V) 
     LinearMap.mulRight K (((x : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)
   have hint : ∀ v, ι Q (specP Q x v) = c (ι Q v) := fun v => by
     rw [ι_specP]
-    simp only [c, Module.End.mul_apply, LinearMap.mulLeft_apply, LinearMap.mulRight_apply,
+    simp only [c, mul_apply_eq_comp, LinearMap.mulLeft_apply, LinearMap.mulRight_apply,
       mul_assoc]
   have hpow : ∀ (n : ℕ) v, ι Q (((specP Q x : V →ₗ[K] V) ^ n) v) = (c ^ n) (ι Q v) := by
     intro n
@@ -72,12 +72,12 @@ theorem ι_aeval_specP {Q : QuadraticForm K V} (x : GSpin Q) (q : K[X]) (v : V) 
     | zero => intro v; simp
     | succ n ih =>
       intro v
-      rw [pow_succ', pow_succ', Module.End.mul_apply, Module.End.mul_apply, LinearEquiv.coe_coe,
+      rw [pow_succ', pow_succ', mul_apply_eq_comp, mul_apply_eq_comp, LinearEquiv.coe_coe,
         hint, ih]
   induction q using Polynomial.induction_on' generalizing v with
   | add p q hp hq => simp only [map_add, LinearMap.add_apply, hp, hq]
   | monomial n b =>
-    rw [aeval_monomial, aeval_monomial, Module.End.mul_apply, Module.End.mul_apply,
+    rw [aeval_monomial, aeval_monomial, mul_apply_eq_comp, mul_apply_eq_comp,
       Module.algebraMap_end_apply, Module.algebraMap_end_apply, map_smul, hpow]
 
 section Semisimple
@@ -155,7 +155,7 @@ theorem quadReflection_comm {x : GSpin Q} {u : V} {ε : K} (hε : ε * ε = 1)
     calc QuadraticMap.polar Q u (specP Q x v) = (ε * ε) * QuadraticMap.polar Q u (specP Q x v) := by
           rw [hε, one_mul]
       _ = ε * QuadraticMap.polar Q u v := by rw [← h]; ring
-  simp only [Module.End.mul_apply, quadReflection_apply, map_sub, map_smul, LinearEquiv.coe_coe,
+  simp only [mul_apply_eq_comp, quadReflection_apply, map_sub, map_smul, LinearEquiv.coe_coe,
     hu, hp, smul_smul]
   congr 2
   ring
@@ -166,7 +166,7 @@ theorem list_prod_quadReflection_apply_of_polar {v : V} :
       (l.map (quadReflection Q)).prod v = v
   | [], _ => rfl
   | u :: t, h => by
-    rw [List.map_cons, List.prod_cons, Module.End.mul_apply,
+    rw [List.map_cons, List.prod_cons, mul_apply_eq_comp,
       list_prod_quadReflection_apply_of_polar t fun w hw => h w (List.mem_cons_of_mem _ hw),
       quadReflection_apply, h u List.mem_cons_self, zero_smul, smul_zero, sub_zero]
 
@@ -231,8 +231,8 @@ theorem exists_reflections_eq_on [FiniteDimensional K V] (E : Submodule K V)
         rcases List.mem_cons.1 hu with rfl | hu
         · exact ⟨v.2, (isUnit_of_invertible (Q₁ v)).ne_zero⟩
         · exact hm1 u hu
-      · rw [List.map_cons, List.prod_cons, Module.End.mul_apply, hm3, List.prod_cons,
-          Subgroup.coe_mul, LinearEquiv.mul_apply, TauCeti.QuadraticMap.coe_reflectionOrthogonal,
+      · rw [List.map_cons, List.prod_cons, mul_apply_eq_comp, hm3, List.prod_cons,
+          Subgroup.coe_mul, mul_apply_eq_comp, TauCeti.QuadraticMap.coe_reflectionOrthogonal,
           TauCeti.QuadraticMap.reflection_apply, quadReflection_apply]
         simp only [smul_smul, invOf_eq_inv]
         rfl
@@ -318,21 +318,21 @@ theorem commute_iff_det_negFixedSub [CharZero K] [IsAlgClosed K] [FiniteDimensio
   have hfix1 : ∀ v ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) 1, specP Q y v = specP Q g v := by
     intro v hv
     show (specP Q y : V →ₗ[K] V) v = _
-    rw [hy2, List.map_append, List.prod_append, Module.End.mul_apply,
+    rw [hy2, List.map_append, List.prod_append, mul_apply_eq_comp,
       list_prod_quadReflection_apply_of_polar l₂ fun u hu => by
         rw [QuadraticMap.polar_comm]; exact polar_eq_zero_of_mem_eigenspace hv (hl₂ u hu).1,
       hp₁ v hv]
   have hfix2 : ∀ v ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) (-1), specP Q y v = specP Q g v := by
     intro v hv
     show (specP Q y : V →ₗ[K] V) v = _
-    rw [hy2, List.map_append, List.prod_append, Module.End.mul_apply, hp₂ v hv]
+    rw [hy2, List.map_append, List.prod_append, mul_apply_eq_comp, hp₂ v hv]
     exact list_prod_quadReflection_apply_of_polar l₁ fun u hu =>
       polar_eq_zero_of_mem_eigenspace (hl₁ u hu).1 (mapsTo_eigenspace_of_commute hcl (-1) v hv)
   have hπ : ∀ ε : K, (∀ v ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) ε, specP Q y v = specP Q g v) →
       ∀ v ∈ Module.End.eigenspace (specP Q x : V →ₗ[K] V) ε, specP Q (y⁻¹ * g) v = v := by
     intro ε h v hv
     apply (specP Q y).injective
-    rw [← LinearEquiv.mul_apply, ← map_mul, mul_inv_cancel_left, h v hv]
+    rw [← mul_apply_eq_comp, ← map_mul, mul_inv_cancel_left, h v hv]
   have hyx : Commute (specP Q y) (specP Q x) := by
     rw [Commute, SemiconjBy]
     apply LinearEquiv.toLinearMap_injective
@@ -350,12 +350,12 @@ theorem commute_iff_det_negFixedSub [CharZero K] [IsAlgClosed K] [FiniteDimensio
     intro w hw
     have h1 := Module.End.mem_eigenspace_iff.1 (hl₁ w hw).1
     rw [LinearEquiv.coe_coe, one_smul] at h1
-    exact ⟨h1, if_pos h1⟩
+    exact ⟨h1, ite_eq_left h1⟩
   have hεneg : ∀ w ∈ l₂, specP Q x w = -w ∧ ε w = -1 := by
     intro w hw
     have h1 := Module.End.mem_eigenspace_iff.1 (hl₂ w hw).1
     rw [LinearEquiv.coe_coe, neg_one_smul] at h1
-    refine ⟨h1, if_neg fun he => (hl₂ w hw).2 ?_⟩
+    refine ⟨h1, ite_eq_right fun he => (hl₂ w hw).2 ?_⟩
     have h2 : (2 : K) • w = 0 := by
       rw [two_smul]; nth_rewrite 1 [← he]; rw [h1, neg_add_cancel]
     rw [(smul_eq_zero.1 h2).resolve_left (Invertible.ne_zero (2 : K)), map_zero]

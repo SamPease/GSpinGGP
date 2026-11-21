@@ -319,7 +319,7 @@ theorem commute_of_commute_baseChange {K L : Type*} [Field K] [Field L] [Algebra
     (h : Commute (A.baseChange L) (B.baseChange L)) : Commute A B := by
   refine LinearMap.ext fun v => Module.Flat.tensorProduct_mk_injective K V L ?_
   have := LinearMap.congr_fun h.eq (1 ⊗ₜ v)
-  simpa [Module.End.mul_apply, LinearMap.baseChange_tmul] using this
+  simpa [mul_apply_eq_comp, LinearMap.baseChange_tmul] using this
 
 /-- Skewness for the associated bilinear form `b = ½ polar` is skewness for `polar`. -/
 theorem isSkewAdjoint_associated_iff {K : Type*} [Field K] [Invertible (2 : K)] {V : Type*}

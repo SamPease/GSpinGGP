@@ -352,14 +352,14 @@ theorem exterior_mem_range_of_contractLeft [Module.Finite K V]
   have sq : ∀ i, ExteriorAlgebra.ι K (b i) * ExteriorAlgebra.ι K (b i) = 0 := fun i =>
     ExteriorAlgebra.ι_sq_zero _
   have kill : ∀ j Z, (1 - h j) (ExteriorAlgebra.ι K (b j) * Z) = 0 := fun j Z => by
-    simp only [h, LinearMap.sub_apply, Module.End.one_apply, LinearMap.coe_comp,
+    simp only [h, LinearMap.sub_apply, one_apply_eq_self, LinearMap.coe_comp,
       Function.comp_apply, LinearMap.mulLeft_apply]
     erw [contractLeft_ι_mul]
     rw [Basis.coord_apply, Basis.repr_self, Finsupp.single_eq_same, one_smul, mul_sub,
       ← mul_assoc, sq, zero_mul, sub_zero, sub_self]
   have comm : ∀ i j, i ≠ j → ∀ Z, (1 - h i) (ExteriorAlgebra.ι K (b j) * Z) =
       ExteriorAlgebra.ι K (b j) * (1 - h i) Z := fun i j hij Z => by
-    simp only [h, LinearMap.sub_apply, Module.End.one_apply, LinearMap.coe_comp,
+    simp only [h, LinearMap.sub_apply, one_apply_eq_self, LinearMap.coe_comp,
       Function.comp_apply, LinearMap.mulLeft_apply]
     erw [contractLeft_ι_mul]
     rw [Basis.coord_apply, Basis.repr_self, Finsupp.single_eq_of_ne hij, zero_smul,
@@ -373,7 +373,7 @@ theorem exterior_mem_range_of_contractLeft [Module.Finite K V]
     | nil => intro j Z; simp [T]
     | cons a L ih =>
       intro j Z
-      simp only [T, List.map_cons, List.prod_cons, Module.End.mul_apply] at ih ⊢
+      simp only [T, List.map_cons, List.prod_cons, mul_apply_eq_comp] at ih ⊢
       rw [ih j Z]
       by_cases hjL : j ∈ L
       · simp [hjL]
@@ -387,7 +387,7 @@ theorem exterior_mem_range_of_contractLeft [Module.Finite K V]
     induction L with
     | nil => simp [T]
     | cons a L ih =>
-      simp only [T, List.map_cons, List.prod_cons, Module.End.mul_apply] at ih ⊢
+      simp only [T, List.map_cons, List.prod_cons, mul_apply_eq_comp] at ih ⊢
       rw [ih]
       simp [h, contractLeft_algebraMap]
   have hTfix : ∀ L : List (Fin n), T L X = X := by
@@ -395,7 +395,7 @@ theorem exterior_mem_range_of_contractLeft [Module.Finite K V]
     induction L with
     | nil => simp [T]
     | cons a L ih =>
-      simp only [T, List.map_cons, List.prod_cons, Module.End.mul_apply] at ih ⊢
+      simp only [T, List.map_cons, List.prod_cons, mul_apply_eq_comp] at ih ⊢
       rw [ih]
       simp [h, hX]
   have hrange : ∀ Y, ∃ r : K, T (List.finRange n) Y = algebraMap K _ r := by
@@ -431,7 +431,8 @@ theorem eq_algebraMap_of_commute_ι [Module.Finite K V] {Q : QuadraticForm K V} 
       change _ = bform Q w y
       rw [bform, QuadraticMap.associated_apply,
         QuadraticMap.polarBilin_apply_apply, QuadraticMap.polar_smul_left, smul_eq_mul]
-      simp [invOf_eq_inv, QuadraticMap.polar]
+      rw [Module.End.smul_def, QuadraticMap.half_moduleEnd_apply_eq_half_smul, smul_eq_mul,
+        QuadraticMap.polar]
     rw [← hpol, ← ι_mul_sub_involute_mul, involute_eq_of_mem_even hx0, hx, sub_self]
   set X := equivExterior Q x
   have hX : ∀ d : Module.Dual K V, CliffordAlgebra.contractLeft d X = 0 := fun d => by
@@ -1469,7 +1470,7 @@ theorem isNilpotent_adV {Q : QuadraticForm K V} {X : CliffordAlgebra Q} (hX : X 
     | zero => intro v; rfl
     | succ j ih =>
       intro v
-      rw [pow_succ', Module.End.mul_apply, ι_adV hX, ih, pow_succ', Module.End.mul_apply,
+      rw [pow_succ', mul_apply_eq_comp, ι_adV hX, ih, pow_succ', mul_apply_eq_comp,
         LieAlgebra.ad_apply, Ring.lie_def]
   refine ⟨k, LinearMap.ext fun v => CliffordAlgebra.ι_injective Q ?_⟩
   rw [h, hk, LinearMap.zero_apply, LinearMap.zero_apply, map_zero]
@@ -2114,11 +2115,11 @@ theorem exterior_sub_algebraMap_mem_wtFil {ι' : Type*} [Fintype ι'] [Decidable
     induction L with
     | nil => simp [T]
     | cons a L ih =>
-      simp only [T, List.map_cons, List.prod_cons, Module.End.mul_apply] at ih ⊢
+      simp only [T, List.map_cons, List.prod_cons, mul_apply_eq_comp] at ih ⊢
       set Y := (List.map (fun i => 1 - h i) L).prod X
       have : (1 - h a) Y - X = (Y - X) - (h a X + h a (Y - X)) := by
         rw [← map_add, add_sub_cancel]
-        simp only [LinearMap.sub_apply, Module.End.one_apply]; abel
+        simp only [LinearMap.sub_apply, one_apply_eq_self]; abel
       rw [this]
       exact sub_mem ih (add_mem (hXi a) (hpres a _ _ ih))
   have anti : ∀ i j, ExteriorAlgebra.ι K (b i) * ExteriorAlgebra.ι K (b j) =
@@ -2130,14 +2131,14 @@ theorem exterior_sub_algebraMap_mem_wtFil {ι' : Type*} [Fintype ι'] [Decidable
   have sq : ∀ i, ExteriorAlgebra.ι K (b i) * ExteriorAlgebra.ι K (b i) = 0 := fun i =>
     ExteriorAlgebra.ι_sq_zero _
   have kill : ∀ j Z, (1 - h j) (ExteriorAlgebra.ι K (b j) * Z) = 0 := fun j Z => by
-    simp only [h, LinearMap.sub_apply, Module.End.one_apply, LinearMap.coe_comp,
+    simp only [h, LinearMap.sub_apply, one_apply_eq_self, LinearMap.coe_comp,
       Function.comp_apply, LinearMap.mulLeft_apply]
     erw [contractLeft_ι_mul]
     rw [Basis.coord_apply, Basis.repr_self, Finsupp.single_eq_same, one_smul, mul_sub,
       ← mul_assoc, sq, zero_mul, sub_zero, sub_self]
   have comm : ∀ i j, i ≠ j → ∀ Z, (1 - h i) (ExteriorAlgebra.ι K (b j) * Z) =
       ExteriorAlgebra.ι K (b j) * (1 - h i) Z := fun i j hij Z => by
-    simp only [h, LinearMap.sub_apply, Module.End.one_apply, LinearMap.coe_comp,
+    simp only [h, LinearMap.sub_apply, one_apply_eq_self, LinearMap.coe_comp,
       Function.comp_apply, LinearMap.mulLeft_apply]
     erw [contractLeft_ι_mul]
     rw [Basis.coord_apply, Basis.repr_self, Finsupp.single_eq_of_ne hij, zero_smul,
@@ -2151,7 +2152,7 @@ theorem exterior_sub_algebraMap_mem_wtFil {ι' : Type*} [Fintype ι'] [Decidable
     | nil => intro j Z; simp [T]
     | cons a L ih =>
       intro j Z
-      simp only [T, List.map_cons, List.prod_cons, Module.End.mul_apply] at ih ⊢
+      simp only [T, List.map_cons, List.prod_cons, mul_apply_eq_comp] at ih ⊢
       rw [ih j Z]
       by_cases hjL : j ∈ L
       · simp [hjL]
@@ -2165,7 +2166,7 @@ theorem exterior_sub_algebraMap_mem_wtFil {ι' : Type*} [Fintype ι'] [Decidable
     induction L with
     | nil => simp [T]
     | cons a L ih =>
-      simp only [T, List.map_cons, List.prod_cons, Module.End.mul_apply] at ih ⊢
+      simp only [T, List.map_cons, List.prod_cons, mul_apply_eq_comp] at ih ⊢
       rw [ih]
       simp [h, contractLeft_algebraMap]
   have hrange : ∀ Y, ∃ r : K, T Finset.univ.toList Y = algebraMap K _ r := by
@@ -2284,7 +2285,7 @@ theorem RaisesFil.isNilpotent {A : V →ₗ[K] V} (hA : RaisesFil Vf A) {a : ℤ
     | zero => intro v; rw [Nat.cast_zero, add_zero, htop]; trivial
     | succ k ih =>
       intro v
-      rw [pow_succ', Module.End.mul_apply]
+      rw [pow_succ', mul_apply_eq_comp]
       have := hA _ _ (ih v)
       rwa [show a + k + 1 = a + ↑(k + 1) by push_cast; ring] at this
   have := key n v
@@ -3372,8 +3373,8 @@ variable [TopologicalSpace K] [IsTopologicalRing K]
 theorem continuous_conj_GSpin [Module.Finite K V] (Q : QuadraticForm K V) (x : CliffordAlgebra Q) :
     Continuous fun g : GSpin Q => ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * x *
       (((g : (CliffordAlgebra Q)ˣ)⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) :=
-  ((Units.continuous_val.comp continuous_subtype_val).mul continuous_const).mul
-    (Units.continuous_coe_inv.comp continuous_subtype_val)
+  ((Units.continuous_val.comp continuous_subtypeVal).mul continuous_const).mul
+    (Units.continuous_coe_inv.comp continuous_subtypeVal)
 
 variable [T2Space K]
 
@@ -3419,7 +3420,7 @@ theorem isClosed_flagUnip [Module.Finite K V] {Q : QuadraticForm K V} (F : Isotr
       exact isNilpotent_iff_pow_finrank (K := K) _
     rw [this]
     exact h0.preimage
-      (((Units.continuous_val.comp continuous_subtype_val).sub continuous_const).pow _)
+      (((Units.continuous_val.comp continuous_subtypeVal).sub continuous_const).pow _)
   have h : (flagUnip F : Set (GSpin Q)) = (flagStab F : Set (GSpin Q)) ∩
       ((⋂ i : Fin F.len, ⋂ v ∈ F.sub i.succ,
           {g : GSpin Q | specP Q g v - v ∈ F.sub i.castSucc}) ∩
@@ -4585,7 +4586,7 @@ variable {U : Type*} [AddCommGroup U] [Module K U] [FiniteDimensional K U] [Topo
 theorem continuous_specP_apply {X : Type*} [TopologicalSpace X] {Q : QuadraticForm K U}
     {x : X → GSpin Q} (hx : Continuous x) (v : U) : Continuous fun t => specP Q (x t) v := by
   have hn : Continuous fun t => ((x t : GSpin Q) : (CliffordAlgebra Q)ˣ) :=
-    continuous_subtype_val.comp hx
+    continuous_subtypeVal.comp hx
   simp only [specP_apply_eq]
   exact (CliffordAlgebra.continuous_ιInv Q).comp
     ((Units.continuous_val.comp hn).mul (continuous_const.mul (Units.continuous_coe_inv.comp hn)))
@@ -4653,11 +4654,11 @@ variable [TopologicalSpace K]
 
 /-- The projection `G → GSpin(W)` is continuous. -/
 theorem continuous_fst : Continuous d.fst :=
-  continuous_induced_rng.2 ((Units.continuous_map _root_.continuous_fst).comp continuous_subtype_val)
+  continuous_induced_rng.2 ((Units.continuous_map _root_.continuous_fst).comp continuous_subtypeVal)
 
 /-- The projection `G → GSpin(V)` is continuous. -/
 theorem continuous_snd : Continuous d.snd :=
-  continuous_induced_rng.2 ((Units.continuous_map _root_.continuous_snd).comp continuous_subtype_val)
+  continuous_induced_rng.2 ((Units.continuous_map _root_.continuous_snd).comp continuous_subtypeVal)
 
 variable [IsTopologicalRing K] [T2Space K]
 

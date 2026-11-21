@@ -53,7 +53,7 @@ theorem isSelfDual_selfDualHaar_of_nondegenerate (𝔤 : LieSubalgebra F A)
   have hex : ∃ μ, IsSelfDual μ (restrictForm 𝔤 b) ψ :=
     exists_isSelfDual_of_isInducing 𝔤.incl.toLinearMap hind Subtype.val_injective _ hnd ψ
   unfold selfDualHaar selfDualMeasure
-  rw [dif_pos hex]
+  rw [dite_eq_left hex]
   exact hex.choose_spec
 
 /-- **`ĵ(O, ·)` is invariant under translation by `Y`**, for a Lie subalgebra `𝔤` on which `b` is

@@ -122,7 +122,7 @@ theorem padic_quadratic_classes {m : ℕ} (Q : QuadraticForm F (Fin m → F)) (h
   -- `d = [-1]` iff `-det Q` is a square
   have hsq : d = squareClass (-1 : Fˣ) ↔ IsSquare (-Q.discr') := by
     rw [show d = _ from discr_formClass_eq Q hQ, squareClass_eq_iff_isSquare_mul,
-      ← isSquare_units_val_iff]
+      ← Units.isSquare_coe_iff]
     simp
   have hdisc : ∀ Q' : QuadraticForm F (Fin m → F), ∀ hQ'' : IsNondeg Q', SameDisc Q Q' →
       RegularFormClass.discr (formClass Q' ((isNondeg_iff_nondegenerate Q').1 hQ'')) = d :=

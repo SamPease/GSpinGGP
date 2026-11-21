@@ -521,7 +521,7 @@ def torusW (X : Module.End K L.W) : Subgroup (Module.End K L.W)ˣ where
   one_mem' := ⟨(SOu L.QW).one_mem, by simp, fun _ _ => rfl⟩
   mul_mem' := fun {a b} ha hb => ⟨(SOu L.QW).mul_mem ha.1 hb.1, by
       rw [Units.val_mul, mul_assoc, hb.2.1, ← mul_assoc, ha.2.1, mul_assoc],
-    fun w hw => by rw [Units.val_mul, Module.End.mul_apply, hb.2.2 w hw, ha.2.2 w hw]⟩
+    fun w hw => by rw [Units.val_mul, mul_apply_eq_comp, hb.2.2 w hw, ha.2.2 w hw]⟩
   inv_mem' := fun {a} ha => ⟨(SOu L.QW).inv_mem ha.1, by
       calc ((a⁻¹ : (Module.End K L.W)ˣ) : Module.End K L.W) * X =
             ((a⁻¹ : (Module.End K L.W)ˣ) : Module.End K L.W) * (X * a) *
@@ -534,7 +534,7 @@ def torusW (X : Module.End K L.W) : Subgroup (Module.End K L.W)ˣ where
       calc ((a⁻¹ : (Module.End K L.W)ˣ) : Module.End K L.W) w =
             ((a⁻¹ : (Module.End K L.W)ˣ) : Module.End K L.W) ((a : Module.End K L.W) w) := by
               rw [h]
-        _ = w := by rw [← Module.End.mul_apply, Units.inv_mul, Module.End.one_apply]⟩
+        _ = w := by rw [← mul_apply_eq_comp, Units.inv_mul, one_apply_eq_self]⟩
 
 /-- `H''_X` embedded diagonally in `Ḡ`, `g ↦ (g, g ⊕ 1)` (a subgroup of `H̄`). -/
 def torusOf (X : Module.End K L.W) : Subgroup L.Ambˣ := (L.torusW X).map L.diagU

@@ -98,9 +98,9 @@ def hypTorus (W : Submodule K V) {n : ℕ} (e f : Fin n → V) : Subgroup (V ≃
   one_mem' := ⟨fun _ _ => rfl, fun _ => 1, fun _ => by simp⟩
   mul_mem' := by
     rintro a b ⟨haW, s, hs⟩ ⟨hbW, t, ht⟩
-    refine ⟨fun w hw => by rw [LinearEquiv.mul_apply, hbW w hw, haW w hw], fun i => s i * t i,
+    refine ⟨fun w hw => by rw [mul_apply_eq_comp, hbW w hw, haW w hw], fun i => s i * t i,
       fun i => ?_⟩
-    simp only [LinearEquiv.mul_apply, (ht i).1, (ht i).2, map_smul, (hs i).1, (hs i).2, smul_smul,
+    simp only [mul_apply_eq_comp, (ht i).1, (ht i).2, map_smul, (hs i).1, (hs i).2, smul_smul,
       Units.val_mul, mul_inv, mul_comm, and_self]
   inv_mem' := by
     rintro a ⟨haW, s, hs⟩
@@ -202,7 +202,7 @@ omit hbc hb in
 `eᵢ`. -/
 theorem eq_smul_e_of_commute_diag (i : Fin n) : h (e i) = polar Q (h (e i)) (f i) • e i := by
   have hv : k (h (e i)) = a i • h (e i) := by
-    rw [← Module.End.mul_apply, hc.eq, Module.End.mul_apply, hke, map_smul]
+    rw [← mul_apply_eq_comp, hc.eq, mul_apply_eq_comp, hke, map_smul]
   obtain ⟨hs, hfj, hej⟩ := hF.eigen_of_diag hkW hke hkf hv (hac i)
   refine hs.trans ?_
   unfold frameSum
@@ -219,7 +219,7 @@ omit hac ha in
 /-- A map commuting with a regular frame-diagonal `k` scales each `fᵢ`. -/
 theorem eq_smul_f_of_commute_diag (i : Fin n) : h (f i) = polar Q (h (f i)) (e i) • f i := by
   have hv : k (h (f i)) = b i • h (f i) := by
-    rw [← Module.End.mul_apply, hc.eq, Module.End.mul_apply, hkf, map_smul]
+    rw [← mul_apply_eq_comp, hc.eq, mul_apply_eq_comp, hkf, map_smul]
   obtain ⟨hs, hfj, hej⟩ := hF.eigen_of_diag hkW hke hkf hv (hbc i)
   refine hs.trans ?_
   unfold frameSum
@@ -236,7 +236,7 @@ omit ha hb hab in
 /-- A map commuting with a frame-diagonal `k` (with `c` none of the `aᵢ, bᵢ`) preserves `W`. -/
 theorem mapsTo_of_commute_diag {w : V} (hw : w ∈ W) : h w ∈ W := by
   refine hF.mem_of_diag hkW hke hkf hac hbc ?_
-  rw [← Module.End.mul_apply, hc.eq, Module.End.mul_apply, hkW w hw, map_smul]
+  rw [← mul_apply_eq_comp, hc.eq, mul_apply_eq_comp, hkW w hw, map_smul]
 
 /-- **Maps commuting with a regular frame-diagonal map commute with every frame-diagonal map**:
 if `h` commutes with `k` (the `c, aᵢ, bᵢ` distinct), then `h` commutes with any `k'` acting on
@@ -245,13 +245,13 @@ theorem commute_of_commute_diag {k' : V →ₗ[K] V} {c' : K} {a' b' : Fin n →
     (hkW' : ∀ w ∈ W, k' w = c' • w) (hke' : ∀ i, k' (e i) = a' i • e i)
     (hkf' : ∀ i, k' (f i) = b' i • f i) : Commute k' h := by
   refine hF.linearMap_ext (fun w hw => ?_) (fun i => ?_) (fun i => ?_)
-  · rw [Module.End.mul_apply, Module.End.mul_apply,
+  · rw [mul_apply_eq_comp, mul_apply_eq_comp,
       hkW' _ (hF.mapsTo_of_commute_diag hkW hke hkf hac hbc hc hw), hkW' w hw, map_smul]
   · have he := hF.eq_smul_e_of_commute_diag hkW hke hkf hac ha hab hc i
-    rw [Module.End.mul_apply, Module.End.mul_apply, hke', map_smul, he, map_smul, hke',
+    rw [mul_apply_eq_comp, mul_apply_eq_comp, hke', map_smul, he, map_smul, hke',
       smul_comm]
   · have hf := hF.eq_smul_f_of_commute_diag hkW hke hkf hbc hb hab hc i
-    rw [Module.End.mul_apply, Module.End.mul_apply, hkf', map_smul, hf, map_smul, hkf',
+    rw [mul_apply_eq_comp, mul_apply_eq_comp, hkf', map_smul, hf, map_smul, hkf',
       smul_comm]
 
 omit hac hbc ha hb hab hc in
@@ -260,11 +260,11 @@ theorem commute_of_diag {k' : V →ₗ[K] V} {c' : K} {a' b' : Fin n → K}
     (hkW' : ∀ w ∈ W, k' w = c' • w) (hke' : ∀ i, k' (e i) = a' i • e i)
     (hkf' : ∀ i, k' (f i) = b' i • f i) : Commute k k' := by
   refine hF.linearMap_ext (fun w hw => ?_) (fun i => ?_) (fun i => ?_)
-  · rw [Module.End.mul_apply, Module.End.mul_apply, hkW' w hw, hkW w hw, map_smul, map_smul,
+  · rw [mul_apply_eq_comp, mul_apply_eq_comp, hkW' w hw, hkW w hw, map_smul, map_smul,
       hkW w hw, hkW' w hw, smul_comm]
-  · rw [Module.End.mul_apply, Module.End.mul_apply, hke', hke, map_smul, map_smul, hke, hke',
+  · rw [mul_apply_eq_comp, mul_apply_eq_comp, hke', hke, map_smul, map_smul, hke, hke',
       smul_comm]
-  · rw [Module.End.mul_apply, Module.End.mul_apply, hkf', hkf, map_smul, map_smul, hkf, hkf',
+  · rw [mul_apply_eq_comp, mul_apply_eq_comp, hkf', hkf, map_smul, map_smul, hkf, hkf',
       smul_comm]
 
 end Diag
@@ -320,7 +320,7 @@ private theorem torus_diag {k : V ≃ₗ[K] V} (hkW : ∀ w ∈ W, k w = w)
 private theorem commute_coe {k h : V ≃ₗ[K] V} (hc : Commute k h) :
     Commute (k : V →ₗ[K] V) (h : V →ₗ[K] V) :=
   LinearMap.ext fun v => by
-    rw [Module.End.mul_apply, Module.End.mul_apply]
+    rw [mul_apply_eq_comp, mul_apply_eq_comp]
     exact congrArg (fun g : V ≃ₗ[K] V => g v) hc.eq
 
 /-- A map `h` commuting with a *regular* element `k` of the torus (`tᵢ ≠ 1`, the `tᵢ` distinct,
@@ -459,7 +459,7 @@ theorem hypTorus_eq_iSup (hF : IsHypFrame Q W e f) :
         refine ih _ (fun i => t i * ((Pi.mulSingle a (t a) : Fin n → Kˣ) i)⁻¹) (fun w hw => ?_)
           (fun i => ?_) (fun i hi => ?_)
         · have hpw : p⁻¹ w = w := (LinearEquiv.symm_apply_eq p).2 (hp.1 w hw).symm
-          rw [LinearEquiv.mul_apply, hpw, hW w hw]
+          rw [mul_apply_eq_comp, hpw, hW w hw]
         · have hpe :
               p⁻¹ (e i) = ((((Pi.mulSingle a (t a) : Fin n → Kˣ) i)⁻¹ : Kˣ) : K) • e i := by
             show p.symm _ = _
@@ -469,7 +469,7 @@ theorem hypTorus_eq_iSup (hF : IsHypFrame Q W e f) :
             show p.symm _ = _
             rw [LinearEquiv.symm_apply_eq, map_smul, (hp.2 i).2, smul_smul, Units.mul_inv,
               one_smul]
-          simp only [LinearEquiv.mul_apply, hpe, hpf, map_smul, (ht i).1, (ht i).2, smul_smul,
+          simp only [mul_apply_eq_comp, hpe, hpf, map_smul, (ht i).1, (ht i).2, smul_smul,
             Units.val_mul, mul_inv, inv_inv, mul_comm]
           exact ⟨trivial, trivial⟩
         · rcases eq_or_ne i a with rfl | hia
@@ -505,15 +505,15 @@ theorem hypTorus_map_conj (g : V ≃ₗ[K] V) (hW : ∀ v, g v ∈ W₂ ↔ v �
   · rintro ⟨h₁, ⟨hW₁, t, ht⟩, rfl⟩
     refine ⟨fun w hw => ?_, t, fun i => ⟨?_, ?_⟩⟩
     · have : g.symm w ∈ W₁ := (hW _).1 (by rwa [LinearEquiv.apply_symm_apply])
-      simp only [LinearEquiv.mul_apply, hinv, hW₁ _ this, LinearEquiv.apply_symm_apply]
-    · simp only [LinearEquiv.mul_apply, hinv, he', (ht i).1, map_smul, he]
-    · simp only [LinearEquiv.mul_apply, hinv, hf', (ht i).2, map_smul, hf]
+      simp only [mul_apply_eq_comp, hinv, hW₁ _ this, LinearEquiv.apply_symm_apply]
+    · simp only [mul_apply_eq_comp, hinv, he', (ht i).1, map_smul, he]
+    · simp only [mul_apply_eq_comp, hinv, hf', (ht i).2, map_smul, hf]
   · rintro ⟨hW₂, t, ht⟩
     refine ⟨g⁻¹ * h * g, ⟨fun w hw => ?_, t, fun i => ⟨?_, ?_⟩⟩, by group⟩
     · have : g w ∈ W₂ := (hW w).2 hw
-      simp only [LinearEquiv.mul_apply, hinv, hW₂ _ this, LinearEquiv.symm_apply_apply]
-    · simp only [LinearEquiv.mul_apply, hinv, he, (ht i).1, map_smul, he']
-    · simp only [LinearEquiv.mul_apply, hinv, hf, (ht i).2, map_smul, hf']
+      simp only [mul_apply_eq_comp, hinv, hW₂ _ this, LinearEquiv.symm_apply_apply]
+    · simp only [mul_apply_eq_comp, hinv, he, (ht i).1, map_smul, he']
+    · simp only [mul_apply_eq_comp, hinv, hf, (ht i).2, map_smul, hf']
 
 /-- Swapping `e_{i₀}` and `f_{i₀}` does not change the torus. -/
 theorem hypTorus_swap (i₀ : Fin n) :

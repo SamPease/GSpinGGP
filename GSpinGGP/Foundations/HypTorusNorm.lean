@@ -61,7 +61,7 @@ theorem hypParam_mul (hF : IsHypFrame Q W e f) {y y' : V ≃ₗ[K] V} (hy : y �
     hypParam Q e f (y * y') i = hypParam Q e f y i * hypParam Q e f y' i := by
   have h := (hF.apply_e_of_mem_hypTorus hy i).1
   have h' := (hF.apply_e_of_mem_hypTorus hy' i).1
-  rw [hypParam, LinearEquiv.mul_apply, h', map_smul, h, smul_smul, polar_smul_left,
+  rw [hypParam, mul_apply_eq_comp, h', map_smul, h, smul_smul, polar_smul_left,
     hF.polar_ef_self, smul_eq_mul, mul_one, mul_comm]
 
 /-- `hypParam (y⁻¹) = (hypParam y)⁻¹` on the frame torus. -/

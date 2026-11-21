@@ -83,7 +83,7 @@ theorem commute_specP_adV {g : ↥(GSpin Q)} {X : CliffordAlgebra Q} (hX : X ∈
     Commute (specP Q g : V →ₗ[F] V) (adV Q X) := by
   refine LinearMap.ext fun v => CliffordAlgebra.ι_injective Q ?_
   have hiX := (Commute.units_inv_left (u := (g : (CliffordAlgebra Q)ˣ)) hgX).eq
-  simp only [Module.End.mul_apply, LinearEquiv.coe_coe]
+  simp only [mul_apply_eq_comp, LinearEquiv.coe_coe]
   rw [ι_specP, ι_adV hX, ι_adV hX, ι_specP, mul_sub, sub_mul, ← mul_assoc, hgX]
   simp only [mul_assoc, hiX]
 

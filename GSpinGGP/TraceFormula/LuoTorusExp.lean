@@ -88,7 +88,7 @@ theorem isExpCompatT_map_lieTorusCLE {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
   refine ⟨e.toLinearEquiv.toAddEquiv.isAddHaarMeasure_map _ e.continuous e.symm.continuous, ?_⟩
   -- the neighbourhood of `0` in `𝔱⁰` where the exponential facts hold
   have hval : Tendsto (fun X : ↥(d.lieTorus T) => (X : CliffordAlgebra d.QW)) (𝓝 0) (𝓝 0) :=
-    continuous_subtype_val.tendsto' 0 0 rfl
+    continuous_subtypeVal.tendsto' 0 0 rfl
   have hev := hval.eventually
     ((d.eventually_exists_mem_torusOf_eq_expA x).and d.eventually_toGbarU_diag_eq_expA)
   let U₀ := U ∩ {X : ↥(d.lieTorus T) | (X : CliffordAlgebra d.QW) ∈ d.lieTorus T →

@@ -102,7 +102,7 @@ theorem isClosed_range_scalarGSpin (Q : QuadraticForm K V) :
   have hS := isClosed_submodule_of_moduleTopology (K := K)
     (LinearMap.range (Algebra.linearMap K (CliffordAlgebra Q)))
   have hc : Continuous (fun g : GSpin Q => ((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) :=
-    Units.continuous_val.comp continuous_subtype_val
+    Units.continuous_val.comp continuous_subtypeVal
   convert hS.preimage hc using 1
   ext g
   simp only [Set.mem_preimage, SetLike.mem_coe, LinearMap.mem_range, MonoidHom.mem_range,
@@ -157,7 +157,7 @@ theorem _root_.QuotientGroup.isClosedEmbedding_map_of_isClosed_mul {G : Type*} [
     IsClosedEmbedding (QuotientGroup.map N A H.subtype hle) := by
   set f := QuotientGroup.map N A H.subtype hle with hf_def
   have hcont : Continuous f :=
-    continuous_coinduced_dom.2 (QuotientGroup.continuous_mk.comp continuous_subtype_val)
+    continuous_coinduced_dom.2 (QuotientGroup.continuous_mk.comp continuous_subtypeVal)
   have hinj : Function.Injective f := by
     rw [injective_iff_map_eq_one]
     intro q hq
@@ -196,7 +196,7 @@ theorem _root_.QuotientGroup.isClosedEmbedding_map_of_isClosed_mul {G : Type*} [
     rw [← compl_compl C, Set.image_compl_eq hbij]
     exact (hf'o _ hC.isOpen_compl).isClosed_compl
   rw [himg]
-  exact hRc.isClosedMap_subtype_val _ hC'
+  exact hRc.isClosedMap_subtypeVal _ hC'
 
 
 /-- Conjugation in a quotient group, at a representative.  Stated for an abstract group: on the
@@ -232,7 +232,7 @@ instance locallyCompactSpace_parabolicU (FW : IsotropicFlag d.QW) (FV : Isotropi
 
 /-- `H(F)` is closed in `G(F)` (from `GGPData.isClosed_H`, closedness in `(C(W) × C(V))ˣ`). -/
 theorem isClosed_H_in_G : IsClosed (d.H : Set ↥d.G) := by
-  have h := d.isClosed_H.preimage (continuous_subtype_val (p := fun x => x ∈ d.G))
+  have h := d.isClosed_H.preimage (continuous_subtypeVal (p := fun x => x ∈ d.G))
   have he : (Subtype.val ⁻¹' ((d.H.map d.G.subtype : Subgroup d.ambientˣ) : Set d.ambientˣ) :
       Set ↥d.G) = (d.H : Set ↥d.G) := by
     ext x
@@ -368,7 +368,7 @@ instance isClosed_AGHinH : IsClosed (d.AGHinH : Set ↥d.H) := by
       rw [← d.AG_inf_H]
       exact ⟨hh, h.2⟩
   rw [h]
-  exact d.isClosed_AG.preimage continuous_subtype_val
+  exact d.isClosed_AG.preimage continuous_subtypeVal
 
 /-- `G(F)/A_G(F)` and `H(F)/A_{G,H}(F)` are Hausdorff (indeed regular), since `A_G(F)` and
 `A_{G,H}(F)` are closed. -/
@@ -404,7 +404,7 @@ theorem toGmodAG_injective : Function.Injective d.toGmodAG := by
 /-- `toGmodAG` is continuous (Thesis §7.1). -/
 theorem continuous_toGmodAG : Continuous d.toGmodAG := by
   apply continuous_coinduced_dom.2
-  exact (QuotientGroup.continuous_mk).comp continuous_subtype_val
+  exact (QuotientGroup.continuous_mk).comp continuous_subtypeVal
 
 end GGPData
 
@@ -517,9 +517,9 @@ theorem continuous_nPart_coe :
     IsModuleTopology.continuous_of_linearMap
       (CliffordAlgebra.map (QuadraticMap.Isometry.inl d.QW d.QZ)).toLinearMap
   have hW : Continuous fun g : ↥d.G => ((d.fst g : GSpin d.QW) : (CliffordAlgebra d.QW)ˣ) :=
-    continuous_subtype_val.comp d.continuous_fst
+    continuous_subtypeVal.comp d.continuous_fst
   have hV : Continuous fun g : ↥d.G => ((d.snd g : GSpin d.QV) : (CliffordAlgebra d.QV)ˣ) :=
-    continuous_subtype_val.comp d.continuous_snd
+    continuous_subtypeVal.comp d.continuous_snd
   have hi : Continuous fun g : ↥d.G =>
       (((d.incl (d.fst g))⁻¹ : GSpin d.QV) : (CliffordAlgebra d.QV)ˣ) := by
     rw [Units.continuous_iff]
@@ -994,8 +994,8 @@ theorem isClosed_incl_range_mul_N_of_finrank_eq_two
         rw [d.mem_N_iff_NCond, e1, e2]; exact h3
       exact ⟨d.incl a, ⟨a, rfl⟩, _, hy, mul_inv_cancel_left _ _⟩
   rw [key]
-  have hbv : Continuous bv := Units.continuous_val.comp continuous_subtype_val
-  have hbi : Continuous bi := Units.continuous_coe_inv.comp continuous_subtype_val
+  have hbv : Continuous bv := Units.continuous_val.comp continuous_subtypeVal
+  have hbi : Continuous bi := Units.continuous_coe_inv.comp continuous_subtypeVal
   have hτ : Continuous fun x : CliffordAlgebra d.QV =>
       LinearMap.trace F (CliffordAlgebra d.QV) (LinearMap.mulLeft F x) :=
     IsModuleTopology.continuous_of_linearMap
@@ -1004,7 +1004,7 @@ theorem isClosed_incl_range_mul_N_of_finrank_eq_two
     have : ContinuousSMul F (CliffordAlgebra d.QW) := inferInstance
     have h2 : Continuous fun b : CliffordAlgebra d.QV =>
         LinearMap.trace F (CliffordAlgebra d.QV) (LinearMap.mulLeft F
-          (Cm (ι d.QW (e 0) * ι d.QW (e 1)) * b)) := hτ.comp (continuous_const.mul continuous_id)
+          (Cm (ι d.QW (e 0) * ι d.QW (e 1)) * b)) := hτ.comp (by fun_prop)
     unfold planeCoord
     fun_prop
   have hCm : Continuous Cm := IsModuleTopology.continuous_of_linearMap Cm.toLinearMap
@@ -1257,7 +1257,7 @@ theorem map_mul_right_haar_of_mem_compact {Q : Type*} [Group Q] [TopologicalSpac
   have h1 : Measure.map (· * g) μ E = μ E := by
     rw [Measure.map_apply (measurable_mul_const g) hEc.isClosed.measurableSet, hpre]
   have hc : Measure.haarScalarFactor (Measure.map (· * g) μ) μ = 1 := by
-    rw [hfac, Measure.smul_apply, ENNReal.smul_def, smul_eq_mul] at h1
+    rw [hfac, smul_apply, ENNReal.smul_def, smul_eq_mul] at h1
     have h2 : ((Measure.haarScalarFactor (Measure.map (· * g) μ) μ : NNReal) : ENNReal) * μ E =
         1 * μ E := by rw [one_mul]; exact h1
     exact_mod_cast (ENNReal.mul_left_inj hpos hfin).mp h2
@@ -1608,8 +1608,8 @@ theorem continuous_inr : Continuous d.inr := by
   apply continuous_induced_rng.2
   rw [Units.continuous_iff]
   constructor
-  · exact continuous_const.prodMk (Units.continuous_val.comp continuous_subtype_val)
-  · exact continuous_const.prodMk (Units.continuous_coe_inv.comp continuous_subtype_val)
+  · exact continuous_const.prodMk (Units.continuous_val.comp continuous_subtypeVal)
+  · exact continuous_const.prodMk (Units.continuous_coe_inv.comp continuous_subtypeVal)
 
 /-- `(1, n) ∈ H` for `n ∈ N`. -/
 theorem inr_mem_H {n : GSpin d.QV} (hn : n ∈ d.N) : d.inr n ∈ d.H := by
@@ -1667,14 +1667,14 @@ theorem continuous_pair : Continuous d.pair := by
   apply continuous_induced_rng.2
   rw [Units.continuous_iff]
   constructor
-  · exact (Units.continuous_val.comp (continuous_subtype_val.comp _root_.continuous_fst)).prodMk
-      (Units.continuous_val.comp (continuous_subtype_val.comp _root_.continuous_snd))
-  · exact (Units.continuous_coe_inv.comp (continuous_subtype_val.comp _root_.continuous_fst)).prodMk
-      (Units.continuous_coe_inv.comp (continuous_subtype_val.comp _root_.continuous_snd))
+  · exact (Units.continuous_val.comp (continuous_subtypeVal.comp _root_.continuous_fst)).prodMk
+      (Units.continuous_val.comp (continuous_subtypeVal.comp _root_.continuous_snd))
+  · exact (Units.continuous_coe_inv.comp (continuous_subtypeVal.comp _root_.continuous_fst)).prodMk
+      (Units.continuous_coe_inv.comp (continuous_subtypeVal.comp _root_.continuous_snd))
 
 theorem continuous_conjιGSpin {V : Type*} [AddCommGroup V] [Module F V] [Module.Finite F V]
     {Q : QuadraticForm F V} {w : V} (hw : Q w ≠ 0) : Continuous (conjιGSpin Q hw) :=
-  continuous_induced_rng.2 ((continuous_const.mul continuous_subtype_val).mul continuous_const)
+  continuous_induced_rng.2 ((continuous_const.mul continuous_subtypeVal).mul continuous_const)
 
 /-- The diagonal `GSpin(W) → H`. -/
 def diagToH : GSpin d.QW →* d.H := d.diag.codRestrict d.H d.diag_mem_H
@@ -1825,7 +1825,7 @@ theorem conjιHmod_mk {w : Fin d.m → F} (hw : d.QW w ≠ 0) (h : d.H) :
 
 theorem continuous_conjιHmod {w : Fin d.m → F} (hw : d.QW w ≠ 0) : Continuous (conjιHmod hw) :=
   continuous_coinduced_dom.2 (QuotientGroup.continuous_mk.comp
-    (continuous_induced_rng.2 ((continuous_conjιG hw).comp continuous_subtype_val)))
+    (continuous_induced_rng.2 ((continuous_conjιG hw).comp continuous_subtypeVal)))
 
 theorem conjιHmod_conjιHmod {w : Fin d.m → F} (hw : d.QW w ≠ 0) (q : d.HmodAGH) :
     conjιHmod hw (conjιHmod hw q) = q := by
@@ -2078,11 +2078,13 @@ instance isFiniteMeasureOnCompacts_weilMeasureHG : IsFiniteMeasureOnCompacts d.w
   exact IsWeilMeasure.isFiniteMeasureOnCompacts d.continuous_toGmodAG
     d.isClosedEmbedding_toGmodAG d.weilMeasureHG_spec
 
-/-- **The Weil measure on `H(F)\G(F)/A_G(F)` is outer regular**, found by instance search: the
-quotient is Hausdorff, locally compact and second countable (`CosetSpace.instT2Space`, …), hence
-metrizable, and the measure is finite on compact sets
-(`WeaklyRegular.of_pseudoMetrizableSpace_secondCountable_of_locallyFinite`). -/
-example : d.weilMeasureHG.OuterRegular := inferInstance
+/-- **The Weil measure on `H(F)\G(F)/A_G(F)` is weakly regular** (in particular outer regular):
+the quotient is Hausdorff, locally compact and second countable (`CosetSpace.instT2Space`, …),
+hence metrizable, and the measure is finite on compact sets
+(`WeaklyRegular.of_pseudoMetrizableSpace_secondCountable_of_locallyFinite`). Instance search does
+not always find this chain, so it is recorded as an instance. -/
+instance weaklyRegular_weilMeasureHG : d.weilMeasureHG.WeaklyRegular :=
+  Measure.WeaklyRegular.of_pseudoMetrizableSpace_secondCountable_of_locallyFinite _
 
 end GGPData
 

@@ -37,7 +37,7 @@ variable {Q : QuadraticForm K V} {N : Module.End K V}
 theorem bform_pow_pow (hN : ∀ u w, bform Q (N u) w = -bform Q u (N w)) (v : V) (i j : ℕ) :
     bform Q ((N ^ i) v) ((N ^ j) v) = (-1) ^ i * bform Q v ((N ^ (i + j)) v) := by
   have h := bform_pow_skew hN i v ((N ^ j) v)
-  rw [← Module.End.mul_apply, ← pow_add] at h
+  rw [← mul_apply_eq_comp, ← pow_add] at h
   rw [h, ← mul_assoc, ← pow_add, ← two_mul, pow_mul]
   simp
 
@@ -58,7 +58,7 @@ theorem bform_shift (hN : ∀ u w, bform Q (N u) w = -bform Q u (N w)) (v : V) (
       bform Q v ((N ^ l) v) + 2 * c * bform Q v ((N ^ (l + 2 * m)) v) +
         c ^ 2 * bform Q v ((N ^ (l + 4 * m)) v) := by
   have e1 : (N ^ l) ((N ^ (2 * m)) v) = (N ^ (l + 2 * m)) v := by
-    rw [← Module.End.mul_apply, ← pow_add]
+    rw [← mul_apply_eq_comp, ← pow_add]
   have h1 := bform_pow_pow hN v (2 * m) l
   have h2 := bform_pow_pow hN v (2 * m) (l + 2 * m)
   have hs : ((-1 : K)) ^ (2 * m) = 1 := by rw [pow_mul]; simp
@@ -99,7 +99,7 @@ theorem exists_normal_vector (hN : ∀ u w, bform Q (N u) w = -bform Q u (N w)) 
     set β := bform Q v ((N ^ (2 * k)) v) with hβ
     set c : K := -bform Q v' ((N ^ (2 * k - 2 * (t + 1))) v') / (2 * β) with hc
     refine ⟨v' + c • (N ^ (2 * (t + 1))) v', ?_, ?_, ?_⟩
-    · rw [map_add, map_smul, ← Module.End.mul_apply, ← pow_add,
+    · rw [map_add, map_smul, ← mul_apply_eq_comp, ← pow_add,
         hz (2 * k + 2 * (t + 1)) (by omega), smul_zero, add_zero, h1]
     · rw [bform_shift hN, hz (2 * k + 2 * (t + 1)) (by omega),
         hz (2 * k + 4 * (t + 1)) (by omega), map_zero, h2]

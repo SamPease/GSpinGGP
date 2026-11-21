@@ -99,19 +99,19 @@ theorem commute_restrict_of_commute {f : Module.End K V} (hf : f.IsSemisimple)
       Commute (f.restrict hU) (ext h) := by
     intro h hh
     refine LinearMap.ext fun u => Subtype.ext ?_
-    simp only [Module.End.mul_apply]
+    simp only [mul_apply_eq_comp]
     rw [hext, LinearMap.coe_restrict_apply, hext]
     change f (h (π u)) = h (π (f u))
-    rw [hπf, ← Module.End.mul_apply, ← hh.eq]
+    rw [hπf, ← mul_apply_eq_comp, ← hh.eq]
     rfl
   have hc := hcomm _ _ (hcomm_ext g hg) (hcomm_ext g' hg')
   refine LinearMap.ext fun p => Subtype.ext ?_
   have h1 := congrArg Subtype.val (LinearMap.congr_fun hc.eq ⟨p, hPU p.2⟩)
-  simp only [Module.End.mul_apply, hext] at h1
+  simp only [mul_apply_eq_comp, hext] at h1
   have hπp : ∀ p' : P, π (p' : V) = p' := Submodule.projectionOnto_apply_left hPQ
   have hπU : ∀ p' : P, π ((⟨p', hPU p'.2⟩ : U) : V) = p' := hπp
   rw [hπU, hπp, hπp] at h1
-  simpa only [Module.End.mul_apply] using h1
+  simpa only [mul_apply_eq_comp] using h1
 
 omit [FiniteDimensional K V] in
 /-- **The commutant passes to invariant subspaces** (ambient form of
@@ -132,11 +132,11 @@ theorem commute_restrict_of_commute' {f : Module.End K V} (hf : f.IsSemisimple)
     intro k hk
     refine LinearMap.ext fun v => ?_
     have := congrArg Subtype.val (LinearMap.congr_fun hk.eq (e.symm v))
-    simpa [LinearEquiv.conj_apply, Module.End.mul_apply, hes, hf', e] using this
+    simpa [LinearEquiv.conj_apply, mul_apply_eq_comp, hes, hf', e] using this
   have hc := hcomm _ _ (key h hh) (key h' hh')
   refine LinearMap.ext fun w => Subtype.ext ?_
   have := LinearMap.congr_fun hc.eq (e w)
-  simpa [LinearEquiv.conj_apply, Module.End.mul_apply, hes'] using this
+  simpa [LinearEquiv.conj_apply, mul_apply_eq_comp, hes'] using this
 
 /-- **Decomposition into minimal invariant subspaces**: for a semisimple `f`, `V` is the
 independent sum of a finite set of nonzero `f`-invariant subspaces, each minimal among nonzero

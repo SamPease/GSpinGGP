@@ -855,7 +855,7 @@ theorem weaklyContainedIn_leftRegular_of_isClosed_comm (Gs : Subgroup Aˣ)
     WeaklyContainedIn π (leftRegular Gs) := by
   apply weaklyContainedIn_leftRegular_of_foelner π hπ
   let C := (latticeStab F (A := A)).subgroupOf Gs
-  have hCo : IsOpen (C : Set Gs) := (isOpen_latticeStab F).preimage continuous_subtype_val
+  have hCo : IsOpen (C : Set Gs) := (isOpen_latticeStab F).preimage continuous_subtypeVal
   have hCc : IsCompact (C : Set Gs) :=
     hG.isClosedEmbedding_subtypeVal.isCompact_preimage (isCompact_latticeStab F)
   letI : CommGroup Gs := { (inferInstance : Group Gs) with mul_comm := hcomm }
@@ -1299,7 +1299,7 @@ theorem jHat_zeroOrbit_eq_one (G : Subgroup Aˣ) (𝔤 : LieSubalgebra F A)
   have hε : 0 < ε := by have := norm_pos_iff.mpr hz; positivity
   have hU : IsOpen (j ⁻¹' Metric.ball (j X₀) ε) := Metric.isOpen_ball.preimage hjcont
   obtain ⟨V, hVc, hVo, hXV, hVU⟩ := exists_isCompact_isClopen_between isCompact_singleton hU
-    (Set.singleton_subset_iff.mpr (Metric.mem_ball_self hε))
+    (Set.singleton_subset_iff.mpr (Set.mem_preimage.mpr (Metric.mem_ball_self hε)))
   have hX₀V : X₀ ∈ V := hXV rfl
   have hf : IsTestFn (V.indicator (1 : ↥𝔤 → ℂ)) := by
     refine ⟨?_, HasCompactSupport.intro' hVc hVc.isClosed fun x hx => Set.indicator_of_notMem hx _⟩

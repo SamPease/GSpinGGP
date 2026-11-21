@@ -45,11 +45,11 @@ theorem hypForm_apply (n : ℕ) (v : Fin (2 * n) → K) :
   refine Finset.sum_congr rfl fun i _ => ?_
   rw [Finset.sum_eq_single (Fin.rev i)]
   · simp only [hypMatrix, smul_eq_mul]
-    rw [if_pos (by rw [Fin.val_rev]; have := i.2; omega)]
+    rw [ite_eq_left (by rw [Fin.val_rev]; have := i.2; omega)]
     ring
   · intro j _ hj
     simp only [hypMatrix, smul_eq_mul]
-    rw [if_neg]
+    rw [ite_eq_right]
     · ring
     · intro h
       apply hj
@@ -143,7 +143,7 @@ theorem invOf_two_end_apply (x : K) : (⅟(2 : Module.End K K)) x = ⅟2 * x := 
   have h : (⅟(2 : Module.End K K)) = (⅟(2 : K)) • LinearMap.id := by
     apply invOf_eq_right_inv
     ext
-    simp [Module.End.mul_apply]
+    simp [mul_apply_eq_comp]
   rw [h]
   rfl
 
@@ -261,7 +261,7 @@ theorem pigeon_fin {m : ℕ} {P₁ P₂ P₃ : QuadraticForm F (Fin m → F)} (h
   obtain ⟨i₃, ⟨e₃⟩, -⟩ := huniq P₃ (h₃.isNondeg h₁) ((sameDisc_iff_discRel _ _).2 h₃)
   have : i₁ = i₂ ∨ i₁ = i₃ ∨ i₂ = i₃ := by
     by_contra hc
-    push_neg at hc
+    push Not at hc
     have a := Fin.val_ne_of_ne hc.1
     have b := Fin.val_ne_of_ne hc.2.1
     have c := Fin.val_ne_of_ne hc.2.2

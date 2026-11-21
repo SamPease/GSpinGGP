@@ -397,7 +397,7 @@ theorem exists_hcDomain (t : HCVal) :
 
 /-- `A_G(F) ∩ ker H_G` is open in `A_G(F)` (`H_G` is locally constant). -/
 theorem isOpen_ker_hcA : IsOpen (d.hcA.ker : Set ↥d.AG) :=
-  (d.isLocallyConstant_hcG.comp_continuous continuous_subtype_val).isOpen_fiber 1
+  (d.isLocallyConstant_hcG.comp_continuous continuous_subtypeVal).isOpen_fiber 1
 
 /-- `A_G(F) ∩ ker H_G` is compact (`isCompact_AG_inter_ker_hcG`). -/
 theorem isCompact_ker_hcA : IsCompact (d.hcA.ker : Set ↥d.AG) := by
@@ -443,7 +443,7 @@ theorem isCompact_preimage_hcA {S : Set HCVal} (hS : S.Finite) : IsCompact (d.hc
 theorem finite_image_hcG {C : Set ↥d.G} (hC : IsCompact C) : (d.hcG '' C).Finite := by
   have : CompactSpace C := isCompact_iff_compactSpace.1 hC
   rw [Set.image_eq_range]
-  exact (d.isLocallyConstant_hcG.comp_continuous continuous_subtype_val).range_finite
+  exact (d.isLocallyConstant_hcG.comp_continuous continuous_subtypeVal).range_finite
 
 open scoped Classical in
 /-- **The cutoff** `κ(g) = c⁻¹ · 1_D(H_G(g))`. -/
@@ -485,7 +485,7 @@ theorem isAGCutoff_agCutoff : IsAGCutoff d d.agCutoff := by
       have : E = (fun a : ↥d.AG => d.hcG ((a : ↥d.G) * g)) ⁻¹' d.hcDomain := by
         ext a; simp [E, GGPData.hcA_apply]
       rw [this]
-      exact (hloc.comp_continuous (continuous_subtype_val.mul continuous_const)) _
+      exact (hloc.comp_continuous (continuous_subtypeVal.mul continuous_const)) _
     have hmemE : ∀ a : ↥d.AG, a ∈ E ↔ d.hcG ((a : ↥d.G) * g) ∈ d.hcDomain := fun a => by
       rw [map_mul]; exact Iff.rfl
     have hfun : (fun a : ↥d.AG => d.agCutoff ((a : ↥d.G) * g)) =
@@ -502,7 +502,7 @@ theorem isAGCutoff_agCutoff : IsAGCutoff d d.agCutoff := by
     have hT : (d.hcG '' C).Finite := by
       have : CompactSpace C := isCompact_iff_compactSpace.1 hC
       rw [Set.image_eq_range]
-      exact (hloc.comp_continuous continuous_subtype_val).range_finite
+      exact (hloc.comp_continuous continuous_subtypeVal).range_finite
     choose a₀ ha₀ using fun t : HCVal => d.exists_hcDomain t
     have hpiece : ∀ t : HCVal, IsCompact ((Subtype.val : ↥d.AG → ↥d.G) ''
         ((fun a : ↥d.AG => a₀ t * a) '' (d.hcA.ker : Set ↥d.AG)) * C) := fun t =>
@@ -539,7 +539,7 @@ theorem exists_isCompact_AG_support {f₀ : ↥d.G → ℂ} (hf₀ : HasCompactS
   refine ⟨d.hcA ⁻¹' S, d.isCompact_preimage_hcA hS, ?_⟩
   set L : Set ↥d.G := (Subtype.val '' (d.hcA ⁻¹' S))⁻¹ * tsupport f₀
   have hL : IsCompact L :=
-    ((d.isCompact_preimage_hcA hS).image continuous_subtype_val).inv.mul hf₀
+    ((d.isCompact_preimage_hcA hS).image continuous_subtypeVal).inv.mul hf₀
   have hemb : IsClosedEmbedding (fun u : ↥(d.whittU FW FV) => p * (u : ↥d.G)) :=
     (Homeomorph.mulLeft p).isClosedEmbedding.comp
       (d.isClosed_whittU FW FV).isClosedEmbedding_subtypeVal
@@ -568,7 +568,7 @@ theorem chiProj_isStronglyCuspidal {f₀ : ↥d.G → ℂ} (hf₀ : f₀ ∈ tes
   obtain ⟨Ap, hAp, Up, hUp, hsupp⟩ := exists_isCompact_AG_support d hf₀.2 FW FV p
   have hφc : Continuous (chiProj d χ f₀) := (chiProj_isLocallyConstant d χ hf₀).continuous
   have hcontU : Continuous (fun u : ↥(d.whittU FW FV) => p * (u : ↥d.G)) :=
-    continuous_const.mul continuous_subtype_val
+    continuous_const.mul continuous_subtypeVal
   refine ⟨?_, ?_⟩
   · -- integrability: continuous with compact support `Up`
     refine (hφc.comp hcontU).integrable_of_hasCompactSupport (HasCompactSupport.intro hUp ?_)
@@ -582,10 +582,10 @@ theorem chiProj_isStronglyCuspidal {f₀ : ↥d.G → ℂ} (hf₀ : f₀ ∈ tes
     set Φ : ↥d.AG → ↥(d.whittU FW FV) → ℂ :=
       fun a u => ((χ.toHom a : Circle) : ℂ) * f₀ ((a : ↥d.G) * (p * u))
     have hΦc : Continuous (Function.uncurry Φ) := by
-      refine ((continuous_subtype_val.comp (χ.continuous.comp continuous_fst))).mul
+      refine ((continuous_subtypeVal.comp (χ.continuous.comp continuous_fst))).mul
         (hf₀.1.continuous.comp ?_)
-      exact (continuous_subtype_val.comp continuous_fst).mul
-        (continuous_const.mul (continuous_subtype_val.comp continuous_snd))
+      exact (continuous_subtypeVal.comp continuous_fst).mul
+        (continuous_const.mul (continuous_subtypeVal.comp continuous_snd))
     have hΦs : HasCompactSupport (Function.uncurry Φ) := by
       refine HasCompactSupport.intro (hAp.prod hUp) fun x hx => ?_
       by_contra h
@@ -1454,7 +1454,7 @@ theorem isLocallyConstant_translate_AG {f' : ↥d.G → ℂ} (hf' : f' ∈ testF
   rw [IsLocallyConstant.iff_eventually_eq]
   intro a₀
   have hc : Continuous (fun a : ↥d.AG => (a : ↥d.G)⁻¹ * (a₀ : ↥d.G)) :=
-    (continuous_subtype_val.inv).mul continuous_const
+    (continuous_subtypeVal.inv).mul continuous_const
   have : (fun a : ↥d.AG => (a : ↥d.G)⁻¹ * (a₀ : ↥d.G)) ⁻¹' U ∈ 𝓝 a₀ :=
     hc.continuousAt.preimage_mem_nhds (by simpa using hU)
   filter_upwards [this] with a ha
@@ -1475,13 +1475,13 @@ theorem integral_char_mul_eq_sum {T : Type*} {Φ : ↥d.AG → T} (hΦ : IsLocal
   have hfin : (Φ '' K).Finite := by
     have : CompactSpace K := isCompact_iff_compactSpace.1 hK
     rw [Set.image_eq_range]
-    exact (hΦ.comp_continuous continuous_subtype_val).range_finite
+    exact (hΦ.comp_continuous continuous_subtypeVal).range_finite
   set R := hfin.toFinset
   set E : T → Set ↥d.AG := fun τ => K ∩ Φ ⁻¹' {τ}
   have hEm : ∀ τ, MeasurableSet (E τ) := fun τ =>
     hK.isClosed.measurableSet.inter (hΦ.isOpen_fiber τ).measurableSet
   have hχc : Continuous (fun a : ↥d.AG => ((χ.toHom a : Circle) : ℂ)) :=
-    continuous_subtype_val.comp χ.continuous
+    continuous_subtypeVal.comp χ.continuous
   have hint : ∀ τ, Integrable ((E τ).indicator fun a => ((χ.toHom a : Circle) : ℂ)) Measure.haar :=
     fun τ => (integrable_indicator_iff (hEm τ)).2
       ((hχc.continuousOn.integrableOn_compact hK).mono_set Set.inter_subset_left)
@@ -1519,7 +1519,7 @@ theorem measurePreserving_AG_shear :
       ((Measure.haar : Measure ↥d.AG).prod (Measure.haar : Measure ↥d.G))
       ((Measure.haar : Measure ↥d.AG).prod (Measure.haar : Measure ↥d.G)) :=
   (MeasurePreserving.id _).skew_product (g := fun (a : ↥d.AG) (x : ↥d.G) => (a : ↥d.G) * x)
-    ((continuous_subtype_val.comp continuous_fst).mul continuous_snd).measurable
+    ((continuous_subtypeVal.comp continuous_fst).mul continuous_snd).measurable
     (Eventually.of_forall fun _ => map_mul_left_eq_self _ _)
 
 /-- The `A_G`-range: if `f(y⁻¹ g y) h(a⁻¹ g) ≠ 0` then `H_G(a) ∈ H_G(supp f) H_G(supp h)⁻¹`. -/
@@ -1566,7 +1566,7 @@ theorem integrable_AG_prod {θ' h : ↥d.G → ℂ} (hθ' : LocallyIntegrable θ
   set A' : Set ↥d.AG := d.hcA ⁻¹' Set.image2 (fun s t => s * t⁻¹) S₀ T
   have hA' : IsCompact A' := d.isCompact_preimage_hcA (hS₀.image2 _ hT)
   set L : Set ↥d.G := (Subtype.val '' A') * Kh
-  have hL : IsCompact L := (hA'.image continuous_subtype_val).mul hKh
+  have hL : IsCompact L := (hA'.image continuous_subtypeVal).mul hKh
   set F' : ↥d.AG × ↥d.G → ℂ := fun p =>
     ((χ.toHom p.1 : Circle) : ℂ) * θ' p.2 * h ((p.1 : ↥d.G)⁻¹ * p.2)
   have hcomp : (fun p : ↥d.AG × ↥d.G =>
@@ -1574,9 +1574,9 @@ theorem integrable_AG_prod {θ' h : ↥d.G → ℂ} (hθ' : LocallyIntegrable θ
       F' ∘ fun p : ↥d.AG × ↥d.G => (p.1, (p.1 : ↥d.G) * p.2) := by
     funext p; simp [F', inv_mul_cancel_left]
   have hF'm : AEStronglyMeasurable F' ((Measure.haar : Measure ↥d.AG).prod Measure.haar) := by
-    refine ((((continuous_subtype_val.comp χ.continuous).comp continuous_fst).aestronglyMeasurable).mul
+    refine ((((continuous_subtypeVal.comp χ.continuous).comp continuous_fst).aestronglyMeasurable).mul
       hθ'.aestronglyMeasurable.comp_snd).mul ?_
-    exact (hh.comp ((continuous_subtype_val.comp continuous_fst).inv.mul
+    exact (hh.comp ((continuous_subtypeVal.comp continuous_fst).inv.mul
       continuous_snd).measurable).aestronglyMeasurable
   rw [hcomp, (measurePreserving_AG_shear d).integrable_comp hF'm]
   have hbound : ∀ p : ↥d.AG × ↥d.G,
@@ -1615,9 +1615,9 @@ theorem orbitalInner_chiProj {f₀ h : ↥d.G → ℂ} (hf₀ : f₀ ∈ testFun
   set Φ : ↥d.AG → ↥d.G → ℂ := fun a g =>
     ((χ.toHom a : Circle) : ℂ) * f₀ ((a : ↥d.G) * (y⁻¹ * g * y)) * h g
   have hΦc : Continuous (Function.uncurry Φ) := by
-    refine ((continuous_subtype_val.comp (χ.continuous.comp continuous_fst)).mul
+    refine ((continuous_subtypeVal.comp (χ.continuous.comp continuous_fst)).mul
       (hf₀.1.continuous.comp ?_)).mul (hh.1.continuous.comp continuous_snd)
-    exact (continuous_subtype_val.comp continuous_fst).mul
+    exact (continuous_subtypeVal.comp continuous_fst).mul
       ((continuous_const.mul continuous_snd).mul continuous_const)
   have hΦs : HasCompactSupport (Function.uncurry Φ) := by
     refine HasCompactSupport.intro ((isCompact_agRange d hf₀.2 hh.2).prod hh.2) fun p hp => ?_
@@ -1667,7 +1667,7 @@ theorem continuousOn_chiAvg {f₀ θ₀ : ↥d.G → ℂ} (hθ₀ : IsThetaF d f
   have hN₀ : regularSet d.G d.lie ∩ {g | d.hcG g = t} ∈ 𝓝 g₀ :=
     (hreg.inter (d.isLocallyConstant_hcG.isOpen_fiber t)).mem_nhds ⟨hg₀, rfl⟩
   obtain ⟨N, hN, hNsub, hNc⟩ := local_compact_nhds hN₀
-  have hB : IsCompact ((Subtype.val '' A') * N) := (hA'.image continuous_subtype_val).mul hNc
+  have hB : IsCompact ((Subtype.val '' A') * N) := (hA'.image continuous_subtypeVal).mul hNc
   have hBreg : (Subtype.val '' A') * N ⊆ regularSet d.G d.lie := by
     rintro _ ⟨_, ⟨a, -, rfl⟩, g, hg, rfl⟩
     exact mul_mem_regularSet_of_mem_AG d a (hNsub hg).1
@@ -1676,8 +1676,8 @@ theorem continuousOn_chiAvg {f₀ θ₀ : ↥d.G → ℂ} (hθ₀ : IsThetaF d f
   refine continuousWithinAt_of_dominated (bound := A'.indicator fun _ => C) ?_ ?_
     ((integrable_indicator_iff hA'.measurableSet).2 (integrableOn_const hA'.measure_lt_top.ne)) ?_
   · filter_upwards [self_mem_nhdsWithin] with g hg
-    exact ((continuous_subtype_val.comp χ.continuous).mul (hθ₀.2.1.comp_continuous
-      (continuous_subtype_val.mul continuous_const)
+    exact ((continuous_subtypeVal.comp χ.continuous).mul (hθ₀.2.1.comp_continuous
+      (continuous_subtypeVal.mul continuous_const)
       fun a => mul_mem_regularSet_of_mem_AG d a hg)).aestronglyMeasurable
   · filter_upwards [mem_nhdsWithin_of_mem_nhds hN] with g hg
     refine Eventually.of_forall fun a => ?_

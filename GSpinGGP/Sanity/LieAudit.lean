@@ -232,7 +232,7 @@ theorem toyD_germLie0 (θ : ↥(𝕋).lieZero → ℂ) {X : (𝕋).ambient} (hX 
     rw [hsum _ Y hY, Subsingleton.elim Z 0]
   have hE : ∃ c, HasGermExpansionLie (𝕋).G (𝕋).lieZero (𝕋).bilin ψ θ 0 c := ⟨_, hex⟩
   unfold GGPData.germLie0 germLie
-  rw [ite_cond_eq_true _ _ (eq_true (toyD_mem_nilReg _ _ O)),
+  rw [ite_eq_left_of_eq_true _ _ (eq_true (toyD_mem_nilReg _ _ O)),
     dite_eq_left_of_eq_true (eq_true hE)]
   exact huniq _ hE.choose_spec
 
@@ -326,7 +326,7 @@ theorem toyD_mGeomLie (θ : ↥(𝕋).lieZero → ℂ) : (𝕋).mGeomLie ψ θ =
     simp only [measureReal_def, Measure.dirac_apply_of_mem (Set.mem_univ _), ENNReal.toReal_one,
       one_smul]
     unfold GGPData.gammaIntegrandLie
-    rw [if_pos (by simpa using toyD_isGammaEltLie_zero _), toyD_weylDiscLie, toyD_deltaLie,
+    rw [ite_eq_left (by simpa using toyD_isGammaEltLie_zero _), toyD_weylDiscLie, toyD_deltaLie,
       toyD_germLie0 ψ θ (by simpa using toyD_diagLie_zero)]
     simp
   unfold GGPData.mGeomLie
@@ -415,7 +415,7 @@ theorem wittIndex_eq_one_of_isotropic {V : Type*} [AddCommGroup V] [Module F V]
     rw [QuadraticMap.map_smul, hv, smul_zero]
   · rintro n ⟨U, hU, rfl⟩
     by_contra hlt
-    push_neg at hlt
+    push Not at hlt
     have h2 : finrank F U = finrank F V :=
       le_antisymm (Submodule.finrank_le U) (hdim ▸ hlt)
     have htop : U = ⊤ := Submodule.eq_top_of_finrank_eq h2

@@ -123,7 +123,7 @@ theorem isQuasiSplitQF_fixedSub_of_forall_finrank_le {Q : QuadraticForm K V} (hQ
   have hQA := isNondeg_comp_subtype_of_isCompl hc
   have hskew : ∀ u w, bform (Q.comp (fixedSub y).subtype) ((adV Q X).restrict h u) w =
       -bform (Q.comp (fixedSub y).subtype) u ((adV Q X).restrict h w) := fun u w => by
-    simp only [bform_comp_subtype, LinearMap.restrict_coe_apply]
+    simp only [bform_comp_subtype, LinearMap.coe_restrict_apply]
     exact bform_adV hXg _ _
   have hle : ∀ M : Module.End K (fixedSub y), (∀ u w, bform (Q.comp (fixedSub y).subtype) (M u) w =
       -bform (Q.comp (fixedSub y).subtype) u (M w)) →

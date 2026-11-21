@@ -155,7 +155,7 @@ theorem torusBarFbar_commute_of (x : ↥(GSpin d.QW))
     rw [hX]
     refine LinearMap.ext fun w => ?_
     show specP (d.QW.baseChange (AlgebraicClosure F)) xb (specP (d.QW.baseChange (AlgebraicClosure F)) g w) = specP (d.QW.baseChange (AlgebraicClosure F)) g (specP (d.QW.baseChange (AlgebraicClosure F)) xb w)
-    rw [← LinearEquiv.mul_apply, ← map_mul, hc, map_mul, LinearEquiv.mul_apply]
+    rw [← mul_apply_eq_comp, ← map_mul, hc, map_mul, mul_apply_eq_comp]
   have hfix : ∀ g ∈ d.torusFbar x, ∀ z ∈ Module.End.eigenspace X 1,
       (specP (d.QW.baseChange (AlgebraicClosure F)) g : _ →ₗ[AlgebraicClosure F] AlgebraicClosure F ⊗[F] (Fin d.m → F)) z = z := by
     intro g hg z hz

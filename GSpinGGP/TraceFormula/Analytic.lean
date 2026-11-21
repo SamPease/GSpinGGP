@@ -131,7 +131,7 @@ theorem one_le_logNormG (g : ↥d.G) : 1 ≤ d.logNormG g := one_le_logNorm _ g
 /-- `σ_G` is continuous. -/
 theorem continuous_logNormG : Continuous d.logNormG := by
   have hv : Continuous fun g : ↥d.G => ((g : d.ambientˣ) : d.ambient) :=
-    Units.continuous_val.comp continuous_subtype_val
+    Units.continuous_val.comp continuous_subtypeVal
   have h1 : Continuous fun g : ↥d.G => ‖lmulPi F ((g : d.ambientˣ) : d.ambient)‖ :=
     ((continuous_lmulPi F).comp hv).norm
   have h2 : Continuous fun g : ↥d.G => ‖lmulPi F (((g⁻¹ : ↥d.G) : d.ambientˣ) : d.ambient)‖ :=
@@ -400,7 +400,7 @@ variable {d} (IW : d.IwasawaDatum)
 abbrev KP0 : Subgroup ↥IW.P0 := IW.K.subgroupOf IW.P0
 
 theorem isOpen_KP0 : IsOpen (IW.KP0 : Set ↥IW.P0) :=
-  IW.isOpen_K.preimage continuous_subtype_val
+  IW.isOpen_K.preimage continuous_subtypeVal
 
 theorem isCompact_KP0 : IsCompact (IW.KP0 : Set ↥IW.P0) :=
   (d.isClosed_whittB IW.FW IW.FV).isClosedEmbedding_subtypeVal.isCompact_preimage IW.isCompact_K
@@ -531,7 +531,7 @@ theorem continuous_incl : Continuous d.incl := by
   apply continuous_induced_rng.2
   rw [Units.continuous_iff]
   constructor
-  · exact hmap.comp (Units.continuous_val.comp continuous_subtype_val)
+  · exact hmap.comp (Units.continuous_val.comp continuous_subtypeVal)
   · have e : ∀ a : GSpin d.QW, ((((d.incl a : GSpin d.QV) : (CliffordAlgebra d.QV)ˣ))⁻¹ :
         (CliffordAlgebra d.QV)ˣ) = (((d.incl a⁻¹ : GSpin d.QV) : (CliffordAlgebra d.QV)ˣ)) := by
       intro a
@@ -550,7 +550,7 @@ theorem continuous_incl : Continuous d.incl := by
       rw [e a, e2 a]
     rw [this]
     refine hmap.comp ?_
-    exact Units.continuous_coe_inv.comp continuous_subtype_val
+    exact Units.continuous_coe_inv.comp continuous_subtypeVal
 
 /-- `g ↦ n(g) = g_W⁻¹ g_V` is continuous on `G(F)`. -/
 theorem continuous_nPart : Continuous d.nPart := by
@@ -567,12 +567,12 @@ theorem continuous_lam : Continuous d.lam := by
   unfold lam
   refine continuous_finsetSum _ fun i _ => ?_
   exact (IsModuleTopology.continuous_of_linearMap (bform d.QV (d.zV (-(i : ℤ) - 1)))).comp
-    ((d.continuous_specP_nPart _).comp continuous_subtype_val)
+    ((d.continuous_specP_nPart _).comp continuous_subtypeVal)
 
 /-- `ξ = ψ ∘ λ` is continuous on `H(F)` (Thesis §5.2). -/
 theorem continuous_xi (ψ : NontrivialAddChar F) : Continuous (d.xi ψ.toAddChar) := by
   unfold xi
-  exact continuous_subtype_val.comp (ψ.continuous.comp d.continuous_lam)
+  exact continuous_subtypeVal.comp (ψ.continuous.comp d.continuous_lam)
 
 /-! ## 4. The kernel `K(f,x)` and the distribution `J(f)` (Thesis §7.1, §10.1) -/
 
@@ -589,7 +589,7 @@ theorem kernelK_integrable (f : ↥d.G → ℂ) (hf : f ∈ ScuspTestFn d χ) (x
   -- the integrand on `H(F)` is continuous
   let φ : ↥d.H → ℂ := fun h => kernelIntegrand d ψ f x h
   have hφ : Continuous φ :=
-    (hlc.continuous.comp ((continuous_const.mul continuous_subtype_val).mul continuous_const)).mul
+    (hlc.continuous.comp ((continuous_const.mul continuous_subtypeVal).mul continuous_const)).mul
       (d.continuous_xi ψ)
   -- it descends to `H(F)/A_{G,H}(F)`
   let φbar : d.HmodAGH → ℂ :=

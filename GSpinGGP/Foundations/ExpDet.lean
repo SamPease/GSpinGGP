@@ -116,11 +116,11 @@ theorem exists_absF_det_mul_expA_sub_one [TopologicalSpace (Module.End F V)]
     ext w
     have hw : A (w : V) = w := by
       have h0 : (A - 1) (w : V) = 0 := LinearMap.mem_ker.mp w.2
-      rwa [LinearMap.sub_apply, Module.End.one_apply, sub_eq_zero] at h0
-    simp only [LinearMap.coe_restrict_apply, Module.End.mul_apply, hMdef, LinearMap.sub_apply,
-      Module.End.one_apply]
-    rw [← Module.End.mul_apply A (expA F Y), hAe.eq, Module.End.mul_apply, hw, hexp]
-    simp [Module.End.mul_apply]
+      rwa [LinearMap.sub_apply, one_apply_eq_self, sub_eq_zero] at h0
+    simp only [LinearMap.coe_restrict_apply, mul_apply_eq_comp, hMdef, LinearMap.sub_apply,
+      one_apply_eq_self]
+    rw [← mul_apply_eq_comp A (expA F Y), hAe.eq, mul_apply_eq_comp, hw, hexp]
+    simp [mul_apply_eq_comp]
   have hK1 : LinearMap.det ((u Y).restrict huK) = g₁ (u Y) :=
     (congrArg LinearMap.det (comp_comp_subtype_eq_restrict hπK huK)).symm
   have hR2 : LinearMap.det (M.restrict hMR) = g₂ M :=

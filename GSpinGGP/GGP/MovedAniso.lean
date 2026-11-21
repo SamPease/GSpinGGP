@@ -263,7 +263,7 @@ theorem anisotropic_orthogonal_fixedSub_of_isGammaElt (d : GGPData F) (x : ↥(G
         specP d.QW (t : ↥(GSpin d.QW)) (u : Fin d.m → F) := by
       have hn : Continuous fun t : ↥(d.torusOf x) =>
           ((t : ↥(GSpin d.QW)) : (CliffordAlgebra d.QW)ˣ) :=
-        continuous_subtype_val.comp continuous_subtype_val
+        continuous_subtypeVal.comp continuous_subtypeVal
       simp only [specP_apply_eq]
       exact (IsModuleTopology.continuous_of_linearMap (CliffordAlgebra.ιInv d.QW)).comp
         ((Units.continuous_val.comp hn).mul (continuous_const.mul (Units.continuous_coe_inv.comp hn)))

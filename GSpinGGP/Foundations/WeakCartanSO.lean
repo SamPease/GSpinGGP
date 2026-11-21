@@ -59,7 +59,7 @@ theorem Good.mul [IsUltrametricDist F] {S : Finset (Fin n)} {M M' : ℝ} {g h : 
     rcases hgd with h1 | h1 <;> rcases hhd with h2 | h2 <;> simp [h1, h2]
   · exact (basisOpNorm_mul_le g h).trans
       (mul_le_mul hgM hhM (basisOpNorm_nonneg _) ((basisOpNorm_nonneg _).trans hgM))
-  · rw [LinearEquiv.mul_apply, hhS k hk, hgS k hk]
+  · rw [mul_apply_eq_comp, hhS k hk, hgS k hk]
 
 omit [CharZero F] in
 theorem Good.mono {S : Finset (Fin n)} {M M' : ℝ} {g : V ≃ₗ[F] V} (hg : Good Q b S M g)
@@ -555,7 +555,7 @@ theorem orbit_core [FiniteDimensional F V] :
       rw [this, ha, hc']
   obtain ⟨g₄, hg₄, t, ht0, ht1, e₄⟩ := hfinal
   refine ⟨g₄ * (g₃ * (g₂ * g₁)), hg₄.mul (hg₃.mul (hg₂.mul hg₁)), t, ht0, ht1, ?_⟩
-  simp only [LinearEquiv.mul_apply]
+  simp only [mul_apply_eq_comp]
   rw [e₁, e₂, e₃, e₄]
 
 /-- **The orbit lemma** (used for Thesis Prop. 8.3.1; the orthogonal analogue of Lemme 11.0.2 in
@@ -595,7 +595,7 @@ theorem orbit_lemma [FiniteDimensional F V] (hS' : S'.Nonempty) :
     refine ⟨_, TauCeti.QuadraticMap.mem_specialOrthogonalGroup_iff.2 ⟨hgρ.1, ?_⟩, hgρ.2.2.1,
       fun k h0 h1 h2 => hgρ.2.2.2 k (hS k h0 h1 h2), t, ht0, ht1, ?_⟩
     · rw [map_mul, hdet, TauCeti.QuadraticMap.det_reflection]; simp
-    · rw [LinearEquiv.mul_apply, e]
+    · rw [mul_apply_eq_comp, e]
       refine TauCeti.QuadraticMap.reflection_apply_of_polar_eq_zero Q (b j₂) ?_
       rw [polar_add_right, polar_smul_right, polar_smul_right,
         show b i₀ - b i₁ = b i₀ + (-1 : F) • b i₁ by simp [sub_eq_add_neg],

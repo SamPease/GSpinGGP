@@ -90,12 +90,12 @@ theorem exists_frame_torus_elt {x : GSpin Q} {n : ℕ} {e f : Fin n → V} {μ :
       obtain ⟨p, hpx, hpW, hpe, hpz⟩ := pair i (u i)⁻¹
       refine ⟨p * g, hpx.mul_left hgx, fun w hw => ?_, fun j => ⟨?_, ?_⟩,
         fun z hz => (hpz z hz).mul_right (hgz z hz)⟩
-      · rw [map_mul, LinearEquiv.mul_apply, hgW w hw, hpW w hw]
-      · rw [map_mul, LinearEquiv.mul_apply, (hge j).1, map_smul, (hpe j).1, smul_smul]
+      · rw [map_mul, mul_apply_eq_comp, hgW w hw, hpW w hw]
+      · rw [map_mul, mul_apply_eq_comp, (hge j).1, map_smul, (hpe j).1, smul_smul]
         by_cases hj : j = i
         · subst hj; simp [hi]
         · simp [hj]
-      · rw [map_mul, LinearEquiv.mul_apply, (hge j).2, map_smul, (hpe j).2, smul_smul]
+      · rw [map_mul, mul_apply_eq_comp, (hge j).2, map_smul, (hpe j).2, smul_smul]
         by_cases hj : j = i
         · subst hj; simp [hi]
         · simp [hj]

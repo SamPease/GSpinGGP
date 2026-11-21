@@ -90,7 +90,7 @@ theorem triv2_not_irreducible : ¬ triv2.IsIrreducible := by
   rintro ⟨-, h⟩
   have h' : ∀ W : Submodule ℂ E2, IsClosed (W : Set E2) → W = ⊥ ∨ W = ⊤ :=
     fun W hW => h W hW fun g v hv => (triv2_ρ g v).symm ▸ hv
-  rcases h' (ℂ ∙ (EuclideanSpace.single 0 1 : E2)) (Submodule.closed_of_finiteDimensional _)
+  rcases h' (ℂ ∙ (EuclideanSpace.single 0 1 : E2)) (Submodule.isClosed_of_finiteDimensional _)
     with h0 | h1
   · have : (EuclideanSpace.single 0 1 : E2) ∈ (ℂ ∙ (EuclideanSpace.single 0 1 : E2)) :=
       Submodule.mem_span_singleton_self _
@@ -241,7 +241,7 @@ theorem toyD_germ_unique_nonvacuous (ψ : NontrivialAddChar F) :
     (zeroOrbit _ _)
   by_contra hne
   unfold germ at h
-  rw [if_pos (toyD_mem_nilReg _ _ _), dif_neg hne] at h
+  rw [ite_eq_left (toyD_mem_nilReg _ _ _), dite_eq_right hne] at h
   exact zero_ne_one h
 
 /-- The axiom's instance at `toyD` (agrees with `toyD_germ_unique`). -/
@@ -384,7 +384,7 @@ theorem germ_unique_forces_jHat_ne_zero (d : GGPData F) (ψ : NontrivialAddChar 
   classical
   intro ω hω
   by_contra hcon
-  push_neg at hcon
+  push Not at hcon
   have h0 : HasGermExpansion d.G d.lie d.bilin ψ 0 x 0 :=
     ⟨by simp, ω, hω, fun X _ _ _ y _ => by simp⟩
   have h1 : HasGermExpansion d.G d.lie d.bilin ψ 0 x (Pi.single O 1) := by

@@ -461,7 +461,7 @@ theorem exists_nhds_one_leftInvariant {f : G → ℂ} (hf : f ∈ testFunctions 
   have : CompactSpace ↥(tsupport f) := isCompact_iff_compactSpace.mp hcpt
   have hfin : (f '' tsupport f).Finite := by
     rw [Set.image_eq_range]
-    exact (hf.1.comp_continuous continuous_subtype_val).range_finite
+    exact (hf.1.comp_continuous continuous_subtypeVal).range_finite
   have hfib : ∀ c : ℂ, ∃ V ∈ nhds (1 : G), c ≠ 0 → V * (f ⁻¹' {c}) ⊆ f ⁻¹' {c} := by
     intro c
     by_cases hc : c = 0
@@ -704,7 +704,7 @@ theorem continuous [Nontrivial π.H] (h : HasCentralChar π A χ) : Continuous �
     funext a
     rw [h.smul_eq, inner_smul_right, mul_div_assoc, div_self hvv, mul_one]
   rw [hχ]
-  exact (continuous_const.inner ((π.strongCont v).comp continuous_subtype_val)).div_const _
+  exact (continuous_const.inner ((π.strongCont v).comp continuous_subtypeVal)).div_const _
 
 /-- Irreducible versions of the three facts above. -/
 theorem mul_of_irreducible (hπ : π.IsIrreducible) (h : HasCentralChar π A χ) (a b : ↥A) :

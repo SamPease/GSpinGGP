@@ -80,7 +80,7 @@ theorem finrank_soCent_ker_eq_of_forall_le {Q : QuadraticForm K V} (hQ : IsNonde
   have hAg : ∀ v, v ∈ A ↔ (1 + E) v = v := fun v => by
     simp [A, E, LinearMap.mem_ker]
   have hgB : ∀ b ∈ B, (1 + E) b ∈ B := fun b hb => by
-    rw [LinearMap.add_apply, Module.End.one_apply]; exact add_mem hb (hEB hb)
+    rw [LinearMap.add_apply, one_apply_eq_self]; exact add_mem hb (hEB hb)
   have hQA := isNondeg_comp_subtype_of_isCompl hc
   -- the dimension formula
   have key : ∀ Z ∈ lieCentralizer (soSub Q) Xc, ∀ hZA : ∀ a ∈ A, adV Q Z a ∈ A,
@@ -280,7 +280,7 @@ theorem wPart_commute {E : Module.End F (Fin d.m → F)} {EV : Module.End F d.V}
     d.wPart M * E = E * d.wPart M := by
   refine LinearMap.ext fun w => ?_
   have := congrArg (fun T : Module.End F d.V => (T (w, 0)).1) hME
-  simp only [Module.End.mul_apply, hEV] at this
+  simp only [mul_apply_eq_comp, hEV] at this
   exact this
 
 theorem pow_apply_inl (hMs : ∀ u w, bform d.QV (M u) w = -bform d.QV u (M w))
@@ -289,8 +289,8 @@ theorem pow_apply_inl (hMs : ∀ u w, bform d.QV (M u) w = -bform d.QV u (M w))
   induction k with
   | zero => simp
   | succ k ih =>
-    rw [pow_succ', Module.End.mul_apply, ih, d.apply_eq_of_skew hMs hMz, pow_succ',
-      Module.End.mul_apply]
+    rw [pow_succ', mul_apply_eq_comp, ih, d.apply_eq_of_skew hMs hMz, pow_succ',
+      mul_apply_eq_comp]
     rfl
 
 theorem isNilpotent_wPart (hMs : ∀ u w, bform d.QV (M u) w = -bform d.QV u (M w))
@@ -493,7 +493,7 @@ theorem mapsTo_ker_fst {X : CliffordAlgebra d.QW} (hX : X ∈ soSub d.QW) {Y : d
   have hc := adV_commute_of_commute hY1.1 hX.1 (congrArg Prod.fst hYc)
   intro a ha
   rw [LinearMap.mem_ker] at ha ⊢
-  rw [← Module.End.mul_apply, ← hc, Module.End.mul_apply, ha, map_zero]
+  rw [← mul_apply_eq_comp, ← hc, mul_apply_eq_comp, ha, map_zero]
 
 /-- `ad Y` preserves `ker X` on `V` for `Y ∈ 𝔤⁰_X`. -/
 theorem mapsTo_ker_snd {X : CliffordAlgebra d.QW} (hX : X ∈ soSub d.QW) {Y : d.ambient}
@@ -505,7 +505,7 @@ theorem mapsTo_ker_snd {X : CliffordAlgebra d.QW} (hX : X ∈ soSub d.QW) {Y : d
     (congrArg Prod.snd hYc)
   intro a ha
   rw [LinearMap.mem_ker] at ha ⊢
-  rw [← Module.End.mul_apply, ← hc, Module.End.mul_apply, ha, map_zero]
+  rw [← mul_apply_eq_comp, ← hc, mul_apply_eq_comp, ha, map_zero]
 
 /-- **Two regular nilpotent elements of `𝔤⁰_X` meeting Luo's recipe are `Z_G(X)`-conjugate.** -/
 theorem exists_conj_of_orbitSpecAt {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)

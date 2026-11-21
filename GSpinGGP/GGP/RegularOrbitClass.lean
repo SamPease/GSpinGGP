@@ -177,8 +177,8 @@ theorem exists_isometryEquiv_conj_of_pow_ne_zero {Q : QuadraticForm K V}
     have : (φ : V →ₗ[K] V₂) ∘ₗ N = N₂ ∘ₗ (φ : V →ₗ[K] V₂) := by
       refine b.ext fun i => ?_
       simp only [LinearMap.comp_apply, LinearEquiv.coe_coe]
-      rw [hb, chainBasis_apply, ← Module.End.mul_apply, ← pow_succ', hφpow, hφpow,
-        ← Module.End.mul_apply, ← pow_succ']
+      rw [hb, chainBasis_apply, ← mul_apply_eq_comp, ← pow_succ', hφpow, hφpow,
+        ← mul_apply_eq_comp, ← pow_succ']
     exact LinearMap.congr_fun this x
 
 /-- **Single-block nilpotent skew maps are `SO(V)`-conjugate**: as
@@ -536,8 +536,8 @@ theorem isInOrbitNu_conj_of (σ : Q.IsometryEquiv Q) {U : Submodule F W} {ν : F
     intro k
     induction k with
     | zero => intro v; simp
-    | succ k ih => intro v; rw [pow_succ, Module.End.mul_apply, ih, hconj, pow_succ,
-        Module.End.mul_apply, LinearEquiv.symm_apply_apply]
+    | succ k ih => intro v; rw [pow_succ, mul_apply_eq_comp, ih, hconj, pow_succ,
+        mul_apply_eq_comp, LinearEquiv.symm_apply_apply]
   refine ⟨τ d₀, U₁.map (τ : W →ₗ[F] W), ⟨d₀, h1, rfl⟩, by rwa [hσ], Submodule.map_mono h3,
     ?_, ?_, ?_, ?_, ⟨τ u, ⟨u, hu, rfl⟩, ?_⟩, τ e, ⟨e, he, rfl⟩, by rw [hσ, hQe], ?_⟩
   · rintro _ ⟨w, hw, rfl⟩

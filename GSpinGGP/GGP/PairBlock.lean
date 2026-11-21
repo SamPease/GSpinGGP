@@ -262,8 +262,8 @@ theorem Realizes.comp {μ : K} {L₁ L₂ : Eig x μ →ₗ[K] Eig x μ} (h₁ :
   obtain ⟨γ₁, c₁, e₁, o₁⟩ := h₁
   obtain ⟨γ₂, c₂, e₂, o₂⟩ := h₂
   refine ⟨γ₁ * γ₂, c₁.mul_left c₂, fun v => ?_, fun ν h1 h2 v hv => ?_⟩
-  · rw [map_mul, LinearEquiv.mul_apply, e₂, e₁]; rfl
-  · rw [map_mul, LinearEquiv.mul_apply, o₂ ν h1 h2 v hv, o₁ ν h1 h2 v hv]
+  · rw [map_mul, mul_apply_eq_comp, e₂, e₁]; rfl
+  · rw [map_mul, mul_apply_eq_comp, o₂ ν h1 h2 v hv, o₁ ν h1 h2 v hv]
 
 /-- The rank-one maps `v ↦ v + s polar(w, v) u` on `E_μ` are realized. -/
 theorem realizes_rankOne {μ : K} (hμ : μ * μ ≠ 1) (hμ0 : μ ≠ 0) (u : Eig x μ) {w : V}
@@ -309,7 +309,7 @@ theorem realizes_of_det_ne_zero (hQ : IsNondeg Q)
           · simp [hl]
         rw [hsplit, Matrix.toLin_mul b b b]
         refine ih.comp (realizes_rankOne hμ hμ0 (b k) (hw k) (D k - 1) ?_ _ fun v => ?_)
-        · rw [hpol, if_pos rfl]; have := hD k (Finset.mem_univ _); ring_nf; exact this
+        · rw [hpol, ite_eq_left rfl]; have := hD k (Finset.mem_univ _); ring_nf; exact this
         · rw [hwb]
           have e : Matrix.toLin b b (Matrix.diagonal fun l => if l = k then D k else 1) =
               LinearMap.id + ((D k - 1) • b.coord k).smulRight (b k) := by
@@ -324,7 +324,7 @@ theorem realizes_of_det_ne_zero (hQ : IsNondeg Q)
     simpa using key Finset.univ
   · intro t
     refine realizes_rankOne hμ hμ0 (t.c • b t.i) (hw t.j) 1 ?_ _ fun v => ?_
-    · rw [Submodule.coe_smul, QuadraticMap.polar_smul_left, hpol, if_neg t.hij]; simp
+    · rw [Submodule.coe_smul, QuadraticMap.polar_smul_left, hpol, ite_eq_right t.hij]; simp
     · rw [hwb]
       have e : Matrix.toLin b b t.toMatrix =
           LinearMap.id + (b.coord t.j).smulRight (t.c • b t.i) := by
@@ -346,7 +346,7 @@ theorem realizes_of_det_ne_zero (hQ : IsNondeg Q)
 
 theorem specP_inv_fix {γ : GSpin Q} {v : V} (h : specP Q γ v = v) : specP Q γ⁻¹ v = v := by
   conv_lhs => rw [← h]
-  rw [← LinearEquiv.mul_apply, ← map_mul, inv_mul_cancel, map_one]; rfl
+  rw [← mul_apply_eq_comp, ← map_mul, inv_mul_cancel, map_one]; rfl
 
 /-- **Pair blocks are sign-trivial**: if `P(g)` commutes with the semisimple `P(x)` and is the
 identity on `E₁` and `E₋₁`, then `g` commutes with `x` (over an algebraically closed field). -/
@@ -392,7 +392,7 @@ theorem commute_of_fix [CharZero K] (hQ : IsNondeg Q)
             have : v = 0 := (specP Q x).injective (by rw [map_zero]; exact hv)
             rw [this, map_zero]
         · exact hT ν (by simp [hνμ, hν]) v hv
-      push_neg at hμ
+      push Not at hμ
       obtain ⟨hμ1, hμ0⟩ := hμ
       have hXg := Steinberg.commute_toLinearMap hc
       have hmaps := IsomCent.mapsTo_eigenspace_of_commute hXg μ
@@ -414,9 +414,9 @@ theorem commute_of_fix [CharZero K] (hQ : IsNondeg Q)
       have hfixμ : ∀ v ∈ Eig x μ, specP Q g' v = v := by
         intro v hv
         rw [hg']
-        rw [map_mul, LinearEquiv.mul_apply]
+        rw [map_mul, mul_apply_eq_comp]
         have : specP Q g v = specP Q γ v := (hγe ⟨v, hv⟩).symm
-        rw [this, ← LinearEquiv.mul_apply, ← map_mul, inv_mul_cancel, map_one]; rfl
+        rw [this, ← mul_apply_eq_comp, ← map_mul, inv_mul_cancel, map_one]; rfl
       have hc' : Commute (specP Q g') (specP Q x) := by
         rw [hg', map_mul, map_inv]
         exact (hγx.map (specP Q)).inv_left.mul_left hc
@@ -424,7 +424,7 @@ theorem commute_of_fix [CharZero K] (hQ : IsNondeg Q)
           specP Q g' v = v := by
         intro ν h1ν h2ν v hv hgv
         rw [hg']
-        rw [map_mul, LinearEquiv.mul_apply, hgv]
+        rw [map_mul, mul_apply_eq_comp, hgv]
         exact specP_inv_fix (hγo ν h1ν h2ν v hv)
       have hcom : Commute g' x := by
         refine ih g' hc' (fun v hv => hfix 1 hμ1' hμ1'' v hv (h1 v hv))

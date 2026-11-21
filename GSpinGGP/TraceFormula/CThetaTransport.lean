@@ -127,7 +127,7 @@ theorem eventually_expA_mem_Gbar :
     exact ⟨g, h2 hZ g hg⟩
   obtain ⟨U, hU, hUP⟩ := hP.exists_mem
   have hc : Continuous (fun Y : ↥d.luoOf.lie => ((d.toSOCLE.symm Y : ↥d.lieZero) : d.ambient)) :=
-    continuous_subtype_val.comp d.toSOCLE.symm.continuous
+    continuous_subtypeVal.comp d.toSOCLE.symm.continuous
   have hV : (fun Y : ↥d.luoOf.lie => ((d.toSOCLE.symm Y : ↥d.lieZero) : d.ambient)) ⁻¹' U ∈
       𝓝 (0 : ↥d.luoOf.lie) :=
     hc.continuousAt.preimage_mem_nhds (by simpa using hU)
@@ -548,7 +548,7 @@ theorem isOpen_setOf_isRegularSS_lieCentralizer_lieZero {D : d.ambient} (hD : D 
       (mem_lieCentralizer.mp Z.2).2⟩
   have hc : Continuous fun Z : ↥(lieCentralizer d.lieZero D) =>
       (⟨Z, hmem Z⟩ : ↥(lieCentralizer d.lie D)) :=
-    Continuous.subtype_mk continuous_subtype_val _
+    Continuous.subtype_mk continuous_subtypeVal _
   convert hO.preimage hc using 1
   ext Z
   exact d.isRegularSS_lieCentralizer_lieZero_iff Z.2
@@ -942,7 +942,7 @@ theorem germLie0_unique (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) (θ'
         𝓝 (0 : ↥d.luoOf.lie) := by
       have hcont : Continuous fun Y' : ↥d.luoOf.lie =>
           ((d.toSOCLE.symm Y' : ↥d.lieZero) : d.ambient) :=
-        continuous_subtype_val.comp d.toSOCLE.symm.continuous
+        continuous_subtypeVal.comp d.toSOCLE.symm.continuous
       exact hcont.continuousAt.preimage_mem_nhds (by simpa using hω)
     obtain ⟨ω', hω', hω'S⟩ := (mem_nhds_subtype _ _ _).mp hS
     refine ⟨?_, ω', hω', fun Y' hY'ω hY' hY'r Z' hZ' => ?_⟩
