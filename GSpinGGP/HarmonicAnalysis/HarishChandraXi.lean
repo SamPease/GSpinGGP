@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import Mathlib
 import TauCeti.MeasureTheory.Measure.Haar.Unique
 import TauCeti.MeasureTheory.Group.ModularCharacter
+import GSpinGGP.Literature.Parabolic
 
 /-!
 # Harish-Chandra's function `Ξ` for an Iwasawa pair
@@ -42,6 +43,19 @@ pairs of `M` and `H` (not built here).
   for a special maximal compact `K`: the printed proof uses only that the `K`-fixed vectors of
   `i_{P}^G 1` form a line, i.e. `G = P K`; the proof here is a direct computation with the
   cocycle relation and the left invariance of `dk`.
+* **Independence of `K`** `IwasawaPair.exists_xi_equiv`: for two Iwasawa pairs `(P, K)`, `(P, K')`
+  with the same `P`, `c Ξ_{K'} ≤ Ξ_K ≤ C Ξ_{K'}` for constants `c, C > 0`, for any compact open
+  `K`, `K'` (BP §1.5, p. 24, remarks without proof that other choices, with `K` special maximal
+  compact, give equivalent functions).
+  Ingredients: `ρ_K ≤ C ρ_{K'}` (`rho_le_mul_rho`: the ratio is left `P`-invariant, hence
+  determined by its values on the compact `K`), and the proportionality of the `K`- and
+  `K'`-integrals on `δ_P`-equivariant functions (`exists_integral_K_eq_mul`).
+* `IwasawaPair.integral_K_mul_right`: for continuous `φ` with `φ(p x) = δ_P(p) φ(x)` and `G`
+  unimodular, `∫_K φ(k g) dk = ∫_K φ(k) dk`.
+
+The last two use the integration formula for `G = P K` (Bourbaki, the literature axiom
+`integral_eq_mul_integral_compact_integral`, `Literature/Parabolic.lean`), hence assume `G`
+Hausdorff and second countable.  The rest of the file needs only Mathlib and Tau Ceti.
 
 ## Not here
 
@@ -49,6 +63,8 @@ The estimates of Waldspurger 2003 Lemme II.1.1 (second assertion), II.1.5, II.1.
 Prop II.4.5 are stated by Waldspurger for `K` the fixer of a special point of the apartment of a
 maximal split torus `A₀ ⊆ P₀`, `σ` the log-norm of an embedding `τ : G → GL_n` with
 `τ(K) ⊆ GL_n(𝒪)`, and `M̄₀⁺` defined through `H₀` and the simple roots.  They are not stated here.
+The comparison `Ξ_K ≤ C Ξ_{K'}` (`exists_xi_le_mul_xi`) transfers such estimates from one `K` to
+another with the same `P`.
 -/
 
 open MeasureTheory Topology Filter
@@ -310,6 +326,12 @@ theorem xi_mul_right_mem_K (g : G) {k : G} (hk : k ∈ I.K) : I.xi (g * k) = I.x
   funext k'
   rw [← mul_assoc, I.rho_mul_right hk]
 
+/-- `Ξ` is continuous: it is right `K`-invariant for the open subgroup `K`, hence locally
+constant. -/
+theorem continuous_xi : Continuous I.xi :=
+  (isLocallyConstant_of_mul_right_invariant I.isOpen_K fun x _ hk =>
+    I.xi_mul_right_mem_K x hk).continuous
+
 /-- The inner step of the doubling principle: for `k' ∈ K`,
 `∫_K δ(p(k' g₁ k g₂))^{1/2} dk = δ(p(k' g₁))^{1/2} ∫_K δ(p(k g₂))^{1/2} dk`. -/
 theorem integral_sqrt_rho_mul_mul (x g₂ : G) :
@@ -368,6 +390,257 @@ theorem integral_xi_mul_mul (g₁ g₂ : G) :
   simp_rw [hin]
   rw [integral_mul_const]
   ring
+
+/-! ## 2. Integrals of `δ_P`-equivariant functions and independence of `K` -/
+
+omit [MeasurableSpace G] [BorelSpace G] in
+/-- `ρ = 1` on `K`. -/
+theorem rho_eq_one_of_mem {k : G} (hk : k ∈ I.K) : I.rho k = 1 := by
+  rw [I.rho_eq_delta (p := 1) hk (by simp)]
+  simp [delta]
+
+omit [LocallyCompactSpace G] [MeasurableSpace G] [BorelSpace G] in
+theorem isClopen_KP : IsClopen (I.KP : Set ↥I.P) :=
+  ⟨Subgroup.isClosed_of_isOpen _ I.isOpen_KP, I.isOpen_KP⟩
+
+/-- `0 < μ_P(P ∩ K)` (`P ∩ K` is open, nonempty and compact in `P`). -/
+theorem haar_KP_real_pos : 0 < (Measure.haar : Measure ↥I.P).real (I.KP : Set ↥I.P) := by
+  rw [measureReal_def]
+  exact ENNReal.toReal_pos (I.isOpen_KP.measure_pos _ ⟨1, I.KP.one_mem⟩).ne'
+    I.isCompact_KP.measure_lt_top.ne
+
+/-- **The fibre integral**: for `φ` with `φ(p x) = δ_P(p) φ(x)`,
+`∫_P (1_K φ)(p x) dp = μ_P(P ∩ K) φ(x)` (write `x = q k₀`; then `1_K(p q k₀) = 1_{P ∩ K}(p q)`,
+`φ(p q k₀) = φ(k₀)` there, and right translation by `q` multiplies `μ_P` by `δ_P(q)`). -/
+theorem integral_indicator_K_mul {φ : G → ℂ}
+    (hφP : ∀ (p : ↥I.P) (x : G), φ ((p : G) * x) = (I.delta p : ℂ) * φ x) (x : G) :
+    ∫ p : ↥I.P, (I.K : Set G).indicator φ ((p : G) * x) ∂Measure.haar =
+      ((Measure.haar : Measure ↥I.P).real (I.KP : Set ↥I.P) : ℂ) * φ x := by
+  obtain ⟨q, hq, k₀, hk₀, rfl⟩ := I.mul_eq x
+  set e : ↥I.P → ℂ := (I.KP : Set ↥I.P).indicator (fun _ => (1 : ℂ)) with he
+  have h1 : ∀ p : ↥I.P, (I.K : Set G).indicator φ ((p : G) * (q * k₀)) =
+      e (p * ⟨q, hq⟩) * φ k₀ := by
+    intro p
+    by_cases hp : p * ⟨q, hq⟩ ∈ (I.KP : Set ↥I.P)
+    · have hp' : (p : G) * q ∈ I.K := hp
+      have hmem : (p : G) * (q * k₀) ∈ I.K := by
+        rw [← mul_assoc]; exact I.K.mul_mem hp' hk₀
+      rw [Set.indicator_of_mem hmem, he, Set.indicator_of_mem hp, one_mul, ← mul_assoc]
+      have := hφP (p * ⟨q, hq⟩) k₀
+      rw [I.delta_eq_one_of_mem (p * ⟨q, hq⟩) hp', Complex.ofReal_one, one_mul] at this
+      exact this
+    · have hmem : (p : G) * (q * k₀) ∉ I.K := fun h => hp (by
+        have := I.K.mul_mem h (I.K.inv_mem hk₀)
+        rw [← mul_assoc, mul_inv_cancel_right] at this
+        exact this)
+      rw [Set.indicator_of_notMem hmem, he, Set.indicator_of_notMem hp, zero_mul]
+  simp_rw [h1]
+  rw [integral_mul_const]
+  have hec : Continuous e := by
+    rw [he]
+    exact continuous_indicator (by simp [I.isClopen_KP.frontier_eq]) continuousOn_const
+  have hes : HasCompactSupport e :=
+    HasCompactSupport.intro I.isCompact_KP fun y hy => by rw [he, Set.indicator_of_notMem hy]
+  have htr := TauCeti.integral_mul_right_eq_modularCharacter_smul
+    (μ := (Measure.haar : Measure ↥I.P)) hec hes ⟨q, hq⟩
+  rw [htr, he, integral_indicator_const _ I.isOpen_KP.measurableSet, hφP ⟨q, hq⟩ k₀]
+  simp only [delta, Complex.real_smul, mul_one]
+  ring
+
+/-- **`G = P K` invariance** (`G` unimodular): for continuous `φ` with `φ(p x) = δ_P(p) φ(x)`,
+`∫_K φ(k g) dk = ∫_K φ(k) dk`.  Proof: `β = 1_K φ` is continuous with compact support and
+`∫_P β(p x) dp = μ_P(P ∩ K) φ(x)` (`integral_indicator_K_mul`); the integration formula for
+`G = P K` (`integral_eq_mul_integral_compact_integral`) and the right invariance of `dx` give
+`μ_P(P ∩ K) ∫_K φ(k g) dk = c⁻¹ ∫_G β(x g) dx = c⁻¹ ∫_G β(x) dx = μ_P(P ∩ K) ∫_K φ(k) dk`. -/
+theorem integral_K_mul_right [T2Space G] [SecondCountableTopology G]
+    [(Measure.haar : Measure G).IsMulRightInvariant] {φ : G → ℂ} (hφ : Continuous φ)
+    (hφP : ∀ (p : ↥I.P) (x : G), φ ((p : G) * x) = (I.delta p : ℂ) * φ x) (g : G) :
+    ∫ k : ↥I.K, φ ((k : G) * g) ∂(Measure.haar : Measure ↥I.K) =
+      ∫ k : ↥I.K, φ k ∂(Measure.haar : Measure ↥I.K) := by
+  set mS : ℝ := (Measure.haar : Measure ↥I.P).real (I.KP : Set ↥I.P)
+  set β : G → ℂ := (I.K : Set G).indicator φ with hβ
+  have hKclopen : IsClopen (I.K : Set G) := ⟨I.K.isClosed_of_isOpen I.isOpen_K, I.isOpen_K⟩
+  have hβc : Continuous β :=
+    continuous_indicator (by simp [hKclopen.frontier_eq]) hφ.continuousOn
+  have hβs : HasCompactSupport β :=
+    HasCompactSupport.intro I.isCompact_K fun x hx => Set.indicator_of_notMem hx _
+  obtain ⟨c, hc, hformula⟩ := integral_eq_mul_integral_compact_integral I.P I.K I.isClosed_P
+    I.mul_eq
+  have hβg : Continuous fun x => β (x * g) := hβc.comp (continuous_id.mul continuous_const)
+  have hβgs : HasCompactSupport fun x => β (x * g) := hβs.comp_homeomorph (Homeomorph.mulRight g)
+  have h1 := hformula _ hβg hβgs
+  have h2 := hformula _ hβc hβs
+  rw [integral_mul_right_eq_self β g] at h1
+  have e1 : ∀ k : ↥I.K, ∫ p : ↥I.P, β ((p : G) * (k : G) * g)
+      ∂(Measure.haar : Measure ↥I.P) = (mS : ℂ) * φ ((k : G) * g) := fun k => by
+    simp only [mul_assoc]
+    exact I.integral_indicator_K_mul hφP _
+  have e2 : ∀ k : ↥I.K, ∫ p : ↥I.P, β ((p : G) * (k : G))
+      ∂(Measure.haar : Measure ↥I.P) = (mS : ℂ) * φ k := fun k =>
+    I.integral_indicator_K_mul hφP _
+  rw [integral_congr_ae (Filter.Eventually.of_forall e1), integral_const_mul] at h1
+  rw [integral_congr_ae (Filter.Eventually.of_forall e2), integral_const_mul] at h2
+  have hne : (c : ℂ) * (mS : ℂ) ≠ 0 :=
+    mul_ne_zero (Complex.ofReal_ne_zero.2 hc.ne') (Complex.ofReal_ne_zero.2 I.haar_KP_real_pos.ne')
+  apply mul_left_cancel₀ hne
+  calc (c : ℂ) * mS * ∫ k : ↥I.K, φ ((k : G) * g) ∂(Measure.haar : Measure ↥I.K)
+      = (c : ℂ) * (mS * ∫ k : ↥I.K, φ ((k : G) * g) ∂(Measure.haar : Measure ↥I.K)) := by ring
+    _ = (c : ℂ) * (mS * ∫ k : ↥I.K, φ k ∂(Measure.haar : Measure ↥I.K)) := h1.symm.trans h2
+    _ = (c : ℂ) * mS * ∫ k : ↥I.K, φ k ∂(Measure.haar : Measure ↥I.K) := by ring
+
+/-- **The `K`- and `K'`-integrals are proportional on `δ_P`-equivariant functions.** For two
+Iwasawa pairs `(P, K)`, `(P, K')` with the same `P` there is `c > 0` with
+`∫_K φ(k) dk = c ∫_{K'} φ(k') dk'` for every continuous `φ` with `φ(p x) = δ_P(p) φ(x)`
+(both are multiples of the integral over `P\G`).  Proof: with `β = 1_{K'} φ`, the integration
+formula for `G = P K` and for `G = P K'` and the fibre integral `∫_P β(p x) dp = μ_P(P ∩ K') φ(x)`
+(`integral_indicator_K_mul` for `(P, K')`) give
+`c_K μ_P(P ∩ K') ∫_K φ = ∫_G β = c_{K'} μ_P(P ∩ K') ∫_{K'} φ`. -/
+theorem exists_integral_K_eq_mul [T2Space G] [SecondCountableTopology G] (J : IwasawaPair G)
+    (hP : I.P = J.P) :
+    ∃ c : ℝ, 0 < c ∧ ∀ φ : G → ℂ, Continuous φ →
+      (∀ (p : ↥I.P) (x : G), φ ((p : G) * x) = (I.delta p : ℂ) * φ x) →
+      ∫ k : ↥I.K, φ k ∂(Measure.haar : Measure ↥I.K) =
+        c * ∫ k : ↥J.K, φ k ∂(Measure.haar : Measure ↥J.K) := by
+  obtain ⟨P, K, hPc, hKo, hKc, hmul⟩ := I
+  obtain ⟨P', K', hPc', hKo', hKc', hmul'⟩ := J
+  obtain rfl : P = P' := hP
+  set I : IwasawaPair G := ⟨P, K, hPc, hKo, hKc, hmul⟩
+  set J : IwasawaPair G := ⟨P, K', hPc', hKo', hKc', hmul'⟩
+  have : LocallyCompactSpace ↥P := hPc.locallyCompactSpace
+  have : CompactSpace ↥K := isCompact_iff_compactSpace.mp hKc
+  have : CompactSpace ↥K' := isCompact_iff_compactSpace.mp hKc'
+  obtain ⟨cI, hcI, hI⟩ := integral_eq_mul_integral_compact_integral (G := G) P K hPc hmul
+  obtain ⟨cJ, hcJ, hJ⟩ := integral_eq_mul_integral_compact_integral (G := G) P K' hPc hmul'
+  refine ⟨cJ / cI, div_pos hcJ hcI, fun φ hφ hφP => ?_⟩
+  set mS : ℝ := (Measure.haar : Measure ↥J.P).real (J.KP : Set ↥J.P)
+  set β : G → ℂ := (K' : Set G).indicator φ with hβ
+  have hKclopen : IsClopen (K' : Set G) := ⟨K'.isClosed_of_isOpen hKo', hKo'⟩
+  have hβc : Continuous β :=
+    continuous_indicator (by simp [hKclopen.frontier_eq]) hφ.continuousOn
+  have hβs : HasCompactSupport β :=
+    HasCompactSupport.intro hKc' fun x hx => Set.indicator_of_notMem hx _
+  have hfib : ∀ x : G, ∫ p : ↥P, β ((p : G) * x) ∂(Measure.haar : Measure ↥P) = (mS : ℂ) * φ x :=
+    J.integral_indicator_K_mul hφP
+  have h1 := hI _ hβc hβs
+  have h2 := hJ _ hβc hβs
+  rw [integral_congr_ae (Filter.Eventually.of_forall fun k => hfib _), integral_const_mul] at h1 h2
+  have hm : (mS : ℂ) ≠ 0 := Complex.ofReal_ne_zero.2 J.haar_KP_real_pos.ne'
+  have hcI' : (cI : ℂ) ≠ 0 := Complex.ofReal_ne_zero.2 hcI.ne'
+  have key : (cI : ℂ) * (mS * ∫ k : ↥K, φ k ∂(Measure.haar : Measure ↥K)) =
+      (cJ : ℂ) * (mS * ∫ k : ↥K', φ k ∂(Measure.haar : Measure ↥K')) := h1.symm.trans h2
+  change ∫ k : ↥K, φ k ∂(Measure.haar : Measure ↥K) =
+    ((cJ / cI : ℝ) : ℂ) * ∫ k : ↥K', φ k ∂(Measure.haar : Measure ↥K')
+  rw [Complex.ofReal_div]
+  field_simp
+  apply mul_left_cancel₀ hm
+  linear_combination key
+
+omit [MeasurableSpace G] [BorelSpace G] in
+/-- **`ρ_K ≤ C ρ_{K'}`** for two Iwasawa pairs with the same `P`: write `g = p k` with `k ∈ K`;
+then `ρ_K(g) = δ_P(p)` and `ρ_{K'}(g) = δ_P(p) ρ_{K'}(k)`, and the continuous positive function
+`ρ_{K'}` is bounded below on the compact `K`. -/
+theorem rho_le_mul_rho (J : IwasawaPair G) (hP : I.P = J.P) :
+    ∃ C : ℝ, 0 < C ∧ ∀ g : G, I.rho g ≤ C * J.rho g := by
+  obtain ⟨P, K, hPc, hKo, hKc, hmul⟩ := I
+  obtain ⟨P', K', hPc', hKo', hKc', hmul'⟩ := J
+  obtain rfl : P = P' := hP
+  set I : IwasawaPair G := ⟨P, K, hPc, hKo, hKc, hmul⟩
+  set J : IwasawaPair G := ⟨P, K', hPc', hKo', hKc', hmul'⟩
+  obtain ⟨k₀, -, hmin⟩ := hKc.exists_isMinOn ⟨1, K.one_mem⟩ J.continuous_rho.continuousOn
+  have hm := J.rho_pos k₀
+  refine ⟨(J.rho k₀)⁻¹, inv_pos.2 hm, fun g => ?_⟩
+  have hg := I.iwP_mul_iwK g
+  have hJ : J.rho g = I.delta (I.iwP g) * J.rho (I.iwK g) := by
+    conv_lhs => rw [← hg]
+    exact J.rho_mul_left (I.iwP g) _
+  have hk : J.rho k₀ ≤ J.rho (I.iwK g) := hmin (I.iwK g).property
+  change I.delta (I.iwP g) ≤ _
+  rw [hJ, ← mul_assoc, mul_comm _ (I.delta _), mul_assoc]
+  refine le_mul_of_one_le_right (I.delta_pos _).le ?_
+  rw [inv_mul_eq_div, one_le_div hm]
+  exact hk
+
+/-- **`Ξ_K ≤ C Ξ_{K'}`** for two Iwasawa pairs `(P, K)`, `(P, K')` with the same `P`.  Proof:
+`ψ_K(x) = ρ_K(x g)^{1/2} ρ_K(x)^{1/2}` is `δ_P`-equivariant and `Ξ_K(g)` is its normalized
+`K`-integral (`ρ_K = 1` on `K`); by `exists_integral_K_eq_mul` this is a constant times its
+`K'`-integral, and `ψ_K ≤ C ψ_{K'}` pointwise (`rho_le_mul_rho`). -/
+theorem exists_xi_le_mul_xi [T2Space G] [SecondCountableTopology G] (J : IwasawaPair G)
+    (hP : I.P = J.P) :
+    ∃ C : ℝ, 0 < C ∧ ∀ g : G, I.xi g ≤ C * J.xi g := by
+  obtain ⟨c, hc, hint⟩ := I.exists_integral_K_eq_mul J hP
+  obtain ⟨C, hC, hρ⟩ := I.rho_le_mul_rho J hP
+  set μI : ℝ := ((Measure.haar : Measure ↥I.K) Set.univ).toReal
+  set μJ : ℝ := ((Measure.haar : Measure ↥J.K) Set.univ).toReal
+  refine ⟨μI⁻¹ * c * C * μJ, by
+    have := I.haar_K_toReal_pos; have := J.haar_K_toReal_pos; positivity, fun g => ?_⟩
+  -- `ψ_I(x) = √ρ_I(x g) √ρ_I(x)`
+  set ψ : G → ℝ := fun x => Real.sqrt (I.rho (x * g)) * Real.sqrt (I.rho x) with hψ
+  have hψc : Continuous ψ :=
+    (Real.continuous_sqrt.comp (I.continuous_rho.comp (continuous_id.mul continuous_const))).mul
+      (Real.continuous_sqrt.comp I.continuous_rho)
+  have hψP : ∀ (p : ↥I.P) (x : G), ((ψ ((p : G) * x) : ℝ) : ℂ) = (I.delta p : ℂ) * (ψ x : ℂ) := by
+    intro p x
+    have hd := (I.delta_pos p).le
+    simp only [hψ, mul_assoc, I.rho_mul_left, Real.sqrt_mul hd]
+    rw [← Complex.ofReal_mul]
+    congr 1
+    linear_combination (Real.sqrt (I.rho (x * g)) * Real.sqrt (I.rho x)) * Real.mul_self_sqrt hd
+  have hint' := hint (fun x => (ψ x : ℂ)) (Complex.continuous_ofReal.comp hψc) hψP
+  rw [integral_complex_ofReal, integral_complex_ofReal, ← Complex.ofReal_mul] at hint'
+  have hintR := Complex.ofReal_injective hint'
+  -- `Ξ_I(g) = μ_I⁻¹ ∫_K ψ`
+  have hxiI : I.xi g = μI⁻¹ * ∫ k : ↥I.K, ψ k ∂Measure.haar := by
+    unfold xi
+    congr 2
+    funext k
+    simp [hψ, I.rho_eq_one_of_mem k.property]
+  -- `ψ_I ≤ C ψ_J`
+  have hle : ∀ x : G, ψ x ≤ C * (Real.sqrt (J.rho (x * g)) * Real.sqrt (J.rho x)) := by
+    intro x
+    have h1 : Real.sqrt (I.rho (x * g)) ≤ Real.sqrt C * Real.sqrt (J.rho (x * g)) := by
+      rw [← Real.sqrt_mul hC.le]; exact Real.sqrt_le_sqrt (hρ _)
+    have h2 : Real.sqrt (I.rho x) ≤ Real.sqrt C * Real.sqrt (J.rho x) := by
+      rw [← Real.sqrt_mul hC.le]; exact Real.sqrt_le_sqrt (hρ _)
+    calc ψ x ≤ (Real.sqrt C * Real.sqrt (J.rho (x * g))) * (Real.sqrt C * Real.sqrt (J.rho x)) :=
+          mul_le_mul h1 h2 (Real.sqrt_nonneg _) (by positivity)
+      _ = (Real.sqrt C * Real.sqrt C) * (Real.sqrt (J.rho (x * g)) * Real.sqrt (J.rho x)) := by
+          ring
+      _ = _ := by rw [Real.mul_self_sqrt hC.le]
+  have hJint : ∫ k : ↥J.K, C * (Real.sqrt (J.rho ((k : G) * g)) * Real.sqrt (J.rho k))
+      ∂Measure.haar = C * (μJ * J.xi g) := by
+    rw [integral_const_mul]
+    congr 1
+    unfold xi
+    rw [← mul_assoc, mul_inv_cancel₀ J.haar_K_toReal_pos.ne', one_mul]
+    congr 1
+    funext k
+    simp [J.rho_eq_one_of_mem k.property]
+  have hmono : ∫ k : ↥J.K, ψ k ∂Measure.haar ≤
+      ∫ k : ↥J.K, C * (Real.sqrt (J.rho ((k : G) * g)) * Real.sqrt (J.rho k)) ∂Measure.haar := by
+    refine integral_mono ((hψc.comp continuous_subtypeVal).integrable_of_hasCompactSupport
+      (HasCompactSupport.of_compactSpace _)) ?_ fun k => hle k
+    exact (continuous_const.mul ((Real.continuous_sqrt.comp (J.continuous_rho.comp
+      (continuous_subtypeVal.mul continuous_const))).mul (Real.continuous_sqrt.comp
+        (J.continuous_rho.comp continuous_subtypeVal)))).integrable_of_hasCompactSupport
+          (HasCompactSupport.of_compactSpace _)
+  rw [hxiI, hintR]
+  have hμI := inv_pos.2 I.haar_K_toReal_pos
+  calc μI⁻¹ * (c * ∫ k : ↥J.K, ψ k ∂Measure.haar) ≤ μI⁻¹ * (c * (C * (μJ * J.xi g))) := by
+        gcongr
+        exact hmono.trans_eq hJint
+    _ = μI⁻¹ * c * C * μJ * J.xi g := by ring
+
+/-- **Independence of `K`** (BP §1.5, p. 24, remark for special `K`; here any compact open `K`):
+for two Iwasawa pairs `(P, K)`, `(P, K')` with the same `P`, `Ξ_K` and `Ξ_{K'}` are
+equivalent: `c Ξ_{K'} ≤ Ξ_K ≤ C Ξ_{K'}`. -/
+theorem exists_xi_equiv [T2Space G] [SecondCountableTopology G] (J : IwasawaPair G)
+    (hP : I.P = J.P) :
+    ∃ c C : ℝ, 0 < c ∧ 0 < C ∧ ∀ g : G, c * J.xi g ≤ I.xi g ∧ I.xi g ≤ C * J.xi g := by
+  obtain ⟨C, hC, h⟩ := I.exists_xi_le_mul_xi J hP
+  obtain ⟨C', hC', h'⟩ := J.exists_xi_le_mul_xi I hP.symm
+  refine ⟨C'⁻¹, C, inv_pos.2 hC', hC, fun g => ⟨?_, h g⟩⟩
+  rw [inv_mul_le_iff₀ hC']
+  exact h' g
 
 end IwasawaPair
 

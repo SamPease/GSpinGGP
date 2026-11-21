@@ -16,9 +16,12 @@ This file imports only Mathlib.
   holds, with `c = 1`, for the trivial group, the degenerate instance where every Haar measure is
   the unit point mass.
 
-Used for the unitarity of normalized parabolic induction (`GGPData.ParIndData.preInner_rightTrans`
-in `GGP/Levi.lean`): with `G` unimodular, it makes `φ ↦ ∫_K φ(k) dk` a right-`G`-invariant form on
-the functions with `φ(p x) = δ_P(p) φ(x)`.
+Used in `HarmonicAnalysis/HarishChandraXi.lean`: `IwasawaPair.integral_K_mul_right` (with `G`
+unimodular, `φ ↦ ∫_K φ(k) dk` is a right-`G`-invariant form on the functions with
+`φ(p x) = δ_P(p) φ(x)`; hence the unitarity of normalized parabolic induction,
+`GGPData.ParIndData.preInner_rightTrans` in `GGP/Levi.lean`) and
+`IwasawaPair.exists_integral_K_eq_mul` (for `G = P K = P K'` the `K`- and `K'`-integrals of such
+functions are proportional; hence the independence of `Ξ` from `K`).
 -/
 
 open MeasureTheory
