@@ -19,10 +19,10 @@ proved: `GGPData.isMulRightInvariant_haar_G`, `TraceFormula/Basic.lean`.)
   function `x ↦ ∫_{G(F)} f₀(x⁻¹gx) f'(g) dg` is integrable on `G(F)/A_G(F)` (BP Thm 5.5.1(ii), in
   the form stated after it on p. 116; Thesis Thm 4.7.1(ii)).  BP states it without proof.
 
-The composite statements built on it live in `TraceFormula/StronglyCuspidal.lean`:
-`bp_thetaF_exists` (the quasi-character `θ_f`; proved from this axiom and the `sorry` theorem
-`bp_thetaF_represents`) and `bp_scusp_surj_ell` (BP Cor 5.7.2(i), adapted to a non-compact centre;
-a `sorry` theorem).
+The composite statements built on it: `bp_thetaF_exists` (`TraceFormula/StronglyCuspidal.lean`;
+the quasi-character `θ_f`; proved from this axiom and the `sorry` theorem `bp_thetaF_represents`)
+and `bp_scusp_surj_ell` (`TraceFormula/Scusp.lean`; BP Cor 5.7.2(i), adapted to a non-compact
+centre; proved from this axiom and two `sorry` theorems of `TraceFormula/StronglyCuspidal.lean`).
 
 Since `TraceFormula/Basic.lean` and `Literature/HarishChandra.lean` are in the same layer and not
 visible here, the kernel and strong cuspidality are written out inline with the L1 names
