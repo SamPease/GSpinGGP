@@ -162,6 +162,20 @@ theorem glMaxNorm_le_of_bound (f : E ≃ₗ[F] E) {M : ℝ} (hM : 1 ≤ M) (h1 :
   · exact h1 v
   · exact h2 v
 
+/-- `glMax` is continuous on `GL(E)` (for the topology of `E ≃ₗ[F] E` induced by `(g, g⁻¹)`). -/
+theorem continuous_glMaxNorm : Continuous (glMaxNorm : (E ≃ₗ[F] E) → ℝ) := by
+  have : IsModuleTopology F (Module.End F E) := ⟨rfl⟩
+  have h0 : Continuous fun f : Module.End F E => LinearMap.toContinuousLinearMap f :=
+    IsModuleTopology.continuous_of_linearMap
+      (LinearMap.toContinuousLinearMap : (E →ₗ[F] E) ≃ₗ[F] (E →L[F] E)).toLinearMap
+  have h1 : Continuous fun g : E ≃ₗ[F] E => LinearMap.toContinuousLinearMap (g : E →ₗ[F] E) :=
+    h0.comp TauCeti.continuous_linearEquiv_toLinearMap
+  have h2 : Continuous fun g : E ≃ₗ[F] E =>
+      LinearMap.toContinuousLinearMap ((g⁻¹ : E ≃ₗ[F] E) : E →ₗ[F] E) :=
+    h1.comp continuous_inv
+  exact continuous_const.max (h1.norm.max h2.norm)
+
+omit [PAdicField F] in
 /-- The basis vectors `z_k` of `Z = F^{2r+1}` have sup norm `≤ 1`. -/
 theorem norm_zvec_le (r : ℕ) (k : ℤ) : ‖(zvec r k : Fin (2 * r + 1) → F)‖ ≤ 1 :=
   (pi_norm_le_iff_of_nonneg zero_le_one).2 fun i => by

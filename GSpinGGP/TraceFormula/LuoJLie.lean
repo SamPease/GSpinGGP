@@ -283,7 +283,7 @@ theorem toGbarU_mem_HbarU {g : ↥d.G} (hg : g ∈ d.H) : d.toGbarU g ∈ d.luoO
 
 /-- **`H̄ ⊆ P(H)`**: write `u = (s, (s ⊕ 1) n)` (`mem_HbarU_iff`), lift `s = P(t)` and `n = P(b)`;
 then `b ∈ F^× · N_F`, and a scalar multiple of `b` lies in `N_F`
-(`exists_smul_sub_one_isNilpotent_of_mem_flagUnipSO`). -/
+(`exists_mul_scalarGSpin_mem_N_of_mem_flagUnipSO`). -/
 theorem exists_mem_H_toGbarU_eq {u : d.luoOf.Ambˣ} (hu : u ∈ d.luoOf.HbarU) :
     ∃ g ∈ d.H, d.toGbarU g = u := by
   obtain ⟨s, hs, n, hn, rfl⟩ := d.luoOf.mem_HbarU_iff.1 hu
@@ -295,10 +295,7 @@ theorem exists_mem_H_toGbarU_eq {u : d.luoOf.Ambˣ} (hu : u ∈ d.luoOf.HbarU) :
     rw [specPVU_apply, hb]; exact MulEquiv.symm_apply_apply _ _
   have hbSO : b ∈ flagUnipSO d.flag :=
     (d.mem_Nset_iff_mem_flagUnipSO (n := n) (hbn ▸ d.coe_specPVU b)).1 hn
-  obtain ⟨c, hc⟩ := exists_smul_sub_one_isNilpotent_of_mem_flagUnipSO d.nondeg_QV hbSO
-  have hSO' := (flagUnipSO d.flag).mul_mem hbSO (scalarGSpin_mem_flagUnipSO d.flag c)
-  have hbN : b * scalarGSpin d.QV c ∈ d.N :=
-    ⟨hSO'.1, hSO'.2.1, hSO'.2.2, by rw [coe_mul_scalarGSpin]; exact hc⟩
+  obtain ⟨c, hbN⟩ := d.exists_mul_scalarGSpin_mem_N_of_mem_flagUnipSO hbSO
   refine ⟨d.diag t * d.inr (b * scalarGSpin d.QV c),
     d.H.mul_mem (d.diag_mem_H t) (d.inr_mem_H hbN), ?_⟩
   have hsc : d.specPVU (b * scalarGSpin d.QV c) = d.specPVU b := by
