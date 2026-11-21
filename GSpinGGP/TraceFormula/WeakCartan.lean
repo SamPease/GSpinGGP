@@ -6,6 +6,7 @@ import GSpinGGP.TraceFormula.Analytic
 import GSpinGGP.TraceFormula.GoodParabolic
 import TauCeti.LinearAlgebra.Determinant.Basic
 import GSpinGGP.Foundations.LogNormCompact
+import GSpinGGP.GGP.Cocharacter
 
 /-!
 # The weak Cartan decomposition of `G` and the reduction from `G` to `G₀`
@@ -635,6 +636,117 @@ theorem exists_isCompact_lift (M : ℝ) :
   refine ⟨{g | logNorm F d.G g ≤ C * M}, isCompact_logNorm_le d.isClosed_G _, fun g hg => ?_⟩
   obtain ⟨z, hz, hzg⟩ := hz g
   exact ⟨z, hz, hzg.trans (mul_le_mul_of_nonneg_left hg hC)⟩
+
+/-! ## 6b. The Levi decomposition of `P_V` in coordinates -/
+
+/-- The standard basis of `V = W × Z` (`W = F^m`, `Z = F^{2r+1}`). -/
+def stdBasis : Basis (Fin d.m ⊕ Fin (2 * d.r + 1)) F d.V :=
+  (Pi.basisFun F (Fin d.m)).prod (Pi.basisFun F (Fin (2 * d.r + 1)))
+
+/-- The weights of the standard basis for the flag `⟨z_r⟩ ⊂ ⋯ ⊂ ⟨z_r, …, z_1⟩`: `z_k` has
+weight `k`, and `W` weight `0`. -/
+def stdWt : Fin d.m ⊕ Fin (2 * d.r + 1) → ℤ := Sum.elim (fun _ => 0) fun i => (i : ℤ) - d.r
+
+theorem stdBasis_inr (i : Fin (2 * d.r + 1)) : d.stdBasis (Sum.inr i) = d.zV ((i : ℤ) - d.r) := by
+  refine Prod.ext (Basis.prod_apply_inr_fst _ _ _) ?_
+  rw [stdBasis, Basis.prod_apply_inr_snd, Pi.basisFun_apply, zV]
+  ext j
+  simp only [zvec, Pi.single_apply]
+  split_ifs with h1 h2 h2 <;> first | rfl | (exfalso; apply h2; omega) | (exfalso; apply h1; ext; omega)
+
+theorem stdBasis_inl (j : Fin d.m) : d.stdBasis (Sum.inl j) = (Pi.single j 1, 0) :=
+  Prod.ext (by rw [stdBasis, Basis.prod_apply_inl_fst, Pi.basisFun_apply])
+    (Basis.prod_apply_inl_snd _ _ _)
+
+theorem flag_sub_eq_flagWt (i : Fin (d.flag.len + 1)) :
+    d.flag.sub i = flagWt d.flag ((d.flag.len : ℤ) + 1 - i) := by
+  have hi2 := i.2
+  by_cases hi : (i : ℕ) = 0
+  · rw [show i = 0 from Fin.ext hi, d.flag.sub_zero, d.flag.flagWt_eq_bot (by simp)]
+  · rw [d.flag.flagWt_of_pos (by omega)]
+    congr 1
+    ext
+    simp only [IsotropicFlag.idx]
+    omega
+
+theorem mem_flag_sub_of_le {k : ℕ} (hk : 1 ≤ k) (hkr : k ≤ d.r) {i : Fin (d.flag.len + 1)}
+    (hi : d.r - k < (i : ℕ)) : d.zV (k : ℤ) ∈ d.flag.sub i :=
+  Submodule.subset_span ⟨⟨d.r - k, hi⟩, by simp only; congr 1; push_cast [hkr]; ring⟩
+
+/-- The standard basis splits the weight filtration of `d.flag`. -/
+theorem isFlagSplitting_stdBasis : IsFlagSplitting d.flag d.stdBasis d.stdWt where
+  mem := by
+    have hl : d.flag.len = d.r := rfl
+    rintro (j | i)
+    · rw [stdBasis_inl, stdWt, Sum.elim_inl, d.flag.flagWt_zero]
+      exact d.inl_mem_orthogonal_top _
+    · rw [stdBasis_inr, stdWt, Sum.elim_inr]
+      have hi := i.2
+      rcases lt_trichotomy (i : ℤ) d.r with h | h | h
+      · -- negative weight: `z_k ⊥ Z_{r+k}`
+        rw [d.flag.flagWt_of_nonpos (by omega), LinearMap.BilinForm.mem_orthogonal_iff]
+        intro u hu
+        refine Submodule.span_induction (p := fun u _ => bform d.QV u (d.zV ((i : ℤ) - d.r)) = 0)
+          ?_ (by simp) (fun x y _ _ hx hy => by simp only [map_add, LinearMap.add_apply, hx, hy,
+            add_zero]) (fun c x _ hx => by simp only [map_smul, LinearMap.smul_apply, hx,
+            smul_zero]) hu
+        rintro _ ⟨j, rfl⟩
+        have hj := j.2
+        simp only [IsotropicFlag.idx] at hj
+        rw [bform_QV_zV, bform_splitOddForm_zvec _ _ (by rw [abs_le]; constructor <;> omega)
+          (by rw [abs_le]; constructor <;> omega), if_neg (by omega)]
+      · rw [show (i : ℤ) - d.r = 0 by omega, d.flag.flagWt_zero]
+        exact d.zV_zero_mem_orthogonal_top
+      · rw [d.flag.flagWt_of_pos (by omega)]
+        have := d.mem_flag_sub_of_le (k := (i : ℕ) - d.r) (by omega) (by omega)
+          (i := d.flag.idx (d.flag.len + 1 - ((i : ℤ) - d.r)))
+          (by simp only [IsotropicFlag.idx]; change _ < min _ d.r; omega)
+        rwa [show (((i : ℕ) - d.r : ℕ) : ℤ) = (i : ℤ) - d.r by omega] at this
+  repr_eq_zero := by
+    have hl : d.flag.len = d.r := rfl
+    intro w v hv i hi
+    rcases i with j | i
+    · simp only [stdWt, Sum.elim_inl] at hi
+      rw [stdBasis, Basis.prod_repr_inl]
+      rw [d.flag.flagWt_of_pos (show 1 ≤ w by omega)] at hv
+      have := d.span_flag_le _ hv
+      rw [this.1]; simp
+    · simp only [stdWt, Sum.elim_inr] at hi
+      rw [stdBasis, Basis.prod_repr_inr, Pi.basisFun_repr]
+      by_cases hw : 1 ≤ w
+      · rw [d.flag.flagWt_of_pos hw] at hv
+        have := d.span_flag_le _ hv
+        refine this.2 i ?_
+        simp only [IsotropicFlag.idx]
+        change (i : ℕ) < 2 * d.r + 1 - min _ d.r
+        omega
+      · rw [d.flag.flagWt_of_nonpos (by omega), LinearMap.BilinForm.mem_orthogonal_iff] at hv
+        have hk : |(d.r : ℤ) - i| ≤ d.r := by rw [abs_le]; have := i.2; constructor <;> omega
+        have hmem : d.zV ((d.r : ℤ) - i) ∈ d.flag.sub (d.flag.idx (d.flag.len + w)) :=
+          Submodule.subset_span ⟨⟨i, by simp only [IsotropicFlag.idx]; change _ < min _ d.r; omega⟩,
+            rfl⟩
+        have h0 := hv _ hmem
+        rw [bform_comm, bform_zV_eq _ _ hk] at h0
+        have e : (⟨((d.r : ℤ) - ((d.r : ℤ) - i)).toNat, by omega⟩ : Fin (2 * d.r + 1)) = i :=
+          Fin.ext (by simp)
+        rw [e] at h0
+        exact (mul_eq_zero.mp h0).resolve_left d.ν.ne_zero
+  orth := by
+    rintro (j | i) (j' | i') hne
+    · simp [stdWt] at hne
+    · rw [stdBasis_inl, stdBasis_inr, zV, bform_prod]; simp
+    · rw [stdBasis_inl, stdBasis_inr, zV, bform_prod]; simp
+    · simp only [stdWt, Sum.elim_inr] at hne
+      have hi := i.2; have hi' := i'.2
+      rw [stdBasis_inr, stdBasis_inr, bform_QV_zV, bform_splitOddForm_zvec _ _
+        (by rw [abs_le]; constructor <;> omega) (by rw [abs_le]; constructor <;> omega),
+        if_neg hne]
+  sum_wt := by
+    rw [Fintype.sum_sum_type]
+    simp only [stdWt, Sum.elim_inl, Sum.elim_inr, Finset.sum_const_zero, zero_add]
+    refine Finset.sum_involution (fun i _ => i.rev) (fun i _ => by simp [Fin.val_rev]; omega)
+      (fun i _ hi h => hi ?_) (fun _ _ => Finset.mem_univ _) (fun i _ => Fin.rev_rev i)
+    have := congrArg Fin.val h; simp only [Fin.val_rev] at this; omega
 
 /-! ## 7. The weak Cartan decomposition of `G` (Thesis Lemma 8.3.2(ii)) and the weak Cartan
 data of `H\G/A_G` -/
