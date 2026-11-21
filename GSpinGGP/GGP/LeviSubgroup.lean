@@ -139,6 +139,198 @@ theorem isClosed_flagLevi [TopologicalSpace K] [IsTopologicalRing K] [T2Space K]
 
 end FlagLevi
 
+
+/-! ## 1a. The opposite flag -/
+
+section Opposite
+
+variable {K : Type*} [Field K] [Invertible (2 : K)]
+variable {V : Type*} [AddCommGroup V] [Module K V]
+variable {Q : QuadraticForm K V} {F : IsotropicFlag Q}
+variable {ι : Type*} [Fintype ι] {b : Basis ι K V} {wt : ι → ℤ}
+
+/-- The weights of a splitting lie in `[−len, len]`. -/
+theorem IsFlagSplitting.wt_le (hs : IsFlagSplitting F b wt) (j : ι) : wt j ≤ F.len := by
+  by_contra h
+  have := hs.mem j
+  rw [F.flagWt_eq_bot (by omega), Submodule.mem_bot] at this
+  exact b.ne_zero j this
+
+theorem IsFlagSplitting.neg_len_le (hs : IsFlagSplitting F b wt) (j : ι) : -(F.len : ℤ) ≤ wt j := by
+  by_contra h
+  have := hs.repr_eq_zero (-(F.len : ℤ)) (b j)
+    (by rw [F.flagWt_eq_top le_rfl]; trivial) j (by omega)
+  simp at this
+
+/-- A vector paired to `0` with all basis vectors of weight `−c` has no weight-`c` coordinates
+(`b` nondegenerate, and `b(bᵢ, bₖ) = 0` unless `wtᵢ + wtₖ = 0`). -/
+theorem IsFlagSplitting.repr_eq_zero_of_bform (hQ : IsNondeg Q) (hs : IsFlagSplitting F b wt)
+    {v : V} {c : ℤ} (hv : ∀ k, wt k = -c → bform Q (b k) v = 0) {i : ι} (hi : wt i = c) :
+    b.repr v i = 0 := by
+  set x := wtProj b wt c v
+  have hx : IsHomog b wt x c := (isHomog_iff_wtProj _ _).2 (by
+    refine b.repr.injective (Finsupp.ext fun l => ?_)
+    simp only [x, repr_wtProj]; split_ifs <;> rfl)
+  -- `b(bₖ, y) = 0` when `y` has no coordinates of weight `−wtₖ`
+  have hsum : ∀ k (y : V), (∀ l, wt l = -wt k → b.repr y l = 0) → bform Q (b k) y = 0 := by
+    intro k y hy
+    rw [← b.sum_repr y, map_sum]
+    refine Finset.sum_eq_zero fun l _ => ?_
+    rw [map_smul, smul_eq_mul]
+    by_cases hl : wt l = -wt k
+    · rw [hy l hl, zero_mul]
+    · rw [hs.orth k l (by omega), mul_zero]
+  have hx0 : x = 0 := by
+    refine hQ.1 x fun y => ?_
+    rw [bform_comm, ← b.sum_repr y, map_sum, LinearMap.sum_apply]
+    refine Finset.sum_eq_zero fun k _ => ?_
+    rw [map_smul, LinearMap.smul_apply, smul_eq_mul]
+    by_cases hk : wt k = -c
+    · have h1 : bform Q (b k) (v - x) = 0 := hsum k _ fun l hl => by
+        simp only [x, map_sub, Finsupp.sub_apply, repr_wtProj]
+        rw [ite_cond_eq_true _ _ (eq_true (by omega)), sub_self]
+      rw [map_sub, hv k hk, zero_sub, neg_eq_zero] at h1
+      rw [h1, mul_zero]
+    · rw [hs.bform_eq_zero_of_isHomog (x := b k) (a := wt k)
+        (fun l hl => by
+          have hkl : k ≠ l := fun h => hl (h ▸ rfl)
+          simp [b.repr_self, hkl])
+        hx (by omega), mul_zero]
+  have := congr(b.repr $hx0 i)
+  simpa [x, repr_wtProj, hi] using this
+
+/-- Every weight `1, …, len` occurs in a splitting (the flag is strictly increasing). -/
+theorem IsFlagSplitting.exists_wt_eq (hs : IsFlagSplitting F b wt) {w : ℤ} (h1 : 1 ≤ w)
+    (h2 : w ≤ F.len) : ∃ i, wt i = w := by
+  by_contra hne
+  push Not at hne
+  have hlt : F.sub (F.idx (F.len + 1 - (w + 1))) < F.sub (F.idx (F.len + 1 - w)) :=
+    F.strictMono (by simp only [IsotropicFlag.idx, Fin.mk_lt_mk]; omega)
+  rw [← F.flagWt_of_pos h1, ← F.flagWt_of_pos (by omega)] at hlt
+  refine hlt.ne (le_antisymm (F.flagWt_anti (by omega)) fun v hv => ?_)
+  rw [hs.mem_flagWt_iff] at hv ⊢
+  intro i hi
+  exact hv i (lt_of_le_of_ne (by omega) (hne i))
+
+/-- Every weight `−1, …, −len` occurs in a splitting (pairing with the weight `w`). -/
+theorem IsFlagSplitting.exists_wt_eq_neg (hQ : IsNondeg Q) (hs : IsFlagSplitting F b wt) {w : ℤ}
+    (h1 : 1 ≤ w) (h2 : w ≤ F.len) : ∃ j, wt j = -w := by
+  obtain ⟨i, hi⟩ := hs.exists_wt_eq h1 h2
+  by_contra hne
+  push Not at hne
+  refine b.ne_zero i (hQ.1 (b i) fun y => ?_)
+  rw [← b.sum_repr y, map_sum]
+  refine Finset.sum_eq_zero fun j _ => ?_
+  rw [map_smul, smul_eq_mul, hs.orth i j (fun h => hne j (by omega)), mul_zero]
+
+/-- The span of basis vectors of negative weight is totally isotropic. -/
+theorem IsFlagSplitting.isTotallyIsotropic_span (hs : IsFlagSplitting F b wt) {s : Set ι}
+    (hneg : ∀ j ∈ s, wt j < 0) : IsTotallyIsotropic Q (Submodule.span K (b '' s)) := by
+  have horth : ∀ x ∈ Submodule.span K (b '' s), ∀ y ∈ Submodule.span K (b '' s),
+      bform Q x y = 0 := by
+    intro x hx y hy
+    induction hx using Submodule.span_induction with
+    | mem x hx =>
+      obtain ⟨i, hi, rfl⟩ := hx
+      induction hy using Submodule.span_induction with
+      | mem y hy =>
+        obtain ⟨j, hj, rfl⟩ := hy
+        exact hs.orth i j (by have := hneg i hi; have := hneg j hj; omega)
+      | zero => simp
+      | add y z _ _ h1 h2 => rw [map_add, h1, h2, add_zero]
+      | smul c y _ h => rw [map_smul, h, smul_zero]
+    | zero => simp
+    | add x z _ _ h1 h2 => rw [map_add, LinearMap.add_apply, h1, h2, add_zero]
+    | smul c x _ h => rw [map_smul, LinearMap.smul_apply, h, smul_zero]
+  intro u hu
+  rw [← QuadraticMap.associated_eq_self_apply K Q]
+  exact horth u hu u hu
+
+/-- The opposite flag: `Z̄ᵢ` is spanned by the `bⱼ` with `−wtⱼ ≥ len + 1 − i`. -/
+def IsFlagSplitting.oppFlag (hQ : IsNondeg Q) (hs : IsFlagSplitting F b wt) : IsotropicFlag Q where
+  len := F.len
+  sub i := Submodule.span K (b '' {j | (F.len : ℤ) + 1 - i ≤ -wt j})
+  sub_zero := by
+    rw [Submodule.span_eq_bot]
+    rintro _ ⟨j, hj, rfl⟩
+    have := hs.neg_len_le j
+    simp only [Set.mem_ofPred_eq, Fin.val_zero, Nat.cast_zero, sub_zero] at hj
+    omega
+  strictMono := by
+    intro i i' hii'
+    refine lt_of_le_of_ne (Submodule.span_mono (Set.image_mono fun j hj => ?_)) fun he => ?_
+    · simp only [Set.mem_ofPred_eq] at hj ⊢
+      have : (i : ℤ) < i' := by exact_mod_cast hii'
+      omega
+    · have hi' := i'.isLt
+      have hi : (i : ℕ) < i' := hii'
+      obtain ⟨j, hj⟩ := hs.exists_wt_eq_neg hQ (w := (F.len : ℤ) + 1 - i') (by omega) (by omega)
+      have hmem : b j ∈ Submodule.span K (b '' {j | (F.len : ℤ) + 1 - i' ≤ -wt j}) :=
+        Submodule.subset_span ⟨j, by simp [hj], rfl⟩
+      have he' : Submodule.span K (b '' {j | (F.len : ℤ) + 1 - i ≤ -wt j}) =
+          Submodule.span K (b '' {j | (F.len : ℤ) + 1 - i' ≤ -wt j}) := he
+      rw [← he', b.self_mem_span_image] at hmem
+      simp only [Set.mem_ofPred_eq] at hmem
+      omega
+  isotropic i := hs.isTotallyIsotropic_span fun j hj => by
+    have := (i : Fin (F.len + 1)).isLt
+    simp only [Set.mem_ofPred_eq] at hj
+    omega
+
+theorem IsFlagSplitting.oppFlag_sub (hQ : IsNondeg Q) (hs : IsFlagSplitting F b wt)
+    (i : Fin ((hs.oppFlag hQ).len + 1)) :
+    (hs.oppFlag hQ).sub i = Submodule.span K (b '' {j | (F.len : ℤ) + 1 - i ≤ -wt j}) := rfl
+
+/-- **The opposite flag** (`P̄ = M Ū`): `(b, −wt)` splits the flag `oppFlag`. -/
+theorem IsFlagSplitting.isFlagSplitting_oppFlag (hQ : IsNondeg Q) (hs : IsFlagSplitting F b wt) :
+    IsFlagSplitting (hs.oppFlag hQ) b (-wt) := by
+  set F' := hs.oppFlag hQ
+  have hlen : F'.len = F.len := rfl
+  have hidx : ∀ t : ℤ, ((F'.idx t : Fin (F'.len + 1)) : ℕ) = min t.toNat F.len := fun _ => rfl
+  refine ⟨fun j => ?_, fun w v hv i hi => ?_, fun i j hij => hs.orth i j (by
+    simp only [Pi.neg_apply] at hij; omega), by simp [Finset.sum_neg_distrib, hs.sum_wt]⟩
+  · have hb1 := hs.wt_le j
+    have hb2 := hs.neg_len_le j
+    simp only [Pi.neg_apply]
+    by_cases hw : 1 ≤ -wt j
+    · rw [F'.flagWt_of_pos hw, hs.oppFlag_sub]
+      refine Submodule.subset_span ⟨j, ?_, rfl⟩
+      simp only [Set.mem_ofPred_eq]
+      have := hidx (F'.len + 1 - -wt j)
+      omega
+    · rw [F'.flagWt_of_nonpos (by omega), LinearMap.BilinForm.mem_orthogonal_iff]
+      intro y hy
+      rw [hs.oppFlag_sub] at hy
+      have := hidx (F'.len + -wt j)
+      induction hy using Submodule.span_induction with
+      | mem y hy =>
+        obtain ⟨k, hk, rfl⟩ := hy
+        simp only [Set.mem_ofPred_eq] at hk
+        exact hs.orth k j (by omega)
+      | zero => simp
+      | add y z _ _ h1 h2 => rw [map_add, LinearMap.add_apply, h1, h2, add_zero]
+      | smul c y _ h => rw [map_smul, LinearMap.smul_apply, h, smul_zero]
+  · simp only [Pi.neg_apply] at hi
+    have hb1 := hs.wt_le i
+    have hb2 := hs.neg_len_le i
+    by_cases hw : 1 ≤ w
+    · rw [F'.flagWt_of_pos hw, hs.oppFlag_sub] at hv
+      have hsupp := b.repr_support_subset_of_mem_span _ hv
+      by_contra hne
+      have := hsupp (Finsupp.mem_support_iff.2 hne)
+      simp only [Set.mem_ofPred_eq] at this
+      have := hidx (F'.len + 1 - w)
+      omega
+    · rw [F'.flagWt_of_nonpos (by omega), LinearMap.BilinForm.mem_orthogonal_iff] at hv
+      refine hs.repr_eq_zero_of_bform hQ (c := wt i) (fun k hk => hv _ ?_) rfl
+      rw [hs.oppFlag_sub]
+      refine Submodule.subset_span ⟨k, ?_, rfl⟩
+      simp only [Set.mem_ofPred_eq]
+      have := hidx (F'.len + w)
+      omega
+
+end Opposite
+
 /-! ## 2. Levi subgroups of `P = P_{F_W} × P_{F_V}` -/
 
 namespace GGPData
