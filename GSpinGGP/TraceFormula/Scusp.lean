@@ -309,7 +309,7 @@ continuous on `G_reg(F)` and equal to `θ₀` there, represents the orbital pair
   every subspace is closed, so "dense image" is "onto" (BP's own parenthesis in Cor 5.7.2(i)).
 * Open and closed: BP's `Ω` is open.  For `p`-adic `F`, `Ω_{x_i}^G = (x_i exp ω_i)^G` for a good
   neighbourhood `ω_i` is a `G`-domain (open, closed, invariant: Waldspurger 2010 §3.1, p. 14; the
-  axiom `waldspurger_goodNbhd`).  Closedness is what makes `1_Ω θ` a quasi-character.
+  literature axiom `waldspurger_goodNbhd`).  Closedness is what makes `1_Ω θ` a quasi-character.
 * Not the `G/A_G` form: BP applied literally to `Ḡ = G/A_G` (compact centre) only treats
   `A_G(F)`-invariant data, i.e. trivial central character.  A character `χ` of `A_G(F)` with
   `χ(-1) ≠ 1` does not extend to `G(F)` (`-1 ∈ Spin(F)`), so twisting by an extension is not
