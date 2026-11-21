@@ -147,15 +147,17 @@ def ScuspSurjOn (d : GGPData F) (Ω : Set ↥d.G) : Prop :=
               ∂Measure.haar
 
 /-- **The elliptic regular set is relatively compact modulo conjugation and `A_G(F)`**
-(`p`-adic; standard, no exact reference located): there is a compact `K ⊆ \overline{G(F)_{ell,reg}}` such that every
-elliptic regular `g` is `a · x c x⁻¹` with `a ∈ A_G(F)`, `x ∈ G(F)`, `c ∈ K`.
+(`p`-adic; standard, no exact reference located): there is a compact `K` contained in the closure
+of `G(F)_{ell,reg}` such that every elliptic regular `g` is `a · x c x⁻¹` with `a ∈ A_G(F)`,
+`x ∈ G(F)`, `c ∈ K`.
 
 Proof sketch (not formalized): there are finitely many `G(F)`-conjugacy classes of maximal
 `F`-tori of `G` (`F` `p`-adic of characteristic `0`); for an elliptic maximal torus `T`,
 `T(F)/A_G(F)` is compact, so `T(F) ⊆ A_G(F) K_T` with `K_T` compact; every elliptic regular `g` is
 conjugate into `T(F)` for one of the finitely many representatives `T`.  Then
-`K = (⋃_T K_T) ∩ \overline{G_ell,reg(F)}` works: `G_ell,reg(F)` is stable under conjugation and
-under `A_G(F)`, so the `c = x⁻¹ a⁻¹ g x ∈ K_T` obtained is again elliptic regular.
+`K = (⋃_T K_T) ∩ cl(G_ell,reg(F))` works: `G_ell,reg(F)` is stable under conjugation and under
+`A_G(F)` (`conj_mem_ellRegSet`, `mul_mem_ellRegSet_of_mem_AG`), so the `c = x⁻¹ a⁻¹ g x ∈ K_T`
+obtained is again elliptic regular.
 
 **Status: `sorry`.**  Used, with `exists_scuspSurjOn_nhd_ell`, to prove `bp_scusp_surj_ell`
 (`TraceFormula/Scusp.lean`), where only the covering argument is done. -/
@@ -186,15 +188,14 @@ p. 5), so they apply to `G = GSpin(W) × GSpin(V)` and to its centralizers `G_x`
 an elliptic regular `y` near `g` is conjugate into `x exp(ω)`, its centralizer torus `T` lies in
 `G_x`, so `A_{G_x} ⊆ T` and `T/A_G` anisotropic give `A_{G_x} = A_G`.  Take a compact open good `ω`
 and `U = A_G(F) · (x exp ω)^{G(F)}` (it contains `g`, since `ω` is open, `G_x`-invariant and contains
-`0`, so contains the nilpotent part of `log(x⁻¹ g)`).  **Unverified:** (a) that `(x exp ω)^{G(F)}` is
-closed (W1 uses such sets as `G`-domains, e.g. `ω_G` in the proof of Prop. 6.4; no precise
-reference located); (b) that the translates `a (x exp ω)^{G(F)}`, `a ∈ A_G(F)`, form a locally
-finite family of sets that are pairwise equal or disjoint, so that `U` is closed (this needs `ω`
-chosen compatibly with the central directions: `exp Z · x exp X = x exp(X + Z)` for small central
-`Z`, which need not stay in `ω`); (c) the splitting of rational classes inside a stable
-neighbourhood.  A `θ₀` as in `ScuspSurjOn d U` meets finitely many translates; on each, its descent
+`0`, so contains the nilpotent part of `log(x⁻¹ g)`).  The set `(x exp ω)^{G(F)}` is a `G`-domain (open, closed and
+invariant, W1 p. 6), compact modulo conjugation (W1 §3.1, p. 14; the axiom `waldspurger_goodNbhd`).
+`U` is closed because the translates `a (x exp ω)^{G(F)}` form a locally finite family (via the
+Harish-Chandra map `H_G`, as for the `A_G`-cutoff of `TraceFormula/ThetaF.lean`); overlapping
+translates are handled by taking differences of invariant clopen sets.  A `θ₀` as in `ScuspSurjOn d U` meets finitely many translates; on each, its descent
 to `𝔤_x(F)` (W1 §4.1) is a quasi-character with compact support modulo conjugation, which is `θ_φ`
-(Prop. 6.4), lifted to `f` (Lemme 6.2) and translated by `a`; summing gives `f₀`.  Finally W1's
+(Prop. 6.4); `φ` is cut down to `1_ω φ` (very cuspidal, `ω` being a `G_x`-domain) so that it is
+supported in `ω`, lifted to `f` (Lemme 6.2) and translated by `a`; summing gives `f₀`.  Finally W1's
 `θ_f` (defined by weighted orbital integrals, W1 §5.3) represents the orbital pairing (BP Thm
 5.5.1(iv) with the Weyl integration formula, as in `bp_thetaF_represents`).
 

@@ -8,6 +8,7 @@ import GSpinGGP.Literature.HarishChandra
 import GSpinGGP.Literature.GSpin
 import GSpinGGP.TraceFormula.MGeom
 import GSpinGGP.TraceFormula.Analytic
+import GSpinGGP.TraceFormula.Scusp
 import GSpinGGP.TraceFormula.Spectral
 
 /-!
@@ -35,6 +36,11 @@ the path of the main theorem meet the definitions in one instance.
   (`toyD_isNearCentral`, `toyD_not_isTempIndData`).
   The conclusion of `prop_6_7_1_iii` (now proved) is also checked
   there (`toyD_prop_6_7_1_iii`).
+  `LitTF.exists_isCompact_ellRegSet_modConjAG` and `LitTF.exists_scuspSurjOn_nhd_ell` (the two
+  `sorry` statements behind `bp_scusp_surj_ell`): conclusions proved at `toyD`
+  (`toyD_exists_isCompact_ellRegSet_modConjAG`, `toyD_exists_scuspSurjOn_nhd_ell`, via
+  `toyD_isLocallyConstant_of_isQC`), and both shown to follow from the conclusion of
+  `bp_scusp_surj_ell` for every `d` (so they are no stronger than it).
 
 Not covered: anything that needs a nonzero nilpotent orbit, a proper parabolic or a nontrivial
 torus.
@@ -323,5 +329,117 @@ theorem toyD_exists_lie_descent (ψ : NontrivialAddChar F) (χ : CentralCharOn (
   · rw [toyD_distribJ χ ψ hf.2.1, toyD_distribJLie]
   · rw [toyD_thetaFLie, toyD_mGeomLie, toyD_thetaF_eq hf.1.continuous,
       toyD_mGeom ψ hf.1 (toyD_apply_diag χ hf.2.1)]
+
+/-! ## `bp_scusp_surj_ell` and its two `sorry` statements at `toyD` -/
+
+/-- On `toyD` every quasi-character is locally constant. -/
+theorem toyD_isLocallyConstant_of_isQC (ψ : NontrivialAddChar F) {θ : ↥(𝕋).G → ℂ}
+    (hθ : IsQuasiCharacter (𝕋).G (𝕋).lie (𝕋).bilin ψ θ) : IsLocallyConstant θ := by
+  rw [IsLocallyConstant.iff_eventually_eq]
+  intro x
+  have hss : IsSS F ((x : (𝕋).ambientˣ) : (𝕋).ambient) :=
+    (show x ∈ regularSet (𝕋).G (𝕋).lie by rw [toy_regularSet_eq_univ]; trivial).1
+  obtain ⟨c, hc⟩ := hθ.2 x hss
+  have hcx := toyD_expansion_coeff ψ θ x c hc
+  have hL : (lieCentralizer (𝕋).lie ((x : (𝕋).ambientˣ) : (𝕋).ambient)) ≤ (𝕋).lie := inf_le_left
+  haveI : Subsingleton (NilOrbit (grpCentralizer (𝕋).G (x : (𝕋).ambientˣ))
+      (lieCentralizer (𝕋).lie ((x : (𝕋).ambientˣ) : (𝕋).ambient))) :=
+    ⟨fun a b => (toyD_nilOrbit_eq_zero _ _ hL a).trans (toyD_nilOrbit_eq_zero _ _ hL b).symm⟩
+  have hsd : ∃ μ, IsSelfDual μ (restrictForm (lieCentralizer (𝕋).lie
+      ((x : (𝕋).ambientˣ) : (𝕋).ambient)) (𝕋).bilin) ψ := by
+    rw [toy_lieCentralizer_eq]
+    exact exists_isSelfDual_toyLie ψ
+  obtain ⟨-, ω, hω, hexp⟩ := hc
+  obtain ⟨log, hlc, hl1, hle⟩ := exists_logA F (A := (𝕋).ambient)
+  set u : ↥(𝕋).G → (𝕋).ambient := fun y =>
+    (((x : (𝕋).ambientˣ)⁻¹ : (𝕋).ambientˣ) : (𝕋).ambient) * ((y : (𝕋).ambientˣ) : (𝕋).ambient)
+    with hu
+  have hucont : Continuous u :=
+    continuous_const.mul (Units.continuous_val.comp continuous_subtypeVal)
+  have hu1 : Tendsto u (𝓝 x) (𝓝 1) := by
+    have : u x = 1 := by simp [hu]
+    simpa [this] using hucont.tendsto x
+  have hlog0 : Tendsto (fun y => log (u y)) (𝓝 x) (𝓝 0) := by
+    have := hlc.tendsto.comp hu1
+    rwa [hl1] at this
+  filter_upwards [hu1.eventually hle, hlog0.eventually hω,
+    hlog0.eventually (eventually_mem_lie_of_expA_mem (F := F) (𝕋))] with y hy1 hy2 hy3
+  have hgu : (((x⁻¹ * y : ↥(𝕋).G) : (𝕋).ambientˣ) : (𝕋).ambient) = expA F (log (u y)) := by
+    rw [hy1]; simp [hu]
+  have hYlie : log (u y) ∈ (𝕋).lie := hy3 _ hgu
+  have hYc : log (u y) ∈ lieCentralizer (𝕋).lie ((x : (𝕋).ambientˣ) : (𝕋).ambient) := by
+    rw [toy_lieCentralizer_eq]; exact hYlie
+  have hyx : ((y : (𝕋).ambientˣ) : (𝕋).ambient) =
+      ((x : (𝕋).ambientˣ) : (𝕋).ambient) * expA F (log (u y)) := by
+    rw [hy1]; simp [hu]
+  have h := hexp _ hy2 hYc (toyD_isRegularSS _ hL ⟨_, hYc⟩) y hyx
+  rw [h, finsum_eq_single _ (zeroOrbit _ _) (fun O' hO' => (hO' (Subsingleton.elim _ _)).elim),
+    jHat_zeroOrbit_eq_one _ _ _ ψ hsd (toyD_isRegularSS _ hL) hYc, mul_one, hcx]
+
+/-- **The conclusion of `exists_scuspSurjOn_nhd_ell` holds at `toyD`** (with `U = G`). -/
+theorem toyD_exists_scuspSurjOn_nhd_ell (g : ↥(𝕋).G) :
+    ∃ U : Set ↥(𝕋).G, IsOpen U ∧ IsClosed U ∧ (∀ x y : ↥(𝕋).G, y ∈ U → x * y * x⁻¹ ∈ U) ∧
+      (∀ (a : ↥(𝕋).AG) (y : ↥(𝕋).G), y ∈ U → (a : ↥(𝕋).G) * y ∈ U) ∧ g ∈ U ∧
+      (∃ C : Set ↥(𝕋).G, IsCompact C ∧
+        ∀ y ∈ U, ∃ (a : ↥(𝕋).AG) (x c : ↥(𝕋).G), c ∈ C ∧ y = (a : ↥(𝕋).G) * (x * c * x⁻¹)) ∧
+      LitTF.ScuspSurjOn (𝕋) U := by
+  refine ⟨Set.univ, isOpen_univ, isClosed_univ, fun _ _ _ => trivial, fun _ _ _ => trivial,
+    trivial, ⟨{1}, isCompact_singleton, fun y _ => ⟨⟨y, by rw [toyD_AG_eq_top]; trivial⟩, 1, 1,
+      rfl, by simp⟩⟩, ?_⟩
+  rintro θ₀ hq ⟨C₀, hC₀, -, hsupp⟩
+  obtain ⟨ψ₀⟩ := nonempty_nontrivialAddChar (F := F)
+  have hlc := toyD_isLocallyConstant_of_isQC ψ₀ (hq ψ₀)
+  have hsub : Function.support θ₀ ⊆ C₀ := fun y hy => by
+    obtain ⟨x, c, hc, rfl⟩ :=
+      hsupp y (by rw [toy_regularSet_eq_univ]; trivial) hy
+    rwa [toyD_G_comm x c, mul_inv_cancel_right]
+  have hcs : HasCompactSupport θ₀ := by
+    refine IsCompact.of_isClosed_subset hC₀ (isClosed_tsupport _) ?_
+    have hcl : IsClosed (Function.support θ₀) :=
+      isOpen_compl_iff.1 (by rw [Function.compl_support]; exact hlc {0})
+    rw [tsupport, hcl.closure_eq]
+    exact hsub
+  refine ⟨θ₀, ⟨hlc, hcs⟩, fun FW FV hP => (toyD_not_isProperFlagPair FW FV hP).elim,
+    Set.subset_univ _, θ₀, ?_⟩
+  obtain ⟨h1, h2, h3⟩ := toyD_isThetaF (F := F) hlc.continuous
+  exact ⟨h1, h2, fun _ _ => rfl, h3⟩
+
+
+/-- The conclusion of `exists_isCompact_ellRegSet_modConjAG` holds at `toyD`, with `K = {1}`. -/
+theorem toyD_exists_isCompact_ellRegSet_modConjAG :
+    ∃ K : Set ↥(𝕋).G, IsCompact K ∧ K ⊆ closure (ellipticRegularSet (𝕋).G (𝕋).lie (𝕋).AG) ∧
+      ∀ g ∈ ellipticRegularSet (𝕋).G (𝕋).lie (𝕋).AG,
+        ∃ (a : ↥(𝕋).AG) (x c : ↥(𝕋).G), c ∈ K ∧ g = (a : ↥(𝕋).G) * (x * c * x⁻¹) := by
+  have hAG : ∀ g : ↥(𝕋).G, g ∈ (𝕋).AG := fun g => by
+    rw [toyD_AG_eq_top]; exact Subgroup.mem_top g
+  refine ⟨{1}, isCompact_singleton, ?_, fun g _ => ⟨⟨g, hAG g⟩, 1, 1, rfl, by simp⟩⟩
+  rintro _ rfl
+  have he : (1 : ↥(𝕋).G) ∈ (𝕋).ellRegSet := by
+    rw [toyD_ellRegSet]; trivial
+  exact subset_closure he
+
+/-- The two `sorry` statements behind `bp_scusp_surj_ell` are no stronger than its former
+statement: its conclusion implies `exists_scuspSurjOn_nhd_ell` (take `U = Ω`, closed, so it
+contains the closure of the elliptic set). -/
+example (d : GGPData F) (h : type_of% (LitTF.bp_scusp_surj_ell d)) {g : ↥d.G}
+    (hg : g ∈ closure (ellipticRegularSet d.G d.lie d.AG)) :
+    type_of% (LitTF.exists_scuspSurjOn_nhd_ell d hg) := by
+  obtain ⟨Ω, ho, hc, hconj, hAG, hell, hC, hs⟩ := h
+  exact ⟨Ω, ho, hc, hconj, hAG, closure_minimal hell hc hg, hC, hs⟩
+
+/-- ... and implies `exists_isCompact_ellRegSet_modConjAG` (`K = C ∩ cl(G_ell,reg)`, using the
+stability of `G_ell,reg(F)` under conjugation and `A_G(F)`). -/
+example (d : GGPData F) (h : type_of% (LitTF.bp_scusp_surj_ell d)) :
+    type_of% (LitTF.exists_isCompact_ellRegSet_modConjAG d) := by
+  obtain ⟨Ω, -, hc, -, -, hell, ⟨C, hC, hCov⟩, -⟩ := h
+  refine ⟨C ∩ closure (ellipticRegularSet d.G d.lie d.AG), hC.inter_right isClosed_closure,
+    Set.inter_subset_right, fun g hg => ?_⟩
+  obtain ⟨a, x, c, hcC, rfl⟩ := hCov g (hell hg)
+  refine ⟨a, x, c, ⟨hcC, subset_closure ?_⟩, rfl⟩
+  have h2 := conj_mem_ellRegSet d x⁻¹ (mul_mem_ellRegSet_of_mem_AG d a⁻¹ hg)
+  have e : x⁻¹ * (((a⁻¹ : ↥d.AG) : ↥d.G) * ((a : ↥d.G) * (x * c * x⁻¹))) * x⁻¹⁻¹ = c := by
+    rw [Subgroup.coe_inv]; group
+  rw [e] at h2
+  exact h2
 
 end GSpinGGP.AxiomRedTeam

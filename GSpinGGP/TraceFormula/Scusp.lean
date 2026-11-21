@@ -151,6 +151,32 @@ theorem IsInvariantClopen.AG_mul_mem_iff {Ω : Set ↥d.G} (hΩ : IsInvariantClo
   have := hΩ.2.2.2 a⁻¹ _ h
   simpa using this
 
+/-- The complement of an invariant clopen set is an invariant clopen set. -/
+theorem IsInvariantClopen.compl {Ω : Set ↥d.G} (hΩ : IsInvariantClopen d Ω) :
+    IsInvariantClopen d Ωᶜ :=
+  ⟨hΩ.2.1.isOpen_compl, hΩ.1.isClosed_compl, fun x g hg => mt (hΩ.conj_mem_iff x g).1 hg,
+    fun a g hg => mt (hΩ.AG_mul_mem_iff a g).1 hg⟩
+
+variable (d) in
+/-- **Invariant clopen cutoffs preserve quasi-characters**: `1_Ω θ` is a quasi-character when `θ`
+is and `Ω` is invariant clopen (`1_Ω` is locally constant and invariant,
+`isQuasiCharacter_mul_of_isLocallyConstant`). -/
+theorem isQuasiCharacter_indicator (ψ : NontrivialAddChar F) {Ω : Set ↥d.G}
+    (hΩ : IsInvariantClopen d Ω) {θ : ↥d.G → ℂ} (hθ : IsQuasiCharacter d.G d.lie d.bilin ψ θ) :
+    IsQuasiCharacter d.G d.lie d.bilin ψ (Ω.indicator θ) := by
+  have he : Ω.indicator θ = fun g => Ω.indicator (fun _ => (1 : ℂ)) g * θ g := by
+    funext g
+    by_cases hg : g ∈ Ω
+    · rw [Set.indicator_of_mem hg, Set.indicator_of_mem hg, one_mul]
+    · rw [Set.indicator_of_notMem hg, Set.indicator_of_notMem hg, zero_mul]
+  rw [he]
+  refine isQuasiCharacter_mul_of_isLocallyConstant d ψ
+    (isLocallyConstant_indicator_of_isClopen hΩ.isClopen (IsLocallyConstant.const 1))
+    (fun x g => ?_) hθ
+  by_cases hg : g ∈ Ω
+  · rw [Set.indicator_of_mem hg, Set.indicator_of_mem ((hΩ.conj_mem_iff x g).2 hg)]
+  · rw [Set.indicator_of_notMem hg, Set.indicator_of_notMem (mt (hΩ.conj_mem_iff x g).1 hg)]
+
 variable (d)
 
 /-- **Invariant clopen sets are saturated along unipotent radicals** (only invariance and `Ω` open
@@ -196,95 +222,58 @@ theorem mem_mul_parabolicU_iff {Ω : Set ↥d.G} (hΩ : IsInvariantClopen d Ω)
 namespace LitTF
 
 /-- `ScuspSurjOn` holds trivially for the empty set: a `θ₀` with support in `∅^{G(F)}` vanishes on
-`G_reg(F)`, so `f₀ = 0`, `θ = 0` work. -/
+`G_reg(F)`, so `f₀ = 0`, `θ = 0` work (`isThetaF_zero`). -/
 theorem scuspSurjOn_empty : ScuspSurjOn d ∅ := by
   rintro θ₀ - ⟨C₀, -, hC₀, hsupp⟩
   have h0 : ∀ g ∈ regularSet d.G d.lie, θ₀ g = 0 := fun g hg => by
     by_contra hne
     obtain ⟨x, c, hc, -⟩ := hsupp g hg hne
     exact hC₀ hc
-  refine ⟨0, (testFunctions ↥d.G).zero_mem, fun FW FV _ p _ => by simp, by simp, 0,
-    locallyIntegrable_zero, continuousOn_const, fun g hg => (h0 g hg).symm, fun f' _ => by simp⟩
+  obtain ⟨hli, hco, hpair⟩ := isThetaF_zero d
+  exact ⟨0, (testFunctions ↥d.G).zero_mem, fun FW FV _ p _ => by simp, by simp, 0, hli, hco,
+    fun g hg => (h0 g hg).symm, hpair⟩
 
-set_option maxHeartbeats 400000 in
+/-- Cutting by an invariant clopen `Ω` keeps the support compact modulo conjugation: if the
+regular support of `θ₀` lies in `C₀^{G(F)}`, that of `1_Ω θ₀` lies in `(C₀ ∩ Ω)^{G(F)}`. -/
+theorem indicator_support_conj {Ω C₀ : Set ↥d.G} (hΩ : IsInvariantClopen d Ω) {θ₀ : ↥d.G → ℂ}
+    (hsupp : ∀ g ∈ regularSet d.G d.lie, θ₀ g ≠ 0 → ∃ x c : ↥d.G, c ∈ C₀ ∧ g = x * c * x⁻¹) :
+    ∀ g ∈ regularSet d.G d.lie, Ω.indicator θ₀ g ≠ 0 →
+      ∃ x c : ↥d.G, c ∈ C₀ ∩ Ω ∧ g = x * c * x⁻¹ := by
+  intro g hg hne
+  have hgΩ : g ∈ Ω := by
+    by_contra h
+    exact hne (Set.indicator_of_notMem h _)
+  obtain ⟨x, c, hc, rfl⟩ := hsupp g hg (by rwa [Set.indicator_of_mem hgΩ] at hne)
+  exact ⟨x, c, ⟨hc, (hΩ.conj_mem_iff x c).1 hgΩ⟩, rfl⟩
+
 /-- **Gluing along an invariant clopen set** (the partition step of BP §5.7 / Waldspurger 2010
-§6.4): if `U₁` is open, closed and conjugation invariant, and `f ↦ θ_f` is onto `QC_c(U₁)` and onto
-`QC_c(U₂)`, then it is onto `QC_c(U₁ ∪ U₂)`.  Split `θ₀ = 1_{U₁} θ₀ + 1_{U₁ᶜ} θ₀`, solve on each
-piece, add. -/
-theorem scuspSurjOn_union {U₁ U₂ : Set ↥d.G} (ho : IsOpen U₁) (hc : IsClosed U₁)
-    (hconj : ∀ x g : ↥d.G, g ∈ U₁ → x * g * x⁻¹ ∈ U₁) (h₁ : ScuspSurjOn d U₁)
-    (h₂ : ScuspSurjOn d U₂) : ScuspSurjOn d (U₁ ∪ U₂) := by
-  classical
+§6.4): if `U₁` is invariant clopen and `f ↦ θ_f` is onto `QC_c(U₁)` and onto `QC_c(U₂)`, then it
+is onto `QC_c(U₁ ∪ U₂)`.  Split `θ₀ = 1_{U₁} θ₀ + 1_{U₁ᶜ} θ₀`, solve on each piece, add
+(`isThetaF_add`; the kernels are integrable by `bp_integrable_kernel_scusp`). -/
+theorem scuspSurjOn_union {U₁ U₂ : Set ↥d.G} (hU₁ : IsInvariantClopen d U₁)
+    (h₁ : ScuspSurjOn d U₁) (h₂ : ScuspSurjOn d U₂) : ScuspSurjOn d (U₁ ∪ U₂) := by
   rintro θ₀ hq ⟨C₀, hC₀, hC₀U, hsupp⟩
-  have hiff : ∀ x c : ↥d.G, x * c * x⁻¹ ∈ U₁ ↔ c ∈ U₁ := fun x c => by
-    refine ⟨fun h => ?_, hconj x c⟩
-    have := hconj x⁻¹ _ h
-    rwa [show x⁻¹ * (x * c * x⁻¹) * x⁻¹⁻¹ = c by group] at this
-  set κ₁ : ↥d.G → ℂ := U₁.indicator 1 with hκ₁
-  set κ₂ : ↥d.G → ℂ := U₁ᶜ.indicator 1 with hκ₂
-  have hlc₁ : IsLocallyConstant κ₁ :=
-    isLocallyConstant_indicator_of_isClopen ⟨hc, ho⟩ (IsLocallyConstant.const 1)
-  have hlc₂ : IsLocallyConstant κ₂ :=
-    isLocallyConstant_indicator_of_isClopen ⟨ho.isClosed_compl, hc.isOpen_compl⟩
-      (IsLocallyConstant.const 1)
-  have hcj₁ : ∀ x g : ↥d.G, κ₁ (x * g * x⁻¹) = κ₁ g := fun x g => by
-    by_cases hg : g ∈ U₁
-    · simp [hκ₁, Set.indicator_of_mem hg, Set.indicator_of_mem ((hiff x g).2 hg)]
-    · simp [hκ₁, Set.indicator_of_notMem hg, Set.indicator_of_notMem (mt (hiff x g).1 hg)]
-  have hcj₂ : ∀ x g : ↥d.G, κ₂ (x * g * x⁻¹) = κ₂ g := fun x g => by
-    by_cases hg : g ∈ U₁
-    · simp [hκ₂, hg, (hiff x g).2 hg]
-    · simp [hκ₂, hg, mt (hiff x g).1 hg]
-  have hsplit : ∀ g, κ₁ g * θ₀ g + κ₂ g * θ₀ g = θ₀ g := fun g => by
-    by_cases hg : g ∈ U₁ <;> simp [hκ₁, hκ₂, hg]
-  -- the two pieces
   obtain ⟨f₁, hf₁, hcusp₁, hs₁, θ₁, hli₁, hco₁, heq₁, hpair₁⟩ :=
-    h₁ (fun g => κ₁ g * θ₀ g)
-      (fun ψ => isQuasiCharacter_mul_of_isLocallyConstant d ψ hlc₁ hcj₁ (hq ψ))
-      ⟨C₀ ∩ U₁, hC₀.inter_right hc, Set.inter_subset_right, fun g hg hne => by
-        have hκ : κ₁ g ≠ 0 := left_ne_zero_of_mul hne
-        have hgU : g ∈ U₁ := by
-          by_contra h
-          exact hκ (by simp [hκ₁, h])
-        obtain ⟨x, c, hcC, rfl⟩ := hsupp g hg (right_ne_zero_of_mul hne)
-        exact ⟨x, c, ⟨hcC, (hiff x c).1 hgU⟩, rfl⟩⟩
+    h₁ (U₁.indicator θ₀) (fun ψ => isQuasiCharacter_indicator d ψ hU₁ (hq ψ))
+      ⟨C₀ ∩ U₁, hC₀.inter_right hU₁.2.1, Set.inter_subset_right,
+        indicator_support_conj d hU₁ hsupp⟩
   obtain ⟨f₂, hf₂, hcusp₂, hs₂, θ₂, hli₂, hco₂, heq₂, hpair₂⟩ :=
-    h₂ (fun g => κ₂ g * θ₀ g)
-      (fun ψ => isQuasiCharacter_mul_of_isLocallyConstant d ψ hlc₂ hcj₂ (hq ψ))
-      ⟨C₀ ∩ U₁ᶜ, hC₀.inter_right ho.isClosed_compl,
-        fun c hc' => (hC₀U hc'.1).resolve_left hc'.2, fun g hg hne => by
-        have hκ : κ₂ g ≠ 0 := left_ne_zero_of_mul hne
-        have hgU : g ∉ U₁ := by
-          intro h
-          exact hκ (by simp [hκ₂, h])
-        obtain ⟨x, c, hcC, rfl⟩ := hsupp g hg (right_ne_zero_of_mul hne)
-        exact ⟨x, c, ⟨hcC, mt (hiff x c).2 hgU⟩, rfl⟩⟩
+    h₂ (U₁ᶜ.indicator θ₀) (fun ψ => isQuasiCharacter_indicator d ψ hU₁.compl (hq ψ))
+      ⟨C₀ ∩ U₁ᶜ, hC₀.inter_right hU₁.compl.2.1,
+        fun c hc => (hC₀U hc.1).resolve_left hc.2, indicator_support_conj d hU₁.compl hsupp⟩
+  have hθ : IsThetaF d (f₁ + f₂) (θ₁ + θ₂) :=
+    isThetaF_add d hf₁.1.continuous hf₂.1.continuous ⟨hli₁, hco₁, hpair₁⟩ ⟨hli₂, hco₂, hpair₂⟩
+      (fun f' hf' => bp_integrable_kernel_scusp d f₁ hf₁ hcusp₁ f' hf')
+      (fun f' hf' => bp_integrable_kernel_scusp d f₂ hf₂ hcusp₂ f' hf')
   refine ⟨f₁ + f₂, add_mem hf₁ hf₂, fun FW FV hP p hp => ?_,
     (Function.support_add _ _).trans (Set.union_subset_union hs₁ hs₂), θ₁ + θ₂,
-    hli₁.add hli₂, hco₁.add hco₂, fun g hg => ?_, fun f' hf' => ?_⟩
+    hθ.1, hθ.2.1, fun g hg => ?_, hθ.2.2⟩
   · simp only [Pi.add_apply]
     rw [integral_add (integrable_parabolicU_of_testFunctions d hf₁ FW FV p)
       (integrable_parabolicU_of_testFunctions d hf₂ FW FV p), hcusp₁ FW FV hP p hp,
       hcusp₂ FW FV hP p hp, add_zero]
   · simp only [Pi.add_apply]
-    rw [heq₁ hg, heq₂ hg]
-    exact hsplit g
-  · have e1 : (fun g => (θ₁ + θ₂) g * f' g) = fun g => θ₁ g * f' g + θ₂ g * f' g := by
-      funext g; simp [add_mul]
-    rw [e1, integral_add (integrable_mul_testFunction d hli₁ hf')
-      (integrable_mul_testFunction d hli₂ hf'), hpair₁ f' hf', hpair₂ f' hf']
-    have hinner : ∀ x : ↥d.G ⧸ d.AG,
-        (∫ g : ↥d.G, (f₁ + f₂) ((Quotient.out x)⁻¹ * g * Quotient.out x) * f' g ∂Measure.haar) =
-          (∫ g : ↥d.G, f₁ ((Quotient.out x)⁻¹ * g * Quotient.out x) * f' g ∂Measure.haar) +
-          ∫ g : ↥d.G, f₂ ((Quotient.out x)⁻¹ * g * Quotient.out x) * f' g ∂Measure.haar := by
-      intro x
-      rw [← integral_add (integrable_orbitalInner_integrand d hf₁.1.continuous hf' _)
-        (integrable_orbitalInner_integrand d hf₂.1.continuous hf' _)]
-      congr 1; funext g; simp [add_mul]
-    simp_rw [hinner]
-    have i₁ := bp_integrable_kernel_scusp d f₁ hf₁ hcusp₁ f' hf'
-    have i₂ := bp_integrable_kernel_scusp d f₂ hf₂ hcusp₂ f' hf'
-    rw [integral_add i₁ i₂]
+    rw [heq₁ hg, heq₂ hg, Set.indicator_self_add_compl_apply]
 
 /-- **(c) Elliptic isolation, untwisted, `p`-adic** (BP Astérisque 418, Cor 5.7.2(i) = Thesis
 Cor 4.8.3(i), in the form given by its proof for a group whose split centre `A_G` need not be
@@ -308,7 +297,8 @@ continuous on `G_reg(F)` and equal to `θ₀` there, represents the orbital pair
   `Ω_{x_i}^G` cover it modulo `A_G(F)`, and `Ω = A_G(F) · ⋃ Ω_{x_i}^G` (an `A_G(F)`-translate of a
   `G`-good neighbourhood of an elliptic point is one of the translated point).  A `θ₀ ∈ QC_c(Ω)`
   (support compact modulo conjugation, *not* modulo `A_G`) meets finitely many translates
-  `a Ω_{x_i}^G`; an invariant partition of unity (BP Prop 3.1.1(ii)) reduces to one of them.
+  `a Ω_{x_i}^G`; splitting `θ₀` along invariant clopen sets (`1_U θ₀ + 1_{Uᶜ} θ₀`) reduces to
+  one of them.
 * `p`-adic ingredients without a centre hypothesis, which can replace BP's density statements:
   Waldspurger, *Une formule intégrale reliée à la conjecture locale de Gross–Prasad*, Compositio
   Math. 146 (2010), Prop. 6.4 (arXiv:0902.1875v1, p. 31: every quasi-character on `𝔤(F)` compactly
@@ -317,10 +307,9 @@ continuous on `G_reg(F)` and equal to `θ₀` there, represents the orbital pair
   `Z_G(x) = G_x` for `GSpin`, whose derived group is simply connected).
 * Surjectivity: in the `p`-adic case `QC_c(Ω)` carries its finest locally convex topology, in which
   every subspace is closed, so "dense image" is "onto" (BP's own parenthesis in Cor 5.7.2(i)).
-* Open and closed: BP's `Ω` is open.  For `p`-adic `F` the `Ω_{x_i}` may be taken compact open,
-  and then `Ω_{x_i}^G` is also closed (unverified detail: it is the union of finitely many of the
-  sets `π⁻¹(π(Ω'))`, `π` the characteristic-polynomial map, separating the rational classes in a
-  stable class near `x_i`).  Closedness is what makes `1_Ω θ` a quasi-character.
+* Open and closed: BP's `Ω` is open.  For `p`-adic `F`, `Ω_{x_i}^G = (x_i exp ω_i)^G` for a good
+  neighbourhood `ω_i` is a `G`-domain (open, closed, invariant: Waldspurger 2010 §3.1, p. 14; the
+  axiom `waldspurger_goodNbhd`).  Closedness is what makes `1_Ω θ` a quasi-character.
 * Not the `G/A_G` form: BP applied literally to `Ḡ = G/A_G` (compact centre) only treats
   `A_G(F)`-invariant data, i.e. trivial central character.  A character `χ` of `A_G(F)` with
   `χ(-1) ≠ 1` does not extend to `G(F)` (`-1 ∈ Spin(F)`), so twisting by an extension is not
@@ -374,8 +363,8 @@ theorem bp_scusp_surj_ell (d : GGPData F) :
     | empty => simpa using scuspSurjOn_empty d
     | insert e s _ ih =>
       rw [Finset.set_biUnion_insert]
-      exact scuspSurjOn_union d (hUo _ (hKcl e.2)) (hUc _ (hKcl e.2)) (hUconj _ (hKcl e.2))
-        (hUsurj _ (hKcl e.2)) ih
+      exact scuspSurjOn_union d ⟨hUo _ (hKcl e.2), hUc _ (hKcl e.2), hUconj _ (hKcl e.2),
+        hUAG _ (hKcl e.2)⟩ (hUsurj _ (hKcl e.2)) ih
   refine ⟨⋃ e ∈ t, U (e : ↥d.G), isOpen_biUnion fun e _ => hUo _ (hKcl e.2),
     t.finite_toSet.isClosed_biUnion fun e _ => hUc _ (hKcl e.2), fun x g hg => ?_,
     fun a g hg => ?_, fun g hg => ?_, ⟨⋃ e ∈ t, C (e : ↥d.G),
@@ -419,24 +408,12 @@ semisimple `x` only involves a neighbourhood of `x`; `Ω` is open, its complemen
 `isQuasiCharacter_mul_of_isLocallyConstant`). -/
 theorem indicator_mem_QC {Ω : Set ↥d.G} (hΩ : IsInvariantClopen d Ω) {θ : ↥d.G → ℂ}
     (hθ : θ ∈ QC d χ) : Ω.indicator θ ∈ QC d χ := by
-  have he : Ω.indicator θ = fun g => Ω.indicator (fun _ => (1 : ℂ)) g * θ g := by
-    funext g
-    by_cases hg : g ∈ Ω
-    · rw [Set.indicator_of_mem hg, Set.indicator_of_mem hg, one_mul]
-    · rw [Set.indicator_of_notMem hg, Set.indicator_of_notMem hg, zero_mul]
-  refine ⟨fun ψ => ?_, fun a g hg => ?_⟩
-  · rw [he]
-    refine isQuasiCharacter_mul_of_isLocallyConstant d ψ
-      (isLocallyConstant_indicator_of_isClopen hΩ.isClopen (IsLocallyConstant.const 1))
-      (fun x g => ?_) (hθ.1 ψ)
-    by_cases hg : g ∈ Ω
-    · rw [Set.indicator_of_mem hg, Set.indicator_of_mem ((hΩ.conj_mem_iff x g).2 hg)]
-    · rw [Set.indicator_of_notMem hg, Set.indicator_of_notMem (mt (hΩ.conj_mem_iff x g).1 hg)]
-  · by_cases hga : g ∈ Ω
-    · rw [Set.indicator_of_mem ((hΩ.AG_mul_mem_iff a g).2 hga), Set.indicator_of_mem hga,
-        hθ.2 a g hg]
-    · rw [Set.indicator_of_notMem (mt (hΩ.AG_mul_mem_iff a g).1 hga),
-        Set.indicator_of_notMem hga, mul_zero]
+  refine ⟨fun ψ => isQuasiCharacter_indicator d ψ hΩ (hθ.1 ψ), fun a g hg => ?_⟩
+  by_cases hga : g ∈ Ω
+  · rw [Set.indicator_of_mem ((hΩ.AG_mul_mem_iff a g).2 hga), Set.indicator_of_mem hga,
+      hθ.2 a g hg]
+  · rw [Set.indicator_of_notMem (mt (hΩ.AG_mul_mem_iff a g).1 hga),
+      Set.indicator_of_notMem hga, mul_zero]
 
 /-- **Cutting a virtual character off near the elliptic set** (BP Lemma 4.2.3 and Prop 4.4.1 for
 invariant cutoffs; Thesis §4.8): for a virtual tempered `P` with
