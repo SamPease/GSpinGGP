@@ -4,9 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import Mathlib
 import TauCeti.MeasureTheory.Measure.Haar.Unique
+import TauCeti.MeasureTheory.Group.ModularCharacter
 
 /-!
-# Harish-Chandra's function `Ξ` for an Iwasawa pair, and Levi data
+# Harish-Chandra's function `Ξ` for an Iwasawa pair
 
 Harish-Chandra's function is defined (Waldspurger, *La formule de Plancherel pour les groupes
 `p`-adiques*, J. Inst. Math. Jussieu 2 (2003), §II.1, pp. 250–251; BP §1.5) from a minimal
@@ -18,8 +19,8 @@ where `g = p₀(g) k₀(g)` with `p₀(g) ∈ P₀`, `k₀(g) ∈ K`.  Only the 
 enters the definition, so this file works for any locally compact group `G`, closed subgroup
 `P`, and compact open subgroup `K` with `G = P K` (an `IwasawaPair`).  Harish-Chandra's `Ξ^G` of
 `G = GSpin(W) × GSpin(V)` (`GGPData.IwasawaDatum.xiHC`, `TraceFormula/Analytic.lean`) is the `Ξ`
-of such a pair; `Ξ^M` for a Levi subgroup `M` is `LeviDatum.xiM`; `Ξ^H` for `H = GSpin(W)` would
-be the `Ξ` of a pair of `H` (not built here).
+of such a pair; `Ξ^M` for a Levi subgroup `M` and `Ξ^H` for `H = GSpin(W)` would be the `Ξ` of
+pairs of `M` and `H` (not built here).
 
 ## Main definitions
 
@@ -28,10 +29,6 @@ be the `Ξ` of a pair of `H` (not built here).
   `μ(E p⁻¹) = δ_P(p) μ(E)`, which is `|det Ad(p)|_{𝔲}|` for `P = M U`, as in Waldspurger 2003
   §I.1); `IwasawaPair.rho g = δ_P(p(g))` (independent of the choice of `p(g)`).
 * `IwasawaPair.xi`: `Ξ(g) = ∫_K δ_P(p(kg))^{1/2} dk` (normalized Haar measure on `K`).
-* `LeviDatum I`: a parabolic subgroup `P ⊇ P₀` with a Levi decomposition `P = M U`, `U ⊆ P₀`,
-  and the *good position* of `K` relative to `M`, `M = (P₀ ∩ M)(K ∩ M)` (Waldspurger 2003 §I.1);
-  its Iwasawa pair `LeviDatum.levi` on `M`, `Ξ^M = LeviDatum.xiM`, and `δ_P` on `M`
-  (`LeviDatum.deltaP`); `LeviDatum.top` (`P = M = G`).
 
 ## Main results
 
@@ -110,15 +107,15 @@ theorem isLocallyConstant_modularCharacter (E : Subgroup G₀) (hEo : IsOpen (E 
   refine isLocallyConstant_of_mul_right_invariant hEo fun x k hk => ?_
   rw [map_mul, modularCharacter_eq_one_of_mem E hEo hEc _ hk, mul_one]
 
-/-- On a compact set, the modular character is bounded below by a positive constant (if there
-is a compact open subgroup). -/
-theorem exists_lowerBound_modularCharacter (E : Subgroup G₀) (hEo : IsOpen (E : Set G₀))
-    (hEc : IsCompact (E : Set G₀)) (S : Set G₀) (hS : IsCompact S) :
+/-- On a compact set, the modular character is bounded below by a positive constant (it is
+continuous, `TauCeti.continuous_modularCharacter`, and positive). -/
+theorem exists_lowerBound_modularCharacter (S : Set G₀) (hS : IsCompact S) :
     ∃ m : ℝ, 0 < m ∧ ∀ p ∈ S, m ≤ (Measure.modularCharacter p : ℝ) := by
   rcases S.eq_empty_or_nonempty with rfl | hne
   · exact ⟨1, one_pos, by simp⟩
   obtain ⟨p0, -, hmin⟩ :=
-    hS.exists_isMinOn hne (isLocallyConstant_modularCharacter E hEo hEc).continuous.continuousOn
+    hS.exists_isMinOn hne
+      (NNReal.continuous_coe.comp TauCeti.continuous_modularCharacter).continuousOn
   exact ⟨_, by exact_mod_cast Measure.modularCharacterFun_pos p0, fun p hp => hmin hp⟩
 
 /-- The modular character is trivial on central elements. -/
@@ -219,7 +216,7 @@ theorem delta_eq_one_of_central (a : ↥I.P) (ha : ∀ y : ↥I.P, y * a = a * y
 /-- On a compact subset of `P`, `δ_P` is bounded below by a positive constant. -/
 theorem exists_lowerBound_delta (S : Set ↥I.P) (hS : IsCompact S) :
     ∃ m : ℝ, 0 < m ∧ ∀ p ∈ S, m ≤ I.delta p :=
-  exists_lowerBound_modularCharacter I.KP I.isOpen_KP I.isCompact_KP S hS
+  exists_lowerBound_modularCharacter S hS
 
 /-- A choice of `P`-component of `g = p k`. -/
 def iwP (g : G) : ↥I.P := ⟨(I.mul_eq g).choose, (I.mul_eq g).choose_spec.1⟩
@@ -374,90 +371,5 @@ theorem integral_xi_mul_mul (g₁ g₂ : G) :
 
 end IwasawaPair
 
-/-! ## 2. Levi data -/
-
-/-- **Levi data** for an Iwasawa pair `I = (P₀, K)`: a parabolic subgroup `P ⊇ P₀` with a Levi
-decomposition `P = M U` (`M` normalizes `U`, `M ∩ U = 1`), whose unipotent radical lies in `P₀`
-(as the unipotent radical of a parabolic subgroup containing `P₀` does), and the good position of
-`K` relative to `M`: `M = (P₀ ∩ M)(K ∩ M)` (Waldspurger 2003 §I.1, for `P` semi-standard and `K`
-special: "le groupe `M ∩ K` vérifie relativement à `M` les mêmes propriétés que `K` relativement
-à `G`").  The good position is a hypothesis (for an arbitrary compact open `K` with `G = P₀ K` it
-is not known here to hold). -/
-structure LeviDatum {G : Type*} [Group G] [TopologicalSpace G] (I : IwasawaPair G) where
-  /-- the parabolic subgroup -/
-  P : Subgroup G
-  /-- its Levi factor -/
-  M : Subgroup G
-  /-- its unipotent radical -/
-  U : Subgroup G
-  P0_le : I.P ≤ P
-  M_le : M ≤ P
-  U_le_P0 : U ≤ I.P
-  isClosed_P : IsClosed (P : Set G)
-  isClosed_M : IsClosed (M : Set G)
-  conj_mem_U : ∀ m ∈ M, ∀ u ∈ U, m * u * m⁻¹ ∈ U
-  /-- `P = M U` -/
-  mul_eq : ∀ p ∈ P, ∃ m ∈ M, ∃ u ∈ U, p = m * u
-  inf_eq_bot : M ⊓ U = ⊥
-  /-- good position of `K` relative to `M`: `M = (P₀ ∩ M)(K ∩ M)` -/
-  goodPos : ∀ m ∈ M, ∃ p ∈ I.P, ∃ k ∈ I.K, p ∈ M ∧ k ∈ M ∧ m = p * k
-
-namespace LeviDatum
-
-variable {G : Type*} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
-  [LocallyCompactSpace G] {I : IwasawaPair G} (L : LeviDatum I)
-
-instance locallyCompactSpace_P : LocallyCompactSpace ↥L.P := L.isClosed_P.locallyCompactSpace
-
-instance locallyCompactSpace_M : LocallyCompactSpace ↥L.M := L.isClosed_M.locallyCompactSpace
-
-/-- The Iwasawa pair `(P₀ ∩ M, K ∩ M)` of the Levi subgroup `M`. -/
-def levi : IwasawaPair ↥L.M where
-  P := I.P.subgroupOf L.M
-  K := I.K.subgroupOf L.M
-  isClosed_P := I.isClosed_P.preimage continuous_subtypeVal
-  isOpen_K := I.isOpen_K.preimage continuous_subtypeVal
-  isCompact_K := L.isClosed_M.isClosedEmbedding_subtypeVal.isCompact_preimage I.isCompact_K
-  mul_eq m := by
-    obtain ⟨p, hp, k, hk, hpM, hkM, h⟩ := L.goodPos m m.property
-    exact ⟨⟨p, hpM⟩, hp, ⟨k, hkM⟩, hk, Subtype.ext h⟩
-
-/-- `δ_P` on the Levi factor `M`: the modular character of `P` (Waldspurger 2003 §I.1:
-`|det Ad(m)|_{𝔲}|`). -/
-def deltaP (m : ↥L.M) : ℝ :=
-  (Measure.modularCharacter (⟨m, L.M_le m.property⟩ : ↥L.P) : ℝ)
-
-theorem deltaP_pos (m : ↥L.M) : 0 < L.deltaP m := by
-  unfold deltaP
-  exact_mod_cast Measure.modularCharacterFun_pos _
-
-/-- **`Ξ^M`**, Harish-Chandra's function of the Levi factor, built from `(P₀ ∩ M, K ∩ M)`
-(Waldspurger 2003 §II.1, p. 252: "on définit une fonction `Ξ^M` sur `M` comme on vient de définir
-`Ξ` sur `G`"). -/
-def xiM [MeasurableSpace G] [BorelSpace G] (m : ↥L.M) : ℝ := L.levi.xi m
-
-theorem xiM_pos [MeasurableSpace G] [BorelSpace G] (m : ↥L.M) : 0 < L.xiM m := L.levi.xi_pos m
-
-/-- The trivial Levi datum `P = M = G`, `U = 1` (good position is the Iwasawa decomposition
-itself). -/
-def top (I : IwasawaPair G) : LeviDatum I where
-  P := ⊤
-  M := ⊤
-  U := ⊥
-  P0_le := le_top
-  M_le := le_rfl
-  U_le_P0 := bot_le
-  isClosed_P := by simp
-  isClosed_M := by simp
-  conj_mem_U m _ u hu := by
-    rw [Subgroup.mem_bot] at hu ⊢
-    simp [hu]
-  mul_eq p _ := ⟨p, trivial, 1, Subgroup.one_mem _, (mul_one p).symm⟩
-  inf_eq_bot := by simp
-  goodPos m _ := by
-    obtain ⟨p, hp, k, hk, h⟩ := I.mul_eq m
-    exact ⟨p, hp, k, hk, trivial, trivial, h⟩
-
-end LeviDatum
 
 end GSpinGGP

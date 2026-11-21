@@ -28,7 +28,7 @@ stabilizer `P_F = flagStab F ⊆ GSpin(V)` (Thesis §5.1.2) and the Levi decompo
   `P_{F_W} × P_{F_V} = (M_{F_W} × M_{F_V})(N_{F_W} × N_{F_V})`.
 
 `M ∩ N = 1`, the opposite unipotent radical and the good position of a compact open `K` are not
-proved here, so no `LeviDatum` (`HarmonicAnalysis/HarishChandraXi.lean`) for `G` is built yet.
+proved here, so no Iwasawa pair of a Levi subgroup of `G` is built yet.
 -/
 
 open MeasureTheory Topology Filter
@@ -96,7 +96,7 @@ theorem scalarGSpin_mem_flagLevi (b : Module.Basis ι K V) (wt : ι → ℤ) (c 
   rw [specP_scalarGSpin_eq_one]
   rfl
 
-omit [Fintype ι] in
+omit [Invertible (2 : K)] [Fintype ι] in
 /-- A map that is homogeneous of degree `0` for the weights commutes with the weight projections. -/
 theorem wtProj_comp_of_isHomog {b : Module.Basis ι K V} {wt : ι → ℤ} {A : V →ₗ[K] V}
     (hA : ∀ j, IsHomog b wt (A (b j)) (wt j)) (w : ℤ) :
