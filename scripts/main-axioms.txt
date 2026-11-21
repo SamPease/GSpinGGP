@@ -1,4 +1,5 @@
 GSpinGGP.LitTF.bp_integrable_kernel_scusp
+GSpinGGP.bp_sqrt_weylDisc_mul_locallyBounded
 GSpinGGP.emoryTakeda_mult_le_one
 GSpinGGP.exists_isSelfDual
 GSpinGGP.exists_rel_torusBar_of_fixerBar

@@ -7,6 +7,7 @@ import GSpinGGP.TraceFormula.DeltaIntegrability
 import GSpinGGP.TraceFormula.TorusDescent
 import GSpinGGP.GGP.Germs
 import GSpinGGP.GGP.GammaClassFinite
+import GSpinGGP.TraceFormula.GermBoundTorus
 
 /-!
 # `m_geom` on quasi-characters: Thesis Prop 12.1.1
@@ -18,12 +19,13 @@ The statements in §1 are the interface consumed by
   for `θ` in the span `QCfin d` of the `QC(G, χ)`, the integrals `m_{geom,s}(θ)` converge
   absolutely for `s > 0` (hence are linear in `θ`), and the limit `s → 0⁺` exists.  §0b proves
   these from the precisely stated inputs `finite_gammaClass`, `germ_bound_of_mem_QC` (BP Prop
-  4.5.1), `aestronglyMeasurable_torusFn_of_mem_QC`, `integrable_delta_rpow` (BP Lemma B.1.2(i)
+  4.1.1(ii), per orbit), `aestronglyMeasurable_torusFn_of_mem_QC`, `integrable_delta_rpow` (BP Lemma B.1.2(i)
   plus the eigenvalues of `t` on `W''`) and `tendsto_mGeomS_of_mem_QC` (the thesis's induction for
   one `χ`).  `integrable_delta_rpow` is proved from `bp_integrable_deltaGGP_rpow` (the GSpin
   consequence of B.1.2(i), proved through the `exp` chart from its Lie-algebra form
   `locallyIntegrable_absF_det_adV_rpow`), `aestronglyMeasurable_torusFn_of_mem_QC` from
-  inputs in `TraceFormula/TorusDescent.lean`; the others are SORRY.
+  inputs in `TraceFormula/TorusDescent.lean`, `germ_bound_of_mem_QC` in
+  `TraceFormula/GermBoundTorus.lean` (from BP Prop 4.1.1(ii)); the others are SORRY.
   `mGeomS_smul` needs no input.
 * `mGeom_congr_regularSet`: `m_geom(θ)` depends only on `θ|_{G_reg}` (germs only see the regular
   set, by `exists_nhds_mul_expA_mem_regularSet`).
@@ -181,8 +183,9 @@ function `(D^G)^{1/2} c_{θ,O}` is locally bounded (BP Prop 4.5.1), so it suffic
 `∫_{Γ(G,H)} Δ(x)^{s - 1/2} dx` converges for `Re s > 0`, which is BP Lemma B.1.2(i).
 
 Here that argument is split torus by torus into three precisely stated inputs (the first
-SORRY, the second proved from three SORRY inputs on `T(F)` in `TraceFormula/TorusDescent.lean`,
-the third proved from `bp_integrable_deltaGGP_rpow`), whose combination is proved
+proved from `finite_nilReg` (SORRY) in `TraceFormula/GermBoundTorus.lean`, the second proved from three SORRY inputs on `T(F)`
+in `TraceFormula/TorusDescent.lean`, the third proved from `bp_integrable_deltaGGP_rpow`), whose
+combination is proved
 (`isTorusIntegrable_of_mem_QC`):
 * `germ_bound_of_mem_QC`: `‖D^G(t)^{1/2} c_{θ,O_t}(t)‖ ≤ C` on `T_♮`;
 * `aestronglyMeasurable_torusFn_of_mem_QC`: measurability of the integrand on `T(F)/A_{G,H}(F)`;
@@ -202,18 +205,16 @@ section Convergence
 on `T_♮ = {t | t ∈ Γ(G,H), T_t = T}` because `T(F) = A_{G,H}(F)·K` for a compact `K`
 (`T(F)/A_{G,H}(F)` is compact, part of `IsGammaElt`) and the integrand is `A_{G,H}(F)`-invariant
 (`χ` is trivial on `A_{G,H}(F)`, so `θ(ag) = θ(g)` on `G_reg(F)` and germs at `x` and `ax` agree).
-BP Prop 4.5.1 is stated for the averaged `c_θ`; the bound for each individual `c_{θ,O}` is the
-thesis's own reading of it, so this is an assumption of the thesis, not a citation of BP.
-Proved ingredient: `exists_finset_bound_nilReg_coeff` (`TraceFormula/GermBound.lean`): at one
-semisimple `x`, a regular coefficient of a local expansion is bounded by the expansion's values at
-finitely many regular points of `𝔤_x` (not uniform in `x`).
-Status: SORRY (own work from BP Prop 4.5.1, GSpin input). -/
+BP Prop 4.5.1 is stated for the averaged `c_θ`; the bound for each individual `c_{θ,O}` is
+proved here from BP Prop 4.1.1(ii) (local boundedness of `(D^G)^{1/2} θ`) by evaluating the local
+expansion at finitely many points along rays `x e^{ϖ^{2k} X}` (`germ_bound_of_mem_QC_aux`,
+`TraceFormula/GermBoundTorus.lean`). Status: proved from `finite_nilReg` (SORRY). -/
 theorem germ_bound_of_mem_QC {χ : CentralCharOn d} {θ : ↥d.G → ℂ} (hθ : θ ∈ QC d χ)
     (T : Subgroup ↥(GSpin d.QW)) :
     ∃ C : ℝ, ∀ t : ↥(GSpin d.QW), d.IsGammaElt t → d.torusOf t = T →
       ‖(Real.sqrt (weylDisc d.lie (d.diag t : d.ambientˣ)) : ℂ) *
-        germ d.G d.lie d.bilin ψ θ (d.diag t) (orbitChoice d t)‖ ≤ C := by
-  sorry
+        germ d.G d.lie d.bilin ψ θ (d.diag t) (orbitChoice d t)‖ ≤ C :=
+  germ_bound_of_mem_QC_aux ψ d hθ T
 
 /-- **Measurability of the integrand of `m_{geom,s}` on `T(F)/A_{G,H}(F)`** (Thesis §6.5, the
 measure on `Γ(G,H)`).  The integrand `t ↦ D^G(t)^{1/2} c_{θ,O_t}(t) Δ(t)^{s-1/2}` on `T(F)` is
