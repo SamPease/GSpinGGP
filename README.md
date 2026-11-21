@@ -48,12 +48,12 @@ As of November 2026:
   below), plus some smaller lemmas. A `sorry` is a step this project still owes.
 - Results from the literature are assumed as `axiom`s in `GSpinGGP/Literature/`, each with a
   docstring citing its source; they are where the formalization stops, and are not meant to be
-  proved here. `local_ggp` uses 21 of the 21. There are two classes.
+  proved here. `local_ggp` uses 20 of the 20. There are two classes.
   A *verbatim* axiom is a statement printed in its source, for the group the source treats,
   specialized (one, `bp_integrable_kernel_scusp`, is stated without proof in its source).
   A *derived* axiom is a short, explicit combination of such statements, or a printed statement
   whose hypotheses are checked for our object in the docstring only; the docstring quotes the
-  ingredients and gives the steps. 9 of the 21 are derived (`scripts/derived-axioms.txt`):
+  ingredients and gives the steps. 9 of the 20 are derived (`scripts/derived-axioms.txt`):
   the two on characters and the one on multiplicity one (sources state them for irreducible
   admissible smooth representations, the axioms for irreducible unitary ones);
   the three on Galois cohomology (applied to groups of `F̄`-points whose description as algebraic
@@ -76,6 +76,9 @@ As of November 2026:
 - Hilbert's Theorem 90 for `GL_m` is proved (`GGP/Hilbert90.lean`), from Mathlib's linear
   independence of characters, and from it Hilbert 90 for the units of a central simple algebra
   (`GGP/Hilbert90Units.lean`).
+- Schur's lemma for irreducible unitary representations (Dixmier 13.1.4: the commutant is the
+  scalars) is proved (`Foundations/UnitarySchur.lean`) from Tau Ceti's spectral theorem for
+  bounded normal operators.
 
 To see exactly what the main theorem rests on:
 
