@@ -629,8 +629,8 @@ theorem opp_M : L.opp.M = L.M := by
 end FlagLeviDatum
 
 variable (d) in
-/-- **A reduced flag Levi datum**: the weight-`0` spaces `W̃ = Z_W^⊥/Z_W`, `Ṽ = Z_V^⊥/Z_V` (the
-`GSpin`-factors of `M`) are not hyperbolic planes.  Every `P` and `M` arise from a reduced datum:
+/-- **A reduced flag Levi datum**: the weight-`0` spaces `W̃`, `Ṽ` (complements of `Z` in `Z^⊥`,
+isometric to `Z^⊥/Z`; the `GSpin`-factors of `M`) are not hyperbolic planes.  Every `P` and `M` arise from a reduced datum:
 if `Ṽ` is a hyperbolic plane, refining the flag by one of its two isotropic lines gives the same
 `P` and `M` (an element of `P` acts on `Ṽ` through `SO(Ṽ)`, which fixes both lines).  This is the
 condition under which `Coord` has the right size: `GSpin` of a hyperbolic plane is a split torus

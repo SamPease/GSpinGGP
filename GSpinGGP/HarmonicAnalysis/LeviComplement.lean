@@ -7,7 +7,8 @@ import Mathlib
 /-!
 # The projection onto a complement of a normal subgroup
 
-General group theory used for Levi subgroups (`GGP/LeviSubgroup.lean`).  If `H` is a complement of a normal subgroup `N` of `G`
+General group theory used for Levi subgroups (`GGP/LeviSubgroup.lean`).  If `H` is a complement
+of a normal subgroup `N` of `G`
 (Mathlib's `Subgroup.IsComplement'`), every `g` is `h n` uniquely, and `g ↦ h` is a
 homomorphism `G →* H` (`Subgroup.IsComplement'.proj`, through Mathlib's
 `Subgroup.IsComplement'.QuotientMulEquiv : G ⧸ N ≃* H`).  For topological groups this
