@@ -82,6 +82,7 @@ import GSpinGGP.TraceFormula.LuoTransfer
 import GSpinGGP.TraceFormula.LuoGamma
 import GSpinGGP.TraceFormula.LuoWeyl
 import GSpinGGP.TraceFormula.LuoClass
+import GSpinGGP.TraceFormula.LieDescent
 import GSpinGGP.TraceFormula.LuoTorus
 import GSpinGGP.TraceFormula.LuoTorusExp
 import GSpinGGP.TraceFormula.LuoTorusIntegral
@@ -191,6 +192,7 @@ import GSpinGGP.Main
 import GSpinGGP.Sanity.Witnesses
 import GSpinGGP.Sanity.NilpotentOrbit
 import GSpinGGP.Sanity.LieAudit
+import GSpinGGP.Sanity.LieDescentAudit
 import GSpinGGP.Sanity.InvariantSetsAudit
 import GSpinGGP.Sanity.WeakCartanFrame
 import GSpinGGP.Sanity.RelativeXi

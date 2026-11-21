@@ -2,7 +2,7 @@ import GSpinGGP.GGP.Triple
 import GSpinGGP.GGP.Centralizers
 import GSpinGGP.GGP.Germs
 import GSpinGGP.TraceFormula.StronglyCuspidal
-import GSpinGGP.Literature.Parabolic
+import GSpinGGP.HarmonicAnalysis.HarishChandraXi
 
 /-!
 # Isomorphisms of GGP triples, and the Levi subgroups of `G`
@@ -36,8 +36,9 @@ For a pair of isotropic flags `(F_W, F_V)`, the Levi of `P = P_{F_W} × P_{F_V}`
 `leviSmall d FW FV` is a GGP datum for `(W̃, Ṽ)` (epsilon pattern from the specification
 `LeviSpec`); `dimG_leviSmall_lt` is what the induction on `dim G` uses.  The existence of such a
 datum (`exists_leviSpec`) is proved (§4a: hyperbolic splitting, `Z ≅ H^r ⊥ ⟨ν⟩`, `H ≅ ⟨ν⟩ ⊥ ⟨-ν⟩`,
-from the cited Witt decomposition and Witt cancellation).  The description of the Levi quotient
-`P/U` (`exists_leviHom_of_leviSpec`) is stated precisely and left as `sorry`.
+from the cited Witt decomposition and Witt cancellation).  The Levi embedding `G̃(F) → P/U`
+induced by isometric embeddings of the Levi pair (`IsLeviEmbedding`) is defined; its existence
+(`exists_isLeviEmbedding`) is left as `sorry`.
 
 ## 6–7. Parabolic induction and `R_ind`
 
@@ -353,9 +354,11 @@ theorem UnitaryRep.isIrreducible_comapCME (e : G ≃ₜ* G') (π : UnitaryRep G'
 
 /-- Smooth vectors are the same for `π ∘ e` and `π` (open subgroups correspond under the
 homeomorphism `e`). -/
-theorem smoothVectors_comapCME (e : G ≃ₜ* G') (π : UnitaryRep G') :
+theorem smoothVectors_comapCME [SeparatelyContinuousMul G] [SeparatelyContinuousMul G']
+    (e : G ≃ₜ* G') (π : UnitaryRep G') :
     smoothVectors (π.comapCME e) = smoothVectors π := by
   ext v
+  rw [mem_smoothVectors_iff, mem_smoothVectors_iff]
   constructor
   · rintro ⟨U, hU, hfix⟩
     refine ⟨U.map (e : G ≃* G').toMonoidHom, ?_, ?_⟩
@@ -1314,33 +1317,84 @@ theorem dimG_leviSmall_lt {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV}
     (hP : d.IsProperFlagPair FW FV) : (d.leviSmall FW FV).dimG < d.dimG :=
   d.dimG_lt_of_leviSpec (d.leviSmall_spec FW FV) hP.len_pos
 
-/-- **The Levi decomposition** (Thesis §5.1.2 "natural isomorphism
-`M ≃ GL(Z'_1) × ⋯ × GL(Z'_k) × GSpin(Ṽ)`", §9.3 (9.3.1)–(9.3.3)): for any GGP
-datum `d'` realizing the Levi pair `(W̃, Ṽ)`, there is a surjective homomorphism from the Levi
-quotient `P/U` of `P = P_{F_W} × P_{F_V}` onto `∏ GL(Z_{i+1,W}/Z_{i,W}) × ∏ GL(Z_{j+1,V}/Z_{j,V}) × G̃(F)`
-with central kernel.  (The literature gives an isomorphism, Asgari's description of the Levi
-subgroups of `GSpin`; the weaker form is what is used here.)  Left as
-`sorry`: it needs the Clifford-algebra description of the Levi (the `GL` factors sit in
-`GSpin(Z'_i ⊕ Z'_{-i})`), which is not formalized.
+/-- **The Levi embedding** `ι : G̃(F) → M = P/U` of the GGP group of the Levi pair
+(Thesis §5.1.2: "natural isomorphism `M ≃ GL(Z'_1) × ⋯ × GL(Z'_k) × GSpin(Ṽ)`";
+§9.3 (9.3.1)–(9.3.3);
+Asgari's description of the Levi subgroups of `GSpin`).  `ι` is induced, through the
+Clifford-algebra maps `GSpin.map`, by isometric embeddings of the two factors of `d'` into `W` and
+`V` whose images are orthogonal to the tops `Z_W = F_W.top`, `Z_V = F_V.top` of the flags and have
+the complementary dimensions `dim W − 2 dim Z_W`, `dim V − 2 dim Z_V` (so the images are complements
+`W̃`, `Ṽ` of `Z_W ⊆ Z_W^⊥`, `Z_V ⊆ Z_V^⊥`).  Even elements of `C(W̃)` commute with `W̃^⊥ ⊇ Z_W`,
+so the image fixes the flags pointwise and lies in `P`; its image in `M` is the
+`GSpin(W̃) × GSpin(Ṽ)` factor.  As in `LeviSpec`, the second disjunct is the factor swap (`d'.W ≅ Ṽ`, `d'.V ≅ W̃`).
 
-Caveat for its use in Thesis Cor 9.5.1 / Prop 7.4.1(i) (`mult_parInd_eq_mGeom`, Spectral): those
-need the `G̃(F)`-component to be the Levi projection
-`M ≅ ∏ GL(Z'_i) × GSpin(Ṽ)` built from a character `λ` of the split part with `λ(c) = c` on the
-centre (not restriction to `Ṽ`), carrying the image of `H_{Q̄}`
-onto `H̃` and
-`A_{G,H}` onto `A_{G̃,H̃}`.  "Some surjection with central kernel" does not pin that down; a
-strengthened sibling recording these compatibilities is needed before Cor 9.5.1 can be stated. -/
-theorem exists_leviHom_of_leviSpec (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV)
-    (d' : GGPData F) (h : d.LeviSpec FW FV d') :
-    ∃ φ : d.LeviQuot FW FV →* FW.glPart × FV.glPart × ↥d'.G,
-      Function.Surjective φ ∧ φ.ker ≤ Subgroup.center (d.LeviQuot FW FV) := by
+Tying `ι` to `GSpin.map` (rather than to an abstract isomorphism of groups) is what fixes the
+`G̃(F)`-component: an abstract isomorphism could be composed with a twist by a character of `G̃(F)`,
+which changes multiplicities.  Two such `ι` differ by the choice of the isometric embeddings; the
+GGP subgroups `(H̃, ξ̃)` they carry to `M` are then conjugate under `G̃(F)` (Thesis §9.3: the
+triple of the Levi is "well-defined up to `G̃(F)`-conjugation").
+
+The Levi subgroups of `GSpin`: M. Asgari, *Local L-functions for split spinor groups*, Canad. J.
+Math. 54 (2002), 673–693, §2.  Differs from the dissertation in one degenerate case: a
+hyperbolic-plane factor with a one-line flag is treated as `GL₁ × GSpin(0)` (`W̃ = 0`), where the
+thesis may keep `W̃ = W`; both give the same answer. -/
+def IsLeviEmbedding (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV) (d' : GGPData F)
+    (ι : ↥d'.G →* d.LeviQuot FW FV) : Prop :=
+  (∃ (jW : d'.QW →qᵢ d.QW) (jV : d'.QV →qᵢ d.QV),
+    (∀ x, ∀ z ∈ FW.top, QuadraticMap.polar d.QW (jW x) z = 0) ∧
+    (∀ y, ∀ z ∈ FV.top, QuadraticMap.polar d.QV (jV y) z = 0) ∧
+    d'.m + 2 * finrank F ↥FW.top = d.m ∧
+    d'.m + 2 * d'.r + 1 + 2 * finrank F ↥FV.top = d.m + 2 * d.r + 1 ∧
+    ∀ g : ↥d'.G, ∃ p : ↥(d.whittB FW FV),
+      (p : ↥d.G) =
+        d.pair (GSpin.map jW d'.nondeg (d'.fst g), GSpin.map jV d'.nondeg_QV (d'.snd g)) ∧
+      ι g = QuotientGroup.mk p) ∨
+  (∃ (jW : d'.QV →qᵢ d.QW) (jV : d'.QW →qᵢ d.QV),
+    (∀ y, ∀ z ∈ FW.top, QuadraticMap.polar d.QW (jW y) z = 0) ∧
+    (∀ x, ∀ z ∈ FV.top, QuadraticMap.polar d.QV (jV x) z = 0) ∧
+    d'.m + 2 * d'.r + 1 + 2 * finrank F ↥FW.top = d.m ∧
+    d'.m + 2 * finrank F ↥FV.top = d.m + 2 * d.r + 1 ∧
+    ∀ g : ↥d'.G, ∃ p : ↥(d.whittB FW FV),
+      (p : ↥d.G) =
+        d.pair (GSpin.map jW d'.nondeg_QV (d'.snd g), GSpin.map jV d'.nondeg (d'.fst g)) ∧
+      ι g = QuotientGroup.mk p)
+
+/-- **Existence of the Levi embedding** (Thesis §5.1.2, §9.3) for a datum `d'` of the Levi pair.
+Own linear algebra: a hyperbolic partner `Z'_W` of `Z_W` gives `W = (Z_W ⊕ Z'_W) ⊥ W̃` with `W̃`
+nondegenerate (Witt), `W̃ ≅ d'.W` (resp. `d'.V`) by Witt cancellation from `LeviSpec`; the same for
+`V`.  `GSpin.map` along `W̃ ↪ W` fixes `W̃^⊥ ⊇ Z_W` pointwise (`map_even_commute_ι`), hence lies in
+the flag stabilizer.  Status: SORRY. -/
+theorem exists_isLeviEmbedding (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV)
+    {d' : GGPData F} (h : d.LeviSpec FW FV d') :
+    ∃ ι : ↥d'.G →* d.LeviQuot FW FV, d.IsLeviEmbedding FW FV d' ι := by
   sorry
 
-/-- The Levi decomposition for `leviSmall`. -/
-theorem exists_leviHom (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV) :
-    ∃ φ : d.LeviQuot FW FV →* FW.glPart × FV.glPart × ↥(d.leviSmall FW FV).G,
-      Function.Surjective φ ∧ φ.ker ≤ Subgroup.center (d.LeviQuot FW FV) :=
-  d.exists_leviHom_of_leviSpec FW FV _ (d.leviSmall_spec FW FV)
+/-- `GSpin.map` along an isometric embedding carries the scalar `c` to the scalar `c`. -/
+theorem _root_.GSpinGGP.GSpin.map_scalarGSpin {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V₁]
+    [Module.Finite F V₁] [AddCommGroup V₂] [Module F V₂] {Q₁ : QuadraticForm F V₁}
+    {Q₂ : QuadraticForm F V₂} (f : Q₁ →qᵢ Q₂) (hf : IsNondeg Q₁) (c : Fˣ) :
+    GSpin.map f hf (scalarGSpin Q₁ c) = scalarGSpin Q₂ c := by
+  apply Subtype.ext; apply Units.ext
+  rw [GSpin.coe_map]
+  simp [scalarGSpin]
+
+/-- A Levi embedding carries `A_{G̃,H̃}` (the diagonal scalars of `G̃`) into the image of
+`A_{G,H}` (the diagonal scalars of `G`) in `M`. -/
+theorem IsLeviEmbedding.exists_AGH {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV}
+    {d' : GGPData F} {ι : ↥d'.G →* d.LeviQuot FW FV} (hι : d.IsLeviEmbedding FW FV d' ι)
+    {a : ↥d'.G} (ha : a ∈ d'.AGH) :
+    ∃ p : ↥(d.whittB FW FV), (p : ↥d.G) ∈ d.AGH ∧ ι a = QuotientGroup.mk p := by
+  obtain ⟨c, rfl⟩ := ha
+  have hmem : d.pair (scalarGSpin d.QW c, scalarGSpin d.QV c) ∈ d.AGH :=
+    ⟨c, by rw [MonoidHom.comp_apply, GGPData.diag, MonoidHom.comp_apply, MonoidHom.prod_apply,
+      MonoidHom.id_apply, d.incl_scalarGSpin]⟩
+  rcases hι with ⟨jW, jV, -, -, -, -, hg⟩ | ⟨jW, jV, -, -, -, -, hg⟩
+  all_goals
+    obtain ⟨p, hp, hι⟩ := hg (d'.diag.comp (scalarGSpin d'.QW) c)
+    refine ⟨p, ?_, hι⟩
+    rw [hp]
+    simpa [GGPData.fst_diag, GGPData.snd_diag, d'.incl_scalarGSpin, GSpin.map_scalarGSpin]
+      using hmem
 
 end GGPData
 
@@ -1392,12 +1446,6 @@ instance borelSpace_leviQuot : BorelSpace (d.LeviQuot FW FV) := ⟨rfl⟩
 instance secondCountableTopology_whittB : SecondCountableTopology ↥(d.whittB FW FV) :=
   Topology.IsEmbedding.subtypeVal.secondCountableTopology
 
-/-- The modular character `δ_P` of `P(F) = P_{F_W} × P_{F_V}` (BP §1.5; Mathlib's
-`modularCharacter`, `μ(E p⁻¹) = δ_P(p) μ(E)` for a left Haar measure `μ`, so that
-`δ_P(p) = |det Ad(p)|_{𝔲}|`; the same convention as `IwasawaPair.delta` in
-`HarmonicAnalysis/HarishChandraXi.lean`; checked on `F^× ⋉ F` below). -/
-def deltaP (p : ↥(d.whittB FW FV)) : ℝ := (Measure.modularCharacter p : ℝ)
-
 end LeviTop
 
 /-- **Data of a parabolically induced representation** `i_P^G(σ)` (Thesis §3.2, §5.1.2; BP §1.5):
@@ -1422,13 +1470,25 @@ variable {d} (D : d.ParIndData)
 /-- The parabolic subgroup `P(F)`. -/
 abbrev P : Subgroup ↥d.G := d.whittB D.FW D.FV
 
+/-- `(P(F), K)` as an Iwasawa pair (`HarmonicAnalysis/HarishChandraXi.lean`). Its `delta` is the
+modular character `δ_P` of `P(F) = P_{F_W} × P_{F_V}` (BP §1.5; Mathlib's `modularCharacter`,
+`μ(E p⁻¹) = δ_P(p) μ(E)` for a left Haar measure `μ`, so that `δ_P(p) = |det Ad(p)|_{𝔲}|`;
+checked on `F^× ⋉ F` below). -/
+def toIwasawaPair : IwasawaPair ↥d.G where
+  P := D.P
+  K := D.K
+  isClosed_P := d.isClosed_whittB D.FW D.FV
+  isOpen_K := D.isOpen_K
+  isCompact_K := D.isCompact_K
+  mul_eq := D.mul_eq
+
 /-- The smooth vectors of `i_P^G(σ)`: functions `f : G(F) → H_σ` with
 `f(pg) = δ_P(p)^{1/2} σ(pU) f(g)` that are right invariant under an open subgroup (BZ 1977 §2,
 Thesis §3.2). -/
 def smoothSpace : Submodule ℂ (↥d.G → D.σ.H) where
   carrier := {f | (∀ (p : ↥D.P) (g : ↥d.G),
       f ((p : ↥d.G) * g) =
-        ((Real.sqrt (d.deltaP D.FW D.FV p) : ℝ) : ℂ) • D.σ.ρ (QuotientGroup.mk p) (f g)) ∧
+        ((Real.sqrt (D.toIwasawaPair.delta p) : ℝ) : ℂ) • D.σ.ρ (QuotientGroup.mk p) (f g)) ∧
     ∃ K' : Subgroup ↥d.G, IsOpen (K' : Set ↥d.G) ∧ ∀ g : ↥d.G, ∀ k ∈ K', f (g * k) = f g}
   zero_mem' := ⟨fun p g => by simp, ⊤, isOpen_univ, fun _ _ _ => rfl⟩
   add_mem' := by
@@ -1445,14 +1505,7 @@ def smoothSpace : Submodule ℂ (↥d.G → D.σ.H) where
 theorem continuous_of_mem_smoothSpace {f : ↥d.G → D.σ.H} (hf : f ∈ D.smoothSpace) :
     Continuous f := by
   obtain ⟨-, K', hK', i⟩ := hf
-  refine continuous_iff_continuousAt.2 fun g => ?_
-  have hmem : {x : ↥d.G | g⁻¹ * x ∈ K'} ∈ 𝓝 g := by
-    refine (hK'.preimage (continuous_const.mul continuous_id)).mem_nhds ?_
-    simp [K'.one_mem]
-  refine (continuousAt_const (y := f g)).congr (Filter.eventually_of_mem hmem fun x hx => ?_)
-  have := i g _ hx
-  rw [mul_inv_cancel_left] at this
-  exact this.symm
+  exact (isLocallyConstant_of_mul_right_invariant hK' i).continuous
 
 /-- The pre-Hilbert space of smooth vectors (a type synonym, so that the `Pi` topology of
 `G(F) → H_σ` does not leak into the norm topology). -/
@@ -1574,142 +1627,19 @@ theorem inner_sqrt_smul_unitary {E : Type*} [NormedAddCommGroup E] [InnerProduct
 /-- The equivariance `f(p x) = δ_P(p)^{1/2} σ(p) f(x)` of a smooth vector. -/
 theorem apply_mul_of_mem {f : ↥d.G → D.σ.H} (hf : f ∈ D.smoothSpace) (p : ↥D.P) (x : ↥d.G) :
     f ((p : ↥d.G) * x) =
-      ((Real.sqrt (d.deltaP D.FW D.FV p) : ℝ) : ℂ) • D.σ.ρ (QuotientGroup.mk p) (f x) := by
+      ((Real.sqrt (D.toIwasawaPair.delta p) : ℝ) : ℂ) • D.σ.ρ (QuotientGroup.mk p) (f x) := by
   obtain ⟨h, -⟩ := hf
   exact h p x
 
 /-- `⟨f₁(p x), f₂(p x)⟩ = δ_P(p) ⟨f₁(x), f₂(x)⟩` (`σ` is unitary and `δ_P^{1/2}` is real). -/
 theorem inner_toFun_mul (f₁ f₂ : D.Pre) (p : ↥D.P) (x : ↥d.G) :
     inner ℂ (D.toFun f₁ ((p : ↥d.G) * x)) (D.toFun f₂ ((p : ↥d.G) * x)) =
-      (d.deltaP D.FW D.FV p : ℂ) * inner ℂ (D.toFun f₁ x) (D.toFun f₂ x) := by
+      (D.toIwasawaPair.delta p : ℂ) * inner ℂ (D.toFun f₁ x) (D.toFun f₂ x) := by
   have e1 := D.apply_mul_of_mem (D.toFun_mem f₁) p x
   have e2 := D.apply_mul_of_mem (D.toFun_mem f₂) p x
   have h := inner_sqrt_smul_unitary (D.σ.unitary_ρ (QuotientGroup.mk p))
     (NNReal.coe_nonneg (Measure.modularCharacter p)) (D.toFun f₁ x) (D.toFun f₂ x)
   exact (congrArg₂ (fun a b => inner ℂ a b) e1 e2).trans h
-
-/-- `P(F) ∩ K`, as a subset of `P(F)`. -/
-def PK : Set ↥D.P := {p | (p : ↥d.G) ∈ D.K}
-
-theorem isOpen_PK : IsOpen D.PK := D.isOpen_K.preimage continuous_subtypeVal
-
-theorem isCompact_PK : IsCompact D.PK :=
-  (d.isClosed_whittB D.FW D.FV).isClosedEmbedding_subtypeVal.isCompact_preimage D.isCompact_K
-
-/-- `0 < μ_P(P ∩ K) < ∞` (`P ∩ K` is open, nonempty and compact in `P`). -/
-theorem haar_real_PK_pos : 0 < (Measure.haar : Measure ↥D.P).real D.PK := by
-  rw [measureReal_def]
-  exact ENNReal.toReal_pos (D.isOpen_PK.measure_pos _ ⟨1, D.K.one_mem⟩).ne'
-    D.isCompact_PK.measure_lt_top.ne
-
-/-- `map (· * q) μ_P = δ_P(q) • μ_P` (the defining property of the modular character). -/
-theorem map_mul_right_haar_P (q : ↥D.P) :
-    Measure.map (· * q) (Measure.haar : Measure ↥D.P) =
-      Measure.modularCharacter q • (Measure.haar : Measure ↥D.P) := by
-  show _ = Measure.modularCharacterFun q • _
-  rw [Measure.modularCharacterFun_eq_haarScalarFactor Measure.haar q]
-  exact Measure.isMulLeftInvariant_eq_smul _ _
-
-set_option maxHeartbeats 1000000 in
-/-- `δ_P = 1` on the compact open subgroup `P(F) ∩ K`. -/
-theorem deltaP_eq_one {s : ↥D.P} (hs : s ∈ D.PK) : d.deltaP D.FW D.FV s = 1 := by
-  have hmeas : MeasurableSet D.PK := D.isOpen_PK.measurableSet
-  have h := congrArg (fun μ : Measure ↥D.P => μ D.PK) (D.map_mul_right_haar_P s)
-  beta_reduce at h
-  have hpre : (· * s) ⁻¹' D.PK = D.PK := by
-    ext p
-    simp only [Set.mem_preimage, PK, Set.mem_ofPred_eq, Subgroup.coe_mul]
-    exact ⟨fun h => by simpa using D.K.mul_mem h (D.K.inv_mem hs), fun h => D.K.mul_mem h hs⟩
-  rw [Measure.map_apply (measurable_mul_const s) hmeas, hpre, smul_apply,
-    ENNReal.smul_def, smul_eq_mul] at h
-  have h0 := (D.isOpen_PK.measure_pos (Measure.haar : Measure ↥D.P) ⟨1, D.K.one_mem⟩).ne'
-  have htop := D.isCompact_PK.measure_lt_top (μ := (Measure.haar : Measure ↥D.P)).ne
-  have h1 : ((Measure.modularCharacter s : NNReal) : ENNReal) = 1 :=
-    (ENNReal.mul_left_inj h0 htop).1 (h.symm.trans (one_mul _).symm)
-  unfold deltaP
-  rw [ENNReal.coe_eq_one] at h1
-  rw [h1, NNReal.coe_one]
-
-set_option maxHeartbeats 1000000 in
-/-- `∫_P 1_{P ∩ K}(p q) dp = δ_P(q) μ_P(P ∩ K)`. -/
-theorem integral_indicator_PK_mul_right (q : ↥D.P) :
-    ∫ p : ↥D.P, D.PK.indicator (fun _ => (1 : ℂ)) (p * q) ∂(Measure.haar : Measure ↥D.P) =
-      (d.deltaP D.FW D.FV q : ℂ) * ((Measure.haar : Measure ↥D.P).real D.PK : ℂ) := by
-  have hmeas : MeasurableSet D.PK := D.isOpen_PK.measurableSet
-  have hm := integral_map (μ := (Measure.haar : Measure ↥D.P))
-    (measurable_mul_const q).aemeasurable
-    ((measurable_const.indicator hmeas).aestronglyMeasurable (f := D.PK.indicator fun _ => (1 : ℂ)))
-  rw [← hm, D.map_mul_right_haar_P q, integral_smul_nnreal_measure, integral_indicator_const _ hmeas]
-  unfold deltaP
-  rw [NNReal.smul_def, Complex.real_smul, Complex.real_smul, mul_one]
-
-set_option maxHeartbeats 1000000 in
-/-- **The `G = P K` invariance**: for continuous `φ` on `G(F)` with `φ(p x) = δ_P(p) φ(x)`,
-`∫_K φ(k g) dk = ∫_K φ(k) dk`.  Proof: `β = 1_K φ` is continuous with compact support, and
-`∫_P β(p x) dp = μ_P(P ∩ K) φ(x)` for every `x` (write `x = q k₀`, `G = P K`, and use
-`δ_P = 1` on `P ∩ K`); then the integration formula for `G = P K` and the right invariance of the
-Haar measure of `G(F)` give `μ_P(P ∩ K) ∫_K φ(k g) dk = c⁻¹ ∫_G β(x g) dx = c⁻¹ ∫_G β(x) dx =
-μ_P(P ∩ K) ∫_K φ(k) dk`. -/
-theorem integral_K_mul_right {φ : ↥d.G → ℂ} (hφ : Continuous φ)
-    (hφP : ∀ (p : ↥D.P) (x : ↥d.G), φ ((p : ↥d.G) * x) = (d.deltaP D.FW D.FV p : ℂ) * φ x)
-    (g : ↥d.G) :
-    ∫ k : ↥D.K, φ ((k : ↥d.G) * g) ∂(Measure.haar : Measure ↥D.K) =
-      ∫ k : ↥D.K, φ k ∂(Measure.haar : Measure ↥D.K) := by
-  set mS : ℝ := (Measure.haar : Measure ↥D.P).real D.PK with hmS
-  set β : ↥d.G → ℂ := (D.K : Set ↥d.G).indicator φ with hβ
-  have hKclopen : IsClopen (D.K : Set ↥d.G) := ⟨D.K.isClosed_of_isOpen D.isOpen_K, D.isOpen_K⟩
-  have hβc : Continuous β :=
-    continuous_indicator (by simp [hKclopen.frontier_eq]) hφ.continuousOn
-  have hβs : HasCompactSupport β :=
-    HasCompactSupport.intro D.isCompact_K fun x hx => Set.indicator_of_notMem hx _
-  have hfib : ∀ x : ↥d.G,
-      ∫ p : ↥D.P, β ((p : ↥d.G) * x) ∂(Measure.haar : Measure ↥D.P) = (mS : ℂ) * φ x := by
-    intro x
-    obtain ⟨q, hq, k₀, hk₀, rfl⟩ := D.mul_eq x
-    have e : ∀ p : ↥D.P, β ((p : ↥d.G) * (q * k₀)) =
-        D.PK.indicator (fun _ => (1 : ℂ)) (p * ⟨q, hq⟩) * φ k₀ := by
-      intro p
-      by_cases hp : p * ⟨q, hq⟩ ∈ D.PK
-      · have hp' : (p : ↥d.G) * q ∈ D.K := hp
-        have hmem : (p : ↥d.G) * (q * k₀) ∈ D.K := by
-          rw [← mul_assoc]; exact D.K.mul_mem hp' hk₀
-        rw [hβ, Set.indicator_of_mem hmem, Set.indicator_of_mem hp, one_mul, ← mul_assoc]
-        have := hφP (p * ⟨q, hq⟩) k₀
-        rw [D.deltaP_eq_one hp, Complex.ofReal_one, one_mul] at this
-        exact this
-      · have hmem : (p : ↥d.G) * (q * k₀) ∉ D.K := fun h => hp (by
-          have := D.K.mul_mem h (D.K.inv_mem hk₀)
-          rw [← mul_assoc, mul_inv_cancel_right] at this
-          exact this)
-        rw [hβ, Set.indicator_of_notMem hmem, Set.indicator_of_notMem hp, zero_mul]
-    rw [integral_congr_ae (Filter.Eventually.of_forall e), integral_mul_const,
-      D.integral_indicator_PK_mul_right]
-    have := hφP ⟨q, hq⟩ k₀
-    rw [show ((⟨q, hq⟩ : ↥D.P) : ↥d.G) = q from rfl] at this
-    rw [this]
-    ring
-  obtain ⟨c, hc, hformula⟩ := integral_eq_mul_integral_compact_integral (G := ↥d.G) D.P D.K
-    (d.isClosed_whittB D.FW D.FV) D.mul_eq
-  have hβg : Continuous fun x => β (x * g) := hβc.comp (continuous_id.mul continuous_const)
-  have hβgs : HasCompactSupport fun x => β (x * g) := hβs.comp_homeomorph (Homeomorph.mulRight g)
-  have h1 := hformula _ hβg hβgs
-  have h2 := hformula _ hβc hβs
-  rw [integral_mul_right_eq_self β g] at h1
-  have e1 : ∀ k : ↥D.K, ∫ p : ↥D.P, β ((p : ↥d.G) * (k : ↥d.G) * g)
-      ∂(Measure.haar : Measure ↥D.P) = (mS : ℂ) * φ ((k : ↥d.G) * g) := fun k => by
-    simp only [mul_assoc]
-    exact hfib _
-  have e2 : ∀ k : ↥D.K, ∫ p : ↥D.P, β ((p : ↥d.G) * (k : ↥d.G))
-      ∂(Measure.haar : Measure ↥D.P) = (mS : ℂ) * φ k := fun k => hfib _
-  rw [integral_congr_ae (Filter.Eventually.of_forall e1), integral_const_mul] at h1
-  rw [integral_congr_ae (Filter.Eventually.of_forall e2), integral_const_mul] at h2
-  have hne : (c : ℂ) * (mS : ℂ) ≠ 0 :=
-    mul_ne_zero (Complex.ofReal_ne_zero.2 hc.ne') (Complex.ofReal_ne_zero.2 D.haar_real_PK_pos.ne')
-  apply mul_left_cancel₀ hne
-  calc (c : ℂ) * mS * ∫ k : ↥D.K, φ ((k : ↥d.G) * g) ∂(Measure.haar : Measure ↥D.K)
-      = (c : ℂ) * (mS * ∫ k : ↥D.K, φ ((k : ↥d.G) * g) ∂(Measure.haar : Measure ↥D.K)) := by ring
-    _ = (c : ℂ) * (mS * ∫ k : ↥D.K, φ k ∂(Measure.haar : Measure ↥D.K)) := h1.symm.trans h2
-    _ = (c : ℂ) * mS * ∫ k : ↥D.K, φ k ∂(Measure.haar : Measure ↥D.K) := by ring
 
 /-- **Normalized parabolic induction is unitary** (Bernstein–Zelevinsky 1977 §2; Casselman,
 *Introduction to the theory of admissible representations*, Prop. 3.1.2 (number unverified)):
@@ -1721,15 +1651,16 @@ invariant under right translation.  This is where the normalization by `δ_P^{1/
 Convention check (as for `IwasawaPair.delta`): for `P = F^× ⋉ F`, `(a, x)(b, y) = (ab, x + ay)`,
 the left Haar measure is `|a|⁻¹ d^×a dx` and `μ(E p⁻¹) = |b| μ(E)` for `p = (b, y)`, i.e.
 `δ_P(b, y) = |b| = |det Ad(p)|_𝔲|`, the normalization for which `δ_P^{1/2}` makes the induction
-unitary.  Status: proved from `integral_K_mul_right` (the integration formula for `G = P K`,
-literature axiom `integral_eq_mul_integral_compact_integral`, and the unimodularity of `G(F)`,
+unitary.  Status: proved from `IwasawaPair.integral_K_mul_right` (the integration
+formula for `G = P K`, literature axiom `integral_eq_mul_integral_compact_integral`, and the
+unimodularity of `G(F)`,
 `GGPData.isMulRightInvariant_haar_G`); the convention for `δ_P` is the one for which the proof
 goes through, so no convention is assumed. -/
 theorem preInner_rightTrans (g : ↥d.G) (f₁ f₂ : D.Pre) :
     D.preInner (D.rightTransLin g f₁) (D.rightTransLin g f₂) = D.preInner f₁ f₂ := by
   have hc₁ := D.continuous_of_mem_smoothSpace (D.toFun_mem f₁)
   have hc₂ := D.continuous_of_mem_smoothSpace (D.toFun_mem f₂)
-  exact D.integral_K_mul_right (φ := fun x => inner ℂ (D.toFun f₁ x) (D.toFun f₂ x))
+  exact D.toIwasawaPair.integral_K_mul_right (φ := fun x => inner ℂ (D.toFun f₁ x) (D.toFun f₂ x))
     (hc₁.inner hc₂) (fun p x => D.inner_toFun_mul f₁ f₂ p x) g
 
 theorem norm_rightTransLin (g : ↥d.G) (f : D.Pre) : ‖D.rightTransLin g f‖ = ‖f‖ := by
@@ -1883,6 +1814,40 @@ theorem subset_Rind {η : CentralCharOn d} {P : VirtualTemp d η} {D : d.ParIndD
     (hP : Set.EqOn (vChar d P) (charG d (d.parInd D)) (regularSet d.G d.lie)) :
     P ∈ d.Rind η :=
   Submodule.subset_span ⟨D, hD, hP⟩
+
+/-- **`σ̃` is the `G̃`-factor of `σ`** (Thesis §9.3 (9.3.4)–(9.3.6), `σ = σ^{GL} ⊠ σ̃`, stated
+without tensor products): for some Levi embedding `ι : G̃(F) → M` (`IsLeviEmbedding`), `σ̃` embeds
+isometrically and `G̃(F)`-equivariantly into the restriction `σ ∘ ι`.  For `σ` irreducible, `M(F)`
+is the direct product of `ι(G̃(F))` and a product of general linear groups, so `σ = σ^{GL} ⊠ σ̃₀`
+and the restriction `σ ∘ ι` is a multiple of `σ̃₀`; an irreducible `σ̃` with this property is then
+equivalent to `σ̃₀`. -/
+def IsLeviFactor (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV) (d' : GGPData F)
+    (σ : UnitaryRep (d.LeviQuot FW FV)) (σ' : UnitaryRep ↥d'.G) : Prop :=
+  ∃ ι : ↥d'.G →* d.LeviQuot FW FV, d.IsLeviEmbedding FW FV d' ι ∧
+    ∃ T : σ'.H →ₗᵢ[ℂ] σ.H, ∀ g v, T (σ'.ρ g v) = σ.ρ (ι g) (T v)
+
+/-- **The `G̃`-factor of a properly induced datum is trivial on `A_{G̃,H̃}`** (Thesis §9.3: "all
+representations … have central character equal to `χ|_{A_S}`"): `A_{G̃,H̃}` goes into the image of
+`A_{G,H}` (`IsLeviEmbedding.exists_AGH`), on which `σ` acts by `η`, which is trivial on
+`A_{G,H}`. -/
+theorem IsLeviFactor.isTrivialOn_AGH {η : CentralCharOn d} {D : d.ParIndData}
+    (hD : d.IsTempIndData η D) {d' : GGPData F} {σ' : UnitaryRep ↥d'.G}
+    (hf : d.IsLeviFactor D.FW D.FV d' D.σ σ') : IsTrivialOn σ' (d'.AGH : Set ↥d'.G) := by
+  obtain ⟨ι, hι, T, hT⟩ := hf
+  intro a ha
+  obtain ⟨p, hpAGH, hp⟩ := GGPData.IsLeviEmbedding.exists_AGH d hι ha
+  have hpAG : (p : ↥d.G) ∈ d.AG := d.AGH_le_AG hpAGH
+  have hσ : D.σ.ρ (ι a) = 1 := by
+    have hc := hD.centralChar ⟨p, hpAG⟩
+    have hmk : (QuotientGroup.mk (⟨((⟨p, hpAG⟩ : ↥d.AG) : ↥d.G), hD.AG_le hpAG⟩ : ↥D.P) :
+        d.LeviQuot D.FW D.FV) = QuotientGroup.mk p := rfl
+    rw [hmk, η.trivial_AGH _ hpAGH] at hc
+    rw [hp, hc]
+    simp
+  ext v
+  apply T.injective
+  rw [hT, hσ]
+  rfl
 
 end GGPData
 

@@ -7,8 +7,10 @@ import GSpinGGP.TraceFormula.W1Lie
 /-!
 # Waldspurger 2010, Théorème 7.9: the integral formula on the Lie algebra
 
-One literature axiom, `waldspurger2010_thm_7_9`, verbatim: Waldspurger's Lie-algebra integral
-formula for the pair `(SO(V), SO(W))`, with his truncated integrals `I_N(θ, f)`.  The objects are
+One literature axiom, `waldspurger2010_thm_7_9` (derived: a composite of Waldspurger's theorem with
+Beuzart-Plessis Thm 5.5.2(ii) and the Weyl integration formula, which pin down his `θ_f`):
+Waldspurger's Lie-algebra integral formula for the pair `(SO(V), SO(W))`, with his truncated
+integrals `I_N(θ, f)`.  The objects are
 those of `TraceFormula/W1Lie.lean`, defined on the quadratic spaces of a `LuoDatum`.
 -/
 
@@ -20,7 +22,9 @@ namespace GSpinGGP
 
 open LuoDatum
 
-/-- **Waldspurger 2010, Théorème 7.9: `lim_{N→∞} I_N(θ, f) = I(θ, f)`.**
+/-- **Waldspurger 2010, Théorème 7.9: `lim_{N→∞} I_N(θ, f) = I(θ, f)`** (composite axiom: W1
+Thm 7.9, with `θ_f` pinned down through Beuzart-Plessis Thm 5.5.2(ii) and the Weyl integration
+formula; the steps are written out under "Composite" below).
 
 Source: J.-L. Waldspurger, *Une formule intégrale reliée à la conjecture locale de Gross–Prasad*,
 Compositio Math. 146 (2010) 1180–1290; arXiv:0902.1875v1, §7.9, p. 43 (page numbers of the arXiv
@@ -44,28 +48,43 @@ Every dimension `d_W = dim W ≥ 0` is allowed (in particular `W` a hyperbolic p
 `I(θ, f) = Σ_{T ∈ 𝒯} |W(H, T)|⁻¹ ν(T) ∫_{𝔱(F)} c_θ(Y) c_f(Y) D^H(Y) Δ(Y)^r dY` (`W1Input.Igeom`),
 with `c_f = c_{θ_f}` (§7.9), `θ_f` the quasi-character of §6.1.
 
+**Composite (derived axiom; listed in `scripts/derived-axioms.txt`).**  W1's `θ_f` is defined on
+`𝔤_reg(F)` by weighted orbital integrals,
+`θ_f(X) = (−1)^{a_{M(X)} − a_G} ν(G_X)^{-1} D^G(X)^{-1/2} J_{M(X)}(X, f)` (§6.1, p. 27), which are
+not formalized.  The axiom is stated for every `τ` with `IsThetaFW1` (a locally integrable
+quasi-character, continuous on `𝔤_reg(F)`, with `∫ τ f' dX = ∫_{G(F)} ∫_{𝔤(F)} f(g⁻¹Xg) f'(X) dX dg`
+for every test function `f'`).  From W1 Thm 7.9 for W1's `θ_f` to this statement:
+1. **W1 Thm 7.9** (quoted above) for `θ`, `f` and W1's measures.
+2. **Beuzart-Plessis, Astérisque 418 (2020), Thm 5.5.2(ii)** (p. 117; arXiv:1506.01452 p. 127),
+   for the connected reductive group `G = SO(V)` (here `A_G = 1`, as `V` is not a hyperbolic
+   plane): "`J^A(f, f') = ∫_{Γ(𝔤)} D^G(X)^{1/2} θ_f(X) J_G(X, f') dX`", absolutely convergent, with
+   `J^A(f, f') = ∫_{G(F)} ∫_{𝔤(F)} f(g⁻¹Xg) f'(X) dX dg`.  **Announced without proof in its
+   source** ("The proof of these two theorems will appear elsewhere", BP p. 116).  BP's `θ_f`
+   (§5.2) is given by the same formula as W1's (BP follows W1).
+3. **Weyl integration formula** on `𝔤` (BP §1.7, arXiv p. 38): `θ_f` is conjugation-invariant, so
+   `J_G(X, θ_f f') = θ_f(X) J_G(X, f')` and 2 becomes `∫ θ_f f' dX = J^A(f, f')`: W1's `θ_f` has
+   the property `IsThetaFW1`.
+4. **`τ = θ_f` on `𝔤_reg(F)`**: two locally integrable functions with the same integrals against
+   all test functions agree almost everywhere; both are continuous on the open set `𝔤_reg(F)`,
+   which has full measure, so they agree there.
+5. **Equal germs**: `c_f(Y) = c_{θ_f, O}(Y)` depends only on the values on regular elements near
+   `Y`, by the uniqueness of the regular coefficients of local expansions on `(SO(V), so(V))`
+   (W1 §4.1–4.2; Harish-Chandra 1999 Cor 5.10), so `I(θ, τ) = I(θ, θ_f)`.
+6. **Rescaling `μG`**: W1 fixes all measures (§1.2); replacing `μG` by `c μG` multiplies both
+   sides by `c` (on the left through the quotient measure, on the right through `τ`), so the
+   statement for an arbitrary Haar measure is equivalent to W1's.
+Steps 4–6 are identifications.  Once `θ_f` is defined in this project, the axiom splits into W1
+Thm 7.9 for `θ_f` (verbatim) and BP Thm 5.5.2(ii) (verbatim, flagged), and this statement becomes
+a theorem.
+
 **How the statement is encoded.**
-* `θ_f`: W1 defines `θ_f(X) = (−1)^{a_{M(X)} − a_G} ν(G_X)^{-1} D^G(X)^{-1/2} J_{M(X)}(X, f)` on
-  `𝔤_reg(F)` (§6.1); weighted orbital integrals are not formalized.  The statement is made for any
-  `τ` satisfying `IsThetaFW1` (a continuous, locally integrable quasi-character on `𝔤_reg(F)`
-  representing the orbital pairing of `f`).  W1 §6.1 (2) gives `J(φ̂, f) = ∫ φ̂ θ_f` for the
-  geometric side `J` of the local trace formula on `𝔤`; with `J` written as the kernel integral
-  `∫_{G(F)} ∫_{𝔤(F)} φ(X) f(g⁻¹Xg) dX dg` this says that `θ_f` has the property, and a continuous
-  function on `𝔤_reg(F)` with it agrees with `θ_f` there (the germs `c_f` only see
-  `𝔤_reg(F)`).  This
-  identification is the step used in conjunct (b) of `luo_lie_geomExpansion_SO`; it is **not
-  printed in this form**.  It enters only as a hypothesis on `τ`: for the true `θ_f` the statement
-  is W1's.
 * `θ_f`, `ĵ` and the germs use `germLie`/`jHat` of this project for `(SO(V), so(V))` and
   `(SO(W), so(W))` with W1's form.  The orbit recipes for `c_θ`, `c_f` are W1 §7.3 at
   `Y ∈ 𝔱_♮(F)` (Lie version, §7.9); `O_{±ν₀}` are `IsInOrbitNu … (±nu0)` (W1's `ν₀ = ½ Q(z₀)`, and
   `IsInOrbitNu` measures the anisotropic line by `Q`, so the factor `½` cancels).
 * `𝒯` (§7.3 conditions (1)–(4)): parameterized by `Y ∈ 𝔥(F)` semisimple with `T_Y` commutative
   with compact `F`-points (`A_T = 1`) and condition (4) (`IsW1Elt`), as for Luo's `GammaTorus`.
-* Measures: W1 fixes all measures (§1.2).  Here `μG` is an arbitrary Haar measure on `G(F)`, and
-  `θ_f` is the representative for `μG`; replacing `μG` by `c μG` multiplies both sides by `c`
-  (on the left through the quotient measure, on the right through `θ_f`), so the statement for
-  arbitrary `μG` is equivalent to W1's.  The measures on `𝔥(F)` and `𝔲(F)` are deduced through
+* Measures: `μG` is an arbitrary Haar measure on `G(F)` (step 6).  The measures on `𝔥(F)` and `𝔲(F)` are deduced through
   `exp` from those on `H(F)` and `U(F)` (§1.2), and `U(F)H(F)` carries `du dh`; only their ratios
   enter.  `ν(T) dY` is deduced through `exp` from `d_c t = ν(T) dt`, of total mass `1` on `T(F)`
   when `A_T = 1` (§1.2).
@@ -73,11 +92,11 @@ with `c_f = c_{θ_f}` (§7.9), `θ_f` the quasi-character of §6.1.
   `U(F)H(F)`-invariant (W1 §7.2 for `κ_N`).
 * `IsNondeg L.QV`: W1's `V` is nondegenerate; `W` is (`LuoDatum.nondeg`).
 * `¬ IsHypPlane L.QV`: the case `V = V₀` a hyperbolic plane (`d = 2`, `r = 0`, `d_W = 1`) is
-  excluded.  W1 flags it (§7.2: "`A_M = A`, sauf dans le cas où `V₀` est hyperbolique de dimension
-  2, auquel cas `A_M = M`"): there `G = SO(V) ≅ G_m` is a split torus, `H = U = 1`, every `f` is
-  very cuspidal, `I(θ, f, g) = θ(0) f(0)` for all `g`, and `I_N(θ, f)` is `θ(0) f(0)` times the
-  volume of `{κ_N = 1}`, which grows with `N`; so the limit is not finite unless
-  `θ(0) f(0) = 0`.  The statement is only used with `dim V ≥ 3`.
+  excluded, because W1's printed statement fails there (our computation, not stated in W1):
+  `G = SO(V) ≅ G_m` is a split torus, `H = U = 1`, every `f` is very cuspidal,
+  `I(θ, f, g) = θ(0) f(0)` for all `g`, and `I_N(θ, f)` is `θ(0) f(0)` times the volume of
+  `{κ_N = 1}`, which grows linearly in `N`; so the limit is not finite unless `θ(0) f(0) = 0`.
+  The statement is only used with `dim V ≥ 3`.
 
 **Hypotheses checked.**  `F` `p`-adic of characteristic `0`: `PAdicField`.  `2r + 1 ≤ d`: by
 construction.  `θ` a quasi-character on `𝔥(F)` (`IsLieQuasiCharacter` for `(SO(W), so(W))`, W1
