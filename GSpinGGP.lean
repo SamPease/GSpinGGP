@@ -152,6 +152,7 @@ import GSpinGGP.TraceFormula.Basic
 import GSpinGGP.TraceFormula.SpinorNorm
 import GSpinGGP.TraceFormula.ThetaF
 import GSpinGGP.TraceFormula.Analytic
+import GSpinGGP.TraceFormula.XiG
 import GSpinGGP.TraceFormula.GoodParabolic
 import GSpinGGP.TraceFormula.WeakCartan
 import GSpinGGP.TraceFormula.ConeTorus
