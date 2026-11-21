@@ -152,7 +152,7 @@ def iwP (g : G) : ↥I.P := ⟨(I.mul_eq g).choose, (I.mul_eq g).choose_spec.1�
 def iwK (g : G) : ↥I.K := ⟨(I.iwP g : G)⁻¹ * g, by
   obtain ⟨k, hk, hg⟩ := (I.mul_eq g).choose_spec.2
   have e : ((I.mul_eq g).choose)⁻¹ * g = k := by rw [inv_mul_eq_iff_eq_mul]; exact hg
-  show ((I.mul_eq g).choose)⁻¹ * g ∈ I.K
+  change ((I.mul_eq g).choose)⁻¹ * g ∈ I.K
   rw [e]
   exact hk⟩
 
@@ -166,19 +166,19 @@ theorem rho_pos (g : G) : 0 < I.rho g := I.delta_pos _
 
 theorem rho_eq_delta {p : ↥I.P} {k g : G} (hk : k ∈ I.K) (hg : g = p * k) :
     I.rho g = I.delta p :=
-  I.delta_eq_of_mul_eq (I.iwK g).2 hk (by rw [iwP_mul_iwK, hg])
+  I.delta_eq_of_mul_eq (I.iwK g).property hk (by rw [iwP_mul_iwK, hg])
 
 /-- `ρ(p) = δ_P(p)` on `P`. -/
 theorem rho_of_mem (p : ↥I.P) : I.rho p = I.delta p :=
   I.rho_eq_delta I.K.one_mem (mul_one _).symm
 
 theorem rho_mul_right {g k : G} (hk : k ∈ I.K) : I.rho (g * k) = I.rho g :=
-  I.rho_eq_delta (I.K.mul_mem (I.iwK g).2 hk) (by rw [← mul_assoc, iwP_mul_iwK])
+  I.rho_eq_delta (I.K.mul_mem (I.iwK g).property hk) (by rw [← mul_assoc, iwP_mul_iwK])
 
 theorem rho_mul_left (p : ↥I.P) (g : G) : I.rho (p * g) = I.delta p * I.rho g := by
-  show _ = I.delta p * I.delta (I.iwP g)
+  change _ = I.delta p * I.delta (I.iwP g)
   rw [← I.delta_mul]
-  exact I.rho_eq_delta (I.iwK g).2 (by rw [Subgroup.coe_mul, mul_assoc, iwP_mul_iwK])
+  exact I.rho_eq_delta (I.iwK g).property (by rw [Subgroup.coe_mul, mul_assoc, iwP_mul_iwK])
 
 /-- **The cocycle relation** `δ(p(xy)) = δ(p(x)) δ(p(k(x) y))`. -/
 theorem rho_mul (x y : G) : I.rho (x * y) = I.rho x * I.rho ((I.iwK x : G) * y) := by
@@ -204,7 +204,8 @@ theorem haar_K_toReal_pos : 0 < ((Measure.haar : Measure ↥I.K) Set.univ).toRea
   ENNReal.toReal_pos (Measure.measure_univ_pos.2 (NeZero.ne _)).ne'
     (measure_ne_top _ _)
 
-theorem continuous_sqrt_rho_mul (g : G) : Continuous fun k : ↥I.K => Real.sqrt (I.rho ((k : G) * g)) :=
+theorem continuous_sqrt_rho_mul (g : G) :
+    Continuous fun k : ↥I.K => Real.sqrt (I.rho ((k : G) * g)) :=
   Real.continuous_sqrt.comp (I.continuous_rho.comp (continuous_subtypeVal.mul continuous_const))
 
 theorem integrable_sqrt_rho_mul (g : G) :
@@ -359,13 +360,13 @@ def levi : IwasawaPair ↥L.M where
   isOpen_K := I.isOpen_K.preimage continuous_subtypeVal
   isCompact_K := L.isClosed_M.isClosedEmbedding_subtypeVal.isCompact_preimage I.isCompact_K
   mul_eq m := by
-    obtain ⟨p, hp, k, hk, hpM, hkM, h⟩ := L.goodPos m m.2
+    obtain ⟨p, hp, k, hk, hpM, hkM, h⟩ := L.goodPos m m.property
     exact ⟨⟨p, hpM⟩, hp, ⟨k, hkM⟩, hk, Subtype.ext h⟩
 
 /-- `δ_P` on the Levi factor `M`: the modular character of `P` (Waldspurger 2003 §I.1:
 `|det Ad(m)|_{𝔲}|`). -/
 def deltaP (m : ↥L.M) : ℝ :=
-  (Measure.modularCharacter (⟨m, L.M_le m.2⟩ : ↥L.P) : ℝ)
+  (Measure.modularCharacter (⟨m, L.M_le m.property⟩ : ↥L.P) : ℝ)
 
 theorem deltaP_pos (m : ↥L.M) : 0 < L.deltaP m := by
   unfold deltaP
@@ -439,6 +440,7 @@ def flagLevi (b : Module.Basis ι K V) (wt : ι → ℤ) : Subgroup (GSpin Q) wh
     have := specP_inv_apply_apply g⁻¹ (cochar b wt τ (specP Q g⁻¹ v))
     rwa [inv_inv] at this
 
+omit [Fintype ι] in
 theorem scalarGSpin_mem_flagLevi (b : Module.Basis ι K V) (wt : ι → ℤ) (c : Kˣ) :
     scalarGSpin Q c ∈ flagLevi (Q := Q) b wt := by
   intro τ
