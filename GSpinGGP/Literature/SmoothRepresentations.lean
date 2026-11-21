@@ -38,8 +38,9 @@ universe u v
 Part 1 (1979), §2.7, p. 133): "Let `(π, V)` be any irreducible unitary representation of `G`. Let
 `V_∞` be the space of vectors in `V` stable by `π(K)` for some compact open subgroup `K` of `G`.
 Then `V_∞` is dense in `V` and stable under `G`, hence affords a smooth representation `π_∞` of
-`G`. The representation `(π_∞, V_∞)` is admissible." Here `G` is the group of `F`-points of a
-reductive group over the `p`-adic field `F` (Cartier §II); the corollary follows from Bernstein's
+`G`. The representation `(π_∞, V_∞)` is admissible." Here (Cartier §2.1) `F` is a local field and
+`G` a connected reductive algebraic group over `F`, identified with its group of `F`-points; the
+corollary follows from Bernstein's
 bound (Cartier Thm 2.8 and its proof via Thm 2.7; I. N. Bernstein, *All reductive p-adic groups
 are tame*, Funct. Anal. Appl. 8 (1974), 91–93, Thm 1).
 

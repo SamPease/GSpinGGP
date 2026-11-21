@@ -357,9 +357,11 @@ subgroup `H = N_{Q_r} ⋊ GSpin(V₀)` of `GSpin(V) × GSpin(V₀)` and a generi
 `dim_ℂ Hom_H(π ⊗ π₀, ξ) ≤ 1`". There is no quasi-split hypothesis, so inner forms are covered.
 Here `(V₀, V) = (W, V)`, `π₀ = ρ₀`, `π = ρ`, the two factors of the product written in the order
 `GSpin(W) × GSpin(V)` of `d.G` (so `π ⊗ π₀` becomes `ρ₀ ⊗ ρ`, the same space up to the swap of
-factors), `H = d.H` and `ξ = d.xi ψ`. The case `r = 0` is Emory–Takeda, *Contragredients and a
-multiplicity one theorem for general spin groups*, Math. Z. 303 (2023), Thm 1.1
-(arXiv:2104.04814v4, p. 2). -/
+factors), `H = d.H` and `ξ = d.xi ψ` (Pan Yan §3.1: `H = N_{Q_r} ⋊ GSpin(V₀)` with `N_{Q_r}` the
+unipotent radical of the stabilizer of a full isotropic flag in `V₀^⊥`, `ξ(nzh) = λ(z) ψ(l(n))`
+generic, and `(H, ξ)` determined by `V₀ ⊂ V` up to conjugacy in `G`). The case `r = 0` is
+Emory–Takeda, *Contragredients and a multiplicity one theorem for general spin groups*, Math. Z. 303
+(2023), Thm 1.1 (arXiv:2104.04814v4, p. 2). -/
 axiom panYan_mult_le_one (d : GGPData F) (ψ : NontrivialAddChar F) {V₀ V₁ : Type*}
     [AddCommGroup V₀] [Module ℂ V₀] [AddCommGroup V₁] [Module ℂ V₁]
     (ρ₀ : Representation ℂ (GSpin d.QW) V₀) (ρ : Representation ℂ (GSpin d.QV) V₁)

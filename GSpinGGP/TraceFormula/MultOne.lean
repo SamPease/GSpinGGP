@@ -27,31 +27,6 @@ open MeasureTheory Topology
 
 noncomputable section
 
-namespace Representation
-
-variable {G V W : Type*} [Group G] [AddCommGroup V] [Module ℂ V] [AddCommGroup W] [Module ℂ W]
-
-/-- Multiplicities are invariant under an equivariant linear isomorphism. -/
-theorem multiplicity_eq_of_linearEquiv {ρ : Representation ℂ G V} {σ : Representation ℂ G W}
-    (e : V ≃ₗ[ℂ] W) (he : ∀ g v, e (ρ g v) = σ g (e v)) (S : Subgroup G) (ξ : ↥S → ℂ) :
-    multiplicity ρ S ξ = multiplicity σ S ξ := by
-  have hmem : ∀ ℓ, ℓ ∈ equivariantForms ρ S ξ ↔ e.symm.dualMap ℓ ∈ equivariantForms σ S ξ := by
-    intro ℓ
-    change (∀ s : ↥S, ∀ v, ℓ (ρ s v) = ξ s * ℓ v) ↔
-      ∀ s : ↥S, ∀ w, ℓ (e.symm (σ s w)) = ξ s * ℓ (e.symm w)
-    constructor
-    · intro h s w
-      have := h s (e.symm w)
-      have hs : e.symm (σ s w) = ρ s (e.symm w) := by
-        rw [LinearEquiv.symm_apply_eq, he, LinearEquiv.apply_symm_apply]
-      rwa [hs]
-    · intro h s v
-      have := h s (e v)
-      rwa [← he, LinearEquiv.symm_apply_apply, LinearEquiv.symm_apply_apply] at this
-  have h := congrArg Cardinal.toENat (GSpinGGP.equivOfForallMemIff e.symm.dualMap hmem).lift_rank_eq
-  rwa [Cardinal.toENat_lift, Cardinal.toENat_lift] at h
-
-end Representation
 
 namespace GSpinGGP
 
