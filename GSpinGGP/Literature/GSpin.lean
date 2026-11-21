@@ -362,8 +362,9 @@ factors of `G` are written in the order `GSpin(W) × GSpin(V)` of `d.G`, so `π 
 `ρ₀ ⊗ ρ` through the swap `TensorProduct.comm`, which is `H`-equivariant and does not change
 `dim Hom_H`. Pan Yan's basis of `Z` (§3.1: `X_r = ⟨e_1, …, e_r⟩`, `Y_r = ⟨e_{-r}, …, e_{-1}⟩`,
 `⟨e_i, e_{-j}⟩ = δ_{ij}`, `e₀` anisotropic) is ours (Thesis (5.2.1)) under
-`e_i ↔ z_{r+1−i}`, `e_{−i} ↔ ν⁻¹ z_{−(r+1−i)}`, `e₀ ↔ z₀`; then his flag (6) is the flag defining
-`d.N`, `N_{Q_r} = d.N`, and his `H = N_{Q_r} ⋊ GSpin(V₀)` (embedded in `G` as `(a n, a)`, factors
+`e_i ↔ z_{r+1−i}`, `e_{−i} ↔ (2ν)⁻¹ z_{−(r+1−i)}`, `e₀ ↔ z₀` (Pan Yan's `⟨,⟩` is the polar form
+`q(v₁ + v₂) − q(v₁) − q(v₂) = 2b`, so `⟨z_k, z_{−k}⟩ = 2ν`); then his flag (6) is the flag
+defining `d.N`, `N_{Q_r} = d.N`, and his `H = N_{Q_r} ⋊ GSpin(V₀)` (embedded in `G` as `(a n, a)`, factors
 swapped) is `d.H`. His `ξ(u) = ψ'(x₁ + … + x_{r−1} + z(u))` (§3.1, `l_r(u) = (x₁, …, x_{r−1}, z)`)
 matches `d.lam`: the terms `i ≥ 1` of `d.lam` are `ν · x_{r−i}` and the term `i = 0` is `ν · z(u)`,
 so `d.xi ψ` is Pan Yan's `ξ` for the nontrivial character `ψ' = ψ(ν ·)`. Edge cases: `r = 0`
