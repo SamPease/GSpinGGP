@@ -882,6 +882,66 @@ theorem mul_mem_regularSet_of_mem_AG (a : ↥d.AG) {g : ↥d.G} (hg : g ∈ regu
   refine ⟨?_, hC ▸ hg.2⟩
   exact isSS_mul_of_commute hAg hAss hg.1
 
+/-- `G_ell,reg(F)` is stable under `A_G(F)`: `a g` is regular, and `a` central gives
+`Z_G(a g) = Z_G(g)`. -/
+theorem mul_mem_ellRegSet_of_mem_AG (a : ↥d.AG) {g : ↥d.G} (hg : g ∈ d.ellRegSet) :
+    (a : ↥d.G) * g ∈ d.ellRegSet := by
+  refine ⟨mul_mem_regularSet_of_mem_AG d a hg.1, ?_⟩
+  have hc : ∀ y : ↥d.G, y * (a : ↥d.G) = (a : ↥d.G) * y := fun y =>
+    Subgroup.mem_center_iff.mp (d.AG_le_center a.2) y
+  have he : (Subgroup.centralizer ({(a : ↥d.G) * g} : Set ↥d.G) : Set ↥d.G) =
+      Subgroup.centralizer ({g} : Set ↥d.G) := by
+    ext y
+    simp only [SetLike.mem_coe, Subgroup.mem_centralizer_iff, Set.mem_singleton_iff, forall_eq]
+    constructor
+    · intro h
+      calc g * y = (a : ↥d.G)⁻¹ * ((a : ↥d.G) * g * y) := by group
+        _ = (a : ↥d.G)⁻¹ * (y * ((a : ↥d.G) * g)) := by rw [h]
+        _ = (a : ↥d.G)⁻¹ * ((a : ↥d.G) * (y * g)) := by rw [← mul_assoc y, hc y, mul_assoc]
+        _ = y * g := by group
+    · intro h
+      rw [mul_assoc, h, ← mul_assoc, ← hc y, mul_assoc]
+  rw [he]
+  exact hg.2
+
+/-- `G_ell,reg(F)` is stable under conjugation: `x g x⁻¹` is regular, and the image of
+`Z_G(x g x⁻¹) = x Z_G(g) x⁻¹` in `G(F)/A_G(F)` is the conjugate of that of `Z_G(g)`. -/
+theorem conj_mem_ellRegSet (x : ↥d.G) {g : ↥d.G} (hg : g ∈ d.ellRegSet) :
+    x * g * x⁻¹ ∈ d.ellRegSet := by
+  refine ⟨conj_mem_regularSet d x g hg.1, ?_⟩
+  set φ : ↥d.G ⧸ d.AG → ↥d.G ⧸ d.AG := fun q =>
+    (QuotientGroup.mk x : ↥d.G ⧸ d.AG) * q * (QuotientGroup.mk x : ↥d.G ⧸ d.AG)⁻¹
+  have hφ : Continuous φ := (continuous_const.mul continuous_id).mul continuous_const
+  have hmem : ∀ z : ↥d.G, z ∈ Subgroup.centralizer ({x * g * x⁻¹} : Set ↥d.G) ↔
+      x⁻¹ * z * x ∈ Subgroup.centralizer ({g} : Set ↥d.G) := by
+    intro z
+    simp only [Subgroup.mem_centralizer_iff, Set.mem_singleton_iff, forall_eq]
+    constructor
+    · intro h
+      calc g * (x⁻¹ * z * x) = x⁻¹ * ((x * g * x⁻¹) * z) * x := by group
+        _ = x⁻¹ * (z * (x * g * x⁻¹)) * x := by rw [h]
+        _ = x⁻¹ * z * x * g := by group
+    · intro h
+      calc x * g * x⁻¹ * z = x * (g * (x⁻¹ * z * x)) * x⁻¹ := by group
+        _ = x * ((x⁻¹ * z * x) * g) * x⁻¹ := by rw [h]
+        _ = z * (x * g * x⁻¹) := by group
+  have he : (QuotientGroup.mk '' (Subgroup.centralizer ({x * g * x⁻¹} : Set ↥d.G) : Set ↥d.G) :
+      Set (↥d.G ⧸ d.AG)) = φ '' (QuotientGroup.mk ''
+        (Subgroup.centralizer ({g} : Set ↥d.G) : Set ↥d.G)) := by
+    ext q
+    constructor
+    · rintro ⟨z, hz, rfl⟩
+      refine ⟨QuotientGroup.mk (x⁻¹ * z * x), ⟨_, (hmem z).1 hz, rfl⟩, ?_⟩
+      simp only [φ, ← QuotientGroup.mk_inv, ← QuotientGroup.mk_mul]
+      congr 1; group
+    · rintro ⟨_, ⟨w, hw, rfl⟩, rfl⟩
+      refine ⟨x * w * x⁻¹, (hmem _).2 (by simpa [mul_assoc] using hw), ?_⟩
+      simp only [φ, ← QuotientGroup.mk_inv, ← QuotientGroup.mk_mul]
+  show IsCompact (QuotientGroup.mk '' (Subgroup.centralizer ({x * g * x⁻¹} : Set ↥d.G) :
+    Set ↥d.G) : Set (↥d.G ⧸ d.AG))
+  rw [he]
+  exact hg.2.image hφ
+
 open Classical Polynomial in
 /-- An element of `A_G(F)` is semisimple in `C(W) × C(V)` and commutes with `𝔤` (the first half of
 `mul_mem_regularSet_of_mem_AG`). -/
@@ -1331,28 +1391,39 @@ theorem thetaF_smul (c : ℂ) {f : ↥d.G → ℂ} (hf : f ∈ ScuspTestFn d χ)
     Set.EqOn (thetaF d (c • f)) (c • thetaF d f) (regularSet d.G d.lie) :=
   eqOn_thetaF d (isThetaF_smul d c (thetaF_spec d χ hf).1)
 
-/-- `θ_{f+g} = θ_f + θ_g` on the regular set. -/
-theorem thetaF_add {f g : ↥d.G → ℂ} (hf : f ∈ ScuspTestFn d χ) (hg : g ∈ ScuspTestFn d χ) :
-    Set.EqOn (thetaF d (f + g)) (thetaF d f + thetaF d g) (regularSet d.G d.lie) := by
-  have hθf := (thetaF_spec d χ hf).1
-  have hθg := (thetaF_spec d χ hg).1
-  refine eqOn_thetaF d ⟨hθf.1.add hθg.1, hθf.2.1.add hθg.2.1, fun f' hf' => ?_⟩
-  have e1 : (fun x => (thetaF d f + thetaF d g) x * f' x) =
-      fun x => thetaF d f x * f' x + thetaF d g x * f' x := by
+/-- **Additivity of `IsThetaF`**: if `θ` and `θ'` represent the orbital pairings of the continuous
+`f` and `g`, and the kernels `x ↦ ∫_G f(x⁻¹ h x) f'(h) dh`, `x ↦ ∫_G g(x⁻¹ h x) f'(h) dh` are
+integrable on `G(F)/A_G(F)` for every test function `f'`, then `θ + θ'` represents that of
+`f + g`. -/
+theorem isThetaF_add {f g θ θ' : ↥d.G → ℂ} (hf : Continuous f) (hg : Continuous g)
+    (hθ : IsThetaF d f θ) (hθ' : IsThetaF d g θ')
+    (hif : ∀ f' ∈ testFunctions ↥d.G,
+      Integrable (fun x : d.GmodAG => orbitalInner d f f' (Quotient.out x)) Measure.haar)
+    (hig : ∀ f' ∈ testFunctions ↥d.G,
+      Integrable (fun x : d.GmodAG => orbitalInner d g f' (Quotient.out x)) Measure.haar) :
+    IsThetaF d (f + g) (θ + θ') := by
+  refine ⟨hθ.1.add hθ'.1, hθ.2.1.add hθ'.2.1, fun f' hf' => ?_⟩
+  have e1 : (fun x => (θ + θ') x * f' x) = fun x => θ x * f' x + θ' x * f' x := by
     funext x; simp [add_mul]
-  rw [e1, integral_add (integrable_mul_testFunction d hθf.1 hf')
-    (integrable_mul_testFunction d hθg.1 hf'), hθf.2.2 f' hf', hθg.2.2 f' hf',
+  rw [e1, integral_add (integrable_mul_testFunction d hθ.1 hf')
+    (integrable_mul_testFunction d hθ'.1 hf'), hθ.2.2 f' hf', hθ'.2.2 f' hf',
     orbitalPairing_eq, orbitalPairing_eq, orbitalPairing_eq]
   have hinner : ∀ y : ↥d.G, orbitalInner d (f + g) f' y = orbitalInner d f f' y +
       orbitalInner d g f' y := by
     intro y
     unfold orbitalInner
-    rw [← integral_add (integrable_orbitalInner_integrand d hf.1.continuous hf' y)
-      (integrable_orbitalInner_integrand d hg.1.continuous hf' y)]
+    rw [← integral_add (integrable_orbitalInner_integrand d hf hf' y)
+      (integrable_orbitalInner_integrand d hg hf' y)]
     congr 1; funext x; simp [add_mul]
   simp_rw [hinner]
-  exact (integral_add (integrable_orbitalInner_scusp d χ hf hf')
-    (integrable_orbitalInner_scusp d χ hg hf')).symm
+  exact (integral_add (hif f' hf') (hig f' hf')).symm
+
+/-- `θ_{f+g} = θ_f + θ_g` on the regular set. -/
+theorem thetaF_add {f g : ↥d.G → ℂ} (hf : f ∈ ScuspTestFn d χ) (hg : g ∈ ScuspTestFn d χ) :
+    Set.EqOn (thetaF d (f + g)) (thetaF d f + thetaF d g) (regularSet d.G d.lie) :=
+  eqOn_thetaF d (isThetaF_add d hf.1.continuous hg.1.continuous (thetaF_spec d χ hf).1
+    (thetaF_spec d χ hg).1 (fun _ hf' => integrable_orbitalInner_scusp d χ hf hf')
+    (fun _ hf' => integrable_orbitalInner_scusp d χ hg hf'))
 
 /-- `θ_f` is conjugation invariant on the regular set. -/
 theorem thetaF_conj (ψ : NontrivialAddChar F) {f : ↥d.G → ℂ} (hf : f ∈ ScuspTestFn d χ)

@@ -258,8 +258,8 @@ Proof route: there are finitely many `G(F)`-conjugacy classes of maximal tori `T
 preimage, under the characteristic-polynomial map of `(W, V)`, of a compact open neighbourhood of
 the image of `⋃_T T(F)` (modulo the scalars) is open, closed, invariant and `A_G(F)`-stable, and it
 is compact modulo conjugation and `A_G(F)` by Harish-Chandra's compactness lemma.
-Status: proved: the set `Ω` of BP Cor 5.7.2(i) (axiom
-`bp_scusp_surj_ell`, via `exists_scusp_of_qc_bp`, `Scusp.lean`) has these properties. -/
+Status: proved: the set `Ω` of BP Cor 5.7.2(i) (`LitTF.bp_scusp_surj_ell`, via
+`exists_scusp_of_qc_bp`, `Scusp.lean`) has these properties. -/
 theorem exists_qcCutoff_ellRegSet : ∃ Ω, IsQCCutoff d Ω ∧ d.ellRegSet ⊆ Ω := by
   obtain ⟨Ω, hΩ, hell, hcpt, -⟩ := exists_scusp_of_qc_bp d
   exact ⟨Ω, ⟨hΩ, hcpt⟩, hell⟩

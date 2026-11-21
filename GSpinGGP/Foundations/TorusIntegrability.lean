@@ -11,8 +11,9 @@ General `p`-adic (in fact: locally compact nontrivially normed field) integrabil
 BP Astérisque 418, Lemma B.1.2(i),(ii) (stated there without proof), proved directly from the
 scaling of Haar measure. `|·|_F` is the normalized absolute value `absF`.
 
-* `distribHaarChar_eq_absF_pow`, `addHaar_smul_absF`: `d(c • v) = |c|_F^{dim V} dv`;
-  `setLIntegral_smul_set`: the corresponding change of variables.
+* `distribHaarChar_eq_absF_pow`, `addHaar_smul_absF`: `d(c • v) = |c|_F^{dim V} dv` (the latter for
+  any finite-dimensional space with its module topology); `map_addHaar_smul_absF`,
+  `integral_comp_smul_absF`, `setLIntegral_smul_set`: the corresponding changes of variables.
 * `locallyIntegrable_of_homogeneous`: a function homogeneous of degree `κ > −dim V`
   (`f(c • x) = |c|_F^κ f(x)`) and locally integrable off `0` is locally integrable.
 * `locallyIntegrable_prod_gauge_rpow`: `v ↦ ∏_i N_i(π_i v)^{a_i}` is locally integrable for linear
@@ -119,21 +120,67 @@ theorem distribHaarChar_eq_absF_pow [LocallyCompactSpace V] (c : Fˣ) :
       exact ENNReal.ofReal_eq_coe_nnreal _)
   rw [this]; rfl
 
-/-- `μ(c • s) = |c|_F^{dim V} μ(s)` for an additive Haar measure on a finite-dimensional
-`F`-vector space. -/
-theorem addHaar_smul_absF (μ : Measure V) [μ.IsAddHaarMeasure] {c : F} (hc : c ≠ 0) (s : Set V) :
-    μ (c • s) = ENNReal.ofReal (absF c ^ Module.finrank F V) * μ s := by
+end Scaling
+
+section ScalingModule
+
+variable {V : Type*} [AddCommGroup V] [Module F V] [FiniteDimensional F V]
+  [TopologicalSpace V] [IsModuleTopology F V] [MeasurableSpace V] [BorelSpace V]
+
+/-- `μ(c • S) = |c|_F^{dim V} μ(S)` for an additive Haar measure on a finite-dimensional
+`F`-vector space with its module topology (for a normed space, the module topology is its norm
+topology: `isModuleTopologyOfFiniteDimensional`). Transported from `F^n`, where it is
+`distribHaarChar_eq_absF_pow`. -/
+theorem addHaar_smul_absF (μ : Measure V) [μ.IsAddHaarMeasure] {c : F} (hc : c ≠ 0) (S : Set V) :
+    μ (c • S) = ENNReal.ofReal (absF c ^ Module.finrank F V) * μ S := by
   haveI : ProperSpace F := .of_nontriviallyNormedField_of_weaklyLocallyCompactSpace F
-  haveI : CompleteSpace F := complete_of_proper
-  haveI : ProperSpace V := FiniteDimensional.proper F V
-  have h := distribHaarChar_mul (μ := μ) (Units.mk0 c hc) s
-  have h2 := distribHaarChar_eq_absF_pow (V := V) (Units.mk0 c hc)
-  have hs : (Units.mk0 c hc • s : Set V) = c • s := rfl
-  rw [hs] at h
-  rw [← h, ← ENNReal.ofReal_coe_nnreal, h2]
+  haveI := IsModuleTopology.isTopologicalAddGroup F V
+  set n := Module.finrank F V
+  letI : MeasurableSpace (Fin n → F) := borel _
+  haveI : BorelSpace (Fin n → F) := ⟨rfl⟩
+  let e : V ≃ₗ[F] (Fin n → F) := (Module.finBasis F V).equivFun
+  have he : Continuous e := IsModuleTopology.continuous_of_linearMap e.toLinearMap
+  have he' : Continuous e.symm := IsModuleTopology.continuous_of_linearMap e.symm.toLinearMap
+  let h : V ≃ₜ (Fin n → F) := ⟨e.toEquiv, he, he'⟩
+  let em := h.toMeasurableEquiv
+  have hem : (em : V → Fin n → F) = e := rfl
+  haveI : (μ.map em).IsAddHaarMeasure := by
+    rw [hem]; exact e.toAddEquiv.isAddHaarMeasure_map μ he he'
+  have key : ∀ T : Set V, μ T = (μ.map em) (e '' T) := fun T => by
+    rw [em.map_apply, hem, Set.preimage_image_eq T e.injective]
+  have himg : e '' (c • S) = c • (e '' S) := image_smul_set e c S
+  have hF := distribHaarChar_mul (μ := μ.map em) (Units.mk0 c hc) (e '' S)
+  have h2 := distribHaarChar_eq_absF_pow (V := Fin n → F) (Units.mk0 c hc)
+  have hs : (Units.mk0 c hc • (e '' S) : Set (Fin n → F)) = c • (e '' S) := rfl
+  rw [Module.finrank_fin_fun] at h2
+  rw [key, key S, himg, ← hs, ← hF, ← ENNReal.ofReal_coe_nnreal, h2]
   rfl
 
-end Scaling
+/-- `μ.map (c • ·) = |c|_F^{-dim V} μ`. -/
+theorem map_addHaar_smul_absF (μ : Measure V) [μ.IsAddHaarMeasure] {c : F} (hc : c ≠ 0) :
+    μ.map (fun Y : V => c • Y) =
+      Real.toNNReal ((absF c ^ Module.finrank F V)⁻¹) • μ := by
+  haveI := IsModuleTopology.isTopologicalAddGroup F V
+  ext S hS
+  rw [Measure.map_apply (continuous_const_smul c).measurable hS, Set.preimage_smul₀ hc,
+    addHaar_smul_absF μ (inv_ne_zero hc), smul_apply, absF_inv, inv_pow,
+    ENNReal.smul_def, smul_eq_mul, ENNReal.ofReal]
+
+/-- **Change of variables `Y ↦ c Y`**: `∫ g(c Y) dμ(Y) = |c|_F^{-dim V} ∫ g dμ`. -/
+theorem integral_comp_smul_absF (μ : Measure V) [μ.IsAddHaarMeasure] {c : F} (hc : c ≠ 0)
+    (g : V → ℂ) :
+    ∫ Y, g (c • Y) ∂μ = (((absF c ^ Module.finrank F V)⁻¹ : ℝ) : ℂ) * ∫ Y, g Y ∂μ := by
+  haveI := IsModuleTopology.isTopologicalAddGroup F V
+  let h : V ≃ₜ V := Homeomorph.smulOfNeZero c hc
+  let em := h.toMeasurableEquiv
+  have hem : (em : V → V) = fun Y => c • Y := rfl
+  have := integral_map_equiv em g (μ := μ)
+  rw [hem, map_addHaar_smul_absF μ hc, integral_smul_nnreal_measure, NNReal.smul_def,
+    Real.coe_toNNReal _ (inv_nonneg.mpr (pow_nonneg (absF_nonneg _) _)),
+    Complex.real_smul] at this
+  exact this.symm
+
+end ScalingModule
 
 /-- `|·|_F` is monotone in the norm. -/
 theorem absF_le_absF_of_norm_le {a b : F} (h : ‖a‖ ≤ ‖b‖) : absF a ≤ absF b := by
@@ -204,14 +251,10 @@ theorem setLIntegral_smul_set (μ : Measure V) [μ.IsAddHaarMeasure] {c : F} (hc
       ENNReal.ofReal (absF c ^ Module.finrank F V) * ∫⁻ y in S, g (c • y) ∂μ := by
   haveI : ProperSpace F := .of_nontriviallyNormedField_of_weaklyLocallyCompactSpace F
   haveI : CompleteSpace F := complete_of_proper
-  haveI : ProperSpace V := FiniteDimensional.proper F V
-  set d := Module.finrank F V
+  haveI : IsModuleTopology F V := isModuleTopologyOfFiniteDimensional
   let e : V ≃ᵐ V := MeasurableEquiv.smul₀ c hc
-  have hmap : μ.map e = ENNReal.ofReal (absF c⁻¹ ^ d) • μ := by
-    ext A hA
-    rw [Measure.map_apply e.measurable hA, smul_apply, smul_eq_mul]
-    have : (e : V → V) ⁻¹' A = c⁻¹ • A := preimage_smul₀ hc A
-    rw [this, addHaar_smul_absF μ (inv_ne_zero hc)]
+  have hmap : μ.map e = Real.toNNReal ((absF c ^ Module.finrank F V)⁻¹) • μ :=
+    map_addHaar_smul_absF μ hc
   have hcS : MeasurableSet (c • S) := hS.const_smul₀ c
   have h1 : ∫⁻ y in S, g (c • y) ∂μ = ∫⁻ y, (c • S).indicator g (e y) ∂μ := by
     rw [← lintegral_indicator hS]
@@ -222,9 +265,12 @@ theorem setLIntegral_smul_set (μ : Measure V) [μ.IsAddHaarMeasure] {c : F} (hc
     classical
     change _ = if c • y ∈ c • S then g (c • y) else 0
     simp only [smul_mem_smul_set_iff₀ hc]
-  rw [h1, ← lintegral_map_equiv, hmap, lintegral_smul_measure, lintegral_indicator hcS, smul_eq_mul, ← mul_assoc,
-    ← ENNReal.ofReal_mul (pow_nonneg (absF_nonneg _) _), ← mul_pow, ← absF_mul,
-    mul_inv_cancel₀ hc, absF_one, one_pow, ENNReal.ofReal_one, one_mul]
+  have hr : ((Real.toNNReal ((absF c ^ Module.finrank F V)⁻¹) : ℝ≥0) : ℝ≥0∞) =
+      ENNReal.ofReal ((absF c ^ Module.finrank F V)⁻¹) := rfl
+  rw [h1, ← lintegral_map_equiv, hmap, lintegral_smul_measure, lintegral_indicator hcS,
+    ENNReal.smul_def, smul_eq_mul, hr, ← mul_assoc,
+    ← ENNReal.ofReal_mul (pow_nonneg (absF_nonneg _) _),
+    mul_inv_cancel₀ (pow_pos (absF_pos hc) _).ne', ENNReal.ofReal_one, one_mul]
 
 /-- **Homogeneous functions of degree `> −dim V` are locally integrable at `0`.**
 If `f : V → ℝ` satisfies `f(c • x) = |c|_F^κ f(x)` (`c ≠ 0`) with `κ > −dim V`, and `f` is
