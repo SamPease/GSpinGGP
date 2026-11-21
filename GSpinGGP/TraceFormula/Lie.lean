@@ -8,6 +8,7 @@ import GSpinGGP.TraceFormula.LieAlgebra
 import GSpinGGP.TraceFormula.LuoClass
 import GSpinGGP.Literature.Fourier
 import GSpinGGP.TraceFormula.SelfDual
+import GSpinGGP.TraceFormula.LieDescent
 
 /-!
 # The geometric expansion near `1`, via the Lie algebra
@@ -27,7 +28,8 @@ This file holds:
   (`distribJLie_eq_mGeomLie`, from Luo Thm 7.3.3 for the special orthogonal triple through
   `TraceFormula/LuoTransfer.lean` and `TraceFormula/LuoClass.lean`; Prop 12.5.1 and the endgame
   are the thesis's route, not used);
-* §3 the descent from `G` to `𝔤⁰` near `1` (`exists_lie_descent`, SORRY; Prop 12.4.1(i) and
+* §3 the descent from `G` to `𝔤⁰` near `1` (`exists_lie_descent`, from the slices of
+  `TraceFormula/LieDescent.lean`; Prop 12.4.1(i) and
   Prop 12.1.1(iv));
 * §4 the triples with a hyperbolic-plane factor (`geomAt_near_of_isHypPlane_V`, elementary, proved
   with `Ω = G(F)` from the helpers in namespace `HypVAux`; `geomAt_near_of_isHypPlane_W`, a gap in
@@ -149,14 +151,15 @@ factor (so `𝔤 = Lie(A_G) ⊕ 𝔤⁰` and `A_G ∩ H = A_{G,H}`).  For a `G(F
 strongly cuspidal on `𝔤⁰` with `J(f) = J^Lie(F)` (BP (3.3.2) on `H`: `𝔥 = Lie(A_{G,H}) ⊕ 𝔥⁰`,
 `χ` trivial on `A_{G,H}`) and `m_geom(θ_f) = m^Lie_geom(θ_F)` (`exp` is a measure-preserving
 homeomorphism `ω ∩ Γ^Lie(G,H) ≃ exp(ω) ∩ Γ(G,H)`, and `θ_F = (j_G^H)^{1/2}(θ_f)_ω`
-near `0`).  Status: SORRY (own work). -/
+near `0`).  Proved from the slices of `TraceFormula/LieDescent.lean`
+(`exists_lie_descent_of_slices`; four of them are SORRY, own work). -/
 theorem exists_lie_descent (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
     (χ : CentralCharOn d) :
     ∃ Ω : Set ↥d.G, IsInvariantClopen d Ω ∧ (1 : ↥d.G) ∈ Ω ∧
       ∀ f ∈ ScuspTestFn d χ, Function.support f ⊆ Ω →
         ∃ F : ↥d.lieZero → ℂ, d.IsLieScusp F ∧ distribJ d ψ f = d.distribJLie ψ F ∧
-          mGeom ψ d (thetaF d f) = d.mGeomLie ψ (d.thetaFLie ψ F) := by
-  sorry
+          mGeom ψ d (thetaF d f) = d.mGeomLie ψ (d.thetaFLie ψ F) :=
+  d.exists_lie_descent_of_slices ψ hW hV χ
 
 /-! ## 4. Triples with a hyperbolic-plane factor -/
 
