@@ -385,7 +385,7 @@ theorem isOpen_torusNat (T : Subgroup ↥(GSpin d.QW)) :
   set val : ↥T → CliffordAlgebra d.QW :=
     fun t => (((t : ↥(GSpin d.QW)) : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) with hvaldef
   have hval : Continuous val :=
-    (Units.continuous_val.comp continuous_subtype_val).comp continuous_subtype_val
+    (Units.continuous_val.comp continuous_subtypeVal).comp continuous_subtypeVal
   have hmemT : ∀ t : ↥T, (t : ↥(GSpin d.QW)) ∈ d.torusOf x := fun t => hT.symm ▸ t.2
   -- `W'_t = W'_x` near `x`
   let f : ↥T → (Fin d.m → F) →ₗ[F] CliffordAlgebra d.QW := fun t =>
@@ -502,7 +502,7 @@ theorem deltaGGP_eq_absF_det_movedSub {x t : ↥(GSpin d.QW)} (hx : d.IsGammaElt
     obtain ⟨a, ha, u, hu, rfl⟩ := Submodule.mem_sup.mp hv
     have ha' : (P t - 1) a = 0 := by
       have := htx.2 a ha
-      simp only [LinearMap.sub_apply, Module.End.one_apply, sub_eq_zero]
+      simp only [LinearMap.sub_apply, one_apply_eq_self, sub_eq_zero]
       exact this
     show (P t - 1) (a + u) ∈ movedSub x
     rw [map_add, ha', zero_add]
@@ -566,14 +566,14 @@ theorem continuousOn_deltaGGP_rpow (T : Subgroup ↥(GSpin d.QW)) (s : ℝ) :
   -- continuity of `t ↦ det g(t)`
   have hPc : ∀ v, Continuous fun t : ↥T => P t v := fun v =>
     continuous_specP_apply (Q := d.QW) (x := fun t : ↥T => (t : ↥(GSpin d.QW)))
-      continuous_subtype_val v
+      continuous_subtypeVal v
   have hdet : Continuous fun t => LinearMap.det (g t) := by
     refine ContinuousLinearMap.continuous_det.comp
       (f := fun t => LinearMap.toContinuousLinearMap (g t)) (continuous_clm_apply.2 fun u => ?_)
     show Continuous fun t => g t u
     refine Continuous.subtype_mk ?_ _
     show Continuous fun t => (P t - 1) (u : Fin d.m → F)
-    simp only [LinearMap.sub_apply, Module.End.one_apply]
+    simp only [LinearMap.sub_apply, one_apply_eq_self]
     exact (hPc u).sub continuous_const
   -- `det g(x) ≠ 0`
   have hdet0 : LinearMap.det (g t₀) ≠ 0 := by
@@ -663,10 +663,10 @@ theorem continuous_sub_conj_diag (v : d.ambient) :
       ((((d.diag t : ↥d.G) : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient) := by
   have hval : Continuous fun t : ↥(GSpin d.QW) =>
       ((t : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) :=
-    Units.continuous_val.comp continuous_subtype_val
+    Units.continuous_val.comp continuous_subtypeVal
   have hvali : Continuous fun t : ↥(GSpin d.QW) =>
       (((t : (CliffordAlgebra d.QW)ˣ)⁻¹ : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) :=
-    Units.continuous_coe_inv.comp continuous_subtype_val
+    Units.continuous_coe_inv.comp continuous_subtypeVal
   have hmap : Continuous (CliffordAlgebra.map (QuadraticMap.Isometry.inl d.QW d.QZ)) :=
     IsModuleTopology.continuous_of_linearMap
       (CliffordAlgebra.map (QuadraticMap.Isometry.inl d.QW d.QZ)).toLinearMap
@@ -708,7 +708,7 @@ theorem continuousOn_weylDisc_torusNat (T : Subgroup ↥(GSpin d.QW)) :
       have := congrArg (fun k : ↥d.G => (((k⁻¹ : ↥d.G) : d.ambientˣ) : d.ambient)) hc.eq
       simpa [mul_inv_rev] using this
     refine LinearMap.ext fun X => Subtype.ext ?_
-    simp only [Module.End.mul_apply, hN]
+    simp only [mul_apply_eq_comp, hN]
     have e1 : u t * (u t₀ * X * ui t₀) * ui t = u t₀ * (u t * X * ui t) * ui t₀ := by
       simp only [← mul_assoc]
       rw [h1, mul_assoc _ (ui t₀), h2, ← mul_assoc]
@@ -725,7 +725,7 @@ theorem continuousOn_weylDisc_torusNat (T : Subgroup ↥(GSpin d.QW)) :
     rw [hLdef, hCdef]; exact isCompl_ker_range_of_isSemisimple hss
   have hL : ∀ t, ∀ X ∈ L, N t X ∈ L := fun t X hX => by
     rw [hLdef, LinearMap.mem_ker] at hX ⊢
-    rw [← Module.End.mul_apply, ← (hcomm t).eq, Module.End.mul_apply, hX, map_zero]
+    rw [← mul_apply_eq_comp, ← (hcomm t).eq, mul_apply_eq_comp, hX, map_zero]
   have hC : ∀ t, ∀ X ∈ C, N t X ∈ C := by
     rw [hCdef]
     rintro t _ ⟨Y, rfl⟩
@@ -774,7 +774,7 @@ theorem continuousOn_weylDisc_torusNat (T : Subgroup ↥(GSpin d.QW)) :
     refine continuous_det_restrict_of_continuous d.lie.toSubmodule.subtype
       d.lie.toSubmodule.injective_subtype N (fun v => ?_) C hC
     simp only [Submodule.subtype_apply, hN]
-    exact (continuous_sub_conj_diag d (v : d.ambient)).comp continuous_subtype_val
+    exact (continuous_sub_conj_diag d (v : d.ambient)).comp continuous_subtypeVal
   -- conclude
   refine continuousAt_of_eventually_eq_absF hdet.continuousAt (hkey t₀ ⟨hx, hT⟩).1 ?_
   filter_upwards [(isOpen_torusNat d T).mem_nhds ⟨hx, hT⟩] with t ht
@@ -917,7 +917,7 @@ theorem continuous_coe_diag :
     Continuous fun t : ↥(GSpin d.QW) => (((d.diag t : ↥d.G) : d.ambientˣ) : d.ambient) := by
   have hval : Continuous fun t : ↥(GSpin d.QW) =>
       ((t : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) :=
-    Units.continuous_val.comp continuous_subtype_val
+    Units.continuous_val.comp continuous_subtypeVal
   have hmap : Continuous (CliffordAlgebra.map (QuadraticMap.Isometry.inl d.QW d.QZ)) :=
     IsModuleTopology.continuous_of_linearMap
       (CliffordAlgebra.map (QuadraticMap.Isometry.inl d.QW d.QZ)).toLinearMap
@@ -1060,7 +1060,7 @@ theorem continuousOn_germ_of_mem_QC {χ : CentralCharOn d} {θ : ↥d.G → ℂ}
         (((d.diag (t : ↥(GSpin d.QW)) : ↥d.G) : d.ambientˣ) : d.ambient) := ⟨_, rfl⟩
   have hu : Continuous u := by
     rw [hudef]
-    exact continuous_const.mul ((continuous_coe_diag d).comp continuous_subtype_val)
+    exact continuous_const.mul ((continuous_coe_diag d).comp continuous_subtypeVal)
   have hut : Tendsto u (𝓝 t₀) (𝓝 1) := by
     have h1 : u t₀ = 1 := by rw [hudef]; exact Units.inv_mul _
     simpa [h1] using hu.tendsto t₀

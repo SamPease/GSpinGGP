@@ -57,16 +57,16 @@ theorem _root_.LinearMap.BilinForm.cayley_spec [FiniteDimensional K V]
     rw [hui']
     exact (Commute.units_inv_left (u := hu.unit) hpu.symm).symm
   have hu_ui : ∀ v, u (ui v) = v := fun v => by
-    rw [← Module.End.mul_apply, hui, Ring.mul_inverse_cancel u hu, Module.End.one_apply]
+    rw [← mul_apply_eq_comp, hui, Ring.mul_inverse_cancel u hu, one_apply_eq_self]
   have hui_u : ∀ v, ui (u v) = v := fun v => by
-    rw [← Module.End.mul_apply, hui, Ring.inverse_mul_cancel u hu, Module.End.one_apply]
+    rw [← mul_apply_eq_comp, hui, Ring.inverse_mul_cancel u hu, one_apply_eq_self]
   -- `u (s v) = p v`
   have hus : ∀ v, u ((p * ui) v) = p v := fun v => by
-    rw [hpui.eq, Module.End.mul_apply, hu_ui]
+    rw [hpui.eq, mul_apply_eq_comp, hu_ui]
   refine ⟨?_, ?_, fun v => ⟨fun h => ?_, fun h => ?_⟩, fun v h => ?_⟩
   · -- `B((μ + X)a, (μ + X)b) = B((μ − X)a, (μ − X)b)`
     intro a b
-    rw [Module.End.mul_apply, Module.End.mul_apply, hp_apply, hp_apply]
+    rw [mul_apply_eq_comp, mul_apply_eq_comp, hp_apply, hp_apply]
     conv_rhs => rw [← hu_ui a, ← hu_ui b, hu_apply (ui a), hu_apply (ui b)]
     simp only [map_add, map_sub, map_smul, LinearMap.add_apply, LinearMap.sub_apply,
       LinearMap.smul_apply, smul_eq_mul]
@@ -78,7 +78,7 @@ theorem _root_.LinearMap.BilinForm.cayley_spec [FiniteDimensional K V]
     have hpm : p ∈ Algebra.adjoin K {X} :=
       Subalgebra.add_mem _ (Subalgebra.algebraMap_mem _ μ) hXm
     have huim : ui ∈ Algebra.adjoin K {X} := by
-      have h := TauCeti.Units.coe_inv_mem_adjoin (K := K) hu.unit (IsIntegral.of_finite K _)
+      have h := Units.inv_mem_adjoin (K := K) hu.unit (IsIntegral.of_finite K _)
       rw [hU, ← hui'] at h
       exact Algebra.adjoin_le (Set.singleton_subset_iff.mpr hum) h
     exact Subalgebra.mul_mem _ hpm huim
@@ -89,7 +89,7 @@ theorem _root_.LinearMap.BilinForm.cayley_spec [FiniteDimensional K V]
         _ = 0 := sub_eq_zero.mpr h1.symm
     exact (smul_eq_zero.mp h3).resolve_left h2
   · have hpv : p v = u v := by rw [hp_apply, hu_apply, h, add_zero, sub_zero]
-    rw [hpui.eq, Module.End.mul_apply, hpv, hui_u]
+    rw [hpui.eq, mul_apply_eq_comp, hpv, hui_u]
   · have h1 := hus v
     rw [h, map_neg, hu_apply, hp_apply] at h1
     have h3 : (2 * μ) • v = 0 :=

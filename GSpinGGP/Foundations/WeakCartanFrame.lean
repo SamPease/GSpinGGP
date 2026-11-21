@@ -79,7 +79,7 @@ def fixer (Q : QuadraticForm F V) (b : Module.Basis (Fin n) F V) (j : ℕ) :
     ∀ i : Fin n, i.val < j → g (b i) = b i}
   one_mem' := ⟨one_mem _, fun _ _ => rfl⟩
   mul_mem' := fun {g h} hg hh => ⟨mul_mem hg.1 hh.1, fun i hi => by
-    rw [LinearEquiv.mul_apply, hh.2 i hi, hg.2 i hi]⟩
+    rw [mul_apply_eq_comp, hh.2 i hi, hg.2 i hi]⟩
   inv_mem' := fun {g} hg => ⟨inv_mem hg.1, fun i hi => by
     conv_lhs => rw [← hg.2 i hi]
     exact g.symm_apply_apply (b i)⟩
@@ -618,7 +618,7 @@ theorem multiTorus_apply_basisNat_of_ge :
   | [], _, _, _ => rfl
   | t :: ts, j, m, hm => by
     simp only [List.length_cons] at hm
-    rw [multiTorus_cons, LinearEquiv.mul_apply,
+    rw [multiTorus_cons, mul_apply_eq_comp,
       levelTorus_apply_basisNat_of_ne hb hf j t (by omega) (by omega),
       multiTorus_apply_basisNat_of_ge ts (j + 2) (by omega)]
 
@@ -629,13 +629,13 @@ theorem multiTorus_apply_add :
         (ts[k] : F) • (basisNat b (j + 2 * k) + basisNat b (j + 2 * k + 1))
   | t :: ts, j, 0, _, hl => by
     simp only [mul_zero, add_zero] at hl ⊢
-    rw [multiTorus_cons, LinearEquiv.mul_apply, levelTorus_apply_add hb hf hl, map_smul, map_add,
+    rw [multiTorus_cons, mul_apply_eq_comp, levelTorus_apply_add hb hf hl, map_smul, map_add,
       multiTorus_apply_basisNat_of_lt hb hf ts (j + 2) (by omega),
       multiTorus_apply_basisNat_of_lt hb hf ts (j + 2) (by omega)]
     rfl
   | t :: ts, j, k + 1, hk, hl => by
     have e1 : j + 2 * (k + 1) = j + 2 + 2 * k := by ring
-    rw [e1, multiTorus_cons, LinearEquiv.mul_apply, map_add,
+    rw [e1, multiTorus_cons, mul_apply_eq_comp, map_add,
       levelTorus_apply_basisNat_of_ne hb hf j t (by omega) (by omega),
       levelTorus_apply_basisNat_of_ne hb hf j t (by omega) (by omega),
       multiTorus_apply_add ts (j + 2) k (by simpa using hk) (by omega)]
@@ -648,13 +648,13 @@ theorem multiTorus_apply_sub :
         (ts[k] : F)⁻¹ • (basisNat b (j + 2 * k) - basisNat b (j + 2 * k + 1))
   | t :: ts, j, 0, _, hl => by
     simp only [mul_zero, add_zero] at hl ⊢
-    rw [multiTorus_cons, LinearEquiv.mul_apply, levelTorus_apply_sub hb hf hl, map_smul, map_sub,
+    rw [multiTorus_cons, mul_apply_eq_comp, levelTorus_apply_sub hb hf hl, map_smul, map_sub,
       multiTorus_apply_basisNat_of_lt hb hf ts (j + 2) (by omega),
       multiTorus_apply_basisNat_of_lt hb hf ts (j + 2) (by omega)]
     rfl
   | t :: ts, j, k + 1, hk, hl => by
     have e1 : j + 2 * (k + 1) = j + 2 + 2 * k := by ring
-    rw [e1, multiTorus_cons, LinearEquiv.mul_apply, map_sub,
+    rw [e1, multiTorus_cons, mul_apply_eq_comp, map_sub,
       levelTorus_apply_basisNat_of_ne hb hf j t (by omega) (by omega),
       levelTorus_apply_basisNat_of_ne hb hf j t (by omega) (by omega),
       multiTorus_apply_sub ts (j + 2) k (by simpa using hk) (by omega)]

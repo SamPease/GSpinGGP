@@ -261,7 +261,7 @@ theorem adV_regNil_pow_w {j : ℕ} (hj : j ≤ 2 * k) :
     refine ⟨ε * (if (j : ℤ) - k < 0 then (-1 : K) else if (j : ℤ) - k < k then 1 else 0), ?_, ?_⟩
     · refine mul_ne_zero hε ?_
       split_ifs <;> first | (exfalso; omega) | simp
-    · rw [pow_succ', Module.End.mul_apply, he, map_smul,
+    · rw [pow_succ', mul_apply_eq_comp, he, map_smul,
         adV_regNil_w hw hν (abs_le.2 ⟨by omega, by omega⟩), smul_smul]
       congr 2
       push_cast; ring

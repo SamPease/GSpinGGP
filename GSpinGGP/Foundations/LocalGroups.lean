@@ -360,7 +360,7 @@ theorem aeval_mulRight {A : Type*} [Ring A] [Algebra K A] (x : A) (p : Polynomia
     ext z; simp [mul_add]
   | monomial n a =>
     ext z
-    simp only [Polynomial.aeval_monomial, Module.End.mul_apply, Module.algebraMap_end_apply,
+    simp only [Polynomial.aeval_monomial, mul_apply_eq_comp, Module.algebraMap_end_apply,
       LinearMap.pow_mulRight, LinearMap.mulRight_apply]
     rw [Algebra.smul_def, ← mul_assoc, ← mul_assoc, Algebra.commutes]
 
@@ -387,7 +387,7 @@ theorem commute_mulLeft_mul_mulRight {A : Type*} [Ring A] [Algebra K A] {a a' b 
     Commute (LinearMap.mulLeft K a * LinearMap.mulRight K b)
       (LinearMap.mulLeft K a' * LinearMap.mulRight K b') := by
   refine LinearMap.ext fun z => ?_
-  simp only [Module.End.mul_apply, LinearMap.mulLeft_apply, LinearMap.mulRight_apply]
+  simp only [mul_apply_eq_comp, LinearMap.mulLeft_apply, LinearMap.mulRight_apply]
   simp only [mul_assoc]
   rw [show b' * b = b * b' from hb.eq.symm, ← mul_assoc a, ← mul_assoc a', ha.eq]
 
@@ -398,7 +398,7 @@ theorem isSemisimple_mulLeft_inv [PerfectField K] {A : Type*} [Ring A] [Algebra 
   have hmem : Algebra.lmul K A ((u⁻¹ : Aˣ) : A) ∈ Algebra.adjoin K {Algebra.lmul K A (u : A)} := by
     rw [← AlgHom.map_adjoin_singleton]
     exact Subalgebra.mem_map.mpr
-      ⟨_, TauCeti.Units.coe_inv_mem_adjoin u (IsIntegral.of_finite K (u : A)), rfl⟩
+      ⟨_, Units.inv_mem_adjoin u (IsIntegral.of_finite K (u : A)), rfl⟩
   exact Module.End.IsSemisimple.of_mem_adjoin_singleton hu hmem
 
 /-- **`Ad(u) = L_u R_{u⁻¹}` is semisimple** for a unit `u` with `L_u` semisimple (`u⁻¹ ∈ K[u]`). -/
@@ -511,7 +511,7 @@ theorem ker_one_sub_conjAd_pow (a : Aˣ) (k : ℕ) :
   set R : Module.End F A := -LinearMap.mulRight F ((a⁻¹ : Aˣ) : A)
   have he : 1 - (conjAd F a).toLinearEquiv.toLinearMap = R * LieAlgebra.ad F A (a : A) := by
     refine LinearMap.ext fun y => ?_
-    simp only [R, LinearMap.sub_apply, Module.End.one_apply, Module.End.mul_apply,
+    simp only [R, LinearMap.sub_apply, one_apply_eq_self, mul_apply_eq_comp,
       LinearMap.neg_apply, LinearMap.mulRight_apply, LieAlgebra.ad_apply, Ring.lie_def, sub_mul,
       mul_assoc, Units.mul_inv, mul_one]
     change y - (a : A) * y * ((a⁻¹ : Aˣ) : A) = _
@@ -519,7 +519,7 @@ theorem ker_one_sub_conjAd_pow (a : Aˣ) (k : ℕ) :
     abel
   have hc : Commute R (LieAlgebra.ad F A (a : A)) := by
     refine Commute.neg_left (LinearMap.ext fun y => ?_)
-    simp only [Module.End.mul_apply, LinearMap.mulRight_apply, LieAlgebra.ad_apply, Ring.lie_def,
+    simp only [mul_apply_eq_comp, LinearMap.mulRight_apply, LieAlgebra.ad_apply, Ring.lie_def,
       sub_mul, mul_assoc, Units.mul_inv, Units.inv_mul, mul_one]
   have hu : IsUnit R := ⟨⟨R, -LinearMap.mulRight F (a : A),
     LinearMap.ext fun y => by simp [R, mul_assoc],
@@ -646,7 +646,7 @@ theorem isSS_of_mem_adjoin [PerfectField F] [FiniteDimensional F A] {u Y : A} (h
 /-- The inverse of a semisimple unit is semisimple (it lies in `F[u]`). -/
 theorem isSS_coe_inv [PerfectField F] [FiniteDimensional F A] {u : Aˣ} (hu : IsSS F (u : A)) :
     IsSS F ((u⁻¹ : Aˣ) : A) :=
-  isSS_of_mem_adjoin hu (TauCeti.Units.coe_inv_mem_adjoin u (IsIntegral.of_finite F (u : A)))
+  isSS_of_mem_adjoin hu (Units.inv_mem_adjoin u (IsIntegral.of_finite F (u : A)))
 
 /-- The product of commuting semisimple elements is semisimple. -/
 theorem isSS_mul_of_commute [PerfectField F] [FiniteDimensional F A] {a c : A} (h : Commute a c)
@@ -804,17 +804,17 @@ lemma exists_norm_factorial_inv_le :
   refine ⟨r⁻¹, inv_pos.mpr hr0, fun n => ?_⟩
   set a : ℝ := ‖(n.factorial : F)‖ with ha
   have ha0 : 0 < a := by simp [ha, Nat.factorial_ne_zero]
-  have h1 : a ^ c = (p : ℝ) ^ (-(padicValNat p n.factorial : ℤ)) := by
+  have h1 : a ^ c = (p : ℝ) ^ (-(multiplicity p n.factorial : ℤ)) := by
     have := hcn n.factorial
     simp only [ratAbsF, AbsoluteValue.coe_mk, MulHom.coe_mk, Rat.cast_natCast,
       Rat.AbsoluteValue.padic_eq_padicNorm] at this
-    rw [this, padicNorm.eq_zpow_of_nonzero (by exact_mod_cast Nat.factorial_ne_zero n),
+    rw [this, padicNorm.eq_zpow_of_ne_zero (by exact_mod_cast Nat.factorial_ne_zero n),
       padicValRat.of_nat]
     push_cast; rfl
   have h2 : ((p : ℝ)⁻¹) ^ n ≤ a ^ c := by
     rw [h1, zpow_neg, ← inv_zpow, ← zpow_natCast]
     apply zpow_le_zpow_right_of_le_one₀ (by positivity) (inv_le_one_of_one_le₀ hp1.le)
-    exact_mod_cast padicValNat_factorial_le (p := p) n
+    exact_mod_cast multiplicity_factorial_le (p := p) n
   have h3 : r ^ n ≤ a := by
     rw [hr, Real.rpow_pow_comm (by positivity)]
     calc (((p : ℝ)⁻¹) ^ n) ^ (1 / c) ≤ (a ^ c) ^ (1 / c) :=
@@ -1199,7 +1199,7 @@ theorem expA_mem_subalgebra (S : Subalgebra F A) {X : A} (hX : X ∈ S) : expA F
   letI : Algebra ℚ A := Algebra.compHom A (algebraMap ℚ F)
   haveI : IsScalarTower ℚ F A := IsScalarTower.of_algebraMap_eq fun _ => rfl
   exact NormedSpace.exp_mem (R := F) (s := S)
-    ((Subalgebra.toSubmodule S).closed_of_finiteDimensional) hX
+    ((Subalgebra.toSubmodule S).isClosed_of_finiteDimensional) hX
 
 variable (F)
 
@@ -1243,7 +1243,7 @@ lemma exists_nhds_mem_of_expA_mem :
     intro c hc
     rw [Metric.mem_eball, edist_zero_right] at hb ⊢
     refine lt_of_le_of_lt ?_ hb
-    rw [enorm_smul]
+    rw [eNorm_smul]
     calc ‖c‖ₑ * ‖L‖ₑ ≤ 1 * ‖L‖ₑ := by
           gcongr
           rw [← ofReal_norm]
@@ -1283,7 +1283,7 @@ lemma exists_nhds_mem_of_expA_mem :
     · simp only [s, Nat.cast_pow, Set.mem_compl_iff, Set.mem_singleton_iff]
       exact pow_ne_zero _ (norm_pos_iff.mp hm0)
   have hlim := hderiv.comp hs
-  have hclosedP : IsClosed (P : Set A) := (Subalgebra.toSubmodule P).closed_of_finiteDimensional
+  have hclosedP : IsClosed (P : Set A) := (Subalgebra.toSubmodule P).isClosed_of_finiteDimensional
   have hclosed : IsClosed {Z : VA →L[F] VA | lmulPiInv F Z ∈ P} :=
     hclosedP.preimage (lmulPiInv F).continuous
   have hexpn : ∀ n : ℕ, lmulPiInv F (NormedSpace.exp L ^ n) = expA F X ^ n := by
@@ -1323,7 +1323,7 @@ lemma exists_nhds_expA_mem_adjoin :
   obtain ⟨U, hU, h⟩ := expA_hasSum F (A := A)
   refine ⟨U, hU, fun X hX => ?_⟩
   have hclosed : IsClosed ((Algebra.adjoin F {X} : Subalgebra F A) : Set A) :=
-    (Subalgebra.toSubmodule (Algebra.adjoin F {X})).closed_of_finiteDimensional
+    (Subalgebra.toSubmodule (Algebra.adjoin F {X})).isClosed_of_finiteDimensional
   exact hclosed.mem_of_tendsto (h X hX) (Eventually.of_forall fun s =>
     Subalgebra.sum_mem _ fun n _ => Subalgebra.smul_mem _
       (Subalgebra.pow_mem _ (Algebra.self_mem_adjoin_singleton F X) n) _)

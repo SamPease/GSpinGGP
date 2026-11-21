@@ -271,7 +271,7 @@ theorem conj_blockDiagGL_mem_torusBarFbar {d : GGPData F} (x : GSpin d.QW) {κ :
       Matrix (Fin d.m) (Fin d.m) Kb) = Bm := rfl
   rw [coe_specMatFbar, TwistDescent.toMatrix_bc, Units.val_mul, Units.val_mul, coe_blockDiagGL, hBb,
     ← LinearMap.toMatrix'_toLin' (_ * _ * Bm)]
-  congr 1
+  refine congrArg LinearMap.toMatrix' ?_
   refine LinearMap.ext fun v => ?_
   set w := (InnerTwistAux.bcE d.m).symm v
   have hv : InnerTwistAux.bcE d.m w = v := (InnerTwistAux.bcE d.m).apply_symm_apply v

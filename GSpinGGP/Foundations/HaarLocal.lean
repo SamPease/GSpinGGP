@@ -41,7 +41,7 @@ theorem eq_of_isHaarMeasure_of_eqOn_nhds (μ ν : Measure G) [μ.IsHaarMeasure] 
   have htop : μ (interior K) ≠ ⊤ :=
     (measure_mono interior_subset |>.trans_lt hKc.measure_lt_top).ne
   have hK' := h _ isOpen_interior.measurableSet (interior_subset.trans hKU)
-  rw [hc, Measure.smul_apply, ENNReal.smul_def, smul_eq_mul] at hK'
+  rw [hc, smul_apply, ENNReal.smul_def, smul_eq_mul] at hK'
   have h1 := (ENNReal.mul_eq_right h0 htop).mp hK'.symm
   rw [hc, ENNReal.coe_eq_one.mp h1, one_smul]
 

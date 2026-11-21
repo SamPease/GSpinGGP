@@ -101,7 +101,7 @@ theorem isSS_of_isSemisimple_specP_baseChange {Q : QuadraticForm K V} (hQ : IsNo
     intro v
     have h1 := hNι v
     have h2 : c (ι Q v) = cs (ι Q v) := sub_eq_zero.mp h1
-    simp only [c, cs, Module.End.mul_apply, LinearMap.mulLeft_apply,
+    simp only [c, cs, mul_apply_eq_comp, LinearMap.mulLeft_apply,
       LinearMap.mulRight_apply] at h2
     -- `X ι xi = s ι si` ⇒ `si X ι = ι si X`
     have hsis : si * s = 1 := sU.inv_mul

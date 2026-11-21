@@ -40,6 +40,7 @@ noncomputable section
 set_option linter.unusedSectionVars false
 
 open Module QuadraticMap
+open scoped Pointwise
 
 namespace GSpinGGP
 
@@ -157,7 +158,7 @@ theorem exists_bound_fixer_top (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l) :
     have : (Q' : P → F) = fun y : P => ∑ i, (y.1 i) ^ 2 * Q (b i) := funext hQ'
     rw [this]
     exact continuous_finsetSum _ fun i _ =>
-      (((continuous_apply i).comp continuous_subtype_val).pow 2).mul continuous_const
+      (((continuous_apply i).comp continuous_subtypeVal).pow 2).mul continuous_const
   have haniso : QuadraticMap.Anisotropic Q' := fun y hy => by
     have h := hf.anisotropic hb (x := b.equivFun.symm y.1) (fun i hi => by
       rw [hr]; exact y.2 i hi) hy
@@ -260,7 +261,7 @@ theorem orbit_step (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l) {j : ℕ} (hj
     · exact (mul_mem (mul_mem hg (inv_mem hc)) (inv_mem (levelTorus_mem_fixer hb hf j lam))).2 i hi
     · have : i = i₀ := Fin.ext hi
       subst this
-      rw [LinearEquiv.mul_apply, LinearEquiv.mul_apply, hA, ← he]
+      rw [mul_apply_eq_comp, mul_apply_eq_comp, hA, ← he]
       simp
   by_cases hn : j + 2 < n
   · -- the orbit lemma
@@ -336,7 +337,7 @@ theorem multiTorus_cons_apply_left (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν 
       (((t : F) + (t : F)⁻¹) / 2) • b ⟨j, hf.idx_lt (by omega)⟩ +
         (((t : F) - (t : F)⁻¹) / 2) • b ⟨j + 1, hf.idx_lt hj⟩ := by
   have hfix := multiTorus_mem_fixer hb hf ts (j + 2)
-  rw [multiTorus_cons, LinearEquiv.mul_apply, levelTorus_of_le hb hf hj, pairTorus_apply_left,
+  rw [multiTorus_cons, mul_apply_eq_comp, levelTorus_of_le hb hf hj, pairTorus_apply_left,
     map_add, map_smul, map_smul, hfix.2 _ (by simp), hfix.2 _ (by simp)]
 
 omit [IsUltrametricDist F] [LocallyCompactSpace F] in
@@ -392,7 +393,7 @@ theorem norm_param_le (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l) {j : ℕ} 
     refine (basisNorm_add_le _ _).trans (max_le ?_ ?_) <;>
       rw [basisNorm_smul, basisNorm_basis, mul_one] <;> assumption
   have hhw : h w₁ = k (aH w₁) := by
-    simp only [hh, LinearEquiv.mul_apply, hk'1, ha'1]
+    simp only [hh, mul_apply_eq_comp, hk'1, ha'1]
   have hnh1 : basisNorm b (h w₁) ≤ M * (‖(2 : F)‖⁻¹ * ‖(s : F)‖⁻¹) := by
     rw [hhw]
     exact (basisNorm_apply_le _ _).trans (mul_le_mul hkM hnaH (basisNorm_nonneg _) hM)
@@ -410,9 +411,9 @@ theorem norm_param_le (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l) {j : ℕ} 
   have hpair : aH (w₁ + w₂) = (s : F) • (w₁ + w₂) :=
     multiTorus_cons_apply_pair hb hf (j := j + 1) (by omega) s ss
   have e1 : (k'⁻¹ * a'⁻¹) (w₁ + w₂) = (s : F) • h⁻¹ (k (w₁ + w₂)) := by
-    rw [← hid, LinearEquiv.mul_apply, LinearEquiv.mul_apply, hpair, map_smul, map_smul]
+    rw [← hid, mul_apply_eq_comp, mul_apply_eq_comp, hpair, map_smul, map_smul]
   have e2 : (k'⁻¹ * a'⁻¹) w₁ = w₁ := by
-    rw [LinearEquiv.mul_apply, (inv_mem ha'fix).2 _ (by simp), (inv_mem hk').2 _ (by simp)]
+    rw [mul_apply_eq_comp, (inv_mem ha'fix).2 _ (by simp), (inv_mem hk').2 _ (by simp)]
   set x := (k'⁻¹ * a'⁻¹) w₂
   have hx : x = (s : F) • h⁻¹ (k (w₁ + w₂)) - w₁ := by
     rw [← e1, map_add, e2]; abel
@@ -439,7 +440,7 @@ theorem norm_param_le (hb : IsOrthoBasis Q b) (hf : IsFrame Q b ν l) {j : ℕ} 
   -- `a'⁻¹ w₂ = k' x`
   have hk'x : a'⁻¹ w₂ = k' x := by
     change _ = k' ((k'⁻¹ * a'⁻¹) w₂)
-    rw [← LinearEquiv.mul_apply, mul_inv_cancel_left]
+    rw [← mul_apply_eq_comp, mul_inv_cancel_left]
   have hn2 : ‖(lam : F)‖ * basisNorm b (a'⁻¹ w₂) ≤ M * C₀ := by
     rw [hk'x]
     calc ‖(lam : F)‖ * basisNorm b (k' x) ≤ ‖(lam : F)‖ * (M * basisNorm b x) :=

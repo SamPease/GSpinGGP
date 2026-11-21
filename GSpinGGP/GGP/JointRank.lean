@@ -49,7 +49,7 @@ theorem not_commute_wedge_dual {d : ℕ} (hd : 2 ≤ d) (u w : Fin d → V)
       (wedge (bform Q) (u ⟨1, by omega⟩) (w ⟨0, by omega⟩)) := by
   intro h
   have h1 := LinearMap.congr_fun h.eq (u ⟨1, by omega⟩)
-  simp only [Module.End.mul_apply, wedge_apply, map_smul, huu, hwu, Fin.mk.injEq,
+  simp only [mul_apply_eq_comp, wedge_apply, map_smul, huu, hwu, Fin.mk.injEq,
     zero_smul, sub_zero, ite_true, one_smul] at h1
   simp at h1
   exact hu1 h1.symm
@@ -153,7 +153,7 @@ private theorem pow_apply_of_eq_smul {f : Module.End K V} {x : V} {r : K} (hx : 
     (f ^ k) x = r ^ k • x := by
   induction k with
   | zero => simp
-  | succ k ih => rw [pow_succ', Module.End.mul_apply, ih, map_smul, hx, smul_smul, pow_succ]
+  | succ k ih => rw [pow_succ', mul_apply_eq_comp, ih, map_smul, hx, smul_smul, pow_succ]
 
 /-- On a hyperbolic pair of joint eigenvectors, the joint centralizer has no nonzero nilpotent
 element, and the only unipotent isometry commuting with `P` and `N` is `1`. -/
@@ -192,7 +192,7 @@ theorem pair_nilpotent_unipotent :
       linear_combination (mul_eq_zero.1 h').resolve_right huw
     obtain ⟨k, hk⟩ := hnil
     have hsub : (h - 1) u = (a - 1) • u := by
-      rw [LinearMap.sub_apply, ha, Module.End.one_apply, sub_smul, one_smul]
+      rw [LinearMap.sub_apply, ha, one_apply_eq_self, sub_smul, one_smul]
     have := pow_apply_of_eq_smul hsub k
     rw [hk, LinearMap.zero_apply, eq_comm, smul_eq_zero] at this
     have ha1 : a = 1 := by
@@ -204,7 +204,7 @@ theorem pair_nilpotent_unipotent :
       Submodule.mem_span_pair.1 (hspan ▸ Submodule.mem_top)
     refine LinearMap.ext fun x => ?_
     obtain ⟨s, t, rfl⟩ := hmem x
-    rw [map_add, map_smul, map_smul, ha, ha', ha1, ha'1, one_smul, one_smul, Module.End.one_apply]
+    rw [map_add, map_smul, map_smul, ha, ha', ha1, ha'1, one_smul, one_smul, one_apply_eq_self]
 
 end Pieces
 
@@ -254,7 +254,7 @@ theorem commute_of_restrict_inf
   have hc := (hab _ (m A₁ h₁) _ (m A₂ h₂)).eq
   refine LinearMap.ext fun u => Subtype.ext ?_
   have := congrArg (fun F : Module.End K V => F u) hc
-  simpa only [Module.End.mul_apply, sumEnd_left] using this
+  simpa only [mul_apply_eq_comp, sumEnd_left] using this
 
 omit horth in
 /-- An endomorphism preserving `U` and `U'` is determined by its restrictions. -/

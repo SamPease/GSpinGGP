@@ -491,7 +491,7 @@ theorem lieAbelian_specP_baseChange_of_movedPartAbelian {d : GGPData F} (x : ↥
   obtain ⟨u₂, hu₂, h₂⟩ := d.exists_movedCent_lift x Y₂ hs₂ hc₂ hf₂
   have h12 := gspinBC_commute_of_mem hx hu₁ hu₂
   refine LinearMap.ext fun v => ι_injective (d.QW.baseChange (AlgebraicClosure F)) ?_
-  rw [Module.End.mul_apply, Module.End.mul_apply, ← sub_eq_zero, ← h₁, ← h₂, ← h₂, ← h₁]
+  rw [mul_apply_eq_comp, mul_apply_eq_comp, ← sub_eq_zero, ← h₁, ← h₂, ← h₂, ← h₁]
   set A := gspinBC d.QW u₁
   set B := gspinBC d.QW u₂
   have e : A * (B * ι _ v - ι _ v * B) - (B * ι _ v - ι _ v * B) * A -
@@ -620,10 +620,10 @@ theorem exists_movedCent_forall_ne_zero (x : ↥(GSpin d.QW)) {ι : Type*} [Fini
   let p : ι → Submodule F ↥(LinearMap.ker (movedCentMap d.QW x)) := fun k =>
     { carrier := {Z | γ k (d.movedCentAd x Z) = 0}
       add_mem' := fun {Z Z'} hZ hZ' => by
-        simp only [Set.mem_setOf_eq, map_add] at hZ hZ' ⊢; rw [hZ, hZ', add_zero]
-      zero_mem' := by simp only [Set.mem_setOf_eq, map_zero]
+        simp only [Set.mem_ofPred_eq, map_add] at hZ hZ' ⊢; rw [hZ, hZ', add_zero]
+      zero_mem' := by simp only [Set.mem_ofPred_eq, map_zero]
       smul_mem' := fun c Z hZ => by
-        simp only [Set.mem_setOf_eq, map_smul] at hZ ⊢
+        simp only [Set.mem_ofPred_eq, map_smul] at hZ ⊢
         rw [LinearMap.map_smul_of_tower, hZ, smul_zero] }
   have hne : ∀ k, p k ≠ ⊤ := by
     intro k htop

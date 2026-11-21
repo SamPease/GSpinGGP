@@ -380,9 +380,9 @@ theorem continuous_of_bcUnits_eq
         funext fun t => (hΛ t).symm
       rw [show (Units.val ∘ fun t : S₁ => (((f t : S₂) : GSpin Q₂) : (CliffordAlgebra Q₂)ˣ)) =
         Λ ∘ fun t : S₁ => (((t : GSpin Q₁) : (CliffordAlgebra Q₁)ˣ) : CliffordAlgebra Q₁) from this]
-      exact hΛc.comp (Units.continuous_val.comp (continuous_subtype_val.comp continuous_subtype_val))
+      exact hΛc.comp (Units.continuous_val.comp (continuous_subtypeVal.comp continuous_subtypeVal))
     · refine (hΛc.comp (Units.continuous_val.comp
-        (continuous_subtype_val.comp (continuous_subtype_val.comp continuous_inv)))).congr ?_
+        (continuous_subtypeVal.comp (continuous_subtypeVal.comp continuous_inv)))).congr ?_
       intro t
       simp only [Function.comp_apply]
       rw [hΛ, map_inv]
@@ -437,7 +437,7 @@ theorem aeval_mulLeft {A : Type*} [Ring A] [Algebra F A] (a : A) (p : F[X]) :
     ext z; simp [add_mul]
   | monomial n c =>
     ext z
-    simp only [Polynomial.aeval_monomial, Module.End.mul_apply, Module.algebraMap_end_apply,
+    simp only [Polynomial.aeval_monomial, mul_apply_eq_comp, Module.algebraMap_end_apply,
       LinearMap.pow_mulLeft, LinearMap.mulLeft_apply]
     rw [Algebra.smul_def, mul_assoc]
 
@@ -565,7 +565,7 @@ theorem torusSub_eq_of_psiU (hg : g ∈ GSpin (Q₂.baseChange (AlgebraicClosure
   ext a
   simp only [torusSub, Subgroup.mem_inf, Subgroup.mem_centralizer_singleton_iff,
     fixedSub_eq_of_psiU hg hy hs hE]
-  rw [show a * s = s * a ↔ a * y = y * a from commute_iff_of_psiU hg hy hs hc a]
+  rw [show Commute a s ↔ Commute a y from commute_iff_of_psiU hg hy hs hc a]
 
 end Regular
 

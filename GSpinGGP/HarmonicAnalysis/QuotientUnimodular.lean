@@ -58,7 +58,7 @@ theorem isMulRightInvariant_haar_quotient_of_le_center (A : Subgroup B) [A.Norma
   have hFint : ∫ c, F c ∂μC = ∫ x, f x ∂ν := by
     rw [TopologicalGroup.IsSES.integral_inducedMeasure]; rfl
   have hpos : 0 < ∫ x, f x ∂ν :=
-    f₀.continuous.integral_pos_of_hasCompactSupport_nonneg_nonzero f₀_comp f₀_nonneg f₀_one
+    f₀.continuous.integral_pos_of_hasCompactSupport_nonneg_ne_zero f₀_comp f₀_nonneg f₀_one
   refine ⟨fun g => ?_⟩
   obtain ⟨b, rfl⟩ := QuotientGroup.mk_surjective g
   -- the right translate of `f` by `b`

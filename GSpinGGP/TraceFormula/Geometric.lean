@@ -307,7 +307,7 @@ theorem exists_compact_diag_gammaTorus (T : d.GammaTorus) :
     d.continuous_pair.comp (continuous_id.prodMk d.continuous_incl)
   let φ : ↥T.1 → d.GmodAG := fun t => QuotientGroup.mk (d.diag (t : ↥(GSpin d.QW)))
   have hφ : Continuous φ :=
-    QuotientGroup.continuous_mk.comp (hdiag.comp continuous_subtype_val)
+    QuotientGroup.continuous_mk.comp (hdiag.comp continuous_subtypeVal)
   have hφr : ∀ t s : ↥T.1, (QuotientGroup.leftRel (d.scalarsIn T.1)) t s → φ t = φ s := by
     intro t s hts
     rw [QuotientGroup.leftRel_apply] at hts

@@ -54,8 +54,8 @@ theorem specP_mem_commonFixed_map_conj {T : Subgroup ↥(GSpin d.QW)} (g : ↥(G
   have h := LinearMap.mem_ker.mp ((Submodule.mem_iInf _).mp hw ⟨t, ht⟩)
   have h' : specP d.QW t w = w := by simpa [sub_eq_zero] using h
   have e : specP d.QW (g * t * g⁻¹) (specP d.QW g w) = specP d.QW g w := by
-    rw [map_mul, LinearEquiv.mul_apply, show specP d.QW g⁻¹ (specP d.QW g w) = w by simp, map_mul,
-      LinearEquiv.mul_apply, h']
+    rw [map_mul, mul_apply_eq_comp, show specP d.QW g⁻¹ (specP d.QW g w) = w by simp, map_mul,
+      mul_apply_eq_comp, h']
   refine LinearMap.mem_ker.mpr ?_
   simp only [MulEquiv.coe_toMonoidHom, MulAut.conj_apply, LinearMap.sub_apply, LinearMap.id_coe,
     id_eq, LinearEquiv.coe_coe]

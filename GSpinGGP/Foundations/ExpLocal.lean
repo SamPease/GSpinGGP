@@ -182,7 +182,7 @@ lemma exists_nhds_expA_sub_expA_mem (I : Submodule F A) :
   obtain ⟨U, hU, h⟩ := expA_hasSum F (A := A)
   refine ⟨U, hU, fun X hX Y hY hI => ?_⟩
   have hs := ((h Y hY).sub (h X hX)).tendsto_sum_nat
-  refine I.closed_of_finiteDimensional.mem_of_tendsto hs (Eventually.of_forall fun n => ?_)
+  refine I.isClosed_of_finiteDimensional.mem_of_tendsto hs (Eventually.of_forall fun n => ?_)
   refine I.sum_mem fun k _ => ?_
   rw [← smul_sub]
   exact I.smul_mem _ (hI k)
@@ -378,7 +378,7 @@ theorem eventually_isAdjointPair_neg_of_isOrthogonal_expA
     change B ((expA F (j Y)).1 u) v = B u ((MulOpposite.unop (expA F (j Y)).2) v)
     rw [e1, e2]
     have hv : expA F Y (expA F (-Y) v) = v := by
-      rw [← Module.End.mul_apply, hinv Y hYi, Module.End.one_apply]
+      rw [← mul_apply_eq_comp, hinv Y hYi, one_apply_eq_self]
     conv_lhs => rw [← hv]
     exact horth u _
   exact hmem (j Y) hYV _ hP

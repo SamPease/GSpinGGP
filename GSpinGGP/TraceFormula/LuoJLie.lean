@@ -331,7 +331,7 @@ theorem exists_continuousMulEquiv_HmodAGH (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsH
   have hfemb : IsEmbedding f :=
     (e.toHomeomorph.isClosedEmbedding.comp d.isClosedEmbedding_toGmodAG).isEmbedding
   have hφc : Continuous φ := continuous_induced_rng.2 hfemb.continuous
-  have hφemb : IsEmbedding φ := IsEmbedding.of_comp hφc continuous_subtype_val hfemb
+  have hφemb : IsEmbedding φ := IsEmbedding.of_comp hφc continuous_subtypeVal hfemb
   have hsurj : Function.Surjective φ := by
     intro u
     obtain ⟨g, hg, hgu⟩ := d.exists_mem_H_toGbarU_eq (u := ((u : ↥d.luoOf.Gbar) : d.luoOf.Ambˣ))

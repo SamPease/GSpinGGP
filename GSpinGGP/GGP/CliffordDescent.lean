@@ -52,8 +52,8 @@ theorem nonempty_isometryEquiv_of_cliffordAlgEquiv {m : ℕ} {Q₁ Q₂ : Quadra
       have := CliffordAlgebra.isCentral_of_even_finrank hn₂ hm'
       have := CliffordAlgebra.isSimpleRing_of_even_finrank hn₂ hm'
       let A : CSA F := ⟨AlgCat.of F (CliffordAlgebra Q₂)⟩
-      rw [RegularFormClass.cliffordInvariant_formClass_of_even Q₁ hn₁ hm' A e,
-        RegularFormClass.cliffordInvariant_formClass_of_even Q₂ hn₂ hm' A AlgEquiv.refl]
+      rw [RegularFormClass.cliffordInvariant_formClass_eq_mk Q₁ hn₁ A e,
+        RegularFormClass.cliffordInvariant_formClass_eq_mk Q₂ hn₂ A AlgEquiv.refl]
     · have hm' : Odd (finrank F (Fin m → F)) := by rwa [finrank_fin_fun]
       have := CliffordAlgebra.isCentral_even_of_odd_finrank hn₂ hm'
       have := CliffordAlgebra.isSimpleRing_even_of_odd_finrank hn₂ hm'

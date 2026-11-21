@@ -245,7 +245,7 @@ theorem det_galIso_trans_specPIso [FiniteDimensional F V₁] [FiniteDimensional 
     refine LinearMap.ext fun w => ?_
     change (e.trans (specPIso g)).symm (galV σ (specP _ g (e (galV σ⁻¹ w)))) =
       e.symm (specP _ (g⁻¹ * galGS Q₂ σ g) (e (e.symm (galV σ (e (galV σ⁻¹ w))))))
-    rw [e.apply_symm_apply, map_mul, LinearEquiv.mul_apply, ← specP_galGS]
+    rw [e.apply_symm_apply, map_mul, mul_apply_eq_comp, ← specP_galGS]
     change e.symm (specP _ g⁻¹ _) = _
     rfl
   have hc : LinearMap.det ((e.symm.toLinearEquiv : (Kb ⊗[F] V₂) →ₗ[Kb] _) ∘ₗ M ∘ₗ

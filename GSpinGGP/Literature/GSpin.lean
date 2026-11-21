@@ -222,7 +222,7 @@ theorem specP_gspinPair (Q : QuadraticForm K V) {u w : V} (hu : Q u ≠ 0) (hw :
     show ι Q u * ι Q w * ι Q v * (ι Q w * ι Q u) = ι Q u * (ι Q w * ι Q v * ι Q w) * ι Q u by
       simp only [mul_assoc], ι_mul_ι_mul_ι, ι_mul_ι_mul_ι, ← map_smul]
   congr 1
-  simp only [Module.End.mul_apply, quadReflection_apply, QuadraticMap.polar_sub_right,
+  simp only [mul_apply_eq_comp, quadReflection_apply, QuadraticMap.polar_sub_right,
     QuadraticMap.polar_smul_right, smul_eq_mul]
   match_scalars <;> (field_simp; try ring)
 
@@ -285,7 +285,7 @@ theorem mapsTo_fixedSub_of_commute {Q : QuadraticForm K V} {x g : GSpin Q}
   simp only [fixedSub, LinearMap.mem_ker, LinearMap.sub_apply, LinearMap.id_apply,
     sub_eq_zero] at hv ⊢
   have := congrArg (fun e : V ≃ₗ[K] V => e v) h.eq
-  simp only [LinearEquiv.mul_apply] at this
+  simp only [mul_apply_eq_comp] at this
   simp only [LinearEquiv.coe_coe] at hv ⊢
   rw [← this, hv]
 
@@ -297,7 +297,7 @@ theorem mapsTo_negFixedSub_of_commute {Q : QuadraticForm K V} {x g : GSpin Q}
   simp only [negFixedSub, LinearMap.mem_ker, LinearMap.add_apply, LinearMap.id_apply,
     add_eq_zero_iff_eq_neg] at hv ⊢
   have := congrArg (fun e : V ≃ₗ[K] V => e v) h.eq
-  simp only [LinearEquiv.mul_apply] at this
+  simp only [mul_apply_eq_comp] at this
   simp only [LinearEquiv.coe_coe] at hv ⊢
   rw [← this, hv, map_neg]
 

@@ -209,7 +209,7 @@ theorem setLIntegral_smul_set (μ : Measure V) [μ.IsAddHaarMeasure] {c : F} (hc
   let e : V ≃ᵐ V := MeasurableEquiv.smul₀ c hc
   have hmap : μ.map e = ENNReal.ofReal (absF c⁻¹ ^ d) • μ := by
     ext A hA
-    rw [Measure.map_apply e.measurable hA, Measure.smul_apply, smul_eq_mul]
+    rw [Measure.map_apply e.measurable hA, smul_apply, smul_eq_mul]
     have : (e : V → V) ⁻¹' A = c⁻¹ • A := preimage_smul₀ hc A
     rw [this, addHaar_smul_absF μ (inv_ne_zero hc)]
   have hcS : MeasurableSet (c • S) := hS.const_smul₀ c
@@ -273,7 +273,7 @@ theorem locallyIntegrable_of_homogeneous (μ : Measure V) [μ.IsAddHaarMeasure] 
     rw [setLIntegral_smul_set μ hk _ hRm]
     have : ∀ y, ‖f (ϖ ^ k • y)‖ₑ = ENNReal.ofReal (absF (ϖ ^ k) ^ κ) * ‖f y‖ₑ := by
       intro y
-      rw [hhom _ hk, enorm_mul, Real.enorm_of_nonneg (Real.rpow_nonneg (absF_nonneg _) _)]
+      rw [hhom _ hk, eNorm_mul, Real.eNorm_of_nonneg (Real.rpow_nonneg (absF_nonneg _) _)]
     simp_rw [this]
     rw [lintegral_const_mul' _ _ ENNReal.ofReal_ne_top, ← mul_assoc,
       ← ENNReal.ofReal_mul (pow_nonneg (absF_nonneg _) _), ← ENNReal.ofReal_pow hρ0]
@@ -700,7 +700,7 @@ theorem integrable_of_chart {Q : Type*} [Group Q] [TopologicalSpace Q] [IsTopolo
       show ∫⁻ y in O, ‖f y‖ₑ ∂ν < ∞
       have hm : Measurable fun X => q₀ * Φ' X := (measurable_const_mul q₀).comp hΦ'm
       have hae : AEMeasurable (fun y => ‖f y‖ₑ) ((μ.restrict W).map fun X => q₀ * Φ' X) := by
-        rw [hmap]; exact hf.restrict.enorm
+        rw [hmap]; exact hf.restrict.eNorm
       rw [← hmap, lintegral_map' hae hm.aemeasurable]
       have hW0 : IntegrableOn g W μ := hint.mono_set (hWW₀.trans inter_subset_left)
       calc ∫⁻ X in W, ‖f (q₀ * Φ' X)‖ₑ ∂μ ≤ ∫⁻ X in W, ‖g X‖ₑ ∂μ := by

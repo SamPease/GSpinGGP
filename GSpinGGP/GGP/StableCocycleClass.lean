@@ -146,7 +146,7 @@ theorem IsStableIso.rel {τ : InnerTwist d.QW} {x : GSpin d.QW} (hx : d.IsGammaE
     have h1 : Commute (bcGSpin d.QW kr) (bcGSpin d.QW x) := hkrx.map (bcGSpin d.QW)
     have h2 : Commute s (bcGSpin d.QW x) := hsdef ▸ h1.inv_left.mul_left hk₀x
     refine ⟨congrArg Subtype.val h2.eq, fun w hw => ?_⟩
-    rw [← hsdef, map_mul, LinearEquiv.mul_apply, hk₀w, hcw w hw, map_inv]
+    rw [← hsdef, map_mul, mul_apply_eq_comp, hk₀w, hcw w hw, map_inv]
     exact (specP _ (bcGSpin d.QW kr)).symm_apply_apply w
   -- the cocycle identity
   obtain ⟨M, hMdef⟩ : ∃ M, specMatFbar d.QW (bcGSpin d.QW kr) = M := ⟨_, rfl⟩

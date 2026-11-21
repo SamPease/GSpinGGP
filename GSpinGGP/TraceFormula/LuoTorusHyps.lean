@@ -324,9 +324,9 @@ theorem cTheta_unitConj_diagU (hQV : IsNondeg L.QV) (ψ : NontrivialAddChar F) {
     ext v
     rw [LinearMap.mem_ker, Submodule.mem_map]
     have hpp : ∀ w, (p : Module.End F L.W) (((p⁻¹ : (Module.End F L.W)ˣ) : Module.End F L.W) w) = w :=
-      fun w => by rw [← Module.End.mul_apply, Units.mul_inv, Module.End.one_apply]
+      fun w => by rw [← mul_apply_eq_comp, Units.mul_inv, one_apply_eq_self]
     have hpp' : ∀ w, ((p⁻¹ : (Module.End F L.W)ˣ) : Module.End F L.W) ((p : Module.End F L.W) w) = w :=
-      fun w => by rw [← Module.End.mul_apply, Units.inv_mul, Module.End.one_apply]
+      fun w => by rw [← mul_apply_eq_comp, Units.inv_mul, one_apply_eq_self]
     change (p : Module.End F L.W) (L.fstA M (((p⁻¹ : (Module.End F L.W)ˣ) : Module.End F L.W) v)) = 0
       ↔ _
     constructor
@@ -545,12 +545,12 @@ theorem commClause_iff_squarefree {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
   -- commuting with `A` preserves `R`
   have hmapsR : ∀ {g : Module.End F (Fin d.m → F)}, g * A = A * g → ∀ v ∈ R, g v ∈ R := by
     rintro g hg _ ⟨v, rfl⟩
-    exact ⟨g v, by rw [← Module.End.mul_apply, ← hg, Module.End.mul_apply]⟩
+    exact ⟨g v, by rw [← mul_apply_eq_comp, ← hg, mul_apply_eq_comp]⟩
   have hcommR : ∀ {g : Module.End F (Fin d.m → F)} (hg : g * A = A * g),
       Commute A₀ (g.restrict (hmapsR hg)) := fun {g} hg =>
     LinearMap.ext fun v => Subtype.ext (by
       change A (g v) = g (A v)
-      rw [← Module.End.mul_apply, ← hg, Module.End.mul_apply])
+      rw [← mul_apply_eq_comp, ← hg, mul_apply_eq_comp])
   constructor
   · -- `⇒`
     intro hcl
@@ -608,10 +608,10 @@ theorem commClause_iff_squarefree {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
       obtain ⟨Z, hZs, hadZ⟩ := GSpinGGP.exists_mem_soSub_adV_eq d.nondeg _ hsk
       have hSA : ext S * A = A * ext S := LinearMap.ext fun v => by
         obtain ⟨k, hk, r, hr, rfl⟩ := hdecomp v
-        rw [Module.End.mul_apply, Module.End.mul_apply, map_add, LinearMap.mem_ker.mp hk, zero_add,
+        rw [mul_apply_eq_comp, mul_apply_eq_comp, map_add, LinearMap.mem_ker.mp hk, zero_add,
           hextr S _ (hRA r hr), hext S k r hk hr]
         have := congrArg Subtype.val (LinearMap.congr_fun hSc.eq ⟨r, hr⟩)
-        simp only [Module.End.mul_apply] at this
+        simp only [mul_apply_eq_comp] at this
         exact this.symm
       refine ⟨Z, hZs, hadZ, hcl Z hZs ?_ fun w hw => ?_⟩
       · have hmem : Z * X - X * Z ∈ soSub d.QW := by
@@ -632,9 +632,9 @@ theorem commClause_iff_squarefree {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
       rw [hY₁a, hY₂a] at h'
       refine LinearMap.ext fun r => Subtype.ext ?_
       have := LinearMap.congr_fun h' (r : Fin d.m → F)
-      simp only [Module.End.mul_apply] at this
+      simp only [mul_apply_eq_comp] at this
       rw [hextr S₂ r r.2, hextr S₁ r r.2, hextr S₁ _ (S₂ r).2, hextr S₂ _ (S₁ r).2] at this
-      simpa only [Module.End.mul_apply] using this
+      simpa only [mul_apply_eq_comp] using this
     have hcommR := fun g g' (hg : Commute A₀ g) (hg' : Commute A₀ g') =>
       commute_of_commute_of_isSkewAdjoint two_ne_zero hBRsymm hBRnd hA₀sk hA₀inj hskewR hg hg'
     exact squarefree_charpoly_of_commute hss₀ hcommR
@@ -655,8 +655,8 @@ theorem commClause_iff_squarefree {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x)
       exact (d.mem_fixedSub_iff).mp this
     have hBk : adV d.QW Y k = 0 := hYf k hkT
     have hr' := congrArg Subtype.val (LinearMap.congr_fun hPB.eq ⟨r, hr⟩)
-    simp only [Module.End.mul_apply, LinearMap.restrict_apply] at hr'
-    simp only [Module.End.mul_apply, map_add]
+    simp only [mul_apply_eq_comp, LinearMap.restrict_apply] at hr'
+    simp only [mul_apply_eq_comp, map_add]
     erw [hPk, hBk]
     simp only [map_zero, zero_add]
     exact hr'

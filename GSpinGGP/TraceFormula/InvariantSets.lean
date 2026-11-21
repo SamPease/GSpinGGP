@@ -60,7 +60,7 @@ theorem isCompact_AG_inter_hcG_mem {R : Set HCVal} (hR : R.Finite) :
     · rintro ⟨hg, hgR⟩; exact ⟨⟨g, hg⟩, hgR, rfl⟩
     · rintro ⟨a, ha, rfl⟩; exact ⟨a.2, ha⟩
   rw [e]
-  exact (d.isCompact_preimage_hcA hR).image continuous_subtype_val
+  exact (d.isCompact_preimage_hcA hR).image continuous_subtypeVal
 
 /-- **`A_G(F)`-saturation preserves closedness** for a closed set `Ω₀` contained in the conjugates of
 a compact `K`: near any point, `H_G` (locally constant, conjugation invariant) confines the
@@ -123,7 +123,7 @@ theorem isClosed_of_subset_lie {ω : Set d.ambient} (hωlie : ω ⊆ d.lie)
   haveI := isTopologicalRing_of_moduleTopology F d.ambient
   haveI : ContinuousSMul F d.ambient := IsModuleTopology.toContinuousSMul F d.ambient
   have hlie : IsClosed (d.lie : Set d.ambient) :=
-    Submodule.closed_of_finiteDimensional (LieSubalgebra.toSubmodule d.lie)
+    Submodule.isClosed_of_finiteDimensional (LieSubalgebra.toSubmodule d.lie)
   have := hωc.trans hlie
   convert this using 1
   ext X
@@ -154,7 +154,7 @@ theorem exists_compact_conj_of_expHomeo (hωlie : ω ⊆ d.lie)
   have hωcl : IsClosed ω := isClosed_of_subset_lie d hωlie hωc
   refine ⟨Subtype.val '' (e '' {X : ↥ω | (X : d.ambient) ∈ Γ}),
     ((hωcl.isClosedEmbedding_subtypeVal.isCompact_preimage hΓ).image e.continuous).image
-      continuous_subtype_val, fun g hg => ?_⟩
+      continuous_subtypeVal, fun g hg => ?_⟩
   set X := e.symm ⟨g, hg⟩
   obtain ⟨h, Y, hY, hXY⟩ := hωΓ X X.2
   have hYω : Y ∈ ω := by

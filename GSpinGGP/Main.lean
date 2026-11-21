@@ -239,7 +239,7 @@ theorem isSS_scalar (c : Fˣ) :
 /-- `T_1 = {g ∈ GSpin(W) | P(g) = 1}` (`= A_{G,H}` by `ker_specP`). -/
 theorem mem_torusOf_one_iff (g : ↥(GSpin d.QW)) : g ∈ d.torusOf 1 ↔ specP d.QW g = 1 := by
   rw [GGPData.torusOf, Subgroup.mem_inf, Subgroup.mem_centralizer_singleton_iff]
-  simp only [one_mul, mul_one, true_and]
+  simp only [Commute.one_right, true_and]
   constructor
   · intro h
     refine LinearEquiv.ext fun w => ?_
@@ -254,8 +254,9 @@ theorem torusOf_eq_one_of_central (t : ↥(GSpin d.QW)) (ht : IsCentralW d t) :
   ext g
   rw [GGPData.torusOf, GGPData.torusOf, Subgroup.mem_inf, Subgroup.mem_inf,
     Subgroup.mem_centralizer_singleton_iff, Subgroup.mem_centralizer_singleton_iff,
-    fixedSub_scalar, fixedSub_one_eq_top, one_mul, mul_one]
-  exact and_congr_left fun _ => iff_of_true (scalarGSpin_commute d.QW c g).eq.symm rfl
+    fixedSub_scalar, fixedSub_one_eq_top]
+  exact and_congr_left fun _ =>
+    iff_of_true (scalarGSpin_commute d.QW c g).symm (Commute.one_right g)
 
 /-- `1 ∈ Γ(G,H)`: `T_1 = F^×` (by `ker_specP`) is commutative and `T_1/A_{G,H}` is a point. -/
 theorem isGammaElt_one : d.IsGammaElt 1 := by
@@ -410,7 +411,7 @@ theorem weylDisc_of_central (𝔤 : LieSubalgebra F d.ambient) (x : d.ambientˣ)
   rw [dite_eq_left hst]
   have h0 : (1 - (conjAd F x).toLinearEquiv.toLinearMap.restrict hst) = 0 := by
     refine LinearMap.ext fun X => Subtype.ext ?_
-    simp only [LinearMap.sub_apply, Module.End.one_apply, Submodule.coe_sub,
+    simp only [LinearMap.sub_apply, one_apply_eq_self, Submodule.coe_sub,
       LinearMap.zero_apply, Submodule.coe_zero]
     exact sub_eq_zero.2 (hid X).symm
   have htc : ∀ n : ℕ, (Polynomial.X ^ n : Polynomial F).trailingCoeff = 1 := fun n => by
@@ -927,7 +928,7 @@ theorem gspinProdBC_oneSubAd (d : GGPData F) (t : ↥d.G)
   induction u using TensorProduct.inductionOn with
   | tmul z X =>
     rw [LinearMap.baseChange_tmul, gspinProdBC_tmul, gspinProdBC_tmul]
-    simp only [adPair, LinearMap.sub_apply, Module.End.one_apply, Submodule.coe_sub,
+    simp only [adPair, LinearMap.sub_apply, one_apply_eq_self, Submodule.coe_sub,
       Prod.fst_sub, Prod.snd_sub, TensorProduct.tmul_sub, map_sub, Prod.mk_sub_mk]
     refine Prod.ext ?_ ?_ <;> dsimp only <;> congr 1
     · exact ofBaseChange_tmul_mul3 d.QW z _ (X : d.ambient).1 _
@@ -2406,7 +2407,7 @@ theorem torusClass_count (hqs : d.IsQuasiSplit) (IF : InnerFormSystem d) (α : I
         have hex' : ∃ x : ↥(GSpin d.QW), d.IsGammaElt x ∧
             d.StronglyStablyConjW (IF.twist α) x (gammaGen (IF.data α) c') := ⟨t, hT'.1, hts⟩
         unfold stableLift
-        rw [dif_pos hex']
+        rw [dite_eq_left hex']
         obtain ⟨h1, h2⟩ := hex'.choose_spec
         rw [hf α _ _ t hg'.1 h1 hT'.1 h2 hts, hT'.2, (hgen c).2]
       -- `N(c) = S` for every `c` meeting `c'`
@@ -2417,7 +2418,7 @@ theorem torusClass_count (hqs : d.IsQuasiSplit) (IF : InnerFormSystem d) (α : I
           rw [if_congr (GGPData.meets_refl_iff hTα (hgen c).1 (hgen c₂).1 (hgen c₂).2 hc) rfl rfl]
       have hS : S ≠ 0 := by
         refine (Finset.sum_pos' (fun c₂ _ => by positivity) ⟨c₀, Finset.mem_univ _, ?_⟩).ne'
-        rw [if_pos hc₀]
+        rw [ite_eq_left hc₀]
         have := GGPData.weylCardOf_pos (hgen c₀).1
         rw [(hgen c₀).2] at this
         exact div_pos one_pos (by exact_mod_cast this)
@@ -2436,17 +2437,17 @@ theorem torusClass_count (hqs : d.IsQuasiSplit) (IF : InnerFormSystem d) (α : I
           split_ifs with hc
           · rw [hN c hc, hf_eq c hc, ← hsum]; ring
           · simp
-    · push_neg at hex
+    · push Not at hex
       have h0 : stableLift IF α f c' = 0 := by
         unfold stableLift
-        rw [dif_neg]
+        rw [dite_eq_right]
         rintro ⟨x, hx, hxy⟩
         have hm : GGPData.Meets (IF.twist α) x c' := ⟨_, ⟨hg'.1, hxy⟩, hg'.2⟩
         obtain ⟨g, hΓ1, hT1⟩ := GGPData.exists_conj_torusOf_eq_out hx rfl
         exact hex _ (GGPData.meets_of_torusOf_eq hTα hΓ1 (hgen _).1 ((hgen _).2.trans hT1.symm)
           (GGPData.meets_conj g hm))
       rw [h0]
-      exact (Finset.sum_eq_zero fun c _ => if_neg (hex c)).symm
+      exact (Finset.sum_eq_zero fun c _ => ite_eq_right (hex c)).symm
   -- regroup
   rw [tsum_fintype, tsum_fintype]
   simp_rw [hratio, hper, Finset.mul_sum]

@@ -55,7 +55,7 @@ lemma locallyCompactSpace_lie (𝔤 : LieSubalgebra F A) : LocallyCompactSpace �
   haveI := isTopologicalRing_of_moduleTopology F A
   haveI := locallyCompactSpace_of_moduleTopology F A
   haveI : ContinuousSMul F A := IsModuleTopology.toContinuousSMul F A
-  have hcl : IsClosed (𝔤.toSubmodule : Set A) := Submodule.closed_of_finiteDimensional _
+  have hcl : IsClosed (𝔤.toSubmodule : Set A) := Submodule.isClosed_of_finiteDimensional _
   exact hcl.locallyCompactSpace
 
 /-- The trace form `b(X,Y) = tr(L_{XY})` of a GGP datum is symmetric

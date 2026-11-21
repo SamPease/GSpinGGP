@@ -495,7 +495,7 @@ theorem IsWeilMeasure.isFiniteMeasureOnCompacts {S Γ : Type*}
     obtain ⟨γ, hγ, -⟩ := hKK' hq₀; exact ⟨γ, hγ, trivial⟩
   obtain ⟨γ₀, hγ₀, -⟩ := hγ₀
   have hpos : 0 < ∫ x, φ x ∂ν := by
-    refine φ.continuous.integral_pos_of_hasCompactSupport_nonneg_nonzero hφc
+    refine φ.continuous.integral_pos_of_hasCompactSupport_nonneg_ne_zero hφc
       (fun x => (hφ01 x).1) (x := γ₀) ?_
     rw [hφ1 ⟨1, mem_of_mem_nhds hV1, γ₀, hγ₀, one_mul γ₀⟩]; exact one_ne_zero
   have hF : Integrable Fq m := by

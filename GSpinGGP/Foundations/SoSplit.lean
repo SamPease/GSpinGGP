@@ -70,7 +70,7 @@ theorem sumEnd_mem_soCent (h : IsCompl U U') (hXU : Set.MapsTo X U U) (hXU' : Se
       congrArg (fun F : Module.End K U => (F a : V)) hA.2
     have h2 : (A' (X.restrict hXU' a') : V) = X (A' a') :=
       congrArg (fun F : Module.End K U' => (F a' : V)) hA'.2
-    simp only [Module.End.mul_apply]
+    simp only [mul_apply_eq_comp]
     rw [LinearMap.map_add X, e1, e2, LinearMap.map_add (sumEnd h A A'), sumEnd_left, sumEnd_right,
       h1, h2, LinearMap.map_add (sumEnd h A A'), sumEnd_left, sumEnd_right, LinearMap.map_add]
 
@@ -180,7 +180,7 @@ theorem commute_of_restrict (h : IsCompl U U') (hXU : Set.MapsTo X U U)
     (sumEnd_mem_soCent horth h hXU hXU' h₂ z)).eq
   refine LinearMap.ext fun u => Subtype.ext ?_
   have := congrArg (fun F : Module.End K V => F u) hc
-  simpa only [Module.End.mul_apply, sumEnd_left] using this
+  simpa only [mul_apply_eq_comp, sumEnd_left] using this
 
 end Split
 
@@ -240,7 +240,7 @@ theorem exists_lieCentralizer_fixed_swap {Q : QuadraticForm K V} (hQ : IsNondeg 
   have hNmem : (adV Q Y).restrict hNB ∈ soCent (Q.comp ((bform Q).orthogonal (fixedSub y)).subtype)
       ((specP Q y : Module.End K V).restrict hgB) := by
     refine mem_soCent.2 ⟨fun u w => ?_, LinearMap.ext fun b => Subtype.ext ?_⟩
-    · simp only [bform_comp_subtype, LinearMap.restrict_coe_apply]; exact hNs _ _
+    · simp only [bform_comp_subtype, LinearMap.coe_restrict_apply]; exact hNs _ _
     · exact congrArg (fun T : Module.End K V => T (b : V)) hNg
   set N' := sumEnd hc M ((adV Q Y).restrict hNB)
   obtain ⟨Y', hY'm, hY'⟩ := exists_mem_lieCentralizer_adV_eq hQ y
@@ -248,7 +248,7 @@ theorem exists_lieCentralizer_fixed_swap {Q : QuadraticForm K V} (hQ : IsNondeg 
   obtain ⟨h1, e1⟩ := finrank_lieCentralizer_fixed hQ y hc hY'm
   obtain ⟨h0, e0⟩ := finrank_lieCentralizer_fixed hQ y hc hY
   have hres : (adV Q Y').restrict h1 = M := by
-    ext a; simp only [LinearMap.restrict_coe_apply, hY', N', sumEnd_left]
+    ext a; simp only [LinearMap.coe_restrict_apply, hY', N', sumEnd_left]
   have hkill : soCent Q (specP Q y : Module.End K V) ⊓ soCent Q (adV Q Y') ⊓ killSub (fixedSub y) =
       soCent Q (specP Q y : Module.End K V) ⊓ soCent Q (adV Q Y) ⊓ killSub (fixedSub y) :=
     soCent_inf_killSub_congr hc (fun a ha => h1 a ha) (fun a ha => h a ha) fun b hb => by
@@ -272,8 +272,8 @@ theorem sumEnd_mul (h : IsCompl U U') (A C : Module.End K U) (A' C' : Module.End
     sumEnd h A A' * sumEnd h C C' = sumEnd h (A * C) (A' * C') := by
   symm
   refine LinearMap.ofIsCompl_eq h (fun u => ?_) (fun u => ?_)
-  · simp [Module.End.mul_apply, sumEnd_left]
-  · simp [Module.End.mul_apply, sumEnd_right]
+  · simp [mul_apply_eq_comp, sumEnd_left]
+  · simp [mul_apply_eq_comp, sumEnd_right]
 
 theorem sumEnd_one (h : IsCompl U U') : sumEnd h (1 : Module.End K U) 1 = 1 :=
   LinearMap.ofIsCompl_eq h (fun _ => rfl) (fun _ => rfl)
@@ -320,7 +320,7 @@ theorem exists_killPart {Q : QuadraticForm K V} {E N : Module.End K V}
     simp only [SetLike.mem_coe, A, LinearMap.mem_ker] at ha ⊢; rw [ha, map_zero]
   have hNA : Set.MapsTo N A A := fun a ha => by
     simp only [SetLike.mem_coe, A, LinearMap.mem_ker] at ha ⊢
-    rw [← Module.End.mul_apply, ← hNE, Module.End.mul_apply, ha, map_zero]
+    rw [← mul_apply_eq_comp, ← hNE, mul_apply_eq_comp, ha, map_zero]
   have hEB := mapsTo_orthogonal_of_skew hE hEA
   have hNB := mapsTo_orthogonal_of_skew hN hNA
   have hNmem : N ∈ soCent Q E := mem_soCent.2 ⟨hN, hNE⟩

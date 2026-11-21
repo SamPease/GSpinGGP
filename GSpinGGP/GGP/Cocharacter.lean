@@ -195,10 +195,10 @@ theorem exists_flagSplitting (hQ : IsNondeg Q) (F : IsotropicFlag Q) :
         simp only [f, map_sub, map_smul, map_sum, smul_eq_mul]
       rw [this]
       simp only [hf'z, hcoord_e, mul_ite, mul_one, mul_zero, Finset.sum_ite_eq', Finset.mem_univ,
-        if_true]
+        ite_true]
       rw [hsymm (f' i) (f' j)]
     rw [h1, h3]
-    simp only [h2, mul_ite, mul_one, mul_zero, Finset.sum_ite_eq', Finset.mem_univ, if_true]
+    simp only [h2, mul_ite, mul_one, mul_zero, Finset.sum_ite_eq', Finset.mem_univ, ite_true]
     rw [hsymm (f' j) (f' i)]
     have : (⅟2 : K) + ⅟2 = 1 := by rw [← two_mul, mul_invOf_self]
     linear_combination (-(bform Q (f' i) (f' j))) * this
@@ -234,14 +234,14 @@ theorem exists_flagSplitting (hQ : IsNondeg Q) (F : IsotropicFlag Q) :
       have h := hpair (e j)
       simp only [Fintype.sum_sum_type, c, hBZ (e j).2 (e _).2, hef, (hX.1 (bX _).2).1, mul_zero,
         Finset.sum_const_zero, zero_add, add_zero, mul_ite, mul_one, Finset.sum_ite_eq, Finset.sum_ite_eq',
-        Finset.mem_univ, if_true] at h
+        Finset.mem_univ, ite_true] at h
       exact h
     have hB : ∀ j, g (Sum.inl j) = 0 := by
       intro j
       have h := hpair (f j)
       simp only [Fintype.sum_sum_type, c, hfe, hff, (hX.1 (bX _).2).2, mul_zero,
         Finset.sum_const_zero, zero_add, add_zero, mul_ite, mul_one, Finset.sum_ite_eq, Finset.sum_ite_eq',
-        Finset.mem_univ, if_true] at h
+        Finset.mem_univ, ite_true] at h
       exact h
     have hC : ∀ k, g (Sum.inr (Sum.inr k)) = 0 := by
       have h0 : ∑ k, g (Sum.inr (Sum.inr k)) • ((bX k : X) : V) = 0 := by
@@ -261,11 +261,11 @@ theorem exists_flagSplitting (hQ : IsNondeg Q) (F : IsotropicFlag Q) :
     · intro j
       simp only [map_sub, map_sum, map_smul, smul_eq_mul, hBZ (e j).2 (e _).2, mul_zero,
         Finset.sum_const_zero, sub_zero, hef, mul_ite, mul_one, Finset.sum_ite_eq, Finset.sum_ite_eq',
-        Finset.mem_univ, if_true, sub_self]
+        Finset.mem_univ, ite_true, sub_self]
     · intro j
       simp only [map_sub, map_sum, map_smul, smul_eq_mul, hfe, hff, mul_zero,
         Finset.sum_const_zero, sub_zero, mul_ite, mul_one, Finset.sum_ite_eq, Finset.sum_ite_eq',
-        Finset.mem_univ, if_true, sub_self]
+        Finset.mem_univ, ite_true, sub_self]
   have hsp : ⊤ ≤ Submodule.span K (Set.range c) := by
     intro v _
     have hx := hproj v
@@ -299,20 +299,20 @@ theorem exists_flagSplitting (hQ : IsNondeg Q) (F : IsotropicFlag Q) :
     rw [hpairb]
     simp only [Fintype.sum_sum_type, c, hBZ (e i).2 (e _).2, hef, (hX.1 (bX _).2).1, mul_zero,
       Finset.sum_const_zero, zero_add, add_zero, mul_ite, mul_one, Finset.sum_ite_eq, Finset.sum_ite_eq',
-      Finset.mem_univ, if_true]
+      Finset.mem_univ, ite_true]
   have hrepr_e : ∀ v i, b.repr v (Sum.inl i) = bform Q (f i) v := by
     intro v i
     rw [hpairb]
     simp only [Fintype.sum_sum_type, c, hfe, hff, (hX.1 (bX _).2).2, mul_zero,
       Finset.sum_const_zero, zero_add, add_zero, mul_ite, mul_one, Finset.sum_ite_eq, Finset.sum_ite_eq',
-      Finset.mem_univ, if_true]
+      Finset.mem_univ, ite_true]
   have hrepr_Z : ∀ (z : Z) k, b.repr z (Sum.inr (Sum.inr k)) = 0 := by
     intro z k
     rw [hZsum z]
     simp only [map_sum, map_smul, Finsupp.coe_finsetSum, Finset.sum_apply, Finsupp.smul_apply]
     refine Finset.sum_eq_zero fun l _ => ?_
     have : ((e l : Z) : V) = b (Sum.inl l) := (hb (Sum.inl l)).symm
-    rw [this, b.repr_self, Finsupp.single_apply, if_neg (by simp), smul_zero]
+    rw [this, b.repr_self, Finsupp.single_apply, ite_eq_right (by simp), smul_zero]
   have hle_Z : ∀ {w : ℤ}, 1 ≤ w → ∀ {v : V}, v ∈ flagWt F w → v ∈ Z := by
     intro w hw v hv
     show v ∈ F.top
@@ -342,11 +342,11 @@ theorem exists_flagSplitting (hQ : IsNondeg Q) (F : IsotropicFlag Q) :
   · rintro (i | i | k) (j | j | l) hij <;> rw [hb, hb]
     · exact hBZ (e i).2 (e j).2
     · show bform Q (e i) (f j) = 0
-      rw [hef, if_neg]
+      rw [hef, ite_eq_right]
       rintro rfl; exact hij (by simp [wt])
     · exact (hX.1 (bX l).2).1 i
     · show bform Q (f i) (e j) = 0
-      rw [hfe, if_neg]
+      rw [hfe, ite_eq_right]
       rintro rfl; exact hij (by simp [wt])
     · exact hff i j
     · exact (hX.1 (bX l).2).2 i

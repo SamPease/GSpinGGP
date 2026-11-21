@@ -98,19 +98,19 @@ theorem IsOrbitMeasure.eq_of_eventually_conj_eq_orbitMap {G : Subgroup Aˣ}
     rwa [Ring.lie_def] at this
   -- the compact chart image `VA`
   set CA : Submodule F A := C.map 𝔤.incl.toLinearMap with hCA
-  have hCAc : IsClosed (CA : Set A) := CA.closed_of_finiteDimensional
+  have hCAc : IsClosed (CA : Set A) := CA.isClosed_of_finiteDimensional
   set VA : Set A := orbitMap F (X₀ : A) '' ((CA : Set A) ∩ K) with hVA
   have hVAc : IsCompact VA :=
     (hKc.inter_left hCAc).image_of_continuousOn
       (hcont.mono fun Y hY => (hKW hY.2).1.2)
   set V : Set ↥𝔤 := Subtype.val ⁻¹' VA with hV
-  have hVm : MeasurableSet V := (hVAc.isClosed.preimage continuous_subtype_val).measurableSet
+  have hVm : MeasurableSet V := (hVAc.isClosed.preimage continuous_subtypeVal).measurableSet
   -- the chart with values in `𝔤`
   set φ : ↥C → ↥𝔤 := fun Y =>
     if h : orbitMap F (X₀ : A) ((Y : ↥𝔤) : A) ∈ 𝔤 then ⟨_, h⟩ else 0 with hφ
   set CK : Set ↥C := {Y | ((Y : ↥𝔤) : A) ∈ K} with hCK
   have hι : Continuous fun Y : ↥C => ((Y : ↥𝔤) : A) :=
-    continuous_subtype_val.comp continuous_subtype_val
+    continuous_subtypeVal.comp continuous_subtypeVal
   have hCKm : MeasurableSet CK := (hKc.isClosed.preimage hι).measurableSet
   have hφK : ∀ Y ∈ CK, ((φ Y : ↥𝔤) : A) = orbitMap F (X₀ : A) ((Y : ↥𝔤) : A) := by
     intro Y hY
@@ -157,7 +157,7 @@ theorem IsOrbitMeasure.eq_of_eventually_conj_eq_orbitMap {G : Subgroup Aˣ}
       ⟨((((g : Aˣ)⁻¹ : Aˣ)) : A) * (W : A) * ((((g : Aˣ)⁻¹)⁻¹ : Aˣ) : A),
         hG _ (G.inv_mem g.2) _ W.2⟩ with hρ
     have hρc : Continuous ρ :=
-      Continuous.subtype_mk ((continuous_const.mul continuous_subtype_val).mul continuous_const) _
+      Continuous.subtype_mk ((continuous_const.mul continuous_subtypeVal).mul continuous_const) _
     set S' : Set ↥𝔤 := V ∩ ρ ⁻¹' T with hS'
     have hS'm : MeasurableSet S' := hVm.inter (hρc.measurable hT)
     have hset : Subtype.val ⁻¹' (conjAd F (g : Aˣ) ⁻¹' (Subtype.val '' S')) = T ∩ P g := by
@@ -377,7 +377,7 @@ theorem eventually_conj_eq_orbitMap {H : Subgroup Aˣ} {𝔥 : LieSubalgebra F A
     continuous_neg.continuousAt.preimage_mem_nhds (by rwa [neg_zero])
   have hfac := eventually_eq_expA_mul_expA F hexp hlog hC (inter_mem (inter_mem hU hUi) hneg)
   have hval : Tendsto (fun k : ↥H => ((k : Aˣ) : A)) (𝓝 1) (𝓝 1) :=
-    (Units.continuous_val.comp continuous_subtype_val).tendsto' 1 1 rfl
+    (Units.continuous_val.comp continuous_subtypeVal).tendsto' 1 1 rfl
   filter_upwards [hval.eventually hfac] with k hk
   obtain ⟨Y, hYC, ⟨⟨hYU, -⟩, hYn⟩, W, hWK, hkYW⟩ := hk (k : Aˣ) k.2 rfl
   refine ⟨⟨Y, hYC⟩, hYU, ?_⟩

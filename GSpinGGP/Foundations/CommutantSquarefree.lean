@@ -83,7 +83,7 @@ theorem exists_not_commute_of_one_lt_finrank_eigenspace {f : Module.End K V}
       Commute f (((b.coord i).comp π).smulRight (b j : V)) := by
     intro i j
     refine LinearMap.ext fun v => ?_
-    simp only [Module.End.mul_apply, LinearMap.smulRight_apply, LinearMap.comp_apply, map_smul]
+    simp only [mul_apply_eq_comp, LinearMap.smulRight_apply, LinearMap.comp_apply, map_smul]
     have h1 : f (b j : V) = μ • (b j : V) := by
       have h' : (f - algebraMap K (Module.End K V) μ) (b j : V) = 0 := (b j).2
       rwa [LinearMap.sub_apply, Module.algebraMap_end_apply, sub_eq_zero] at h'
@@ -93,7 +93,7 @@ theorem exists_not_commute_of_one_lt_finrank_eigenspace {f : Module.End K V}
   have h := LinearMap.congr_fun hgg.eq (b i₁ : V)
   have hπb : ∀ j, π (b j : V) = b j := fun j =>
     Submodule.projectionOnto_apply_left hc (b j)
-  simp only [g, g', Module.End.mul_apply, LinearMap.smulRight_apply, LinearMap.comp_apply,
+  simp only [g, g', mul_apply_eq_comp, LinearMap.smulRight_apply, LinearMap.comp_apply,
     hπb, Module.Basis.coord_apply, Module.Basis.repr_self, map_smul] at h
   have h' : (b i₁ : V) = 0 := by simpa [h01] using h
   exact b.ne_zero i₁ (Subtype.ext h')
@@ -111,7 +111,7 @@ theorem commute_of_finrank_eigenspace_le_one [IsAlgClosed K] {f : Module.End K V
     have hm' := IsomCent.mapsTo_eigenspace_of_commute hg' μ
     have hc := IsomCent.commute_of_finrank_le_one (h1 μ) (g.restrict hm) (g'.restrict hm')
     have := congrArg Subtype.val (LinearMap.congr_fun hc.eq ⟨v, hv⟩)
-    simp only [Module.End.mul_apply, LinearMap.restrict_apply] at this
+    simp only [mul_apply_eq_comp, LinearMap.restrict_apply] at this
     simp [this]
   rw [htop] at hle
   refine LinearMap.ext fun v => ?_
@@ -269,8 +269,8 @@ theorem commute_of_commute_of_isSkewAdjoint (h2 : (2 : K) ≠ 0) {B : LinearMap.
   have hadjc : ∀ h, Commute f h → Commute f (adj h) := fun h hh => by
     refine (LinearMap.ext fun x => sub_eq_zero.mp (hnd.1 _ fun y => ?_) :
       adj h * f = f * adj h).symm
-    simp only [map_sub, LinearMap.sub_apply, Module.End.mul_apply, hadj, hsk]
-    rw [← Module.End.mul_apply h f, ← hh.eq, Module.End.mul_apply]
+    simp only [map_sub, LinearMap.sub_apply, mul_apply_eq_comp, hadj, hsk]
+    rw [← mul_apply_eq_comp h f, ← hh.eq, mul_apply_eq_comp]
     ring
   -- `h − h*` is skew, `f (h + h*)` is skew
   have hk : ∀ h, B.IsSkewAdjoint (h - adj h) := fun h x y => by
@@ -286,7 +286,7 @@ theorem commute_of_commute_of_isSkewAdjoint (h2 : (2 : K) ≠ 0) {B : LinearMap.
         add_comm]
     have hc : Commute f (h + adj h) := hh.add_right (hadjc h hh)
     change B ((f * (h + adj h)) x) y = B x (-((f * (h + adj h)) y))
-    rw [Module.End.mul_apply, hsk, hs, map_neg, ← Module.End.mul_apply, hc.eq]
+    rw [mul_apply_eq_comp, hsk, hs, map_neg, ← mul_apply_eq_comp, hc.eq]
   have hkc : ∀ h, Commute f h → Commute f (h - adj h) := fun h hh => hh.sub_right (hadjc h hh)
   have hac : ∀ h, Commute f h → Commute f (f * (h + adj h)) := fun h hh =>
     (Commute.refl f).mul_right (hh.add_right (hadjc h hh))

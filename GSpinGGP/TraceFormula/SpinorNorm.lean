@@ -192,7 +192,7 @@ theorem continuous_eigenChar (Q : QuadraticForm F V) {e : CliffordAlgebra Q} (he
     rw [eigenChar_apply, map_smul, hℓ, smul_eq_mul, mul_one]
   rw [key]
   exact (IsModuleTopology.continuous_of_linearMap ℓ).comp
-    ((Units.continuous_val.comp continuous_subtype_val).mul continuous_const)
+    ((Units.continuous_val.comp continuous_subtypeVal).mul continuous_const)
 
 end Eigen
 
@@ -474,7 +474,7 @@ theorem continuous_detChar (Q : QuadraticForm F V) :
   rw [key]
   refine Continuous.matrix_det ?_
   exact (IsModuleTopology.continuous_of_linearMap
-    (Algebra.leftMulMatrix b).toLinearMap).comp (Units.continuous_val.comp continuous_subtype_val)
+    (Algebra.leftMulMatrix b).toLinearMap).comp (Units.continuous_val.comp continuous_subtypeVal)
 
 theorem detChar_scalarGSpin (Q : QuadraticForm F V) (c : Fˣ) :
     ((detChar Q (scalarGSpin Q c) : Fˣ) : F) = (c : F) ^ Module.finrank F (CliffordAlgebra Q) :=
@@ -695,7 +695,7 @@ theorem isClosed_AG_mul {C : Set ↥d.G} (hC : IsCompact C) : IsClosed ((d.AG : 
 theorem isCompact_image_mul {C : Set ↥d.G} (hC : IsCompact C) {K : Set ↥d.AG} (hK : IsCompact K)
     (b : ↥d.AG) :
     IsCompact ((Subtype.val : ↥d.AG → ↥d.G) '' ((fun a => b * a) '' K) * C) :=
-  ((hK.image (Homeomorph.mulLeft b).continuous).image continuous_subtype_val).mul hC
+  ((hK.image (Homeomorph.mulLeft b).continuous).image continuous_subtypeVal).mul hC
 
 end GGPData
 

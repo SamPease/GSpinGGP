@@ -206,10 +206,10 @@ def fixerOf (Q : QuadraticForm F V) (U : Submodule F V) : Subgroup ↥(GSpin Q) 
   carrier := {g | ∀ w ∈ U, specP Q g w = w}
   one_mem' := fun w _ => by simp
   mul_mem' := fun {g h} hg hh w hw => by
-    rw [map_mul, LinearEquiv.mul_apply, hh w hw, hg w hw]
+    rw [map_mul, mul_apply_eq_comp, hh w hw, hg w hw]
   inv_mem' := fun {g} hg w hw => by
     have h1 : specP Q g⁻¹ (specP Q g w) = w := by
-      rw [← LinearEquiv.mul_apply, ← map_mul, inv_mul_cancel, map_one]
+      rw [← mul_apply_eq_comp, ← map_mul, inv_mul_cancel, map_one]
       rfl
     rw [hg w hw] at h1
     exact h1
