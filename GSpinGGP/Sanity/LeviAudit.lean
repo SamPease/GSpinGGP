@@ -10,14 +10,16 @@ import GSpinGGP.Sanity.LieAudit
 
 1. **Inhabited for every flag pair** (`exists_isLevi`): every `P_{F_W} × P_{F_V}` has a Levi
    subgroup, and `𝒫(M)` contains `P` and the opposite parabolic `P̄`.
-2. **No junk Levi** (`whittB_eq_whittU_of_isLevi_bot`, `IsLevi.eq_of_le`): `M = 1` is a Levi only
-   when `P = U`, and two Levi subgroups of the same parabolic are never properly nested.
+2. **No junk Levi** (`not_isLevi_bot`, `whittU_eq_bot_of_isLevi_whittB`, `IsLevi.eq_of_le`):
+   `M = 1` is never a Levi (`M` contains the central scalars), `M = P` is a Levi only when
+   `U = 1`, and two Levi subgroups of the same parabolic are never properly nested.
 3. **`H_M` is not trivial** (`exists_HM_ne_zero`): for a nonempty flag of `V`, the lift `T` of the
    cocharacter `λ(τ)`, `0 < |τ| < 1`, lies in `M` and `H_M(T) ≠ 0` on the first `GL`-coordinate
    (`det(T|_{V_1}) = τ^{dim V_1}` with `dim V_1 ≥ 1`), so the `GL`-coordinates of `H_M` are not
    identically zero.
    This is instantiated (`exists_HM_ne_zero_hypV`) at `Sanity.hypVData` (`V` a hyperbolic plane,
-   a full flag of length `1`).
+   a full flag of length `1`, a reduced datum), where also the opposite flag differs from the
+   flag (`IsFlagSplitting.oppFlag_top_inf_top`: the two tops are transversal).
 4. **Agreement with `H_G`** (`HM_gspin_eq_hcMap`): the `GSpin`-coordinate of `H_M` is the first
    coordinate of the existing Harish-Chandra map `hcMap` when the space is not a hyperbolic
    plane.
@@ -43,17 +45,38 @@ theorem exists_isLevi (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV) :
   let L : d.FlagLeviDatum := ⟨FW, FV, ιW, ιV, bW, wtW, bV, wtV, hsW, hsV⟩
   exact ⟨L, rfl, rfl, L.isLevi, L.mem_parabolics, L.opp_mem_parabolics⟩
 
-/-- `M = 1` is a Levi subgroup only when `P = U`. -/
-theorem whittB_eq_whittU_of_isLevi_bot {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV}
-    (h : d.IsLevi FW FV ⊥) : d.whittB FW FV = d.whittU FW FV := by
-  refine le_antisymm (fun p hp => ?_) (d.whittU_le_whittB FW FV)
-  obtain ⟨m, hm, u, hu, rfl⟩ := h.exists_mul hp
-  rw [Subgroup.mem_bot] at hm
-  rwa [hm, one_mul]
+/-- **`M = 1` is never a Levi subgroup**: a Levi contains the central scalars, and `pair (2, 1)`
+is not in `U` (its `C(W)`-component `2` is not unipotent). -/
+theorem not_isLevi_bot {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV} :
+    ¬ d.IsLevi FW FV ⊥ := by
+  intro h
+  have hPU : d.whittB FW FV = d.whittU FW FV := by
+    refine le_antisymm (fun p hp => ?_) (d.whittU_le_whittB FW FV)
+    obtain ⟨m, hm, u, hu, rfl⟩ := h.exists_mul hp
+    rw [Subgroup.mem_bot] at hm
+    rwa [hm, one_mul]
+  obtain ⟨L, rfl, rfl, hL, -⟩ := exists_isLevi FW FV
+  set c : Fˣ := Units.mk0 2 two_ne_zero
+  set g : ↥d.G := d.pair (scalarGSpin d.QW c, 1)
+  have hg : g ∈ L.M := ⟨scalarGSpin_mem_flagLevi (Q := d.QW) L.bW L.wtW c,
+    (flagLevi (Q := d.QV) L.bV L.wtV).one_mem⟩
+  have hgU : g ∈ d.whittU L.FW L.FV := hPU ▸ hL.le hg
+  have : g ∈ L.M ⊓ d.whittU L.FW L.FV := ⟨hg, hgU⟩
+  rw [hL.inf_eq_bot, Subgroup.mem_bot] at this
+  have h1 := congrArg
+    (fun x => ((((d.fst x : GSpin d.QW) : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW))) this
+  simp only [g, fst_pair, map_one] at h1
+  simp [scalarGSpin, c] at h1
+
+/-- `M = P` is a Levi subgroup only when `U = 1`. -/
+theorem whittU_eq_bot_of_isLevi_whittB {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV}
+    (h : d.IsLevi FW FV (d.whittB FW FV)) : d.whittU FW FV = ⊥ := by
+  have := h.inf_eq_bot
+  rwa [inf_eq_right.2 (d.whittU_le_whittB FW FV)] at this
 
 /-- **`H_M` is not trivial on a nonempty flag**: `H_M(T) ≠ 0` for the lift `T` of a contracting
 cocharacter. -/
-theorem exists_HM_ne_zero (L : d.FlagLeviDatum) (h : 0 < L.FV.len) :
+theorem exists_HM_ne_zero (L : d.ReducedLeviDatum) (h : 0 < L.FV.len) :
     ∃ m : ↥L.M, L.HM m (Sum.inr (Sum.inl ⟨0, h⟩)) ≠ 0 := by
   classical
   obtain ⟨τ, hτ0, hτ1⟩ := NormedField.exists_norm_lt_one F
@@ -93,27 +116,62 @@ theorem exists_HM_ne_zero (L : d.FlagLeviDatum) (h : 0 < L.FV.len) :
       _ < 1 := by rw [one_mul]; exact hτ1
   have hpos : 0 < ‖∏ j, if L.wtV j = 1 then τ else (1 : F)‖ :=
     norm_pos_iff.2 (Finset.prod_ne_zero_iff.2 fun j _ => by split_ifs <;> simp [hτ])
-  simp only [FlagLeviDatum.HM, hval]
+  simp only [ReducedLeviDatum.HM, hval]
   exact (Real.log_neg hpos hlt).ne
 
 /-- The `GSpin(W)`-coordinate of `H_M` is the first coordinate of `hcMap` (the `H_G` of
 `TraceFormula/SpinorNorm.lean`) when `W` is not a hyperbolic plane. -/
-theorem HM_gspin_eq_hcMap (L : d.FlagLeviDatum) (hW : ¬ IsHypPlane d.QW) (m : ↥L.M) :
+theorem HM_gspin_eq_hcMap (L : d.ReducedLeviDatum) (hW : ¬ IsHypPlane d.QW) (m : ↥L.M) :
     L.HM m (Sum.inl (Sum.inr ())) = Multiplicative.toAdd (hcMap d.QW (d.fst m)).1 := by
-  simp [FlagLeviDatum.HM, FlagLeviDatum.char, hcMap, gspinChar₁, hW, logAbs_apply]
+  simp [ReducedLeviDatum.HM, ReducedLeviDatum.char, hcMap, gspinChar₁, hW, logAbs_apply]
 
-/-- **A nonempty flag datum exists**: at `Sanity.hypVData` (`V` a hyperbolic plane) a full flag of
-`V` has length `1`, and `H_M` is nonzero there. -/
+/-- **A nonempty reduced flag datum exists**: at `Sanity.hypVData` (`V` a hyperbolic plane) a full
+flag of `V` has length `1`; the datum is reduced (`W` is a line, and `V` has no weight-`0` basis
+vector), `H_M` is nonzero, and the opposite flag of `V` differs from the flag. -/
 theorem exists_HM_ne_zero_hypV :
-    ∃ (L : (Sanity.hypVData (F := F)).FlagLeviDatum) (h : 0 < L.FV.len) (m : ↥L.M),
-      L.HM m (Sum.inr (Sum.inl ⟨0, h⟩)) ≠ 0 := by
-  obtain ⟨FW, -⟩ := IsotropicFlag.exists_isFull (Sanity.hypVData (F := F)).QW
-  obtain ⟨FV, hFV⟩ := IsotropicFlag.exists_isFull (Sanity.hypVData (F := F)).QV
+    ∃ (L : (Sanity.hypVData (F := F)).ReducedLeviDatum) (h : 0 < L.FV.len) (m : ↥L.M),
+      L.HM m (Sum.inr (Sum.inl ⟨0, h⟩)) ≠ 0 ∧ L.opp.FV.top ≠ L.FV.top := by
+  set D := Sanity.hypVData (F := F)
+  obtain ⟨FW, -⟩ := IsotropicFlag.exists_isFull D.QW
+  obtain ⟨FV, hFV⟩ := IsotropicFlag.exists_isFull D.QV
   obtain ⟨L, -, hL, -⟩ := exists_isLevi FW FV
   have h : 0 < L.FV.len := by
     rw [hL, hFV.1, Sanity.hypVData_isHypPlane_QV.2.2]; exact one_pos
-  obtain ⟨m, hm⟩ := exists_HM_ne_zero L h
-  exact ⟨L, h, m, hm⟩
+  have hdimV : finrank F D.V = 2 := Sanity.hypVData_isHypPlane_QV.1
+  have hred : ¬ IsHypPlane (D.QW.comp (wtSpan L.bW L.wtW 0).subtype) := fun hp => by
+    have h1 := Submodule.finrank_le (wtSpan L.bW L.wtW 0)
+    have h2 : finrank F (Fin D.m → F) = 1 := Module.finrank_fin_fun F
+    have := hp.1
+    omega
+  have hredV : ¬ IsHypPlane (D.QV.comp (wtSpan L.bV L.wtV 0).subtype) := fun hp => by
+    classical
+    obtain ⟨j₁, hj₁⟩ := L.hsV.exists_wt_eq (w := 1) le_rfl (by exact_mod_cast h)
+    obtain ⟨j₂, hj₂⟩ := L.hsV.exists_wt_eq_neg D.nondeg_QV (w := 1) le_rfl (by exact_mod_cast h)
+    have hempty : {j | L.wtV j = 0} = (∅ : Set L.ιV) := by
+      ext j
+      simp only [Set.mem_ofPred_eq, Set.mem_empty_iff_false, iff_false]
+      intro hj
+      have hcard : Fintype.card L.ιV = 2 := by rw [← finrank_eq_card_basis L.bV, hdimV]
+      have n1 : j ≠ j₁ := fun e => by rw [e] at hj; omega
+      have n2 : j ≠ j₂ := fun e => by rw [e] at hj; omega
+      have n12 : j₁ ≠ j₂ := fun e => by rw [e] at hj₁; omega
+      have h3 : ({j, j₁, j₂} : Finset L.ιV).card = 3 := by
+        rw [Finset.card_insert_of_notMem (by simp [n1, n2]), Finset.card_pair n12]
+      have := Finset.card_le_univ ({j, j₁, j₂} : Finset L.ιV)
+      omega
+    have := hp.1
+    rw [wtSpan, hempty, Set.image_empty, Submodule.span_empty, finrank_bot] at this
+    omega
+  let R : D.ReducedLeviDatum := ⟨L, hred, hredV⟩
+  obtain ⟨m, hm⟩ := exists_HM_ne_zero R h
+  refine ⟨R, h, m, hm, fun he => ?_⟩
+  have htop := R.hsV.oppFlag_top_inf_top D.nondeg_QV
+  change R.opp.FV.top ⊓ R.FV.top = ⊥ at htop
+  rw [he, inf_idem] at htop
+  have hlt := R.FV.strictMono (show (0 : Fin (R.FV.len + 1)) < Fin.last _ from by
+    simp [Fin.lt_def]; omega)
+  rw [R.FV.sub_zero] at hlt
+  exact hlt.ne' htop
 
 end GGPData
 

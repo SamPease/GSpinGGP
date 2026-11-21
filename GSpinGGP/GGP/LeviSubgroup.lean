@@ -13,7 +13,8 @@ import GSpinGGP.TraceFormula.SpinorNorm
 `parInd` (`GGP/Levi.lean`) induces from the quotient `P/U` (`LeviQuot`).  The weighted orbital
 integrals and the spectral side need the Levi `M` as a *subgroup* of `G`, the finite set `𝒫(M)`
 of parabolic subgroups with Levi component `M`, the real vector space `a_M` and the map `H_P`
-(Thesis §2.1, §2.6, §5.1.2; Waldspurger 2003 §I.1; Beuzart-Plessis, Astérisque 418, §1.1, §1.10).
+(Thesis §2.1, §5.1.2; Beuzart-Plessis, Astérisque 418, §1.1; Waldspurger 2003 §I.1 writes `H_G`
+with the opposite sign and base `q`, `q^{−⟨χ, H_G(g)⟩} = |χ(g)|_F`).
 This file builds these objects for `G = GSpin(W) × GSpin(V)` and the Levi subgroups of its flag
 stabilizers (M. Asgari, *Local L-functions for split spinor groups*, Canad. J. Math. 54 (2002),
 §2: `M ≅ ∏ GL × GSpin`).
@@ -28,8 +29,9 @@ stabilizers (M. Asgari, *Local L-functions for split spinor groups*, Canad. J. M
 * `GGPData.parabolics M`: `𝒫(M)`, the parabolic subgroups `P_{F_W} × P_{F_V}` having `M` as a
   Levi component.
 * `GGPData.FlagLeviDatum`: flags with splittings of their weight filtrations; its Levi
-  `M = flagLeviG`, its opposite datum (`FlagLeviDatum.opp`, the opposite parabolic `P̄ = M Ū`),
-  the space `a_M = Coord → ℝ` and `H_M : M → a_M`.
+  `M = flagLeviG` and its opposite datum (`FlagLeviDatum.opp`, the opposite parabolic `P̄ = M Ū`).
+* `GGPData.ReducedLeviDatum`: a flag Levi datum whose weight-`0` spaces are not hyperbolic
+  planes; the space `a_M = Coord → ℝ` and `H_M : M → a_M`.
 * `GGPData.hP`: `H_P(g) = H_M(m)` for `g = m u k`, any `P ∈ 𝒫(M)` and any compact open `K`
   with `G = P K`.
 
@@ -84,6 +86,15 @@ theorem mem_flagLevi_iff {g : GSpin Q} :
   have := congr($(hg (wt j)) (b j))
   simp only [LinearMap.comp_apply, LinearEquiv.coe_coe, wtProj_basis] at this
   exact this.symm
+
+omit [Invertible (2 : K)] [Fintype ι] in
+/-- The weight-`w` space of a splitting: the span of the `bⱼ` with `wtⱼ = w`. -/
+def wtSpan (b : Basis ι K V) (wt : ι → ℤ) (w : ℤ) : Submodule K V :=
+  Submodule.span K (b '' {j | wt j = w})
+
+omit [Invertible (2 : K)] [Fintype ι] in
+theorem wtSpan_neg : wtSpan b (-wt) 0 = wtSpan b wt 0 := by
+  simp [wtSpan, neg_eq_zero]
 
 omit [Fintype ι] in
 /-- The Levi subgroup depends only on the weight spaces: `M(b, −wt) = M(b, wt)`. -/
@@ -329,6 +340,19 @@ theorem IsFlagSplitting.isFlagSplitting_oppFlag (hQ : IsNondeg Q) (hs : IsFlagSp
       have := hidx (F'.len + w)
       omega
 
+/-- **The opposite flag is transversal**: `Z̄ ∩ Z = 0` for the tops of `F` and of `oppFlag`. -/
+theorem IsFlagSplitting.oppFlag_top_inf_top (hQ : IsNondeg Q) (hs : IsFlagSplitting F b wt) :
+    (hs.oppFlag hQ).top ⊓ F.top = ⊥ := by
+  rw [eq_bot_iff]
+  rintro v ⟨h1, h2⟩
+  rw [← IsotropicFlag.flagWt_one] at h1 h2
+  rw [Submodule.mem_bot]
+  refine b.repr.injective (Finsupp.ext fun j => ?_)
+  rw [map_zero, Finsupp.zero_apply]
+  by_cases hj : wt j < 1
+  · exact hs.repr_eq_zero 1 v h2 j hj
+  · exact (hs.isFlagSplitting_oppFlag hQ).repr_eq_zero 1 v h1 j (by simp only [Pi.neg_apply]; omega)
+
 end Opposite
 
 /-! ## 1b. The determinant characters of `M_F` -/
@@ -508,20 +532,8 @@ end IsLevi
 `exists_isCompact_zpow_of_isNilpotent`). -/
 theorem exists_isCompact_zpow_of_mem_whittU {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV}
     {u : ↥d.G} (hu : u ∈ d.whittU FW FV) : ∃ C : Set ↥d.G, IsCompact C ∧ ∀ k : ℤ, u ^ k ∈ C := by
-  have := properSpace_F (F := F)
-  have key : ∀ {V : Type} [AddCommGroup V] [Module F V] [FiniteDimensional F V]
-      [TopologicalSpace V] [IsModuleTopology F V] {Q : QuadraticForm F V} {g : GSpin Q},
-      IsNilpotent (((g : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1) →
-      ∃ C : Set (GSpin Q), IsCompact C ∧ ∀ k : ℤ, g ^ k ∈ C := by
-    intro V _ _ _ _ _ Q g hg
-    have := t2Space_cliffordAlgebra Q
-    obtain ⟨C, hC, hCu⟩ := exists_isCompact_zpow_of_isNilpotent (K := F) _ hg
-    refine ⟨_, (isClosed_GSpin Q).isClosedEmbedding_subtypeVal.isCompact_preimage hC,
-      fun k => ?_⟩
-    show ((g ^ k : GSpin Q) : (CliffordAlgebra Q)ˣ) ∈ C
-    rw [Subgroup.coe_zpow]; exact hCu k
-  obtain ⟨CW, hCW, hW⟩ := key hu.1.2.2.2
-  obtain ⟨CV, hCV, hV⟩ := key hu.2.2.2.2
+  obtain ⟨CW, hCW, hW⟩ := exists_isCompact_zpow_of_isNilpotent_GSpin d.QW hu.1.2.2.2
+  obtain ⟨CV, hCV, hV⟩ := exists_isCompact_zpow_of_isNilpotent_GSpin d.QV hu.2.2.2.2
   refine ⟨d.pair '' (CW ×ˢ CV), (hCW.prod hCV).image d.continuous_pair, fun k => ?_⟩
   refine ⟨(d.fst (u ^ k), d.snd (u ^ k)), ⟨?_, ?_⟩, d.pair_fst_snd _⟩
   · show d.fst (u ^ k) ∈ CW
@@ -614,6 +626,33 @@ def opp : d.FlagLeviDatum where
 theorem opp_M : L.opp.M = L.M := by
   simp only [M, opp, GGPData.flagLeviG, flagLevi_neg]
 
+end FlagLeviDatum
+
+variable (d) in
+/-- **A reduced flag Levi datum**: the weight-`0` spaces `W̃ = Z_W^⊥/Z_W`, `Ṽ = Z_V^⊥/Z_V` (the
+`GSpin`-factors of `M`) are not hyperbolic planes.  Every `P` and `M` arise from a reduced datum:
+if `Ṽ` is a hyperbolic plane, refining the flag by one of its two isotropic lines gives the same
+`P` and `M` (an element of `P` acts on `Ṽ` through `SO(Ṽ)`, which fixes both lines).  This is the
+condition under which `Coord` has the right size: `GSpin` of a hyperbolic plane is a split torus
+of rank `2`. -/
+structure ReducedLeviDatum extends d.FlagLeviDatum where
+  reducedW : ¬ IsHypPlane (d.QW.comp (wtSpan bW wtW 0).subtype)
+  reducedV : ¬ IsHypPlane (d.QV.comp (wtSpan bV wtV 0).subtype)
+
+namespace ReducedLeviDatum
+
+variable (L : d.ReducedLeviDatum)
+
+/-- The opposite of a reduced datum is reduced (same weight-`0` spaces). -/
+def opp : d.ReducedLeviDatum where
+  toFlagLeviDatum := L.toFlagLeviDatum.opp
+  reducedW := by
+    change ¬ IsHypPlane (d.QW.comp (wtSpan L.bW (-L.wtW) 0).subtype)
+    rw [wtSpan_neg]; exact L.reducedW
+  reducedV := by
+    change ¬ IsHypPlane (d.QV.comp (wtSpan L.bV (-L.wtV) 0).subtype)
+    rw [wtSpan_neg]; exact L.reducedV
+
 /-- The coordinates of `a_M`: the weights `1, …, len` of each flag (the `GL`-factors of `M`) and
 one coordinate for each `GSpin`-factor. -/
 abbrev Coord : Type := (Fin L.FW.len ⊕ Unit) ⊕ (Fin L.FV.len ⊕ Unit)
@@ -623,9 +662,8 @@ abbrev Coord : Type := (Fin L.FW.len ⊕ Unit) ⊕ (Fin L.FV.len ⊕ Unit)
 for `M = ∏ GL(Z_i/Z_{i-1}) × GSpin(Z^⊥/Z)` in each factor (Asgari 2002 §2), the determinants of
 the `GL`-blocks and the norm of the `GSpin`-factor (`detChar`, a power of the similitude
 character) form a basis of `X^*(M)_F ⊗ ℚ`, so `λ ↦ (λ(χ_c))_c` identifies
-`Hom(X^*(M)_F, ℝ)` with `Coord → ℝ`.  This needs `Z^⊥/Z` not to be a hyperbolic plane (then
-`GSpin(Z^⊥/Z)` is a split torus of rank `2`): in that case the flag is refined by one of the two
-isotropic lines of `Z^⊥/Z`, which gives the same `P` and `M`. -/
+`Hom(X^*(M)_F, ℝ)` with `Coord → ℝ`.  This uses that the datum is reduced (`Z^⊥/Z` is not a
+hyperbolic plane). -/
 abbrev aM : Type := L.Coord → ℝ
 
 /-- The characters of `M` giving the coordinates of `a_M`. -/
@@ -638,7 +676,9 @@ def char : L.Coord → (↥L.M →* Fˣ)
   | Sum.inr (Sum.inr _) => (detChar d.QV).comp (d.snd.comp L.M.subtype)
 
 /-- **The Harish-Chandra map of `M`**, `H_M(m)(χ) = log |χ(m)|` (Thesis §2.1; Beuzart-Plessis
-§1.1), in the coordinates of `aM`. -/
+§1.1), in the coordinates of `aM`.  The absolute value is the norm `‖·‖` of `F`, as in `hcMap`;
+it is a positive power `|·|_F^s` of the normalized absolute value `absF`, so `HM` is `s` times the
+`H_M` of the thesis (identities relating `H_P` to `δ_P` acquire the factor `s`). -/
 def HM (m : ↥L.M) : L.aM := fun c => Real.log ‖((L.char c m : Fˣ) : F)‖
 
 theorem HM_mul (m m' : ↥L.M) : L.HM (m * m') = L.HM m + L.HM m' := by
@@ -650,7 +690,7 @@ theorem HM_mul (m m' : ↥L.M) : L.HM (m * m') = L.HM m + L.HM m' := by
 theorem HM_one : L.HM 1 = 0 := by
   funext c; simp [HM]
 
-end FlagLeviDatum
+end ReducedLeviDatum
 
 variable (d) in
 /-- **`𝒫(M)`, the parabolic subgroups with Levi component `M`** (Thesis §2.1; Beuzart-Plessis
@@ -675,15 +715,16 @@ and an anisotropic kernel); the diagonal split torus `A` then lies in `M`, and c
 whose eigenvalues on the hyperbolic lines are pairwise distinct and `≠ 1`.  If `M ⊆ P_{F'}`, every
 member of `F'` is `A`-stable, hence spanned by its intersections with the eigenspaces, i.e. by
 basis vectors (the intersection with the anisotropic kernel is isotropic, hence `0`).  So `F'`
-ranges over finitely many flags. -/
+ranges over finitely many flags.  (The given splitting need not be a Witt basis: either show that
+`flagLevi` depends only on the weight spaces and re-split them by Witt bases, or conjugate.) -/
 theorem finite_parabolics : (d.parabolics L.M).Finite := by
   sorry
 
 end FlagLeviDatum
 
-namespace FlagLeviDatum
+namespace ReducedLeviDatum
 
-variable (L : d.FlagLeviDatum)
+variable (L : d.ReducedLeviDatum)
 
 theorem continuous_char (c : L.Coord) : Continuous fun m : ↥L.M => ((L.char c m : Fˣ) : F) := by
   classical
@@ -695,7 +736,8 @@ theorem continuous_char (c : L.Coord) : Continuous fun m : ↥L.M => ((L.char c 
       ((d.continuous_snd.comp continuous_subtypeVal).subtype_mk _)
   · exact (continuous_detChar d.QV).comp (d.continuous_snd.comp continuous_subtypeVal)
 
-/-- **The map `H_P`** (Thesis §2.6, p. 29; Waldspurger 2003 §I.1; Beuzart-Plessis §1.10): for
+/-- **The map `H_P`** (Thesis §2.1; Beuzart-Plessis §1.1; Waldspurger 2003 §I.1 uses the opposite
+sign and base `q`): for
 `P = P_{F_W} × P_{F_V} ∈ 𝒫(M)` and a compact open subgroup `K` with `G = P K`,
 `H_P(g) = H_M(m)` where `g = m u k` (`hP_mul`; well defined for every such `K`: `H_M` is trivial on
 the compact group `M`-part of `P ∩ K`). -/
@@ -730,7 +772,7 @@ theorem hP_mul {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV} (hL : d.IsLev
   simp only [hP]
   rw [this, hL.proj_mul m hu]
 
-end FlagLeviDatum
+end ReducedLeviDatum
 
 end GGPData
 

@@ -2,25 +2,19 @@
 Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import GSpinGGP.HarmonicAnalysis.HarishChandraXi
+import Mathlib
 
 /-!
-# Complements of a normal subgroup, and functions extended along `G = P K`
+# The projection onto a complement of a normal subgroup
 
-Two pieces of general group theory used for Levi subgroups (`GGP/LeviSubgroup.lean`).
-
-1. **The projection onto a complement.**  If `H` is a complement of a normal subgroup `N` of `G`
-   (Mathlib's `Subgroup.IsComplement'`), every `g` is `h n` uniquely, and `g ↦ h` is a
-   homomorphism `G →* H` (`Subgroup.IsComplement'.proj`, through Mathlib's
-   `Subgroup.IsComplement'.QuotientMulEquiv : G ⧸ N ≃* H`).  For topological groups this
-   homomorphism is continuous as soon as `H` is σ-compact and `G ⧸ N` is locally compact and
-   Hausdorff (`Subgroup.IsComplement'.continuous_proj`): the bijection `H → G ⧸ N` is continuous,
-   hence open by the open mapping theorem (Mathlib's `MonoidHom.isOpenMap_of_sigmaCompact`).
-   For a parabolic subgroup `P = M U` of a `p`-adic group this is the continuity of `p ↦ m`.
-2. **Extension along an Iwasawa decomposition.**  For an `IwasawaPair` (`G = P K`) and a function
-   `h` on `P` that is right invariant under `P ∩ K`, `IwasawaPair.extend h (p k) = h p`
-   (`IwasawaPair.extend_mul`).  This is how `H_P(g) = H_M(m_P(g))` is defined for `g = m u k`
-   (Thesis §2.6, p. 29; Waldspurger 2003 §I.1; Beuzart-Plessis, Astérisque 418, §1.10).
+General group theory used for Levi subgroups (`GGP/LeviSubgroup.lean`).  If `H` is a complement of a normal subgroup `N` of `G`
+(Mathlib's `Subgroup.IsComplement'`), every `g` is `h n` uniquely, and `g ↦ h` is a
+homomorphism `G →* H` (`Subgroup.IsComplement'.proj`, through Mathlib's
+`Subgroup.IsComplement'.QuotientMulEquiv : G ⧸ N ≃* H`).  For topological groups this
+homomorphism is continuous as soon as `H` is σ-compact and `G ⧸ N` is locally compact and
+Hausdorff (`Subgroup.IsComplement'.continuous_proj`): the bijection `H → G ⧸ N` is continuous,
+hence open by the open mapping theorem (Mathlib's `MonoidHom.isOpenMap_of_sigmaCompact`).
+For a parabolic subgroup `P = M U` of a `p`-adic group this is the continuity of `p ↦ m`.
 -/
 
 noncomputable section
@@ -88,32 +82,3 @@ theorem IsComplement'.continuous_proj [N.Normal] (h : H.IsComplement' N) [SigmaC
   exact he.comp continuous_quotient_mk'
 
 end Subgroup
-
-namespace GSpinGGP
-
-namespace IwasawaPair
-
-variable {G : Type*} [Group G] [TopologicalSpace G] (I : IwasawaPair G) {E : Type*}
-
-/-- **Extension along `G = P K`**: `extend h g = h p` for a chosen decomposition `g = p k`.  It is
-independent of the choice when `h` is right invariant under `P ∩ K` (`extend_mul`). -/
-def extend (h : ↥I.P → E) (g : G) : E :=
-  h ⟨(I.mul_eq g).choose, (I.mul_eq g).choose_spec.1⟩
-
-/-- `extend h (p k) = h p`, for `h` right invariant under `P ∩ K`. -/
-theorem extend_mul {h : ↥I.P → E} (hh : ∀ (p q : ↥I.P), (q : G) ∈ I.K → h (p * q) = h p)
-    (p : ↥I.P) {k : G} (hk : k ∈ I.K) : I.extend h ((p : G) * k) = h p := by
-  obtain ⟨hp', k', hk', he⟩ := (I.mul_eq ((p : G) * k)).choose_spec
-  set p' : ↥I.P := ⟨(I.mul_eq ((p : G) * k)).choose, hp'⟩
-  have hq : (p' : G)⁻¹ * p ∈ I.P := I.P.mul_mem (I.P.inv_mem p'.2) p.2
-  have hqK : (p' : G)⁻¹ * p ∈ I.K := by
-    have : (p' : G)⁻¹ * p = k' * k⁻¹ := by
-      rw [inv_mul_eq_iff_eq_mul, ← mul_assoc, ← he]; group
-    rw [this]; exact I.K.mul_mem hk' (I.K.inv_mem hk)
-  have := hh p' ⟨_, hq⟩ hqK
-  rw [show p' * (⟨_, hq⟩ : ↥I.P) = p from Subtype.ext (by simp)] at this
-  exact this.symm
-
-end IwasawaPair
-
-end GSpinGGP

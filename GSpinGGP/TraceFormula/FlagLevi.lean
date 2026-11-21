@@ -27,8 +27,9 @@ stabilizer `P_F = flagStab F ⊆ GSpin(V)` (Thesis §5.1.2) and the Levi decompo
 * `GGPData.flagLeviG_le_whittB`, `GGPData.exists_mem_flagLeviG_mul`: the same for
   `P_{F_W} × P_{F_V} = (M_{F_W} × M_{F_V})(N_{F_W} × N_{F_V})`.
 
-`M ∩ N = 1`, the opposite unipotent radical and the good position of a compact open `K` are not
-proved here, so no Iwasawa pair of a Levi subgroup of `G` is built yet.
+`M ∩ N = 1`, the opposite parabolic, `𝒫(M)`, `a_M` and `H_P` are in `GGP/LeviSubgroup.lean`.
+The good position of a compact open `K` with respect to `M` is not proved, so no Iwasawa pair of
+a Levi subgroup of `G` is built yet.
 -/
 
 open MeasureTheory Topology Filter
