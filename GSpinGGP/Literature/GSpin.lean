@@ -1,5 +1,6 @@
 import GSpinGGP.Foundations.LocalGroups
 import GSpinGGP.Foundations.Representations
+import GSpinGGP.Foundations.SmoothRepresentations
 import GSpinGGP.Foundations.GSpin
 import GSpinGGP.Foundations.QuadraticForms
 import GSpinGGP.Foundations.PAdicQuadraticForms
@@ -36,7 +37,9 @@ Galois cohomology `H¹` is **not** modelled.
   the statement without that hypothesis is false, see the docstring).
   Existence of Luo's orbit `O_ν` for a GGP datum — `exists_regularNil_inOrbitNu`, also a theorem
   (`GGP/RegularNilpotent`).
-* (f) Multiplicity at most one (Emory–Takeda + reduction; Yan) — `emoryTakeda_mult_le_one`.
+* (f) Multiplicity at most one for irreducible admissible representations (Pan Yan; Emory–Takeda)
+  — `panYan_mult_le_one`. Its form for tempered unitary `π`, `emoryTakeda_mult_le_one`, is a
+  theorem (`TraceFormula/MultOne.lean`).
 -/
 
 noncomputable section
@@ -340,27 +343,30 @@ section MultOne
 
 variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
 
-/-- **Multiplicity at most one** (Thesis Thm. 5.5.1).
-For every GGP datum `d`, nontrivial additive character `ψ`, and irreducible tempered unitary
-representation `π` of `G(F)`, `m(π) = dim Hom_{H(F)}(π^∞, ξ) ≤ 1`.
+/-- **Multiplicity at most one** (Thesis Thm. 5.5.1), for irreducible admissible
+representations. For every GGP datum `d`, nontrivial additive character `ψ`, and irreducible
+admissible smooth representations `ρ₀` of `GSpin(W)` and `ρ` of `GSpin(V)`,
+`dim Hom_H(ρ₀ ⊗ ρ, ξ) ≤ 1`, where `ρ₀ ⊗ ρ` is the representation `g ↦ ρ₀(g_W) ⊗ ρ(g_V)` of
+`G = GSpin(W) × GSpin(V)` (`g_W = d.fst g`, `g_V = d.snd g`).
 
 Source: Pan Yan, *Uniqueness of Bessel models for GSpin groups*, Nagoya Math. J. (2026),
 arXiv:2503.20116, Thm 1.1, p. 2: for a nondegenerate quadratic space `V` over a local field of
 characteristic `0`, a nondegenerate `V₀ ⊂ V` with `V₀^⊥` split of dimension `2r + 1`, the Bessel
 subgroup `H = N_{Q_r} ⋊ GSpin(V₀)` of `GSpin(V) × GSpin(V₀)` and a generic character `ξ` of `H`,
-`dim Hom_H(π ⊗ π₀, ξ) ≤ 1` for all irreducible admissible `π`, `π₀`.  There is no quasi-split
-hypothesis, so inner forms are covered.  Here `(V₀, V) = (W, V)`.  The case `r = 0` is
-Emory–Takeda, *Contragredients and a multiplicity one theorem for general spin groups*, Math. Z. 303
-(2023), Thm 1.1 (arXiv:2104.04814v4, p. 2).
-Dictionary: an irreducible unitary representation of the `p`-adic group `G(F)` has irreducible
-admissible smooth part (Bernstein 1974), of the form `π ⊗ π₀`; all linear forms on it are
-continuous.  The instances on `↥d.G` are the layer-1 theorems of
-`Foundations/LocalGroups` (closedness of `G` is `GGPData.isClosed_G`). -/
-axiom emoryTakeda_mult_le_one (d : GGPData F) (ψ : NontrivialAddChar F) (π : UnitaryRep ↥d.G) :
-    haveI := subgroup_isTopologicalGroup F d.ambient d.G
-    haveI := subgroup_t2Space F d.ambient d.G
-    haveI := subgroup_locallyCompactSpace_of_isClosed F d.ambient d.G d.isClosed_G
-    IsTempered π → multiplicity π d.H (d.xi ψ.toAddChar) ≤ 1
+"for any irreducible admissible representation `π` of `GSpin(V)` and `π₀` of `GSpin(V₀)` …
+`dim_ℂ Hom_H(π ⊗ π₀, ξ) ≤ 1`". There is no quasi-split hypothesis, so inner forms are covered.
+Here `(V₀, V) = (W, V)`, `π₀ = ρ₀`, `π = ρ`, the two factors of the product written in the order
+`GSpin(W) × GSpin(V)` of `d.G` (so `π ⊗ π₀` becomes `ρ₀ ⊗ ρ`, the same space up to the swap of
+factors), `H = d.H` and `ξ = d.xi ψ`. The case `r = 0` is Emory–Takeda, *Contragredients and a
+multiplicity one theorem for general spin groups*, Math. Z. 303 (2023), Thm 1.1
+(arXiv:2104.04814v4, p. 2). -/
+axiom panYan_mult_le_one (d : GGPData F) (ψ : NontrivialAddChar F) {V₀ V₁ : Type*}
+    [AddCommGroup V₀] [Module ℂ V₀] [AddCommGroup V₁] [Module ℂ V₁]
+    (ρ₀ : Representation ℂ (GSpin d.QW) V₀) (ρ : Representation ℂ (GSpin d.QV) V₁)
+    (hirr₀ : ρ₀.IsIrreducible) (hadm₀ : ρ₀.IsAdmissible)
+    (hirr : ρ.IsIrreducible) (hadm : ρ.IsAdmissible) :
+    Representation.multiplicity ((ρ₀.externalTensor ρ).comp (d.fst.prod d.snd)) d.H
+      (d.xi ψ.toAddChar) ≤ 1
 
 end MultOne
 
