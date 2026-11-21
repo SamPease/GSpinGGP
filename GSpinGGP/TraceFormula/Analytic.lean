@@ -27,8 +27,8 @@ of Thesis Ch. 8 and 10 and proves the bookkeeping around it.
   `H(F)\G(F)/A_G(F)` (Thesis §8.4, §10.1);
 * `xiHG`: the function `Ξ^{H\G}_C(x) = vol(xC)^{-1/2}` (Thesis §8.4);
 * `IwasawaDatum`: a minimal parabolic `P₀` (stabilizer of full isotropic flags), a compact open
-  subgroup `K` and `G = P₀ K`; `deltaP0` (the modular character of `P₀`), `iwasawaP` and
-  Harish-Chandra's function `xiHC` (`Ξ^G`, BP §1.5);
+  subgroup `K` and `G = P₀ K`; its Iwasawa pair `toIwasawaPair` (`HarmonicAnalysis/HarishChandraXi`)
+  and Harish-Chandra's function `xiHC` (`Ξ^G`, BP §1.5), the `Ξ` of that pair;
 * the Harish-Chandra Schwartz space `HCSchwartzChi d χ IW` = `𝒞(A_G(F)\G(F), χ⁻¹)` (Thesis
   §2.3), its seminorms `schwartzSeminorm`, and the strongly cuspidal part `ScuspSchwartz`.
 
@@ -88,7 +88,7 @@ variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
 (The modular-character lemmas used here, `modularCharacter_eq_one_of_mem`,
 `exists_lowerBound_modularCharacter`, `modularCharacter_eq_one_of_central`, are in
-`TraceFormula/Basic.lean`.) -/
+`HarmonicAnalysis/HarishChandraXi.lean`.) -/
 
 section ModularCharacter
 
@@ -369,79 +369,43 @@ instance locallyCompactSpace_P0 : LocallyCompactSpace ↥IW.P0 :=
 instance compactSpace_K : CompactSpace ↥IW.K :=
   isCompact_iff_compactSpace.mp IW.isCompact_K
 
-/-- The modular character `δ_{P₀}` of `P₀(F)` (BP §1.5): Mathlib's `modularCharacter`,
-`μ(E p⁻¹) = δ(p) μ(E)` for a left Haar measure `μ`.  For `P₀ = M₀ U₀` this is
-`|det Ad(p)|_{𝔲₀}|` (e.g. for `F^× ⋉ F`, `δ(a) = |a|`), the normalization in
-`Ξ(g) = ∫_K δ_{P₀}(p(kg))^{1/2} dk`. -/
-def deltaP0 (p : ↥IW.P0) : ℝ := (Measure.modularCharacter p : ℝ)
-
-/-- A choice of `P₀`-component of `g = p k` (Iwasawa decomposition).  `δ_{P₀}` of it does not
-depend on the choice, since `δ_{P₀}` is trivial on the compact open subgroup `P₀ ∩ K` of `P₀`. -/
-def iwasawaP (g : ↥d.G) : ↥IW.P0 :=
-  ⟨(IW.mul_eq g).choose, (IW.mul_eq g).choose_spec.1⟩
+/-- The Iwasawa pair `(P₀, K)` (`HarmonicAnalysis/HarishChandraXi.lean`).  Its `delta` is the
+modular character `δ_{P₀}` of `P₀(F)` (BP §1.5): Mathlib's `modularCharacter`,
+`μ(E p⁻¹) = δ(p) μ(E)` for a left Haar measure `μ`; for `P₀ = M₀ U₀` this is
+`|det Ad(p)|_{𝔲₀}|` (e.g. for `F^× ⋉ F`, `δ(a) = |a|`). -/
+def toIwasawaPair : IwasawaPair ↥d.G where
+  P := IW.P0
+  K := IW.K
+  isClosed_P := d.isClosed_whittB IW.FW IW.FV
+  isOpen_K := IW.isOpen_K
+  isCompact_K := IW.isCompact_K
+  mul_eq := IW.mul_eq
 
 /-- **Harish-Chandra's function** `Ξ^G(g) = ∫_K δ_{P₀}(p(kg))^{1/2} dk` (BP §1.5, Thesis §2.3),
 `dk` the probability Haar measure on `K`: the matrix coefficient of the spherical vector of
-`i_{P₀}^G 1`. -/
-def xiHC (g : ↥d.G) : ℝ :=
-  ((Measure.haar : Measure ↥IW.K) Set.univ).toReal⁻¹ *
-    ∫ k : ↥IW.K, Real.sqrt (IW.deltaP0 (IW.iwasawaP ((k : ↥d.G) * g))) ∂Measure.haar
+`i_{P₀}^G 1`.  It is the `Ξ` of the Iwasawa pair `(P₀, K)` (`IwasawaPair.xi`), which gives its
+bi-`K`-invariance, positivity and the doubling principle (Waldspurger 2003, Lemme II.1.3). -/
+def xiHC (g : ↥d.G) : ℝ := IW.toIwasawaPair.xi g
 
 end IwasawaDatum
 
-/-! ### Properties of `δ_{P₀}` and a lower bound for `Ξ` -/
+/-! ### A lower bound for `Ξ` -/
 
 namespace IwasawaDatum
 
 variable {d} (IW : d.IwasawaDatum)
 
-/-- `P₀(F) ∩ K`, as a subgroup of `P₀(F)`. -/
-abbrev KP0 : Subgroup ↥IW.P0 := IW.K.subgroupOf IW.P0
-
-theorem isOpen_KP0 : IsOpen (IW.KP0 : Set ↥IW.P0) :=
-  IW.isOpen_K.preimage continuous_subtypeVal
-
-theorem isCompact_KP0 : IsCompact (IW.KP0 : Set ↥IW.P0) :=
-  (d.isClosed_whittB IW.FW IW.FV).isClosedEmbedding_subtypeVal.isCompact_preimage IW.isCompact_K
-
-theorem deltaP0_pos (p : ↥IW.P0) : 0 < IW.deltaP0 p := by
-  unfold deltaP0
-  exact_mod_cast Measure.modularCharacterFun_pos p
-
-theorem deltaP0_mul (p q : ↥IW.P0) : IW.deltaP0 (p * q) = IW.deltaP0 p * IW.deltaP0 q := by
-  unfold deltaP0
-  rw [map_mul, NNReal.coe_mul]
-
-/-- `δ_{P₀}` is trivial on the compact open subgroup `P₀ ∩ K`. -/
-theorem deltaP0_eq_one_of_mem_KP0 (k : ↥IW.P0) (hk : k ∈ IW.KP0) : IW.deltaP0 k = 1 := by
-  unfold deltaP0
-  rw [modularCharacter_eq_one_of_mem IW.KP0 IW.isOpen_KP0 IW.isCompact_KP0 k hk, NNReal.coe_one]
-
-/-- `δ_{P₀}` is trivial on central elements of `P₀`. -/
-theorem deltaP0_eq_one_of_central (a : ↥IW.P0) (ha : ∀ y : ↥IW.P0, y * a = a * y) :
-    IW.deltaP0 a = 1 := by
-  unfold deltaP0
-  rw [modularCharacter_eq_one_of_central a ha, NNReal.coe_one]
-
-/-- On a compact subset of `P₀(F)`, `δ_{P₀}` is bounded below by a positive constant. -/
-theorem exists_lowerBound_deltaP0 (S : Set ↥IW.P0) (hS : IsCompact S) :
-    ∃ m : ℝ, 0 < m ∧ ∀ p ∈ S, m ≤ IW.deltaP0 p :=
-  exists_lowerBound_modularCharacter IW.KP0 IW.isOpen_KP0 IW.isCompact_KP0 S hS
-
-theorem xiHC_nonneg (g : ↥d.G) : 0 ≤ IW.xiHC g :=
-  mul_nonneg (inv_nonneg.2 ENNReal.toReal_nonneg)
-    (integral_nonneg fun _ => Real.sqrt_nonneg _)
-
 /-- `Ξ^G` is bounded below on `A_G(F) C` for compact `C` (or vanishes there, which in Lean only
 happens if its defining integrand were not integrable): `Ξ(g)⁻¹` is bounded on `A_G(F) C`. -/
 theorem exists_xiHC_inv_le (C : Set ↥d.G) (hC : IsCompact C) :
     ∃ B : ℝ, 0 ≤ B ∧ ∀ g ∈ (d.AG : Set ↥d.G) * C, (IW.xiHC g)⁻¹ ≤ B := by
-  let S : Set ↥IW.P0 :=
+  set I := IW.toIwasawaPair
+  let S : Set ↥I.P :=
     Subtype.val ⁻¹' ((IW.K : Set ↥d.G) * C * (IW.K : Set ↥d.G))
   have hS : IsCompact S :=
-    (d.isClosed_whittB IW.FW IW.FV).isClosedEmbedding_subtypeVal.isCompact_preimage
+    I.isClosed_P.isClosedEmbedding_subtypeVal.isCompact_preimage
       ((IW.isCompact_K.mul hC).mul IW.isCompact_K)
-  obtain ⟨m, hm, hmS⟩ := IW.exists_lowerBound_deltaP0 S hS
+  obtain ⟨m, hm, hmS⟩ := I.exists_lowerBound_delta S hS
   refine ⟨(Real.sqrt m)⁻¹, inv_nonneg.2 (Real.sqrt_nonneg _), ?_⟩
   intro g hg
   obtain ⟨a, ha, c, hc, hg⟩ := Set.mem_mul.mp hg
@@ -456,19 +420,19 @@ theorem exists_xiHC_inv_le (C : Set ↥d.G) (hC : IsCompact C) :
     group
   -- pointwise lower bound for the integrand
   have hpt : ∀ k : ↥IW.K, Real.sqrt m ≤
-      Real.sqrt (IW.deltaP0 (IW.iwasawaP ((k : ↥d.G) * (a * c)))) := by
+      Real.sqrt (I.rho ((k : ↥d.G) * (a * c))) := by
     intro k
     apply Real.sqrt_le_sqrt
-    let a' : ↥IW.P0 := ⟨a, IW.AG_le_P0 ha⟩
-    have hca' : ∀ y : ↥IW.P0, y * a' = a' * y := fun y => Subtype.ext (hcent y)
-    have hp : IW.iwasawaP ((k : ↥d.G) * (a * c)) =
-        a' * (a'⁻¹ * IW.iwasawaP ((k : ↥d.G) * (a * c))) := by group
-    rw [hp, deltaP0_mul, IW.deltaP0_eq_one_of_central a' hca', one_mul]
+    let a' : ↥I.P := ⟨a, IW.AG_le_P0 ha⟩
+    have hca' : ∀ y : ↥I.P, y * a' = a' * y := fun y => Subtype.ext (hcent y)
+    have hp : I.iwP ((k : ↥d.G) * (a * c)) =
+        a' * (a'⁻¹ * I.iwP ((k : ↥d.G) * (a * c))) := by group
+    rw [IwasawaPair.rho, hp, I.delta_mul, I.delta_eq_one_of_central a' hca', one_mul]
     apply hmS
     obtain ⟨k1, hk1, hkp⟩ := (IW.mul_eq ((k : ↥d.G) * (a * c))).choose_spec.2
-    have hval : ((a'⁻¹ * IW.iwasawaP ((k : ↥d.G) * (a * c)) : ↥IW.P0) : ↥d.G) =
+    have hval : ((a'⁻¹ * I.iwP ((k : ↥d.G) * (a * c)) : ↥I.P) : ↥d.G) =
         a⁻¹ * (IW.mul_eq ((k : ↥d.G) * (a * c))).choose := rfl
-    change ((a'⁻¹ * IW.iwasawaP ((k : ↥d.G) * (a * c)) : ↥IW.P0) : ↥d.G) ∈
+    change ((a'⁻¹ * I.iwP ((k : ↥d.G) * (a * c)) : ↥I.P) : ↥d.G) ∈
       (IW.K : Set ↥d.G) * C * (IW.K : Set ↥d.G)
     rw [hval, alg a c (k : ↥d.G) _ k1 hcent hkp]
     exact ⟨(k : ↥d.G) * c, ⟨k, k.2, c, hc, rfl⟩, k1⁻¹, IW.K.inv_mem hk1, rfl⟩
@@ -818,7 +782,7 @@ theorem scuspTestFn_subset_scuspSchwartz (IW : d.IwasawaDatum) :
     by_cases hg : g ∈ (d.AG : Set ↥d.G) * C
     · have hBg := hB g hg
       obtain ⟨a, ha, c, hc, rfl⟩ := Set.mem_mul.mp hg
-      have hxi0 : 0 ≤ (IW.xiHC (a * c))⁻¹ := inv_nonneg.2 (IW.xiHC_nonneg _)
+      have hxi0 : 0 ≤ (IW.xiHC (a * c))⁻¹ := inv_nonneg.2 (IW.toIwasawaPair.xi_nonneg _)
       have hσ : d.logNormModAG (a * c) ≤ max L 0 :=
         ((d.logNormModSub_mul_left d.AG ha c).trans_le (d.logNormModSub_le d.AG c)).trans
           ((hL' c hc).trans (le_max_left _ _))

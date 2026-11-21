@@ -10,6 +10,7 @@ import GSpinGGP.HarmonicAnalysis.QuotientUnimodular
 import GSpinGGP.Foundations.CosetSpaceTranslate
 import GSpinGGP.Foundations.CosetSpaceTopology
 import GSpinGGP.HarmonicAnalysis.RelativeXi
+import GSpinGGP.HarmonicAnalysis.HarishChandraXi
 import GSpinGGP.GGP.Centralizers
 import GSpinGGP.Foundations.SoCentralizer
 
@@ -469,6 +470,23 @@ theorem scalarGSpin_mem_flagUnipSO [FiniteDimensional K V] {Q : QuadraticForm K 
   · rw [specP_scalarGSpin_eq_one]; simp
   · rw [specP_scalarGSpin_eq_one]; simp
 
+/-- An element of `K^× · N_F` whose scalar multiple `c b` is unipotent in `C(V)` gives
+`b · c ∈ N_F`. -/
+theorem mul_scalarGSpin_mem_flagUnip [FiniteDimensional K V] {Q : QuadraticForm K V}
+    {F : IsotropicFlag Q} {b : GSpin Q} (hb : b ∈ flagUnipSO F) {c : Kˣ}
+    (hc : IsNilpotent ((c : K) • (((b : GSpin Q) : (CliffordAlgebra Q)ˣ) :
+      CliffordAlgebra Q) - 1)) : b * scalarGSpin Q c ∈ flagUnip F := by
+  have hSO' := (flagUnipSO F).mul_mem hb (scalarGSpin_mem_flagUnipSO F c)
+  exact ⟨hSO'.1, hSO'.2.1, hSO'.2.2, by rw [coe_mul_scalarGSpin]; exact hc⟩
+
+/-- **Every element of `K^× · N_F` has a scalar multiple in `N_F`**
+(`exists_smul_sub_one_isNilpotent_of_mem_flagUnipSO`). -/
+theorem exists_mul_scalarGSpin_mem_flagUnip_of_mem_flagUnipSO [FiniteDimensional K V]
+    {Q : QuadraticForm K V} (hQ : IsNondeg Q) {F : IsotropicFlag Q} {b : GSpin Q}
+    (hb : b ∈ flagUnipSO F) : ∃ c : Kˣ, b * scalarGSpin Q c ∈ flagUnip F :=
+  let ⟨c, hc⟩ := exists_smul_sub_one_isNilpotent_of_mem_flagUnipSO hQ hb
+  ⟨c, mul_scalarGSpin_mem_flagUnip hb hc⟩
+
 variable [TopologicalSpace K] [IsTopologicalRing K] [T2Space K]
 
 /-- `K^× · N_F` is closed in `GSpin(V)` (as `isClosed_flagUnip`, without the nilpotency
@@ -512,16 +530,14 @@ theorem fst_inr_eq_one (y : GSpin d.QV) : d.fst (d.inr y) = 1 := rfl
 /-- An element of `K^× · N` whose scalar multiple `c b` is unipotent in `C(V)` gives `b · c ∈ N`. -/
 theorem mul_scalarGSpin_mem_N {b : GSpin d.QV} (hb : b ∈ flagUnipSO d.flag) {c : Fˣ}
     (hc : IsNilpotent ((c : F) • (((b : GSpin d.QV) : (CliffordAlgebra d.QV)ˣ) :
-      CliffordAlgebra d.QV) - 1)) : b * scalarGSpin d.QV c ∈ d.N := by
-  have hSO' := (flagUnipSO d.flag).mul_mem hb (scalarGSpin_mem_flagUnipSO d.flag c)
-  exact ⟨hSO'.1, hSO'.2.1, hSO'.2.2, by rw [coe_mul_scalarGSpin]; exact hc⟩
+      CliffordAlgebra d.QV) - 1)) : b * scalarGSpin d.QV c ∈ d.N :=
+  mul_scalarGSpin_mem_flagUnip hb hc
 
 /-- **Every element of `K^× · N` has a scalar multiple in `N`**
 (`exists_smul_sub_one_isNilpotent_of_mem_flagUnipSO`). -/
 theorem exists_mul_scalarGSpin_mem_N_of_mem_flagUnipSO {b : GSpin d.QV}
     (hb : b ∈ flagUnipSO d.flag) : ∃ c : Fˣ, b * scalarGSpin d.QV c ∈ d.N :=
-  let ⟨c, hc⟩ := exists_smul_sub_one_isNilpotent_of_mem_flagUnipSO d.nondeg_QV hb
-  ⟨c, d.mul_scalarGSpin_mem_N hb hc⟩
+  exists_mul_scalarGSpin_mem_flagUnip_of_mem_flagUnipSO d.nondeg_QV hb
 
 /-- `g ↦ n(g) = g_W⁻¹ g_V` is continuous (also `continuous_nPart` in `TraceFormula/Analytic`, which
 this file cannot import). -/
@@ -1295,78 +1311,6 @@ theorem map_mul_right_mul_eq {Q : Type*} [Group Q] [MeasurableSpace Q] [Measurab
   rw [e, ← Measure.map_map (measurable_mul_const b) (measurable_mul_const a), ha, hb]
 
 
-section ModularCharacter
-
-variable {G₀ : Type*} [Group G₀] [TopologicalSpace G₀] [IsTopologicalGroup G₀]
-  [LocallyCompactSpace G₀]
-
-/-- The modular character is trivial on a compact open subgroup `E` (right translation by
-`k ∈ E` maps `E`, a set of finite positive Haar measure, to itself). -/
-theorem modularCharacter_eq_one_of_mem (E : Subgroup G₀) (hEo : IsOpen (E : Set G₀))
-    (hEc : IsCompact (E : Set G₀)) (k : G₀) (hk : k ∈ E) : Measure.modularCharacter k = 1 := by
-  borelize G₀
-  set μ : Measure G₀ := Measure.haar
-  have hcl : closure (E : Set G₀) = E := (Subgroup.isClosed_of_isOpen E hEo).closure_eq
-  have h := Measure.measure_isMulInvariant_eq_smul_of_isCompact_closure
-    (Measure.map (· * k) μ) μ (s := (E : Set G₀)) (by rw [hcl]; exact hEc)
-  have hpre : (· * k) ⁻¹' (E : Set G₀) = E := by
-    ext x
-    simp only [Set.mem_preimage, SetLike.mem_coe]
-    exact ⟨fun hx => by simpa using E.mul_mem hx (E.inv_mem hk), fun hx => E.mul_mem hx hk⟩
-  rw [Measure.map_apply (measurable_mul_const k) hEo.measurableSet, hpre] at h
-  have hpos : μ E ≠ 0 := (hEo.measure_pos μ ⟨1, E.one_mem⟩).ne'
-  have htop : μ E ≠ ⊤ := hEc.measure_lt_top.ne
-  have h1 : ((Measure.haarScalarFactor (Measure.map (· * k) μ) μ : NNReal) : ENNReal) = 1 := by
-    rw [ENNReal.smul_def, smul_eq_mul] at h
-    have h' : 1 * μ E = _ * μ E := (one_mul (μ E)).trans h
-    exact ((ENNReal.mul_left_inj hpos htop).mp h').symm
-  show Measure.modularCharacterFun k = 1
-  rw [Measure.modularCharacterFun_eq_haarScalarFactor μ k]
-  exact_mod_cast h1
-
-/-- A function on a topological group that is invariant under right translation by an open
-subgroup `K` is locally constant (it is constant on each open coset `xK`). -/
-theorem isLocallyConstant_of_mul_right_invariant {G A : Type*} [Group G] [TopologicalSpace G]
-    [ContinuousMul G] {K : Subgroup G} (hK : IsOpen (K : Set G)) {f : G → A}
-    (hf : ∀ x, ∀ k ∈ K, f (x * k) = f x) : IsLocallyConstant f := by
-  rw [IsLocallyConstant.iff_exists_open]
-  intro x
-  refine ⟨(fun y => x⁻¹ * y) ⁻¹' (K : Set G),
-    hK.preimage (continuous_const.mul continuous_id), by simp, fun y hy => ?_⟩
-  have e : y = x * (x⁻¹ * y) := by group
-  rw [e, hf x _ hy]
-
-/-- The modular character is locally constant if there is a compact open subgroup. -/
-theorem isLocallyConstant_modularCharacter (E : Subgroup G₀) (hEo : IsOpen (E : Set G₀))
-    (hEc : IsCompact (E : Set G₀)) :
-    IsLocallyConstant (fun p : G₀ => (Measure.modularCharacter p : ℝ)) := by
-  refine isLocallyConstant_of_mul_right_invariant hEo fun x k hk => ?_
-  rw [map_mul, modularCharacter_eq_one_of_mem E hEo hEc _ hk, mul_one]
-
-/-- On a compact set, the modular character is bounded below by a positive constant (if there
-is a compact open subgroup). -/
-theorem exists_lowerBound_modularCharacter (E : Subgroup G₀) (hEo : IsOpen (E : Set G₀))
-    (hEc : IsCompact (E : Set G₀)) (S : Set G₀) (hS : IsCompact S) :
-    ∃ m : ℝ, 0 < m ∧ ∀ p ∈ S, m ≤ (Measure.modularCharacter p : ℝ) := by
-  rcases S.eq_empty_or_nonempty with rfl | hne
-  · exact ⟨1, one_pos, by simp⟩
-  obtain ⟨p0, -, hmin⟩ :=
-    hS.exists_isMinOn hne (isLocallyConstant_modularCharacter E hEo hEc).continuous.continuousOn
-  exact ⟨_, by exact_mod_cast Measure.modularCharacterFun_pos p0, fun p hp => hmin hp⟩
-
-/-- The modular character is trivial on central elements. -/
-theorem modularCharacter_eq_one_of_central (a : G₀) (ha : ∀ y : G₀, y * a = a * y) :
-    Measure.modularCharacter a = 1 := by
-  borelize G₀
-  have e : (fun y : G₀ => y * a) = fun y => a * y := funext ha
-  have hmap : Measure.map (· * a) (Measure.haar : Measure G₀) = Measure.haar := by
-    rw [e]
-    exact map_mul_left_eq_self (Measure.haar : Measure G₀) a
-  show Measure.modularCharacterFun a = 1
-  rw [Measure.modularCharacterFun_eq_haarScalarFactor (Measure.haar : Measure G₀) a]
-  simp only [hmap, Measure.haarScalarFactor_self]
-
-end ModularCharacter
 
 section ModularInvolution
 
