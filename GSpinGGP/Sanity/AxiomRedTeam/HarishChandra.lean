@@ -15,10 +15,6 @@ Unless said otherwise, each conclusion is verified *without* the axiom at the to
 (`W = 0`, `V` a line, `G ≅ F^× × F^×`), for the trivial representation.  For `germ_unique` and
 `rodier_germ_one` the axiom's own instance at `toyD` is also shown to agree with that computation.
 
-* `dixmier_commutant_scalar`: the commutant of the one-dimensional trivial representation is `ℂ`
-  (`scalar_of_C`); for the two-dimensional trivial representation of the trivial group
-  (commutant `M₂(ℂ)`, reducible) the axiom gives the same verdict as a direct proof
-  (`triv2_not_irreducible`, `triv2_not_irreducible_via_dixmier`).
 * `hc_regular_open_dense_conull`: `D^G ≡ 1` on `toyD`, so `G_reg = G` (`toyD_hc_regular_check`).
 * `hc_character_exists`, `hc_character_isQuasiCharacter`: `θ_1 = 1` is a quasi-character
   (`toyD_hc_character_exists_check`, `toyD_hc_isQuasiCharacter_check`).
@@ -46,77 +42,6 @@ namespace GSpinGGP.AxiomRedTeam
 set_option linter.unusedSectionVars false
 set_option linter.unusedVariables false
 set_option linter.style.haveILetI false
-
-/-! ## `dixmier_commutant_scalar` -/
-
-theorem scalar_of_C (T : ℂ →L[ℂ] ℂ) : ∃ c : ℂ, T = c • (1 : ℂ →L[ℂ] ℂ) := by
-  refine ⟨T 1, ContinuousLinearMap.ext fun v => ?_⟩
-  have h := T.map_smul v 1
-  simp only [smul_eq_mul, mul_one] at h
-  simp [h, mul_comm]
-
-/-- The conclusion of `dixmier_commutant_scalar` for any one-dimensional trivial representation. -/
-example (G : Type) [Group G] [TopologicalSpace G] (T : (trivialRep G).H →L[ℂ] (trivialRep G).H) :
-    ∃ c : ℂ, T = c • (1 : (trivialRep G).H →L[ℂ] (trivialRep G).H) := scalar_of_C T
-
-/-- `ℂ²`. -/
-abbrev E2 := EuclideanSpace ℂ (Fin 2)
-
-theorem E2_e0_ne : (EuclideanSpace.single 0 1 : E2) ≠ 0 := by
-  intro h
-  have := congrArg (fun v : E2 => v 0) h
-  simp at this
-
-theorem E2_e1_not_mem :
-    (EuclideanSpace.single 1 1 : E2) ∉ (ℂ ∙ (EuclideanSpace.single 0 1 : E2)) := by
-  intro h
-  obtain ⟨a, ha⟩ := Submodule.mem_span_singleton.mp h
-  have := congrArg (fun v : E2 => v 1) ha
-  simp at this
-
-/-- The two-dimensional trivial representation of the trivial group: its commutant is `M₂(ℂ)`. -/
-abbrev triv2 : UnitaryRep Unit where
-  H := E2
-  ρ := 1
-  unitary_ρ _ := one_mem _
-  strongCont _ := continuous_const
-
-theorem triv2_ρ (g : Unit) (v : E2) : triv2.ρ g v = v := by
-  have : ((1 : Unit →* (E2 →L[ℂ] E2)) g) = 1 := MonoidHom.one_apply g
-  exact congrArg (fun T : E2 →L[ℂ] E2 => T v) this
-
-/-- Direct proof: `triv2` is reducible (the line `ℂ e₀` is invariant). -/
-theorem triv2_not_irreducible : ¬ triv2.IsIrreducible := by
-  rintro ⟨-, h⟩
-  have h' : ∀ W : Submodule ℂ E2, IsClosed (W : Set E2) → W = ⊥ ∨ W = ⊤ :=
-    fun W hW => h W hW fun g v hv => (triv2_ρ g v).symm ▸ hv
-  rcases h' (ℂ ∙ (EuclideanSpace.single 0 1 : E2)) (Submodule.closed_of_finiteDimensional _)
-    with h0 | h1
-  · have : (EuclideanSpace.single 0 1 : E2) ∈ (ℂ ∙ (EuclideanSpace.single 0 1 : E2)) :=
-      Submodule.mem_span_singleton_self _
-    rw [h0, Submodule.mem_bot] at this
-    exact E2_e0_ne this
-  · exact E2_e1_not_mem (h1 ▸ Submodule.mem_top)
-
-/-- The projection onto the first coordinate; it commutes with `triv2` and is not scalar. -/
-def P2 : E2 →L[ℂ] E2 :=
-  (EuclideanSpace.proj (0 : Fin 2)).smulRight (EuclideanSpace.single (0 : Fin 2) (1 : ℂ))
-
-theorem P2_not_scalar (c : ℂ) : P2 ≠ c • (1 : E2 →L[ℂ] E2) := by
-  intro hc
-  have h0 := congrArg (fun T : E2 →L[ℂ] E2 => T (EuclideanSpace.single 0 1) 0) hc
-  have h1 := congrArg (fun T : E2 →L[ℂ] E2 => T (EuclideanSpace.single 1 1) 1) hc
-  simp [P2] at h0 h1
-  rw [← h0] at h1
-  exact one_ne_zero h1.symm
-
-/-- The same conclusion through `dixmier_commutant_scalar`. -/
-theorem triv2_not_irreducible_via_dixmier : ¬ triv2.IsIrreducible := fun hirr => by
-  obtain ⟨c, hc⟩ := dixmier_commutant_scalar triv2 hirr P2 fun g => by
-    ext v : 1
-    change P2 (triv2.ρ g v) = triv2.ρ g (P2 v)
-    rw [triv2_ρ, triv2_ρ]
-  exact P2_not_scalar c hc
 
 attribute [local instance 100] LieRing.ofAssociativeRing LieAlgebra.ofAssociativeAlgebra
 
@@ -241,7 +166,7 @@ theorem toyD_germ_unique_nonvacuous (ψ : NontrivialAddChar F) :
     (zeroOrbit _ _)
   by_contra hne
   unfold germ at h
-  rw [if_pos (toyD_mem_nilReg _ _ _), dif_neg hne] at h
+  rw [ite_eq_left (toyD_mem_nilReg _ _ _), dite_eq_right hne] at h
   exact zero_ne_one h
 
 /-- The axiom's instance at `toyD` (agrees with `toyD_germ_unique`). -/
@@ -384,7 +309,7 @@ theorem germ_unique_forces_jHat_ne_zero (d : GGPData F) (ψ : NontrivialAddChar 
   classical
   intro ω hω
   by_contra hcon
-  push_neg at hcon
+  push Not at hcon
   have h0 : HasGermExpansion d.G d.lie d.bilin ψ 0 x 0 :=
     ⟨by simp, ω, hω, fun X _ _ _ y _ => by simp⟩
   have h1 : HasGermExpansion d.G d.lie d.bilin ψ 0 x (Pi.single O 1) := by

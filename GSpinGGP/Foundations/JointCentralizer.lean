@@ -43,7 +43,7 @@ theorem commute_wedge_of_skew (hN : B.IsSkewAdjoint N) {c : K} {u w : V}
     (hu : u ∈ N.eigenspace c) (hw : w ∈ N.eigenspace (-c)) : Commute N (wedge B u w) := by
   rw [mem_eigenspace_iff] at hu hw
   ext z
-  simp only [Module.End.mul_apply, wedge_apply, map_sub, map_smul]
+  simp only [mul_apply_eq_comp, wedge_apply, map_sub, map_smul]
   have h1 : B w (N z) = c * B w z := by
     rw [← neg_neg (B w (N z)), ← hN.eq, hw, map_smul, LinearMap.smul_apply, smul_eq_mul]; ring
   have h2 : B u (N z) = -c * B u z := by

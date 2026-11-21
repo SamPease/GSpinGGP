@@ -620,7 +620,7 @@ theorem jHat_zeroOrbit_eq_one (G : Subgroup Aˣ) (𝔤 : LieSubalgebra F A)
   have hε : 0 < ε := by have := norm_pos_iff.mpr hz; positivity
   have hU : IsOpen (j ⁻¹' Metric.ball (j X₀) ε) := Metric.isOpen_ball.preimage hjcont
   obtain ⟨V, hVc, hVo, hXV, hVU⟩ := exists_isCompact_isClopen_between isCompact_singleton hU
-    (Set.singleton_subset_iff.mpr (Metric.mem_ball_self hε))
+    (Set.singleton_subset_iff.mpr (Set.mem_preimage.mpr (Metric.mem_ball_self hε)))
   have hX₀V : X₀ ∈ V := hXV rfl
   have hf : IsTestFn (V.indicator (1 : ↥𝔤 → ℂ)) := by
     refine ⟨?_, HasCompactSupport.intro' hVc hVc.isClosed fun x hx => Set.indicator_of_notMem hx _⟩
@@ -756,7 +756,7 @@ theorem finrank_W (hV : IsHypPlane d.QV) : finrank F (Fin d.m → F) = 1 := by
 
 theorem gspinW_scalar (hV : IsHypPlane d.QV) (g : GSpin d.QW) :
     ∃ c, ((g : (CliffordAlgebra d.QW)ˣ) : CliffordAlgebra d.QW) = algebraMap F _ c := by
-  exact even_scalar_of_finrank_one (finrank_W hV) (mem_evenOdd_zero_of_mem_GSpin g)
+  exact even_scalar_of_finrank_one (Q := d.QW) (finrank_W hV) (mem_evenOdd_zero_of_mem_GSpin g)
 
 theorem gspinW_mem_range (hV : IsHypPlane d.QV) (g : GSpin d.QW) :
     g ∈ (scalarGSpin d.QW).range :=
@@ -782,7 +782,7 @@ theorem isEvenPair_lie {X : d.ambient} (hX : X ∈ d.lie) : IsEvenPair X := by
 /-- Even pairs commute when `V` is a hyperbolic plane (`C⁺(W) = F`, `C⁺(V)` commutative). -/
 theorem comm_of_isEvenPair (hV : IsHypPlane d.QV) {a b : d.ambient} (ha : IsEvenPair a)
     (hb : IsEvenPair b) : a * b = b * a := by
-  obtain ⟨l, hl⟩ := even_scalar_of_finrank_one (finrank_W hV) ha.1
+  obtain ⟨l, hl⟩ := even_scalar_of_finrank_one (Q := d.QW) (finrank_W hV) ha.1
   refine Prod.ext ?_ ?_
   · simp only [Prod.fst_mul]
     rw [hl]
@@ -795,7 +795,7 @@ theorem comm_of_isEvenPair (hV : IsHypPlane d.QV) {a b : d.ambient} (ha : IsEven
 squarefree `X (X² − c)`. -/
 theorem isSS_of_isEvenPair (hV : IsHypPlane d.QV) {a : d.ambient} (ha : IsEvenPair a) :
     IsSS F a := by
-  obtain ⟨l, hl⟩ := even_scalar_of_finrank_one (finrank_W hV) ha.1
+  obtain ⟨l, hl⟩ := even_scalar_of_finrank_one (Q := d.QW) (finrank_W hV) ha.1
   obtain ⟨e, he⟩ := exists_orthogonal_basis_fin_two d.QV hV.1
   obtain ⟨α, β, hαβ⟩ := exists_eq_smul_one_add_smul_of_even e he _ ha.2
   set ω : CliffordAlgebra d.QV := ι d.QV (e 0) * ι d.QV (e 1) with hω
@@ -829,7 +829,7 @@ theorem isSS_of_isEvenPair (hV : IsHypPlane d.QV) {a : d.ambient} (ha : IsEvenPa
       · simp only [hu, hv, Prod.snd_mul]
         exact Algebra.commutes _ _
     refine LinearMap.ext fun z => ?_
-    simp only [Module.End.mul_apply, LinearMap.mulLeft_apply, ← mul_assoc, huv]
+    simp only [mul_apply_eq_comp, LinearMap.mulLeft_apply, ← mul_assoc, huv]
   have hlin : LinearMap.mulLeft F a = LinearMap.mulLeft F u + β • LinearMap.mulLeft F v := by
     refine LinearMap.ext fun z => ?_
     simp [hdec, add_mul]

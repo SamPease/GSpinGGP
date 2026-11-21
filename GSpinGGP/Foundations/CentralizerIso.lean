@@ -338,7 +338,7 @@ theorem exists_nhds_of_mem_nhds {U : Set A} (hU : U ∈ 𝓝 (0 : A)) :
       (fun {c X} => (lieCentralizer 𝔤' (y : A')).incl.toLinearMap.map_smul c X)
   have hcont : Continuous e.symm := LinearMap.continuous_of_finiteDimensional e.symm.toLinearMap
   have h1 : (Subtype.val ⁻¹' U : Set ↥(lieCentralizer 𝔤 (x : A))) ∈ 𝓝 0 :=
-    continuous_subtype_val.continuousAt.preimage_mem_nhds (by simpa using hU)
+    continuous_subtypeVal.continuousAt.preimage_mem_nhds (by simpa using hU)
   have h2 : (e.symm ⁻¹' (Subtype.val ⁻¹' U)) ∈ 𝓝 (0 : ↥(lieCentralizer 𝔤' (y : A'))) :=
     hcont.continuousAt.preimage_mem_nhds (by simpa using h1)
   obtain ⟨U', hU', hsub⟩ := (mem_nhds_subtype _ _ _).mp h2

@@ -233,12 +233,12 @@ def torusFbar (x : ↥(GSpin d.QW)) :
   mul_mem' := fun {g h} hg hh => by
     refine ⟨?_, fun w hw => ?_⟩
     · simpa only [Subgroup.coe_mul] using hg.1.mul_left hh.1
-    · rw [map_mul, LinearEquiv.mul_apply, hh.2 w hw, hg.2 w hw]
+    · rw [map_mul, mul_apply_eq_comp, hh.2 w hw, hg.2 w hw]
   inv_mem' := fun {g} hg => by
     refine ⟨?_, fun w hw => ?_⟩
     · simpa only [Subgroup.coe_inv] using hg.1.inv_left
     · have h1 : specP _ g⁻¹ (specP _ g w) = w := by
-        rw [← LinearEquiv.mul_apply, ← map_mul, inv_mul_cancel, map_one]
+        rw [← mul_apply_eq_comp, ← map_mul, inv_mul_cancel, map_one]
         rfl
       rw [hg.2 w hw] at h1
       exact h1

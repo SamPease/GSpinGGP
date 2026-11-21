@@ -284,10 +284,10 @@ theorem isOpen_setOf_isRegularSS_lieCentralizer :
     | zero => intro w; exact continuous_const
     | succ k ih =>
       intro w
-      simp only [pow_succ', Module.End.mul_apply, ad, LieAlgebra.ad_apply, Ring.lie_def]
+      simp only [pow_succ', mul_apply_eq_comp, ad, LieAlgebra.ad_apply, Ring.lie_def]
       exact (continuous_id.mul (ih w)).sub ((ih w).mul continuous_id)
   have hf : ∀ v, Continuous fun Z : ↥L => f Z v := fun v =>
-    (hc D v).comp continuous_subtype_val
+    (hc D v).comp continuous_subtypeVal
   -- `dim ker f Z = dim (𝔤_g ∩ ker (ad Z)^D)`
   have hker : ∀ Z : ↥L, finrank F (LinearMap.ker (f Z)) =
       finrank F ↥(L.toSubmodule ⊓ LinearMap.ker (ad (Z : d.ambient) ^ D)) := by

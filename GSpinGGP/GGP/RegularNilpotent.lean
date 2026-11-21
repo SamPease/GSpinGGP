@@ -258,7 +258,7 @@ theorem commute_movedPart_incl (x : GSpin d.QW)
     · refine LinearMap.ext fun w => ?_
       show (M (specP d.QW x w, 0)).1 = specP d.QW x ((M (w, 0)).1)
       have := congrArg (fun T : Module.End K d.V => T (w, 0)) hMc
-      simp only [Module.End.mul_apply, LinearEquiv.coe_coe] at this
+      simp only [mul_apply_eq_comp, LinearEquiv.coe_coe] at this
       rw [d.specP_incl_apply] at this
       conv_rhs at this => rw [hv (w, 0)]
       rw [d.specP_incl_apply] at this
@@ -271,9 +271,9 @@ theorem commute_movedPart_incl (x : GSpin d.QW)
   have hc := hW _ h₁ _ h₂
   refine LinearMap.ext fun v => ?_
   have := congrArg (fun T : Module.End K (Fin d.m → K) => T v.1) hc
-  simp only [Module.End.mul_apply, LinearMap.comp_apply, LinearMap.inl_apply,
+  simp only [mul_apply_eq_comp, LinearMap.comp_apply, LinearMap.inl_apply,
     LinearMap.fst_apply] at this
-  simp only [Module.End.mul_apply]
+  simp only [mul_apply_eq_comp]
   rw [hv₂ v, hv₁, hv₁ v, hv₂]
   simp only [this]
   exact (hv₂ ((M₁ (v.1, 0)).1, 0)).symm

@@ -104,7 +104,7 @@ theorem locallyIntegrable_absF_det_rpow_of_odd_pow [IsUltrametricDist F] [Perfec
       rw [Submodule.subtype_apply, Submodule.projectionOnto_apply_left hcompl ⟨u, hu⟩]
     rw [← hu']
     have := LinearMap.congr_fun hPρ.eq u
-    simp only [Module.End.mul_apply, LinearMap.comp_apply] at this
+    simp only [mul_apply_eq_comp, LinearMap.comp_apply] at this
     rw [← this]
     exact Submodule.coe_mem _
   -- the block maps
@@ -124,7 +124,7 @@ theorem locallyIntegrable_absF_det_rpow_of_odd_pow [IsUltrametricDist F] [Perfec
         simpa [hρb] using this
       refine ⟨⟨A w, hBA i w w.2⟩, LinearMap.mem_ker.mpr (Subtype.ext ?_), rfl⟩
       simp only [hρb, LinearMap.coe_restrict_apply, ZeroMemClass.coe_zero]
-      rw [← Module.End.mul_apply, ← (hρ v).eq, Module.End.mul_apply, hw', map_zero]
+      rw [← mul_apply_eq_comp, ← (hρ v).eq, mul_apply_eq_comp, hw', map_zero]
     rcases hBmin i N hNA (Submodule.map_subtype_le _ _) with hN | hN
     · have hker : LinearMap.ker (ρb i v) = ⊥ := eq_bot_iff.mpr fun w hw => by
         have : (w : K) ∈ N := ⟨w, hw, rfl⟩

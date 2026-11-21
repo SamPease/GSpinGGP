@@ -19,6 +19,7 @@ import GSpinGGP.Foundations.ModuleTopologyPAdic
 import GSpinGGP.TraceFormula.JHatSelfDual
 import GSpinGGP.TraceFormula.JHatTransport
 import GSpinGGP.Foundations.Representations
+import GSpinGGP.Foundations.UnitarySchur
 import GSpinGGP.Foundations.GSpin
 import GSpinGGP.Foundations.HypPlane
 import GSpinGGP.Foundations.HypFrame
@@ -154,6 +155,7 @@ import GSpinGGP.TraceFormula.ThetaF
 import GSpinGGP.TraceFormula.Analytic
 import GSpinGGP.TraceFormula.GoodParabolic
 import GSpinGGP.TraceFormula.WeakCartan
+import GSpinGGP.TraceFormula.ConeTorus
 import GSpinGGP.TraceFormula.Interface
 import GSpinGGP.TraceFormula.GermTranslate
 import GSpinGGP.TraceFormula.TorusDescent

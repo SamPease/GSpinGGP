@@ -44,7 +44,7 @@ instance _root_.ContinuousLinearMap.isUltrametricDist {𝕜 𝕜₂ E G : Type*}
     [IsUltrametricDist G] : IsUltrametricDist (E →SL[σ] G) :=
   IsUltrametricDist.isUltrametricDist_of_forall_norm_add_le_max_norm fun f g =>
     ContinuousLinearMap.opNorm_le_bound _ (le_max_of_le_left (norm_nonneg _)) fun x => by
-      rw [ContinuousLinearMap.add_apply, max_mul_of_nonneg _ _ (norm_nonneg x)]
+      rw [add_apply, max_mul_of_nonneg _ _ (norm_nonneg x)]
       exact (IsUltrametricDist.norm_add_le_max _ _).trans
         (max_le_max (f.le_opNorm x) (g.le_opNorm x))
 
@@ -431,7 +431,7 @@ lemma isCompact_lmulPi_ball (s : ℝ) : IsCompact {a : A | ‖lmulPi F a‖ ≤ 
   haveI : ProperSpace F := ProperSpace.of_locallyCompactSpace F
   haveI : ProperSpace (VA →L[F] VA) := FiniteDimensional.proper F _
   have hcl : IsClosed (LinearMap.range (lmulPiₗ F (A := A)) : Set (VA →L[F] VA)) :=
-    Submodule.closed_of_finiteDimensional _
+    Submodule.isClosed_of_finiteDimensional _
   have hK := ((isCompact_closedBall (0 : VA →L[F] VA) s).inter_right hcl).image
     (lmulPiInv F).continuous
   convert hK using 1
@@ -503,7 +503,7 @@ lemma scalarBall_mono (𝔤 : Submodule F A) {s s' : ℝ} (hs : 0 ≤ s) (hs' : 
 
 lemma scalarBall_mem_nhds (𝔤 : Submodule F A) {s : ℝ} (hs : 0 < s) :
     (scalarBall 𝔤 hs.le : Set 𝔤) ∈ 𝓝 (0 : 𝔤) := by
-  have h := (continuous_subtype_val (p := fun a : A => a ∈ 𝔤)).continuousAt (x := 0)
+  have h := (continuous_subtypeVal (p := fun a : A => a ∈ 𝔤)).continuousAt (x := 0)
     |>.preimage_mem_nhds (by simpa using lmulPi_ball_mem_nhds F (A := A) hs)
   refine Filter.mem_of_superset h fun X hX => ⟨0, ?_⟩
   simpa using hX
@@ -636,13 +636,14 @@ theorem exists_expA_chart
   have hΦ : ∀ (X : 𝔤) (g : 𝓗), ((j g : Aˣ) : A) = expA F (X : A) → Φ X = (g : 𝓗 ⧸ Z) := by
     intro X g hg
     have h : ∃ g : 𝓗, ((j g : Aˣ) : A) = expA F (X : A) := ⟨g, hg⟩
-    simp only [Φ, dif_pos h]
+    simp only [Φ, dite_eq_left h]
     rw [hjinj (h.choose_spec.trans hg.symm)]
   have E2 : ∀ (W : A) (_ : ‖lmulPi F W‖ ≤ r) (hqW : q W ∈ 𝔤) (g : 𝓗),
       ((j g : Aˣ) : A) = expA F W → Φ ⟨q W, hqW⟩ = (g : 𝓗 ⧸ Z) := by
     intro W hW hqW g hg
     obtain ⟨g', z, hz, hg', hgz⟩ := E1 W hW hqW
-    rw [hΦ _ g' hg', ← hjinj (hgz.trans hg.symm)]
+    have hgg : g' * z = g := hjinj (hgz.trans hg.symm)
+    rw [hΦ ⟨q W, hqW⟩ g' hg', ← hgg]
     exact QuotientGroup.eq.mpr (by simpa using hz)
   have hball : ∀ {s : ℝ} (hs : 0 ≤ s) (X : 𝔤), X ∈ scalarBall 𝔤 hs ↔
       ∃ W : A, ‖lmulPi F W‖ ≤ s ∧ q W = (X : A) := by
@@ -789,16 +790,16 @@ theorem exists_expA_chart
         ((j (ψ X) : Aˣ) : A) = expA F (X : A) := by
       intro X hX
       have h : ∃ g : 𝓗, ((j g : Aˣ) : A) = expA F (X : A) := (hsmall X hX).1 X.2
-      simp only [ψ, dif_pos h]; exact h.choose_spec
+      simp only [ψ, dite_eq_left h]; exact h.choose_spec
     have hψc : ContinuousOn ψ (scalarBall 𝔤 hr0.le : Set 𝔤) := by
       rw [hj.continuousOn_iff]
       refine ContinuousOn.congr (f := fun X : 𝔤 => expA F (X : A)) ?_ fun X hX => hψ X hX
-      exact hcont.comp continuous_subtype_val.continuousOn fun X hX => (hsmall X hX).2
+      exact hcont.comp continuous_subtypeVal.continuousOn fun X hX => (hsmall X hX).2
     refine (QuotientGroup.continuous_mk.comp_continuousOn hψc).congr fun X hX => ?_
     exact hΦ X (ψ X) (hψ X hX)
   ------------------------------------------------------------------
   -- compactness of `L_r`, openness of `Γ_r`
-  have h𝔤closed : IsClosed (𝔤 : Set A) := Submodule.closed_of_finiteDimensional 𝔤
+  have h𝔤closed : IsClosed (𝔤 : Set A) := Submodule.isClosed_of_finiteDimensional 𝔤
   have hcpt : IsCompact (scalarBall 𝔤 hr0.le : Set 𝔤) := by
     have hK : IsCompact (Subtype.val ⁻¹' (q '' {a : A | ‖lmulPi F a‖ ≤ r}) : Set 𝔤) :=
       h𝔤closed.isClosedEmbedding_subtypeVal.isCompact_preimage
@@ -863,7 +864,7 @@ theorem exists_expA_chart
   set ν : Measure 𝔤 := Measure.map Subtype.val (Measure.comap fL μK) with hνdef
   have hν : ∀ S, MeasurableSet S → ν S = μK (Φ '' (S ∩ L0)) := by
     intro S hS
-    rw [hνdef, Measure.map_apply measurable_subtype_coe hS, hfe.comap_apply]
+    rw [hνdef, Measure.map_apply measurable_subtypeVal hS, hfe.comap_apply]
     congr 1
     ext y
     constructor
@@ -903,22 +904,22 @@ theorem exists_expA_chart
     exact ⟨fun _ => hlam0, fun h => absurd h hνfin⟩
   have hext : c • lam.restrict L0 = ν := by
     haveI : IsFiniteMeasure (c • lam.restrict L0) := ⟨by
-      rw [Measure.smul_apply, Measure.restrict_apply_univ, smul_eq_mul]
+      rw [smul_apply, Measure.restrict_apply_univ, smul_eq_mul]
       exact ENNReal.mul_lt_top (lt_top_iff_ne_top.mpr hcT) (lt_top_iff_ne_top.mpr hlamT)⟩
     refine Measure.eq_of_forall_vadd_coset L hanti (fun n => isOpen_scalarBall 𝔤 (hs0 n)) hcpt'
       hbasis _ _ ?_ ?_ ?_ ?_ ?_
-    · rw [Measure.smul_apply, Measure.restrict_apply hL0m.compl, Set.compl_inter_self,
+    · rw [smul_apply, Measure.restrict_apply hL0m.compl, Set.compl_inter_self,
         measure_empty, smul_zero]
     · rw [hν _ hL0m.compl, Set.compl_inter_self, Set.image_empty, measure_empty]
     · intro n x hx
       have hm := (isOpen_scalarBall 𝔤 (hs0 n)).measurableSet
-      rw [Measure.smul_apply, Measure.smul_apply, Measure.restrict_apply (hm.const_vadd x),
+      rw [smul_apply, smul_apply, Measure.restrict_apply (hm.const_vadd x),
         Measure.restrict_apply hm, Set.inter_eq_left.mpr (hcos n x hx),
         Set.inter_eq_left.mpr (show (L n : Set 𝔤) ⊆ L0 from hanti (Nat.zero_le n)),
         measure_vadd]
     · intro n x hx
       rw [hνcos n x hx, ← hνcos n 0 (L 0).zero_mem, zero_vadd]
-    · rw [Measure.smul_apply, Measure.restrict_apply hL0m, Set.inter_self, smul_eq_mul, hcdef,
+    · rw [smul_apply, Measure.restrict_apply hL0m, Set.inter_self, smul_eq_mul, hcdef,
         ENNReal.div_mul_cancel hlam0 hlamT]
   ------------------------------------------------------------------
   haveI : (c • lam).IsAddHaarMeasure := Measure.IsAddHaarMeasure.smul lam hc0 hcT
@@ -942,7 +943,7 @@ theorem exists_expA_chart
     exact ⟨g, hg, hΦ X g hg⟩
   · have hSL : S ∩ L0 = S := Set.inter_eq_left.mpr hSU
     have h1 : (c • lam) S = ν S := by
-      rw [← hext, Measure.smul_apply, Measure.smul_apply, Measure.restrict_apply hS, hSL]
+      rw [← hext, smul_apply, smul_apply, Measure.restrict_apply hS, hSL]
     rw [h1, hν S hS, hSL]
 
 /-- The image of a measurable set under the chart of `exists_expA_chart` is the set `e^S Z`. -/

@@ -139,7 +139,7 @@ theorem inv_apply_mem_flagSub_of_mem_Nset {n : (Module.End K L.V)ˣ} (hn : n ∈
     exact Subtype.ext (((Module.End.isUnit_iff _).1 n.isUnit).1 h)
   obtain ⟨w, hw⟩ := (LinearMap.injective_iff_surjective.1 hinj) ⟨v, hv⟩
   have hw' : (n : Module.End K L.V) w = v := congrArg Subtype.val hw
-  rw [← hw', ← Module.End.mul_apply, Units.inv_mul, Module.End.one_apply]
+  rw [← hw', ← mul_apply_eq_comp, Units.inv_mul, one_apply_eq_self]
   exact w.2
 
 /-- `N` is a subgroup of `GL(V)`. -/
@@ -148,14 +148,14 @@ def NsetSub : Subgroup (Module.End K L.V)ˣ where
   one_mem' := ⟨(SOu L.QV).one_mem, fun _ _ v _ => by simp, fun v _ => by simp⟩
   mul_mem' := fun {a b} ha hb => ⟨(SOu L.QV).mul_mem ha.1 hb.1,
     fun k hk v hv => by
-      rw [Units.val_mul, Module.End.mul_apply,
+      rw [Units.val_mul, mul_apply_eq_comp,
         show (a : Module.End K L.V) ((b : Module.End K L.V) v) - v =
           (a : Module.End K L.V) ((b : Module.End K L.V) v - v) +
             ((a : Module.End K L.V) v - v) by rw [map_sub]; abel]
       exact add_mem (L.apply_mem_flagSub_of_mem_Nset ha (by omega) (hb.2.1 k hk v hv))
         (ha.2.1 k hk v hv),
     fun v hv => by
-      rw [Units.val_mul, Module.End.mul_apply,
+      rw [Units.val_mul, mul_apply_eq_comp,
         show (a : Module.End K L.V) ((b : Module.End K L.V) v) - v =
           (a : Module.End K L.V) ((b : Module.End K L.V) v - v) +
             ((a : Module.End K L.V) v - v) by rw [map_sub]; abel]
@@ -164,7 +164,7 @@ def NsetSub : Subgroup (Module.End K L.V)ˣ where
     have key : ∀ v : L.V, ((a⁻¹ : (Module.End K L.V)ˣ) : Module.End K L.V) v - v =
         -((a⁻¹ : (Module.End K L.V)ˣ) : Module.End K L.V) ((a : Module.End K L.V) v - v) := by
       intro v
-      rw [map_sub, ← Module.End.mul_apply, Units.inv_mul, Module.End.one_apply]
+      rw [map_sub, ← mul_apply_eq_comp, Units.inv_mul, one_apply_eq_self]
       abel
     refine ⟨(SOu L.QV).inv_mem ha.1, fun k hk v hv => ?_, fun v hv => ?_⟩
     · rw [key]
@@ -187,8 +187,8 @@ theorem extU_conj_mem_Nset {g : (Module.End K L.W)ˣ} (hg : g ∈ SOu L.QW)
           (((e⁻¹ : (Module.End K L.V)ˣ) : Module.End K L.V) v) -
         ((e⁻¹ : (Module.End K L.V)ˣ) : Module.End K L.V) v) := by
     intro v
-    rw [map_sub, ← Module.End.mul_apply (e : Module.End K L.V)
-      ((e⁻¹ : (Module.End K L.V)ˣ) : Module.End K L.V), Units.mul_inv, Module.End.one_apply]
+    rw [map_sub, ← mul_apply_eq_comp (e : Module.End K L.V)
+      ((e⁻¹ : (Module.End K L.V)ˣ) : Module.End K L.V), Units.mul_inv, one_apply_eq_self]
     rfl
   have he_val : (e : Module.End K L.V) = L.extGrp (g : Module.End K L.W) := rfl
   have heinv_val : ((e⁻¹ : (Module.End K L.V)ˣ) : Module.End K L.V) =
@@ -526,9 +526,9 @@ theorem conj_mem_lieN {u : (Module.End K L.V)ˣ} (hu : u ∈ SOu L.QV)
     {M : Module.End K L.V} (hM : M ∈ L.lieN) :
     ((u⁻¹ : (Module.End K L.V)ˣ) : Module.End K L.V) * M * (u : Module.End K L.V) ∈ L.lieN := by
   refine ⟨conj_mem_skewAdjoint hu hM.1, fun k hk v hv => ?_, fun v hv => ?_⟩
-  · simp only [Module.End.mul_apply]
+  · simp only [mul_apply_eq_comp]
     exact h2 k hk.le _ (hM.2.1 k hk _ (h1 (k + 1) hk _ hv))
-  · simp only [Module.End.mul_apply]
+  · simp only [mul_apply_eq_comp]
     exact h2 _ le_rfl _ (hM.2.2 _ (L.apply_mem_orthogonal_of_mem_SOu hu (h2 _ le_rfl) hv))
 
 theorem extLie_apply (A : Module.End K L.W) (v : L.V) : L.extLie A v = (A v.1, 0) := rfl
@@ -622,7 +622,7 @@ theorem bform_conj_lieN {n : (Module.End K L.V)ˣ} (hn : n ∈ L.Nset) {M : Modu
   rw [hk] at hd hMz
   have e : (ni * M * (n : Module.End K L.V)) z =
       ni (M ((n : Module.End K L.V) z - z)) + (ni (M z) - M z) + M z := by
-    simp only [Module.End.mul_apply, map_sub]; abel
+    simp only [mul_apply_eq_comp, map_sub]; abel
   rw [e, map_add, map_add, L.bform_zV_neg_of_mem_flagSub hi
       (L.inv_apply_mem_flagSub_of_mem_Nset hn (by omega) (hM.2.1 _ (by omega) _ hd)),
     L.bform_zV_neg_of_mem_flagSub hi (hn'.2.1 _ (by omega) _ hMz), zero_add, zero_add]
@@ -646,7 +646,7 @@ theorem conj_extLie_sub_mem_lieN {n : (Module.End K L.V)ˣ} (hn : n ∈ L.Nset)
       L.extLie_apply_of_fst_eq_zero A (L.fst_eq_zero_of_mem_flagSub
         (L.apply_mem_flagSub_of_mem_Nset hn hk hv))
     have h2 : L.extLie A v = 0 := L.extLie_apply_of_fst_eq_zero A (L.fst_eq_zero_of_mem_flagSub hv)
-    simp only [LinearMap.sub_apply, Module.End.mul_apply, h1, h2, map_zero, sub_zero]
+    simp only [LinearMap.sub_apply, mul_apply_eq_comp, h1, h2, map_zero, sub_zero]
     exact zero_mem _
   · have hd : (n : Module.End K L.V) v - v ∈ L.flagSub L.r := hn.2.2 v hv
     have h1 : L.extLie A ((n : Module.End K L.V) v) = L.extLie A v := by
@@ -657,7 +657,7 @@ theorem conj_extLie_sub_mem_lieN {n : (Module.End K L.V)ˣ} (hn : n ∈ L.Nset)
       intro z hz
       rw [bform_prod, extLie_apply, L.fst_eq_zero_of_mem_flagSub hz]
       simp
-    simp only [LinearMap.sub_apply, Module.End.mul_apply, h1]
+    simp only [LinearMap.sub_apply, mul_apply_eq_comp, h1]
     exact hn'.2.2 _ hw
 
 /-- **`(g, g ⊕ 1)` normalizes `𝔥` and fixes `λ`** (`g ∈ SO(W)`). -/
@@ -695,7 +695,7 @@ theorem diagU_conj_mem_lieH {g : (Module.End K L.W)ˣ} (hg : g ∈ SOu L.QW) {Y 
   · unfold lam
     rw [hsnd]
     refine Finset.sum_congr rfl fun i _ => ?_
-    rw [Module.End.mul_apply, Module.End.mul_apply, show (E : Module.End K L.V) (L.zV (i : ℕ)) =
+    rw [mul_apply_eq_comp, mul_apply_eq_comp, show (E : Module.End K L.V) (L.zV (i : ℕ)) =
       L.zV (i : ℕ) from L.extGrp_zV _ _, ← (isOrthogonal_of_mem_SOu hE).isAdjointPair]
     change bform L.QV (L.extGrp _ _) _ = _
     rw [L.extGrp_zV]
@@ -744,7 +744,7 @@ theorem inrU_conj_mem_lieH {n : (Module.End K L.V)ˣ} (hn : n ∈ L.Nset) {Y : L
     have e1 : (ni * L.sndA Y * (n : Module.End K L.V)) (L.zV (i : ℕ)) =
         (ni * M * (n : Module.End K L.V)) (L.zV (i : ℕ)) := by
       rw [hYV, mul_add, add_mul, LinearMap.add_apply]
-      simp only [Module.End.mul_apply, L.extLie_apply_of_fst_eq_zero _ hnz, map_zero, add_zero]
+      simp only [mul_apply_eq_comp, L.extLie_apply_of_fst_eq_zero _ hnz, map_zero, add_zero]
     have e2 : L.sndA Y (L.zV (i : ℕ)) = M (L.zV (i : ℕ)) := by
       rw [hYV, LinearMap.add_apply, L.extLie_apply_of_fst_eq_zero _ (L.fst_zV _), add_zero]
     rw [e1, L.bform_conj_lieN hn hM hi, e2]

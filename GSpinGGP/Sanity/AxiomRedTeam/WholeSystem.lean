@@ -30,10 +30,11 @@ the path of the main theorem meet the definitions in one instance.
   Iwasawa datum (`toyD_kernelK_bound_scusp`; on the way `Ξ^G ≡ 1`, `Ξ^{H\G} ≡ 1`);
   `locallyIntegrable_absF_det_adV_rpow` at `a = 0` for every `d` (`locallyIntegrable_det_adV_rpow_zero`;
   the conclusion of `bp_integrable_deltaGGP_rpow`, now proved from it, is also checked at `toyD`:
-  `toyD_bp_integrable`); `prop_6_7_1_iii`
-  (`toyD_prop_6_7_1_iii`); `exists_lie_descent` with `Ω = G` (`toyD_exists_lie_descent`).
+  `toyD_bp_integrable`); `exists_lie_descent` with `Ω = G` (`toyD_exists_lie_descent`).
   `exists_good_nhd_of_not_nearCentral` and `mult_parInd_eq_mGeom` are vacuous there
   (`toyD_isNearCentral`, `toyD_not_isTempIndData`).
+  The conclusion of `prop_6_7_1_iii` (now proved) is also checked
+  there (`toyD_prop_6_7_1_iii`).
 
 Not covered: anything that needs a nonzero nilpotent orbit, a proper parabolic or a nontrivial
 torus.

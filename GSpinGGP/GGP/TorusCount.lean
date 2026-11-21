@@ -165,14 +165,14 @@ theorem finite_conj_torusOf {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x) :
       set v := specP _ g⁻¹ (e i)
       have hv : v ≠ 0 := fun h0 => he (by
         have := congrArg (specP _ g) h0
-        rw [map_zero, ← LinearEquiv.mul_apply, ← map_mul, mul_inv_cancel, map_one] at this
+        rw [map_zero, ← mul_apply_eq_comp, ← map_mul, mul_inv_cancel, map_one] at this
         exact this)
       have hXv : X v = ((τ i : Kbˣ) : Kb) • v := by
         have h1 : specP _ g⁻¹ * specP _ (bcGSpin d.QW t) =
             specP _ (bcGSpin d.QW x) * specP _ g⁻¹ := by
           rw [← map_mul, ← map_mul, ← hg]; congr 1; group
         have h2 := congrArg (fun φ => φ (e i)) h1
-        simp only [LinearEquiv.mul_apply, (hτ i).1, map_smul] at h2
+        simp only [mul_apply_eq_comp, (hτ i).1, map_smul] at h2
         exact h2.symm
       exact (Module.End.hasEigenvalue_iff_isRoot).1
         (Module.End.hasEigenvalue_of_hasEigenvector ⟨Module.End.mem_eigenspace_iff.2 hXv, hv⟩)
@@ -609,9 +609,9 @@ theorem card_quot_stableSet (hT : HasTorusTransport τ) {x : ↥(GSpin d.QW)} (h
   refine tsum_congr fun c => ?_
   by_cases h : Meets τ x c
   · obtain ⟨y₀, hy₀⟩ := h
-    rw [card_fibOn_stableSet hT hx hy₀, if_pos ⟨y₀, hy₀⟩]
+    rw [card_fibOn_stableSet hT hx hy₀, ite_eq_left ⟨y₀, hy₀⟩]
     ring
-  · rw [if_neg h, Set.not_nonempty_iff_eq_empty.1 h]
+  · rw [ite_eq_right h, Set.not_nonempty_iff_eq_empty.1 h]
     simp
 
 /-- `Meets` depends only on the torus of `x`: if `T_u = T_z` (both in `Γ(G,H)`), a class meeting

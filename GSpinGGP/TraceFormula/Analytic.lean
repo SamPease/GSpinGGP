@@ -35,9 +35,9 @@ of Thesis Ch. 8 and 10 and proves the bookkeeping around it.
 ## Results
 
 * Proved: `kernelK_integrable` (the integral defining `K(f,x)` converges for
-  `f ∈ ScuspTestFn`), `kernelK_add`, `kernelK_smul`, `distribJ_add`, `distribJ_smul`,
-  `distribJ_convergent` (from `kernelK_bound_scusp`, `prop_6_7_1_iii` and the continuity of
-  `K(f,·)` on `H(F)\G(F)/A_G(F)`, `continuous_kernelK_repHG`),
+  `f ∈ ScuspTestFn`), `kernelK_add`, `kernelK_smul`, `distribJ_smul`, the continuity of
+  `K(f,·)` on `H(F)\G(F)/A_G(F)` (`continuous_kernelK_repHG`; `distribJ_convergent`,
+  `distribJ_add` and Thesis Prop 8.4.1(iii) `prop_6_7_1_iii` are in `TraceFormula/ConeTorus.lean`),
   `scuspTestFn_subset_scuspSchwartz` (`C_c^∞` strongly cuspidal functions are Schwartz), and the
   supporting lemmas: continuity of `λ` and `ξ`, properties of `δ_{P₀}` and a lower bound for
   `Ξ^G` on compact sets, van Dantzig's theorem, uniform local constancy, log-norm lemmas.
@@ -50,10 +50,9 @@ of Thesis Ch. 8 and 10 and proves the bookkeeping around it.
   `H(F)\G(F)/A_G(F)`: `isInvariantQuotient_mkHG` (the Weil measure is right invariant),
   `xiHG_mkHG` (`xiHG` is the abstract `Ξ^{H\G}`), `logNormHG_eq_fiberInf_logNormModAG`, and
   `prop_6_7_1_iii_of_weakCartanData` (Prop 8.4.1(iii) from weak Cartan data; the outer
-  regularity of the Weil measure it uses is found by instance search from the Hausdorff, locally
-  compact and second countable instances on `HGQuot`).
+  regularity of the Weil measure it uses is the instance `GGPData.weaklyRegular_weilMeasureHG`).
 * `sorry` (own work, Thesis Ch. 8 and 10, adapted from BP Ch. 6, 8): `kernelK_bound` (Thm 10.1.1(i)),
-  `kernelK_bound_scusp` (Thm 10.1.1(ii)), `prop_6_7_1_iii` (Thesis Prop 8.4.1(iii)),
+  `kernelK_bound_scusp` (Thm 10.1.1(ii)),
   `lemma_6_5_1_i/ii/iii` (Thesis Lemma 8.2.1); `exists_good_minimal_parabolic` (Thesis
   Prop 8.1.1(i)) is proved from `TraceFormula/GoodParabolic.lean` except for the Haar-null
   complement of `H(F) P̄(F)` (an inline `sorry`).
@@ -131,7 +130,7 @@ theorem one_le_logNormG (g : ↥d.G) : 1 ≤ d.logNormG g := one_le_logNorm _ g
 /-- `σ_G` is continuous. -/
 theorem continuous_logNormG : Continuous d.logNormG := by
   have hv : Continuous fun g : ↥d.G => ((g : d.ambientˣ) : d.ambient) :=
-    Units.continuous_val.comp continuous_subtype_val
+    Units.continuous_val.comp continuous_subtypeVal
   have h1 : Continuous fun g : ↥d.G => ‖lmulPi F ((g : d.ambientˣ) : d.ambient)‖ :=
     ((continuous_lmulPi F).comp hv).norm
   have h2 : Continuous fun g : ↥d.G => ‖lmulPi F (((g⁻¹ : ↥d.G) : d.ambientˣ) : d.ambient)‖ :=
@@ -400,7 +399,7 @@ variable {d} (IW : d.IwasawaDatum)
 abbrev KP0 : Subgroup ↥IW.P0 := IW.K.subgroupOf IW.P0
 
 theorem isOpen_KP0 : IsOpen (IW.KP0 : Set ↥IW.P0) :=
-  IW.isOpen_K.preimage continuous_subtype_val
+  IW.isOpen_K.preimage continuous_subtypeVal
 
 theorem isCompact_KP0 : IsCompact (IW.KP0 : Set ↥IW.P0) :=
   (d.isClosed_whittB IW.FW IW.FV).isClosedEmbedding_subtypeVal.isCompact_preimage IW.isCompact_K
@@ -531,7 +530,7 @@ theorem continuous_incl : Continuous d.incl := by
   apply continuous_induced_rng.2
   rw [Units.continuous_iff]
   constructor
-  · exact hmap.comp (Units.continuous_val.comp continuous_subtype_val)
+  · exact hmap.comp (Units.continuous_val.comp continuous_subtypeVal)
   · have e : ∀ a : GSpin d.QW, ((((d.incl a : GSpin d.QV) : (CliffordAlgebra d.QV)ˣ))⁻¹ :
         (CliffordAlgebra d.QV)ˣ) = (((d.incl a⁻¹ : GSpin d.QV) : (CliffordAlgebra d.QV)ˣ)) := by
       intro a
@@ -550,7 +549,7 @@ theorem continuous_incl : Continuous d.incl := by
       rw [e a, e2 a]
     rw [this]
     refine hmap.comp ?_
-    exact Units.continuous_coe_inv.comp continuous_subtype_val
+    exact Units.continuous_coe_inv.comp continuous_subtypeVal
 
 /-- `g ↦ n(g) = g_W⁻¹ g_V` is continuous on `G(F)`. -/
 theorem continuous_nPart : Continuous d.nPart := by
@@ -567,12 +566,12 @@ theorem continuous_lam : Continuous d.lam := by
   unfold lam
   refine continuous_finsetSum _ fun i _ => ?_
   exact (IsModuleTopology.continuous_of_linearMap (bform d.QV (d.zV (-(i : ℤ) - 1)))).comp
-    ((d.continuous_specP_nPart _).comp continuous_subtype_val)
+    ((d.continuous_specP_nPart _).comp continuous_subtypeVal)
 
 /-- `ξ = ψ ∘ λ` is continuous on `H(F)` (Thesis §5.2). -/
 theorem continuous_xi (ψ : NontrivialAddChar F) : Continuous (d.xi ψ.toAddChar) := by
   unfold xi
-  exact continuous_subtype_val.comp (ψ.continuous.comp d.continuous_lam)
+  exact continuous_subtypeVal.comp (ψ.continuous.comp d.continuous_lam)
 
 /-! ## 4. The kernel `K(f,x)` and the distribution `J(f)` (Thesis §7.1, §10.1) -/
 
@@ -589,7 +588,7 @@ theorem kernelK_integrable (f : ↥d.G → ℂ) (hf : f ∈ ScuspTestFn d χ) (x
   -- the integrand on `H(F)` is continuous
   let φ : ↥d.H → ℂ := fun h => kernelIntegrand d ψ f x h
   have hφ : Continuous φ :=
-    (hlc.continuous.comp ((continuous_const.mul continuous_subtype_val).mul continuous_const)).mul
+    (hlc.continuous.comp ((continuous_const.mul continuous_subtypeVal).mul continuous_const)).mul
       (d.continuous_xi ψ)
   -- it descends to `H(F)/A_{G,H}(F)`
   let φbar : d.HmodAGH → ℂ :=
@@ -920,9 +919,7 @@ theorem exists_growth_mkHG_frameTorus {n₁ n₂ : ℕ} {W₁ W₂ : Submodule F
 pp. 151–152): given the weak Cartan decomposition with the comparison `σ_{A_G\G} ≪ σ_{H\G}` on
 the cone and its polynomial growth (`WeakCartanData`, BP (6.7.11), 6.7.1(ii)(b), (6.7.12)), the
 integral `∫ Ξ^{H\G}(x)² σ_{H\G}(x)^{-d} dx` converges for some `d > 0`. The measurability of
-`xiHG` uses the outer regularity of the Weil measure, found by instance search: `HGQuot` is
-Hausdorff, locally compact and second countable, and the measure is finite on compacts
-(`WeaklyRegular.of_pseudoMetrizableSpace_secondCountable_of_locallyFinite`). -/
+`xiHG` uses the outer regularity of the Weil measure (`GGPData.weaklyRegular_weilMeasureHG`). -/
 theorem prop_6_7_1_iii_of_weakCartanData (C₀ : Set ↥d.G) (hC₀ : IsCompact C₀)
     (hC₀' : (interior C₀).Nonempty)
     (W : WeakCartanData d.mkHG d.logNormModAG) :
@@ -932,16 +929,6 @@ theorem prop_6_7_1_iii_of_weakCartanData (C₀ : Set ↥d.G) (hC₀ : IsCompact 
   exact d.isInvariantQuotient_mkHG.exists_integrable_of_weakCartanData d.isQuotientMap_mkHG
     d.isLogNorm_logNormModAG (d.logNormHG_eq_fiberInf_logNormModAG ▸ d.measurable_logNormHG) W
     hC₀ hC₀' (d.xiHG_mkHG C₀)
-
-/-- **Thesis Prop 8.4.1(iii)** (adapted from BP Prop 6.7.1(iii)): there is `d > 0` with
-`∫_{H(F)\G(F)/A_G(F)} Ξ^{H\G}(x)² σ_{H\G}(x)^{-d} dx < ∞`.  Stated for every compact `C₀`
-with nonempty interior defining `Ξ^{H\G} = Ξ^{H\G}_{C₀}` (`xiHG`); the thesis fixes one such
-`C₀`, and different choices give equivalent functions (Thesis §8.4).  Own work; not proved
-here. -/
-theorem prop_6_7_1_iii (C₀ : Set ↥d.G) (hC₀ : IsCompact C₀) (hC₀' : (interior C₀).Nonempty) :
-    ∃ d₀ : ℝ, 0 < d₀ ∧
-      Integrable (fun q : d.HGQuot => d.xiHG C₀ q ^ 2 * d.logNormHG q ^ (-d₀)) d.weilMeasureHG := by
-  sorry
 
 /-- **`K(f,·)` is continuous on `H(F)\G(F)/A_G(F)`** for `f` `χ`-equivariant and bi-invariant
 under a compact open subgroup `K'`: it is right `K'`-invariant, hence locally constant on `G(F)`,
@@ -977,40 +964,6 @@ theorem continuous_kernelK_repHG (f : ↥d.G → ℂ) (hchi : IsChiEquivariant d
     rfl
   rw [heq]
   exact hφ
-
-/-- **`J(f)` converges** for `f ∈ ScuspTestFn d χ` (Thesis §10.1): `f` is Schwartz
-(`scuspTestFn_subset_scuspSchwartz`), so Thm 10.1.1(ii) (`kernelK_bound_scusp`) bounds
-`|K(f,x)|` by a multiple of `Ξ^{H\G}(x)² σ_{H\G}(x)^{-d}` for every `d > 0`, which is integrable
-for `d` large by Thesis Prop 8.4.1(iii) (`prop_6_7_1_iii`); `K(f,·)` is continuous on
-`H(F)\G(F)/A_G(F)` (`continuous_kernelK_repHG`). -/
-theorem distribJ_convergent (f : ↥d.G → ℂ) (hf : f ∈ ScuspTestFn d χ) :
-    Integrable (fun q : d.HGQuot => kernelK d ψ f (d.repHG q)) d.weilMeasureHG := by
-  obtain ⟨IW⟩ := d.exists_iwasawaDatum
-  have hf' := d.scuspTestFn_subset_scuspSchwartz χ IW hf
-  obtain ⟨⟨K', hK'o, hK'c, hbi⟩, hchi, -⟩ := hf'.1
-  have hC₀' : (interior (K' : Set ↥d.G)).Nonempty :=
-    ⟨1, mem_interior_iff_mem_nhds.2 (hK'o.mem_nhds K'.one_mem)⟩
-  obtain ⟨d₀, hd₀, hint⟩ := d.prop_6_7_1_iii (K' : Set ↥d.G) hK'c hC₀'
-  obtain ⟨C, n, hb⟩ := d.kernelK_bound_scusp χ ψ IW (K' : Set ↥d.G) hK'c hC₀' d₀ hd₀ K' hK'o hK'c
-  refine (hint.const_mul (C * d.schwartzSeminorm IW n f)).mono'
-    (d.continuous_kernelK_repHG χ ψ f hchi hK'o hbi).aestronglyMeasurable
-    (Filter.Eventually.of_forall fun q => ?_)
-  have := hb f hf' hbi (d.repHG q)
-  rw [d.mkHG_repHG] at this
-  simpa only [mul_assoc] using this
-
-/-- `J` is additive on `ScuspTestFn d χ` (Thesis §10.1: `J` is a linear form). -/
-theorem distribJ_add (f g : ↥d.G → ℂ) (hf : f ∈ ScuspTestFn d χ) (hg : g ∈ ScuspTestFn d χ) :
-    distribJ d ψ (f + g) = distribJ d ψ f + distribJ d ψ g := by
-  have e : ∀ q : d.HGQuot, kernelK d ψ (f + g) (d.repHG q) =
-      kernelK d ψ f (d.repHG q) + kernelK d ψ g (d.repHG q) :=
-    fun q => d.kernelK_add χ ψ f g hf hg _
-  unfold distribJ
-  change ∫ q, kernelK d ψ (f + g) (d.repHG q) ∂d.weilMeasureHG =
-    ∫ q, kernelK d ψ f (d.repHG q) ∂d.weilMeasureHG +
-      ∫ q, kernelK d ψ g (d.repHG q) ∂d.weilMeasureHG
-  simp_rw [e]
-  exact integral_add (d.distribJ_convergent χ ψ f hf) (d.distribJ_convergent χ ψ g hg)
 
 /-- `J(c f) = c J(f)` (Thesis §10.1); no hypothesis needed. -/
 theorem distribJ_smul (c : ℂ) (f : ↥d.G → ℂ) :

@@ -311,16 +311,16 @@ theorem exists_hypFrame_eigen (hQ : (polarBilin Q).Nondegenerate)
       simpa using this
     have h := isCompl_ker_range_of_isSemisimple hss1
     have hk : LinearMap.ker (X - 1) = X.eigenspace 1 := by
-      ext v; rw [LinearMap.mem_ker, hE1, LinearMap.sub_apply, Module.End.one_apply, sub_eq_zero]
+      ext v; rw [LinearMap.mem_ker, hE1, LinearMap.sub_apply, one_apply_eq_self, sub_eq_zero]
     rwa [hk] at h
   have hperp : ∀ v ∈ X.eigenspace 1, ∀ r ∈ R, polar Q v r = 0 := by
     rintro v hv _ ⟨y, rfl⟩
     have h := hpX v y
     rw [(hE1 v).1 hv] at h
-    rw [LinearMap.sub_apply, Module.End.one_apply, polar_sub_right, h, sub_self]
+    rw [LinearMap.sub_apply, one_apply_eq_self, polar_sub_right, h, sub_self]
   have hRX : ∀ r ∈ R, X r ∈ R := by
     rintro _ ⟨y, rfl⟩
-    exact ⟨X y, by simp only [LinearMap.sub_apply, Module.End.one_apply, map_sub]⟩
+    exact ⟨X y, by simp only [LinearMap.sub_apply, one_apply_eq_self, map_sub]⟩
   have hRnd : ∀ v ∈ R, (∀ v' ∈ R, polar Q v v' = 0) → v = 0 := by
     intro v hv hv0
     refine hQ.1 v fun z => ?_
@@ -333,7 +333,7 @@ theorem exists_hypFrame_eigen (hQ : (polarBilin Q).Nondegenerate)
   have hEm : R ⊓ X.eigenspace (-1) = X.eigenspace (-1) := by
     refine inf_eq_right.2 fun v hv => ⟨-(2 : K)⁻¹ • v, ?_⟩
     rw [mem_eigenspace_iff] at hv
-    simp only [LinearMap.sub_apply, Module.End.one_apply, map_smul, hv, neg_one_smul]
+    simp only [LinearMap.sub_apply, one_apply_eq_self, map_smul, hv, neg_one_smul]
     module
   have hevEm : Even (finrank K (X.eigenspace (-1))) := by
     have hB : LinearMap.BilinForm.IsSymm (polarBilin Q) := ⟨fun u v => polar_comm Q u v⟩
@@ -362,7 +362,7 @@ theorem exists_hypFrame_eigen (hQ : (polarBilin Q).Nondegenerate)
   obtain ⟨y, rfl⟩ := (LinearMap.injective_iff_surjective.1 hinj) z
   rw [polarBilin_apply_apply, polar_sub_left, hpX]
   have := hvR _ ⟨y, rfl⟩
-  rw [LinearMap.sub_apply, Module.End.one_apply, polar_sub_right] at this
+  rw [LinearMap.sub_apply, one_apply_eq_self, polar_sub_right] at this
   linear_combination -this
 
 end Frame

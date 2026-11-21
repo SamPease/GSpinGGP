@@ -93,7 +93,7 @@ theorem L0_skew_eq_zero {X : Module.End F (L0 (F := F)).V}
   have h := L0_end_eq_smul (F := F) X
   set c := (X e0).2 0
   rw [h] at hX'
-  rw [Pi.neg_apply, LinearMap.smul_apply, Module.End.one_apply,
+  rw [Pi.neg_apply, LinearMap.smul_apply, one_apply_eq_self,
     map_smul, map_neg, map_smul, LinearMap.smul_apply, L0_bform_e0] at hX'
   have hc : c = 0 := by
     have h2 : (2 : F) ≠ 0 := two_ne_zero
@@ -263,7 +263,7 @@ theorem L0_expCompatH_univ (μH : Measure ↥(L0 (F := F)).Hbar) (μ𝔥 : Measu
   rw [hS Set.univ MeasurableSet.univ hsub]
   congr 1
   ext h
-  simp only [Set.mem_setOf_eq, Set.mem_univ, true_and, iff_true]
+  simp only [Set.mem_ofPred_eq, Set.mem_univ, true_and, iff_true]
   refine ⟨0, ?_⟩
   rw [Subsingleton.elim h 1]
   simp [expA_zero]
@@ -361,11 +361,11 @@ theorem absF_one' : absF (1 : F) = 1 := by
 
 theorem L0_weylDiscLie : weylDiscLie (L0 (F := F)).lie 0 = 1 := by
   unfold weylDiscLie
-  rw [dif_pos (fun Y _ => by simp)]
+  rw [dite_eq_left (fun Y _ => by simp)]
   haveI : Subsingleton ↥(L0 (F := F)).lie.toSubmodule :=
     inferInstanceAs (Subsingleton ↥(L0 (F := F)).lie)
   rw [charpoly_eq_one_of_subsingleton, Polynomial.trailingCoeff, Polynomial.natTrailingDegree_one,
-    Polynomial.coeff_one_zero, absF_one']
+    AddMonoidAlgebra.coeff_one_zero, absF_one']
 
 theorem L0_delta : (L0 (F := F)).delta 0 = 1 := by
   unfold LuoDatum.delta
@@ -388,7 +388,7 @@ theorem L0_cTheta (ψ : NontrivialAddChar F) (θ : ↥(L0 (F := F)).lie → ℂ)
   unfold LuoDatum.cTheta germLie
   have hE : ∃ c, HasGermExpansionLie (L0 (F := F)).Gbar (L0 (F := F)).lie
       (L0 (F := F)).traceForm ψ θ 0 c := ⟨_, L0_hasGermExpansionLie ψ θ 0⟩
-  rw [if_pos (L0_nilReg _ _), dif_pos hE]
+  rw [ite_eq_left (L0_nilReg _ _), dite_eq_left hE]
   exact L0_coeff_eq ψ θ 0 (zero_mem _) hE.choose_spec _
 
 theorem L0_mGeomLieS (ψ : NontrivialAddChar F)
@@ -406,7 +406,7 @@ theorem L0_mGeomLieS (ψ : NontrivialAddChar F)
   rw [L0_weylCardOf, Nat.cast_one, inv_one, one_mul, integral_of_subsingleton _ _ 0,
     L0_expCompatT_univ _ _ (hμT _), one_smul]
   unfold LuoDatum.gammaIntegrand
-  rw [ZeroMemClass.coe_zero, if_pos (L0_isNat _), L0_weylDiscLie, L0_delta, L0_cTheta]
+  rw [ZeroMemClass.coe_zero, ite_eq_left (L0_isNat _), L0_weylDiscLie, L0_delta, L0_cTheta]
   simp
 
 

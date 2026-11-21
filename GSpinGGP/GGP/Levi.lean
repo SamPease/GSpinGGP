@@ -223,7 +223,7 @@ theorem continuous_e (Φ : GGPIso d d') : Continuous Φ.e := by
   have hu : Continuous (GGPData.unitsOf Φ.alg) :=
     Units.continuous_map (f := (Φ.alg.toRingEquiv.toMulEquiv : d.ambient →* d'.ambient))
       (continuous_alg Φ.alg)
-  exact (hu.comp continuous_subtype_val).subtype_mk _
+  exact (hu.comp continuous_subtypeVal).subtype_mk _
 
 theorem continuous_e_symm (Φ : GGPIso d d') : Continuous Φ.e.symm :=
   Φ.symm.continuous_e
@@ -1372,7 +1372,7 @@ instance locallyCompactSpace_whittB : LocallyCompactSpace ↥(d.whittB FW FV) :=
 instance isClosed_whittU_subgroupOf :
     IsClosed (((d.whittU FW FV).subgroupOf (d.whittB FW FV) : Subgroup ↥(d.whittB FW FV)) :
       Set ↥(d.whittB FW FV)) :=
-  (d.isClosed_whittU FW FV).preimage continuous_subtype_val
+  (d.isClosed_whittU FW FV).preimage continuous_subtypeVal
 
 instance t3Space_leviQuot : T3Space (d.LeviQuot FW FV) :=
   @QuotientGroup.instT3Space _ _ _ _ ((d.whittU FW FV).subgroupOf (d.whittB FW FV)) _
@@ -1484,7 +1484,7 @@ theorem integrable_inner (f₁ f₂ : D.Pre) :
   have h₁ := D.continuous_of_mem_smoothSpace (D.toFun_mem f₁)
   have h₂ := D.continuous_of_mem_smoothSpace (D.toFun_mem f₂)
   have hc : Continuous (fun k : ↥D.K => inner ℂ (D.toFun f₁ k) (D.toFun f₂ k)) :=
-    (h₁.comp continuous_subtype_val).inner (h₂.comp continuous_subtype_val)
+    (h₁.comp continuous_subtypeVal).inner (h₂.comp continuous_subtypeVal)
   exact integrableOn_univ.1 (hc.continuousOn.integrableOn_compact isCompact_univ)
 
 theorem preInner_conj_symm (f₁ f₂ : D.Pre) :
@@ -1591,7 +1591,7 @@ theorem inner_toFun_mul (f₁ f₂ : D.Pre) (p : ↥D.P) (x : ↥d.G) :
 /-- `P(F) ∩ K`, as a subset of `P(F)`. -/
 def PK : Set ↥D.P := {p | (p : ↥d.G) ∈ D.K}
 
-theorem isOpen_PK : IsOpen D.PK := D.isOpen_K.preimage continuous_subtype_val
+theorem isOpen_PK : IsOpen D.PK := D.isOpen_K.preimage continuous_subtypeVal
 
 theorem isCompact_PK : IsCompact D.PK :=
   (d.isClosed_whittB D.FW D.FV).isClosedEmbedding_subtypeVal.isCompact_preimage D.isCompact_K
@@ -1620,7 +1620,7 @@ theorem deltaP_eq_one {s : ↥D.P} (hs : s ∈ D.PK) : d.deltaP D.FW D.FV s = 1 
     ext p
     simp only [Set.mem_preimage, PK, Set.mem_ofPred_eq, Subgroup.coe_mul]
     exact ⟨fun h => by simpa using D.K.mul_mem h (D.K.inv_mem hs), fun h => D.K.mul_mem h hs⟩
-  rw [Measure.map_apply (measurable_mul_const s) hmeas, hpre, Measure.smul_apply,
+  rw [Measure.map_apply (measurable_mul_const s) hmeas, hpre, smul_apply,
     ENNReal.smul_def, smul_eq_mul] at h
   have h0 := (D.isOpen_PK.measure_pos (Measure.haar : Measure ↥D.P) ⟨1, D.K.one_mem⟩).ne'
   have htop := D.isCompact_PK.measure_lt_top (μ := (Measure.haar : Measure ↥D.P)).ne

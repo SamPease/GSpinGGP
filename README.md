@@ -41,21 +41,21 @@ satisfying the stability, transfer and genericity hypotheses, which is all the p
 
 As of November 2026:
 
-- The project builds with 33 declarations containing `sorry`. The main theorem `local_ggp`
-  depends on 16 of them. They are of two kinds: the analytic core of the local trace formula
+- The project builds with 31 declarations containing `sorry`. The main theorem `local_ggp`
+  depends on 15 of them. They are of two kinds: the analytic core of the local trace formula
   (Thesis Ch. 8–12, e.g. the bound on the kernel of the distribution `J` and its spectral
   expansion), and published results that the dissertation adapts to general spin groups (see
   below), plus some smaller lemmas. A `sorry` is a step this project still owes.
 - Results from the literature are assumed as `axiom`s in `GSpinGGP/Literature/`, each with a
   docstring citing its source; they are where the formalization stops, and are not meant to be
-  proved here. `local_ggp` uses 21 of the 22. The other,
-  `bp_sqrt_weylDisc_mul_locallyBounded` (BP Prop 4.1.1(ii)), is an input of the germ bound
-  `germ_bound_of_mem_QC`, still a `sorry`. There are two classes.
+  proved here. `local_ggp` uses 20 of the 21. The other,
+  `bp_sqrt_weylDisc_mul_locallyBounded` (BP Prop 4.1.1(ii)), is intended as an input of the germ
+  bound `germ_bound_of_mem_QC`, still a `sorry`. There are two classes.
   A *verbatim* axiom is a statement printed in its source, for the group the source treats,
   specialized (one, `bp_integrable_kernel_scusp`, is stated without proof in its source).
   A *derived* axiom is a short, explicit combination of such statements, or a printed statement
   whose hypotheses are checked for our object in the docstring only; the docstring quotes the
-  ingredients and gives the steps. 10 of the 22 are derived (`scripts/derived-axioms.txt`):
+  ingredients and gives the steps. 10 of the 21 are derived (`scripts/derived-axioms.txt`):
   the two on characters and the one on multiplicity one (sources state them for irreducible
   admissible smooth representations, the axioms for irreducible unitary ones);
   the three on Galois cohomology (applied to groups of `F̄`-points whose description as algebraic
@@ -81,6 +81,9 @@ As of November 2026:
 - Hilbert's Theorem 90 for `GL_m` is proved (`GGP/Hilbert90.lean`), from Mathlib's linear
   independence of characters, and from it Hilbert 90 for the units of a central simple algebra
   (`GGP/Hilbert90Units.lean`).
+- Schur's lemma for irreducible unitary representations (Dixmier 13.1.4: the commutant is the
+  scalars) is proved (`Foundations/UnitarySchur.lean`) from Tau Ceti's spectral theorem for
+  bounded normal operators.
 
 To see exactly what the main theorem rests on:
 

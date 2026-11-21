@@ -190,7 +190,7 @@ theorem hcDisc_ne_zero_of_mem_regularSet (d : GGPData F) {x : ↥d.G}
   have key : (LinearMap.charpoly N).coeff (lieRank d.lie) ≠ 0 := by
     rw [← finrank_lieCentralizer_eq_lieRank d hx, ← hker', ← hdeg]
     change (LinearMap.charpoly N).trailingCoeff ≠ 0
-    exact Polynomial.trailingCoeff_nonzero_iff_nonzero.mpr (LinearMap.charpoly_monic N).ne_zero
+    exact Polynomial.trailingCoeff_ne_zero.mpr (LinearMap.charpoly_monic N).ne_zero
   rw [hNdef] at key
   unfold hcDisc
   rw [dite_eq_left (lie_conj_stable d x)]

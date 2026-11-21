@@ -77,13 +77,13 @@ variable {R M : Type*} [CommRing R] [AddCommGroup M] [Module R M] {B : LinearMap
 theorem IsOrthogonal.isAdjointPair_inv (h : B.IsOrthogonal (u : Module.End R M)) :
     IsAdjointPair B B ((u⁻¹ : (Module.End R M)ˣ) : Module.End R M) (u : Module.End R M) :=
   fun x y => by
-    rw [← h, ← Module.End.mul_apply, Units.mul_inv, Module.End.one_apply]
+    rw [← h, ← mul_apply_eq_comp, Units.mul_inv, one_apply_eq_self]
 
 /-- An orthogonal unit is adjoint to its inverse: `B (u x) y = B x (u⁻¹ y)`. -/
 theorem IsOrthogonal.isAdjointPair (h : B.IsOrthogonal (u : Module.End R M)) :
     IsAdjointPair B B (u : Module.End R M) ((u⁻¹ : (Module.End R M)ˣ) : Module.End R M) :=
   fun x y => by
-    rw [← h x, ← Module.End.mul_apply (u : Module.End R M), Units.mul_inv, Module.End.one_apply]
+    rw [← h x, ← mul_apply_eq_comp (u : Module.End R M), Units.mul_inv, one_apply_eq_self]
 
 /-- Conjugation by an orthogonal unit preserves skew-adjointness. -/
 theorem IsSkewAdjoint.conj_units (h : B.IsOrthogonal (u : Module.End R M)) {f : Module.End R M}

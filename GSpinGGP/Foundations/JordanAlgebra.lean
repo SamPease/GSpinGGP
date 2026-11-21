@@ -132,7 +132,7 @@ theorem Units.inv_mem_adjoin_of_mem_adjoin {x s : Aˣ}
     (hs : (s : A) ∈ Algebra.adjoin F {(x : A)}) :
     ((s⁻¹ : Aˣ) : A) ∈ Algebra.adjoin F {(x : A)} :=
   Algebra.adjoin_le (Set.singleton_subset_iff.2 hs)
-    (TauCeti.Units.coe_inv_mem_adjoin s (IsIntegral.of_finite F _))
+    (Units.inv_mem_adjoin s (IsIntegral.of_finite F _))
 
 omit [PerfectField F] in
 /-- For a unit `x`, `F[x] = F[x⁻¹]`. -/
@@ -140,8 +140,8 @@ theorem Units.adjoin_inv (x : Aˣ) :
     Algebra.adjoin F {((x⁻¹ : Aˣ) : A)} = Algebra.adjoin F {(x : A)} := by
   refine le_antisymm (Algebra.adjoin_le (Set.singleton_subset_iff.2 ?_))
     (Algebra.adjoin_le (Set.singleton_subset_iff.2 ?_))
-  · exact TauCeti.Units.coe_inv_mem_adjoin x (IsIntegral.of_finite F _)
-  · simpa using TauCeti.Units.coe_inv_mem_adjoin x⁻¹ (IsIntegral.of_finite F _)
+  · exact Units.inv_mem_adjoin x (IsIntegral.of_finite F _)
+  · simpa using Units.inv_mem_adjoin x⁻¹ (IsIntegral.of_finite F _)
 
 /-- **Jordan decomposition of a unit**: `x = s + (x − s)` with `s` a unit in `F[x]`, `L_s`
 semisimple and `x − s` nilpotent. -/
@@ -166,7 +166,7 @@ theorem isNilpotent_conj_sub_conj {x s : Aˣ} (hs : (s : A) ∈ Algebra.adjoin F
         (LinearMap.mulLeft F (s : A) * LinearMap.mulRight F ((s⁻¹ : Aˣ) : A)) := by
   set B := Algebra.adjoin F {(x : A)}
   have hxB : (x : A) ∈ B := Algebra.self_mem_adjoin_singleton F _
-  have hxiB : ((x⁻¹ : Aˣ) : A) ∈ B := TauCeti.Units.coe_inv_mem_adjoin x (IsIntegral.of_finite F _)
+  have hxiB : ((x⁻¹ : Aˣ) : A) ∈ B := Units.inv_mem_adjoin x (IsIntegral.of_finite F _)
   have hsiB : ((s⁻¹ : Aˣ) : A) ∈ B := Units.inv_mem_adjoin_of_mem_adjoin hs
   have hcB : ∀ {p q : A}, p ∈ B → q ∈ B → Commute p q := commute_of_mem_adjoin_singleton
   set t₁ := LinearMap.mulLeft F ((x : A) - s) * LinearMap.mulRight F ((x⁻¹ : Aˣ) : A)
@@ -177,7 +177,7 @@ theorem isNilpotent_conj_sub_conj {x s : Aˣ} (hs : (s : A) ∈ Algebra.adjoin F
   have hTC : LinearMap.mulLeft F (x : A) * LinearMap.mulRight F ((x⁻¹ : Aˣ) : A) -
       LinearMap.mulLeft F (s : A) * LinearMap.mulRight F ((s⁻¹ : Aˣ) : A) = t₁ + t₂ := by
     refine LinearMap.ext fun a => ?_
-    simp only [t₁, t₂, LinearMap.sub_apply, LinearMap.add_apply, Module.End.mul_apply,
+    simp only [t₁, t₂, LinearMap.sub_apply, LinearMap.add_apply, mul_apply_eq_comp,
       LinearMap.mulLeft_apply, LinearMap.mulRight_apply]
     noncomm_ring
   have hn₁ : IsNilpotent t₁ :=
@@ -228,8 +228,8 @@ theorem ker_le_ker_pow_add [FiniteDimensional K M] {s n : Module.End K M} (hc : 
     induction k with
     | zero => rfl
     | succ k ih =>
-      rw [pow_succ', Module.End.mul_apply, ih, LinearMap.add_apply, ← Module.End.mul_apply,
-        (hc.pow_right k).eq, Module.End.mul_apply, hx, map_zero, zero_add, ← Module.End.mul_apply,
+      rw [pow_succ', mul_apply_eq_comp, ih, LinearMap.add_apply, ← mul_apply_eq_comp,
+        (hc.pow_right k).eq, mul_apply_eq_comp, hx, map_zero, zero_add, ← mul_apply_eq_comp,
         ← pow_succ']
   have hD : n ^ finrank K M = 0 := by
     have h := LinearMap.aeval_self_charpoly n
@@ -306,7 +306,7 @@ theorem mem_GSpin_of_mem_adjoin {Q : QuadraticForm F V} {x s : (CliffordAlgebra 
       exact hy w
     have h := mapsTo_of_mem_adjoin_singleton hm
       (conj_mem_adjoin_of_isSemisimple_mulLeft ht hts htn) ⟨v, rfl⟩
-    rwa [Module.End.mul_apply, LinearMap.mulRight_apply, LinearMap.mulLeft_apply,
+    rwa [mul_apply_eq_comp, LinearMap.mulRight_apply, LinearMap.mulLeft_apply,
       ← mul_assoc] at h
   have hsi : ((s⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∈
       Algebra.adjoin F {((x⁻¹ : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)} := by
@@ -345,7 +345,7 @@ theorem ι_adV_pow {Q : QuadraticForm F V} {Y : CliffordAlgebra Q} (hY : Y ∈ g
   induction k with
   | zero => rfl
   | succ k ih =>
-    rw [pow_succ', Module.End.mul_apply, ι_adV hY, ih, pow_succ', Module.End.mul_apply,
+    rw [pow_succ', mul_apply_eq_comp, ι_adV hY, ih, pow_succ', mul_apply_eq_comp,
       LieAlgebra.ad_apply, Ring.lie_def]
 
 /-- `adV Y` is semisimple for `Y ∈ gspin(V)` with `L_Y` semisimple on `C(V)` (`adV Y` is the

@@ -8,13 +8,13 @@ import GSpinGGP.Foundations.TorusIntegrability
 /-!
 # Homogeneity of `ĵ(O, ·)` (BP (1.8.5))
 
-Beuzart-Plessis, Astérisque 418, (1.8.5) (p. 34; arXiv:1506.01452, p. 40):
+Beuzart-Plessis, Astérisque 418, (1.8.5) (p. 34; arXiv:1506.01452, p. 41):
 `ĵ(O, λX) = |λ|^{-dim(O)/2} ĵ(λO, X)` for all nilpotent orbits `O`, regular `X` and `λ ∈ F^×`.
 Here it is proved from the definitions (`jHat_smul`), for any `(G, 𝔤, b)` with `b` nondegenerate on
 `𝔤`, open regular set and unique orbit measures (the hypotheses of `jHat_scale`).
 
-* `integral_comp_smul_absF`: `∫ g(c Y) dμ(Y) = |c|_F^{-n} ∫ g dμ` for a Haar measure on an
-  `n`-dimensional `F`-vector space.
+* `integral_comp_smul_absF` (Foundations/TorusIntegrability): `∫ g(c Y) dμ(Y) = |c|_F^{-n} ∫ g dμ`
+  for a Haar measure on an `n`-dimensional `F`-vector space.
 * `selfDualMeasure_smul`: the self-dual measure of `c B` is `|c|_F^{n/2}` times that of `B`
   (`κ² |c|^{-n} = 1` in the inversion formula, and uniqueness of self-dual measures).
 * `isOrbitMeasure_smul_iff`, `orbitMeasure_smul`: the orbit measure of `O` for `c b` is
@@ -55,68 +55,16 @@ theorem absFHalfPow_sq (c : F) (n : ℕ) :
     (absFHalfPow c n : ℝ) * absFHalfPow c n = absF c ^ n := by
   rw [absFHalfPow_coe, Real.mul_self_sqrt (pow_nonneg (absF_nonneg _) _)]
 
-theorem absF_inv_mul {c : F} (hc : c ≠ 0) : absF c⁻¹ * absF c = 1 := by
-  rw [← absF_mul, inv_mul_cancel₀ hc, absF_one]
+theorem absFHalfPow_pow_two (t : F) (k : ℕ) : (absFHalfPow (t ^ 2) k : ℝ) = absF t ^ k := by
+  rw [absFHalfPow_coe, absF_pow, ← pow_mul, mul_comm, pow_mul,
+    Real.sqrt_sq (pow_nonneg (absF_nonneg _) _)]
 
-/-! ## Haar measures under scalar multiplication -/
+/-! ## Self-dual measures of a rescaled form -/
 
 section HaarScale
 
 variable {V : Type*} [AddCommGroup V] [Module F V] [FiniteDimensional F V]
   [TopologicalSpace V] [IsModuleTopology F V] [MeasurableSpace V] [BorelSpace V]
-
-/-- `μ(c • S) = |c|_F^{dim V} μ(S)` for a Haar measure on a finite-dimensional `F`-vector space
-with its module topology (`addHaar_smul_absF`, transported from `F^n`). -/
-theorem addHaar_smul_absF_of_isModuleTopology (μ : Measure V) [μ.IsAddHaarMeasure] {c : F}
-    (hc : c ≠ 0) (S : Set V) :
-    μ (c • S) = ENNReal.ofReal (absF c ^ Module.finrank F V) * μ S := by
-  haveI := IsModuleTopology.isTopologicalAddGroup F V
-  set n := Module.finrank F V
-  letI : MeasurableSpace (Fin n → F) := borel _
-  haveI : BorelSpace (Fin n → F) := ⟨rfl⟩
-  let e : V ≃ₗ[F] (Fin n → F) := (Module.finBasis F V).equivFun
-  have he : Continuous e := IsModuleTopology.continuous_of_linearMap e.toLinearMap
-  have he' : Continuous e.symm := IsModuleTopology.continuous_of_linearMap e.symm.toLinearMap
-  let h : V ≃ₜ (Fin n → F) := ⟨e.toEquiv, he, he'⟩
-  let em := h.toMeasurableEquiv
-  have hem : (em : V → Fin n → F) = e := rfl
-  haveI : (μ.map em).IsAddHaarMeasure := by
-    rw [hem]; exact e.toAddEquiv.isAddHaarMeasure_map μ he he'
-  have key : ∀ T : Set V, μ T = (μ.map em) (e '' T) := fun T => by
-    rw [em.map_apply, hem, Set.preimage_image_eq T e.injective]
-  have himg : e '' (c • S) = c • (e '' S) := image_smul_set e c S
-  rw [key, key S, himg, addHaar_smul_absF _ hc, Module.finrank_fin_fun]
-
-/-- `μ.map (c • ·) = |c|_F^{-dim V} μ`. -/
-theorem map_smul_addHaar (μ : Measure V) [μ.IsAddHaarMeasure] {c : F} (hc : c ≠ 0) :
-    μ.map (fun Y : V => c • Y) =
-      Real.toNNReal ((absF c ^ Module.finrank F V)⁻¹) • μ := by
-  haveI := IsModuleTopology.isTopologicalAddGroup F V
-  haveI : ContinuousConstSMul F V := inferInstance
-  have hinv : absF c⁻¹ ^ Module.finrank F V = (absF c ^ Module.finrank F V)⁻¹ := by
-    rw [← inv_pow]
-    congr 1
-    exact eq_inv_of_mul_eq_one_left (absF_inv_mul hc)
-  ext S hS
-  rw [Measure.map_apply (continuous_const_smul c).measurable hS, Set.preimage_smul₀ hc,
-    addHaar_smul_absF_of_isModuleTopology μ (inv_ne_zero hc), Measure.smul_apply, hinv,
-    ENNReal.smul_def, smul_eq_mul, ENNReal.ofReal]
-
-/-- **Change of variables `Y ↦ c Y`**: `∫ g(c Y) dμ(Y) = |c|_F^{-dim V} ∫ g dμ`. -/
-theorem integral_comp_smul_absF (μ : Measure V) [μ.IsAddHaarMeasure] {c : F} (hc : c ≠ 0)
-    (g : V → ℂ) :
-    ∫ Y, g (c • Y) ∂μ = (((absF c ^ Module.finrank F V)⁻¹ : ℝ) : ℂ) * ∫ Y, g Y ∂μ := by
-  haveI := IsModuleTopology.isTopologicalAddGroup F V
-  let h : V ≃ₜ V := Homeomorph.smulOfNeZero c hc
-  let em := h.toMeasurableEquiv
-  have hem : (em : V → V) = fun Y => c • Y := rfl
-  have := integral_map_equiv em g (μ := μ)
-  rw [hem, map_smul_addHaar μ hc, integral_smul_nnreal_measure, NNReal.smul_def,
-    Real.coe_toNNReal _ (inv_nonneg.mpr (pow_nonneg (absF_nonneg _) _)),
-    Complex.real_smul] at this
-  exact this.symm
-
-/-! ## Self-dual measures of a rescaled form -/
 
 /-- **`|c|^{n/2} μ` is self-dual for `c B`** when `μ` is self-dual for `B`: the Fourier transform
 for `(|c|^{n/2} μ, c B)` is `|c|^{n/2} f̂(c ·)`, and the inversion integral acquires
@@ -172,27 +120,6 @@ variable {A : Type*} [Ring A] [Algebra F A] [TopologicalSpace A] [Module.Finite 
   [IsModuleTopology F A]
 variable {G : Subgroup Aˣ} {𝔤 : LieSubalgebra F A} {b : LinearMap.BilinForm F A}
 
-/-- `dim ker(ad X)|_𝔤 = dim 𝔤_X` for `X ∈ 𝔤`. -/
-theorem finrank_ker_ad_eq (X : ↥𝔤) :
-    Module.finrank F ↥(LinearMap.ker (LieAlgebra.ad F ↥𝔤 X)) =
-      Module.finrank F ↥(lieCentralizer 𝔤 (X : A)) := by
-  have hle : (lieCentralizer 𝔤 (X : A)).toSubmodule ≤ 𝔤.toSubmodule :=
-    fun Z hZ => (mem_lieCentralizer.mp hZ).1
-  have key : ∀ Z : ↥𝔤, ((⁅X, Z⁆ : ↥𝔤) : A) = (X : A) * Z - Z * X := fun Z => by
-    simp [Ring.lie_def]
-  have heq : LinearMap.ker (LieAlgebra.ad F ↥𝔤 X) =
-      (lieCentralizer 𝔤 (X : A)).toSubmodule.comap 𝔤.toSubmodule.subtype := by
-    ext Z
-    rw [LinearMap.mem_ker, Submodule.mem_comap, LieSubalgebra.mem_toSubmodule,
-      mem_lieCentralizer, LieAlgebra.ad_apply]
-    constructor
-    · intro h
-      exact ⟨Z.2, sub_eq_zero.mp ((key Z).symm.trans (congrArg Subtype.val h))⟩
-    · rintro ⟨-, h⟩
-      exact Subtype.ext (by rw [key]; exact sub_eq_zero.mpr h)
-  rw [heq]
-  exact (Submodule.comapSubtypeEquivOfLe hle).finrank_eq
-
 theorem restrictForm_smul (c : F) : restrictForm 𝔤 (c • b) = c • restrictForm 𝔤 b := rfl
 
 theorem kirillovForm_smul (c : F) (X : ↥𝔤) :
@@ -214,7 +141,7 @@ theorem isOrbitMeasure_smul_iff (ψ : NontrivialAddChar F) {c : F} (hc : c ≠ 0
   set κ := absFHalfPow c k
   have hκ : (κ : ENNReal) ≠ 0 := by exact_mod_cast absFHalfPow_ne_zero hc k
   have hsm : ∀ T, (κ • μ) T = (κ : ENNReal) * μ T := fun T => by
-    rw [Measure.smul_apply, ENNReal.smul_def, smul_eq_mul]
+    rw [smul_apply, ENNReal.smul_def, smul_eq_mul]
   have hcancel : ∀ a a' : ENNReal, (κ : ENNReal) * a = (κ : ENNReal) * a' ↔ a = a' :=
     fun a a' => ⟨fun h => (ENNReal.mul_right_inj hκ ENNReal.coe_ne_top).mp h,
       fun h => by rw [h]⟩
@@ -228,7 +155,7 @@ theorem isOrbitMeasure_smul_iff (ψ : NontrivialAddChar F) {c : F} (hc : c ≠ 0
     have hdim : Module.finrank F ↥C = k := by
       have h1 := Submodule.finrank_add_eq_of_isCompl hC
       have h2 := hk X hX
-      rw [← finrank_ker_ad_eq] at h2
+      rw [← finrank_ker_ad_eq_finrank_lieCentralizer] at h2
       omega
     have : (kirillovForm 𝔤 (c • b) X).compl₁₂ C.subtype C.subtype =
         c • (kirillovForm 𝔤 b X).compl₁₂ C.subtype C.subtype := rfl
@@ -243,7 +170,7 @@ theorem isOrbitMeasure_smul_iff (ψ : NontrivialAddChar F) {c : F} (hc : c ≠ 0
   · refine forall_congr' fun X => forall_congr' fun hX => forall_congr' fun C =>
       forall_congr' fun hC => exists_congr fun U => and_congr Iff.rfl (forall_congr' fun S =>
         forall_congr' fun _ => forall_congr' fun _ => ?_)
-    rw [hsm, hsd X hX C hC, Measure.smul_apply, ENNReal.smul_def, smul_eq_mul]
+    rw [hsm, hsd X hX C hC, smul_apply, ENNReal.smul_def, smul_eq_mul]
     exact hcancel _ _
 
 /-- Uniqueness of orbit measures passes from `b` to `c b`. -/
@@ -283,18 +210,6 @@ theorem orbitMeasure_smul (ψ : NontrivialAddChar F) {c : F} (hc : c ≠ 0)
       rwa [smul_inv_smul₀ hκ]
     rw [dite_eq_right h, dite_eq_right h', smul_zero]
 
-/-- `c X` is regular semisimple iff `X` is, for `c ≠ 0`. -/
-theorem isRegularSS_smul_iff {c : F} (hc : c ≠ 0) (X : A) :
-    IsRegularSS 𝔤 (c • X) ↔ IsRegularSS 𝔤 X := by
-  have hml : LinearMap.mulLeft F (c • X) = c • LinearMap.mulLeft F X :=
-    LinearMap.ext fun Y => by simp
-  have hcent : lieCentralizer 𝔤 (c • X) = lieCentralizer 𝔤 X := by
-    ext Z
-    rw [mem_lieCentralizer, mem_lieCentralizer, smul_mul_assoc, mul_smul_comm]
-    exact and_congr_right fun _ => ⟨fun h => smul_right_injective A hc h, fun h => by rw [h]⟩
-  unfold IsRegularSS IsSS
-  rw [hml, Module.End.IsSemisimple_smul_iff hc, hcent]
-
 /-- The Fourier transform for `c b` is `|c|_F^{dim 𝔤 / 2} f̂_b(c ·)`. -/
 theorem fourierLie_smul (ψ : NontrivialAddChar F) {c : F} (hc : c ≠ 0) (f : ↥𝔤 → ℂ) (Y : ↥𝔤) :
     fourierLie 𝔤 (c • b) ψ f Y =
@@ -321,15 +236,6 @@ theorem fourierLie_comp_smul_inv (ψ : NontrivialAddChar F) {c : F} (hc : c ≠ 
   simp only [inv_smul_smul₀ hc, e] at h
   unfold fourierLie fourierWRT
   rw [h, ← mul_assoc, ← Complex.ofReal_mul, mul_inv_cancel₀ hpos, Complex.ofReal_one, one_mul]
-
-theorem restrictForm_smul_nondegenerate {c : F} (hc : c ≠ 0)
-    (hnd : (restrictForm 𝔤 b).Nondegenerate) : (restrictForm 𝔤 (c • b)).Nondegenerate := by
-  rw [restrictForm_smul]
-  refine ⟨fun Y hY => hnd.1 Y fun Z => ?_, fun Y hY => hnd.2 Y fun Z => ?_⟩
-  · have := hY Z
-    rwa [LinearMap.smul_apply, LinearMap.smul_apply, smul_eq_zero, or_iff_right hc] at this
-  · have := hY Z
-    rwa [LinearMap.smul_apply, LinearMap.smul_apply, smul_eq_zero, or_iff_right hc] at this
 
 /-- **Representatives of `f ↦ μ_O(f̂)` for `c b`**: if `j` represents it for `b`, then
 `|c|_F^{k/2} j(c ·)` represents it for `c b` (`k = dim O`). Change of variables `X ↦ c X`: the
@@ -362,7 +268,7 @@ theorem isJHat_smul (ψ : NontrivialAddChar F) {c : F} (hc : c ≠ 0)
     have hjc : LocallyIntegrable (fun Y => j (c • Y)) μ := by
       let h : ↥𝔤 ≃ₜ ↥𝔤 := Homeomorph.smulOfNeZero c hc
       have h1 : LocallyIntegrable j (μ.map h) := by
-        rw [show (μ.map h) = μ.map (fun Y : ↥𝔤 => c • Y) from rfl, map_smul_addHaar μ hc]
+        rw [show (μ.map h) = μ.map (fun Y : ↥𝔤 => c • Y) from rfl, map_addHaar_smul_absF μ hc]
         exact (locallyIntegrable_nnreal_smul_iff (by
           rw [Ne, Real.toNNReal_eq_zero, not_le]
           exact inv_pos.mpr (pow_pos (absF_pos hc) _))).mpr hli
@@ -393,7 +299,7 @@ theorem isJHat_smul (ψ : NontrivialAddChar F) {c : F} (hc : c ≠ 0)
 /-- **BP (1.8.5): `ĵ(O, c X) = |c|_F^{-dim(O)/2} ĵ(c O, X)`** for `X ∈ 𝔤` regular semisimple and
 `c ∈ F^×`, where `dim O = k` (`hk`: `dim 𝔤_Y + k = dim 𝔤` for `Y ∈ O`), under the hypotheses of
 `jHat_scale`: `b` nondegenerate on `𝔤`, the regular semisimple set of `𝔤` open, orbit measures for
-`b` unique. Beuzart-Plessis, Astérisque 418, (1.8.5), p. 34 (arXiv:1506.01452, p. 40). Proof:
+`b` unique. Beuzart-Plessis, Astérisque 418, (1.8.5), p. 34 (arXiv:1506.01452, p. 41). Proof:
 `ĵ_b(c O, X) = ĵ_{c b}(O, X)` (`jHat_scale`) and `ĵ_{c b}(O, X) = |c|^{k/2} ĵ_b(O, c X)`
 (`isJHat_smul`; both are `0` when no representative exists). -/
 theorem jHat_smul (ψ : NontrivialAddChar F) {c : F} (hc : c ≠ 0)
@@ -431,7 +337,10 @@ theorem jHat_smul (ψ : NontrivialAddChar F) {c : F} (hc : c ≠ 0)
       (fun Y hY => by rw [← Algebra.smul_def]; exact 𝔤.smul_mem c hY) O) X =
       jHat G 𝔤 (c • b) ψ O X from hscale.symm]
   -- `ĵ_{c b}(O, X) = |c|^{k/2} ĵ_b(O, c X)`
-  have hnd' := restrictForm_smul_nondegenerate hc hnd
+  have hnd' : (restrictForm 𝔤 (c • b)).Nondegenerate :=
+    hform ▸ restrictForm_scaleForm_nondegenerate u
+      (fun Y hY => by rw [hu1, ← Algebra.smul_def]; exact 𝔤.smul_mem c hY)
+      (fun Y hY => by rw [hu2, ← Algebra.smul_def]; exact 𝔤.smul_mem c⁻¹ hY) hnd
   have hmain : jHat G 𝔤 (c • b) ψ O X = ((κ : ℝ) : ℂ) * jHat G 𝔤 b ψ O (c • X) := by
     unfold jHat
     by_cases h : ∃ j, IsJHat G 𝔤 b ψ O j
@@ -450,22 +359,6 @@ theorem jHat_smul (ψ : NontrivialAddChar F) {c : F} (hc : c ≠ 0)
         exact h ⟨_, this⟩
       rw [dite_eq_right h, dite_eq_right h', mul_zero]
   rw [hmain, ← mul_assoc, Complex.ofReal_inv, inv_mul_cancel₀ hκ, one_mul]
-
-
-/-- `dim 𝔤_X` is constant on a nilpotent orbit, when `G` normalizes `𝔤`. -/
-theorem finrank_lieCentralizer_eq_of_mem_nilOrbitSet
-    (hG : ∀ g ∈ G, ∀ Y ∈ 𝔤, (g : A) * Y * (↑g⁻¹ : A) ∈ 𝔤) {O : NilOrbit G 𝔤} {X Y : ↥𝔤}
-    (hX : X ∈ nilOrbitSet O) (hY : Y ∈ nilOrbitSet O) :
-    Module.finrank F ↥(lieCentralizer 𝔤 (X : A)) =
-      Module.finrank F ↥(lieCentralizer 𝔤 (Y : A)) := by
-  obtain ⟨hXn, hXO⟩ := hX
-  obtain ⟨hYn, hYO⟩ := hY
-  obtain ⟨g, hg, h⟩ := Quotient.exact (hYO.trans hXO.symm)
-  have h' : (Y : A) = (g⁻¹ : Aˣ) * X * ((g⁻¹)⁻¹ : Aˣ) := by
-    rw [inv_inv, ← h]
-    simp [mul_assoc]
-  rw [h', finrank_lieCentralizer_conj 𝔤 g⁻¹ (hG _ (G.inv_mem hg))
-    (fun Z hZ => by simpa using hG g hg Z hZ)]
 
 /-- **BP (1.8.5) with `dim O = dim 𝔤 − dim 𝔤_{X₀}`** for any `X₀ ∈ O`, when `G` normalizes `𝔤`
 (`jHat_smul`, the dimension being constant on `O` by

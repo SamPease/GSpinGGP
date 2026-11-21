@@ -34,8 +34,10 @@ written out inline.
   Harish-Chandra; BP §4.5, Thesis §4.2); derived: `germ_eq_of_hasGermExpansion`, `germ_add`,
   `germ_smul`, `germ_finset_sum`, `germ_zero`;
 * (f) `rodier_germ_one` — BP Prop 4.8.1(i) = Thesis Prop 4.4.1(i) (Rodier, Mœglin–Waldspurger);
-* (g) `dixmier_commutant_scalar` — Schur's lemma (Dixmier 13.1.4); `schur_central` (the centre acts
-  by scalars) is proved from it.
+
+Schur's lemma for unitary representations (Dixmier 13.1.4) is proved, not assumed:
+`dixmier_commutant_scalar` and `schur_central` (the centre acts by scalars) in
+`Foundations/UnitarySchur.lean`.
 
 Not needed as an axiom: BP Prop 4.5.1(i) (`c_θ(x) = 0` if `G_x` is not quasi-split) — `germ` is
 `0` off `NilReg` by definition (`germ_of_not_mem`), and `NilReg(𝔤_x) = ∅ ↔ G_x` not quasi-split
@@ -399,30 +401,5 @@ theorem lieCentralizer_one {A : Type*} [Ring A] [Algebra F A] (𝔤 : LieSubalge
     lieCentralizer 𝔤 (1 : A) = 𝔤 := by
   ext X
   simp [mem_lieCentralizer]
-
-/-! ## (g) Schur's lemma -/
-
-/-- **(g) Schur's lemma for unitary representations** (Dixmier, *Les C\*-algèbres et leurs
-représentations*, Gauthier-Villars 1964, 13.1.4, p. 250, (i) ⇒ (ii); the same for involutive algebras is
-2.3.1): for a continuous unitary representation `π` of a topological group `G` whose only closed
-`π(G)`-stable subspaces are `0` and `H`, the commutant of `π(G)` in `L(H)` consists of the scalars.
-Our `UnitaryRep` is strongly continuous, which is Dixmier's continuity (13.1.1, 13.1.2), and
-`IsIrreducible` is his condition (i) together with `H ≠ 0`.  Dixmier's `G` is a topological group;
-only the topology of `G` enters (through continuity), so the axiom is stated for a group with a
-topology, as used here (in fact only with the discrete topology). -/
-axiom dixmier_commutant_scalar {G : Type*} [Group G] [TopologicalSpace G] (π : UnitaryRep G)
-    (hπ : π.IsIrreducible) (T : π.H →L[ℂ] π.H) (hT : ∀ g, T * π.ρ g = π.ρ g * T) :
-    ∃ c : ℂ, T = c • (1 : π.H →L[ℂ] π.H)
-
-/-- **The centre acts by scalars** in an irreducible unitary representation (used for the central
-character of tempered representations, Thesis §3.1.2): `π(z)` commutes with `π(G)` for `z` central,
-so it is a scalar by `dixmier_commutant_scalar`. -/
-theorem schur_central {G : Type*} [Group G] [TopologicalSpace G] (π : UnitaryRep G)
-    (hπ : π.IsIrreducible) :
-    ∃ χ : ↥(Subgroup.center G) → ℂ, HasCentralChar π (Subgroup.center G) χ := by
-  choose χ hχ using fun z : ↥(Subgroup.center G) =>
-    dixmier_commutant_scalar π hπ (π.ρ z) fun g => by
-      rw [← map_mul, ← map_mul, (Subgroup.mem_center_iff.1 z.2 g).symm]
-  exact ⟨χ, hχ⟩
 
 end GSpinGGP

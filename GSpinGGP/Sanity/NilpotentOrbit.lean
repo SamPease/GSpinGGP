@@ -86,7 +86,7 @@ theorem ne_zero_of_isOrbitMeasure {G : Subgroup Aˣ} {𝔤 : LieSubalgebra F A}
   obtain ⟨U, hU, hS⟩ := hμ.2.2 X hX C hC
   set S : Set ↥C := (fun Y : ↥C ↦ ((Y : ↥𝔤) : A)) ⁻¹' interior U with hSdef
   have hcont : Continuous (fun Y : ↥C ↦ ((Y : ↥𝔤) : A)) :=
-    continuous_subtype_val.comp continuous_subtype_val
+    continuous_subtypeVal.comp continuous_subtypeVal
   have hSopen : IsOpen S := isOpen_interior.preimage hcont
   have hS0 : (0 : ↥C) ∈ S := by
     show ((0 : ↥𝔤) : A) ∈ interior U
@@ -97,7 +97,7 @@ theorem ne_zero_of_isOrbitMeasure {G : Subgroup Aˣ} {𝔤 : LieSubalgebra F A}
   have hpos : selfDualMeasure ((kirillovForm 𝔤 b X).compl₁₂ C.subtype C.subtype) ψ S ≠ 0 :=
     hSopen.measure_ne_zero _ ⟨0, hS0⟩
   intro h0
-  rw [h0, Measure.coe_zero, Pi.zero_apply] at heq
+  rw [h0, FunLike.coe_zero, Pi.zero_apply] at heq
   exact hpos heq.symm
 
 /-- `orbitMeasure` is not the junk value `0` as soon as an orbit measure exists (under the

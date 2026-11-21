@@ -12,8 +12,8 @@ import GSpinGGP.Literature.KottwitzClay
 For `x ∈ G(F)` semisimple, `O` a nilpotent orbit of `𝔤_x` and `t ∈ F^×`:
 `ĵ(O, t² X) = |t|_F^{-dim O} ĵ(O, X)` for `X ∈ 𝔤_x` regular (`jHat_sq_smul_lieCentralizer`).
 This is BP (1.8.5) (`jHat_smul_of_mem`) with `λ = t²`, together with `t² O = O`
-(`kottwitz_nilpotent_sq_smul`, BP §1.8: "`λO = O` for all `λ ∈ F^{×2}`"); the hypotheses of
-`jHat_smul_of_mem` hold for `(G_x, 𝔤_x)`: `b` is nondegenerate on `𝔤_x`
+(`kottwitz_nilpotent_sq_smul`, Kottwitz 2005 §17.5; BP §1.8: "`λO = O` for all `λ ∈ F^{×2}`");
+the hypotheses of `jHat_smul_of_mem` hold for `(G_x, 𝔤_x)`: `b` is nondegenerate on `𝔤_x`
 (`restrictForm_lieCentralizer_nondegenerate`), the regular set of `𝔤_x` is open
 (`isOpen_setOf_isRegularSS_lieCentralizer`), orbit measures are unique (`isOrbitMeasure_unique`).
 Here `dim O = dim 𝔤_x − dim 𝔤_{x,X₀}` for any `X₀ ∈ O`.
@@ -31,10 +31,6 @@ namespace GSpinGGP
 
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
-theorem absFHalfPow_pow_two (t : F) (k : ℕ) : (absFHalfPow (t ^ 2) k : ℝ) = absF t ^ k := by
-  rw [absFHalfPow_coe, absF_pow, ← pow_mul, mul_comm, pow_mul,
-    Real.sqrt_sq (pow_nonneg (absF_nonneg _) _)]
-
 /-- **`t² O = O`** for a nilpotent orbit `O` of `𝔤_x`, `x` semisimple
 (`kottwitz_nilpotent_sq_smul`). -/
 theorem nilScale_sq_eq (d : GGPData F) (x : ↥d.G) (hx : IsSS F ((x : d.ambientˣ) : d.ambient))
@@ -48,13 +44,10 @@ theorem nilScale_sq_eq (d : GGPData F) (x : ↥d.G) (hx : IsSS F ((x : d.ambient
   obtain ⟨h, hhx, hhN⟩ := kottwitz_nilpotent_sq_smul d x hx N.2.1 N.2.2 ht
   refine Quotient.sound ⟨((h⁻¹ : ↥d.G) : d.ambientˣ), ⟨(h⁻¹).2, ?_⟩, ?_⟩
   · show ((h⁻¹ : ↥d.G) : d.ambientˣ) ∈ Subgroup.centralizer {((x : ↥d.G) : d.ambientˣ)}
-    rw [Subgroup.mem_centralizer_iff]
-    rintro m rfl
-    have h' : (x : d.ambientˣ) * (h⁻¹ : ↥d.G) = ((h⁻¹ : ↥d.G) : d.ambientˣ) * x := by
-      have e : x * h⁻¹ = h⁻¹ * x := by
-        rw [mul_inv_eq_iff_eq_mul, mul_assoc, ← hhx, inv_mul_cancel_left]
-      exact congrArg Subtype.val e
-    exact h'
+    rw [Subgroup.mem_centralizer_singleton_iff]
+    have e : x * h⁻¹ = h⁻¹ * x := by
+      rw [mul_inv_eq_iff_eq_mul, mul_assoc, ← hhx, inv_mul_cancel_left]
+    exact (congrArg Subtype.val e).symm
   · change ((h⁻¹ : ↥d.G) : d.ambientˣ).val * (algebraMap F d.ambient (t ^ 2) * N.1) *
       ((((h⁻¹ : ↥d.G) : d.ambientˣ))⁻¹ : d.ambientˣ).val = N.1
     rw [← Algebra.smul_def, ← hhN]

@@ -152,14 +152,14 @@ theorem map_dite_choose_eq {α β : Type*} (E : α → β) (hsurj : Function.Sur
     E (if h : ∃ a, p a then h.choose else z) = if h : ∃ b, q b then h.choose else z' := by
   by_cases h : ∃ a, p a
   · have h' : ∃ b, q b := ⟨E h.choose, (hpq _).mpr h.choose_spec⟩
-    rw [dif_pos h, dif_pos h']
+    rw [dite_eq_left h, dite_eq_left h']
     obtain ⟨a, ha⟩ := hsurj h'.choose
     have hp : p a := (hpq a).mp (ha ▸ h'.choose_spec)
     rw [← ha, huniq _ _ h.choose_spec hp]
   · have h' : ¬ ∃ b, q b := fun ⟨b, hb⟩ => by
       obtain ⟨a, rfl⟩ := hsurj b
       exact h ⟨a, (hpq a).mp hb⟩
-    rw [dif_neg h, dif_neg h', hz]
+    rw [dite_eq_right h, dite_eq_right h', hz]
 
 end Converse
 
@@ -708,7 +708,7 @@ theorem isOpen_setOf_isRegularSS_lieZero :
   have h := isOpen_setOf_isRegularSS_lieCentralizer d 1 hss
   rw [hL] at h
   have hc : Continuous fun X : ↥d.lieZero => (⟨(X : d.ambient), d.lieZero_le_lie X.2⟩ : ↥d.lie) :=
-    Continuous.subtype_mk continuous_subtype_val _
+    Continuous.subtype_mk continuous_subtypeVal _
   have he : {X : ↥d.lieZero | IsRegularSS d.lieZero (X : d.ambient)} =
       (fun X : ↥d.lieZero => (⟨(X : d.ambient), d.lieZero_le_lie X.2⟩ : ↥d.lie)) ⁻¹'
         {Z : ↥d.lie | IsRegularSS d.lie (Z : d.ambient)} := by
@@ -813,7 +813,7 @@ theorem isSS_toSOLin {X : d.ambient} (hX : X ∈ d.lieZero) (hs : IsSS F X) :
     | zero => intro y; rfl
     | succ i ih =>
       intro y
-      rw [pow_succ', Module.End.mul_apply, pow_succ', Module.End.mul_apply, ← ih]
+      rw [pow_succ', mul_apply_eq_comp, pow_succ', mul_apply_eq_comp, ← ih]
       simp only [D, LieAlgebra.ad_apply, Ring.lie_def, Prod.fst_sub, Prod.fst_mul]
   have hsnd : ∀ (i : ℕ) (y : d.ambient),
       ((D ^ i) y).2 = (LieAlgebra.ad F (CliffordAlgebra d.QV) X.2 ^ i) y.2 := by
@@ -822,7 +822,7 @@ theorem isSS_toSOLin {X : d.ambient} (hX : X ∈ d.lieZero) (hs : IsSS F X) :
     | zero => intro y; rfl
     | succ i ih =>
       intro y
-      rw [pow_succ', Module.End.mul_apply, pow_succ', Module.End.mul_apply, ← ih]
+      rw [pow_succ', mul_apply_eq_comp, pow_succ', mul_apply_eq_comp, ← ih]
       simp only [D, LieAlgebra.ad_apply, Ring.lie_def, Prod.snd_sub, Prod.snd_mul]
   have hW : Polynomial.aeval (adV d.QW X.1) q = 0 := by
     refine LinearMap.ext fun v => ?_

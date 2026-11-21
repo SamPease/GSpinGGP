@@ -137,13 +137,13 @@ theorem selfDualMeasure_map {V V' : Type*} [AddCommGroup V] [Module F V] [Topolo
   unfold selfDualMeasure
   by_cases h : ∃ μ, IsSelfDual μ B ψ
   · have h' : ∃ μ, IsSelfDual μ B' ψ := ⟨_, (key _).mpr h.choose_spec⟩
-    rw [dif_pos h, dif_pos h']
+    rw [dite_eq_left h, dite_eq_left h']
     exact isSelfDual_unique h'.choose_spec ((key _).mpr h.choose_spec)
   · have h' : ¬ ∃ μ, IsSelfDual μ B' ψ := by
       rintro ⟨μ', hμ'⟩
       refine h ⟨μ'.map e.symm, (key _).mp ?_⟩
       rwa [show (μ'.map e.symm).map e = μ' from em.map_map_symm]
-    rw [dif_neg h, dif_neg h', Measure.map_zero]
+    rw [dite_eq_right h, dite_eq_right h', Measure.map_zero]
 
 variable {A : Type*} [Ring A] [Algebra F A] [TopologicalSpace A] [Module.Finite F A]
   [IsModuleTopology F A]
@@ -320,7 +320,7 @@ theorem orbitMeasure_map (ψ : NontrivialAddChar F)
   by_cases h : ∃ μ, IsOrbitMeasure (grpCentralizer G x) (lieCentralizer 𝔤 (x : A)) b ψ O μ
   · have h' : ∃ μ, IsOrbitMeasure (grpCentralizer G' y) (lieCentralizer 𝔤' (y : A')) b' ψ
         (ι.nilOrbitEquiv hG O) μ := ⟨_, (key _).mpr h.choose_spec⟩
-    rw [dif_pos h, dif_pos h']
+    rw [dite_eq_left h, dite_eq_left h']
     exact hu' _ _ _ h'.choose_spec ((key _).mpr h.choose_spec)
   · have h' : ¬ ∃ μ, IsOrbitMeasure (grpCentralizer G' y) (lieCentralizer 𝔤' (y : A')) b' ψ
         (ι.nilOrbitEquiv hG O) μ := by
@@ -330,7 +330,7 @@ theorem orbitMeasure_map (ψ : NontrivialAddChar F)
         show (⇑ι.linEquiv ∘ ⇑ι.linEquiv.symm) = id from funext ι.linEquiv.apply_symm_apply,
         Measure.map_id]
       exact hμ'
-    rw [dif_neg h, dif_neg h', Measure.map_zero]
+    rw [dite_eq_right h, dite_eq_right h', Measure.map_zero]
 
 /-- **Representatives of `f ↦ μ_O(f̂)` are transported**, given that the orbit measures and the
 self-dual measures correspond: `j'` represents it for `ι O` iff `j' ∘ ι` does for `O` (change of
@@ -423,7 +423,7 @@ theorem jHat_map (ψ : NontrivialAddChar F)
       rw [this]; exact h.choose_spec)
     have h' : ∃ j, IsJHat (grpCentralizer G' y) (lieCentralizer 𝔤' (y : A')) b' ψ
         (ι.nilOrbitEquiv hG O) j := ⟨_, hj'⟩
-    rw [dif_pos h, dif_pos h', dif_pos hX, dif_pos hX']
+    rw [dite_eq_left h, dite_eq_left h', dite_eq_left hX, dite_eq_left hX']
     -- the instances on `𝔤'_y` needed by `eqOn_of_isJHat`
     obtain ⟨_, _, _, _, _⟩ := lieSubalgebra_topology (lieCentralizer 𝔤' (y : A'))
     haveI := t2Space_of_moduleTopology F A'
@@ -437,7 +437,7 @@ theorem jHat_map (ψ : NontrivialAddChar F)
       LinearEquiv.symm_apply_apply]
   · have h' : ¬ ∃ j, IsJHat (grpCentralizer G' y) (lieCentralizer 𝔤' (y : A')) b' ψ (ι.nilOrbitEquiv hG O) j :=
       fun ⟨j', hj'⟩ => h ⟨_, (key j').mp hj'⟩
-    rw [dif_neg h, dif_neg h']
+    rw [dite_eq_right h, dite_eq_right h']
 
 end CentralizerIso
 

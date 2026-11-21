@@ -434,8 +434,8 @@ theorem isCompact_setOf_coe_mem_inv_mem [T2Space F] {C : Set (Module.End F V)}
   have : CompactSpace T := isCompact_iff_compactSpace.mp hT
   let Φ : T → V ≃ₗ[F] V := fun p => LinearEquiv.ofLinearMap p.1.1 p.1.2 p.2.2.1 p.2.2.2
   have hΦ : Continuous Φ := TauCeti.continuous_linearEquiv_iff.mpr
-    ⟨(continuous_fst.comp continuous_subtype_val).congr fun p => by simp [Φ],
-      (continuous_snd.comp continuous_subtype_val).congr fun p =>
+    ⟨(continuous_fst.comp continuous_subtypeVal).congr fun p => by simp [Φ],
+      (continuous_snd.comp continuous_subtypeVal).congr fun p =>
         LinearMap.ext fun x => by simp [Φ]⟩
   convert isCompact_range hΦ using 1
   ext g
@@ -547,7 +547,7 @@ theorem polar_apply_eq_mul_conj {A : V ≃ₗ[F] V}
     (hx : A x = α • x) (hy : A y = β • y) :
     polar Q (h x) y = α * β * polar Q ((A * h * A⁻¹) x) y := by
   have h1 : (A * h * A⁻¹) (A x) = A (h x) := by
-    simp only [LinearEquiv.mul_apply]
+    simp only [mul_apply_eq_comp]
     rw [show A⁻¹ (A x) = x from A.symm_apply_apply x]
   rw [← TauCeti.QuadraticMap.polar_apply_of_mem_orthogonalGroup hA (h x) y, ← h1, hx, hy,
     map_smul, polar_smul_left, polar_smul_right, smul_eq_mul, smul_eq_mul]

@@ -132,7 +132,7 @@ theorem locallyIntegrable_absF_det_adV_rpow {x t₀ : ↥(GSpin d.QW)} (hx : d.I
     refine d.exists_mem_lieTorus_adV_eq hx (fun u w => ?_) ?_ fun w hw => ?_
     · rw [bform_pow_skew hYskew, Odd.neg_one_pow (⟨k, rfl⟩ : Odd (2 * k + 1))]; ring
     · exact ((hregY _ ((Commute.refl Y).pow_left _)).eq).symm
-    · rw [pow_succ, Module.End.mul_apply, hY0 w hw, map_zero]
+    · rw [pow_succ, mul_apply_eq_comp, hY0 w hw, map_zero]
   -- `W''_x = range Y`
   have hYmov : ∀ v ∈ movedSub x, Y v ∈ movedSub x :=
     d.mapsTo_movedSub_of_commute ((hregY Y (Commute.refl Y)).symm)
@@ -261,7 +261,7 @@ theorem exists_eventually_deltaGGP_bounds {x t₀ : ↥(GSpin d.QW)} (hx : d.IsG
   have hadc : Continuous (adV d.QW : CliffordAlgebra d.QW → Module.End F (Fin d.m → F)) :=
     IsModuleTopology.continuous_of_linearMap (adV d.QW)
   have hcoe : Tendsto (fun X : ↥(d.lieTorus (d.torusOf x)) => (X : CliffordAlgebra d.QW)) (𝓝 0) (𝓝 0) :=
-    continuous_subtype_val.tendsto' 0 0 rfl
+    continuous_subtypeVal.tendsto' 0 0 rfl
   have hadT : Tendsto (fun X : ↥(d.lieTorus (d.torusOf x)) => adV d.QW (X : CliffordAlgebra d.QW))
       (𝓝 0) (𝓝 0) := (hadc.tendsto' 0 0 (map_zero _)).comp hcoe
   have hφT : Tendsto (fun X : ↥(d.lieTorus (d.torusOf x)) => φ (adV d.QW (X : CliffordAlgebra d.QW)))

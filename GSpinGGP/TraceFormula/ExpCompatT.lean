@@ -169,7 +169,7 @@ theorem exists_expA_chart_torusOf {x : ↥(GSpin d.QW)} (hx : d.IsGammaElt x) :
   haveI : CompactSpace (d.TorusQuot T) := hx.2.2
   haveI : IsClosed (d.scalarsIn T : Set ↥T) := by
     have hcl : IsClosed (Set.range (algebraMap F (CliffordAlgebra d.QW))) := by
-      have := Submodule.closed_of_finiteDimensional
+      have := Submodule.isClosed_of_finiteDimensional
         (Subalgebra.toSubmodule (⊥ : Subalgebra F (CliffordAlgebra d.QW)))
       simpa [Algebra.coe_bot] using this
     have e : (d.scalarsIn T : Set ↥T) = (fun t : ↥T =>

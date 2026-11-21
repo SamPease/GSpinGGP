@@ -46,7 +46,7 @@ theorem isExpCompatH_map_toSOHCLE (eH : d.HmodAGH ≃ₜ* ↥d.luoOf.Hbar)
   refine ⟨e.toLinearEquiv.toAddEquiv.isAddHaarMeasure_map _ e.continuous e.symm.continuous, ?_⟩
   -- the neighbourhood of `0` in `𝔥⁰` where the exponential facts hold
   have hval : Tendsto (fun X : ↥d.lieH0 => (X : d.ambient)) (𝓝 0) (𝓝 0) :=
-    continuous_subtype_val.tendsto' 0 0 rfl
+    continuous_subtypeVal.tendsto' 0 0 rfl
   have hev := hval.eventually
     ((d.eventually_exists_mem_H_eq_expA).and d.eventually_toGbarU_eq_expA_toSOLin)
   let U₀ := U ∩ {X : ↥d.lieH0 | (X : d.ambient) ∈ d.lieH0 →

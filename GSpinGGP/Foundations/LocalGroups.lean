@@ -110,6 +110,12 @@ lemma absF_one [LocallyCompactSpace F] : absF (1 : F) = 1 := by
   rw [this, map_one]
   rfl
 
+/-- `|a⁻¹|_F = |a|_F⁻¹` (both sides `0` at `a = 0`). -/
+lemma absF_inv [LocallyCompactSpace F] (a : F) : absF a⁻¹ = (absF a)⁻¹ := by
+  by_cases ha : a = 0
+  · simp [ha]
+  exact eq_inv_of_mul_eq_one_left (by rw [← absF_mul, inv_mul_cancel₀ ha, absF_one])
+
 open scoped Pointwise in
 /-- `|u|_F = 1` for `‖u‖ = 1`: multiplication by `u` preserves the closed unit ball. -/
 theorem absF_eq_one_of_norm_eq_one [LocallyCompactSpace F] {u : F} (hu : ‖u‖ = 1) :
@@ -360,7 +366,7 @@ theorem aeval_mulRight {A : Type*} [Ring A] [Algebra K A] (x : A) (p : Polynomia
     ext z; simp [mul_add]
   | monomial n a =>
     ext z
-    simp only [Polynomial.aeval_monomial, Module.End.mul_apply, Module.algebraMap_end_apply,
+    simp only [Polynomial.aeval_monomial, mul_apply_eq_comp, Module.algebraMap_end_apply,
       LinearMap.pow_mulRight, LinearMap.mulRight_apply]
     rw [Algebra.smul_def, ← mul_assoc, ← mul_assoc, Algebra.commutes]
 
@@ -387,7 +393,7 @@ theorem commute_mulLeft_mul_mulRight {A : Type*} [Ring A] [Algebra K A] {a a' b 
     Commute (LinearMap.mulLeft K a * LinearMap.mulRight K b)
       (LinearMap.mulLeft K a' * LinearMap.mulRight K b') := by
   refine LinearMap.ext fun z => ?_
-  simp only [Module.End.mul_apply, LinearMap.mulLeft_apply, LinearMap.mulRight_apply]
+  simp only [mul_apply_eq_comp, LinearMap.mulLeft_apply, LinearMap.mulRight_apply]
   simp only [mul_assoc]
   rw [show b' * b = b * b' from hb.eq.symm, ← mul_assoc a, ← mul_assoc a', ha.eq]
 
@@ -398,7 +404,7 @@ theorem isSemisimple_mulLeft_inv [PerfectField K] {A : Type*} [Ring A] [Algebra 
   have hmem : Algebra.lmul K A ((u⁻¹ : Aˣ) : A) ∈ Algebra.adjoin K {Algebra.lmul K A (u : A)} := by
     rw [← AlgHom.map_adjoin_singleton]
     exact Subalgebra.mem_map.mpr
-      ⟨_, TauCeti.Units.coe_inv_mem_adjoin u (IsIntegral.of_finite K (u : A)), rfl⟩
+      ⟨_, Units.inv_mem_adjoin u (IsIntegral.of_finite K (u : A)), rfl⟩
   exact Module.End.IsSemisimple.of_mem_adjoin_singleton hu hmem
 
 /-- **`Ad(u) = L_u R_{u⁻¹}` is semisimple** for a unit `u` with `L_u` semisimple (`u⁻¹ ∈ K[u]`). -/
@@ -503,6 +509,29 @@ theorem lieCentralizer_toSubmodule_eq {K : Type*} [Field K] [Algebra K A]
   rw [LieSubalgebra.mem_toSubmodule, mem_lieCentralizer, Submodule.mem_inf, LinearMap.mem_ker,
     LieAlgebra.ad_apply, Ring.lie_def, sub_eq_zero, LieSubalgebra.mem_toSubmodule]
 
+/-- `dim ker(ad X)|_𝔤 = dim 𝔤_X` for `X ∈ 𝔤`. -/
+theorem finrank_ker_ad_eq_finrank_lieCentralizer {K : Type*} [Field K] [Algebra K A]
+    {𝔤 : LieSubalgebra K A} (X : ↥𝔤) :
+    Module.finrank K ↥(LinearMap.ker (LieAlgebra.ad K ↥𝔤 X)) =
+      Module.finrank K ↥(lieCentralizer 𝔤 (X : A)) := by
+  letI := LieRing.ofAssociativeRing (A := A)
+  have hle : (lieCentralizer 𝔤 (X : A)).toSubmodule ≤ 𝔤.toSubmodule :=
+    fun Z hZ => (mem_lieCentralizer.mp hZ).1
+  have key : ∀ Z : ↥𝔤, ((⁅X, Z⁆ : ↥𝔤) : A) = (X : A) * Z - Z * X := fun Z => by
+    simp [Ring.lie_def]
+  have heq : LinearMap.ker (LieAlgebra.ad K ↥𝔤 X) =
+      (lieCentralizer 𝔤 (X : A)).toSubmodule.comap 𝔤.toSubmodule.subtype := by
+    ext Z
+    rw [LinearMap.mem_ker, Submodule.mem_comap, LieSubalgebra.mem_toSubmodule,
+      mem_lieCentralizer, LieAlgebra.ad_apply]
+    constructor
+    · intro h
+      exact ⟨Z.property, sub_eq_zero.mp ((key Z).symm.trans (congrArg Subtype.val h))⟩
+    · rintro ⟨-, h⟩
+      exact Subtype.ext (by rw [key]; exact sub_eq_zero.mpr h)
+  rw [heq]
+  exact (Submodule.comapSubtypeEquivOfLe hle).finrank_eq
+
 /-- **`ker (1 − Ad a)^k = ker (ad a)^k`** for a unit `a`: `1 − Ad a = −R_{a⁻¹} ∘ ad a`, where
 `R_{a⁻¹}` is invertible and commutes with `ad a`. -/
 theorem ker_one_sub_conjAd_pow (a : Aˣ) (k : ℕ) :
@@ -511,7 +540,7 @@ theorem ker_one_sub_conjAd_pow (a : Aˣ) (k : ℕ) :
   set R : Module.End F A := -LinearMap.mulRight F ((a⁻¹ : Aˣ) : A)
   have he : 1 - (conjAd F a).toLinearEquiv.toLinearMap = R * LieAlgebra.ad F A (a : A) := by
     refine LinearMap.ext fun y => ?_
-    simp only [R, LinearMap.sub_apply, Module.End.one_apply, Module.End.mul_apply,
+    simp only [R, LinearMap.sub_apply, one_apply_eq_self, mul_apply_eq_comp,
       LinearMap.neg_apply, LinearMap.mulRight_apply, LieAlgebra.ad_apply, Ring.lie_def, sub_mul,
       mul_assoc, Units.mul_inv, mul_one]
     change y - (a : A) * y * ((a⁻¹ : Aˣ) : A) = _
@@ -519,7 +548,7 @@ theorem ker_one_sub_conjAd_pow (a : Aˣ) (k : ℕ) :
     abel
   have hc : Commute R (LieAlgebra.ad F A (a : A)) := by
     refine Commute.neg_left (LinearMap.ext fun y => ?_)
-    simp only [Module.End.mul_apply, LinearMap.mulRight_apply, LieAlgebra.ad_apply, Ring.lie_def,
+    simp only [mul_apply_eq_comp, LinearMap.mulRight_apply, LieAlgebra.ad_apply, Ring.lie_def,
       sub_mul, mul_assoc, Units.mul_inv, Units.inv_mul, mul_one]
   have hu : IsUnit R := ⟨⟨R, -LinearMap.mulRight F (a : A),
     LinearMap.ext fun y => by simp [R, mul_assoc],
@@ -554,6 +583,18 @@ def regularSet (G : Subgroup Aˣ) (𝔤 : LieSubalgebra F A) : Set ↥G :=
 /-- The regular semisimple set `𝔤_reg(F)` of the Lie algebra (Thesis §2.1). -/
 def regularSetLie (𝔤 : LieSubalgebra F A) : Set A :=
   {X | X ∈ 𝔤 ∧ IsRegularSS 𝔤 X}
+
+/-- `c X` is regular semisimple iff `X` is, for `c ≠ 0`. -/
+theorem isRegularSS_smul_iff {𝔤 : LieSubalgebra F A} {c : F} (hc : c ≠ 0) (X : A) :
+    IsRegularSS 𝔤 (c • X) ↔ IsRegularSS 𝔤 X := by
+  have hml : LinearMap.mulLeft F (c • X) = c • LinearMap.mulLeft F X :=
+    LinearMap.ext fun Y => by simp
+  have hcent : lieCentralizer 𝔤 (c • X) = lieCentralizer 𝔤 X := by
+    ext Z
+    rw [mem_lieCentralizer, mem_lieCentralizer, smul_mul_assoc, mul_smul_comm]
+    exact and_congr_right fun _ => ⟨fun h => smul_right_injective A hc h, fun h => by rw [h]⟩
+  unfold IsRegularSS IsSS
+  rw [hml, Module.End.IsSemisimple_smul_iff hc, hcent]
 
 variable [PAdicField F] [Module.Finite F A]
 
@@ -646,7 +687,7 @@ theorem isSS_of_mem_adjoin [PerfectField F] [FiniteDimensional F A] {u Y : A} (h
 /-- The inverse of a semisimple unit is semisimple (it lies in `F[u]`). -/
 theorem isSS_coe_inv [PerfectField F] [FiniteDimensional F A] {u : Aˣ} (hu : IsSS F (u : A)) :
     IsSS F ((u⁻¹ : Aˣ) : A) :=
-  isSS_of_mem_adjoin hu (TauCeti.Units.coe_inv_mem_adjoin u (IsIntegral.of_finite F (u : A)))
+  isSS_of_mem_adjoin hu (Units.inv_mem_adjoin u (IsIntegral.of_finite F (u : A)))
 
 /-- The product of commuting semisimple elements is semisimple. -/
 theorem isSS_mul_of_commute [PerfectField F] [FiniteDimensional F A] {a c : A} (h : Commute a c)
@@ -804,17 +845,17 @@ lemma exists_norm_factorial_inv_le :
   refine ⟨r⁻¹, inv_pos.mpr hr0, fun n => ?_⟩
   set a : ℝ := ‖(n.factorial : F)‖ with ha
   have ha0 : 0 < a := by simp [ha, Nat.factorial_ne_zero]
-  have h1 : a ^ c = (p : ℝ) ^ (-(padicValNat p n.factorial : ℤ)) := by
+  have h1 : a ^ c = (p : ℝ) ^ (-(multiplicity p n.factorial : ℤ)) := by
     have := hcn n.factorial
     simp only [ratAbsF, AbsoluteValue.coe_mk, MulHom.coe_mk, Rat.cast_natCast,
       Rat.AbsoluteValue.padic_eq_padicNorm] at this
-    rw [this, padicNorm.eq_zpow_of_nonzero (by exact_mod_cast Nat.factorial_ne_zero n),
+    rw [this, padicNorm.eq_zpow_of_ne_zero (by exact_mod_cast Nat.factorial_ne_zero n),
       padicValRat.of_nat]
     push_cast; rfl
   have h2 : ((p : ℝ)⁻¹) ^ n ≤ a ^ c := by
     rw [h1, zpow_neg, ← inv_zpow, ← zpow_natCast]
     apply zpow_le_zpow_right_of_le_one₀ (by positivity) (inv_le_one_of_one_le₀ hp1.le)
-    exact_mod_cast padicValNat_factorial_le (p := p) n
+    exact_mod_cast multiplicity_factorial_le (p := p) n
   have h3 : r ^ n ≤ a := by
     rw [hr, Real.rpow_pow_comm (by positivity)]
     calc (((p : ℝ)⁻¹) ^ n) ^ (1 / c) ≤ (a ^ c) ^ (1 / c) :=
@@ -1199,7 +1240,7 @@ theorem expA_mem_subalgebra (S : Subalgebra F A) {X : A} (hX : X ∈ S) : expA F
   letI : Algebra ℚ A := Algebra.compHom A (algebraMap ℚ F)
   haveI : IsScalarTower ℚ F A := IsScalarTower.of_algebraMap_eq fun _ => rfl
   exact NormedSpace.exp_mem (R := F) (s := S)
-    ((Subalgebra.toSubmodule S).closed_of_finiteDimensional) hX
+    ((Subalgebra.toSubmodule S).isClosed_of_finiteDimensional) hX
 
 variable (F)
 
@@ -1243,7 +1284,7 @@ lemma exists_nhds_mem_of_expA_mem :
     intro c hc
     rw [Metric.mem_eball, edist_zero_right] at hb ⊢
     refine lt_of_le_of_lt ?_ hb
-    rw [enorm_smul]
+    rw [eNorm_smul]
     calc ‖c‖ₑ * ‖L‖ₑ ≤ 1 * ‖L‖ₑ := by
           gcongr
           rw [← ofReal_norm]
@@ -1283,7 +1324,7 @@ lemma exists_nhds_mem_of_expA_mem :
     · simp only [s, Nat.cast_pow, Set.mem_compl_iff, Set.mem_singleton_iff]
       exact pow_ne_zero _ (norm_pos_iff.mp hm0)
   have hlim := hderiv.comp hs
-  have hclosedP : IsClosed (P : Set A) := (Subalgebra.toSubmodule P).closed_of_finiteDimensional
+  have hclosedP : IsClosed (P : Set A) := (Subalgebra.toSubmodule P).isClosed_of_finiteDimensional
   have hclosed : IsClosed {Z : VA →L[F] VA | lmulPiInv F Z ∈ P} :=
     hclosedP.preimage (lmulPiInv F).continuous
   have hexpn : ∀ n : ℕ, lmulPiInv F (NormedSpace.exp L ^ n) = expA F X ^ n := by
@@ -1323,7 +1364,7 @@ lemma exists_nhds_expA_mem_adjoin :
   obtain ⟨U, hU, h⟩ := expA_hasSum F (A := A)
   refine ⟨U, hU, fun X hX => ?_⟩
   have hclosed : IsClosed ((Algebra.adjoin F {X} : Subalgebra F A) : Set A) :=
-    (Subalgebra.toSubmodule (Algebra.adjoin F {X})).closed_of_finiteDimensional
+    (Subalgebra.toSubmodule (Algebra.adjoin F {X})).isClosed_of_finiteDimensional
   exact hclosed.mem_of_tendsto (h X hX) (Eventually.of_forall fun s =>
     Subalgebra.sum_mem _ fun n _ => Subalgebra.smul_mem _
       (Subalgebra.pow_mem _ (Algebra.self_mem_adjoin_singleton F X) n) _)
@@ -1643,6 +1684,21 @@ theorem finrank_lieCentralizer_conj (𝔤 : LieSubalgebra F A)
     Module.finrank F ↥(lieCentralizer 𝔤 X).toSubmodule
   rw [← hmap]
   exact ((φ.toLinearEquiv.submoduleMap (lieCentralizer 𝔤 X).toSubmodule).finrank_eq).symm
+
+/-- `dim 𝔤_X` is constant on a nilpotent orbit, when `G` normalizes `𝔤`. -/
+theorem finrank_lieCentralizer_eq_of_mem_nilOrbitSet {G : Subgroup Aˣ} {𝔤 : LieSubalgebra F A}
+    (hG : ∀ g ∈ G, ∀ Y ∈ 𝔤, (g : A) * Y * (↑g⁻¹ : A) ∈ 𝔤) {O : NilOrbit G 𝔤} {X Y : ↥𝔤}
+    (hX : X ∈ nilOrbitSet O) (hY : Y ∈ nilOrbitSet O) :
+    Module.finrank F ↥(lieCentralizer 𝔤 (X : A)) =
+      Module.finrank F ↥(lieCentralizer 𝔤 (Y : A)) := by
+  obtain ⟨hXn, hXO⟩ := hX
+  obtain ⟨hYn, hYO⟩ := hY
+  obtain ⟨g, hg, h⟩ := Quotient.exact (hYO.trans hXO.symm)
+  have h' : (Y : A) = (g⁻¹ : Aˣ) * X * ((g⁻¹)⁻¹ : Aˣ) := by
+    rw [inv_inv, ← h]
+    simp [mul_assoc]
+  rw [h', finrank_lieCentralizer_conj 𝔤 g⁻¹ (hG _ (G.inv_mem hg))
+    (fun Z hZ => by simpa using hG g hg Z hZ)]
 
 /-- The orbit of a regular nilpotent element is a regular orbit (regularity is invariant under
 conjugation by `G`, when `G` preserves `𝔤`). -/

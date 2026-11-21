@@ -64,6 +64,50 @@ theorem IsotropicFlag.flagWt_zero (F : IsotropicFlag Q) :
   ext
   simp [IsotropicFlag.idx]
 
+/-- The steps of a flag in terms of its weight filtration: `Z_i = V_{≥ len + 1 − i}`. -/
+theorem IsotropicFlag.sub_eq_flagWt (F : IsotropicFlag Q) (i : Fin (F.len + 1)) :
+    F.sub i = flagWt F ((F.len : ℤ) + 1 - i) := by
+  have hi2 := i.2
+  by_cases hi : (i : ℕ) = 0
+  · rw [show i = 0 from Fin.ext hi, F.sub_zero, F.flagWt_eq_bot (by simp)]
+  · rw [F.flagWt_of_pos (by omega)]
+    congr 1
+    ext
+    simp only [IsotropicFlag.idx]
+    omega
+
+/-- An element of `GSpin(V)` acting trivially on the graded pieces of the weight filtration of a
+flag (both `P(g) − 1` and `P(g⁻¹) − 1` raise weights) lies in `K^× · N_F` (`flagUnipSO`). -/
+theorem mem_flagUnipSO_of_raisesFil {F : IsotropicFlag Q} {g : GSpin Q}
+    (hA : RaisesFil (flagWt F) ((specP Q g : V →ₗ[K] V) - LinearMap.id))
+    (hB : RaisesFil (flagWt F) ((specP Q g⁻¹ : V →ₗ[K] V) - LinearMap.id)) :
+    g ∈ flagUnipSO F := by
+  have keep : ∀ {g : GSpin Q},
+      RaisesFil (flagWt F) ((specP Q g : V →ₗ[K] V) - LinearMap.id) →
+      ∀ w, ∀ v ∈ flagWt F w, specP Q g v ∈ flagWt F w := by
+    intro g h w v hv
+    have h1 := F.flagWt_anti (show w ≤ w + 1 by omega) (h w v hv)
+    have : specP Q g v =
+        v + (((specP Q g : V →ₗ[K] V) - LinearMap.id : V →ₗ[K] V) v) := by simp
+    rw [this]; exact add_mem hv h1
+  refine ⟨fun i => le_antisymm ?_ ?_, fun i v hv => ?_, fun v hv => ?_⟩
+  · rintro _ ⟨v, hv, rfl⟩
+    rw [F.sub_eq_flagWt] at hv ⊢
+    exact keep hA _ v hv
+  · intro v hv
+    refine ⟨specP Q g⁻¹ v, ?_, specP_inv_apply_apply g v⟩
+    rw [F.sub_eq_flagWt] at hv ⊢
+    exact keep hB _ v hv
+  · rw [F.sub_eq_flagWt] at hv ⊢
+    have := hA _ v hv
+    simp only [LinearMap.sub_apply, LinearEquiv.coe_coe, LinearMap.id_apply] at this
+    convert this using 2
+    simp only [Fin.val_succ, Fin.val_castSucc]; push_cast; ring
+  · rw [← F.flagWt_zero] at hv
+    rw [← F.flagWt_one]
+    have := hA _ v hv
+    simpa using this
+
 /-- Elements of `P_F` preserve every step `V_{≥w}` of the weight filtration. -/
 theorem flagStab_mapsTo_flagWt {F : IsotropicFlag Q} {g : GSpin Q} (hg : g ∈ flagStab F) (w : ℤ)
     {v : V} (hv : v ∈ flagWt F w) : specP Q g v ∈ flagWt F w := by
@@ -151,10 +195,10 @@ theorem exists_flagSplitting (hQ : IsNondeg Q) (F : IsotropicFlag Q) :
         simp only [f, map_sub, map_smul, map_sum, smul_eq_mul]
       rw [this]
       simp only [hf'z, hcoord_e, mul_ite, mul_one, mul_zero, Finset.sum_ite_eq', Finset.mem_univ,
-        if_true]
+        ite_true]
       rw [hsymm (f' i) (f' j)]
     rw [h1, h3]
-    simp only [h2, mul_ite, mul_one, mul_zero, Finset.sum_ite_eq', Finset.mem_univ, if_true]
+    simp only [h2, mul_ite, mul_one, mul_zero, Finset.sum_ite_eq', Finset.mem_univ, ite_true]
     rw [hsymm (f' j) (f' i)]
     have : (⅟2 : K) + ⅟2 = 1 := by rw [← two_mul, mul_invOf_self]
     linear_combination (-(bform Q (f' i) (f' j))) * this
@@ -190,14 +234,14 @@ theorem exists_flagSplitting (hQ : IsNondeg Q) (F : IsotropicFlag Q) :
       have h := hpair (e j)
       simp only [Fintype.sum_sum_type, c, hBZ (e j).2 (e _).2, hef, (hX.1 (bX _).2).1, mul_zero,
         Finset.sum_const_zero, zero_add, add_zero, mul_ite, mul_one, Finset.sum_ite_eq, Finset.sum_ite_eq',
-        Finset.mem_univ, if_true] at h
+        Finset.mem_univ, ite_true] at h
       exact h
     have hB : ∀ j, g (Sum.inl j) = 0 := by
       intro j
       have h := hpair (f j)
       simp only [Fintype.sum_sum_type, c, hfe, hff, (hX.1 (bX _).2).2, mul_zero,
         Finset.sum_const_zero, zero_add, add_zero, mul_ite, mul_one, Finset.sum_ite_eq, Finset.sum_ite_eq',
-        Finset.mem_univ, if_true] at h
+        Finset.mem_univ, ite_true] at h
       exact h
     have hC : ∀ k, g (Sum.inr (Sum.inr k)) = 0 := by
       have h0 : ∑ k, g (Sum.inr (Sum.inr k)) • ((bX k : X) : V) = 0 := by
@@ -217,11 +261,11 @@ theorem exists_flagSplitting (hQ : IsNondeg Q) (F : IsotropicFlag Q) :
     · intro j
       simp only [map_sub, map_sum, map_smul, smul_eq_mul, hBZ (e j).2 (e _).2, mul_zero,
         Finset.sum_const_zero, sub_zero, hef, mul_ite, mul_one, Finset.sum_ite_eq, Finset.sum_ite_eq',
-        Finset.mem_univ, if_true, sub_self]
+        Finset.mem_univ, ite_true, sub_self]
     · intro j
       simp only [map_sub, map_sum, map_smul, smul_eq_mul, hfe, hff, mul_zero,
         Finset.sum_const_zero, sub_zero, mul_ite, mul_one, Finset.sum_ite_eq, Finset.sum_ite_eq',
-        Finset.mem_univ, if_true, sub_self]
+        Finset.mem_univ, ite_true, sub_self]
   have hsp : ⊤ ≤ Submodule.span K (Set.range c) := by
     intro v _
     have hx := hproj v
@@ -255,20 +299,20 @@ theorem exists_flagSplitting (hQ : IsNondeg Q) (F : IsotropicFlag Q) :
     rw [hpairb]
     simp only [Fintype.sum_sum_type, c, hBZ (e i).2 (e _).2, hef, (hX.1 (bX _).2).1, mul_zero,
       Finset.sum_const_zero, zero_add, add_zero, mul_ite, mul_one, Finset.sum_ite_eq, Finset.sum_ite_eq',
-      Finset.mem_univ, if_true]
+      Finset.mem_univ, ite_true]
   have hrepr_e : ∀ v i, b.repr v (Sum.inl i) = bform Q (f i) v := by
     intro v i
     rw [hpairb]
     simp only [Fintype.sum_sum_type, c, hfe, hff, (hX.1 (bX _).2).2, mul_zero,
       Finset.sum_const_zero, zero_add, add_zero, mul_ite, mul_one, Finset.sum_ite_eq, Finset.sum_ite_eq',
-      Finset.mem_univ, if_true]
+      Finset.mem_univ, ite_true]
   have hrepr_Z : ∀ (z : Z) k, b.repr z (Sum.inr (Sum.inr k)) = 0 := by
     intro z k
     rw [hZsum z]
     simp only [map_sum, map_smul, Finsupp.coe_finsetSum, Finset.sum_apply, Finsupp.smul_apply]
     refine Finset.sum_eq_zero fun l _ => ?_
     have : ((e l : Z) : V) = b (Sum.inl l) := (hb (Sum.inl l)).symm
-    rw [this, b.repr_self, Finsupp.single_apply, if_neg (by simp), smul_zero]
+    rw [this, b.repr_self, Finsupp.single_apply, ite_eq_right (by simp), smul_zero]
   have hle_Z : ∀ {w : ℤ}, 1 ≤ w → ∀ {v : V}, v ∈ flagWt F w → v ∈ Z := by
     intro w hw v hv
     show v ∈ F.top
@@ -298,11 +342,11 @@ theorem exists_flagSplitting (hQ : IsNondeg Q) (F : IsotropicFlag Q) :
   · rintro (i | i | k) (j | j | l) hij <;> rw [hb, hb]
     · exact hBZ (e i).2 (e j).2
     · show bform Q (e i) (f j) = 0
-      rw [hef, if_neg]
+      rw [hef, ite_eq_right]
       rintro rfl; exact hij (by simp [wt])
     · exact (hX.1 (bX l).2).1 i
     · show bform Q (f i) (e j) = 0
-      rw [hfe, if_neg]
+      rw [hfe, ite_eq_right]
       rintro rfl; exact hij (by simp [wt])
     · exact hff i j
     · exact (hX.1 (bX l).2).2 i
@@ -356,6 +400,19 @@ theorem IsFlagSplitting.bform_eq_zero_of_isHomog (hs : IsFlagSplitting F b wt) {
     · rw [hs.orth i j (by omega), mul_zero, mul_zero]
     · rw [hy j hj, zero_mul, mul_zero]
   · rw [hx i hi, zero_mul]
+
+omit [Invertible (2 : K)] [Fintype ι] in
+/-- An endomorphism preserving the weights of the basis vectors preserves homogeneity. -/
+theorem isHomog_apply [Finite ι] {A : V →ₗ[K] V} (hA : ∀ j, IsHomog b wt (A (b j)) (wt j))
+    {v : V} {w : ℤ} (hv : IsHomog b wt v w) : IsHomog b wt (A v) w := by
+  have := Fintype.ofFinite ι
+  intro i hi
+  rw [← b.sum_repr v, map_sum, map_sum, Finsupp.finsetSum_apply]
+  refine Finset.sum_eq_zero fun j _ => ?_
+  rw [map_smul, map_smul, Finsupp.smul_apply, smul_eq_mul]
+  by_cases hj : wt j = w
+  · rw [hA j i (by rw [hj]; exact hi), mul_zero]
+  · rw [hv j hj, zero_mul]
 
 variable (b wt) in
 /-- The graded part of an endomorphism: `bⱼ ↦` the weight-`wtⱼ` part of `A bⱼ`. -/
@@ -421,14 +478,7 @@ theorem IsFlagSplitting.grEnd_eq (hs : IsFlagSplitting F b wt) {A M : V →ₗ[K
 theorem IsFlagSplitting.grEnd_comp (hs : IsFlagSplitting F b wt) {A B : V →ₗ[K] V}
     (hA : PresFil (flagWt F) A) (hB : PresFil (flagWt F) B) :
     grEnd b wt (A ∘ₗ B) = grEnd b wt A ∘ₗ grEnd b wt B := by
-  refine hs.grEnd_eq (fun j i hi => ?_) ?_
-  · have hBj := isHomog_grEnd (b := b) (wt := wt) B j
-    rw [LinearMap.comp_apply, ← b.sum_repr (grEnd b wt B (b j)), map_sum, map_sum,
-      Finsupp.finsetSum_apply]
-    refine Finset.sum_eq_zero fun k _ => ?_
-    by_cases hk : wt k = wt j
-    · rw [map_smul, map_smul, Finsupp.smul_apply, isHomog_grEnd A k i (hk ▸ hi), smul_zero]
-    · rw [hBj k hk, zero_smul, map_zero, map_zero, Finsupp.zero_apply]
+  refine hs.grEnd_eq (fun j => isHomog_apply (isHomog_grEnd A) (isHomog_grEnd B j)) ?_
   · have : A ∘ₗ B - grEnd b wt A ∘ₗ grEnd b wt B =
         (A - grEnd b wt A) ∘ₗ B + grEnd b wt A ∘ₗ (B - grEnd b wt B) := by
       simp only [LinearMap.sub_comp, LinearMap.comp_sub]; abel

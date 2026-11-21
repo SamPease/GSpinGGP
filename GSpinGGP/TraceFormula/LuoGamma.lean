@@ -132,7 +132,7 @@ theorem map_unitFst_conj_map {h : d.luoOf.Ambˣ} {g : ↥(GSpin d.QW)}
 theorem continuous_toGbarU_comp_diag : Continuous (d.toGbarU.comp d.diag) := by
   have hdiag : Continuous d.diag :=
     d.continuous_pair.comp (continuous_id.prodMk d.continuous_incl)
-  exact continuous_subtype_val.comp (d.continuous_toGbar.comp hdiag)
+  exact continuous_subtypeVal.comp (d.continuous_toGbar.comp hdiag)
 
 /-- The kernel of `t ↦ (P(t), P(t) ⊕ 1)` is that of `P`, i.e. the scalars `F^×`
 (`ker_specP`). -/
@@ -170,7 +170,7 @@ def torusQuotMap (T : Subgroup ↥(GSpin d.QW)) : d.TorusQuot T →* d.luoOf.Amb
 
 theorem continuous_torusQuotMap (T : Subgroup ↥(GSpin d.QW)) : Continuous (d.torusQuotMap T) :=
   (QuotientGroup.isQuotientMap_mk (d.scalarsIn T)).continuous_iff.mpr
-    (d.continuous_toGbarU_comp_diag.comp continuous_subtype_val)
+    (d.continuous_toGbarU_comp_diag.comp continuous_subtypeVal)
 
 /-- The range of `torusQuotMap` is the image of `T(F)`. -/
 theorem range_torusQuotMap (T : Subgroup ↥(GSpin d.QW)) :

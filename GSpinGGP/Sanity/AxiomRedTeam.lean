@@ -29,8 +29,6 @@ nontrivial tori are **not** exercised.  No check depends on `sorry`.  A (V) chec
 the axiom it tests; the computations of germs at `toyD` use `exists_isSelfDual` (the measure in
 `ĵ(0, ·)`).  `local_ggp` does not import this file.
 
-* `dixmier_commutant_scalar`: V (`scalar_of_C`), C (`triv2_not_irreducible_via_dixmier`). Not
-  covered: infinite-dimensional `π`.
 * `hc_regular_open_dense_conull`: V at `toyD` (`toyD_hc_regular_check`, `D^G ≡ 1`). Not covered:
   `G_reg ≠ G`.
 * `hc_character_exists`: V at `toyD`, `π = 1` (`toyD_hc_character_exists_check`). Not covered:

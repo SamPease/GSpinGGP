@@ -11,8 +11,8 @@ import GSpinGGP.Foundations.GSpinExp
 
 * **V at `toyD`, every quasi-character** (`toyD_locallyBounded`): on the toy datum every
   quasi-character `θ` is locally constant (near `y`, `z = y e^X` with `X = log(y⁻¹ z) ∈ 𝔤` small,
-  and the expansion at `y` gives `θ(z) = θ(y) ĵ(0, X) = θ(y)`), and `D^G ≡ 1`, so the conclusion holds
-  with `C = ‖θ(y)‖`. Proved without the axiom.
+  and the expansion at `y` gives `θ(z) = θ(y) ĵ(0, X) = θ(y)`), and `D^G ≡ 1`, so the conclusion
+  holds with `C = ‖θ(y)‖`. Proved without the axiom.
 * **Non-vacuity**: the hypothesis holds for `θ = 1` (`toyD_isQuasiCharacter_one`).
 * **The restriction to `G_reg(F)` is needed** (junk values): `IsQuasiCharacter` does not constrain
   `θ` off `G_reg(F)`, while `weylDisc` is never `0` there being the absolute value of the trailing
@@ -69,7 +69,7 @@ theorem toyD_isQuasiCharacter_eventually_eq (ψ : NontrivialAddChar F) {θ : ↥
           (((z : ↥(𝕋).G) : (𝕋).ambientˣ) : (𝕋).ambient) := by
       funext z; rfl
     rw [this]
-    exact continuous_const.mul (Units.continuous_val.comp continuous_subtype_val)
+    exact continuous_const.mul (Units.continuous_val.comp continuous_subtypeVal)
   have hφy : ((((y⁻¹ * y : ↥(𝕋).G)) : (𝕋).ambientˣ) : (𝕋).ambient) = 1 := by simp
   have hT : Tendsto (fun z : ↥(𝕋).G =>
       ((((y⁻¹ * z : ↥(𝕋).G)) : (𝕋).ambientˣ) : (𝕋).ambient)) (𝓝 y) (𝓝 1) := by

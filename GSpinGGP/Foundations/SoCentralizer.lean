@@ -66,7 +66,7 @@ theorem adV_commutator {Q : QuadraticForm K V} {X Y : CliffordAlgebra Q} (hX : X
     have := (gspin Q).lie_mem hX hY; rwa [Ring.lie_def] at this
   ext v
   apply ι_injective Q
-  rw [ι_adV hXY, LinearMap.sub_apply, map_sub, Module.End.mul_apply, Module.End.mul_apply,
+  rw [ι_adV hXY, LinearMap.sub_apply, map_sub, mul_apply_eq_comp, mul_apply_eq_comp,
     ι_adV hX (adV Q Y v), ι_adV hY (adV Q X v), ι_adV hY v, ι_adV hX v]
   noncomm_ring
 
@@ -209,7 +209,7 @@ theorem finrank_lieCentralizer_gspin {Q : QuadraticForm K V} (hQ : IsNondeg Q)
       show adV Q 1 = 0
       rw [← map_one (algebraMap K (CliffordAlgebra Q)), adV_algebraMap])⟩
     have he : e ≠ 0 := fun h => one_ne_zero (congrArg (fun z : LinearMap.ker φ => ((z : _) : CliffordAlgebra Q)) h)
-    refine (finrank_eq_one_iff_of_nonzero' e he).2 fun ⟨⟨Y, hY⟩, hYk⟩ => ?_
+    refine (finrank_eq_one_iff_of_ne_zero' e he).2 fun ⟨⟨Y, hY⟩, hYk⟩ => ?_
     have hY0 : adV Q Y = 0 := congrArg Subtype.val (LinearMap.mem_ker.mp hYk)
     obtain ⟨r, rfl⟩ := eq_algebraMap_of_adV_eq_zero hQ (mem_lieCentralizer.mp hY).1 hY0
     exact ⟨r, Subtype.ext (Subtype.ext (by simp [e, Algebra.algebraMap_eq_smul_one]))⟩
@@ -236,7 +236,7 @@ theorem commute_of_lift {Q : QuadraticForm K V} (hQ : IsNondeg Q) (g : GSpin Q) 
       rw [← ι_specP, specP_inv_apply_apply]
     have hYv : Y v = specP Q g (Y u) := by
       have := LinearMap.congr_fun hYc.eq u
-      simp only [Module.End.mul_apply, LinearEquiv.coe_coe] at this
+      simp only [mul_apply_eq_comp, LinearEquiv.coe_coe] at this
       rw [this, specP_inv_apply_apply]
     have e1 : a * Yh * b * (a * ι Q u * b) = a * (Yh * ι Q u) * b := by
       simp only [mul_assoc]; rw [← mul_assoc b a, hba, one_mul]
@@ -297,7 +297,7 @@ theorem finrank_lieCentralizer_gspin_unit {Q : QuadraticForm K V} (hQ : IsNondeg
       rw [Units.inv_mul_eq_iff_eq_mul, ← mul_assoc, hYu, mul_assoc, Units.mul_inv, mul_one]
     ext v
     apply ι_injective Q
-    simp only [Module.End.mul_apply, LinearEquiv.coe_coe]
+    simp only [mul_apply_eq_comp, LinearEquiv.coe_coe]
     rw [ι_adV hY, ι_specP, ι_specP, ι_adV hY, ← hu]
     simp only [mul_sub, sub_mul, mul_assoc]
     rw [← mul_assoc Y (u : CliffordAlgebra Q), ← hYu, hYu', ← mul_assoc (u : CliffordAlgebra Q) Y]
@@ -321,7 +321,7 @@ theorem finrank_lieCentralizer_gspin_unit {Q : QuadraticForm K V} (hQ : IsNondeg
       rw [← map_one (algebraMap K (CliffordAlgebra Q)), adV_algebraMap])⟩
     have he : e ≠ 0 := fun h =>
       one_ne_zero (congrArg (fun z : LinearMap.ker φ => ((z : _) : CliffordAlgebra Q)) h)
-    refine (finrank_eq_one_iff_of_nonzero' e he).2 fun ⟨⟨Y, hY⟩, hYk⟩ => ?_
+    refine (finrank_eq_one_iff_of_ne_zero' e he).2 fun ⟨⟨Y, hY⟩, hYk⟩ => ?_
     have hY0 : adV Q Y = 0 := congrArg Subtype.val (LinearMap.mem_ker.mp hYk)
     obtain ⟨r, rfl⟩ := eq_algebraMap_of_adV_eq_zero hQ (mem_lieCentralizer.mp hY).1 hY0
     exact ⟨r, Subtype.ext (Subtype.ext (by simp [e, Algebra.algebraMap_eq_smul_one]))⟩
@@ -476,7 +476,7 @@ theorem finrank_lieCentralizer_lieCentralizer_gspin {Q : QuadraticForm K V} (hQ 
       rw [← map_one (algebraMap K (CliffordAlgebra Q)), adV_algebraMap])⟩
     have he : e ≠ 0 := fun h =>
       one_ne_zero (congrArg (fun z : LinearMap.ker φ => (z.1.1 : CliffordAlgebra Q)) h)
-    refine (finrank_eq_one_iff_of_nonzero' e he).2 fun ⟨⟨Z, hZ⟩, hZk⟩ => ?_
+    refine (finrank_eq_one_iff_of_ne_zero' e he).2 fun ⟨⟨Z, hZ⟩, hZk⟩ => ?_
     have hZ0 : adV Q Z = 0 := congrArg Subtype.val (LinearMap.mem_ker.mp hZk)
     obtain ⟨r, rfl⟩ := eq_algebraMap_of_adV_eq_zero hQ (hmem.mp hZ).1 hZ0
     exact ⟨r, Subtype.ext (Subtype.ext (by simp [e, Algebra.algebraMap_eq_smul_one]))⟩
@@ -512,13 +512,13 @@ theorem finrank_soCent_inf_eq {Q : QuadraticForm K V} {g N : Module.End K V} {A 
     (hNs : ∀ u w, bform Q (N u) w = -bform Q u (N w)) (hNg : N * g = g * N) :
     finrank K ↥(soCent Q g ⊓ soCent Q N) =
       finrank K ↥(soCent (Q.comp A.subtype) (N.restrict (p := A) (q := A) fun a ha =>
-        (hAg _).2 (by rw [← Module.End.mul_apply, ← hNg, Module.End.mul_apply, (hAg a).1 ha]))) +
+        (hAg _).2 (by rw [← mul_apply_eq_comp, ← hNg, mul_apply_eq_comp, (hAg a).1 ha]))) +
       finrank K ↥(soCent Q g ⊓ soCent Q N ⊓ killSub A) := by
   set B := (bform Q).orthogonal A
   have hsymm : ∀ x y, bform Q x y = bform Q y x := fun x y => QuadraticMap.associated_isSymm K Q x y
   -- elements commuting with `g` preserve `A`
   have hpres : ∀ M : Module.End K V, M * g = g * M → ∀ a ∈ A, M a ∈ A := fun M hM a ha =>
-    (hAg _).2 (by rw [← Module.End.mul_apply, ← hM, Module.End.mul_apply, (hAg a).1 ha])
+    (hAg _).2 (by rw [← mul_apply_eq_comp, ← hM, mul_apply_eq_comp, (hAg a).1 ha])
   have hNA := hpres N hNg
   set NA : Module.End K A := N.restrict (p := A) (q := A) hNA
   -- the projection onto `A` along `B`
@@ -558,7 +558,7 @@ theorem finrank_soCent_inf_eq {Q : QuadraticForm K V} {g N : Module.End K V} {A 
         refine mem_soCent.2 ⟨fun a b => ?_, ?_⟩
         · rw [bform_comp_subtype, bform_comp_subtype]; exact hMs a b
         · ext a
-          simp only [Module.End.mul_apply, LinearMap.restrict_apply, NA]
+          simp only [mul_apply_eq_comp, LinearMap.restrict_apply, NA]
           exact congrArg (fun T : Module.End K V => T a) hMNc⟩
       map_add' := fun _ _ => rfl
       map_smul' := fun _ _ => rfl }
@@ -572,13 +572,13 @@ theorem finrank_soCent_inf_eq {Q : QuadraticForm K V} {g N : Module.End K V} {A 
       rw [hMv, hMv, hbπ, ← bform_comp_subtype, hMAs, bform_comp_subtype, hbπ' u (MA (π w))]
     have hMg : M * g = g * M := by
       ext v
-      simp only [Module.End.mul_apply, hMv, hgπ]
+      simp only [mul_apply_eq_comp, hMv, hgπ]
       exact ((hAg _).1 (MA (π v)).2).symm
     have hMN : M * N = N * M := by
       ext v
-      simp only [Module.End.mul_apply, hMv, hNπ]
+      simp only [mul_apply_eq_comp, hMv, hNπ]
       have := congrArg (fun T : Module.End K A => (T (π v) : V)) hMAN
-      simpa [Module.End.mul_apply, NA] using this
+      simpa [mul_apply_eq_comp, NA] using this
     refine ⟨⟨M, Submodule.mem_inf.mpr ⟨mem_soCent.2 ⟨hMs, hMg⟩, mem_soCent.2 ⟨hMs, hMN⟩⟩⟩, ?_⟩
     apply Subtype.ext
     ext a
@@ -613,7 +613,7 @@ theorem soCent_inf_killSub_eq {Q : QuadraticForm K V} {g N : Module.End K V} {A 
   set B := (bform Q).orthogonal A
   have hsymm : ∀ x y, bform Q x y = bform Q y x := fun x y => QuadraticMap.associated_isSymm K Q x y
   have hNA : ∀ a ∈ A, N a ∈ A := fun a ha =>
-    (hAg _).2 (by rw [← Module.End.mul_apply, ← hNg, Module.End.mul_apply, (hAg a).1 ha])
+    (hAg _).2 (by rw [← mul_apply_eq_comp, ← hNg, mul_apply_eq_comp, (hAg a).1 ha])
   set π := A.projectionOnto B hA
   have hπA : ∀ a (ha : a ∈ A), π a = ⟨a, ha⟩ := fun a ha =>
     Submodule.projectionOnto_apply_of_mem_left hA ha
@@ -640,7 +640,7 @@ theorem soCent_inf_killSub_eq {Q : QuadraticForm K V} {g N : Module.End K V} {A 
       hbπ ⟨_, hNA _ (π u).2⟩ w, hNs, hsymm u, hbπ ⟨_, hNA _ (π w).2⟩ u, hsymm]
   have hN₁g : N₁ * g = g * N₁ := by
     ext v
-    simp only [Module.End.mul_apply, hN₁v, hgπ]
+    simp only [mul_apply_eq_comp, hN₁v, hgπ]
     exact ((hAg _).1 (hNA _ (π v).2)).symm
   set N₂ := N - N₁
   have hN₂ : N₂ ∈ soCent Q g ⊓ killSub A := by
@@ -659,7 +659,7 @@ theorem soCent_inf_killSub_eq {Q : QuadraticForm K V} {g N : Module.End K V} {A 
       rw [← neg_eq_zero, ← hMs, hMk a ha, map_zero, LinearMap.zero_apply]
     have h1 : M * N₁ = N₁ * M := by
       ext v
-      simp only [Module.End.mul_apply, hN₁v, hMk _ (hNA _ (π v).2), hπB _ (hMB v),
+      simp only [mul_apply_eq_comp, hN₁v, hMk _ (hNA _ (π v).2), hπB _ (hMB v),
         Submodule.coe_zero, map_zero]
     have h2 := hab M hM N₂ hN₂
     have hMN : M * N = N * M := by
@@ -753,7 +753,7 @@ theorem soCent_inf_killSub_congr {Q : QuadraticForm K V} {g N N' : Module.End K 
     obtain ⟨a, ha, b, hb, rfl⟩ := Submodule.mem_sup.1 (hA.sup_eq_top ▸ Submodule.mem_top (x := v))
     have hMb := mem_orthogonal_of_mem_killSub hMs hMA b
     have hb' := congrArg (fun T : Module.End K V => T b) hMN
-    simp only [Module.End.mul_apply] at hb' ⊢
+    simp only [mul_apply_eq_comp] at hb' ⊢
     rw [map_add, map_add, map_add, map_add, hMA _ (hN'A a ha), hMA a ha, map_zero, ← hNN' b hb,
       ← hNN' _ hMb, hb']
   exact le_antisymm (key hNA hN'A hNN') (key hN'A hNA fun b hb => (hNN' b hb).symm)
@@ -793,8 +793,8 @@ theorem bform_pow_skew {Q : QuadraticForm K V} {N : Module.End K V}
   induction l generalizing w with
   | zero => simp
   | succ l ih =>
-    have e1 : (N ^ (l + 1)) w = (N ^ l) (N w) := by rw [pow_succ, Module.End.mul_apply]
-    have e2 : (N ^ (l + 1)) u = N ((N ^ l) u) := by rw [pow_succ', Module.End.mul_apply]
+    have e1 : (N ^ (l + 1)) w = (N ^ l) (N w) := by rw [pow_succ, mul_apply_eq_comp]
+    have e2 : (N ^ (l + 1)) u = N ((N ^ l) u) := by rw [pow_succ', mul_apply_eq_comp]
     rw [e1, e2, ih, hN, pow_succ]
     ring
 
@@ -833,7 +833,7 @@ theorem finrank_soCent_le_of_chain {Q : QuadraticForm K V} (hQ : IsNondeg Q) {N 
       change bform Q ((N ^ (2 * (j : ℕ))) v₀) (M v₀) = 0
       have h1 : bform Q (M v₀) ((N ^ (2 * (j : ℕ))) v₀) =
           -bform Q (M v₀) ((N ^ (2 * (j : ℕ))) v₀) := by
-        conv_lhs => rw [hMs, ← Module.End.mul_apply, hcommpow M hM, Module.End.mul_apply,
+        conv_lhs => rw [hMs, ← mul_apply_eq_comp, hcommpow M hM, mul_apply_eq_comp,
           bform_pow_skew hN, pow_mul, neg_one_sq, one_pow, one_mul, hsymm]
       rw [hsymm]
       have h2 : (2 : K) * bform Q (M v₀) ((N ^ (2 * (j : ℕ))) v₀) = 0 := by
@@ -855,7 +855,7 @@ theorem finrank_soCent_le_of_chain {Q : QuadraticForm K V} (hQ : IsNondeg Q) {N 
         rw [Submodule.span_le]
         rintro _ ⟨i, rfl⟩
         change M ((N ^ (i : ℕ)) v₀) = 0
-        rw [← Module.End.mul_apply, hcommpow M hM, Module.End.mul_apply, hv, map_zero]
+        rw [← mul_apply_eq_comp, hcommpow M hM, mul_apply_eq_comp, hv, map_zero]
       exact fun u hu => hle hu
     obtain ⟨e, he⟩ := finrank_le_one_iff.mp hperp
     have hee : bform Q (M e) e = 0 := by
@@ -892,7 +892,7 @@ theorem isTotallyIsotropic_span_pow {Q : QuadraticForm K V} {N : Module.End K V}
   set S := Submodule.span K (Set.range fun i : Fin l => (N ^ (a + i)) v)
   have hgen : ∀ i j : ℕ, bform Q ((N ^ (a + i)) v) ((N ^ (a + j)) v) = 0 := by
     intro i j
-    rw [bform_pow_skew hN (a + j), ← Module.End.mul_apply, ← pow_add]
+    rw [bform_pow_skew hN (a + j), ← mul_apply_eq_comp, ← pow_add]
     rw [Module.End.pow_map_zero_of_le (by omega) hm, map_zero, LinearMap.zero_apply, mul_zero]
   have h1 : ∀ i : Fin l, S ≤ LinearMap.ker (bform Q ((N ^ (a + i)) v)) := fun i =>
     Submodule.span_le.2 <| by rintro _ ⟨j, rfl⟩; exact hgen i j
@@ -922,7 +922,7 @@ theorem linearIndependent_pow_apply {f : Module.End K V} {v : V} {m : ℕ}
     exact linearIndependent_unique_iff.2 (by simpa using hm)
   | succ m ih =>
     have e : ∀ j, (f ^ (j + 1)) v = (f ^ j) (f v) := fun j => by
-      rw [pow_succ, Module.End.mul_apply]
+      rw [pow_succ, mul_apply_eq_comp]
     rw [linearIndependent_finSucc]
     have ht : Fin.tail (fun i : Fin (m + 2) => (f ^ (i : ℕ)) v) =
         fun i : Fin (m + 1) => (f ^ (i : ℕ)) (f v) := funext fun i => e i
@@ -931,7 +931,7 @@ theorem linearIndependent_pow_apply {f : Module.End K V} {v : V} {m : ℕ}
     have hle : Submodule.span K (Set.range fun i : Fin (m + 1) => (f ^ (i : ℕ)) (f v)) ≤
         LinearMap.ker (f ^ (m + 1)) := Submodule.span_le.2 <| by
       rintro _ ⟨i, rfl⟩
-      rw [SetLike.mem_coe, LinearMap.mem_ker, ← Module.End.mul_apply, ← pow_add, ← e]
+      rw [SetLike.mem_coe, LinearMap.mem_ker, ← mul_apply_eq_comp, ← pow_add, ← e]
       exact Module.End.pow_map_zero_of_le (by omega) hm'
     exact hle hv
 
@@ -948,7 +948,7 @@ theorem exists_pow_apply_ne_zero_of_isNilpotent {f : Module.End K V} (hf : IsNil
   · by_contra hlt
     exact hm (Module.End.pow_map_zero_of_le (by omega) (Nat.find_spec ex))
   · rcases Nat.eq_zero_or_eq_succ_pred (Nat.find ex) with h0 | hs
-    · rw [h0, pow_zero, Module.End.one_apply]
+    · rw [h0, pow_zero, one_apply_eq_self]
       rintro rfl
       exact hm (map_zero _)
     · rw [hs]
