@@ -110,6 +110,12 @@ lemma absF_one [LocallyCompactSpace F] : absF (1 : F) = 1 := by
   rw [this, map_one]
   rfl
 
+/-- `|a⁻¹|_F = |a|_F⁻¹` (both sides `0` at `a = 0`). -/
+lemma absF_inv [LocallyCompactSpace F] (a : F) : absF a⁻¹ = (absF a)⁻¹ := by
+  by_cases ha : a = 0
+  · simp [ha]
+  exact eq_inv_of_mul_eq_one_left (by rw [← absF_mul, inv_mul_cancel₀ ha, absF_one])
+
 open scoped Pointwise in
 /-- `|u|_F = 1` for `‖u‖ = 1`: multiplication by `u` preserves the closed unit ball. -/
 theorem absF_eq_one_of_norm_eq_one [LocallyCompactSpace F] {u : F} (hu : ‖u‖ = 1) :
@@ -503,6 +509,29 @@ theorem lieCentralizer_toSubmodule_eq {K : Type*} [Field K] [Algebra K A]
   rw [LieSubalgebra.mem_toSubmodule, mem_lieCentralizer, Submodule.mem_inf, LinearMap.mem_ker,
     LieAlgebra.ad_apply, Ring.lie_def, sub_eq_zero, LieSubalgebra.mem_toSubmodule]
 
+/-- `dim ker(ad X)|_𝔤 = dim 𝔤_X` for `X ∈ 𝔤`. -/
+theorem finrank_ker_ad_eq_finrank_lieCentralizer {K : Type*} [Field K] [Algebra K A]
+    {𝔤 : LieSubalgebra K A} (X : ↥𝔤) :
+    Module.finrank K ↥(LinearMap.ker (LieAlgebra.ad K ↥𝔤 X)) =
+      Module.finrank K ↥(lieCentralizer 𝔤 (X : A)) := by
+  letI := LieRing.ofAssociativeRing (A := A)
+  have hle : (lieCentralizer 𝔤 (X : A)).toSubmodule ≤ 𝔤.toSubmodule :=
+    fun Z hZ => (mem_lieCentralizer.mp hZ).1
+  have key : ∀ Z : ↥𝔤, ((⁅X, Z⁆ : ↥𝔤) : A) = (X : A) * Z - Z * X := fun Z => by
+    simp [Ring.lie_def]
+  have heq : LinearMap.ker (LieAlgebra.ad K ↥𝔤 X) =
+      (lieCentralizer 𝔤 (X : A)).toSubmodule.comap 𝔤.toSubmodule.subtype := by
+    ext Z
+    rw [LinearMap.mem_ker, Submodule.mem_comap, LieSubalgebra.mem_toSubmodule,
+      mem_lieCentralizer, LieAlgebra.ad_apply]
+    constructor
+    · intro h
+      exact ⟨Z.property, sub_eq_zero.mp ((key Z).symm.trans (congrArg Subtype.val h))⟩
+    · rintro ⟨-, h⟩
+      exact Subtype.ext (by rw [key]; exact sub_eq_zero.mpr h)
+  rw [heq]
+  exact (Submodule.comapSubtypeEquivOfLe hle).finrank_eq
+
 /-- **`ker (1 − Ad a)^k = ker (ad a)^k`** for a unit `a`: `1 − Ad a = −R_{a⁻¹} ∘ ad a`, where
 `R_{a⁻¹}` is invertible and commutes with `ad a`. -/
 theorem ker_one_sub_conjAd_pow (a : Aˣ) (k : ℕ) :
@@ -554,6 +583,18 @@ def regularSet (G : Subgroup Aˣ) (𝔤 : LieSubalgebra F A) : Set ↥G :=
 /-- The regular semisimple set `𝔤_reg(F)` of the Lie algebra (Thesis §2.1). -/
 def regularSetLie (𝔤 : LieSubalgebra F A) : Set A :=
   {X | X ∈ 𝔤 ∧ IsRegularSS 𝔤 X}
+
+/-- `c X` is regular semisimple iff `X` is, for `c ≠ 0`. -/
+theorem isRegularSS_smul_iff {𝔤 : LieSubalgebra F A} {c : F} (hc : c ≠ 0) (X : A) :
+    IsRegularSS 𝔤 (c • X) ↔ IsRegularSS 𝔤 X := by
+  have hml : LinearMap.mulLeft F (c • X) = c • LinearMap.mulLeft F X :=
+    LinearMap.ext fun Y => by simp
+  have hcent : lieCentralizer 𝔤 (c • X) = lieCentralizer 𝔤 X := by
+    ext Z
+    rw [mem_lieCentralizer, mem_lieCentralizer, smul_mul_assoc, mul_smul_comm]
+    exact and_congr_right fun _ => ⟨fun h => smul_right_injective A hc h, fun h => by rw [h]⟩
+  unfold IsRegularSS IsSS
+  rw [hml, Module.End.IsSemisimple_smul_iff hc, hcent]
 
 variable [PAdicField F] [Module.Finite F A]
 
@@ -1643,6 +1684,21 @@ theorem finrank_lieCentralizer_conj (𝔤 : LieSubalgebra F A)
     Module.finrank F ↥(lieCentralizer 𝔤 X).toSubmodule
   rw [← hmap]
   exact ((φ.toLinearEquiv.submoduleMap (lieCentralizer 𝔤 X).toSubmodule).finrank_eq).symm
+
+/-- `dim 𝔤_X` is constant on a nilpotent orbit, when `G` normalizes `𝔤`. -/
+theorem finrank_lieCentralizer_eq_of_mem_nilOrbitSet {G : Subgroup Aˣ} {𝔤 : LieSubalgebra F A}
+    (hG : ∀ g ∈ G, ∀ Y ∈ 𝔤, (g : A) * Y * (↑g⁻¹ : A) ∈ 𝔤) {O : NilOrbit G 𝔤} {X Y : ↥𝔤}
+    (hX : X ∈ nilOrbitSet O) (hY : Y ∈ nilOrbitSet O) :
+    Module.finrank F ↥(lieCentralizer 𝔤 (X : A)) =
+      Module.finrank F ↥(lieCentralizer 𝔤 (Y : A)) := by
+  obtain ⟨hXn, hXO⟩ := hX
+  obtain ⟨hYn, hYO⟩ := hY
+  obtain ⟨g, hg, h⟩ := Quotient.exact (hYO.trans hXO.symm)
+  have h' : (Y : A) = (g⁻¹ : Aˣ) * X * ((g⁻¹)⁻¹ : Aˣ) := by
+    rw [inv_inv, ← h]
+    simp [mul_assoc]
+  rw [h', finrank_lieCentralizer_conj 𝔤 g⁻¹ (hG _ (G.inv_mem hg))
+    (fun Z hZ => by simpa using hG g hg Z hZ)]
 
 /-- The orbit of a regular nilpotent element is a regular orbit (regularity is invariant under
 conjugation by `G`, when `G` preserves `𝔤`). -/
