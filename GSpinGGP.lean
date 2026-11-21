@@ -116,6 +116,8 @@ import GSpinGGP.TraceFormula.W1Untruncated
 import GSpinGGP.TraceFormula.LieHypW
 import GSpinGGP.Literature.Parabolic
 import GSpinGGP.Literature.Tits
+import GSpinGGP.Literature.WaldspurgerXi
+import GSpinGGP.TraceFormula.XiIntegrable
 import GSpinGGP.TraceFormula.InvariantSets
 import GSpinGGP.GGP.Triple
 import GSpinGGP.GGP.TorusIntegral

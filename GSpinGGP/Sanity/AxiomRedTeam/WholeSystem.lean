@@ -204,17 +204,8 @@ theorem toyD_multFormula_trivialRep (ψ : NontrivialAddChar F) :
 
 /-! ## `kernelK_bound_scusp` -/
 
-theorem toyD_xiHC (IW : (𝕋).IwasawaDatum) (g : ↥(𝕋).G) : IW.xiHC g = 1 := by
-  have hδ : ∀ x : ↥(𝕋).G, IW.toIwasawaPair.rho x = 1 := fun x =>
-    IW.toIwasawaPair.delta_eq_one_of_central _ fun y => Subtype.ext (by
-      simp only [Subgroup.coe_mul]; exact toyD_G_comm _ _)
-  unfold GGPData.IwasawaDatum.xiHC IwasawaPair.xi
-  simp_rw [hδ, Real.sqrt_one]
-  rw [integral_const, smul_eq_mul, mul_one, measureReal_def]
-  have h0 : (Measure.haar : Measure ↥IW.K) Set.univ ≠ 0 :=
-    isOpen_univ.measure_ne_zero Measure.haar Set.univ_nonempty
-  have ht : (Measure.haar : Measure ↥IW.K) Set.univ ≠ ⊤ := measure_ne_top _ _
-  exact inv_mul_cancel₀ (ENNReal.toReal_ne_zero.mpr ⟨h0, ht⟩)
+theorem toyD_xiHC (IW : (𝕋).IwasawaDatum) (g : ↥(𝕋).G) : IW.xiHC g = 1 :=
+  IW.toIwasawaPair.xi_eq_one_of_comm toyD_G_comm g
 
 theorem toyD_xiHG (C₀ : Set ↥(𝕋).G) (hC₀ : C₀.Nonempty) (q : (𝕋).HGQuot) :
     (𝕋).xiHG C₀ q = 1 := by
