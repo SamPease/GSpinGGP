@@ -8,6 +8,7 @@ import GSpinGGP.TraceFormula.LieAlgebra
 import GSpinGGP.TraceFormula.LuoClass
 import GSpinGGP.Literature.Fourier
 import GSpinGGP.TraceFormula.SelfDual
+import GSpinGGP.TraceFormula.LieHypW
 import GSpinGGP.TraceFormula.LieDescent
 
 /-!
@@ -32,8 +33,8 @@ This file holds:
   `TraceFormula/LieDescent.lean`; Prop 12.4.1(i) and
   Prop 12.1.1(iv));
 * §4 the triples with a hyperbolic-plane factor (`geomAt_near_of_isHypPlane_V`, elementary, proved
-  with `Ω = G(F)` from the helpers in namespace `HypVAux`; `geomAt_near_of_isHypPlane_W`, a gap in
-  the literature's coverage, SORRY);
+  with `Ω = G(F)` from the helpers in namespace `HypVAux`; `geomAt_near_of_isHypPlane_W`, from
+  Waldspurger 2010 Thm 7.9 through `TraceFormula/LieHypW.lean`);
 * `geomAt_near`, proved from §2–§4.  Sanity checks: `Sanity/LieAudit.lean`.
 -/
 
@@ -1206,20 +1207,18 @@ theorem geomAt_near_of_isHypPlane_V (hV : IsHypPlane d.QV) (χ : CentralCharOn d
   ⟨Set.univ, isInvariantClopen_univ d, trivial, fun f hf _ => HypVAux.geomAt ψ hV χ f hf⟩
 
 /-- **`geomAt_near` when `W` is a hyperbolic plane** (`dim V = 2r + 3`).  Then
-`A_Ḡ = SO(W) ≅ G_m` is a nontrivial split central torus of `Ḡ = SO(W) × SO(V)`, and the
-Lie-algebra half must be run for the special orthogonal triple modulo `A_Ḡ`: `𝔤⁰` is reductive
-with centre `Lie(A_Ḡ) = so(W)`, and `H\G/A_G ≃ H̄\Ḡ/A_Ḡ` (`quotHG_equiv`).  Neither Luo (whose
-`J^Lie` on `H̄\Ḡ` is `0` or divergent here, although his §6.3(2) treats `dim W = 2`) nor
-Waldspurger 2010 (whose group is `SO(V)` alone, with `dim V ≥ 3`, and whose `I_N` formalism does
-cover `d_W = 2` but is not the BP-form `J^Lie`) states the needed theorems in this form; the
-natural citation is Beuzart-Plessis's general framework (Astérisque 418, Ch. 1–5, which allows a
-nontrivial `A_G`) applied to the argument of BP Ch. 10–11 modulo `A_Ḡ`.
-Status: SORRY (genuine gap in the cited literature's coverage). -/
+`A_Ḡ = SO(W) ≅ G_m` is a nontrivial split central torus of `Ḡ = SO(W) × SO(V)`, and Luo's
+`J^Lie` on `H̄\Ḡ` is `0` or divergent.  The Lie-algebra step is instead run for the single group
+`SO(V)` with the quasi-character `θ` on `so(W)`: Waldspurger 2010 Thm 7.9
+(`waldspurger2010_thm_7_9`), whose space `U(F)SO(W)(F)\SO(V)(F)` is `H(F)\G(F)/A_G(F)` through
+`(t, g) ↦ t⁻¹ g`.  Status: proved (`geomAt_near_hypW`, `TraceFormula/LieHypW.lean`) from
+that axiom and the sorries `exists_hypW_descent` (descent and dictionary), `Igeom_of_isHypPlane`
+(Waldspurger's geometric side for `W` a plane) and `kappa_spec` (`κ_N → 1`). -/
 theorem geomAt_near_of_isHypPlane_W (h : HYP ψ d) (hW : IsHypPlane d.QW) (χ : CentralCharOn d) :
     ∃ Ω : Set ↥d.G, IsInvariantClopen d Ω ∧ (1 : ↥d.G) ∈ Ω ∧
       ∀ f ∈ ScuspTestFn d χ, Function.support f ⊆ Ω →
-        distribJ d ψ f = mGeom ψ d (thetaF d f) := by
-  sorry
+        distribJ d ψ f = mGeom ψ d (thetaF d f) :=
+  d.geomAt_near_hypW ψ hW χ
 
 /-! ## Interface statement -/
 

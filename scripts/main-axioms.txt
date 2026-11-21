@@ -18,5 +18,6 @@ GSpinGGP.luo_lie_geomExpansion_SO
 GSpinGGP.panYan_mult_le_one
 GSpinGGP.rodier_germ_one
 GSpinGGP.tits_iwasawa
+GSpinGGP.waldspurger2010_thm_7_9
 GSpinGGP.waldspurger_goodNbhd
 GSpinGGP.weil_quotient_radon

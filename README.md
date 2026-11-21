@@ -41,26 +41,30 @@ satisfying the stability, transfer and genericity hypotheses, which is all the p
 
 As of November 2026:
 
-- The project builds with 37 declarations containing `sorry`. The main theorem `local_ggp`
-  depends on 22 of them. They are of two kinds: the analytic core of the local trace formula
+- The project builds with 39 declarations containing `sorry`. The main theorem `local_ggp`
+  depends on 24 of them. They are of two kinds: the analytic core of the local trace formula
   (Thesis Ch. 8–12, e.g. the bound on the kernel of the distribution `J` and its spectral
   expansion), and published results that the dissertation adapts to general spin groups (see
   below), plus some smaller lemmas. A `sorry` is a step this project still owes.
 - Results from the literature are assumed as `axiom`s in `GSpinGGP/Literature/`, each with a
   docstring citing its source; they are where the formalization stops, and are not meant to be
-  proved here. `local_ggp` uses 22 of the 23. The other,
+  proved here. `local_ggp` uses 23 of the 24. The other,
   `bp_sqrt_weylDisc_mul_locallyBounded` (BP Prop 4.1.1(ii)), is intended as an input of the germ
   bound `germ_bound_of_mem_QC`, still a `sorry`. There are two classes.
   A *verbatim* axiom is a statement printed in its source, for the group the source treats,
   specialized (one, `bp_integrable_kernel_scusp`, is stated without proof in its source).
   A *derived* axiom is a short, explicit combination of such statements, or a printed statement
   whose hypotheses are checked for our object in the docstring only; the docstring quotes the
-  ingredients and gives the steps. 7 of the 23 are derived (`scripts/derived-axioms.txt`).
+  ingredients and gives the steps. 8 of the 24 are derived (`scripts/derived-axioms.txt`).
   They are the three on Galois cohomology (applied to groups of `F̄`-points whose description as algebraic
   groups, and for Kottwitz's lemma as a fundamental maximal torus, is argued in the docstring);
   `jantzen_finrank_soCentMat_ge` (four statements of Jantzen combined);
   `luo_lie_geomExpansion_SO` (Luo's theorem with properties of `θ_f` from Waldspurger and
   Beuzart-Plessis, one obtained from a theorem stated without proof by the Weyl integration formula);
+  `waldspurger2010_thm_7_9` (Waldspurger's Lie-algebra integral formula for `(SO(V), SO(W))`,
+  with his `θ_f`, which is not formalized, replaced by any function representing the orbital pairing
+  of `f`; the link uses Beuzart-Plessis's expansion of the kernel, stated without proof in its
+  source, and the Weyl integration formula);
   `tits_iwasawa` (the Iwasawa decomposition as stated by Tits, from the valuation of the root
   datum of Bruhat–Tits; the identification of Tits's `Z(F)U⁺(F)` with a stabilizer of full isotropic
   flags is our own step);

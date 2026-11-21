@@ -11,6 +11,7 @@ import GSpinGGP.Sanity.AxiomRedTeam.WholeSystem
 import GSpinGGP.Sanity.AxiomRedTeam.Tits
 import GSpinGGP.Sanity.AxiomRedTeam.BPQuasiCharacter
 import GSpinGGP.Sanity.AxiomRedTeam.SmoothRepresentations
+import GSpinGGP.Sanity.AxiomRedTeam.WaldspurgerLie
 
 /-!
 # Checks of the literature axioms on small instances
@@ -58,6 +59,10 @@ the axiom it tests; the computations of germs at `toyD` use `exists_isSelfDual` 
   (`L0_germLie_unique_needs_mem_lie`); consequences on any Luo datum
   (`false_of_orbitMeasure_eq_lie`, `germLie_unique_SO_forces_jHat_ne_zero`). Not covered: several
   orbits.
+* `waldspurger2010_thm_7_9`: C, junk values: `I_N` vanishes for `f = 0` or `θ = 0`, so
+  the axiom forces `I(θ, τ) = 0` there (`Igeom_eq_zero_of_f_zero`, nonvacuous: `isVeryCuspidal_zero`,
+  `isThetaFW1_zero`; `Igeom_zero_left`). Not covered: a constructed `W1Input` (special lattices,
+  measures) with both sides computed.
 * `jantzen_finrank_soCentMat_ge`: V for `n = 3` (`jantzen_ge_three`). Not covered: `n ≥ 4`.
 * `jantzen_regularNil_partition`: V for `n = 3`, `Φ` antidiagonal (`jantzen_partition_three`); C
   at `n = 4` with the previous axiom (`partition_four_via_axioms`). Not covered: `n ≥ 5`.
