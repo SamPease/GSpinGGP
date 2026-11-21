@@ -48,12 +48,14 @@ As of November 2026:
   below), plus some smaller lemmas. A `sorry` is a step this project still owes.
 - Results from the literature are assumed as `axiom`s in `GSpinGGP/Literature/`, each with a
   docstring citing its source; they are where the formalization stops, and are not meant to be
-  proved here. `local_ggp` uses 20 of the 20. There are two classes.
+  proved here. `local_ggp` uses 20 of the 21. The other,
+  `bp_sqrt_weylDisc_mul_locallyBounded` (BP Prop 4.1.1(ii)), is intended as an input of the germ
+  bound `germ_bound_of_mem_QC`, still a `sorry`. There are two classes.
   A *verbatim* axiom is a statement printed in its source, for the group the source treats,
   specialized (one, `bp_integrable_kernel_scusp`, is stated without proof in its source).
   A *derived* axiom is a short, explicit combination of such statements, or a printed statement
   whose hypotheses are checked for our object in the docstring only; the docstring quotes the
-  ingredients and gives the steps. 9 of the 20 are derived (`scripts/derived-axioms.txt`):
+  ingredients and gives the steps. 10 of the 21 are derived (`scripts/derived-axioms.txt`):
   the two on characters and the one on multiplicity one (sources state them for irreducible
   admissible smooth representations, the axioms for irreducible unitary ones);
   the three on Galois cohomology (applied to groups of `F̄`-points whose description as algebraic
@@ -61,9 +63,12 @@ As of November 2026:
   `jantzen_finrank_soCentMat_ge` (four statements of Jantzen combined);
   `luo_lie_geomExpansion_SO` (Luo's theorem with properties of `θ_f` from Waldspurger and
   Beuzart-Plessis, one obtained from a theorem stated without proof by the Weyl integration formula);
-  and `tits_iwasawa` (the Iwasawa decomposition as stated by Tits, from the valuation of the root
+  `tits_iwasawa` (the Iwasawa decomposition as stated by Tits, from the valuation of the root
   datum of Bruhat–Tits; the identification of Tits's `Z(F)U⁺(F)` with a stabilizer of full isotropic
-  flags is our own step).
+  flags is our own step);
+  and `bp_sqrt_weylDisc_mul_locallyBounded` (BP's local boundedness of `(D^G)^{1/2} θ`, stated for
+  connected reductive groups; that a quasi-character in our sense is one in BP's is checked in
+  the docstring).
   No axiom states for general spin groups a result that its source states for another group.
   Where the dissertation adapts a published result (stated for orthogonal or unitary groups, groups
   with compact centre, pure inner forms, …) or combines several, the statement is a theorem with
