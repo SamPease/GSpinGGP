@@ -100,6 +100,17 @@ theorem pi0_zV {k : ℤ} (hk : k ≠ 0) : d.pi0 (d.zV k) = 0 := by
   rw [ite_eq_right (by push_cast; omega)]
   simp
 
+/-- Vectors with vanishing coordinates off `V₀` lie in `ι₀(V₀)`. -/
+theorem eq_iota0_pi0 {v : d.V} (hv : ∀ i : Fin (2 * d.r + 1), (i : ℕ) ≠ d.r → v.2 i = 0) :
+    v = d.iota0 (d.pi0 v) := by
+  refine Prod.ext rfl (funext fun i => ?_)
+  simp only [iota0_apply, pi0, LinearMap.prodMap_apply, LinearMap.smulRight_apply,
+    LinearMap.proj_apply, Pi.smul_apply, smul_eq_mul, zvec]
+  by_cases hi : (i : ℕ) = d.r
+  · have hlt : d.r < 2 * d.r + 1 := by omega
+    rw [show i = ⟨d.r, hlt⟩ from Fin.ext hi]; simp
+  · rw [hv i hi]; simp [show ¬ ((i : ℤ) - d.r = 0) by omega]
+
 theorem QV_iota0 (x : d.V0) : d.QV (d.iota0 x) = d.Q0 x := by
   obtain ⟨w, c⟩ := x
   rw [iota0_apply]
@@ -354,22 +365,15 @@ theorem aniso_V {y : d.V} (hy : y ∈ orthFrame d.QV (eV hf) (fV hf)) (hQ : d.QV
       exact (mul_eq_zero.mp ((mul_eq_zero.mp this).resolve_left hν)).resolve_left h2
   -- so `y = ι₀ (π₀ y)`
   have hyi : y = d.iota0 (d.pi0 y) := by
-    refine Prod.ext rfl (funext fun t => ?_)
-    simp only [iota0_apply, pi0, LinearMap.prodMap_apply, LinearMap.smulRight_apply,
-      LinearMap.proj_apply, Pi.smul_apply, smul_eq_mul, zvec]
-    by_cases ht : (t : ℕ) = d.r
-    · have : t = ⟨d.r, by omega⟩ := Fin.ext ht
-      rw [this]
-      simp
-    · have ht2 := t.2
-      have habs : |(d.r : ℤ) - t| ≤ d.r := by rw [abs_le]; constructor <;> omega
-      have hj := hz ((d.r : ℤ) - t) (by omega) habs
-      rw [bform_zV_eq _ _ habs] at hj
-      have e : (⟨((d.r : ℤ) - ((d.r : ℤ) - t)).toNat, by omega⟩ : Fin (2 * d.r + 1)) = t :=
-        Fin.ext (by simp)
-      rw [e] at hj
-      rw [(mul_eq_zero.mp hj).resolve_left d.ν.ne_zero]
-      simp [show ¬ ((t : ℤ) - d.r = 0) by omega]
+    refine d.eq_iota0_pi0 fun t ht => ?_
+    have ht2 := t.2
+    have habs : |(d.r : ℤ) - t| ≤ d.r := by rw [abs_le]; constructor <;> omega
+    have hj := hz ((d.r : ℤ) - t) (by omega) habs
+    rw [bform_zV_eq _ _ habs] at hj
+    have e : (⟨((d.r : ℤ) - ((d.r : ℤ) - t)).toNat, by omega⟩ : Fin (2 * d.r + 1)) = t :=
+      Fin.ext (by simp)
+    rw [e] at hj
+    exact (mul_eq_zero.mp hj).resolve_left d.ν.ne_zero
   -- and `π₀ y` lies past the frame
   set x := d.pi0 y
   have hxc : x ∈ pairCompl b l 0 := by

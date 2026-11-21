@@ -21,8 +21,7 @@ cone is such a subset, for the frames attached to the frame `b` of `V₀` (Thesi
   (`torusZ`) and `SO(V₀)`'s torus `multiTorus … 0` extended by `1` (`extV0`).
 
 With this, the growth hypotheses of `GGPData.prop_6_7_1_iii_of_growth` are discharged, which proves
-**Thesis Prop. 8.4.1(iii)** (`GGPData.prop_6_7_1_iii`). Its proof now depends on the weak Cartan
-decomposition at the level of `SO` (`GGPData.exists_weakCartan_SO`, still a `sorry`). The
+**Thesis Prop. 8.4.1(iii)** (`GGPData.prop_6_7_1_iii`). The
 consumers `distribJ_convergent` and `distribJ_add` (Thesis §10.1) are stated here as well, since
 this file comes after `Analytic.lean`.
 
@@ -30,7 +29,6 @@ this file comes after `Analytic.lean`.
 
 * `GGPData.isHypFrame_iota0`, `GGPData.extV0_mem_hypTorus`: frames of `V₀` and their tori pushed to
   `V` along `ι₀`, `g ↦ g ⊕ 1`.
-* `GGPData.extZ_eq_extV0`: `g ⊕ 1` on `V = W ⊕ Z` is `(g ⊕ 1 on V₀) ⊕ 1`.
 * `GGPData.torusZ_mem_hypTorus_V`, `GGPData.extV0_mem_hypTorus_V`: the two factors of the
   `V`-component of the cone lie in the torus of the joint frame.
 * `GGPData.cone_subset_frameTorus`, `GGPData.exists_growth_cone`: the cone lies in `frameTorus`,
@@ -94,18 +92,6 @@ theorem extV0_mem_hypTorus (hF : IsHypFrame d.Q0 W' e f) {g : d.V0 ≃ₗ[F] d.V
   · simp only [Function.comp_apply, extV0_iota0, (ht i).1, map_smul]
   · simp only [Function.comp_apply, extV0_iota0, (ht i).2, map_smul]
 
-/-- `g ⊕ 1` on `V = W ⊕ Z` (`extZ`) is `(g ⊕ 1 on V₀) ⊕ 1` (`extV0 ∘ base.extZ`). -/
-theorem extZ_eq_extV0 (g : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) :
-    d.extZ g = d.extV0 (d.base.extZ g) := by
-  refine LinearEquiv.ext fun v => ?_
-  rw [extV0_apply, ← pi0_extZ, ← map_sub]
-  have h : d.extZ g v - v = d.iota0 (d.pi0 (d.extZ g v - v)) := by
-    refine Prod.ext ?_ ?_
-    · simp [iota0_apply, pi0, extZ_apply]
-    · simp only [Prod.snd_sub, extZ_coord, sub_self, iota0_apply]
-      simp [pi0, extZ_apply]
-  rw [← h, add_sub_cancel]
-
 /-! ## 2. The torus of the joint frame of `V` -/
 
 section JointFrame
@@ -119,18 +105,6 @@ theorem mem_orthFrame_iota0_of_mem_V {v : d.V} (hv : v ∈ orthFrame d.QV (eV hf
     v ∈ orthFrame d.QV (d.iota0 ∘ pairE hf 0) (d.iota0 ∘ pairF hf 0) := fun i => by
   have := hv (Fin.natAdd d.r i)
   simpa only [eV, fV, Fin.append_right] using this
-
-/-- `a(τ) z_j = c • z_j` with `c` the torus coefficient at `z_j`. -/
-theorem torusZ_zV (τ : Fin d.r → Fˣ) {j : ℤ} (hj : |j| ≤ d.r) :
-    d.torusZ τ (d.zV j) =
-      (d.torusCoeff τ ⟨(j + d.r).toNat, by have := abs_le.mp hj; omega⟩ : F) • d.zV j := by
-  rw [torusZ_apply, zV]
-  refine Prod.ext (by simp) (funext fun i => ?_)
-  simp only [Prod.smul_snd, Pi.smul_apply, smul_eq_mul, zvec]
-  by_cases hi : ((i : ℕ) : ℤ) - d.r = j
-  · have : i = ⟨(j + d.r).toNat, by have := abs_le.mp hj; omega⟩ := Fin.ext (by simp; omega)
-    simp [this]
-  · simp only [hi, ↓reduceIte, mul_zero]
 
 /-- `a(τ) z_{-(r-k)} = c_k z_{-(r-k)}` with `c_k` the torus coefficient at that coordinate. -/
 theorem torusZ_zb (τ : Fin d.r → Fˣ) (k : Fin d.r) :
@@ -262,10 +236,7 @@ end Cone
 with nonempty interior defining `Ξ^{H\G} = Ξ^{H\G}_{C₀}` (`xiHG`); the thesis fixes one such
 `C₀`, and different choices give equivalent functions (Thesis §8.4).  Proof: BP's argument
 (`prop_6_7_1_iii_of_growth`) for the explicit good pair of a maximal frame `z₀ = w₀, w₁, …` of
-`V₀`, with the polynomial growth of the cone from `exists_growth_cone`.
-
-Still depends on the `sorry` `exists_weakCartan_SO` (Thesis Lemma 8.3.2(ii) at the level of `SO`),
-through `exists_weakCartan`. -/
+`V₀`, with the polynomial growth of the cone from `exists_growth_cone`. -/
 theorem prop_6_7_1_iii (C₀ : Set ↥d.G) (hC₀ : IsCompact C₀) (hC₀' : (interior C₀).Nonempty) :
     ∃ d₀ : ℝ, 0 < d₀ ∧
       Integrable (fun q : d.HGQuot => d.xiHG C₀ q ^ 2 * d.logNormHG q ^ (-d₀)) d.weilMeasureHG := by
