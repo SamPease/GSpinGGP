@@ -136,6 +136,13 @@ GSpinGGP.vanDijk_charG_parInd_ell
 GSpinGGP.hc_vMult_eq_mult_parInd
 GSpinGGP.arthur_mem_Rind_of_vChar_ell
 GSpinGGP.bp_exists_vChar_eq_thetaF_ell
+GSpinGGP.GGPData.IsLeviEmbedding
+GSpinGGP.GGPData.exists_isLeviEmbedding
+GSpinGGP.GGPData.IsLeviFactor
+GSpinGGP.GGPData.IsLeviFactor.isTrivialOn_AGH
+GSpinGGP.exists_leviFactor
+GSpinGGP.mult_parInd_eq_mult_leviFactor
+GSpinGGP.mGeom_charG_parInd_eq
 GSpinGGP.mult_parInd_eq_mGeom
 GSpinGGP.defect_eq_zero_of_mem_Rind
 GSpinGGP.defect_eq_zero_of_vChar_eq_zero_ell
@@ -184,11 +191,11 @@ GSpinGGP.GGPData.lemma_6_5_1_ii
 GSpinGGP.GGPData.lemma_6_5_1_iii
 GSpinGGP.GGPData.kernelK_bound
 GSpinGGP.GGPData.kernelK_bound_scusp
-GSpinGGP.GGPData.exists_leviHom_of_leviSpec
 GSpinGGP.GGPIso.mGeom_congr_iso
 GSpinGGP.Sanity.NilpotentOrbit.exists_isOrbitMeasure_regOrbit
 GSpinGGP.Sanity.NilpotentOrbit.jHat_regOrbit_split
-GSpinGGP.Sanity.NilpotentOrbit.jHat_regOrbit_ellipticGSpinGGP.finrank_lieCentralizer_eq_lieRank
+GSpinGGP.Sanity.NilpotentOrbit.jHat_regOrbit_elliptic
+GSpinGGP.finrank_lieCentralizer_eq_lieRank
 GSpinGGP.hcDisc_ne_zero_of_mem_regularSet
 GSpinGGP.isOpen_regularSS_lieCentralizer
 GSpinGGP.jantzen_finrank_soCentMat_ge

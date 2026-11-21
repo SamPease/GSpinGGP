@@ -84,7 +84,8 @@ theorem vMGeom_eq_mGeom_vChar {η : CentralCharOn d} (P : VirtualTemp d η) :
 irreducible tempered `σ̃` of `G̃(F)` embeds isometrically and equivariantly into `σ ∘ ι`.
 
 Ingredients: `M(F) = C × ι(G̃(F))` with `C` a product of general linear groups commuting with
-`ι(G̃(F))` (Asgari's description of the Levi subgroups of `GSpin`); an irreducible unitary
+`ι(G̃(F))` (the Levi subgroups of `GSpin`: M. Asgari, *Local L-functions for split spinor
+groups*, Canad. J. Math. 54 (2002), 673–693, §2); an irreducible unitary
 representation of a direct product of two type I groups is an exterior tensor product
 `σ^{GL} ⊠ σ̃` of irreducible unitary representations (Dixmier, *C\*-algebras*, 13.1.8), so
 `σ ∘ ι` is a multiple of `σ̃`; `σ̃` is tempered since `σ` is weakly contained in the regular
@@ -102,9 +103,14 @@ the GGP triple `(G̃, H̃, ξ̃)` of the Levi pair.
 
 Proof (thesis, own: the unitary-group argument of BP Ch. 7 redone for `GSpin`):
 `m(π) ≠ 0 ⇔ 𝓛_π ≠ 0` (Thesis Thm 9.2.1, for `π` and for `σ̃`), `𝓛_π ≠ 0 ⇔ 𝓛_σ̃ ≠ 0` (Thesis
-§9.3, the proposition after (9.3.6), by induction in stages and the codimension-one computation),
+Prop 9.3.7, by induction in stages and the codimension-one computation),
 `m(σ̃) ≤ 1` (`emoryTakeda_mult_le_one`), and `m(π) ≤ 1` (Thesis Lemma 9.2.3(ii): two orthogonal
 irreducible subrepresentations with nonzero multiplicity would give `𝓛_π(T₁)𝓛_π(T₂) = 0`).
+For special orthogonal groups this is Waldspurger, *Une formule intégrale reliée à la conjecture
+locale de Gross–Prasad, 2e partie* (arXiv 0904.0314), §7.7, Lemme.
+Differs from the dissertation in one degenerate case: a hyperbolic-plane factor with a one-line
+flag is treated as `GL₁ × GSpin(0)` (`W̃ = 0`), where the thesis may keep `W̃ = W`; both give the
+same answer.
 Status: SORRY. -/
 theorem mult_parInd_eq_mult_leviFactor {η : CentralCharOn d} {D : d.ParIndData}
     (hD : d.IsTempIndData η D) {d' : GGPData F} {σ' : UnitaryRep ↥d'.G} (hσ' : IsTempered σ')
@@ -117,12 +123,18 @@ theorem mult_parInd_eq_mult_leviFactor {η : CentralCharOn d} {D : d.ParIndData}
 parabolic and `σ̃` its `G̃`-factor.
 
 Proof (thesis): `θ_{i_Q^G σ} = i_L^G(θ_σ)` (BP (3.4.3), van Dijk's formula); Thesis Lemma 7.3.1
-(Luo, *A local trace formula for the local Gan–Gross–Prasad conjecture for special orthogonal
-groups*, Lemma 7.2.2, for `GSpin`: own) gives `m_geom(i_L^G θ_σ) = m_geom^{G̃}(θ_σ̃) ·
+(for `GSpin`: own; for special orthogonal groups it is Waldspurger, *Une formule intégrale reliée à
+la conjecture locale de Gross–Prasad, 2e partie* (arXiv 0904.0314), §7.2, Lemme, p. 118, which Luo,
+*A local trace formula for the local Gan–Gross–Prasad conjecture for special orthogonal groups*,
+Lemma 7.2.2, cites) gives `m_geom(i_L^G θ_σ) = m_geom^{G̃}(θ_σ̃) ·
 c_{θ_{σ^{GL}}, O_1}(1)`; and `c_{θ_{σ^{GL}}, O_1}(1) = 1` by BP Prop 4.8.1(i) for the general linear
 factor (Rodier) and Zelevinsky 1980 Thm 9.7 (tempered representations of `GL_n` are generic).
 The three steps are stated together because the character `θ_{σ^{GL}}` of the general linear
-factor is not separately available here.  Status: SORRY. -/
+factor is not separately available here.
+Differs from the dissertation in one degenerate case: a hyperbolic-plane factor with a one-line
+flag is treated as `GL₁ × GSpin(0)` (`W̃ = 0`), where the thesis may keep `W̃ = W`; both give the
+same answer.
+Status: SORRY. -/
 theorem mGeom_charG_parInd_eq {η : CentralCharOn d} {D : d.ParIndData}
     (hD : d.IsTempIndData η D) {d' : GGPData F} {σ' : UnitaryRep ↥d'.G} (hσ' : IsTempered σ')
     (hf : d.IsLeviFactor D.FW D.FV d' D.σ σ') :
@@ -355,7 +367,7 @@ of the elliptic characters, A93), and the defect vanishes on `R_ind(G,χ)` by Th
 (Thesis Cor 9.5.1, Thesis Lemma 7.3.1 = Luo Lemma 7.2.2 for GSpin, BP (3.4.3),
 BP Prop 4.8.1(i), Zelevinsky 1980 Thm 9.7, and (HYP) for the Levi datum).
 Status: **proved** from `arthur_mem_Rind_of_vChar_ell` (ASSUME) and
-`defect_eq_zero_of_mem_Rind` (proved here). -/
+`defect_eq_zero_of_mem_Rind` (proved here from the sorries of §2). -/
 theorem defect_eq_zero_of_vChar_eq_zero_ell (h : HYP ψ d) (η : CentralCharOn d)
     (P : VirtualTemp d η) (hP : ∀ x ∈ d.ellRegSet, vChar d P x = 0) : defect ψ d P = 0 :=
   defect_eq_zero_of_mem_Rind ψ d h η (arthur_mem_Rind_of_vChar_ell d η P hP)

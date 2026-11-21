@@ -1330,7 +1330,12 @@ Tying `ι` to `GSpin.map` (rather than to an abstract isomorphism of groups) is 
 `G̃(F)`-component: an abstract isomorphism could be composed with a twist by a character of `G̃(F)`,
 which changes multiplicities.  Two such `ι` differ by the choice of the isometric embeddings; the
 GGP subgroups `(H̃, ξ̃)` they carry to `M` are then conjugate under `G̃(F)` (Thesis §9.3: the
-triple of the Levi is "well-defined up to `G̃(F)`-conjugation"). -/
+triple of the Levi is "well-defined up to `G̃(F)`-conjugation").
+
+The Levi subgroups of `GSpin`: M. Asgari, *Local L-functions for split spinor groups*, Canad. J.
+Math. 54 (2002), 673–693, §2.  Differs from the dissertation in one degenerate case: a
+hyperbolic-plane factor with a one-line flag is treated as `GL₁ × GSpin(0)` (`W̃ = 0`), where the
+thesis may keep `W̃ = W`; both give the same answer. -/
 def IsLeviEmbedding (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV) (d' : GGPData F)
     (ι : ↥d'.G →* d.LeviQuot FW FV) : Prop :=
   (∃ (jW : d'.QW →qᵢ d.QW) (jV : d'.QV →qᵢ d.QV),
