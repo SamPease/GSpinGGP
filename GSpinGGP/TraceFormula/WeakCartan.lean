@@ -891,7 +891,7 @@ theorem isFlagSplitting_stdBasis : IsFlagSplitting d.flag d.stdBasis d.stdWt whe
 theorem torusZ_mul_extV0 (τ : Fin d.r → Fˣ) (g : d.V0 ≃ₗ[F] d.V0) :
     d.torusZ τ * d.extV0 g = d.extV0 g * d.torusZ τ := by
   refine LinearEquiv.ext fun v => ?_
-  simp only [LinearEquiv.mul_apply, extV0_apply, map_add, torusZ_iota0, pi0_torusZ]
+  simp only [mul_apply_eq_comp, extV0_apply, map_add, torusZ_iota0, pi0_torusZ]
 
 theorem torusZ_zV_fin (τ : Fin d.r → Fˣ) (i : Fin (2 * d.r + 1)) :
     d.torusZ τ (d.zV ((i : ℤ) - d.r)) = (d.torusCoeff τ i : F) • d.zV ((i : ℤ) - d.r) := by
@@ -1101,12 +1101,12 @@ theorem exists_extZ_of_mem_fixer (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1
     (LinearMap.ext fun w => by
       have h := hf1 (f' w)
       rw [← hf2, show g ((g⁻¹ : d.V0 ≃ₗ[F] d.V0) ((w, 0) : d.V0)) = (w, 0) by
-        rw [← LinearEquiv.mul_apply, mul_inv_cancel]; rfl] at h
+        rw [← mul_apply_eq_comp, mul_inv_cancel]; rfl] at h
       exact (congrArg Prod.fst h).symm)
     (LinearMap.ext fun w => by
       have h := hf2 (f w)
       rw [← hf1, show (g⁻¹ : d.V0 ≃ₗ[F] d.V0) (g ((w, 0) : d.V0)) = (w, 0) by
-        rw [← LinearEquiv.mul_apply, inv_mul_cancel]; rfl] at h
+        rw [← mul_apply_eq_comp, inv_mul_cancel]; rfl] at h
       exact (congrArg Prod.fst h).symm)
   have hext : d.base.extZ gW = g := by
     refine LinearEquiv.ext fun v => ?_
