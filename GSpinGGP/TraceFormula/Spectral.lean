@@ -26,9 +26,13 @@ How the two are proved here:
 * **Parabolic induction and `R_ind`** are real definitions in `GGP/Levi.lean` §6–§7
   (`GGPData.parInd`, `GGPData.IsTempIndData`, `GGPData.Rind`, at the level of characters).
 * **Thesis Prop 7.4.1(i)** (`defect_eq_zero_of_mem_Rind`, proved): the defect vanishes on `R_ind(G, η)` under
-  (HYP), from one SORRY at a single induced representation, `mult_parInd_eq_mGeom` (Thesis
+  (HYP), from the statement at a single induced representation, `mult_parInd_eq_mGeom` (Thesis
   Prop 7.4.1(i)), `hc_vMult_eq_mult_parInd`, and the linearity of `m_geom`
-  on `QCfin` (`MGeom.lean`; `vMGeom_eq_mGeom_vChar`).
+  on `QCfin` (`MGeom.lean`; `vMGeom_eq_mGeom_vChar`).  `mult_parInd_eq_mGeom` is proved from (HYP)
+  at the Levi datum and three SORRYs: the `G̃`-factor `σ̃` of `σ` (`exists_leviFactor`), Thesis
+  Cor 9.5.1(i) (`mult_parInd_eq_mult_leviFactor`) and the `m_geom` identity
+  (`mGeom_charG_parInd_eq`), with the Levi embedding of `GGP/Levi.lean` (`exists_isLeviEmbedding`,
+  SORRY).
 * **The characterization** `R_ind(G, η) = {Π : θ_Π = 0 on G_ell,reg(F)}` (`mem_Rind_iff`, proved
   from van Dijk and Arthur, `TraceFormula/EllipticRepresentations.lean`).
 * **The spectral side**: `ellVirtual d η f`, a virtual representation with `θ = θ_f` on the
@@ -74,30 +78,77 @@ theorem vMGeom_eq_mGeom_vChar {η : CentralCharOn d} (P : VirtualTemp d η) :
 
 /-! ## 2. The defect vanishes on `R_ind(G, η)` (Thesis Prop 7.4.1(i)) -/
 
+/-- **The `G̃`-factor of an irreducible tempered representation of the Levi** (Thesis §9.3
+(9.3.4)–(9.3.6): `σ = σ^{GL} ⊠ σ̃`, with `σ̃` tempered).  Let `i_P^G(σ)` be properly induced with
+`σ` irreducible tempered on `M = P/U`, and let `ι : G̃(F) → M` be a Levi embedding.  Then some
+irreducible tempered `σ̃` of `G̃(F)` embeds isometrically and equivariantly into `σ ∘ ι`.
+
+Ingredients: `M(F) = C × ι(G̃(F))` with `C` a product of general linear groups commuting with
+`ι(G̃(F))` (Asgari's description of the Levi subgroups of `GSpin`); an irreducible unitary
+representation of a direct product of two type I groups is an exterior tensor product
+`σ^{GL} ⊠ σ̃` of irreducible unitary representations (Dixmier, *C\*-algebras*, 13.1.8), so
+`σ ∘ ι` is a multiple of `σ̃`; `σ̃` is tempered since `σ` is weakly contained in the regular
+representation of `M(F)`.  Status: SORRY. -/
+theorem exists_leviFactor {η : CentralCharOn d} {D : d.ParIndData} (hD : d.IsTempIndData η D)
+    {d' : GGPData F} {ι : ↥d'.G →* d.LeviQuot D.FW D.FV}
+    (hι : d.IsLeviEmbedding D.FW D.FV d' ι) :
+    ∃ σ' : UnitaryRep ↥d'.G, IsTempered σ' ∧
+      ∃ T : σ'.H →ₗᵢ[ℂ] D.σ.H, ∀ g v, T (σ'.ρ g v) = D.σ.ρ (ι g) (T v) := by
+  sorry
+
+/-- **Thesis Cor 9.5.1(i)**: `m(i_Q^G σ) = m(σ̃)` for `σ` irreducible tempered on the Levi of a
+proper parabolic and `σ̃` its `G̃`-factor (`IsLeviFactor`), the multiplicity of `σ̃` being taken for
+the GGP triple `(G̃, H̃, ξ̃)` of the Levi pair.
+
+Proof (thesis, own: the unitary-group argument of BP Ch. 7 redone for `GSpin`):
+`m(π) ≠ 0 ⇔ 𝓛_π ≠ 0` (Thesis Thm 9.2.1, for `π` and for `σ̃`), `𝓛_π ≠ 0 ⇔ 𝓛_σ̃ ≠ 0` (Thesis
+§9.3, the proposition after (9.3.6), by induction in stages and the codimension-one computation),
+`m(σ̃) ≤ 1` (`emoryTakeda_mult_le_one`), and `m(π) ≤ 1` (Thesis Lemma 9.2.3(ii): two orthogonal
+irreducible subrepresentations with nonzero multiplicity would give `𝓛_π(T₁)𝓛_π(T₂) = 0`).
+Status: SORRY. -/
+theorem mult_parInd_eq_mult_leviFactor {η : CentralCharOn d} {D : d.ParIndData}
+    (hD : d.IsTempIndData η D) {d' : GGPData F} {σ' : UnitaryRep ↥d'.G} (hσ' : IsTempered σ')
+    (hf : d.IsLeviFactor D.FW D.FV d' D.σ σ') :
+    mult ψ d (d.parInd D) = mult ψ d' σ' := by
+  sorry
+
+/-- **`m_geom` of an induced character** (Thesis Prop 7.4.1(i), second step):
+`m_geom(θ_{i_Q^G σ}) = m_geom^{G̃}(θ_σ̃)` for `σ` irreducible tempered on the Levi of a proper
+parabolic and `σ̃` its `G̃`-factor.
+
+Proof (thesis): `θ_{i_Q^G σ} = i_L^G(θ_σ)` (BP (3.4.3), van Dijk's formula); Thesis Lemma 7.3.1
+(Luo, *A local trace formula for the local Gan–Gross–Prasad conjecture for special orthogonal
+groups*, Lemma 7.2.2, for `GSpin`: own) gives `m_geom(i_L^G θ_σ) = m_geom^{G̃}(θ_σ̃) ·
+c_{θ_{σ^{GL}}, O_1}(1)`; and `c_{θ_{σ^{GL}}, O_1}(1) = 1` by BP Prop 4.8.1(i) for the general linear
+factor (Rodier) and Zelevinsky 1980 Thm 9.7 (tempered representations of `GL_n` are generic).
+The three steps are stated together because the character `θ_{σ^{GL}}` of the general linear
+factor is not separately available here.  Status: SORRY. -/
+theorem mGeom_charG_parInd_eq {η : CentralCharOn d} {D : d.ParIndData}
+    (hD : d.IsTempIndData η D) {d' : GGPData F} {σ' : UnitaryRep ↥d'.G} (hσ' : IsTempered σ')
+    (hf : d.IsLeviFactor D.FW D.FV d' D.σ σ') :
+    mGeom ψ d (charG d (d.parInd D)) = mGeom ψ d' (charG d' σ') := by
+  sorry
+
 /-- **Thesis Prop 7.4.1(i) at one induced representation**.  Assume (HYP).
 For `π = i_Q^G(σ)` with `Q` proper and `σ` tempered with central character `η`,
 `m(π) = m_geom(θ_π)`.
 
-Proof route (thesis): decompose the Levi `L = L^{GL} × G̃` and `σ = σ^{GL} ⊠ σ̃`, with
-`(G̃, H̃, ξ̃)` the GGP triple of the Levi (`GGPData.leviSmall`, `dimG_leviSmall_lt`), where
-the `GSpin(Ṽ)`-component is the Levi projection `M ≅ ∏ GL(Z'_i) × GSpin(Ṽ)` of Asgari, not
-restriction to `Ṽ`.
-1. `m(i_Q^G σ) = m(σ̃)`: Thesis Cor 9.5.1 (own: the tempered intertwinings).
-2. `m_geom(θ_{i_Q^G σ}) = m_geom^{G̃}(θ_σ̃) · c_{σ^{GL},O_1}(1)`: BP (3.4.3) (`θ_{i_Q^G σ} =
-   i_L^G θ_σ`) and Thesis Lemma 7.3.1 = Luo, *A local trace formula for the local
-   Gan–Gross–Prasad conjecture for special orthogonal groups*, Lemma 7.2.2, for GSpin (own).
-3. `c_{σ^{GL},O_1}(1) = 1`: BP Prop 4.8.1(i) and Zelevinsky 1980 Thm 9.7 (tempered
-   representations of `GL_n` are generic).
-4. `m(σ̃) = m_geom(θ_σ̃)`: (HYP) at `G̃`, since `dim G̃ < dim G`; `σ̃` has central character
-   trivial on `A_{G̃,H̃}` because the Levi projection carries `A_{G,H}` onto `A_{G̃,H̃}`.
-Status: SORRY.  Stating steps 1–4 separately needs `σ̃` as a function of `σ`, i.e. the
-Levi projection as a homomorphism compatible with `H` and with `A_{G,H}`; the
-current `exists_leviHom_of_leviSpec` (some surjection with central kernel) does not pin down that
-component, so the split is deferred. -/
+Proof (thesis): with `(G̃, H̃, ξ̃)` the GGP triple of the Levi pair (`GGPData.leviSmall`) and `σ̃`
+the `G̃`-factor of `σ` (`exists_isLeviEmbedding`, `exists_leviFactor`),
+1. `m(i_Q^G σ) = m(σ̃)` (`mult_parInd_eq_mult_leviFactor`, Thesis Cor 9.5.1(i));
+2. `m_geom(θ_{i_Q^G σ}) = m_geom^{G̃}(θ_σ̃)` (`mGeom_charG_parInd_eq`: BP (3.4.3), Thesis
+   Lemma 7.3.1, BP Prop 4.8.1(i) and Zelevinsky 1980 Thm 9.7);
+3. `m(σ̃) = m_geom^{G̃}(θ_σ̃)` by (HYP) at `G̃`, since `dim G̃ < dim G` (`dimG_leviSmall_lt`) and
+   `σ̃` is trivial on `A_{G̃,H̃}` (`IsLeviFactor.isTrivialOn_AGH`). -/
 theorem mult_parInd_eq_mGeom (h : HYP ψ d) (η : CentralCharOn d) (D : d.ParIndData)
     (hD : d.IsTempIndData η D) :
     ((mult ψ d (d.parInd D)).toNat : ℂ) = mGeom ψ d (charG d (d.parInd D)) := by
-  sorry
+  obtain ⟨ι, hι⟩ := d.exists_isLeviEmbedding D.FW D.FV (d.leviSmall_spec D.FW D.FV)
+  obtain ⟨σ', hσ', T, hT⟩ := exists_leviFactor d hD hι
+  have hf : d.IsLeviFactor D.FW D.FV (d.leviSmall D.FW D.FV) D.σ σ' := ⟨ι, hι, T, hT⟩
+  obtain ⟨-, hmult⟩ := (h _ (d.dimG_leviSmall_lt hD.proper)).2 σ' hσ'
+    (GGPData.IsLeviFactor.isTrivialOn_AGH d hD hf)
+  rw [mult_parInd_eq_mult_leviFactor ψ d hD hσ' hf, hmult, mGeom_charG_parInd_eq ψ d hD hσ' hf]
 
 /-- **The defect vanishes on properly induced virtual representations** (Thesis
 Prop 7.4.1(i), extended linearly).  On a generator `Π` with
@@ -304,7 +355,7 @@ of the elliptic characters, A93), and the defect vanishes on `R_ind(G,χ)` by Th
 (Thesis Cor 9.5.1, Thesis Lemma 7.3.1 = Luo Lemma 7.2.2 for GSpin, BP (3.4.3),
 BP Prop 4.8.1(i), Zelevinsky 1980 Thm 9.7, and (HYP) for the Levi datum).
 Status: **proved** from `arthur_mem_Rind_of_vChar_ell` (ASSUME) and
-`defect_eq_zero_of_mem_Rind` (proved here from one SORRY). -/
+`defect_eq_zero_of_mem_Rind` (proved here). -/
 theorem defect_eq_zero_of_vChar_eq_zero_ell (h : HYP ψ d) (η : CentralCharOn d)
     (P : VirtualTemp d η) (hP : ∀ x ∈ d.ellRegSet, vChar d P x = 0) : defect ψ d P = 0 :=
   defect_eq_zero_of_mem_Rind ψ d h η (arthur_mem_Rind_of_vChar_ell d η P hP)
