@@ -509,6 +509,20 @@ variable (d : GGPData F)
 /-- `fst ∘ inr = 1` (`rfl`). -/
 theorem fst_inr_eq_one (y : GSpin d.QV) : d.fst (d.inr y) = 1 := rfl
 
+/-- An element of `K^× · N` whose scalar multiple `c b` is unipotent in `C(V)` gives `b · c ∈ N`. -/
+theorem mul_scalarGSpin_mem_N {b : GSpin d.QV} (hb : b ∈ flagUnipSO d.flag) {c : Fˣ}
+    (hc : IsNilpotent ((c : F) • (((b : GSpin d.QV) : (CliffordAlgebra d.QV)ˣ) :
+      CliffordAlgebra d.QV) - 1)) : b * scalarGSpin d.QV c ∈ d.N := by
+  have hSO' := (flagUnipSO d.flag).mul_mem hb (scalarGSpin_mem_flagUnipSO d.flag c)
+  exact ⟨hSO'.1, hSO'.2.1, hSO'.2.2, by rw [coe_mul_scalarGSpin]; exact hc⟩
+
+/-- **Every element of `K^× · N` has a scalar multiple in `N`**
+(`exists_smul_sub_one_isNilpotent_of_mem_flagUnipSO`). -/
+theorem exists_mul_scalarGSpin_mem_N_of_mem_flagUnipSO {b : GSpin d.QV}
+    (hb : b ∈ flagUnipSO d.flag) : ∃ c : Fˣ, b * scalarGSpin d.QV c ∈ d.N :=
+  let ⟨c, hc⟩ := exists_smul_sub_one_isNilpotent_of_mem_flagUnipSO d.nondeg_QV hb
+  ⟨c, d.mul_scalarGSpin_mem_N hb hc⟩
+
 /-- `g ↦ n(g) = g_W⁻¹ g_V` is continuous (also `continuous_nPart` in `TraceFormula/Analytic`, which
 this file cannot import). -/
 theorem continuous_nPart_coe :
@@ -562,10 +576,7 @@ theorem mem_H_mul_AG_of {g : ↥d.G} (hSO : d.nPart g ∈ flagUnipSO d.flag) {t 
     have e : d.nPart (g * d.inr (scalarGSpin d.QV c)) = d.nPart g * scalarGSpin d.QV c := by
       simp only [nPart, map_mul, fst_inr_eq_one, snd_inr, mul_one, mul_assoc]
     rw [e]
-    have hSO' := (flagUnipSO d.flag).mul_mem hSO (scalarGSpin_mem_flagUnipSO d.flag c)
-    refine ⟨hSO'.1, hSO'.2.1, hSO'.2.2, ?_⟩
-    rw [coe_mul_scalarGSpin]
-    exact ht
+    exact d.mul_scalarGSpin_mem_N hSO ht
   have ha : (d.inr (scalarGSpin d.QV c))⁻¹ ∈ d.AG :=
     d.AG.inv_mem ⟨(1, scalarGSpin d.QV c), ⟨(splitCentralGSpin d.QW).one_mem,
       scalarGSpin_mem_splitCentralGSpin _ _⟩, rfl⟩
