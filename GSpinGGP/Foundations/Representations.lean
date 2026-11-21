@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 -/
 import Mathlib
 import GSpinGGP.Foundations.VanDantzig
+import TauCeti.RepresentationTheory.Smooth.Basic
 
 /-!
 # Unitary representations of totally disconnected locally compact groups
@@ -23,7 +24,11 @@ Sources:
 * `leftTranslate`, `leftRegular G`: the left regular representation on `L²(G, haar)`.
 * `WeaklyContainedIn`, `IsTempered`.
 * `IsTrivialOn`, `HasCentralChar`.
-* `smoothVectors π` (= `π^∞`, `p`-adic: vectors with open stabilizer) and its `ρ`-stability.
+* `UnitaryRep.toRepresentation`: the underlying linear representation (through Mathlib's
+  `ContRepresentation`).
+* `smoothVectors π` (= `π^∞`, `p`-adic: vectors with open stabilizer), defined as Tau Ceti's
+  `Representation.smoothVectors`; `coe_smoothVectors` gives its carrier. `smoothAction`: the
+  action of `G` on `π^∞`.
 * `equivariantForms π S ξ`, `multiplicity π S ξ`, `HasModel π S ξ`.
 * `testFunctions G`, `fixedSpace`, `IsAdmissible`, `OpIntegrable`, `opOf`, `traceOf`,
   `IsCharacterOf`, `characterOn`.
@@ -196,46 +201,66 @@ theorem isTrivialOn_iff_hasCentralChar_one (π : UnitaryRep G) (A : Subgroup G) 
 
 /-! ### Smooth vectors -/
 
-/-- The smooth vectors `π^∞` of `π` in the `p`-adic case: the vectors whose stabilizer
-contains an open subgroup (Thesis §3.1.2 and Ch. 1). -/
-def smoothVectors (π : UnitaryRep G) : Submodule ℂ π.H where
-  carrier := {v | ∃ U : Subgroup G, IsOpen (U : Set G) ∧ ∀ u ∈ U, π.ρ u v = v}
-  zero_mem' := ⟨⊤, isOpen_univ, fun u _ => map_zero _⟩
-  add_mem' := by
-    rintro v w ⟨U, hU, hv⟩ ⟨U', hU', hw⟩
-    refine ⟨U ⊓ U', hU.inter hU', fun u hu => ?_⟩
-    rw [map_add, hv u hu.1, hw u hu.2]
-  smul_mem' := by
-    rintro c v ⟨U, hU, hv⟩
-    exact ⟨U, hU, fun u hu => by rw [map_smul, hv u hu]⟩
+namespace UnitaryRep
 
-section Smooth
+/-- `π` as a continuous representation (Mathlib's `ContRepresentation`): each `ρ g` is a continuous
+linear map. Unitarity and strong continuity are forgotten. -/
+def toContRepresentation (π : UnitaryRep G) : ContRepresentation ℂ G π.H :=
+  .ofMonoidHom π.ρ
 
-variable [IsTopologicalGroup G]
+/-- The underlying linear representation `G →* (H →ₗ[ℂ] H)` of `π`. -/
+abbrev toRepresentation (π : UnitaryRep G) : Representation ℂ G π.H :=
+  π.toContRepresentation.toRepresentation
 
-/-- `π^∞` is `ρ`-stable (Thesis Ch. 1: "this subspace is `G(F)`-invariant"). -/
-theorem smoothVectors_stable (π : UnitaryRep G) (g : G) {v : π.H}
-    (hv : v ∈ smoothVectors π) : π.ρ g v ∈ smoothVectors π := by
-  obtain ⟨U, hU, hfix⟩ := hv
-  refine ⟨U.comap (MulAut.conj g⁻¹).toMonoidHom, ?_, fun x hx => ?_⟩
-  · have hc : Continuous fun x : G => g⁻¹ * x * g⁻¹⁻¹ := by fun_prop
-    exact hU.preimage hc
-  · have hx' : g⁻¹ * x * g⁻¹⁻¹ ∈ U := hx
-    have h1 := hfix _ hx'
-    rw [inv_inv] at h1
-    calc π.ρ x (π.ρ g v) = π.ρ (x * g) v := by rw [map_mul]; rfl
-      _ = π.ρ (g * (g⁻¹ * x * g)) v := by rw [show g * (g⁻¹ * x * g) = x * g by group]
-      _ = π.ρ g (π.ρ (g⁻¹ * x * g) v) := by rw [map_mul]; rfl
-      _ = π.ρ g v := by rw [h1]
+@[simp]
+theorem toRepresentation_apply (π : UnitaryRep G) (g : G) (v : π.H) :
+    π.toRepresentation g v = π.ρ g v := rfl
 
-/-- The action of `G` on `π^∞`. -/
+end UnitaryRep
+
+section SmoothVectors
+
+variable [SeparatelyContinuousMul G]
+
+/-- The smooth vectors `π^∞` of `π` in the `p`-adic case: the vectors whose stabilizer is open,
+i.e. contains an open subgroup (Thesis §3.1.2 and Ch. 1). This is Tau Ceti's
+`Representation.smoothVectors` of the underlying linear representation; `coe_smoothVectors` gives
+the carrier explicitly. -/
+def smoothVectors (π : UnitaryRep G) : Submodule ℂ π.H :=
+  π.toRepresentation.smoothVectors.toSubmodule
+
+/-- The carrier of `π^∞`: the vectors fixed by some open subgroup. -/
+theorem coe_smoothVectors (π : UnitaryRep G) :
+    (smoothVectors π : Set π.H) =
+      {v | ∃ U : Subgroup G, IsOpen (U : Set G) ∧ ∀ u ∈ U, π.ρ u v = v} := by
+  ext v
+  change v ∈ π.toRepresentation.smoothVectors ↔ _
+  rw [Representation.mem_smoothVectors_iff_exists_openSubgroup]
+  constructor
+  · rintro ⟨U, hU⟩
+    exact ⟨U, U.isOpen, fun u hu => Representation.mem_stabilizer.1 (hU hu)⟩
+  · rintro ⟨U, hUo, hU⟩
+    exact ⟨⟨U, hUo⟩, fun u hu => Representation.mem_stabilizer.2 (hU u hu)⟩
+
+theorem mem_smoothVectors_iff (π : UnitaryRep G) {v : π.H} :
+    v ∈ smoothVectors π ↔ ∃ U : Subgroup G, IsOpen (U : Set G) ∧ ∀ u ∈ U, π.ρ u v = v := by
+  rw [← SetLike.mem_coe, coe_smoothVectors, Set.mem_ofPred_eq]
+
+/-- The action of `G` on `π^∞` (Thesis Ch. 1: "this subspace is `G(F)`-invariant"); it is
+Tau Ceti's `Subrepresentation.toRepresentation` of `Representation.smoothVectors`. -/
 def smoothAction (π : UnitaryRep G) (g : G) :
     ↥(smoothVectors π) →ₗ[ℂ] ↥(smoothVectors π) :=
-  ((π.ρ g).toLinearMap.restrict fun _ hv => smoothVectors_stable π g hv)
+  π.toRepresentation.smoothVectors.toRepresentation g
 
 @[simp]
 theorem smoothAction_apply (π : UnitaryRep G) (g : G) (v : ↥(smoothVectors π)) :
     (smoothAction π g v : π.H) = π.ρ g v := rfl
+
+end SmoothVectors
+
+section Smooth
+
+variable [IsTopologicalGroup G]
 
 /-! ### Equivariant forms and multiplicities -/
 
@@ -291,9 +316,9 @@ def fixedSpace (π : UnitaryRep G) (K : Subgroup G) : Submodule ℂ π.H where
   add_mem' := fun hv hw k hk => by rw [map_add, hv k hk, hw k hk]
   smul_mem' := fun c _ hv k hk => by rw [map_smul, hv k hk]
 
-theorem fixedSpace_le_smoothVectors (π : UnitaryRep G) {K : Subgroup G}
+theorem fixedSpace_le_smoothVectors [SeparatelyContinuousMul G] (π : UnitaryRep G) {K : Subgroup G}
     (hK : IsOpen (K : Set G)) : fixedSpace π K ≤ smoothVectors π :=
-  fun _ hv => ⟨K, hK, hv⟩
+  fun _ hv => (mem_smoothVectors_iff π).2 ⟨K, hK, hv⟩
 
 /-- `π` is admissible: `π^K` is finite-dimensional for every compact open subgroup `K`
 (Thesis §3.1; tempered irreducible representations of `p`-adic groups are admissible). -/
@@ -864,15 +889,16 @@ variable [IsTopologicalGroup G] {π π' : UnitaryRep G}
 
 omit [IsTopologicalGroup G] in
 /-- Invariance under unitary equivalence (Thesis §3.1). -/
-theorem mem_smoothVectors_of_intertwines (U : π.H ≃ₗᵢ[ℂ] π'.H)
+theorem mem_smoothVectors_of_intertwines [SeparatelyContinuousMul G] (U : π.H ≃ₗᵢ[ℂ] π'.H)
     (hU : ∀ g v, U (π.ρ g v) = π'.ρ g (U v)) {v : π.H} (hv : v ∈ smoothVectors π) :
-    U v ∈ smoothVectors π' := by
-  obtain ⟨K, hK, hfix⟩ := hv
-  exact ⟨K, hK, fun k hk => by rw [← hU, hfix k hk]⟩
+    U v ∈ smoothVectors π' :=
+  Representation.IntertwiningMap.apply_mem_smoothVectors
+    (U.toLinearEquiv.toLinearMap.intertwiningMap_of_isIntertwiningMap
+      π.toRepresentation π'.toRepresentation hU) hv
 
 omit [IsTopologicalGroup G] in
 /-- Invariance under unitary equivalence (Thesis §3.1). -/
-theorem mem_smoothVectors_iff_of_intertwines (U : π.H ≃ₗᵢ[ℂ] π'.H)
+theorem mem_smoothVectors_iff_of_intertwines [SeparatelyContinuousMul G] (U : π.H ≃ₗᵢ[ℂ] π'.H)
     (hU : ∀ g v, U (π.ρ g v) = π'.ρ g (U v)) (v : π.H) :
     v ∈ smoothVectors π ↔ U v ∈ smoothVectors π' := by
   refine ⟨mem_smoothVectors_of_intertwines U hU, fun hv => ?_⟩
