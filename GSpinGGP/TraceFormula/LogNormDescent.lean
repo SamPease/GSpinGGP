@@ -317,7 +317,6 @@ theorem logNorm_equiv_entryMaxNorm (G : Subgroup Aˣ) :
       (one_le_maxNorm (F := F) G g) hC (by simpa using (h g).2)
     simpa [logNorm] using this
 
-omit [PAdicField F] in
 /-- `entryMaxNorm b` is continuous on `G` (the matrix entries of `L_a` are linear in `a`). -/
 theorem continuous_entryMaxNorm (G : Subgroup Aˣ) : Continuous (entryMaxNorm b G) := by
   have := isTopologicalRing_of_moduleTopology F A
