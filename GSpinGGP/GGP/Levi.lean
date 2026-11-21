@@ -36,8 +36,9 @@ For a pair of isotropic flags `(F_W, F_V)`, the Levi of `P = P_{F_W} × P_{F_V}`
 `leviSmall d FW FV` is a GGP datum for `(W̃, Ṽ)` (epsilon pattern from the specification
 `LeviSpec`); `dimG_leviSmall_lt` is what the induction on `dim G` uses.  The existence of such a
 datum (`exists_leviSpec`) is proved (§4a: hyperbolic splitting, `Z ≅ H^r ⊥ ⟨ν⟩`, `H ≅ ⟨ν⟩ ⊥ ⟨-ν⟩`,
-from the cited Witt decomposition and Witt cancellation).  The description of the Levi quotient
-`P/U` (`exists_leviHom_of_leviSpec`) is stated precisely and left as `sorry`.
+from the cited Witt decomposition and Witt cancellation).  The Levi embedding `G̃(F) → P/U`
+induced by isometric embeddings of the Levi pair (`IsLeviEmbedding`) is defined; its existence
+(`exists_isLeviEmbedding`) is left as `sorry`.
 
 ## 6–7. Parabolic induction and `R_ind`
 
@@ -1314,33 +1315,84 @@ theorem dimG_leviSmall_lt {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV}
     (hP : d.IsProperFlagPair FW FV) : (d.leviSmall FW FV).dimG < d.dimG :=
   d.dimG_lt_of_leviSpec (d.leviSmall_spec FW FV) hP.len_pos
 
-/-- **The Levi decomposition** (Thesis §5.1.2 "natural isomorphism
-`M ≃ GL(Z'_1) × ⋯ × GL(Z'_k) × GSpin(Ṽ)`", §9.3 (9.3.1)–(9.3.3)): for any GGP
-datum `d'` realizing the Levi pair `(W̃, Ṽ)`, there is a surjective homomorphism from the Levi
-quotient `P/U` of `P = P_{F_W} × P_{F_V}` onto `∏ GL(Z_{i+1,W}/Z_{i,W}) × ∏ GL(Z_{j+1,V}/Z_{j,V}) × G̃(F)`
-with central kernel.  (The literature gives an isomorphism, Asgari's description of the Levi
-subgroups of `GSpin`; the weaker form is what is used here.)  Left as
-`sorry`: it needs the Clifford-algebra description of the Levi (the `GL` factors sit in
-`GSpin(Z'_i ⊕ Z'_{-i})`), which is not formalized.
+/-- **The Levi embedding** `ι : G̃(F) → M = P/U` of the GGP group of the Levi pair
+(Thesis §5.1.2: "natural isomorphism `M ≃ GL(Z'_1) × ⋯ × GL(Z'_k) × GSpin(Ṽ)`";
+§9.3 (9.3.1)–(9.3.3);
+Asgari's description of the Levi subgroups of `GSpin`).  `ι` is induced, through the
+Clifford-algebra maps `GSpin.map`, by isometric embeddings of the two factors of `d'` into `W` and
+`V` whose images are orthogonal to the tops `Z_W = F_W.top`, `Z_V = F_V.top` of the flags and have
+the complementary dimensions `dim W − 2 dim Z_W`, `dim V − 2 dim Z_V` (so the images are complements
+`W̃`, `Ṽ` of `Z_W ⊆ Z_W^⊥`, `Z_V ⊆ Z_V^⊥`).  Even elements of `C(W̃)` commute with `W̃^⊥ ⊇ Z_W`,
+so the image fixes the flags pointwise and lies in `P`; its image in `M` is the
+`GSpin(W̃) × GSpin(Ṽ)` factor.  As in `LeviSpec`, the second disjunct is the factor swap (`d'.W ≅ Ṽ`, `d'.V ≅ W̃`).
 
-Caveat for its use in Thesis Cor 9.5.1 / Prop 7.4.1(i) (`mult_parInd_eq_mGeom`, Spectral): those
-need the `G̃(F)`-component to be the Levi projection
-`M ≅ ∏ GL(Z'_i) × GSpin(Ṽ)` built from a character `λ` of the split part with `λ(c) = c` on the
-centre (not restriction to `Ṽ`), carrying the image of `H_{Q̄}`
-onto `H̃` and
-`A_{G,H}` onto `A_{G̃,H̃}`.  "Some surjection with central kernel" does not pin that down; a
-strengthened sibling recording these compatibilities is needed before Cor 9.5.1 can be stated. -/
-theorem exists_leviHom_of_leviSpec (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV)
-    (d' : GGPData F) (h : d.LeviSpec FW FV d') :
-    ∃ φ : d.LeviQuot FW FV →* FW.glPart × FV.glPart × ↥d'.G,
-      Function.Surjective φ ∧ φ.ker ≤ Subgroup.center (d.LeviQuot FW FV) := by
+Tying `ι` to `GSpin.map` (rather than to an abstract isomorphism of groups) is what fixes the
+`G̃(F)`-component: an abstract isomorphism could be composed with a twist by a character of `G̃(F)`,
+which changes multiplicities.  Two such `ι` differ by the choice of the isometric embeddings; the
+GGP subgroups `(H̃, ξ̃)` they carry to `M` are then conjugate under `G̃(F)` (Thesis §9.3: the
+triple of the Levi is "well-defined up to `G̃(F)`-conjugation").
+
+The Levi subgroups of `GSpin`: M. Asgari, *Local L-functions for split spinor groups*, Canad. J.
+Math. 54 (2002), 673–693, §2.  Differs from the dissertation in one degenerate case: a
+hyperbolic-plane factor with a one-line flag is treated as `GL₁ × GSpin(0)` (`W̃ = 0`), where the
+thesis may keep `W̃ = W`; both give the same answer. -/
+def IsLeviEmbedding (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV) (d' : GGPData F)
+    (ι : ↥d'.G →* d.LeviQuot FW FV) : Prop :=
+  (∃ (jW : d'.QW →qᵢ d.QW) (jV : d'.QV →qᵢ d.QV),
+    (∀ x, ∀ z ∈ FW.top, QuadraticMap.polar d.QW (jW x) z = 0) ∧
+    (∀ y, ∀ z ∈ FV.top, QuadraticMap.polar d.QV (jV y) z = 0) ∧
+    d'.m + 2 * finrank F ↥FW.top = d.m ∧
+    d'.m + 2 * d'.r + 1 + 2 * finrank F ↥FV.top = d.m + 2 * d.r + 1 ∧
+    ∀ g : ↥d'.G, ∃ p : ↥(d.whittB FW FV),
+      (p : ↥d.G) =
+        d.pair (GSpin.map jW d'.nondeg (d'.fst g), GSpin.map jV d'.nondeg_QV (d'.snd g)) ∧
+      ι g = QuotientGroup.mk p) ∨
+  (∃ (jW : d'.QV →qᵢ d.QW) (jV : d'.QW →qᵢ d.QV),
+    (∀ y, ∀ z ∈ FW.top, QuadraticMap.polar d.QW (jW y) z = 0) ∧
+    (∀ x, ∀ z ∈ FV.top, QuadraticMap.polar d.QV (jV x) z = 0) ∧
+    d'.m + 2 * d'.r + 1 + 2 * finrank F ↥FW.top = d.m ∧
+    d'.m + 2 * finrank F ↥FV.top = d.m + 2 * d.r + 1 ∧
+    ∀ g : ↥d'.G, ∃ p : ↥(d.whittB FW FV),
+      (p : ↥d.G) =
+        d.pair (GSpin.map jW d'.nondeg_QV (d'.snd g), GSpin.map jV d'.nondeg (d'.fst g)) ∧
+      ι g = QuotientGroup.mk p)
+
+/-- **Existence of the Levi embedding** (Thesis §5.1.2, §9.3) for a datum `d'` of the Levi pair.
+Own linear algebra: a hyperbolic partner `Z'_W` of `Z_W` gives `W = (Z_W ⊕ Z'_W) ⊥ W̃` with `W̃`
+nondegenerate (Witt), `W̃ ≅ d'.W` (resp. `d'.V`) by Witt cancellation from `LeviSpec`; the same for
+`V`.  `GSpin.map` along `W̃ ↪ W` fixes `W̃^⊥ ⊇ Z_W` pointwise (`map_even_commute_ι`), hence lies in
+the flag stabilizer.  Status: SORRY. -/
+theorem exists_isLeviEmbedding (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV)
+    {d' : GGPData F} (h : d.LeviSpec FW FV d') :
+    ∃ ι : ↥d'.G →* d.LeviQuot FW FV, d.IsLeviEmbedding FW FV d' ι := by
   sorry
 
-/-- The Levi decomposition for `leviSmall`. -/
-theorem exists_leviHom (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV) :
-    ∃ φ : d.LeviQuot FW FV →* FW.glPart × FV.glPart × ↥(d.leviSmall FW FV).G,
-      Function.Surjective φ ∧ φ.ker ≤ Subgroup.center (d.LeviQuot FW FV) :=
-  d.exists_leviHom_of_leviSpec FW FV _ (d.leviSmall_spec FW FV)
+/-- `GSpin.map` along an isometric embedding carries the scalar `c` to the scalar `c`. -/
+theorem _root_.GSpinGGP.GSpin.map_scalarGSpin {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V₁]
+    [Module.Finite F V₁] [AddCommGroup V₂] [Module F V₂] {Q₁ : QuadraticForm F V₁}
+    {Q₂ : QuadraticForm F V₂} (f : Q₁ →qᵢ Q₂) (hf : IsNondeg Q₁) (c : Fˣ) :
+    GSpin.map f hf (scalarGSpin Q₁ c) = scalarGSpin Q₂ c := by
+  apply Subtype.ext; apply Units.ext
+  rw [GSpin.coe_map]
+  simp [scalarGSpin]
+
+/-- A Levi embedding carries `A_{G̃,H̃}` (the diagonal scalars of `G̃`) into the image of
+`A_{G,H}` (the diagonal scalars of `G`) in `M`. -/
+theorem IsLeviEmbedding.exists_AGH {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV}
+    {d' : GGPData F} {ι : ↥d'.G →* d.LeviQuot FW FV} (hι : d.IsLeviEmbedding FW FV d' ι)
+    {a : ↥d'.G} (ha : a ∈ d'.AGH) :
+    ∃ p : ↥(d.whittB FW FV), (p : ↥d.G) ∈ d.AGH ∧ ι a = QuotientGroup.mk p := by
+  obtain ⟨c, rfl⟩ := ha
+  have hmem : d.pair (scalarGSpin d.QW c, scalarGSpin d.QV c) ∈ d.AGH :=
+    ⟨c, by rw [MonoidHom.comp_apply, GGPData.diag, MonoidHom.comp_apply, MonoidHom.prod_apply,
+      MonoidHom.id_apply, d.incl_scalarGSpin]⟩
+  rcases hι with ⟨jW, jV, -, -, -, -, hg⟩ | ⟨jW, jV, -, -, -, -, hg⟩
+  all_goals
+    obtain ⟨p, hp, hι⟩ := hg (d'.diag.comp (scalarGSpin d'.QW) c)
+    refine ⟨p, ?_, hι⟩
+    rw [hp]
+    simpa [GGPData.fst_diag, GGPData.snd_diag, d'.incl_scalarGSpin, GSpin.map_scalarGSpin]
+      using hmem
 
 end GGPData
 
@@ -1760,6 +1812,40 @@ theorem subset_Rind {η : CentralCharOn d} {P : VirtualTemp d η} {D : d.ParIndD
     (hP : Set.EqOn (vChar d P) (charG d (d.parInd D)) (regularSet d.G d.lie)) :
     P ∈ d.Rind η :=
   Submodule.subset_span ⟨D, hD, hP⟩
+
+/-- **`σ̃` is the `G̃`-factor of `σ`** (Thesis §9.3 (9.3.4)–(9.3.6), `σ = σ^{GL} ⊠ σ̃`, stated
+without tensor products): for some Levi embedding `ι : G̃(F) → M` (`IsLeviEmbedding`), `σ̃` embeds
+isometrically and `G̃(F)`-equivariantly into the restriction `σ ∘ ι`.  For `σ` irreducible, `M(F)`
+is the direct product of `ι(G̃(F))` and a product of general linear groups, so `σ = σ^{GL} ⊠ σ̃₀`
+and the restriction `σ ∘ ι` is a multiple of `σ̃₀`; an irreducible `σ̃` with this property is then
+equivalent to `σ̃₀`. -/
+def IsLeviFactor (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV) (d' : GGPData F)
+    (σ : UnitaryRep (d.LeviQuot FW FV)) (σ' : UnitaryRep ↥d'.G) : Prop :=
+  ∃ ι : ↥d'.G →* d.LeviQuot FW FV, d.IsLeviEmbedding FW FV d' ι ∧
+    ∃ T : σ'.H →ₗᵢ[ℂ] σ.H, ∀ g v, T (σ'.ρ g v) = σ.ρ (ι g) (T v)
+
+/-- **The `G̃`-factor of a properly induced datum is trivial on `A_{G̃,H̃}`** (Thesis §9.3: "all
+representations … have central character equal to `χ|_{A_S}`"): `A_{G̃,H̃}` goes into the image of
+`A_{G,H}` (`IsLeviEmbedding.exists_AGH`), on which `σ` acts by `η`, which is trivial on
+`A_{G,H}`. -/
+theorem IsLeviFactor.isTrivialOn_AGH {η : CentralCharOn d} {D : d.ParIndData}
+    (hD : d.IsTempIndData η D) {d' : GGPData F} {σ' : UnitaryRep ↥d'.G}
+    (hf : d.IsLeviFactor D.FW D.FV d' D.σ σ') : IsTrivialOn σ' (d'.AGH : Set ↥d'.G) := by
+  obtain ⟨ι, hι, T, hT⟩ := hf
+  intro a ha
+  obtain ⟨p, hpAGH, hp⟩ := GGPData.IsLeviEmbedding.exists_AGH d hι ha
+  have hpAG : (p : ↥d.G) ∈ d.AG := d.AGH_le_AG hpAGH
+  have hσ : D.σ.ρ (ι a) = 1 := by
+    have hc := hD.centralChar ⟨p, hpAG⟩
+    have hmk : (QuotientGroup.mk (⟨((⟨p, hpAG⟩ : ↥d.AG) : ↥d.G), hD.AG_le hpAG⟩ : ↥D.P) :
+        d.LeviQuot D.FW D.FV) = QuotientGroup.mk p := rfl
+    rw [hmk, η.trivial_AGH _ hpAGH] at hc
+    rw [hp, hc]
+    simp
+  ext v
+  apply T.injective
+  rw [hT, hσ]
+  rfl
 
 end GGPData
 
