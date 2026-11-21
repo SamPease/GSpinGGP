@@ -263,6 +263,18 @@ theorem torusZ_coord (τ : Fin d.r → Fˣ) (j : Fin d.r) (v : d.V) :
   show (d.torusCoeff τ ⟨d.r + j + 1, by omega⟩ : F) * _ = _
   rw [torusCoeff_pos]
 
+/-- `a(τ) z_j = c • z_j` with `c` the torus coefficient at `z_j`. -/
+theorem torusZ_zV (τ : Fin d.r → Fˣ) {j : ℤ} (hj : |j| ≤ d.r) :
+    d.torusZ τ (d.zV j) =
+      (d.torusCoeff τ ⟨(j + d.r).toNat, by have := abs_le.mp hj; omega⟩ : F) • d.zV j := by
+  rw [torusZ_apply, zV]
+  refine Prod.ext (by simp) (funext fun i => ?_)
+  simp only [Prod.smul_snd, Pi.smul_apply, smul_eq_mul, zvec]
+  by_cases hi : ((i : ℕ) : ℤ) - d.r = j
+  · have : i = ⟨(j + d.r).toNat, by have := abs_le.mp hj; omega⟩ := Fin.ext (by simp; omega)
+    simp [this]
+  · simp only [hi, ↓reduceIte, mul_zero]
+
 theorem extV0_coord (g : d.V0 ≃ₗ[F] d.V0) (j : Fin d.r) (v : d.V) :
     (d.extV0 g v).2 ⟨d.r + j + 1, by omega⟩ = v.2 ⟨d.r + j + 1, by omega⟩ := by
   rw [extV0_apply, Prod.snd_add, Pi.add_apply, iota0_apply]
@@ -334,6 +346,18 @@ theorem extZ_iota0 (f : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) (x : d.V0) :
 
 theorem extZ_coord (f : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) (v : d.V) :
     (d.extZ f v).2 = v.2 := rfl
+
+/-- `g ⊕ 1` on `V = W ⊕ Z` (`extZ`) is `(g ⊕ 1 on V₀) ⊕ 1` (`extV0 ∘ base.extZ`). -/
+theorem extZ_eq_extV0 (g : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) :
+    d.extZ g = d.extV0 (d.base.extZ g) := by
+  refine LinearEquiv.ext fun v => ?_
+  rw [extV0_apply, ← pi0_extZ, ← map_sub]
+  have h : d.extZ g v - v = d.iota0 (d.pi0 (d.extZ g v - v)) := by
+    refine Prod.ext ?_ ?_
+    · simp [iota0_apply, pi0, extZ_apply]
+    · simp only [Prod.snd_sub, extZ_coord, sub_self, iota0_apply]
+      simp [pi0, extZ_apply]
+  rw [← h, add_sub_cancel]
 
 section Compress
 
@@ -753,7 +777,7 @@ theorem flagStab_flagVP_le : flagStab (flagVP hb hf h0) ≤ flagStab d.flag := b
     constructor <;> rintro ⟨j, rfl⟩ <;> refine ⟨j, ?_⟩ <;>
       · have hj : (j : ℕ) < d.r := by
           have h1 := j.2; have h2 := i.2
-          try simp only [Fin.val_mk] at h1
+          try simp only at h1
           change (i : ℕ) < d.r + 1 at h2; omega
         simp only [Function.comp_apply]
         rw [show (Fin.castLE _ j : Fin (d.r + numPairs l 0)) = Fin.castAdd _ ⟨j, hj⟩ from
@@ -785,18 +809,7 @@ theorem stdBasis_inl (j : Fin d.m) : d.stdBasis (Sum.inl j) = (Pi.single j 1, 0)
   Prod.ext (by rw [stdBasis, Basis.prod_apply_inl_fst, Pi.basisFun_apply])
     (Basis.prod_apply_inl_snd _ _ _)
 
-theorem flag_sub_eq_flagWt (i : Fin (d.flag.len + 1)) :
-    d.flag.sub i = flagWt d.flag ((d.flag.len : ℤ) + 1 - i) := by
-  have hi2 := i.2
-  by_cases hi : (i : ℕ) = 0
-  · rw [show i = 0 from Fin.ext hi, d.flag.sub_zero, d.flag.flagWt_eq_bot (by simp)]
-  · rw [d.flag.flagWt_of_pos (by omega)]
-    congr 1
-    ext
-    simp only [IsotropicFlag.idx]
-    omega
-
-theorem mem_flag_sub_of_le {k : ℕ} (hk : 1 ≤ k) (hkr : k ≤ d.r) {i : Fin (d.flag.len + 1)}
+theorem mem_flag_sub_of_le {k : ℕ} (hkr : k ≤ d.r) {i : Fin (d.flag.len + 1)}
     (hi : d.r - k < (i : ℕ)) : d.zV (k : ℤ) ∈ d.flag.sub i :=
   Submodule.subset_span ⟨⟨d.r - k, hi⟩, by simp only; congr 1; push_cast [hkr]; ring⟩
 
@@ -821,11 +834,11 @@ theorem isFlagSplitting_stdBasis : IsFlagSplitting d.flag d.stdBasis d.stdWt whe
         have hj := j.2
         simp only [IsotropicFlag.idx] at hj
         rw [bform_QV_zV, bform_splitOddForm_zvec _ _ (by rw [abs_le]; constructor <;> omega)
-          (by rw [abs_le]; constructor <;> omega), if_neg (by omega)]
+          (by rw [abs_le]; constructor <;> omega), ite_eq_right (fun h => absurd h (by omega))]
       · rw [show (i : ℤ) - d.r = 0 by omega, d.flag.flagWt_zero]
         exact d.zV_zero_mem_orthogonal_top
       · rw [d.flag.flagWt_of_pos (by omega)]
-        have := d.mem_flag_sub_of_le (k := (i : ℕ) - d.r) (by omega) (by omega)
+        have := d.mem_flag_sub_of_le (k := (i : ℕ) - d.r) (by omega)
           (i := d.flag.idx (d.flag.len + 1 - ((i : ℤ) - d.r)))
           (by simp only [IsotropicFlag.idx]; change _ < min _ d.r; omega)
         rwa [show (((i : ℕ) - d.r : ℕ) : ℤ) = (i : ℤ) - d.r by omega] at this
@@ -867,7 +880,7 @@ theorem isFlagSplitting_stdBasis : IsFlagSplitting d.flag d.stdBasis d.stdWt whe
       have hi := i.2; have hi' := i'.2
       rw [stdBasis_inr, stdBasis_inr, bform_QV_zV, bform_splitOddForm_zvec _ _
         (by rw [abs_le]; constructor <;> omega) (by rw [abs_le]; constructor <;> omega),
-        if_neg hne]
+        ite_eq_right (fun h => absurd h hne)]
   sum_wt := by
     rw [Fintype.sum_sum_type]
     simp only [stdWt, Sum.elim_inl, Sum.elim_inr, Finset.sum_const_zero, zero_add]
@@ -880,59 +893,12 @@ theorem torusZ_mul_extV0 (τ : Fin d.r → Fˣ) (g : d.V0 ≃ₗ[F] d.V0) :
   refine LinearEquiv.ext fun v => ?_
   simp only [LinearEquiv.mul_apply, extV0_apply, map_add, torusZ_iota0, pi0_torusZ]
 
-theorem torusZ_zV (τ : Fin d.r → Fˣ) (i : Fin (2 * d.r + 1)) :
+theorem torusZ_zV_fin (τ : Fin d.r → Fˣ) (i : Fin (2 * d.r + 1)) :
     d.torusZ τ (d.zV ((i : ℤ) - d.r)) = (d.torusCoeff τ i : F) • d.zV ((i : ℤ) - d.r) := by
-  rw [← stdBasis_inr]
-  refine Prod.ext (by simp [stdBasis, torusZ_apply]) (funext fun i' => ?_)
-  rw [torusZ_apply]
-  simp only [stdBasis, Basis.prod_apply_inr_snd, Pi.basisFun_apply, Prod.smul_snd, Pi.smul_apply,
-    smul_eq_mul, Pi.single_apply]
-  split_ifs with h
-  · subst h; rfl
-  · simp
-
-/-- Elements of `P_V` whose `P̄`-image is unipotent on the graded pieces of the weight
-filtration lie in `K^× · N` (`flagUnipSO`). -/
-theorem mem_flagUnipSO_of_raisesFil {g : GSpin d.QV}
-    (hA : RaisesFil (flagWt d.flag) ((specP d.QV g : d.V →ₗ[F] d.V) - LinearMap.id))
-    (hB : RaisesFil (flagWt d.flag) ((specP d.QV g⁻¹ : d.V →ₗ[F] d.V) - LinearMap.id)) :
-    g ∈ flagUnipSO d.flag := by
-  have keep : ∀ {g : GSpin d.QV},
-      RaisesFil (flagWt d.flag) ((specP d.QV g : d.V →ₗ[F] d.V) - LinearMap.id) →
-      ∀ w, ∀ v ∈ flagWt d.flag w, specP d.QV g v ∈ flagWt d.flag w := by
-    intro g h w v hv
-    have h1 := d.flag.flagWt_anti (show w ≤ w + 1 by omega) (h w v hv)
-    have : specP d.QV g v =
-        v + (((specP d.QV g : d.V →ₗ[F] d.V) - LinearMap.id : d.V →ₗ[F] d.V) v) := by simp
-    rw [this]; exact add_mem hv h1
-  refine ⟨fun i => le_antisymm ?_ ?_, fun i v hv => ?_, fun v hv => ?_⟩
-  · rintro _ ⟨v, hv, rfl⟩
-    rw [d.flag_sub_eq_flagWt] at hv ⊢
-    exact keep hA _ v hv
-  · intro v hv
-    refine ⟨specP d.QV g⁻¹ v, ?_, specP_inv_apply_apply g v⟩
-    rw [d.flag_sub_eq_flagWt] at hv ⊢
-    exact keep hB _ v hv
-  · rw [d.flag_sub_eq_flagWt] at hv ⊢
-    have := hA _ v hv
-    simp only [LinearMap.sub_apply, LinearEquiv.coe_coe, LinearMap.id_apply] at this
-    convert this using 2
-    simp only [Fin.val_succ, Fin.coe_castSucc]; push_cast; ring
-  · rw [← d.flag.flagWt_zero] at hv
-    rw [← d.flag.flagWt_one]
-    have := hA _ v hv
-    simpa using this
-
-/-- Vectors with vanishing coordinates off `V₀` lie in `ι₀(V₀)`. -/
-theorem eq_iota0_pi0 {v : d.V} (hv : ∀ i : Fin (2 * d.r + 1), (i : ℕ) ≠ d.r → v.2 i = 0) :
-    v = d.iota0 (d.pi0 v) := by
-  refine Prod.ext rfl (funext fun i => ?_)
-  simp only [iota0_apply, pi0, LinearMap.prodMap_apply, LinearMap.smulRight_apply,
-    LinearMap.proj_apply, Pi.smul_apply, smul_eq_mul, zvec]
-  by_cases hi : (i : ℕ) = d.r
-  · have hlt : d.r < 2 * d.r + 1 := by omega
-    rw [show i = ⟨d.r, hlt⟩ from Fin.ext hi]; simp
-  · rw [hv i hi]; simp [show ¬ ((i : ℤ) - d.r = 0) by omega]
+  have hi := i.2
+  rw [d.torusZ_zV τ (by rw [abs_le]; constructor <;> omega)]
+  congr 3
+  ext; simp
 
 theorem isHomog_zero_iff {v : d.V} :
     IsHomog d.stdBasis d.stdWt v 0 ↔ ∀ i : Fin (2 * d.r + 1), (i : ℕ) ≠ d.r → v.2 i = 0 := by
@@ -945,18 +911,6 @@ theorem isHomog_zero_iff {v : d.V} :
     · simp only [stdWt, Sum.elim_inr] at hj
       simpa [stdBasis] using h i (by omega)
 
-/-- A map preserving the weights of the basis vectors preserves homogeneity. -/
-theorem isHomog_apply {A : d.V →ₗ[F] d.V}
-    (hA : ∀ j, IsHomog d.stdBasis d.stdWt (A (d.stdBasis j)) (d.stdWt j)) {v : d.V} {w : ℤ}
-    (hv : IsHomog d.stdBasis d.stdWt v w) : IsHomog d.stdBasis d.stdWt (A v) w := by
-  intro i hi
-  rw [← d.stdBasis.sum_repr v, map_sum, map_sum, Finsupp.finsetSum_apply]
-  refine Finset.sum_eq_zero fun j _ => ?_
-  rw [map_smul, map_smul, Finsupp.smul_apply, smul_eq_mul]
-  by_cases hj : d.stdWt j = w
-  · rw [hA j i (by rw [hj]; exact hi), mul_zero]
-  · rw [hv j hj, zero_mul]
-
 /-- **The Levi factor in coordinates**: an element of `GSpin(V)` preserving the weights of the
 standard basis acts as `a(τ) (m ⊕ 1)` with `m ∈ SO(V₀)`. -/
 theorem exists_torusZ_extV0_of_isHomog {g : GSpin d.QV}
@@ -968,7 +922,7 @@ theorem exists_torusZ_extV0_of_isHomog {g : GSpin d.QV}
   -- `A` preserves `ι₀(V₀)`
   have hι : ∀ x : d.V0, A (d.iota0 x) = d.iota0 (d.pi0 (A (d.iota0 x))) := by
     intro x
-    refine d.eq_iota0_pi0 ((d.isHomog_zero_iff).1 (d.isHomog_apply hA ((d.isHomog_zero_iff).2 ?_)))
+    refine d.eq_iota0_pi0 ((d.isHomog_zero_iff).1 (isHomog_apply hA ((d.isHomog_zero_iff).2 ?_)))
     intro i hi
     simp [iota0_apply, zvec, show ¬ ((i : ℤ) - d.r = 0) by omega]
   -- `A` scales `z_k`, `k ≠ 0`
@@ -981,14 +935,16 @@ theorem exists_torusZ_extV0_of_isHomog {g : GSpin d.QV}
     simp only [stdWt, Sum.elim_inr] at h
     refine Prod.ext ?_ (funext fun i' => ?_)
     · funext j
-      have := h (Sum.inl j) (by simp only [stdWt, Sum.elim_inl]; omega)
+      have := h (Sum.inl j) (by simp only [Sum.elim_inl]; omega)
       simpa [stdBasis, zV] using this
     · by_cases hi' : i' = i
       · subst hi'; simp [c, zV, zvec]
       · have := h (Sum.inr i') (by
-          simp only [stdWt, Sum.elim_inr]; intro h'; exact hi' (Fin.ext (by omega)))
+          simp only [Sum.elim_inr]; intro h'; exact hi' (Fin.ext (by omega)))
         simp only [stdBasis, Basis.prod_repr_inr, Pi.basisFun_repr] at this
-        rw [this]; simp [zV, zvec]; intro h'; exact absurd (Fin.ext (by omega)) hi'
+        rw [this]
+        simp only [zV, zvec, Prod.smul_snd, Pi.smul_apply, smul_eq_mul]
+        rw [ite_eq_right (fun h' => absurd (Fin.ext (by omega)) hi'), mul_zero]
   -- `c i c(rev i) = 1`
   have hc : ∀ i : Fin (2 * d.r + 1), (i : ℕ) ≠ d.r → c i * c i.rev = 1 := by
     intro i hi
@@ -1000,7 +956,10 @@ theorem exists_torusZ_extV0_of_isHomog {g : GSpin d.QV}
     have hk' : |((i.rev : ℤ) - d.r)| ≤ d.r := by
       rw [abs_le, Fin.val_rev]; constructor <;> omega
     rw [hz i hi, hz _ hir, map_smul, map_smul, LinearMap.smul_apply, bform_QV_zV,
-      bform_splitOddForm_zvec _ _ hk hk', if_pos (by rw [Fin.val_rev]; omega)] at hb
+      bform_splitOddForm_zvec _ _ hk hk'] at hb
+    have hcond : ((i : ℕ) : ℤ) - d.r + (((i.rev : ℕ) : ℤ) - d.r) = 0 := by
+      rw [Fin.val_rev]; omega
+    simp only [hcond, ↓reduceIte] at hb
     have hν := d.ν.ne_zero
     rw [smul_eq_mul, smul_eq_mul] at hb
     have : (c i * c i.rev - 1) * (d.ν : F) = 0 := by linear_combination hb
@@ -1009,7 +968,7 @@ theorem exists_torusZ_extV0_of_isHomog {g : GSpin d.QV}
     have := hc i hi; rw [h, zero_mul] at this; exact zero_ne_one this
   -- the torus parameters
   set τ : Fin d.r → Fˣ := fun j => Units.mk0 (c ⟨d.r + j + 1, by omega⟩)
-    (hcu _ (by show d.r + (j : ℕ) + 1 ≠ d.r; omega))
+    (hcu _ (by change d.r + (j : ℕ) + 1 ≠ d.r; omega))
   have hτc : ∀ i : Fin (2 * d.r + 1), (i : ℕ) ≠ d.r → (d.torusCoeff τ i : F) = c i := by
     intro i hi
     unfold torusCoeff
@@ -1052,7 +1011,7 @@ theorem exists_torusZ_extV0_of_isHomog {g : GSpin d.QV}
       · rw [stdBasis_inr]
         change A _ = d.torusZ τ (d.extV0 m _)
         rw [hz i hi, extV0_apply, d.pi0_zV (by omega), map_zero, sub_zero, map_zero, add_zero,
-          torusZ_zV, hτc i hi]
+          torusZ_zV_fin, hτc i hi]
   refine ⟨τ, m, ⟨fun x => ?_, ?_⟩, heq⟩
   · rw [← QV_iota0, hm]
     exact (specP_isometry g (d.iota0 x)).trans (d.QV_iota0 x)
@@ -1092,42 +1051,12 @@ def cone : Set d.G := d.Pbar ⁻¹' d.coneSO hb hf
 /-! ### Ingredients of the weak Cartan decomposition of `Ḡ` -/
 
 omit hb hf in
-/-- `glMax` is continuous on `GL(E)` (for the topology of `E ≃ₗ[F] E` induced by `(g, g⁻¹)`). -/
-theorem continuous_glMaxNorm {E : Type*} [NormedAddCommGroup E] [NormedSpace F E]
-    [FiniteDimensional F E] : Continuous (glMaxNorm : (E ≃ₗ[F] E) → ℝ) := by
-  haveI : IsModuleTopology F (Module.End F E) := ⟨rfl⟩
-  have h0 : Continuous fun f : Module.End F E => LinearMap.toContinuousLinearMap f :=
-    IsModuleTopology.continuous_of_linearMap
-      (LinearMap.toContinuousLinearMap : (E →ₗ[F] E) ≃ₗ[F] (E →L[F] E)).toLinearMap
-  have h1 : Continuous fun g : E ≃ₗ[F] E => LinearMap.toContinuousLinearMap (g : E →ₗ[F] E) :=
-    h0.comp TauCeti.continuous_linearEquiv_toLinearMap
-  have h2 : Continuous fun g : E ≃ₗ[F] E =>
-      LinearMap.toContinuousLinearMap ((g⁻¹ : E ≃ₗ[F] E) : E →ₗ[F] E) :=
-    h1.comp continuous_inv
-  exact continuous_const.max (h1.norm.max h2.norm)
-
-omit hb hf in
-/-- `g ↦ g ⊕ 1` on `V₀ = W ⊕ ⟨z₀⟩` is injective. -/
-theorem base_extZ_injective : Function.Injective (d.base.extZ) := fun f g h =>
-  LinearEquiv.ext fun w => congrArg Prod.fst (LinearEquiv.congr_fun h ((w, 0) : d.V0))
-
-omit hb hf in
-/-- `(g ⊕ 1_{z₀}) ⊕ 1 = g ⊕ 1` on `V`. -/
-theorem extV0_base_extZ (f : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) :
-    d.extV0 (d.base.extZ f) = d.extZ f := by
-  refine LinearEquiv.ext fun v => ?_
-  rw [extV0_apply, extZ_apply]
-  refine Prod.ext ?_ ?_
-  · simp [pi0, iota0_apply, extZ_apply]
-  · simp [pi0, iota0_apply, extZ_apply]
-
-omit hb hf in
 theorem torusZ_mul_extZ (τ : Fin d.r → Fˣ) (f : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) :
     d.torusZ τ * d.extZ f = d.extZ f * d.torusZ τ := by
   refine LinearEquiv.ext fun v => ?_
   rfl
 
-include hb hf in
+include hf in
 /-- **`fixer Q₀ b 1 = SO(W) ⊕ 1`** (converse of `extZ_mem_fixer`): an element of `SO(V₀)` fixing
 `w₀ = b 0 ∈ ⟨z₀⟩` is `g_W ⊕ 1` with `g_W ∈ SO(W)`. -/
 theorem exists_extZ_of_mem_fixer (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1 = 0)
@@ -1192,7 +1121,7 @@ theorem exists_extZ_of_mem_fixer (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1
   refine ⟨⟨gW, fun w => ?_, ?_⟩, hext⟩
   · have := (hSO hg).1 ((w, 0) : d.V0)
     rw [hf1] at this
-    show d.QW (f w) = d.QW w
+    change d.QW (f w) = d.QW w
     simpa [Q0] using this
   · have h1 := (hSO hg).2
     rw [← hext] at h1
@@ -1233,18 +1162,15 @@ theorem exists_levi_SO {p : GSpin d.QV} (hp : p ∈ flagStab d.flag) :
   obtain ⟨m, y, he, hm, hy, hy'⟩ :=
     d.isFlagSplitting_stdBasis.exists_levi_decomp d.nondeg_QV ((flagStab d.flag).inv_mem hp)
   have hyinv : y⁻¹ ∈ flagUnipSO d.flag :=
-    d.mem_flagUnipSO_of_raisesFil hy' (by rwa [inv_inv])
-  obtain ⟨c, hc⟩ := exists_smul_sub_one_isNilpotent_of_mem_flagUnipSO d.nondeg_QV hyinv
-  have hSO' := (flagUnipSO d.flag).mul_mem hyinv (scalarGSpin_mem_flagUnipSO d.flag c)
-  have hN : y⁻¹ * scalarGSpin d.QV c ∈ d.N :=
-    ⟨hSO'.1, hSO'.2.1, hSO'.2.2, by rw [coe_mul_scalarGSpin]; exact hc⟩
+    mem_flagUnipSO_of_raisesFil hy' (by rwa [inv_inv])
+  obtain ⟨c, hN⟩ := d.exists_mul_scalarGSpin_mem_N_of_mem_flagUnipSO hyinv
   obtain ⟨τ, m₀, hm₀, hmτ⟩ := d.exists_torusZ_extV0_of_isHomog hm
   refine ⟨_, hN, τ⁻¹, m₀⁻¹, inv_mem hm₀, ?_⟩
   have hp' : p = y⁻¹ * m⁻¹ := by rw [← mul_inv_rev, ← he, inv_inv]
   rw [hp', map_mul, map_mul (specP d.QV) y⁻¹, specP_scalarGSpin_eq_one, mul_one,
     map_inv (specP d.QV) m, hmτ, mul_inv_rev, ← map_inv d.extV0, torusZ_inv, torusZ_mul_extV0]
 
-set_option maxHeartbeats 1600000 in
+set_option maxHeartbeats 400000 in
 -- The products in `SO(W) × SO(V)` make elaboration slow here.
 include hb in
 /-- **Thesis Lemma 8.3.2(ii) at the level of `SO(W) × SO(V)`** (BP Lemma 6.6.2(ii)), for the
@@ -1274,14 +1200,14 @@ theorem exists_weakCartan_SO (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1 = 0
   have hm₀' : m₀ ∈ TauCeti.QuadraticMap.specialOrthogonalGroup d.Q0 := by
     rw [← SOGrp_eq_specialOrthogonalGroup]; exact hm₀
   obtain ⟨h', hh', s, hs, t, ht, kH, hkH, k, hk, hxe, hye⟩ := hWC _ hx0 m₀ hm₀'
-  obtain ⟨a', ha'⟩ := d.exists_extZ_of_mem_fixer hb hf hb0 hh'
-  obtain ⟨sW, hsW⟩ := d.exists_extZ_of_mem_fixer hb hf hb0
+  obtain ⟨a', ha'⟩ := d.exists_extZ_of_mem_fixer hf hb0 hh'
+  obtain ⟨sW, hsW⟩ := d.exists_extZ_of_mem_fixer hf hb0
     (inv_mem (multiTorus_mem_fixer hb hf s 1))
-  obtain ⟨kW, hkW⟩ := d.exists_extZ_of_mem_fixer hb hf hb0 (hCHs hkH)
+  obtain ⟨kW, hkW⟩ := d.exists_extZ_of_mem_fixer hf hb0 (hCHs hkH)
   -- the `W`-part
   have hW : ((d.Pbar p).1 : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) =
       (a' : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) * sW * kW := by
-    apply d.base_extZ_injective
+    apply d.base.extZ_injective
     rw [hxe, map_mul, map_mul, ha', hsW, hkW]
   -- lifts
   obtain ⟨ã, hã⟩ : ∃ ã : GSpin d.QW, specP d.QW ã = a' := by
@@ -1290,11 +1216,10 @@ theorem exists_weakCartan_SO (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1 = 0
     exact hmem
   set h : d.G := d.pair (ã, nn * d.incl ã)
   have hh : h ∈ d.H := by
-    show (d.incl (d.fst h))⁻¹ * d.snd h ∈ d.N
-    have e : (d.incl (d.fst h))⁻¹ * d.snd h = (d.incl ã)⁻¹ * nn * ((d.incl ã)⁻¹)⁻¹ := by
-      simp only [h, fst_pair, snd_pair, inv_inv, mul_assoc]
+    have e : h = d.inr nn * d.diag ã :=
+      d.G_ext (by rw [map_mul]; exact (one_mul ã).symm) (by rw [map_mul]; rfl)
     rw [e]
-    exact flagUnip_conj ((flagStab _).inv_mem (d.incl_mem_flagStab ã)) hnn
+    exact d.H.mul_mem (d.inr_mem_H hnn) (d.diag_mem_H ã)
   have hPincl : specP d.QV (d.incl ã) = d.extZ a' := by
     refine LinearEquiv.ext fun v => ?_
     rw [d.specP_incl_apply, extZ_apply, hã]
@@ -1323,7 +1248,7 @@ theorem exists_weakCartan_SO (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1 = 0
           (glMaxNorm (d.extV0 k)) := le_max_of_le_left (one_le_glMaxNorm _)
       have := Real.log_le_log (by linarith) (max_le_max (hgW.trans (le_max_left _ _))
         (hgV.trans (le_max_right _ _)) |>.trans (max_self B).le)
-      show 1 + Real.log (max (glMaxNorm (kW : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)))
+      change 1 + Real.log (max (glMaxNorm (kW : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)))
           (glMaxNorm (d.extV0 k))) ≤ _
       linarith
     have := d.logNormSO_mul_le kk k₁
@@ -1332,12 +1257,12 @@ theorem exists_weakCartan_SO (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1 = 0
     rw [← mul_assoc]
     congr 1
     refine Prod.ext (Subtype.ext ?_) (Subtype.ext ?_)
-    · show ((d.Pbar p).1 : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) = specP d.QW ã * sW * kW
+    · change ((d.Pbar p).1 : (Fin d.m → F) ≃ₗ[F] (Fin d.m → F)) = specP d.QW ã * sW * kW
       rw [hW, hã]
-    · show specP d.QV (d.snd p) = specP d.QV (nn * d.incl ã) * (d.torusZ τ * d.extV0 y0) *
+    · change specP d.QV (d.snd p) = specP d.QV (nn * d.incl ã) * (d.torusZ τ * d.extV0 y0) *
         d.extV0 k
       rw [hpV, hye, map_mul (specP d.QV) nn, hPincl, map_mul d.extV0, map_mul d.extV0, ← ha',
-        extV0_base_extZ]
+        ← extZ_eq_extV0]
       simp only [mul_assoc]
       rw [← mul_assoc (d.torusZ τ), torusZ_mul_extZ, mul_assoc]
 
@@ -1365,7 +1290,7 @@ theorem exists_weakCartan (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1 = 0) :
     group
   have hwc := Subgroup.mem_center_iff.mp (d.AG_le_center (d.scalars_le_AG hw))
   refine ⟨h, hh, x₁ * z⁻¹ * w, ?_, z * k₁, hzk, ?_⟩
-  · show d.Pbar (x₁ * z⁻¹ * w) ∈ d.coneSO hb hf
+  · change d.Pbar (x₁ * z⁻¹ * w) ∈ d.coneSO hb hf
     have hwk : d.Pbar w = 1 := by rw [d.scalars_eq_ker] at hw; exact hw
     rwa [map_mul, map_mul, hwk, map_inv, hzker, inv_one, mul_one, mul_one]
   · have : g = h * (x₁ * z⁻¹) * (z * k₁) * w := by simp only [w, mul_inv_cancel_left]

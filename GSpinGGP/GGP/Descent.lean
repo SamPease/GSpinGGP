@@ -1023,6 +1023,10 @@ def extZ : ((Fin d.m → K) ≃ₗ[K] (Fin d.m → K)) →* (d.V ≃ₗ[K] d.V) 
 theorem extZ_apply (f : (Fin d.m → K) ≃ₗ[K] (Fin d.m → K)) (v : d.V) :
     d.extZ f v = (f v.1, v.2) := rfl
 
+/-- `g ↦ g ⊕ 1` is injective. -/
+theorem extZ_injective : Function.Injective d.extZ := fun _ _ h =>
+  LinearEquiv.ext fun w => congrArg Prod.fst (LinearEquiv.congr_fun h ((w, 0) : d.V))
+
 /-- For `r = 0` (so `N = 1`), the `V`-component of `P̄(h)`, `h ∈ H`, is the `W`-component extended
 by the identity on `Z`: `H = GSpin(W)` acts on `V₀ = W ⊕ Z` through `SO(W)`. -/
 theorem Pbar_snd_of_mem_H (hr : d.r = 0) {h : d.G} (hh : h ∈ d.H) :

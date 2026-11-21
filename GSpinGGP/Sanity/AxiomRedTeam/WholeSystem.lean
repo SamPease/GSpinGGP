@@ -33,7 +33,7 @@ the path of the main theorem meet the definitions in one instance.
   `toyD_bp_integrable`); `exists_lie_descent` with `Ω = G` (`toyD_exists_lie_descent`).
   `exists_good_nhd_of_not_nearCentral` and `mult_parInd_eq_mGeom` are vacuous there
   (`toyD_isNearCentral`, `toyD_not_isTempIndData`).
-  The conclusion of `prop_6_7_1_iii` (now proved, from `exists_weakCartan_SO`) is also checked
+  The conclusion of `prop_6_7_1_iii` (now proved) is also checked
   there (`toyD_prop_6_7_1_iii`).
 
 Not covered: anything that needs a nonzero nilpotent orbit, a proper parabolic or a nontrivial
