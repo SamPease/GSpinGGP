@@ -198,7 +198,8 @@ theorem commute_oneSubAd_adLie {g : ↥d.G} {X : d.ambient} (hX : X ∈ d.lie)
 (3.3.1); Harish-Chandra), for `x ∈ G(F)` semisimple and `X ∈ 𝔤_x` semisimple, with
 `δ = dim 𝔤_x − dim 𝔤_{x,X}` and `D^{G_x}(X) = |det(ad X)|_{𝔤_x/𝔤_{x,X}}|`.
 Proof (`eventually_absF_trailingCoeff_charpoly` with `S = 1 − Ad x`, `D = ad X` on `𝔤` and
-`N_c = 1 − Ad(x e^{cX})`). `𝔤 = 𝔤_x ⊕ 𝔮`, `𝔮 = Im(1 − Ad x)`, both stable under `Ad(x e^{λX})`. On `𝔮`,
+`N_c = 1 − Ad(x e^{cX})`). `𝔤 = 𝔤_x ⊕ 𝔮`, `𝔮 = Im(1 − Ad x)`, both stable under
+`Ad(x e^{λX})`. On `𝔮`,
 `det(1 − Ad(x e^{λX}))` is continuous in `λ` and nonzero at `0`, so its absolute value is
 `|det(1 − Ad x)|_𝔮| = D^G(x)` for `λ` small. On `𝔤_x = 𝔤_{x,X} ⊕ C`, `C = Im(ad X)`,
 `Ad(e^{λX}) = e^{λ ad X}` is `1` on `𝔤_{x,X}`, and `λ⁻¹(1 − e^{λ ad X})|_C → −ad X|_C`, which is

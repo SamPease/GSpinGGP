@@ -19,7 +19,8 @@ are in `Foundations/Determinant.lean`.
 * `eventually_absF_eq_of_tendsto`: `|·|_F` is locally constant away from `0` (ultrametric `F`);
 * `eventually_absF_trailingCoeff_charpoly`: let `S`, `D` be semisimple endomorphisms of `E`
   with `D` preserving `ker S`, and `N_c` (`c ∈ F`) endomorphisms commuting with `S` and `D`,
-  vanishing on `ker S ∩ ker D`, with `N_c → S` and `c⁻¹ N_c → −D` on `ker S` as `c → 0`. Then for small
+  vanishing on `ker S ∩ ker D`, with `N_c → S` and `c⁻¹ N_c → −D` on `ker S` as `c → 0`.
+  Then for small
   `c ≠ 0`,
   `|trail charpoly N_c| = |trail charpoly S| · |c|^{dim ker S − dim ker D'} ·
   |trail charpoly D'|`, where `D' = D|_{ker S}`.
@@ -79,7 +80,8 @@ variable {E A : Type*} [AddCommGroup E] [Module F E] [FiniteDimensional F E]
   [AddCommGroup A] [Module F A] [TopologicalSpace A] [IsModuleTopology F A]
 
 /-- **Trailing coefficients along a degenerating family.** Let `S`, `D` be semisimple endomorphisms
-of `E` with `D(ker S) ⊆ ker S`, and `N_c` (`c ∈ F`) endomorphisms which for small `c ≠ 0` commute with `S`
+of `E` with `D(ker S) ⊆ ker S`, and `N_c` (`c ∈ F`) endomorphisms which for small `c ≠ 0`
+commute with `S`
 and `D` and vanish on `ker S ∩ ker D`, such that `N_c → S` and, on `ker S`, `c⁻¹ N_c → −D`
 (pointwise, read through an injective linear map `ι` into a space with its module topology).
 Then for small `c ≠ 0`,
