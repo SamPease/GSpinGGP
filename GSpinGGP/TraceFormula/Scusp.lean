@@ -24,6 +24,9 @@ Cor 5.7.2(i)).
   (`isQuasiCharacter_mul_of_isLocallyConstant`); invariant clopen sets.
 * `LitTF.bp_scusp_surj_ell` (BP Cor 5.7.2(i), untwisted on `G(F)`) gives *one* invariant clopen
   `Ω ⊇ G_ell,reg`, compact modulo conjugation and `A_G(F)`, on which `S_scusp(Ω) → QC_c(Ω)` is onto.
+  It is proved here (finite subcover and gluing, `LitTF.scuspSurjOn_union`) from the two `sorry`
+  theorems `LitTF.exists_isCompact_ellRegSet_modConjAG` and `LitTF.exists_scuspSurjOn_nhd_ell`
+  (`StronglyCuspidal.lean`).
   The own **`χ`-transfer** (`exists_scusp_of_qc_bp`, §3): `θ₀ = κ θ` for the `A_G`-cutoff `κ`
   (`exists_isAGCutoff`), `f₀` from BP Cor 5.7.2(i), `f = P_χ f₀`, and `θ_f = ∫ χ(a) θ₀(a ·) da = θ`
   (`isThetaF_chiProj_avg`).  Consequence: `exists_scusp_ell_bp`, which has exactly the type of the
@@ -189,6 +192,206 @@ theorem mem_mul_parabolicU_iff {Ω : Set ↥d.G} (hΩ : IsInvariantClopen d Ω)
       hΩ.2.1.mem_of_tendsto h1 (Eventually.of_forall fun k => (hmem k _).2 hpΩ)
     obtain ⟨k, hk⟩ := (hu'.eventually (hΩ.1.mem_nhds hL)).exists
     exact (hmem k _).1 hk
+
+namespace LitTF
+
+/-- `ScuspSurjOn` holds trivially for the empty set: a `θ₀` with support in `∅^{G(F)}` vanishes on
+`G_reg(F)`, so `f₀ = 0`, `θ = 0` work. -/
+theorem scuspSurjOn_empty : ScuspSurjOn d ∅ := by
+  rintro θ₀ - ⟨C₀, -, hC₀, hsupp⟩
+  have h0 : ∀ g ∈ regularSet d.G d.lie, θ₀ g = 0 := fun g hg => by
+    by_contra hne
+    obtain ⟨x, c, hc, -⟩ := hsupp g hg hne
+    exact hC₀ hc
+  refine ⟨0, (testFunctions ↥d.G).zero_mem, fun FW FV _ p _ => by simp, by simp, 0,
+    locallyIntegrable_zero, continuousOn_const, fun g hg => (h0 g hg).symm, fun f' _ => by simp⟩
+
+set_option maxHeartbeats 400000 in
+/-- **Gluing along an invariant clopen set** (the partition step of BP §5.7 / Waldspurger 2010
+§6.4): if `U₁` is open, closed and conjugation invariant, and `f ↦ θ_f` is onto `QC_c(U₁)` and onto
+`QC_c(U₂)`, then it is onto `QC_c(U₁ ∪ U₂)`.  Split `θ₀ = 1_{U₁} θ₀ + 1_{U₁ᶜ} θ₀`, solve on each
+piece, add. -/
+theorem scuspSurjOn_union {U₁ U₂ : Set ↥d.G} (ho : IsOpen U₁) (hc : IsClosed U₁)
+    (hconj : ∀ x g : ↥d.G, g ∈ U₁ → x * g * x⁻¹ ∈ U₁) (h₁ : ScuspSurjOn d U₁)
+    (h₂ : ScuspSurjOn d U₂) : ScuspSurjOn d (U₁ ∪ U₂) := by
+  classical
+  rintro θ₀ hq ⟨C₀, hC₀, hC₀U, hsupp⟩
+  have hiff : ∀ x c : ↥d.G, x * c * x⁻¹ ∈ U₁ ↔ c ∈ U₁ := fun x c => by
+    refine ⟨fun h => ?_, hconj x c⟩
+    have := hconj x⁻¹ _ h
+    rwa [show x⁻¹ * (x * c * x⁻¹) * x⁻¹⁻¹ = c by group] at this
+  set κ₁ : ↥d.G → ℂ := U₁.indicator 1 with hκ₁
+  set κ₂ : ↥d.G → ℂ := U₁ᶜ.indicator 1 with hκ₂
+  have hlc₁ : IsLocallyConstant κ₁ :=
+    isLocallyConstant_indicator_of_isClopen ⟨hc, ho⟩ (IsLocallyConstant.const 1)
+  have hlc₂ : IsLocallyConstant κ₂ :=
+    isLocallyConstant_indicator_of_isClopen ⟨ho.isClosed_compl, hc.isOpen_compl⟩
+      (IsLocallyConstant.const 1)
+  have hcj₁ : ∀ x g : ↥d.G, κ₁ (x * g * x⁻¹) = κ₁ g := fun x g => by
+    by_cases hg : g ∈ U₁
+    · simp [hκ₁, Set.indicator_of_mem hg, Set.indicator_of_mem ((hiff x g).2 hg)]
+    · simp [hκ₁, Set.indicator_of_notMem hg, Set.indicator_of_notMem (mt (hiff x g).1 hg)]
+  have hcj₂ : ∀ x g : ↥d.G, κ₂ (x * g * x⁻¹) = κ₂ g := fun x g => by
+    by_cases hg : g ∈ U₁
+    · simp [hκ₂, hg, (hiff x g).2 hg]
+    · simp [hκ₂, hg, mt (hiff x g).1 hg]
+  have hsplit : ∀ g, κ₁ g * θ₀ g + κ₂ g * θ₀ g = θ₀ g := fun g => by
+    by_cases hg : g ∈ U₁ <;> simp [hκ₁, hκ₂, hg]
+  -- the two pieces
+  obtain ⟨f₁, hf₁, hcusp₁, hs₁, θ₁, hli₁, hco₁, heq₁, hpair₁⟩ :=
+    h₁ (fun g => κ₁ g * θ₀ g)
+      (fun ψ => isQuasiCharacter_mul_of_isLocallyConstant d ψ hlc₁ hcj₁ (hq ψ))
+      ⟨C₀ ∩ U₁, hC₀.inter_right hc, Set.inter_subset_right, fun g hg hne => by
+        have hκ : κ₁ g ≠ 0 := left_ne_zero_of_mul hne
+        have hgU : g ∈ U₁ := by
+          by_contra h
+          exact hκ (by simp [hκ₁, h])
+        obtain ⟨x, c, hcC, rfl⟩ := hsupp g hg (right_ne_zero_of_mul hne)
+        exact ⟨x, c, ⟨hcC, (hiff x c).1 hgU⟩, rfl⟩⟩
+  obtain ⟨f₂, hf₂, hcusp₂, hs₂, θ₂, hli₂, hco₂, heq₂, hpair₂⟩ :=
+    h₂ (fun g => κ₂ g * θ₀ g)
+      (fun ψ => isQuasiCharacter_mul_of_isLocallyConstant d ψ hlc₂ hcj₂ (hq ψ))
+      ⟨C₀ ∩ U₁ᶜ, hC₀.inter_right ho.isClosed_compl,
+        fun c hc' => (hC₀U hc'.1).resolve_left hc'.2, fun g hg hne => by
+        have hκ : κ₂ g ≠ 0 := left_ne_zero_of_mul hne
+        have hgU : g ∉ U₁ := by
+          intro h
+          exact hκ (by simp [hκ₂, h])
+        obtain ⟨x, c, hcC, rfl⟩ := hsupp g hg (right_ne_zero_of_mul hne)
+        exact ⟨x, c, ⟨hcC, mt (hiff x c).2 hgU⟩, rfl⟩⟩
+  refine ⟨f₁ + f₂, add_mem hf₁ hf₂, fun FW FV hP p hp => ?_,
+    (Function.support_add _ _).trans (Set.union_subset_union hs₁ hs₂), θ₁ + θ₂,
+    hli₁.add hli₂, hco₁.add hco₂, fun g hg => ?_, fun f' hf' => ?_⟩
+  · simp only [Pi.add_apply]
+    rw [integral_add (integrable_parabolicU_of_testFunctions d hf₁ FW FV p)
+      (integrable_parabolicU_of_testFunctions d hf₂ FW FV p), hcusp₁ FW FV hP p hp,
+      hcusp₂ FW FV hP p hp, add_zero]
+  · simp only [Pi.add_apply]
+    rw [heq₁ hg, heq₂ hg]
+    exact hsplit g
+  · have e1 : (fun g => (θ₁ + θ₂) g * f' g) = fun g => θ₁ g * f' g + θ₂ g * f' g := by
+      funext g; simp [add_mul]
+    rw [e1, integral_add (integrable_mul_testFunction d hli₁ hf')
+      (integrable_mul_testFunction d hli₂ hf'), hpair₁ f' hf', hpair₂ f' hf']
+    have hinner : ∀ x : ↥d.G ⧸ d.AG,
+        (∫ g : ↥d.G, (f₁ + f₂) ((Quotient.out x)⁻¹ * g * Quotient.out x) * f' g ∂Measure.haar) =
+          (∫ g : ↥d.G, f₁ ((Quotient.out x)⁻¹ * g * Quotient.out x) * f' g ∂Measure.haar) +
+          ∫ g : ↥d.G, f₂ ((Quotient.out x)⁻¹ * g * Quotient.out x) * f' g ∂Measure.haar := by
+      intro x
+      rw [← integral_add (integrable_orbitalInner_integrand d hf₁.1.continuous hf' _)
+        (integrable_orbitalInner_integrand d hf₂.1.continuous hf' _)]
+      congr 1; funext g; simp [add_mul]
+    simp_rw [hinner]
+    have i₁ := bp_integrable_kernel_scusp d f₁ hf₁ hcusp₁ f' hf'
+    have i₂ := bp_integrable_kernel_scusp d f₂ hf₂ hcusp₂ f' hf'
+    rw [integral_add i₁ i₂]
+
+/-- **(c) Elliptic isolation, untwisted, `p`-adic** (BP Astérisque 418, Cor 5.7.2(i) = Thesis
+Cor 4.8.3(i), in the form given by its proof for a group whose split centre `A_G` need not be
+trivial).  There is a subset `Ω ⊆ G(F)` which is open and closed, conjugation invariant and
+`A_G(F)`-stable, contains the elliptic regular set, and is compact modulo conjugation and
+`A_G(F)`, such that every quasi-character `θ₀` whose support (on `G_reg(F)`) is compact modulo
+conjugation *inside* `Ω` (the space `QC_c(Ω)` of BP §4.1) is `θ_{f₀}` on `G_reg(F)` for a strongly
+cuspidal `f₀ ∈ C_c^∞(G(F))` supported in `Ω` (`S_scusp(Ω)`; `S = C_c^∞` for `p`-adic `F`).
+Here "`θ_{f₀}` on `G_reg(F)`" is written, as in `bp_thetaF_exists`, as: some locally integrable `θ`,
+continuous on `G_reg(F)` and equal to `θ₀` there, represents the orbital pairing of `f₀`.
+
+**Relation to the source; what is adapted (not literal).**
+* BP Cor 5.7.2 assumes that the centre of `G(F)` is compact; here `A_G(F)` is a nontrivial split
+  torus.  BP's proof of (i) is local: for an elliptic `x`, a `G`-good open neighbourhood `Ω_x`
+  relatively compact modulo conjugation, `Ω = Ω_x^G`, it combines semisimple descent
+  (BP Prop 4.1.1(ii),(iii) = Thesis Prop 4.1.1.1), density of `θ(S_scusp(ω_x))` in `QC_c(ω_x)` on
+  `𝔤_x` (BP Prop 5.6.1(i) = Thesis Prop 4.8.1(i); `G_x` has an elliptic maximal torus since `x` is
+  elliptic) and the lift `f ↦ f̃` of BP Prop 5.7.1 = Thesis Prop 4.8.2; none of these assumes a
+  compact centre.  The compact-centre hypothesis is used only to cover `G(F)_ell` by finitely many
+  `Ω_{x_i}^G`.  Here `G(F)_ell` is compact modulo conjugation *and `A_G(F)`*, so finitely many
+  `Ω_{x_i}^G` cover it modulo `A_G(F)`, and `Ω = A_G(F) · ⋃ Ω_{x_i}^G` (an `A_G(F)`-translate of a
+  `G`-good neighbourhood of an elliptic point is one of the translated point).  A `θ₀ ∈ QC_c(Ω)`
+  (support compact modulo conjugation, *not* modulo `A_G`) meets finitely many translates
+  `a Ω_{x_i}^G`; an invariant partition of unity (BP Prop 3.1.1(ii)) reduces to one of them.
+* `p`-adic ingredients without a centre hypothesis, which can replace BP's density statements:
+  Waldspurger, *Une formule intégrale reliée à la conjecture locale de Gross–Prasad*, Compositio
+  Math. 146 (2010), Prop. 6.4 (arXiv:0902.1875v1, p. 31: every quasi-character on `𝔤(F)` compactly
+  supported modulo conjugation is `θ_f` for a strongly cuspidal `f ∈ C_c^∞(𝔤(F))`) and Lemme 6.2 (p. 28:
+  lift from `𝔤_x` to `G` at an elliptic `x`, assuming `Z_G(x)(F)`-invariance, automatic here since
+  `Z_G(x) = G_x` for `GSpin`, whose derived group is simply connected).
+* Surjectivity: in the `p`-adic case `QC_c(Ω)` carries its finest locally convex topology, in which
+  every subspace is closed, so "dense image" is "onto" (BP's own parenthesis in Cor 5.7.2(i)).
+* Open and closed: BP's `Ω` is open.  For `p`-adic `F` the `Ω_{x_i}` may be taken compact open,
+  and then `Ω_{x_i}^G` is also closed (unverified detail: it is the union of finitely many of the
+  sets `π⁻¹(π(Ω'))`, `π` the characteristic-polynomial map, separating the rational classes in a
+  stable class near `x_i`).  Closedness is what makes `1_Ω θ` a quasi-character.
+* Not the `G/A_G` form: BP applied literally to `Ḡ = G/A_G` (compact centre) only treats
+  `A_G(F)`-invariant data, i.e. trivial central character.  A character `χ` of `A_G(F)` with
+  `χ(-1) ≠ 1` does not extend to `G(F)` (`-1 ∈ Spin(F)`), so twisting by an extension is not
+  available, and the `χ`-equivariant statement is derived instead from this untwisted one on `G(F)`
+  (cutoff `κ` and `P_χ`, `TraceFormula/Scusp.lean`).
+
+Normalization-insensitivity: the conclusion is linear in `f₀`; rescaling either Haar measure
+rescales `θ_{f₀}` by a positive constant (see `bp_thetaF_exists`), which is absorbed into `f₀`.
+`p`-adic case only (`PAdicField F`).
+
+**Status: proved here from two `sorry` statements** (`TraceFormula/StronglyCuspidal.lean`):
+`exists_isCompact_ellRegSet_modConjAG` (the elliptic regular set is relatively compact modulo
+conjugation and `A_G(F)`) and `exists_scuspSurjOn_nhd_ell` (local surjectivity on an `A_G(F)`-stable
+invariant clopen neighbourhood of each point of the closure of the elliptic regular set; Waldspurger
+2010 Prop. 6.4, Lemme 6.2 and §3.1, adapted).  The covering argument is proved: a finite subcover of
+the compact `K` gives `Ω = ⋃ U_i`; for a given `θ₀`, `θ₀ = 1_{U_1} θ₀ + 1_{U_1ᶜ} θ₀` with both
+pieces again quasi-characters supported in a compact set modulo conjugation (`U_1` is invariant and
+clopen), and the solutions are added (`scuspSurjOn_union`; integrability of the kernels by
+`bp_integrable_kernel_scusp`).  The hypothesis quantifies the quasi-character condition over every
+`ψ`, stronger than BP's single notion; this only weakens the statement. -/
+theorem bp_scusp_surj_ell (d : GGPData F) :
+    ∃ Ω : Set ↥d.G, IsOpen Ω ∧ IsClosed Ω ∧ (∀ x g : ↥d.G, g ∈ Ω → x * g * x⁻¹ ∈ Ω) ∧
+      (∀ (a : ↥d.AG) (g : ↥d.G), g ∈ Ω → (a : ↥d.G) * g ∈ Ω) ∧
+      ellipticRegularSet d.G d.lie d.AG ⊆ Ω ∧
+      (∃ C : Set ↥d.G, IsCompact C ∧
+        ∀ g ∈ Ω, ∃ (a : ↥d.AG) (x c : ↥d.G), c ∈ C ∧ g = (a : ↥d.G) * (x * c * x⁻¹)) ∧
+      ∀ θ₀ : ↥d.G → ℂ, (∀ ψ : NontrivialAddChar F, IsQuasiCharacter d.G d.lie d.bilin ψ θ₀) →
+        (∃ C₀ : Set ↥d.G, IsCompact C₀ ∧ C₀ ⊆ Ω ∧
+          ∀ g ∈ regularSet d.G d.lie, θ₀ g ≠ 0 → ∃ x c : ↥d.G, c ∈ C₀ ∧ g = x * c * x⁻¹) →
+        ∃ f₀ : ↥d.G → ℂ, f₀ ∈ testFunctions ↥d.G ∧
+          (∀ (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV), d.IsProperFlagPair FW FV →
+            ∀ p ∈ d.whittB FW FV, ∫ u : ↥(d.whittU FW FV), f₀ (p * u) ∂Measure.haar = 0) ∧
+          Function.support f₀ ⊆ Ω ∧
+          ∃ θ : ↥d.G → ℂ, LocallyIntegrable θ Measure.haar ∧
+            ContinuousOn θ (regularSet d.G d.lie) ∧ Set.EqOn θ θ₀ (regularSet d.G d.lie) ∧
+            ∀ f' ∈ testFunctions ↥d.G,
+              ∫ g : ↥d.G, θ g * f' g ∂Measure.haar =
+                ∫ x : ↥d.G ⧸ d.AG,
+                  (∫ g : ↥d.G, f₀ ((Quotient.out x)⁻¹ * g * Quotient.out x) * f' g ∂Measure.haar)
+                  ∂Measure.haar := by
+  classical
+  obtain ⟨K, hK, hKcl, hcov⟩ := exists_isCompact_ellRegSet_modConjAG d
+  choose! U hUo hUc hUconj hUAG hmem hUcpt hUsurj using
+    fun g (hg : g ∈ closure (ellipticRegularSet d.G d.lie d.AG)) => exists_scuspSurjOn_nhd_ell d hg
+  choose! C hC hCU using hUcpt
+  obtain ⟨t, ht⟩ := hK.elim_finite_subcover (fun e : ↥K => U (e : ↥d.G))
+    (fun e => hUo _ (hKcl e.2)) (fun e he => Set.mem_iUnion.2 ⟨⟨e, he⟩, hmem e (hKcl he)⟩)
+  have hglue : ∀ s : Finset ↥K, ScuspSurjOn d (⋃ e ∈ s, U (e : ↥d.G)) := by
+    intro s
+    induction s using Finset.induction_on with
+    | empty => simpa using scuspSurjOn_empty d
+    | insert e s _ ih =>
+      rw [Finset.set_biUnion_insert]
+      exact scuspSurjOn_union d (hUo _ (hKcl e.2)) (hUc _ (hKcl e.2)) (hUconj _ (hKcl e.2))
+        (hUsurj _ (hKcl e.2)) ih
+  refine ⟨⋃ e ∈ t, U (e : ↥d.G), isOpen_biUnion fun e _ => hUo _ (hKcl e.2),
+    t.finite_toSet.isClosed_biUnion fun e _ => hUc _ (hKcl e.2), fun x g hg => ?_,
+    fun a g hg => ?_, fun g hg => ?_, ⟨⋃ e ∈ t, C (e : ↥d.G),
+      t.isCompact_biUnion fun e _ => hC _ (hKcl e.2), fun g hg => ?_⟩, hglue t⟩
+  · obtain ⟨e, he, hge⟩ := Set.mem_iUnion₂.1 hg
+    exact Set.mem_iUnion₂.2 ⟨e, he, hUconj _ (hKcl e.2) x g hge⟩
+  · obtain ⟨e, he, hge⟩ := Set.mem_iUnion₂.1 hg
+    exact Set.mem_iUnion₂.2 ⟨e, he, hUAG _ (hKcl e.2) a g hge⟩
+  · obtain ⟨a, x, c, hc, rfl⟩ := hcov g hg
+    obtain ⟨e, he, hce⟩ := Set.mem_iUnion₂.1 (ht hc)
+    exact Set.mem_iUnion₂.2 ⟨e, he, hUAG _ (hKcl e.2) a _ (hUconj _ (hKcl e.2) x c hce)⟩
+  · obtain ⟨e, he, hge⟩ := Set.mem_iUnion₂.1 hg
+    obtain ⟨a, x, c, hc, rfl⟩ := hCU _ (hKcl e.2) g hge
+    exact ⟨a, x, c, Set.mem_iUnion₂.2 ⟨e, he, hc⟩, rfl⟩
+
+end LitTF
 
 /-- BP Cor 5.7.2(i) (`LitTF.bp_scusp_surj_ell`) in the vocabulary of `Basic.lean`/`ThetaF.lean`. -/
 theorem exists_bpOmega : ∃ Ω : Set ↥d.G, IsInvariantClopen d Ω ∧ d.ellRegSet ⊆ Ω ∧
