@@ -21,6 +21,10 @@ hyperbolic plane, so all four apply) and *proved* there, without them:
 
 This checks that the normalizations of `J`, `J^Lie`, `θ_f`, `θ_F` and the two torus integrals
 match at the zero orbit, and that the lift `f_ω` takes the value `f(1)` at `0`.
+
+Limits of these checks: at the toy datum `𝔤⁰ = 0`, so they exercise no nonzero nilpotent orbit, no
+transport of measures by `exp` (all measures are point masses), no dependence on `s`, and no
+correspondence of the orbits chosen by `orbitChoice` and `orbitChoiceLie` beyond the zero orbit.
 -/
 
 noncomputable section

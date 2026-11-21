@@ -2,8 +2,7 @@
 Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import GSpinGGP.TraceFormula.LuoClass
-import GSpinGGP.TraceFormula.Interface
+import GSpinGGP.TraceFormula.LieAlgebra
 
 /-!
 # Descent from `G` to `𝔤⁰` near `1`: the slices of Thesis Prop 12.4.1(i) and Prop 12.1.1(iv)
@@ -25,18 +24,17 @@ case `j_G^H = 1` on a small enough `ω`, so `(j_G^H)^{1/2} f_ω = f_ω`.)  It th
 * `isLieScusp_liftLie` (SORRY): `f_ω ∈ S_scusp(𝔤⁰(F))` (Thesis §12.4);
 * `torusIntegral_eq_torusIntegralLie_liftLie` (SORRY): torus by torus, for every `s > 0`,
   `∫_{T(F)/A_{G,H}(F)} D^G(t)^{1/2} c_{θ_f,O_t}(t) Δ(t)^{s−1/2} dt =
-  ∫_{𝔱⁰(F)} D^G(X)^{1/2} c_{θ_F,O_X}(X) Δ(X)^{s−1/2} dX` (Thesis (12.1.14), torus by torus,
+  ∫_{𝔱⁰(F)} D^G(X)^{1/2} c_{θ_F,O_X}(X) Δ(X)^{s−1/2} dX` (Thesis (12.1.10), torus by torus,
   with `j_G^H = 1`); hence `m_{geom,s}(θ_f) = m^Lie_{geom,s}(θ_F)` for every `s > 0` and
-  `m_geom(θ_f) = m^Lie_geom(θ_F)` (`mGeom_eq_mGeomLie_liftLie`, proved: no convergence is needed,
+  `m_geom(θ_f) = m^Lie_geom(θ_F)` (`mGeom_eq_mGeomLie_of_torusIntegral`, proved: no convergence is needed,
   the two functions of `s` agree on `s > 0`).
 
 Each of the four is stated in the form "there is a neighbourhood `ω₀` of `0` such that the claim
 holds for every descent neighbourhood `ω ⊆ ω₀^{G(F)}`", so that the smallness conditions of the
 slices can be intersected.
 
-Also proved here: the existence of `θ_F` for every `F ∈ S_scusp(𝔤⁰(F))` (`exists_isThetaFLie`),
-from Luo Thm 7.3.3 for the special orthogonal triple (the axiom `luo_lie_geomExpansion_SO`,
-transported to `𝔤⁰` by `isThetaFLie_of_SO`).
+The existence of `θ_F` for every `F ∈ S_scusp(𝔤⁰(F))`, needed by the last slice, is
+`exists_isThetaFLie` (`TraceFormula/LuoClass.lean`, from Luo Thm 7.3.3).
 -/
 
 noncomputable section
@@ -60,9 +58,10 @@ variable (d : GGPData F)
 /-- **A descent neighbourhood of `0` in `𝔤⁰(F)`** (Thesis §12.4, BP §3.3, Waldspurger 2010 §3.1):
 `ω ⊆ 𝔤⁰(F)` open and closed, containing `0`, invariant under `G(F)`, compact modulo conjugation;
 `exp` is a homeomorphism of `ω` onto `Ω₀ ⊆ G(F)`; two elements of `Ω₀` that differ by an element of
-`A_G(F)` are equal; and `Ω = A_G(F)·Ω₀` is open, closed, invariant and `A_G(F)`-stable.  This is the
-thesis's `G(F)`-excellent neighbourhood `ω` with `Ω = A_G(F)·exp(ω)`, written for `𝔤⁰` (Thesis
-§12.4 uses `𝔤 = Lie(A_G) ⊕ 𝔤⁰`). -/
+`A_G(F)` are equal; and `Ω = A_G(F)·Ω₀` is open, closed, invariant and `A_G(F)`-stable.  This is a
+weakening of the thesis's `G(F)`-excellent neighbourhood `ω` with `Ω = A_G(F)·exp(ω)`, written for
+`𝔤⁰` (Thesis §12.4 uses `𝔤 = Lie(A_G) ⊕ 𝔤⁰`); the smallness conditions are imposed separately by
+`IsConjSmall`. -/
 structure IsLieDescentNbhd (ω : Set ↥d.lieZero) (Ω₀ : Set ↥d.G) : Prop where
   isOpen : IsOpen ω
   isClosed : IsClosed ω
@@ -181,7 +180,7 @@ theorem isLieScusp_liftLie (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
         d.IsLieScusp (d.liftLie ω f) := by
   sorry
 
-/-- **(12.1.14) torus by torus** (Thesis Prop 12.1.1(iv), with `j_G^H = 1` on a small `ω`): for a
+/-- **(12.1.10) torus by torus** (Thesis Prop 12.1.1(iv), with `j_G^H = 1` on a small `ω`): for a
 small descent neighbourhood `ω`, `f ∈ 𝒞_scusp` supported in `Ω = A_G(F)·Ω₀`, every torus class
 `c` and every `s > 0`,
 `∫_{T(F)/A_{G,H}(F)} D^G(t)^{1/2} c_{θ_f,O_t}(t) Δ(t)^{s−1/2} dt
@@ -192,7 +191,11 @@ integrands vanish off `exp(ω ∩ 𝔱⁰(F))` resp. `ω ∩ 𝔱⁰(F)` (`germ_
 `ω ∩ 𝔤⁰_reg(F)` (both represent the orbital pairing of `f_ω`, the Haar measure of `G(F)` being
 `da·dX` on `A_G(F)·exp(ω)`; `isThetaFLie_eqOn_regular`); for `t = e^X`, `X ∈ ω ∩ 𝔱⁰_♮(F)`:
 `D^G(e^X) = D^G(X)`, `Δ(e^X) = Δ(X)`, the fixed space of `e^X` is `ker X`, `G_{e^X} = G_X`,
-`𝔤_{e^X} = 𝔷 ⊕ 𝔤⁰_X`, and `c_{θ_f,O}(e^X) = c_{θ_F,O}(X)` (BP Prop 4.5.1.1(iv)); finally `exp`
+`𝔤_{e^X} = 𝔷 ⊕ 𝔤⁰_X`, and `c_{θ_f,O}(e^X) = c_{θ_F,O}(X)` (from the definition of germs by local
+expansions, BP §4.1, §4.5, and `θ_F = θ_f ∘ exp`: `θ_f(e^X e^Y) = θ_F(X + Y)` for `Y ∈ 𝔤⁰_X` small);
+the orbits picked by `orbitChoice` at `e^X` and by `orbitChoiceLie` at `X` correspond (an obligation of
+this slice: both are characterized by the same condition on `ker X`, unique by the results of `TraceFormula/OrbitSpecUnique.lean`);
+finally `exp`
 carries the measure of `𝔱⁰(F)` to the probability measure of `T(F)/A_{G,H}(F)` on
 `ω ∩ 𝔱⁰(F)` (`IsExpCompatT`, extended from a neighbourhood of `0` to the subgroup of elements with
 small eigenvalues, on which `exp` is a homomorphism). -/
@@ -229,21 +232,6 @@ theorem mGeom_eq_mGeomLie_of_torusIntegral {θ : ↥d.G → ℂ} {θ' : ↥d.lie
     rw [h c s hs]
   unfold mGeom mGeomLie limUnder
   rw [Filter.map_congr hev]
-
-/-- **`θ_F` exists on `𝔤⁰`**: every `F ∈ S_scusp(𝔤⁰(F))` has a function `θ_F` representing its
-orbital pairing (`IsThetaFLie`), when neither `W` nor `V` is a hyperbolic plane.  From Luo
-Thm 7.3.3 for the special orthogonal triple (`luo_lie_geomExpansion_SO`, which provides `θ_F` for
-`SO(W) × SO(V)`), transported to `𝔤⁰` (`isThetaFLie_of_SO`); BP §5.5–5.6, Lie-algebra case. -/
-theorem exists_isThetaFLie (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
-    {f : ↥d.lieZero → ℂ} (hf : d.IsLieScusp f) : ∃ θ, d.IsThetaFLie ψ f θ := by
-  have := d.muG_isHaarMeasure hW hV
-  obtain ⟨μH, μ𝔥, m, hμH, h𝔥, hm, -⟩ := d.exists_JLie_transfer ψ hW hV
-  obtain ⟨e, hen, -⟩ := d.gammaClass_equiv hW hV
-  obtain ⟨μT, hμT, -⟩ := d.torusIntegralLie_toSO ψ hW hV e hen
-  obtain ⟨θ, ⟨h1, h2, h3⟩, -, -⟩ :=
-    luo_lie_geomExpansion_SO d.luoOf hW hV ψ d.muG μH μ𝔥 h𝔥 m hm μT hμT
-      (f ∘ d.toSO.symm) (d.isScusp_toSO hf)
-  exact ⟨_, d.isThetaFLie_of_SO ψ hW hV hf h1 h2 h3⟩
 
 /-- **Descent to the Lie algebra near `1`** (Thesis Prop 12.4.1(i), Prop 12.1.1(iv)), assembled from
 the slices: `Ω = A_G(F)·exp(ω)` for a small descent neighbourhood `ω` and `F = f_ω`.  This is the
