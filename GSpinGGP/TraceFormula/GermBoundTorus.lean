@@ -6,6 +6,7 @@ import GSpinGGP.TraceFormula.GermBound
 import GSpinGGP.TraceFormula.GermHomogeneous
 import GSpinGGP.TraceFormula.TorusDescent
 import GSpinGGP.Literature.BPQuasiCharacter
+import GSpinGGP.Foundations.CharpolyLimit
 
 /-!
 # The bound on `(D^G)^{1/2} c_{θ,O_t}(t)` on `T_♮`
@@ -184,10 +185,97 @@ end Basic
 
 section Disc
 
+omit [PAdicField F] in
+/-- **The derivative of `c ↦ e^{cX}` at `0` is `X`**: `c⁻¹ (e^{cX} − 1) → X` as `c → 0`, `c ≠ 0`
+(`exp` of the Banach algebra `End(F^d)` through `lmulPi`,
+`hasDerivAt_exp_smul_const_of_mem_ball`). -/
+theorem tendsto_inv_smul_expA_sub_one [PAdicField F] {A : Type*} [Ring A] [Algebra F A]
+    [Module.Finite F A] [TopologicalSpace A] [IsModuleTopology F A] (X : A) :
+    Tendsto (fun c : F => c⁻¹ • (expA F (c • X) - 1)) (𝓝[≠] 0) (𝓝 X) := by
+  have := isTopologicalRing_of_moduleTopology F A
+  have := IsModuleTopology.toContinuousSMul F A
+  obtain ⟨U, hU, -, h⟩ := expA_aux F (A := A)
+  set M := lmulPi F X
+  have hball : (0 : F) • M ∈ Metric.eball
+      (0 : (Fin (Module.finrank F A) → F) →L[F] (Fin (Module.finrank F A) → F))
+      (NormedSpace.expSeries F
+        ((Fin (Module.finrank F A) → F) →L[F] (Fin (Module.finrank F A) → F))).radius := by
+    rw [zero_smul, Metric.mem_eball, edist_self]
+    exact expSeries_radius_pos_of_pAdic F _
+  have hd := (hasDerivAt_exp_smul_const_of_mem_ball (𝕂 := F) M 0 hball).tendsto_slope_zero
+  rw [zero_smul, NormedSpace.exp_zero, one_mul] at hd
+  have hmap := ((lmulPiInv F).continuous.tendsto _).comp hd
+  rw [Function.comp_def, lmulPiInv_lmulPi] at hmap
+  refine hmap.congr' ?_
+  have hcU : ∀ᶠ c in 𝓝[≠] (0 : F), c • X ∈ U :=
+    nhdsWithin_le_nhds ((continuous_id.smul continuous_const).continuousAt.preimage_mem_nhds
+      (by simpa using hU))
+  filter_upwards [hcU] with c hc
+  obtain ⟨-, -, he⟩ := h _ hc
+  have hsm : lmulPi F (c • X) = c • M := (lmulPiₗ F).map_smul c X
+  rw [zero_add, ← hsm, ← he, ← lmulPi_one F]
+  have : c⁻¹ • (lmulPi F (expA F (c • X)) - lmulPi F 1) =
+      lmulPi F (c⁻¹ • (expA F (c • X) - 1)) := by
+    rw [show lmulPi F = lmulPiₗ F from rfl, map_smul, map_sub]
+  rw [this, lmulPiInv_lmulPi]
+
+/-- `Ad g` restricted to `𝔤`. -/
+abbrev adRestrict (g : ↥d.G) : Module.End F d.lie.toSubmodule :=
+  (conjAd F (g : d.ambientˣ)).toLinearEquiv.toLinearMap.restrict (lie_conj_stable d g)
+
+theorem coe_adRestrict (g : ↥d.G) (v : d.lie.toSubmodule) :
+    ((adRestrict d g v : d.lie.toSubmodule) : d.ambient) =
+      ((g : d.ambientˣ) : d.ambient) * v * (((g : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient) := rfl
+
+/-- `1 − Ad g` and `1 − Ad h` commute for commuting `g, h ∈ G(F)`. -/
+theorem commute_oneSubAd {g h : ↥d.G} (hc : Commute g h) :
+    Commute (oneSubAd d g) (oneSubAd d h) := by
+  have hR : Commute (adRestrict d g) (adRestrict d h) := by
+    refine LinearMap.ext fun v => Subtype.ext ?_
+    simp only [mul_apply_eq_comp, coe_adRestrict]
+    have e1 := congrArg (fun k : ↥d.G => ((k : d.ambientˣ) : d.ambient)) hc.eq
+    have e2 := congrArg (fun k : ↥d.G => (((k⁻¹ : ↥d.G) : d.ambientˣ) : d.ambient)) hc.eq
+    simp only [Subgroup.coe_mul, Units.val_mul, mul_inv_rev, InvMemClass.coe_inv] at e1 e2
+    calc _ = (((g : d.ambientˣ) : d.ambient) * ((h : d.ambientˣ) : d.ambient)) * (v : d.ambient) *
+          ((((h : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient) *
+            (((g : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient)) := by simp only [mul_assoc]
+      _ = _ := by rw [e1, e2]; simp only [mul_assoc]
+  exact (Commute.one_left _).sub_left ((Commute.one_right _).sub_right hR)
+
+/-- `ad X` on `𝔤`, for `X ∈ 𝔤`. -/
+def adLie {X : d.ambient} (hX : X ∈ d.lie) : Module.End F d.lie.toSubmodule :=
+  (LinearMap.mulLeft F X - LinearMap.mulRight F X).restrict fun Y hY => by
+    simpa [Ring.lie_def] using d.lie.lie_mem hX hY
+
+theorem coe_adLie {X : d.ambient} (hX : X ∈ d.lie) (v : d.lie.toSubmodule) :
+    ((adLie d hX v : d.lie.toSubmodule) : d.ambient) = X * v - v * X := rfl
+
+/-- `1 − Ad g` commutes with `ad X` when `g` commutes with `X`. -/
+theorem commute_oneSubAd_adLie {g : ↥d.G} {X : d.ambient} (hX : X ∈ d.lie)
+    (hgX : ((g : d.ambientˣ) : d.ambient) * X = X * ((g : d.ambientˣ) : d.ambient)) :
+    Commute (oneSubAd d g) (adLie d hX) := by
+  have hgX' : (((g : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient) * X =
+      X * (((g : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient) :=
+    (Commute.units_inv_left (u := (g : d.ambientˣ)) hgX).eq
+  have hR : Commute (adRestrict d g) (adLie d hX) := by
+    refine LinearMap.ext fun v => Subtype.ext ?_
+    simp only [mul_apply_eq_comp, coe_adRestrict, coe_adLie]
+    set gv := ((g : d.ambientˣ) : d.ambient)
+    set gi := (((g : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient)
+    have h1 : gv * (X * v) * gi = X * (gv * v * gi) := by
+      rw [← mul_assoc gv X, hgX]; simp only [mul_assoc]
+    have h2 : gv * ((v : d.ambient) * X) * gi = gv * v * gi * X := by
+      calc gv * ((v : d.ambient) * X) * gi = gv * v * (X * gi) := by simp only [mul_assoc]
+        _ = gv * v * (gi * X) := by rw [hgX']
+        _ = _ := by simp only [mul_assoc]
+    rw [mul_sub, sub_mul, h1, h2]
+  exact (Commute.one_left _).sub_left hR
+
 /-- **`D^G(x e^{λX}) = D^G(x) |λ|^{δ} D^{G_x}(X)` for small `λ ≠ 0`** (BP Astérisque 418, §3.3 and
 (3.3.1); Harish-Chandra), for `x ∈ G(F)` semisimple and `X ∈ 𝔤_x` semisimple, with
 `δ = dim 𝔤_x − dim 𝔤_{x,X}` and `D^{G_x}(X) = |det(ad X)|_{𝔤_x/𝔤_{x,X}}|`.
-Proof sketch. `𝔤 = 𝔤_x ⊕ 𝔮`, `𝔮 = Im(1 − Ad x)`, both stable under `Ad(x e^{λX})`. On `𝔮`,
+Proof (`eventually_absF_trailingCoeff_charpoly` with `S = 1 − Ad x`, `D = ad X` on `𝔤` and
+`N_c = 1 − Ad(x e^{cX})`). `𝔤 = 𝔤_x ⊕ 𝔮`, `𝔮 = Im(1 − Ad x)`, both stable under `Ad(x e^{λX})`. On `𝔮`,
 `det(1 − Ad(x e^{λX}))` is continuous in `λ` and nonzero at `0`, so its absolute value is
 `|det(1 − Ad x)|_𝔮| = D^G(x)` for `λ` small. On `𝔤_x = 𝔤_{x,X} ⊕ C`, `C = Im(ad X)`,
 `Ad(e^{λX}) = e^{λ ad X}` is `1` on `𝔤_{x,X}`, and `λ⁻¹(1 − e^{λ ad X})|_C → −ad X|_C`, which is
@@ -202,7 +290,243 @@ theorem eventually_weylDisc_mul_expA_smul (x : ↥d.G) (hx : IsSS F ((x : d.ambi
           Module.finrank F ↥(lieCentralizer
             (lieCentralizer d.lie ((x : d.ambientˣ) : d.ambient)) X)) *
         weylDiscLie (lieCentralizer d.lie ((x : d.ambientˣ) : d.ambient)) X := by
-  sorry
+  classical
+  have := isTopologicalRing_of_moduleTopology F d.ambient
+  have := IsModuleTopology.toContinuousSMul F d.ambient
+  set a : d.ambient := ((x : d.ambientˣ) : d.ambient) with ha
+  set ai : d.ambient := (((x : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient) with hai
+  have haai : a * ai = 1 := Units.mul_inv _
+  have haia : ai * a = 1 := Units.inv_mul _
+  obtain ⟨hXl, hXa⟩ := mem_lieCentralizer.mp hX
+  have hXa' : Commute a X := hXa
+  set V := d.lie.toSubmodule with hV
+  set S := oneSubAd d x with hSdef
+  set D := adLie d hXl with hDdef
+  have hSv : ∀ v : V, ((S v : V) : d.ambient) = v - a * v * ai := fun v => rfl
+  have hS0 : ∀ v : V, S v = 0 ↔ a * v = v * a := by
+    intro v
+    rw [← Subtype.coe_inj, hSv, Submodule.coe_zero, sub_eq_zero]
+    constructor
+    · intro h
+      calc a * v = a * v * ai * a := by rw [mul_assoc (a * v), haia, mul_one]
+        _ = v * a := by rw [← h]
+    · intro h
+      rw [h, mul_assoc, haai, mul_one]
+  -- semisimplicity
+  have hS : Module.End.IsSemisimple S := isSemisimple_oneSubAd d x hx
+  have hD : Module.End.IsSemisimple D := by
+    set p := minpoly F (LinearMap.mulLeft F X)
+    have hsq : Squarefree p := Module.End.IsSemisimple.minpoly_squarefree hXs
+    have h0 : Polynomial.aeval (Algebra.lmul F d.ambient X) p = 0 := minpoly.aeval F _
+    rw [Polynomial.aeval_algHom_apply] at h0
+    have h1 : Polynomial.aeval X p = 0 :=
+      Algebra.lmul_injective (R := F) (h0.trans (map_zero _).symm)
+    have hR : Module.End.IsSemisimple (LinearMap.mulRight F X) :=
+      Module.End.isSemisimple_of_squarefree_aeval_eq_zero hsq (by
+        rw [aeval_mulRight, h1]; exact LinearMap.ext fun Y => by simp)
+    have hAd : Module.End.IsSemisimple (LinearMap.mulLeft F X - LinearMap.mulRight F X) :=
+      Module.End.IsSemisimple.sub_of_commute (LinearMap.commute_mulLeft_right X X) hXs hR
+    exact hAd.restrict ((Module.End.mem_invtSubmodule _).mpr fun Y hY => by
+      simpa [Ring.lie_def] using d.lie.lie_mem hXl hY)
+  have hDK : ∀ v ∈ LinearMap.ker S, D v ∈ LinearMap.ker S := fun v hv => by
+    rw [LinearMap.mem_ker, hS0] at hv ⊢
+    have e1 : a * (X * v) = X * (v * a) := by rw [← mul_assoc, hXa, mul_assoc, hv]
+    have e2 : a * (v * X) = v * (X * a) := by rw [← mul_assoc, hv, mul_assoc, hXa]
+    rw [coe_adLie, mul_sub, sub_mul, e1, e2]
+    simp only [mul_assoc]
+  -- the family `N_c = 1 − Ad(x e^{cX})`
+  let N : F → Module.End F V := fun c =>
+    if h : ∃ y : ↥d.G, ((y : d.ambientˣ) : d.ambient) = a * expA F (c • X) then
+      oneSubAd d h.choose else 0
+  have hN : ∀ c (y : ↥d.G), ((y : d.ambientˣ) : d.ambient) = a * expA F (c • X) →
+      N c = oneSubAd d y := fun c y hy => by
+    have h : ∃ y : ↥d.G, ((y : d.ambientˣ) : d.ambient) = a * expA F (c • X) := ⟨y, hy⟩
+    have hy' : h.choose = y := Subtype.ext (Units.ext (h.choose_spec.trans hy.symm))
+    simp only [N, h, ↓reduceDIte, hy']
+  obtain ⟨Ue, hUe, hee⟩ := expA_mul_expA_neg F (A := d.ambient)
+  have hcX : Tendsto (fun c : F => c • X) (𝓝[≠] 0) (𝓝 0) := by
+    have : Tendsto (fun c : F => c • X) (𝓝 0) (𝓝 ((0 : F) • X)) :=
+      (continuous_id.smul continuous_const).tendsto 0
+    rw [zero_smul] at this
+    exact this.mono_left nhdsWithin_le_nhds
+  have hgood : ∀ᶠ c in 𝓝[≠] (0 : F), c • X ∈ Ue ∧
+      (c • X ∈ d.lie → ∃ g : ↥d.G, ((g : d.ambientˣ) : d.ambient) = expA F (c • X)) :=
+    (hcX.eventually hUe).and (hcX.eventually (eventually_expA_mem_G d))
+  -- the data at a good `c`
+  have key : ∀ c : F, c • X ∈ Ue →
+      (c • X ∈ d.lie → ∃ g : ↥d.G, ((g : d.ambientˣ) : d.ambient) = expA F (c • X)) →
+      ∃ y : ↥d.G, ((y : d.ambientˣ) : d.ambient) = a * expA F (c • X) ∧
+        (((y : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient) = expA F (-(c • X)) * ai ∧
+        N c = oneSubAd d y := by
+    intro c hU hG
+    obtain ⟨g, hg⟩ := hG (d.lie.smul_mem c hXl)
+    have hy : (((x * g : ↥d.G) : d.ambientˣ) : d.ambient) = a * expA F (c • X) := by
+      rw [Subgroup.coe_mul, Units.val_mul, hg]
+    refine ⟨x * g, hy, ?_, hN c _ hy⟩
+    refine Units.inv_eq_of_mul_eq_one_right ?_
+    rw [hy, mul_assoc, ← mul_assoc (expA F (c • X)), hee _ hU, one_mul, haai]
+  have hcomm : ∀ c : F, Commute a (expA F (c • X)) ∧ Commute a (expA F (-(c • X))) ∧
+      Commute X (expA F (c • X)) := fun c =>
+    ⟨commute_expA_of_commute (F := F) (hXa'.smul_right c),
+      commute_expA_of_commute (F := F) (hXa'.smul_right c).neg_right,
+      commute_expA_of_commute (F := F) ((Commute.refl X).smul_right c)⟩
+  have hNS : ∀ᶠ c in 𝓝[≠] (0 : F), Commute (N c) S := by
+    filter_upwards [hgood] with c ⟨hU, hG⟩
+    obtain ⟨y, hy, -, hNc⟩ := key c hU hG
+    rw [hNc]
+    refine commute_oneSubAd d (Subtype.ext (Units.ext ?_))
+    simp only [Subgroup.coe_mul, Units.val_mul, hy]
+    rw [mul_assoc, (hcomm c).1.eq.symm, ← mul_assoc]
+  have hND : ∀ᶠ c in 𝓝[≠] (0 : F), Commute (N c) D := by
+    filter_upwards [hgood] with c ⟨hU, hG⟩
+    obtain ⟨y, hy, -, hNc⟩ := key c hU hG
+    rw [hNc]
+    refine commute_oneSubAd_adLie d hXl ?_
+    rw [hy, mul_assoc, (hcomm c).2.2.eq.symm, ← mul_assoc, hXa, mul_assoc]
+  have hconj : ∀ c : F, c • X ∈ Ue → ∀ (y : ↥d.G),
+      ((y : d.ambientˣ) : d.ambient) = a * expA F (c • X) →
+      (((y : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient) = expA F (-(c • X)) * ai →
+      ∀ v : V, ((oneSubAd d y v : V) : d.ambient) =
+        v - a * expA F (c • X) * v * (expA F (-(c • X)) * ai) := by
+    intro c _ y hy hyi v
+    change (v : d.ambient) - ((y : d.ambientˣ) : d.ambient) * v *
+      (((y : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient) = _
+    rw [hy, hyi]
+  have hK : ∀ᶠ c in 𝓝[≠] (0 : F), ∀ v, S v = 0 → D v = 0 → N c v = 0 := by
+    filter_upwards [hgood] with c ⟨hU, hG⟩ v hSv0 hDv0
+    obtain ⟨y, hy, hyi, hNc⟩ := key c hU hG
+    rw [hNc]
+    refine Subtype.ext ?_
+    rw [hconj c hU y hy hyi v, Submodule.coe_zero]
+    have hva : Commute a (v : d.ambient) := (hS0 v).mp hSv0
+    have hvX : Commute X (v : d.ambient) := by
+      have := congrArg Subtype.val hDv0
+      rw [coe_adLie, Submodule.coe_zero, sub_eq_zero] at this
+      exact this
+    have hve : Commute (v : d.ambient) (expA F (c • X)) :=
+      commute_expA_of_commute (F := F) (hvX.symm.smul_right c)
+    have hve' : Commute (v : d.ambient) (expA F (-(c • X))) :=
+      commute_expA_of_commute (F := F) (hvX.symm.smul_right c).neg_right
+    have hfix : a * expA F (c • X) * v * (expA F (-(c • X)) * ai) = v := by
+      calc a * expA F (c • X) * v * (expA F (-(c • X)) * ai) =
+          v * (a * (expA F (c • X) * expA F (-(c • X))) * ai) := by
+            rw [mul_assoc a, ← hve.eq, ← mul_assoc a, hva.eq]; simp only [mul_assoc]
+        _ = v := by rw [hee _ hU, mul_one, haai, mul_one]
+    rw [hfix, sub_self]
+  -- limits
+  have he : Tendsto (fun c : F => expA F (c • X)) (𝓝[≠] 0) (𝓝 1) := by
+    have := (continuousAt_expA_at_zero F (A := d.ambient)).tendsto.comp hcX
+    rwa [expA_zero_eq_one] at this
+  have he' : Tendsto (fun c : F => expA F (-(c • X))) (𝓝[≠] 0) (𝓝 1) := by
+    have := (continuousAt_expA_at_zero F (A := d.ambient)).tendsto.comp
+      (by simpa using hcX.neg : Tendsto (fun c : F => -(c • X)) (𝓝[≠] 0) (𝓝 0))
+    rwa [expA_zero_eq_one] at this
+  have hlim : ∀ v, Tendsto (fun c => V.subtype (N c v)) (𝓝[≠] 0) (𝓝 (V.subtype (S v))) := by
+    intro v
+    have hT : Tendsto (fun c : F => (v : d.ambient) - a * expA F (c • X) * v *
+        (expA F (-(c • X)) * ai)) (𝓝[≠] 0) (𝓝 ((v : d.ambient) - a * 1 * v * (1 * ai))) :=
+      tendsto_const_nhds.sub (((tendsto_const_nhds.mul he).mul tendsto_const_nhds).mul
+        (he'.mul tendsto_const_nhds))
+    simp only [mul_one, one_mul] at hT
+    refine hT.congr' ?_
+    filter_upwards [hgood] with c ⟨hU, hG⟩
+    obtain ⟨y, hy, hyi, hNc⟩ := key c hU hG
+    rw [Submodule.subtype_apply, hNc, hconj c hU y hy hyi v]
+  have hder : ∀ v, S v = 0 →
+      Tendsto (fun c => V.subtype (c⁻¹ • N c v)) (𝓝[≠] 0) (𝓝 (V.subtype (-D v))) := by
+    intro v hv
+    have hva : Commute a (v : d.ambient) := (hS0 v).mp hv
+    have h1 := tendsto_inv_smul_expA_sub_one (F := F) X
+    have h2 := tendsto_inv_smul_expA_sub_one (F := F) (-X)
+    simp only [smul_neg] at h2
+    have hT : Tendsto (fun c : F => -((c⁻¹ • (expA F (c • X) - 1)) * v * expA F (-(c • X)) +
+        (v : d.ambient) * (c⁻¹ • (expA F (-(c • X)) - 1)))) (𝓝[≠] 0)
+        (𝓝 (-(X * v * 1 + (v : d.ambient) * -X))) :=
+      (((h1.mul tendsto_const_nhds).mul he').add (tendsto_const_nhds.mul h2)).neg
+    have hlimv : -(X * v * 1 + (v : d.ambient) * -X) = V.subtype (-D v) := by
+      rw [map_neg, Submodule.subtype_apply, coe_adLie]; noncomm_ring
+    rw [hlimv] at hT
+    refine hT.congr' ?_
+    filter_upwards [hgood] with c ⟨hU, hG⟩
+    obtain ⟨y, hy, hyi, hNc⟩ := key c hU hG
+    rw [map_smul, Submodule.subtype_apply, hNc, hconj c hU y hy hyi v]
+    have hconj' : a * expA F (c • X) * v * (expA F (-(c • X)) * ai) =
+        expA F (c • X) * v * expA F (-(c • X)) := by
+      calc _ = expA F (c • X) * (a * v) * (expA F (-(c • X)) * ai) := by
+            rw [(hcomm c).1.eq]; simp only [mul_assoc]
+        _ = expA F (c • X) * v * (a * expA F (-(c • X))) * ai := by
+            rw [hva.eq]; simp only [mul_assoc]
+        _ = expA F (c • X) * v * expA F (-(c • X)) * (a * ai) := by
+            rw [(hcomm c).2.1.eq]; simp only [mul_assoc]
+        _ = _ := by rw [haai, mul_one]
+    rw [hconj']
+    simp only [smul_sub, sub_mul, mul_sub, smul_mul_assoc, mul_smul_comm, one_mul, mul_one]
+    abel
+  -- the abstract statement
+  have hmain := eventually_absF_trailingCoeff_charpoly V.subtype V.injective_subtype hS hD N hNS
+    hND hK hlim hder hDK
+  -- identifications
+  have hmapK : (LinearMap.ker S).map V.subtype = (lieCentralizer d.lie a).toSubmodule := by
+    ext Z
+    constructor
+    · rintro ⟨v, hv, rfl⟩
+      exact mem_lieCentralizer.mpr ⟨v.property, (hS0 v).mp hv⟩
+    · intro hZ
+      obtain ⟨hZl, hZa⟩ := mem_lieCentralizer.mp hZ
+      exact ⟨⟨Z, hZl⟩, (hS0 _).mpr hZa, rfl⟩
+  have hmapK2 : ((LinearMap.ker (D.restrict hDK)).map (LinearMap.ker S).subtype).map V.subtype =
+      (lieCentralizer (lieCentralizer d.lie a) X).toSubmodule := by
+    ext Z
+    constructor
+    · rintro ⟨_, ⟨w, hw, rfl⟩, rfl⟩
+      have hw0 : D.restrict hDK w = 0 := hw
+      have hw' := congrArg (fun u : LinearMap.ker S => ((u : V) : d.ambient)) hw0
+      change X * ((w : V) : d.ambient) - ((w : V) : d.ambient) * X = 0 at hw'
+      rw [sub_eq_zero] at hw'
+      exact mem_lieCentralizer.mpr
+        ⟨mem_lieCentralizer.mpr ⟨(w : V).property, (hS0 _).mp w.property⟩, hw'⟩
+    · intro hZ
+      obtain ⟨hZc, hZX⟩ := mem_lieCentralizer.mp hZ
+      obtain ⟨hZl, hZa⟩ := mem_lieCentralizer.mp hZc
+      let v : V := ⟨Z, hZl⟩
+      let w : LinearMap.ker S := ⟨v, (hS0 v).mpr hZa⟩
+      refine ⟨(w : V), ⟨w, ?_, rfl⟩, rfl⟩
+      change D.restrict hDK w = 0
+      refine Subtype.ext (Subtype.ext ?_)
+      change X * Z - Z * X = 0
+      rw [hZX, sub_self]
+  have hdim1 : Module.finrank F ↥(LinearMap.ker S) =
+      Module.finrank F ↥(lieCentralizer d.lie a) :=
+    ((Submodule.equivMapOfInjective _ V.injective_subtype _).trans
+      (LinearEquiv.ofEq _ _ hmapK)).finrank_eq
+  have hdim2 : Module.finrank F ↥(LinearMap.ker (D.restrict hDK)) =
+      Module.finrank F ↥(lieCentralizer (lieCentralizer d.lie a) X) :=
+    (((Submodule.equivMapOfInjective _ (LinearMap.ker S).injective_subtype _).trans
+      (Submodule.equivMapOfInjective _ V.injective_subtype _)).trans
+      (LinearEquiv.ofEq _ _ hmapK2)).finrank_eq
+  set e : ↥(LinearMap.ker S) ≃ₗ[F] ↥(lieCentralizer d.lie a).toSubmodule :=
+    (Submodule.equivMapOfInjective _ V.injective_subtype _).trans (LinearEquiv.ofEq _ _ hmapK)
+    with he_def
+  have he_coe : ∀ w, ((e w : ↥(lieCentralizer d.lie a).toSubmodule) : d.ambient) =
+      ((w : V) : d.ambient) := fun w => rfl
+  have hadX : ∀ Y ∈ (lieCentralizer d.lie a).toSubmodule,
+      (LinearMap.mulLeft F X - LinearMap.mulRight F X) Y ∈
+        (lieCentralizer d.lie a).toSubmodule := fun Y hY => by
+    simpa [Ring.lie_def] using (lieCentralizer d.lie a).lie_mem hX hY
+  have hconjD : e.conj (D.restrict hDK) =
+      (LinearMap.mulLeft F X - LinearMap.mulRight F X).restrict hadX := by
+    refine LinearMap.ext fun w => Subtype.ext ?_
+    obtain ⟨u, rfl⟩ := e.surjective w
+    rw [LinearEquiv.conj_apply_apply, LinearEquiv.symm_apply_apply, he_coe]
+    simp only [LinearMap.coe_restrict_apply, LinearMap.sub_apply,
+      LinearMap.mulLeft_apply, LinearMap.mulRight_apply, he_coe]
+    exact coe_adLie d hXl _
+  have hwl : weylDiscLie (lieCentralizer d.lie a) X =
+      absF (D.restrict hDK).charpoly.trailingCoeff := by
+    rw [weylDiscLie, dite_eq_left_of_eq_true (eq_true hadX), ← hconjD,
+      LinearEquiv.charpoly_conj]
+  filter_upwards [hmain, hgood] with c hc ⟨hU, hG⟩ y hy
+  rw [weylDisc_eq_oneSubAd, weylDisc_eq_oneSubAd, ← hN c y hy, hc, hdim1, hdim2, hwl]
 
 end Disc
 

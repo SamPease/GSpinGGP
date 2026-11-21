@@ -41,16 +41,14 @@ satisfying the stability, transfer and genericity hypotheses, which is all the p
 
 As of November 2026:
 
-- The project builds with 37 declarations containing `sorry`. The main theorem `local_ggp`
-  depends on 22 of them. They are of two kinds: the analytic core of the local trace formula
+- The project builds with 36 declarations containing `sorry`. The main theorem `local_ggp`
+  depends on 21 of them. They are of two kinds: the analytic core of the local trace formula
   (Thesis Ch. 8–12, e.g. the bound on the kernel of the distribution `J` and its spectral
   expansion), and published results that the dissertation adapts to general spin groups (see
   below), plus some smaller lemmas. A `sorry` is a step this project still owes.
 - Results from the literature are assumed as `axiom`s in `GSpinGGP/Literature/`, each with a
   docstring citing its source; they are where the formalization stops, and are not meant to be
-  proved here. `local_ggp` uses 20 of the 21. The other,
-  `bp_sqrt_weylDisc_mul_locallyBounded` (BP Prop 4.1.1(ii)), is intended as an input of the germ
-  bound `germ_bound_of_mem_QC`, still a `sorry`. There are two classes.
+  proved here. `local_ggp` uses 21 of the 21. There are two classes.
   A *verbatim* axiom is a statement printed in its source, for the group the source treats,
   specialized (one, `bp_integrable_kernel_scusp`, is stated without proof in its source).
   A *derived* axiom is a short, explicit combination of such statements, or a printed statement
