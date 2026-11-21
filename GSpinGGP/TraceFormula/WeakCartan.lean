@@ -30,7 +30,10 @@ Let `d` be a GGP datum, `V = W ⊕ ⟨z₀⟩ ⊕ ⟨z_{±1}, …, z_{±r}⟩`, 
 * `GGPData.exists_isCompact_lift`: bounded subsets of `Ḡ` lift to compact subsets of `G(F)`
   modulo the scalars (log-norm balls are compact, `isCompact_logNorm_le`).
 * **Weak Cartan decomposition** (Thesis Lemma 8.3.2(ii)): `GGPData.exists_weakCartan` for `G`,
-  from its `SO`-level form `GGPData.exists_weakCartan_SO` (`sorry`, with a proof sketch).
+  from its `SO`-level form `GGPData.exists_weakCartan_SO`, which combines the Iwasawa
+  decomposition for `P` (`exists_iwasawa_SO`, `tits_iwasawa` for the full flag `flagVP`
+  extending `d.flag`), the Levi decomposition of `P_V` in coordinates (`exists_levi_SO`, via
+  `IsFlagSplitting.exists_levi_decomp` for the standard basis) and `weakCartan_G0_SO`.
 * `GGPData.weakCartanData`: the `WeakCartanData d.mkHG d.logNormModAG` with cone
   `S = A_G A₀⁺ A(F)` (`GGPData.cone`), taking the polynomial growth of the cone modulo `A_G`
   (BP (6.7.12)) as hypotheses; `GGPData.prop_6_7_1_iii_of_growth` feeds it to
@@ -642,6 +645,123 @@ theorem exists_isCompact_lift (M : ℝ) :
   obtain ⟨z, hz, hzg⟩ := hz g
   exact ⟨z, hz, hzg.trans (mul_le_mul_of_nonneg_left hg hC)⟩
 
+/-! ## 6a. A full flag of `V` extending `⟨z_r⟩ ⊂ ⋯ ⊂ ⟨z_r, …, z_1⟩` -/
+
+section FlagP
+
+variable {d} {n l : ℕ} {b : Basis (Fin n) F d.V0}
+  (hb : IsOrthoBasis d.Q0 b) (hf : IsFrame d.Q0 b (d.Q0 d.z00) l) (h0 : ∀ h, b ⟨0, h⟩ = d.z00)
+
+/-- `z_r, …, z_1`: the first `r` vectors of the flag. -/
+def zbP (k : Fin d.r) : d.V := d.zV ((d.r : ℤ) - (k : ℕ))
+
+/-- Their duals `(2ν)⁻¹ z_{-r}, …, (2ν)⁻¹ z_{-1}`. -/
+def zbPD (k : Fin d.r) : d.V := (2 * (d.ν : F))⁻¹ • d.zV (-((d.r : ℤ) - (k : ℕ)))
+
+theorem zbP_eq (k : Fin d.r) : zbP (d := d) k = (2 * (d.ν : F)) • zbD (d := d) k := by
+  rw [zbP, zbD, smul_smul, mul_inv_cancel₀ (mul_ne_zero two_ne_zero d.ν.ne_zero), one_smul]
+
+theorem zbPD_eq (k : Fin d.r) : zbPD (d := d) k = (2 * (d.ν : F))⁻¹ • zb (d := d) k := rfl
+
+/-- The isotropic vectors `z_r, …, z_1, u₁, u₂, …` of `V`. -/
+def eVP : Fin (d.r + numPairs l 0) → d.V := Fin.append (zbP (d := d)) (d.iota0 ∘ pairE hf 0)
+
+/-- Their duals. -/
+def fVP : Fin (d.r + numPairs l 0) → d.V := Fin.append (zbPD (d := d)) (d.iota0 ∘ pairF hf 0)
+
+include hb h0 in
+theorem isHypFrame_VP :
+    IsHypFrame d.QV (orthFrame d.QV (eVP hf) (fVP hf)) (eVP hf) (fVP hf) := by
+  have H := isHypFrame_V hb hf h0
+  have hν : (2 * (d.ν : F)) ≠ 0 := mul_ne_zero two_ne_zero d.ν.ne_zero
+  have hee := H.polar_ee
+  have hff := H.polar_ff
+  have hef := H.polar_ef
+  refine isHypFrame_orthFrame (fun i j => ?_) (fun i j => ?_) (fun i j => ?_)
+  · refine Fin.addCases (fun k => ?_) (fun k => ?_) i <;>
+      refine Fin.addCases (fun k' => ?_) (fun k' => ?_) j <;>
+      simp only [eVP, Fin.append_left, Fin.append_right, Function.comp_apply]
+    · rw [zbP_eq, zbP_eq, polar_smul_left, polar_smul_right, polar_zbD_zbD]; simp
+    · rw [zbP_eq, polar_smul_left, polar_zbD_iota0]; simp
+    · rw [zbP_eq, polar_smul_right, polar_comm, polar_zbD_iota0]; simp
+    · have := hee (Fin.natAdd _ k) (Fin.natAdd _ k')
+      simpa [eV] using this
+  · refine Fin.addCases (fun k => ?_) (fun k => ?_) i <;>
+      refine Fin.addCases (fun k' => ?_) (fun k' => ?_) j <;>
+      simp only [fVP, Fin.append_left, Fin.append_right, Function.comp_apply]
+    · rw [zbPD_eq, zbPD_eq, polar_smul_left, polar_smul_right, polar_zb_zb]; simp
+    · rw [zbPD_eq, polar_smul_left, polar_zb_iota0]; simp
+    · rw [zbPD_eq, polar_smul_right, polar_comm, polar_zb_iota0]; simp
+    · have := hff (Fin.natAdd _ k) (Fin.natAdd _ k')
+      simpa [fV] using this
+  · refine Fin.addCases (fun k => ?_) (fun k => ?_) i <;>
+      refine Fin.addCases (fun k' => ?_) (fun k' => ?_) j <;>
+      simp only [eVP, fVP, Fin.append_left, Fin.append_right, Function.comp_apply]
+    · rw [zbP_eq, zbPD_eq, polar_smul_left, polar_smul_right, polar_comm, polar_zb_zbD]
+      simp only [(Fin.castAdd_injective _ _).eq_iff, smul_eq_mul]
+      split_ifs with h1 h2 h2
+      · field_simp
+      · exact absurd h1.symm h2
+      · exact absurd h2.symm h1
+      · simp
+    · rw [zbP_eq, polar_smul_left, polar_zbD_iota0, smul_zero, ite_eq_right (fun h => by
+        have := congrArg Fin.val h; simp at this; omega)]
+    · rw [zbPD_eq, polar_smul_right, polar_comm, polar_zb_iota0, smul_zero,
+        ite_eq_right (fun h => by have := congrArg Fin.val h; simp at this; omega)]
+    · have := hef (Fin.natAdd _ k) (Fin.natAdd _ k')
+      simpa [eV, fV] using this
+
+include hb h0 in
+theorem aniso_VP {y : d.V} (hy : y ∈ orthFrame d.QV (eVP hf) (fVP hf)) (hQ : d.QV y = 0) :
+    y = 0 := by
+  have hν : (2 * (d.ν : F)) ≠ 0 := mul_ne_zero two_ne_zero d.ν.ne_zero
+  refine aniso_V hb hf h0 (fun i => ?_) hQ
+  refine Fin.addCases (fun k => ?_) (fun k => ?_) i
+  · have h1 := (hy (Fin.castAdd _ k)).1
+    have h2 := (hy (Fin.castAdd _ k)).2
+    simp only [eVP, fVP, Fin.append_left, zbP_eq, zbPD_eq, polar_smul_right, smul_eq_mul]
+      at h1 h2
+    simp only [eV, fV, Fin.append_left]
+    exact ⟨(mul_eq_zero.mp h2).resolve_left (inv_ne_zero hν),
+      (mul_eq_zero.mp h1).resolve_left hν⟩
+  · have := hy (Fin.natAdd _ k)
+    simpa [eVP, fVP, eV, fV] using this
+
+/-- The full isotropic flag `⟨z_r⟩ ⊂ ⋯ ⊂ ⟨z_r, …, z_1⟩ ⊂ ⟨z_r, …, z_1, u₁⟩ ⊂ ⋯` of `V`, extending
+`d.flag`. -/
+def flagVP : IsotropicFlag d.QV :=
+  IsotropicFlag.ofFamily (eVP hf)
+    ((isHypFrame_VP hb hf h0).linearIndependent.comp Sum.inl Sum.inl_injective)
+    (isHypFrame_VP hb hf h0).isTotallyIsotropic_span_e
+
+theorem isFull_flagVP : (flagVP hb hf h0).IsFull :=
+  IsotropicFlag.isFull_ofFamily
+    ((isHypFrame_VP hb hf h0).wittIndex_eq d.nondeg_QV
+      (fun x hx => Subtype.ext (aniso_VP hb hf h0 x.2 hx))).symm
+
+/-- `flagVP` extends `d.flag`, so its stabilizer lies in that of `d.flag`. -/
+theorem flagStab_flagVP_le : flagStab (flagVP hb hf h0) ≤ flagStab d.flag := by
+  intro g hg i
+  have hi : (i : ℕ) < (flagVP hb hf h0).len + 1 := by
+    have := i.2; change (i : ℕ) < d.r + 1 at this; change _ < d.r + numPairs l 0 + 1; omega
+  have e : d.flag.sub i = (flagVP hb hf h0).sub ⟨i, hi⟩ := by
+    change Submodule.span F (Set.range fun j : Fin (i : ℕ) => d.zV ((d.r : ℤ) - (j : ℕ))) =
+      Submodule.span F (Set.range (eVP hf ∘ Fin.castLE _))
+    congr 1
+    ext v
+    constructor <;> rintro ⟨j, rfl⟩ <;> refine ⟨j, ?_⟩ <;>
+      · have hj : (j : ℕ) < d.r := by
+          have h1 := j.2; have h2 := i.2
+          try simp only [Fin.val_mk] at h1
+          change (i : ℕ) < d.r + 1 at h2; omega
+        simp only [Function.comp_apply]
+        rw [show (Fin.castLE _ j : Fin (d.r + numPairs l 0)) = Fin.castAdd _ ⟨j, hj⟩ from
+          Fin.ext rfl, eVP, Fin.append_left, zbP]
+  rw [e]
+  exact hg _
+
+end FlagP
+
 /-! ## 6b. The Levi decomposition of `P_V` in coordinates -/
 
 /-- The standard basis of `V = W × Z` (`W = F^m`, `Z = F^{2r+1}`). -/
@@ -657,7 +777,8 @@ theorem stdBasis_inr (i : Fin (2 * d.r + 1)) : d.stdBasis (Sum.inr i) = d.zV ((i
   rw [stdBasis, Basis.prod_apply_inr_snd, Pi.basisFun_apply, zV]
   ext j
   simp only [zvec, Pi.single_apply]
-  split_ifs with h1 h2 h2 <;> first | rfl | (exfalso; apply h2; omega) | (exfalso; apply h1; ext; omega)
+  split_ifs with h1 h2 h2 <;>
+    first | rfl | (exfalso; apply h2; omega) | (exfalso; apply h1; ext; omega)
 
 theorem stdBasis_inl (j : Fin d.m) : d.stdBasis (Sum.inl j) = (Pi.single j 1, 0) :=
   Prod.ext (by rw [stdBasis, Basis.prod_apply_inl_fst, Pi.basisFun_apply])
@@ -769,8 +890,8 @@ theorem torusZ_zV (τ : Fin d.r → Fˣ) (i : Fin (2 * d.r + 1)) :
   · subst h; rfl
   · simp
 
-/-- Elements of `P_V` whose `P̄`-image is unipotent on the graded pieces of the weight filtration lie
-in `K^× · N` (`flagUnipSO`). -/
+/-- Elements of `P_V` whose `P̄`-image is unipotent on the graded pieces of the weight
+filtration lie in `K^× · N` (`flagUnipSO`). -/
 theorem mem_flagUnipSO_of_raisesFil {g : GSpin d.QV}
     (hA : RaisesFil (flagWt d.flag) ((specP d.QV g : d.V →ₗ[F] d.V) - LinearMap.id))
     (hB : RaisesFil (flagWt d.flag) ((specP d.QV g⁻¹ : d.V →ₗ[F] d.V) - LinearMap.id)) :
@@ -1084,7 +1205,23 @@ with `K̄` bounded for `σ_{SO}`. -/
 theorem exists_iwasawa_SO :
     ∃ M, ∀ y : d.GbarGrp, ∃ p : d.G, d.snd p ∈ flagStab d.flag ∧
       ∃ k : d.GbarGrp, d.logNormSO k ≤ M ∧ y = d.Pbar p * k := by
-  sorry
+  obtain ⟨n', l', b', hb', hf', h0⟩ := WeakCartan.exists_isFrame
+    ((isNondeg_iff_nondegenerate _).1 d.nondeg_Q0) (v₀ := d.z00)
+    (by rw [d.Q0_z00]; exact d.ν.ne_zero)
+  have h0' : ∀ h, b' ⟨0, h⟩ = d.z00 := fun _ => h0
+  obtain ⟨FW, hFW⟩ := IsotropicFlag.exists_isFull d.QW
+  obtain ⟨K, hK, hdec⟩ := tits_iwasawa d FW (flagVP hb' hf' h0') hFW (isFull_flagVP hb' hf' h0')
+  obtain ⟨c, hc, hle⟩ := d.exists_logNormSO_Pbar_le
+  obtain ⟨B, -, hB⟩ := d.isLogNorm_logNormG.exists_le_of_isCompact hK
+  refine ⟨c * B, fun y => ?_⟩
+  obtain ⟨g, hg⟩ := d.Pbar_surjective y⁻¹
+  obtain ⟨k, hk, q, hq, he⟩ := hdec g
+  refine ⟨q⁻¹, flagStab_flagVP_le hb' hf' h0' ?_, d.Pbar k⁻¹, ?_, ?_⟩
+  · rw [map_inv]; exact (flagStab _).inv_mem hq.2
+  · calc d.logNormSO (d.Pbar k⁻¹) ≤ c * logNorm F d.G k⁻¹ := hle _
+      _ = c * d.logNormG k := by rw [logNorm_inv]; rfl
+      _ ≤ c * B := mul_le_mul_of_nonneg_left (hB _ hk) hc
+  · rw [← map_mul, ← mul_inv_rev, ← he, map_inv, hg, inv_inv]
 
 /-- **Levi decomposition of `P_V` at the level of `SO(V)`** (Thesis §5.1.2, §8.3): for `p` in the
 stabilizer of `⟨z_r⟩ ⊂ ⋯ ⊂ ⟨z_r, …, z_1⟩`, `P(p) = P(n) a(τ) (m ⊕ 1)` with `n ∈ N`,
@@ -1106,19 +1243,20 @@ theorem exists_levi_SO {p : GSpin d.QV} (hp : p ∈ flagStab d.flag) :
   rw [hp', map_mul, map_mul (specP d.QV) y⁻¹, specP_scalarGSpin_eq_one, mul_one,
     map_inv (specP d.QV) m, hmτ, mul_inv_rev, ← map_inv d.extV0, torusZ_inv, torusZ_mul_extV0]
 
--- The products in `SO(W) × SO(V)` make elaboration slow here.
 set_option maxHeartbeats 1600000 in
+-- The products in `SO(W) × SO(V)` make elaboration slow here.
 include hb in
 /-- **Thesis Lemma 8.3.2(ii) at the level of `SO(W) × SO(V)`** (BP Lemma 6.6.2(ii)), for the
 explicit good pair of `weakCartan_G0_SO`: `Ḡ = P̄(H) · A₀⁺A(F) · K̄` with `K̄` bounded for
-`σ_{SO}` (equivalently, relatively compact). Own work; not proved here.
+`σ_{SO}` (equivalently, relatively compact).
 
-Proof sketch (BP's proof of Lemma 6.6.2(ii)): (a) Iwasawa: `Ḡ = P̄(P) K₁` for the stabilizer
-`P = GSpin(W) × P_V` of `⟨z_r⟩ ⊂ ⋯ ⊂ ⟨z_r, …, z_1⟩` (from `tits_iwasawa` for full flags
-extending that flag, e.g. `z_r, …, z_1, u₁, u₂, …`); (b) Levi decomposition at the level of
-`SO(V)`: every element of `P̄_V` is `P(n) a(τ) (m ⊕ 1)` with `n ∈ N`, `m ∈ SO(V₀)`; (c)
-`weakCartan_G0_SO` for `(W ⊆ V₀, b)` applied to `(P(p_W) ⊕ 1, m)`, the converse of
-`extZ_mem_fixer` (`fixer Q₀ b 1 = SO(W) ⊕ 1`), and `a(τ)` commuting with `SO(V₀) ⊕ 1`. -/
+Proof (BP's proof of Lemma 6.6.2(ii)): (a) Iwasawa: `Ḡ = P̄(P) K₁` for the stabilizer
+`P = GSpin(W) × P_V` of `⟨z_r⟩ ⊂ ⋯ ⊂ ⟨z_r, …, z_1⟩` (`exists_iwasawa_SO`, from `tits_iwasawa`
+for the full flag `z_r, …, z_1, u₁, u₂, …` extending that flag, `flagVP`); (b) Levi
+decomposition at the level of `SO(V)`: every element of `P̄_V` is `P(n) a(τ) (m ⊕ 1)` with
+`n ∈ N`, `m ∈ SO(V₀)` (`exists_levi_SO`); (c) `weakCartan_G0_SO` for `(W ⊆ V₀, b)` applied to
+`(P(p_W) ⊕ 1, m)`, the converse of `extZ_mem_fixer` (`fixer Q₀ b 1 = SO(W) ⊕ 1`,
+`exists_extZ_of_mem_fixer`), and `a(τ)` commuting with `SO(W) ⊕ 1`. -/
 theorem exists_weakCartan_SO (hb0 : ∀ i : Fin n, (i : ℕ) = 0 → (b i).1 = 0) :
     ∃ M, ∀ y : d.GbarGrp, ∃ h ∈ d.H, ∃ x ∈ d.coneSO hb hf, ∃ k : d.GbarGrp,
       d.logNormSO k ≤ M ∧ y = d.Pbar h * x * k := by
