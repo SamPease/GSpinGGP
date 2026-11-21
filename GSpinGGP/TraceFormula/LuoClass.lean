@@ -124,6 +124,21 @@ theorem gammaClass_equiv (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) :
 
 variable (ψ : NontrivialAddChar F)
 
+/-- **`θ_F` exists on `𝔤⁰`**: every `F ∈ S_scusp(𝔤⁰(F))` has a function `θ_F` representing its
+orbital pairing (`IsThetaFLie`), when neither `W` nor `V` is a hyperbolic plane.  From Luo
+Thm 7.3.3 for the special orthogonal triple (`luo_lie_geomExpansion_SO`, which provides `θ_F` for
+`SO(W) × SO(V)`), transported to `𝔤⁰` (`isThetaFLie_of_SO`); BP §5.5–5.6, Lie-algebra case. -/
+theorem exists_isThetaFLie (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
+    {f : ↥d.lieZero → ℂ} (hf : d.IsLieScusp f) : ∃ θ, d.IsThetaFLie ψ f θ := by
+  have := d.muG_isHaarMeasure hW hV
+  obtain ⟨μH, μ𝔥, m, hμH, h𝔥, hm, -⟩ := d.exists_JLie_transfer ψ hW hV
+  obtain ⟨e, hen, -⟩ := d.gammaClass_equiv hW hV
+  obtain ⟨μT, hμT, -⟩ := d.torusIntegralLie_toSO ψ hW hV e hen
+  obtain ⟨θ, ⟨h1, h2, h3⟩, -, -⟩ :=
+    luo_lie_geomExpansion_SO d.luoOf hW hV ψ d.muG μH μ𝔥 h𝔥 m hm μT hμT
+      (f ∘ d.toSO.symm) (d.isScusp_toSO hf)
+  exact ⟨_, d.isThetaFLie_of_SO ψ hW hV hf h1 h2 h3⟩
+
 /-- **Thesis Thm 12.2.2 on `𝔤⁰`: `J^Lie(f) = m^Lie_geom(θ_f)`** for `f ∈ S_scusp(𝔤⁰(F))`, when
 neither `W` nor `V` is a hyperbolic plane: Luo Thm 7.3.3 for the special orthogonal triple
 (`luo_lie_geomExpansion_SO`), transported by (L1)–(L9). -/
