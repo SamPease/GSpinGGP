@@ -50,8 +50,7 @@ of Thesis Ch. 8 and 10 and proves the bookkeeping around it.
   `H(F)\G(F)/A_G(F)`: `isInvariantQuotient_mkHG` (the Weil measure is right invariant),
   `xiHG_mkHG` (`xiHG` is the abstract `Ξ^{H\G}`), `logNormHG_eq_fiberInf_logNormModAG`, and
   `prop_6_7_1_iii_of_weakCartanData` (Prop 8.4.1(iii) from weak Cartan data; the outer
-  regularity of the Weil measure it uses is found by instance search from the Hausdorff, locally
-  compact and second countable instances on `HGQuot`).
+  regularity of the Weil measure it uses is the instance `GGPData.weaklyRegular_weilMeasureHG`).
 * `sorry` (own work, Thesis Ch. 8 and 10, adapted from BP Ch. 6, 8): `kernelK_bound` (Thm 10.1.1(i)),
   `kernelK_bound_scusp` (Thm 10.1.1(ii)),
   `lemma_6_5_1_i/ii/iii` (Thesis Lemma 8.2.1); `exists_good_minimal_parabolic` (Thesis
@@ -920,9 +919,7 @@ theorem exists_growth_mkHG_frameTorus {n₁ n₂ : ℕ} {W₁ W₂ : Submodule F
 pp. 151–152): given the weak Cartan decomposition with the comparison `σ_{A_G\G} ≪ σ_{H\G}` on
 the cone and its polynomial growth (`WeakCartanData`, BP (6.7.11), 6.7.1(ii)(b), (6.7.12)), the
 integral `∫ Ξ^{H\G}(x)² σ_{H\G}(x)^{-d} dx` converges for some `d > 0`. The measurability of
-`xiHG` uses the outer regularity of the Weil measure, found by instance search: `HGQuot` is
-Hausdorff, locally compact and second countable, and the measure is finite on compacts
-(`WeaklyRegular.of_pseudoMetrizableSpace_secondCountable_of_locallyFinite`). -/
+`xiHG` uses the outer regularity of the Weil measure (`GGPData.weaklyRegular_weilMeasureHG`). -/
 theorem prop_6_7_1_iii_of_weakCartanData (C₀ : Set ↥d.G) (hC₀ : IsCompact C₀)
     (hC₀' : (interior C₀).Nonempty)
     (W : WeakCartanData d.mkHG d.logNormModAG) :

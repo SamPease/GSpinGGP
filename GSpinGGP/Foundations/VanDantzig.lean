@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import Mathlib
 import TauCeti.Topology.Algebra.Group.OpenSubgroup.Compact
+import TauCeti.Topology.LocallyConstant.Compact
 
 /-!
 # van Dantzig's theorem and compact open subgroups
@@ -45,7 +46,7 @@ theorem exists_isCompact_isClopen_between {X : Type*} [TopologicalSpace X] [T2Sp
     isClopen_biUnion_finset fun x hx => hWcl x (htK x hx), hcover,
     Set.iUnion₂_subset fun x hx => hWU x (htK x hx)⟩
 
-section VanDantzig
+section CompactOpenSubgroups
 
 variable {G₀ : Type*} [Group G₀] [TopologicalSpace G₀] [IsTopologicalGroup G₀]
 
@@ -57,31 +58,14 @@ theorem exists_subgroup_biInvariant_on [T2Space G₀] [LocallyCompactSpace G₀]
     (C : Set G₀) (hC : IsCompact C) :
     ∃ K : Subgroup G₀, IsOpen (K : Set G₀) ∧ IsCompact (K : Set G₀) ∧
       ∀ c ∈ C, ∀ k ∈ K, ∀ k' ∈ K, f (k * c * k') = f c := by
-  have hU : ∃ U ∈ 𝓝 (1 : G₀), ∀ c ∈ C, ∀ k ∈ U, ∀ k' ∈ U, f (k * c * k') = f c := by
-    apply hC.induction_on (p := fun S ↦ ∃ U ∈ 𝓝 (1 : G₀), ∀ c ∈ S, ∀ k ∈ U, ∀ k' ∈ U,
-      f (k * c * k') = f c)
-    · exact ⟨Set.univ, Filter.univ_mem, by simp⟩
-    · exact fun _ _ hst ⟨U, hU, h⟩ => ⟨U, hU, fun c hc => h c (hst hc)⟩
-    · exact fun _ _ ⟨U₁, hU₁, h₁⟩ ⟨U₂, hU₂, h₂⟩ => ⟨U₁ ∩ U₂, Filter.inter_mem hU₁ hU₂,
-        fun c hc k hk k' hk' => hc.elim (fun hc => h₁ c hc k hk.1 k' hk'.1)
-          (fun hc => h₂ c hc k hk.2 k' hk'.2)⟩
-    intro x _
-    have hO : f ⁻¹' {f x} ∈ 𝓝 x := (hf.isOpen_fiber (f x)).mem_nhds rfl
-    have hcont : Continuous fun p : G₀ × G₀ × G₀ => p.1 * p.2.1 * p.2.2 := by fun_prop
-    have hpre : (fun p : G₀ × G₀ × G₀ => p.1 * p.2.1 * p.2.2) ⁻¹' (f ⁻¹' {f x}) ∈
-        𝓝 ((1 : G₀), x, (1 : G₀)) :=
-      hcont.continuousAt.preimage_mem_nhds (by simpa using hO)
-    obtain ⟨u, hu, v, hv, huv⟩ := mem_nhds_prod_iff.mp hpre
-    obtain ⟨v₁, hv₁, v₂, hv₂, hv₁₂⟩ := mem_nhds_prod_iff.mp hv
-    refine ⟨v₁, mem_nhdsWithin_of_mem_nhds hv₁, u ∩ v₂, Filter.inter_mem hu hv₂, ?_⟩
-    intro c hc k hk k' hk'
-    have e1 : f (k * c * k') = f x := huv (Set.mk_mem_prod hk.1 (hv₁₂ (Set.mk_mem_prod hc hk'.2)))
-    have e2 : f ((1 : G₀) * c * 1) = f x :=
-      huv (Set.mk_mem_prod (mem_of_mem_nhds hu) (hv₁₂ (Set.mk_mem_prod hc (mem_of_mem_nhds hv₂))))
-    rw [e1, ← e2, one_mul, mul_one]
-  obtain ⟨U, hU1, hUf⟩ := hU
-  obtain ⟨K, hKc, hKU⟩ := NonarchimedeanGroup.nhds_one_hasBasis_isCompact_openSubgroup.mem_iff.1 hU1
-  exact ⟨K, K.isOpen, hKc, fun c hc k hk k' hk' => hUf c hc k (hKU hk) k' (hKU hk')⟩
+  obtain ⟨V, hVo, hV1, hV⟩ := IsLocallyConstant.exists_isOpen_forall_mem_eq
+    (hf.comp_continuous (by fun_prop : Continuous fun p : G₀ × (G₀ × G₀) => p.2.1 * p.1 * p.2.2))
+    hC ((1 : G₀), (1 : G₀))
+  obtain ⟨u, hu, v, hv, huv⟩ := mem_nhds_prod_iff.mp (hVo.mem_nhds hV1)
+  obtain ⟨K, hKc, hKU⟩ := NonarchimedeanGroup.nhds_one_hasBasis_isCompact_openSubgroup.mem_iff.1
+    (Filter.inter_mem hu hv)
+  refine ⟨K, K.isOpen, hKc, fun c hc k hk k' hk' => ?_⟩
+  simpa using hV (k, k') (huv (Set.mk_mem_prod (hKU hk).1 (hKU hk').2)) c hc
 
 /-- In a totally disconnected locally compact Hausdorff group, every compact subgroup `K₀` lies in
 a compact open subgroup: `K₀ N` with `N = ⋂_{k ∈ K₀} k U k⁻¹` for a compact open subgroup `U`
@@ -141,6 +125,6 @@ theorem isOpen_subgroup_mul_of_mem_nhds_one (H B : Subgroup G₀)
   rw [e]
   exact isOpen_interior.mul_left.mul_right
 
-end VanDantzig
+end CompactOpenSubgroups
 
 end GSpinGGP
