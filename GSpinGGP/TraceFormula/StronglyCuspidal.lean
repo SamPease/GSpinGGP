@@ -129,7 +129,8 @@ every quasi-character `θ₀` (for every `ψ`) whose support on `G_reg(F)` is co
 for a compact `C₀ ⊆ Ω` is `θ_{f₀}` on `G_reg(F)` for a strongly cuspidal `f₀ ∈ C_c^∞(G(F))`
 supported in `Ω`.  "`θ_{f₀}` on `G_reg(F)`" is written as in `bp_thetaF_exists`: some locally
 integrable `θ`, continuous on `G_reg(F)` and equal to `θ₀` there, represents the orbital pairing of
-`f₀`.  This is the last clause of `bp_scusp_surj_ell` (`TraceFormula/Scusp.lean`) for a given `Ω`. -/
+`f₀`.  This is the last clause of `bp_scusp_surj_ell` (`TraceFormula/Scusp.lean`) for a given
+`Ω`. -/
 def ScuspSurjOn (d : GGPData F) (Ω : Set ↥d.G) : Prop :=
   ∀ θ₀ : ↥d.G → ℂ, (∀ ψ : NontrivialAddChar F, IsQuasiCharacter d.G d.lie d.bilin ψ θ₀) →
     (∃ C₀ : Set ↥d.G, IsCompact C₀ ∧ C₀ ⊆ Ω ∧
@@ -184,19 +185,24 @@ p. 5), so they apply to `G = GSpin(W) × GSpin(V)` and to its centralizers `G_x`
   very cuspidal `f ∈ C_c^∞(G(F))` with `θ_{f,x,ω} = θ_φ` (the proof gives `c·θ_φ`, `c > 0`, absorbed
   into `f`).  `Z_G(x) = G_x` for `GSpin` (simply connected derived group), so the invariance holds.
 
-**Adapting argument (own; not formalized).**  Let `x` be the semisimple part of `g`.  It is elliptic:
-an elliptic regular `y` near `g` is conjugate into `x exp(ω)`, its centralizer torus `T` lies in
-`G_x`, so `A_{G_x} ⊆ T` and `T/A_G` anisotropic give `A_{G_x} = A_G`.  Take a compact open good `ω`
-and `U = A_G(F) · (x exp ω)^{G(F)}` (it contains `g`, since `ω` is open, `G_x`-invariant and contains
-`0`, so contains the nilpotent part of `log(x⁻¹ g)`).  The set `(x exp ω)^{G(F)}` is a `G`-domain (open, closed and
-invariant, W1 p. 6), compact modulo conjugation (W1 §3.1, p. 14; the axiom `waldspurger_goodNbhd`).
-`U` is closed because the translates `a (x exp ω)^{G(F)}` form a locally finite family (via the
-Harish-Chandra map `H_G`, as for the `A_G`-cutoff of `TraceFormula/ThetaF.lean`); overlapping
-translates are handled by taking differences of invariant clopen sets.  A `θ₀` as in `ScuspSurjOn d U` meets finitely many translates; on each, its descent
-to `𝔤_x(F)` (W1 §4.1) is a quasi-character with compact support modulo conjugation, which is `θ_φ`
-(Prop. 6.4); `φ` is cut down to `1_ω φ` (very cuspidal, `ω` being a `G_x`-domain) so that it is
-supported in `ω`, lifted to `f` (Lemme 6.2) and translated by `a`; summing gives `f₀`.  Finally W1's
-`θ_f` (defined by weighted orbital integrals, W1 §5.3) represents the orbital pairing (BP Thm
+**Adapting argument (own; not formalized).**  Let `x` be the semisimple part of `g`.  It is
+elliptic: an elliptic regular `y` near `g` is conjugate into `x exp(ω)`, its centralizer torus `T`
+lies in `G_x`, so `A_{G_x} ⊆ T` and `T/A_G` anisotropic give `A_{G_x} = A_G`.  Take a compact open
+good `ω` and `U = A_G(F) · (x exp ω)^{G(F)}` (it contains `g`, since `ω` is open, `G_x`-invariant
+and contains `0`, so contains the nilpotent part of `log(x⁻¹ g)`).  The set `Ω₀ = (x exp ω)^{G(F)}`
+is a `G`-domain, compact modulo conjugation (W1 §3.1, p. 14; the axiom `waldspurger_goodNbhd`); a
+`G`-domain is open, closed and invariant (definition, W1 p. 6).  `U` is closed: the Harish-Chandra
+map `H_G` is locally constant and conjugation invariant, so it takes finitely many values on `Ω₀`;
+writing `A_G(F)` as
+the compact group `A_c = A_G(F) ∩ ker H_G` times a lattice of representatives `a_λ`,
+`U = ⋃_λ a_λ (A_c · Ω₀)`, where each `A_c · Ω₀` is closed (`A_c` compact, `Ω₀` closed) and the
+family is locally finite (`H_G` separates the pieces up to a finite overlap).  Overlapping
+translates are handled by taking differences of invariant clopen sets.  A `θ₀` as in
+`ScuspSurjOn d U` meets finitely many translates; on each, its descent to `𝔤_x(F)` (W1 §4.1) is a
+quasi-character with compact support modulo conjugation, which is `θ_φ` (Prop. 6.4); `φ` is cut
+down to `1_ω φ` (very cuspidal: `ω` is a `G_x`-domain, W1 §5.1 and §6.1) so that it is supported
+in `ω`, lifted to `f` (Lemme 6.2) and translated by `a`; summing gives `f₀`.  Finally W1's `θ_f`
+(defined by weighted orbital integrals, W1 §5.3) represents the orbital pairing (BP Thm
 5.5.1(iv) with the Weyl integration formula, as in `bp_thetaF_represents`).
 
 **Why not axioms.**  W1's `θ_f`, `θ_{f,x,ω}` and very cuspidal functions on `𝔤_x(F)` (with the

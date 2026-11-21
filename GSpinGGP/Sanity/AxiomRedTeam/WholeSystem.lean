@@ -418,9 +418,9 @@ theorem toyD_exists_isCompact_ellRegSet_modConjAG :
     rw [toyD_ellRegSet]; trivial
   exact subset_closure he
 
-/-- The two `sorry` statements behind `bp_scusp_surj_ell` are no stronger than its former
-statement: its conclusion implies `exists_scuspSurjOn_nhd_ell` (take `U = Ω`, closed, so it
-contains the closure of the elliptic set). -/
+/-- The two `sorry` statements behind `bp_scusp_surj_ell` are no stronger than that theorem
+(whose statement is unchanged): its conclusion implies `exists_scuspSurjOn_nhd_ell` (take
+`U = Ω`, closed, so it contains the closure of the elliptic set). -/
 example (d : GGPData F) (h : type_of% (LitTF.bp_scusp_surj_ell d)) {g : ↥d.G}
     (hg : g ∈ closure (ellipticRegularSet d.G d.lie d.AG)) :
     type_of% (LitTF.exists_scuspSurjOn_nhd_ell d hg) := by
