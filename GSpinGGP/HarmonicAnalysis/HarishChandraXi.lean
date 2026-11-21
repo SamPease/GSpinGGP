@@ -319,6 +319,14 @@ theorem xi_pos (g : G) : 0 < I.xi g := by
   rw [hsupp]
   exact Measure.measure_univ_pos.2 (NeZero.ne _)
 
+/-- For commutative `G`, `Ξ ≡ 1`: `δ_P` is trivial on the central elements of `P`. -/
+theorem xi_eq_one_of_comm (hc : ∀ x y : G, x * y = y * x) (g : G) : I.xi g = 1 := by
+  have hρ : ∀ x : G, I.rho x = 1 := fun x =>
+    I.delta_eq_one_of_central _ fun y => Subtype.ext (hc _ _)
+  unfold xi
+  simp only [hρ, Real.sqrt_one, integral_const, smul_eq_mul, mul_one, Measure.real]
+  exact inv_mul_cancel₀ I.haar_K_toReal_pos.ne'
+
 /-- `Ξ` is right `K`-invariant (Waldspurger 2003, Lemme II.1.1, first assertion). -/
 theorem xi_mul_right_mem_K (g : G) {k : G} (hk : k ∈ I.K) : I.xi (g * k) = I.xi g := by
   unfold xi

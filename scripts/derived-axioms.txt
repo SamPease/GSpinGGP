@@ -8,4 +8,5 @@ GSpinGGP.jantzen_finrank_soCentMat_ge
 GSpinGGP.luo_lie_geomExpansion_SO
 GSpinGGP.tits_iwasawa
 GSpinGGP.bp_sqrt_weylDisc_mul_locallyBounded
+GSpinGGP.waldspurger2010_thm_7_9
 GSpinGGP.exists_iwasawaPair_xi_sq_integrable

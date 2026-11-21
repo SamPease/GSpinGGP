@@ -317,6 +317,21 @@ theorem logNorm_equiv_entryMaxNorm (G : Subgroup Aˣ) :
       (one_le_maxNorm (F := F) G g) hC (by simpa using (h g).2)
     simpa [logNorm] using this
 
+omit [PAdicField F] in
+/-- `entryMaxNorm b` is continuous on `G` (the matrix entries of `L_a` are linear in `a`). -/
+theorem continuous_entryMaxNorm (G : Subgroup Aˣ) : Continuous (entryMaxNorm b G) := by
+  have := isTopologicalRing_of_moduleTopology F A
+  let ℓ : A →ₗ[F] (Fin n → Fin n → F) :=
+    LinearMap.pi fun i => b.equivFun.toLinearMap ∘ₗ LinearMap.mulRight F (b i)
+  have hℓ : Continuous ℓ := IsModuleTopology.continuous_of_linearMap ℓ
+  have hb : ∀ a : A, basisOpNorm b (LinearMap.mulLeft F a) = ‖ℓ a‖ := fun _ => rfl
+  have hv : Continuous fun g : ↥G => ((g : Aˣ) : A) :=
+    Units.continuous_val.comp continuous_subtypeVal
+  have hvi : Continuous fun g : ↥G => (((g⁻¹ : ↥G) : Aˣ) : A) := hv.comp continuous_inv
+  unfold entryMaxNorm
+  simp only [hb]
+  exact continuous_const.max (((hℓ.comp hv).norm).max ((hℓ.comp hvi).norm))
+
 end EntryNorm
 
 /-! ### `G → Ḡ = SO(W) × SO(V)` -/

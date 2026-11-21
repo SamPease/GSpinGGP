@@ -2,7 +2,6 @@
 Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import GSpinGGP.GGP.Triple
 import GSpinGGP.HarmonicAnalysis.HarishChandraXi
 import GSpinGGP.TraceFormula.LogNormDescent
 
@@ -45,7 +44,8 @@ identifications: a choice of torus, compact subgroup and lattice basis, and nota
   `‖g‖ = sup_{i,j} sup(|a_ij|_F, |b_ij|_F)` for `τ(g) = (a_ij)`, `τ(g)⁻¹ = (b_ij)`, "On vérifie
   que `‖g‖ ≥ 1`", `σ(g) = log ‖g‖`.
 * §II.1, pp. 250–251: `Ξ(g) = ⟨π(g)e, e⟩` for `π = I_{P₀}^G 1` and `e` its `K`-fixed vector with
-  `e(1) = 1`, and "`Ξ(g) = ∫_K δ₀(m₀(kg))^{1/2} dk`", `δ₀ = δ_{P₀}`, `g = u₀(g) m₀(g) k₀(g)`.
+  `e(1) = 1`, and "`Ξ(g) = ∫_K δ₀(m₀(kg))^{1/2} dk`", with `g = u₀(g) m₀(g) k₀(g)` (p. 240) and
+  `δ₀ = δ_{P₀}` (p. 241).
 
 **Steps (identifications).**
 (a) *Hypotheses and choice of `A₀`, `K`.* A `PAdicField` is non-archimedean local with finite
@@ -60,10 +60,14 @@ identifications: a choice of torus, compact subgroup and lattice basis, and nota
   `C(W)^×`, and `C(W)^×` acts faithfully on `C(W)` by left multiplication, with closed image
   (likewise for `V`).  `K_s` is compact, so it stabilizes an `𝒪`-lattice `L ⊆ A`; for an
   `𝒪`-basis `b` of `L`, `τ₀(K_s) ⊆ GL_n(𝒪)` in the basis `b`, and Waldspurger's `‖g‖` is
-  `sup` of the absolute values of the matrix entries of `L_g` and `L_{g⁻¹}` in `b`, which is
-  `entryMaxNorm b d.G g` (the `max 1` there changes nothing since `‖g‖ ≥ 1`).  Hence
-  `1 + σ(g) = 1 + log (entryMaxNorm b d.G g)`.
-(c) *`δ` and `Ξ`.* Waldspurger's `δ_H` (p. 240) is the module of `H` for left Haar measure, the
+  `sup` of the normalized absolute values `|·|_F` of the matrix entries of `L_g` and `L_{g⁻¹}`
+  in `b`.  The norm `‖·‖` of `F` (Mathlib's) is `|·|_F^c` for some `c > 0` (two absolute values
+  defining the same topology), so `entryMaxNorm b d.G g`, built with `‖·‖`, is `‖g‖_W^c` (the
+  `max 1` there changes nothing since `‖g‖_W ≥ 1`), and `log (entryMaxNorm b d.G g) = c σ(g)`.
+  Then `(1 + c σ)^{-d} ≤ max(1, 1/c)^d (1 + σ)^{-d}`, so the same `d` works for
+  `1 + log entryMaxNorm` as for Waldspurger's `1 + σ`.
+(c) *`δ` and `Ξ`.* Waldspurger's `δ_H` (p. 240; see the integration formula (2) there) is the
+  module of `H` for left Haar measure, the
   convention of `IwasawaPair.delta` (Mathlib's `modularCharacter`: `μ(E p⁻¹) = δ(p) μ(E)`).  The
   module of `P₀` is trivial on `U₀` (a union of compact subgroups), so
   `δ₀(m₀(g)) = δ_{P₀}(u₀(g) m₀(g))`, and with `dk` of total mass `1` Waldspurger's `Ξ` is

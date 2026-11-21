@@ -218,22 +218,6 @@ theorem toyD_growth : ∃ (R₀ M : ℝ), logNorm F (𝕋).G 1 < R₀ ∧ ∀ R 
   rw [Set.mem_singleton_iff.1 hz, one_mul]
   exact Set.mem_biUnion hj ⟨j * e, ⟨e, he, rfl⟩, rfl⟩
 
-/-- `entryMaxNorm b` is continuous on `G` (matrix entries of `L_a` are linear in `a`). -/
-theorem continuous_entryMaxNorm {A : Type*} [Ring A] [Algebra F A] [Module.Finite F A]
-    [TopologicalSpace A] [IsModuleTopology F A] {n : ℕ} (b : Module.Basis (Fin n) F A)
-    (G : Subgroup Aˣ) : Continuous (entryMaxNorm b G) := by
-  have := isTopologicalRing_of_moduleTopology F A
-  let ℓ : A →ₗ[F] (Fin n → Fin n → F) :=
-    LinearMap.pi fun i => b.equivFun.toLinearMap ∘ₗ LinearMap.mulRight F (b i)
-  have hℓ : Continuous ℓ := IsModuleTopology.continuous_of_linearMap ℓ
-  have hb : ∀ a : A, basisOpNorm b (LinearMap.mulLeft F a) = ‖ℓ a‖ := fun _ => rfl
-  have hv : Continuous fun g : ↥G => ((g : Aˣ) : A) :=
-    Units.continuous_val.comp continuous_subtypeVal
-  have hvi : Continuous fun g : ↥G => (((g⁻¹ : ↥G) : Aˣ) : A) := hv.comp continuous_inv
-  unfold entryMaxNorm
-  simp only [hb]
-  exact continuous_const.max (((hℓ.comp hv).norm).max ((hℓ.comp hvi).norm))
-
 theorem isInvariantQuotient_id_toyD :
     IsInvariantQuotient (id : ↥(𝕋).G → ↥(𝕋).G) (Measure.haar : Measure ↥(𝕋).G) where
   descends _ _ _ h := by simp only [id] at h ⊢; rw [h]
@@ -286,13 +270,8 @@ def toyXiPair : IwasawaPair ↥(𝕋).G where
   mul_eq g := ⟨g, trivial, 1, one_mem _, (mul_one g).symm⟩
 
 /-- `Ξ ≡ 1` at `toyD`: `G` is abelian, so `δ_P = 1`. -/
-theorem toyXiPair_xi_eq_one (g : ↥(𝕋).G) : (toyXiPair (F := F)).xi g = 1 := by
-  have hρ : ∀ x : ↥(𝕋).G, (toyXiPair (F := F)).rho x = 1 := fun x =>
-    (toyXiPair (F := F)).delta_eq_one_of_central _ fun y =>
-      Subtype.ext (toyData_G_comm (K := F) _ _)
-  unfold IwasawaPair.xi
-  simp only [hρ, Real.sqrt_one, integral_const, smul_eq_mul, mul_one, Measure.real]
-  exact inv_mul_cancel₀ (toyXiPair (F := F)).haar_K_toReal_pos.ne'
+theorem toyXiPair_xi_eq_one (g : ↥(𝕋).G) : (toyXiPair (F := F)).xi g = 1 :=
+  (toyXiPair (F := F)).xi_eq_one_of_comm toyD_G_comm g
 
 /-- The hypotheses of `exists_iwasawaPair_xi_sq_integrable` hold at `toyD`: the empty flags are
 full, and `whittB` of them is `G`. -/
@@ -304,7 +283,7 @@ theorem toyD_xi_sq_integrable_hyps :
       (emptyFlag_isFull toyData_wittIndex_QV) toyData_wittIndex_QW toyData_wittIndex_QV⟩
 
 /-- **(V) The conclusion of `exists_iwasawaPair_xi_sq_integrable` at `toyD`**, without the axiom,
-for any basis `b` (with `D = 4`). -/
+with `b = Module.finBasis` and `D = 4` (the same proof works for any basis). -/
 theorem toyD_exists_iwasawaPair_xi_sq_integrable :
     ∃ (I : IwasawaPair ↥(𝕋).G) (_ : I.P = (𝕋).whittB (emptyFlag _) (emptyFlag _))
       (b : Module.Basis (Fin (Module.finrank F (𝕋).ambient)) F (𝕋).ambient) (D : ℕ),
