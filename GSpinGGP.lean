@@ -107,6 +107,10 @@ import GSpinGGP.GGP.Hilbert90Units
 import GSpinGGP.GGP.CliffordDescent
 import GSpinGGP.Literature.Localization
 import GSpinGGP.Literature.Waldspurger
+import GSpinGGP.TraceFormula.W1Lie
+import GSpinGGP.Literature.WaldspurgerLie
+import GSpinGGP.TraceFormula.W1Untruncated
+import GSpinGGP.TraceFormula.LieHypW
 import GSpinGGP.Literature.Parabolic
 import GSpinGGP.Literature.Tits
 import GSpinGGP.TraceFormula.InvariantSets
