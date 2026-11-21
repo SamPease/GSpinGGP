@@ -302,14 +302,37 @@ $\gspin(V'_x)$ is regular nilpotent in $\mathfrak g_x$, because with an abelian 
 $\dim\mathfrak g_{x,Y}$ is the same for every $Y$.
 \end{proof}
 
-\begin{literature}[Multiplicity at most one]
-\label{LIT-emoryTakeda_mult_le_one}
+\begin{literature}[Flath's tensor product theorem]
+\label{LIT-flath_tensor_decomposition}
+\lean{GSpinGGP.flath_tensor_decomposition}
+\leanok
+An irreducible admissible representation of a product $G_1\times G_2$ of locally compact totally
+disconnected groups is $\pi_1\otimes\pi_2$ with $\pi_i$ irreducible admissible.
+
+\assumedfrom{Flath, Corvallis 1979, Thm.~1 (1.2)}
+\end{literature}
+
+\begin{literature}[Uniqueness of Bessel models]
+\label{LIT-panYan_mult_le_one}
+\lean{GSpinGGP.panYan_mult_le_one}
+\leanok
+\uses{G, GGPData, GSpin, H, xi}
+For irreducible admissible $\rho_0$ of $\GSpin(W)$ and $\rho$ of $\GSpin(V)$,
+$\dim\Hom_{H(F)}(\rho_0\otimes\rho,\xi)\le 1$.
+
+\assumedfrom{\cite{Yan}, Thm.~1.1; \cite{ET}, Thm.~1.1 ($r=0$)}
+\end{literature}
+
+\begin{theorem}[Multiplicity at most one]
+\label{emoryTakeda_mult_le_one}
 \lean{GSpinGGP.emoryTakeda_mult_le_one}
 \leanok
-\uses{G, GGPData, GSpin, H, IsTempered, UnitaryRep, xi}
+\uses{IsTempered, UnitaryRep, LIT-panYan_mult_le_one, LIT-flath_tensor_decomposition, smoothRep_isIrreducible_isAdmissible}
 For every GGP triple and every irreducible tempered unitary representation $\pi$ of $G(F)$,
 $m(\pi)=\dim\Hom_{H(F)}(\pi^\infty,\xi)\le 1$ (Thesis Thm.~5.5.1).
-
-\assumedfrom{\cite{ET}, Thm.~1.3 ($r=0$), with the reduction of \cite{BP}, \S6.3 and \cite{GGP}, \S15; directly \cite{Yan}}
-\end{literature}
+\end{theorem}
+\begin{proof}
+\leanok
+$\pi^\infty$ is irreducible admissible, hence $\rho_0\otimes\rho$ by Flath; apply Pan Yan's theorem.
+\end{proof}
 

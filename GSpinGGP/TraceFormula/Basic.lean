@@ -1617,16 +1617,6 @@ section LeviInvolution
 
 open CliffordAlgebra
 
-/-- `GSpin(W) × GSpin(V) → G` is continuous. -/
-theorem continuous_pair : Continuous d.pair := by
-  apply continuous_induced_rng.2
-  rw [Units.continuous_iff]
-  constructor
-  · exact (Units.continuous_val.comp (continuous_subtypeVal.comp _root_.continuous_fst)).prodMk
-      (Units.continuous_val.comp (continuous_subtypeVal.comp _root_.continuous_snd))
-  · exact (Units.continuous_coe_inv.comp (continuous_subtypeVal.comp _root_.continuous_fst)).prodMk
-      (Units.continuous_coe_inv.comp (continuous_subtypeVal.comp _root_.continuous_snd))
-
 theorem continuous_conjιGSpin {V : Type*} [AddCommGroup V] [Module F V] [Module.Finite F V]
     {Q : QuadraticForm F V} {w : V} (hw : Q w ≠ 0) : Continuous (conjιGSpin Q hw) :=
   continuous_induced_rng.2 ((continuous_const.mul continuous_subtypeVal).mul continuous_const)

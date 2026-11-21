@@ -19,6 +19,7 @@ import GSpinGGP.Foundations.ModuleTopologyPAdic
 import GSpinGGP.TraceFormula.JHatSelfDual
 import GSpinGGP.TraceFormula.JHatTransport
 import GSpinGGP.Foundations.Representations
+import GSpinGGP.Foundations.SmoothRepresentations
 import GSpinGGP.Foundations.UnitarySchur
 import GSpinGGP.Foundations.GSpin
 import GSpinGGP.Foundations.HypPlane
@@ -38,6 +39,9 @@ import GSpinGGP.Foundations.PAdicQuadraticForms
 import GSpinGGP.Literature.Measure
 import GSpinGGP.Literature.Fourier
 import GSpinGGP.Literature.HarishChandra
+import GSpinGGP.Literature.SmoothRepresentations
+import GSpinGGP.GGP.UnitaryCharacters
+import GSpinGGP.GGP.MultOne
 import GSpinGGP.GGP.Germs
 import GSpinGGP.Literature.GSpin
 import GSpinGGP.Literature.NilpotentOrbits

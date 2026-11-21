@@ -50,6 +50,16 @@ section CompactOpenSubgroups
 
 variable {G₀ : Type*} [Group G₀] [TopologicalSpace G₀] [IsTopologicalGroup G₀]
 
+/-- **van Dantzig**, in the form used for test functions and smooth vectors: in a locally compact,
+totally disconnected Hausdorff group, every neighbourhood of `1` contains a compact open
+subgroup. -/
+theorem exists_compactOpenSubgroup_subset [T2Space G₀] [LocallyCompactSpace G₀]
+    [TotallyDisconnectedSpace G₀] :
+    ∀ U ∈ 𝓝 (1 : G₀), ∃ K : Subgroup G₀,
+      IsOpen (K : Set G₀) ∧ IsCompact (K : Set G₀) ∧ (K : Set G₀) ⊆ U := fun U hU => by
+  obtain ⟨K, hKc, hKU⟩ := NonarchimedeanGroup.nhds_one_hasBasis_isCompact_openSubgroup.mem_iff.1 hU
+  exact ⟨K, K.isOpen, hKc, hKU⟩
+
 /-- **Uniform local constancy**: a locally constant function on a totally disconnected locally
 compact Hausdorff group is, on a compact set `C`, invariant under left and right translation by
 some compact open subgroup. -/

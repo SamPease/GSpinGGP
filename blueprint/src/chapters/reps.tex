@@ -220,16 +220,54 @@ The regular semisimple set $\Greg(F)$ is open in $G(F)$ and its complement has H
 Harish-Chandra's theorem and the identification $G'=\Greg(F)$.
 \end{proof}
 
+\begin{literature}[Cartier's corollary of Bernstein's theorem]
+\label{LIT-cartier_smoothVectors_dense_admissible}
+\lean{GSpinGGP.cartier_smoothVectors_dense_admissible}
+\leanok
+\uses{G, GGPData, UnitaryRep}
+For an irreducible unitary representation $\pi$ of $G(F)$, the smooth vectors $\pi^\infty$ are dense and
+form an admissible representation.
+
+\assumedfrom{Cartier, Corvallis 1979, Cor.~2.3; Bernstein 1974, Thm.~1}
+\end{literature}
+
+\begin{theorem}[$\pi^\infty$ is irreducible and admissible]
+\label{smoothRep_isIrreducible_isAdmissible}
+\lean{GSpinGGP.smoothRep_isIrreducible_isAdmissible, GSpinGGP.isIrreducible_smoothRep}
+\leanok
+\uses{LIT-cartier_smoothVectors_dense_admissible}
+For an irreducible unitary $\pi$, the smooth representation $\pi^\infty$ is irreducible and admissible.
+\end{theorem}
+\begin{proof}
+\leanok
+A nonzero $G$-stable $W\subseteq\pi^\infty$ is dense; $e_K=\pi(1_K)$ maps $W$ into the finite-dimensional,
+hence closed, $W\cap\pi^K$, so $\pi^K=e_K(\overline W)\subseteq W$ for every compact open $K$.
+\end{proof}
+
 \begin{literature}[Harish-Chandra's regularity theorem]
-\label{LIT-hc_character_exists}
+\label{LIT-hc_character_exists_admissible}
+\lean{GSpinGGP.hc_character_exists_admissible}
+\leanok
+\uses{G, GGPData, gspin}
+For an irreducible admissible smooth representation $\rho$ of $G(F)$, the distribution
+$f\mapsto\operatorname{tr}\rho(f)$ on $C_c^\infty(G(F))$ is given by a locally integrable function which is
+locally constant on $G'(F)$.
+
+\assumedfrom{\cite{HC99}, Thm.~16.3; Thesis Ch.~1}
+\end{literature}
+
+\begin{theorem}[Characters of tempered representations]
+\label{hc_character_exists}
 \lean{GSpinGGP.hc_character_exists}
 \leanok
-\uses{G, GGPData, GSpin, IsTempered, UnitaryRep, gspin}
-For an irreducible tempered $\pi$, the distribution $f\mapsto\operatorname{tr}\pi(f)$ on $C_c^\infty(G(F))$
-is given by a locally integrable function which is locally constant on $\Greg(F)$.
-
-\assumedfrom{Bernstein (admissibility); \cite{HC99}; \cite{BP}, \S2.1; Thesis Ch.~1}
-\end{literature}
+\uses{IsTempered, UnitaryRep, LIT-hc_character_exists_admissible, smoothRep_isIrreducible_isAdmissible}
+For an irreducible tempered $\pi$, the distribution $f\mapsto\operatorname{tr}\pi(f)$ is given by a locally
+integrable function, continuous on $G'(F)$.
+\end{theorem}
+\begin{proof}
+\leanok
+Apply Literature~\ref{LIT-hc_character_exists_admissible} to $\pi^\infty$, whose trace is that of $\pi$.
+\end{proof}
 
 \begin{definition}[The character $\theta_\pi$]
 \label{charG}
@@ -284,14 +322,26 @@ $\hat j(\mathcal O,\cdot)$ near $0$).
 \end{literature}
 
 \begin{literature}[Local character expansion]
-\label{LIT-hc_character_isQuasiCharacter}
+\label{LIT-hc_character_isQuasiCharacter_admissible}
+\lean{GSpinGGP.hc_character_isQuasiCharacter_admissible}
+\leanok
+\uses{G, GGPData, IsQuasiCharacter, gspin}
+For an irreducible admissible smooth representation $\rho$, $\theta_\rho$ is a quasi-character.
+
+\assumedfrom{\cite{HC99}, Thm.~16.2; \cite{Wal10}, \S4; \cite{BP}, Prop.~4.1.1(i); Thesis Prop.~4.1.1.1(i)}
+\end{literature}
+
+\begin{theorem}[Characters of tempered representations are quasi-characters]
+\label{hc_character_isQuasiCharacter}
 \lean{GSpinGGP.hc_character_isQuasiCharacter}
 \leanok
-\uses{G, GGPData, GSpin, IsQuasiCharacter, IsTempered, UnitaryRep, gspin}
+\uses{IsQuasiCharacter, IsTempered, UnitaryRep, LIT-hc_character_isQuasiCharacter_admissible, smoothRep_isIrreducible_isAdmissible}
 For irreducible tempered $\pi$, $\theta_\pi$ is a quasi-character.
-
-\assumedfrom{\cite{HC99}; \cite{Wal10}, \S4; \cite{BP}, Prop.~4.1.1(i); Thesis Prop.~4.1.1.1(i)}
-\end{literature}
+\end{theorem}
+\begin{proof}
+\leanok
+$\theta_\pi=\theta_{\pi^\infty}$; apply Literature~\ref{LIT-hc_character_isQuasiCharacter_admissible}.
+\end{proof}
 
 \begin{literature}[Rodier's theorem]
 \label{LIT-rodier_germ_one}
