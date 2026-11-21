@@ -420,7 +420,8 @@ variable {F : Type} [NontriviallyNormedField F] [PAdicField F] (d : GGPData F)
 Beuzart-Plessis §1.1): a closed subgroup of `P` complementary to the unipotent radical
 `U = N_{F_W} × N_{F_V}`, i.e. `M ∩ U = 1` and `P = M U` (Mathlib's `Subgroup.IsComplement'`,
 inside `P`).  `M` normalizes `U` because `U` is normal in `P` (`whittU_normal`).  The Levi
-subgroups `flagLeviG` of splittings of the flags are examples (`FlagLeviDatum.isLevi`). -/
+subgroups `flagLeviG` of splittings of the flags are examples (`FlagLeviDatum.isLevi`), and the
+only ones used here; that every closed complement of `U` in `P` is of this form is not proved. -/
 structure IsLevi (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV) (M : Subgroup ↥d.G) :
     Prop where
   isClosed : IsClosed (M : Set ↥d.G)

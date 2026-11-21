@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.GGP.LeviSubgroup
+import GSpinGGP.Sanity.LieAudit
 
 /-!
 # Sanity checks for Levi subgroups, `𝒫(M)` and `H_M` (`GGP/LeviSubgroup.lean`)
@@ -15,6 +16,8 @@ import GSpinGGP.GGP.LeviSubgroup
    cocharacter `λ(τ)`, `0 < |τ| < 1`, lies in `M` and `H_M(T) ≠ 0` on the first `GL`-coordinate
    (`det(T|_{V_1}) = τ^{dim V_1}` with `dim V_1 ≥ 1`), so the `GL`-coordinates of `H_M` are not
    identically zero.
+   This is instantiated (`exists_HM_ne_zero_hypV`) at `Sanity.hypVData` (`V` a hyperbolic plane,
+   a full flag of length `1`).
 4. **Agreement with `H_G`** (`HM_gspin_eq_hcMap`): the `GSpin`-coordinate of `H_M` is the first
    coordinate of the existing Harish-Chandra map `hcMap` when the space is not a hyperbolic
    plane.
@@ -98,6 +101,19 @@ theorem exists_HM_ne_zero (L : d.FlagLeviDatum) (h : 0 < L.FV.len) :
 theorem HM_gspin_eq_hcMap (L : d.FlagLeviDatum) (hW : ¬ IsHypPlane d.QW) (m : ↥L.M) :
     L.HM m (Sum.inl (Sum.inr ())) = Multiplicative.toAdd (hcMap d.QW (d.fst m)).1 := by
   simp [FlagLeviDatum.HM, FlagLeviDatum.char, hcMap, gspinChar₁, hW, logAbs_apply]
+
+/-- **A nonempty flag datum exists**: at `Sanity.hypVData` (`V` a hyperbolic plane) a full flag of
+`V` has length `1`, and `H_M` is nonzero there. -/
+theorem exists_HM_ne_zero_hypV :
+    ∃ (L : (Sanity.hypVData (F := F)).FlagLeviDatum) (h : 0 < L.FV.len) (m : ↥L.M),
+      L.HM m (Sum.inr (Sum.inl ⟨0, h⟩)) ≠ 0 := by
+  obtain ⟨FW, -⟩ := IsotropicFlag.exists_isFull (Sanity.hypVData (F := F)).QW
+  obtain ⟨FV, hFV⟩ := IsotropicFlag.exists_isFull (Sanity.hypVData (F := F)).QV
+  obtain ⟨L, -, hL, -⟩ := exists_isLevi FW FV
+  have h : 0 < L.FV.len := by
+    rw [hL, hFV.1, Sanity.hypVData_isHypPlane_QV.2.2]; exact one_pos
+  obtain ⟨m, hm⟩ := exists_HM_ne_zero L h
+  exact ⟨L, h, m, hm⟩
 
 end GGPData
 
