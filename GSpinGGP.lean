@@ -153,6 +153,7 @@ import GSpinGGP.TraceFormula.ThetaF
 import GSpinGGP.TraceFormula.Analytic
 import GSpinGGP.TraceFormula.GoodParabolic
 import GSpinGGP.TraceFormula.WeakCartan
+import GSpinGGP.TraceFormula.ConeTorus
 import GSpinGGP.TraceFormula.Interface
 import GSpinGGP.TraceFormula.GermTranslate
 import GSpinGGP.TraceFormula.TorusDescent

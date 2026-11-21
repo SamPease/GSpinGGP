@@ -6,6 +6,7 @@ import GSpinGGP.TraceFormula.MGeom
 import GSpinGGP.TraceFormula.Scusp
 import GSpinGGP.TraceFormula.Spectral
 import GSpinGGP.TraceFormula.Analytic
+import GSpinGGP.TraceFormula.ConeTorus
 import GSpinGGP.GGP.Descent
 import GSpinGGP.Literature.Localization
 import GSpinGGP.TraceFormula.InvariantSets
