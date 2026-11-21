@@ -388,6 +388,27 @@ theorem wtDet_apply (w : ℤ) (m : flagLevi (Q := Q) b wt) :
 
 end WtDet
 
+section WtDetContinuous
+
+variable {K : Type*} [Field K] [Invertible (2 : K)] [TopologicalSpace K] [IsTopologicalRing K]
+variable {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V] [TopologicalSpace V]
+  [IsModuleTopology K V]
+variable {Q : QuadraticForm K V} {ι : Type*} [Fintype ι] [DecidableEq ι] {b : Basis ι K V}
+  {wt : ι → ℤ}
+
+/-- The determinant characters are continuous. -/
+theorem continuous_wtDet (w : ℤ) :
+    Continuous fun m : flagLevi (Q := Q) b wt => ((wtDet (Q := Q) b wt w m : Kˣ) : K) := by
+  simp_rw [wtDet_apply, ← LinearMap.det_toMatrix b]
+  refine Continuous.matrix_det (continuous_pi fun i => continuous_pi fun j => ?_)
+  simp only [LinearMap.toMatrix_apply, wtBlock, LinearMap.add_apply, LinearMap.comp_apply,
+    LinearEquiv.coe_coe, map_add, Finsupp.add_apply]
+  refine Continuous.add ?_ continuous_const
+  exact (IsModuleTopology.continuous_of_linearMap ((b.coord i) ∘ₗ wtProj b wt w)).comp
+    (continuous_specP_apply continuous_subtypeVal (b j))
+
+end WtDetContinuous
+
 /-! ## 2. Levi subgroups of `P = P_{F_W} × P_{F_V}` -/
 
 namespace GGPData
@@ -505,6 +526,209 @@ theorem exists_isCompact_zpow_of_mem_whittU {FW : IsotropicFlag d.QW} {FV : Isot
     rw [map_zpow]; exact hW k
   · show d.snd (u ^ k) ∈ CV
     rw [map_zpow]; exact hV k
+
+/-! ## 3. Flag Levi data, `𝒫(M)`, `a_M`, `H_M` and `H_P` -/
+
+/-- `M_{F_W} × M_{F_V} ∩ N_{F_W} × N_{F_V} = 1`. -/
+theorem flagLeviG_inf_whittU {ιW ιV : Type*} [Fintype ιW] [Fintype ιV] {FW : IsotropicFlag d.QW}
+    {FV : IsotropicFlag d.QV} {bW : Basis ιW F (Fin d.m → F)} {wtW : ιW → ℤ}
+    {bV : Basis ιV F d.V} {wtV : ιV → ℤ}
+    (hsW : IsFlagSplitting FW bW wtW) (hsV : IsFlagSplitting FV bV wtV) :
+    d.flagLeviG bW wtW bV wtV ⊓ d.whittU FW FV = ⊥ := by
+  rw [eq_bot_iff]
+  rintro g ⟨hm, hu⟩
+  have h1 : d.fst g ∈ flagLevi (Q := d.QW) bW wtW ⊓ flagUnip FW := ⟨hm.1, hu.1⟩
+  have h2 : d.snd g ∈ flagLevi (Q := d.QV) bV wtV ⊓ flagUnip FV := ⟨hm.2, hu.2⟩
+  rw [hsW.flagLevi_inf_flagUnip d.nondeg, Subgroup.mem_bot] at h1
+  rw [hsV.flagLevi_inf_flagUnip d.nondeg_QV, Subgroup.mem_bot] at h2
+  rw [Subgroup.mem_bot, ← d.pair_fst_snd g, h1, h2]
+  exact map_one d.pair
+
+variable (d) in
+/-- **A flag Levi datum** of `G`: isotropic flags `F_W`, `F_V` with splittings `(b_W, wt_W)`,
+`(b_V, wt_V)` of their weight filtrations (`exists_flagSplitting`).  Its Levi subgroup is
+`M = M_{F_W} × M_{F_V}` (`flagLeviG`), a Levi of `P = P_{F_W} × P_{F_V}` (`isLevi`). -/
+structure FlagLeviDatum where
+  FW : IsotropicFlag d.QW
+  FV : IsotropicFlag d.QV
+  ιW : Type
+  ιV : Type
+  [fintypeW : Fintype ιW]
+  [fintypeV : Fintype ιV]
+  bW : Basis ιW F (Fin d.m → F)
+  wtW : ιW → ℤ
+  bV : Basis ιV F d.V
+  wtV : ιV → ℤ
+  hsW : IsFlagSplitting FW bW wtW
+  hsV : IsFlagSplitting FV bV wtV
+
+namespace FlagLeviDatum
+
+attribute [instance] fintypeW fintypeV
+
+variable (L : d.FlagLeviDatum)
+
+/-- The Levi subgroup `M = M_{F_W} × M_{F_V}`. -/
+abbrev M : Subgroup ↥d.G := d.flagLeviG L.bW L.wtW L.bV L.wtV
+
+/-- The parabolic subgroup `P = P_{F_W} × P_{F_V}`. -/
+abbrev P : Subgroup ↥d.G := d.whittB L.FW L.FV
+
+/-- The unipotent radical `U = N_{F_W} × N_{F_V}`. -/
+abbrev U : Subgroup ↥d.G := d.whittU L.FW L.FV
+
+/-- **`M` is a Levi subgroup of `P`** (Thesis §5.1.2: `P = M N`). -/
+theorem isLevi : d.IsLevi L.FW L.FV L.M where
+  isClosed := ((isClosed_flagLevi (Q := d.QW)).preimage d.continuous_fst).inter
+    ((isClosed_flagLevi (Q := d.QV)).preimage d.continuous_snd)
+  le := d.flagLeviG_le_whittB L.hsW L.hsV
+  isComplement' := by
+    refine Subgroup.isComplement'_of_disjoint_and_mul_eq_univ ?_ ?_
+    · rw [Subgroup.disjoint_def]
+      intro x hm hu
+      have : (x : ↥d.G) ∈ L.M ⊓ L.U := ⟨hm, hu⟩
+      rw [flagLeviG_inf_whittU L.hsW L.hsV, Subgroup.mem_bot] at this
+      exact Subtype.ext this
+    · refine Set.eq_univ_iff_forall.2 fun p => ?_
+      obtain ⟨m, hm, u, hu, he⟩ := d.exists_mem_flagLeviG_mul L.hsW L.hsV p.2
+      exact Set.mem_mul.2 ⟨⟨m, d.flagLeviG_le_whittB L.hsW L.hsV hm⟩, hm,
+        ⟨u, d.whittU_le_whittB _ _ hu⟩, hu, Subtype.ext he.symm⟩
+
+/-- **The opposite datum**: the opposite flags (`IsFlagSplitting.oppFlag`) with the same bases and
+the negated weights.  Its parabolic is the opposite parabolic `P̄ = M Ū` (`opp_M`). -/
+def opp : d.FlagLeviDatum where
+  FW := L.hsW.oppFlag d.nondeg
+  FV := L.hsV.oppFlag d.nondeg_QV
+  ιW := L.ιW
+  ιV := L.ιV
+  bW := L.bW
+  wtW := -L.wtW
+  bV := L.bV
+  wtV := -L.wtV
+  hsW := L.hsW.isFlagSplitting_oppFlag d.nondeg
+  hsV := L.hsV.isFlagSplitting_oppFlag d.nondeg_QV
+
+/-- `P` and `P̄` have the same Levi subgroup. -/
+theorem opp_M : L.opp.M = L.M := by
+  simp only [M, opp, GGPData.flagLeviG, flagLevi_neg]
+
+/-- The coordinates of `a_M`: the weights `1, …, len` of each flag (the `GL`-factors of `M`) and
+one coordinate for each `GSpin`-factor. -/
+abbrev Coord : Type := (Fin L.FW.len ⊕ Unit) ⊕ (Fin L.FV.len ⊕ Unit)
+
+/-- **The real vector space `a_M`** (Thesis §2.1; Beuzart-Plessis §1.1:
+`a_M = Hom(X^*(M)_F, ℝ)`), in coordinates given by the rational characters `char L c` of `M`:
+for `M = ∏ GL(Z_i/Z_{i-1}) × GSpin(Z^⊥/Z)` in each factor (Asgari 2002 §2), the determinants of
+the `GL`-blocks and the norm of the `GSpin`-factor (`detChar`, a power of the similitude
+character) form a basis of `X^*(M)_F ⊗ ℚ`, so `λ ↦ (λ(χ_c))_c` identifies
+`Hom(X^*(M)_F, ℝ)` with `Coord → ℝ`.  This needs `Z^⊥/Z` not to be a hyperbolic plane (then
+`GSpin(Z^⊥/Z)` is a split torus of rank `2`): in that case the flag is refined by one of the two
+isotropic lines of `Z^⊥/Z`, which gives the same `P` and `M`. -/
+abbrev aM : Type := L.Coord → ℝ
+
+/-- The characters of `M` giving the coordinates of `a_M`. -/
+def char : L.Coord → (↥L.M →* Fˣ)
+  | Sum.inl (Sum.inl i) => (wtDet (Q := d.QW) L.bW L.wtW ((i : ℤ) + 1)).comp
+      ((d.fst.comp L.M.subtype).codRestrict _ fun m => m.2.1)
+  | Sum.inl (Sum.inr _) => (detChar d.QW).comp (d.fst.comp L.M.subtype)
+  | Sum.inr (Sum.inl i) => (wtDet (Q := d.QV) L.bV L.wtV ((i : ℤ) + 1)).comp
+      ((d.snd.comp L.M.subtype).codRestrict _ fun m => m.2.2)
+  | Sum.inr (Sum.inr _) => (detChar d.QV).comp (d.snd.comp L.M.subtype)
+
+/-- **The Harish-Chandra map of `M`**, `H_M(m)(χ) = log |χ(m)|` (Thesis §2.1; Beuzart-Plessis
+§1.1), in the coordinates of `aM`. -/
+def HM (m : ↥L.M) : L.aM := fun c => Real.log ‖((L.char c m : Fˣ) : F)‖
+
+theorem HM_mul (m m' : ↥L.M) : L.HM (m * m') = L.HM m + L.HM m' := by
+  funext c
+  simp only [HM, Pi.add_apply, map_mul, Units.val_mul, norm_mul]
+  exact Real.log_mul (norm_ne_zero_iff.2 (L.char c m).ne_zero)
+    (norm_ne_zero_iff.2 (L.char c m').ne_zero)
+
+theorem HM_one : L.HM 1 = 0 := by
+  funext c; simp [HM]
+
+end FlagLeviDatum
+
+variable (d) in
+/-- **`𝒫(M)`, the parabolic subgroups with Levi component `M`** (Thesis §2.1; Beuzart-Plessis
+§1.1): the subgroups `P_{F_W} × P_{F_V}` (every parabolic subgroup of `G` is of this form,
+Thesis §5.1.2) of which `M` is a Levi subgroup. -/
+def parabolics (M : Subgroup ↥d.G) : Set (Subgroup ↥d.G) :=
+  {P | ∃ (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV), P = d.whittB FW FV ∧
+    d.IsLevi FW FV M}
+
+namespace FlagLeviDatum
+
+variable (L : d.FlagLeviDatum)
+
+theorem mem_parabolics : L.P ∈ d.parabolics L.M := ⟨L.FW, L.FV, rfl, L.isLevi⟩
+
+/-- **The opposite parabolic** `P̄ ∈ 𝒫(M)`. -/
+theorem opp_mem_parabolics : L.opp.P ∈ d.parabolics L.M :=
+  ⟨L.opp.FW, L.opp.FV, rfl, L.opp_M ▸ L.opp.isLevi⟩
+
+/-- **`𝒫(M)` is finite.**  Sketch: choose the splitting bases to be Witt bases (hyperbolic pairs
+and an anisotropic kernel); the diagonal split torus `A` then lies in `M`, and contains an element
+whose eigenvalues on the hyperbolic lines are pairwise distinct and `≠ 1`.  If `M ⊆ P_{F'}`, every
+member of `F'` is `A`-stable, hence spanned by its intersections with the eigenspaces, i.e. by
+basis vectors (the intersection with the anisotropic kernel is isotropic, hence `0`).  So `F'`
+ranges over finitely many flags. -/
+theorem finite_parabolics : (d.parabolics L.M).Finite := by
+  sorry
+
+end FlagLeviDatum
+
+namespace FlagLeviDatum
+
+variable (L : d.FlagLeviDatum)
+
+theorem continuous_char (c : L.Coord) : Continuous fun m : ↥L.M => ((L.char c m : Fˣ) : F) := by
+  classical
+  rcases c with (i | _) | (i | _)
+  · exact (continuous_wtDet (Q := d.QW) _).comp
+      ((d.continuous_fst.comp continuous_subtypeVal).subtype_mk _)
+  · exact (continuous_detChar d.QW).comp (d.continuous_fst.comp continuous_subtypeVal)
+  · exact (continuous_wtDet (Q := d.QV) _).comp
+      ((d.continuous_snd.comp continuous_subtypeVal).subtype_mk _)
+  · exact (continuous_detChar d.QV).comp (d.continuous_snd.comp continuous_subtypeVal)
+
+/-- **The map `H_P`** (Thesis §2.6, p. 29; Waldspurger 2003 §I.1; Beuzart-Plessis §1.10): for
+`P = P_{F_W} × P_{F_V} ∈ 𝒫(M)` and a compact open subgroup `K` with `G = P K`,
+`H_P(g) = H_M(m)` where `g = m u k` (`hP_mul`; well defined for every such `K`: `H_M` is trivial on
+the compact group `M`-part of `P ∩ K`). -/
+def hP {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV} (hL : d.IsLevi FW FV L.M)
+    (K : Subgroup ↥d.G) (hKo : IsOpen (K : Set ↥d.G)) (hKc : IsCompact (K : Set ↥d.G))
+    (hPK : ∀ g : ↥d.G, ∃ p ∈ d.whittB FW FV, ∃ k ∈ K, g = p * k) : ↥d.G → L.aM :=
+  (IwasawaPair.mk (d.whittB FW FV) K (d.isClosed_whittB FW FV) hKo hKc hPK).extend
+    fun p => L.HM (hL.proj p)
+
+/-- **`H_P(m u k) = H_M(m)`.** -/
+theorem hP_mul {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV} (hL : d.IsLevi FW FV L.M)
+    {K : Subgroup ↥d.G} (hKo : IsOpen (K : Set ↥d.G)) (hKc : IsCompact (K : Set ↥d.G))
+    (hPK : ∀ g : ↥d.G, ∃ p ∈ d.whittB FW FV, ∃ k ∈ K, g = p * k) (m : ↥L.M)
+    {u : ↥d.G} (hu : u ∈ d.whittU FW FV) {k : ↥d.G} (hk : k ∈ K) :
+    L.hP hL K hKo hKc hPK ((m : ↥d.G) * u * k) = L.HM m := by
+  set I : IwasawaPair ↥d.G := IwasawaPair.mk (d.whittB FW FV) K (d.isClosed_whittB FW FV) hKo
+    hKc hPK
+  have hinv : ∀ p q : ↥I.P, (q : ↥d.G) ∈ I.K →
+      L.HM (hL.proj (p * q)) = L.HM (hL.proj p) := by
+    intro p q hq
+    rw [map_mul, HM_mul, add_eq_left]
+    funext c
+    have hC : IsCompact ((Subtype.val : ↥(d.whittB FW FV) → ↥d.G) ⁻¹' (K : Set ↥d.G)) :=
+      (d.isClosed_whittB FW FV).isClosedEmbedding_subtypeVal.isCompact_preimage hKc
+    have := norm_char_eq_one_of_zpow_mem_compact ((L.char c).comp hL.proj)
+      ((L.continuous_char c).comp hL.continuous_proj) hC
+      (u := q) fun n => by simpa using K.zpow_mem hq n
+    simp only [HM, Pi.zero_apply]
+    rw [show (L.char c) (hL.proj q) = ((L.char c).comp hL.proj) q from rfl, this, Real.log_one]
+  have := I.extend_mul (h := fun p => L.HM (hL.proj p)) hinv ⟨(m : ↥d.G) * u, (d.whittB FW FV).mul_mem (hL.le m.2)
+    (d.whittU_le_whittB FW FV hu)⟩ hk
+  simp only [hP]
+  rw [this, hL.proj_mul m hu]
+
+end FlagLeviDatum
 
 end GGPData
 
