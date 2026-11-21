@@ -24,10 +24,10 @@ single point, and `A` is a scalar.
 
 ## Main results
 
-* `IsIdempotentElem.eq_zero_or_eq_one_of_forall_commute`: an idempotent commuting with an
-  irreducible family of operators is `0` or `1`.
-* `exists_eq_smul_one_of_isStarNormal_of_forall_commute`: a normal operator commuting with an
-  irreducible family of operators is a scalar.
+* `ContinuousLinearMap.IsIdempotentElem.eq_zero_or_eq_one_of_forall_commute`: an idempotent
+  commuting with an irreducible family of operators is `0` or `1`.
+* `ContinuousLinearMap.exists_eq_smul_one_of_isStarNormal_of_forall_commute`: a normal operator
+  commuting with an irreducible family of operators is a scalar.
 * `UnitaryRep.star_ρ`: `π(g)* = π(g⁻¹)`.
 * `dixmier_commutant_scalar`: Schur's lemma for irreducible unitary representations.
 * `schur_central`: the centre acts by scalars.
@@ -35,9 +35,7 @@ single point, and `A` is a scalar.
 
 open scoped ComplexStarModule
 
-namespace GSpinGGP
-
-section Operators
+namespace ContinuousLinearMap
 
 variable {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℂ H] [CompleteSpace H]
   {ι : Type*} {S : ι → H →L[ℂ] H}
@@ -49,25 +47,12 @@ theorem IsIdempotentElem.eq_zero_or_eq_one_of_forall_commute {P : H →L[ℂ] H}
     (hP : IsIdempotentElem P) (hS : ∀ W : Submodule ℂ H, IsClosed (W : Set H) →
       (∀ i, ∀ v ∈ W, S i v ∈ W) → W = ⊥ ∨ W = ⊤)
     (hc : ∀ i, Commute P (S i)) : P = 0 ∨ P = 1 := by
-  -- the range of `P` is the kernel of `1 - P`
-  let W : Submodule ℂ H := LinearMap.ker ((1 - P : H →L[ℂ] H) : H →ₗ[ℂ] H)
-  have hmem : ∀ v, v ∈ W ↔ P v = v := fun v => by
-    change (1 - P) v = 0 ↔ P v = v
-    rw [sub_apply, one_apply_eq_self, sub_eq_zero, eq_comm]
-  have hPW : ∀ v, P v ∈ W := fun v => (hmem _).2 (by
-    rw [← mul_apply_eq_comp, hP.eq])
-  have hinv : ∀ i, ∀ v ∈ W, S i v ∈ W := fun i v hv => (hmem _).2 (by
-    rw [← mul_apply_eq_comp, (hc i).eq, mul_apply_eq_comp,
-      (hmem v).1 hv])
-  rcases hS W (ContinuousLinearMap.isClosed_ker _) hinv with h | h
-  · left
-    ext v
-    have := hPW v
-    rw [h, Submodule.mem_bot] at this
-    simp [this]
-  · right
-    ext v
-    exact (hmem v).1 (h ▸ Submodule.mem_top)
+  refine (hS P.range (IsIdempotentElem.isClosed_range hP)
+    fun i v hv => ((IsIdempotentElem.commute_iff hP).1 (hc i)).1 hv).imp
+    (fun h => coe_injective (by simpa using LinearMap.range_eq_bot.1 h)) fun h => ?_
+  ext v
+  exact (LinearMap.IsIdempotentElem.mem_range_iff (IsIdempotentElem.toLinearMap hP)).1
+    (h ▸ Submodule.mem_top)
 
 /-- A normal operator commuting with a family `S` of operators on a nonzero Hilbert space whose
 only closed common invariant subspaces are `⊥` and `⊤` is a scalar: its spectral projections are
@@ -97,18 +82,18 @@ theorem exists_eq_smul_one_of_isStarNormal_of_forall_commute [Nontrivial H]
   exact ⟨z, (CFC.eq_algebraMap_of_spectrum_subset_singleton A z hsub).trans
     (Algebra.algebraMap_eq_smul_one z)⟩
 
-end Operators
+end ContinuousLinearMap
+
+namespace GSpinGGP
 
 namespace UnitaryRep
 
 variable {G : Type*} [Group G] [TopologicalSpace G]
 
 /-- `π(g)* = π(g⁻¹)`. -/
-theorem star_ρ (π : UnitaryRep G) (g : G) : star (π.ρ g) = π.ρ g⁻¹ := by
-  calc star (π.ρ g) = star (π.ρ g) * (π.ρ g * π.ρ g⁻¹) := by
-        rw [← map_mul, mul_inv_cancel, map_one, mul_one]
-    _ = π.ρ g⁻¹ := by
-        rw [← mul_assoc, Unitary.star_mul_self_of_mem (π.unitary_ρ g), one_mul]
+theorem star_ρ (π : UnitaryRep G) (g : G) : star (π.ρ g) = π.ρ g⁻¹ :=
+  left_inv_eq_right_inv (Unitary.star_mul_self_of_mem (π.unitary_ρ g))
+    (by rw [← map_mul, mul_inv_cancel, map_one])
 
 end UnitaryRep
 
@@ -135,8 +120,10 @@ theorem dixmier_commutant_scalar {G : Type*} [Group G] [TopologicalSpace G] (π 
     exact (((hT' g).sub_left (hTs g)).smul_left _).smul_left _
   have : IsStarNormal (ℜ T : π.H →L[ℂ] π.H) := (ℜ T).property.isStarNormal
   have : IsStarNormal (ℑ T : π.H →L[ℂ] π.H) := (ℑ T).property.isStarNormal
-  obtain ⟨a, ha⟩ := exists_eq_smul_one_of_isStarNormal_of_forall_commute hπ.2 _ hre
-  obtain ⟨b, hb⟩ := exists_eq_smul_one_of_isStarNormal_of_forall_commute hπ.2 _ him
+  obtain ⟨a, ha⟩ :=
+    ContinuousLinearMap.exists_eq_smul_one_of_isStarNormal_of_forall_commute hπ.2 _ hre
+  obtain ⟨b, hb⟩ :=
+    ContinuousLinearMap.exists_eq_smul_one_of_isStarNormal_of_forall_commute hπ.2 _ him
   refine ⟨a + Complex.I * b, ?_⟩
   rw [← realPart_add_I_smul_imaginaryPart T, ha, hb, smul_smul, add_smul]
 

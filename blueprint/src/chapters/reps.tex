@@ -33,16 +33,22 @@ For a unitary representation $\pi$ of $G(F)$, \[ m(\pi)=\dim\Hom_{H(F)}(\pi^\inf
 where $\pi^\infty$ is the space of smooth vectors (Thesis \S5.5).
 \end{definition}
 
-\begin{literature}[Schur's lemma]
-\label{LIT-dixmier_commutant_scalar}
+\begin{theorem}[Schur's lemma]
+\label{dixmier_commutant_scalar}
 \lean{GSpinGGP.dixmier_commutant_scalar}
 \leanok
 \uses{UnitaryRep}
 For a continuous unitary representation of a topological group with no closed invariant subspaces other than $0$ and the
-whole space, every bounded operator commuting with the group is a scalar.
-
-\assumedfrom{\cite{Dixmier}, 13.1.4 (i)$\Rightarrow$(ii)}
-\end{literature}
+whole space, every bounded operator commuting with the group is a scalar (\cite{Dixmier}, 13.1.4 (i)$\Rightarrow$(ii)).
+\end{theorem}
+\begin{proof}
+\leanok
+If $T$ commutes with the group, so does $T^*$, since $\pi(g)^*=\pi(g^{-1})$; hence so do the real and imaginary parts
+of $T$. By the spectral theorem for bounded normal operators (Tau Ceti), each spectral projection of a normal operator
+commuting with the group commutes with the group, so its range is a closed invariant subspace and the projection is $0$
+or $1$. Two points of the spectrum would have disjoint open neighbourhoods whose spectral projections are both $1$ with
+product $0$; so the spectrum is a point and the operator is a scalar.
+\end{proof}
 
 \begin{theorem}[The centre acts by a character]
 \label{schur_central}
@@ -53,8 +59,8 @@ In an irreducible unitary representation of a topological group, the centre acts
 \end{theorem}
 \begin{proof}
 \leanok
-\uses{LIT-dixmier_commutant_scalar}
-A central element's operator commutes with the whole group, so it is a scalar by Lemma~\ref{LIT-dixmier_commutant_scalar}.
+\uses{dixmier_commutant_scalar}
+A central element's operator commutes with the whole group, so it is a scalar by Theorem~\ref{dixmier_commutant_scalar}.
 \end{proof}
 
 \begin{theorem}[$G(F)$ is unimodular]

@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Foundations.LocalGroups
 import GSpinGGP.Foundations.Representations
-import GSpinGGP.Foundations.UnitarySchur
 import GSpinGGP.Foundations.GSpin
 
 /-!
