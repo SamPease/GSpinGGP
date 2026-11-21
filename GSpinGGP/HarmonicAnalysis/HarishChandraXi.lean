@@ -63,6 +63,8 @@ The estimates of Waldspurger 2003 Lemme II.1.1 (second assertion), II.1.5, II.1.
 Prop II.4.5 are stated by Waldspurger for `K` the fixer of a special point of the apartment of a
 maximal split torus `A₀ ⊆ P₀`, `σ` the log-norm of an embedding `τ : G → GL_n` with
 `τ(K) ⊆ GL_n(𝒪)`, and `M̄₀⁺` defined through `H₀` and the simple roots.  They are not stated here.
+The comparison `Ξ_K ≤ C Ξ_{K'}` (`exists_xi_le_mul_xi`) transfers such estimates from one `K` to
+another with the same `P`.
 -/
 
 open MeasureTheory Topology Filter
@@ -323,6 +325,12 @@ theorem xi_mul_right_mem_K (g : G) {k : G} (hk : k ∈ I.K) : I.xi (g * k) = I.x
   congr 2
   funext k'
   rw [← mul_assoc, I.rho_mul_right hk]
+
+/-- `Ξ` is continuous: it is right `K`-invariant for the open subgroup `K`, hence locally
+constant. -/
+theorem continuous_xi : Continuous I.xi :=
+  (isLocallyConstant_of_mul_right_invariant I.isOpen_K fun x _ hk =>
+    I.xi_mul_right_mem_K x hk).continuous
 
 /-- The inner step of the doubling principle: for `k' ∈ K`,
 `∫_K δ(p(k' g₁ k g₂))^{1/2} dk = δ(p(k' g₁))^{1/2} ∫_K δ(p(k g₂))^{1/2} dk`. -/

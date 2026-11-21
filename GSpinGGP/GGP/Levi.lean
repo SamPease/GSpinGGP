@@ -2,7 +2,6 @@ import GSpinGGP.GGP.Triple
 import GSpinGGP.GGP.Centralizers
 import GSpinGGP.GGP.Germs
 import GSpinGGP.TraceFormula.StronglyCuspidal
-import GSpinGGP.Literature.Parabolic
 import GSpinGGP.HarmonicAnalysis.HarishChandraXi
 
 /-!
@@ -1393,12 +1392,6 @@ instance borelSpace_leviQuot : BorelSpace (d.LeviQuot FW FV) := ⟨rfl⟩
 instance secondCountableTopology_whittB : SecondCountableTopology ↥(d.whittB FW FV) :=
   Topology.IsEmbedding.subtypeVal.secondCountableTopology
 
-/-- The modular character `δ_P` of `P(F) = P_{F_W} × P_{F_V}` (BP §1.5; Mathlib's
-`modularCharacter`, `μ(E p⁻¹) = δ_P(p) μ(E)` for a left Haar measure `μ`, so that
-`δ_P(p) = |det Ad(p)|_{𝔲}|`; the same convention as `IwasawaPair.delta` in
-`HarmonicAnalysis/HarishChandraXi.lean`; checked on `F^× ⋉ F` below). -/
-def deltaP (p : ↥(d.whittB FW FV)) : ℝ := (Measure.modularCharacter p : ℝ)
-
 end LeviTop
 
 /-- **Data of a parabolically induced representation** `i_P^G(σ)` (Thesis §3.2, §5.1.2; BP §1.5):
@@ -1423,13 +1416,25 @@ variable {d} (D : d.ParIndData)
 /-- The parabolic subgroup `P(F)`. -/
 abbrev P : Subgroup ↥d.G := d.whittB D.FW D.FV
 
+/-- `(P(F), K)` as an Iwasawa pair (`HarmonicAnalysis/HarishChandraXi.lean`). Its `delta` is the
+modular character `δ_P` of `P(F) = P_{F_W} × P_{F_V}` (BP §1.5; Mathlib's `modularCharacter`,
+`μ(E p⁻¹) = δ_P(p) μ(E)` for a left Haar measure `μ`, so that `δ_P(p) = |det Ad(p)|_{𝔲}|`;
+checked on `F^× ⋉ F` below). -/
+def toIwasawaPair : IwasawaPair ↥d.G where
+  P := D.P
+  K := D.K
+  isClosed_P := d.isClosed_whittB D.FW D.FV
+  isOpen_K := D.isOpen_K
+  isCompact_K := D.isCompact_K
+  mul_eq := D.mul_eq
+
 /-- The smooth vectors of `i_P^G(σ)`: functions `f : G(F) → H_σ` with
 `f(pg) = δ_P(p)^{1/2} σ(pU) f(g)` that are right invariant under an open subgroup (BZ 1977 §2,
 Thesis §3.2). -/
 def smoothSpace : Submodule ℂ (↥d.G → D.σ.H) where
   carrier := {f | (∀ (p : ↥D.P) (g : ↥d.G),
       f ((p : ↥d.G) * g) =
-        ((Real.sqrt (d.deltaP D.FW D.FV p) : ℝ) : ℂ) • D.σ.ρ (QuotientGroup.mk p) (f g)) ∧
+        ((Real.sqrt (D.toIwasawaPair.delta p) : ℝ) : ℂ) • D.σ.ρ (QuotientGroup.mk p) (f g)) ∧
     ∃ K' : Subgroup ↥d.G, IsOpen (K' : Set ↥d.G) ∧ ∀ g : ↥d.G, ∀ k ∈ K', f (g * k) = f g}
   zero_mem' := ⟨fun p g => by simp, ⊤, isOpen_univ, fun _ _ _ => rfl⟩
   add_mem' := by
@@ -1446,14 +1451,7 @@ def smoothSpace : Submodule ℂ (↥d.G → D.σ.H) where
 theorem continuous_of_mem_smoothSpace {f : ↥d.G → D.σ.H} (hf : f ∈ D.smoothSpace) :
     Continuous f := by
   obtain ⟨-, K', hK', i⟩ := hf
-  refine continuous_iff_continuousAt.2 fun g => ?_
-  have hmem : {x : ↥d.G | g⁻¹ * x ∈ K'} ∈ 𝓝 g := by
-    refine (hK'.preimage (continuous_const.mul continuous_id)).mem_nhds ?_
-    simp [K'.one_mem]
-  refine (continuousAt_const (y := f g)).congr (Filter.eventually_of_mem hmem fun x hx => ?_)
-  have := i g _ hx
-  rw [mul_inv_cancel_left] at this
-  exact this.symm
+  exact (isLocallyConstant_of_mul_right_invariant hK' i).continuous
 
 /-- The pre-Hilbert space of smooth vectors (a type synonym, so that the `Pi` topology of
 `G(F) → H_σ` does not leak into the norm topology). -/
@@ -1575,29 +1573,19 @@ theorem inner_sqrt_smul_unitary {E : Type*} [NormedAddCommGroup E] [InnerProduct
 /-- The equivariance `f(p x) = δ_P(p)^{1/2} σ(p) f(x)` of a smooth vector. -/
 theorem apply_mul_of_mem {f : ↥d.G → D.σ.H} (hf : f ∈ D.smoothSpace) (p : ↥D.P) (x : ↥d.G) :
     f ((p : ↥d.G) * x) =
-      ((Real.sqrt (d.deltaP D.FW D.FV p) : ℝ) : ℂ) • D.σ.ρ (QuotientGroup.mk p) (f x) := by
+      ((Real.sqrt (D.toIwasawaPair.delta p) : ℝ) : ℂ) • D.σ.ρ (QuotientGroup.mk p) (f x) := by
   obtain ⟨h, -⟩ := hf
   exact h p x
 
 /-- `⟨f₁(p x), f₂(p x)⟩ = δ_P(p) ⟨f₁(x), f₂(x)⟩` (`σ` is unitary and `δ_P^{1/2}` is real). -/
 theorem inner_toFun_mul (f₁ f₂ : D.Pre) (p : ↥D.P) (x : ↥d.G) :
     inner ℂ (D.toFun f₁ ((p : ↥d.G) * x)) (D.toFun f₂ ((p : ↥d.G) * x)) =
-      (d.deltaP D.FW D.FV p : ℂ) * inner ℂ (D.toFun f₁ x) (D.toFun f₂ x) := by
+      (D.toIwasawaPair.delta p : ℂ) * inner ℂ (D.toFun f₁ x) (D.toFun f₂ x) := by
   have e1 := D.apply_mul_of_mem (D.toFun_mem f₁) p x
   have e2 := D.apply_mul_of_mem (D.toFun_mem f₂) p x
   have h := inner_sqrt_smul_unitary (D.σ.unitary_ρ (QuotientGroup.mk p))
     (NNReal.coe_nonneg (Measure.modularCharacter p)) (D.toFun f₁ x) (D.toFun f₂ x)
   exact (congrArg₂ (fun a b => inner ℂ a b) e1 e2).trans h
-
-/-- `(P(F), K)` as an Iwasawa pair (`HarmonicAnalysis/HarishChandraXi.lean`); its `delta` is
-`deltaP` (by definition). -/
-def toIwasawaPair : IwasawaPair ↥d.G where
-  P := D.P
-  K := D.K
-  isClosed_P := d.isClosed_whittB D.FW D.FV
-  isOpen_K := D.isOpen_K
-  isCompact_K := D.isCompact_K
-  mul_eq := D.mul_eq
 
 /-- **Normalized parabolic induction is unitary** (Bernstein–Zelevinsky 1977 §2; Casselman,
 *Introduction to the theory of admissible representations*, Prop. 3.1.2 (number unverified)):

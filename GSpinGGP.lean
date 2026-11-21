@@ -56,7 +56,6 @@ import GSpinGGP.GGP.RegularNilpotentConverse
 import GSpinGGP.Foundations.SingleBlock
 import GSpinGGP.Foundations.OrthogonalSum
 import GSpinGGP.Foundations.BasisNorm
-import GSpinGGP.Foundations.LogNormEntries
 import GSpinGGP.Foundations.WeakCartanSO
 import GSpinGGP.Foundations.WeakCartanRotation
 import GSpinGGP.Foundations.WeakCartanFrame
