@@ -14,8 +14,8 @@ The local trace formula of Thesis Ch. 7–12 is split into:
   `distribJ`, the orbital pairing and `thetaF`, the elliptic regular set;
 * `TraceFormula/ThetaF.lean`: the theory of `θ_f` (existence, uniqueness, quasi-character
   property, `χ`-equivariant transfer);
-* `TraceFormula/Analytic.lean`: the analytic estimates (kernel bounds, convergence of `J`,
-  Harish-Chandra Schwartz spaces);
+* `TraceFormula/Analytic.lean`: the analytic estimates (kernel bounds, Harish-Chandra Schwartz
+  spaces); `TraceFormula/ConeTorus.lean`: Thesis Prop 8.4.1(iii) and the convergence of `J`;
 * `TraceFormula/SpinorNorm.lean`: the spinor norms and the Harish-Chandra map `H_G`;
 * `TraceFormula/Interface.lean`: the shared definitions of the decomposition (`GeomAt`,
   `HYP`, `QC`, supports);

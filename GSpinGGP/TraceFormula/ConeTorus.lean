@@ -70,10 +70,7 @@ variable {N : ℕ} {W' : Submodule F d.V0} {e f : Fin N → d.V0}
 /-- A hyperbolic frame of `V₀` is one of `V` along `ι₀`. -/
 theorem isHypFrame_iota0 (hF : IsHypFrame d.Q0 W' e f) :
     IsHypFrame d.QV (orthFrame d.QV (d.iota0 ∘ e) (d.iota0 ∘ f)) (d.iota0 ∘ e) (d.iota0 ∘ f) :=
-  isHypFrame_orthFrame
-    (fun i j => by simpa only [Function.comp_apply, d.polar_iota0] using hF.polar_ee i j)
-    (fun i j => by simpa only [Function.comp_apply, d.polar_iota0] using hF.polar_ff i j)
-    (fun i j => by simpa only [Function.comp_apply, d.polar_iota0] using hF.polar_ef i j)
+  hF.orthFrame_comp d.iota0 d.polar_iota0
 
 /-- `π₀` maps the complement of `ι₀(e, f)` in `V` into the complement `W'` of `(e, f)` in `V₀`. -/
 theorem pi0_mem_of_mem_orthFrame (hF : IsHypFrame d.Q0 W' e f) {v : d.V}
@@ -265,7 +262,10 @@ end Cone
 with nonempty interior defining `Ξ^{H\G} = Ξ^{H\G}_{C₀}` (`xiHG`); the thesis fixes one such
 `C₀`, and different choices give equivalent functions (Thesis §8.4).  Proof: BP's argument
 (`prop_6_7_1_iii_of_growth`) for the explicit good pair of a maximal frame `z₀ = w₀, w₁, …` of
-`V₀`, with the polynomial growth of the cone from `exists_growth_cone`. -/
+`V₀`, with the polynomial growth of the cone from `exists_growth_cone`.
+
+Still depends on the `sorry` `exists_weakCartan_SO` (Thesis Lemma 8.3.2(ii) at the level of `SO`),
+through `exists_weakCartan`. -/
 theorem prop_6_7_1_iii (C₀ : Set ↥d.G) (hC₀ : IsCompact C₀) (hC₀' : (interior C₀).Nonempty) :
     ∃ d₀ : ℝ, 0 < d₀ ∧
       Integrable (fun q : d.HGQuot => d.xiHG C₀ q ^ 2 * d.logNormHG q ^ (-d₀)) d.weilMeasureHG := by
