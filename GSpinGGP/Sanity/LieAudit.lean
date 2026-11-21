@@ -26,8 +26,9 @@ instance is checked to give no `False`.
   `hypWData` (`W` a hyperbolic plane, `r = 0`), plain `def`s.  Both axioms carry the hypotheses
   `¬ IsHypPlane d.QW`, `¬ IsHypPlane d.QV`, which fail there (`hypVData_isHypPlane_QV`,
   `hypWData_isHypPlane_QW`): the instances are vacuous, and `geomAt_near` goes through
-  `geomAt_near_of_isHypPlane_V` (proved, only axiom `exists_isSelfDual`) and the named `sorry`
-  `geomAt_near_of_isHypPlane_W` instead.
+  `geomAt_near_of_isHypPlane_V` (proved, only axiom `exists_isSelfDual`) and
+  `geomAt_near_of_isHypPlane_W` (from Waldspurger 2010 Thm 7.9 and named `sorry`s,
+  `TraceFormula/LieHypW.lean`) instead.
 -/
 
 noncomputable section
@@ -500,7 +501,7 @@ theorem hypVData_axioms_vacuous : ¬ ¬ IsHypPlane (hypVData (F := F)).QV :=
   not_not_intro hypVData_isHypPlane_QV
 
 /-- **The axioms are vacuous at `hypWData`**: their hypothesis `¬ IsHypPlane QW` fails.
-`geomAt_near` for it is `geomAt_near_of_isHypPlane_W` (a named `sorry`). -/
+`geomAt_near` for it is `geomAt_near_of_isHypPlane_W` (from Waldspurger 2010 Thm 7.9). -/
 theorem hypWData_axioms_vacuous : ¬ ¬ IsHypPlane (hypWData (F := F)).QW :=
   not_not_intro hypWData_isHypPlane_QW
 
