@@ -108,6 +108,8 @@ import GSpinGGP.Literature.Localization
 import GSpinGGP.Literature.Waldspurger
 import GSpinGGP.Literature.Parabolic
 import GSpinGGP.Literature.Tits
+import GSpinGGP.Literature.WaldspurgerXi
+import GSpinGGP.TraceFormula.XiIntegrable
 import GSpinGGP.TraceFormula.InvariantSets
 import GSpinGGP.GGP.Triple
 import GSpinGGP.GGP.TorusIntegral

@@ -10,6 +10,7 @@ import GSpinGGP.Sanity.AxiomRedTeam.Measure
 import GSpinGGP.Sanity.AxiomRedTeam.WholeSystem
 import GSpinGGP.Sanity.AxiomRedTeam.Tits
 import GSpinGGP.Sanity.AxiomRedTeam.BPQuasiCharacter
+import GSpinGGP.Sanity.AxiomRedTeam.WaldspurgerXi
 
 /-!
 # Checks of the literature axioms on small instances
@@ -62,6 +63,9 @@ the axiom it tests; the computations of germs at `toyD` use `exists_isSelfDual` 
   (`toyD_tits_iwasawa_check`); V for `V` a hyperbolic plane (`tits_iwasawa_check_of_isHypPlane_V`),
   at `hypVData` with a nonempty full flag (`hypVData_tits_iwasawa_check`). Not covered: proper
   `P₀`.
+* `exists_iwasawaPair_xi_sq_integrable`: V at `toyD` (`toyD_exists_iwasawaPair_xi_sq_integrable`;
+  hypotheses `toyD_xi_sq_integrable_hyps`): `Ξ ≡ 1` and `σ^{-4}` integrable by polynomial growth of
+  `F^× × F^×`. Not covered: nonabelian `G`, proper `P₀`.
 * `kottwitz_nilpotent_sq_smul`: V for `N = 0` and on `toyData` (`kottwitz_sq_smul_toy`). Not
   covered: `N ≠ 0`.
 * `exists_isSelfDual`: hypothesis needed (`not_isSelfDual_zero`); P on the zero space. Not covered:
