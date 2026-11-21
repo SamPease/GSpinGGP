@@ -16,7 +16,8 @@ irreducible tempered unitary representation `π` of `G(F)`, through its smooth p
 
 * `smoothRep_isIrreducible_isAdmissible`: `π^∞` is irreducible and admissible (Cartier's
   Corollary 2.3 gives density and admissibility; irreducibility is `isIrreducible_smoothRep`);
-* `hc_character_exists`: `θ_π` exists and is continuous on `G' = {D ≠ 0}`;
+  stated for `F : Type*`, like `emoryTakeda_mult_le_one`;
+* `hc_character_exists` (`F : Type`, as the cited axioms of `Literature/HarishChandra`): `θ_π` exists and is continuous on `G' = {D ≠ 0}`;
 * `hc_character_isQuasiCharacter`: `θ_π` is a quasi-character.
 
 The characters of `π^∞` and `π` coincide (`isCharacterOf_smoothRep`, `characterOn_smoothRep`).
@@ -30,27 +31,38 @@ namespace GSpinGGP
 
 open HarishChandra
 
-variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
+section Smooth
 
-/-- Compact open subgroups form a basis of neighbourhoods of `1` in `G(F)` (van Dantzig). -/
-theorem GGPData.exists_compactOpen_subgroup_le (d : GGPData F) :
-    ∀ U ∈ 𝓝 (1 : ↥d.G), ∃ K : Subgroup ↥d.G,
-      IsOpen (K : Set ↥d.G) ∧ IsCompact (K : Set ↥d.G) ∧ (K : Set ↥d.G) ⊆ U := by
-  have := totallyDisconnectedSpace_subgroup F d.ambient d.G
-  intro U hU
-  obtain ⟨K, hKc, hKU⟩ :=
-    NonarchimedeanGroup.nhds_one_hasBasis_isCompact_openSubgroup.mem_iff.1 hU
-  exact ⟨K, K.isOpen, hKc, hKU⟩
+variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
+
+/-- The smooth vectors of a nonzero unitary representation are nonzero when they are dense. -/
+theorem smoothVectors_ne_bot_of_dense {G : Type*} [Group G] [TopologicalSpace G]
+    [IsTopologicalGroup G] {π : UnitaryRep G} [Nontrivial π.H]
+    (hdense : Dense (smoothVectors π : Set π.H)) : smoothVectors π ≠ ⊥ := by
+  intro h0
+  obtain ⟨x, hx⟩ := exists_ne (0 : π.H)
+  have : x ∈ closure (smoothVectors π : Set π.H) := hdense x
+  rw [h0, Submodule.bot_coe, closure_singleton] at this
+  exact hx this
 
 /-- **`π^∞` is irreducible and admissible** for every irreducible unitary representation `π` of
-`G(F)`: Cartier's Corollary 2.3 (density and admissibility) and `isIrreducible_smoothRep`. -/
+`G(F)`: Cartier's Corollary 2.3 (density and admissibility) and `isIrreducible_smoothRep`, with
+van Dantzig's theorem for `G(F)` (`exists_compactOpenSubgroup_subset`). -/
 theorem smoothRep_isIrreducible_isAdmissible (d : GGPData F) {π : UnitaryRep ↥d.G}
     (hπ : π.IsIrreducible) : (smoothRep π).IsIrreducible ∧ (smoothRep π).IsAdmissible := by
   obtain ⟨hdense, hadm⟩ := cartier_smoothVectors_dense_admissible d π hπ
-  refine ⟨isIrreducible_smoothRep d.exists_compactOpen_subgroup_le hπ hdense fun K hKo hKc => ?_,
-    hadm⟩
+  have := subgroup_t2Space F d.ambient d.G
+  have := subgroup_locallyCompactSpace_of_isClosed F d.ambient d.G d.isClosed_G
+  have := totallyDisconnectedSpace_subgroup F d.ambient d.G
+  have := hπ.1
+  refine ⟨isIrreducible_smoothRep exists_compactOpenSubgroup_subset hπ
+    (smoothVectors_ne_bot_of_dense hdense) fun K hKo hKc => ?_, hadm⟩
   have := hadm.2 K hKo hKc
   exact (invariantsSmoothEquiv π hKo).finiteDimensional
+
+end Smooth
+
+variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
 /-- **(b) for unitary representations.** For an irreducible tempered representation `π` of `G(F)`,
 the character `θ_π` exists and is continuous on Harish-Chandra's `G' = {D ≠ 0}`: Harish-Chandra's

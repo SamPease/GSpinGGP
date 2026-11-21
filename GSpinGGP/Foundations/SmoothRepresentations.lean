@@ -28,17 +28,23 @@ a unitary representation `π` through its smooth part `π^∞` (Tau Ceti's
   representations (`GSpinGGP.traceOf` …).
 * `Representation.equivariantForms`, `Representation.multiplicity`: `Hom_S(ρ, ξ)` and its
   dimension.
-* `GSpinGGP.smoothRep π`: the smooth representation of `G` on `π^∞`.
+* (`GSpinGGP.smoothRep π`, the smooth representation of `G` on `π^∞`, is in
+  `Foundations/Representations`.)
 
 ## Main results
 
-* `GSpinGGP.integral_eq_smul_finsum_quotient`: for `K` compact open and `F` right `K`-invariant with
-  compact support, `∫_G F = μ(K) ∑_{gK} F(g)`.
+* `GSpinGGP.integral_eq_smul_finsum_quotient`: for `K` open with `μ(K) < ∞` (`μ` left invariant)
+  and `F` right `K`-invariant with compact support, `∫_G F dμ = μ(K) ∑_{gK} F(g)`.
+* `Representation.IsAdmissible.comp_continuousMulEquiv`: admissibility pulls back along an
+  isomorphism of topological groups.
+* `Representation.traceOf_eq`, `Representation.exists_traceDatum`: for admissible `ρ` a trace datum
+  exists, and the trace does not depend on it.
 * `GSpinGGP.traceOf_smoothRep`, `GSpinGGP.isCharacterOf_smoothRep`,
   `GSpinGGP.characterOn_smoothRep`: the trace and character of `π^∞` are those of `π`.
 * `GSpinGGP.multiplicity_smoothRep`: `m(π)` is the multiplicity of `π^∞` (by definition).
-* `GSpinGGP.isIrreducible_smoothRep`: if `π` is irreducible, `π^∞` is dense and the spaces `π^K`
-  are finite-dimensional, then `π^∞` is an irreducible representation. Proof: a nonzero
+* `GSpinGGP.isIrreducible_smoothRep`: if compact open subgroups form a basis of neighbourhoods of
+  `1` (van Dantzig), `π` is irreducible, `π^∞ ≠ 0` and the spaces `π^K` are finite-dimensional,
+  then `π^∞` is an irreducible representation. Proof: a nonzero
   `G`-stable `W ⊆ π^∞` is dense; `e_K = π(1_K)` maps `W` into `W ∩ π^K`, which is
   finite-dimensional, hence closed, so `μ(K) π^K = e_K(π^K) ⊆ e_K(closure W) ⊆ W ∩ π^K`.
 -/
@@ -55,11 +61,41 @@ section Admissible
 variable {k G V : Type*} [Field k] [Group G] [TopologicalSpace G] [AddCommGroup V] [Module k V]
 
 /-- A representation of a topological group is *admissible* if it is smooth and the invariants
-`V^K` of every compact open subgroup `K` are finite-dimensional (Flath, *Decomposition of
-representations into tensor products*, PSPUM 33 Part 1 (1979), §1; Cartier, *ibid.*, §2.5). -/
+`V^K` of every compact open subgroup `K` are finite-dimensional (Harish-Chandra, *Admissible
+invariant distributions on reductive p-adic groups*, AMS ULS 16 (1999), preface, p. ix; Flath,
+*Decomposition of representations into tensor products*, PSPUM 33 Part 1 (1979), §1). -/
 def IsAdmissible (ρ : Representation k G V) : Prop :=
   ρ.IsSmooth ∧ ∀ K : Subgroup G, IsOpen (K : Set G) → IsCompact (K : Set G) →
     FiniteDimensional k ↥(invariants (ρ.comp K.subtype))
+
+/-- Admissibility pulls back along an isomorphism of topological groups `e : H ≃ₜ* G`: compact
+open subgroups of `H` and `G` correspond under `e`. -/
+theorem IsAdmissible.comp_continuousMulEquiv {H : Type*} [Group H] [TopologicalSpace H]
+    {ρ : Representation k G V} (h : ρ.IsAdmissible) (e : H ≃ₜ* G) :
+    Representation.IsAdmissible (ρ.comp e.toMulEquiv.toMonoidHom) := by
+  have := h.1
+  refine ⟨IsSmooth.comp (ρ := ρ) e.toHomeomorph.continuous, fun K hKo hKc => ?_⟩
+  have hco : IsOpen ((K.map e.toMulEquiv.toMonoidHom : Subgroup G) : Set G) := by
+    rw [Subgroup.coe_map]
+    exact e.toHomeomorph.isOpenMap _ hKo
+  have hcc : IsCompact ((K.map e.toMulEquiv.toMonoidHom : Subgroup G) : Set G) := by
+    rw [Subgroup.coe_map]
+    exact hKc.image e.toHomeomorph.continuous
+  have := h.2 _ hco hcc
+  have heq : invariants ((ρ.comp e.toMulEquiv.toMonoidHom).comp K.subtype) =
+      invariants (ρ.comp (K.map e.toMulEquiv.toMonoidHom).subtype) := by
+    ext v
+    rw [mem_invariants, mem_invariants]
+    constructor
+    · intro h' g
+      obtain ⟨p, hp, hpg⟩ := Subgroup.mem_map.1 g.property
+      change ρ (g : G) v = v
+      rw [← hpg]
+      exact h' ⟨p, hp⟩
+    · intro h' p
+      exact h' ⟨e p, Subgroup.mem_map_of_mem _ p.property⟩
+  rw [heq]
+  exact this
 
 end Admissible
 
@@ -83,9 +119,11 @@ def TraceDatum (ρ : Representation ℂ G V) (f : G → ℂ) (K : Subgroup G) : 
     FiniteDimensional ℂ ↥(invariants (ρ.comp K.subtype)) ∧
     ∀ v ∈ invariants (ρ.comp K.subtype), heckeOp ρ f K v ∈ invariants (ρ.comp K.subtype)
 
-/-- `tr ρ(f)` for an admissible `ρ` and a test function `f`: the trace of `ρ(f)` on `V^K`, for
-`f` bi-`K`-invariant (`ρ(f)` has range in `V^K` and kills the other isotypic components of `K`).
-Defined by the epsilon pattern (`0` if no such `K` exists), as `GSpinGGP.traceOf`. -/
+/-- `tr ρ(f)` for an admissible `ρ` and a test function `f`: the trace of `ρ(f)` restricted to
+`V^K`, for `f` bi-`K`-invariant. (Only the restriction `heckeOp ρ f K` on `V^K` is meant; it is
+the trace of `ρ(f)` on `V` because `ρ(f)` has range in `V^K` and kills the other isotypic
+components of `K`.) Defined by the epsilon pattern (`0` if no such `K` exists), as
+`GSpinGGP.traceOf`; it does not depend on the datum (`traceOf_eq`). -/
 def traceOf (ρ : Representation ℂ G V) (f : G → ℂ) : ℂ :=
   if h : ∃ K : Subgroup G, TraceDatum ρ f K then
     LinearMap.trace ℂ ↥(invariants (ρ.comp h.choose.subtype))
@@ -128,10 +166,13 @@ def multiplicity (ρ : Representation ℂ G V) (S : Subgroup G) (ξ : ↥S → �
 
 variable {W : Type*} [AddCommGroup W] [Module ℂ W]
 
-/-- Multiplicities are invariant under an equivariant linear isomorphism. -/
-theorem multiplicity_eq_of_linearEquiv {ρ : Representation ℂ G V} {σ : Representation ℂ G W}
-    (e : V ≃ₗ[ℂ] W) (he : ∀ g v, e (ρ g v) = σ g (e v)) (S : Subgroup G) (ξ : ↥S → ℂ) :
+/-- Multiplicities are invariant under equivalence of representations. -/
+theorem multiplicity_eq_of_equiv {ρ : Representation ℂ G V} {σ : Representation ℂ G W}
+    (e' : Representation.Equiv ρ σ) (S : Subgroup G) (ξ : ↥S → ℂ) :
     multiplicity ρ S ξ = multiplicity σ S ξ := by
+  let e : V ≃ₗ[ℂ] W := e'.toLinearEquiv
+  have he : ∀ g v, e (ρ g v) = σ g (e v) := fun g v =>
+    LinearMap.congr_fun (e'.toIntertwiningMap.isIntertwining' g) v
   have hmem : ∀ ℓ, ℓ ∈ equivariantForms ρ S ξ ↔ e.symm.dualMap ℓ ∈ equivariantForms σ S ξ := by
     intro ℓ
     change (∀ s : ↥S, ∀ v, ℓ (ρ s v) = ξ s * ℓ v) ↔
@@ -171,15 +212,16 @@ theorem finite_setOf_out_ne_zero {M : Type*} [Zero M] {K : Subgroup G} (hK : IsO
   intro c hc
   exact ⟨c.out, subset_tsupport F hc, QuotientGroup.out_eq' c⟩
 
-variable [LocallyCompactSpace G] [MeasurableSpace G] [BorelSpace G]
+variable [MeasurableSpace G] [BorelSpace G]
 
-/-- **Integration over cosets.** For `K` a compact open subgroup and `F` right `K`-invariant with
-compact support, `∫_G F = μ(K) ∑_{gK ∈ G/K} F(g)` (a finite sum). -/
+/-- **Integration over cosets.** For `μ` a left-invariant measure, `K` an open subgroup with
+`μ(K) < ∞` and `F` right `K`-invariant with compact support,
+`∫_G F dμ = μ(K) ∑_{gK ∈ G/K} F(g)` (a finite sum). -/
 theorem integral_eq_smul_finsum_quotient {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
-    [CompleteSpace E] {K : Subgroup G} (hKo : IsOpen (K : Set G)) (hKc : IsCompact (K : Set G))
+    [CompleteSpace E] {K : Subgroup G} {μ : Measure G} [μ.IsMulLeftInvariant] (hKo : IsOpen (K : Set G))
+    (hfin : μ (K : Set G) ≠ ⊤)
     {F : G → E} (hF : ∀ g, ∀ k ∈ K, F (g * k) = F g) (hFc : HasCompactSupport F) :
-    ∫ g, F g ∂(Measure.haar : Measure G) =
-      ((Measure.haar : Measure G) (K : Set G)).toReal • ∑ᶠ c : G ⧸ K, F c.out := by
+    ∫ g, F g ∂μ = (μ (K : Set G)).toReal • ∑ᶠ c : G ⧸ K, F c.out := by
   classical
   have : DiscreteTopology (G ⧸ K) := QuotientGroup.discreteTopology hKo
   have hs := finite_setOf_out_ne_zero hKo hFc
@@ -197,10 +239,8 @@ theorem integral_eq_smul_finsum_quotient {E : Type*} [NormedAddCommGroup E] [Nor
     rfl
   have hmeas : ∀ c : G ⧸ K, MeasurableSet (QuotientGroup.mk ⁻¹' {c} : Set G) := fun c =>
     ((isOpen_discrete {c}).preimage QuotientGroup.continuous_mk).measurableSet
-  have hμ : ∀ c : G ⧸ K, (Measure.haar : Measure G) (QuotientGroup.mk ⁻¹' {c}) =
-      (Measure.haar : Measure G) (K : Set G) := fun c => by
+  have hμ : ∀ c : G ⧸ K, μ (QuotientGroup.mk ⁻¹' {c}) = μ (K : Set G) := fun c => by
     rw [hpre c, measure_smul]
-  have hfin : (Measure.haar : Measure G) (K : Set G) ≠ ⊤ := hKc.measure_lt_top.ne
   have hsum : F = fun g => ∑ c ∈ s,
       (QuotientGroup.mk ⁻¹' {c} : Set G).indicator (fun _ => F c.out) g := by
     funext g
@@ -231,20 +271,192 @@ theorem integral_eq_smul_finsum_quotient {E : Type*} [NormedAddCommGroup E] [Nor
 
 end Cosets
 
+/-! ## The trace of an admissible representation -/
+
+section Trace
+
+variable {G : Type*} [Group G] [TopologicalSpace G] [IsTopologicalGroup G] [LocallyCompactSpace G]
+  [MeasurableSpace G] [BorelSpace G] {V : Type*} [AddCommGroup V] [Module ℂ V]
+
+omit [IsTopologicalGroup G] [LocallyCompactSpace G] [MeasurableSpace G] [BorelSpace G] in
+/-- Linear algebra: if `T` maps `M` (finite-dimensional) into `W ≤ M`, the traces of `T` on `M`
+and on `W` agree. -/
+theorem trace_restrict_eq_of_mem_of_le {E : Type*} [AddCommGroup E] [Module ℂ E]
+    (T : E →ₗ[ℂ] E) {M W : Submodule ℂ E} (hWM : W ≤ M) [FiniteDimensional ℂ ↥M]
+    (hT : ∀ x ∈ M, T x ∈ W) :
+    LinearMap.trace ℂ ↥M (T.restrict fun x hx => hWM (hT x hx)) =
+      LinearMap.trace ℂ ↥W (T.restrict fun x hx => hT x (hWM hx)) := by
+  have : FiniteDimensional ℂ ↥W :=
+    Module.Finite.of_injective (Submodule.inclusion hWM) (Submodule.inclusion_injective hWM)
+  let S : ↥M →ₗ[ℂ] ↥W := LinearMap.codRestrict W (T ∘ₗ M.subtype) fun x => hT x x.property
+  have h1 : T.restrict (fun x hx => hWM (hT x hx)) = Submodule.inclusion hWM ∘ₗ S := by
+    ext x; rfl
+  have h2 : T.restrict (fun x hx => hT x (hWM hx)) = S ∘ₗ Submodule.inclusion hWM := by
+    ext x; rfl
+  rw [h1, h2, LinearMap.trace_comp_comm']
+
+/-- `ρ(f) v = μ(K) ∑_{gK} f(g) ρ(g) v` when only finitely many cosets carry `f`. -/
+theorem heckeOp_apply_of_finite {V : Type*} [AddCommGroup V] [Module ℂ V]
+    (ρ : Representation ℂ G V) (f : G → ℂ) (K : Subgroup G)
+    (hs : {c : G ⧸ K | f c.out ≠ 0}.Finite) (v : V) :
+    Representation.heckeOp ρ f K v =
+      ((Measure.haar : Measure G) (K : Set G)).toReal • ∑ᶠ c : G ⧸ K, f c.out • ρ c.out v := by
+  classical
+  have h1 : (Function.support fun c : G ⧸ K => f c.out • ρ c.out) ⊆ hs.toFinset := by
+    intro c hc
+    simp only [Set.Finite.coe_toFinset, Set.mem_ofPred_eq]
+    intro h0
+    exact hc (by simp [h0])
+  have h2 : (Function.support fun c : G ⧸ K => f c.out • ρ c.out v) ⊆ hs.toFinset := by
+    intro c hc
+    simp only [Set.Finite.coe_toFinset, Set.mem_ofPred_eq]
+    intro h0
+    exact hc (by simp [h0])
+  rw [Representation.heckeOp, LinearMap.smul_apply, finsum_eq_sum_of_support_subset _ h1,
+    finsum_eq_sum_of_support_subset _ h2, LinearMap.sum_apply]
+  rfl
+
+omit [LocallyCompactSpace G] [MeasurableSpace G] [BorelSpace G] in
+/-- If `f` is left `L`-invariant and right `K`-invariant, then `g ↦ f(g) ρ(g) v` (`v ∈ V^K`) sums
+over `G/K` to an `L`-invariant vector. -/
+theorem finsum_quotient_mem_invariants (ρ : Representation ℂ G V) {f : G → ℂ}
+    {K L : Subgroup G} (hKo : IsOpen (K : Set G)) (hf : HasCompactSupport f)
+    (hfK : ∀ g, ∀ k ∈ K, f (g * k) = f g) (hfL : ∀ l ∈ L, ∀ g, f (l * g) = f g) {v : V}
+    (hv : v ∈ Representation.invariants (ρ.comp K.subtype)) :
+    ∑ᶠ c : G ⧸ K, f c.out • ρ c.out v ∈ Representation.invariants (ρ.comp L.subtype) := by
+  rw [Representation.mem_invariants]
+  intro l
+  have hs := finite_setOf_out_ne_zero (K := K) hKo hf
+  have hfin : (Function.support fun c : G ⧸ K => f c.out • ρ c.out v).Finite :=
+    hs.subset fun c hc h0 => hc (by simp [h0])
+  change ρ (l : G) _ = _
+  rw [map_finsum _ hfin]
+  -- `φ(g) = f(g) ρ(g) v` is right `K`-invariant, and `f(c) ρ(l c) v = φ(l c)`.
+  set φ : G → V := fun g => f g • ρ g v
+  have hφ : ∀ g, ∀ k ∈ K, φ (g * k) = φ g := by
+    intro g k hk
+    simp only [φ, hfK g k hk, map_mul, mul_apply_eq_comp]
+    have hk' : ρ k v = v := (Representation.mem_invariants _ _).1 hv ⟨k, hk⟩
+    rw [hk']
+  have hout : ∀ c : G ⧸ K, φ ((l : G) • c).out = φ ((l : G) * c.out) := by
+    intro c
+    have : ((l : G) • c : G ⧸ K) = QuotientGroup.mk ((l : G) * c.out) := by
+      conv_lhs => rw [← QuotientGroup.out_eq' c]
+      rfl
+    rw [this]
+    obtain ⟨k, hk⟩ := QuotientGroup.mk_out_eq_mul K ((l : G) * c.out)
+    rw [hk, hφ _ k k.property]
+  have : (fun c : G ⧸ K => ρ (l : G) (f c.out • ρ c.out v)) =
+      fun c => φ (MulAction.toPerm (l : G) c).out := by
+    funext c
+    rw [MulAction.toPerm_apply, hout c]
+    simp only [φ, map_smul, map_mul, mul_apply_eq_comp, hfL l l.property]
+  rw [this, finsum_comp_equiv (MulAction.toPerm (l : G)) (f := fun c : G ⧸ K => φ c.out)]
+
+/-- `ρ(f)` with `f` left `L`-invariant maps `V^K` into `V^L`. -/
+theorem heckeOp_mem_invariants (ρ : Representation ℂ G V) {f : G → ℂ} {K L : Subgroup G}
+    (hKo : IsOpen (K : Set G)) (hf : HasCompactSupport f) (hfK : ∀ g, ∀ k ∈ K, f (g * k) = f g)
+    (hfL : ∀ l ∈ L, ∀ g, f (l * g) = f g) {v : V}
+    (hv : v ∈ Representation.invariants (ρ.comp K.subtype)) :
+    Representation.heckeOp ρ f K v ∈ Representation.invariants (ρ.comp L.subtype) := by
+  rw [heckeOp_apply_of_finite ρ f K (finite_setOf_out_ne_zero hKo hf)]
+  exact Submodule.smul_of_tower_mem _ _ (finsum_quotient_mem_invariants ρ hKo hf hfK hfL hv)
+
+/-- `ρ(f)` on `V^K` does not depend on `K`: for `K₀ ≤ K` open, `K` compact, `f` a test function
+right `K`-invariant and `v ∈ V^K`, the coset sums over `G/K₀` and `G/K` agree (both compute
+`ℓ(∫ f(g) ρ(g) v dg)` for every linear form `ℓ`, by `integral_eq_smul_finsum_quotient`). -/
+theorem heckeOp_eq_of_le (ρ : Representation ℂ G V) {f : G → ℂ} (hf : f ∈ testFunctions G)
+    {K₀ K : Subgroup G} (hle : K₀ ≤ K) (hK₀o : IsOpen (K₀ : Set G)) (hKo : IsOpen (K : Set G))
+    (hKc : IsCompact (K : Set G)) (hfK : ∀ g, ∀ k ∈ K, f (g * k) = f g) {v : V}
+    (hv : v ∈ Representation.invariants (ρ.comp K.subtype)) :
+    Representation.heckeOp ρ f K₀ v = Representation.heckeOp ρ f K v := by
+  have hK₀c : IsCompact (K₀ : Set G) :=
+    hKc.of_isClosed_subset (Subgroup.isClosed_of_isOpen _ hK₀o) hle
+  have hs := finite_setOf_out_ne_zero (K := K) hKo hf.2
+  have hs₀ := finite_setOf_out_ne_zero (K := K₀) hK₀o hf.2
+  rw [← sub_eq_zero, ← Module.forall_dual_apply_eq_zero_iff ℂ]
+  intro ℓ
+  rw [map_sub, sub_eq_zero, heckeOp_apply_of_finite ρ f K₀ hs₀, heckeOp_apply_of_finite ρ f K hs]
+  set ψ : G → ℂ := fun g => ℓ (f g • ρ g v)
+  have hψK : ∀ g, ∀ k ∈ K, ψ (g * k) = ψ g := by
+    intro g k hk
+    simp only [ψ, hfK g k hk, map_mul, mul_apply_eq_comp]
+    have hk' : ρ k v = v := (Representation.mem_invariants _ _).1 hv ⟨k, hk⟩
+    rw [hk']
+  have hψc : HasCompactSupport ψ :=
+    hf.2.mono fun g hg h0 => hg (by simp [ψ, h0])
+  have h1 := integral_eq_smul_finsum_quotient (μ := (Measure.haar : Measure G)) hKo
+    hKc.measure_lt_top.ne hψK hψc
+  have h2 := integral_eq_smul_finsum_quotient (μ := (Measure.haar : Measure G)) hK₀o
+    hK₀c.measure_lt_top.ne (fun g k hk => hψK g k (hle hk)) hψc
+  have hfin : ∀ (H : Subgroup G), {c : G ⧸ H | f c.out ≠ 0}.Finite →
+      (Function.support fun c : G ⧸ H => f c.out • ρ c.out v).Finite := fun H hH =>
+    hH.subset fun c hc h0 => hc (by simp [h0])
+  rw [LinearMap.map_smul_of_tower, LinearMap.map_smul_of_tower, map_finsum _ (hfin _ hs₀),
+    map_finsum _ (hfin _ hs)]
+  exact h2.symm.trans h1
+
+/-- **Independence of the trace datum**: for a test function `f`, `tr ρ(f)` is the trace of `ρ(f)`
+on `V^K` for any trace datum `K`. -/
+theorem _root_.Representation.traceOf_eq (ρ : Representation ℂ G V) {f : G → ℂ}
+    (hf : f ∈ testFunctions G) (K : Subgroup G) (hK : Representation.TraceDatum ρ f K) :
+    Representation.traceOf ρ f = LinearMap.trace ℂ ↥(Representation.invariants (ρ.comp K.subtype))
+      ((Representation.heckeOp ρ f K).restrict hK.2.2.2.2) := by
+  classical
+  have key : ∀ (K K' : Subgroup G) (hK : Representation.TraceDatum ρ f K)
+      (hK' : Representation.TraceDatum ρ f K'),
+      LinearMap.trace ℂ ↥(Representation.invariants (ρ.comp K.subtype))
+          ((Representation.heckeOp ρ f K).restrict hK.2.2.2.2) =
+        LinearMap.trace ℂ ↥(Representation.invariants (ρ.comp K'.subtype))
+          ((Representation.heckeOp ρ f K').restrict hK'.2.2.2.2) := by
+    intro K K' hK hK'
+    have := hK.2.2.2.1
+    have := hK'.2.2.2.1
+    set W := Representation.invariants (ρ.comp K.subtype) ⊓
+      Representation.invariants (ρ.comp K'.subtype)
+    have hmapK : ∀ v ∈ Representation.invariants (ρ.comp K.subtype),
+        Representation.heckeOp ρ f K v ∈ W := fun v hv =>
+      ⟨hK.2.2.2.2 v hv, heckeOp_mem_invariants ρ hK.1 hf.2 (fun g k hk => (hK.2.2.1 k hk g).2)
+        (fun l hl g => (hK'.2.2.1 l hl g).1) hv⟩
+    have hmapK' : ∀ v ∈ Representation.invariants (ρ.comp K'.subtype),
+        Representation.heckeOp ρ f K' v ∈ W := fun v hv =>
+      ⟨heckeOp_mem_invariants ρ hK'.1 hf.2 (fun g k hk => (hK'.2.2.1 k hk g).2)
+        (fun l hl g => (hK.2.2.1 l hl g).1) hv, hK'.2.2.2.2 v hv⟩
+    have hW : ∀ v ∈ W, Representation.heckeOp ρ f K v = Representation.heckeOp ρ f K' v := by
+      intro v hv
+      rw [← heckeOp_eq_of_le ρ hf inf_le_left (hK.1.inter hK'.1) hK.1 hK.2.1
+        (fun g k hk => (hK.2.2.1 k hk g).2) hv.1,
+        ← heckeOp_eq_of_le ρ hf inf_le_right (hK.1.inter hK'.1) hK'.1 hK'.2.1
+        (fun g k hk => (hK'.2.2.1 k hk g).2) hv.2]
+    rw [trace_restrict_eq_of_mem_of_le _ inf_le_left hmapK,
+      trace_restrict_eq_of_mem_of_le _ inf_le_right hmapK']
+    congr 1
+    ext v
+    exact hW v v.property
+  have h : ∃ K, Representation.TraceDatum ρ f K := ⟨K, hK⟩
+  unfold Representation.traceOf
+  rw [dite_eq_left_of_eq_true (eq_true h)]
+  exact key _ _ h.choose_spec hK
+
+/-- For an admissible `ρ`, a trace datum exists for every test function, provided compact open
+subgroups form a basis of neighbourhoods of `1` (van Dantzig). -/
+theorem _root_.Representation.exists_traceDatum
+    (hG : ∀ U ∈ nhds (1 : G), ∃ K : Subgroup G,
+      IsOpen (K : Set G) ∧ IsCompact (K : Set G) ∧ (K : Set G) ⊆ U)
+    {ρ : Representation ℂ G V} (hρ : ρ.IsAdmissible) {f : G → ℂ} (hf : f ∈ testFunctions G) :
+    ∃ K, Representation.TraceDatum ρ f K := by
+  obtain ⟨K, hKo, hKc, hKb⟩ := exists_biInvariant hG hf
+  exact ⟨K, hKo, hKc, hKb, hρ.2 K hKo hKc, fun v hv =>
+    heckeOp_mem_invariants ρ hKo hf.2 (fun g k hk => (hKb k hk g).2)
+      (fun l hl g => (hKb l hl g).1) hv⟩
+
+end Trace
+
 /-! ## The smooth part of a unitary representation -/
 
 section SmoothPart
 
 variable {G : Type u} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
-
-/-- The smooth representation of `G` on `π^∞` (Thesis Ch. 1): Tau Ceti's subrepresentation of
-smooth vectors of `π.toRepresentation`. -/
-abbrev smoothRep (π : UnitaryRep G) : Representation ℂ G ↥(smoothVectors π) :=
-  π.toRepresentation.smoothVectors.toRepresentation
-
-@[simp]
-theorem smoothRep_apply (π : UnitaryRep G) (g : G) (v : ↥(smoothVectors π)) :
-    ((smoothRep π g v : ↥(smoothVectors π)) : π.H) = π.ρ g v := rfl
 
 /-- `Hom_S(π^∞, ξ)` is the space of equivariant forms of the smooth representation `π^∞`. -/
 theorem equivariantForms_smoothRep (π : UnitaryRep G) (S : Subgroup G) (ξ : ↥S → ℂ) :
@@ -284,27 +496,6 @@ theorem coe_invariantsSmoothEquiv (π : UnitaryRep G) {K : Subgroup G} (hK : IsO
 
 variable [LocallyCompactSpace G] [MeasurableSpace G] [BorelSpace G]
 
-/-- `ρ(f) v = μ(K) ∑_{gK} f(g) ρ(g) v` when only finitely many cosets carry `f`. -/
-theorem heckeOp_apply_of_finite {V : Type*} [AddCommGroup V] [Module ℂ V]
-    (ρ : Representation ℂ G V) (f : G → ℂ) (K : Subgroup G)
-    (hs : {c : G ⧸ K | f c.out ≠ 0}.Finite) (v : V) :
-    Representation.heckeOp ρ f K v =
-      ((Measure.haar : Measure G) (K : Set G)).toReal • ∑ᶠ c : G ⧸ K, f c.out • ρ c.out v := by
-  classical
-  have h1 : (Function.support fun c : G ⧸ K => f c.out • ρ c.out) ⊆ hs.toFinset := by
-    intro c hc
-    simp only [Set.Finite.coe_toFinset, Set.mem_ofPred_eq]
-    intro h0
-    exact hc (by simp [h0])
-  have h2 : (Function.support fun c : G ⧸ K => f c.out • ρ c.out v) ⊆ hs.toFinset := by
-    intro c hc
-    simp only [Set.Finite.coe_toFinset, Set.mem_ofPred_eq]
-    intro h0
-    exact hc (by simp [h0])
-  rw [Representation.heckeOp, LinearMap.smul_apply, finsum_eq_sum_of_support_subset _ h1,
-    finsum_eq_sum_of_support_subset _ h2, LinearMap.sum_apply]
-  rfl
-
 /-- On `π^K`, `π(f)` is the finite coset sum `μ(K) ∑_{gK} f(g) π(g)`, for `f` a test function,
 right `K`-invariant, and `K` compact open. -/
 theorem opOf_eq_smul_finsum (π : UnitaryRep G) {f : G → ℂ} (hf : f ∈ testFunctions G)
@@ -313,7 +504,8 @@ theorem opOf_eq_smul_finsum (π : UnitaryRep G) {f : G → ℂ} (hf : f ∈ test
     opOf π f v =
       ((Measure.haar : Measure G) (K : Set G)).toReal • ∑ᶠ c : G ⧸ K, f c.out • π.ρ c.out v := by
   rw [opOf_apply π (opIntegrable_of_mem_testFunctions π hf)]
-  refine integral_eq_smul_finsum_quotient hKo hKc (fun g k hk => ?_) hf.2.smul_right
+  refine integral_eq_smul_finsum_quotient hKo hKc.measure_lt_top.ne (fun g k hk => ?_)
+    hf.2.smul_right
   rw [hfK g k hk, map_mul]
   change f g • π.ρ g (π.ρ k v) = _
   rw [hv k hk]
@@ -455,7 +647,7 @@ theorem opOf_indicator_mem (π : UnitaryRep G) {K : Subgroup G} (hKo : IsOpen (K
     indicator_mem_testFunctions hKc ⟨Subgroup.isClosed_of_isOpen _ hKo, hKo⟩
   rw [opOf_apply π (opIntegrable_of_mem_testFunctions π hfK),
     integral_eq_smul_finsum_quotient (F := fun g => (K : Set G).indicator (1 : G → ℂ) g • π.ρ g w)
-      hK0o hK0c (fun g k hk => ?_) hfK.2.smul_right]
+      hK0o hK0c.measure_lt_top.ne (fun g k hk => ?_) hfK.2.smul_right]
   · refine W.smul_mem _ (finsum_induction _ W.zero_mem (fun _ _ => W.add_mem) fun c => ?_)
     exact W.smul_mem _ (hWg _ _ hw)
   · have hkK : k ∈ K := hk.1
@@ -465,17 +657,23 @@ theorem opOf_indicator_mem (π : UnitaryRep G) {K : Subgroup G} (hKo : IsOpen (K
     change _ • π.ρ g (π.ρ k w) = _
     rw [hU k hkU]
 
-/-- **`π^∞` is irreducible.** Let `π` be an irreducible unitary representation whose smooth
-vectors are dense and whose spaces `π^K` (`K` compact open) are finite-dimensional, and suppose
-compact open subgroups form a basis of neighbourhoods of `1`. Then the smooth representation `π^∞`
-is (algebraically) irreducible. -/
-theorem isIrreducible_smoothRep
+end SmoothPart
+
+section Irreducible
+
+variable {G : Type u} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
+
+/-- **`π^∞` is irreducible.** Let `π` be an irreducible unitary representation with `π^∞ ≠ 0`
+whose spaces `π^K` (`K` compact open) are finite-dimensional, and suppose compact open subgroups
+form a basis of neighbourhoods of `1` (van Dantzig). Then the smooth representation `π^∞` is
+(algebraically) irreducible. -/
+theorem isIrreducible_smoothRep [LocallyCompactSpace G] [T2Space G]
     (hG : ∀ U ∈ 𝓝 (1 : G), ∃ K : Subgroup G,
       IsOpen (K : Set G) ∧ IsCompact (K : Set G) ∧ (K : Set G) ⊆ U)
-    {π : UnitaryRep G} (hπ : π.IsIrreducible) (hdense : Dense (smoothVectors π : Set π.H))
-    (hadm : ∀ K : Subgroup G, IsOpen (K : Set G) → IsCompact (K : Set G) →
-      FiniteDimensional ℂ ↥(fixedSpace π K)) :
+    {π : UnitaryRep G} (hπ : π.IsIrreducible) (hne : smoothVectors π ≠ ⊥)
+    (hadm : IsAdmissible π) :
     (smoothRep π).IsIrreducible := by
+  borelize G
   -- The key step: a nonzero `G`-stable `W ⊆ π^∞` contains `π^∞`.
   have key : ∀ W : Submodule ℂ π.H, W ≤ smoothVectors π → (∀ g, ∀ w ∈ W, π.ρ g w ∈ W) →
       W ≠ ⊥ → smoothVectors π ≤ W := by
@@ -519,19 +717,13 @@ theorem isIrreducible_smoothRep
     exact W.smul_mem _ (hrange v).1
   apply Representation.isIrreducible_toRepresentation_of_isAtom
   refine ⟨fun h => ?_, fun τ hτ => ?_⟩
-  · -- `π^∞ ≠ 0`: it is dense in `H ≠ 0`.
-    have h0 : smoothVectors π = ⊥ := congrArg Subrepresentation.toSubmodule h
-    have := hπ.1
-    obtain ⟨x, hx⟩ := exists_ne (0 : π.H)
-    have : x ∈ closure (smoothVectors π : Set π.H) := hdense x
-    rw [h0, Submodule.bot_coe, closure_singleton] at this
-    exact hx this
+  · exact hne (congrArg Subrepresentation.toSubmodule h)
   · by_contra hne
     have hle : τ.toSubmodule ≤ smoothVectors π := hτ.le
     have h1 := key τ.toSubmodule hle (fun g w hw => τ.apply_mem_toSubmodule g hw)
       (fun h0 => hne (Subrepresentation.toSubmodule_injective (by rw [h0]; rfl)))
     exact hτ.not_ge h1
 
-end SmoothPart
+end Irreducible
 
 end GSpinGGP

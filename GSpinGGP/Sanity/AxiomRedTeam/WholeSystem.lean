@@ -10,7 +10,7 @@ import GSpinGGP.TraceFormula.MGeom
 import GSpinGGP.TraceFormula.Analytic
 import GSpinGGP.TraceFormula.Scusp
 import GSpinGGP.TraceFormula.Spectral
-import GSpinGGP.TraceFormula.MultOne
+import GSpinGGP.GGP.MultOne
 
 /-!
 # Whole-system checks on the toy datum

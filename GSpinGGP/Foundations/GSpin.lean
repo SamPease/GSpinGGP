@@ -4664,6 +4664,35 @@ theorem continuous_fst : Continuous d.fst :=
 theorem continuous_snd : Continuous d.snd :=
   continuous_induced_rng.2 ((Units.continuous_map _root_.continuous_snd).comp continuous_subtypeVal)
 
+/-- `GSpin(W) × GSpin(V) → G` is continuous. -/
+theorem continuous_pair : Continuous d.pair := by
+  apply continuous_induced_rng.2
+  rw [Units.continuous_iff]
+  constructor
+  · exact (Units.continuous_val.comp (continuous_subtypeVal.comp _root_.continuous_fst)).prodMk
+      (Units.continuous_val.comp (continuous_subtypeVal.comp _root_.continuous_snd))
+  · exact (Units.continuous_coe_inv.comp (continuous_subtypeVal.comp _root_.continuous_fst)).prodMk
+      (Units.continuous_coe_inv.comp (continuous_subtypeVal.comp _root_.continuous_snd))
+
+/-- `G = GSpin(W) × GSpin(V)` as a topological group: `pair` is an isomorphism of topological
+groups, with inverse `g ↦ (fst g, snd g)`. -/
+def pairEquiv : (GSpin d.QW × GSpin d.QV) ≃ₜ* ↥d.G where
+  toFun := d.pair
+  invFun g := (d.fst g, d.snd g)
+  left_inv _ := rfl
+  right_inv := d.pair_fst_snd
+  map_mul' := map_mul d.pair
+  continuous_toFun := d.continuous_pair
+  continuous_invFun := d.continuous_fst.prodMk d.continuous_snd
+
+@[simp]
+theorem coe_pairEquiv : ⇑d.pairEquiv = d.pair := rfl
+
+theorem pair_comp_prod : d.pair.comp (d.fst.prod d.snd) = MonoidHom.id _ :=
+  MonoidHom.ext fun g => d.pair_fst_snd g
+
+theorem surjective_pair : Function.Surjective d.pair := d.pairEquiv.surjective
+
 variable [IsTopologicalRing K] [T2Space K]
 
 /-- The parabolic subgroup `P = P_{F_W} × P_{F_V}` is closed in `G(K)` (Thesis §5.1.2). -/

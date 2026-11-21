@@ -48,7 +48,7 @@ Specialized to `G = GSpin(W) × GSpin(V)` (`↥d.G`). `V_∞` is `smoothVectors 
 open stabilizer; in the locally profinite group `↥d.G` this is the same set, since every open
 subgroup contains a compact open one (van Dantzig). Stability under `G` is built into
 `smoothRep π` (a subrepresentation). -/
-axiom cartier_smoothVectors_dense_admissible {F : Type} [NontriviallyNormedField F]
+axiom cartier_smoothVectors_dense_admissible {F : Type*} [NontriviallyNormedField F]
     [PAdicField F] (d : GGPData F) (π : UnitaryRep ↥d.G) (hπ : π.IsIrreducible) :
     Dense (smoothVectors π : Set π.H) ∧ (smoothRep π).IsAdmissible
 
