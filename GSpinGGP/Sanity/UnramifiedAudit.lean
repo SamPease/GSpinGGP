@@ -22,6 +22,9 @@ take the central element `m = (c, 1)`, `0 < ‖c‖ < 1`, of `M(F)`.  Its `H_M` 
    `σ_{iν}(m) v = −σ(m) v ≠ σ(m) v`.
 4. **The stabilizer is not everything** (`twistStab_trivialRep`, `twistStab_trivialRep_ne_top`):
    for the trivial representation on `ℂ` (`Sanity.trivialRep`), `i a^∨_{M,σ} = 𝒜^∨_{M,F} ≠ a*_M`.
+5. **`i a*_{M,F}` is a genuine torus** (`dualLattice_ne_bot_ne_top`): `0 ≠ 𝒜^∨_{M,F} ≠ a*_M`,
+   and the unitarity criterion `Re λ = 0` rejects the real `λ` above
+   (`not_re_eq_zero_of_not_unitary`).
 -/
 
 noncomputable section
@@ -94,6 +97,10 @@ theorem dualLattice_ne_top : L.dualLattice ≠ ⊤ := by
   intro h
   exact hν ((L.unitaryUnramChar_eq_one_iff ν).2 (h ▸ AddSubgroup.mem_top ν))
 
+/-- **`i a*_{M,F}` is neither a point nor all of `a*_M`.** -/
+theorem dualLattice_ne_bot_ne_top : L.dualLattice ≠ ⊥ ∧ L.dualLattice ≠ ⊤ :=
+  ⟨L.dualLattice_ne_bot, L.dualLattice_ne_top⟩
+
 /-- **A real `λ` gives a non-unitary `χ_λ`**: the criterion `norm_unramChar_eq_one_iff` has
 content. -/
 theorem exists_unramChar_not_unitary : ∃ μ : L.aMDualC, ∃ m : ↥L.M,
@@ -108,6 +115,12 @@ theorem exists_unramChar_not_unitary : ∃ μ : L.aMDualC, ∃ m : ↥L.M,
     simp [apply_ite Complex.re]
   rw [this, Ne, Real.exp_eq_one_iff]
   exact hm
+
+/-- **The criterion `Re λ = 0` is consistent with the non-unitary `χ_λ` above**: some coordinate
+of that `λ` has nonzero real part. -/
+theorem not_re_eq_zero_of_not_unitary : ∃ μ : L.aMDualC, ¬ ∀ c, (μ c).re = 0 := by
+  obtain ⟨μ, m, hm⟩ := L.exists_unramChar_not_unitary
+  exact ⟨μ, fun h => hm ((L.norm_unramChar_eq_one_iff μ).2 h m)⟩
 
 /-- **Twisting changes the action**: `σ_{iν}(m) v = −σ(m) v` for the `ν`, `m` above. -/
 theorem unramTwist_ρ_ne (σ : UnitaryRep ↥L.M) (v : σ.H) (hv : v ≠ 0) :
