@@ -165,10 +165,12 @@ theorem isIrreducible_twist_iff (π : UnitaryRep G) (χ : G →ₜ* Circle) :
       (∀ g, ∀ v ∈ W, (π.twist χ).ρ g v ∈ W) ↔ (∀ g, ∀ v ∈ W, π.ρ g v ∈ W) := by
     intro W
     refine ⟨fun h g v hv => ?_, fun h g v hv => ?_⟩
-    · have h1 := W.smul_mem (((χ g : Circle) : ℂ))⁻¹ (h g v hv)
-      rwa [twist_ρ_apply, smul_smul, inv_mul_cancel₀ (Circle.coe_ne_zero _), one_smul] at h1
-    · rw [twist_ρ_apply]
-      exact W.smul_mem _ (h g v hv)
+    · exact Representation.apply_mem_of_charTwist_apply_mem
+        (χ := Circle.toUnits.comp (χ : G →* Circle))
+        (ρ := π.toContRepresentation.toRepresentation) (fun g _ hv => h g _ hv) g hv
+    · exact Representation.charTwist_apply_mem_of_apply_mem
+        (χ := Circle.toUnits.comp (χ : G →* Circle))
+        (ρ := π.toContRepresentation.toRepresentation) (fun g _ hv => h g _ hv) g hv
   unfold IsIrreducible
   exact and_congr Iff.rfl (forall_congr' fun W => forall_congr' fun _ => imp_congr_left (key W))
 

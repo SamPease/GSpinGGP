@@ -56,8 +56,12 @@ The dual lattice is `𝒜^∨_{M,F} = Hom(𝒜_{M,F}, 2πℤ)`, the homomorphism
   `isEquivalent_unramTwist_zero`, `isEquivalent_unramTwist_add`,
   `unramTwist_eq_of_sub_mem` (depends only on `ν` mod `𝒜^∨_{M,F}`),
   `dualLattice_le_twistStab`.
-* `ParIndData.mem_smoothSpace_unramTwist_iff`: the smooth vectors of `i_P^G(σ_λ)` are the
-  `f` with `f(pg) = δ_P(p)^{1/2} e^{⟨λ, H_M(p)⟩} σ(p) f(g)`.
+* `ParIndData.unramTwist_σ_ρ_leviQuotEquiv`, `isEquivalent_comap_unramTwist`: the inducing
+  representation of `ParIndData.unramTwist` is `ReducedLeviDatum.unramTwist` transported along
+  `M ≅ P/U`.
+* `ParIndData.mem_smoothSpace_unramTwist_iff`: for `λ = iν`, the smooth vectors of
+  `i_P^G(σ_λ)` are the `f` with `f(pg) = δ_P(p)^{1/2} e^{i⟨ν, H_M(proj p)⟩} σ(pU) f(g)` (with the
+  `s`-scaled `H_M = L.HM`, see below).
 
 Not done here: that `𝒜_{M,F}` is a lattice of full rank (so that `i a*_{M,F}` is a compact torus
 and the unitarity criterion becomes `Re λ = 0`), and the restriction-to-`K` identification of the
@@ -137,16 +141,6 @@ theorem dualPairC_mul_I (ν : L.aMDual) (H : L.aM) :
   exact Finset.sum_congr rfl fun c _ => by ring
 
 /-! ## 2. `H_M` is a continuous homomorphism; `𝒜_{M,F}` -/
-
-/-- **`H_M` is continuous** (each `log ‖χ_c(m)‖` is, `χ_c` being continuous with values in
-`F^×`). -/
-theorem continuous_HM : Continuous L.HM :=
-  continuous_pi fun c =>
-    (continuous_norm.comp (L.continuous_char c)).log fun m =>
-      norm_ne_zero_iff.2 (L.char c m).ne_zero
-
-theorem HM_inv (m : ↥L.M) : L.HM m⁻¹ = -L.HM m := by
-  rw [eq_neg_iff_add_eq_zero, ← HM_mul, inv_mul_cancel, HM_one]
 
 /-- **`𝒜_{M,F} = H_M(M(F))`** (Thesis §2.1; Beuzart-Plessis §1.1, p. 12), a subgroup of `a_M`. -/
 def rangeHM : AddSubgroup L.aM where
@@ -439,9 +433,35 @@ def unramTwist (D : d.ParIndData) (L : d.ReducedLeviDatum) (hL : d.IsLevi D.FW D
     (ν : L.aMDual) : d.ParIndData :=
   { D with σ := D.σ.twist (L.charQuot hL ν) }
 
-/-- **The smooth vectors of `i_P^G(σ_{iν})`**: the `f` with
-`f(pg) = δ_P(p)^{1/2} e^{i⟨ν, H_M(proj p)⟩} σ(pU) f(g)`, right invariant under an open
-subgroup. -/
+/-- **The inducing representation of `D.unramTwist` is `σ_{iν}` on `M`**: on `M ≅ P/U`
+(`IsLevi.leviQuotEquiv`), `(σ ⊗ charQuot)(m) = χ_{iν}(m) σ(m)`. -/
+theorem unramTwist_σ_ρ_leviQuotEquiv (D : d.ParIndData) (L : d.ReducedLeviDatum)
+    (hL : d.IsLevi D.FW D.FV L.M) (ν : L.aMDual) (m : ↥L.M) (v : D.σ.H) :
+    (D.unramTwist L hL ν).σ.ρ (hL.leviQuotEquiv m) v =
+      ((L.unitaryUnramChar ν m : Circle) : ℂ) • D.σ.ρ (hL.leviQuotEquiv m) v := by
+  change ((L.charQuot hL ν (hL.leviQuotEquiv m) : Circle) : ℂ) •
+    D.σ.ρ (hL.leviQuotEquiv m) v = _
+  rw [L.charQuot_leviQuotEquiv]
+
+/-- `M → P/U`, `m ↦ mU`, is continuous. -/
+theorem _root_.GSpinGGP.GGPData.IsLevi.continuous_leviQuotEquiv {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV}
+    {M : Subgroup ↥d.G} (hL : d.IsLevi FW FV M) : Continuous hL.leviQuotEquiv :=
+  continuous_quot_mk.comp (continuous_subtypeVal.subtype_mk _)
+
+/-- **`i_P^G(σ_λ)` is induced from the `M`-side twist**: pulled back to `M` along `M ≅ P/U`, the
+inducing representation of `D.unramTwist L hL ν` is `ReducedLeviDatum.unramTwist` of the
+pull-back of `σ` (the identity map is the equivalence). -/
+theorem isEquivalent_comap_unramTwist (D : d.ParIndData) (L : d.ReducedLeviDatum)
+    (hL : d.IsLevi D.FW D.FV L.M) (ν : L.aMDual) :
+    ((D.unramTwist L hL ν).σ.comap hL.leviQuotEquiv.toMonoidHom
+        hL.continuous_leviQuotEquiv).IsEquivalent
+      (L.unramTwist (D.σ.comap hL.leviQuotEquiv.toMonoidHom hL.continuous_leviQuotEquiv) ν) :=
+  ⟨LinearIsometryEquiv.refl ℂ D.σ.H, fun m v =>
+    D.unramTwist_σ_ρ_leviQuotEquiv L hL ν m v⟩
+
+/-- **The smooth vectors of `i_P^G(σ_λ)`, `λ = iν`**: the `f` with
+`f(pg) = δ_P(p)^{1/2} e^{i⟨ν, H_M(proj p)⟩} σ(pU) f(g)` (`H_M = L.HM`, the `s`-scaled map),
+right invariant under an open subgroup. -/
 theorem mem_smoothSpace_unramTwist_iff (D : d.ParIndData) (L : d.ReducedLeviDatum)
     (hL : d.IsLevi D.FW D.FV L.M) (ν : L.aMDual) (f : ↥d.G → D.σ.H) :
     f ∈ (D.unramTwist L hL ν).smoothSpace ↔
