@@ -2,6 +2,7 @@ import GSpinGGP.Foundations.LocalGroups
 import GSpinGGP.Foundations.HaarLocal
 import GSpinGGP.Foundations.RankSemicontinuity
 import GSpinGGP.Foundations.Determinant
+import GSpinGGP.Foundations.CharpolyLimit
 import GSpinGGP.Foundations.SubgroupTransport
 import GSpinGGP.Foundations.CayleyTransform
 import GSpinGGP.Foundations.JHatTranslate
@@ -174,6 +175,7 @@ import GSpinGGP.TraceFormula.Interface
 import GSpinGGP.TraceFormula.GermTranslate
 import GSpinGGP.TraceFormula.TorusDescent
 import GSpinGGP.TraceFormula.GermBound
+import GSpinGGP.TraceFormula.GermBoundTorus
 import GSpinGGP.TraceFormula.JHatHomogeneous
 import GSpinGGP.TraceFormula.GermHomogeneous
 import GSpinGGP.TraceFormula.MGeom
