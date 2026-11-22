@@ -325,14 +325,6 @@ universe u
 
 variable {G G' : Type u} [Group G] [TopologicalSpace G] [Group G'] [TopologicalSpace G']
 
-/-- The pullback `π ∘ e` of a unitary representation of `G'` along a continuous homomorphism
-`e : G → G'` (same Hilbert space).  (Generic; a candidate for `Foundations/Representations.lean`.) -/
-abbrev UnitaryRep.comap (e : G →* G') (he : Continuous e) (π : UnitaryRep G') : UnitaryRep G where
-  H := π.H
-  ρ := π.ρ.comp e
-  unitary_ρ g := π.unitary_ρ (e g)
-  strongCont v := (π.strongCont v).comp he
-
 /-- The pullback along an isomorphism of topological groups. -/
 abbrev UnitaryRep.comapCME (e : G ≃ₜ* G') (π : UnitaryRep G') : UnitaryRep G :=
   π.comap (e : G ≃* G').toMonoidHom e.continuous
@@ -623,7 +615,8 @@ theorem exists_coeff_leftRegular (e : G ≃ₜ* G') (w' : (leftRegular G').H) :
       ⟪(leftRegular G).ρ g w, w⟫_ℂ = ⟪(leftRegular G').ρ (e g) w', w'⟫_ℂ := by
   let W' : Lp ℂ 2 (Measure.haar : Measure G') := w'
   suffices ∃ W : Lp ℂ 2 (Measure.haar : Measure G), ∀ g : G,
-      ⟪leftTranslate g W, W⟫_ℂ = ⟪leftTranslate (e g) W', W'⟫_ℂ from this
+      ⟪(Measure.haar : Measure G).leftRegular ℂ ℂ 2 g W, W⟫_ℂ =
+        ⟪(Measure.haar : Measure G').leftRegular ℂ ℂ 2 (e g) W', W'⟫_ℂ from this
   set c : ℝ := (haarFactor e : ℝ) with hc_def
   have hc : 0 < c := by simpa [hc_def] using haarFactor_pos e
   set s : ℂ := (((Real.sqrt c)⁻¹ : ℝ) : ℂ) with hs_def
@@ -645,26 +638,26 @@ theorem exists_coeff_leftRegular (e : G ≃ₜ* G') (w' : (leftRegular G').H) :
   -- left translates
   have hmp : MeasurePreserving (fun x : G => g⁻¹ * x) Measure.haar Measure.haar :=
     measurePreserving_mul_left _ g⁻¹
-  have hmp' : MeasurePreserving (fun y : G' => (e g)⁻¹ * y) Measure.haar Measure.haar :=
-    measurePreserving_mul_left _ (e g)⁻¹
-  have hL : (leftTranslate g w : G → ℂ) =ᵐ[Measure.haar]
+  have hL : ((Measure.haar : Measure G).leftRegular ℂ ℂ 2 g w : G → ℂ) =ᵐ[Measure.haar]
       fun x => s • (W' : G' → ℂ) ((e g)⁻¹ * e x) := by
-    have a1 : (leftTranslate g w : G → ℂ) =ᵐ[Measure.haar] (w : G → ℂ) ∘ fun x => g⁻¹ * x :=
-      Lp.coeFn_compMeasurePreserving w hmp
+    have a1 := Measure.coeFn_leftRegular (Measure.haar : Measure G) (𝕜 := ℂ) (E := ℂ) 2 g w
     have a2 := hmp.quasiMeasurePreserving.ae_eq_comp hw
     filter_upwards [a1, a2] with x h1 h2
-    rw [h1, h2]
+    rw [h1, show (w : G → ℂ) (g⁻¹ * x) = _ from h2]
     simp [map_mul, map_inv]
-  have hL' : (leftTranslate (e g) W' : G' → ℂ) =ᵐ[Measure.haar]
-      fun y => (W' : G' → ℂ) ((e g)⁻¹ * y) := Lp.coeFn_compMeasurePreserving W' hmp'
+  have hL' : ((Measure.haar : Measure G').leftRegular ℂ ℂ 2 (e g) W' : G' → ℂ) =ᵐ[Measure.haar]
+      fun y => (W' : G' → ℂ) ((e g)⁻¹ * y) :=
+    Measure.coeFn_leftRegular (Measure.haar : Measure G') (𝕜 := ℂ) (E := ℂ) 2 (e g) W'
   rw [MeasureTheory.L2.inner_def, MeasureTheory.L2.inner_def]
-  have lhs : ∫ x, ⟪(leftTranslate g w : G → ℂ) x, (w : G → ℂ) x⟫_ℂ ∂Measure.haar =
+  have lhs : ∫ x, ⟪((Measure.haar : Measure G).leftRegular ℂ ℂ 2 g w : G → ℂ) x, (w : G → ℂ) x⟫_ℂ
+      ∂Measure.haar =
       ∫ x, (starRingEnd ℂ) s * s *
         ⟪(W' : G' → ℂ) ((e g)⁻¹ * e x), (W' : G' → ℂ) (e x)⟫_ℂ ∂Measure.haar := by
     refine integral_congr_ae ?_
     filter_upwards [hL, hw] with x h1 h2
     rw [h1, h2, inner_smul_left, inner_smul_right, ← mul_assoc]
-  have rhs : ∫ y, ⟪(leftTranslate (e g) W' : G' → ℂ) y, (W' : G' → ℂ) y⟫_ℂ ∂Measure.haar =
+  have rhs : ∫ y, ⟪((Measure.haar : Measure G').leftRegular ℂ ℂ 2 (e g) W' : G' → ℂ) y,
+      (W' : G' → ℂ) y⟫_ℂ ∂Measure.haar =
       ∫ y, ⟪(W' : G' → ℂ) ((e g)⁻¹ * y), (W' : G' → ℂ) y⟫_ℂ ∂Measure.haar := by
     refine integral_congr_ae ?_
     filter_upwards [hL'] with y h1
@@ -1615,13 +1608,13 @@ theorem toFun_rightTransLin (g : ↥d.G) (f : D.Pre) (x : ↥d.G) :
 
 /-! ### The invariant form on `δ_P`-equivariant functions (for `preInner_rightTrans`) -/
 
-/-- `⟨c U a, c U b⟩ = r ⟨a, b⟩` for `U` unitary and `c = √r`, `r ≥ 0`. -/
+/-- `⟨c U a, c U b⟩ = r ⟨a, b⟩` for `U` preserving the inner product and `c = √r`, `r ≥ 0`. -/
 theorem inner_sqrt_smul_unitary {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℂ E]
-    [CompleteSpace E] {U : E →L[ℂ] E} (hU : U ∈ unitary (E →L[ℂ] E)) {r : ℝ} (hr : 0 ≤ r)
+    {U : E →L[ℂ] E} (hU : ∀ a b, inner ℂ (U a) (U b) = inner ℂ a b) {r : ℝ} (hr : 0 ≤ r)
     (a b : E) :
     inner ℂ (((Real.sqrt r : ℝ) : ℂ) • U a) (((Real.sqrt r : ℝ) : ℂ) • U b) =
       (r : ℂ) * inner ℂ a b := by
-  rw [inner_smul_left, inner_smul_right, ContinuousLinearMap.inner_map_map_of_mem_unitary hU,
+  rw [inner_smul_left, inner_smul_right, hU,
     Complex.conj_ofReal, ← mul_assoc, ← Complex.ofReal_mul, Real.mul_self_sqrt hr]
 
 /-- The equivariance `f(p x) = δ_P(p)^{1/2} σ(p) f(x)` of a smooth vector. -/
@@ -1637,7 +1630,7 @@ theorem inner_toFun_mul (f₁ f₂ : D.Pre) (p : ↥D.P) (x : ↥d.G) :
       (D.toIwasawaPair.delta p : ℂ) * inner ℂ (D.toFun f₁ x) (D.toFun f₂ x) := by
   have e1 := D.apply_mul_of_mem (D.toFun_mem f₁) p x
   have e2 := D.apply_mul_of_mem (D.toFun_mem f₂) p x
-  have h := inner_sqrt_smul_unitary (D.σ.unitary_ρ (QuotientGroup.mk p))
+  have h := inner_sqrt_smul_unitary (D.σ.isUnitary (QuotientGroup.mk p))
     (NNReal.coe_nonneg (Measure.modularCharacter p)) (D.toFun f₁ x) (D.toFun f₂ x)
   exact (congrArg₂ (fun a b => inner ℂ a b) e1 e2).trans h
 
@@ -1779,11 +1772,9 @@ end ParIndData
 /-- **Normalized parabolic induction** `i_P^G(σ)` (BZ 1977 §2; BP §1.5; Thesis §3.2): the
 completion of the space of smooth `f : G(F) → H_σ` with `f(pg) = δ_P(p)^{1/2} σ(p) f(g)`, for the
 norm `‖f‖² = ∫_K ‖f(k)‖² dk`, with `G(F)` acting by right translation. -/
-def parInd (D : d.ParIndData) : UnitaryRep ↥d.G where
-  H := D.Hil
-  ρ := { toFun := D.rho, map_one' := D.rho_one, map_mul' := D.rho_mul }
-  unitary_ρ := D.rho_mem_unitary
-  strongCont := D.continuous_rho_apply
+def parInd (D : d.ParIndData) : UnitaryRep ↥d.G :=
+  .ofMonoidHom D.Hil { toFun := D.rho, map_one' := D.rho_one, map_mul' := D.rho_mul }
+    D.rho_mem_unitary D.continuous_rho_apply
 
 /-! ## 7. Properly induced virtual representations `R_ind(G, η)` (BP §2.7; Thesis §3.4, §7.4) -/
 

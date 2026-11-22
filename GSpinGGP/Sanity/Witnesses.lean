@@ -890,8 +890,8 @@ def toyInnerForms : InnerFormSystem (toyData (K := F)) where
 /-- The trivial one-dimensional unitary representation. -/
 def trivialRep (G : Type) [Group G] [TopologicalSpace G] : UnitaryRep G where
   H := ℂ
-  ρ := 1
-  unitary_ρ _ := one_mem _
+  toContRepresentation := .trivial ℂ G ℂ
+  isUnitary := ContRepresentation.isUnitary_trivial
   strongCont _ := continuous_const
 
 theorem trivialRep_ρ_apply (G : Type) [Group G] [TopologicalSpace G] (g : G)

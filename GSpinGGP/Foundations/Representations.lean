@@ -4,6 +4,8 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 import Mathlib
 import GSpinGGP.Foundations.VanDantzig
 import TauCeti.RepresentationTheory.Smooth.Basic
+import TauCeti.RepresentationTheory.Continuous.Unitary.Basic
+import TauCeti.RepresentationTheory.Continuous.LeftRegular.Basic
 
 /-!
 # Unitary representations of totally disconnected locally compact groups
@@ -19,9 +21,13 @@ Sources:
 
 ## Main definitions
 
-* `UnitaryRep G`: a strongly continuous unitary representation on a complex Hilbert space.
+* `UnitaryRep G`: a strongly continuous unitary representation on a complex Hilbert space: a
+  Mathlib `ContRepresentation` that is unitary in the sense of Tau Ceti's
+  `ContRepresentation.IsUnitary`. `UnitaryRep.ρ` is its action, `UnitaryRep.ofMonoidHom` builds one
+  from a homomorphism into the unitary operators with continuous orbits.
 * `UnitaryRep.IsIrreducible`, `UnitaryRep.IsEquivalent`.
-* `leftTranslate`, `leftRegular G`: the left regular representation on `L²(G, haar)`.
+* `leftRegular G`: the left regular representation on `L²(G, haar)` (Tau Ceti's
+  `Measure.leftRegular`).
 * `WeaklyContainedIn`, `IsTempered`.
 * `IsTrivialOn`, `HasCentralChar`.
 * `UnitaryRep.toRepresentation`: the underlying linear representation (through Mathlib's
@@ -60,25 +66,53 @@ namespace GSpinGGP
 universe u
 
 /-- A strongly continuous unitary representation of a topological group `G` on a complex
-Hilbert space `H` (Thesis §3.1). -/
+Hilbert space `H` (Thesis §3.1): a continuous representation `G →* (H →L[ℂ] H)` (Mathlib's
+`ContRepresentation`) that is unitary (Tau Ceti's `ContRepresentation.IsUnitary`: every `π g`
+preserves the inner product) and strongly continuous (`g ↦ π g v` is continuous for every `v`).
+
+The action as a monoid homomorphism is `UnitaryRep.ρ`; `UnitaryRep.ofMonoidHom` builds a
+`UnitaryRep` from a homomorphism into the unitary operators with continuous orbits. -/
 structure UnitaryRep (G : Type u) [Group G] [TopologicalSpace G] where
   /-- The underlying Hilbert space. -/
   H : Type u
   [normed : NormedAddCommGroup H]
   [inner : InnerProductSpace ℂ H]
   [complete : CompleteSpace H]
-  /-- The action. -/
-  ρ : G →* (H →L[ℂ] H)
-  /-- Each `ρ g` is unitary. -/
-  unitary_ρ : ∀ g, ρ g ∈ unitary (H →L[ℂ] H)
-  /-- Strong continuity: `g ↦ ρ g v` is continuous for every `v`. -/
-  strongCont : ∀ v : H, Continuous fun g => ρ g v
+  /-- The underlying continuous representation. -/
+  toContRepresentation : ContRepresentation ℂ G H
+  /-- Unitarity: each `π g` preserves the inner product. -/
+  isUnitary : toContRepresentation.IsUnitary
+  /-- Strong continuity: `g ↦ π g v` is continuous for every `v`. -/
+  strongCont : ∀ v : H, Continuous fun g => toContRepresentation g v
 
 attribute [instance] UnitaryRep.normed UnitaryRep.inner UnitaryRep.complete
 
 variable {G : Type u} [Group G] [TopologicalSpace G]
 
 namespace UnitaryRep
+
+/-- The action of `π` as a monoid homomorphism `G →* (H →L[ℂ] H)`. -/
+abbrev ρ (π : UnitaryRep G) : G →* (π.H →L[ℂ] π.H) :=
+  π.toContRepresentation.toMonoidHom
+
+/-- A `UnitaryRep` from a monoid homomorphism `ρ : G →* (H →L[ℂ] H)` into the unitary operators
+with continuous orbits. -/
+def ofMonoidHom (H : Type u) [NormedAddCommGroup H] [InnerProductSpace ℂ H] [CompleteSpace H]
+    (ρ : G →* (H →L[ℂ] H)) (unitary_ρ : ∀ g, ρ g ∈ unitary (H →L[ℂ] H))
+    (strongCont : ∀ v : H, Continuous fun g => ρ g v) : UnitaryRep G where
+  H := H
+  toContRepresentation := .ofMonoidHom ρ
+  isUnitary := (ContRepresentation.isUnitary_iff_mem_unitary _).2 unitary_ρ
+  strongCont := strongCont
+
+/-- The pullback `π ∘ e` of a unitary representation of `G'` along a continuous homomorphism
+`e : G → G'`, on the same Hilbert space (Mathlib's `ContRepresentation.restrict`). -/
+abbrev comap {G' : Type u} [Group G'] [TopologicalSpace G'] (e : G →* G') (he : Continuous e)
+    (π : UnitaryRep G') : UnitaryRep G where
+  H := π.H
+  toContRepresentation := π.toContRepresentation.restrict e
+  isUnitary := π.isUnitary.restrict e
+  strongCont v := (π.strongCont v).comp he
 
 /-- `π` is (topologically) irreducible: `H ≠ 0` and the only closed `ρ`-invariant subspaces are
 `⊥` and `⊤` (Thesis §3.1). -/
@@ -99,70 +133,16 @@ section Regular
 variable [IsTopologicalGroup G] [LocallyCompactSpace G] [T2Space G]
   [MeasurableSpace G] [BorelSpace G]
 
-/-- Left translation `(λ(g) f)(x) = f(g⁻¹ x)` on `L²(G, haar)`. -/
-noncomputable def leftTranslate (g : G) :
-    Lp ℂ 2 (Measure.haar : Measure G) →L[ℂ] Lp ℂ 2 (Measure.haar : Measure G) :=
-  (Lp.compMeasurePreservingₗᵢ ℂ (fun x : G => g⁻¹ * x)
-    (measurePreserving_mul_left (Measure.haar : Measure G) g⁻¹)).toContinuousLinearMap
-
-omit [T2Space G] in
-private lemma compMeasurePreserving_congr {f f' : G → G} (h : f = f')
-    (hf : MeasurePreserving f (Measure.haar : Measure G) Measure.haar)
-    (hf' : MeasurePreserving f' (Measure.haar : Measure G) Measure.haar)
-    (v : Lp ℂ 2 (Measure.haar : Measure G)) :
-    Lp.compMeasurePreserving f hf v = Lp.compMeasurePreserving f' hf' v := by
-  subst h; rfl
-
-omit [T2Space G] in
-lemma leftTranslate_one : leftTranslate (1 : G) = 1 :=
-  ContinuousLinearMap.ext fun v => by
-    change Lp.compMeasurePreserving _ _ v = v
-    rw [compMeasurePreserving_congr (f' := id) (by funext x; simp) _ (MeasurePreserving.id _)]
-    exact Lp.compMeasurePreserving_id_apply v
-
-omit [T2Space G] in
-lemma leftTranslate_mul (g h : G) : leftTranslate (g * h) = leftTranslate g * leftTranslate h :=
-  ContinuousLinearMap.ext fun v => by
-    change Lp.compMeasurePreserving _ _ v =
-      Lp.compMeasurePreserving _ _ (Lp.compMeasurePreserving _ _ v)
-    rw [compMeasurePreserving_congr (f' := (fun x => h⁻¹ * x) ∘ (fun x => g⁻¹ * x))
-      (by funext x; simp [mul_assoc]) _
-      ((measurePreserving_mul_left _ h⁻¹).comp (measurePreserving_mul_left _ g⁻¹))]
-    exact Lp.compMeasurePreserving_comp_apply v _ _
-
-omit [T2Space G] in
-lemma leftTranslate_mem_unitary (g : G) :
-    leftTranslate g ∈ unitary (Lp ℂ 2 (Measure.haar : Measure G) →L[ℂ] Lp ℂ 2 (Measure.haar : Measure G)) := by
-  have hsurj : Function.Surjective (Lp.compMeasurePreservingₗᵢ ℂ (fun x : G => g⁻¹ * x)
-      (measurePreserving_mul_left (Measure.haar : Measure G) g⁻¹)) := fun v =>
-    ⟨leftTranslate g⁻¹ v, by
-      change (leftTranslate g * leftTranslate g⁻¹) v = v
-      rw [← leftTranslate_mul, mul_inv_cancel, leftTranslate_one]
-      rfl⟩
-  exact (Unitary.linearIsometryEquiv.symm (LinearIsometryEquiv.ofSurjective _ hsurj)).2
-
-omit [T2Space G] in
-/-- Strong continuity of the left regular representation (Mathlib's
-`Continuous.compMeasurePreservingLp`, using that Haar measure is regular). -/
-lemma continuous_leftTranslate_apply (v : Lp ℂ 2 (Measure.haar : Measure G)) :
-    Continuous fun g : G => leftTranslate g v := by
-  have hc : Continuous fun z : G => (⟨fun x => z⁻¹ * x, by fun_prop⟩ : C(G, G)) :=
-    ContinuousMap.continuous_of_continuous_uncurry _
-      (show Continuous fun p : G × G => p.1⁻¹ * p.2 by fun_prop)
-  exact continuous_const.compMeasurePreservingLp hc
-    (fun z => measurePreserving_mul_left (Measure.haar : Measure G) z⁻¹) (by norm_num)
-
 /-- The left regular representation of `G` on `L²(G, haar)`: `(λ(g) f)(x) = f(g⁻¹ x)`
-(Thesis Ch. 1, the "regular representation of `G(F)`"). -/
+(Thesis Ch. 1, the "regular representation of `G(F)`"). This is Tau Ceti's
+`Measure.leftRegular` for Haar measure, which is unitary (`Measure.isUnitary_leftRegular`) and
+strongly continuous (`Measure.continuous_leftRegular_apply`). -/
 noncomputable def leftRegular (G : Type u) [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
     [LocallyCompactSpace G] [T2Space G] [MeasurableSpace G] [BorelSpace G] : UnitaryRep G where
   H := Lp ℂ 2 (Measure.haar : Measure G)
-  ρ :=
-    { toFun := leftTranslate
-      map_one' := leftTranslate_one
-      map_mul' := leftTranslate_mul }
-  unitary_ρ := leftTranslate_mem_unitary
-  strongCont := continuous_leftTranslate_apply
+  toContRepresentation := (Measure.haar : Measure G).leftRegular ℂ ℂ 2
+  isUnitary := Measure.isUnitary_leftRegular _
+  strongCont := Measure.continuous_leftRegular_apply _ _ (by norm_num)
 
 /-- Weak containment (Fell): `π` is weakly contained in `σ` if every diagonal matrix
 coefficient of `π` is a limit, uniformly on compact sets, of finite sums of diagonal matrix
@@ -202,11 +182,6 @@ theorem isTrivialOn_iff_hasCentralChar_one (π : UnitaryRep G) (A : Subgroup G) 
 /-! ### Smooth vectors -/
 
 namespace UnitaryRep
-
-/-- `π` as a continuous representation (Mathlib's `ContRepresentation`): each `ρ g` is a continuous
-linear map. Unitarity and strong continuity are forgotten. -/
-def toContRepresentation (π : UnitaryRep G) : ContRepresentation ℂ G π.H :=
-  .ofMonoidHom π.ρ
 
 /-- The underlying linear representation `G →* (H →ₗ[ℂ] H)` of `π`. -/
 abbrev toRepresentation (π : UnitaryRep G) : Representation ℂ G π.H :=
@@ -383,7 +358,7 @@ noncomputable def opOf (π : UnitaryRep G) (f : G → ℂ) : π.H →L[ℂ] π.H
         rw [← integral_mul_const]
         congr 1
         funext g
-        rw [norm_smul, ContinuousLinearMap.norm_map_of_mem_unitary (π.unitary_ρ g)]
+        rw [norm_smul, show ‖π.ρ g v‖ = ‖v‖ from π.isUnitary.norm_map g v]
       · simpa using mul_nonneg (integral_nonneg fun _ => norm_nonneg _) (norm_nonneg v))
 
 omit [T2Space G] in
@@ -722,7 +697,7 @@ theorem map_one [Nontrivial π.H] (h : HasCentralChar π A χ) : χ 1 = 1 := by
 /-- On a nonzero unitary representation the central character is unitary. -/
 theorem norm_eq_one [Nontrivial π.H] (h : HasCentralChar π A χ) (a : ↥A) : ‖χ a‖ = 1 := by
   obtain ⟨v, hv⟩ := exists_ne (0 : π.H)
-  have h1 : ‖π.ρ a v‖ = ‖v‖ := ContinuousLinearMap.norm_map_of_mem_unitary (π.unitary_ρ a) v
+  have h1 : ‖π.ρ a v‖ = ‖v‖ := π.isUnitary.norm_map _ v
   rw [h.smul_eq, norm_smul] at h1
   have hv' : ‖v‖ ≠ 0 := norm_ne_zero_iff.mpr hv
   have := mul_right_cancel₀ hv' (h1.trans (one_mul _).symm)
