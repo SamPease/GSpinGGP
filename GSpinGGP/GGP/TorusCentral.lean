@@ -5,6 +5,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import GSpinGGP.Foundations.EigenFrame
 import GSpinGGP.GGP.Steinberg
 import GSpinGGP.Foundations.HypPlane
+import GSpinGGP.Foundations.SoCentralizer
+import GSpinGGP.Foundations.QuadraticForms
 
 /-!
 # The torus of a semisimple element is central in its centralizer
@@ -160,6 +162,104 @@ theorem commute_of_fixes_eigenspace_one (hQ : IsNondeg Q) {x : GSpin Q}
   have htg : t = scalarGSpin Q c * g := by rw [hc, inv_mul_cancel_right]
   rw [htg]
   exact ((scalarGSpin_mem_center Q c).comm z).symm.mul_right (hgz z hzs)
+
+/-- **Regular centralizers are commutative**, over an algebraically closed field of
+characteristic `0`: if `P(x)` is semisimple and `so(V)_{P(x)}` (`soCent`) is abelian, any two elements of
+`GSpin(V)` commuting with `x` commute.  `so(V)_{P(x)} ⊇ so(ker (P(x) − 1))` forces
+`dim ker (P(x) − 1) ≤ 2` (`IsomCent.finrank_eigenspace_neg_one_le_two` for `−P(x)`).  An element
+commuting with `x` has determinant `1` on `ker (P(x) − 1)`
+(`det_restrict_one_eq_one_of_commute`): in dimension `≤ 1` it fixes `ker (P(x) − 1)`, and
+`commute_of_fixes_eigenspace_one` applies.  In dimension `2`, `ker (P(x) − 1)` is a hyperbolic
+plane `⟨e, f⟩` on which `P(g)` acts by `diag(c, c⁻¹)` (`exists_smul_of_det_restrict_eq_one`); with
+`s` the pair element of `⟨e, f⟩` acting by `diag(c⁻¹, c)`, `g s` fixes `ker (P(x) − 1)`, so
+commutes with `h`, and `s` commutes with `h` (`commute_hypUnit`), hence so does `g`. -/
+theorem commute_of_forall_skew_commute (hQ : IsNondeg Q) {x : GSpin Q}
+    (hss : Module.End.IsSemisimple (specP Q x : V →ₗ[K] V))
+    (hab : ∀ M₁ ∈ soCent Q (specP Q x : V →ₗ[K] V), ∀ M₂ ∈ soCent Q (specP Q x : V →ₗ[K] V),
+      Commute M₁ M₂)
+    {g h : GSpin Q} (hg : Commute g x) (hh : Commute h x) : Commute g h := by
+  set X : Module.End K V := (specP Q x : V →ₗ[K] V) with hXdef
+  have hB : (bform Q).IsSymm := ⟨fun u v => bform_comm Q u v⟩
+  have hXo := isOrthogonal_specP x
+  have hab' : ∀ Y₁ Y₂ : Module.End K V, (bform Q).IsSkewAdjoint Y₁ → (bform Q).IsSkewAdjoint Y₂ →
+      Commute X Y₁ → Commute X Y₂ → Commute Y₁ Y₂ := fun Y₁ Y₂ h₁ h₂ c₁ c₂ =>
+    hab Y₁ (mem_soCent.2 ⟨h₁.eq, c₁.eq.symm⟩) Y₂ (mem_soCent.2 ⟨h₂.eq, c₂.eq.symm⟩)
+  have hL : IsomCent.LieAbelian (bform Q) X := fun Y₁ Y₂ h₁ h₂ c₁ c₂ _ _ => hab' Y₁ Y₂ h₁ h₂ c₁ c₂
+  -- `dim ker (X − 1) ≤ 2`
+  have hE : Module.End.eigenspace (-X) (-1) = Module.End.eigenspace X 1 := by
+    ext v; simp
+  have hdim : finrank K (Module.End.eigenspace X 1) ≤ 2 := by
+    rw [← hE]
+    refine IsomCent.finrank_eigenspace_neg_one_le_two hB hQ (fun u v => ?_)
+      (Module.End.isSemisimple_neg.2 hss) ?_
+    · simp only [LinearMap.neg_apply, map_neg, neg_neg]
+      exact hXo u v
+    · intro Y₁ Y₂ h₁ h₂ c₁ c₂ _ _
+      exact hab' Y₁ Y₂ h₁ h₂ (by simpa using c₁.neg_left) (by simpa using c₂.neg_left)
+  obtain ⟨hcg, hdg⟩ := det_restrict_one_eq_one_of_commute hQ x hss g hg
+  obtain ⟨hch, hdh⟩ := det_restrict_one_eq_one_of_commute hQ x hss h hh
+  rcases Nat.lt_or_ge (finrank K (Module.End.eigenspace X 1)) 2 with h1 | h2
+  · -- `dim ≤ 1`: `P(g)` fixes `ker (X − 1)`
+    refine (commute_of_fixes_eigenspace_one hQ hss hL hg (fun w hw => ?_) hh).symm
+    rcases Nat.lt_succ_iff.1 h1 |> Nat.le_one_iff_eq_zero_or_eq_one.1 with h0 | h1
+    · have : (⟨w, hw⟩ : Module.End.eigenspace X 1) = 0 :=
+        (Module.finrank_zero_iff.1 h0).elim _ _
+      rw [show w = 0 from congrArg Subtype.val this, map_zero]
+    · obtain ⟨c, hc, -⟩ := LinearMap.existsUnique_eq_smul_id_of_finrank_eq_one h1
+        ((specP Q g : V →ₗ[K] V).restrict
+          (IsomCent.mapsTo_eigenspace_of_commute (commute_toLinearMap hcg) 1))
+      rw [hc, LinearMap.det_smul, LinearMap.det_id, h1, pow_one, mul_one] at hdg
+      have := congrArg Subtype.val (LinearMap.congr_fun hc ⟨w, hw⟩)
+      rw [hdg, one_smul, LinearMap.coe_restrict_apply] at this
+      exact this
+  · -- `dim = 2`: a hyperbolic plane
+    have h2 : finrank K (Module.End.eigenspace X 1) = 2 := le_antisymm hdim h2
+    have hnd : ∀ u ∈ Module.End.eigenspace X 1,
+        (∀ u' ∈ Module.End.eigenspace X 1, polar Q u u' = 0) → u = 0 := by
+      intro u hu h0
+      have h := (IsomCent.pairing_eigenspace hB hQ hXo hss 1).2 u hu
+      rw [inv_one] at h
+      refine h fun w hw => ?_
+      have := h0 w hw
+      rw [polar_eq_two_mul_bform] at this
+      exact (mul_eq_zero.1 this).resolve_left two_ne_zero
+    obtain ⟨e, he, f, hf, hQe, hQf, hef⟩ := exists_hypPair_of_finrank_eq_two h2 hnd
+    have hee : polar Q e e = 0 := by rw [polar_self, hQe, smul_zero]
+    have hff : polar Q f f = 0 := by rw [polar_self, hQf, smul_zero]
+    obtain ⟨c, hce, hcf⟩ := exists_smul_of_det_restrict_eq_one (specP_isometry g) h2 _ he hf hQe
+      hQf hef hdg
+    obtain ⟨d, hde, hdf⟩ := exists_smul_of_det_restrict_eq_one (specP_isometry h) h2 _ he hf hQe
+      hQf hef hdh
+    have hfe : polar Q f e = 1 := by rw [polar_comm, hef]
+    set s := hypGSpin hQe hQf hef c
+    have hs : ∀ v, specP Q s v = v + (((c⁻¹ : Kˣ) : K) - 1) • (polar Q f v • e) +
+        ((c : K) - 1) • (polar Q e v • f) := specP_hypGSpin hQe hQf hef c
+    -- `s` commutes with `x` and `h`
+    have hxe : specP Q x e = ((1 : Kˣ) : K) • e := by
+      rw [Units.val_one, one_smul]; exact Module.End.mem_eigenspace_iff.1 he |>.trans (one_smul _ _)
+    have hxf : specP Q x f = (((1 : Kˣ)⁻¹ : Kˣ) : K) • f := by
+      rw [inv_one, Units.val_one, one_smul]
+      exact Module.End.mem_eigenspace_iff.1 hf |>.trans (one_smul _ _)
+    have hsx : Commute s x :=
+      Subtype.ext (Units.ext (commute_hypUnit hQe hQf hef hxe hxf c).symm.eq)
+    have hhs : Commute h s := Subtype.ext (Units.ext (commute_hypUnit hQe hQf hef hde hdf c))
+    -- `g s` fixes `ker (X − 1)`, so commutes with `h`
+    have hse : specP Q s e = ((c⁻¹ : Kˣ) : K) • e := by rw [hs, hfe, hee]; module
+    have hsf : specP Q s f = (c : K) • f := by rw [hs, hff, hef]; module
+    have hgs : ∀ w ∈ Module.End.eigenspace X 1, specP Q (g * s) w = w := by
+      intro w hw
+      obtain ⟨α, β, rfl⟩ := exists_eq_smul_add_smul_of_hypPair h2 he hf hQe hQf hef hw
+      have hce' : specP Q g e = (c : K) • e := hce
+      have hcf' : specP Q g f = ((c⁻¹ : Kˣ) : K) • f := hcf
+      rw [map_mul, mul_apply_eq_comp, map_add, map_smul, map_smul, hse, hsf, map_add,
+        map_smul, map_smul, map_smul, map_smul, hce', hcf', smul_smul, smul_smul]
+      simp
+    have hhgs := commute_of_fixes_eigenspace_one hQ hss hL (hg.mul_left hsx) hgs hh
+    have hgh : Commute h g := by
+      have e1 : g = g * s * s⁻¹ := by group
+      rw [e1]
+      exact hhgs.mul_right hhs.inv_right
+    exact hgh.symm
 
 end Steinberg
 
