@@ -28,7 +28,6 @@ single point, and `A` is a scalar.
   commuting with an irreducible family of operators is `0` or `1`.
 * `ContinuousLinearMap.exists_eq_smul_one_of_isStarNormal_of_forall_commute`: a normal operator
   commuting with an irreducible family of operators is a scalar.
-* `UnitaryRep.star_ρ`: `π(g)* = π(g⁻¹)`.
 * `dixmier_commutant_scalar`: Schur's lemma for irreducible unitary representations.
 * `schur_central`: the centre acts by scalars.
 -/
@@ -85,17 +84,6 @@ theorem exists_eq_smul_one_of_isStarNormal_of_forall_commute [Nontrivial H]
 end ContinuousLinearMap
 
 namespace GSpinGGP
-
-namespace UnitaryRep
-
-variable {G : Type*} [Group G] [TopologicalSpace G]
-
-/-- `π(g)* = π(g⁻¹)`. -/
-theorem star_ρ (π : UnitaryRep G) (g : G) : star (π.ρ g) = π.ρ g⁻¹ :=
-  left_inv_eq_right_inv (Unitary.star_mul_self_of_mem (π.unitary_ρ g))
-    (by rw [← map_mul, mul_inv_cancel, map_one])
-
-end UnitaryRep
 
 /-- **Schur's lemma for unitary representations** (Dixmier, *Les C\*-algèbres et leurs
 représentations*, Gauthier-Villars 1964, 13.1.4, p. 250, (i) ⇒ (ii); the same for involutive

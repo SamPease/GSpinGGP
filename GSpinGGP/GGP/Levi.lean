@@ -329,8 +329,8 @@ variable {G G' : Type u} [Group G] [TopologicalSpace G] [Group G'] [TopologicalS
 `e : G → G'` (same Hilbert space).  (Generic; a candidate for `Foundations/Representations.lean`.) -/
 abbrev UnitaryRep.comap (e : G →* G') (he : Continuous e) (π : UnitaryRep G') : UnitaryRep G where
   H := π.H
-  ρ := π.ρ.comp e
-  unitary_ρ g := π.unitary_ρ (e g)
+  toContRepresentation := π.toContRepresentation.restrict e
+  isUnitary := π.isUnitary.restrict e
   strongCont v := (π.strongCont v).comp he
 
 /-- The pullback along an isomorphism of topological groups. -/
@@ -623,7 +623,8 @@ theorem exists_coeff_leftRegular (e : G ≃ₜ* G') (w' : (leftRegular G').H) :
       ⟪(leftRegular G).ρ g w, w⟫_ℂ = ⟪(leftRegular G').ρ (e g) w', w'⟫_ℂ := by
   let W' : Lp ℂ 2 (Measure.haar : Measure G') := w'
   suffices ∃ W : Lp ℂ 2 (Measure.haar : Measure G), ∀ g : G,
-      ⟪leftTranslate g W, W⟫_ℂ = ⟪leftTranslate (e g) W', W'⟫_ℂ from this
+      ⟪(Measure.haar : Measure G).leftRegular ℂ ℂ 2 g W, W⟫_ℂ =
+        ⟪(Measure.haar : Measure G').leftRegular ℂ ℂ 2 (e g) W', W'⟫_ℂ from this
   set c : ℝ := (haarFactor e : ℝ) with hc_def
   have hc : 0 < c := by simpa [hc_def] using haarFactor_pos e
   set s : ℂ := (((Real.sqrt c)⁻¹ : ℝ) : ℂ) with hs_def
@@ -647,24 +648,24 @@ theorem exists_coeff_leftRegular (e : G ≃ₜ* G') (w' : (leftRegular G').H) :
     measurePreserving_mul_left _ g⁻¹
   have hmp' : MeasurePreserving (fun y : G' => (e g)⁻¹ * y) Measure.haar Measure.haar :=
     measurePreserving_mul_left _ (e g)⁻¹
-  have hL : (leftTranslate g w : G → ℂ) =ᵐ[Measure.haar]
+  have hL : ((Measure.haar : Measure G).leftRegular ℂ ℂ 2 g w : G → ℂ) =ᵐ[Measure.haar]
       fun x => s • (W' : G' → ℂ) ((e g)⁻¹ * e x) := by
-    have a1 : (leftTranslate g w : G → ℂ) =ᵐ[Measure.haar] (w : G → ℂ) ∘ fun x => g⁻¹ * x :=
+    have a1 : ((Measure.haar : Measure G).leftRegular ℂ ℂ 2 g w : G → ℂ) =ᵐ[Measure.haar] (w : G → ℂ) ∘ fun x => g⁻¹ * x :=
       Lp.coeFn_compMeasurePreserving w hmp
     have a2 := hmp.quasiMeasurePreserving.ae_eq_comp hw
     filter_upwards [a1, a2] with x h1 h2
     rw [h1, h2]
     simp [map_mul, map_inv]
-  have hL' : (leftTranslate (e g) W' : G' → ℂ) =ᵐ[Measure.haar]
+  have hL' : ((Measure.haar : Measure G').leftRegular ℂ ℂ 2 (e g) W' : G' → ℂ) =ᵐ[Measure.haar]
       fun y => (W' : G' → ℂ) ((e g)⁻¹ * y) := Lp.coeFn_compMeasurePreserving W' hmp'
   rw [MeasureTheory.L2.inner_def, MeasureTheory.L2.inner_def]
-  have lhs : ∫ x, ⟪(leftTranslate g w : G → ℂ) x, (w : G → ℂ) x⟫_ℂ ∂Measure.haar =
+  have lhs : ∫ x, ⟪((Measure.haar : Measure G).leftRegular ℂ ℂ 2 g w : G → ℂ) x, (w : G → ℂ) x⟫_ℂ ∂Measure.haar =
       ∫ x, (starRingEnd ℂ) s * s *
         ⟪(W' : G' → ℂ) ((e g)⁻¹ * e x), (W' : G' → ℂ) (e x)⟫_ℂ ∂Measure.haar := by
     refine integral_congr_ae ?_
     filter_upwards [hL, hw] with x h1 h2
     rw [h1, h2, inner_smul_left, inner_smul_right, ← mul_assoc]
-  have rhs : ∫ y, ⟪(leftTranslate (e g) W' : G' → ℂ) y, (W' : G' → ℂ) y⟫_ℂ ∂Measure.haar =
+  have rhs : ∫ y, ⟪((Measure.haar : Measure G').leftRegular ℂ ℂ 2 (e g) W' : G' → ℂ) y, (W' : G' → ℂ) y⟫_ℂ ∂Measure.haar =
       ∫ y, ⟪(W' : G' → ℂ) ((e g)⁻¹ * y), (W' : G' → ℂ) y⟫_ℂ ∂Measure.haar := by
     refine integral_congr_ae ?_
     filter_upwards [hL'] with y h1
@@ -1779,11 +1780,9 @@ end ParIndData
 /-- **Normalized parabolic induction** `i_P^G(σ)` (BZ 1977 §2; BP §1.5; Thesis §3.2): the
 completion of the space of smooth `f : G(F) → H_σ` with `f(pg) = δ_P(p)^{1/2} σ(p) f(g)`, for the
 norm `‖f‖² = ∫_K ‖f(k)‖² dk`, with `G(F)` acting by right translation. -/
-def parInd (D : d.ParIndData) : UnitaryRep ↥d.G where
-  H := D.Hil
-  ρ := { toFun := D.rho, map_one' := D.rho_one, map_mul' := D.rho_mul }
-  unitary_ρ := D.rho_mem_unitary
-  strongCont := D.continuous_rho_apply
+def parInd (D : d.ParIndData) : UnitaryRep ↥d.G :=
+  .ofMonoidHom D.Hil { toFun := D.rho, map_one' := D.rho_one, map_mul' := D.rho_mul }
+    D.rho_mem_unitary D.continuous_rho_apply
 
 /-! ## 7. Properly induced virtual representations `R_ind(G, η)` (BP §2.7; Thesis §3.4, §7.4) -/
 
