@@ -168,6 +168,7 @@ import GSpinGGP.GGP.WeightVM
 import GSpinGGP.TraceFormula.Basic
 import GSpinGGP.TraceFormula.SpinorNorm
 import GSpinGGP.TraceFormula.ThetaF
+import GSpinGGP.TraceFormula.WeightedOrbital
 import GSpinGGP.TraceFormula.Analytic
 import GSpinGGP.TraceFormula.FlagLevi
 import GSpinGGP.TraceFormula.GoodParabolic
@@ -213,5 +214,6 @@ import GSpinGGP.Sanity.RelativeXi
 import GSpinGGP.Sanity.AxiomRedTeam
 import GSpinGGP.Sanity.LeviAudit
 import GSpinGGP.Sanity.WeightAudit
+import GSpinGGP.Sanity.WeightedOrbitalAudit
 import GSpinGGP.Sanity.UnitaryRepAudit
 import GSpinGGP.Sanity.UnramifiedAudit
