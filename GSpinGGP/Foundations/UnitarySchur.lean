@@ -28,7 +28,6 @@ single point, and `A` is a scalar.
   commuting with an irreducible family of operators is `0` or `1`.
 * `ContinuousLinearMap.exists_eq_smul_one_of_isStarNormal_of_forall_commute`: a normal operator
   commuting with an irreducible family of operators is a scalar.
-* `UnitaryRep.star_ρ`: `π(g)* = π(g⁻¹)`.
 * `dixmier_commutant_scalar`: Schur's lemma for irreducible unitary representations.
 * `schur_central`: the centre acts by scalars.
 -/
@@ -86,17 +85,6 @@ end ContinuousLinearMap
 
 namespace GSpinGGP
 
-namespace UnitaryRep
-
-variable {G : Type*} [Group G] [TopologicalSpace G]
-
-/-- `π(g)* = π(g⁻¹)`. -/
-theorem star_ρ (π : UnitaryRep G) (g : G) : star (π.ρ g) = π.ρ g⁻¹ :=
-  left_inv_eq_right_inv (Unitary.star_mul_self_of_mem (π.unitary_ρ g))
-    (by rw [← map_mul, mul_inv_cancel, map_one])
-
-end UnitaryRep
-
 /-- **Schur's lemma for unitary representations** (Dixmier, *Les C\*-algèbres et leurs
 représentations*, Gauthier-Villars 1964, 13.1.4, p. 250, (i) ⇒ (ii); the same for involutive
 algebras is 2.3.1): for a continuous unitary representation `π` of a topological group `G` whose
@@ -111,7 +99,8 @@ theorem dixmier_commutant_scalar {G : Type*} [Group G] [TopologicalSpace G] (π 
   -- `T*` commutes with `π(G)`, since `π(g)* = π(g⁻¹)`
   have hTs : ∀ g, Commute (star T) (π.ρ g) := fun g => by
     have h := (hT' g⁻¹).star_star
-    rwa [π.star_ρ, inv_inv] at h
+    have hs : star (π.ρ g⁻¹) = π.ρ g⁻¹⁻¹ := π.isUnitary.star_eq_inv g⁻¹
+    rwa [hs, inv_inv] at h
   have hre : ∀ g, Commute (ℜ T : π.H →L[ℂ] π.H) (π.ρ g) := fun g => by
     rw [realPart_apply_coe]
     exact ((hT' g).add_left (hTs g)).smul_left _

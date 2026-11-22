@@ -211,3 +211,4 @@ import GSpinGGP.Sanity.RelativeXi
 import GSpinGGP.Sanity.AxiomRedTeam
 import GSpinGGP.Sanity.LeviAudit
 import GSpinGGP.Sanity.WeightAudit
+import GSpinGGP.Sanity.UnitaryRepAudit
