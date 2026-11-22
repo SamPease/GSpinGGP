@@ -161,6 +161,12 @@ theorem IsLatticeSpin.mul {κ : Type*} {Q : QuadraticForm F V} {e : Basis κ F V
   · rw [mul_inv_rev, map_mul]; exact h'.2.1.mul h.2.1
   · rw [map_mul, Units.val_mul, norm_mul, h.2.2, h'.2.2, one_mul]
 
+omit [Module.Finite F V] in
+theorem IsLatticeSpin.inv {κ : Type*} {Q : QuadraticForm F V} {e : Basis κ F V} {k : GSpin Q}
+    (h : IsLatticeSpin Q e k) : IsLatticeSpin Q e k⁻¹ := by
+  refine ⟨h.2.1, by rw [inv_inv]; exact h.1, ?_⟩
+  rw [map_inv, Units.val_inv_eq_inv_val, norm_inv, h.2.2, inv_one]
+
 omit [PAdicField F] [Module.Finite F V] in
 /-- `s_u` fixes the vectors orthogonal to `u`. -/
 theorem quadReflection_apply_of_polar_eq_zero (Q : QuadraticForm F V) {u x : V}
