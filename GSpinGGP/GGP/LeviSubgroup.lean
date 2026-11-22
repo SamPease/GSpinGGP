@@ -42,6 +42,9 @@ stabilizers (M. Asgari, *Local L-functions for split spinor groups*, Canad. J. M
   `IsLevi.leviQuotEquiv : M ≃* P/U` connects it with `LeviQuot`.
 * `GGPData.FlagLeviDatum.mem_parabolics`, `opp_mem_parabolics`: `P, P̄ ∈ 𝒫(M)`.
 * `GGPData.hP_mul`: `H_P(m u k) = H_M(m)` (well defined for any `K` with `G = P K`).
+* `GGPData.ReducedLeviDatum.hP_mul_left`, `hP_mul_right`: `H_P(p g k) = H_M(proj p) + H_P(g)`.
+* `GGPData.ReducedLeviDatum.hP_congr`: `H_P` depends only on the subgroup `P` (and `K`), not on
+  the flags defining it.
 -/
 
 noncomputable section
@@ -86,6 +89,14 @@ theorem mem_flagLevi_iff {g : GSpin Q} :
   have := congr($(hg (wt j)) (b j))
   simp only [LinearMap.comp_apply, LinearEquiv.coe_coe, wtProj_basis] at this
   exact this.symm
+
+omit [Fintype ι] in
+/-- The split centre `wtScalar` lies in the Levi subgroup. -/
+theorem wtScalar_le_flagLevi : wtScalar Q b wt ≤ flagLevi (Q := Q) b wt := by
+  rintro g ⟨t, -, ht⟩
+  refine mem_flagLevi_iff.2 fun j i hi => ?_
+  have hij : j ≠ i := fun h => hi (h ▸ rfl)
+  simp [ht, b.repr_self, Finsupp.single_apply, hij]
 
 omit [Invertible (2 : K)] [Fintype ι] in
 /-- The weight-`w` space of a splitting: the span of the `bⱼ` with `wtⱼ = w`. -/
@@ -477,6 +488,13 @@ theorem exists_mul (hL : d.IsLevi FW FV M) {p : ↥d.G} (hp : p ∈ d.whittB FW 
 def proj (hL : d.IsLevi FW FV M) : ↥(d.whittB FW FV) →* ↥M :=
   (Subgroup.subgroupOfEquivOfLe hL.le).toMonoidHom.comp hL.isComplement'.proj
 
+/-- `p = proj(p) · u` with `u ∈ U`. -/
+theorem inv_proj_mul_mem (hL : d.IsLevi FW FV M) (p : ↥(d.whittB FW FV)) :
+    ((hL.proj p : ↥M) : ↥d.G)⁻¹ * p ∈ d.whittU FW FV := by
+  have := hL.isComplement'.inv_proj_mul_mem p
+  rw [Subgroup.mem_subgroupOf] at this
+  exact this
+
 theorem proj_mul (hL : d.IsLevi FW FV M) (m : ↥M) {u : ↥d.G} (hu : u ∈ d.whittU FW FV) :
     hL.proj ⟨(m : ↥d.G) * u, (d.whittB FW FV).mul_mem (hL.le m.2) (d.whittU_le_whittB FW FV hu)⟩ =
       m := by
@@ -747,30 +765,106 @@ def hP {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV} (hL : d.IsLevi FW FV 
   (IwasawaPair.mk (d.whittB FW FV) K (d.isClosed_whittB FW FV) hKo hKc hPK).extend
     fun p => L.HM (hL.proj p)
 
+/-- **`H_M ∘ proj` kills elements generating relatively compact subgroups**: if all powers of
+`q ∈ P` lie in a compact set, then `H_M(proj q) = 0` (each `|χ(proj q)|` is `1`, `χ ∘ proj` being a
+continuous character of `P`).  This applies to `q ∈ K` and to `q` in the unipotent radical of any
+flag parabolic (`exists_isCompact_zpow_of_mem_whittU`). -/
+theorem HM_proj_eq_zero_of_zpow_mem {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV}
+    (hL : d.IsLevi FW FV L.M) {q : ↥(d.whittB FW FV)} {C : Set ↥d.G} (hC : IsCompact C)
+    (hq : ∀ n : ℤ, (q : ↥d.G) ^ n ∈ C) : L.HM (hL.proj q) = 0 := by
+  funext c
+  have hC' : IsCompact ((Subtype.val : ↥(d.whittB FW FV) → ↥d.G) ⁻¹' C) :=
+    (d.isClosed_whittB FW FV).isClosedEmbedding_subtypeVal.isCompact_preimage hC
+  have := norm_char_eq_one_of_zpow_mem_compact ((L.char c).comp hL.proj)
+    ((L.continuous_char c).comp hL.continuous_proj) hC' (u := q) fun n => by simpa using hq n
+  simp only [HM, Pi.zero_apply]
+  rw [show (L.char c) (hL.proj q) = ((L.char c).comp hL.proj) q from rfl, this, Real.log_one]
+
+/-- `H_M(proj(p q)) = H_M(proj p)` for `q ∈ P ∩ K`, `K` compact. -/
+theorem HM_proj_mul_of_mem {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV}
+    (hL : d.IsLevi FW FV L.M) {K : Subgroup ↥d.G} (hKc : IsCompact (K : Set ↥d.G))
+    (p q : ↥(d.whittB FW FV)) (hq : (q : ↥d.G) ∈ K) :
+    L.HM (hL.proj (p * q)) = L.HM (hL.proj p) := by
+  rw [map_mul, HM_mul, L.HM_proj_eq_zero_of_zpow_mem hL hKc fun n => K.zpow_mem hq n, add_zero]
+
+/-- **`H_P(p k) = H_M(proj p)`** for `p ∈ P`, `k ∈ K`. -/
+theorem hP_eq {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV} (hL : d.IsLevi FW FV L.M)
+    {K : Subgroup ↥d.G} (hKo : IsOpen (K : Set ↥d.G)) (hKc : IsCompact (K : Set ↥d.G))
+    (hPK : ∀ g : ↥d.G, ∃ p ∈ d.whittB FW FV, ∃ k ∈ K, g = p * k) (p : ↥(d.whittB FW FV))
+    {k : ↥d.G} (hk : k ∈ K) : L.hP hL K hKo hKc hPK ((p : ↥d.G) * k) = L.HM (hL.proj p) :=
+  (IwasawaPair.mk (d.whittB FW FV) K (d.isClosed_whittB FW FV) hKo hKc hPK).extend_mul
+    (fun p q hq => L.HM_proj_mul_of_mem hL hKc p q hq) p hk
+
 /-- **`H_P(m u k) = H_M(m)`.** -/
 theorem hP_mul {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV} (hL : d.IsLevi FW FV L.M)
     {K : Subgroup ↥d.G} (hKo : IsOpen (K : Set ↥d.G)) (hKc : IsCompact (K : Set ↥d.G))
     (hPK : ∀ g : ↥d.G, ∃ p ∈ d.whittB FW FV, ∃ k ∈ K, g = p * k) (m : ↥L.M)
     {u : ↥d.G} (hu : u ∈ d.whittU FW FV) {k : ↥d.G} (hk : k ∈ K) :
     L.hP hL K hKo hKc hPK ((m : ↥d.G) * u * k) = L.HM m := by
-  set I : IwasawaPair ↥d.G := IwasawaPair.mk (d.whittB FW FV) K (d.isClosed_whittB FW FV) hKo
-    hKc hPK
-  have hinv : ∀ p q : ↥I.P, (q : ↥d.G) ∈ I.K →
-      L.HM (hL.proj (p * q)) = L.HM (hL.proj p) := by
-    intro p q hq
-    rw [map_mul, HM_mul, add_eq_left]
-    funext c
-    have hC : IsCompact ((Subtype.val : ↥(d.whittB FW FV) → ↥d.G) ⁻¹' (K : Set ↥d.G)) :=
-      (d.isClosed_whittB FW FV).isClosedEmbedding_subtypeVal.isCompact_preimage hKc
-    have := norm_char_eq_one_of_zpow_mem_compact ((L.char c).comp hL.proj)
-      ((L.continuous_char c).comp hL.continuous_proj) hC
-      (u := q) fun n => by simpa using K.zpow_mem hq n
-    simp only [HM, Pi.zero_apply]
-    rw [show (L.char c) (hL.proj q) = ((L.char c).comp hL.proj) q from rfl, this, Real.log_one]
-  have := I.extend_mul (h := fun p => L.HM (hL.proj p)) hinv ⟨(m : ↥d.G) * u, (d.whittB FW FV).mul_mem (hL.le m.2)
-    (d.whittU_le_whittB FW FV hu)⟩ hk
-  simp only [hP]
-  rw [this, hL.proj_mul m hu]
+  rw [L.hP_eq hL hKo hKc hPK ⟨(m : ↥d.G) * u, (d.whittB FW FV).mul_mem (hL.le m.2)
+    (d.whittU_le_whittB FW FV hu)⟩ hk, hL.proj_mul m hu]
+
+/-- **`H_P` is right `K`-invariant.** -/
+theorem hP_mul_right {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV} (hL : d.IsLevi FW FV L.M)
+    {K : Subgroup ↥d.G} (hKo : IsOpen (K : Set ↥d.G)) (hKc : IsCompact (K : Set ↥d.G))
+    (hPK : ∀ g : ↥d.G, ∃ p ∈ d.whittB FW FV, ∃ k ∈ K, g = p * k) (g : ↥d.G) {k : ↥d.G}
+    (hk : k ∈ K) : L.hP hL K hKo hKc hPK (g * k) = L.hP hL K hKo hKc hPK g :=
+  (IwasawaPair.mk (d.whittB FW FV) K (d.isClosed_whittB FW FV) hKo hKc hPK).extend_mul_right
+    (fun p q hq => L.HM_proj_mul_of_mem hL hKc p q hq) g hk
+
+/-- **`H_P(p g) = H_M(proj p) + H_P(g)`** for `p ∈ P`; in particular
+`H_P(m g) = H_M(m) + H_P(g)` for `m ∈ M` (`hP_mul_left_of_mem`). -/
+theorem hP_mul_left {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV} (hL : d.IsLevi FW FV L.M)
+    {K : Subgroup ↥d.G} (hKo : IsOpen (K : Set ↥d.G)) (hKc : IsCompact (K : Set ↥d.G))
+    (hPK : ∀ g : ↥d.G, ∃ p ∈ d.whittB FW FV, ∃ k ∈ K, g = p * k) (p : ↥(d.whittB FW FV))
+    (g : ↥d.G) :
+    L.hP hL K hKo hKc hPK ((p : ↥d.G) * g) = L.HM (hL.proj p) + L.hP hL K hKo hKc hPK g :=
+  (IwasawaPair.mk (d.whittB FW FV) K (d.isClosed_whittB FW FV) hKo hKc hPK).extend_mul_left
+    (fun p q hq => L.HM_proj_mul_of_mem hL hKc p q hq) (fun p q => by rw [map_mul, HM_mul]) p g
+
+theorem hP_mul_left_of_mem {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV}
+    (hL : d.IsLevi FW FV L.M) {K : Subgroup ↥d.G} (hKo : IsOpen (K : Set ↥d.G))
+    (hKc : IsCompact (K : Set ↥d.G))
+    (hPK : ∀ g : ↥d.G, ∃ p ∈ d.whittB FW FV, ∃ k ∈ K, g = p * k) (m : ↥L.M) (g : ↥d.G) :
+    L.hP hL K hKo hKc hPK ((m : ↥d.G) * g) = L.HM m + L.hP hL K hKo hKc hPK g := by
+  have := L.hP_mul_left hL hKo hKc hPK ⟨m, hL.le m.2⟩ g
+  have hm := hL.proj_mul m (d.whittU FW FV).one_mem
+  simp only [mul_one] at hm
+  rw [this, hm]
+
+/-- **`H_M ∘ proj` depends only on the subgroup `P`**, not on the flags defining it: if
+`P_{F_W} × P_{F_V} = P_{F'_W} × P_{F'_V}` and `M` is a Levi of both, write `p = m u'` with
+`u'` in the second unipotent radical; then the first projection sends `u'` to an element killed by
+`H_M` (`HM_proj_eq_zero_of_zpow_mem`: `u'` generates a relatively compact subgroup). -/
+theorem HM_proj_congr {FW FW' : IsotropicFlag d.QW} {FV FV' : IsotropicFlag d.QV}
+    (hL : d.IsLevi FW FV L.M) (hL' : d.IsLevi FW' FV' L.M)
+    (hB : d.whittB FW FV = d.whittB FW' FV') (p : ↥d.G) (hp : p ∈ d.whittB FW FV) :
+    L.HM (hL.proj ⟨p, hp⟩) = L.HM (hL'.proj ⟨p, hB ▸ hp⟩) := by
+  set m := hL'.proj ⟨p, hB ▸ hp⟩
+  set u : ↥d.G := (m : ↥d.G)⁻¹ * p
+  have hu : u ∈ d.whittU FW' FV' := hL'.inv_proj_mul_mem _
+  have huB : u ∈ d.whittB FW FV := hB ▸ d.whittU_le_whittB FW' FV' hu
+  have hmB : (m : ↥d.G) ∈ d.whittB FW FV := hL.le m.2
+  have hsplit : (⟨p, hp⟩ : ↥(d.whittB FW FV)) = ⟨m, hmB⟩ * ⟨u, huB⟩ := by
+    exact Subtype.ext (mul_inv_cancel_left _ _).symm
+  obtain ⟨C, hC, hCu⟩ := d.exists_isCompact_zpow_of_mem_whittU hu
+  have hm := hL.proj_mul m (d.whittU FW FV).one_mem
+  simp only [mul_one] at hm
+  rw [hsplit, map_mul, HM_mul, L.HM_proj_eq_zero_of_zpow_mem hL (q := ⟨u, huB⟩) hC hCu, add_zero]
+  exact congrArg L.HM hm
+
+/-- **`H_P` depends only on `P` and `K`**, not on the flags defining `P` (`HM_proj_congr`). -/
+theorem hP_congr {FW FW' : IsotropicFlag d.QW} {FV FV' : IsotropicFlag d.QV}
+    (hL : d.IsLevi FW FV L.M) (hL' : d.IsLevi FW' FV' L.M)
+    (hB : d.whittB FW FV = d.whittB FW' FV') {K : Subgroup ↥d.G} (hKo : IsOpen (K : Set ↥d.G))
+    (hKc : IsCompact (K : Set ↥d.G))
+    (hPK : ∀ g : ↥d.G, ∃ p ∈ d.whittB FW FV, ∃ k ∈ K, g = p * k)
+    (hPK' : ∀ g : ↥d.G, ∃ p ∈ d.whittB FW' FV', ∃ k ∈ K, g = p * k) :
+    L.hP hL K hKo hKc hPK = L.hP hL' K hKo hKc hPK' := by
+  funext g
+  obtain ⟨p, hp, k, hk, rfl⟩ := hPK g
+  rw [L.hP_eq hL hKo hKc hPK ⟨p, hp⟩ hk, L.hP_eq hL' hKo hKc hPK' ⟨p, hB ▸ hp⟩ hk,
+    L.HM_proj_congr hL hL' hB p hp]
 
 end ReducedLeviDatum
 
