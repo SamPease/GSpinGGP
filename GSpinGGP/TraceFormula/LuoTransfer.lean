@@ -25,7 +25,7 @@ The identification is own work, stated step by step:
 * (L2) `luoOf`: the admissible pair of `d` with Luo's basis `z^L_i = ν^{-i} z_i`,
   `z^L_{-i} = ν^{i-1} z_{-i}` (`i ≥ 1`), `z^L_0 = z_0` (`luoOf_gram` proved), and `λ` agrees
   (`lam_toSO`);
-* (L3) `muG`: the push-forward of `Measure.haar` on `G(F)/A_G(F)` to `Ḡ(F)`, a Haar measure
+* (L3) `muG`: the push-forward of `measGmodAG` on `G(F)/A_G(F)` to `Ḡ(F)`, a Haar measure
   (`muG_isHaarMeasure`, proved);
 * (L4) `exists_JLie_transfer` (proved, in `TraceFormula/LuoJLieExp.lean`): `J^Lie` of `d` is
   Luo's `J^Lie` for compatible measures;
@@ -519,11 +519,11 @@ theorem continuous_toGbar : Continuous d.toGbar := by
   rw [this]
   exact d.continuous_toGbarU_val.comp continuous_inv
 
-/-- **The Haar measure on `Ḡ(F)`**: the push-forward of `Measure.haar` on `G(F)/A_G(F)` along
+/-- **The Haar measure on `Ḡ(F)`**: the push-forward of `measGmodAG` on `G(F)/A_G(F)` along
 `G(F)/A_G(F) → Ḡ(F)` (an isomorphism of topological groups when neither `W` nor `V` is a hyperbolic
 plane: `AGbar_eq_bot` and Hilbert 90, `Pbar_surjective`). -/
 def muG : Measure ↥d.luoOf.Gbar :=
-  Measure.map (fun x : d.GmodAG => d.toGbar (Quotient.out x)) Measure.haar
+  Measure.map (fun x : d.GmodAG => d.toGbar (Quotient.out x)) d.measGmodAG
 
 /-- `A_G(F) ⊆ ker(G(F) → Ḡ(F))` when neither `W` nor `V` is a hyperbolic plane (`AGbar_eq_bot`). -/
 theorem toGbar_eq_one_of_mem_AG (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) {a : ↥d.G}
@@ -599,7 +599,7 @@ theorem muG_isHaarMeasure (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) :
   obtain ⟨e, he⟩ := d.exists_continuousMulEquiv_toGbar hW hV
   unfold muG
   rw [← he]
-  exact e.toMulEquiv.isHaarMeasure_map Measure.haar e.continuous e.symm.continuous
+  exact e.toMulEquiv.isHaarMeasure_map d.measGmodAG e.continuous e.symm.continuous
 
 /-! ## (L4) `J^Lie`: `exists_JLie_transfer` is in `TraceFormula/LuoJLieExp.lean` -/
 
@@ -997,7 +997,7 @@ theorem isThetaFLie_of_SO (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
       rw [eq_comm, Equiv.symm_apply_eq]
       exact Subtype.ext hcj
     obtain ⟨φ, hφ⟩ := d.exists_continuousMulEquiv_toGbar hW hV
-    have hmu : d.muG = Measure.map φ Measure.haar := by rw [hφ]; rfl
+    have hmu : d.muG = Measure.map φ d.measGmodAG := by rw [hφ]; rfl
     have hL := hint fun Y => θ Y * f' (d.toSO.symm Y)
     simp only [Equiv.symm_apply_apply] at hL
     simp only [Function.comp_apply]
@@ -1005,8 +1005,8 @@ theorem isThetaFLie_of_SO (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
     have h3' := h3 _ hf''
     simp only [Function.comp_apply] at h3'
     rw [h3', LuoDatum.orbitalPairing, orbitalPairingLie, hmu,
-      show Measure.map (⇑φ) (Measure.haar : Measure d.GmodAG) =
-        Measure.map (⇑φ.toHomeomorph) Measure.haar from rfl,
+      show Measure.map (⇑φ) d.measGmodAG =
+        Measure.map (⇑φ.toHomeomorph) d.measGmodAG from rfl,
       φ.toHomeomorph.measurableEmbedding.integral_map, ← integral_smul]
     refine integral_congr_ae (Eventually.of_forall fun x => ?_)
     have hI := hint fun Y => f (d.adLie0 (Quotient.out x)⁻¹ (d.toSO.symm Y)) * f' (d.toSO.symm Y)

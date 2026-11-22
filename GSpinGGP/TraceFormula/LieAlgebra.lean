@@ -52,8 +52,8 @@ over `H̄\Ḡ` is `0` or divergent.  The triples with a hyperbolic-plane factor 
 separately in `TraceFormula/Lie.lean`.
 
 Normalization: as for `J` and `m_geom`, nothing depends on a choice of Haar measure
-except through the one measure `Measure.haar` on `G(F)/A_G(F)`: `J^Lie` and `θ_f^Lie` both scale
-with it; the measure on `H(F)/A_{G,H}(F)` cancels in `J^Lie` (it fixes both `measH0` and
+except through the one measure `measGmodAG = dg / d_c a` on `G(F)/A_G(F)` (Arthur 1991, §1,
+p. 11): `J^Lie` and `θ_f^Lie` both scale with it; the measure on `H(F)/A_{G,H}(F)` cancels in `J^Lie` (it fixes both `measH0` and
 `weilMeasureHG`); the germs and `m^Lie_geom` are pinned by `ψ`, the trace form and probability
 measures.  The constant in the Weyl-integration step relating `θ_f` to BP's weighted orbital
 integrals is `1` (BP §1.7).
@@ -391,10 +391,12 @@ variable (d : GGPData F) (ψ : NontrivialAddChar F)
 def measLie0 : Measure ↥d.lieZero := selfDualHaar d.lieZero d.bilin ψ
 
 /-- The orbital pairing on `𝔤⁰`: `⟨f, f'⟩ = ∫_{G(F)/A_G(F)} ∫_{𝔤⁰(F)} f(x⁻¹Xx) f'(X) dX dx`
-(BP §5.5, Lie-algebra case; as `orbitalPairing`), for `Measure.haar` on `G(F)/A_G(F)`. -/
+(BP §5.5, Lie-algebra case; as `orbitalPairing`), for `measGmodAG = dg / d_c a` on
+`G(F)/A_G(F)` (`d_c a` gives the maximal compact subgroup of `A_G(F)` measure `1`: Arthur 1991,
+§1, p. 11; BP leaves the measure on `A_G(F)\G(F)` unstated). -/
 def orbitalPairingLie (f f' : ↥d.lieZero → ℂ) : ℂ :=
   ∫ x : d.GmodAG, (∫ X : ↥d.lieZero, f (d.adLie0 (Quotient.out x)⁻¹ X) * f' X ∂d.measLie0 ψ)
-    ∂Measure.haar
+    ∂d.measGmodAG
 
 /-- `θ` represents the orbital pairing of `f` on `𝔤⁰` (as `IsThetaF`; BP §5.5–5.6, Lie case). -/
 def IsThetaFLie (f θ : ↥d.lieZero → ℂ) : Prop :=
@@ -537,7 +539,7 @@ truncated `I_N` formalism.  The right-hand side depends only on `θ_f` as a dist
 only on `θ_f|_{𝔤⁰_reg}` (`𝔤⁰_reg` is open of full measure).  The `Γ(Σ)` formula itself is not
 stated: it needs the measure on `Γ(𝔤⁰)` (tori, Weyl groups, normalized measures on each `𝔱(F)`),
 which is not formalized, and a wrong constant there would make the statement false.  This form is
-normalization-free: rescaling `Measure.haar` on `G(F)/A_G(F)` rescales `θ_f` and `θ_{f'}` alike.
+normalization-free: rescaling the measure on `G(F)/A_G(F)` rescales `θ_f` and `θ_{f'}` alike.
 
 **Coverage.**  Luo defines `J^Lie(f) = ∫_{H(F)\G(F)} K^Lie(f,x) dx` with
 `G = SO(W) × SO(V)` and no quotient by a central torus (Luo §4), and treats `dim W = 2` explicitly
@@ -580,7 +582,7 @@ statement here (unconditional, with arbitrary `c`) is that geometric expansion t
 linear independence of the germ functionals `f ↦ c_{θ_f,O}(0)` shown in the endgame.
 
 **Normalization-sensitive** (unlike `jLie_eq_of_thetaFLie_eqOn`): `measH0` and `measLieTorus` are
-the measures compatible with `exp` (BP §1.6), `θ_f^Lie` and `J^Lie` are tied to `Measure.haar` on
+the measures compatible with `exp` (BP §1.6), `θ_f^Lie` and `J^Lie` are tied to `measGmodAG` on
 `G(F)/A_G(F)`, the germs to `ψ` and the trace form; the constant of the
 Weyl-integration step relating `θ_f` to BP's weighted orbital integrals (`= 1`) is inherited.  Checked at
 the smallest triple in `Sanity/LieAudit.lean`.

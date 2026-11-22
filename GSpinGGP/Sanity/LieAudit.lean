@@ -16,7 +16,7 @@ instance is checked to give no `False`.
 * **`toyData`** (§1–§3).  Neither factor is a hyperbolic plane, so both axioms apply.  Here
   `𝔤⁰ = so(0) ⊕ so(1) = 0`, every Lie test function is strongly cuspidal (there is no proper
   parabolic), and we compute, *without the axioms*:
-  `J^Lie(f) = f(0)` (`toyD_distribJLie`), `θ_f = f` (`toyD_thetaFLie`),
+  `J^Lie(f) = c f(0)` (`toyD_distribJLie`), `θ_f = c f` (`toyD_thetaFLie`), `c = dcScaleAG`,
   `m^Lie_geom(θ) = θ(0)` (`toyD_mGeomLie`) and `c_{θ,0}(0) = θ(0)` (`toyD_germLie0`).
   Both instances are then *proved* from these computations (`toyD_jLie_eq_of_thetaFLie_eqOn`,
   `toyD_lie_endgame`), so they are consistent there.  This is load-bearing: had any of the measures
@@ -172,31 +172,34 @@ theorem toyD_kernelLie (f : ↥(𝕋).lieZero → ℂ) (x : ↥(𝕋).G) :
   rw [toyD_measH0_eq, integral_of_subsingleton _ _ 0, toyD_xiLie]
   simp [Subsingleton.elim ((𝕋).adLie0 x⁻¹ ((𝕋).lieH0Incl 0)) 0]
 
-/-- **`J^Lie(f) = f(0)` for the toy datum.** -/
-theorem toyD_distribJLie (f : ↥(𝕋).lieZero → ℂ) : (𝕋).distribJLie ψ f = f 0 := by
+/-- **`J^Lie(f) = c f(0)` for the toy datum**, `c = dcScaleAG` the mass of the point `G/A_G`. -/
+theorem toyD_distribJLie (f : ↥(𝕋).lieZero → ℂ) :
+    (𝕋).distribJLie ψ f = ((𝕋).dcScaleAG.toReal : ℂ) * f 0 := by
   unfold GGPData.distribJLie
   simp_rw [toyD_kernelLie]
-  rw [integral_const, toy_weilMeasureHG_real_univ, one_smul]
+  rw [integral_const, toy_weilMeasureHG_real_univ, Complex.real_smul]
 
-/-- Every `f` represents its own orbital pairing on `𝔤⁰ = 0`. -/
-theorem toyD_isThetaFLie (f : ↥(𝕋).lieZero → ℂ) : (𝕋).IsThetaFLie ψ f f := by
+/-- `c f` represents the orbital pairing of `f` on `𝔤⁰ = 0`, `c = dcScaleAG`. -/
+theorem toyD_isThetaFLie (f : ↥(𝕋).lieZero → ℂ) :
+    (𝕋).IsThetaFLie ψ f (((𝕋).dcScaleAG.toReal : ℂ) • f) := by
   have hc : Continuous f := continuous_of_const fun x y => congrArg f (Subsingleton.elim x y)
   rw [GGPData.IsThetaFLie, toyD_measLie0]
-  refine ⟨hc.locallyIntegrable, hc.continuousOn, fun f' _ => ?_⟩
-  rw [GGPData.orbitalPairingLie, integral_of_subsingleton (Measure.haar : Measure (𝕋).GmodAG) _ 1,
-    haar_real_univ_of_subsingleton, one_smul, toyD_measLie0]
+  refine ⟨hc.locallyIntegrable.smul _, hc.continuousOn.const_smul _, fun f' _ => ?_⟩
+  rw [GGPData.orbitalPairingLie, integral_of_subsingleton (𝕋).measGmodAG _ 1,
+    toy_measGmodAG_real_univ, toyD_measLie0, Complex.real_smul, ← integral_const_mul]
   congr 1
   funext X
-  rw [Subsingleton.elim ((𝕋).adLie0 _ X) X]
+  rw [Subsingleton.elim ((𝕋).adLie0 _ X) X, Pi.smul_apply, smul_eq_mul, mul_assoc]
 
-/-- **`θ_f = f` for the toy datum.** -/
-theorem toyD_thetaFLie (f : ↥(𝕋).lieZero → ℂ) : (𝕋).thetaFLie ψ f = f := by
-  have h1 := (𝕋).isThetaFLie_thetaFLie_of_exists ψ ⟨f, toyD_isThetaFLie ψ f⟩
+/-- **`θ_f = c f` for the toy datum**, `c = dcScaleAG`. -/
+theorem toyD_thetaFLie (f : ↥(𝕋).lieZero → ℂ) :
+    (𝕋).thetaFLie ψ f = ((𝕋).dcScaleAG.toReal : ℂ) • f := by
+  have h1 := (𝕋).isThetaFLie_thetaFLie_of_exists ψ ⟨_, toyD_isThetaFLie ψ f⟩
   have h2 := toyD_isThetaFLie ψ f
   have e := (h1.2.2 (fun _ => 1) (toyD_isTestFn _)).trans (h2.2.2 (fun _ => 1) (toyD_isTestFn _)).symm
   rw [toyD_measLie0, integral_of_subsingleton _ _ 0, integral_of_subsingleton _ _ 0] at e
   simp only [mul_one, smul_eq_mul] at e
-  have e' : (𝕋).thetaFLie ψ f 0 = f 0 := by simpa using e
+  have e' : (𝕋).thetaFLie ψ f 0 = (((𝕋).dcScaleAG.toReal : ℂ) • f) 0 := by simpa using e
   funext X
   rw [Subsingleton.elim X 0, e']
 
@@ -354,8 +357,9 @@ theorem toyD_jLie_eq_of_thetaFLie_eqOn {f f' θ θ' : ↥(𝕋).lieZero → ℂ}
     (hθ : (𝕋).IsThetaFLie ψ f θ) (hθ' : (𝕋).IsThetaFLie ψ f' θ')
     (he : ∀ X : ↥(𝕋).lieZero, IsRegularSS (𝕋).lieZero (X : (𝕋).ambient) → θ X = θ' X) :
     (𝕋).distribJLie ψ f = (𝕋).distribJLie ψ f' := by
-  -- `θ(0) = f(0)` from the defining identity with `f' = 1`
-  have key : ∀ {g φ : ↥(𝕋).lieZero → ℂ}, (𝕋).IsThetaFLie ψ g φ → φ 0 = g 0 := by
+  -- `θ(0) = c f(0)` from the defining identity with `f' = 1`
+  have key : ∀ {g φ : ↥(𝕋).lieZero → ℂ}, (𝕋).IsThetaFLie ψ g φ →
+      φ 0 = ((𝕋).dcScaleAG.toReal : ℂ) * g 0 := by
     intro g φ hφ
     have e := (hφ.2.2 (fun _ => 1) (toyD_isTestFn _)).trans
       ((toyD_isThetaFLie ψ g).2.2 (fun _ => 1) (toyD_isTestFn _)).symm
@@ -365,8 +369,8 @@ theorem toyD_jLie_eq_of_thetaFLie_eqOn {f f' θ θ' : ↥(𝕋).lieZero → ℂ}
     toyD_isRegularSS _ (𝕋).lieZero_le_lie 0
   rw [toyD_distribJLie, toyD_distribJLie, ← key hθ, ← key hθ', he 0 hreg]
 
-/-- **`lie_endgame` holds at the toy datum** (proved without `sorry`): with `f = 1`,
-`J^Lie(1) − m^Lie_geom(θ_1) = 1 − 1 = 0 = c_0 · c_{θ_1,0}(0) = c_0`. -/
+/-- **`lie_endgame` holds at the toy datum** (proved without `sorry`): with `f = 1` and
+`κ = dcScaleAG > 0`, `J^Lie(1) − m^Lie_geom(θ_1) = κ − κ = 0 = c_0 · c_{θ_1,0}(0) = c_0 κ`. -/
 theorem toyD_lie_endgame
     (c : NilOrbit (lieGrpCentralizer (𝕋).G 0) (lieCentralizer (𝕋).lieZero 0) → ℂ)
     (h : ∀ f : ↥(𝕋).lieZero → ℂ, (𝕋).IsLieScusp f →
@@ -380,14 +384,18 @@ theorem toyD_lie_endgame
   haveI : Subsingleton (NilOrbit (lieGrpCentralizer (𝕋).G 0) (lieCentralizer (𝕋).lieZero 0)) :=
     ⟨fun a b => (toyD_nilOrbit_eq_zero _ _ hL a).trans (toyD_nilOrbit_eq_zero _ _ hL b).symm⟩
   have h1 := h (fun _ => 1) (toyD_isLieScusp _)
-  rw [toyD_distribJLie, toyD_thetaFLie, toyD_mGeomLie, sub_self] at h1
+  rw [toyD_distribJLie, toyD_thetaFLie, toyD_mGeomLie, Pi.smul_apply, smul_eq_mul,
+    sub_self] at h1
   have hset : NilReg (lieGrpCentralizer (𝕋).G 0) (lieCentralizer (𝕋).lieZero 0) = {O} :=
     Set.eq_singleton_iff_unique_mem.mpr ⟨hO, fun O' _ => Subsingleton.elim _ _⟩
   have hs : ∑ᶠ O' ∈ NilReg (lieGrpCentralizer (𝕋).G 0) (lieCentralizer (𝕋).lieZero 0),
-      c O' * (𝕋).germLie0 ψ (fun _ => (1 : ℂ)) 0 O' = c O := by
-    rw [hset, finsum_mem_singleton, toyD_germLie0 ψ _ rfl, mul_one]
+      c O' * (𝕋).germLie0 ψ (((𝕋).dcScaleAG.toReal : ℂ) • fun _ => (1 : ℂ)) 0 O' =
+        c O * ((𝕋).dcScaleAG.toReal : ℂ) := by
+    rw [hset, finsum_mem_singleton, toyD_germLie0 ψ _ rfl, Pi.smul_apply, smul_eq_mul, mul_one]
   rw [hs] at h1
-  exact h1.symm
+  have hκ : ((𝕋).dcScaleAG.toReal : ℂ) ≠ 0 :=
+    Complex.ofReal_ne_zero.2 (𝕋).dcScaleAG_toReal_pos.ne'
+  exact (mul_eq_zero.1 h1.symm).resolve_right hκ
 
 /-- The axiom instances at the toy datum (for `#print axioms`: they use the axioms, while the
 two theorems above show the same statements without them). -/

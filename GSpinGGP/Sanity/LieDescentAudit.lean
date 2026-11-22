@@ -133,15 +133,17 @@ theorem toyD_torusIntegral {θ : ↥(𝕋).G → ℂ} (hθ : IsLocallyConstant �
   simp
 
 /-- **`torusIntegral_eq_torusIntegralLie_liftLie` at the toy datum**, proved: both sides are
-`f(1)`. -/
+`c f(1)`, `c = dcScaleAG`. -/
 theorem toyD_torusIntegral_eq_torusIntegralLie_liftLie {ω : Set ↥(𝕋).lieZero}
     {Ω₀ : Set ↥(𝕋).G} (hω : (𝕋).IsLieDescentNbhd ω Ω₀) {f : ↥(𝕋).G → ℂ}
     (hf : f ∈ ScuspTestFn (𝕋) χ) (c : GammaClass (𝕋)) (s : ℝ) :
     torusIntegral ψ (𝕋) (thetaF (𝕋) f) (Quot.out c).1 s =
       (𝕋).torusIntegralLie ψ ((𝕋).thetaFLie ψ ((𝕋).liftLie ω f)) (Quot.out c).1 s := by
-  rw [toyD_torusIntegralLie, toyD_thetaFLie, toyD_liftLie_zero hω,
+  rw [toyD_torusIntegralLie, toyD_thetaFLie, Pi.smul_apply, toyD_liftLie_zero hω,
     toyD_thetaF_eq hf.1.continuous]
-  exact toyD_torusIntegral ψ hf.1 (toyD_apply_diag χ hf.2.1) c s
+  exact toyD_torusIntegral ψ (θ := ((𝕋).dcScaleAG.toReal : ℂ) • f)
+    (hf.1.comp fun z => ((𝕋).dcScaleAG.toReal : ℂ) * z)
+    (fun t => by simp only [Pi.smul_apply, toyD_apply_diag χ hf.2.1]) c s
 
 end LieDescentToy
 
