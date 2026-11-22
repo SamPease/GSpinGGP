@@ -42,6 +42,12 @@ theorem lie_conj_stable (d : GGPData F) (t : ↥d.G) :
     ∀ X ∈ d.lie.toSubmodule, conjAd F (t : d.ambientˣ) X ∈ d.lie.toSubmodule := fun _ hX =>
   ⟨conj_mem_gspin d.QW (d.fst t) hX.1, conj_mem_gspin d.QV (d.snd t) hX.2⟩
 
+/-- `D^G(t) > 0` for `t ∈ G(F)`: the characteristic polynomial of `1 − Ad t` is monic, so its
+trailing coefficient is nonzero. -/
+theorem weylDisc_pos (d : GGPData F) (t : ↥d.G) : 0 < weylDisc d.lie (t : d.ambientˣ) := by
+  rw [weylDisc, dite_eq_left_of_eq_true (eq_true (lie_conj_stable d t))]
+  exact absF_pos (mt Polynomial.trailingCoeff_eq_zero.mp (LinearMap.charpoly_monic _).ne_zero)
+
 /-- `1 − Ad(t)` on `𝔤`. -/
 abbrev oneSubAd (d : GGPData F) (t : ↥d.G) : d.lie.toSubmodule →ₗ[F] d.lie.toSubmodule :=
   1 - (conjAd F (t : d.ambientˣ)).toLinearEquiv.toLinearMap.restrict (lie_conj_stable d t)

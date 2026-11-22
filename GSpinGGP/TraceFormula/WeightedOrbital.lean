@@ -292,15 +292,8 @@ theorem weightedOrbitalIntegral_smul_measure (μ : Measure ↥(d.centG x)) [μ.I
 every integral over `G(F)` vanish. -/
 theorem orbQuotMeasure_zero : d.orbQuotMeasure x 0 = 0 := by
   classical
-  have h : ¬ ∃ m, IsWeilMeasure (d.centG x).subtype (Measure.haar : Measure ↥d.G) 0 m := by
-    rintro ⟨m, hm⟩
-    obtain ⟨φ, hφ1, -, hφc, hφ01⟩ := exists_continuous_one_zero_of_isCompact
-      (isCompact_singleton (x := (1 : ↥d.G))) isClosed_empty (Set.disjoint_empty _)
-    have hp : 0 < ∫ g, φ g ∂(Measure.haar : Measure ↥d.G) :=
-      φ.continuous.integral_pos_of_hasCompactSupport_nonneg_ne_zero hφc
-        (fun g => (hφ01 g).1) (x := 1) (by rw [hφ1 rfl]; exact one_ne_zero)
-    rw [hm φ φ.continuous hφc] at hp
-    simp at hp
+  have h : ¬ ∃ m, IsWeilMeasure (d.centG x).subtype (Measure.haar : Measure ↥d.G) 0 m :=
+    fun ⟨_, hm⟩ => not_isWeilMeasure_zero hm
   unfold orbQuotMeasure
   rw [dite_eq_right_of_eq_false (eq_false h)]
 

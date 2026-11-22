@@ -92,12 +92,6 @@ variable (ψ : NontrivialAddChar F) (d : GGPData F)
 
 section Basic
 
-/-- `D^G(t) > 0` for `t ∈ G(F)`: the characteristic polynomial of `1 − Ad t` is monic, so its
-trailing coefficient is nonzero. -/
-theorem weylDisc_pos (t : ↥d.G) : 0 < weylDisc d.lie (t : d.ambientˣ) := by
-  rw [weylDisc_eq_oneSubAd]
-  exact absF_pos (mt Polynomial.trailingCoeff_eq_zero.mp (LinearMap.charpoly_monic _).ne_zero)
-
 /-- `D^{𝔤'}(X) > 0` for `X` in a Lie subalgebra `𝔤'`. -/
 theorem weylDiscLie_pos (𝔤' : LieSubalgebra F d.ambient) {X : d.ambient} (hX : X ∈ 𝔤') :
     0 < weylDiscLie 𝔤' X := by

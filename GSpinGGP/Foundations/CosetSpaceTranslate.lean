@@ -90,4 +90,37 @@ theorem IsWeilMeasure.map_mulRight [ν.IsMulRightInvariant] [μ.IsMulRightInvari
 
 end Weil
 
+section NonZero
+
+variable {S Γ : Type*} [Group S] [Group Γ] [TopologicalSpace Γ] [IsTopologicalGroup Γ]
+  [LocallyCompactSpace Γ] [MeasurableSpace Γ] [BorelSpace Γ]
+  [MeasurableSpace S] {ι : S →* Γ} {ν : Measure Γ} [ν.IsOpenPosMeasure] {μ : Measure S}
+  {m : Measure (CosetSpace ι)}
+
+/-- A continuous compactly supported `φ ≥ 0` with `∫ φ dν > 0`, for `ν` positive on open sets. -/
+theorem exists_integral_pos_of_isOpenPosMeasure (ν : Measure Γ) [ν.IsOpenPosMeasure]
+    [IsFiniteMeasureOnCompacts ν] :
+    ∃ φ : Γ → ℝ, Continuous φ ∧ HasCompactSupport φ ∧ 0 < ∫ g, φ g ∂ν := by
+  obtain ⟨φ, hφ1, -, hφc, hφ01⟩ := exists_continuous_one_zero_of_isCompact
+    (isCompact_singleton (x := (1 : Γ))) isClosed_empty (Set.disjoint_empty _)
+  exact ⟨φ, φ.continuous, hφc, φ.continuous.integral_pos_of_hasCompactSupport_nonneg_ne_zero hφc
+    (fun g => (hφ01 g).1) (x := 1) (by rw [hφ1 rfl]; exact one_ne_zero)⟩
+
+/-- **A Weil measure for `ν` positive on open sets is nonzero.** -/
+theorem IsWeilMeasure.ne_zero [IsFiniteMeasureOnCompacts ν] (h : IsWeilMeasure ι ν μ m) :
+    m ≠ 0 := by
+  rintro rfl
+  obtain ⟨φ, hφ, hφc, hp⟩ := exists_integral_pos_of_isOpenPosMeasure ν
+  rw [h φ hφ hφc, integral_zero_measure] at hp
+  exact lt_irrefl _ hp
+
+/-- **There is no Weil measure for the zero measure on `S`** (when `ν` is positive on open sets). -/
+theorem not_isWeilMeasure_zero [IsFiniteMeasureOnCompacts ν] : ¬ IsWeilMeasure ι ν 0 m := by
+  intro h
+  obtain ⟨φ, hφ, hφc, hp⟩ := exists_integral_pos_of_isOpenPosMeasure ν
+  rw [h φ hφ hφc] at hp
+  simp at hp
+
+end NonZero
+
 end GSpinGGP

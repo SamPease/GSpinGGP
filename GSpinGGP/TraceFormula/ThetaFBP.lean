@@ -226,15 +226,12 @@ theorem exists_isDcMeasure {x : ↥d.G} (hx : x ∈ regularSet d.G d.lie)
     ∃ μ, L.IsDcMeasure x μ := by
   set A1 : Set ↥(L.AGx x) := (L.AGxOne x : Set ↥(L.AGx x))
   set ι := (L.AGx x).subtype
-  -- `d_c a`
-  set μ0 : Measure ↥(L.AGx x) := Measure.haar
-  have h0 : μ0 A1 ≠ 0 := (ho.measure_pos μ0 ⟨1, (L.AGxOne x).one_mem⟩).ne'
-  have h0' : μ0 A1 ≠ ⊤ := hk.measure_lt_top.ne
-  set μA : Measure ↥(L.AGx x) := (μ0 A1)⁻¹ • μ0
-  have hA : μA.IsHaarMeasure :=
-    Measure.IsHaarMeasure.smul μ0 (ENNReal.inv_ne_zero.2 h0') (ENNReal.inv_ne_top.2 h0)
-  have hA1 : μA A1 = 1 := by
-    simp only [μA, smul_apply, smul_eq_mul, ENNReal.inv_mul_cancel h0 h0']
+  -- `d_c a`: the Haar measure normalized on the compact open subgroup `A¹`
+  let A1c : TopologicalSpace.PositiveCompacts ↥(L.AGx x) :=
+    ⟨⟨A1, hk⟩, ⟨1, ho.mem_nhds (L.AGxOne x).one_mem |> mem_interior_iff_mem_nhds.2⟩⟩
+  set μA : Measure ↥(L.AGx x) := Measure.haarMeasure A1c
+  have hA : μA.IsHaarMeasure := inferInstance
+  have hA1 : μA A1 = 1 := Measure.haarMeasure_self
   have := isMulRightInvariant_of_le_centG hx (L.AGx x) μA
   -- the quotient of a Haar measure of `G_x(F)`
   set ν0 : Measure ↥(d.centG x) := Measure.haar
@@ -242,16 +239,7 @@ theorem exists_isDcMeasure {x : ↥d.G} (hx : x ∈ regularSet d.G d.lie)
   obtain ⟨m0, hW0, -⟩ := weil_quotient ι continuous_subtypeVal (L.isClosedEmbedding_AGx x) ν0 μA
   have := hW0.isFiniteMeasureOnCompacts continuous_subtypeVal (L.isClosedEmbedding_AGx x)
   have hfin : m0 Set.univ ≠ ⊤ := isCompact_univ.measure_lt_top.ne
-  have hpos : m0 Set.univ ≠ 0 := by
-    intro h00
-    have hm : m0 = 0 := Measure.measure_univ_eq_zero.1 h00
-    obtain ⟨φ, hφ1, -, hφc, hφ01⟩ := exists_continuous_one_zero_of_isCompact
-      (isCompact_singleton (x := (1 : ↥(d.centG x)))) isClosed_empty (Set.disjoint_empty _)
-    have hp : 0 < ∫ g, φ g ∂ν0 :=
-      φ.continuous.integral_pos_of_hasCompactSupport_nonneg_ne_zero hφc
-        (fun g => (hφ01 g).1) (x := 1) (by rw [hφ1 rfl]; exact one_ne_zero)
-    rw [hW0 φ φ.continuous hφc, hm, integral_zero_measure] at hp
-    exact lt_irrefl _ hp
+  have hpos : m0 Set.univ ≠ 0 := fun h00 => hW0.ne_zero (Measure.measure_univ_eq_zero.1 h00)
   refine ⟨(m0 Set.univ)⁻¹ • ν0, Measure.IsHaarMeasure.smul ν0 (ENNReal.inv_ne_zero.2 hfin)
     (ENNReal.inv_ne_top.2 hpos), μA, (m0 Set.univ)⁻¹ • m0, hA, hA1, hW0.smul_left _, ?_⟩
   simp only [smul_apply, smul_eq_mul, ENNReal.inv_mul_cancel hpos hfin]
@@ -320,21 +308,9 @@ theorem dcMeasure_conj {x m : ↥d.G} (hx : x ∈ regularSet d.G d.lie) (hm : m 
       exact h h3
     rw [dcMeasure_of_not_exists h, dcMeasure_of_not_exists h', Measure.map_zero]
 
-end ReducedLeviDatum
+variable (L)
 
-/-! ## 3. `D^G` -/
-
-/-- `D^G(x) > 0` for `x ∈ G(F)`: the characteristic polynomial of `1 − Ad x` is monic, so its
-trailing coefficient is nonzero. -/
-theorem weylDisc_pos' (x : ↥d.G) : 0 < weylDisc d.lie (x : d.ambientˣ) := by
-  rw [weylDisc, dite_eq_left_of_eq_true (eq_true (lie_conj_stable d x))]
-  exact absF_pos (mt Polynomial.trailingCoeff_eq_zero.mp (LinearMap.charpoly_monic _).ne_zero)
-
-namespace ReducedLeviDatum
-
-variable (L : d.ReducedLeviDatum)
-
-/-! ## 4. `θ_f` -/
+/-! ## 3. `θ_f` -/
 
 /-- **Beuzart-Plessis' `θ_f(x)`** (Astérisque 418, §5.2, p. 109; Waldspurger 2010, §5.3), for a
 Levi datum `L` with `L.M = M(x)` (`IsMx L x`):
@@ -363,7 +339,7 @@ theorem thetaFBP_eq_integral (K : d.GoodK L.toFlagLeviDatum) (f : ↥d.G → ℂ
       ∫ q, d.weightedIntegrand L K x f (CosetSpace.out _ q)
         ∂d.orbQuotMeasure x (L.dcMeasure x) := by
   have hD : ((Real.sqrt (weylDisc d.lie (x : d.ambientˣ)) : ℂ)) ≠ 0 :=
-    Complex.ofReal_ne_zero.2 (Real.sqrt_pos.2 (weylDisc_pos' x)).ne'
+    Complex.ofReal_ne_zero.2 (Real.sqrt_pos.2 (weylDisc_pos d x)).ne'
   unfold thetaFBP weightedOrbitalIntegral
   rw [mul_assoc, ← mul_assoc _ (Real.sqrt _ : ℂ), inv_mul_cancel₀ hD, one_mul]
 
@@ -422,7 +398,7 @@ theorem thetaFBP_of_aG_eq_top_eq_integral (hG : L.aG = ⊤) (K : d.GoodK L.toFla
     L.thetaFBP K f x = ∫ q, f ((CosetSpace.out _ q)⁻¹ * x * CosetSpace.out _ q)
       ∂d.orbQuotMeasure x (L.dcMeasure x) := by
   have hD : ((Real.sqrt (weylDisc d.lie (x : d.ambientˣ)) : ℂ)) ≠ 0 :=
-    Complex.ofReal_ne_zero.2 (Real.sqrt_pos.2 (weylDisc_pos' x)).ne'
+    Complex.ofReal_ne_zero.2 (Real.sqrt_pos.2 (weylDisc_pos d x)).ne'
   rw [thetaFBP_of_aG_eq_top hG, orbitalIntegral, ← mul_assoc, inv_mul_cancel₀ hD, one_mul]
 
 end ReducedLeviDatum

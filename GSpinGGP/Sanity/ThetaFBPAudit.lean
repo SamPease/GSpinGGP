@@ -13,9 +13,10 @@ At the toy datum `toyD` (`G = GL₁ × GL₁`, commutative) take the reduced Lev
 `IsMx L x` holds for every `x` (`x` is elliptic in `M = G`); `A_M(F) ∩ ker H_M` is
 `{(c₁, c₂) : |c₁| = |c₂| = 1}`, compact and open, so `d_c t` exists (`exists_isDcMeasure`) and is
 the Haar measure giving `O^× × O^×` measure `1`.  The sign is `1`, `D^G = 1`, `v_M = 1`, and
-`θ_f(x) = c f(x)` with `c > 0` (`toyD_thetaFBP`): `c` is the mass of the point `G_x(F)\G(F)` for
-`dg / d_c t` (which should be the `Measure.haar`-volume of `O^× × O^×`; only `c > 0` is
-proved).  So `IsMx`, `IsDcMeasure` and `thetaFBP` are not vacuous.  Nothing here uses an axiom.
+`θ_f(x) = c f(x)` with `c = Measure.haar(O^× × O^×) > 0` (`toyD_thetaFBP`): `c` is the mass of the
+point `G_x(F)\G(F)` for `dg / d_c t` (`toyD_orbQuotMeasure_dc`), which tests the normalization
+`d_c a(A¹) = 1`.  So `IsMx`, `IsDcMeasure` and `thetaFBP` are not vacuous.  No new axioms; the
+literature axiom `weil_quotient_radon` is used (existence of the quotient measures).
 -/
 
 noncomputable section
@@ -86,12 +87,14 @@ theorem isOpen_toyOneSet : IsOpen (toyOneSet (F := F)) := by
   ext g
   simp [toyOneSet]
 
+theorem isClosed_toyOneSet : IsClosed (toyOneSet (F := F)) :=
+  (isClosed_eq (continuous_norm.comp ((continuous_detChar _).comp (𝕋).continuous_fst))
+    continuous_const).inter
+  (isClosed_eq (continuous_norm.comp ((continuous_detChar _).comp (𝕋).continuous_snd))
+    continuous_const)
+
 theorem isCompact_toyOneSet : IsCompact (toyOneSet (F := F)) := by
-  have hcl : IsClosed (toyOneSet (F := F)) :=
-    (isClosed_eq (continuous_norm.comp ((continuous_detChar _).comp (𝕋).continuous_fst))
-      continuous_const).inter
-    (isClosed_eq (continuous_norm.comp ((continuous_detChar _).comp (𝕋).continuous_snd))
-      continuous_const)
+  have hcl := isClosed_toyOneSet (F := F)
   set T := LinearMap.toContinuousLinearMap (toyL (F := F))
   refine (isCompact_logNorm_le (F := F) (𝕋).isClosed_G
     (1 + Real.log (max 1 ‖T‖))).of_isClosed_subset hcl fun g hg => ?_
@@ -164,12 +167,101 @@ theorem toyD_exists_isDcMeasure (L : (𝕋).ReducedLeviDatum) (hM : L.M = ⊤) (
 
 end Toy
 
-/-- **`θ_f(x) = c f(x)` at `toyD`, with `c > 0`**, for the datum with `M = G` (empty flags), which
-is `M(x)` for every `x`; `d_c t` exists at every `x`. -/
+/-- The indicator of a compact clopen set is continuous with compact support. -/
+theorem continuous_indicator_one_of_isClopen {X : Type*} [TopologicalSpace X] {S : Set X}
+    (hS : IsClopen S) : Continuous (S.indicator (1 : X → ℝ)) := by
+  classical
+  refine continuous_def.2 fun U _ => ?_
+  have : S.indicator (1 : X → ℝ) ⁻¹' U = (if (1 : ℝ) ∈ U then S else ∅) ∪
+      (if (0 : ℝ) ∈ U then Sᶜ else ∅) := by
+    ext y
+    by_cases hy : y ∈ S <;> by_cases h1 : (1 : ℝ) ∈ U <;> by_cases h0 : (0 : ℝ) ∈ U <;>
+      simp [hy, h1, h0]
+  rw [this]
+  refine IsOpen.union ?_ ?_ <;> split_ifs
+  exacts [hS.isOpen, isOpen_empty, hS.compl.isOpen, isOpen_empty]
+
+theorem hasCompactSupport_indicator_one {X : Type*} [TopologicalSpace X] {S : Set X}
+    (hS : IsCompact S) (hc : IsClosed S) : HasCompactSupport (S.indicator (1 : X → ℝ)) :=
+  HasCompactSupport.intro' hS hc fun _ hy => Set.indicator_of_notMem hy _
+
+theorem one_mem_toyOneSet : (1 : ↥(𝕋).G) ∈ toyOneSet := by
+  simp [toyOneSet]
+
+/-- **At `toyD`, `d_c t` and the quotient measure are pinned down**: for `x ∈ G(F)`,
+`d_c t` gives `{t ∈ G_x(F) : |c₁(t)| = |c₂(t)| = 1}` measure `1` (the quotient `A\G_x` is a point
+of mass `1` and `d_c a(A¹) = 1`), and the point `G_x(F)\G(F)` has `dg/d_c t`-mass
+`Measure.haar(toyOneSet)`. -/
+theorem toyD_orbQuotMeasure_dc (L : (𝕋).ReducedLeviDatum) (hW : L.FW.len = 0)
+    (hV : L.FV.len = 0) (x : ↥(𝕋).G) (hdc : L.IsDcMeasure x (L.dcMeasure x)) :
+    ((𝕋).orbQuotMeasure x (L.dcMeasure x)).real Set.univ =
+      (Measure.haar : Measure ↥(𝕋).G).real toyOneSet := by
+  classical
+  have hx : x ∈ regularSet (𝕋).G (𝕋).lie := by rw [toy_regularSet_eq_univ]; trivial
+  obtain ⟨hμ, μA, mW, hA, hA1, hW', hm1⟩ := hdc
+  have := isMulRightInvariant_of_le_centG hx (L.AGx x) μA
+  have := isMulRightInvariant_of_mem_regularSet hx (L.dcMeasure x)
+  set S : Set ↥(𝕋).G := toyOneSet
+  have hSc : IsClopen S := ⟨isClosed_toyOneSet, isOpen_toyOneSet⟩
+  set ST : Set ↥((𝕋).centG x) := (fun t => (t : ↥(𝕋).G)) ⁻¹' S
+  have hSTc : IsClopen ST := hSc.preimage continuous_subtypeVal
+  have hSTk : IsCompact ST := ((𝕋).isClosedEmbedding_centG x).isCompact_preimage isCompact_toyOneSet
+  -- step 1: `d_c t (ST) = 1`
+  have hA1' : μA.real ((fun a : ↥(L.AGx x) => (a : ↥((𝕋).centG x))) ⁻¹' ST) = 1 := by
+    have e : ((fun a : ↥(L.AGx x) => (a : ↥((𝕋).centG x))) ⁻¹' ST) =
+        (L.AGxOne x : Set ↥(L.AGx x)) := by
+      rw [toyD_AGxOne_eq L hW hV x]; rfl
+    rw [e, Measure.real, hA1, ENNReal.toReal_one]
+  have hT1 : (L.dcMeasure x).real ST = 1 := by
+    have h := hW' (ST.indicator (1 : ↥((𝕋).centG x) → ℝ))
+      (continuous_indicator_one_of_isClopen hSTc)
+      (hasCompactSupport_indicator_one hSTk hSTc.isClosed)
+    rw [integral_indicator_one hSTc.isClosed.measurableSet] at h
+    rw [h]
+    have hin : ∀ q : CosetSpace (L.AGx x).subtype,
+        ∫ a, ST.indicator (1 : ↥((𝕋).centG x) → ℝ) ((L.AGx x).subtype a * CosetSpace.out _ q)
+          ∂μA = 1 := by
+      intro q
+      set o : ↥(L.AGx x) := ⟨CosetSpace.out _ q, toyD_mem_AGx L x _⟩
+      have e : ∀ a : ↥(L.AGx x), ST.indicator (1 : ↥((𝕋).centG x) → ℝ) ((L.AGx x).subtype a *
+          CosetSpace.out _ q) = ((fun a : ↥(L.AGx x) => (a : ↥((𝕋).centG x))) ⁻¹' ST).indicator
+          (1 : ↥(L.AGx x) → ℝ) (a * o) := fun a => rfl
+      simp_rw [e]
+      rw [integral_mul_right_eq_self (fun a => ((fun a : ↥(L.AGx x) =>
+        (a : ↥((𝕋).centG x))) ⁻¹' ST).indicator (1 : ↥(L.AGx x) → ℝ) a) o,
+        integral_indicator_one ((hSTc.isClosed.preimage continuous_subtypeVal).measurableSet),
+        hA1']
+    simp_rw [hin]
+    rw [integral_const, smul_eq_mul, mul_one, Measure.real, hm1, ENNReal.toReal_one]
+  -- step 2: the mass of the point `G_x(F)\G(F)`
+  have hW2 := (𝕋).orbQuotMeasure_spec (x := x) (L.dcMeasure x)
+  have h := hW2 (S.indicator (1 : ↥(𝕋).G → ℝ)) (continuous_indicator_one_of_isClopen hSc)
+    (hasCompactSupport_indicator_one isCompact_toyOneSet hSc.isClosed)
+  rw [integral_indicator_one hSc.isClosed.measurableSet] at h
+  rw [h]
+  have hin : ∀ q : (𝕋).CentQuot x,
+      ∫ t, S.indicator (1 : ↥(𝕋).G → ℝ) (((𝕋).centG x).subtype t * CosetSpace.out _ q)
+        ∂(L.dcMeasure x) = 1 := by
+    intro q
+    set o : ↥((𝕋).centG x) := ⟨CosetSpace.out _ q, by simp [toyD_centG_eq_top]⟩
+    have e : ∀ t : ↥((𝕋).centG x), S.indicator (1 : ↥(𝕋).G → ℝ) (((𝕋).centG x).subtype t *
+        CosetSpace.out _ q) = ST.indicator (1 : ↥((𝕋).centG x) → ℝ) (t * o) := fun t => rfl
+    simp_rw [e]
+    rw [integral_mul_right_eq_self (fun t => ST.indicator (1 : ↥((𝕋).centG x) → ℝ) t) o,
+      integral_indicator_one hSTc.isClosed.measurableSet, hT1]
+  simp_rw [hin]
+  rw [integral_const, smul_eq_mul, mul_one]
+
+/-- **`θ_f(x) = c f(x)` at `toyD`, with `c = Measure.haar({|c₁| = |c₂| = 1}) > 0`**, for the datum
+with `M = G` (empty flags), which is `M(x)` for every `x`; `d_c t` exists at every `x`.  The
+constant is the `dg`-volume of the maximal compact subgroup `A_G(O)`, as `d_c t` gives it mass
+`1`: so `θ_f` depends on the normalization of `dg` exactly as stated in `thetaFBP`'s docstring. -/
 theorem toyD_thetaFBP :
     ∃ (L : (𝕋).ReducedLeviDatum) (K : (𝕋).GoodK L.toFlagLeviDatum),
       (∀ x, L.IsMx x) ∧ (∀ x, L.IsDcMeasure x (L.dcMeasure x)) ∧
-      ∀ x : ↥(𝕋).G, ∃ c : ℝ, 0 < c ∧ ∀ f : ↥(𝕋).G → ℂ, L.thetaFBP K f x = c * f x := by
+      0 < (Measure.haar : Measure ↥(𝕋).G).real toyOneSet ∧
+      ∀ (x : ↥(𝕋).G) (f : ↥(𝕋).G → ℂ),
+        L.thetaFBP K f x = (Measure.haar : Measure ↥(𝕋).G).real toyOneSet * f x := by
   classical
   obtain ⟨ιW, _, _, bW, wtW, hsW⟩ := exists_flagSplitting (𝕋).nondeg (emptyFlag (𝕋).QW)
   obtain ⟨ιV, _, _, bV, wtV, hsV⟩ := exists_flagSplitting (𝕋).nondeg_QV (emptyFlag (𝕋).QV)
@@ -189,24 +281,18 @@ theorem toyD_thetaFBP :
     toyXiPair.isCompact_K (toyD_stabilizesSplitLattice _ _).1 (toyD_stabilizesSplitLattice _ _).2
   have hdc : ∀ x, L.IsDcMeasure x (L.dcMeasure x) := fun x =>
     ReducedLeviDatum.isDcMeasure_dcMeasure (toyD_exists_isDcMeasure L hM rfl rfl x)
-  refine ⟨L, K, toyD_isMx L hM, hdc, fun x => ?_⟩
+  refine ⟨L, K, toyD_isMx L hM, hdc, ?_, fun x f => ?_⟩
+  · exact ENNReal.toReal_pos (isOpen_toyOneSet.measure_pos _ ⟨1, one_mem_toyOneSet⟩).ne'
+      isCompact_toyOneSet.measure_lt_top.ne
   have := (hdc x).1
-  -- `d_c t = s • Measure.haar`
-  have e := Measure.isMulLeftInvariant_eq_smul (L.dcMeasure x) Measure.haar
-  rw [ENNReal.smul_def] at e
-  set s : ℝ≥0∞ := (Measure.haarScalarFactor (L.dcMeasure x) Measure.haar : ℝ≥0∞)
-  have hs0 : s ≠ 0 := ENNReal.coe_ne_zero.2
-    (Measure.haarScalarFactor_pos_of_isHaarMeasure _ _).ne'
-  have hs : s ≠ ⊤ := ENNReal.coe_ne_top
-  obtain ⟨c, hc, hJ⟩ := toyD_orbitalIntegral x
-  refine ⟨(s⁻¹).toReal * c, mul_pos (ENNReal.toReal_pos (ENNReal.inv_ne_zero.2 hs)
-    (ENNReal.inv_ne_top.2 hs0)) hc, fun f => ?_⟩
+  have := isMulRightInvariant_of_mem_regularSet
+    (show x ∈ regularSet (𝕋).G (𝕋).lie by rw [toy_regularSet_eq_univ]; trivial) (L.dcMeasure x)
   have : Subsingleton L.aMG := Submodule.Quotient.subsingleton_iff.2 hG
-  unfold ReducedLeviDatum.thetaFBP
-  rw [Module.finrank_zero_of_subsingleton, pow_zero, one_mul, toyD_weylDisc, Real.sqrt_one,
-    Complex.ofReal_one, inv_one, one_mul, e, weightedOrbitalIntegral_smul_measure _ hs0 hs,
-    weightedOrbitalIntegral_eq_orbitalIntegral_of_aG_eq_top hG, hJ]
-  push_cast
-  ring
+  have hpt : ∀ q : (𝕋).CentQuot x,
+      f ((CosetSpace.out _ q)⁻¹ * x * CosetSpace.out _ q) = f x := fun q => by
+    rw [mul_assoc, toyD_G_comm x, inv_mul_cancel_left]
+  rw [ReducedLeviDatum.thetaFBP_of_aG_eq_top_eq_integral hG]
+  simp_rw [hpt]
+  rw [integral_const, toyD_orbQuotMeasure_dc L rfl rfl x (hdc x), Complex.real_smul]
 
 end GSpinGGP.GGPData
