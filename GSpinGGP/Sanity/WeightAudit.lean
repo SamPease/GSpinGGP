@@ -27,9 +27,36 @@ variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
 local notation "𝕋" => (toyD (F := F))
 
+open MeasureTheory Measure Set in
+/-- **The lattice normalization in dimension one**: for `Λ = ℤ ℓ ⊂ ℝ` the hull of `{0, x}` has
+volume `|x| / ℓ` (`E/Λ` has volume `1`, whatever `addHaar` is). -/
+theorem hullVolume_zmultiples_pair {ℓ : ℝ} (hℓ : 0 < ℓ) (x : ℝ) :
+    hullVolume (AddSubgroup.zmultiples ℓ) {0, x} = |x| / ℓ := by
+  set c := addHaarScalarFactor (addHaar : Measure ℝ) volume
+  have hμ : (addHaar : Measure ℝ) = c • volume :=
+    isAddLeftInvariant_eq_smul_of_innerRegular _ _
+  have hc : (c : ENNReal) ≠ 0 := by
+    intro h0
+    have : (addHaar : Measure ℝ) = 0 := by rw [hμ, show c = 0 from by exact_mod_cast h0, zero_smul]
+    exact (NeZero.ne _ : (addHaar : Measure ℝ) ≠ 0) this
+  have hD := isAddFundamentalDomain_Ioc hℓ 0 (addHaar : Measure ℝ)
+  have hcov : addCovolume (AddSubgroup.zmultiples ℓ) ℝ addHaar = c * ENNReal.ofReal ℓ := by
+    rw [hD.covolume_eq_volume, hμ, smul_apply, Real.volume_Ioc, zero_add, sub_zero]; rfl
+  have hhull : convexHull ℝ ({0, x} : Set ℝ) = uIcc 0 x := by
+    rw [convexHull_pair, segment_eq_uIcc]
+  rw [hullVolume, latticeHaar, smul_apply, hcov, hhull, hμ, smul_apply, Real.volume_interval,
+    sub_zero]
+  rw [ENNReal.smul_def, smul_eq_mul, smul_eq_mul,
+    ENNReal.mul_inv (Or.inl hc) (Or.inl ENNReal.coe_ne_top)]
+  rw [show (c : ENNReal)⁻¹ * (ENNReal.ofReal ℓ)⁻¹ * (c * ENNReal.ofReal |x|) =
+      ((c : ENNReal)⁻¹ * c) * ((ENNReal.ofReal ℓ)⁻¹ * ENNReal.ofReal |x|) by ring,
+    ENNReal.inv_mul_cancel hc ENNReal.coe_ne_top, one_mul, ENNReal.toReal_mul, ENNReal.toReal_inv,
+    ENNReal.toReal_ofReal hℓ.le, ENNReal.toReal_ofReal (abs_nonneg x), inv_mul_eq_div]
+
 /-- A submodule of a space of dimension `≤ 1` is not a hyperbolic plane. -/
 theorem not_isHypPlane_comp_of_finrank_le {K V : Type*} [Field K] [Invertible (2 : K)]
-    [AddCommGroup V] [Module K V] [FiniteDimensional K V] (Q : QuadraticForm K V) (S : Submodule K V) (h : finrank K V ≤ 1) :
+    [AddCommGroup V] [Module K V] [FiniteDimensional K V] (Q : QuadraticForm K V)
+    (S : Submodule K V) (h : finrank K V ≤ 1) :
     ¬ IsHypPlane (Q.comp S.subtype) := fun hS => by
   have := Submodule.finrank_le S
   have h2 := hS.1
@@ -40,7 +67,8 @@ theorem not_isHypPlane_comp_of_finrank_le {K V : Type*} [Field K] [Invertible (2
 theorem toyD_vM_eq_one :
     ∃ (L : (𝕋).ReducedLeviDatum) (K : (𝕋).GoodK L.M), L.M = ⊤ ∧ L.aG = ⊤ ∧
       (∀ g, L.vM K g = 1) ∧
-      (DiscreteTopology L.latticeMG ∧ Submodule.span ℝ (L.latticeMG : Set L.aMG) = ⊤) := by
+      (DiscreteTopology L.latticeMG.toIntSubmodule ∧
+        Submodule.span ℝ (L.latticeMG.toIntSubmodule : Set L.aMG) = ⊤) := by
   classical
   obtain ⟨ιW, _, _, bW, wtW, hsW⟩ := exists_flagSplitting (𝕋).nondeg (emptyFlag (𝕋).QW)
   obtain ⟨ιV, _, _, bV, wtV, hsV⟩ := exists_flagSplitting (𝕋).nondeg_QV (emptyFlag (𝕋).QV)
@@ -69,7 +97,8 @@ is a split torus and `A_G` is all of `GSpin(W) × GSpin(V)`) the Levi `M` of a f
 theorem hypV_aG_eq_top :
     ∃ L : (Sanity.hypVData (F := F)).ReducedLeviDatum, 0 < L.FV.len ∧ L.aG = ⊤ ∧
       (∀ (K : (Sanity.hypVData (F := F)).GoodK L.M) g, L.vM K g = 1) ∧
-      (DiscreteTopology L.latticeMG ∧ Submodule.span ℝ (L.latticeMG : Set L.aMG) = ⊤) := by
+      (DiscreteTopology L.latticeMG.toIntSubmodule ∧
+        Submodule.span ℝ (L.latticeMG.toIntSubmodule : Set L.aMG) = ⊤) := by
   classical
   set D := Sanity.hypVData (F := F)
   obtain ⟨L, h, m, hm, -, hW0, hV1, hm1⟩ := exists_HM_ne_zero_hypV (F := F)
