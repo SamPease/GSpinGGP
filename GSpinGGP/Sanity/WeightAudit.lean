@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import GSpinGGP.GGP.WeightVM
 import GSpinGGP.Sanity.AxiomRedTeam.WaldspurgerXi
 import GSpinGGP.Sanity.LeviAudit
+import GSpinGGP.GGP.QuadClassify
 
 /-!
 # Sanity checks for the weight `v_M`
@@ -12,10 +13,12 @@ import GSpinGGP.Sanity.LeviAudit
 At the toy datum `toyD` (`W = 0`, `V` a line, `G = GL₁ × GL₁`) the empty flags give a reduced
 Levi datum with `M = G`; the compact open subgroup of `toyXiPair` is good for it
 (`GoodK.ofEqTop`, with good position since `P(g) = 1` there), so `GoodK` is inhabited, and
-`v_G = 1`.  The lattice statement
-`latticeMG_isLattice` holds there (in the zero space `a_G^G`).  At `Sanity.hypVData` (`V` a
-hyperbolic plane) a nonempty flag still has `a_M = a_G` (`hypV_aG_eq_top`), as it must: `G` is
-then a torus times `GL₁`, so `M = G`.  Nothing here uses an axiom.
+`v_G = 1`.  At `Sanity.hypVData` (`V` a hyperbolic plane) a nonempty flag still has `a_M = a_G`
+(`hypV_aG_eq_top`, from `single_mem_aG`), as it must: `G` is then a torus times `GL₁`, so
+`M = G`.  At `gl2Data` (`W = 0`, `V` split of dimension `3`, `G = GL₁ × GSpin₃`) the torus `M`
+of a full flag of `V` has `a_M^G ≠ 0` and `latticeHaar` gives the fundamental domains of
+`proj_M^G(H_M(A_M(F)))` volume `1` (`gl2_aMG_nontrivial`); a `GoodK` for this proper Levi is not
+constructed.  Nothing here uses an axiom.
 -/
 
 noncomputable section
@@ -111,40 +114,81 @@ theorem hypV_aG_eq_top :
       (∀ (K : (Sanity.hypVData (F := F)).GoodK L.toFlagLeviDatum) g, L.vM K g = 1) ∧
       (DiscreteTopology L.latticeMG.toIntSubmodule ∧
         Submodule.span ℝ (L.latticeMG.toIntSubmodule : Set L.aMG) = ⊤) := by
+  obtain ⟨L, h, -, -, -, hW0, -, -⟩ := exists_HM_ne_zero_hypV (F := F)
+  have hG : L.aG = ⊤ := L.aG_eq_top_of_single_mem fun x => L.single_mem_aG (by
+    rcases x with (i | _) | (i | _)
+    · exact absurd (i.isLt.trans_eq hW0) (Nat.not_lt_zero _)
+    · trivial
+    · exact Sanity.hypVData_isHypPlane_QV
+    · trivial)
+  exact ⟨L, h, hG, fun K g => L.vM_eq_one_of_aG_eq_top hG K g, L.latticeMG_isLattice⟩
+
+/-- **The `GSpin₃ ≅ GL₂` datum**: `W = 0`, `V = Z` split of dimension `3` (`m = 0`, `r = 1`,
+`ν = 1`), so `G = GL₁ × GSpin₃`. -/
+abbrev gl2Data : GGPData F where
+  m := 0
+  QW := 0
+  nondeg := ⟨fun _ _ => Subsingleton.elim _ _, fun _ _ => Subsingleton.elim _ _⟩
+  r := 1
+  ν := 1
+
+theorem gl2Data_finrank_V : finrank F (gl2Data (F := F)).V = 3 := by
+  show finrank F ((Fin 0 → F) × (Fin (2 * 1 + 1) → F)) = 3
+  simp
+
+/-- `V` is isotropic: `(0, e₀)` with `q(e₀) = ν Σᵢ e₀(i) e₀(2 − i) = 0`. -/
+theorem gl2Data_one_le_wittIndex : 1 ≤ wittIndex (gl2Data (F := F)).QV := by
+  refine QuadClassify.one_le_wittIndex_of_isotropic (v := ((0 : Fin 0 → F), (Pi.single 0 1 : Fin 3 → F)))
+    (fun h => by simpa using congrArg (fun p : (gl2Data (F := F)).V => p.2 0) h) ?_
+  show (0 : QuadraticForm F (Fin 0 → F)) 0 + splitOddForm 1 ((1 : Fˣ) : F) (Pi.single 0 1) = 0
+  rw [LeviAux.splitOddForm_apply]
+  simp [Fin.sum_univ_three, Fin.rev]
+
+/-- **A Levi subgroup with `a_M^G ≠ 0` and a genuine normalization of `v_M`**: at `gl2Data` the
+Levi `M` of a full flag of `V` (of length `1`; `M` is a maximal torus) has a non-central
+`GL`-coordinate (`V` is not a hyperbolic plane), so `a_M^G ≠ 0`, and `latticeHaar` gives a
+fundamental domain of `proj_M^G(H_M(A_M(F)))` volume `1`.  (A `GoodK` for this proper Levi is not
+constructed here: it needs the Iwasawa decompositions `G = B K = B̄ K` for one `K` stabilizing a
+split lattice.) -/
+theorem gl2_aMG_nontrivial :
+    ∃ L : (gl2Data (F := F)).ReducedLeviDatum, ∃ h : 0 < L.FV.len,
+      ¬ L.IsCentralCoord (Sum.inr (Sum.inl ⟨0, h⟩)) ∧ Nontrivial L.aMG ∧
+      ∃ D : Set L.aMG, MeasureTheory.IsAddFundamentalDomain L.latticeMG.toIntSubmodule D
+        MeasureTheory.Measure.addHaar ∧ MeasureTheory.Measure.latticeHaar L.latticeMG D = 1 := by
   classical
-  set D := Sanity.hypVData (F := F)
-  obtain ⟨L, h, m, hm, -, hW0, hV1, hm1⟩ := exists_HM_ne_zero_hypV (F := F)
-  have hmAG : (m : ↥D.G) ∈ D.AG := by
-    refine ⟨(D.fst m, D.snd m), ⟨?_, ?_⟩, D.pair_fst_snd _⟩
-    · rw [hm1]; exact Subgroup.one_mem _
-    · show D.snd m ∈ splitCentralGSpin D.QV
-      rw [splitCentralGSpin, ite_eq_left_of_eq_true _ _ (eq_true Sanity.hypVData_isHypPlane_QV)]
-      trivial
-  have hv : L.HM m ∈ L.aG := Submodule.subset_span ⟨⟨m, hmAG⟩, rfl⟩
-  set a := L.HM m (Sum.inr (Sum.inl ⟨0, h⟩))
-  set b := L.HM m (Sum.inr (Sum.inr ()))
-  have hdec : L.HM m = a • Pi.single (Sum.inr (Sum.inl ⟨0, h⟩)) 1 +
-      b • Pi.single (Sum.inr (Sum.inr ())) 1 := by
-    funext x
-    rcases x with (i | _) | (i | _)
-    · exact absurd (i.isLt.trans_eq hW0) (Nat.not_lt_zero _)
-    · simp [ReducedLeviDatum.HM, ReducedLeviDatum.char, hm1]
-    · have : i = ⟨0, h⟩ := Fin.ext (by have := i.isLt; omega)
-      subst this
-      simp [a]
-    · simp [b]
-  have hGL : Pi.single (Sum.inr (Sum.inl ⟨0, h⟩)) (1 : ℝ) ∈ L.aG := by
-    have h1 := L.aG.smul_mem a⁻¹ (L.aG.sub_mem hv (L.aG.smul_mem b L.single_gspin_mem_aG.2))
-    rwa [hdec, add_sub_cancel_right, smul_smul, inv_mul_cancel₀ hm, one_smul] at h1
-  have hG : L.aG = ⊤ := L.aG_eq_top_of_single_mem fun x => by
-    rcases x with (i | _) | (i | _)
-    · exact absurd (i.isLt.trans_eq hW0) (Nat.not_lt_zero _)
-    · exact L.single_gspin_mem_aG.1
-    · have : i = ⟨0, h⟩ := Fin.ext (by have := i.isLt; omega)
-      exact this ▸ hGL
-    · exact L.single_gspin_mem_aG.2
-  have : Subsingleton L.aMG := Submodule.Quotient.subsingleton_iff.2 hG
-  exact ⟨L, h, hG, fun K g => L.vM_eq_one_of_aG_eq_top hG K g, inferInstance,
-    Subsingleton.elim _ _⟩
+  set D := gl2Data (F := F)
+  obtain ⟨FV, hFV⟩ := IsotropicFlag.exists_isFull D.QV
+  obtain ⟨L, -, hL, -⟩ := exists_isLevi (emptyFlag D.QW) FV
+  have h : 0 < L.FV.len := by
+    rw [hL, hFV.1]; exact gl2Data_one_le_wittIndex
+  have hW1 : finrank F (Fin D.m → F) ≤ 1 := by
+    rw [Module.finrank_fin_fun]; simp [D]
+  have hnotV : ¬ IsHypPlane D.QV := fun hp => by
+    have := hp.1; rw [gl2Data_finrank_V] at this; omega
+  have hredV : ¬ IsHypPlane (D.QV.comp (wtSpan L.bV L.wtV 0).subtype) := fun hp => by
+    obtain ⟨j₁, hj₁⟩ := L.hsV.exists_wt_eq (w := 1) le_rfl (by exact_mod_cast h)
+    obtain ⟨j₂, hj₂⟩ := L.hsV.exists_wt_eq_neg D.nondeg_QV (w := 1) le_rfl (by exact_mod_cast h)
+    have hcard : Fintype.card L.ιV = 3 := by rw [← finrank_eq_card_basis L.bV, gl2Data_finrank_V]
+    have hsub : (Finset.univ.filter fun j => L.wtV j = 0) ⊆ (Finset.univ.erase j₁).erase j₂ := by
+      intro j hj
+      simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hj
+      simp only [Finset.mem_erase, Finset.mem_univ, and_true]
+      exact ⟨fun e => by rw [e] at hj; omega, fun e => by rw [e] at hj; omega⟩
+    have h12 : j₂ ≠ j₁ := fun e => by rw [e] at hj₂; omega
+    have hle := Finset.card_le_card hsub
+    rw [Finset.card_erase_of_mem (by simp [h12]), Finset.card_erase_of_mem (Finset.mem_univ _),
+      Finset.card_univ, hcard] at hle
+    have hfin : finrank F (wtSpan L.bV L.wtV 0) ≤ 1 := by
+      calc finrank F (wtSpan L.bV L.wtV 0)
+          ≤ (Finset.univ.filter fun j => L.wtV j = 0).card := by
+            rw [wtSpan, ← Finset.coe_filter_univ, ← Finset.coe_image]
+            exact (finrank_span_finset_le_card _).trans Finset.card_image_le
+        _ ≤ 1 := by omega
+    have := hp.1
+    omega
+  let R : D.ReducedLeviDatum :=
+    ⟨L, not_isHypPlane_comp_of_finrank_le _ _ hW1, hredV⟩
+  have hc : ¬ R.IsCentralCoord (Sum.inr (Sum.inl ⟨0, h⟩)) := hnotV
+  exact ⟨R, h, hc, R.nontrivial_aMG hc, R.exists_isAddFundamentalDomain_latticeHaar_eq_one⟩
 
 end GSpinGGP.GGPData

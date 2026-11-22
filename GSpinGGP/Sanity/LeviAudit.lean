@@ -2,7 +2,7 @@
 Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import GSpinGGP.GGP.LeviSubgroup
+import GSpinGGP.GGP.LeviLattice
 import GSpinGGP.Sanity.LieAudit
 
 /-!
@@ -88,23 +88,13 @@ theorem exists_HM_ne_zero (L : d.ReducedLeviDatum) (h : 0 < L.FV.len) :
     have hij : j ≠ i := fun e => hi (e ▸ rfl)
     simp [hT j, L.bV.repr_self, hij]
   refine ⟨⟨d.pair (1, T), ⟨(flagLevi (Q := d.QW) L.bW L.wtW).one_mem, hTM⟩⟩, rfl, ?_⟩
-  have hspec : (specP d.QV T : d.V →ₗ[F] d.V) = cochar L.bV L.wtV τ :=
-    L.bV.ext fun i => by rw [cochar_basis]; exact hT i
-  have hdiag : LinearMap.toMatrix L.bV L.bV (wtBlock L.bV L.wtV 1 (cochar L.bV L.wtV τ)) =
-      Matrix.diagonal fun j => if L.wtV j = 1 then τ else 1 := by
-    ext i j
-    rw [LinearMap.toMatrix_apply, Matrix.diagonal_apply]
-    simp only [wtBlock, LinearMap.add_apply, LinearMap.comp_apply, LinearMap.sub_apply,
-      LinearMap.id_apply, cochar_basis, map_smul, wtProj_basis]
-    rcases eq_or_ne i j with rfl | hij
-    · by_cases hj : L.wtV i = 1 <;> simp [hj, L.bV.repr_self]
-    · by_cases hj : L.wtV j = 1 <;> simp [hj, hij, L.bV.repr_self]
-  have hval : ((L.char (Sum.inr (Sum.inl ⟨0, h⟩)) ⟨d.pair (1, T), ⟨(flagLevi (Q := d.QW) L.bW L.wtW).one_mem, hTM⟩⟩ : Fˣ) : F) =
-      ∏ j, if L.wtV j = 1 then τ else 1 := by
-    change ((wtDet (Q := d.QV) L.bV L.wtV ((0 : ℕ) + 1 : ℤ) ⟨T, hTM⟩ : Fˣ) : F) = _
-    rw [wtDet_apply]
-    simp only [Nat.cast_zero, zero_add]
-    rw [hspec, ← LinearMap.det_toMatrix L.bV, hdiag, Matrix.det_diagonal]
+  set m : ↥L.M := ⟨d.pair (1, T), ⟨(flagLevi (Q := d.QW) L.bW L.wtW).one_mem, hTM⟩⟩
+  have hval : L.HM m (Sum.inr (Sum.inl ⟨0, h⟩)) =
+      Real.log ‖∏ j, if L.wtV j = 1 then τ else (1 : F)‖ := by
+    rw [L.HM_inr_inl_of_diag m (s := fun j => τ ^ L.wtV j)
+      (fun j => by simpa [m, snd_pair] using hT j)]
+    congr 2
+    exact Finset.prod_congr rfl fun j _ => by split_ifs with hj <;> simp_all
   obtain ⟨j₀, hj₀⟩ := L.hsV.exists_wt_eq (w := 1) le_rfl (by exact_mod_cast h)
   have hlt : ‖∏ j, if L.wtV j = 1 then τ else (1 : F)‖ < 1 := by
     rw [norm_prod, ← Finset.prod_erase_mul _ _ (Finset.mem_univ j₀)]
@@ -116,7 +106,7 @@ theorem exists_HM_ne_zero (L : d.ReducedLeviDatum) (h : 0 < L.FV.len) :
       _ < 1 := by rw [one_mul]; exact hτ1
   have hpos : 0 < ‖∏ j, if L.wtV j = 1 then τ else (1 : F)‖ :=
     norm_pos_iff.2 (Finset.prod_ne_zero_iff.2 fun j _ => by split_ifs <;> simp [hτ])
-  simp only [ReducedLeviDatum.HM, hval]
+  rw [hval]
   exact (Real.log_neg hpos hlt).ne
 
 /-- The `GSpin(W)`-coordinate of `H_M` is the first coordinate of `hcMap` (the `H_G` of
