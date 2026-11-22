@@ -16,8 +16,9 @@ centralizer `GSpin(V)_x` is a maximal torus; in particular it is commutative
 `G_x = M_x ⊂ M`; Beuzart-Plessis, Astérisque 418, §1.10; Waldspurger's `G_x` is the neutral
 component `Z_G(x)⁰`, which is the full centralizer here: centralizers of semisimple elements of
 `GSpin` are connected, by Steinberg's theorem, as `Spin` is simply connected).  The argument for
-the inclusion: a lift `T ∈ GSpin(V)` of the cocharacter `λ(2) : bᵢ ↦ 2^{wtᵢ} bᵢ` (`IsFlagSplitting.exists_cochar_lift`)
-satisfies `T x T⁻¹ = ±x` (`P(T)` commutes with `P(x)`, `CentralizerSign.exists_conj_eq_smul`), so
+the inclusion: a lift `T ∈ GSpin(V)` of the cocharacter `λ(2) : bᵢ ↦ 2^{wtᵢ} bᵢ`
+(`IsFlagSplitting.exists_cochar_lift`) satisfies `T x T⁻¹ = ±x` (`P(T)` commutes with `P(x)`,
+`CentralizerSign.exists_conj_eq_smul`), so
 `T²` lies in `GSpin(V)_x`; every `g ∈ GSpin(V)_x` commutes with `T²`, so `P(g)` commutes with
 `λ(4)`, whose eigenvalues `4^w` separate the weights; hence `P(g)` preserves each weight space.
 -/
@@ -45,9 +46,9 @@ and `Steinberg.commute_of_fixes_eigenspace_one`: (1) `P(x)` is semisimple
 of `gspin(V)_x` by `commute_of_isLieAbelian_lieCentralizer`, as the centralizer of `P(x)_{K̄}` is
 `so(V)_{P(x)} ⊗ K̄`; the same passage to `K̄` is done for `GSpin(W)` and the moved part in
 `commute_torusOf_of_commute_of_movedPartAbelian`, `isSemisimple_specP_baseChange` and
-`lieAbelian_specP_baseChange_of_movedPartAbelian`, which would need generalizing); (2) over `K̄`, `so(V)_{P(x)}` abelian gives
-`dim ker (P(x) − 1) ≤ 2`;
-(3) if `dim ker (P(x) − 1) ≤ 1`, every `t` commuting with `x` acts trivially on `ker (P(x) − 1)`
+`lieAbelian_specP_baseChange_of_movedPartAbelian`, which would need generalizing); (2) over `K̄`,
+`so(V)_{P(x)}` abelian gives `dim ker (P(x) − 1) ≤ 2`; (3) if `dim ker (P(x) − 1) ≤ 1`, every `t`
+commuting with `x` acts trivially on `ker (P(x) − 1)`
 (its determinant there is `1`, `det_restrict_one_eq_one_of_commute`), and
 `Steinberg.commute_of_fixes_eigenspace_one` gives `Commute g t`; (4) if `ker (P(x) − 1)` is a
 (hyperbolic) plane `⟨e₀, f₀⟩`, `P(g)` and `P(h)` act on it by `diag(c, c⁻¹)` (an isometry of
