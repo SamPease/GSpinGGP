@@ -222,6 +222,7 @@ import GSpinGGP.Sanity.AxiomRedTeam
 import GSpinGGP.Sanity.LeviAudit
 import GSpinGGP.Sanity.WeightAudit
 import GSpinGGP.Sanity.GL2GoodK
+import GSpinGGP.Sanity.GL2Weight
 import GSpinGGP.Sanity.WeightedOrbitalAudit
 import GSpinGGP.Sanity.ThetaFBPAudit
 import GSpinGGP.Sanity.UnitaryRepAudit

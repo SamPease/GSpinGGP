@@ -91,6 +91,19 @@ theorem mem_flagLevi_iff {g : GSpin Q} :
   exact this.symm
 
 omit [Fintype ι] in
+/-- An element of `M_F` is diagonal in a splitting basis whose weights are pairwise distinct. -/
+theorem flagLevi_apply_basis_eq_smul (hwt : Function.Injective wt) {g : GSpin Q}
+    (hg : g ∈ flagLevi (Q := Q) b wt) (j : ι) :
+    specP Q g (b j) = b.repr (specP Q g (b j)) j • b j := by
+  classical
+  refine b.repr.injective (Finsupp.ext fun i => ?_)
+  rw [map_smul, b.repr_self, Finsupp.smul_apply, Finsupp.single_apply]
+  by_cases hij : j = i
+  · subst hij; simp
+  · rw [ite_eq_right_of_eq_false _ _ (eq_false hij), smul_zero]
+    exact mem_flagLevi_iff.1 hg j i fun h => hij (hwt h).symm
+
+omit [Fintype ι] in
 /-- The split centre `wtScalar` lies in the Levi subgroup. -/
 theorem wtScalar_le_flagLevi : wtScalar Q b wt ≤ flagLevi (Q := Q) b wt := by
   rintro g ⟨t, -, ht⟩
