@@ -606,15 +606,22 @@ theorem exists_specP_eq_of_det_eq_one [FiniteDimensional K V] (hQ : IsNondeg Q)
       exact hiso v v) hdet
   exact ⟨g, by rw [hg]; rfl⟩
 
-/-- **The cocharacter** `λ(τ) : bᵢ ↦ τ^{wtᵢ} bᵢ` of `SO(V)` lifts to `GSpin(V)`. -/
-theorem IsFlagSplitting.exists_cochar_lift [FiniteDimensional K V] (hQ : IsNondeg Q)
-    (hs : IsFlagSplitting F b wt) {τ : K} (hτ : τ ≠ 0) :
-    ∃ T : GSpin Q, ∀ i, specP Q T (b i) = τ ^ wt i • b i := by
+/-- **A diagonal cocharacter lifts to `GSpin(V)`**: for weights `wt` with `b(bᵢ, bⱼ) = 0` unless
+`wtᵢ + wtⱼ = 0` and total weight `0`, `λ(τ) : bᵢ ↦ τ^{wtᵢ} bᵢ` is `P(T)` for some `T`. -/
+theorem exists_cochar_lift_of_orth [FiniteDimensional K V] (hQ : IsNondeg Q)
+    (horth : ∀ i j, wt i + wt j ≠ 0 → bform Q (b i) (b j) = 0) (hsum : ∑ i, wt i = 0) {τ : K}
+    (hτ : τ ≠ 0) : ∃ T : GSpin Q, ∀ i, specP Q T (b i) = τ ^ wt i • b i := by
   obtain ⟨T, hT⟩ := exists_specP_eq_of_det_eq_one hQ
     (by rw [cochar_mul τ τ⁻¹, mul_inv_cancel₀ hτ, cochar_one])
     (by rw [cochar_mul τ⁻¹ τ, inv_mul_cancel₀ hτ, cochar_one])
-    (hs.bform_cochar hτ) (hs.det_cochar hτ)
+    (bform_cochar_of_orth horth hτ) (det_cochar_of_sum_eq_zero hsum hτ)
   exact ⟨T, fun i => by rw [← cochar_basis, ← hT]; rfl⟩
+
+/-- **The cocharacter** `λ(τ) : bᵢ ↦ τ^{wtᵢ} bᵢ` of `SO(V)` lifts to `GSpin(V)`. -/
+theorem IsFlagSplitting.exists_cochar_lift [FiniteDimensional K V] (hQ : IsNondeg Q)
+    (hs : IsFlagSplitting F b wt) {τ : K} (hτ : τ ≠ 0) :
+    ∃ T : GSpin Q, ∀ i, specP Q T (b i) = τ ^ wt i • b i :=
+  exists_cochar_lift_of_orth hQ hs.orth hs.sum_wt hτ
 
 /-- **Levi decomposition of `P_F`** (Thesis §5.1.2: `P = M N`): every `p ∈ P_F` is `m y`, where
 `P(m)` preserves the weight of each `bⱼ` (`P(m)` is the graded part of `P(p)`, so it commutes with

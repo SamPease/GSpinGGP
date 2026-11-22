@@ -53,14 +53,9 @@ theorem exists_HM_cW_ne_zero : ∃ m : ↥L.M, L.HM m L.cW ≠ 0 := by
   have hlog : Real.log ‖τ‖ ≠ 0 := (Real.log_neg hτ0 hτ1).ne
   have hN : (finrank F (CliffordAlgebra d.QW) : ℝ) ≠ 0 := by
     rw [finrank_cliffordAlgebra]; positivity
-  refine ⟨⟨d.pair (scalarGSpin d.QW c, 1), scalarGSpin_mem_flagLevi (Q := d.QW) L.bW L.wtW c,
-    (flagLevi (Q := d.QV) L.bV L.wtV).one_mem⟩, ?_⟩
-  have : L.HM ⟨d.pair (scalarGSpin d.QW c, 1), scalarGSpin_mem_flagLevi (Q := d.QW) L.bW L.wtW c,
-      (flagLevi (Q := d.QV) L.bV L.wtV).one_mem⟩ L.cW =
-      (finrank F (CliffordAlgebra d.QW) : ℝ) * Real.log ‖τ‖ := by
-    simp [HM, char, fst_pair, detChar_scalarGSpin, c, norm_pow, Real.log_pow]
-  rw [this]
-  exact mul_ne_zero hN hlog
+  refine ⟨L.scalarW c, ?_⟩
+  rw [HM_scalarW]
+  simpa [cW, c] using mul_ne_zero hN hlog
 
 /-- A unitary unramified character of `M(F)` with a value `e^{iπ} = −1`. -/
 theorem exists_unitaryUnramChar_apply_eq_exp_pi : ∃ ν : L.aMDual, ∃ m : ↥L.M,

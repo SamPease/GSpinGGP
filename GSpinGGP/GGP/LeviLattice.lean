@@ -13,7 +13,7 @@ For a reduced flag Levi datum `L` with Levi subgroup `M = L.M` of `G = GSpin(W) 
 * **discreteness**: every coordinate `log ‖χ_c(m)‖` of `H_M(m)` lies in `ℤ ℓ` for one `ℓ > 0`
   (`exists_HM_mem_zmultiples`; the value group of `F` is cyclic, `exists_log_norm_mem_zmultiples`);
 * **full rank**: the `H_M` of the split centre `A_M(F)` of `M` (`AMF`) already span `a_M`
-  (`span_HM_AMF_eq_top`).  For the `GL`-coordinate of weight `w = 1, …, len` of a flag, the lift
+  (`span_HMAMF_eq_top`).  For the `GL`-coordinate of weight `w = 1, …, len` of a flag, the lift
   to `GSpin` of the element of `SO` acting by `τ` on the weight-`w` space, by `τ⁻¹` on the
   weight-`(−w)` space and trivially elsewhere (`IsFlagSplitting.exists_oneWt_lift`; its
   determinant is `1` because the two spaces have the same dimension, `card_wt_neg`) has
@@ -96,11 +96,7 @@ theorem IsFlagSplitting.exists_oneWt_lift [FiniteDimensional K V] (hQ : IsNondeg
     have hc := hs.card_wt_neg hQ w
     rw [Fintype.card_subtype, Fintype.card_subtype] at hc
     simp only [wt', oneWt, Finset.sum_sub_distrib, Finset.sum_boole, hc, sub_self]
-  obtain ⟨T, hT⟩ := exists_specP_eq_of_det_eq_one hQ
-    (by rw [cochar_mul τ τ⁻¹, mul_inv_cancel₀ hτ, cochar_one])
-    (by rw [cochar_mul τ⁻¹ τ, inv_mul_cancel₀ hτ, cochar_one])
-    (bform_cochar_of_orth horth hτ) (det_cochar_of_sum_eq_zero hsum hτ)
-  exact ⟨T, fun i => by rw [← cochar_basis (wt := wt'), ← hT]; rfl⟩
+  exact exists_cochar_lift_of_orth (wt := wt') hQ horth hsum hτ
 
 omit [Invertible (2 : K)] in
 /-- **The determinant on a weight space of a diagonal map**: if `A bⱼ = sⱼ bⱼ`, then
