@@ -2,9 +2,8 @@
 Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import GSpinGGP.GGP.RegularRank
 import GSpinGGP.GGP.CentralizerSign
-import GSpinGGP.TraceFormula.FlagLevi
+import GSpinGGP.GGP.LeviSubgroup
 
 /-!
 # Centralizers of regular semisimple elements of `GSpin(V)`
@@ -14,8 +13,10 @@ centralizer `GSpin(V)_x` is a maximal torus; in particular it is commutative
 (`commute_of_isRegular`, not yet proved).  From this: if moreover `x` lies in the Levi subgroup
 `M_F = flagLevi b wt` of a flag stabilizer, then `GSpin(V)_x ⊆ M_F`
 (`mem_flagLevi_of_commute_of_isRegular`; Waldspurger, Compos. Math. 146 (2010), §2.3,
-`G_x = M_x ⊂ M`; Beuzart-Plessis, Astérisque 418, §1.10).  The argument for the inclusion: a lift
-`T ∈ GSpin(V)` of the cocharacter `λ(2) : bᵢ ↦ 2^{wtᵢ} bᵢ` (`IsFlagSplitting.exists_cochar_lift`)
+`G_x = M_x ⊂ M`; Beuzart-Plessis, Astérisque 418, §1.10; Waldspurger's `G_x` is the neutral
+component `Z_G(x)⁰`, which is the full centralizer here: centralizers of semisimple elements of
+`GSpin` are connected, by Steinberg's theorem, as `Spin` is simply connected).  The argument for
+the inclusion: a lift `T ∈ GSpin(V)` of the cocharacter `λ(2) : bᵢ ↦ 2^{wtᵢ} bᵢ` (`IsFlagSplitting.exists_cochar_lift`)
 satisfies `T x T⁻¹ = ±x` (`P(T)` commutes with `P(x)`, `CentralizerSign.exists_conj_eq_smul`), so
 `T²` lies in `GSpin(V)_x`; every `g ∈ GSpin(V)_x` commutes with `T²`, so `P(g)` commutes with
 `λ(4)`, whose eigenvalues `4^w` separate the weights; hence `P(g)` preserves each weight space.
@@ -37,15 +38,20 @@ commute.  (The centralizer is a maximal torus: connected by Steinberg's theorem,
 group `Spin(V)` is simply connected, with abelian Lie algebra.)
 
 Not yet proved.  Sketch, without connectedness, by the explicit methods of `Steinberg.commute_iff`
-and `Steinberg.commute_of_fixes_eigenspace_one`: (1) commuting is detected after base change to
-`K̄` (`bcGSpin_injective`), and the hypotheses base change (semisimplicity:
+and `Steinberg.commute_of_fixes_eigenspace_one`: (1) `P(x)` is semisimple
+(`Steinberg.isSemisimple_specP_of_isSS`); commuting is detected after base change to `K̄`
+(`bcGSpin_injective`), and the hypotheses base change (semisimplicity:
 `isSemisimple_baseChange_algebraicClosure`; abelianness of `so(V)_{P(x)}`, which follows from that
 of `gspin(V)_x` by `commute_of_isLieAbelian_lieCentralizer`, as the centralizer of `P(x)_{K̄}` is
-`so(V)_{P(x)} ⊗ K̄`); (2) over `K̄`, `so(V)_{P(x)}` abelian gives `dim ker (P(x) − 1) ≤ 2`;
+`so(V)_{P(x)} ⊗ K̄`; the same passage to `K̄` is done for `GSpin(W)` and the moved part in
+`commute_torusOf_of_commute_of_movedPartAbelian`, `isSemisimple_specP_baseChange` and
+`lieAbelian_specP_baseChange_of_movedPartAbelian`, which would need generalizing); (2) over `K̄`, `so(V)_{P(x)}` abelian gives
+`dim ker (P(x) − 1) ≤ 2`;
 (3) if `dim ker (P(x) − 1) ≤ 1`, every `t` commuting with `x` acts trivially on `ker (P(x) − 1)`
 (its determinant there is `1`, `det_restrict_one_eq_one_of_commute`), and
 `Steinberg.commute_of_fixes_eigenspace_one` gives `Commute g t`; (4) if `ker (P(x) − 1)` is a
-(hyperbolic) plane `⟨e₀, f₀⟩`, `P(g)` and `P(h)` act on it by `diag(c, c⁻¹)`, and replacing `x` by
+(hyperbolic) plane `⟨e₀, f₀⟩`, `P(g)` and `P(h)` act on it by `diag(c, c⁻¹)` (an isometry of
+the plane of determinant `1`, `det_restrict_one_eq_one_of_commute`), and replacing `x` by
 `x s` with `s` a pair element of `⟨e₀, f₀⟩` acting by `diag(a, a⁻¹)`, `a` avoiding `±1` and the
 eigenvalues of `P(x)`, gives a regular `x s` with `ker (P(x s) − 1) = 0` whose centralizer contains
 `g` and `h`; conclude by (3). -/
@@ -61,30 +67,9 @@ section FlagLevi
 
 variable {F : IsotropicFlag Q} {ι : Type*} [Fintype ι] {b : Basis ι K V} {wt : ι → ℤ}
 
-omit [Invertible (2 : K)] [Fintype ι] in
-/-- An endomorphism commuting with `λ(τ)`, whose powers `τ^w` separate the weights, preserves
-the weight of each basis vector. -/
-theorem isHomog_of_comp_cochar {τ : K} (hτ : Function.Injective fun w : ℤ => τ ^ w)
-    {A : V →ₗ[K] V} (hA : A ∘ₗ cochar b wt τ = cochar b wt τ ∘ₗ A) (j : ι) :
-    IsHomog b wt (A (b j)) (wt j) := by
-  intro i hi
-  have h := congr(b.repr ($hA (b j)) i)
-  simp only [LinearMap.comp_apply, cochar_basis, map_smul, repr_cochar,
-    Finsupp.smul_apply, smul_eq_mul] at h
-  by_contra h0
-  exact hi (hτ (mul_right_cancel₀ h0 h).symm)
-
-omit [Fintype ι] in
-/-- An element of `flagLevi b wt` preserves the weight of each basis vector. -/
-theorem isHomog_of_mem_flagLevi {x : GSpin Q} (hx : x ∈ flagLevi (Q := Q) b wt) (j : ι) :
-    IsHomog b wt (specP Q x (b j)) (wt j) := by
-  intro i hi
-  have h := congr(b.repr ($(hx (wt j)) (b j)) i)
-  have hb : wtProj b wt (wt j) (b j) = b j := by simp [wtProj]
-  simp only [LinearMap.comp_apply, LinearEquiv.coe_coe, hb, repr_wtProj, ite_eq_right hi] at h
-  exact h
-
-/-- **`GSpin(V)_x ⊆ M_F` for `x ∈ M_F` with commutative centralizer** (Waldspurger 2010, §2.3):
+/-- **`GSpin(V)_x ⊆ M_F` for `x ∈ M_F` with commutative centralizer** (Waldspurger 2010, §2.3,
+for `G_x = Z_G(x)⁰`, here the full centralizer since `Z_G(x)` is connected (Steinberg; `Spin` is
+simply connected)):
 if every two elements commuting with `x ∈ flagLevi b wt` commute, then every `g` commuting with
 `x` lies in `flagLevi b wt`.  A lift `T` of `λ(2)` has `T x T⁻¹ = ±x`, so `T²` commutes with `x`,
 hence with `g`; then `P(g)` commutes with `λ(4)` and preserves its eigenspaces, the weight
@@ -104,7 +89,7 @@ theorem mem_flagLevi_of_commute [CharZero K] [FiniteDimensional K V] (hQ : IsNon
     change (specP Q T : V →ₗ[K] V) ∘ₗ (specP Q x : V →ₗ[K] V) =
       (specP Q x : V →ₗ[K] V) ∘ₗ (specP Q T : V →ₗ[K] V)
     rw [hTc]
-    exact cochar_comp_of_isHomog (isHomog_of_mem_flagLevi hx) 2
+    exact cochar_comp_of_isHomog (mem_flagLevi_iff.1 hx) 2
   -- `T x T⁻¹ = c x` with `c² = 1`, so `T²` commutes with `x`
   obtain ⟨c, hc2, hc⟩ := CentralizerSign.exists_conj_eq_smul hQ hTx
   have hT2 : Commute (T * T) x := by
@@ -134,7 +119,7 @@ theorem mem_flagLevi_of_commute [CharZero K] [FiniteDimensional K V] (hQ : IsNon
     have h : (((4 : ℚ) ^ m : ℚ) : K) = (((4 : ℚ) ^ n : ℚ) : K) := by
       simpa only [Rat.cast_zpow, Rat.cast_ofNat] using hmn
     exact zpow_right_injective₀ (by norm_num : (0 : ℚ) < 4) (by norm_num) (Rat.cast_injective h)
-  exact wtProj_comp_of_isHomog (isHomog_of_comp_cochar hinj hP)
+  exact mem_flagLevi_iff.2 (isHomog_of_comp_cochar hinj hP)
 
 /-- **`GSpin(V)_x ⊆ M_F` for regular semisimple `x ∈ M_F`** (Waldspurger 2010, §2.3:
 `G_x = M_x ⊂ M`; Beuzart-Plessis §1.10), from `mem_flagLevi_of_commute` and

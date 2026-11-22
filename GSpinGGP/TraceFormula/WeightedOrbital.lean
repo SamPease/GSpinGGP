@@ -33,7 +33,8 @@ sources must account for it.
 **Where the integral makes sense.** The integrand is evaluated at the chosen representatives
 `CosetSpace.out` of the cosets.  It is a function on `G_x(F)\G(F)` when `G_x(F) ⊆ M(F)`
 (`weightedIntegrand_mul_left`), which is the case for `x ∈ M(F) ∩ G_reg(F)` (Waldspurger 2010,
-§2.3: `G_x = M_x ⊂ M`); the results below carry `G_x(F) ⊆ M(F)` as a hypothesis, as
+§2.3: `G_x = M_x ⊂ M`, for `G_x = Z_G(x)⁰`, which is the full centralizer `centG x` here, as
+`Z_G(x)` is connected by Steinberg's theorem, `Spin` being simply connected); the results below carry `G_x(F) ⊆ M(F)` as a hypothesis, as
 Beuzart-Plessis' definition does.  For `x ∈ M(F) ∩ G_reg(F)` it holds (`centG_le_M`), and every
 Haar measure on `G_x(F)` is right invariant (`isMulRightInvariant_of_mem_regularSet`), in
 `TraceFormula/RegularCentralizer.lean`.

@@ -15,7 +15,9 @@ the weighted orbital integrals of `TraceFormula/WeightedOrbital.lean` take as hy
   torus), so every left Haar measure on it is right invariant
   (`isMulRightInvariant_of_mem_regularSet`);
 * `centG_le_M`: `G_x(F) ⊆ M(F)` for `x ∈ M(F)` (Waldspurger, Compos. Math. 146 (2010), §2.3:
-  `G_x = M_x ⊂ M`; Beuzart-Plessis, Astérisque 418, §1.10).
+  `G_x = M_x ⊂ M`; Beuzart-Plessis, Astérisque 418, §1.10).  The sources' `G_x` is the neutral
+  component `Z_G(x)⁰`; `centG x` is the full centralizer, which is the same here, since `Z_G(x)` is
+  connected (Steinberg; the derived group `Spin × Spin` is simply connected).
 
 Both reduce, factor by factor on `G = GSpin(W) × GSpin(V)`, to `commute_of_isRegular` (not yet
 proved), and the second then to `mem_flagLevi_of_commute` (`GGP/RegularCentralizer.lean`).
@@ -64,7 +66,9 @@ theorem isMulRightInvariant_of_mem_regularSet (hx : x ∈ regularSet d.G d.lie)
   exact map_mul_left_eq_self μ c
 
 /-- **`G_x(F) ⊆ M(F)` for `x ∈ M(F) ∩ G_reg(F)`** (Waldspurger 2010, §2.3; Beuzart-Plessis
-§1.10): factorwise `mem_flagLevi_of_commute_of_isRegular`. -/
+§1.10): factorwise `mem_flagLevi_of_commute_of_isRegular`.  The sources state it for
+`G_x = Z_G(x)⁰`; `centG x` is the full centralizer, the same here since `Z_G(x)` is connected
+(Steinberg; `Spin` is simply connected). -/
 theorem centG_le_M (L : d.FlagLeviDatum) (hx : x ∈ regularSet d.G d.lie) (hxM : x ∈ L.M) :
     d.centG x ≤ L.M := by
   obtain ⟨hss, hab⟩ := hx
