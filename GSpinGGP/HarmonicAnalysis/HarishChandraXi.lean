@@ -281,6 +281,29 @@ theorem isLocallyConstant_rho : IsLocallyConstant I.rho :=
 
 theorem continuous_rho : Continuous I.rho := I.isLocallyConstant_rho.continuous
 
+/-- **Extension along `G = P K`**: `extend h g = h (p(g))` for the chosen decomposition
+`g = p(g) k(g)`.  It is independent of the choice when `h` is right invariant under `P ∩ K`
+(`extend_mul`); this is how `H_P(g) = H_M(m_P(g))` is defined (Thesis §2.1). -/
+def extend {E : Type*} (h : ↥I.P → E) (g : G) : E := h (I.iwP g)
+
+omit [IsTopologicalGroup G] [LocallyCompactSpace G] in
+/-- `extend h (p k) = h p`, for `h` right invariant under `P ∩ K`. -/
+theorem extend_mul {E : Type*} {h : ↥I.P → E}
+    (hh : ∀ (p q : ↥I.P), (q : G) ∈ I.K → h (p * q) = h p) (p : ↥I.P) {k : G} (hk : k ∈ I.K) :
+    I.extend h ((p : G) * k) = h p := by
+  set p' := I.iwP ((p : G) * k)
+  have hmem : ((p'⁻¹ * p : ↥I.P) : G) ∈ I.K := by
+    have e : ((p'⁻¹ * p : ↥I.P) : G) = (I.iwK ((p : G) * k) : G) * k⁻¹ := by
+      have := I.iwP_mul_iwK ((p : G) * k)
+      push_cast
+      rw [inv_mul_eq_iff_eq_mul, ← mul_assoc, this]
+      group
+    rw [e]
+    exact I.K.mul_mem (I.iwK _).property (I.K.inv_mem hk)
+  have := hh p' _ hmem
+  rw [mul_inv_cancel_left] at this
+  exact this.symm
+
 variable [MeasurableSpace G] [BorelSpace G]
 
 /-- **Harish-Chandra's function** `Ξ(g) = ∫_K δ_P(p(kg))^{1/2} dk`, `dk` the probability Haar
@@ -318,6 +341,14 @@ theorem xi_pos (g : G) : 0 < I.xi g := by
     Set.eq_univ_of_forall fun k => (Real.sqrt_pos.2 (I.rho_pos _)).ne'
   rw [hsupp]
   exact Measure.measure_univ_pos.2 (NeZero.ne _)
+
+/-- For commutative `G`, `Ξ ≡ 1`: `δ_P` is trivial on the central elements of `P`. -/
+theorem xi_eq_one_of_comm (hc : ∀ x y : G, x * y = y * x) (g : G) : I.xi g = 1 := by
+  have hρ : ∀ x : G, I.rho x = 1 := fun x =>
+    I.delta_eq_one_of_central _ fun y => Subtype.ext (hc _ _)
+  unfold xi
+  simp only [hρ, Real.sqrt_one, integral_const, smul_eq_mul, mul_one, Measure.real]
+  exact inv_mul_cancel₀ I.haar_K_toReal_pos.ne'
 
 /-- `Ξ` is right `K`-invariant (Waldspurger 2003, Lemme II.1.1, first assertion). -/
 theorem xi_mul_right_mem_K (g : G) {k : G} (hk : k ∈ I.K) : I.xi (g * k) = I.xi g := by

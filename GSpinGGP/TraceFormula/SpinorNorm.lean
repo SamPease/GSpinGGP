@@ -552,17 +552,25 @@ theorem hcMap_eq_one_of_zpow_mem_compact (Q : QuadraticForm F V) {u : GSpin Q} {
   (hcMap_eq_one_iff Q u).2 ⟨norm_char_eq_one_of_zpow_mem_compact _ (continuous_gspinChar₁ Q) hC hu,
     norm_char_eq_one_of_zpow_mem_compact _ (continuous_gspinChar₂ Q) hC hu⟩
 
-/-- `hcMap` is trivial on unipotent elements (`u − 1` nilpotent in `C(V)`): their powers stay in a
-compact set (`exists_isCompact_zpow_of_isNilpotent`, `F` non-archimedean). -/
-theorem hcMap_eq_one_of_isNilpotent (Q : QuadraticForm F V) {u : GSpin Q}
-    (hu : IsNilpotent (((u : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1)) : hcMap Q u = 1 := by
+/-- **Unipotent elements of `GSpin(V)` have relatively compact powers**: if `u − 1` is nilpotent in
+`C(V)`, all `u^k`, `k ∈ ℤ`, lie in one compact subset of `GSpin(V)`
+(`exists_isCompact_zpow_of_isNilpotent`, `F` non-archimedean). -/
+theorem exists_isCompact_zpow_of_isNilpotent_GSpin (Q : QuadraticForm F V) {u : GSpin Q}
+    (hu : IsNilpotent (((u : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1)) :
+    ∃ C : Set (GSpin Q), IsCompact C ∧ ∀ k : ℤ, u ^ k ∈ C := by
   have := properSpace_F (F := F)
   have := t2Space_cliffordAlgebra Q
   obtain ⟨C, hC, hCu⟩ := exists_isCompact_zpow_of_isNilpotent (K := F) _ hu
-  refine hcMap_eq_one_of_zpow_mem_compact Q
-    ((isClosed_GSpin Q).isClosedEmbedding_subtypeVal.isCompact_preimage hC) fun k => ?_
+  refine ⟨_, (isClosed_GSpin Q).isClosedEmbedding_subtypeVal.isCompact_preimage hC, fun k => ?_⟩
   show ((u ^ k : GSpin Q) : (CliffordAlgebra Q)ˣ) ∈ C
   rw [Subgroup.coe_zpow]; exact hCu k
+
+/-- `hcMap` is trivial on unipotent elements (`u − 1` nilpotent in `C(V)`): their powers stay in a
+compact set (`exists_isCompact_zpow_of_isNilpotent`, `F` non-archimedean). -/
+theorem hcMap_eq_one_of_isNilpotent (Q : QuadraticForm F V) {u : GSpin Q}
+    (hu : IsNilpotent (((u : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) - 1)) : hcMap Q u = 1 :=
+  let ⟨_, hC, hCu⟩ := exists_isCompact_zpow_of_isNilpotent_GSpin Q hu
+  hcMap_eq_one_of_zpow_mem_compact Q hC hCu
 
 /-- The compact set `{c ∈ F^× : ‖c‖ = 1}`. -/
 theorem isCompact_unitSphere : IsCompact {c : Fˣ | ‖(c : F)‖ = 1} := by

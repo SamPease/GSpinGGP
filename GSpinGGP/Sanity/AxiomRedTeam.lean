@@ -10,6 +10,8 @@ import GSpinGGP.Sanity.AxiomRedTeam.Measure
 import GSpinGGP.Sanity.AxiomRedTeam.WholeSystem
 import GSpinGGP.Sanity.AxiomRedTeam.Tits
 import GSpinGGP.Sanity.AxiomRedTeam.BPQuasiCharacter
+import GSpinGGP.Sanity.AxiomRedTeam.WaldspurgerXi
+import GSpinGGP.Sanity.AxiomRedTeam.SmoothRepresentations
 import GSpinGGP.Sanity.AxiomRedTeam.WaldspurgerLie
 
 /-!
@@ -32,12 +34,19 @@ the axiom it tests; the computations of germs at `toyD` use `exists_isSelfDual` 
 
 * `hc_regular_open_dense_conull`: V at `toyD` (`toyD_hc_regular_check`, `D^G ≡ 1`). Not covered:
   `G_reg ≠ G`.
-* `hc_character_exists`: V at `toyD`, `π = 1` (`toyD_hc_character_exists_check`). Not covered:
-  `π ≠ 1`.
-* `hc_character_isQuasiCharacter`: V at `toyD`, `π = 1` (`toyD_hc_isQuasiCharacter_check`). Not
-  covered: nonzero orbits.
-* `emoryTakeda_mult_le_one`: V, sharp (`toyD_mult_eq_one_check`); C (`toyD_mult_trivialRep`). Not
-  covered: `π ≠ 1`.
+* `hc_character_exists_admissible`: V at `toyD`, `ρ = 1^∞`
+  (`toyD_hc_character_exists_admissible_check`), hypotheses hold (`toyD_smoothRep_trivial_irr_adm`).
+  Not covered: `ρ ≠ 1`. The unitary form `hc_character_exists` (a theorem): V
+  (`toyD_hc_character_exists_check`).
+* `hc_character_isQuasiCharacter_admissible`: V at `toyD`, `ρ = 1^∞`
+  (`toyD_hc_isQuasiCharacter_admissible_check`). Not covered: nonzero orbits.
+* `panYan_mult_le_one`: V at `toyD`, `ρ₀ = ρ = 1` (`toyD_panYan_check`). Not covered: `ρ ≠ 1`. The
+  unitary form `emoryTakeda_mult_le_one` (a theorem): V, sharp (`toyD_mult_eq_one_check`); C
+  (`toyD_mult_trivialRep`).
+* `cartier_smoothVectors_dense_admissible`: V at `toyD`, `π = 1` (`toyD_cartier_check`). Not
+  covered: infinite-dimensional `π`.
+* `flath_tensor_decomposition`: V for the trivial representation of any product
+  (`flath_trivial_check`). Not covered: nontrivial representations.
 * `germ_unique`: V at `toyD`, every `θ` (`toyD_germ_unique`), nonvacuous; consequences on any datum
   (`false_of_orbitMeasure_eq`, `germ_unique_forces_jHat_ne_zero`). Not covered: several orbits.
 * `rodier_germ_one`: V at `toyD`, `π = 1` (`toyD_rodier_trivialRep`); C
@@ -67,6 +76,9 @@ the axiom it tests; the computations of germs at `toyD` use `exists_isSelfDual` 
   (`toyD_tits_iwasawa_check`); V for `V` a hyperbolic plane (`tits_iwasawa_check_of_isHypPlane_V`),
   at `hypVData` with a nonempty full flag (`hypVData_tits_iwasawa_check`). Not covered: proper
   `P₀`.
+* `exists_iwasawaPair_xi_sq_integrable`: V at `toyD` (`toyD_exists_iwasawaPair_xi_sq_integrable`;
+  hypotheses `toyD_xi_sq_integrable_hyps`): `Ξ ≡ 1` and `σ^{-4}` integrable by polynomial growth of
+  `F^× × F^×`. Not covered: nonabelian `G`, proper `P₀`.
 * `kottwitz_nilpotent_sq_smul`: V for `N = 0` and on `toyData` (`kottwitz_sq_smul_toy`). Not
   covered: `N ≠ 0`.
 * `exists_isSelfDual`: hypothesis needed (`not_isSelfDual_zero`); P on the zero space. Not covered:

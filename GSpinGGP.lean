@@ -20,6 +20,7 @@ import GSpinGGP.Foundations.ModuleTopologyPAdic
 import GSpinGGP.TraceFormula.JHatSelfDual
 import GSpinGGP.TraceFormula.JHatTransport
 import GSpinGGP.Foundations.Representations
+import GSpinGGP.Foundations.SmoothRepresentations
 import GSpinGGP.Foundations.UnitarySchur
 import GSpinGGP.Foundations.GSpin
 import GSpinGGP.Foundations.HypPlane
@@ -39,6 +40,9 @@ import GSpinGGP.Foundations.PAdicQuadraticForms
 import GSpinGGP.Literature.Measure
 import GSpinGGP.Literature.Fourier
 import GSpinGGP.Literature.HarishChandra
+import GSpinGGP.Literature.SmoothRepresentations
+import GSpinGGP.GGP.UnitaryCharacters
+import GSpinGGP.GGP.MultOne
 import GSpinGGP.GGP.Germs
 import GSpinGGP.Literature.GSpin
 import GSpinGGP.Literature.NilpotentOrbits
@@ -113,6 +117,8 @@ import GSpinGGP.TraceFormula.W1Untruncated
 import GSpinGGP.TraceFormula.LieHypW
 import GSpinGGP.Literature.Parabolic
 import GSpinGGP.Literature.Tits
+import GSpinGGP.Literature.WaldspurgerXi
+import GSpinGGP.TraceFormula.XiIntegrable
 import GSpinGGP.TraceFormula.InvariantSets
 import GSpinGGP.GGP.Triple
 import GSpinGGP.GGP.TorusIntegral
@@ -155,6 +161,7 @@ import GSpinGGP.GGP.CentralizerTransport
 import GSpinGGP.GGP.GermTransfer
 import GSpinGGP.GGP.TwistSymm
 import GSpinGGP.GGP.Levi
+import GSpinGGP.GGP.LeviSubgroup
 import GSpinGGP.TraceFormula.Basic
 import GSpinGGP.TraceFormula.SpinorNorm
 import GSpinGGP.TraceFormula.ThetaF
@@ -184,6 +191,7 @@ import GSpinGGP.HarmonicAnalysis.PolynomialGrowth
 import GSpinGGP.HarmonicAnalysis.LatticeGrowth
 import GSpinGGP.HarmonicAnalysis.QuotientUnimodular
 import GSpinGGP.HarmonicAnalysis.HarishChandraXi
+import GSpinGGP.HarmonicAnalysis.LeviComplement
 import GSpinGGP.Foundations.CosetSpaceTranslate
 import GSpinGGP.Foundations.CosetSpaceTopology
 import GSpinGGP.Foundations.NormDescent
@@ -199,3 +207,4 @@ import GSpinGGP.Sanity.InvariantSetsAudit
 import GSpinGGP.Sanity.WeakCartanFrame
 import GSpinGGP.Sanity.RelativeXi
 import GSpinGGP.Sanity.AxiomRedTeam
+import GSpinGGP.Sanity.LeviAudit

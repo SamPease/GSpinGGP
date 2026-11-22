@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Foundations.LocalGroups
 import GSpinGGP.Foundations.Representations
+import GSpinGGP.Foundations.SmoothRepresentations
 import GSpinGGP.Foundations.GSpin
 
 /-!
@@ -25,15 +26,20 @@ written out inline.
   (`hcDisc`);
 * instances `T2Space ↥d.G`, `LocallyCompactSpace ↥d.G` (theorems of LocalGroups, made instances
   here because `F` is recoverable from `d`);
-* (b) `hc_character_exists` — `θ_π` is a function, continuous on Harish-Chandra's `G' = {D ≠ 0}`
-  (Harish-Chandra's regularity theorem; Bernstein's admissibility); the form on `G_reg(F)` is
-  `hc_character` in `GGP/Germs.lean`;
-* (c) `hc_character_isQuasiCharacter` — `θ_π` is a quasi-character (HC local character expansion;
-  BP Prop 4.1.1(i), Thesis Prop 4.1.1.1);
+* (b) `hc_character_exists_admissible` — for `ρ` irreducible admissible smooth, `θ_ρ` is a
+  function, continuous on Harish-Chandra's `G' = {D ≠ 0}` (Harish-Chandra's regularity theorem);
+* (c) `hc_character_isQuasiCharacter_admissible` — `θ_ρ` is a quasi-character (HC local character
+  expansion; BP Prop 4.1.1(i), Thesis Prop 4.1.1.1);
 * (d) `germ_unique` — uniqueness of the local expansion (linear independence of the `ĵ(O,·)`,
   Harish-Chandra; BP §4.5, Thesis §4.2); derived: `germ_eq_of_hasGermExpansion`, `germ_add`,
   `germ_smul`, `germ_finset_sum`, `germ_zero`;
 * (f) `rodier_germ_one` — BP Prop 4.8.1(i) = Thesis Prop 4.4.1(i) (Rodier, Mœglin–Waldspurger);
+
+(b) and (c) are stated, as in their sources, for irreducible admissible smooth representations.
+Their forms for irreducible tempered unitary `π` (`hc_character_exists`,
+`hc_character_isQuasiCharacter`, in `GGP/UnitaryCharacters.lean`) are theorems: `π^∞` is
+irreducible admissible (`Literature/SmoothRepresentations`, `Foundations/SmoothRepresentations`) and
+has the same character as `π`. The form on `G_reg(F)` is `hc_character` in `GGP/Germs.lean`.
 
 Schur's lemma for unitary representations (Dixmier 13.1.4) is proved, not assumed:
 `dixmier_commutant_scalar` and `schur_central` (the centre acts by scalars) in
@@ -122,40 +128,32 @@ axiom hc_regular_open_dense_conull (d : GGPData F) :
     IsOpen {x : ↥d.G | hcDisc d x ≠ 0} ∧ Dense {x : ↥d.G | hcDisc d x ≠ 0} ∧
       (Measure.haar : Measure ↥d.G) {x : ↥d.G | hcDisc d x ≠ 0}ᶜ = 0
 
-/-- **(b) Harish-Chandra's regularity theorem.** For an irreducible tempered unitary
-representation `π` of `G(F)`, the distribution `f ↦ tr π(f)` on `C_c^∞(G(F))` is given by a locally
+/-- **(b) Harish-Chandra's regularity theorem.** For an irreducible admissible smooth
+representation `ρ` of `G(F)`, the distribution `f ↦ tr ρ(f)` on `C_c^∞(G(F))` is given by a locally
 integrable function which is locally constant on `G' = {D ≠ 0}`.
 
-Sources:
-* Bernstein, *All reductive p-adic groups are tame*, Funct. Anal. Appl. 8 (1974), 91–93, Thm 1.
-  For `G` the group of `F`-points of a reductive group over a non-archimedean local field and
-  `K ⊆ G` compact open, `dim V^K` is bounded over all irreducible unitary `(π, V)`. In particular
-  `π` is admissible, so `tr π(f)` is defined (`traceOf`).
-* Harish-Chandra, *Admissible invariant distributions on reductive p-adic groups*, Univ. Lecture
-  Series 16, AMS 1999, Thm 16.3 (= Theorem 1 of the introduction; proved in §21). For `G` the
-  `F`-points of a connected reductive group, `char F = 0`, the character `Θ_π` of an admissible
-  irreducible `π` is a locally summable function on `G`, locally constant on
-  `G' = {x : D_G(x) ≠ 0}`.
+Source: Harish-Chandra, *Admissible invariant distributions on reductive p-adic groups*, Univ.
+Lecture Series 16, AMS 1999, Thm 16.3 (= Theorem 1 of the introduction; proved in §21). For `G`
+the `F`-points of a connected reductive group, `char F = 0`, the character `Θ_π` of an admissible
+irreducible `π` is a locally summable function on `G`, locally constant on
+`G' = {x : D_G(x) ≠ 0}`. Here `Θ_π(f) = tr π(f)` is `Representation.traceOf` and "given by the
+function `θ`" is `Representation.IsCharacterOf`.
 
 Harish-Chandra's `G'` is `{x | hcDisc d x ≠ 0}` (as in `hc_regular_open_dense_conull`), and the
 conclusion is stated on that set, verbatim; its identification with `regularSet` is a separate
 theorem (`hcDisc_ne_zero_iff_mem_regularSet`, GGP/Germs). Only continuity on `G'` is stated, which is
-weaker than local constancy. Thesis Ch. 1, BP §2.1 / Prop 4.1.1(i).
-
-One step of the chain is not covered by an exact citation yet: for a topologically irreducible
-unitary `π`, the smooth vectors `π^∞` form an (algebraically) irreducible admissible representation,
-and its character `f ↦ tr π^∞(f)` is `traceOf π` (the trace on `π^K`). Bernstein's Thm 1 gives
-admissibility; the irreducibility of `π^∞` is standard but its source is still to be pinned down. -/
-axiom hc_character_exists (d : GGPData F) (π : UnitaryRep ↥d.G) (hπ : IsTempered π) :
-    ∃ θ : ↥d.G → ℂ, IsCharacterOf π θ ∧ ContinuousOn θ {x : ↥d.G | hcDisc d x ≠ 0}
+weaker than local constancy. Thesis Ch. 1, BP §2.1 / Prop 4.1.1(i). -/
+axiom hc_character_exists_admissible (d : GGPData F) {V : Type*} [AddCommGroup V] [Module ℂ V]
+    (ρ : Representation ℂ ↥d.G V) (hirr : ρ.IsIrreducible) (hadm : ρ.IsAdmissible) :
+    ∃ θ : ↥d.G → ℂ, ρ.IsCharacterOf θ ∧ ContinuousOn θ {x : ↥d.G | hcDisc d x ≠ 0}
 
 /-! ## (c) Characters are quasi-characters -/
 
 /-- **(c) Harish-Chandra's local character expansion** (in the semisimple-descent form of
-Waldspurger / BP). For `π` irreducible tempered, `θ_π` is a quasi-character on `G(F)`:
-it is conjugation invariant on `G_reg(F)`, and at every semisimple `x ∈ G(F)` there are finitely
-many coefficients `c_{θ_π,O}(x)`, `O ∈ Nil(𝔤_x)`, with
-`θ_π(x e^X) = ∑_O c_{θ_π,O}(x) ĵ(O, X)` for `X ∈ 𝔤_x(F)` regular and close to `0`.
+Waldspurger / BP). For `ρ` an irreducible admissible smooth representation, `θ_ρ` is a
+quasi-character on `G(F)`: it is conjugation invariant on `G_reg(F)`, and at every semisimple
+`x ∈ G(F)` there are finitely many coefficients `c_{θ_ρ,O}(x)`, `O ∈ Nil(𝔤_x)`, with
+`θ_ρ(x e^X) = ∑_O c_{θ_ρ,O}(x) ĵ(O, X)` for `X ∈ 𝔤_x(F)` regular and close to `0`.
 
 Sources: Harish-Chandra 1999 (op. cit.), Thm 16.2 (= Theorems 5 and 20): for `γ` semisimple,
 with `M`, `𝔪` its centralizers in `G`, `𝔤`, there are unique `c_ξ` with
@@ -163,13 +161,15 @@ with `M`, `𝔪` its centralizers in `G`, `𝔤`, there are unique `c_ξ` with
 `M`-orbits in `𝔪` (applied with the admissibility of `Θ_π` at `γ`, §15); BP Astérisque 418,
 Prop 4.1.1(i): "for every irreducible admissible representation `π` of `G(F)`, the character `θ_π`
 is a quasi-character on `G(F)`", which is the form stated here (BP §4.1's definition);
-Waldspurger, Compositio 146 (2010), §4; Thesis Prop 4.1.1.1(i).
+Waldspurger, Compositio 146 (2010), §4; Thesis Prop 4.1.1.1(i). `θ_ρ` is
+`Representation.characterOn ρ (regularSet …)`, the representative continuous on `G_reg(F)`.
 Here `ĵ` is normalized by `d.bilin` and `ψ` (Thesis §2.4); a change of invariant form or of measures
 permutes and rescales the `ĵ(O,·)`, which is absorbed by the coefficients, so this axiom is
 insensitive to the normalization. -/
-axiom hc_character_isQuasiCharacter (d : GGPData F) (ψ : NontrivialAddChar F)
-    (π : UnitaryRep ↥d.G) (hπ : IsTempered π) :
-    IsQuasiCharacter d.G d.lie d.bilin ψ (characterOn π (regularSet d.G d.lie))
+axiom hc_character_isQuasiCharacter_admissible (d : GGPData F) (ψ : NontrivialAddChar F)
+    {V : Type*} [AddCommGroup V] [Module ℂ V] (ρ : Representation ℂ ↥d.G V)
+    (hirr : ρ.IsIrreducible) (hadm : ρ.IsAdmissible) :
+    IsQuasiCharacter d.G d.lie d.bilin ψ (ρ.characterOn (regularSet d.G d.lie))
 
 /-! ## (d) Uniqueness of germs -/
 

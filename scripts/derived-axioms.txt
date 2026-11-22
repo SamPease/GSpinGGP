@@ -1,11 +1,9 @@
-GSpinGGP.emoryTakeda_mult_le_one
 GSpinGGP.exists_rel_torusBar_of_fixerBar
 GSpinGGP.finite_H1_normalizerBar
 GSpinGGP.finite_H1_torusBar
-GSpinGGP.hc_character_exists
-GSpinGGP.hc_character_isQuasiCharacter
 GSpinGGP.jantzen_finrank_soCentMat_ge
 GSpinGGP.luo_lie_geomExpansion_SO
 GSpinGGP.tits_iwasawa
 GSpinGGP.bp_sqrt_weylDisc_mul_locallyBounded
 GSpinGGP.waldspurger2010_thm_7_9
+GSpinGGP.exists_iwasawaPair_xi_sq_integrable
