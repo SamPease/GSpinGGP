@@ -226,7 +226,9 @@ theorem isStronglyCuspidal_iff_inline {f : ↥d.G → ℂ} (hf : f ∈ testFunct
     ⟨integrable_parabolicU_of_testFunctions d hf FW FV p, h FW FV hFV p hp⟩⟩
 
 /-- `bp_thetaF_exists` (BP Thm 5.5.1) applied with the inline cuspidality predicate of this file (checks that
-the bridge matches the axiom's hypothesis exactly). -/
+the bridge matches the axiom's hypothesis exactly).  That statement is for `Measure.haar` on
+`G(F)/A_G(F)`; its `θ` is rescaled by `c = dcScaleAG` to represent `orbitalPairing`, which uses
+`measGmodAG = c • Measure.haar`. -/
 theorem bp_thetaF_exists_of_inline {f₀ : ↥d.G → ℂ} (hf₀ : f₀ ∈ testFunctions ↥d.G)
     (h : IsStronglyCuspidalInline d f₀) :
     ∃ θ : ↥d.G → ℂ, LocallyIntegrable θ Measure.haar ∧

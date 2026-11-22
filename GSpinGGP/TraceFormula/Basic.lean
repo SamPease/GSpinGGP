@@ -41,8 +41,10 @@ Contents:
 
 `θ_f` and `J` are both tied to one measure on the quotient group `G(F)/A_G(F)`, `measGmodAG`:
 the quotient of `Measure.haar` on `G(F)` by the Haar measure `d_c a` on `A_G(F)` giving its maximal
-compact subgroup measure `1` (Arthur, Publ. IHÉS 73 (1991), §1, p. 11; Beuzart-Plessis §5.5 leaves
-it unstated), the one measure for which BP Thm 5.5.1(iv) can hold.  `θ_f` uses it through the
+compact subgroup measure `1`.  This is the convention of Arthur, Publ. IHÉS 73 (1991), §1, p. 11,
+and Waldspurger, J. reine angew. Math. 465 (1995), §1.4; Beuzart-Plessis §5.5 leaves it unstated.
+It is the one measure for which BP Thm 5.5.1(iv) can hold: `J^A` scales as `1/da_G`, and the right
+side of (iv) has no `A_G` parameter.  `θ_f` uses it through the
 orbital pairing, `J` through the Weil quotient measure.  The Haar measure on `H(F)/A_{G,H}(F)`
 cancels in `J` (`IsWeilMeasure.smul_right`).  So `J(f) = m_geom(θ_f)` does not depend on the
 normalization of `Measure.haar` on `G(F)`; the normalization of Thesis §2.4 is not modelled.
@@ -1969,7 +1971,8 @@ on `A_G(F)` that gives the maximal compact subgroup of `A_G(F)` measure `1` (Art
 (1991), §1, p. 11; Beuzart-Plessis, Astérisque 418, §5.5 leaves the measure on `A_G(F)\G(F)`
 unstated).  It is `dcScaleAG • Measure.haar` (`measGmodAG`), where the constant `dcScaleAG` is
 pinned by the quotient formula (`IsDcQuotientAG`); its existence and uniqueness are proved in
-`TraceFormula/DcQuotient.lean` (`isDcQuotientAG_measGmodAG`, `dcScaleAG_eq`).  Both `θ_f` (through
+`TraceFormula/DcQuotient.lean` (`isDcQuotientAG_measGmodAG`, `dcScaleAG_eq`); existence rests on the
+literature axiom `weil_quotient_radon` (through `weil_quotient`).  Both `θ_f` (through
 `orbitalPairing`) and `J` (through `weilMeasureHG`) use this one measure. -/
 
 /-- **`d_c a` on `A_G(F)`** (Arthur 1991, §1, p. 11; Beuzart-Plessis §1.6, p. 30, for `A_T`): a
@@ -1989,8 +1992,8 @@ def IsDcQuotientAG (m : Measure d.GmodAG) : Prop :=
 
 open scoped Classical in
 /-- The constant `c ∈ (0, ∞)` with `c • Measure.haar` the quotient of `dg` by `d_c a`
-(`IsDcQuotientAG`), chosen by the epsilon pattern; it exists and is unique
-(`TraceFormula/DcQuotient.lean`).  The fallback `1` is never used, and keeps `measGmodAG` a Haar
+(`IsDcQuotientAG`), chosen by the epsilon pattern; it exists (from `weil_quotient_radon`) and is
+unique (`TraceFormula/DcQuotient.lean`).  The fallback `1` is never used, and keeps `measGmodAG` a Haar
 measure unconditionally. -/
 def dcScaleAG : ENNReal :=
   if h : ∃ c : ENNReal, c ≠ 0 ∧ c ≠ ⊤ ∧ d.IsDcQuotientAG (c • Measure.haar) then h.choose else 1

@@ -48,7 +48,7 @@ value `0`.
    * `toy_distribJ`: `J(f) = c f(1)`, with `weilMeasureHG` of mass `c = dcScaleAG`, the mass of the
      point `G/A_G` for `dg / d_c a` (`toy_weilMeasureHG_real_univ`, from an explicit Weil measure);
    * `toy_thetaF`: `θ_f = c · f` (`c = haar_G(A_G(𝒪))`: `toyD_dcScaleAG`,
-     `Sanity/ThetaFBPAudit.lean`);
+     `Sanity/DcQuotientAudit.lean`);
    * `toyD_mGeom`: `m_geom(θ) = θ(1)` for locally constant `θ` constant on `A_{G,H}`: one torus
      class, `|W(T)| = 1`, `D^G = Δ = 1`, probability measure = point mass, germ = value;
    * `toy_geomAt`: the geometric expansion `J(f) = m_geom(θ_f)` (Thesis Thm 12.2.1) holds;
@@ -1052,9 +1052,10 @@ end Packet
 
 For the toy datum (`m = 0`, `r = 0`) `G = A_G ≅ F^× × F^×`, `G/A_G = 1`, `H = A_{G,H}` and
 `Γ(G,H) = {GSpin(W)} = {F^×}`.  We compute both sides of the geometric expansion
-(Thesis Thm 12.2.1) directly: `J(f) = f(1)` (`toyD_distribJ`), `θ_f = f` (`toyD_thetaF`) and
-`m_geom(θ_f) = f(1)` (`toyD_mGeom`), so `GeomAt` holds (`toy_geomAt`).  This checks that the
-normalizations of `J` (`weilMeasureHG`), `θ_f` (`orbitalPairing`, Haar on `G/A_G`) and `m_geom`
+(Thesis Thm 12.2.1) directly: `J(f) = c f(1)` (`toyD_distribJ`), `θ_f = c f` (`toyD_thetaF`) and
+`m_geom(θ_f) = c f(1)` (`toyD_mGeom`), so `GeomAt` holds (`toy_geomAt`); here `c = dcScaleAG` is
+the mass of the point `G/A_G` for `measGmodAG = dg / d_c a`.  This checks that the
+normalizations of `J` (`weilMeasureHG`), `θ_f` (`orbitalPairing`, `measGmodAG` on `G/A_G`) and `m_geom`
 (`probHaar`, `weylCard`, `weylDisc`, `deltaGGP`, the germ at the zero orbit, `ĵ(0,·) = 1`) agree
 **at the zero orbit**; nonzero orbits are not tested here (see `Sanity/NilpotentOrbit.lean`).
 -/
@@ -1499,7 +1500,7 @@ theorem toyD_thetaF_eq {f : ↥(𝕋).G → ℂ} (hf : Continuous f) :
   exact (hc.ae_eq_iff_eq Measure.haar (hf.const_smul _)).mp hae
 
 /-- **`θ_f = c · f` with `c` the mass of the point `G/A_G`** for `measGmodAG = dg / d_c a`, for
-`f ∈ 𝒞_scusp`; `c = haar_G(A_G(𝒪))` (`toyD_dcScaleAG`, `Sanity/ThetaFBPAudit.lean`). -/
+`f ∈ 𝒞_scusp`; `c = haar_G(A_G(𝒪))` (`toyD_dcScaleAG`, `Sanity/DcQuotientAudit.lean`). -/
 theorem toyD_thetaF {f : ↥(𝕋).G → ℂ} (hf : f ∈ ScuspTestFn (𝕋) χ) :
     thetaF (𝕋) f = (((𝕋).measGmodAG.real Set.univ : ℝ) : ℂ) • f := by
   rw [toy_measGmodAG_real_univ]

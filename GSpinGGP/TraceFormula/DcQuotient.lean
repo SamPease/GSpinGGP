@@ -36,28 +36,6 @@ namespace GSpinGGP
 
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
-/-- A right invariant measure, finite on compact sets, on a unimodular group is a multiple of
-`Measure.haar` (uniqueness of Haar measures, applied to the inverse measures). -/
-theorem eq_smul_haar_of_isMulRightInvariant {Q : Type*} [Group Q] [TopologicalSpace Q]
-    [IsTopologicalGroup Q] [LocallyCompactSpace Q] [SecondCountableTopology Q] [MeasurableSpace Q]
-    [BorelSpace Q] (m : Measure Q) [m.IsMulRightInvariant] [IsFiniteMeasureOnCompacts m]
-    [(Measure.haar : Measure Q).IsMulRightInvariant] :
-    ∃ c : ℝ≥0, m = (c : ℝ≥0∞) • (Measure.haar : Measure Q) := by
-  obtain ⟨s, e1⟩ : ∃ s : ℝ≥0, m.inv = s • (Measure.haar : Measure Q) :=
-    ⟨_, Measure.isMulLeftInvariant_eq_smul m.inv (Measure.haar : Measure Q)⟩
-  obtain ⟨t, e2⟩ : ∃ t : ℝ≥0, (Measure.haar : Measure Q).inv = t • (Measure.haar : Measure Q) :=
-    ⟨_, Measure.isMulLeftInvariant_eq_smul (Measure.haar : Measure Q).inv
-      (Measure.haar : Measure Q)⟩
-  refine ⟨s * t, ?_⟩
-  calc m = m.inv.inv := (Measure.inv_inv m).symm
-    _ = _ := by
-      rw [e1]
-      change Measure.map Inv.inv (s • (Measure.haar : Measure Q)) = _
-      rw [Measure.map_smul]
-      · change s • (Measure.haar : Measure Q).inv = _
-        rw [e2, smul_smul, ENNReal.smul_def]
-      · exact measurable_inv.aemeasurable
-
 namespace GGPData
 
 variable (d : GGPData F)

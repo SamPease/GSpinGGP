@@ -10,6 +10,8 @@ import Mathlib
 `isMulRightInvariant_haar_quotient_of_le_center`: if Haar measure on a locally compact, second
 countable group `B` is right invariant and `A ≤ Z(B)` is closed, then Haar measure on `B/A` is
 right invariant (used for `G(F)/A_G(F)`, Thesis §7.1).
+`eq_smul_haar_of_isMulRightInvariant`: on a group whose Haar measure is right invariant, a right
+invariant measure finite on compact sets is a multiple of `Measure.haar`.
 -/
 
 open MeasureTheory Topology Filter
@@ -97,5 +99,29 @@ theorem isMulRightInvariant_haar_quotient_of_le_center (A : Subgroup B) [A.Norma
   rw [hfac, hone, one_smul]
 
 end RightInvariance
+
+open scoped NNReal ENNReal in
+/-- A right invariant measure, finite on compact sets, on a unimodular group is a multiple of
+`Measure.haar` (uniqueness of Haar measures, applied to the inverse measures). -/
+theorem eq_smul_haar_of_isMulRightInvariant {Q : Type*} [Group Q] [TopologicalSpace Q]
+    [IsTopologicalGroup Q] [LocallyCompactSpace Q] [SecondCountableTopology Q] [MeasurableSpace Q]
+    [BorelSpace Q] (m : Measure Q) [m.IsMulRightInvariant] [IsFiniteMeasureOnCompacts m]
+    [(Measure.haar : Measure Q).IsMulRightInvariant] :
+    ∃ c : ℝ≥0, m = (c : ℝ≥0∞) • (Measure.haar : Measure Q) := by
+  obtain ⟨s, e1⟩ : ∃ s : ℝ≥0, m.inv = s • (Measure.haar : Measure Q) :=
+    ⟨_, Measure.isMulLeftInvariant_eq_smul m.inv (Measure.haar : Measure Q)⟩
+  obtain ⟨t, e2⟩ : ∃ t : ℝ≥0, (Measure.haar : Measure Q).inv = t • (Measure.haar : Measure Q) :=
+    ⟨_, Measure.isMulLeftInvariant_eq_smul (Measure.haar : Measure Q).inv
+      (Measure.haar : Measure Q)⟩
+  refine ⟨s * t, ?_⟩
+  calc m = m.inv.inv := (Measure.inv_inv m).symm
+    _ = _ := by
+      rw [e1]
+      change Measure.map Inv.inv (s • (Measure.haar : Measure Q)) = _
+      rw [Measure.map_smul]
+      · change s • (Measure.haar : Measure Q).inv = _
+        rw [e2, smul_smul, ENNReal.smul_def]
+      · exact measurable_inv.aemeasurable
+
 
 end GSpinGGP
