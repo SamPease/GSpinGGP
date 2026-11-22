@@ -49,7 +49,8 @@ attribute [instance] Data.normed Data.inner Data.complete
 
 /-- `UnitaryRep G` is equivalent to `Data G`. -/
 def equivData : UnitaryRep G ≃ Data G where
-  toFun π := { H := π.H, ρ := π.ρ, unitary_ρ := π.unitary_ρ, strongCont := π.strongCont }
+  toFun π :=
+    { H := π.H, ρ := π.ρ, unitary_ρ := π.isUnitary.mem_unitary, strongCont := π.strongCont }
   invFun D := .ofMonoidHom D.H D.ρ D.unitary_ρ D.strongCont
   left_inv _ := rfl
   right_inv _ := rfl

@@ -70,8 +70,8 @@ Hilbert space `H` (Thesis §3.1): a continuous representation `G →* (H →L[�
 `ContRepresentation`) that is unitary (Tau Ceti's `ContRepresentation.IsUnitary`: every `π g`
 preserves the inner product) and strongly continuous (`g ↦ π g v` is continuous for every `v`).
 
-The action as a monoid homomorphism is `UnitaryRep.ρ`; `UnitaryRep.unitary_ρ` says each `ρ g`
-is a unitary operator, and `UnitaryRep.ofMonoidHom` builds a `UnitaryRep` from these data. -/
+The action as a monoid homomorphism is `UnitaryRep.ρ`; `UnitaryRep.ofMonoidHom` builds a
+`UnitaryRep` from a homomorphism into the unitary operators with continuous orbits. -/
 structure UnitaryRep (G : Type u) [Group G] [TopologicalSpace G] where
   /-- The underlying Hilbert space. -/
   H : Type u
@@ -95,17 +95,6 @@ namespace UnitaryRep
 abbrev ρ (π : UnitaryRep G) : G →* (π.H →L[ℂ] π.H) :=
   π.toContRepresentation.toMonoidHom
 
-theorem toContRepresentation_apply (π : UnitaryRep G) (g : G) :
-    π.toContRepresentation g = π.ρ g := rfl
-
-/-- Each `ρ g` is a unitary operator. -/
-theorem unitary_ρ (π : UnitaryRep G) (g : G) : π.ρ g ∈ unitary (π.H →L[ℂ] π.H) :=
-  π.isUnitary.mem_unitary g
-
-/-- `π(g)* = π(g⁻¹)`. -/
-theorem star_ρ (π : UnitaryRep G) (g : G) : star (π.ρ g) = π.ρ g⁻¹ :=
-  π.isUnitary.star_eq_inv g
-
 /-- A `UnitaryRep` from a monoid homomorphism `ρ : G →* (H →L[ℂ] H)` into the unitary operators
 with continuous orbits. -/
 def ofMonoidHom (H : Type u) [NormedAddCommGroup H] [InnerProductSpace ℂ H] [CompleteSpace H]
@@ -116,14 +105,14 @@ def ofMonoidHom (H : Type u) [NormedAddCommGroup H] [InnerProductSpace ℂ H] [C
   isUnitary := (ContRepresentation.isUnitary_iff_mem_unitary _).2 unitary_ρ
   strongCont := strongCont
 
-@[simp]
-theorem ofMonoidHom_ρ (H : Type u) [NormedAddCommGroup H] [InnerProductSpace ℂ H]
-    [CompleteSpace H] (ρ : G →* (H →L[ℂ] H)) (hu : ∀ g, ρ g ∈ unitary (H →L[ℂ] H))
-    (hc : ∀ v : H, Continuous fun g => ρ g v) : (ofMonoidHom H ρ hu hc).ρ = ρ := rfl
-
-/-- Every `UnitaryRep` is `ofMonoidHom` of its own action. -/
-theorem ofMonoidHom_eta (π : UnitaryRep G) :
-    ofMonoidHom π.H π.ρ π.unitary_ρ π.strongCont = π := rfl
+/-- The pullback `π ∘ e` of a unitary representation of `G'` along a continuous homomorphism
+`e : G → G'`, on the same Hilbert space (Mathlib's `ContRepresentation.restrict`). -/
+abbrev comap {G' : Type u} [Group G'] [TopologicalSpace G'] (e : G →* G') (he : Continuous e)
+    (π : UnitaryRep G') : UnitaryRep G where
+  H := π.H
+  toContRepresentation := π.toContRepresentation.restrict e
+  isUnitary := π.isUnitary.restrict e
+  strongCont v := (π.strongCont v).comp he
 
 /-- `π` is (topologically) irreducible: `H ≠ 0` and the only closed `ρ`-invariant subspaces are
 `⊥` and `⊤` (Thesis §3.1). -/
@@ -154,12 +143,6 @@ noncomputable def leftRegular (G : Type u) [Group G] [TopologicalSpace G] [IsTop
   toContRepresentation := (Measure.haar : Measure G).leftRegular ℂ ℂ 2
   isUnitary := Measure.isUnitary_leftRegular _
   strongCont := Measure.continuous_leftRegular_apply _ _ (by norm_num)
-
-/-- The left regular representation acts by `f ↦ f(g⁻¹ ·)`, i.e. by
-`Lp.compMeasurePreserving (g⁻¹ * ·)`. -/
-theorem leftRegular_ρ_apply (g : G) (f : (leftRegular G).H) :
-    (leftRegular G).ρ g f =
-      Lp.compMeasurePreserving (g⁻¹ * ·) (measurePreserving_mul_left _ g⁻¹) f := rfl
 
 /-- Weak containment (Fell): `π` is weakly contained in `σ` if every diagonal matrix
 coefficient of `π` is a limit, uniformly on compact sets, of finite sums of diagonal matrix
@@ -375,7 +358,7 @@ noncomputable def opOf (π : UnitaryRep G) (f : G → ℂ) : π.H →L[ℂ] π.H
         rw [← integral_mul_const]
         congr 1
         funext g
-        rw [norm_smul, ContinuousLinearMap.norm_map_of_mem_unitary (π.unitary_ρ g)]
+        rw [norm_smul, show ‖π.ρ g v‖ = ‖v‖ from π.isUnitary.norm_map g v]
       · simpa using mul_nonneg (integral_nonneg fun _ => norm_nonneg _) (norm_nonneg v))
 
 omit [T2Space G] in
@@ -714,7 +697,7 @@ theorem map_one [Nontrivial π.H] (h : HasCentralChar π A χ) : χ 1 = 1 := by
 /-- On a nonzero unitary representation the central character is unitary. -/
 theorem norm_eq_one [Nontrivial π.H] (h : HasCentralChar π A χ) (a : ↥A) : ‖χ a‖ = 1 := by
   obtain ⟨v, hv⟩ := exists_ne (0 : π.H)
-  have h1 : ‖π.ρ a v‖ = ‖v‖ := ContinuousLinearMap.norm_map_of_mem_unitary (π.unitary_ρ a) v
+  have h1 : ‖π.ρ a v‖ = ‖v‖ := π.isUnitary.norm_map _ v
   rw [h.smul_eq, norm_smul] at h1
   have hv' : ‖v‖ ≠ 0 := norm_ne_zero_iff.mpr hv
   have := mul_right_cancel₀ hv' (h1.trans (one_mul _).symm)

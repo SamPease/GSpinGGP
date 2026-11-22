@@ -99,7 +99,8 @@ theorem dixmier_commutant_scalar {G : Type*} [Group G] [TopologicalSpace G] (π 
   -- `T*` commutes with `π(G)`, since `π(g)* = π(g⁻¹)`
   have hTs : ∀ g, Commute (star T) (π.ρ g) := fun g => by
     have h := (hT' g⁻¹).star_star
-    rwa [π.star_ρ, inv_inv] at h
+    have hs : star (π.ρ g⁻¹) = π.ρ g⁻¹⁻¹ := π.isUnitary.star_eq_inv g⁻¹
+    rwa [hs, inv_inv] at h
   have hre : ∀ g, Commute (ℜ T : π.H →L[ℂ] π.H) (π.ρ g) := fun g => by
     rw [realPart_apply_coe]
     exact ((hT' g).add_left (hTs g)).smul_left _
