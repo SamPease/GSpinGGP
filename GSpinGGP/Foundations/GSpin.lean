@@ -4604,6 +4604,17 @@ theorem continuous_specP_toEnd {X : Type*} [TopologicalSpace X] {Q : QuadraticFo
 
 end SpecPContinuous
 
+section ScalarContinuous
+
+variable {K : Type*} [Field K] [TopologicalSpace K]
+variable {U : Type*} [AddCommGroup U] [Module K U]
+
+/-- The central scalars `K^× → GSpin(U)` form a continuous map. -/
+theorem continuous_scalarGSpin (Q : QuadraticForm K U) : Continuous (scalarGSpin Q) :=
+  continuous_induced_rng.2 (Units.continuous_map (continuous_algebraMap K (CliffordAlgebra Q)))
+
+end ScalarContinuous
+
 /-! ## Whittaker data (Thesis §4.4) -/
 
 section Whittaker

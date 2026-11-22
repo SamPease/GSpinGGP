@@ -26,7 +26,9 @@ definition below is the sources' `v_M` when it holds.
 ## Main definitions
 
 * `GGPData.GoodK L`: a compact open subgroup `K` with `G = P K` for every `P ∈ 𝒫(M)`, in good
-  position relative to `M` (it stabilizes weight-split lattices of `W` and `V`).
+  position relative to `M` (it stabilizes weight-split lattices of `W` and `V`).  Examples:
+  `GoodK.ofEqTop` for `M = G`; a lattice stabilizer (`GGP/LatticeK.lean`) for a maximal torus of
+  `GL₁ × GSpin₃` (`Sanity/GL2GoodK.lean`).
 * `GGPData.ReducedLeviDatum.hPar`: `H_P : G → a_M` for each `P ∈ 𝒫(M)` (any flags defining `P`
   give the same map, `hPar_eq`).
 * `GGPData.ReducedLeviDatum.aG`: `a_G ⊆ a_M`, spanned by `H_M(A_G(F))`; `IsCentralCoord`: the
@@ -51,6 +53,16 @@ open MeasureTheory Module Pointwise
 
 namespace GSpinGGP
 
+section MapsLattice
+
+variable {F : Type*} [NontriviallyNormedField F] {V : Type*} [AddCommGroup V] [Module F V]
+
+/-- **`A` maps the lattice `Λ_e = {v : ‖e^*_i(v)‖ ≤ 1 ∀ i}` into itself.** -/
+def MapsLattice {κ : Type*} (e : Basis κ F V) (A : V →ₗ[F] V) : Prop :=
+  ∀ v : V, (∀ i, ‖e.repr v i‖ ≤ 1) → ∀ i, ‖e.repr (A v) i‖ ≤ 1
+
+end MapsLattice
+
 namespace GGPData
 
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F] {d : GGPData F}
@@ -63,13 +75,13 @@ variable {V : Type*} [AddCommGroup V] [Module F V] {ι : Type*}
 
 /-- **`S` stabilizes an `𝒪_F`-lattice of `V` split by the weight spaces of `(b, wt)`**: there is a
 basis `e` of `V`, each vector of which lies in one weight space `wtSpan b wt w`, such that every
-`P(g)`, `g ∈ S`, maps the lattice `Λ_e = {v : ‖e^*_i(v)‖ ≤ 1 ∀ i}` into itself.  (Every
-`𝒪_F`-lattice
-that is the direct sum of its intersections with the weight spaces is such a `Λ_e`.) -/
+`P(g)`, `g ∈ S`, maps the lattice `Λ_e = {v : ‖e^*_i(v)‖ ≤ 1 ∀ i}` into itself (`MapsLattice`).
+(Every `𝒪_F`-lattice that is the direct sum of its intersections with the weight spaces is such a
+`Λ_e`.) -/
 def StabilizesSplitLattice (Q : QuadraticForm F V) (b : Basis ι F V) (wt : ι → ℤ)
     (S : Set (GSpin Q)) : Prop :=
   ∃ (κ : Type) (_ : Fintype κ) (e : Basis κ F V), (∀ i, ∃ w, e i ∈ wtSpan b wt w) ∧
-    ∀ g ∈ S, ∀ v : V, (∀ i, ‖e.repr v i‖ ≤ 1) → ∀ i, ‖e.repr (specP Q g v) i‖ ≤ 1
+    ∀ g ∈ S, MapsLattice e (specP Q g : V →ₗ[F] V)
 
 end SplitLattice
 
