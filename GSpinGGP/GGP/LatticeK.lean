@@ -117,6 +117,20 @@ def latticeSpin (Q : QuadraticForm F V) (e : Basis κ F V) : Subgroup (GSpin Q) 
   inv_mem' := fun {k} h => ⟨h.2.1, by rw [inv_inv]; exact h.1,
     by rw [map_inv, Units.val_inv_eq_inv_val, norm_inv, h.2.2, inv_one]⟩
 
+omit [Module.Finite F V] in
+/-- **`latticeSpin` preserves the coordinate norm of `Λ_e`**: `‖P(k) v‖_e = ‖v‖_e` (`P(k)` and
+`P(k)⁻¹` have matrices with entries in `𝒪_F`). -/
+theorem basisNorm_specP_of_mem_latticeSpin {n : ℕ} {Q : QuadraticForm F V} {e : Basis (Fin n) F V}
+    {k : GSpin Q} (hk : k ∈ latticeSpin Q e) (v : V) :
+    basisNorm e (specP Q k v) = basisNorm e v := by
+  have key : ∀ z ∈ latticeSpin Q e, ∀ w, basisNorm e (specP Q z w) ≤ basisNorm e w :=
+    fun z hz w => (basisNorm_apply_le (specP Q z : V →ₗ[F] V) w).trans
+      (mul_le_of_le_one_left (basisNorm_nonneg w) hz.1.basisOpNorm_le)
+  refine le_antisymm (key k hk v) ?_
+  have := key k⁻¹ (inv_mem hk) (specP Q k v)
+  rw [← specP_mul_apply, inv_mul_cancel, map_one] at this
+  exact this
+
 /-- **`latticeSpin` is clopen**: matrix entries and `detChar` are continuous, and closed balls and
 spheres are clopen in an ultrametric field. -/
 theorem isClopen_latticeSpin [Finite κ] [TopologicalSpace V] [IsModuleTopology F V]

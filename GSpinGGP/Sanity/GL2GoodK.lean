@@ -104,6 +104,19 @@ theorem gl2_finrank_le_one {U : Submodule F (𝔾).V} (hU : IsTotallyIsotropic (
   rw [LinearMap.BilinForm.finrank_orthogonal (𝔾).nondeg_QV, gl2Data_finrank_V] at h1
   omega
 
+/-- An isotropic flag of `V` has length `≤ 1`. -/
+theorem gl2_flag_len_le_one (FV : IsotropicFlag (𝔾).QV) : FV.len ≤ 1 := by
+  by_contra hne
+  have h2 : 2 ≤ FV.len := by omega
+  have hlt1 : FV.sub ⟨0, by omega⟩ < FV.sub ⟨1, by omega⟩ :=
+    FV.strictMono (Fin.mk_lt_mk.2 (by omega))
+  have hlt2 : FV.sub ⟨1, by omega⟩ < FV.sub ⟨2, by omega⟩ :=
+    FV.strictMono (Fin.mk_lt_mk.2 (by omega))
+  have f1 := Submodule.finrank_lt_finrank_of_lt hlt1
+  have f2 := Submodule.finrank_lt_finrank_of_lt hlt2
+  have := gl2_finrank_le_one (FV.isotropic ⟨2, by omega⟩)
+  omega
+
 /-- **The Iwasawa decomposition `G = P K` for every flag parabolic `P`.** -/
 theorem gl2_iwasawa (FW : IsotropicFlag (𝔾).QW) (FV : IsotropicFlag (𝔾).QV) (g : ↥(𝔾).G) :
     ∃ p ∈ (𝔾).whittB FW FV, ∃ k ∈ gl2K (F := F), g = p * k := by
@@ -115,17 +128,7 @@ theorem gl2_iwasawa (FW : IsotropicFlag (𝔾).QW) (FV : IsotropicFlag (𝔾).QV
     · change _ ∈ flagStab FV
       rw [flagStab_eq_top_of_len_eq_zero FV h0]; trivial
   · -- the flag is one isotropic line `ℓ = F v₁`
-    have hlen : FV.len = 1 := by
-      by_contra hne
-      have h2 : 2 ≤ FV.len := by omega
-      have hlt1 : FV.sub ⟨0, by omega⟩ < FV.sub ⟨1, by omega⟩ :=
-        FV.strictMono (Fin.mk_lt_mk.2 (by omega))
-      have hlt2 : FV.sub ⟨1, by omega⟩ < FV.sub ⟨2, by omega⟩ :=
-        FV.strictMono (Fin.mk_lt_mk.2 (by omega))
-      have f1 := Submodule.finrank_lt_finrank_of_lt hlt1
-      have f2 := Submodule.finrank_lt_finrank_of_lt hlt2
-      have := gl2_finrank_le_one (FV.isotropic ⟨2, by omega⟩)
-      omega
+    have hlen : FV.len = 1 := le_antisymm (gl2_flag_len_le_one FV) hpos
     set ℓ := FV.sub ⟨1, by omega⟩
     have hℓ : ⊥ < ℓ := by
       have h := FV.strictMono (show (⟨0, by omega⟩ : Fin (FV.len + 1)) < ⟨1, by omega⟩ from
