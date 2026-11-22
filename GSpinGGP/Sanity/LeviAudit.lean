@@ -77,7 +77,7 @@ theorem whittU_eq_bot_of_isLevi_whittB {FW : IsotropicFlag d.QW} {FV : Isotropic
 /-- **`H_M` is not trivial on a nonempty flag**: `H_M(T) ≠ 0` for the lift `T` of a contracting
 cocharacter. -/
 theorem exists_HM_ne_zero (L : d.ReducedLeviDatum) (h : 0 < L.FV.len) :
-    ∃ m : ↥L.M, L.HM m (Sum.inr (Sum.inl ⟨0, h⟩)) ≠ 0 := by
+    ∃ m : ↥L.M, d.fst m = 1 ∧ L.HM m (Sum.inr (Sum.inl ⟨0, h⟩)) ≠ 0 := by
   classical
   obtain ⟨τ, hτ0, hτ1⟩ := NormedField.exists_norm_lt_one F
   have hτ : τ ≠ 0 := norm_pos_iff.1 hτ0
@@ -87,7 +87,7 @@ theorem exists_HM_ne_zero (L : d.ReducedLeviDatum) (h : 0 < L.FV.len) :
     intro j i hi
     have hij : j ≠ i := fun e => hi (e ▸ rfl)
     simp [hT j, L.bV.repr_self, hij]
-  refine ⟨⟨d.pair (1, T), ⟨(flagLevi (Q := d.QW) L.bW L.wtW).one_mem, hTM⟩⟩, ?_⟩
+  refine ⟨⟨d.pair (1, T), ⟨(flagLevi (Q := d.QW) L.bW L.wtW).one_mem, hTM⟩⟩, rfl, ?_⟩
   have hspec : (specP d.QV T : d.V →ₗ[F] d.V) = cochar L.bV L.wtV τ :=
     L.bV.ext fun i => by rw [cochar_basis]; exact hT i
   have hdiag : LinearMap.toMatrix L.bV L.bV (wtBlock L.bV L.wtV 1 (cochar L.bV L.wtV τ)) =
@@ -126,15 +126,25 @@ theorem HM_gspin_eq_hcMap (L : d.ReducedLeviDatum) (hW : ¬ IsHypPlane d.QW) (m 
   simp [ReducedLeviDatum.HM, ReducedLeviDatum.char, hcMap, gspinChar₁, hW, logAbs_apply]
 
 /-- **A nonempty reduced flag datum exists**: at `Sanity.hypVData` (`V` a hyperbolic plane) a full
-flag of `V` has length `1`; the datum is reduced (`W` is a line, and `V` has no weight-`0` basis
-vector), `H_M` is nonzero, and the opposite flag of `V` differs from the flag. -/
+flag of `V` has length `1` (that of the line `W` has length `0`); the datum is reduced (`W` is a
+line, and `V` has no weight-`0` basis vector), `H_M` is nonzero (at an `m` with trivial
+`GSpin(W)`-component), and the opposite flag of `V` differs from the flag. -/
 theorem exists_HM_ne_zero_hypV :
     ∃ (L : (Sanity.hypVData (F := F)).ReducedLeviDatum) (h : 0 < L.FV.len) (m : ↥L.M),
-      L.HM m (Sum.inr (Sum.inl ⟨0, h⟩)) ≠ 0 ∧ L.opp.FV.top ≠ L.FV.top := by
+      L.HM m (Sum.inr (Sum.inl ⟨0, h⟩)) ≠ 0 ∧ L.opp.FV.top ≠ L.FV.top ∧ L.FW.len = 0 ∧
+        L.FV.len = 1 ∧ (Sanity.hypVData (F := F)).fst m = 1 := by
   set D := Sanity.hypVData (F := F)
-  obtain ⟨FW, -⟩ := IsotropicFlag.exists_isFull D.QW
+  obtain ⟨FW, hFW⟩ := IsotropicFlag.exists_isFull D.QW
   obtain ⟨FV, hFV⟩ := IsotropicFlag.exists_isFull D.QV
-  obtain ⟨L, -, hL, -⟩ := exists_isLevi FW FV
+  obtain ⟨L, hLW, hL, -⟩ := exists_isLevi FW FV
+  have hW0 : L.FW.len = 0 := by
+    rw [hLW, hFW.1]
+    refine Sanity.wittIndex_eq_zero_of_anisotropic fun (z : Fin (2 * 0 + 1) → F) hz =>
+      funext fun i => ?_
+    have hz' : -1 * (z 0 * z 0) = 0 := by
+      rw [← Sanity.splitOddForm_zero_apply]; exact hz
+    rw [Sanity.fin_eq_zero_of rfl i]
+    exact (by simpa using hz' : z 0 = 0)
   have h : 0 < L.FV.len := by
     rw [hL, hFV.1, Sanity.hypVData_isHypPlane_QV.2.2]; exact one_pos
   have hdimV : finrank F D.V = 2 := Sanity.hypVData_isHypPlane_QV.1
@@ -163,8 +173,11 @@ theorem exists_HM_ne_zero_hypV :
     rw [wtSpan, hempty, Set.image_empty, Submodule.span_empty, finrank_bot] at this
     omega
   let R : D.ReducedLeviDatum := ⟨L, hred, hredV⟩
-  obtain ⟨m, hm⟩ := exists_HM_ne_zero R h
-  refine ⟨R, h, m, hm, fun he => ?_⟩
+  obtain ⟨m, hm1, hm⟩ := exists_HM_ne_zero R h
+  have hV1 : R.FV.len = 1 := by
+    change L.FV.len = 1
+    rw [hL, hFV.1, Sanity.hypVData_isHypPlane_QV.2.2]
+  refine ⟨R, h, m, hm, fun he => ?_, hW0, hV1, hm1⟩
   have htop := R.hsV.oppFlag_top_inf_top D.nondeg_QV
   change R.opp.FV.top ⊓ R.FV.top = ⊥ at htop
   rw [he, inf_idem] at htop
