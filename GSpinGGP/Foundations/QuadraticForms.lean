@@ -355,6 +355,39 @@ theorem det_quadReflection [FiniteDimensional K V] {Q : QuadraticForm K V} {u : 
   rw [← quadReflection_eq, ← LinearEquiv.coe_det, TauCeti.QuadraticMap.det_reflection]
   rfl
 
+omit [Invertible (2 : K)] in
+/-- `s_u` fixes the vectors `polar`-orthogonal to `u`. -/
+theorem quadReflection_apply_of_polar_eq_zero (Q : QuadraticForm K V) {u x : V}
+    (h : QuadraticMap.polar Q u x = 0) : quadReflection Q u x = x := by
+  simp [quadReflection_apply, h]
+
+omit [Invertible (2 : K)] in
+/-- **A reflection is an involution**: `s_u (s_u v) = v` for anisotropic `u`. -/
+theorem quadReflection_quadReflection (Q : QuadraticForm K V) {u : V} (hu : Q u ≠ 0) (v : V) :
+    quadReflection Q u (quadReflection Q u v) = v := by
+  let := invertibleOfNonzero hu
+  rw [← quadReflection_eq]
+  exact LinearEquiv.congr_fun (TauCeti.QuadraticMap.reflection_mul_self Q u) v
+
+omit [Invertible (2 : K)] in
+/-- `q(x - y) = -polar(x, y)` for isotropic `x`, `y`. -/
+theorem quadForm_sub_of_isotropic (Q : QuadraticForm K V) {x y : V} (hx : Q x = 0)
+    (hy : Q y = 0) : Q (x - y) = -QuadraticMap.polar Q x y := by
+  have h : QuadraticMap.polar Q x (-y) = -QuadraticMap.polar Q x y :=
+    QuadraticMap.polar_neg_right Q x y
+  rw [QuadraticMap.polar, QuadraticMap.map_neg, ← sub_eq_add_neg, hx, hy] at h
+  linear_combination h
+
+omit [Invertible (2 : K)] in
+/-- **The reflection in `x - y` swaps isotropic `x` and `y`** when `polar(x, y) ≠ 0` (Tau Ceti's
+`reflection_sub_apply_eq_of_map_eq`). -/
+theorem quadReflection_sub_apply_self (Q : QuadraticForm K V) {x y : V} (hx : Q x = 0)
+    (hy : Q y = 0) (hxy : QuadraticMap.polar Q x y ≠ 0) : quadReflection Q (x - y) x = y := by
+  let := invertibleOfNonzero (show Q (x - y) ≠ 0 by
+    rw [quadForm_sub_of_isotropic Q hx hy]; exact neg_ne_zero.2 hxy)
+  rw [← quadReflection_eq]
+  exact TauCeti.QuadraticMap.reflection_sub_apply_eq_of_map_eq Q x y (hx.trans hy.symm)
+
 /-- Group an even-length product into consecutive pairs. -/
 theorem exists_pairs_prod {M W : Type*} [Monoid M] (f : W → M) :
     ∀ (l : List M), Even l.length → (∀ x ∈ l, ∃ w, f w = x) →
