@@ -708,6 +708,9 @@ theorem HM_mul (m m' : ↥L.M) : L.HM (m * m') = L.HM m + L.HM m' := by
 theorem HM_one : L.HM 1 = 0 := by
   funext c; simp [HM]
 
+theorem HM_inv (m : ↥L.M) : L.HM m⁻¹ = -L.HM m := by
+  rw [eq_neg_iff_add_eq_zero, ← HM_mul, inv_mul_cancel, HM_one]
+
 end ReducedLeviDatum
 
 variable (d) in
@@ -753,6 +756,13 @@ theorem continuous_char (c : L.Coord) : Continuous fun m : ↥L.M => ((L.char c 
   · exact (continuous_wtDet (Q := d.QV) _).comp
       ((d.continuous_snd.comp continuous_subtypeVal).subtype_mk _)
   · exact (continuous_detChar d.QV).comp (d.continuous_snd.comp continuous_subtypeVal)
+
+/-- **`H_M` is continuous** (each `log ‖χ_c(m)‖` is, `χ_c` being continuous with values in
+`F^×`). -/
+theorem continuous_HM : Continuous L.HM :=
+  continuous_pi fun c =>
+    (continuous_norm.comp (L.continuous_char c)).log fun m =>
+      norm_ne_zero_iff.2 (L.char c m).ne_zero
 
 /-- **The map `H_P`** (Thesis §2.1; Beuzart-Plessis §1.1; Waldspurger 2003 §I.1 uses the opposite
 sign and base `q`): for

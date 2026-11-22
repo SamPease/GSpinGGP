@@ -20,6 +20,7 @@ import GSpinGGP.Foundations.ModuleTopologyPAdic
 import GSpinGGP.TraceFormula.JHatSelfDual
 import GSpinGGP.TraceFormula.JHatTransport
 import GSpinGGP.Foundations.Representations
+import GSpinGGP.Foundations.RepresentationTwist
 import GSpinGGP.Foundations.SmoothRepresentations
 import GSpinGGP.Foundations.UnitarySchur
 import GSpinGGP.Foundations.GSpin
@@ -162,6 +163,7 @@ import GSpinGGP.GGP.GermTransfer
 import GSpinGGP.GGP.TwistSymm
 import GSpinGGP.GGP.Levi
 import GSpinGGP.GGP.LeviSubgroup
+import GSpinGGP.GGP.Unramified
 import GSpinGGP.GGP.WeightVM
 import GSpinGGP.TraceFormula.Basic
 import GSpinGGP.TraceFormula.SpinorNorm
@@ -214,3 +216,4 @@ import GSpinGGP.Sanity.LeviAudit
 import GSpinGGP.Sanity.WeightAudit
 import GSpinGGP.Sanity.WeightedOrbitalAudit
 import GSpinGGP.Sanity.UnitaryRepAudit
+import GSpinGGP.Sanity.UnramifiedAudit
