@@ -1,0 +1,346 @@
+/-
+Copyright (c) 2026 Samantha Pease. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+import GSpinGGP.GGP.LeviSubgroup
+import GSpinGGP.HarmonicAnalysis.HullVolume
+
+/-!
+# Arthur's weight `v_M(g)`
+
+For a Levi subgroup `M` of `G = GSpin(W) × GSpin(V)` and a compact open subgroup `K` with
+`G = P K` for every `P ∈ 𝒫(M)`, the points `H_P(g)`, `P ∈ 𝒫(M)`, of `a_M` define the weight
+`v_M(g)`: the volume in `a_M^G = a_M / a_G` of their convex hull (Thesis §2.6; Beuzart-Plessis,
+Astérisque 418, §1.10, p. 36; Waldspurger, Compos. Math. 146 (2010), §2.3; J. Arthur,
+*The trace formula in invariant form*, Ann. of Math. 114 (1981)).  The Haar measure on
+`a_M^G` is the one of Waldspurger 2010, §1.2: the quotient of `a_M^G` by the projection of
+`H_M(A_M(F))` has volume `1`.
+
+The weight is defined directly as a volume; the (G,M)-family formalism, of which `v_M(g)` is the
+number `c_M` attached to `v_P(λ, g) = e^{λ(H_P(g))}`, is not built here.  The sources identify
+`c_M` with the volume of the hull when the family `(H_P(g))_P` is *positive* `(G,M)`-orthogonal,
+which they deduce from `K` being special and in good position relative to `M`; for the bare
+datum `GoodK` (only `G = P K`) the definition below is the volume of the hull, and it agrees with
+the sources' `v_M` under that positivity.
+
+## Main definitions
+
+* `GGPData.GoodK M`: a compact open subgroup `K` with `G = P K` for every `P ∈ 𝒫(M)`.
+* `GGPData.ReducedLeviDatum.hPar`: `H_P : G → a_M` for each `P ∈ 𝒫(M)` (any flags defining `P`
+  give the same map, `hPar_eq`).
+* `wtScalar`, `GGPData.ReducedLeviDatum.AMF`: `A_M(F)`, the split component of the centre of `M`.
+* `GGPData.ReducedLeviDatum.aG`: `a_G ⊆ a_M`, spanned by `H_M(A_G(F))`.
+* `GGPData.ReducedLeviDatum.latticeMG`: `proj_M^G(H_M(A_M(F)))` in `a_M / a_G`.
+* `GGPData.ReducedLeviDatum.vM`: the weight `v_M(g)`.
+
+## Main results
+
+* `vM_mul_left`: `v_M(m g) = v_M(g)` for `m ∈ M`.
+* `vM_mul_right`: `v_M(g k) = v_M(g)` for `k ∈ K`.
+* `vM_eq_hullVolume_neg`: the hull of the `−H_P(g)` (Arthur's convention) has the same volume.
+* `vM_eq_one_of_subsingleton`: `v_M = 1` when `a_M = a_G` (e.g. `M = G`).
+-/
+
+noncomputable section
+
+open MeasureTheory Module Pointwise
+
+namespace GSpinGGP
+
+/-! ## 1. The split centre `A_M(F)` of a flag Levi subgroup -/
+
+section WtScalar
+
+variable {K : Type*} [Field K] [Invertible (2 : K)] {V : Type*} [AddCommGroup V] [Module K V]
+variable {ι : Type*}
+
+variable (Q : QuadraticForm K V) (b : Basis ι K V) (wt : ι → ℤ) in
+/-- **The split centre of the Levi subgroup `M_F`** (`A_{M_F}(K)`): the `g ∈ GSpin(V)` whose image
+`P(g) ∈ SO(V)` acts on the weight-`w` space of the splitting by a scalar `t_w`, with `t_0 = 1`.
+For `M_F ≅ ∏ GL(Z_i/Z_{i−1}) × GSpin(Ṽ)` (M. Asgari, Canad. J. Math. 54 (2002), §2) its split
+centre is the product of the centres `G_m` of the `GL`-factors and the split centre of
+`GSpin(Ṽ)`, which is the scalars when `Ṽ` is not a hyperbolic plane (`splitCentralGSpin`); this
+is the preimage under `P` of the split torus of `SO(V)` acting by scalars on the weight spaces
+(`t_{−w} = t_w⁻¹` is forced by `P(g)` being orthogonal) and trivially on `Ṽ`. -/
+def wtScalar : Subgroup (GSpin Q) where
+  carrier := {g | ∃ t : ℤ → K, t 0 = 1 ∧ ∀ j, specP Q g (b j) = t (wt j) • b j}
+  one_mem' := ⟨1, rfl, fun j => by simp⟩
+  mul_mem' := by
+    rintro g h ⟨s, hs0, hs⟩ ⟨t, ht0, ht⟩
+    refine ⟨s * t, by simp [hs0, ht0], fun j => ?_⟩
+    rw [specP_mul_apply, ht, map_smul, hs, smul_smul, Pi.mul_apply, mul_comm]
+  inv_mem' := by
+    rintro g ⟨t, ht0, ht⟩
+    have hne : ∀ j, t (wt j) ≠ 0 := fun j h0 => b.ne_zero j <|
+      (specP Q g).injective (by rw [ht, h0, zero_smul, map_zero])
+    refine ⟨fun w => (t w)⁻¹, by simp [ht0], fun j => (specP Q g).injective ?_⟩
+    rw [specP_inv_apply_apply, map_smul, ht, smul_smul, inv_mul_cancel₀ (hne j), one_smul]
+
+end WtScalar
+
+namespace GGPData
+
+variable {F : Type} [NontriviallyNormedField F] [PAdicField F] {d : GGPData F}
+
+/-! ## 2. Good compact subgroups -/
+
+variable (d) in
+/-- **A good compact subgroup for `M`** (decision: carry `K` as data): a compact open subgroup
+`K` of `G` with the Iwasawa decomposition `G = P K` for every `P ∈ 𝒫(M)`.  The sources take `K`
+special maximal compact in good position relative to `M` (Beuzart-Plessis §1.1, §1.10;
+Waldspurger 2010, §1.1, §2.3), which gives `G = P K` for all such `P`; only the decomposition is
+assumed here. -/
+structure GoodK (M : Subgroup ↥d.G) where
+  /-- the compact open subgroup -/
+  K : Subgroup ↥d.G
+  isOpen : IsOpen (K : Set ↥d.G)
+  isCompact : IsCompact (K : Set ↥d.G)
+  /-- `G = P K` for every `P ∈ 𝒫(M)` -/
+  mul_eq : ∀ P ∈ d.parabolics M, ∀ g : ↥d.G, ∃ p ∈ P, ∃ k ∈ K, g = p * k
+
+/-- **For `M = G` every compact open subgroup is good**: `𝒫(G) = {G}`. -/
+def GoodK.ofEqTop {M : Subgroup ↥d.G} (hM : M = ⊤) (K : Subgroup ↥d.G)
+    (hKo : IsOpen (K : Set ↥d.G)) (hKc : IsCompact (K : Set ↥d.G)) : d.GoodK M where
+  K := K
+  isOpen := hKo
+  isCompact := hKc
+  mul_eq P hP g := by
+    obtain ⟨FW, FV, rfl, hL⟩ := hP
+    exact ⟨g, hL.le (hM ▸ Subgroup.mem_top g), 1, K.one_mem, (mul_one g).symm⟩
+
+namespace ReducedLeviDatum
+
+variable (L : d.ReducedLeviDatum)
+
+/-! ## 3. `H_P` for every `P ∈ 𝒫(M)` -/
+
+/-- **`H_P : G → a_M` for `P ∈ 𝒫(M)`** (Thesis §2.1; Beuzart-Plessis §1.1): `H_P(p k) = H_M(m)`
+for `p = m u ∈ P`, `k ∈ K`.  Defined through flags `F_W`, `F_V` with `P = P_{F_W} × P_{F_V}`
+chosen from `P ∈ 𝒫(M)`; any other choice gives the same map (`hPar_eq`). -/
+def hPar (K : d.GoodK L.M) (P : ↥(d.parabolics L.M)) : ↥d.G → L.aM :=
+  L.hP P.2.choose_spec.choose_spec.2 K.K K.isOpen K.isCompact
+    (P.2.choose_spec.choose_spec.1 ▸ K.mul_eq P P.2)
+
+/-- `hPar` is `hP` for any flags defining `P`. -/
+theorem hPar_eq (K : d.GoodK L.M) (P : ↥(d.parabolics L.M)) {FW : IsotropicFlag d.QW}
+    {FV : IsotropicFlag d.QV} (hP : (P : Subgroup ↥d.G) = d.whittB FW FV)
+    (hL : d.IsLevi FW FV L.M) :
+    L.hPar K P = L.hP hL K.K K.isOpen K.isCompact (hP ▸ K.mul_eq P P.2) :=
+  L.hP_congr _ hL (P.2.choose_spec.choose_spec.1.symm.trans hP) _ _ _ _
+
+/-- `H_P(g k) = H_P(g)` for `k ∈ K`. -/
+theorem hPar_mul_right (K : d.GoodK L.M) (P : ↥(d.parabolics L.M)) (g : ↥d.G) {k : ↥d.G}
+    (hk : k ∈ K.K) : L.hPar K P (g * k) = L.hPar K P g :=
+  L.hP_mul_right _ _ _ _ g hk
+
+/-- `H_P(m g) = H_M(m) + H_P(g)` for `m ∈ M`. -/
+theorem hPar_mul_left (K : d.GoodK L.M) (P : ↥(d.parabolics L.M)) (m : ↥L.M) (g : ↥d.G) :
+    L.hPar K P ((m : ↥d.G) * g) = L.HM m + L.hPar K P g :=
+  L.hP_mul_left_of_mem _ _ _ _ m g
+
+/-! ## 4. `a_G`, `A_M(F)` and the measure on `a_M^G` -/
+
+/-- **`a_G ⊆ a_M`** (Beuzart-Plessis §1.1: `a_M = a_M^G ⊕ a_G`): the span of `H_M(A_G(F))`, with
+`A_G(F)` the split centre of `G` (`GGPData.AG`; it lies in `M`).  The inclusion `a_G → a_M` is dual
+to the restriction `X^*(M) → X^*(A_G)` (with `X^*(G) ⊗ ℚ = X^*(A_G) ⊗ ℚ`), and `H_G(A_G(F))` spans
+`a_G`. -/
+def aG : Submodule ℝ L.aM :=
+  Submodule.span ℝ (Set.range fun m : {m : ↥L.M // (m : ↥d.G) ∈ d.AG} => L.HM m)
+
+instance isClosed_aG : IsClosed (L.aG : Set L.aM) := Submodule.isClosed_of_finiteDimensional _
+
+/-- `a_M^G = a_M / a_G`, the space of the weight. -/
+abbrev aMG : Type := L.aM ⧸ L.aG
+
+instance : MeasurableSpace L.aMG := borel _
+
+instance : BorelSpace L.aMG := ⟨rfl⟩
+
+/-- **`A_M(F)`, the split component of the centre of `M`** (Thesis §2.1; Beuzart-Plessis §1.1:
+`ã_{M,F} = H_M(A_M(F))`): the pairs in the split centres `wtScalar` of the two flag Levi
+subgroups.  That this is the split centre uses that the datum is reduced (the weight-`0` spaces
+are not hyperbolic planes). -/
+def AMF : Subgroup ↥d.G :=
+  ((wtScalar d.QW L.bW L.wtW).prod (wtScalar d.QV L.bV L.wtV)).map d.pair
+
+/-- **The lattice `proj_M^G(H_M(A_M(F)))` in `a_M^G`** (Waldspurger 2010, §1.2, p. 7): the image of
+`ã_{M,F} = H_M(A_M(F))` (Beuzart-Plessis §1.1) in `a_M / a_G`.  (The generated subgroup equals the
+image, `H_M` being a homomorphism on the group `A_M(F) ∩ M`.) -/
+def latticeMG : AddSubgroup L.aMG :=
+  AddSubgroup.closure (Set.range fun m : {m : ↥L.M // (m : ↥d.G) ∈ L.AMF} =>
+    L.aG.mkQ (L.HM m))
+
+/-- **`proj_M^G(H_M(A_M(F)))` is a lattice in `a_M^G`**: discrete and spanning.  Sketch: `H_M` of
+an element of `A_M(F)` has `GL`-coordinates `(n_w log ‖t_w‖)_w` (`n_w` the dimension of the
+weight-`w` space), and `log ‖F^×‖` is discrete in `ℝ`; the elements with one `t_w = ϖ` and the
+others `1` exist by the surjectivity of `GSpin → SO` (`gspin_specP_surjective_SO`) and span the
+`GL`-coordinates; `a_G` is spanned by `H_M(A_G(F)) ⊆ H_M(A_M(F))`, so the image is a lattice. -/
+theorem latticeMG_isLattice :
+    DiscreteTopology L.latticeMG ∧ Submodule.span ℝ (L.latticeMG : Set L.aMG) = ⊤ := by
+  sorry
+
+/-! ## 5. The weight `v_M(g)` -/
+
+/-- **Arthur's weight `v_M(g)`** (Thesis §2.6; Beuzart-Plessis §1.10, p. 36; Waldspurger 2010,
+§2.3): the volume in `a_M^G` of the convex hull of the projections of the points `H_P(g)`,
+`P ∈ 𝒫(M)`, for the Haar measure of Waldspurger 2010, §1.2 (`a_M^G / proj_M^G(H_M(A_M(F)))` has
+volume `1`, `latticeMG`; see `MeasureTheory.Measure.latticeHaar_fundamentalDomain`).
+Beuzart-Plessis takes the hull of the `H_P(g)`; Arthur's family `e^{−λ(H_P(g))}` gives the hull
+of the `−H_P(g)`, of the same volume (`vM_eq_hullVolume_neg`).  Rescaling `H_M` (here `‖·‖` is
+`|·|_F^s`, so `HM` is `s` times the thesis' `H_M`) rescales the lattice too, so `v_M` does not
+depend on it.  No finiteness of `𝒫(M)` is used. -/
+def vM (K : d.GoodK L.M) (g : ↥d.G) : ℝ :=
+  Measure.hullVolume L.latticeMG
+    (Set.range fun P : ↥(d.parabolics L.M) => L.aG.mkQ (L.hPar K P g))
+
+/-- **`v_M` is left `M`-invariant** (Beuzart-Plessis §1.10): every `H_P(m g)` is
+`H_M(m) + H_P(g)`, so the hull is translated. -/
+theorem vM_mul_left (K : d.GoodK L.M) (m : ↥L.M) (g : ↥d.G) :
+    L.vM K ((m : ↥d.G) * g) = L.vM K g := by
+  have : (Set.range fun P : ↥(d.parabolics L.M) => L.aG.mkQ (L.hPar K P ((m : ↥d.G) * g))) =
+      L.aG.mkQ (L.HM m) +ᵥ Set.range fun P : ↥(d.parabolics L.M) => L.aG.mkQ (L.hPar K P g) := by
+    rw [Set.vadd_set_range]
+    congr 1
+    funext P
+    simp [hPar_mul_left, vadd_eq_add]
+  rw [vM, this, Measure.hullVolume_vadd]
+  rfl
+
+/-- **`v_M` is right `K`-invariant** (Beuzart-Plessis §1.10). -/
+theorem vM_mul_right (K : d.GoodK L.M) (g : ↥d.G) {k : ↥d.G} (hk : k ∈ K.K) :
+    L.vM K (g * k) = L.vM K g := by
+  simp only [vM, L.hPar_mul_right K _ g hk]
+
+/-- **Sign conventions**: the hull of the `−H_P(g)` (Arthur's `v_P(λ, g) = e^{−λ(H_P(g))}`) has
+the same volume as the hull of the `H_P(g)` (Beuzart-Plessis §1.10). -/
+theorem vM_eq_hullVolume_neg (K : d.GoodK L.M) (g : ↥d.G) :
+    L.vM K g = Measure.hullVolume L.latticeMG
+      (Set.range fun P : ↥(d.parabolics L.M) => -L.aG.mkQ (L.hPar K P g)) := by
+  rw [vM, ← Measure.hullVolume_neg, Set.neg_range]
+
+/-! ## 6. `M = G` -/
+
+/-- For empty flags all weights are `0`. -/
+theorem wtW_eq_zero (hW : L.FW.len = 0) (j : L.ιW) : L.wtW j = 0 := by
+  have h1 := L.hsW.wt_le j
+  have h2 := L.hsW.neg_len_le j
+  rw [hW] at h1 h2
+  omega
+
+theorem wtV_eq_zero (hV : L.FV.len = 0) (j : L.ιV) : L.wtV j = 0 := by
+  have h1 := L.hsV.wt_le j
+  have h2 := L.hsV.neg_len_le j
+  rw [hV] at h1 h2
+  omega
+
+/-- **For empty flags `M = G`.** -/
+theorem M_eq_top_of_len_eq_zero (hW : L.FW.len = 0) (hV : L.FV.len = 0) : L.M = ⊤ := by
+  refine eq_top_iff.2 fun g _ => ⟨mem_flagLevi_iff.2 fun j i hi => ?_,
+    mem_flagLevi_iff.2 fun j i hi => ?_⟩
+  · exact absurd (by rw [L.wtW_eq_zero hW i, L.wtW_eq_zero hW j]) hi
+  · exact absurd (by rw [L.wtV_eq_zero hV i, L.wtV_eq_zero hV j]) hi
+
+/-- The `GL`-coordinates of `H_M(m)` vanish when the components of `m` are scalars (scalars act
+trivially on `W` and `V`). -/
+theorem HM_inl_inl_eq_zero (m : ↥L.M) {c : Fˣ} (h : d.fst m = scalarGSpin d.QW c)
+    (i : Fin L.FW.len) : L.HM m (Sum.inl (Sum.inl i)) = 0 := by
+  have e : L.char (Sum.inl (Sum.inl i)) m =
+      wtDet (Q := d.QW) L.bW L.wtW ((i : ℤ) + 1) ⟨d.fst m, m.2.1⟩ := rfl
+  have : ((L.char (Sum.inl (Sum.inl i)) m : Fˣ) : F) = 1 := by
+    rw [e, wtDet_apply]
+    simp only [h, specP_scalarGSpin_eq_one]
+    exact (congrArg LinearMap.det (wtBlock_id _)).trans LinearMap.det_id
+  simp [HM, this]
+
+theorem HM_inr_inl_eq_zero (m : ↥L.M) {c : Fˣ} (h : d.snd m = scalarGSpin d.QV c)
+    (i : Fin L.FV.len) : L.HM m (Sum.inr (Sum.inl i)) = 0 := by
+  have e : L.char (Sum.inr (Sum.inl i)) m =
+      wtDet (Q := d.QV) L.bV L.wtV ((i : ℤ) + 1) ⟨d.snd m, m.2.2⟩ := rfl
+  have : ((L.char (Sum.inr (Sum.inl i)) m : Fˣ) : F) = 1 := by
+    rw [e, wtDet_apply]
+    simp only [h, specP_scalarGSpin_eq_one]
+    exact (congrArg LinearMap.det (wtBlock_id _)).trans LinearMap.det_id
+  simp [HM, this]
+
+/-- **The two `GSpin`-coordinate vectors lie in `a_G`**: `H_M` of the central scalars `(c, 1)`,
+`(1, c)` of `A_G(F)` is `2^{dim} log ‖c‖` times them (`detChar` is `c ↦ c^{2^{dim}}` on scalars,
+and the scalars act trivially on `V`, so their `GL`-coordinates vanish). -/
+theorem single_gspin_mem_aG : Pi.single (Sum.inl (Sum.inr ())) (1 : ℝ) ∈ L.aG ∧
+    Pi.single (Sum.inr (Sum.inr ())) (1 : ℝ) ∈ L.aG := by
+  classical
+  obtain ⟨τ, hτ0, hτ1⟩ := NormedField.exists_norm_lt_one F
+  have hτ : τ ≠ 0 := norm_pos_iff.1 hτ0
+  set c : Fˣ := Units.mk0 τ hτ
+  have hlog : Real.log ‖τ‖ ≠ 0 := (Real.log_neg hτ0 hτ1).ne
+  have hNW : (finrank F (CliffordAlgebra d.QW) : ℝ) ≠ 0 := by
+    rw [finrank_cliffordAlgebra]; positivity
+  have hNV : (finrank F (CliffordAlgebra d.QV) : ℝ) ≠ 0 := by
+    rw [finrank_cliffordAlgebra]; positivity
+  let mW : {m : ↥L.M // (m : ↥d.G) ∈ d.AG} :=
+    ⟨⟨d.pair (scalarGSpin d.QW c, 1), scalarGSpin_mem_flagLevi (Q := d.QW) L.bW L.wtW c,
+      (flagLevi (Q := d.QV) L.bV L.wtV).one_mem⟩,
+      ⟨_, ⟨scalarGSpin_mem_splitCentralGSpin _ c, Subgroup.one_mem _⟩, rfl⟩⟩
+  let mV : {m : ↥L.M // (m : ↥d.G) ∈ d.AG} :=
+    ⟨⟨d.pair (1, scalarGSpin d.QV c), (flagLevi (Q := d.QW) L.bW L.wtW).one_mem,
+      scalarGSpin_mem_flagLevi (Q := d.QV) L.bV L.wtV c⟩,
+      ⟨_, ⟨Subgroup.one_mem _, scalarGSpin_mem_splitCentralGSpin _ c⟩, rfl⟩⟩
+  have hmW : L.HM mW = ((finrank F (CliffordAlgebra d.QW) : ℝ) * Real.log ‖τ‖) •
+      Pi.single (Sum.inl (Sum.inr ())) 1 := by
+    funext x
+    rcases x with (i | _) | (i | _)
+    · simpa using L.HM_inl_inl_eq_zero mW.1 (c := c) rfl i
+    · simp [mW, HM, char, fst_pair, detChar_scalarGSpin, c, norm_pow, Real.log_pow]
+    · simpa using L.HM_inr_inl_eq_zero mW.1 (c := 1) (by simp [mW, snd_pair]) i
+    · simp [mW, HM, char, snd_pair]
+  have hmV : L.HM mV = ((finrank F (CliffordAlgebra d.QV) : ℝ) * Real.log ‖τ‖) •
+      Pi.single (Sum.inr (Sum.inr ())) 1 := by
+    funext x
+    rcases x with (i | _) | (i | _)
+    · simpa using L.HM_inl_inl_eq_zero mV.1 (c := 1) (by simp [mV, fst_pair]) i
+    · simp [mV, HM, char, fst_pair]
+    · simpa using L.HM_inr_inl_eq_zero mV.1 (c := c) rfl i
+    · simp [mV, HM, char, snd_pair, detChar_scalarGSpin, c, norm_pow, Real.log_pow]
+  constructor
+  · have h := L.aG.smul_mem ((finrank F (CliffordAlgebra d.QW) : ℝ) * Real.log ‖τ‖)⁻¹
+      (Submodule.subset_span ⟨mW, rfl⟩ : L.HM mW ∈ L.aG)
+    rwa [hmW, smul_smul, inv_mul_cancel₀ (mul_ne_zero hNW hlog), one_smul] at h
+  · have h := L.aG.smul_mem ((finrank F (CliffordAlgebra d.QV) : ℝ) * Real.log ‖τ‖)⁻¹
+      (Submodule.subset_span ⟨mV, rfl⟩ : L.HM mV ∈ L.aG)
+    rwa [hmV, smul_smul, inv_mul_cancel₀ (mul_ne_zero hNV hlog), one_smul] at h
+
+/-- `a_G = a_M` as soon as every coordinate vector lies in `a_G`. -/
+theorem aG_eq_top_of_single_mem (h : ∀ x : L.Coord, Pi.single x (1 : ℝ) ∈ L.aG) : L.aG = ⊤ := by
+  classical
+  refine eq_top_iff.2 fun v _ => ?_
+  rw [← Finset.univ_sum_single v]
+  refine L.aG.sum_mem fun x _ => ?_
+  rw [show Pi.single x (v x) = v x • Pi.single x (1 : ℝ) by simp [← Pi.single_smul]]
+  exact L.aG.smul_mem _ (h x)
+
+/-- **For empty flags `a_M = a_G`**: `a_M` has only the two `GSpin`-coordinates
+(`single_gspin_mem_aG`). -/
+theorem aG_eq_top_of_len_eq_zero (hW : L.FW.len = 0) (hV : L.FV.len = 0) : L.aG = ⊤ :=
+  L.aG_eq_top_of_single_mem fun x => by
+    rcases x with (i | _) | (i | _)
+    · exact absurd (i.isLt.trans_eq hW) (Nat.not_lt_zero _)
+    · exact L.single_gspin_mem_aG.1
+    · exact absurd (i.isLt.trans_eq hV) (Nat.not_lt_zero _)
+    · exact L.single_gspin_mem_aG.2
+
+/-- **`v_M = 1` when `a_M = a_G`** (e.g. `M = G`, Beuzart-Plessis §1.10 with `𝒫(G) = {G}`): the
+hull of a nonempty set in the zero space has volume `1`. -/
+theorem vM_eq_one_of_aG_eq_top (hG : L.aG = ⊤) (K : d.GoodK L.M) (g : ↥d.G) : L.vM K g = 1 := by
+  have : Subsingleton L.aMG := Submodule.Quotient.subsingleton_iff.2 hG
+  exact Measure.hullVolume_of_subsingleton _
+    ⟨_, ⟨⟨_, L.toFlagLeviDatum.mem_parabolics⟩, rfl⟩⟩
+
+/-- **`v_G = 1`**: for empty flags (`M = G`, `M_eq_top_of_len_eq_zero`) the weight is `1`. -/
+theorem vM_eq_one_of_len_eq_zero (hW : L.FW.len = 0) (hV : L.FV.len = 0) (K : d.GoodK L.M)
+    (g : ↥d.G) : L.vM K g = 1 :=
+  L.vM_eq_one_of_aG_eq_top (L.aG_eq_top_of_len_eq_zero hW hV) K g
+
+end ReducedLeviDatum
+
+end GGPData
+
+end GSpinGGP
