@@ -54,16 +54,30 @@ theorem commute_of_mem_centG (hx : x ∈ regularSet d.G d.lie) {g h : ↥d.G}
   have hp : Commute (d.fst g, d.snd g) (d.fst h, d.snd h) := Prod.ext hW.eq hV.eq
   simpa only [pair_fst_snd] using hp.map d.pair
 
-/-- **Haar measures on `G_x(F)` are right invariant for `x ∈ G_reg(F)`**: `G_x(F)` is commutative
-(`commute_of_mem_centG`).  Not an instance, the regularity of `x` being a hypothesis; consumers
-use it with `have`. -/
-theorem isMulRightInvariant_of_mem_regularSet (hx : x ∈ regularSet d.G d.lie)
-    (μ : Measure ↥(d.centG x)) [μ.IsMulLeftInvariant] : μ.IsMulRightInvariant := by
+/-- A left invariant measure on a group whose elements commute is right invariant. -/
+theorem isMulRightInvariant_of_forall_commute {H : Type*} [Group H] [MeasurableSpace H]
+    [MeasurableMul H] (hc : ∀ a b : H, Commute a b) (μ : Measure H) [μ.IsMulLeftInvariant] :
+    μ.IsMulRightInvariant := by
   refine ⟨fun c => ?_⟩
-  have e : (fun a : ↥(d.centG x) => a * c) = (fun a => c * a) :=
-    funext fun a => Subtype.ext (commute_of_mem_centG hx a.prop c.prop).eq
+  have e : (fun a : H => a * c) = (fun a => c * a) := funext fun a => (hc a c).eq
   rw [e]
   exact map_mul_left_eq_self μ c
+
+/-- **Every Haar measure on a subgroup of `G_x(F)` is right invariant, for `x ∈ G_reg(F)`**:
+`G_x(F)` is commutative (`commute_of_mem_centG`).  Not an instance, the regularity of `x` being a
+hypothesis; consumers use it with `have`. -/
+theorem isMulRightInvariant_of_le_centG (hx : x ∈ regularSet d.G d.lie)
+    (S : Subgroup ↥(d.centG x)) (μ : Measure ↥S) [μ.IsMulLeftInvariant] :
+    μ.IsMulRightInvariant :=
+  isMulRightInvariant_of_forall_commute (fun a b => Subtype.ext <| Subtype.ext <| by
+    simpa using (commute_of_mem_centG hx (a : ↥(d.centG x)).prop (b : ↥(d.centG x)).prop).eq) μ
+
+/-- **Haar measures on `G_x(F)` are right invariant for `x ∈ G_reg(F)`**
+(`commute_of_mem_centG`). -/
+theorem isMulRightInvariant_of_mem_regularSet (hx : x ∈ regularSet d.G d.lie)
+    (μ : Measure ↥(d.centG x)) [μ.IsMulLeftInvariant] : μ.IsMulRightInvariant :=
+  isMulRightInvariant_of_forall_commute
+    (fun a b => Subtype.ext (commute_of_mem_centG hx a.prop b.prop).eq) μ
 
 /-- **`G_x(F) ⊆ M(F)` for `x ∈ M(F) ∩ G_reg(F)`** (Waldspurger 2010, §2.3; Beuzart-Plessis
 §1.10): factorwise `mem_flagLevi_of_commute_of_isRegular`.  The sources state it for
