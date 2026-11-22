@@ -14,8 +14,8 @@ At the toy datum `toyD` (`G = GL₁ × GL₁`, commutative) take the reduced Lev
 `{(c₁, c₂) : |c₁| = |c₂| = 1}`, compact and open, so `d_c t` exists (`exists_isDcMeasure`) and is
 the Haar measure giving `O^× × O^×` measure `1`.  The sign is `1`, `D^G = 1`, `v_M = 1`, and
 `θ_f(x) = c f(x)` with `c > 0` (`toyD_thetaFBP`): `c` is the mass of the point `G_x(F)\G(F)` for
-`dg / d_c t` (which should be the `Measure.haar`-volume of `O^× × O^×`; only `c > 0` is proved).  So `IsMx`, `IsDcMeasure` and
-`thetaFBP` are not vacuous.  Nothing here uses an axiom.
+`dg / d_c t` (which should be the `Measure.haar`-volume of `O^× × O^×`; only `c > 0` is
+proved).  So `IsMx`, `IsDcMeasure` and `thetaFBP` are not vacuous.  Nothing here uses an axiom.
 -/
 
 noncomputable section
