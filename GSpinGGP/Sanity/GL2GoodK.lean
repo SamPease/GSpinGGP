@@ -58,7 +58,7 @@ theorem gl2Basis_repr (v : (𝔾).V) (i : Fin 3) :
 theorem gl2_QV_eq (v : (𝔾).V) : (𝔾).QV v =
     (gl2Basis (F := F)).repr v 0 * (gl2Basis (F := F)).repr v 2 +
       (gl2Basis (F := F)).repr v 1 ^ 2 := by
-  show (0 : QuadraticForm F (Fin 0 → F)) v.1 + splitOddForm 1 ((1 : Fˣ) : F) v.2 = _
+  change (0 : QuadraticForm F (Fin 0 → F)) v.1 + splitOddForm 1 ((1 : Fˣ) : F) v.2 = _
   rw [LeviAux.splitOddForm_apply]
   change _ + (1 : F) * ∑ i : Fin 3, v.2 i * v.2 i.rev = _
   simp only [gl2Basis_repr, Fin.sum_univ_three]
@@ -109,9 +109,9 @@ theorem gl2_iwasawa (FW : IsotropicFlag (𝔾).QW) (FV : IsotropicFlag (𝔾).QV
   classical
   rcases Nat.eq_zero_or_pos FV.len with h0 | hpos
   · refine ⟨g, ⟨?_, ?_⟩, 1, Subgroup.one_mem _, (mul_one g).symm⟩
-    · show (𝔾).fst g ∈ flagStab FW
+    · change (𝔾).fst g ∈ flagStab FW
       rw [gl2_flagStab_W]; trivial
-    · show _ ∈ flagStab FV
+    · change _ ∈ flagStab FV
       rw [flagStab_eq_top_of_len_eq_zero FV h0]; trivial
   · -- the flag is one isotropic line `ℓ = F v₁`
     have hlen : FV.len = 1 := by
@@ -148,9 +148,9 @@ theorem gl2_iwasawa (FW : IsotropicFlag (𝔾).QW) (FV : IsotropicFlag (𝔾).QV
     set κ := (𝔾).inr (k₁ * k₂⁻¹)
     have hκ : κ ∈ gl2K (F := F) := inr_mem_gl2K (hk₁.mul (IsLatticeSpin.inv hk₂))
     refine ⟨g * κ⁻¹, ⟨?_, ?_⟩, κ, hκ, by rw [inv_mul_cancel_right]⟩
-    · show (𝔾).fst (g * κ⁻¹) ∈ flagStab FW
+    · change (𝔾).fst (g * κ⁻¹) ∈ flagStab FW
       rw [gl2_flagStab_W]; trivial
-    · show (𝔾).snd (g * κ⁻¹) ∈ flagStab FV
+    · change (𝔾).snd (g * κ⁻¹) ∈ flagStab FV
       have hk₁inv : specP (𝔾).QV k₁⁻¹ v₁ = t₁⁻¹ • gl2Basis 2 := by
         apply (specP (𝔾).QV k₁).injective
         rw [← specP_mul_apply, mul_inv_cancel, map_one, map_smul, he₁, smul_smul,

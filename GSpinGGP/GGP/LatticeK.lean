@@ -56,9 +56,10 @@ theorem MapsLattice.mul {e : Basis κ F V} {A B : V →ₗ[F] V} (hA : MapsLatti
 
 /-- **The matrix criterion**: in an ultrametric field, `A Λ_e ⊆ Λ_e` iff every matrix entry
 `e^*_i(A e_j)` has norm `≤ 1`. -/
-theorem mapsLattice_iff [Fintype κ] [IsUltrametricDist F] (e : Basis κ F V) (A : V →ₗ[F] V) :
+theorem mapsLattice_iff [Finite κ] [IsUltrametricDist F] (e : Basis κ F V) (A : V →ₗ[F] V) :
     MapsLattice e A ↔ ∀ i j, ‖e.repr (A (e j)) i‖ ≤ 1 := by
   classical
+  have := Fintype.ofFinite κ
   refine ⟨fun h i j => h (e j) (fun k => ?_) i, fun h v hv i => ?_⟩
   · rw [e.repr_self, Finsupp.single_apply]
     split_ifs <;> simp
@@ -137,12 +138,9 @@ theorem specP_gspinPair_inv_apply
     specP Q (gspinPair Q hu hw)⁻¹ v = quadReflection Q w (quadReflection Q u v) := by
   have hinvol : ∀ x : V, Q x ≠ 0 → ∀ y, quadReflection Q x (quadReflection Q x y) = y := by
     intro x hx y
-    simp only [quadReflection_apply, QuadraticMap.polar_sub_right, QuadraticMap.polar_smul_right,
-      QuadraticMap.polar_self, smul_eq_mul, nsmul_eq_mul]
-    have e : (Q x)⁻¹ * (QuadraticMap.polar Q x y - (Q x)⁻¹ * (QuadraticMap.polar Q x y *
-        ((2 : ℕ) * Q x))) = -((Q x)⁻¹ * QuadraticMap.polar Q x y) := by
-      field_simp; push_cast; ring
-    rw [smul_smul, smul_smul, e, neg_smul, sub_neg_eq_add, sub_add_cancel]
+    let := invertibleOfNonzero hx
+    rw [← quadReflection_eq]
+    exact LinearEquiv.congr_fun (TauCeti.QuadraticMap.reflection_mul_self Q x) y
   apply (specP Q (gspinPair Q hu hw)).injective
   rw [← specP_mul_apply, mul_inv_cancel, map_one]
   change v = (specP Q (gspinPair Q hu hw) : V →ₗ[F] V) _
@@ -186,11 +184,10 @@ omit [PAdicField F] [Module.Finite F V] in
 /-- **The reflection in `x - y` swaps isotropic `x` and `y`** when `polar(x, y) ≠ 0`. -/
 theorem quadReflection_sub_apply_self (Q : QuadraticForm F V) {x y : V} (hx : Q x = 0)
     (hy : Q y = 0) (hxy : QuadraticMap.polar Q x y ≠ 0) : quadReflection Q (x - y) x = y := by
-  have hp : QuadraticMap.polar Q (x - y) x = -QuadraticMap.polar Q x y := by
-    rw [QuadraticMap.polar_sub_left, QuadraticMap.polar_self, hx, QuadraticMap.polar_comm Q y x]
-    simp
-  rw [quadReflection_apply, hp, quadForm_sub_of_isotropic Q hx hy, smul_smul,
-    inv_mul_cancel₀ (neg_ne_zero.2 hxy), one_smul, sub_sub_cancel]
+  let := invertibleOfNonzero (show Q (x - y) ≠ 0 by
+    rw [quadForm_sub_of_isotropic Q hx hy]; exact neg_ne_zero.2 hxy)
+  rw [← quadReflection_eq]
+  exact TauCeti.QuadraticMap.reflection_sub_apply_eq_of_map_eq Q x y (hx.trans hy.symm)
 
 variable (Q : QuadraticForm F V) (e : Basis (Fin 3) F V)
   (hQ : ∀ v, Q v = e.repr v 0 * e.repr v 2 + e.repr v 1 ^ 2)
@@ -283,7 +280,8 @@ theorem exists_isLatticeSpin_apply_eq_smul {v : V} (hv : v ≠ 0) (hQv : Q v = 0
     fin_cases i <;> simp [ha, hb, hc, a, b, c]
   rcases le_or_gt ‖c‖ ‖a‖ with hca | hac
   · -- `a` is the larger end coordinate: one swap `e₂ ↦ a⁻¹ v`
-    have ha : a ≠ 0 := fun ha => hv0 ⟨ha, norm_le_zero_iff.1 (by rw [ha, norm_zero] at hca; exact hca)⟩
+    have ha : a ≠ 0 := fun ha =>
+      hv0 ⟨ha, norm_le_zero_iff.1 (by rw [ha, norm_zero] at hca; exact hca)⟩
     have hna : 0 < ‖a‖ := norm_pos_iff.2 ha
     have hb : ‖b‖ ≤ ‖a‖ := by
       refine (pow_le_pow_iff_left₀ (norm_nonneg _) (norm_nonneg _) two_ne_zero).1 ?_
@@ -489,7 +487,8 @@ theorem isCompact_latticeK : IsCompact (d.latticeK eW eV : Set ↥d.G) := by
   obtain ⟨BV', hBV'⟩ := hC.bddAbove_image (cV.comp continuous_inv).continuousOn
   set T := {c : Fˣ | ‖(c : F)‖ ^ NW ≤ BW ∧ 1 ≤ BW' * ‖(c : F)‖ ^ NW} ×ˢ
     {c : Fˣ | ‖(c : F)‖ ^ NV ≤ BV ∧ 1 ≤ BV' * ‖(c : F)‖ ^ NV}
-  have hT : IsCompact T := (isCompact_units_norm_pow hNW _ _).prod (isCompact_units_norm_pow hNV _ _)
+  have hT : IsCompact T :=
+    (isCompact_units_norm_pow hNW _ _).prod (isCompact_units_norm_pow hNV _ _)
   have hS : IsCompact ((fun p : (Fˣ × Fˣ) × ↥d.G => (d.scalarPair p.1.1 p.1.2)⁻¹ * p.2) ''
       (T ×ˢ C)) :=
     (hT.prod hC).image (((d.continuous_scalarPair.comp _root_.continuous_fst).inv).mul
