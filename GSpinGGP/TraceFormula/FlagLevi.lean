@@ -159,6 +159,29 @@ theorem IsFlagSplitting.exists_mem_flagLevi_mul [FiniteDimensional K V] (hQ : Is
   rw [he, mul_assoc, ← mul_assoc (scalarGSpin Q c⁻¹), ← hcen y, mul_assoc y,
     ← map_mul, inv_mul_cancel, map_one, mul_one]
 
+omit [Fintype ι] in
+variable (Q) in
+/-- **The split centre of the Levi subgroup `M_F`** (`A_{M_F}(K)`): the `g ∈ GSpin(V)` whose image
+`P(g) ∈ SO(V)` acts on the weight-`w` space of the splitting by a scalar `t_w`, with `t_0 = 1`.
+For `M_F ≅ ∏ GL(Z_i/Z_{i−1}) × GSpin(Ṽ)` (M. Asgari, Canad. J. Math. 54 (2002), §2) its split
+centre is the product of the centres `G_m` of the `GL`-factors and the split centre of
+`GSpin(Ṽ)`, which is the scalars when `Ṽ` is not a hyperbolic plane (`splitCentralGSpin`); this
+is the preimage under `P` of the split torus of `SO(V)` acting by scalars on the weight spaces
+(`t_{−w} = t_w⁻¹` is forced by `P(g)` being orthogonal) and trivially on `Ṽ`. -/
+def wtScalar (b : Module.Basis ι K V) (wt : ι → ℤ) : Subgroup (GSpin Q) where
+  carrier := {g | ∃ t : ℤ → K, t 0 = 1 ∧ ∀ j, specP Q g (b j) = t (wt j) • b j}
+  one_mem' := ⟨1, rfl, fun j => by simp⟩
+  mul_mem' := by
+    rintro g h ⟨s, hs0, hs⟩ ⟨t, ht0, ht⟩
+    refine ⟨s * t, by simp [hs0, ht0], fun j => ?_⟩
+    rw [specP_mul_apply, ht, map_smul, hs, smul_smul, Pi.mul_apply, mul_comm]
+  inv_mem' := by
+    rintro g ⟨t, ht0, ht⟩
+    have hne : ∀ j, t (wt j) ≠ 0 := fun j h0 => b.ne_zero j <|
+      (specP Q g).injective (by rw [ht, h0, zero_smul, map_zero])
+    refine ⟨fun w => (t w)⁻¹, by simp [ht0], fun j => (specP Q g).injective ?_⟩
+    rw [specP_inv_apply_apply, map_smul, ht, smul_smul, inv_mul_cancel₀ (hne j), one_smul]
+
 end FlagLevi
 
 /-! ## 2. Levi subgroups of `P_{F_W} × P_{F_V}` -/

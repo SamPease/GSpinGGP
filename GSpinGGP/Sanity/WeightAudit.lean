@@ -11,7 +11,8 @@ import GSpinGGP.Sanity.LeviAudit
 
 At the toy datum `toyD` (`W = 0`, `V` a line, `G = GL₁ × GL₁`) the empty flags give a reduced
 Levi datum with `M = G`; the compact open subgroup of `toyXiPair` is good for it
-(`GoodK.ofEqTop`), so `GoodK` is inhabited, and `v_G = 1`.  The lattice statement
+(`GoodK.ofEqTop`, with good position since `P(g) = 1` there), so `GoodK` is inhabited, and
+`v_G = 1`.  The lattice statement
 `latticeMG_isLattice` holds there (in the zero space `a_G^G`).  At `Sanity.hypVData` (`V` a
 hyperbolic plane) a nonempty flag still has `a_M = a_G` (`hypV_aG_eq_top`), as it must: `G` is
 then a torus times `GL₁`, so `M = G`.  Nothing here uses an axiom.
@@ -32,26 +33,36 @@ open MeasureTheory Measure Set in
 volume `|x| / ℓ` (`E/Λ` has volume `1`, whatever `addHaar` is). -/
 theorem hullVolume_zmultiples_pair {ℓ : ℝ} (hℓ : 0 < ℓ) (x : ℝ) :
     hullVolume (AddSubgroup.zmultiples ℓ) {0, x} = |x| / ℓ := by
-  set c := addHaarScalarFactor (addHaar : Measure ℝ) volume
-  have hμ : (addHaar : Measure ℝ) = c • volume :=
-    isAddLeftInvariant_eq_smul_of_innerRegular _ _
-  have hc : (c : ENNReal) ≠ 0 := by
-    intro h0
-    have : (addHaar : Measure ℝ) = 0 := by rw [hμ, show c = 0 from by exact_mod_cast h0, zero_smul]
-    exact (NeZero.ne _ : (addHaar : Measure ℝ) ≠ 0) this
-  have hD := isAddFundamentalDomain_Ioc hℓ 0 (addHaar : Measure ℝ)
-  have hcov : addCovolume (AddSubgroup.zmultiples ℓ) ℝ addHaar = c * ENNReal.ofReal ℓ := by
-    rw [hD.covolume_eq_volume, hμ, smul_apply, Real.volume_Ioc, zero_add, sub_zero]; rfl
-  have hhull : convexHull ℝ ({0, x} : Set ℝ) = uIcc 0 x := by
-    rw [convexHull_pair, segment_eq_uIcc]
-  rw [hullVolume, latticeHaar, smul_apply, hcov, hhull, hμ, smul_apply, Real.volume_interval,
-    sub_zero]
-  rw [ENNReal.smul_def, smul_eq_mul, smul_eq_mul,
-    ENNReal.mul_inv (Or.inl hc) (Or.inl ENNReal.coe_ne_top)]
-  rw [show (c : ENNReal)⁻¹ * (ENNReal.ofReal ℓ)⁻¹ * (c * ENNReal.ofReal |x|) =
-      ((c : ENNReal)⁻¹ * c) * ((ENNReal.ofReal ℓ)⁻¹ * ENNReal.ofReal |x|) by ring,
-    ENNReal.inv_mul_cancel hc ENNReal.coe_ne_top, one_mul, ENNReal.toReal_mul, ENNReal.toReal_inv,
+  rw [hullVolume, latticeHaar_eq volume (isAddFundamentalDomain_Ioc hℓ 0), smul_apply,
+    convexHull_pair, segment_eq_uIcc, Real.volume_Ioc, Real.volume_interval, smul_eq_mul,
+    ENNReal.toReal_mul, ENNReal.toReal_inv, zero_add, sub_zero, sub_zero,
     ENNReal.toReal_ofReal hℓ.le, ENNReal.toReal_ofReal (abs_nonneg x), inv_mul_eq_div]
+
+/-- **`P(g) = 1` at `toyD`**: every `g` is a pair of scalars (`toyD_exists_scalar`). -/
+theorem toyD_specP_snd (g : ↥(𝕋).G) : specP (𝕋).QV ((𝕋).snd g) = 1 := by
+  obtain ⟨c, hc⟩ := toyD_exists_scalar g
+  have hc2 : ((((𝕋).snd g : GSpin (𝕋).QV) : (CliffordAlgebra (𝕋).QV)ˣ) :
+      CliffordAlgebra (𝕋).QV) = algebraMap F _ c.2 := congrArg Prod.snd hc
+  have hne : c.2 ≠ 0 := by
+    rintro h
+    rw [h, map_zero] at hc2
+    exact (Units.ne_zero _) hc2
+  have : (𝕋).snd g = scalarGSpin _ (Units.mk0 c.2 hne) := Subtype.ext (Units.ext hc2)
+  rw [this, specP_scalarGSpin_eq_one]
+
+/-- **Good position at `toyD`**: any `K` stabilizes the lattices spanned by splitting bases (on
+`W = 0` there is nothing to check, and `P(g) = 1` on `V`). -/
+theorem toyD_stabilizesSplitLattice (L : (𝕋).FlagLeviDatum) (S : Set ↥(𝕋).G) :
+    StabilizesSplitLattice (𝕋).QW L.bW L.wtW ((𝕋).fst '' S) ∧
+      StabilizesSplitLattice (𝕋).QV L.bV L.wtV ((𝕋).snd '' S) := by
+  refine ⟨⟨L.ιW, inferInstance, L.bW, fun i => ⟨L.wtW i, Submodule.subset_span ⟨i, rfl, rfl⟩⟩,
+    fun g _ v _ i => ?_⟩, ⟨L.ιV, inferInstance, L.bV,
+    fun i => ⟨L.wtV i, Submodule.subset_span ⟨i, rfl, rfl⟩⟩, ?_⟩⟩
+  · have : v = 0 := Subsingleton.elim _ _
+    simp [this]
+  · rintro _ ⟨g, -, rfl⟩ v hv i
+    rw [toyD_specP_snd]
+    exact hv i
 
 /-- A submodule of a space of dimension `≤ 1` is not a hyperbolic plane. -/
 theorem not_isHypPlane_comp_of_finrank_le {K V : Type*} [Field K] [Invertible (2 : K)]
@@ -65,7 +76,7 @@ theorem not_isHypPlane_comp_of_finrank_le {K V : Type*} [Field K] [Invertible (2
 /-- **`M = G` at `toyD`**: a reduced datum with empty flags, a good compact subgroup, `a_M = a_G`,
 `v_G = 1`, and the lattice statement. -/
 theorem toyD_vM_eq_one :
-    ∃ (L : (𝕋).ReducedLeviDatum) (K : (𝕋).GoodK L.M), L.M = ⊤ ∧ L.aG = ⊤ ∧
+    ∃ (L : (𝕋).ReducedLeviDatum) (K : (𝕋).GoodK L.toFlagLeviDatum), L.M = ⊤ ∧ L.aG = ⊤ ∧
       (∀ g, L.vM K g = 1) ∧
       (DiscreteTopology L.latticeMG.toIntSubmodule ∧
         Submodule.span ℝ (L.latticeMG.toIntSubmodule : Set L.aMG) = ⊤) := by
@@ -84,7 +95,8 @@ theorem toyD_vM_eq_one :
       reducedV := not_isHypPlane_comp_of_finrank_le _ _ hV1 }
   have hM := L.M_eq_top_of_len_eq_zero rfl rfl
   have hG := L.aG_eq_top_of_len_eq_zero rfl rfl
-  let K : (𝕋).GoodK L.M := GoodK.ofEqTop hM toyXiPair.K toyXiPair.isOpen_K toyXiPair.isCompact_K
+  let K : (𝕋).GoodK L.toFlagLeviDatum := GoodK.ofEqTop hM toyXiPair.K toyXiPair.isOpen_K
+    toyXiPair.isCompact_K (toyD_stabilizesSplitLattice _ _).1 (toyD_stabilizesSplitLattice _ _).2
   have : Subsingleton L.aMG := Submodule.Quotient.subsingleton_iff.2 hG
   refine ⟨L, K, hM, hG, L.vM_eq_one_of_len_eq_zero rfl rfl K, ?_, ?_⟩
   · infer_instance
@@ -96,7 +108,7 @@ is a split torus and `A_G` is all of `GSpin(W) × GSpin(V)`) the Levi `M` of a f
 `GSpin`-coordinates alone.  So `v_M = 1` and the lattice statement holds there. -/
 theorem hypV_aG_eq_top :
     ∃ L : (Sanity.hypVData (F := F)).ReducedLeviDatum, 0 < L.FV.len ∧ L.aG = ⊤ ∧
-      (∀ (K : (Sanity.hypVData (F := F)).GoodK L.M) g, L.vM K g = 1) ∧
+      (∀ (K : (Sanity.hypVData (F := F)).GoodK L.toFlagLeviDatum) g, L.vM K g = 1) ∧
       (DiscreteTopology L.latticeMG.toIntSubmodule ∧
         Submodule.span ℝ (L.latticeMG.toIntSubmodule : Set L.aMG) = ⊤) := by
   classical

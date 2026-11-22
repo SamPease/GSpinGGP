@@ -90,6 +90,14 @@ theorem mem_flagLevi_iff {g : GSpin Q} :
   simp only [LinearMap.comp_apply, LinearEquiv.coe_coe, wtProj_basis] at this
   exact this.symm
 
+omit [Fintype ι] in
+/-- The split centre `wtScalar` lies in the Levi subgroup. -/
+theorem wtScalar_le_flagLevi : wtScalar Q b wt ≤ flagLevi (Q := Q) b wt := by
+  rintro g ⟨t, -, ht⟩
+  refine mem_flagLevi_iff.2 fun j i hi => ?_
+  have hij : j ≠ i := fun h => hi (h ▸ rfl)
+  simp [ht, b.repr_self, Finsupp.single_apply, hij]
+
 omit [Invertible (2 : K)] [Fintype ι] in
 /-- The weight-`w` space of a splitting: the span of the `bⱼ` with `wtⱼ = w`. -/
 def wtSpan (b : Basis ι K V) (wt : ι → ℤ) (w : ℤ) : Submodule K V :=
@@ -800,11 +808,9 @@ theorem hP_mul {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV} (hL : d.IsLev
 theorem hP_mul_right {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV} (hL : d.IsLevi FW FV L.M)
     {K : Subgroup ↥d.G} (hKo : IsOpen (K : Set ↥d.G)) (hKc : IsCompact (K : Set ↥d.G))
     (hPK : ∀ g : ↥d.G, ∃ p ∈ d.whittB FW FV, ∃ k ∈ K, g = p * k) (g : ↥d.G) {k : ↥d.G}
-    (hk : k ∈ K) : L.hP hL K hKo hKc hPK (g * k) = L.hP hL K hKo hKc hPK g := by
-  set I := IwasawaPair.mk (d.whittB FW FV) K (d.isClosed_whittB FW FV) hKo hKc hPK
-  have hg : g = (I.iwP g : ↥d.G) * (I.iwK g : ↥d.G) := (I.iwP_mul_iwK g).symm
-  rw [hg, mul_assoc, L.hP_eq hL hKo hKc hPK _ (K.mul_mem (I.iwK g).2 hk),
-    L.hP_eq hL hKo hKc hPK _ (I.iwK g).2]
+    (hk : k ∈ K) : L.hP hL K hKo hKc hPK (g * k) = L.hP hL K hKo hKc hPK g :=
+  (IwasawaPair.mk (d.whittB FW FV) K (d.isClosed_whittB FW FV) hKo hKc hPK).extend_mul_right
+    (fun p q hq => L.HM_proj_mul_of_mem hL hKc p q hq) g hk
 
 /-- **`H_P(p g) = H_M(proj p) + H_P(g)`** for `p ∈ P`; in particular
 `H_P(m g) = H_M(m) + H_P(g)` for `m ∈ M` (`hP_mul_left_of_mem`). -/
@@ -812,11 +818,9 @@ theorem hP_mul_left {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV} (hL : d.
     {K : Subgroup ↥d.G} (hKo : IsOpen (K : Set ↥d.G)) (hKc : IsCompact (K : Set ↥d.G))
     (hPK : ∀ g : ↥d.G, ∃ p ∈ d.whittB FW FV, ∃ k ∈ K, g = p * k) (p : ↥(d.whittB FW FV))
     (g : ↥d.G) :
-    L.hP hL K hKo hKc hPK ((p : ↥d.G) * g) = L.HM (hL.proj p) + L.hP hL K hKo hKc hPK g := by
-  set I := IwasawaPair.mk (d.whittB FW FV) K (d.isClosed_whittB FW FV) hKo hKc hPK
-  have hg : g = (I.iwP g : ↥d.G) * (I.iwK g : ↥d.G) := (I.iwP_mul_iwK g).symm
-  rw [hg, ← mul_assoc, show (p : ↥d.G) * (I.iwP g : ↥d.G) = ((p * I.iwP g : ↥I.P) : ↥d.G) from rfl,
-    L.hP_eq hL hKo hKc hPK _ (I.iwK g).2, L.hP_eq hL hKo hKc hPK _ (I.iwK g).2, map_mul, HM_mul]
+    L.hP hL K hKo hKc hPK ((p : ↥d.G) * g) = L.HM (hL.proj p) + L.hP hL K hKo hKc hPK g :=
+  (IwasawaPair.mk (d.whittB FW FV) K (d.isClosed_whittB FW FV) hKo hKc hPK).extend_mul_left
+    (fun p q hq => L.HM_proj_mul_of_mem hL hKc p q hq) (fun p q => by rw [map_mul, HM_mul]) p g
 
 theorem hP_mul_left_of_mem {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV}
     (hL : d.IsLevi FW FV L.M) {K : Subgroup ↥d.G} (hKo : IsOpen (K : Set ↥d.G))

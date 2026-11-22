@@ -304,6 +304,25 @@ theorem extend_mul {E : Type*} {h : ↥I.P → E}
   rw [mul_inv_cancel_left] at this
   exact this.symm
 
+omit [IsTopologicalGroup G] [LocallyCompactSpace G] in
+/-- `extend h (g k) = extend h g` for `k ∈ K`, `h` right invariant under `P ∩ K`. -/
+theorem extend_mul_right {E : Type*} {h : ↥I.P → E}
+    (hh : ∀ (p q : ↥I.P), (q : G) ∈ I.K → h (p * q) = h p) (g : G) {k : G} (hk : k ∈ I.K) :
+    I.extend h (g * k) = I.extend h g := by
+  conv_lhs => rw [← I.iwP_mul_iwK g, mul_assoc]
+  exact I.extend_mul hh _ (I.K.mul_mem (I.iwK g).2 hk)
+
+omit [IsTopologicalGroup G] [LocallyCompactSpace G] in
+/-- `extend h (p g) = h p + extend h g` for additive `h`, right invariant under `P ∩ K`. -/
+theorem extend_mul_left {E : Type*} [Add E] {h : ↥I.P → E}
+    (hh : ∀ (p q : ↥I.P), (q : G) ∈ I.K → h (p * q) = h p)
+    (hadd : ∀ p q : ↥I.P, h (p * q) = h p + h q) (p : ↥I.P) (g : G) :
+    I.extend h ((p : G) * g) = h p + I.extend h g := by
+  conv_lhs => rw [← I.iwP_mul_iwK g, ← mul_assoc]
+  rw [show (p : G) * (I.iwP g : G) = ((p * I.iwP g : ↥I.P) : G) from rfl,
+    I.extend_mul hh _ (I.iwK g).2, hadd]
+  rfl
+
 variable [MeasurableSpace G] [BorelSpace G]
 
 /-- **Harish-Chandra's function** `Ξ(g) = ∫_K δ_P(p(kg))^{1/2} dk`, `dk` the probability Haar

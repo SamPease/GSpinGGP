@@ -28,7 +28,7 @@ Gross-Prasad*, Compos. Math. 146 (2010), §1.2; Beuzart-Plessis, Astérisque 418
 
 noncomputable section
 
-open Pointwise
+open Pointwise ENNReal
 
 namespace MeasureTheory.Measure
 
@@ -38,7 +38,9 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimension
 /-- **The Haar measure normalized by `Λ`**: `addHaar / covol(Λ)`, where `covol(Λ)` is the
 `addHaar`-volume of a fundamental domain of `Λ` (Mathlib's `addCovolume`, `0` if there is none).
 For a lattice `Λ` this is the unique Haar measure for which `E/Λ` has volume `1`
-(`latticeHaar_fundamentalDomain`). -/
+(`latticeHaar_fundamentalDomain`, `latticeHaar_fundamentalDomain_of_isZLattice`); it does not
+depend on the choice of `addHaar` (`latticeHaar_eq`).  Junk value: if `Λ` has no fundamental
+domain, `addCovolume = 0` and `latticeHaar Λ = ⊤ • addHaar`. -/
 def latticeHaar (Λ : AddSubgroup E) : Measure E :=
   (addCovolume Λ E addHaar)⁻¹ • addHaar
 
@@ -47,6 +49,36 @@ theorem latticeHaar_fundamentalDomain {Λ : AddSubgroup E} [Countable Λ] {D : S
     (hD : IsAddFundamentalDomain Λ D addHaar) (h0 : addHaar D ≠ 0) (hfin : addHaar D ≠ ⊤) :
     latticeHaar Λ D = 1 := by
   rw [latticeHaar, smul_apply, smul_eq_mul, hD.covolume_eq_volume, ENNReal.inv_mul_cancel h0 hfin]
+
+/-- **`latticeHaar` does not depend on the Haar measure**: for any Haar measure `μ` and any
+fundamental domain `D` of `Λ` for `μ`, `latticeHaar Λ = μ(D)⁻¹ • μ`. -/
+theorem latticeHaar_eq {Λ : AddSubgroup E} [Countable Λ] (μ : Measure E) [μ.IsAddHaarMeasure]
+    {D : Set E} (hD : IsAddFundamentalDomain Λ D μ) : latticeHaar Λ = (μ D)⁻¹ • μ := by
+  set c := addHaarScalarFactor (addHaar : Measure E) μ
+  have hμ : (addHaar : Measure E) = c • μ := isAddLeftInvariant_eq_smul_of_innerRegular _ _
+  have hc : (c : ℝ≥0∞) ≠ 0 := by
+    intro h0
+    have : (addHaar : Measure E) = 0 := by
+      rw [hμ, show c = 0 by exact_mod_cast h0, zero_smul]
+    exact (NeZero.ne _ : (addHaar : Measure E) ≠ 0) this
+  have hD' : IsAddFundamentalDomain Λ D addHaar :=
+    hD.mono (by rw [hμ]; exact smul_absolutelyContinuous)
+  rw [latticeHaar, hD'.covolume_eq_volume, hμ]
+  ext s hs
+  simp only [smul_apply, smul_eq_mul, ENNReal.smul_def]
+  rw [ENNReal.mul_inv (Or.inl hc) (Or.inl ENNReal.coe_ne_top),
+    show (c : ℝ≥0∞)⁻¹ * (μ D)⁻¹ * (c * μ s) = ((c : ℝ≥0∞)⁻¹ * c) * ((μ D)⁻¹ * μ s) by ring,
+    ENNReal.inv_mul_cancel hc ENNReal.coe_ne_top, one_mul]
+
+/-- **For a `ℤ`-lattice, `latticeHaar` gives every fundamental domain the volume `1`.** -/
+theorem latticeHaar_fundamentalDomain_of_isZLattice (L : Submodule ℤ E) [DiscreteTopology L]
+    [IsZLattice ℝ L] {D : Set E} (hD : IsAddFundamentalDomain L D addHaar) :
+    latticeHaar L.toAddSubgroup D = 1 := by
+  have h := ZLattice.covolume_ne_zero L addHaar
+  rw [ZLattice.covolume_eq_measure_fundamentalDomain L addHaar hD, measureReal_def,
+    ENNReal.toReal_ne_zero] at h
+  have : Countable L.toAddSubgroup := inferInstanceAs (Countable L)
+  exact latticeHaar_fundamentalDomain hD h.1 h.2
 
 /-- **The volume of the convex hull of `S`** for the Haar measure normalized by `Λ`. -/
 def hullVolume (Λ : AddSubgroup E) (S : Set E) : ℝ :=
