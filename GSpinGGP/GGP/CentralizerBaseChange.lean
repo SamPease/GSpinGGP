@@ -80,7 +80,7 @@ theorem ofBaseChange_mem_gspin (Q : QuadraticForm K V) (z : AlgebraicClosure K)
     exact Submodule.add_mem _ ha hb
 
 
-/-- `F̄ ⊗ gspin(Q) → C(Q_{F̄})`. -/
+/-- `K̄ ⊗ gspin(Q) → C(Q_{K̄})`. -/
 def gspinBC (Q : QuadraticForm K V) :
     AlgebraicClosure K ⊗[K] (gspin Q).toSubmodule →ₗ[AlgebraicClosure K]
       CliffordAlgebra (Q.baseChange (AlgebraicClosure K)) :=
@@ -100,8 +100,8 @@ theorem baseChange_subtype_injective {M : Type*} [AddCommGroup M] [Module K M] (
   rw [LinearMap.baseChange_eq_lTensor]
   exact Module.Flat.lTensor_preserves_injective_linearMap _ p.injective_subtype
 
-/-- Over `F̄`, `gspin(Q_{F̄})` is spanned by `gspin(Q)` (via `gspin = span{v w} ⊕ K`,
-`gspin_eq_span`, for `Q_{F̄}` nondegenerate). -/
+/-- Over `K̄`, `gspin(Q_{K̄})` is spanned by `gspin(Q)` (via `gspin = span{v w} ⊕ K`,
+`gspin_eq_span`, for `Q_{K̄}` nondegenerate). -/
 theorem range_gspinBC [Module.Finite K V] (Q : QuadraticForm K V)
     (hQ : IsNondeg (Q.baseChange (AlgebraicClosure K))) :
     LinearMap.range (gspinBC Q) = (gspin (Q.baseChange (AlgebraicClosure K))).toSubmodule := by
@@ -295,7 +295,9 @@ theorem exists_movedCent_lift {Q : QuadraticForm K V} (hQ : IsNondeg Q) (x : GSp
 /-- **Commutativity survives base change to `K̄`** (own work): if the elements of `gspin(V)_x`
 commuting with `ι(U)` commute, then so do the `b`-skew endomorphisms of `V_{K̄}` commuting with
 `P(x)_{K̄}` and vanishing on `U`.  They are `ad` of elements of the `K̄`-span of the former
-(`exists_movedCent_lift`, `gspinBC_commute_of_mem`). -/
+(`exists_movedCent_lift`, `gspinBC_commute_of_mem`).  For `U = 0` this is the base change of the
+abelianness of `so(V)_{P(x)}` (`soCent`), which `commute_soCentMat_map` (`GGP/RegularRank.lean`)
+does at the matrix level; the route through `gspin` here also covers the moved part (`U = W'_x`). -/
 theorem commute_baseChange_of_lie_eq_zero {Q : QuadraticForm K V} (hQ : IsNondeg Q)
     (x : GSpin Q) (U : Submodule K V)
     (hA : ∀ X ∈ lieCentralizer (gspin Q) ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q),
