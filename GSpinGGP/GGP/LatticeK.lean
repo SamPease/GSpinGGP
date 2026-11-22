@@ -460,15 +460,8 @@ theorem isCompact_units_norm_pow {N : ℕ} (hN : 1 ≤ N) (B B' : ℝ) :
 
 omit [PAdicField F] in
 theorem continuous_scalarGSpin {V : Type*} [AddCommGroup V] [Module F V] [Module.Finite F V]
-    (Q : QuadraticForm F V) : Continuous (scalarGSpin Q) := by
-  refine continuous_induced_rng.2 ?_
-  refine Units.continuous_iff.2 ⟨?_, ?_⟩
-  · change Continuous fun c : Fˣ => algebraMap F (CliffordAlgebra Q) (c : F)
-    exact (IsModuleTopology.continuous_of_linearMap (Algebra.linearMap F (CliffordAlgebra Q))).comp
-      Units.continuous_val
-  · change Continuous fun c : Fˣ => algebraMap F (CliffordAlgebra Q) ((c⁻¹ : Fˣ) : F)
-    exact (IsModuleTopology.continuous_of_linearMap (Algebra.linearMap F (CliffordAlgebra Q))).comp
-      Units.continuous_coe_inv
+    (Q : QuadraticForm F V) : Continuous (scalarGSpin Q) :=
+  continuous_induced_rng.2 (Units.continuous_map (continuous_algebraMap F (CliffordAlgebra Q)))
 
 theorem continuous_scalarPair :
     Continuous fun c : Fˣ × Fˣ => d.scalarPair c.1 c.2 :=
@@ -499,7 +492,8 @@ theorem isCompact_latticeK : IsCompact (d.latticeK eW eV : Set ↥d.G) := by
   have hT : IsCompact T := (isCompact_units_norm_pow hNW _ _).prod (isCompact_units_norm_pow hNV _ _)
   have hS : IsCompact ((fun p : (Fˣ × Fˣ) × ↥d.G => (d.scalarPair p.1.1 p.1.2)⁻¹ * p.2) ''
       (T ×ˢ C)) :=
-    (hT.prod hC).image (((d.continuous_scalarPair.comp _root_.continuous_fst).inv).mul _root_.continuous_snd)
+    (hT.prod hC).image (((d.continuous_scalarPair.comp _root_.continuous_fst).inv).mul
+      _root_.continuous_snd)
   refine hS.of_isClosed_subset (d.isClopen_latticeK eW eV).1 fun g hg => ?_
   obtain ⟨z, ⟨c, rfl⟩, hzg⟩ := hlift g (hM g hg)
   have hzc : (d.pair.comp ((scalarGSpin d.QW).prodMap (scalarGSpin d.QV))) c =

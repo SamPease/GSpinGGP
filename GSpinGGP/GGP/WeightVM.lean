@@ -26,7 +26,9 @@ definition below is the sources' `v_M` when it holds.
 ## Main definitions
 
 * `GGPData.GoodK L`: a compact open subgroup `K` with `G = P K` for every `P ∈ 𝒫(M)`, in good
-  position relative to `M` (it stabilizes weight-split lattices of `W` and `V`).
+  position relative to `M` (it stabilizes weight-split lattices of `W` and `V`).  Examples:
+  `GoodK.ofEqTop` for `M = G`; a lattice stabilizer (`GGP/LatticeK.lean`) for a maximal torus of
+  `GL₁ × GSpin₃` (`Sanity/GL2GoodK.lean`).
 * `GGPData.ReducedLeviDatum.hPar`: `H_P : G → a_M` for each `P ∈ 𝒫(M)` (any flags defining `P`
   give the same map, `hPar_eq`).
 * `GGPData.ReducedLeviDatum.aG`: `a_G ⊆ a_M`, spanned by `H_M(A_G(F))`; `IsCentralCoord`: the

@@ -17,8 +17,8 @@ Levi datum with `M = G`; the compact open subgroup of `toyXiPair` is good for it
 (`hypV_aG_eq_top`, from `single_mem_aG`), as it must: `G` is then a torus times `GL₁`, so
 `M = G`.  At `gl2Data` (`W = 0`, `V` split of dimension `3`, `G = GL₁ × GSpin₃`) the torus `M`
 of a full flag of `V` has `a_M^G ≠ 0` and `latticeHaar` gives the fundamental domains of
-`proj_M^G(H_M(A_M(F)))` volume `1` (`gl2_aMG_nontrivial`); a `GoodK` for this proper Levi is not
-constructed.  Nothing here uses an axiom.
+`proj_M^G(H_M(A_M(F)))` volume `1` (`gl2_aMG_nontrivial`); a `GoodK` for this proper Levi is
+constructed in `Sanity/GL2GoodK.lean` (`gl2GoodK`).  Nothing here uses an axiom.
 -/
 
 noncomputable section
@@ -147,9 +147,8 @@ theorem gl2Data_one_le_wittIndex : 1 ≤ wittIndex (gl2Data (F := F)).QV := by
 /-- **A Levi subgroup with `a_M^G ≠ 0` and a genuine normalization of `v_M`**: at `gl2Data` the
 Levi `M` of a full flag of `V` (of length `1`; `M` is a maximal torus) has a non-central
 `GL`-coordinate (`V` is not a hyperbolic plane), so `a_M^G ≠ 0`, and `latticeHaar` gives a
-fundamental domain of `proj_M^G(H_M(A_M(F)))` volume `1`.  (A `GoodK` for this proper Levi is not
-constructed here: it needs the Iwasawa decompositions `G = B K = B̄ K` for one `K` stabilizing a
-split lattice.) -/
+fundamental domain of `proj_M^G(H_M(A_M(F)))` volume `1`.  (A `GoodK` for this proper Levi, for the
+explicit datum `gl2Levi`, is `gl2GoodK` in `Sanity/GL2GoodK.lean`.) -/
 theorem gl2_aMG_nontrivial :
     ∃ L : (gl2Data (F := F)).ReducedLeviDatum, ∃ h : 0 < L.FV.len,
       ¬ L.IsCentralCoord (Sum.inr (Sum.inl ⟨0, h⟩)) ∧ Nontrivial L.aMG ∧
