@@ -24,7 +24,11 @@ explicit argument; `dg/μ` is the Weil quotient measure on the right coset space
 through the exponential map and the autodual measures on `𝔤(F)`, `𝔤_x(F)`; neither is used here.
 Replacing `μ` by `c • μ` multiplies `J_M` by `c⁻¹` (`weightedOrbitalIntegral_smul_measure`);
 in `θ_f = (−1)^{a_G − a_{M(x)}} ν(G_x)⁻¹ D^G(x)^{−1/2} J_{M(x)}(x, f)` (Beuzart-Plessis §5.2) the
-factor `ν(G_x)⁻¹` (defined by `d_c t = ν(G_x) dt`, Beuzart-Plessis §1.6) cancels this dependence.
+factor `ν(G_x)⁻¹` (defined by `d_c t = ν(G_x) dt`, Beuzart-Plessis §1.6) cancels the dependence on
+the measure of `G_x(F)` (equivalently: take `μ = d_c t`).  It does not cancel the choice of `dg`:
+`Measure.haar` on `G(F)` differs from Beuzart-Plessis' measure by a positive constant, by which
+`J_M` (and `θ_f`) then differ from the sources' (linearly in `dg`); statements comparing with the
+sources must account for it.
 
 **Where the integral makes sense.** The integrand is evaluated at the chosen representatives
 `CosetSpace.out` of the cosets.  It is a function on `G_x(F)\G(F)` when `G_x(F) ⊆ M(F)`
@@ -44,10 +48,9 @@ Beuzart-Plessis' definition does.
 
 * `orbQuotMeasure_spec`: `dg/μ` is the Weil measure, for `μ` Haar and right invariant (`G_x(F)`
   unimodular; for regular `x` it is a torus).
-* `continuous_vM`: `v_M` is locally constant (right `K`-invariant, `K` open).
 * `integrable_weightedIntegrand`: the integrand is integrable for continuous compactly
-  supported `f` and regular semisimple `x`, from `exists_isCompact_conj_mem` (closed orbits; not yet
-  proved).
+  supported `f`, `x` semisimple and `G_x(F) ⊆ M(F)`, from `exists_isCompact_conj_mem` (closed
+  orbits; not yet proved).
 * `weightedOrbitalIntegral_eq_orbitalIntegral_of_aG_eq_top`: `J_M = J_G` when `a_M = a_G`
   (`v_G = 1`), e.g. `M = G`.
 * `weightedOrbitalIntegral_conj_K`: `J_M(x, f(k · k⁻¹)) = J_M(x, f)` for `k ∈ K`.
@@ -63,47 +66,6 @@ namespace GSpinGGP
 
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
-section WeylDisc
-
-attribute [local instance 100] LieRing.ofAssociativeRing LieAlgebra.ofAssociativeAlgebra
-
-variable {A : Type*} [Ring A] [Algebra F A] [Module.Finite F A]
-
-/-- **`D^G` is invariant under conjugation** by a unit `u` with `Ad u` and `Ad u⁻¹` preserving `𝔤`:
-`1 − Ad(u x u⁻¹)` on `𝔤` is conjugate to `1 − Ad x` by `Ad u` (`LinearEquiv.charpoly_conj`).
-The group analogue of `weylDiscLie_units_conj`. -/
-theorem weylDisc_units_conj (𝔤 : LieSubalgebra F A) (u : Aˣ)
-    (hu : ∀ X ∈ 𝔤.toSubmodule, conjAd F u X ∈ 𝔤.toSubmodule)
-    (hu' : ∀ X ∈ 𝔤.toSubmodule, conjAd F u⁻¹ X ∈ 𝔤.toSubmodule) (x : Aˣ) :
-    weylDisc 𝔤 (u * x * u⁻¹) = weylDisc 𝔤 x := by
-  have hc : ∀ X, conjAd F (u * x * u⁻¹) X = conjAd F u (conjAd F x (conjAd F u⁻¹ X)) := by
-    intro X; simp [mul_assoc]
-  have hc' : ∀ X, conjAd F x X = conjAd F u⁻¹ (conjAd F (u * x * u⁻¹) (conjAd F u X)) := by
-    intro X; simp [mul_assoc]
-  unfold weylDisc
-  by_cases hx : ∀ X ∈ 𝔤.toSubmodule, conjAd F x X ∈ 𝔤.toSubmodule
-  · have hx' : ∀ X ∈ 𝔤.toSubmodule, conjAd F (u * x * u⁻¹) X ∈ 𝔤.toSubmodule := fun X hX => by
-      rw [hc]; exact hu _ (hx _ (hu' _ hX))
-    rw [dite_eq_left_of_eq_true (eq_true hx), dite_eq_left_of_eq_true (eq_true hx')]
-    let c : ↥𝔤.toSubmodule ≃ₗ[F] ↥𝔤.toSubmodule :=
-      { toFun := fun X => ⟨conjAd F u X, hu _ X.2⟩
-        invFun := fun X => ⟨conjAd F u⁻¹ X, hu' _ X.2⟩
-        map_add' := fun X Y => Subtype.ext (map_add _ _ _)
-        map_smul' := fun r X => Subtype.ext (map_smul _ _ _)
-        left_inv := fun X => Subtype.ext (by simp [mul_assoc])
-        right_inv := fun X => Subtype.ext (by simp [mul_assoc]) }
-    congr 2
-    rw [← LinearEquiv.charpoly_conj c.symm]
-    congr 1
-    refine LinearMap.ext fun Y => Subtype.ext ?_
-    simp [LinearEquiv.conj_apply, c, mul_sub, sub_mul, mul_assoc]
-    exact (mul_assoc _ _ _).symm
-  · have hx' : ¬ ∀ X ∈ 𝔤.toSubmodule, conjAd F (u * x * u⁻¹) X ∈ 𝔤.toSubmodule := fun h =>
-      hx fun X hX => by rw [hc']; exact hu' _ (h _ (hu _ hX))
-    rw [dite_eq_right_of_eq_false (eq_false hx), dite_eq_right_of_eq_false (eq_false hx')]
-
-end WeylDisc
-
 namespace GGPData
 
 variable (d : GGPData F)
@@ -114,8 +76,19 @@ section Quotient
 
 variable (x : ↥d.G)
 
-/-- **The centralizer `G_x(F)`** of `x`, as a subgroup of `G(F)` (Thesis §2.1). -/
+/-- **The centralizer `G_x(F)`** of `x`, as a subgroup of `G(F)` (Thesis §2.1; the same group as
+`grpCentralizer d.G x`, `mem_centG_iff`).  Beuzart-Plessis (p. 27) writes `G_x` for the neutral
+component `Z_G(x)⁰`; for semisimple `x` the full centralizer is the same here, since the derived
+group `Spin × Spin` of `G` is simply connected, so centralizers of semisimple elements are
+connected (Steinberg; Humphreys, *Conjugacy classes in semisimple algebraic groups*, Thm 2.11). -/
 abbrev centG : Subgroup ↥d.G := Subgroup.centralizer {x}
+
+/-- `centG x` is `grpCentralizer d.G x` read inside `G(F)`. -/
+theorem mem_centG_iff {g : ↥d.G} :
+    g ∈ d.centG x ↔ (g : d.ambientˣ) ∈ grpCentralizer d.G (x : d.ambientˣ) := by
+  rw [Subgroup.mem_centralizer_singleton_iff, grpCentralizer, Subgroup.mem_inf,
+    Subgroup.mem_centralizer_singleton_iff]
+  exact ⟨fun h => ⟨g.prop, congrArg Subtype.val h.eq⟩, fun h => Subtype.ext h.2.eq⟩
 
 theorem isClosed_centG : IsClosed (d.centG x : Set ↥d.G) := Set.isClosed_centralizer _
 
@@ -187,7 +160,7 @@ def weightedIntegrand (f : ↥d.G → ℂ) (g : ↥d.G) : ℂ :=
   f (g⁻¹ * x * g) * (L.vM K g : ℂ)
 
 /-- **The normalized orbital integral** `J_G(x, f) = D^G(x)^{1/2} ∫_{G_x(F)\G(F)} f(g⁻¹ x g) dg`
-(Beuzart-Plessis §1.8, p. 33; Thesis §2.5), for the quotient measure `dg/μ`
+(Beuzart-Plessis §1.8, p. 33; Thesis §2.6), for the quotient measure `dg/μ`
 (`orbQuotMeasure`), integrating over the representatives `CosetSpace.out` (the integrand is
 left `G_x(F)`-invariant). -/
 def orbitalIntegral (μ : Measure ↥(d.centG x)) (f : ↥d.G → ℂ) : ℂ :=
@@ -222,17 +195,6 @@ theorem weightedIntegrand_mul_left (hM : d.centG x ≤ L.M) (f : ↥d.G → ℂ)
   unfold weightedIntegrand
   rw [e, show c * g = ((⟨c, hM hc⟩ : ↥L.M) : ↥d.G) * g from rfl, L.vM_mul_left]
 
-/-- **`v_M` is locally constant**, hence continuous: it is right `K`-invariant (`vM_mul_right`) and
-`K` is open. -/
-theorem continuous_vM : Continuous (L.vM K) := by
-  refine continuous_iff_continuousAt.2 fun g => ?_
-  have hn : (g * ·) '' (K.K : Set ↥d.G) ∈ 𝓝 g := by
-    have := (Homeomorph.mulLeft g).isOpenMap _ K.isOpen
-    refine this.mem_nhds ⟨1, K.K.one_mem, mul_one g⟩
-  refine (continuousAt_const (y := L.vM K g)).congr (Filter.mem_of_superset hn ?_)
-  rintro _ ⟨k, hk, rfl⟩
-  exact (L.vM_mul_right K g hk).symm
-
 /-- `J_M = J_G` when `a_M = a_G`, e.g. for `M = G` (`v_G = 1`, `vM_eq_one_of_aG_eq_top`). -/
 theorem weightedOrbitalIntegral_eq_orbitalIntegral_of_aG_eq_top (hG : L.aG = ⊤)
     (μ : Measure ↥(d.centG x)) (f : ↥d.G → ℂ) :
@@ -261,13 +223,17 @@ for a compact `C' ⊆ G(F)`.  This is what makes orbital integrals of compactly 
 functions finite (Beuzart-Plessis §1.8, §1.10; Waldspurger 2010, §2.3).
 
 Not yet proved.  Sketch: (1) the conjugacy class `O_x = {g⁻¹ x g}` of a semisimple element is
-closed in `G(F)`: the geometric class of a semisimple element of the connected reductive group
-`G` is Zariski closed (Steinberg), and its `F`-points form finitely many `G(F)`-classes
-(finiteness of Galois cohomology over a `p`-adic field of characteristic `0`, Borel–Serre), each
-open, hence also closed, in them; (2) the orbit map `G_x(F)\G(F) → O_x` is a continuous
-bijection from a `σ`-compact space onto a locally compact Hausdorff space (closed in `G(F)`),
-hence a homeomorphism (Baire); (3) `C ∩ O_x` is compact, so its preimage in `G_x(F)\G(F)` is compact
-and lifts to a compact `C' ⊆ G(F)` (`CosetSpace.exists_isCompact_image_superset`). -/
+closed in `G(F)`: the geometric class `𝒪` of a semisimple element of the connected reductive
+group `G` is Zariski closed (Steinberg), so `𝒪(F)` is closed in `G(F)`; in characteristic `0`
+the orbit map `G → 𝒪` is smooth, so by the implicit function theorem each `G(F)`-orbit in `𝒪(F)`
+is open in `𝒪(F)`; there are finitely many (finiteness of Galois cohomology over a `p`-adic
+field, Borel–Serre), so each is also closed.  (2) `G(F)` is `σ`-compact and acts continuously
+and transitively on the closed, hence locally compact and Baire, space `O_x`; by the open mapping
+theorem (`isOpenMap_smul_of_sigmaCompact`) the orbit map is open, so `G_x(F)\G(F) → O_x` is a
+homeomorphism.  (3) `C ∩ O_x` is compact, so its preimage in `G_x(F)\G(F)` is compact and lifts
+to a compact `C' ⊆ G(F)` (`CosetSpace.exists_isCompact_image_superset`).  A printed alternative
+for regular `x` is the bound `σ_T(g) ≤ c(1 + |log D^G(x)|)` for `g⁻¹ x g ∈ Γ` (Arthur 1991,
+Lemma 4.2, quoted in Waldspurger 2010, §2.3, (1)). -/
 theorem exists_isCompact_conj_mem (hx : IsSS F ((x : d.ambientˣ) : d.ambient)) {C : Set ↥d.G}
     (hC : IsCompact C) :
     ∃ C' : Set ↥d.G, IsCompact C' ∧
@@ -286,7 +252,7 @@ theorem integrable_weightedIntegrand (hx : IsSS F ((x : d.ambientˣ) : d.ambient
   set ι := (d.centG x).subtype
   have hcont : Continuous (d.weightedIntegrand L K x f) := by
     unfold weightedIntegrand
-    exact (hf.comp (by fun_prop)).mul (Complex.continuous_ofReal.comp continuous_vM)
+    exact (hf.comp (by fun_prop)).mul (Complex.continuous_ofReal.comp (L.continuous_vM K))
   have hΦ : Continuous fun q : d.CentQuot x =>
       d.weightedIntegrand L K x f (CosetSpace.out ι q) := by
     refine CosetSpace.continuous_of_comp_mk ι ?_
@@ -408,9 +374,12 @@ theorem weylDisc_conj (m : ↥d.G) :
   have e : ((m * x * m⁻¹ : ↥d.G) : d.ambientˣ) =
       (m : d.ambientˣ) * (x : d.ambientˣ) * (m : d.ambientˣ)⁻¹ := by simp
   rw [e]
-  refine weylDisc_units_conj d.lie _ (lie_conj_stable d m) ?_ _
-  have := lie_conj_stable d m⁻¹
-  simpa using this
+  refine weylDisc_units_conj d.lie _ (le_antisymm ?_ fun X hX => ?_) _
+  · rintro _ ⟨X, hX, rfl⟩
+    exact lie_conj_stable d m X hX
+  · have h := lie_conj_stable d m⁻¹ X hX
+    refine ⟨_, h, ?_⟩
+    simp [mul_assoc]
 
 /-- **`J_M(x, f)` is invariant under conjugation of `x` by `M(F)`** (Beuzart-Plessis §1.10;
 Waldspurger 2010, §2.3, Lemme (i)): `J_M(m x m⁻¹, f) = J_M(x, f)` for `m ∈ M(F)`, when
