@@ -1,4 +1,5 @@
 import GSpinGGP.Foundations.LocalGroups
+import GSpinGGP.Foundations.ValueGroup
 import GSpinGGP.Foundations.HaarLocal
 import GSpinGGP.Foundations.RankSemicontinuity
 import GSpinGGP.Foundations.Determinant
@@ -163,6 +164,7 @@ import GSpinGGP.GGP.GermTransfer
 import GSpinGGP.GGP.TwistSymm
 import GSpinGGP.GGP.Levi
 import GSpinGGP.GGP.LeviSubgroup
+import GSpinGGP.GGP.LeviLattice
 import GSpinGGP.GGP.Unramified
 import GSpinGGP.GGP.WeightVM
 import GSpinGGP.TraceFormula.Basic

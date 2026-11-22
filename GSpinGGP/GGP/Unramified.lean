@@ -2,7 +2,7 @@
 Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import GSpinGGP.GGP.LeviSubgroup
+import GSpinGGP.GGP.LeviLattice
 import GSpinGGP.Foundations.RepresentationTwist
 
 /-!
@@ -46,9 +46,12 @@ The dual lattice is `𝒜^∨_{M,F} = Hom(𝒜_{M,F}, 2πℤ)`, the homomorphism
 
 ## Main results
 
+* `rangeHM_isLattice`: `𝒜_{M,F}` is a lattice of full rank in `a_M` (discrete and spanning).
+* `dualLattice_isLattice`, `dualLattice_ne_bot`: so is `𝒜^∨_{M,F}` in `a*_M`; `i a*_{M,F}` is a
+  compact torus of dimension `dim a_M`.
 * `continuous_unramChar`: `χ_λ` is a continuous character.
-* `norm_unramChar_eq_one_iff`: `χ_λ` is unitary iff `Re λ` vanishes on `𝒜_{M,F}`;
-  `norm_unramChar_eq_one_of_re_eq_zero`: in particular for `λ ∈ i a*_M`.
+* `norm_unramChar_eq_one_iff`: `χ_λ` is unitary iff `Re λ = 0`
+  (`norm_unramChar_eq_one_iff_rangeHM`: iff `Re λ` vanishes on `𝒜_{M,F}`).
 * `unramChar_eq_unramChar_iff`: `χ_λ = χ_μ` iff `⟨λ − μ, H_M(m)⟩ ∈ 2πiℤ` for all `m`;
   `unitaryUnramChar_eq_iff`: `χ_{iν} = χ_{iν'}` iff `ν − ν' ∈ 𝒜^∨_{M,F}`;
   `ker_unitaryUnramCharHom`, `torusChar_injective`.
@@ -63,9 +66,8 @@ The dual lattice is `𝒜^∨_{M,F} = Hom(𝒜_{M,F}, 2πℤ)`, the homomorphism
   `i_P^G(σ_λ)` are the `f` with `f(pg) = δ_P(p)^{1/2} e^{i⟨ν, H_M(proj p)⟩} σ(pU) f(g)` (with the
   `s`-scaled `H_M = L.HM`, see below).
 
-Not done here: that `𝒜_{M,F}` is a lattice of full rank (so that `i a*_{M,F}` is a compact torus
-and the unitarity criterion becomes `Re λ = 0`), and the restriction-to-`K` identification of the
-`i_P^G(σ_λ)` (the compact picture).
+Not done here: the restriction-to-`K` identification of the `i_P^G(σ_λ)` (the compact
+picture).
 -/
 
 noncomputable section
@@ -155,6 +157,49 @@ def rangeHM : AddSubgroup L.aM where
 
 theorem mem_rangeHM {H : L.aM} : H ∈ L.rangeHM ↔ ∃ m, L.HM m = H := Iff.rfl
 
+/-! ### `𝒜_{M,F}` is a lattice of full rank -/
+
+/-- `⟨ν, ·⟩` as a linear form on `a_M`. -/
+def dualPairₗ (ν : L.aMDual) : L.aM →ₗ[ℝ] ℝ where
+  toFun := L.dualPair ν
+  map_add' := L.dualPair_add_right ν
+  map_smul' a H := by
+    simp only [dualPair, Pi.smul_apply, smul_eq_mul, RingHom.id_apply, Finset.mul_sum]
+    exact Finset.sum_congr rfl fun c _ => by ring
+
+@[simp] theorem dualPairₗ_apply (ν : L.aMDual) (H : L.aM) : L.dualPairₗ ν H = L.dualPair ν H := rfl
+
+theorem dualPair_single (ν : L.aMDual) (c : L.Coord) : L.dualPair ν (Pi.single c 1) = ν c := by
+  classical
+  simp [dualPair, Pi.single_apply]
+
+/-- A `ν ∈ a*_M` orthogonal to a spanning set of `a_M` is `0`. -/
+theorem eq_zero_of_dualPair_eq_zero {s : Set L.aM} (hs : Submodule.span ℝ s = ⊤) {ν : L.aMDual}
+    (h : ∀ H ∈ s, L.dualPair ν H = 0) : ν = 0 := by
+  have : L.dualPairₗ ν = 0 := LinearMap.ext_on hs fun H hH => h H hH
+  funext c
+  rw [← L.dualPair_single ν c, ← dualPairₗ_apply, this]
+  rfl
+
+theorem continuous_dualPair_left (H : L.aM) : Continuous fun ν : L.aMDual => L.dualPair ν H :=
+  continuous_finsetSum _ fun c _ => (continuous_apply c).mul continuous_const
+
+/-- **`𝒜_{M,F} = H_M(M(F))` is a lattice of full rank in `a_M`** (Beuzart-Plessis §1.1, p. 12):
+discrete, as its coordinates lie in `ℤ ℓ` (`exists_HM_mem_zmultiples`), and spanning, already by
+`H_M(A_M(F))` (`span_range_HM_eq_top`). -/
+theorem rangeHM_isLattice :
+    DiscreteTopology L.rangeHM.toIntSubmodule ∧
+      Submodule.span ℝ (L.rangeHM.toIntSubmodule : Set L.aM) = ⊤ := by
+  obtain ⟨ℓ, -, hZ⟩ := L.exists_HM_mem_zmultiples
+  refine ⟨?_, L.span_range_HM_eq_top⟩
+  let f : L.rangeHM.toIntSubmodule → (L.Coord → AddSubgroup.zmultiples ℓ) := fun x c =>
+    ⟨(x : L.aM) c, by obtain ⟨m, hm⟩ := (L.mem_rangeHM).1 x.2; rw [← hm]; exact hZ m c⟩
+  have hf : Continuous f := continuous_pi fun c =>
+    ((continuous_apply c).comp continuous_subtypeVal).subtype_mk _
+  have hfi : Function.Injective f := fun x y h =>
+    Subtype.ext (funext fun c => congrArg Subtype.val (congrFun h c))
+  exact DiscreteTopology.of_continuous_injective hf hfi
+
 /-! ## 3. Unramified characters `χ_λ`, `λ ∈ a*_{M,ℂ}` -/
 
 /-- **The unramified character `χ_λ(m) = e^{⟨λ, H_M(m)⟩}`** of `M(F)`, `λ ∈ a*_{M,ℂ}`
@@ -179,7 +224,7 @@ theorem norm_unramChar (μ : L.aMDualC) (m : ↥L.M) :
   rw [coe_unramChar, Complex.norm_exp, re_dualPairC]
 
 /-- **`χ_λ` is unitary iff `Re λ` vanishes on `𝒜_{M,F} = H_M(M(F))`.** -/
-theorem norm_unramChar_eq_one_iff (μ : L.aMDualC) :
+theorem norm_unramChar_eq_one_iff_rangeHM (μ : L.aMDualC) :
     (∀ m, ‖(L.unramChar μ m : ℂ)‖ = 1) ↔
       ∀ H ∈ L.rangeHM, L.dualPair (fun c => (μ c).re) H = 0 := by
   simp only [norm_unramChar, Real.exp_eq_one_iff, mem_rangeHM]
@@ -190,6 +235,15 @@ theorem norm_unramChar_eq_one_of_re_eq_zero {μ : L.aMDualC} (h : ∀ c, (μ c).
     (m : ↥L.M) : ‖(L.unramChar μ m : ℂ)‖ = 1 := by
   rw [norm_unramChar]
   simp [h, dualPair]
+
+/-- **`χ_λ` is unitary iff `Re λ = 0`** (Beuzart-Plessis §1.1): `Re λ` vanishes on
+`𝒜_{M,F}`, which spans `a_M` (`rangeHM_isLattice`). -/
+theorem norm_unramChar_eq_one_iff (μ : L.aMDualC) :
+    (∀ m, ‖(L.unramChar μ m : ℂ)‖ = 1) ↔ ∀ c, (μ c).re = 0 := by
+  rw [norm_unramChar_eq_one_iff_rangeHM]
+  refine ⟨fun h c => congrFun (L.eq_zero_of_dualPair_eq_zero L.span_range_HM_eq_top
+    fun H hH => h H hH) c, fun h H _ => ?_⟩
+  simp [dualPair, h]
 
 /-- **Periodicity**: `χ_λ = χ_μ` iff `⟨λ − μ, H_M(m)⟩ ∈ 2πiℤ` for every `m ∈ M(F)`. -/
 theorem unramChar_eq_unramChar_iff (μ μ' : L.aMDualC) :
@@ -259,6 +313,68 @@ def dualLattice : AddSubgroup L.aMDual where
     intro ν hν H hH
     obtain ⟨n, hn⟩ := hν H hH
     exact ⟨-n, by rw [dualPair_neg_left, hn]; push_cast; ring⟩
+
+/-- `(2π/ℓ) e_c ∈ 𝒜^∨_{M,F}` when the coordinates of `𝒜_{M,F}` lie in `ℤ ℓ`. -/
+theorem smul_single_mem_dualLattice {ℓ : ℝ} (hℓ : 0 < ℓ)
+    (hZ : ∀ (m : ↥L.M) (c : L.Coord), L.HM m c ∈ AddSubgroup.zmultiples ℓ) (c : L.Coord) :
+    (2 * π / ℓ) • Pi.single c (1 : ℝ) ∈ L.dualLattice := by
+  rintro _ ⟨m, rfl⟩
+  obtain ⟨n, hn⟩ := hZ m c
+  refine ⟨n, ?_⟩
+  have : L.dualPair ((2 * π / ℓ) • Pi.single c (1 : ℝ)) (L.HM m) =
+      (2 * π / ℓ) * L.HM m c := by
+    rw [show (2 * π / ℓ) • Pi.single c (1 : ℝ) = Pi.single c (2 * π / ℓ) by
+      rw [← Pi.single_smul, smul_eq_mul, mul_one]]
+    classical
+    simp [dualPair, Pi.single_apply, mul_comm]
+  rw [this, ← hn]
+  simp only [zsmul_eq_mul]
+  field_simp
+
+/-- **`𝒜^∨_{M,F}` is a lattice of full rank in `a*_M`**, so `i a*_{M,F} = a*_M / 𝒜^∨_{M,F}` is a
+compact torus (Beuzart-Plessis §1.1): it contains `(2π/ℓ) e_c` for every coordinate
+(`smul_single_mem_dualLattice`), and it is discrete because `𝒜_{M,F}` spans `a_M`: pairing with a
+basis of `a_M` taken in `𝒜_{M,F}` embeds it in `(2πℤ)^n`. -/
+theorem dualLattice_isLattice :
+    DiscreteTopology L.dualLattice.toIntSubmodule ∧
+      Submodule.span ℝ (L.dualLattice.toIntSubmodule : Set L.aMDual) = ⊤ := by
+  classical
+  obtain ⟨ℓ, hℓ, hZ⟩ := L.exists_HM_mem_zmultiples
+  refine ⟨?_, ?_⟩
+  · obtain ⟨B, hBsub, hBspan, hBli⟩ := exists_linearIndependent ℝ (Set.range L.HM)
+    have : Finite B := hBli.finite
+    have hB : Submodule.span ℝ B = ⊤ := hBspan.trans L.span_range_HM_eq_top
+    let f : L.dualLattice.toIntSubmodule → (B → AddSubgroup.zmultiples (2 * π)) := fun ν H =>
+      ⟨L.dualPair ν H, by
+        obtain ⟨n, hn⟩ := ν.2 H (hBsub H.2)
+        exact ⟨n, by show n • (2 * π) = _; rw [hn, zsmul_eq_mul]⟩⟩
+    have hf : Continuous f := continuous_pi fun H =>
+      ((L.continuous_dualPair_left H).comp continuous_subtypeVal).subtype_mk _
+    have hfi : Function.Injective f := by
+      intro ν ν' h
+      refine Subtype.ext (sub_eq_zero.1 (L.eq_zero_of_dualPair_eq_zero hB fun H hH => ?_))
+      have := congrArg Subtype.val (congrFun h ⟨H, hH⟩)
+      simp only [f] at this
+      rw [dualPair_sub_left, this, sub_self]
+    exact DiscreteTopology.of_continuous_injective hf hfi
+  · rw [eq_top_iff, ← (Pi.basisFun ℝ L.Coord).span_eq, Submodule.span_le]
+    rintro _ ⟨c, rfl⟩
+    have h := Submodule.smul_mem _ (ℓ / (2 * π))
+      (Submodule.subset_span (L.smul_single_mem_dualLattice hℓ hZ c) :
+        (2 * π / ℓ) • Pi.single c (1 : ℝ) ∈
+          Submodule.span ℝ (L.dualLattice.toIntSubmodule : Set L.aMDual))
+    rw [smul_smul, div_mul_div_comm, mul_comm ℓ, div_self (by positivity), one_smul] at h
+    simpa using h
+
+/-- **`𝒜^∨_{M,F} ≠ 0`**: `i a*_{M,F}` is a genuine torus, not all of `i a*_M`. -/
+theorem dualLattice_ne_bot : L.dualLattice ≠ ⊥ := by
+  obtain ⟨ℓ, hℓ, hZ⟩ := L.exists_HM_mem_zmultiples
+  intro h
+  have hmem := L.smul_single_mem_dualLattice hℓ hZ (Sum.inl (Sum.inr ()))
+  rw [h, AddSubgroup.mem_bot] at hmem
+  have := congrFun hmem (Sum.inl (Sum.inr ()))
+  simp only [Pi.smul_apply, Pi.single_eq_same, smul_eq_mul, mul_one, Pi.zero_apply] at this
+  exact (div_pos (by positivity) hℓ).ne' this
 
 /-- **`χ_{iν}` is trivial iff `ν ∈ 𝒜^∨_{M,F}`.** -/
 theorem unitaryUnramChar_eq_one_iff (ν : L.aMDual) :
