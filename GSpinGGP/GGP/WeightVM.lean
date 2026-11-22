@@ -83,9 +83,12 @@ Waldspurger 2010, §1.1 and §2.3, takes `K` special maximal compact in good pos
 `A`-eigenspaces, whose unit balls are lattices split by the weight spaces (sums of
 `A`-eigenspaces); `goodPositionW/V` keep only this consequence (not proved here from the building).
 Beuzart-Plessis (§1.10) takes `K` special.  These sources state that `(H_P(g))_{P ∈ 𝒫(M)}` is
-then a *positive* `(G,M)`-orthogonal family; that positivity is not proved here (no roots of
-`A_M` are formalized yet), and
-specialness is not imposed beyond the Iwasawa decompositions. -/
+then a *positive* `(G,M)`-orthogonal family.  Positivity is expected from `goodPositionW/V` alone
+(not proved here; no roots of `A_M` are formalized yet): `H_P` does not change when `K` is
+enlarged to the stabilizer of the split lattices, and for adjacent `P, P'` the difference
+`H_P(g) - H_{P'}(g)` is a nonpositive multiple of the coroot, by submultiplicativity of the lattice
+norms on exterior powers (the dual lattice on the isotropic part).  Specialness is not imposed
+beyond the Iwasawa decompositions. -/
 structure GoodK (L : d.FlagLeviDatum) where
   /-- the compact open subgroup -/
   K : Subgroup ↥d.G
