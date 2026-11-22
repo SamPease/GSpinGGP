@@ -24,6 +24,8 @@ Gross-Prasad*, Compos. Math. 146 (2010), §1.2; Beuzart-Plessis, Astérisque 418
 
 * `hullVolume_vadd`, `hullVolume_neg`: invariance under translating and negating the points.
 * `hullVolume_of_subsingleton`: in the zero space the hull of a nonempty set has volume `1`.
+* `hullVolume_pair_of_equiv`: in a line `E ≃ ℝ` carrying `Λ` to `ℤ ℓ`, the hull of `{a, b}` has
+  volume `|a − b| / ℓ`.
 -/
 
 noncomputable section
@@ -97,6 +99,46 @@ theorem hullVolume_vadd (Λ : AddSubgroup E) (x : E) (S : Set E) :
 theorem hullVolume_neg (Λ : AddSubgroup E) (S : Set E) : hullVolume Λ (-S) = hullVolume Λ S := by
   rw [hullVolume, hullVolume, convexHull_neg, latticeHaar, smul_apply, smul_apply,
     measure_neg]
+
+/-- **Hulls of two points in a line**: if `φ : E ≃ ℝ` carries `Λ` onto `ℤ ℓ`, the hull of
+`{a, b}` has `latticeHaar Λ`-volume `|φ a − φ b| / ℓ` (a fundamental domain `φ⁻¹(0, ℓ]` has
+volume `1`). -/
+theorem hullVolume_pair_of_equiv {Λ : AddSubgroup E} (φ : E ≃L[ℝ] ℝ) {ℓ : ℝ} (hℓ : 0 < ℓ)
+    (hΛ : Λ.map (φ : E →+ ℝ) = AddSubgroup.zmultiples ℓ) (a b : E) :
+    hullVolume Λ {a, b} = |φ a - φ b| / ℓ := by
+  have hmem : ∀ g : Λ, φ g ∈ AddSubgroup.zmultiples ℓ := fun g => by
+    rw [← hΛ]; exact AddSubgroup.mem_map_of_mem _ g.property
+  let e : Λ → AddSubgroup.zmultiples ℓ := fun g => ⟨φ g, hmem g⟩
+  have he : Function.Bijective e := by
+    refine ⟨fun g h hgh => Subtype.ext (φ.injective (congrArg Subtype.val hgh)), fun y => ?_⟩
+    have hy : (y : ℝ) ∈ Λ.map (φ : E →+ ℝ) := by rw [hΛ]; exact y.property
+    obtain ⟨x, hx, hxy⟩ := hy
+    exact ⟨⟨x, hx⟩, Subtype.ext hxy⟩
+  have : Countable Λ := (Function.Injective.countable he.1 :)
+  let ψ : E ≃ᵐ ℝ := φ.toHomeomorph.toMeasurableEquiv
+  let μ : Measure E := Measure.map ψ.symm volume
+  have hμ : ∀ s, μ s = volume (φ '' s) := fun s => by
+    rw [ψ.symm.map_apply]; congr 1; exact (ψ.image_eq_preimage_symm s).symm
+  have : μ.IsAddHaarMeasure := φ.symm.isAddHaarMeasure_map volume
+  have hD : IsAddFundamentalDomain Λ (φ ⁻¹' Set.Ioc 0 ℓ) μ := by
+    let e' := (Equiv.ofBijective e he).symm
+    rw [show Set.Ioc (0 : ℝ) ℓ = Set.Ioc 0 (0 + ℓ) by rw [zero_add]]
+    refine (isAddFundamentalDomain_Ioc hℓ 0 volume).preimage_of_equiv (ν := μ) (f := φ) (e := e') ?_
+      e'.bijective fun g x => ?_
+    · refine MeasurePreserving.quasiMeasurePreserving ⟨φ.continuous.measurable, ?_⟩
+      rw [Measure.map_map φ.continuous.measurable ψ.symm.measurable]
+      convert Measure.map_id
+      funext x; exact φ.apply_symm_apply x
+    · change φ (e' g + x) = g + φ x
+      rw [map_add]
+      congr 1
+      exact congrArg Subtype.val ((Equiv.ofBijective e he).apply_symm_apply g)
+  rw [hullVolume, latticeHaar_eq μ hD, smul_apply, hμ, hμ, Set.image_preimage_eq _ φ.surjective,
+    convexHull_pair, show φ '' segment ℝ a b = segment ℝ (φ a) (φ b) from
+      image_segment ℝ ((φ : E →ₗ[ℝ] ℝ).toAffineMap) a b, segment_eq_uIcc,
+    Real.volume_Ioc, Real.volume_interval, smul_eq_mul, ENNReal.toReal_mul, ENNReal.toReal_inv,
+    sub_zero, ENNReal.toReal_ofReal hℓ.le, ENNReal.toReal_ofReal (abs_nonneg _), inv_mul_eq_div,
+    abs_sub_comm]
 
 /-- **In the zero space the hull of a nonempty set has volume `1`.** -/
 theorem hullVolume_of_subsingleton [Subsingleton E] (Λ : AddSubgroup E) {S : Set E}

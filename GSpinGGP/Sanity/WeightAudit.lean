@@ -19,7 +19,8 @@ Levi datum with `M = G`; the compact open subgroup of `toyXiPair` is good for it
 `M = G`.  At `gl2Data` (`W = 0`, `V` split of dimension `3`, `G = GL₁ × GSpin₃`) the torus `M`
 of the flag `⟨z₁⟩` (the reduced Levi datum `gl2Levi`) has `a_M^G ≠ 0` and `latticeHaar` gives the fundamental domains of
 `proj_M^G(H_M(A_M(F)))` volume `1` (`gl2_aMG_nontrivial`); a `GoodK` for this proper Levi is
-constructed in `Sanity/GL2GoodK.lean` (`gl2GoodK`).  Nothing here uses an axiom.
+constructed in `Sanity/GL2GoodK.lean` (`gl2GoodK`), and `v_M` is computed at the lower unipotent
+elements in `Sanity/GL2Weight.lean` (`gl2_vM_nbar`).  Nothing here uses an axiom.
 -/
 
 noncomputable section
@@ -37,10 +38,9 @@ open MeasureTheory Measure Set in
 volume `|x| / ℓ` (`E/Λ` has volume `1`, whatever `addHaar` is). -/
 theorem hullVolume_zmultiples_pair {ℓ : ℝ} (hℓ : 0 < ℓ) (x : ℝ) :
     hullVolume (AddSubgroup.zmultiples ℓ) {0, x} = |x| / ℓ := by
-  rw [hullVolume, latticeHaar_eq volume (isAddFundamentalDomain_Ioc hℓ 0), smul_apply,
-    convexHull_pair, segment_eq_uIcc, Real.volume_Ioc, Real.volume_interval, smul_eq_mul,
-    ENNReal.toReal_mul, ENNReal.toReal_inv, zero_add, sub_zero, sub_zero,
-    ENNReal.toReal_ofReal hℓ.le, ENNReal.toReal_ofReal (abs_nonneg x), inv_mul_eq_div]
+  rw [hullVolume_pair_of_equiv (ContinuousLinearEquiv.refl ℝ ℝ) hℓ
+    (AddSubgroup.map_id _), ContinuousLinearEquiv.refl_apply, ContinuousLinearEquiv.refl_apply,
+    zero_sub, abs_neg]
 
 /-- **`P(g) = 1` at `toyD`**: every `g` is a pair of scalars (`toyD_exists_scalar`). -/
 theorem toyD_specP_snd (g : ↥(𝕋).G) : specP (𝕋).QV ((𝕋).snd g) = 1 := by
