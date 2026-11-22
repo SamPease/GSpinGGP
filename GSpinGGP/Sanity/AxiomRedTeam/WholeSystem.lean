@@ -27,8 +27,8 @@ the path of the main theorem meet the definitions in one instance.
   `hc_character_isQuasiCharacter_admissible`, `hc_regular_open_dense_conull`,
   `jantzen_finrank_soCentMat_ge` (the last three through
   `charG_mem_QC`) and `exists_isSelfDual`.
-* **`sorry` statements, conclusions proved at `toyD`** without them:
-  `tendsto_mGeomS_of_mem_QC` and `germ_bound_of_mem_QC` for every `θ ∈ QC(χ)`
+* **`sorry` statements (and `germ_bound_of_mem_QC`, now proved), conclusions proved at `toyD`**
+  without them: `tendsto_mGeomS_of_mem_QC` and `germ_bound_of_mem_QC` for every `θ ∈ QC(χ)`
   (`toyD_tendsto_mGeomS_of_mem_QC`, `toyD_germ_bound_of_mem_QC`) and for `θ = θ_f`
   (`toyD_tendsto_mGeomS_thetaF`, `toyD_germ_bound_thetaF`); `kernelK_bound_scusp` for every
   Iwasawa datum (`toyD_kernelK_bound_scusp`; on the way `Ξ^G ≡ 1`, `Ξ^{H\G} ≡ 1`);

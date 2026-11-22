@@ -38,12 +38,6 @@ namespace GSpinGGP
 
 variable {F : Type*} [NontriviallyNormedField F] [LocallyCompactSpace F]
 
-/-- `|a^n|_F = |a|_F^n`. -/
-lemma absF_pow (a : F) (n : ℕ) : absF (a ^ n) = absF a ^ n := by
-  induction n with
-  | zero => simp [absF_one]
-  | succ n ih => rw [pow_succ, absF_mul, ih, pow_succ]
-
 /-- `|∏ x_i|_F = ∏ |x_i|_F`. -/
 theorem absF_prod {ι : Type*} (s : Finset ι) (x : ι → F) :
     absF (∏ i ∈ s, x i) = ∏ i ∈ s, absF (x i) := by

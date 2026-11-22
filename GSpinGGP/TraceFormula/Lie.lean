@@ -553,34 +553,8 @@ theorem exists_nhds_zero_mul_expA {G : Subgroup Aˣ} {θ : ↥G → ℂ} {x : �
     (hθ : ∀ᶠ y in 𝓝 x, θ y = θ x) :
     ∃ ω ∈ 𝓝 (0 : A), ∀ X ∈ ω, ∀ y : ↥G,
       ((y : Aˣ) : A) = ((x : Aˣ) : A) * expA F X → θ y = θ x := by
-  letI := isTopologicalRing_of_moduleTopology F A
-  -- the neighbourhood of `x` in `G`, pulled back to `A × Aᵐᵒᵖ`
-  rw [nhds_subtype, Filter.eventually_comap] at hθ
-  have hθ' : ∀ᶠ u in 𝓝 (x : Aˣ), ∀ y : ↥G, (y : Aˣ) = u → θ y = θ x := hθ
-  rw [Units.isEmbedding_embedProduct.isInducing.nhds_eq_comap, Filter.eventually_comap] at hθ'
-  -- continuity of `X ↦ (x e^X, op (e^{-X} x⁻¹))` at `0`
-  set f : A → A × Aᵐᵒᵖ := fun X => (((x : Aˣ) : A) * expA F X,
-      MulOpposite.op (expA F (-X) * (((x : Aˣ)⁻¹ : Aˣ) : A))) with hf
-  have hc : ContinuousAt f 0 := by
-    have h1 : ContinuousAt (fun X : A => expA F X) 0 := continuousAt_expA_zero
-    have h2 : ContinuousAt (fun X : A => expA F (-X)) 0 := by
-      have : ContinuousAt (fun X : A => -X) 0 := continuous_neg.continuousAt
-      exact ContinuousAt.comp (g := expA F) (by simpa using continuousAt_expA_zero) this
-    refine ContinuousAt.prodMk (continuousAt_const.mul h1) ?_
-    exact MulOpposite.continuous_op.continuousAt.comp (h2.mul continuousAt_const)
-  have hval : f 0 = Units.embedProduct A (x : Aˣ) := by
-    simp [hf, expA_zero, Units.embedProduct]
-  have hc2 : Tendsto f (𝓝 0) (𝓝 (Units.embedProduct A (x : Aˣ))) := by
-    rw [← hval]; exact hc
-  obtain ⟨U, hU, hUinv⟩ := expA_mul_expA_neg F (A := A)
-  refine ⟨_, Filter.inter_mem (hc2.eventually hθ') hU, fun X hX y hy => ?_⟩
-  obtain ⟨hX1, hX2⟩ := hX
-  refine hX1 (y : Aˣ) ?_ y rfl
-  -- `y⁻¹ = e^{-X} x⁻¹`
-  have hinv : (((y : Aˣ)⁻¹ : Aˣ) : A) = expA F (-X) * (((x : Aˣ)⁻¹ : Aˣ) : A) := by
-    refine Units.inv_eq_of_mul_eq_one_right ?_
-    rw [hy, mul_assoc, ← mul_assoc (expA F X), hUinv X hX2, one_mul, Units.mul_inv]
-  simp only [hf, Units.embedProduct_apply, hy, hinv]
+  obtain ⟨U, hU, hUθ⟩ := hθ.exists_mem
+  exact ⟨_, eventually_mul_expA_mem F hU, fun X hX y hy => hUθ y (hX y hy)⟩
 
 
 /-- **`ĵ(0, ·) = 1` pointwise** on a Lie algebra all of whose elements are regular semisimple

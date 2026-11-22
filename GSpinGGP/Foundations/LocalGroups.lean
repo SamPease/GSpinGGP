@@ -110,6 +110,12 @@ lemma absF_one [LocallyCompactSpace F] : absF (1 : F) = 1 := by
   rw [this, map_one]
   rfl
 
+/-- `|a^n|_F = |a|_F^n`. -/
+lemma absF_pow [LocallyCompactSpace F] (a : F) (n : ℕ) : absF (a ^ n) = absF a ^ n := by
+  induction n with
+  | zero => simp [absF_one]
+  | succ n ih => rw [pow_succ, absF_mul, ih, pow_succ]
+
 /-- `|a⁻¹|_F = |a|_F⁻¹` (both sides `0` at `a = 0`). -/
 lemma absF_inv [LocallyCompactSpace F] (a : F) : absF a⁻¹ = (absF a)⁻¹ := by
   by_cases ha : a = 0
@@ -141,16 +147,21 @@ theorem absF_eq_of_norm_eq [LocallyCompactSpace F] {a b : F} (ha : a ≠ 0) (h :
   rw [hb, absF_mul, absF_eq_one_of_norm_eq_one (u := b / a) ?_, mul_one]
   rw [norm_div, h, div_self (norm_ne_zero_iff.mpr ha)]
 
-/-- Over an ultrametric local field, `|·|_F` is locally constant on `F^×`. -/
-theorem continuousAt_absF [LocallyCompactSpace F] [IsUltrametricDist F] {a : F} (ha : a ≠ 0) :
-    ContinuousAt absF a := by
+/-- Over an ultrametric local field, `|·|_F` is locally constant on `F^×`: `|b|_F = |a|_F` for `b`
+near `a ≠ 0`. -/
+theorem eventually_absF_eq [LocallyCompactSpace F] [IsUltrametricDist F] {a : F} (ha : a ≠ 0) :
+    ∀ᶠ b in 𝓝 a, absF b = absF a := by
   have hpos : 0 < ‖a‖ := norm_pos_iff.mpr ha
-  refine (continuousAt_const (y := absF a)).congr ?_
   filter_upwards [Metric.ball_mem_nhds a hpos] with b hb
   rw [Metric.mem_ball, dist_eq_norm] at hb
-  refine (absF_eq_of_norm_eq ha ?_).symm
+  refine absF_eq_of_norm_eq ha ?_
   have := IsUltrametricDist.norm_add_eq_max_of_norm_ne_norm (ne_of_gt hb)
   rwa [add_sub_cancel, max_eq_left hb.le] at this
+
+/-- Over an ultrametric local field, `|·|_F` is continuous on `F^×`. -/
+theorem continuousAt_absF [LocallyCompactSpace F] [IsUltrametricDist F] {a : F} (ha : a ≠ 0) :
+    ContinuousAt absF a :=
+  (continuousAt_const (y := absF a)).congr ((eventually_absF_eq ha).mono fun _ h => h.symm)
 
 /-- A function that is eventually `|D|_F` for `D` continuous and nonzero at `x₀` is continuous at
 `x₀` (ultrametric `F`). -/
@@ -1406,6 +1417,46 @@ theorem exists_nhds_isRegularSS_expA (𝔤 : LieSubalgebra F A) :
 lemma continuousAt_expA_at_zero : ContinuousAt (expA F : A → A) 0 := by
   obtain ⟨U, hU, hUo, hc⟩ := exists_nhds_continuousOn_expA F (A := A)
   exact hc.continuousAt (hUo.mem_nhds (mem_of_mem_nhds hU))
+
+/-- **Points `x e^X`, `X → 0`, eventually lie in a given neighbourhood of `x`** in a subgroup
+`G ≤ Aˣ` (the topology of `G` is induced by `g ↦ (g, g⁻¹)` into `A × Aᵐᵒᵖ`, and `e^{-X} x⁻¹` is
+the inverse of `x e^X` for `X` near `0`). -/
+theorem eventually_mul_expA_mem {G : Subgroup Aˣ} {x : ↥G} {U : Set ↥G} (hU : U ∈ 𝓝 x) :
+    ∀ᶠ X in 𝓝 (0 : A), ∀ y : ↥G,
+      ((y : Aˣ) : A) = ((x : Aˣ) : A) * expA F X → y ∈ U := by
+  letI := isTopologicalRing_of_moduleTopology F A
+  have hind : Topology.IsInducing fun g : ↥G => Units.embedProduct A (g : Aˣ) :=
+    Units.isInducing_embedProduct.comp Topology.IsInducing.subtypeVal
+  rw [hind.nhds_eq_comap, Filter.mem_comap] at hU
+  obtain ⟨W, hW, hWU⟩ := hU
+  set a : A := ((x : Aˣ) : A)
+  set ai : A := (((x : Aˣ)⁻¹ : Aˣ) : A)
+  have hc : ContinuousAt (fun X : A =>
+      ((a * expA F X, MulOpposite.op (expA F (-X) * ai)) : A × Aᵐᵒᵖ)) 0 := by
+    refine ContinuousAt.prodMk (continuousAt_const.mul (continuousAt_expA_at_zero F)) ?_
+    refine MulOpposite.continuous_op.continuousAt.comp (ContinuousAt.mul ?_ continuousAt_const)
+    exact ContinuousAt.comp_of_eq (g := expA F) (f := fun X : A => -X)
+      (continuousAt_expA_at_zero F) continuous_neg.continuousAt neg_zero
+  have h0 : ((a * expA F 0, MulOpposite.op (expA F (-0) * ai)) : A × Aᵐᵒᵖ) =
+      Units.embedProduct A (x : Aˣ) := by
+    simp [expA_zero_eq_one, a, ai, Units.embedProduct]
+  have hc' : Tendsto (fun X : A =>
+      ((a * expA F X, MulOpposite.op (expA F (-X) * ai)) : A × Aᵐᵒᵖ)) (𝓝 0)
+      (𝓝 (Units.embedProduct A (x : Aˣ))) := by
+    rw [← h0]; exact hc
+  obtain ⟨U₁, hU₁, hinv⟩ := expA_mul_expA_neg F (A := A)
+  filter_upwards [hc' hW, hU₁] with X hX hX₁ y hy
+  refine hWU ?_
+  have hyi : (((y : Aˣ)⁻¹ : Aˣ) : A) = expA F (-X) * ai := by
+    refine Units.inv_eq_of_mul_eq_one_right ?_
+    rw [hy, mul_assoc, ← mul_assoc (expA F X), hinv X hX₁, one_mul]
+    exact Units.mul_inv _
+  change Units.embedProduct A (y : Aˣ) ∈ W
+  have : Units.embedProduct A (y : Aˣ) =
+      ((a * expA F X, MulOpposite.op (expA F (-X) * ai)) : A × Aᵐᵒᵖ) := by
+    simp [Units.embedProduct, hy, hyi, a]
+  rw [this]
+  exact hX
 
 /-- Right multiplication by `a`, transported to a continuous endomorphism of `F^d`. -/
 def rmulPi (a : A) : VA →L[F] VA :=

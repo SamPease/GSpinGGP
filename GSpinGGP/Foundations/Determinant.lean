@@ -10,6 +10,9 @@ import TauCeti.LinearAlgebra.Determinant.Quotient
 
 * `continuous_det_of_continuous_repr`, `continuous_det_restrict_of_continuous`: continuity of
   `x ↦ det (f x)` and `x ↦ det (f x|_C)`;
+* `charpoly_eq_mul_of_isCompl`, `trailingCoeff_charpoly_of_det_ne_zero`,
+  `trailingCoeff_charpoly_zero`: block-diagonal characteristic polynomials and their trailing
+  coefficients;
 * `trailingCoeff_charpoly_of_isCompl`: for `E = ker f ⊕ C` with `C` stable, the trailing
   coefficient of the characteristic polynomial of `f` is `± det (f|_C)`, and `det (f|_C) ≠ 0`;
 * `disjoint_ker_range_of_isSemisimple`, `isCompl_ker_range_of_isSemisimple`: `E = ker f ⊕ im f` for
@@ -40,6 +43,39 @@ theorem continuous_det_of_continuous_repr {K : Type*} [Field K] [TopologicalSpac
   simp only [LinearMap.toMatrix_apply]
   exact hf (b j) i
 
+/-- **Characteristic polynomial of a block-diagonal endomorphism**: for `E = P ⊕ R` with both
+summands `M`-stable, `charpoly M = charpoly(M|_P) charpoly(M|_R)`. -/
+theorem charpoly_eq_mul_of_isCompl {K E : Type*} [Field K] [AddCommGroup E] [Module K E]
+    [FiniteDimensional K E] {M : Module.End K E} {P R : Submodule K E} (h : IsCompl P R)
+    (hP : ∀ v ∈ P, M v ∈ P) (hR : ∀ v ∈ R, M v ∈ R) :
+    M.charpoly = (M.restrict hP).charpoly * (M.restrict hR).charpoly := by
+  obtain ⟨e, he⟩ : ∃ e : (P × R) ≃ₗ[K] E, ∀ q : P × R, e q = (q.1 : E) + (q.2 : E) :=
+    ⟨Submodule.prodEquivOfIsCompl P R h, Submodule.coe_prodEquivOfIsCompl' P R h⟩
+  have hφ : e.symm.conj M = (M.restrict hP).prodMap (M.restrict hR) := by
+    refine LinearMap.ext fun q => e.injective ?_
+    change e (e.symm (M (e q))) = _
+    rw [LinearEquiv.apply_symm_apply, he, he, map_add]
+    simp [LinearMap.coe_restrict_apply]
+  rw [← LinearEquiv.charpoly_conj e.symm M, hφ, LinearMap.charpoly_prodMap]
+
+/-- If `det f ≠ 0`, the trailing coefficient of `charpoly f` is `(−1)^{dim} det f`. -/
+theorem trailingCoeff_charpoly_of_det_ne_zero {K E : Type*} [Field K] [AddCommGroup E]
+    [Module K E] [FiniteDimensional K E] {f : Module.End K E} (h : LinearMap.det f ≠ 0) :
+    f.charpoly.trailingCoeff = (-1) ^ Module.finrank K E * LinearMap.det f := by
+  have hc0 : f.charpoly.coeff 0 ≠ 0 := by
+    intro h0
+    have := LinearMap.det_eq_sign_charpoly_coeff f
+    rw [h0, mul_zero] at this
+    exact h this
+  rw [Polynomial.trailingCoeff_eq_coeff_zero hc0, LinearMap.det_eq_sign_charpoly_coeff, ← mul_assoc,
+    ← pow_add, ← two_mul, pow_mul, neg_one_sq, one_pow, one_mul]
+
+/-- The trailing coefficient of the characteristic polynomial of `0` is `1`. -/
+theorem trailingCoeff_charpoly_zero {K E : Type*} [Field K] [AddCommGroup E] [Module K E]
+    [FiniteDimensional K E] :
+    (0 : Module.End K E).charpoly.trailingCoeff = 1 := by
+  simp [LinearMap.charpoly_zero, Polynomial.trailingCoeff_X_pow]
+
 /-- If `E = L ⊕ C` with `L = ker f` and `C` stable under `f`, then `f|_C` is invertible and the
 trailing coefficient of the characteristic polynomial of `f` is `± det (f|_C)`. -/
 theorem trailingCoeff_charpoly_of_isCompl {K E : Type*} [Field K] [AddCommGroup E] [Module K E]
@@ -58,34 +94,17 @@ theorem trailingCoeff_charpoly_of_isCompl {K E : Type*} [Field K] [AddCommGroup 
       rw [← hker, LinearMap.mem_ker]
       have := congrArg Subtype.val hY
       simpa using this
-    have : (Y : E) ∈ L ⊓ C := ⟨hY', Y.2⟩
+    have : (Y : E) ∈ L ⊓ C := ⟨hY', Y.property⟩
     rw [hcompl.disjoint.eq_bot, Submodule.mem_bot] at this
     exact (Submodule.mem_bot K).mpr (Subtype.ext this)
-  refine ⟨hdet0, ?_⟩
-  obtain ⟨e, he⟩ : ∃ e : (L × C) ≃ₗ[K] E, ∀ q : L × C, e q = (q.1 : E) + (q.2 : E) :=
-    ⟨Submodule.prodEquivOfIsCompl L C hcompl, Submodule.coe_prodEquivOfIsCompl' L C hcompl⟩
-  have hφ : e.symm.conj f = (f.restrict hL).prodMap (f.restrict hC) := by
-    refine LinearMap.ext fun q => e.injective ?_
-    show e (e.symm (f (e q))) = _
-    rw [LinearEquiv.apply_symm_apply, he, he, map_add]
-    simp [LinearMap.coe_restrict_apply]
   have hzL : f.restrict hL = 0 := by
     refine LinearMap.ext fun X => Subtype.ext ?_
-    have hX : (X : E) ∈ LinearMap.ker f := hker ▸ X.2
+    have hX : (X : E) ∈ LinearMap.ker f := hker ▸ X.property
     rw [LinearMap.mem_ker] at hX
     simpa [LinearMap.coe_restrict_apply] using hX
-  have hc0 : (LinearMap.charpoly (f.restrict hC)).coeff 0 ≠ 0 := by
-    intro h
-    have := LinearMap.det_eq_sign_charpoly_coeff (f.restrict hC)
-    rw [h, mul_zero] at this
-    exact hdet0 this
-  have htc := Polynomial.trailingCoeff_eq_coeff_zero hc0
-  have hXr : ((Polynomial.X : Polynomial K) ^ Module.finrank K L).trailingCoeff = 1 := by
-    rw [Polynomial.trailingCoeff, Polynomial.natTrailingDegree_X_pow, Polynomial.coeff_X_pow_self]
-  rw [← LinearEquiv.charpoly_conj e.symm f, hφ, LinearMap.charpoly_prodMap, hzL,
-    LinearMap.charpoly_zero, Polynomial.trailingCoeff_mul, hXr, one_mul, htc,
-    LinearMap.det_eq_sign_charpoly_coeff, ← mul_assoc, ← pow_add, ← two_mul, pow_mul, neg_one_sq,
-    one_pow, one_mul]
+  refine ⟨hdet0, ?_⟩
+  rw [charpoly_eq_mul_of_isCompl hcompl hL hC, Polynomial.trailingCoeff_mul, hzL,
+    trailingCoeff_charpoly_zero, one_mul, trailingCoeff_charpoly_of_det_ne_zero hdet0]
 
 /-- Continuity of `x ↦ det (N_x|_C)` for a family `N_x` of endomorphisms of `E` stabilizing `C`,
 when `E` embeds linearly into a finite-dimensional space `A` with its module topology and

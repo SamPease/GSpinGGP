@@ -923,6 +923,14 @@ theorem continuous_coe_diag :
       (CliffordAlgebra.map (QuadraticMap.Isometry.inl d.QW d.QZ)).toLinearMap
   exact hval.prodMk (hmap.comp hval)
 
+/-- `t ↦ diag t` is continuous from `GSpin(W)(F)` to `G(F)`. -/
+theorem continuous_diag : Continuous fun t : ↥(GSpin d.QW) => d.diag t := by
+  refine Continuous.subtype_mk (Units.continuous_iff.mpr ⟨continuous_coe_diag d, ?_⟩) _
+  have : Continuous fun t : ↥(GSpin d.QW) =>
+      (((d.diag t⁻¹ : ↥d.G) : d.ambientˣ) : d.ambient) :=
+    (continuous_coe_diag d).comp continuous_inv
+  simpa [map_inv] using this
+
 /-- **Translation by a small central semisimple `e^Y` preserves the germ** (an ingredient, not
 written out in the Thesis, of the proof of Thesis Prop 12.1.1(i)): if `diag t = diag x · e^Y`
 with `t ∈ T_{x,♮}` and `Y ∈ 𝔤_x` small, central in
