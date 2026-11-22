@@ -288,6 +288,26 @@ theorem weightedOrbitalIntegral_smul_measure (μ : Measure ↥(d.centG x)) [μ.I
   rw [hq, integral_smul_measure, Complex.real_smul]
   ring
 
+/-- With the zero measure on `G_x(F)` there is no quotient measure: the Weil formula would make
+every integral over `G(F)` vanish. -/
+theorem orbQuotMeasure_zero : d.orbQuotMeasure x 0 = 0 := by
+  classical
+  have h : ¬ ∃ m, IsWeilMeasure (d.centG x).subtype (Measure.haar : Measure ↥d.G) 0 m := by
+    rintro ⟨m, hm⟩
+    obtain ⟨φ, hφ1, -, hφc, hφ01⟩ := exists_continuous_one_zero_of_isCompact
+      (isCompact_singleton (x := (1 : ↥d.G))) isClosed_empty (Set.disjoint_empty _)
+    have hp : 0 < ∫ g, φ g ∂(Measure.haar : Measure ↥d.G) :=
+      φ.continuous.integral_pos_of_hasCompactSupport_nonneg_ne_zero hφc
+        (fun g => (hφ01 g).1) (x := 1) (by rw [hφ1 rfl]; exact one_ne_zero)
+    rw [hm φ φ.continuous hφc] at hp
+    simp at hp
+  unfold orbQuotMeasure
+  rw [dite_eq_right_of_eq_false (eq_false h)]
+
+theorem weightedOrbitalIntegral_zero_measure (f : ↥d.G → ℂ) :
+    d.weightedOrbitalIntegral L K x 0 f = 0 := by
+  simp [weightedOrbitalIntegral, orbQuotMeasure_zero]
+
 /-! ### Invariance -/
 
 /-- **`J_M(x, ·)` is invariant under conjugation of `f` by `K`** (Waldspurger 2010, §2.3:

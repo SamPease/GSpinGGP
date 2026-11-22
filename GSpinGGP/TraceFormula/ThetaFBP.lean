@@ -106,7 +106,8 @@ def AGxToM (x : ↥d.G) : ↥(L.AGx x) →* ↥L.M :=
 /-- **The maximal compact subgroup `A_{G_x}(F)^1 = A_M(F) ∩ ker H_M`** (the subgroup of measure `1`
 for `d_c a`, Beuzart-Plessis §1.6).  For the split torus `A_M`, `H_M(A_M(F))` is a lattice of full
 rank in `a_M` (`span_HMAMF_eq_top`, `exists_HM_mem_zmultiples`), so `ker H_M ∩ A_M(F) = A_M(O)` is
-the maximal compact subgroup. -/
+the maximal compact subgroup.  That it is compact and open is not proved here in general; it is a
+hypothesis of `exists_isDcMeasure`, checked at `toyD`. -/
 def AGxOne (x : ↥d.G) : Subgroup ↥(L.AGx x) := (L.HMHom.comp (L.AGxToM x)).ker
 
 theorem mem_AGxOne {x : ↥d.G} {a : ↥(L.AGx x)} :
@@ -144,18 +145,6 @@ variable {L}
 /-- **`G_x(F) ⊆ M(x)(F)`** (Waldspurger 2010, §2.3), from `centG_le_M`. -/
 theorem IsMx.centG_le {x : ↥d.G} (h : L.IsMx x) : d.centG x ≤ L.M :=
   centG_le_M L.toFlagLeviDatum h.regular h.mem
-
-/-- Every Haar measure on a subgroup of `G_x(F)` is right invariant, for `x` regular
-(`G_x(F)` is commutative, `commute_of_mem_centG`). -/
-theorem isMulRightInvariant_of_le_centG {x : ↥d.G} (hx : x ∈ regularSet d.G d.lie)
-    (S : Subgroup ↥(d.centG x)) (μ : Measure ↥S) [μ.IsMulLeftInvariant] :
-    μ.IsMulRightInvariant := by
-  refine ⟨fun c => ?_⟩
-  have e : (fun a : ↥S => a * c) = (fun a => c * a) :=
-    funext fun a => Subtype.ext (Subtype.ext
-      (commute_of_mem_centG hx (a : ↥(d.centG x)).2 (c : ↥(d.centG x)).2).eq)
-  rw [e]
-  exact map_mul_left_eq_self μ c
 
 /-! ## 2. The measure `d_c t` -/
 
@@ -333,28 +322,7 @@ theorem dcMeasure_conj {x m : ↥d.G} (hx : x ∈ regularSet d.G d.lie) (hm : m 
 
 end ReducedLeviDatum
 
-/-! ## 3. Degenerate measure -/
-
-/-- With the zero measure on `G_x(F)` there is no quotient measure: the Weil formula would make
-every integral over `G(F)` vanish. -/
-theorem orbQuotMeasure_zero (x : ↥d.G) : d.orbQuotMeasure x 0 = 0 := by
-  classical
-  have h : ¬ ∃ m, IsWeilMeasure (d.centG x).subtype (Measure.haar : Measure ↥d.G) 0 m := by
-    rintro ⟨m, hm⟩
-    obtain ⟨φ, hφ1, -, hφc, hφ01⟩ := exists_continuous_one_zero_of_isCompact
-      (isCompact_singleton (x := (1 : ↥d.G))) isClosed_empty (Set.disjoint_empty _)
-    have hp : 0 < ∫ g, φ g ∂(Measure.haar : Measure ↥d.G) :=
-      φ.continuous.integral_pos_of_hasCompactSupport_nonneg_ne_zero hφc
-        (fun g => (hφ01 g).1) (x := 1) (by rw [hφ1 rfl]; exact one_ne_zero)
-    rw [hm φ φ.continuous hφc] at hp
-    simp at hp
-  unfold orbQuotMeasure
-  rw [dite_eq_right_of_eq_false (eq_false h)]
-
-theorem weightedOrbitalIntegral_zero_measure (L : d.ReducedLeviDatum)
-    (K : d.GoodK L.toFlagLeviDatum) (x : ↥d.G) (f : ↥d.G → ℂ) :
-    d.weightedOrbitalIntegral L K x 0 f = 0 := by
-  simp [weightedOrbitalIntegral, orbQuotMeasure_zero]
+/-! ## 3. `D^G` -/
 
 /-- `D^G(x) > 0` for `x ∈ G(F)`: the characteristic polynomial of `1 − Ad x` is monic, so its
 trailing coefficient is nonzero. -/
@@ -421,7 +389,7 @@ theorem thetaFBP_conj (K : d.GoodK L.toFlagLeviDatum) (f : ↥d.G → ℂ) {x m 
     exact weightedOrbitalIntegral_conj (centG_le_M L.toFlagLeviDatum hx hxM) hm _ _
       (dcMeasure_conj hx hm).symm f
   · rw [dcMeasure_conj hx hm, dcMeasure_of_not_exists h, Measure.map_zero,
-      d.weightedOrbitalIntegral_zero_measure, d.weightedOrbitalIntegral_zero_measure]
+      weightedOrbitalIntegral_zero_measure, weightedOrbitalIntegral_zero_measure]
 
 /-- **`θ_f(x)` is unchanged by conjugating `f` by `k ∈ K`**, for `x ∈ M(F) ∩ G_reg(F)`
 (`weightedOrbitalIntegral_conj_K_of_mem_regularSet`). -/
@@ -433,8 +401,8 @@ theorem thetaFBP_conj_K (K : d.GoodK L.toFlagLeviDatum) (f : ↥d.G → ℂ) {x 
   by_cases h : ∃ μ, L.IsDcMeasure x μ
   · have := (isDcMeasure_dcMeasure h).1
     exact weightedOrbitalIntegral_conj_K_of_mem_regularSet hx hxM _ hk f
-  · rw [dcMeasure_of_not_exists h, d.weightedOrbitalIntegral_zero_measure,
-      d.weightedOrbitalIntegral_zero_measure]
+  · rw [dcMeasure_of_not_exists h, weightedOrbitalIntegral_zero_measure,
+      weightedOrbitalIntegral_zero_measure]
 
 /-- **The case `a_M = a_G`** (e.g. `M = G`, i.e. `x` elliptic in `G`): the sign is `1` and
 `v_M = 1`, so `θ_f(x) = D^G(x)^{−1/2} J_G(x, f; d_c t) = ∫_{G_x(F)\G(F)} f(g⁻¹ x g) dg/d_c t`. -/

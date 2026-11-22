@@ -65,6 +65,18 @@ theorem isMulRightInvariant_of_mem_regularSet (hx : x ∈ regularSet d.G d.lie)
   rw [e]
   exact map_mul_left_eq_self μ c
 
+/-- Every Haar measure on a subgroup of `G_x(F)` is right invariant, for `x` regular
+(`G_x(F)` is commutative, `commute_of_mem_centG`). -/
+theorem isMulRightInvariant_of_le_centG {x : ↥d.G} (hx : x ∈ regularSet d.G d.lie)
+    (S : Subgroup ↥(d.centG x)) (μ : Measure ↥S) [μ.IsMulLeftInvariant] :
+    μ.IsMulRightInvariant := by
+  refine ⟨fun c => ?_⟩
+  have e : (fun a : ↥S => a * c) = (fun a => c * a) :=
+    funext fun a => Subtype.ext (Subtype.ext
+      (commute_of_mem_centG hx (a : ↥(d.centG x)).2 (c : ↥(d.centG x)).2).eq)
+  rw [e]
+  exact map_mul_left_eq_self μ c
+
 /-- **`G_x(F) ⊆ M(F)` for `x ∈ M(F) ∩ G_reg(F)`** (Waldspurger 2010, §2.3; Beuzart-Plessis
 §1.10): factorwise `mem_flagLevi_of_commute_of_isRegular`.  The sources state it for
 `G_x = Z_G(x)⁰`; `centG x` is the full centralizer, the same here since `Z_G(x)` is connected
