@@ -81,38 +81,6 @@ theorem oneWt_zero {w : ℤ} (hw : w ≠ 0) : oneWt w 0 = 0 := by
 theorem oneWt_of_pos {w v : ℤ} (hw : 0 < w) (hv : 0 < v) : oneWt w v = if v = w then 1 else 0 := by
   simp [oneWt, show v ≠ -w by omega]
 
-omit [Fintype ι] in
-/-- `λ(τ)` for weights `wt` with `b(bᵢ, bⱼ) = 0` unless `wtᵢ + wtⱼ = 0` is an isometry. -/
-theorem bform_cochar_of_orth (horth : ∀ i j, wt i + wt j ≠ 0 → bform Q (b i) (b j) = 0) {τ : K}
-    (hτ : τ ≠ 0) (x y : V) : bform Q (cochar b wt τ x) (cochar b wt τ y) = bform Q x y := by
-  have key : ∀ i j, bform Q (cochar b wt τ (b i)) (cochar b wt τ (b j)) = bform Q (b i) (b j) := by
-    intro i j
-    rw [cochar_basis, cochar_basis, LinearMap.BilinForm.smul_left, LinearMap.BilinForm.smul_right]
-    by_cases hij : wt i + wt j = 0
-    · rw [← mul_assoc, ← zpow_add₀ hτ, hij, zpow_zero, one_mul]
-    · rw [horth i j hij, mul_zero, mul_zero]
-  have := LinearMap.BilinForm.ext_basis (B := (bform Q).compl₁₂ (cochar b wt τ) (cochar b wt τ))
-    (F₂ := bform Q) b key
-  exact congr($this x y)
-
-omit [Invertible (2 : K)] in
-/-- `det λ(τ) = τ^{∑ wtᵢ}`, which is `1` for total weight `0`. -/
-theorem det_cochar_of_sum_eq_zero [FiniteDimensional K V] (hsum : ∑ i, wt i = 0) {τ : K}
-    (hτ : τ ≠ 0) : LinearMap.det (cochar b wt τ) = 1 := by
-  classical
-  rw [← LinearMap.det_toMatrix b]
-  have : LinearMap.toMatrix b b (cochar b wt τ) = Matrix.diagonal fun i => τ ^ wt i := by
-    ext i j
-    rw [LinearMap.toMatrix_apply, cochar_basis, map_smul, b.repr_self, Finsupp.smul_apply,
-      Finsupp.single_apply, Matrix.diagonal_apply]
-    split_ifs with h1 h2 h2 <;> simp_all [eq_comm]
-  have hprod : ∀ s : Finset ι, ∏ i ∈ s, τ ^ wt i = τ ^ ∑ i ∈ s, wt i := by
-    intro s
-    induction s using Finset.induction_on with
-    | empty => simp
-    | insert a s ha ih => rw [Finset.prod_insert ha, Finset.sum_insert ha, ih, zpow_add₀ hτ]
-  rw [this, Matrix.det_diagonal, hprod, hsum, zpow_zero]
-
 /-- **The one-weight cocharacter lifts to `GSpin(V)`**: for `τ ≠ 0` there is
 `T ∈ GSpin(V)` with `P(T) bᵢ = τ^{oneWt w wtᵢ} bᵢ` (`τ` on the weight-`w` space, `τ⁻¹` on the
 weight-`(−w)` space, `1` elsewhere). -/

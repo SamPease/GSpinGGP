@@ -553,20 +553,24 @@ omit [Invertible (2 : K)] [Fintype ι] in
 theorem cochar_one : cochar b wt (1 : K) = LinearMap.id :=
   b.ext fun i => by rw [cochar_basis, one_zpow, one_smul, LinearMap.id_apply]
 
-theorem IsFlagSplitting.bform_cochar (hs : IsFlagSplitting F b wt) {τ : K} (hτ : τ ≠ 0)
-    (x y : V) : bform Q (cochar b wt τ x) (cochar b wt τ y) = bform Q x y := by
+omit [Fintype ι] in
+/-- `λ(τ)` for weights `wt` with `b(bᵢ, bⱼ) = 0` unless `wtᵢ + wtⱼ = 0` is an isometry. -/
+theorem bform_cochar_of_orth (horth : ∀ i j, wt i + wt j ≠ 0 → bform Q (b i) (b j) = 0) {τ : K}
+    (hτ : τ ≠ 0) (x y : V) : bform Q (cochar b wt τ x) (cochar b wt τ y) = bform Q x y := by
   have key : ∀ i j, bform Q (cochar b wt τ (b i)) (cochar b wt τ (b j)) = bform Q (b i) (b j) := by
     intro i j
     rw [cochar_basis, cochar_basis, LinearMap.BilinForm.smul_left, LinearMap.BilinForm.smul_right]
     by_cases hij : wt i + wt j = 0
     · rw [← mul_assoc, ← zpow_add₀ hτ, hij, zpow_zero, one_mul]
-    · rw [hs.orth i j hij, mul_zero, mul_zero]
+    · rw [horth i j hij, mul_zero, mul_zero]
   have := LinearMap.BilinForm.ext_basis (B := (bform Q).compl₁₂ (cochar b wt τ) (cochar b wt τ))
     (F₂ := bform Q) b key
   exact congr($this x y)
 
-theorem IsFlagSplitting.det_cochar [FiniteDimensional K V] (hs : IsFlagSplitting F b wt)
-    {τ : K} (hτ : τ ≠ 0) : LinearMap.det (cochar b wt τ) = 1 := by
+omit [Invertible (2 : K)] in
+/-- `det λ(τ) = τ^{∑ wtᵢ}`, which is `1` for total weight `0`. -/
+theorem det_cochar_of_sum_eq_zero [FiniteDimensional K V] (hsum : ∑ i, wt i = 0) {τ : K}
+    (hτ : τ ≠ 0) : LinearMap.det (cochar b wt τ) = 1 := by
   classical
   rw [← LinearMap.det_toMatrix b]
   have : LinearMap.toMatrix b b (cochar b wt τ) = Matrix.diagonal fun i => τ ^ wt i := by
@@ -579,7 +583,15 @@ theorem IsFlagSplitting.det_cochar [FiniteDimensional K V] (hs : IsFlagSplitting
     induction s using Finset.induction_on with
     | empty => simp
     | insert a s ha ih => rw [Finset.prod_insert ha, Finset.sum_insert ha, ih, zpow_add₀ hτ]
-  rw [this, Matrix.det_diagonal, hprod, hs.sum_wt, zpow_zero]
+  rw [this, Matrix.det_diagonal, hprod, hsum, zpow_zero]
+
+theorem IsFlagSplitting.bform_cochar (hs : IsFlagSplitting F b wt) {τ : K} (hτ : τ ≠ 0)
+    (x y : V) : bform Q (cochar b wt τ x) (cochar b wt τ y) = bform Q x y :=
+  bform_cochar_of_orth hs.orth hτ x y
+
+theorem IsFlagSplitting.det_cochar [FiniteDimensional K V] (hs : IsFlagSplitting F b wt)
+    {τ : K} (hτ : τ ≠ 0) : LinearMap.det (cochar b wt τ) = 1 :=
+  det_cochar_of_sum_eq_zero hs.sum_wt hτ
 
 /-- An invertible endomorphism preserving `bform Q` with determinant `1` is `P(g)` for some
 `g ∈ GSpin(V)` (`gspin_specP_surjective_SO`). -/
