@@ -31,7 +31,8 @@ the path of the main theorem meet the definitions in one instance.
   without them: `tendsto_mGeomS_of_mem_QC` and `germ_bound_of_mem_QC` for every `θ ∈ QC(χ)`
   (`toyD_tendsto_mGeomS_of_mem_QC`, `toyD_germ_bound_of_mem_QC`) and for `θ = θ_f`
   (`toyD_tendsto_mGeomS_thetaF`, `toyD_germ_bound_thetaF`); `kernelK_bound_scusp` for every
-  Iwasawa datum (`toyD_kernelK_bound_scusp`; on the way `Ξ^G ≡ 1`, `Ξ^{H\G} ≡ 1`);
+  Iwasawa datum (`toyD_kernelK_bound_scusp`; on the way `Ξ^G ≡ 1`, `Ξ^{H\G} ≡ c^{-1/2}`,
+  `c = dcScaleAG`);
   `locallyIntegrable_absF_det_adV_rpow` at `a = 0` for every `d` (`locallyIntegrable_det_adV_rpow_zero`;
   the conclusion of `bp_integrable_deltaGGP_rpow`, now proved from it, is also checked at `toyD`:
   `toyD_bp_integrable`); `exists_lie_descent` with `Ω = G` (`toyD_exists_lie_descent`).
@@ -138,7 +139,10 @@ theorem toyD_tendsto_mGeomS_thetaF (ψ : NontrivialAddChar F) (χ : CentralCharO
     {f : ↥(𝕋).G → ℂ} (hf : f ∈ ScuspTestFn (𝕋) χ) :
     ∃ L : ℂ, Tendsto (mGeomS ψ (𝕋) (thetaF (𝕋) f)) (𝓝[>] (0 : ℝ)) (𝓝 L) := by
   rw [toyD_thetaF_eq hf.1.continuous]
-  exact ⟨f 1, toyD_tendsto_mGeomS ψ (toyD_germ ψ hf.1) (toyD_apply_diag χ hf.2.1)⟩
+  have hlc : IsLocallyConstant (((𝕋).dcScaleAG.toReal : ℂ) • f) :=
+    hf.1.comp fun z => ((𝕋).dcScaleAG.toReal : ℂ) * z
+  exact ⟨_, toyD_tendsto_mGeomS ψ (toyD_germ ψ hlc)
+    (fun t => by simp only [Pi.smul_apply, toyD_apply_diag χ hf.2.1])⟩
 
 /-- Conclusion of `germ_bound_of_mem_QC` at `toyD` for `θ = θ_f`. -/
 theorem toyD_germ_bound_thetaF (ψ : NontrivialAddChar F) (χ : CentralCharOn (𝕋))
@@ -147,7 +151,10 @@ theorem toyD_germ_bound_thetaF (ψ : NontrivialAddChar F) (χ : CentralCharOn (�
       ‖(Real.sqrt (weylDisc (𝕋).lie ((𝕋).diag t : (𝕋).ambientˣ)) : ℂ) *
         germ (𝕋).G (𝕋).lie (𝕋).bilin ψ (thetaF (𝕋) f) ((𝕋).diag t) (orbitChoice (𝕋) t)‖ ≤ C := by
   rw [toyD_thetaF_eq hf.1.continuous]
-  exact toyD_germ_bound ψ (toyD_germ ψ hf.1) (toyD_apply_diag χ hf.2.1) T
+  have hlc : IsLocallyConstant (((𝕋).dcScaleAG.toReal : ℂ) • f) :=
+    hf.1.comp fun z => ((𝕋).dcScaleAG.toReal : ℂ) * z
+  exact toyD_germ_bound ψ (toyD_germ ψ hlc)
+    (fun t => by simp only [Pi.smul_apply, toyD_apply_diag χ hf.2.1]) T
 
 /-! ## The multiplicity formula for `π = 1` -/
 
@@ -208,12 +215,12 @@ theorem toyD_xiHC (IW : (𝕋).IwasawaDatum) (g : ↥(𝕋).G) : IW.xiHC g = 1 :
   IW.toIwasawaPair.xi_eq_one_of_comm toyD_G_comm g
 
 theorem toyD_xiHG (C₀ : Set ↥(𝕋).G) (hC₀ : C₀.Nonempty) (q : (𝕋).HGQuot) :
-    (𝕋).xiHG C₀ q = 1 := by
+    (𝕋).xiHG C₀ q = (𝕋).dcScaleAG.toReal ^ (-(1 / 2 : ℝ)) := by
   unfold GGPData.xiHG
   have hU : ((fun c => (𝕋).mkHG ((𝕋).repHG q * c)) '' C₀) = Set.univ := by
     obtain ⟨c, hc⟩ := hC₀
     exact Set.eq_univ_of_forall fun y => ⟨c, hc, Subsingleton.elim _ _⟩
-  rw [hU, ← measureReal_def, toy_weilMeasureHG_real_univ, Real.one_rpow]
+  rw [hU, ← measureReal_def, toy_weilMeasureHG_real_univ]
 
 /-- Conclusion of `kernelK_bound_scusp` at `toyD`, for every Iwasawa datum. -/
 theorem toyD_kernelK_bound_scusp (ψ : NontrivialAddChar F) (χ : CentralCharOn (𝕋))
@@ -226,7 +233,9 @@ theorem toyD_kernelK_bound_scusp (ψ : NontrivialAddChar F) (χ : CentralCharOn 
   set σ := (𝕋).logNormHG ((𝕋).mkHG 1)
   haveI : Nonempty {g : ↥(𝕋).G // (𝕋).mkHG g = (𝕋).mkHG 1} := ⟨⟨1, rfl⟩⟩
   have hσ : 1 ≤ σ := le_ciInf fun g => (𝕋).one_le_logNormG _
-  refine ⟨σ ^ d₀, 0, fun f hf _ x => ?_⟩
+  set κ := (𝕋).dcScaleAG.toReal
+  have hκ : 0 < κ := (𝕋).dcScaleAG_toReal_pos
+  refine ⟨σ ^ d₀ * κ, 0, fun f hf _ x => ?_⟩
   have hx : (𝕋).mkHG x = (𝕋).mkHG 1 := Subsingleton.elim _ _
   rw [hx, toyD_xiHG C₀ (hC₀'.mono interior_subset), toyD_kernelK χ ψ hf.1.2.1]
   have hν : ‖f 1‖ ≤ (𝕋).schwartzSeminorm IW 0 f := by
@@ -236,8 +245,10 @@ theorem toyD_kernelK_bound_scusp (ψ : NontrivialAddChar F) (χ : CentralCharOn 
     simp [toyD_xiHC]
   have hσ0 : 0 < σ := lt_of_lt_of_le one_pos hσ
   calc ‖f 1‖ ≤ (𝕋).schwartzSeminorm IW 0 f := hν
-    _ = σ ^ d₀ * (𝕋).schwartzSeminorm IW 0 f * 1 ^ 2 * σ ^ (-d₀) := by
-      rw [Real.rpow_neg hσ0.le]
+    _ = σ ^ d₀ * κ * (𝕋).schwartzSeminorm IW 0 f * (κ ^ (-(1 / 2 : ℝ))) ^ 2 * σ ^ (-d₀) := by
+      rw [Real.rpow_neg hσ0.le, ← Real.rpow_natCast, ← Real.rpow_mul hκ.le]
+      norm_num
+      rw [Real.rpow_neg_one]
       field_simp
 
 /-! ## Other path `sorry` statements at `toyD` -/
@@ -302,7 +313,8 @@ theorem toyD_prop_6_7_1_iii (C₀ : Set ↥(𝕋).G) :
     by_contra hc
     rw [not_lt, top_le_iff] at hc
     rw [measureReal_def, hc] at h
-    simp at h
+    simp only [ENNReal.toReal_top] at h
+    exact (𝕋).dcScaleAG_toReal_pos.ne h
   refine ⟨1, one_pos, ?_⟩
   set g := fun q : (𝕋).HGQuot => (𝕋).xiHG C₀ q ^ 2 * (𝕋).logNormHG q ^ (-(1:ℝ))
   obtain ⟨q₀⟩ : Nonempty (𝕋).HGQuot := ⟨(𝕋).mkHG 1⟩
@@ -321,7 +333,10 @@ theorem toyD_exists_lie_descent (ψ : NontrivialAddChar F) (χ : CentralCharOn (
   refine ⟨fun _ => f 1, toyD_isLieScusp _, ?_, ?_⟩
   · rw [toyD_distribJ χ ψ hf.2.1, toyD_distribJLie]
   · rw [toyD_thetaFLie, toyD_mGeomLie, toyD_thetaF_eq hf.1.continuous,
-      toyD_mGeom ψ hf.1 (toyD_apply_diag χ hf.2.1)]
+      toyD_mGeom ψ (θ := ((𝕋).dcScaleAG.toReal : ℂ) • f)
+        (hf.1.comp fun z => ((𝕋).dcScaleAG.toReal : ℂ) * z)
+        (fun t => by simp only [Pi.smul_apply, toyD_apply_diag χ hf.2.1])]
+    rfl
 
 /-! ## `bp_scusp_surj_ell` and its two `sorry` statements at `toyD` -/
 
@@ -394,8 +409,12 @@ theorem toyD_exists_scuspSurjOn_nhd_ell (g : ↥(𝕋).G) :
     exact hsub
   refine ⟨θ₀, ⟨hlc, hcs⟩, fun FW FV hP => (toyD_not_isProperFlagPair FW FV hP).elim,
     Set.subset_univ _, θ₀, ?_⟩
-  obtain ⟨h1, h2, h3⟩ := toyD_isThetaF (F := F) hlc.continuous
-  exact ⟨h1, h2, fun _ _ => rfl, h3⟩
+  -- the pairing is for `Measure.haar` on `G/A_G`: come back from `measGmodAG`
+  have h3 := haar_pairing_of_isThetaF (𝕋) (toyD_isThetaF (F := F) hlc.continuous)
+  have hc : ((𝕋).dcScaleAG.toReal : ℂ) ≠ 0 :=
+    Complex.ofReal_ne_zero.2 (𝕋).dcScaleAG_toReal_pos.ne'
+  rw [smul_smul, inv_mul_cancel₀ hc, one_smul] at h3
+  exact ⟨hlc.continuous.locallyIntegrable, hlc.continuous.continuousOn, fun _ _ => rfl, h3⟩
 
 
 /-- The conclusion of `exists_isCompact_ellRegSet_modConjAG` holds at `toyD`, with `K = {1}`. -/

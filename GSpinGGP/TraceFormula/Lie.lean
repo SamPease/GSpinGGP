@@ -922,61 +922,72 @@ theorem kernelK_eq (hV : IsHypPlane d.QV) (χ : CentralCharOn d) {f : ↥d.G →
   simp_rw [key]
   rw [integral_const, haar_real_univ_of_subsingleton, one_smul]
 
-/-- A Weil measure exists: `dirac` at the unique point of `H\G/A_G`. -/
+/-- `G(F)/A_G(F)` is a point of mass `dcScaleAG` for `measGmodAG`. -/
+theorem measGmodAG_real_univ (hV : IsHypPlane d.QV) :
+    d.measGmodAG.real Set.univ = d.dcScaleAG.toReal := by
+  haveI := subsingleton_GmodAG hV
+  have h1 := haar_real_univ_of_subsingleton (X := d.GmodAG)
+  simp only [Measure.real] at h1 ⊢
+  rw [GGPData.measGmodAG, Measure.smul_apply, smul_eq_mul, ENNReal.toReal_mul, h1, mul_one]
+
+/-- A Weil measure exists: `dcScaleAG` times `dirac` at the unique point of `H\G/A_G`. -/
 theorem exists_weil (hV : IsHypPlane d.QV) : ∃ m, IsWeilMeasure d.toGmodAG
-    (Measure.haar : Measure d.GmodAG) (Measure.haar : Measure d.HmodAGH) m := by
+    d.measGmodAG (Measure.haar : Measure d.HmodAGH) m := by
   haveI := subsingleton_GmodAG hV
   haveI := subsingleton_HmodAGH hV
   haveI hq := subsingleton_HGQuot hV
-  refine ⟨Measure.dirac (CosetSpace.mk d.toGmodAG 1), ?_⟩
+  refine ⟨d.dcScaleAG • Measure.dirac (CosetSpace.mk d.toGmodAG 1), ?_⟩
   intro φ _ _
   have hpt : d.toGmodAG 1 * CosetSpace.out d.toGmodAG (CosetSpace.mk d.toGmodAG 1) = 1 :=
     Subsingleton.elim _ _
-  simp only [integral_of_subsingleton (Measure.haar : Measure d.GmodAG) φ 1,
+  rw [integral_of_subsingleton d.measGmodAG φ 1, measGmodAG_real_univ hV, integral_smul_measure,
     @integral_of_subsingleton _ _ _ hq _ _ _
       (Measure.dirac (CosetSpace.mk d.toGmodAG 1)) _ (CosetSpace.mk d.toGmodAG 1),
-    integral_of_subsingleton (Measure.haar : Measure d.HmodAGH) _ 1, hpt,
-    haar_real_univ_of_subsingleton (X := d.GmodAG),
-    haar_real_univ_of_subsingleton (X := d.HmodAGH), probReal_univ, one_smul]
+    integral_of_subsingleton (Measure.haar : Measure d.HmodAGH) _ 1, hpt]
+  simp only [haar_real_univ_of_subsingleton (X := d.HmodAGH), probReal_univ, one_smul]
 
-theorem weilMeasureHG_real_univ (hV : IsHypPlane d.QV) : d.weilMeasureHG.real Set.univ = 1 := by
+theorem weilMeasureHG_real_univ (hV : IsHypPlane d.QV) :
+    d.weilMeasureHG.real Set.univ = d.dcScaleAG.toReal := by
   haveI := subsingleton_GmodAG hV
   haveI := subsingleton_HmodAGH hV
   have hW := d.weilMeasureHG_spec_of_exists (exists_weil hV)
   have h := hW (fun _ => 1) continuous_const (HasCompactSupport.of_compactSpace _)
-  simp only [integral_const, haar_real_univ_of_subsingleton (X := d.GmodAG),
+  simp only [integral_const, measGmodAG_real_univ hV,
     haar_real_univ_of_subsingleton (X := d.HmodAGH), smul_eq_mul, mul_one] at h
   exact h.symm
 
-/-- **`J(f) = f(1)`** when `V` is a hyperbolic plane. -/
+/-- **`J(f) = c f(1)`** when `V` is a hyperbolic plane, `c = dcScaleAG` the mass of the point
+`G(F)/A_G(F)`. -/
 theorem distribJ_eq (hV : IsHypPlane d.QV) (χ : CentralCharOn d) {f : ↥d.G → ℂ}
-    (hf : IsChiEquivariant d χ f) : distribJ d ψ f = f 1 := by
+    (hf : IsChiEquivariant d χ f) : distribJ d ψ f = (d.dcScaleAG.toReal : ℂ) * f 1 := by
   unfold distribJ
   simp_rw [kernelK_eq ψ hV χ hf]
-  rw [integral_const, weilMeasureHG_real_univ hV, one_smul]
+  rw [integral_const, weilMeasureHG_real_univ hV, Complex.real_smul]
 
 theorem isThetaF_self (hV : IsHypPlane d.QV) {f : ↥d.G → ℂ} (hf : Continuous f) :
-    IsThetaF d f f := by
+    IsThetaF d f ((d.dcScaleAG.toReal : ℂ) • f) := by
   haveI := subsingleton_GmodAG hV
-  refine ⟨hf.locallyIntegrable, hf.continuousOn, fun f' _ => ?_⟩
-  rw [orbitalPairing, integral_of_subsingleton (Measure.haar : Measure d.GmodAG) _ 1,
-    haar_real_univ_of_subsingleton, one_smul]
+  refine ⟨hf.locallyIntegrable.smul _, hf.continuousOn.const_smul _, fun f' _ => ?_⟩
+  rw [orbitalPairing, integral_of_subsingleton d.measGmodAG _ 1, measGmodAG_real_univ hV,
+    Complex.real_smul, ← integral_const_mul]
   congr 1
   funext g
-  rw [G_comm hV _ g, inv_mul_cancel_right]
+  rw [G_comm hV _ g, inv_mul_cancel_right, Pi.smul_apply, smul_eq_mul, mul_assoc]
 
-/-- **`θ_f = f`** when `V` is a hyperbolic plane (`G` commutative, `G/A_G` a point, `G_reg = G`). -/
-theorem thetaF_eq (hV : IsHypPlane d.QV) {f : ↥d.G → ℂ} (hf : Continuous f) : thetaF d f = f := by
-  have h1 := isThetaF_thetaF_of_exists d f ⟨f, isThetaF_self hV hf⟩
+/-- **`θ_f = c f`** when `V` is a hyperbolic plane (`G` commutative, `G/A_G` a point of mass
+`c = dcScaleAG`, `G_reg = G`). -/
+theorem thetaF_eq (hV : IsHypPlane d.QV) {f : ↥d.G → ℂ} (hf : Continuous f) :
+    thetaF d f = (d.dcScaleAG.toReal : ℂ) • f := by
+  have h1 := isThetaF_thetaF_of_exists d f ⟨_, isThetaF_self hV hf⟩
   have h2 := isThetaF_self hV hf
   haveI := totallyDisconnectedSpace_subgroup F d.ambient d.G
-  have hae : thetaF d f =ᵐ[Measure.haar] f :=
+  have hae : thetaF d f =ᵐ[Measure.haar] (d.dcScaleAG.toReal : ℂ) • f :=
     ae_eq_of_integral_testFunctions h1.1 h2.1 fun f' hf' => by rw [h1.2.2 f' hf', h2.2.2 f' hf']
   have hc : Continuous (thetaF d f) := by
     refine continuousOn_univ.mp ?_
     rw [← regularSet_eq_univ hV]
     exact h1.2.1
-  exact (hc.ae_eq_iff_eq Measure.haar hf).mp hae
+  exact (hc.ae_eq_iff_eq Measure.haar (hf.const_smul _)).mp hae
 
 /-! #### The geometric side -/
 
@@ -1152,12 +1163,15 @@ theorem apply_diag (hV : IsHypPlane d.QV) (χ : CentralCharOn d) {f : ↥d.G →
   exact apply_of_mem_AGH χ hf ⟨c, by rw [← hc]; rfl⟩
 
 /-- **The geometric expansion `J(f) = m_geom(θ_f)` for every `f ∈ 𝒞_scusp`** when `V` is a
-hyperbolic plane: `J(f) = f(1) = m_geom(θ_f)`. -/
+hyperbolic plane: `J(f) = c f(1) = m_geom(c f) = m_geom(θ_f)`, `c = dcScaleAG`. -/
 theorem geomAt (hV : IsHypPlane d.QV) (χ : CentralCharOn d) :
     ∀ f ∈ ScuspTestFn d χ, distribJ d ψ f = mGeom ψ d (thetaF d f) := by
   intro f hf
   rw [distribJ_eq ψ hV χ hf.2.1, thetaF_eq hV hf.1.continuous]
-  exact (mGeom_eq ψ hV hf.1 (apply_diag hV χ hf.2.1)).symm
+  have h := mGeom_eq ψ hV (θ := (d.dcScaleAG.toReal : ℂ) • f)
+    (hf.1.comp fun z => (d.dcScaleAG.toReal : ℂ) * z)
+    (fun t => by simp only [Pi.smul_apply, apply_diag hV χ hf.2.1])
+  rw [h, Pi.smul_apply, smul_eq_mul]
 
 
 end HypVAux
@@ -1167,8 +1181,9 @@ end HypVAux
 Then `GSpin(W) = G_m` and `GSpin(V) ≅ G_m²` are commutative and split, so `A_G = G` and an
 `A_G(F)`-stable `Ω ∋ 1` is all of `G(F)`: the statement is the full geometric expansion, which is
 elementary here.  `H = A_{G,H}` (`N = 1` since `r = 0`), so `H\G/A_G` and `H/A_{G,H}` are points
-and `J(f) = f(1)`; `G/A_G` is a point, so `θ_f = f`; `Γ(G,H)` is the class of `1` (the only torus
-of `GSpin(W)` is the scalars) and `𝔤 = 𝔤_1` is abelian, so `m_geom(θ_f) = c_{θ_f,0}(1) = f(1)`
+and `J(f) = c f(1)`; `G/A_G` is a point of mass `c = dcScaleAG`, so `θ_f = c f`; `Γ(G,H)` is the
+class of `1` (the only torus of `GSpin(W)` is the scalars) and `𝔤 = 𝔤_1` is abelian, so
+`m_geom(θ_f) = c_{θ_f,0}(1) = c f(1)`
 (`ĵ(0,·) = 1`).  This is the computation `toy_geomAt` (`Sanity/Witnesses.lean`)
 for `dim W = 0`, `dim V = 1`, to be repeated for `dim W = 1`, `dim V = 2`.  The cited
 Lie-algebra theorems are not used (and do not apply: `J^Lie` of Luo diverges here).

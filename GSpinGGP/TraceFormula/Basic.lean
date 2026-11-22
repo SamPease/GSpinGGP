@@ -24,8 +24,10 @@ Contents:
 * the quotient group `G(F)/A_G(F)` (`GmodAG`), the induced injection
   `toGmodAG : H(F)/A_{G,H}(F) → G(F)/A_G(F)` and the coset space
   `HGQuot = H(F)\G(F)/A_G(F)` (Thesis §7.1);
-* the Weil quotient measure `weilMeasureHG` on `HGQuot`, fixed by the Haar
-  measures on `G/A_G` and `H/A_{G,H}`; `weilMeasureHG_spec` (it is a Weil measure, using
+* the measure `measGmodAG = dg / d_c a` on `G/A_G` (`d_c a` gives the maximal compact subgroup of
+  `A_G(F)` measure `1`; Arthur 1991, §1, p. 11);
+* the Weil quotient measure `weilMeasureHG` on `HGQuot`, fixed by `measGmodAG` and the Haar
+  measure on `H/A_{G,H}`; `weilMeasureHG_spec` (it is a Weil measure, using
   `isMulRightInvariant_haar_GmodAG`), `isFiniteMeasureOnCompacts_weilMeasureHG`, and the right
   invariance of Weil measures (`IsWeilMeasure.isInvariantQuotient`);
 * strongly cuspidal test functions `ScuspTestFn d χ` (Thesis §4.5, §7.1, with
@@ -37,11 +39,15 @@ Contents:
 
 ## Normalization
 
-`θ_f` and `J` are both tied to one measure, `Measure.haar` on the quotient group `G(F)/A_G(F)`:
-`θ_f` through the orbital pairing, `J` through the Weil quotient measure.  The Haar measure on
-`H(F)/A_{G,H}(F)` cancels in `J` (`IsWeilMeasure.smul_right`).  So `J(f) = m_geom(θ_f)` does not
-depend on any normalization; the normalization of Thesis §2.4 is not
-modelled.
+`θ_f` and `J` are both tied to one measure on the quotient group `G(F)/A_G(F)`, `measGmodAG`:
+the quotient of `Measure.haar` on `G(F)` by the Haar measure `d_c a` on `A_G(F)` giving its maximal
+compact subgroup measure `1`.  This is the convention of Arthur, Publ. IHÉS 73 (1991), §1, p. 11,
+and Waldspurger, J. reine angew. Math. 465 (1995), §1.4; Beuzart-Plessis §5.5 leaves it unstated.
+It is the one measure for which BP Thm 5.5.1(iv) can hold: `J^A` scales as `1/da_G`, and the right
+side of (iv) has no `A_G` parameter.  `θ_f` uses it through the
+orbital pairing, `J` through the Weil quotient measure.  The Haar measure on `H(F)/A_{G,H}(F)`
+cancels in `J` (`IsWeilMeasure.smul_right`).  So `J(f) = m_geom(θ_f)` does not depend on the
+normalization of `Measure.haar` on `G(F)`; the normalization of Thesis §2.4 is not modelled.
 
 ## Measurable structures on quotient groups
 
@@ -1958,21 +1964,103 @@ theorem isMulRightInvariant_haar_HmodAGH :
   exact key
 
 
+/-! ### The measure on `G(F)/A_G(F)`: the quotient of `dg` by `d_c a`
+
+`G(F)/A_G(F)` carries the quotient of the Haar measure `dg` on `G(F)` by the Haar measure `d_c a`
+on `A_G(F)` that gives the maximal compact subgroup of `A_G(F)` measure `1` (Arthur, Publ. IHÉS 73
+(1991), §1, p. 11; Beuzart-Plessis, Astérisque 418, §5.5 leaves the measure on `A_G(F)\G(F)`
+unstated).  It is `dcScaleAG • Measure.haar` (`measGmodAG`), where the constant `dcScaleAG` is
+pinned by the quotient formula (`IsDcQuotientAG`); its existence and uniqueness are proved in
+`TraceFormula/DcQuotient.lean` (`isDcQuotientAG_measGmodAG`, `dcScaleAG_eq`); existence rests on the
+literature axiom `weil_quotient_radon` (through `weil_quotient`).  Both `θ_f` (through
+`orbitalPairing`) and `J` (through `weilMeasureHG`) use this one measure. -/
+
+/-- **`d_c a` on `A_G(F)`** (Arthur 1991, §1, p. 11; Beuzart-Plessis §1.6, p. 30, for `A_T`): a
+Haar measure on `A_G(F)` giving measure `1` to the maximal compact subgroup of `A_G(F)` (a compact
+subgroup containing every compact subgroup; it is `A_G(F) ∩ ker H_G`, `isMaxCompact_ker_hcA`). -/
+def IsDcMeasureAG (μA : Measure ↥d.AG) : Prop :=
+  μA.IsHaarMeasure ∧ ∃ K : Subgroup ↥d.AG, IsCompact (K : Set ↥d.AG) ∧
+    (∀ K' : Subgroup ↥d.AG, IsCompact (K' : Set ↥d.AG) → K' ≤ K) ∧ μA K = 1
+
+/-- **`m` is the quotient of `dg` by `d_c a`** on `G(F)/A_G(F)`: for some `d_c a`
+(`IsDcMeasureAG`) and every continuous compactly supported `φ` on `G(F)`,
+`∫_G φ dg = ∫_{G/A_G} ∫_{A_G} φ(x a) d_c a dm(x)` (Weil's formula; Arthur 1991, §1, p. 11). -/
+def IsDcQuotientAG (m : Measure d.GmodAG) : Prop :=
+  ∃ μA : Measure ↥d.AG, d.IsDcMeasureAG μA ∧
+    ∀ φ : ↥d.G → ℝ, Continuous φ → HasCompactSupport φ →
+      ∫ g, φ g ∂Measure.haar = ∫ x, ∫ a, φ (Quotient.out x * (a : ↥d.G)) ∂μA ∂m
+
+open scoped Classical in
+/-- The constant `c ∈ (0, ∞)` with `c • Measure.haar` the quotient of `dg` by `d_c a`
+(`IsDcQuotientAG`), chosen by the epsilon pattern; it exists (from `weil_quotient_radon`) and is
+unique (`TraceFormula/DcQuotient.lean`).  The fallback `1` is never used, and keeps `measGmodAG` a Haar
+measure unconditionally. -/
+def dcScaleAG : ENNReal :=
+  if h : ∃ c : ENNReal, c ≠ 0 ∧ c ≠ ⊤ ∧ d.IsDcQuotientAG (c • Measure.haar) then h.choose else 1
+
+/-- **The measure on `G(F)/A_G(F)`**: `dg / d_c a`, the quotient of the Haar measure of `G(F)` by
+the Haar measure on `A_G(F)` giving its maximal compact subgroup measure `1` (Arthur 1991, §1,
+p. 11; Beuzart-Plessis §5.5 leaves it unstated). -/
+def measGmodAG : Measure d.GmodAG := d.dcScaleAG • Measure.haar
+
+theorem dcScaleAG_spec_of_exists
+    (h : ∃ c : ENNReal, c ≠ 0 ∧ c ≠ ⊤ ∧ d.IsDcQuotientAG (c • Measure.haar)) :
+    d.IsDcQuotientAG d.measGmodAG := by
+  classical
+  unfold measGmodAG dcScaleAG
+  rw [dite_eq_left_of_eq_true (eq_true h)]
+  exact h.choose_spec.2.2
+
+theorem dcScaleAG_ne_zero : d.dcScaleAG ≠ 0 := by
+  classical
+  unfold dcScaleAG
+  split
+  · rename_i h; exact h.choose_spec.1
+  · exact one_ne_zero
+
+theorem dcScaleAG_ne_top : d.dcScaleAG ≠ ⊤ := by
+  classical
+  unfold dcScaleAG
+  split
+  · rename_i h; exact h.choose_spec.2.1
+  · exact ENNReal.one_ne_top
+
+theorem dcScaleAG_toReal_pos : 0 < d.dcScaleAG.toReal :=
+  ENNReal.toReal_pos d.dcScaleAG_ne_zero d.dcScaleAG_ne_top
+
+instance isHaarMeasure_measGmodAG : d.measGmodAG.IsHaarMeasure :=
+  Measure.IsHaarMeasure.smul _ d.dcScaleAG_ne_zero d.dcScaleAG_ne_top
+
+/-- Integrability for `measGmodAG` is integrability for `Measure.haar` (`0 < dcScaleAG < ∞`). -/
+theorem integrable_measGmodAG_iff {E : Type*} [NormedAddCommGroup E] {Φ : d.GmodAG → E} :
+    Integrable Φ d.measGmodAG ↔ Integrable Φ Measure.haar :=
+  integrable_smul_measure d.dcScaleAG_ne_zero d.dcScaleAG_ne_top
+
+theorem integrable_measGmodAG {E : Type*} [NormedAddCommGroup E] {Φ : d.GmodAG → E}
+    (h : Integrable Φ Measure.haar) : Integrable Φ d.measGmodAG :=
+  d.integrable_measGmodAG_iff.2 h
+
+/-- Integrals for `measGmodAG` are `dcScaleAG` times integrals for `Measure.haar`. -/
+theorem integral_measGmodAG {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    (Φ : d.GmodAG → E) :
+    ∫ x, Φ x ∂d.measGmodAG = d.dcScaleAG.toReal • ∫ x, Φ x ∂Measure.haar :=
+  integral_smul_measure Φ d.dcScaleAG
+
 open scoped Classical in
 /-- The Weil quotient measure `dx` on `H(F)\G(F)/A_G(F)` (Thesis §7.1): the
 unique measure `m` with `∫_{G/A_G} φ = ∫_{H\G/A_G} ∫_{H/A_{G,H}} φ(h x) dh dm(x)` for
-`φ ∈ C_c(G/A_G)`, for the Haar measures `Measure.haar` on `G/A_G` and on `H/A_{G,H}`
-(chosen by the epsilon pattern; `0` if no such measure exists, which does not happen:
-`weilMeasureHG_spec` below, from `weil_quotient`). -/
+`φ ∈ C_c(G/A_G)`, for the measure `measGmodAG = dg / d_c a` on `G/A_G` and the Haar measure
+`Measure.haar` on `H/A_{G,H}` (chosen by the epsilon pattern; `0` if no such measure exists, which
+does not happen: `weilMeasureHG_spec` below, from `weil_quotient`). -/
 def weilMeasureHG : Measure d.HGQuot :=
-  if h : ∃ m, IsWeilMeasure d.toGmodAG (Measure.haar : Measure d.GmodAG)
+  if h : ∃ m, IsWeilMeasure d.toGmodAG d.measGmodAG
       (Measure.haar : Measure d.HmodAGH) m then h.choose else 0
 
 /-- If a Weil measure exists, `weilMeasureHG` is one. -/
 theorem weilMeasureHG_spec_of_exists
-    (h : ∃ m, IsWeilMeasure d.toGmodAG (Measure.haar : Measure d.GmodAG)
+    (h : ∃ m, IsWeilMeasure d.toGmodAG d.measGmodAG
       (Measure.haar : Measure d.HmodAGH) m) :
-    IsWeilMeasure d.toGmodAG Measure.haar Measure.haar d.weilMeasureHG := by
+    IsWeilMeasure d.toGmodAG d.measGmodAG Measure.haar d.weilMeasureHG := by
   classical
   unfold weilMeasureHG
   rw [dite_eq_left_of_eq_true (eq_true h)]
@@ -1992,8 +2080,9 @@ From `weil_quotient` (Bourbaki), `isClosedEmbedding_toGmodAG` and the unimodular
 instances in this file. -/
 theorem weilMeasureHG_spec_of_isMulRightInvariant
     (hG : (Measure.haar : Measure d.GmodAG).IsMulRightInvariant) :
-    IsWeilMeasure d.toGmodAG Measure.haar Measure.haar d.weilMeasureHG := by
+    IsWeilMeasure d.toGmodAG d.measGmodAG Measure.haar d.weilMeasureHG := by
   have := d.isMulRightInvariant_haar_HmodAGH
+  have : d.measGmodAG.IsMulRightInvariant := by unfold measGmodAG; infer_instance
   exact d.weilMeasureHG_spec_of_exists
     (weil_quotient d.toGmodAG d.continuous_toGmodAG d.isClosedEmbedding_toGmodAG _ _).exists
 
@@ -2007,13 +2096,18 @@ instance isMulRightInvariant_haar_GmodAG :
     (Measure.haar : Measure d.GmodAG).IsMulRightInvariant :=
   isMulRightInvariant_haar_quotient_of_le_center d.AG d.isClosed_AG d.AG_le_center
 
+/-- `measGmodAG` is right invariant (a multiple of the Haar measure,
+`isMulRightInvariant_haar_GmodAG`). -/
+instance isMulRightInvariant_measGmodAG : d.measGmodAG.IsMulRightInvariant := by
+  unfold measGmodAG; infer_instance
+
 /-- **The Weil measure on `H(F)\G(F)/A_G(F)`** (Thesis §7.1):
-`weilMeasureHG d` satisfies the quotient-integral formula for the Haar measures on `G(F)/A_G(F)`
-and `H(F)/A_{G,H}(F)`.  From `weil_quotient` (Bourbaki), `isClosedEmbedding_toGmodAG`, the
+`weilMeasureHG d` satisfies the quotient-integral formula for `measGmodAG` on `G(F)/A_G(F)`
+and the Haar measure on `H(F)/A_{G,H}(F)`.  From `weil_quotient` (Bourbaki), `isClosedEmbedding_toGmodAG`, the
 unimodularity of `G(F)` (via `isMulRightInvariant_haar_GmodAG`) and of `H(F)/A_{G,H}(F)`
 (`isMulRightInvariant_haar_HmodAGH`). -/
 theorem weilMeasureHG_spec :
-    IsWeilMeasure d.toGmodAG Measure.haar Measure.haar d.weilMeasureHG :=
+    IsWeilMeasure d.toGmodAG d.measGmodAG Measure.haar d.weilMeasureHG :=
   d.weilMeasureHG_spec_of_isMulRightInvariant d.isMulRightInvariant_haar_GmodAG
 
 /-- **The Weil measure on `H(F)\G(F)/A_G(F)` is finite on compact sets**, from its defining formula (`IsWeilMeasure.isFiniteMeasureOnCompacts`, the
@@ -2208,16 +2302,24 @@ def orbitalInner (f f' : ↥d.G → ℂ) (y : ↥d.G) : ℂ :=
   ∫ g : ↥d.G, f (y⁻¹ * g * y) * f' g ∂Measure.haar
 
 /-- The orbital pairing `⟨f, f'⟩ = ∫_{G(F)/A_G(F)} ∫_{G(F)} f(x⁻¹ g x) f'(g) dg dx` (BP §5.5,
-number unverified; Thesis §4.8), for `Measure.haar` on `G(F)` and on the quotient
-group `G(F)/A_G(F)`, integrating over coset representatives (the inner integral does not depend
-on the representative: `orbitalInner_mul_AG`). -/
+number unverified; Thesis §4.8), for `Measure.haar` on `G(F)` and `measGmodAG = dg / d_c a` on the
+quotient group `G(F)/A_G(F)` (`d_c a` gives the maximal compact subgroup of `A_G(F)` measure `1`:
+Arthur 1991, §1, p. 11; BP leaves the measure on `A_G(F)\G(F)` unstated), integrating over coset
+representatives (the inner integral does not depend on the representative:
+`orbitalInner_mul_AG`). -/
 def orbitalPairing (f f' : ↥d.G → ℂ) : ℂ :=
   ∫ x : d.GmodAG, (∫ g : ↥d.G, f ((Quotient.out x)⁻¹ * g * Quotient.out x) * f' g
-    ∂Measure.haar) ∂Measure.haar
+    ∂Measure.haar) ∂d.measGmodAG
 
 theorem orbitalPairing_eq (f f' : ↥d.G → ℂ) :
     orbitalPairing d f f' =
-      ∫ x : d.GmodAG, orbitalInner d f f' (Quotient.out x) ∂Measure.haar := rfl
+      ∫ x : d.GmodAG, orbitalInner d f f' (Quotient.out x) ∂d.measGmodAG := rfl
+
+/-- The orbital pairing is `dcScaleAG` times the pairing for `Measure.haar` on `G(F)/A_G(F)`. -/
+theorem orbitalPairing_eq_haar (f f' : ↥d.G → ℂ) :
+    orbitalPairing d f f' =
+      d.dcScaleAG.toReal • ∫ x : d.GmodAG, orbitalInner d f f' (Quotient.out x) ∂Measure.haar :=
+  d.integral_measGmodAG _
 
 /-- The inner integral of the orbital pairing is invariant under `y ↦ y a`, `a ∈ A_G(F)`
 (`a` central), so the orbital pairing does not depend on the choice of representatives. -/
@@ -2247,11 +2349,39 @@ theorem orbitalInner_out_mk (f f' : ↥d.G → ℂ) (y : ↥d.G) :
 /-- `θ` represents the orbital pairing of `f`: `θ` is locally integrable,
 continuous on the regular set, and `∫_G θ f' = ⟨f, f'⟩` for all `f' ∈ C_c^∞(G(F))`.
 For strongly cuspidal `f`, BP Thm 5.5.1(iv) with the Weyl integration formula (BP §1.7,
-numbers unverified) says that BP's `θ_f` (Thesis §4.8) has this property, up to the positive
-constant relating the measures. -/
+numbers unverified) says that BP's `θ_f` (Thesis §4.8) has this property when `A_G(F)\G(F)`
+carries `dg / d_c a` (`measGmodAG`; Arthur 1991, §1, p. 11), up to the constant relating
+`Measure.haar` on `G(F)` to BP's measure. -/
 def IsThetaF (f θ : ↥d.G → ℂ) : Prop :=
   LocallyIntegrable θ (Measure.haar : Measure ↥d.G) ∧ ContinuousOn θ (regularSet d.G d.lie) ∧
     ∀ f' ∈ testFunctions ↥d.G, ∫ g, θ g * f' g ∂Measure.haar = orbitalPairing d f f'
+
+/-- **Changing the measure on `G(F)/A_G(F)`**: if `θ` represents the pairing of `f` for
+`Measure.haar` on `G(F)/A_G(F)`, then `dcScaleAG • θ` represents the orbital pairing (for
+`measGmodAG = dcScaleAG • Measure.haar`). -/
+theorem isThetaF_of_haar {f θ : ↥d.G → ℂ} (h1 : LocallyIntegrable θ (Measure.haar : Measure ↥d.G))
+    (h2 : ContinuousOn θ (regularSet d.G d.lie))
+    (h3 : ∀ f' ∈ testFunctions ↥d.G, ∫ g, θ g * f' g ∂Measure.haar =
+      ∫ x : d.GmodAG, orbitalInner d f f' (Quotient.out x) ∂Measure.haar) :
+    IsThetaF d f ((d.dcScaleAG.toReal : ℂ) • θ) := by
+  refine ⟨h1.smul _, h2.const_smul _, fun f' hf' => ?_⟩
+  have e1 : (fun g => ((d.dcScaleAG.toReal : ℂ) • θ) g * f' g) =
+      fun g => (d.dcScaleAG.toReal : ℂ) * (θ g * f' g) := by
+    funext g; simp [mul_assoc]
+  rw [e1, integral_const_mul, h3 f' hf', orbitalPairing_eq_haar, Complex.real_smul]
+
+/-- The converse of `isThetaF_of_haar`: if `θ` represents the orbital pairing of `f`, then
+`dcScaleAG⁻¹ • θ` represents the pairing for `Measure.haar` on `G(F)/A_G(F)`. -/
+theorem haar_pairing_of_isThetaF {f θ : ↥d.G → ℂ} (h : IsThetaF d f θ) :
+    ∀ f' ∈ testFunctions ↥d.G, ∫ g, ((d.dcScaleAG.toReal : ℂ)⁻¹ • θ) g * f' g ∂Measure.haar =
+      ∫ x : d.GmodAG, orbitalInner d f f' (Quotient.out x) ∂Measure.haar := by
+  intro f' hf'
+  have hc : (d.dcScaleAG.toReal : ℂ) ≠ 0 := Complex.ofReal_ne_zero.2 d.dcScaleAG_toReal_pos.ne'
+  have e1 : (fun g => ((d.dcScaleAG.toReal : ℂ)⁻¹ • θ) g * f' g) =
+      fun g => (d.dcScaleAG.toReal : ℂ)⁻¹ * (θ g * f' g) := by
+    funext g; simp [mul_assoc]
+  rw [e1, integral_const_mul, h.2.2 f' hf', orbitalPairing_eq_haar, Complex.real_smul,
+    ← mul_assoc, inv_mul_cancel₀ hc, one_mul]
 
 open scoped Classical in
 /-- **The quasi-character `θ_f` of a strongly cuspidal function** (Thesis §4.8; BP §5.5):

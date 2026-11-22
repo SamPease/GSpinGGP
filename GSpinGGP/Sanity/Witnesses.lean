@@ -45,9 +45,10 @@ value `0`.
 6. **The toy trace formula** (§6 below).  For `toyData`:
    * `toy_ellRegSet`: the elliptic regular set is all of `G` (so the hypotheses of the spine
      statements `prop_11_5_1_ii_ell`, `exists_scusp_ell` are not vacuous there);
-   * `toy_distribJ`: `J(f) = f(1)`, with `weilMeasureHG` of mass `1` (`toy_weilMeasureHG_real_univ`,
-     from an explicit Weil measure, no axiom);
-   * `toy_thetaF`: `θ_f = c · f` with `c = haar(G/A_G) = 1` (Mathlib's Haar measure on a point);
+   * `toy_distribJ`: `J(f) = c f(1)`, with `weilMeasureHG` of mass `c = dcScaleAG`, the mass of the
+     point `G/A_G` for `dg / d_c a` (`toy_weilMeasureHG_real_univ`, from an explicit Weil measure);
+   * `toy_thetaF`: `θ_f = c · f` (`c = haar_G(A_G(𝒪))`: `toyD_dcScaleAG`,
+     `Sanity/DcQuotientAudit.lean`);
    * `toyD_mGeom`: `m_geom(θ) = θ(1)` for locally constant `θ` constant on `A_{G,H}`: one torus
      class, `|W(T)| = 1`, `D^G = Δ = 1`, probability measure = point mass, germ = value;
    * `toy_geomAt`: the geometric expansion `J(f) = m_geom(θ_f)` (Thesis Thm 12.2.1) holds;
@@ -1051,9 +1052,10 @@ end Packet
 
 For the toy datum (`m = 0`, `r = 0`) `G = A_G ≅ F^× × F^×`, `G/A_G = 1`, `H = A_{G,H}` and
 `Γ(G,H) = {GSpin(W)} = {F^×}`.  We compute both sides of the geometric expansion
-(Thesis Thm 12.2.1) directly: `J(f) = f(1)` (`toyD_distribJ`), `θ_f = f` (`toyD_thetaF`) and
-`m_geom(θ_f) = f(1)` (`toyD_mGeom`), so `GeomAt` holds (`toy_geomAt`).  This checks that the
-normalizations of `J` (`weilMeasureHG`), `θ_f` (`orbitalPairing`, Haar on `G/A_G`) and `m_geom`
+(Thesis Thm 12.2.1) directly: `J(f) = c f(1)` (`toyD_distribJ`), `θ_f = c f` (`toyD_thetaF`) and
+`m_geom(θ_f) = c f(1)` (`toyD_mGeom`), so `GeomAt` holds (`toy_geomAt`); here `c = dcScaleAG` is
+the mass of the point `G/A_G` for `measGmodAG = dg / d_c a`.  This checks that the
+normalizations of `J` (`weilMeasureHG`), `θ_f` (`orbitalPairing`, `measGmodAG` on `G/A_G`) and `m_geom`
 (`probHaar`, `weylCard`, `weylDisc`, `deltaGGP`, the germ at the zero orbit, `ĵ(0,·) = 1`) agree
 **at the zero orbit**; nonzero orbits are not tested here (see `Sanity/NilpotentOrbit.lean`).
 -/
@@ -1431,65 +1433,77 @@ theorem toyD_kernelK {f : ↥(𝕋).G → ℂ} (hf : IsChiEquivariant (𝕋) χ 
   simp_rw [key]
   rw [integral_const, haar_real_univ_of_subsingleton, one_smul]
 
-/-- A Weil measure exists for the toy datum: `dirac` at the unique point of `H\G/A_G`. -/
+/-- The point `G/A_G` of the toy datum has mass `dcScaleAG` for `measGmodAG`. -/
+theorem toy_measGmodAG_real_univ : (𝕋).measGmodAG.real Set.univ = (𝕋).dcScaleAG.toReal := by
+  have h1 := haar_real_univ_of_subsingleton (X := (𝕋).GmodAG)
+  simp only [Measure.real] at h1 ⊢
+  rw [GGPData.measGmodAG, Measure.smul_apply, smul_eq_mul, ENNReal.toReal_mul, h1, mul_one]
+
+/-- A Weil measure exists for the toy datum: `dcScaleAG` times `dirac` at the unique point of
+`H\G/A_G`. -/
 theorem toy_exists_weil : ∃ m, IsWeilMeasure (𝕋).toGmodAG
-    (Measure.haar : Measure (𝕋).GmodAG) (Measure.haar : Measure (𝕋).HmodAGH) m := by
-  refine ⟨Measure.dirac (CosetSpace.mk (𝕋).toGmodAG 1), ?_⟩
+    (𝕋).measGmodAG (Measure.haar : Measure (𝕋).HmodAGH) m := by
+  refine ⟨(𝕋).dcScaleAG • Measure.dirac (CosetSpace.mk (𝕋).toGmodAG 1), ?_⟩
   intro φ _ _
   have hpt : (𝕋).toGmodAG 1 * CosetSpace.out (𝕋).toGmodAG (CosetSpace.mk (𝕋).toGmodAG 1) = 1 :=
     toy_subsingleton_GmodAG.elim _ _
-  simp only [integral_of_subsingleton (Measure.haar : Measure (𝕋).GmodAG) φ 1,
+  rw [integral_of_subsingleton (𝕋).measGmodAG φ 1, toy_measGmodAG_real_univ,
+    integral_smul_measure,
     @integral_of_subsingleton _ _ _ toy_subsingleton_HGQuot _ _ _
       (Measure.dirac (CosetSpace.mk (𝕋).toGmodAG 1)) _ (CosetSpace.mk (𝕋).toGmodAG 1),
-    integral_of_subsingleton (Measure.haar : Measure (𝕋).HmodAGH) _ 1, hpt,
-    haar_real_univ_of_subsingleton (X := (𝕋).GmodAG),
-    haar_real_univ_of_subsingleton (X := (𝕋).HmodAGH), probReal_univ, one_smul]
+    integral_of_subsingleton (Measure.haar : Measure (𝕋).HmodAGH) _ 1, hpt]
+  simp only [haar_real_univ_of_subsingleton (X := (𝕋).HmodAGH), probReal_univ, one_smul]
 
-/-- The Weil measure `dx` on the point `H\G/A_G` has mass `1` (from `IsWeilMeasure` with
+/-- The Weil measure `dx` on the point `H\G/A_G` has mass `dcScaleAG` (from `IsWeilMeasure` with
 `φ = 1`; no axiom is used: the toy Weil measure exists by `toy_exists_weil`). -/
-theorem toy_weilMeasureHG_real_univ : (𝕋).weilMeasureHG.real Set.univ = 1 := by
+theorem toy_weilMeasureHG_real_univ :
+    (𝕋).weilMeasureHG.real Set.univ = (𝕋).dcScaleAG.toReal := by
   have hW := (𝕋).weilMeasureHG_spec_of_exists toy_exists_weil
   have h := hW (fun _ => 1) continuous_const (HasCompactSupport.of_compactSpace _)
-  simp only [integral_const, haar_real_univ_of_subsingleton (X := (𝕋).GmodAG),
+  simp only [integral_const, toy_measGmodAG_real_univ,
     haar_real_univ_of_subsingleton (X := (𝕋).HmodAGH), smul_eq_mul, mul_one] at h
   exact h.symm
 
-/-- **`J(f) = f(1)` for the toy datum** (Thesis §7.1, §10.1). -/
+/-- **`J(f) = c f(1)` for the toy datum** (Thesis §7.1, §10.1), `c = dcScaleAG` the mass of the
+point `G/A_G` (`toyD_dcScaleAG`: `c = haar_G(A_G(𝒪))`). -/
 theorem toyD_distribJ {f : ↥(𝕋).G → ℂ} (hf : IsChiEquivariant (𝕋) χ f) :
-    distribJ (𝕋) ψ f = f 1 := by
+    distribJ (𝕋) ψ f = ((𝕋).dcScaleAG.toReal : ℂ) * f 1 := by
   unfold distribJ
   simp_rw [toyD_kernelK χ ψ hf]
-  rw [integral_const, toy_weilMeasureHG_real_univ, one_smul]
+  rw [integral_const, toy_weilMeasureHG_real_univ, Complex.real_smul]
 
-/-- For the toy datum every continuous `f` represents its own orbital pairing (`G` is abelian
-and `G/A_G` is a point of Haar mass `1`). -/
-theorem toyD_isThetaF {f : ↥(𝕋).G → ℂ} (hf : Continuous f) : IsThetaF (𝕋) f f := by
-  refine ⟨hf.locallyIntegrable, hf.continuousOn, fun f' _ => ?_⟩
-  rw [orbitalPairing, integral_of_subsingleton (Measure.haar : Measure (𝕋).GmodAG) _ 1,
-    haar_real_univ_of_subsingleton, one_smul]
+/-- For the toy datum `c f` represents the orbital pairing of a continuous `f` (`G` is abelian
+and `G/A_G` is a point of mass `c = dcScaleAG`). -/
+theorem toyD_isThetaF {f : ↥(𝕋).G → ℂ} (hf : Continuous f) :
+    IsThetaF (𝕋) f (((𝕋).dcScaleAG.toReal : ℂ) • f) := by
+  refine ⟨hf.locallyIntegrable.smul _, hf.continuousOn.const_smul _, fun f' _ => ?_⟩
+  rw [orbitalPairing, integral_of_subsingleton (𝕋).measGmodAG _ 1, toy_measGmodAG_real_univ,
+    Complex.real_smul, ← integral_const_mul]
   congr 1
   funext g
-  rw [toyD_G_comm _ g, inv_mul_cancel_right]
+  rw [toyD_G_comm _ g, inv_mul_cancel_right, Pi.smul_apply, smul_eq_mul, mul_assoc]
 
-/-- `θ_f = f` on all of `G` for the toy datum, for every continuous `f` (uniqueness of `θ_f` on
-`G_reg = G`, by separation with test functions; no Harish-Chandra axiom is used). -/
-theorem toyD_thetaF_eq {f : ↥(𝕋).G → ℂ} (hf : Continuous f) : thetaF (𝕋) f = f := by
-  have h1 := isThetaF_thetaF_of_exists (𝕋) f ⟨f, toyD_isThetaF hf⟩
+/-- `θ_f = c f` on all of `G` for the toy datum, for every continuous `f`, `c = dcScaleAG`
+(uniqueness of `θ_f` on `G_reg = G`, by separation with test functions; no Harish-Chandra axiom is
+used). -/
+theorem toyD_thetaF_eq {f : ↥(𝕋).G → ℂ} (hf : Continuous f) :
+    thetaF (𝕋) f = ((𝕋).dcScaleAG.toReal : ℂ) • f := by
+  have h1 := isThetaF_thetaF_of_exists (𝕋) f ⟨_, toyD_isThetaF hf⟩
   have h2 := toyD_isThetaF hf
   haveI := totallyDisconnectedSpace_subgroup F (𝕋).ambient (𝕋).G
-  have hae : thetaF (𝕋) f =ᵐ[Measure.haar] f :=
+  have hae : thetaF (𝕋) f =ᵐ[Measure.haar] ((𝕋).dcScaleAG.toReal : ℂ) • f :=
     ae_eq_of_integral_testFunctions h1.1 h2.1 fun f' hf' => by rw [h1.2.2 f' hf', h2.2.2 f' hf']
   have hc : Continuous (thetaF (𝕋) f) := by
     refine continuousOn_univ.mp ?_
     rw [← toy_regularSet_eq_univ]
     exact h1.2.1
-  exact (hc.ae_eq_iff_eq Measure.haar hf).mp hae
+  exact (hc.ae_eq_iff_eq Measure.haar (hf.const_smul _)).mp hae
 
-/-- **`θ_f = c · f` with `c` the Haar mass of the point `G/A_G`**, for
-`f ∈ 𝒞_scusp`; Mathlib's normalization gives `c = 1` (`haar_real_univ_of_subsingleton`). -/
+/-- **`θ_f = c · f` with `c` the mass of the point `G/A_G`** for `measGmodAG = dg / d_c a`, for
+`f ∈ 𝒞_scusp`; `c = haar_G(A_G(𝒪))` (`toyD_dcScaleAG`, `Sanity/DcQuotientAudit.lean`). -/
 theorem toyD_thetaF {f : ↥(𝕋).G → ℂ} (hf : f ∈ ScuspTestFn (𝕋) χ) :
-    thetaF (𝕋) f = (((Measure.haar : Measure (𝕋).GmodAG).real Set.univ : ℝ) : ℂ) • f := by
-  rw [haar_real_univ_of_subsingleton, Complex.ofReal_one, one_smul]
+    thetaF (𝕋) f = (((𝕋).measGmodAG.real Set.univ : ℝ) : ℂ) • f := by
+  rw [toy_measGmodAG_real_univ]
   exact toyD_thetaF_eq hf.1.continuous
 
 
@@ -1718,15 +1732,19 @@ theorem toyD_apply_diag {f : ↥(𝕋).G → ℂ} (hf : IsChiEquivariant (𝕋) 
   obtain ⟨c, hc⟩ := toy_gspinW_mem_range (K := F) t
   exact toy_apply_of_mem_AGH χ hf ⟨c, by rw [← hc]; rfl⟩
 
-/-- **The geometric expansion holds for the toy datum** (Thesis Thm 12.2.1 at `m = r = 0`): `J(f) = f(1) = m_geom(θ_f)` for every `f ∈ 𝒞_scusp`, every `χ`.
+/-- **The geometric expansion holds for the toy datum** (Thesis Thm 12.2.1 at `m = r = 0`):
+`J(f) = c f(1) = m_geom(θ_f)` for every `f ∈ 𝒞_scusp`, every `χ`, `c = dcScaleAG`.
 This checks that `J`, `θ_f` and `m_geom` are normalized consistently *at the zero orbit*:
-`dx` on the point `H\G/A_G` and `dg` on `G/A_G` both have mass `1`, the probability measure on
-`T/A_{G,H}` is the point mass, and `ĵ(0,·) = 1`.  It does not test nonzero orbits.
+`dx` on the point `H\G/A_G` and `dg / d_c a` on `G/A_G` both have mass `c`, the probability measure
+on `T/A_{G,H}` is the point mass, and `ĵ(0,·) = 1`.  It does not test nonzero orbits.
 Uses the literature axiom `exists_isSelfDual` (via `exists_isSelfDual_toyLie`). -/
 theorem toyD_geomAt (ψ : NontrivialAddChar F) : GeomAt ψ (𝕋) χ := by
   intro f hf
   rw [toyD_distribJ χ ψ hf.2.1, toyD_thetaF_eq hf.1.continuous]
-  exact (toyD_mGeom ψ hf.1 (toyD_apply_diag χ hf.2.1)).symm
+  have h := toyD_mGeom ψ (θ := ((𝕋).dcScaleAG.toReal : ℂ) • f)
+    (hf.1.comp fun z => ((𝕋).dcScaleAG.toReal : ℂ) * z)
+    (fun t => by simp only [Pi.smul_apply, toyD_apply_diag χ hf.2.1])
+  rw [h, Pi.smul_apply, smul_eq_mul]
 
 
 /-- **The geometric expansion for the toy datum** (`GeomAt` for `toyData` itself; see
@@ -1785,17 +1803,18 @@ theorem toy_defect_zero (ψ : NontrivialAddChar F) (η : CentralCharOn (toyData 
 /-- **`G_ell = G` for the toy datum** (Thesis §2.5). -/
 theorem toy_ellRegSet : (toyData (K := F)).ellRegSet = Set.univ := toyD_ellRegSet
 
-/-- **`J(f) = f(1)` for the toy datum** (Thesis §7.1, §10.1). -/
+/-- **`J(f) = c f(1)` for the toy datum** (Thesis §7.1, §10.1), `c = dcScaleAG`. -/
 theorem toy_distribJ (ψ : NontrivialAddChar F) (χ' : CentralCharOn (toyData (K := F)))
     {f : ↥(toyData (K := F)).G → ℂ} (hf : IsChiEquivariant toyData χ' f) :
-    distribJ toyData ψ f = f 1 :=
+    distribJ toyData ψ f = ((toyD (F := F)).dcScaleAG.toReal : ℂ) * f 1 :=
   toyD_distribJ χ' ψ hf
 
-/-- **`θ_f = c · f`, `c = haar(G/A_G) = 1`, for the toy datum** (Thesis §4.8). -/
+/-- **`θ_f = c · f`, `c` the mass of the point `G/A_G` for `dg / d_c a`, for the toy datum**
+(Thesis §4.8). -/
 theorem toy_thetaF (χ' : CentralCharOn (toyData (K := F))) {f : ↥(toyData (K := F)).G → ℂ}
     (hf : f ∈ ScuspTestFn toyData χ') :
     thetaF toyData f =
-      (((Measure.haar : Measure (toyD (F := F)).GmodAG).real Set.univ : ℝ) : ℂ) • f :=
+      (((toyD (F := F)).measGmodAG.real Set.univ : ℝ) : ℂ) • f :=
   toyD_thetaF χ' hf
 
 end ToyPAdic

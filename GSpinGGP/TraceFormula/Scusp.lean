@@ -205,7 +205,9 @@ theorem scuspSurjOn_empty : ScuspSurjOn d ∅ := by
     by_contra hne
     obtain ⟨x, c, hc, -⟩ := hsupp g hg hne
     exact hC₀ hc
-  obtain ⟨hli, hco, hpair⟩ := isThetaF_zero d
+  obtain ⟨hli, hco, -⟩ := isThetaF_zero d
+  have hpair := haar_pairing_of_isThetaF d (isThetaF_zero d)
+  rw [smul_zero] at hpair
   exact ⟨0, (testFunctions ↥d.G).zero_mem, fun FW FV _ p _ => by simp, by simp, 0, hli, hco,
     fun g hg => (h0 g hg).symm, hpair⟩
 
@@ -237,10 +239,21 @@ theorem scuspSurjOn_union {U₁ U₂ : Set ↥d.G} (hU₁ : IsInvariantClopen d 
     h₂ (U₁ᶜ.indicator θ₀) (fun ψ => isQuasiCharacter_indicator d ψ hU₁.compl (hq ψ))
       ⟨C₀ ∩ U₁ᶜ, hC₀.inter_right hU₁.compl.2.1,
         fun c hc => (hC₀U hc.1).resolve_left hc.2, indicator_support_conj d hU₁.compl hsupp⟩
-  have hθ : IsThetaF d (f₁ + f₂) (θ₁ + θ₂) :=
-    isThetaF_add d hf₁.1.continuous hf₂.1.continuous ⟨hli₁, hco₁, hpair₁⟩ ⟨hli₂, hco₂, hpair₂⟩
+  -- pass to `measGmodAG` (`isThetaF_of_haar`), add, and come back (`haar_pairing_of_isThetaF`)
+  set c : ℂ := (d.dcScaleAG.toReal : ℂ)
+  have hc : c ≠ 0 := Complex.ofReal_ne_zero.2 d.dcScaleAG_toReal_pos.ne'
+  have hθc : IsThetaF d (f₁ + f₂) (c • θ₁ + c • θ₂) :=
+    isThetaF_add d hf₁.1.continuous hf₂.1.continuous (isThetaF_of_haar d hli₁ hco₁ hpair₁)
+      (isThetaF_of_haar d hli₂ hco₂ hpair₂)
       (fun f' hf' => bp_integrable_kernel_scusp d f₁ hf₁ hcusp₁ f' hf')
       (fun f' hf' => bp_integrable_kernel_scusp d f₂ hf₂ hcusp₂ f' hf')
+  have hback : c⁻¹ • (c • θ₁ + c • θ₂) = θ₁ + θ₂ := by
+    rw [smul_add, smul_smul, smul_smul, inv_mul_cancel₀ hc, one_smul, one_smul]
+  have hθ : LocallyIntegrable (θ₁ + θ₂) (Measure.haar : Measure ↥d.G) ∧
+      ContinuousOn (θ₁ + θ₂) (regularSet d.G d.lie) ∧
+      ∀ f' ∈ testFunctions ↥d.G, ∫ g, (θ₁ + θ₂) g * f' g ∂Measure.haar =
+        ∫ x : d.GmodAG, orbitalInner d (f₁ + f₂) f' (Quotient.out x) ∂Measure.haar :=
+    ⟨hli₁.add hli₂, hco₁.add hco₂, by rw [← hback]; exact haar_pairing_of_isThetaF d hθc⟩
   refine ⟨f₁ + f₂, add_mem hf₁ hf₂, fun FW FV hP p hp => ?_,
     (Function.support_add _ _).trans (Set.union_subset_union hs₁ hs₂), θ₁ + θ₂,
     hθ.1, hθ.2.1, fun g hg => ?_, hθ.2.2⟩
@@ -370,7 +383,15 @@ theorem exists_bpOmega : ∃ Ω : Set ↥d.G, IsInvariantClopen d Ω ∧ d.ellRe
   obtain ⟨Ω, ho, hc, hconj, hAG, hell, hcpt, hsurj⟩ := LitTF.bp_scusp_surj_ell d
   refine ⟨Ω, ⟨ho, hc, hconj, hAG⟩, hell, hcpt, fun θ₀ hq hs => ?_⟩
   obtain ⟨f₀, hf₀, hcusp, hsupp, θ, hli, hco, heq, hpair⟩ := hsurj θ₀ hq hs
-  exact ⟨f₀, hf₀, hcusp, hsupp, θ, ⟨hli, hco, hpair⟩, heq⟩
+  -- the source's pairing is for `Measure.haar` on `G(F)/A_G(F)`; rescale `f₀` by `dcScaleAG⁻¹`
+  set c : ℂ := (d.dcScaleAG.toReal : ℂ)
+  have hc : c ≠ 0 := Complex.ofReal_ne_zero.2 d.dcScaleAG_toReal_pos.ne'
+  have hθ := isThetaF_smul d c⁻¹ (isThetaF_of_haar d hli hco hpair)
+  rw [smul_smul, inv_mul_cancel₀ hc, one_smul] at hθ
+  refine ⟨c⁻¹ • f₀, (testFunctions ↥d.G).smul_mem _ hf₀, fun FW FV hP p hp => ?_,
+    (Function.support_const_smul_of_ne_zero _ _ (inv_ne_zero hc)).subset.trans hsupp, θ, hθ, heq⟩
+  simp only [Pi.smul_apply, smul_eq_mul]
+  rw [integral_const_mul, hcusp FW FV hP p hp, mul_zero]
 
 end Helpers
 

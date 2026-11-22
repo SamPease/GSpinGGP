@@ -226,7 +226,9 @@ theorem isStronglyCuspidal_iff_inline {f : ↥d.G → ℂ} (hf : f ∈ testFunct
     ⟨integrable_parabolicU_of_testFunctions d hf FW FV p, h FW FV hFV p hp⟩⟩
 
 /-- `bp_thetaF_exists` (BP Thm 5.5.1) applied with the inline cuspidality predicate of this file (checks that
-the bridge matches the axiom's hypothesis exactly). -/
+the bridge matches the axiom's hypothesis exactly).  That statement is for `Measure.haar` on
+`G(F)/A_G(F)`; its `θ` is rescaled by `c = dcScaleAG` to represent `orbitalPairing`, which uses
+`measGmodAG = c • Measure.haar`. -/
 theorem bp_thetaF_exists_of_inline {f₀ : ↥d.G → ℂ} (hf₀ : f₀ ∈ testFunctions ↥d.G)
     (h : IsStronglyCuspidalInline d f₀) :
     ∃ θ : ↥d.G → ℂ, LocallyIntegrable θ Measure.haar ∧
@@ -234,8 +236,16 @@ theorem bp_thetaF_exists_of_inline {f₀ : ↥d.G → ℂ} (hf₀ : f₀ ∈ tes
       (∀ ψ : NontrivialAddChar F, IsQuasiCharacter d.G d.lie d.bilin ψ θ) ∧
       ∀ f' ∈ testFunctions ↥d.G,
         Integrable (fun x : d.GmodAG => orbitalInner d f₀ f' (Quotient.out x)) Measure.haar ∧
-        ∫ g, θ g * f' g ∂Measure.haar = orbitalPairing d f₀ f' :=
-  LitTF.bp_thetaF_exists d f₀ hf₀ h
+        ∫ g, θ g * f' g ∂Measure.haar = orbitalPairing d f₀ f' := by
+  -- `bp_thetaF_exists` is stated for `Measure.haar` on `G(F)/A_G(F)`; rescale to `measGmodAG`
+  obtain ⟨θ, h1, h2, h3, h4⟩ := LitTF.bp_thetaF_exists d f₀ hf₀ h
+  set c : ℂ := (d.dcScaleAG.toReal : ℂ)
+  refine ⟨c • θ, h1.smul c, h2.const_smul c, fun ψ => isQuasiCharacter_smul d ψ c
+    (h3 ψ), fun f' hf' => ⟨(h4 f' hf').1, ?_⟩⟩
+  have e1 : (fun g => (c • θ) g * f' g) = fun g => c * (θ g * f' g) := by
+    funext g; simp [mul_assoc]
+  rw [e1, integral_const_mul, (h4 f' hf').2, orbitalPairing_eq_haar, Complex.real_smul]
+  rfl
 
 /-! ### Uniqueness of `θ_f` on the regular set -/
 
@@ -1231,7 +1241,7 @@ theorem isThetaF_chiProj {f₀ : ↥d.G → ℂ} (hf₀ : f₀ ∈ testFunctions
   have hφ : φ ∈ ScuspTestFn d χ := chiProj_mem_scusp d χ hf₀ hcusp
   have hφc : Continuous φ := hφ.1.continuous
   obtain ⟨hf₁, hcusp₁, -⟩ := cutoff_mul_spec d χ (isAGCutoff_agCutoff d) hφ
-  obtain ⟨θ₁, hθ₁li, hθ₁c, hθ₁qc, hθ₁⟩ := LitTF.bp_thetaF_exists d (d.agCutoff * φ) hf₁ hcusp₁
+  obtain ⟨θ₁, hθ₁li, hθ₁c, hθ₁qc, hθ₁⟩ := bp_thetaF_exists_of_inline d hf₁ hcusp₁
   choose rep hrep using fun t : HCVal => d.exists_hcDomain t
   have hrepD : ∀ t, d.hcA (rep t) * t ∈ d.hcDomain := fun t => (hrep t (rep t)).2 rfl
   set c : ℂ := (d.hcVol : ℂ)
@@ -1309,7 +1319,7 @@ theorem isThetaF_chiProj {f₀ : ↥d.G → ℂ} (hf₀ : f₀ ∈ testFunctions
       rw [Finset.sum_apply, Finset.mul_sum]
     rw [e1, orbitalPairing_eq]
     simp_rw [hpieces f' hf']
-    rw [integral_finsetSum _ fun t _ => (hfibre f' hf' t).1]
+    rw [integral_finsetSum _ fun t _ => d.integrable_measGmodAG (hfibre f' hf' t).1]
     refine Finset.sum_congr rfl fun t _ => ?_
     rw [(hfibre f' hf' t).2, orbitalPairing_eq]
   · -- conjugation invariance
@@ -1416,7 +1426,8 @@ theorem isThetaF_add {f g θ θ' : ↥d.G → ℂ} (hf : Continuous f) (hg : Con
       (integrable_orbitalInner_integrand d hg hf' y)]
     congr 1; funext x; simp [add_mul]
   simp_rw [hinner]
-  exact (integral_add (hif f' hf') (hig f' hf')).symm
+  exact (integral_add (d.integrable_measGmodAG (hif f' hf'))
+    (d.integrable_measGmodAG (hig f' hf'))).symm
 
 /-- `θ_{f+g} = θ_f + θ_g` on the regular set. -/
 theorem thetaF_add {f g : ↥d.G → ℂ} (hf : f ∈ ScuspTestFn d χ) (hg : g ∈ ScuspTestFn d χ) :
@@ -1882,7 +1893,7 @@ theorem isThetaF_chiProj_avg {f₀ θ₀ : ↥d.G → ℂ} (hf₀ : f₀ ∈ tes
     · refine Finset.sum_congr rfl fun τ hτ => ?_
       rw [integral_const_mul, orbitalPairing_eq]
     · obtain ⟨a, rfl⟩ := hRf τ hτ
-      exact ((hbp _ (hΦtest a)).1).const_mul _
+      exact (d.integrable_measGmodAG (hbp _ (hΦtest a)).1).const_mul _
   rw [hL, hR]
 
 end Core2Cutoff
