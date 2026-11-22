@@ -707,6 +707,19 @@ theorem cochar_comp_of_isHomog {M : V →ₗ[K] V} (hM : ∀ j, IsHomog b wt (M 
   · rw [h]
   · rw [hM j i h, mul_zero, mul_zero]
 
+omit [Invertible (2 : K)] [Fintype ι] in
+/-- An endomorphism commuting with `λ(τ)`, whose powers `τ^w` separate the weights, preserves
+the weight of each basis vector. -/
+theorem isHomog_of_comp_cochar {τ : K} (hτ : Function.Injective fun w : ℤ => τ ^ w)
+    {A : V →ₗ[K] V} (hA : A ∘ₗ cochar b wt τ = cochar b wt τ ∘ₗ A) (j : ι) :
+    IsHomog b wt (A (b j)) (wt j) := by
+  intro i hi
+  have h := congr(b.repr ($hA (b j)) i)
+  simp only [LinearMap.comp_apply, cochar_basis, map_smul, repr_cochar,
+    Finsupp.smul_apply, smul_eq_mul] at h
+  by_contra h0
+  exact hi (hτ (mul_right_cancel₀ h0 h).symm)
+
 omit [Fintype ι] in
 /-- A lift `m ∈ GSpin(V)` of a weight-preserving isometry commutes with a lift `T` of the
 cocharacter up to a central scalar, as `P(m)` commutes with `λ(τ)` and `ker P = G_m`.  (For `m` in

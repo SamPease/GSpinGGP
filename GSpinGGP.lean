@@ -72,6 +72,7 @@ import GSpinGGP.Foundations.VanDantzig
 import GSpinGGP.GGP.RegularOrbitClass
 import GSpinGGP.GGP.OrbitSpecQd
 import GSpinGGP.GGP.RegularRank
+import GSpinGGP.GGP.RegularCentralizer
 import GSpinGGP.GGP.JointRankDescent
 import GSpinGGP.GGP.LieRegular
 import GSpinGGP.GGP.Centralizers
@@ -171,6 +172,7 @@ import GSpinGGP.TraceFormula.Basic
 import GSpinGGP.TraceFormula.SpinorNorm
 import GSpinGGP.TraceFormula.ThetaF
 import GSpinGGP.TraceFormula.WeightedOrbital
+import GSpinGGP.TraceFormula.RegularCentralizer
 import GSpinGGP.TraceFormula.Analytic
 import GSpinGGP.TraceFormula.FlagLevi
 import GSpinGGP.TraceFormula.GoodParabolic
