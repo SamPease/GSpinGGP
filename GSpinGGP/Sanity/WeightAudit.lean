@@ -33,15 +33,6 @@ variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
 local notation "𝕋" => (toyD (F := F))
 
-open MeasureTheory Measure Set in
-/-- **The lattice normalization in dimension one**: for `Λ = ℤ ℓ ⊂ ℝ` the hull of `{0, x}` has
-volume `|x| / ℓ` (`E/Λ` has volume `1`, whatever `addHaar` is). -/
-theorem hullVolume_zmultiples_pair {ℓ : ℝ} (hℓ : 0 < ℓ) (x : ℝ) :
-    hullVolume (AddSubgroup.zmultiples ℓ) {0, x} = |x| / ℓ := by
-  rw [hullVolume_pair_of_equiv (ContinuousLinearEquiv.refl ℝ ℝ) hℓ
-    (AddSubgroup.map_id _), ContinuousLinearEquiv.refl_apply, ContinuousLinearEquiv.refl_apply,
-    zero_sub, abs_neg]
-
 /-- **`P(g) = 1` at `toyD`**: every `g` is a pair of scalars (`toyD_exists_scalar`). -/
 theorem toyD_specP_snd (g : ↥(𝕋).G) : specP (𝕋).QV ((𝕋).snd g) = 1 := by
   obtain ⟨c, hc⟩ := toyD_exists_scalar g

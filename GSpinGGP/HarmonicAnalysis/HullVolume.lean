@@ -24,8 +24,9 @@ Gross-Prasad*, Compos. Math. 146 (2010), §1.2; Beuzart-Plessis, Astérisque 418
 
 * `hullVolume_vadd`, `hullVolume_neg`: invariance under translating and negating the points.
 * `hullVolume_of_subsingleton`: in the zero space the hull of a nonempty set has volume `1`.
-* `hullVolume_pair_of_equiv`: in a line `E ≃ ℝ` carrying `Λ` to `ℤ ℓ`, the hull of `{a, b}` has
-  volume `|a − b| / ℓ`.
+* `hullVolume_map`: invariance under a linear isomorphism `E ≃ E'` carrying the lattices.
+* `hullVolume_zmultiples_pair`, `hullVolume_pair_of_equiv`: in a line `E ≃ ℝ` carrying `Λ` to
+  `ℤ ℓ`, the hull of `{a, b}` has volume `|φ a − φ b| / ℓ`.
 -/
 
 noncomputable section
@@ -100,31 +101,28 @@ theorem hullVolume_neg (Λ : AddSubgroup E) (S : Set E) : hullVolume Λ (-S) = h
   rw [hullVolume, hullVolume, convexHull_neg, latticeHaar, smul_apply, smul_apply,
     measure_neg]
 
-/-- **Hulls of two points in a line**: if `φ : E ≃ ℝ` carries `Λ` onto `ℤ ℓ`, the hull of
-`{a, b}` has `latticeHaar Λ`-volume `|φ a − φ b| / ℓ` (a fundamental domain `φ⁻¹(0, ℓ]` has
-volume `1`). -/
-theorem hullVolume_pair_of_equiv {Λ : AddSubgroup E} (φ : E ≃L[ℝ] ℝ) {ℓ : ℝ} (hℓ : 0 < ℓ)
-    (hΛ : Λ.map (φ : E →+ ℝ) = AddSubgroup.zmultiples ℓ) (a b : E) :
-    hullVolume Λ {a, b} = |φ a - φ b| / ℓ := by
-  have hmem : ∀ g : Λ, φ g ∈ AddSubgroup.zmultiples ℓ := fun g => by
-    rw [← hΛ]; exact AddSubgroup.mem_map_of_mem _ g.property
-  let e : Λ → AddSubgroup.zmultiples ℓ := fun g => ⟨φ g, hmem g⟩
+/-- **Transport along a linear isomorphism**: for `φ : E ≃L[ℝ] E'` the hull of `φ(S)` has the
+same volume for `latticeHaar (φ Λ)` as the hull of `S` for `latticeHaar Λ`, provided `φ Λ` has a
+fundamental domain (e.g. `φ Λ` a lattice). -/
+theorem hullVolume_map {E' : Type*} [NormedAddCommGroup E'] [NormedSpace ℝ E']
+    [FiniteDimensional ℝ E'] [MeasurableSpace E'] [BorelSpace E'] {Λ : AddSubgroup E}
+    (φ : E ≃L[ℝ] E') [Countable (Λ.map (φ : E →+ E'))] {D' : Set E'}
+    (hD' : IsAddFundamentalDomain (Λ.map (φ : E →+ E')) D' addHaar) (S : Set E) :
+    hullVolume (Λ.map (φ : E →+ E')) (φ '' S) = hullVolume Λ S := by
+  let e : Λ → Λ.map (φ : E →+ E') := fun g => ⟨φ g, AddSubgroup.mem_map_of_mem _ g.property⟩
   have he : Function.Bijective e := by
     refine ⟨fun g h hgh => Subtype.ext (φ.injective (congrArg Subtype.val hgh)), fun y => ?_⟩
-    have hy : (y : ℝ) ∈ Λ.map (φ : E →+ ℝ) := by rw [hΛ]; exact y.property
-    obtain ⟨x, hx, hxy⟩ := hy
+    obtain ⟨x, hx, hxy⟩ := y.property
     exact ⟨⟨x, hx⟩, Subtype.ext hxy⟩
-  have : Countable Λ := (Function.Injective.countable he.1 :)
-  let ψ : E ≃ᵐ ℝ := φ.toHomeomorph.toMeasurableEquiv
-  let μ : Measure E := Measure.map ψ.symm volume
-  have hμ : ∀ s, μ s = volume (φ '' s) := fun s => by
+  have : Countable Λ := he.1.countable
+  let ψ : E ≃ᵐ E' := φ.toHomeomorph.toMeasurableEquiv
+  let μ : Measure E := Measure.map ψ.symm addHaar
+  have hμ : ∀ s, μ s = addHaar (φ '' s) := fun s => by
     rw [ψ.symm.map_apply]; congr 1; exact (ψ.image_eq_preimage_symm s).symm
-  have : μ.IsAddHaarMeasure := φ.symm.isAddHaarMeasure_map volume
-  have hD : IsAddFundamentalDomain Λ (φ ⁻¹' Set.Ioc 0 ℓ) μ := by
+  have : μ.IsAddHaarMeasure := φ.symm.isAddHaarMeasure_map addHaar
+  have hD : IsAddFundamentalDomain Λ (φ ⁻¹' D') μ := by
     let e' := (Equiv.ofBijective e he).symm
-    rw [show Set.Ioc (0 : ℝ) ℓ = Set.Ioc 0 (0 + ℓ) by rw [zero_add]]
-    refine (isAddFundamentalDomain_Ioc hℓ 0 volume).preimage_of_equiv (ν := μ) (f := φ) (e := e') ?_
-      e'.bijective fun g x => ?_
+    refine hD'.preimage_of_equiv (ν := μ) (f := φ) (e := e') ?_ e'.bijective fun g x => ?_
     · refine MeasurePreserving.quasiMeasurePreserving ⟨φ.continuous.measurable, ?_⟩
       rw [Measure.map_map φ.continuous.measurable ψ.symm.measurable]
       convert Measure.map_id
@@ -133,12 +131,30 @@ theorem hullVolume_pair_of_equiv {Λ : AddSubgroup E} (φ : E ≃L[ℝ] ℝ) {�
       rw [map_add]
       congr 1
       exact congrArg Subtype.val ((Equiv.ofBijective e he).apply_symm_apply g)
-  rw [hullVolume, latticeHaar_eq μ hD, smul_apply, hμ, hμ, Set.image_preimage_eq _ φ.surjective,
-    convexHull_pair, show φ '' segment ℝ a b = segment ℝ (φ a) (φ b) from
-      image_segment ℝ ((φ : E →ₗ[ℝ] ℝ).toAffineMap) a b, segment_eq_uIcc,
-    Real.volume_Ioc, Real.volume_interval, smul_eq_mul, ENNReal.toReal_mul, ENNReal.toReal_inv,
-    sub_zero, ENNReal.toReal_ofReal hℓ.le, ENNReal.toReal_ofReal (abs_nonneg _), inv_mul_eq_div,
+  rw [hullVolume, hullVolume, latticeHaar_eq addHaar hD', latticeHaar_eq μ hD, smul_apply,
+    smul_apply, hμ, hμ, Set.image_preimage_eq _ φ.surjective]
+  congr 3
+  exact ((φ : E →ₗ[ℝ] E').image_convexHull S).symm
+
+/-- **Hulls of two points in `ℝ`** for the lattice `ℤ ℓ`: volume `|x − y| / ℓ`. -/
+theorem hullVolume_zmultiples_pair {ℓ : ℝ} (hℓ : 0 < ℓ) (x y : ℝ) :
+    hullVolume (AddSubgroup.zmultiples ℓ) {x, y} = |x - y| / ℓ := by
+  rw [hullVolume, latticeHaar_eq volume (isAddFundamentalDomain_Ioc hℓ 0), smul_apply,
+    convexHull_pair, segment_eq_uIcc, Real.volume_Ioc, Real.volume_interval, smul_eq_mul,
+    ENNReal.toReal_mul, ENNReal.toReal_inv, zero_add, sub_zero,
+    ENNReal.toReal_ofReal hℓ.le, ENNReal.toReal_ofReal (abs_nonneg _), inv_mul_eq_div,
     abs_sub_comm]
+
+/-- **Hulls of two points in a line**: if `φ : E ≃ ℝ` carries `Λ` onto `ℤ ℓ`, the hull of
+`{a, b}` has `latticeHaar Λ`-volume `|φ a − φ b| / ℓ` (`hullVolume_map`,
+`hullVolume_zmultiples_pair`). -/
+theorem hullVolume_pair_of_equiv {Λ : AddSubgroup E} (φ : E ≃L[ℝ] ℝ) {ℓ : ℝ} (hℓ : 0 < ℓ)
+    (hΛ : Λ.map (φ : E →+ ℝ) = AddSubgroup.zmultiples ℓ) (a b : E) :
+    hullVolume Λ {a, b} = |φ a - φ b| / ℓ := by
+  have : Countable (Λ.map (φ : E →+ ℝ)) := by rw [hΛ]; infer_instance
+  have hD : IsAddFundamentalDomain (Λ.map (φ : E →+ ℝ)) (Set.Ioc 0 (0 + ℓ)) addHaar := by
+    rw [hΛ]; exact isAddFundamentalDomain_Ioc hℓ 0 addHaar
+  rw [← hullVolume_map φ hD, Set.image_pair, hΛ, hullVolume_zmultiples_pair hℓ]
 
 /-- **In the zero space the hull of a nonempty set has volume `1`.** -/
 theorem hullVolume_of_subsingleton [Subsingleton E] (Λ : AddSubgroup E) {S : Set E}

@@ -21,7 +21,8 @@ standard lattice `Λ`.
   `H_B(g) = −log ‖P(g)⁻¹ (½ z₁)‖_Λ` and `H_B̄(g) = log ‖P(g)⁻¹ z₋₁‖_Λ` (`‖·‖_Λ` the sup norm of the
   coordinates, normalized so that the basis vectors have norm `1`).
 * `gl2Nbar t` (`n̄(t)`): the product of the reflections in `z₀` and `z₀ + t z₋₁`, which fixes
-  `z₋₁`; `H_B(n̄(t)) = −2 log max(1, ‖t‖)` and `H_B̄(n̄(t)) = 0`.
+  `z₋₁` and lies in the unipotent radical of `B̄` (`gl2_nbar_mem_whittU`);
+  `H_B(n̄(t)) = −2 log max(1, ‖t‖)` and `H_B̄(n̄(t)) = 0`.
 * `gl2_latticeMG_map`: the lattice `proj_M^G(H_M(A_M(F)))` is `ℤ (−log ‖ϖ‖)`.
 * `gl2_vM_nbar`: `v_T(n̄(t)) = 2 log max(1, ‖t‖) / (−log ‖ϖ‖) = 2 max(0, −val(t))`; in
   particular `v_T(n̄(ϖ^{−n})) = 2n` (`gl2_vM_nbar_zpow`) and `v_T(n̄(t)) = 0` iff `‖t‖ ≤ 1`
@@ -172,17 +173,6 @@ theorem gl2Eig_zero_mul_two {y : GSpin (𝔾).QV}
 
 /-! ## `H_P` through lattice norms -/
 
-/-- `latticeSpin` preserves the norm of `Λ`. -/
-theorem gl2_basisNorm_latticeSpin {y : GSpin (𝔾).QV} (hy : y ∈ latticeSpin (𝔾).QV 𝐟)
-    (v : (𝔾).V) : basisNorm 𝐟 (specP (𝔾).QV y v) = basisNorm 𝐟 v := by
-  have key : ∀ z ∈ latticeSpin (𝔾).QV 𝐟, ∀ w, basisNorm 𝐟 (specP (𝔾).QV z w) ≤ basisNorm 𝐟 w :=
-    fun z hz w => (basisNorm_apply_le (specP (𝔾).QV z : (𝔾).V →ₗ[F] (𝔾).V) w).trans
-      (mul_le_of_le_one_left (basisNorm_nonneg w) hz.1.basisOpNorm_le)
-  refine le_antisymm (key y hy v) ?_
-  have := key y⁻¹ (inv_mem hy) (specP (𝔾).QV y v)
-  rw [← specP_mul_apply, inv_mul_cancel, map_one] at this
-  exact this
-
 /-- **`H_P` from a lattice norm**: if `P = P_{F_W} × P_{F_V} ∈ 𝒫(M)` fixes the line of a unit
 vector `v` of `Λ`, its unipotent radical fixes `v`, and `M` acts on `v` by the `e`-th power of
 the eigenvalue on `z₁`, then `e · H_P(g) = −log ‖P(g)⁻¹ v‖_Λ` in the coordinate `gl2c₀`
@@ -212,7 +202,7 @@ theorem gl2_hP_apply {FW : IsotropicFlag (𝔾).QW} {FV : IsotropicFlag (𝔾).Q
       one_smul]
   have hk' : ((𝔾).snd k)⁻¹ ∈ latticeSpin (𝔾).QV 𝐟 := inv_mem hk.2
   rw [map_mul, mul_inv_rev, specP_mul_apply, hpv', map_smul, basisNorm_smul,
-    gl2_basisNorm_latticeSpin hk', hv, mul_one, norm_inv, norm_zpow, Real.log_inv,
+    basisNorm_specP_of_mem_latticeSpin hk', hv, mul_one, norm_inv, norm_zpow, Real.log_inv,
     Real.log_zpow, neg_neg]
   simp only [ReducedLeviDatum.HM]
   rw [gl2_char_eq]
@@ -436,6 +426,68 @@ theorem gl2_parabolics : (𝔾).parabolics (𝕃).M =
     · exact (𝕃).toFlagLeviDatum.mem_parabolics
     · exact (𝕃).toFlagLeviDatum.opp_mem_parabolics
 
+theorem gl2_nbar_apply (t : F) (v : (𝔾).V) : specP (𝔾).QV ((𝔾).snd (gl2Nbar t)) v =
+    quadReflection (𝔾).QV (𝐟 1) (quadReflection (𝔾).QV (𝐟 1 + t • 𝐟 0) v) := by
+  rw [gl2Nbar, snd_inr]
+  exact LinearMap.congr_fun (specP_gspinPair (𝔾).QV gl2_Q_one (gl2_Q_nbar t)) v
+
+/-- `n̄(t)` fixes `z₋₁`. -/
+theorem gl2_nbar_apply_zero (t : F) : specP (𝔾).QV ((𝔾).snd (gl2Nbar t)) (𝐟 0) = 𝐟 0 := by
+  conv_lhs => rw [← gl2_nbar_inv_zero t]
+  exact specP_inv_apply_apply _ _
+
+/-- **`n̄(t)` is lower unipotent**: it lies in the unipotent radical `Ū` of `B̄`. On `V` it fixes
+`z₋₁` and moves `z₋₁^⊥ = ⟨z₋₁, z₀⟩` by multiples of `z₋₁`; in `C(V)`,
+`n̄(t) − 1 = t z₀ z₋₁` squares to `0`. -/
+theorem gl2_nbar_mem_whittU (t : F) :
+    gl2Nbar t ∈ (𝔾).whittU (𝕃).toFlagLeviDatum.opp.FW (𝕃).toFlagLeviDatum.opp.FV := by
+  have htop : (𝕃).toFlagLeviDatum.opp.FV.top = Submodule.span F {𝐟 0} :=
+    gl2_top_eq_span ((gl2Basis (F := F)).ne_zero 0) gl2_zero_mem_oppFlag
+  have hfix : ∀ v ∈ (𝕃).toFlagLeviDatum.opp.FV.top,
+      specP (𝔾).QV ((𝔾).snd (gl2Nbar t)) v = v := by
+    intro v hv
+    rw [htop] at hv
+    obtain ⟨c, rfl⟩ := Submodule.mem_span_singleton.1 hv
+    rw [map_smul, gl2_nbar_apply_zero]
+  refine ⟨?_, ?_, fun i v hv => ?_, fun v hv => ?_, ?_⟩
+  · change (𝔾).fst ((𝔾).inr _) ∈ flagUnip (𝕃).toFlagLeviDatum.opp.FW
+    rw [fst_inr_eq_one]; exact one_mem _
+  · exact (gl2_mem_flagStab_iff rfl).2 fun v hv => (hfix v hv).symm ▸ hv
+  · obtain rfl : i = ⟨0, Nat.zero_lt_one⟩ :=
+      Fin.ext (Nat.lt_one_iff.1 (show (i : ℕ) < 1 from i.isLt))
+    rw [hfix v hv, sub_self]; exact zero_mem _
+  · -- `v ⊥ z₋₁` has no `½ z₁`-coordinate
+    have h0 : QuadraticMap.polar (𝔾).QV (𝐟 0) v = 0 := by
+      have : bform (𝔾).QV (𝐟 0) v = 0 := hv (𝐟 0) (htop ▸ Submodule.mem_span_singleton_self _)
+      rw [polar_eq_two_mul_bform, this, mul_zero]
+    rw [gl2_polar] at h0
+    simp only [Basis.repr_self, Finsupp.single_apply] at h0
+    norm_num at h0
+    have hQ : (𝔾).QV (𝐟 1 + t • 𝐟 0) = 1 := by rw [gl2_QV_eq]; simp
+    have hQ1 : (𝔾).QV (𝐟 1) = 1 := by rw [gl2_QV_eq]; simp
+    have key : specP (𝔾).QV ((𝔾).snd (gl2Nbar t)) v - v = (-(2 * t * 𝐟.repr v 1)) • 𝐟 0 := by
+      rw [gl2_nbar_apply, quadReflection_apply, quadReflection_apply, hQ, hQ1,
+        gl2_polar, gl2_polar]
+      conv_lhs => rw [← 𝐟.sum_repr v]
+      simp [h0, smul_add, smul_smul]
+      module
+    rw [key, htop]
+    exact Submodule.smul_mem _ _ (Submodule.mem_span_singleton_self _)
+  · -- `n̄(t) − 1 = t ι(z₀) ι(z₋₁)` and `(ι(z₀) ι(z₋₁))² = 0`
+    refine ⟨2, ?_⟩
+    have hQ0 : (𝔾).QV (𝐟 0) = 0 := by rw [gl2_QV_eq]; simp
+    have hQ1 : (𝔾).QV (𝐟 1) = 1 := by rw [gl2_QV_eq]; simp
+    have hp : QuadraticMap.polar (𝔾).QV (𝐟 0) (𝐟 1) = 0 := by rw [gl2_polar]; simp
+    change ((((𝔾).snd (gl2Nbar t) : (CliffordAlgebra (𝔾).QV)ˣ) : CliffordAlgebra (𝔾).QV) - 1) ^ 2
+      = 0
+    rw [gl2Nbar, snd_inr, coe_gspinPair, map_add, map_smul, mul_add, mul_smul_comm,
+      CliffordAlgebra.ι_sq_scalar, hQ1, map_one, add_sub_cancel_left, smul_pow,
+      pow_two (CliffordAlgebra.ι (𝔾).QV (𝐟 1) * CliffordAlgebra.ι (𝔾).QV (𝐟 0)), mul_assoc,
+      ← mul_assoc (CliffordAlgebra.ι (𝔾).QV (𝐟 0)), CliffordAlgebra.ι_mul_ι_comm, hp,
+      map_zero, zero_sub]
+    simp only [neg_mul, mul_neg, ← mul_assoc, CliffordAlgebra.ι_sq_scalar, hQ1, map_one, one_mul,
+      hQ0, map_zero, neg_zero, smul_zero]
+
 /-! ## `a_M^G ≅ ℝ` and the lattice -/
 
 theorem gl2_mem_aG_iff {H : (𝕃).aM} : H ∈ (𝕃).aG ↔ H gl2c₀ = 0 := by
@@ -531,8 +583,8 @@ theorem gl2_vM_nbar_zpow {ϖ : F} (h0 : 0 < ‖ϖ‖) (h1 : ‖ϖ‖ < 1)
   rw [gl2_vM_nbar h0 h1 hmax, max_eq_right h1', norm_inv, norm_pow, Real.log_inv, Real.log_pow]
   field_simp
 
-/-- **`v_T(n̄(t)) = 0` iff `‖t‖ ≤ 1`**, and `v_T(n̄(t)) > 0` otherwise: the weight of the torus is
-not identically zero (nor identically one). -/
+/-- **`v_T(n̄(t)) = 0` iff `‖t‖ ≤ 1`**, i.e. iff the two points `H_B(n̄(t))`, `H_B̄(n̄(t))`
+coincide. -/
 theorem gl2_vM_nbar_eq_zero_iff (t : F) : (𝕃).vM gl2GoodK (gl2Nbar t) = 0 ↔ ‖t‖ ≤ 1 := by
   obtain ⟨ϖ, h0, h1, hmax⟩ := exists_norm_lt_one_isGreatest (F := F)
   have hl : 0 < -Real.log ‖ϖ‖ := neg_pos.2 (Real.log_neg h0 h1)
@@ -545,6 +597,8 @@ theorem gl2_vM_nbar_eq_zero_iff (t : F) : (𝕃).vM gl2GoodK (gl2Nbar t) = 0 ↔
     · exact absurd h (by linarith [le_max_left 1 ‖t‖])
   · intro h; exact Or.inr (Or.inl (max_eq_left h))
 
+/-- **`v_T(n̄(t)) > 0` for `‖t‖ > 1`**: the weight of the torus is not identically zero (nor
+identically one, by `gl2_vM_nbar_eq_zero_iff`). -/
 theorem gl2_vM_nbar_pos {t : F} (ht : 1 < ‖t‖) : 0 < (𝕃).vM gl2GoodK (gl2Nbar t) := by
   obtain ⟨ϖ, h0, h1, hmax⟩ := exists_norm_lt_one_isGreatest (F := F)
   rw [gl2_vM_nbar h0 h1 hmax, max_eq_right ht.le]
