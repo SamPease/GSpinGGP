@@ -46,6 +46,32 @@ theorem lie_conj_stable (d : GGPData F) (t : ↥d.G) :
 abbrev oneSubAd (d : GGPData F) (t : ↥d.G) : d.lie.toSubmodule →ₗ[F] d.lie.toSubmodule :=
   1 - (conjAd F (t : d.ambientˣ)).toLinearEquiv.toLinearMap.restrict (lie_conj_stable d t)
 
+/-- `Ad g` restricted to `𝔤`. -/
+def adRestrict (d : GGPData F) (g : ↥d.G) : Module.End F d.lie.toSubmodule :=
+  (conjAd F (g : d.ambientˣ)).toLinearEquiv.toLinearMap.restrict (lie_conj_stable d g)
+
+theorem oneSubAd_eq_one_sub_adRestrict (d : GGPData F) (g : ↥d.G) : oneSubAd d g = 1 - adRestrict d g := rfl
+
+theorem coe_adRestrict (d : GGPData F) (g : ↥d.G) (v : d.lie.toSubmodule) :
+    ((adRestrict d g v : d.lie.toSubmodule) : d.ambient) =
+      ((g : d.ambientˣ) : d.ambient) * v * (((g : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient) := rfl
+
+/-- `1 − Ad g` and `1 − Ad h` commute for commuting `g, h ∈ G(F)`. -/
+theorem commute_oneSubAd (d : GGPData F) {g h : ↥d.G} (hc : Commute g h) :
+    Commute (oneSubAd d g) (oneSubAd d h) := by
+  have hR : Commute (adRestrict d g) (adRestrict d h) := by
+    refine LinearMap.ext fun v => Subtype.ext ?_
+    simp only [mul_apply_eq_comp, coe_adRestrict]
+    have e1 := congrArg (fun k : ↥d.G => ((k : d.ambientˣ) : d.ambient)) hc.eq
+    have e2 := congrArg (fun k : ↥d.G => (((k⁻¹ : ↥d.G) : d.ambientˣ) : d.ambient)) hc.eq
+    simp only [Subgroup.coe_mul, Units.val_mul, mul_inv_rev, InvMemClass.coe_inv] at e1 e2
+    calc _ = (((g : d.ambientˣ) : d.ambient) * ((h : d.ambientˣ) : d.ambient)) * (v : d.ambient) *
+          ((((h : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient) *
+            (((g : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient)) := by simp only [mul_assoc]
+      _ = _ := by rw [e1, e2]; simp only [mul_assoc]
+  rw [oneSubAd_eq_one_sub_adRestrict, oneSubAd_eq_one_sub_adRestrict]
+  exact (Commute.one_left _).sub_left ((Commute.one_right _).sub_right hR)
+
 /-- `1 − Ad g` is semisimple on `𝔤` for semisimple `g ∈ G(F)`. -/
 theorem isSemisimple_oneSubAd (d : GGPData F) (g : ↥d.G) (hg : IsSS F ((g : d.ambientˣ) : d.ambient)) :
     Module.End.IsSemisimple (oneSubAd d g) := by
