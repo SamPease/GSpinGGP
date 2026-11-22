@@ -655,6 +655,44 @@ theorem weylDiscLie_units_conj (𝔤 : LieSubalgebra F A) (u : Aˣ)
   simp only [inv_inv, mul_sub, sub_mul, mul_assoc, Units.inv_mul_cancel_left, Units.inv_mul,
     mul_one]
 
+/-- **`D^G` is invariant under conjugation** by a unit `u` normalizing `𝔤`: `1 − Ad(u x u⁻¹)` on
+`𝔤` is conjugate to `1 − Ad x` by `Ad u` (`LinearEquiv.charpoly_conj`).  The group analogue of
+`weylDiscLie_units_conj`. -/
+theorem weylDisc_units_conj (𝔤 : LieSubalgebra F A) (u : Aˣ)
+    (hmap : 𝔤.toSubmodule.map (conjAd F u).toLinearMap = 𝔤.toSubmodule) (x : Aˣ) :
+    weylDisc 𝔤 (u * x * u⁻¹) = weylDisc 𝔤 x := by
+  have hu : ∀ X ∈ 𝔤.toSubmodule, conjAd F u X ∈ 𝔤.toSubmodule := fun X hX => by
+    rw [← hmap]; exact ⟨X, hX, rfl⟩
+  have hu' : ∀ X ∈ 𝔤.toSubmodule, conjAd F u⁻¹ X ∈ 𝔤.toSubmodule := fun X hX => by
+    rw [← hmap] at hX
+    obtain ⟨Y, hY, rfl⟩ := hX
+    simpa [mul_assoc] using hY
+  have hc : ∀ X, conjAd F (u * x * u⁻¹) X = conjAd F u (conjAd F x (conjAd F u⁻¹ X)) := by
+    intro X; simp [mul_assoc]
+  have hc' : ∀ X, conjAd F x X = conjAd F u⁻¹ (conjAd F (u * x * u⁻¹) (conjAd F u X)) := by
+    intro X; simp [mul_assoc]
+  unfold weylDisc
+  by_cases hx : ∀ X ∈ 𝔤.toSubmodule, conjAd F x X ∈ 𝔤.toSubmodule
+  · have hx' : ∀ X ∈ 𝔤.toSubmodule, conjAd F (u * x * u⁻¹) X ∈ 𝔤.toSubmodule := fun X hX => by
+      rw [hc]; exact hu _ (hx _ (hu' _ hX))
+    rw [dite_eq_left_of_eq_true (eq_true hx), dite_eq_left_of_eq_true (eq_true hx')]
+    let c : ↥𝔤.toSubmodule ≃ₗ[F] ↥𝔤.toSubmodule :=
+      { toFun := fun X => ⟨conjAd F u X, hu _ X.2⟩
+        invFun := fun X => ⟨conjAd F u⁻¹ X, hu' _ X.2⟩
+        map_add' := fun X Y => Subtype.ext (map_add _ _ _)
+        map_smul' := fun r X => Subtype.ext (map_smul _ _ _)
+        left_inv := fun X => Subtype.ext (by simp [mul_assoc])
+        right_inv := fun X => Subtype.ext (by simp [mul_assoc]) }
+    congr 2
+    rw [← LinearEquiv.charpoly_conj c.symm]
+    congr 1
+    refine LinearMap.ext fun Y => Subtype.ext ?_
+    simp [LinearEquiv.conj_apply, c, mul_sub, sub_mul, mul_assoc]
+    exact (mul_assoc _ _ _).symm
+  · have hx' : ¬ ∀ X ∈ 𝔤.toSubmodule, conjAd F (u * x * u⁻¹) X ∈ 𝔤.toSubmodule := fun h =>
+      hx fun X hX => by rw [hc']; exact hu' _ (h _ (hu _ hX))
+    rw [dite_eq_right_of_eq_false (eq_false hx), dite_eq_right_of_eq_false (eq_false hx')]
+
 end Algebraic
 
 /-! ### Semisimplicity of inverses, products and sums -/

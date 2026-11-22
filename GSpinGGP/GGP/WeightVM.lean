@@ -40,6 +40,7 @@ definition below is the sources' `v_M` when it holds.
   its fundamental domains volume `1` (`exists_isAddFundamentalDomain_latticeHaar_eq_one`).
 * `vM_mul_left`: `v_M(m g) = v_M(g)` for `m ∈ M`.
 * `vM_mul_right`: `v_M(g k) = v_M(g)` for `k ∈ K`.
+* `continuous_vM`: `v_M` is locally constant.
 * `vM_eq_hullVolume_neg`: the hull of the `−H_P(g)` has the same volume.
 * `vM_eq_one_of_aG_eq_top`: `v_M = 1` when `a_M = a_G` (e.g. `M = G`).
 -/
@@ -389,6 +390,17 @@ theorem vM_mul_left (K : d.GoodK L.toFlagLeviDatum) (m : ↥L.M) (g : ↥d.G) :
 theorem vM_mul_right (K : d.GoodK L.toFlagLeviDatum) (g : ↥d.G) {k : ↥d.G} (hk : k ∈ K.K) :
     L.vM K (g * k) = L.vM K g := by
   simp only [vM, L.hPar_mul_right K _ g hk]
+
+/-- **`v_M` is locally constant**, hence continuous: it is right `K`-invariant (`vM_mul_right`) and
+`K` is open. -/
+theorem continuous_vM (K : d.GoodK L.toFlagLeviDatum) : Continuous (L.vM K) := by
+  refine continuous_iff_continuousAt.2 fun g => ?_
+  have hn : (g * ·) '' (K.K : Set ↥d.G) ∈ nhds g := by
+    have := (Homeomorph.mulLeft g).isOpenMap _ K.isOpen
+    refine this.mem_nhds ⟨1, K.K.one_mem, mul_one g⟩
+  refine (continuousAt_const (y := L.vM K g)).congr (Filter.mem_of_superset hn ?_)
+  rintro _ ⟨k, hk, rfl⟩
+  exact (L.vM_mul_right K g hk).symm
 
 /-- **Sign conventions**: the hull of the `−H_P(g)` (the points of Waldspurger 2010, §2.1,
 `c_P(λ) = e^{−λ(Y_P)}`) has the same volume as the hull of the `H_P(g)` (Beuzart-Plessis §1.9,
