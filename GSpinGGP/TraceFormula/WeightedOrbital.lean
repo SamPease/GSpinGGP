@@ -34,7 +34,9 @@ sources must account for it.
 `CosetSpace.out` of the cosets.  It is a function on `G_x(F)\G(F)` when `G_x(F) ⊆ M(F)`
 (`weightedIntegrand_mul_left`), which is the case for `x ∈ M(F) ∩ G_reg(F)` (Waldspurger 2010,
 §2.3: `G_x = M_x ⊂ M`); the results below carry `G_x(F) ⊆ M(F)` as a hypothesis, as
-Beuzart-Plessis' definition does.
+Beuzart-Plessis' definition does.  For `x ∈ M(F) ∩ G_reg(F)` it holds (`centG_le_M`), and every
+Haar measure on `G_x(F)` is right invariant (`isMulRightInvariant_of_mem_regularSet`), in
+`TraceFormula/RegularCentralizer.lean`.
 
 ## Main definitions
 
