@@ -23,6 +23,11 @@ For a reduced flag Levi datum `L` with Levi subgroup `M = L.M` of `G = GSpin(W) 
 These are the facts behind Beuzart-Plessis, Astérisque 418, §1.1 (p. 12): `𝒜_{M,F}` is a lattice
 in `a_M` and `i a*_{M,F} = i a*_M / i 𝒜^∨_{M,F}` a compact torus; and behind Waldspurger,
 Compos. Math. 146 (2010), §1.2 (the projection of `H_M(A_M(F))` to `a_M^G` is a lattice).
+
+Also: `wtScalar` is closed and normalized by the flag Levi subgroup (`isClosed_wtScalar`,
+`mul_mul_inv_mem_wtScalar`), so `A_M(F)` is a closed subgroup of `M(F)` normalized by `M(F)`
+(`AMF_le_M`, `isClosed_AMF`, `conj_mem_AMF`), and `H_M` is invariant under `M(F)`-conjugation
+(`HM_conj`).
 -/
 
 noncomputable section
@@ -116,6 +121,94 @@ theorem det_wtBlock_of_diag {A : V →ₗ[K] V} {s : ι → K} (hA : ∀ j, A (b
   rw [← LinearMap.det_toMatrix b, hdiag, Matrix.det_diagonal]
 
 end OneWeight
+
+/-! ## 1a. The split centre `wtScalar` of a flag Levi subgroup -/
+
+section WtScalar
+
+variable {K : Type*} [Field K] [Invertible (2 : K)]
+variable {V : Type*} [AddCommGroup V] [Module K V]
+variable {Q : QuadraticForm K V}
+variable {ι : Type*} [Fintype ι] {b : Basis ι K V} {wt : ι → ℤ}
+
+/-- An element of `wtScalar` acts on every homogeneous vector of weight `w` by `t w`. -/
+theorem specP_apply_of_isHomog {a : GSpin Q} {t : ℤ → K}
+    (ht : ∀ j, specP Q a (b j) = t (wt j) • b j) {v : V} {w : ℤ} (hv : IsHomog b wt v w) :
+    specP Q a v = t w • v := by
+  conv_lhs => rw [← b.sum_repr v]
+  conv_rhs => rw [← b.sum_repr v]
+  rw [map_sum, Finset.smul_sum]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [map_smul, ht]
+  by_cases h : wt i = w
+  · rw [h, smul_comm]
+  · rw [hv i h, zero_smul, zero_smul, smul_zero]
+
+/-- **`wtScalar` is normalized by the Levi subgroup** (with the same scalars): `M` preserves the
+weight spaces, on which `a` acts by scalars. -/
+theorem mul_mul_inv_mem_wtScalar {g a : GSpin Q} (hg : g ∈ flagLevi (Q := Q) b wt)
+    (ha : a ∈ wtScalar Q b wt) : g * a * g⁻¹ ∈ wtScalar Q b wt := by
+  obtain ⟨t, ht0, ht⟩ := ha
+  refine ⟨t, ht0, fun j => ?_⟩
+  have hh : IsHomog b wt (specP Q g⁻¹ (b j)) (wt j) :=
+    mem_flagLevi_iff.1 ((flagLevi (Q := Q) b wt).inv_mem hg) j
+  rw [specP_mul_apply, specP_mul_apply, specP_apply_of_isHomog ht hh, map_smul,
+    specP_inv_apply_apply]
+
+/-- `wtScalar` by closed conditions: `P(g)` fixes the weight-`0` basis vectors, preserves each line
+`K bⱼ`, and each line `K (bᵢ + bⱼ)` with `bᵢ`, `bⱼ` of the same weight. -/
+theorem wtScalar_eq_iInter :
+    (wtScalar Q b wt : Set (GSpin Q)) =
+      (⋂ j, {g | wt j = 0 → specP Q g (b j) - b j ∈ (⊥ : Submodule K V)}) ∩
+      (⋂ j, {g | specP Q g (b j) - 0 ∈ K ∙ b j}) ∩
+      ⋂ i, ⋂ j, {g | wt i = wt j → specP Q g (b i + b j) - 0 ∈ K ∙ (b i + b j)} := by
+  classical
+  ext g
+  simp only [Set.mem_inter_iff, Set.mem_iInter, Set.mem_ofPred_eq, SetLike.mem_coe,
+    Submodule.mem_bot, sub_eq_zero, sub_zero, Submodule.mem_span_singleton]
+  constructor
+  · rintro ⟨t, ht0, ht⟩
+    refine ⟨⟨fun j hj => by rw [ht, hj, ht0, one_smul], fun j => ⟨t (wt j), (ht j).symm⟩⟩,
+      fun i j hij => ⟨t (wt j), ?_⟩⟩
+    rw [map_add, ht, ht, hij, smul_add]
+  · rintro ⟨⟨h0, h1⟩, h2⟩
+    -- the coefficient `s j` of `P(g) bⱼ` on `bⱼ`
+    set s : ι → K := fun j => (h1 j).choose
+    have hs : ∀ j, specP Q g (b j) = s j • b j := fun j => (h1 j).choose_spec.symm
+    have hsame : ∀ i j, wt i = wt j → s i = s j := by
+      intro i j hij
+      by_cases hne : i = j
+      · rw [hne]
+      obtain ⟨c, hc⟩ := h2 i j hij
+      rw [map_add, hs, hs, smul_add] at hc
+      have hi := congrArg (fun v => b.repr v i) hc
+      have hj := congrArg (fun v => b.repr v j) hc
+      simp [b.repr_self, hne, Ne.symm hne] at hi hj
+      rw [← hi, ← hj]
+    refine ⟨fun w => if w = 0 then 1 else if h : ∃ j, wt j = w then s h.choose else 1,
+      by simp, fun j => ?_⟩
+    by_cases hw : wt j = 0
+    · simp only [hw, ite_true, one_smul]; exact h0 j hw
+    · have hex : ∃ i, wt i = wt j := ⟨j, rfl⟩
+      simp only [hw, ite_false, dite_eq_left_of_eq_true (eq_true hex)]
+      rw [hs, hsame _ _ hex.choose_spec]
+
+/-- **`wtScalar` is closed.** -/
+theorem isClosed_wtScalar [TopologicalSpace K] [IsTopologicalRing K] [T2Space K]
+    [Module.Finite K V] : IsClosed (wtScalar Q b wt : Set (GSpin Q)) := by
+  rw [wtScalar_eq_iInter]
+  refine ((isClosed_iInter fun j => ?_).inter (isClosed_iInter fun j =>
+    isClosed_setOf_specP_sub_mem _ _ _)).inter
+    (isClosed_iInter fun i => isClosed_iInter fun j => ?_)
+  · by_cases hj : wt j = 0
+    · simpa only [hj, true_implies] using isClosed_setOf_specP_sub_mem (Q := Q) (b j) (b j) ⊥
+    · simp only [hj, false_implies, Set.ofPred_true, isClosed_univ]
+  · by_cases hij : wt i = wt j
+    · simpa only [hij, true_implies] using
+        isClosed_setOf_specP_sub_mem (Q := Q) (b i + b j) 0 (K ∙ (b i + b j))
+    · simp only [hij, false_implies, Set.ofPred_true, isClosed_univ]
+
+end WtScalar
 
 /-! ## 2. `A_M(F)` and its `H_M` -/
 
@@ -368,6 +461,46 @@ theorem span_HMAMF_eq_top : Submodule.span ℝ L.HMAMF = ⊤ := by
 theorem span_range_HM_eq_top : Submodule.span ℝ (Set.range L.HM) = ⊤ :=
   eq_top_iff.2 <| L.span_HMAMF_eq_top.symm.le.trans <| Submodule.span_mono <| by
     rintro _ ⟨m, rfl⟩; exact ⟨m.1, rfl⟩
+
+/-! ## 3. `A_M(F)` inside `M(F)` -/
+
+theorem mem_AMF_iff {g : ↥d.G} :
+    g ∈ L.AMF ↔ d.fst g ∈ wtScalar d.QW L.bW L.wtW ∧ d.snd g ∈ wtScalar d.QV L.bV L.wtV := by
+  constructor
+  · rintro ⟨p, hp, rfl⟩
+    exact hp
+  · intro h
+    exact ⟨(d.fst g, d.snd g), h, d.pair_fst_snd g⟩
+
+/-- `A_M(F) ⊆ M(F)`. -/
+theorem AMF_le_M : L.AMF ≤ L.M := fun _ hg =>
+  ⟨wtScalar_le_flagLevi ((L.mem_AMF_iff).1 hg).1, wtScalar_le_flagLevi ((L.mem_AMF_iff).1 hg).2⟩
+
+/-- `A_M(F)` is closed in `G(F)`. -/
+theorem isClosed_AMF : IsClosed (L.AMF : Set ↥d.G) := by
+  have : (L.AMF : Set ↥d.G) = d.fst ⁻¹' (wtScalar d.QW L.bW L.wtW : Set _) ∩
+      d.snd ⁻¹' (wtScalar d.QV L.bV L.wtV : Set _) := by
+    ext g; exact L.mem_AMF_iff
+  rw [this]
+  exact (isClosed_wtScalar.preimage d.continuous_fst).inter
+    (isClosed_wtScalar.preimage d.continuous_snd)
+
+/-- `A_M(F)` is normalized by `M(F)`. -/
+theorem conj_mem_AMF {m a : ↥d.G} (hm : m ∈ L.M) (ha : a ∈ L.AMF) : m * a * m⁻¹ ∈ L.AMF := by
+  rw [mem_AMF_iff] at ha ⊢
+  simp only [map_mul, map_inv]
+  exact ⟨mul_mul_inv_mem_wtScalar hm.1 ha.1, mul_mul_inv_mem_wtScalar hm.2 ha.2⟩
+
+/-- `H_M` is invariant under conjugation in `M(F)` (its target is abelian). -/
+theorem HM_conj (m a : ↥L.M) : L.HM (m * a * m⁻¹) = L.HM a := by
+  rw [HM_mul, HM_mul, HM_inv]; abel
+
+/-- `H_M : M(F) → a_M` as a homomorphism to `Multiplicative a_M`. -/
+def HMHom : ↥L.M →* Multiplicative L.aM where
+  toFun m := Multiplicative.ofAdd (L.HM m)
+  map_one' := by rw [HM_one]; rfl
+  map_mul' m m' := by rw [HM_mul]; rfl
+
 
 end ReducedLeviDatum
 
