@@ -176,4 +176,69 @@ theorem gl2_iwasawa (FW : IsotropicFlag (𝔾).QW) (FV : IsotropicFlag (𝔾).QV
         rw [map_smul, key, smul_smul]
         exact Submodule.smul_mem _ _ (Submodule.mem_span_singleton_self _)
 
+/-! ## The torus `M` and its good compact subgroup -/
+
+/-- The trivial splitting of the empty flag of `W = 0`. -/
+theorem gl2_isFlagSplitting_W :
+    IsFlagSplitting (emptyFlag (𝔾).QW) (Pi.basisFun F (Fin 0)) (Fin.elim0 : Fin 0 → ℤ) where
+  mem i := i.elim0
+  repr_eq_zero _ _ _ i := i.elim0
+  orth i := i.elim0
+  sum_wt := by simp
+
+/-- **The reduced Levi datum of the torus**: the flag `⟨z₁⟩` of `V` with the standard basis and
+weights `-1, 0, 1`, and the empty flag of `W = 0`. -/
+def gl2Levi : (𝔾).ReducedLeviDatum where
+  FW := emptyFlag _
+  FV := (𝔾).flag
+  ιW := Fin 0
+  ιV := Fin (𝔾).m ⊕ Fin (2 * (𝔾).r + 1)
+  bW := Pi.basisFun F (Fin 0)
+  wtW := Fin.elim0
+  bV := (𝔾).stdBasis
+  wtV := (𝔾).stdWt
+  hsW := gl2_isFlagSplitting_W
+  hsV := (𝔾).isFlagSplitting_stdBasis
+  reducedW := not_isHypPlane_comp_of_finrank_le _ _ (by rw [Module.finrank_fin_fun]; simp)
+  reducedV := fun hp => by
+    have h2 := hp.1
+    have hsub : wtSpan (𝔾).stdBasis (𝔾).stdWt 0 ≤ Submodule.span F {(𝔾).stdBasis (Sum.inr 1)} := by
+      rw [wtSpan, Submodule.span_le]
+      rintro _ ⟨j, hj, rfl⟩
+      rcases j with j | j
+      · exact j.elim0
+      · have : j = 1 := by
+          have hj' : ((j : ℕ) : ℤ) - 1 = 0 := hj
+          exact Fin.ext (by simp; omega)
+        rw [this]; exact Submodule.mem_span_singleton_self _
+    have h1 : finrank F (Submodule.span F {(𝔾).stdBasis (Sum.inr 1)}) ≤ 1 :=
+      (finrank_span_le_card ({(𝔾).stdBasis (Sum.inr 1)} : Set (𝔾).V)).trans (by simp)
+    have := (Submodule.finrank_mono hsub).trans h1
+    omega
+
+/-- **`a_M^G ≠ 0`** for the torus: its `GL`-coordinate is not central (`V` is not a hyperbolic
+plane). -/
+theorem gl2Levi_nontrivial_aMG : Nontrivial (gl2Levi (F := F)).aMG := by
+  have hnotV : ¬ IsHypPlane (𝔾).QV := fun hp => by
+    have := hp.1; rw [gl2Data_finrank_V] at this; omega
+  exact (gl2Levi (F := F)).nontrivial_aMG (c := Sum.inr (Sum.inl ⟨0, Nat.zero_lt_one⟩)) hnotV
+
+/-- **A good compact subgroup for the torus `M`** (a proper Levi subgroup): `K = gl2K`, compact
+open (`isCompact_latticeK`, `isOpen_latticeK`), with `G = P K` for every `P ∈ 𝒫(M)`
+(`gl2_iwasawa`, which holds for all flag parabolics), and in good position: it stabilizes the
+lattice spanned by `z₋₁, z₀, ½ z₁`, whose basis vectors lie in the weight spaces of `M`. -/
+def gl2GoodK : (𝔾).GoodK (gl2Levi (F := F)).toFlagLeviDatum where
+  K := gl2K
+  isOpen := (𝔾).isOpen_latticeK _ _
+  isCompact := (𝔾).isCompact_latticeK _ _
+  mul_eq P hP g := by
+    obtain ⟨FW, FV, rfl, -⟩ := hP
+    exact gl2_iwasawa FW FV g
+  goodPositionW := ⟨Fin 0, inferInstance, Pi.basisFun F (Fin 0), fun i => i.elim0,
+    fun _ _ _ _ i => i.elim0⟩
+  goodPositionV := ⟨Fin 3, inferInstance, gl2Basis, fun i => ⟨(𝔾).stdWt (Sum.inr i), by
+      rw [gl2Basis_eq]
+      exact Submodule.smul_mem _ _ (Submodule.subset_span ⟨Sum.inr i, rfl, rfl⟩)⟩,
+    by rintro _ ⟨k, hk, rfl⟩; exact hk.1.2.1⟩
+
 end GSpinGGP.GGPData
