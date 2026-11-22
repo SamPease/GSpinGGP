@@ -9,7 +9,7 @@ import GSpinGGP.Foundations.RepresentationTwist
 # Unramified characters of a Levi subgroup, unramified twists and their orbits
 
 For a reduced flag Levi datum `L` with Levi subgroup `M = L.M` of `G = GSpin(W) × GSpin(V)`,
-this file builds the objects of Beuzart-Plessis, Astérisque 418, §1.1 (pp. 11–12) and §2.2
+this file builds the objects of Beuzart-Plessis, Astérisque 418, §1.1 (p. 12) and §2.2
 (p. 40), and Thesis §2.1 and §3.1.2:
 
 * `a*_M = X^*(M) ⊗ ℝ` and its complexification `a*_{M,ℂ}`, in the coordinates dual to those of
@@ -148,7 +148,7 @@ theorem continuous_HM : Continuous L.HM :=
 theorem HM_inv (m : ↥L.M) : L.HM m⁻¹ = -L.HM m := by
   rw [eq_neg_iff_add_eq_zero, ← HM_mul, inv_mul_cancel, HM_one]
 
-/-- **`𝒜_{M,F} = H_M(M(F))`** (Thesis §2.1; Beuzart-Plessis §1.1, p. 11), a subgroup of `a_M`. -/
+/-- **`𝒜_{M,F} = H_M(M(F))`** (Thesis §2.1; Beuzart-Plessis §1.1, p. 12), a subgroup of `a_M`. -/
 def rangeHM : AddSubgroup L.aM where
   carrier := Set.range L.HM
   zero_mem' := ⟨1, L.HM_one⟩
@@ -251,7 +251,7 @@ def unitaryUnramCharHom : L.aMDual →+ Additive (↥L.M →ₜ* Circle) where
   map_zero' := by simp
   map_add' ν ν' := by rw [unitaryUnramChar_add]; rfl
 
-/-- **The dual lattice `𝒜^∨_{M,F} = Hom(𝒜_{M,F}, 2πℤ)`** (Beuzart-Plessis §1.1, p. 11): the
+/-- **The dual lattice `𝒜^∨_{M,F} = Hom(𝒜_{M,F}, 2πℤ)`** (Beuzart-Plessis §1.1, p. 12): the
 `ν ∈ a*_M` with `⟨ν, H⟩ ∈ 2πℤ` for every `H ∈ 𝒜_{M,F} = H_M(M(F))`. -/
 def dualLattice : AddSubgroup L.aMDual where
   carrier := {ν | ∀ H ∈ L.rangeHM, ∃ n : ℤ, L.dualPair ν H = n * (2 * π)}
@@ -344,7 +344,7 @@ theorem isEquivalent_unramTwist_add (σ : UnitaryRep ↥L.M) (ν ν' : L.aMDual)
   rw [unitaryUnramChar_add]
   exact σ.isEquivalent_twist_twist _ _
 
-theorem UnitaryRep.IsEquivalent.unramTwist {σ σ' : UnitaryRep ↥L.M} (h : σ.IsEquivalent σ')
+theorem isEquivalent_unramTwist_congr {σ σ' : UnitaryRep ↥L.M} (h : σ.IsEquivalent σ')
     (ν : L.aMDual) : (L.unramTwist σ ν).IsEquivalent (L.unramTwist σ' ν) :=
   h.twist _
 
@@ -361,10 +361,10 @@ def twistStab (σ : UnitaryRep ↥L.M) : AddSubgroup L.aMDual where
   add_mem' := by
     intro ν ν' (hν : (L.unramTwist σ ν).IsEquivalent σ) (hν' : (L.unramTwist σ ν').IsEquivalent σ)
     exact (L.isEquivalent_unramTwist_add σ ν ν').symm.trans
-      ((UnitaryRep.IsEquivalent.unramTwist L hν ν').trans hν')
+      ((L.isEquivalent_unramTwist_congr hν ν').trans hν')
   neg_mem' := by
     intro ν (hν : (L.unramTwist σ ν).IsEquivalent σ)
-    have h1 := (UnitaryRep.IsEquivalent.unramTwist L hν.symm (-ν)).trans
+    have h1 := (L.isEquivalent_unramTwist_congr hν.symm (-ν)).trans
       (L.isEquivalent_unramTwist_add σ ν (-ν))
     rw [add_neg_cancel] at h1
     exact h1.trans (L.isEquivalent_unramTwist_zero σ)
@@ -386,13 +386,13 @@ def unramOrbitSetoid : Setoid (UnitaryRep ↥L.M) where
     refine ⟨fun σ => ⟨0, L.isEquivalent_unramTwist_zero σ⟩, ?_, ?_⟩
     · rintro σ σ' ⟨ν, h⟩
       refine ⟨-ν, ?_⟩
-      have h1 := (UnitaryRep.IsEquivalent.unramTwist L h.symm (-ν)).trans
+      have h1 := (L.isEquivalent_unramTwist_congr h.symm (-ν)).trans
         (L.isEquivalent_unramTwist_add σ ν (-ν))
       rw [add_neg_cancel] at h1
       exact h1.trans (L.isEquivalent_unramTwist_zero σ)
     · rintro σ σ' σ'' ⟨ν, h⟩ ⟨ν', h'⟩
       exact ⟨ν + ν', (L.isEquivalent_unramTwist_add σ ν ν').symm.trans
-        ((UnitaryRep.IsEquivalent.unramTwist L h ν').trans h')⟩
+        ((L.isEquivalent_unramTwist_congr h ν').trans h')⟩
 
 /-! ## 6. Twisting the inducing datum of `parInd` -/
 

@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.GGP.Unramified
+import GSpinGGP.Sanity.Witnesses
 
 /-!
 # Sanity checks for unramified characters and twists (`GGP/Unramified.lean`)
@@ -19,6 +20,8 @@ take the central element `m = (c, 1)`, `0 < ‖c‖ < 1`, of `M(F)`.  Its `H_M` 
    `λ ≠ 0` on that coordinate, `|χ_λ(m)| ≠ 1`.
 3. **Twisting changes the representation** (`unramTwist_ρ_ne`): on any nonzero vector,
    `σ_{iν}(m) v = −σ(m) v ≠ σ(m) v`.
+4. **The stabilizer is not everything** (`twistStab_trivialRep`, `twistStab_trivialRep_ne_top`):
+   for the trivial representation on `ℂ` (`Sanity.trivialRep`), `i a^∨_{M,σ} = 𝒜^∨_{M,F} ≠ a*_M`.
 -/
 
 noncomputable section
@@ -37,7 +40,7 @@ namespace ReducedLeviDatum
 variable (L : d.ReducedLeviDatum)
 
 /-- The `GSpin(W)`-coordinate of `a_M`. -/
-abbrev cW : L.Coord := Sum.inl (Sum.inr ())
+private abbrev cW : L.Coord := Sum.inl (Sum.inr ())
 
 /-- A central element `(c, 1)` of `M(F)` with `H_M` nonzero on the `GSpin(W)`-coordinate. -/
 theorem exists_HM_cW_ne_zero : ∃ m : ↥L.M, L.HM m L.cW ≠ 0 := by
@@ -68,7 +71,7 @@ theorem exists_unitaryUnramChar_apply_eq_exp_pi : ∃ ν : L.aMDual, ∃ m : ↥
     ite_true]
   field_simp
 
-theorem circle_exp_pi_ne_one : Circle.exp π ≠ 1 := by
+private theorem circle_exp_pi_ne_one : Circle.exp π ≠ 1 := by
   intro h
   obtain ⟨n, hn⟩ := Circle.exp_eq_one.1 h
   have h1 : (1 : ℝ) = 2 * n := by
@@ -117,6 +120,32 @@ theorem unramTwist_ρ_ne (σ : UnitaryRep ↥L.M) (v : σ.H) (hv : v ≠ 0) :
   rintro (h | h)
   · norm_num at h
   · exact hv ((σ.isUnitary.injective m) (h.trans (map_zero _).symm))
+
+/-- **For the trivial representation, `i a^∨_{M,σ} = 𝒜^∨_{M,F}`**: `σ_{iν} ≅ σ` forces
+`χ_{iν} = 1`. -/
+theorem twistStab_trivialRep : L.twistStab (Sanity.trivialRep ↥L.M) = L.dualLattice := by
+  refine le_antisymm (fun ν hν => ?_) (L.dualLattice_le_twistStab _)
+  obtain ⟨U, hU⟩ :=
+    (hν : (L.unramTwist (Sanity.trivialRep ↥L.M) ν).IsEquivalent (Sanity.trivialRep ↥L.M))
+  rw [← unitaryUnramChar_eq_one_iff]
+  ext m
+  set c : ℂ := ((L.unitaryUnramChar ν m : Circle) : ℂ)
+  have e1 : (L.unramTwist (Sanity.trivialRep ↥L.M) ν).ρ m (1 : ℂ) = c • (1 : ℂ) :=
+    congrArg (c • ·) (Sanity.trivialRep_ρ_apply _ m (1 : ℂ))
+  have h : U (c • (1 : ℂ)) = U (1 : ℂ) :=
+    (congrArg U e1).symm.trans ((hU m (1 : ℂ)).trans (Sanity.trivialRep_ρ_apply _ m _))
+  have h2 : c • U (1 : ℂ) = (1 : ℂ) • U (1 : ℂ) :=
+    (U.map_smul c (1 : ℂ)).symm.trans (h.trans (one_smul ℂ _).symm)
+  have hU1 : U (1 : ℂ) ≠ 0 := by
+    have := U.norm_map (1 : ℂ)
+    rw [← norm_ne_zero_iff, this]
+    exact (norm_one (α := ℂ)).symm ▸ one_ne_zero
+  exact smul_left_injective ℂ hU1 h2
+
+/-- **The stabilizer of the trivial representation is a proper subgroup.** -/
+theorem twistStab_trivialRep_ne_top : L.twistStab (Sanity.trivialRep ↥L.M) ≠ ⊤ := by
+  rw [twistStab_trivialRep]
+  exact L.dualLattice_ne_top
 
 end ReducedLeviDatum
 
