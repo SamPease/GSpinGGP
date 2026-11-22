@@ -36,7 +36,7 @@ namespace GSpinGGP
 
 section MapsLattice
 
-theorem le_one_mul_le_one {a b : ℝ} (ha : a ≤ 1) (hb0 : 0 ≤ b) (hb : b ≤ 1) : a * b ≤ 1 :=
+private theorem le_one_mul_le_one {a b : ℝ} (ha : a ≤ 1) (hb0 : 0 ≤ b) (hb : b ≤ 1) : a * b ≤ 1 :=
   (mul_le_mul_of_nonneg_right ha hb0).trans (by rw [one_mul]; exact hb)
 
 variable {F : Type*} [NontriviallyNormedField F] {V : Type*} [AddCommGroup V] [Module F V]
@@ -534,8 +534,8 @@ theorem isCompact_latticeK : IsCompact (d.latticeK eW eV : Set ↥d.G) := by
 
 /-! ## Elements of `latticeK` -/
 
-/-- `fst (inr y) = 1`. -/
-theorem fst_inr' (y : GSpin d.QV) : d.fst (d.inr y) = 1 := rfl
+/-- `fst ∘ inr = 1`. -/
+theorem fst_inr (y : GSpin d.QV) : d.fst (d.inr y) = 1 := rfl
 
 /-- **`(1, y) ∈ latticeK`** as soon as `P(y)^{±1}` preserve `Λ_{e_V}` and `‖detChar(y)‖ = 1`. -/
 theorem inr_mem_latticeK {y : GSpin d.QV}
@@ -545,11 +545,11 @@ theorem inr_mem_latticeK {y : GSpin d.QV}
   have hinv : ‖((detChar d.QV y⁻¹ : Fˣ) : F)‖ = 1 := by
     rw [map_inv, Units.val_inv_eq_inv_val, norm_inv, h3, inv_one]
   refine ⟨⟨?_, h1, ?_, h3⟩, ⟨?_, ?_, ?_, ?_⟩⟩
-  · rw [fst_inr', map_one]; exact mapsLattice_id eW
-  · rw [fst_inr']; simp
-  · rw [map_inv, fst_inr', inv_one, map_one]; exact mapsLattice_id eW
+  · rw [fst_inr, map_one]; exact mapsLattice_id eW
+  · rw [fst_inr]; simp
+  · rw [map_inv, fst_inr, inv_one, map_one]; exact mapsLattice_id eW
   · rw [map_inv, snd_inr]; exact h2
-  · rw [map_inv, fst_inr', inv_one]; simp
+  · rw [map_inv, fst_inr, inv_one]; simp
   · rw [map_inv, snd_inr]; exact hinv
 
 /-- **Pairs of unit vectors give elements of `latticeK`**: for `u, w ∈ Λ_{e_V}` with
