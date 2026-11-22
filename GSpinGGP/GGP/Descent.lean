@@ -675,6 +675,12 @@ theorem val_snd (g : d.G) :
 /-- The central scalars `(c₁, c₂) ∈ G_m × G_m ⊆ G`. -/
 def scalarPair (c₁ c₂ : Kˣ) : d.G := d.pair (scalarGSpin d.QW c₁, scalarGSpin d.QV c₂)
 
+/-- `(c₁, c₂) ↦ (c₁, c₂) ∈ G` is continuous. -/
+theorem continuous_scalarPair [TopologicalSpace K] [IsTopologicalRing K] :
+    Continuous fun c : Kˣ × Kˣ => d.scalarPair c.1 c.2 :=
+  d.continuous_pair.comp (((continuous_scalarGSpin d.QW).comp _root_.continuous_fst).prodMk
+    ((continuous_scalarGSpin d.QV).comp _root_.continuous_snd))
+
 /-- The scalars `(c₁, c₂)` commute with the whole ambient algebra `C(W) × C(V)`. -/
 theorem scalarPair_commute (c₁ c₂ : Kˣ) (X : d.ambient) :
     ((d.scalarPair c₁ c₂ : d.ambientˣ) : d.ambient) * X =

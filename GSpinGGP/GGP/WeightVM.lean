@@ -53,6 +53,16 @@ open MeasureTheory Module Pointwise
 
 namespace GSpinGGP
 
+section MapsLattice
+
+variable {F : Type*} [NontriviallyNormedField F] {V : Type*} [AddCommGroup V] [Module F V]
+
+/-- **`A` maps the lattice `Λ_e = {v : ‖e^*_i(v)‖ ≤ 1 ∀ i}` into itself.** -/
+def MapsLattice {κ : Type*} (e : Basis κ F V) (A : V →ₗ[F] V) : Prop :=
+  ∀ v : V, (∀ i, ‖e.repr v i‖ ≤ 1) → ∀ i, ‖e.repr (A v) i‖ ≤ 1
+
+end MapsLattice
+
 namespace GGPData
 
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F] {d : GGPData F}
@@ -65,13 +75,13 @@ variable {V : Type*} [AddCommGroup V] [Module F V] {ι : Type*}
 
 /-- **`S` stabilizes an `𝒪_F`-lattice of `V` split by the weight spaces of `(b, wt)`**: there is a
 basis `e` of `V`, each vector of which lies in one weight space `wtSpan b wt w`, such that every
-`P(g)`, `g ∈ S`, maps the lattice `Λ_e = {v : ‖e^*_i(v)‖ ≤ 1 ∀ i}` into itself.  (Every
-`𝒪_F`-lattice
-that is the direct sum of its intersections with the weight spaces is such a `Λ_e`.) -/
+`P(g)`, `g ∈ S`, maps the lattice `Λ_e = {v : ‖e^*_i(v)‖ ≤ 1 ∀ i}` into itself (`MapsLattice`).
+(Every `𝒪_F`-lattice that is the direct sum of its intersections with the weight spaces is such a
+`Λ_e`.) -/
 def StabilizesSplitLattice (Q : QuadraticForm F V) (b : Basis ι F V) (wt : ι → ℤ)
     (S : Set (GSpin Q)) : Prop :=
   ∃ (κ : Type) (_ : Fintype κ) (e : Basis κ F V), (∀ i, ∃ w, e i ∈ wtSpan b wt w) ∧
-    ∀ g ∈ S, ∀ v : V, (∀ i, ‖e.repr v i‖ ≤ 1) → ∀ i, ‖e.repr (specP Q g v) i‖ ≤ 1
+    ∀ g ∈ S, MapsLattice e (specP Q g : V →ₗ[F] V)
 
 end SplitLattice
 

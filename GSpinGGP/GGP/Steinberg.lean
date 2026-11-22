@@ -168,7 +168,7 @@ theorem list_prod_quadReflection_apply_of_polar {v : V} :
   | u :: t, h => by
     rw [List.map_cons, List.prod_cons, mul_apply_eq_comp,
       list_prod_quadReflection_apply_of_polar t fun w hw => h w (List.mem_cons_of_mem _ hw),
-      quadReflection_apply, h u List.mem_cons_self, zero_smul, smul_zero, sub_zero]
+      quadReflection_apply_of_polar_eq_zero Q (h u List.mem_cons_self)]
 
 /-- A product of reflections in vectors commuting with `P(x)` (eigenvalues `±1`) commutes with
 `P(x)`. -/

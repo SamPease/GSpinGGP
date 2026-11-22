@@ -6,6 +6,7 @@ import GSpinGGP.GGP.WeightVM
 import GSpinGGP.Sanity.AxiomRedTeam.WaldspurgerXi
 import GSpinGGP.Sanity.LeviAudit
 import GSpinGGP.GGP.QuadClassify
+import GSpinGGP.TraceFormula.WeakCartan
 
 /-!
 # Sanity checks for the weight `v_M`
@@ -16,7 +17,7 @@ Levi datum with `M = G`; the compact open subgroup of `toyXiPair` is good for it
 `v_G = 1`.  At `Sanity.hypVData` (`V` a hyperbolic plane) a nonempty flag still has `a_M = a_G`
 (`hypV_aG_eq_top`, from `single_mem_aG`), as it must: `G` is then a torus times `GL₁`, so
 `M = G`.  At `gl2Data` (`W = 0`, `V` split of dimension `3`, `G = GL₁ × GSpin₃`) the torus `M`
-of a full flag of `V` has `a_M^G ≠ 0` and `latticeHaar` gives the fundamental domains of
+of the flag `⟨z₁⟩` (the reduced Levi datum `gl2Levi`) has `a_M^G ≠ 0` and `latticeHaar` gives the fundamental domains of
 `proj_M^G(H_M(A_M(F)))` volume `1` (`gl2_aMG_nontrivial`); a `GoodK` for this proper Levi is
 constructed in `Sanity/GL2GoodK.lean` (`gl2GoodK`).  Nothing here uses an axiom.
 -/
@@ -144,50 +145,58 @@ theorem gl2Data_one_le_wittIndex : 1 ≤ wittIndex (gl2Data (F := F)).QV := by
   rw [LeviAux.splitOddForm_apply]
   simp [Fin.sum_univ_three, Fin.rev]
 
-/-- **A Levi subgroup with `a_M^G ≠ 0` and a genuine normalization of `v_M`**: at `gl2Data` the
-Levi `M` of a full flag of `V` (of length `1`; `M` is a maximal torus) has a non-central
-`GL`-coordinate (`V` is not a hyperbolic plane), so `a_M^G ≠ 0`, and `latticeHaar` gives a
-fundamental domain of `proj_M^G(H_M(A_M(F)))` volume `1`.  (A `GoodK` for this proper Levi, for the
-explicit datum `gl2Levi`, is `gl2GoodK` in `Sanity/GL2GoodK.lean`.) -/
-theorem gl2_aMG_nontrivial :
-    ∃ L : (gl2Data (F := F)).ReducedLeviDatum, ∃ h : 0 < L.FV.len,
-      ¬ L.IsCentralCoord (Sum.inr (Sum.inl ⟨0, h⟩)) ∧ Nontrivial L.aMG ∧
-      ∃ D : Set L.aMG, MeasureTheory.IsAddFundamentalDomain L.latticeMG.toIntSubmodule D
-        MeasureTheory.Measure.addHaar ∧ MeasureTheory.Measure.latticeHaar L.latticeMG D = 1 := by
-  classical
-  set D := gl2Data (F := F)
-  obtain ⟨FV, hFV⟩ := IsotropicFlag.exists_isFull D.QV
-  obtain ⟨L, -, hL, -⟩ := exists_isLevi (emptyFlag D.QW) FV
-  have h : 0 < L.FV.len := by
-    rw [hL, hFV.1]; exact gl2Data_one_le_wittIndex
-  have hW1 : finrank F (Fin D.m → F) ≤ 1 := by
-    rw [Module.finrank_fin_fun]; simp [D]
-  have hnotV : ¬ IsHypPlane D.QV := fun hp => by
-    have := hp.1; rw [gl2Data_finrank_V] at this; omega
-  have hredV : ¬ IsHypPlane (D.QV.comp (wtSpan L.bV L.wtV 0).subtype) := fun hp => by
-    obtain ⟨j₁, hj₁⟩ := L.hsV.exists_wt_eq (w := 1) le_rfl (by exact_mod_cast h)
-    obtain ⟨j₂, hj₂⟩ := L.hsV.exists_wt_eq_neg D.nondeg_QV (w := 1) le_rfl (by exact_mod_cast h)
-    have hcard : Fintype.card L.ιV = 3 := by rw [← finrank_eq_card_basis L.bV, gl2Data_finrank_V]
-    have hsub : (Finset.univ.filter fun j => L.wtV j = 0) ⊆ (Finset.univ.erase j₁).erase j₂ := by
-      intro j hj
-      simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hj
-      simp only [Finset.mem_erase, Finset.mem_univ, and_true]
-      exact ⟨fun e => by rw [e] at hj; omega, fun e => by rw [e] at hj; omega⟩
-    have h12 : j₂ ≠ j₁ := fun e => by rw [e] at hj₂; omega
-    have hle := Finset.card_le_card hsub
-    rw [Finset.card_erase_of_mem (by simp [h12]), Finset.card_erase_of_mem (Finset.mem_univ _),
-      Finset.card_univ, hcard] at hle
-    have hfin : finrank F (wtSpan L.bV L.wtV 0) ≤ 1 := by
-      calc finrank F (wtSpan L.bV L.wtV 0)
-          ≤ (Finset.univ.filter fun j => L.wtV j = 0).card := by
-            rw [wtSpan, ← Finset.coe_filter_univ, ← Finset.coe_image]
-            exact (finrank_span_finset_le_card _).trans Finset.card_image_le
-        _ ≤ 1 := by omega
-    have := hp.1
+/-- The trivial splitting of the empty flag of `W = 0`. -/
+theorem gl2_isFlagSplitting_W :
+    IsFlagSplitting (emptyFlag (gl2Data (F := F)).QW) (Pi.basisFun F (Fin 0)) (Fin.elim0 : Fin 0 → ℤ) where
+  mem i := i.elim0
+  repr_eq_zero _ _ _ i := i.elim0
+  orth i := i.elim0
+  sum_wt := by simp
+
+/-- **The reduced Levi datum of the torus**: the flag `⟨z₁⟩` of `V` with the standard basis and
+weights `-1, 0, 1`, and the empty flag of `W = 0`. -/
+def gl2Levi : (gl2Data (F := F)).ReducedLeviDatum where
+  FW := emptyFlag _
+  FV := (gl2Data (F := F)).flag
+  ιW := Fin 0
+  ιV := Fin (gl2Data (F := F)).m ⊕ Fin (2 * (gl2Data (F := F)).r + 1)
+  bW := Pi.basisFun F (Fin 0)
+  wtW := Fin.elim0
+  bV := (gl2Data (F := F)).stdBasis
+  wtV := (gl2Data (F := F)).stdWt
+  hsW := gl2_isFlagSplitting_W
+  hsV := (gl2Data (F := F)).isFlagSplitting_stdBasis
+  reducedW := not_isHypPlane_comp_of_finrank_le _ _ (by rw [Module.finrank_fin_fun]; simp)
+  reducedV := fun hp => by
+    have h2 := hp.1
+    have hsub : wtSpan (gl2Data (F := F)).stdBasis (gl2Data (F := F)).stdWt 0 ≤ Submodule.span F {(gl2Data (F := F)).stdBasis (Sum.inr 1)} := by
+      rw [wtSpan, Submodule.span_le]
+      rintro _ ⟨j, hj, rfl⟩
+      rcases j with j | j
+      · exact j.elim0
+      · have : j = 1 := by
+          have hj' : ((j : ℕ) : ℤ) - 1 = 0 := hj
+          exact Fin.ext (by simp; omega)
+        rw [this]; exact Submodule.mem_span_singleton_self _
+    have h1 : finrank F (Submodule.span F {(gl2Data (F := F)).stdBasis (Sum.inr 1)}) ≤ 1 :=
+      (finrank_span_le_card ({(gl2Data (F := F)).stdBasis (Sum.inr 1)} : Set (gl2Data (F := F)).V)).trans (by simp)
+    have := (Submodule.finrank_mono hsub).trans h1
     omega
-  let R : D.ReducedLeviDatum :=
-    ⟨L, not_isHypPlane_comp_of_finrank_le _ _ hW1, hredV⟩
-  have hc : ¬ R.IsCentralCoord (Sum.inr (Sum.inl ⟨0, h⟩)) := hnotV
-  exact ⟨R, h, hc, R.nontrivial_aMG hc, R.exists_isAddFundamentalDomain_latticeHaar_eq_one⟩
+
+/-- **A Levi subgroup with `a_M^G ≠ 0` and a genuine normalization of `v_M`**: for the torus
+`gl2Levi` of the flag `⟨z₁⟩` the `GL`-coordinate is not central (`V` is not a hyperbolic plane), so
+`a_M^G ≠ 0`, and `latticeHaar` gives a fundamental domain of `proj_M^G(H_M(A_M(F)))` volume `1`.
+(A `GoodK` for this Levi is `gl2GoodK` in `Sanity/GL2GoodK.lean`.) -/
+theorem gl2_aMG_nontrivial :
+    ¬ (gl2Levi (F := F)).IsCentralCoord (Sum.inr (Sum.inl ⟨0, Nat.zero_lt_one⟩)) ∧
+      Nontrivial (gl2Levi (F := F)).aMG ∧
+      ∃ D : Set (gl2Levi (F := F)).aMG,
+        MeasureTheory.IsAddFundamentalDomain (gl2Levi (F := F)).latticeMG.toIntSubmodule D
+          MeasureTheory.Measure.addHaar ∧
+        MeasureTheory.Measure.latticeHaar (gl2Levi (F := F)).latticeMG D = 1 := by
+  have hnotV : ¬ IsHypPlane (gl2Data (F := F)).QV := fun hp => by
+    have := hp.1; rw [gl2Data_finrank_V] at this; omega
+  exact ⟨hnotV, (gl2Levi (F := F)).nontrivial_aMG (c := Sum.inr (Sum.inl ⟨0, Nat.zero_lt_one⟩))
+    hnotV, (gl2Levi (F := F)).exists_isAddFundamentalDomain_latticeHaar_eq_one⟩
 
 end GSpinGGP.GGPData

@@ -480,6 +480,23 @@ theorem detChar_scalarGSpin (Q : QuadraticForm F V) (c : Fˣ) :
     ((detChar Q (scalarGSpin Q c) : Fˣ) : F) = (c : F) ^ Module.finrank F (CliffordAlgebra Q) :=
   Algebra.norm_algebraMap _
 
+omit [PAdicField F] in
+/-- `N(ι u)² = q(u)^{dim C(V)}`. -/
+theorem norm_ι_sq (Q : QuadraticForm F V) (u : V) :
+    Algebra.norm F (CliffordAlgebra.ι Q u) ^ 2 = Q u ^ Module.finrank F (CliffordAlgebra Q) := by
+  rw [sq, ← map_mul, CliffordAlgebra.ι_sq_scalar, Algebra.norm_algebraMap]
+
+/-- **`‖N(u w)‖ = 1` for vectors of unit norm** (`norm_ι_sq`). -/
+theorem norm_detChar_gspinPair (Q : QuadraticForm F V) {u w : V} (hu : Q u ≠ 0) (hw : Q w ≠ 0)
+    (hu1 : ‖Q u‖ = 1) (hw1 : ‖Q w‖ = 1) :
+    ‖((detChar Q (gspinPair Q hu hw) : Fˣ) : F)‖ = 1 := by
+  have h1 : ∀ x : V, ‖Q x‖ = 1 → ‖Algebra.norm F (CliffordAlgebra.ι Q x)‖ = 1 := by
+    intro x hx
+    have h := congrArg norm (norm_ι_sq Q x)
+    rw [norm_pow, norm_pow, hx, one_pow] at h
+    exact (pow_eq_one_iff_of_nonneg (norm_nonneg _) two_ne_zero).1 h
+  rw [detChar_apply, coe_gspinPair, map_mul, norm_mul, h1 u hu1, h1 w hw1, one_mul]
+
 /-- The first coordinate `ε₊`-character of `GSpin` of a hyperbolic plane. -/
 def planeChar₁ (Q : QuadraticForm F V) (hQ : IsHypPlane Q) : GSpin Q →* Fˣ :=
   eigenChar Q (exists_planeIdempotent hQ).choose_spec.1 (exists_planeIdempotent hQ).choose_spec.2.2.1
@@ -588,6 +605,31 @@ theorem isCompact_unitSphere : IsCompact {c : Fˣ | ‖(c : F)‖ = 1} := by
   rw [e]
   exact Units.isClosedEmbedding_embedProduct.isCompact_preimage
     ((isCompact_sphere _ _).prod ((isCompact_sphere _ _).image MulOpposite.continuous_op))
+
+/-- A set of units `{c : ‖c‖^N ≤ B, 1 ≤ B' ‖c‖^N}` (`N ≥ 1`) is compact. -/
+theorem isCompact_units_norm_pow {N : ℕ} (hN : 1 ≤ N) (B B' : ℝ) :
+    IsCompact {c : Fˣ | ‖(c : F)‖ ^ N ≤ B ∧ 1 ≤ B' * ‖(c : F)‖ ^ N} := by
+  have := properSpace_F (F := F)
+  set A : Set F := {x | ‖x‖ ^ N ≤ B ∧ 1 ≤ B' * ‖x‖ ^ N}
+  have hA : IsCompact A := by
+    refine Metric.isCompact_of_isClosed_isBounded ?_ ?_
+    · exact (isClosed_le (continuous_norm.pow N) continuous_const).inter
+        (isClosed_le continuous_const (continuous_const.mul (continuous_norm.pow N)))
+    · refine (Metric.isBounded_iff_subset_closedBall 0).2 ⟨max 1 B, fun x hx => ?_⟩
+      rw [Metric.mem_closedBall, dist_zero_right]
+      by_cases h1 : ‖x‖ ≤ 1
+      · exact h1.trans (le_max_left _ _)
+      · push Not at h1
+        exact ((le_self_pow₀ h1.le (by omega)).trans hx.1).trans (le_max_right _ _)
+  have hsub : A ⊆ Set.range (Units.val : Fˣ → F) := by
+    intro x hx
+    have hx0 : x ≠ 0 := by
+      rintro rfl
+      have := hx.2
+      rw [norm_zero, zero_pow (by omega), mul_zero] at this
+      linarith
+    exact ⟨Units.mk0 x hx0, rfl⟩
+  exact (Units.isEmbedding_val₀.isInducing.isCompact_preimage_iff hsub).2 hA
 
 /-- **`A_{GSpin(U)} ∩ ker hcMap` is compact**: the scalars of norm `1` if `U` is not a hyperbolic
 plane (`det(L_c) = c^{2^n}`), and `{g : ‖χ₁ g‖ = ‖χ₂ g‖ = 1}` (contained in the compact set

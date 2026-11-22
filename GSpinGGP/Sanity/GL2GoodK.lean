@@ -12,14 +12,19 @@ At `gl2Data` (`W = 0`, `V = Z` split of dimension `3` with `q(x) = 2x₀x₂ + x
 `G = GL₁ × GSpin₃`) take the flag `⟨z₁⟩` with its standard splitting basis; its Levi subgroup `M`
 is a maximal torus, and `a_M^G ≠ 0`.  In the coordinates `a = x₀`, `b = x₁`, `c = 2x₂` the form
 is `ac + b²` (`gl2_QV_eq`), and the lattice `Λ = {‖a‖, ‖b‖, ‖c‖ ≤ 1}`, spanned by `z₋₁`, `z₀`,
-`½ z₁`, is split by the weight spaces.  (The factor `½` matters in residue characteristic `2`.)
+`½ z₁`, is split by the weight spaces.  The factor `½` makes `q` integral on `Λ` with unit
+half-discriminant, so its reduction mod `𝔭` is smooth and the stabilizer of `Λ` is hyperspecial.
+In residue characteristic `2` the plain lattice `𝒪³` (on which `polar` takes values in `2𝒪`)
+gives an Iwahori-type stabilizer when `2` is a uniformizer, and a deeper level when `2` is
+ramified, and `G = B K` fails for it.  (`Λ` is not self-dual for `polar` when `‖2‖ < 1`: its dual
+is `𝒪 ⊕ 2⁻¹𝒪 ⊕ 𝒪` in the coordinates `(a, b, c)`.)
 
 * `gl2_iwasawa`: `G = P K` for **every** flag parabolic `P = P_{F_W} × P_{F_V}`, with
   `K = latticeK` the stabilizer of `Λ` with `‖detChar‖ = 1`: `K` is transitive on the isotropic
-  lines of `V` (`exists_isLatticeSpin_apply_eq_smul`), and every proper flag of `V` is one
+  lines of `V` (`exists_mem_latticeSpin_apply_eq_smul`), and every proper flag of `V` is one
   isotropic line.  So the description of `𝒫(M)` is not needed.
-* `gl2GoodK`: the resulting `GoodK` for the reduced Levi datum `gl2Levi` of the torus, and
-  `gl2Levi_nontrivial_aMG`: `a_M^G ≠ 0` there.
+* `gl2GoodK`: the resulting `GoodK` for the reduced Levi datum `gl2Levi` of the torus
+  (`Sanity/WeightAudit.lean`, where `gl2_aMG_nontrivial` shows `a_M^G ≠ 0`).
 -/
 
 noncomputable section
@@ -81,10 +86,6 @@ theorem gl2Basis_eq (i : Fin 3) : (gl2Basis (F := F)) i =
 `‖detChar‖ = 1`). -/
 abbrev gl2K : Subgroup ↥(𝔾).G := (𝔾).latticeK (Pi.basisFun F (Fin 0)) gl2Basis
 
-/-- `(1, k) ∈ K` for `k` stabilizing `Λ` with `‖detChar k‖ = 1`. -/
-theorem inr_mem_gl2K {k : GSpin (𝔾).QV} (hk : IsLatticeSpin (𝔾).QV gl2Basis k) :
-    (𝔾).inr k ∈ gl2K (F := F) :=
-  (𝔾).inr_mem_latticeK _ _ hk.1 hk.2.1 hk.2.2
 
 /-- On `W = 0` every flag stabilizer is everything. -/
 theorem gl2_flagStab_W (FW : IsotropicFlag (𝔾).QW) : flagStab FW = ⊤ := by
@@ -142,11 +143,11 @@ theorem gl2_iwasawa (FW : IsotropicFlag (𝔾).QW) (FV : IsotropicFlag (𝔾).QV
     have hQ₂ : (𝔾).QV v₂ = 0 := by rw [specP_isometry]; exact hQ₁
     have hv₂0 : v₂ ≠ 0 := fun h => hv₁0 ((specP (𝔾).QV y⁻¹).map_eq_zero_iff.1 h)
     obtain ⟨k₁, hk₁, t₁, ht₁, he₁⟩ :=
-      exists_isLatticeSpin_apply_eq_smul (𝔾).QV gl2Basis gl2_QV_eq hv₁0 hQ₁
+      exists_mem_latticeSpin_apply_eq_smul (𝔾).QV gl2Basis gl2_QV_eq hv₁0 hQ₁
     obtain ⟨k₂, hk₂, t₂, ht₂, he₂⟩ :=
-      exists_isLatticeSpin_apply_eq_smul (𝔾).QV gl2Basis gl2_QV_eq hv₂0 hQ₂
+      exists_mem_latticeSpin_apply_eq_smul (𝔾).QV gl2Basis gl2_QV_eq hv₂0 hQ₂
     set κ := (𝔾).inr (k₁ * k₂⁻¹)
-    have hκ : κ ∈ gl2K (F := F) := inr_mem_gl2K (hk₁.mul (IsLatticeSpin.inv hk₂))
+    have hκ : κ ∈ gl2K (F := F) := (𝔾).inr_mem_latticeK _ _ (mul_mem hk₁ (inv_mem hk₂))
     refine ⟨g * κ⁻¹, ⟨?_, ?_⟩, κ, hκ, by rw [inv_mul_cancel_right]⟩
     · change (𝔾).fst (g * κ⁻¹) ∈ flagStab FW
       rw [gl2_flagStab_W]; trivial
@@ -178,51 +179,6 @@ theorem gl2_iwasawa (FW : IsotropicFlag (𝔾).QW) (FV : IsotropicFlag (𝔾).QV
 
 /-! ## The torus `M` and its good compact subgroup -/
 
-/-- The trivial splitting of the empty flag of `W = 0`. -/
-theorem gl2_isFlagSplitting_W :
-    IsFlagSplitting (emptyFlag (𝔾).QW) (Pi.basisFun F (Fin 0)) (Fin.elim0 : Fin 0 → ℤ) where
-  mem i := i.elim0
-  repr_eq_zero _ _ _ i := i.elim0
-  orth i := i.elim0
-  sum_wt := by simp
-
-/-- **The reduced Levi datum of the torus**: the flag `⟨z₁⟩` of `V` with the standard basis and
-weights `-1, 0, 1`, and the empty flag of `W = 0`. -/
-def gl2Levi : (𝔾).ReducedLeviDatum where
-  FW := emptyFlag _
-  FV := (𝔾).flag
-  ιW := Fin 0
-  ιV := Fin (𝔾).m ⊕ Fin (2 * (𝔾).r + 1)
-  bW := Pi.basisFun F (Fin 0)
-  wtW := Fin.elim0
-  bV := (𝔾).stdBasis
-  wtV := (𝔾).stdWt
-  hsW := gl2_isFlagSplitting_W
-  hsV := (𝔾).isFlagSplitting_stdBasis
-  reducedW := not_isHypPlane_comp_of_finrank_le _ _ (by rw [Module.finrank_fin_fun]; simp)
-  reducedV := fun hp => by
-    have h2 := hp.1
-    have hsub : wtSpan (𝔾).stdBasis (𝔾).stdWt 0 ≤ Submodule.span F {(𝔾).stdBasis (Sum.inr 1)} := by
-      rw [wtSpan, Submodule.span_le]
-      rintro _ ⟨j, hj, rfl⟩
-      rcases j with j | j
-      · exact j.elim0
-      · have : j = 1 := by
-          have hj' : ((j : ℕ) : ℤ) - 1 = 0 := hj
-          exact Fin.ext (by simp; omega)
-        rw [this]; exact Submodule.mem_span_singleton_self _
-    have h1 : finrank F (Submodule.span F {(𝔾).stdBasis (Sum.inr 1)}) ≤ 1 :=
-      (finrank_span_le_card ({(𝔾).stdBasis (Sum.inr 1)} : Set (𝔾).V)).trans (by simp)
-    have := (Submodule.finrank_mono hsub).trans h1
-    omega
-
-/-- **`a_M^G ≠ 0`** for the torus: its `GL`-coordinate is not central (`V` is not a hyperbolic
-plane). -/
-theorem gl2Levi_nontrivial_aMG : Nontrivial (gl2Levi (F := F)).aMG := by
-  have hnotV : ¬ IsHypPlane (𝔾).QV := fun hp => by
-    have := hp.1; rw [gl2Data_finrank_V] at this; omega
-  exact (gl2Levi (F := F)).nontrivial_aMG (c := Sum.inr (Sum.inl ⟨0, Nat.zero_lt_one⟩)) hnotV
-
 /-- **A good compact subgroup for the torus `M`** (a proper Levi subgroup): `K = gl2K`, compact
 open (`isCompact_latticeK`, `isOpen_latticeK`), with `G = P K` for every `P ∈ 𝒫(M)`
 (`gl2_iwasawa`, which holds for all flag parabolics), and in good position: it stabilizes the
@@ -239,6 +195,6 @@ def gl2GoodK : (𝔾).GoodK (gl2Levi (F := F)).toFlagLeviDatum where
   goodPositionV := ⟨Fin 3, inferInstance, gl2Basis, fun i => ⟨(𝔾).stdWt (Sum.inr i), by
       rw [gl2Basis_eq]
       exact Submodule.smul_mem _ _ (Submodule.subset_span ⟨Sum.inr i, rfl, rfl⟩)⟩,
-    by rintro _ ⟨k, hk, rfl⟩; exact hk.1.2.1⟩
+    by rintro _ ⟨k, hk, rfl⟩; exact hk.2.1⟩
 
 end GSpinGGP.GGPData
