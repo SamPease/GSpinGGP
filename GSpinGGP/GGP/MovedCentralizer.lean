@@ -2,7 +2,7 @@
 Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import GSpinGGP.GGP.TorusCommute
+import GSpinGGP.GGP.CentralizerBaseChange
 import GSpinGGP.Foundations.GSpinExp
 import GSpinGGP.GGP.GSpinSemisimple
 
@@ -19,13 +19,13 @@ For `x ∈ GSpin(W)(F)`, the *moved part* of the Lie centralizer is
   `T_x`; `exists_mem_torusOf_commute_iff`: the moved part of `𝔩_x` has commutants of points of
   `T_x`;
 * `movedPartAbelian_of_isGammaElt`: `𝔩_x` is abelian for `x ∈ Γ(G,H)`;
-* `gspinBC`, `movedCentMap`, `gspinBC_commute_of_mem`: `𝔩_x ⊗ F̄` and its commutativity;
-* `GGPData.exists_movedCent_lift`, `GGPData.eq_zero_of_forall_movedCent`: a skew endomorphism of
-  `W_{F̄}` commuting with `P(x)` and vanishing on `W'_x ⊗ F̄` is `ad` of an element of `𝔩_x ⊗ F̄`,
-  so the `(ad Z)_{F̄}`, `Z ∈ 𝔩_x`, span all of them; `GGPData.exists_movedCent_forall_ne_zero`:
+* `GGPData.eq_zero_of_forall_movedCent`: a skew endomorphism of `W_{F̄}` commuting with `P(x)` and
+  vanishing on `W'_x ⊗ F̄` is `ad` of an element of `𝔩_x ⊗ F̄` (`exists_movedCent_lift`, in
+  `GGP/CentralizerBaseChange.lean`), so the `(ad Z)_{F̄}`, `Z ∈ 𝔩_x`, span all of them; `GGPData.exists_movedCent_forall_ne_zero`:
   some `Z ∈ 𝔩_x` avoids finitely many such hyperplanes (`F` infinite);
 * `lieAbelian_specP_baseChange_of_movedPartAbelian`: if `𝔩_x` is abelian, so is the Lie algebra
-  of `S_x` over `F̄` (`IsomCent.LieAbelian`);
+  of `S_x` over `F̄` (`IsomCent.LieAbelian`; the case `W = W(d)` of
+  `lieAbelian_specP_baseChange_of_lie_eq_zero`);
 * `GGPData.isSS_of_commute_of_isGammaElt`: for `x ∈ Γ(G,H)`, every `X ∈ gspin(W)` commuting with
   `x` and killing `W'_x` is semisimple.
 -/
@@ -200,208 +200,6 @@ theorem movedPartAbelian_of_isGammaElt (d : GGPData F) (x : ↥(GSpin d.QW))
   rw [Ring.lie_def, sub_eq_zero]
   exact h3.eq.symm
 
-section WD
-
-open CliffordAlgebra
-open scoped TensorProduct
-
-variable {V : Type*} [AddCommGroup V] [Module F V]
-
-theorem ofBaseChange_tmul_eq (Q : QuadraticForm F V) (z : AlgebraicClosure F)
-    (X : CliffordAlgebra Q) :
-    ofBaseChange (AlgebraicClosure F) Q (z ⊗ₜ X) = algebraMap _ _ z * bcHom Q X := by
-  rw [show z ⊗ₜ[F] X = (z ⊗ₜ[F] (1 : CliffordAlgebra Q)) * (1 ⊗ₜ X) by
-    rw [Algebra.TensorProduct.tmul_mul_tmul, mul_one, one_mul], map_mul, ofBaseChange_tmul_one]
-  rfl
-
-theorem bcHom_mem_even (Q : QuadraticForm F V) {X : CliffordAlgebra Q} (hX : X ∈ even Q) :
-    bcHom Q X ∈ even (Q.baseChange (AlgebraicClosure F)) := by
-  rw [← Subalgebra.mem_toSubmodule, even_toSubmodule] at hX ⊢
-  induction X, hX using even_induction with
-  | algebraMap r =>
-    have : bcHom Q (algebraMap F _ r) = algebraMap (AlgebraicClosure F) _
-        (algebraMap F (AlgebraicClosure F) r) := by
-      show ofBaseChange (AlgebraicClosure F) Q (1 ⊗ₜ algebraMap F _ r) = _
-      rw [Algebra.algebraMap_eq_smul_one, ← TensorProduct.smul_tmul, ofBaseChange_tmul_one,
-        Algebra.smul_def, mul_one]
-    rw [this]
-    exact SetLike.algebraMap_mem_graded _ _
-  | add x y hx hy ihx ihy => rw [map_add]; exact Submodule.add_mem _ ihx ihy
-  | ι_mul_ι_mul m₁ m₂ x hx ih =>
-    rw [map_mul, map_mul, bcHom_ι, bcHom_ι]
-    exact zero_add (0 : ZMod 2) ▸ SetLike.mul_mem_graded (ι_mul_ι_mem_evenOdd_zero _ _ _) ih
-
-theorem ofBaseChange_mem_gspin (Q : QuadraticForm F V) (z : AlgebraicClosure F)
-    {X : CliffordAlgebra Q} (hX : X ∈ gspin Q) :
-    ofBaseChange (AlgebraicClosure F) Q (z ⊗ₜ X) ∈ gspin (Q.baseChange (AlgebraicClosure F)) := by
-  rw [ofBaseChange_tmul_eq, ← Algebra.smul_def]
-  refine (gspin _).smul_mem z ⟨bcHom_mem_even Q hX.1, fun w => ?_⟩
-  induction w using TensorProduct.inductionOn with
-  | tmul c v =>
-    obtain ⟨u, hu⟩ := hX.2 v
-    refine ⟨c ⊗ₜ u, ?_⟩
-    have hc : ι (Q.baseChange (AlgebraicClosure F)) (c ⊗ₜ v) = c • ι _ (1 ⊗ₜ v) := by
-      rw [← map_smul, TensorProduct.smul_tmul', smul_eq_mul, mul_one]
-    have hc' : ι (Q.baseChange (AlgebraicClosure F)) (c ⊗ₜ u) = c • ι _ (1 ⊗ₜ u) := by
-      rw [← map_smul, TensorProduct.smul_tmul', smul_eq_mul, mul_one]
-    rw [hc, hc', ← bcHom_ι, ← bcHom_ι, hu, Ring.lie_def, Ring.lie_def, mul_smul_comm,
-      smul_mul_assoc, ← smul_sub, map_sub, map_mul, map_mul]
-  | add a b ha hb =>
-    rw [map_add, lie_add]
-    exact Submodule.add_mem _ ha hb
-
-
-/-- `F̄ ⊗ gspin(Q) → C(Q_{F̄})`. -/
-def gspinBC (Q : QuadraticForm F V) :
-    AlgebraicClosure F ⊗[F] (gspin Q).toSubmodule →ₗ[AlgebraicClosure F]
-      CliffordAlgebra (Q.baseChange (AlgebraicClosure F)) :=
-  (ofBaseChange (AlgebraicClosure F) Q).toLinearMap ∘ₗ
-    (gspin Q).toSubmodule.subtype.baseChange (AlgebraicClosure F)
-
-theorem gspinBC_tmul (Q : QuadraticForm F V) (z : AlgebraicClosure F) (X : (gspin Q).toSubmodule) :
-    gspinBC Q (z ⊗ₜ X) = ofBaseChange (AlgebraicClosure F) Q (z ⊗ₜ (X : CliffordAlgebra Q)) := rfl
-
-theorem ofBaseChange_injective (Q : QuadraticForm F V) :
-    Function.Injective (ofBaseChange (AlgebraicClosure F) Q) :=
-  Function.LeftInverse.injective (toBaseChange_ofBaseChange (AlgebraicClosure F) Q)
-
-theorem baseChange_subtype_injective {M : Type*} [AddCommGroup M] [Module F M] (p : Submodule F M) :
-    Function.Injective (p.subtype.baseChange (AlgebraicClosure F)) := by
-  rw [LinearMap.baseChange_eq_lTensor]
-  exact Module.Flat.lTensor_preserves_injective_linearMap _ p.injective_subtype
-
-/-- Over `F̄`, `gspin(Q_{F̄})` is spanned by `gspin(Q)` (via `gspin = span{v w} ⊕ F`,
-`gspin_eq_span`, for `Q_{F̄}` nondegenerate). -/
-theorem range_gspinBC [Module.Finite F V] (Q : QuadraticForm F V)
-    (hQ : IsNondeg (Q.baseChange (AlgebraicClosure F))) :
-    LinearMap.range (gspinBC Q) = (gspin (Q.baseChange (AlgebraicClosure F))).toSubmodule := by
-  apply le_antisymm
-  · rintro _ ⟨u, rfl⟩
-    induction u using TensorProduct.inductionOn with
-    | tmul z X => exact ofBaseChange_mem_gspin Q z X.2
-    | add a b ha hb => rw [map_add]; exact add_mem ha hb
-  · rw [gspin_eq_span hQ, sup_le_iff, Submodule.span_le, Submodule.span_le]
-    constructor
-    · rintro _ ⟨⟨w₁, w₂⟩, rfl⟩
-      dsimp only
-      induction w₁ using TensorProduct.inductionOn with
-      | tmul a v =>
-        induction w₂ using TensorProduct.inductionOn with
-        | tmul b v' =>
-          refine ⟨(a * b) ⊗ₜ ⟨ι Q v * ι Q v', ι_mul_ι_mem_gspin Q v v'⟩, ?_⟩
-          rw [gspinBC_tmul, ← Algebra.TensorProduct.tmul_mul_tmul, map_mul,
-            ofBaseChange_tmul_ι, ofBaseChange_tmul_ι]
-        | add b c hb hc => rw [map_add, mul_add]; exact add_mem hb hc
-      | add b c hb hc => rw [map_add, add_mul]; exact add_mem hb hc
-    · rintro _ rfl
-      exact ⟨1 ⊗ₜ ⟨1, one_mem_gspin Q⟩, by rw [gspinBC_tmul]; exact map_one _⟩
-
-/-- The `F`-linear conditions cutting out the moved centralizer: commutator with `x` and with
-`ι(bᵢ)` for a basis `bᵢ` of `W'_x`. -/
-def movedCentMap [Module.Finite F V] (Q : QuadraticForm F V) (x : GSpin Q) :
-    (gspin Q).toSubmodule →ₗ[F] (Option (Fin (finrank F (fixedSub x))) → CliffordAlgebra Q) :=
-  LinearMap.pi fun j => Option.elim j
-    ((LinearMap.mulLeft F ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) -
-      LinearMap.mulRight F ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)) ∘ₗ
-        (gspin Q).toSubmodule.subtype)
-    (fun i => (LinearMap.mulRight F (ι Q (Module.finBasis F (fixedSub x) i : V)) -
-      LinearMap.mulLeft F (ι Q (Module.finBasis F (fixedSub x) i : V))) ∘ₗ
-        (gspin Q).toSubmodule.subtype)
-
-theorem piRight_pi_baseChange {M : Type*} [AddCommGroup M] [Module F M] {n : Type*} [Fintype n]
-    [DecidableEq n] {N : Type*} [AddCommGroup N] [Module F N] (f : n → M →ₗ[F] N)
-    (u : AlgebraicClosure F ⊗[F] M) (j : n) :
-    TensorProduct.piRight F (AlgebraicClosure F) (AlgebraicClosure F) (fun _ : n => N)
-      ((LinearMap.pi f).baseChange (AlgebraicClosure F) u) j =
-        (f j).baseChange (AlgebraicClosure F) u := by
-  induction u using TensorProduct.inductionOn with
-  | tmul z m => simp
-  | add a b ha hb => simp only [map_add, Pi.add_apply, ha, hb]
-
-theorem ofBaseChange_commBC (Q : QuadraticForm F V) (c : CliffordAlgebra Q)
-    (u : AlgebraicClosure F ⊗[F] (gspin Q).toSubmodule) :
-    ofBaseChange (AlgebraicClosure F) Q
-      (((LinearMap.mulLeft F c - LinearMap.mulRight F c) ∘ₗ (gspin Q).toSubmodule.subtype).baseChange
-        (AlgebraicClosure F) u) = bcHom Q c * gspinBC Q u - gspinBC Q u * bcHom Q c := by
-  induction u using TensorProduct.inductionOn with
-  | tmul z X =>
-    simp only [LinearMap.baseChange_tmul, LinearMap.comp_apply,
-      LinearMap.sub_apply, LinearMap.mulLeft_apply, LinearMap.mulRight_apply,
-      Submodule.coe_subtype, gspinBC_tmul, ofBaseChange_tmul_eq, map_sub, map_mul]
-    rw [← mul_assoc (bcHom Q c), ← Algebra.commutes z (bcHom Q c), mul_sub]
-    simp only [mul_assoc]
-  | add a b ha hb => simp only [map_add, ha, hb]; noncomm_ring
-
-theorem mem_movedCent_baseChange [Module.Finite F V] (Q : QuadraticForm F V) (x : GSpin Q)
-    (u : AlgebraicClosure F ⊗[F] (gspin Q).toSubmodule)
-    (hc : bcHom Q ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * gspinBC Q u =
-      gspinBC Q u * bcHom Q ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q))
-    (hf : ∀ w ∈ fixedSub x, gspinBC Q u * ι _ (1 ⊗ₜ w) = ι _ (1 ⊗ₜ w) * gspinBC Q u) :
-    u ∈ (LinearMap.ker (movedCentMap Q x)).baseChange (AlgebraicClosure F) := by
-  rw [← LinearMap.ker_baseChange_of_flat, LinearMap.mem_ker]
-  apply (TensorProduct.piRight F (AlgebraicClosure F) (AlgebraicClosure F) _).injective
-  funext j
-  rw [movedCentMap, piRight_pi_baseChange, map_zero, Pi.zero_apply]
-  apply ofBaseChange_injective Q
-  rw [map_zero]
-  cases j with
-  | none =>
-    simp only [Option.elim]
-    rw [ofBaseChange_commBC, hc, sub_self]
-  | some i =>
-    simp only [Option.elim]
-    rw [← neg_sub, LinearMap.neg_comp, LinearMap.baseChange_neg, LinearMap.neg_apply, map_neg,
-      ofBaseChange_commBC, bcHom_ι, hf _ (Module.finBasis F (fixedSub x) i).2, sub_self, neg_zero]
-
-theorem mem_ker_movedCentMap [Module.Finite F V] {Q : QuadraticForm F V} {x : GSpin Q} {X : (gspin Q).toSubmodule}
-    (hX : X ∈ LinearMap.ker (movedCentMap Q x)) :
-    ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) * X = X * ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q) ∧
-      ∀ v ∈ fixedSub x, (X : CliffordAlgebra Q) * ι Q v = ι Q v * X := by
-  rw [LinearMap.mem_ker] at hX
-  have h := fun j => congr_fun hX j
-  simp only [movedCentMap, LinearMap.pi_apply, Pi.zero_apply] at h
-  refine ⟨sub_eq_zero.mp (h none), ?_⟩
-  let ℓ : fixedSub x →ₗ[F] CliffordAlgebra Q :=
-    (LinearMap.mulLeft F (X : CliffordAlgebra Q) - LinearMap.mulRight F (X : CliffordAlgebra Q)) ∘ₗ
-      ι Q ∘ₗ (fixedSub x).subtype
-  have hℓ : ℓ = 0 := (Module.finBasis F (fixedSub x)).ext fun i => by
-    simpa [ℓ] using h (some i)
-  intro v hv
-  have := LinearMap.congr_fun hℓ ⟨v, hv⟩
-  simpa [ℓ, sub_eq_zero] using this
-
-theorem gspinBC_commute_of_mem {m : ℕ} {Q : QuadraticForm F (Fin m → F)} {x : GSpin Q}
-    (hA : MovedPartAbelian Q x) {u u' : AlgebraicClosure F ⊗[F] (gspin Q).toSubmodule}
-    (hu : u ∈ (LinearMap.ker (movedCentMap Q x)).baseChange (AlgebraicClosure F))
-    (hu' : u' ∈ (LinearMap.ker (movedCentMap Q x)).baseChange (AlgebraicClosure F)) :
-    gspinBC Q u * gspinBC Q u' = gspinBC Q u' * gspinBC Q u := by
-  have gen : ∀ X ∈ LinearMap.ker (movedCentMap Q x), ∀ X' ∈ LinearMap.ker (movedCentMap Q x),
-      gspinBC Q (1 ⊗ₜ X) * gspinBC Q (1 ⊗ₜ X') = gspinBC Q (1 ⊗ₜ X') * gspinBC Q (1 ⊗ₜ X) := by
-    intro X hX X' hX'
-    obtain ⟨hc, hf⟩ := mem_ker_movedCentMap hX
-    obtain ⟨hc', hf'⟩ := mem_ker_movedCentMap hX'
-    have := hA X (mem_lieCentralizer.2 ⟨X.2, hc⟩) X' (mem_lieCentralizer.2 ⟨X'.2, hc'⟩)
-      (fun v hv => by rw [Ring.lie_def, hf v hv, sub_self])
-      (fun v hv => by rw [Ring.lie_def, hf' v hv, sub_self])
-    rw [Ring.lie_def, sub_eq_zero] at this
-    rw [gspinBC_tmul, gspinBC_tmul, ← map_mul, ← map_mul, Algebra.TensorProduct.tmul_mul_tmul,
-      Algebra.TensorProduct.tmul_mul_tmul, this]
-  rw [Submodule.baseChange_eq_span] at hu hu'
-  induction hu using Submodule.span_induction with
-  | mem y hy =>
-    obtain ⟨X, hX, rfl⟩ := hy
-    induction hu' using Submodule.span_induction with
-    | mem y' hy' =>
-      obtain ⟨X', hX', rfl⟩ := hy'
-      exact gen X hX X' hX'
-    | zero => simp
-    | add a b _ _ ha hb => rw [map_add, mul_add, add_mul, ha, hb]
-    | smul c a _ ha => rw [map_smul, mul_smul_comm, smul_mul_assoc, ha]
-  | zero => simp
-  | add a b _ _ ha hb => rw [map_add, mul_add, add_mul, ha, hb]
-  | smul c a _ ha => rw [map_smul, mul_smul_comm, smul_mul_assoc, ha]
-
-end WD
 
 namespace GGPData
 
@@ -434,70 +232,20 @@ theorem adV_gspinBC_tmul {Z : (gspin d.QW).toSubmodule} :
     ← map_mul, ← map_sub, ← ι_adV Z.2, bcHom_ι, ιInv_ι]
 
 
-/-- **The `F̄`-span of the rational moved centralizer**: a skew endomorphism `Y` of `W_{F̄}`
-commuting with `P(x)_{F̄}` and vanishing on `W'_x ⊗ F̄` is `ad u` for some `u` in the base change
-of the moved part `𝔩_x = ker movedCentMap` (`exists_lift_skew`, `range_gspinBC`,
-`mem_movedCent_baseChange`): `[u, ι v] = ι (Y v)`. -/
-theorem exists_movedCent_lift (x : ↥(GSpin d.QW)) (Y : Module.End Kb Wb)
-    (hs : (bform Qb).IsSkewAdjoint Y)
-    (hc : Commute ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb) Y)
-    (hf : ∀ z ∈ Module.End.eigenspace
-      ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb) 1, Y z = 0) :
-    ∃ u ∈ (LinearMap.ker (movedCentMap d.QW x)).baseChange Kb,
-      ∀ v, gspinBC d.QW u * ι Qb v - ι Qb v * gspinBC d.QW u = ι Qb (Y v) := by
-  have hQ := isNondeg_baseChange _ d.nondeg
-  let xb : GSpin Qb :=
-    ⟨bcUnits d.QW (x : (CliffordAlgebra d.QW)ˣ), TorusTransfer.bcUnits_mem_GSpin d.QW x⟩
-  have hX : (specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb =
-      (specP Qb xb : _ →ₗ[Kb] _) :=
-    LinearMap.ext fun w => (GGPData.specP_bcUnits d x w).symm
-  obtain ⟨Yh, hYh0, hYh⟩ := exists_lift_skew hQ Y hs.eq
-  have hYh0' := hYh0
-  rw [← LieSubalgebra.mem_toSubmodule, ← range_gspinBC d.QW hQ] at hYh0'
-  obtain ⟨u, rfl⟩ := hYh0'
-  refine ⟨u, mem_movedCent_baseChange d.QW x u ?_ ?_, hYh⟩
-  · rw [hX] at hc
-    exact commute_of_lift hQ xb hc hYh0 hYh
-  · intro w hw
-    have h1 : (1 : Kb) ⊗ₜ[F] w ∈ Module.End.eigenspace
-        ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb) 1 := by
-      rw [Module.End.mem_eigenspace_iff, one_smul, LinearMap.baseChange_tmul]
-      congr 1
-      have := LinearMap.mem_ker.mp hw
-      rw [LinearMap.sub_apply, sub_eq_zero] at this
-      exact this
-    have := hYh (1 ⊗ₜ w)
-    rw [hf _ h1, map_zero, sub_eq_zero] at this
-    exact this
 
 end MovedCentLift
 
 end GGPData
 
-open CliffordAlgebra in
-open scoped TensorProduct in
-/-- **The Lie algebra of `S_x` is abelian over `F̄` if the moved part `𝔩_x` is** (own work).  Route: a skew endomorphism `Y`
-of `W_{F̄}` commuting with `X = P(x)_{F̄}` and vanishing on `ker (X − 1) = W'_x ⊗ F̄` is `ad`
-of an element of `so(W_{F̄}) ⊆ gspin(W_{F̄})` (`gspin = so ⊕ F`) in the centralizer of `x` and
-killing `ι(W'_x ⊗ F̄)`.  These conditions are `F`-linear equations, so their solutions over `F̄`
-are the `F̄`-span of the solutions over `F` (flatness, `range_gspinBC`), which commute by
-hypothesis; hence so do the `Y`. -/
+/-- **The Lie algebra of `S_x` is abelian over `F̄` if the moved part `𝔩_x` is** (own work):
+`lieAbelian_specP_baseChange_of_lie_eq_zero` for `W`.  A skew endomorphism of `W_{F̄}` commuting
+with `P(x)_{F̄}` and vanishing on `ker (P(x)_{F̄} − 1) = W'_x ⊗ F̄` is `ad` of an element of the
+`F̄`-span of `𝔩_x` (the defining conditions are `F`-linear equations). -/
 theorem lieAbelian_specP_baseChange_of_movedPartAbelian {d : GGPData F} (x : ↥(GSpin d.QW))
     (hx : MovedPartAbelian d.QW x) :
     IsomCent.LieAbelian (bform (d.QW.baseChange (AlgebraicClosure F)))
-      ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange (AlgebraicClosure F)) := by
-  intro Y₁ Y₂ hs₁ hs₂ hc₁ hc₂ hf₁ hf₂
-  obtain ⟨u₁, hu₁, h₁⟩ := d.exists_movedCent_lift x Y₁ hs₁ hc₁ hf₁
-  obtain ⟨u₂, hu₂, h₂⟩ := d.exists_movedCent_lift x Y₂ hs₂ hc₂ hf₂
-  have h12 := gspinBC_commute_of_mem hx hu₁ hu₂
-  refine LinearMap.ext fun v => ι_injective (d.QW.baseChange (AlgebraicClosure F)) ?_
-  rw [mul_apply_eq_comp, mul_apply_eq_comp, ← sub_eq_zero, ← h₁, ← h₂, ← h₂, ← h₁]
-  set A := gspinBC d.QW u₁
-  set B := gspinBC d.QW u₂
-  have e : A * (B * ι _ v - ι _ v * B) - (B * ι _ v - ι _ v * B) * A -
-      (B * (A * ι _ v - ι _ v * A) - (A * ι _ v - ι _ v * A) * B) =
-      (A * B - B * A) * ι _ v - ι _ v * (A * B - B * A) := by noncomm_ring
-  rw [e, h12, sub_self, zero_mul, mul_zero, sub_zero]
+      ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange (AlgebraicClosure F)) :=
+  lieAbelian_specP_baseChange_of_lie_eq_zero d.nondeg x hx
 
 /-- **The Lie algebra of `S_x` is abelian over `F̄`** for `x ∈ Γ(G,H)`
 (`lieAbelian_specP_baseChange_of_movedPartAbelian`, `movedPartAbelian_of_isGammaElt`). -/
@@ -547,7 +295,7 @@ local notation "Qb" => d.QW.baseChange (AlgebraicClosure F)
 /-- The moved part `ad Z`, `Z ∈ 𝔩_x`, over `F̄`: skew, commuting with `P(x)_{F̄}`, and vanishing
 on `ker (P(x)_{F̄} − 1)`. -/
 theorem movedCent_baseChange_props (x : ↥(GSpin d.QW))
-    {Z : (gspin d.QW).toSubmodule} (hZ : Z ∈ LinearMap.ker (movedCentMap d.QW x)) :
+    {Z : (gspin d.QW).toSubmodule} (hZ : Z ∈ LinearMap.ker (movedCentMap d.QW x (fixedSub x))) :
     (bform Qb).IsSkewAdjoint ((adV d.QW (Z : CliffordAlgebra d.QW)).baseChange Kb) ∧
       Commute ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb)
         ((adV d.QW (Z : CliffordAlgebra d.QW)).baseChange Kb) ∧
@@ -574,14 +322,15 @@ theorem movedCent_baseChange_props (x : ↥(GSpin d.QW))
 /-- A `F̄`-linear functional on `End(W_{F̄})` vanishing on `(ad Z)_{F̄}` for all `Z ∈ 𝔩_x` vanishes
 on every skew endomorphism commuting with `P(x)_{F̄}` and vanishing on `ker (P(x)_{F̄} − 1)`. -/
 theorem eq_zero_of_forall_movedCent (x : ↥(GSpin d.QW)) (γ : Module.End Kb Wb →ₗ[Kb] Kb)
-    (hγ : ∀ Z ∈ LinearMap.ker (movedCentMap d.QW x),
+    (hγ : ∀ Z ∈ LinearMap.ker (movedCentMap d.QW x (fixedSub x)),
       γ ((adV d.QW (Z : CliffordAlgebra d.QW)).baseChange Kb) = 0)
     (Y : Module.End Kb Wb) (hs : (bform Qb).IsSkewAdjoint Y)
     (hc : Commute ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb) Y)
     (hf : ∀ z ∈ Module.End.eigenspace
       ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb) 1, Y z = 0) :
     γ Y = 0 := by
-  obtain ⟨u, hu, hY⟩ := d.exists_movedCent_lift x Y hs hc hf
+  obtain ⟨u, hu, hY⟩ := exists_movedCent_lift d.nondeg x (fixedSub x) Y hs hc
+    fun _ hw => hf _ (tmul_mem_eigenspace_baseChange_one x hw)
   have hYu : Y = adV Qb (gspinBC d.QW u) :=
     LinearMap.ext fun v => by rw [adV_apply, hY, ιInv_ι]
   rw [hYu]
@@ -598,7 +347,7 @@ theorem eq_zero_of_forall_movedCent (x : ↥(GSpin d.QW)) (γ : Module.End Kb Wb
 
 /-- `Z ↦ (ad Z)_{F̄}` on the moved part `𝔩_x = ker movedCentMap`, as an `F`-linear map. -/
 def movedCentAd (x : ↥(GSpin d.QW)) :
-    ↥(LinearMap.ker (movedCentMap d.QW x)) →ₗ[F] Module.End Kb Wb where
+    ↥(LinearMap.ker (movedCentMap d.QW x (fixedSub x))) →ₗ[F] Module.End Kb Wb where
   toFun Z := (adV d.QW ((Z : (gspin d.QW).toSubmodule) : CliffordAlgebra d.QW)).baseChange Kb
   map_add' Z Z' := by simp only [Submodule.coe_add, map_add, LinearMap.baseChange_add]
   map_smul' c Z := by
@@ -615,9 +364,9 @@ theorem exists_movedCent_forall_ne_zero (x : ↥(GSpin d.QW)) {ι : Type*} [Fini
       (∀ z ∈ Module.End.eigenspace
         ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange Kb) 1, Y z = 0) ∧
       γ k Y ≠ 0) :
-    ∃ Z ∈ LinearMap.ker (movedCentMap d.QW x),
+    ∃ Z ∈ LinearMap.ker (movedCentMap d.QW x (fixedSub x)),
       ∀ k, γ k ((adV d.QW (Z : CliffordAlgebra d.QW)).baseChange Kb) ≠ 0 := by
-  let p : ι → Submodule F ↥(LinearMap.ker (movedCentMap d.QW x)) := fun k =>
+  let p : ι → Submodule F ↥(LinearMap.ker (movedCentMap d.QW x (fixedSub x))) := fun k =>
     { carrier := {Z | γ k (d.movedCentAd x Z) = 0}
       add_mem' := fun {Z Z'} hZ hZ' => by
         simp only [Set.mem_ofPred_eq, map_add] at hZ hZ' ⊢; rw [hZ, hZ', add_zero]
@@ -629,7 +378,7 @@ theorem exists_movedCent_forall_ne_zero (x : ↥(GSpin d.QW)) {ι : Type*} [Fini
     intro k htop
     obtain ⟨Y, hs, hc, hf, hY⟩ := hγ k
     refine hY (d.eq_zero_of_forall_movedCent x (γ k) (fun Z hZ => ?_) Y hs hc hf)
-    have : (⟨Z, hZ⟩ : ↥(LinearMap.ker (movedCentMap d.QW x))) ∈ p k := htop ▸ Submodule.mem_top
+    have : (⟨Z, hZ⟩ : ↥(LinearMap.ker (movedCentMap d.QW x (fixedSub x)))) ∈ p k := htop ▸ Submodule.mem_top
     exact this
   haveI : Infinite F := Infinite.of_injective (Nat.cast : ℕ → F) Nat.cast_injective
   obtain ⟨Z, hZ⟩ := Submodule.exists_forall_notMem_of_forall_ne_top p hne
@@ -643,18 +392,6 @@ section TorusNat
 
 open CliffordAlgebra Module
 open scoped TensorProduct
-
-/-- **`P(x)_{F̄}` is semisimple** for semisimple `x ∈ GSpin(W)(F)` (own work, elementary).  Route:
-left and right multiplication by `x` are commuting semisimple operators on `C(W)`, so conjugation
-`v ↦ x v x⁻¹` is semisimple and so is its restriction to `ι(W)`, which is `P(x)`; semisimplicity
-over `F` of characteristic `0` survives base change to `F̄` (squarefree minimal polynomial).
-Proved: `isSemisimple_specP_of_isSS` (`GGP/Steinberg.lean`), `isSemisimple_baseChange`
-(`GGP/TorusCommute.lean`). -/
-theorem isSemisimple_specP_baseChange {d : GGPData F} (x : ↥(GSpin d.QW))
-    (hx : IsSS F (((x : (CliffordAlgebra d.QW)ˣ)) : CliffordAlgebra d.QW)) :
-    Module.End.IsSemisimple
-      ((specP d.QW x : (Fin d.m → F) →ₗ[F] (Fin d.m → F)).baseChange (AlgebraicClosure F)) :=
-  isSemisimple_baseChange (isSemisimple_specP_of_isSS d.QW x hx)
 
 namespace GGPData
 

@@ -4,13 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.GGP.CentralizerSign
 import GSpinGGP.GGP.LeviSubgroup
+import GSpinGGP.GGP.CentralizerBaseChange
+import GSpinGGP.GGP.TorusCentral
 
 /-!
 # Centralizers of regular semisimple elements of `GSpin(V)`
 
 For `x ∈ GSpin(V)` regular semisimple (`x` semisimple on `C(V)` and `gspin(V)_x` abelian), the
 centralizer `GSpin(V)_x` is a maximal torus; in particular it is commutative
-(`commute_of_isRegular`, not yet proved).  From this: if moreover `x` lies in the Levi subgroup
+(`commute_of_isRegular`; over `K̄`, `Steinberg.commute_of_forall_skew_commute` in
+`GGP/TorusCentral.lean`).  From this: if moreover `x` lies in the Levi subgroup
 `M_F = flagLevi b wt` of a flag stabilizer, then `GSpin(V)_x ⊆ M_F`
 (`mem_flagLevi_of_commute_of_isRegular`; Waldspurger, Compos. Math. 146 (2010), §2.3,
 `G_x = M_x ⊂ M`; Beuzart-Plessis, Astérisque 418, §1.10; Waldspurger's `G_x` is the neutral
@@ -26,6 +29,9 @@ the inclusion: a lift `T ∈ GSpin(V)` of the cocharacter `λ(2) : bᵢ ↦ 2^{w
 noncomputable section
 
 open CliffordAlgebra Module
+open scoped TensorProduct
+
+attribute [local instance 100] LieRing.ofAssociativeRing LieAlgebra.ofAssociativeAlgebra
 
 namespace GSpinGGP
 
@@ -38,31 +44,36 @@ semisimple on `C(V)` with `gspin(V)_x` abelian, any two elements of `GSpin(V)` c
 commute.  (The centralizer is a maximal torus: connected by Steinberg's theorem, as the derived
 group `Spin(V)` is simply connected, with abelian Lie algebra.)
 
-Not yet proved.  Sketch, without connectedness, by the explicit methods of `Steinberg.commute_iff`
-and `Steinberg.commute_of_fixes_eigenspace_one`: (1) `P(x)` is semisimple
-(`Steinberg.isSemisimple_specP_of_isSS`); commuting is detected after base change to `K̄`
-(`bcGSpin_injective`), and the hypotheses base change (semisimplicity:
-`isSemisimple_baseChange_algebraicClosure`; abelianness of `so(V)_{P(x)}`, which follows from that
-of `gspin(V)_x` by `commute_of_isLieAbelian_lieCentralizer`, as the centralizer of `P(x)_{K̄}` is
-`so(V)_{P(x)} ⊗ K̄`; the same passage to `K̄` is done for `GSpin(W)` and the moved part in
-`commute_torusOf_of_commute_of_movedPartAbelian`, `isSemisimple_specP_baseChange` and
-`lieAbelian_specP_baseChange_of_movedPartAbelian`, which would need generalizing); (2) over `K̄`,
-`so(V)_{P(x)}` abelian gives `dim ker (P(x) − 1) ≤ 2`; (3) if `dim ker (P(x) − 1) ≤ 1`, every `t`
-commuting with `x` acts trivially on `ker (P(x) − 1)`
-(its determinant there is `1`, `det_restrict_one_eq_one_of_commute`), and
-`Steinberg.commute_of_fixes_eigenspace_one` gives `Commute g t`; (4) if `ker (P(x) − 1)` is a
-(hyperbolic) plane `⟨e₀, f₀⟩`, `P(g)` and `P(h)` act on it by `diag(c, c⁻¹)` (an isometry of
-the plane of determinant `1`, `det_restrict_one_eq_one_of_commute`), and replacing `x` by
-`x s` with `s` a pair element of `⟨e₀, f₀⟩` acting by `diag(a, a⁻¹)`, `a` avoiding `±1` and the
-eigenvalues of `P(x)`, gives a regular `x s` with `ker (P(x s) − 1) = 0` whose centralizer contains
-`g` and `h`; conclude by (3). -/
+Proof, without connectedness, after base change to `K̄` (`bcGSpin_injective`): `P(x)_{K̄}` is
+semisimple (`isSemisimple_specP_baseChange`), and the skew endomorphisms of `V_{K̄}` commuting
+with `P(x)_{K̄}` (`soCent`) commute, since `gspin(V)_x` is abelian (`commute_baseChange_of_lie_eq_zero` with
+`U = 0`); conclude by `Steinberg.commute_of_forall_skew_commute`. -/
 theorem commute_of_isRegular [CharZero K] [FiniteDimensional K V] (hQ : IsNondeg Q) (x : GSpin Q)
     (hss : Module.End.IsSemisimple
       (LinearMap.mulLeft K ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)))
     (hab : IsLieAbelian
       (lieCentralizer (gspin Q) ((x : (CliffordAlgebra Q)ˣ) : CliffordAlgebra Q)))
     {g h : GSpin Q} (hg : Commute g x) (hh : Commute h x) : Commute g h := by
-  sorry
+  have hQL := isNondeg_baseChange Q hQ
+  have hssL : Module.End.IsSemisimple (specP _ (bcGSpin Q x) :
+      AlgebraicClosure K ⊗[K] V →ₗ[AlgebraicClosure K] AlgebraicClosure K ⊗[K] V) := by
+    rw [specP_bcGSpin]; exact isSemisimple_specP_baseChange x hss
+  have habL : ∀ M₁ ∈ soCent (Q.baseChange (AlgebraicClosure K)) (specP _ (bcGSpin Q x) :
+      AlgebraicClosure K ⊗[K] V →ₗ[AlgebraicClosure K] AlgebraicClosure K ⊗[K] V),
+      ∀ M₂ ∈ soCent (Q.baseChange (AlgebraicClosure K)) (specP _ (bcGSpin Q x) :
+        AlgebraicClosure K ⊗[K] V →ₗ[AlgebraicClosure K] AlgebraicClosure K ⊗[K] V),
+      Commute M₁ M₂ := by
+    intro Y₁ h₁ Y₂ h₂
+    rw [mem_soCent, specP_bcGSpin] at h₁ h₂
+    refine commute_baseChange_of_lie_eq_zero hQ x ⊥ (fun X hX Y hY _ _ => ?_)
+      (LinearMap.isSkewAdjoint_iff.2 h₁.1) (LinearMap.isSkewAdjoint_iff.2 h₂.1) h₁.2.symm h₂.2.symm
+      (fun w hw => by rw [(Submodule.mem_bot K).1 hw, TensorProduct.tmul_zero, map_zero])
+      (fun w hw => by rw [(Submodule.mem_bot K).1 hw, TensorProduct.tmul_zero, map_zero])
+    have h0 := congrArg Subtype.val (hab.trivial ⟨X, hX⟩ ⟨Y, hY⟩)
+    rwa [LieSubalgebra.coe_bracket] at h0
+  have key := Steinberg.commute_of_forall_skew_commute hQL hssL habL (hg.map (bcGSpin Q))
+    (hh.map (bcGSpin Q))
+  exact bcGSpin_injective Q (by rw [map_mul, map_mul, key.eq])
 
 section FlagLevi
 

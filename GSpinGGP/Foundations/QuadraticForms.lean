@@ -2,6 +2,7 @@ import GSpinGGP.Foundations.GSpin
 import GSpinGGP.Foundations.HypFrame
 import TauCeti.LinearAlgebra.QuadraticForm.Witt.Cancellation
 import TauCeti.LinearAlgebra.QuadraticForm.Representation
+import TauCeti.LinearAlgebra.QuadraticForm.Complex
 import TauCeti.LinearAlgebra.Matrix.ToQuadraticForm
 import TauCeti.LinearAlgebra.QuadraticForm.Witt.TotallyIsotropic
 import TauCeti.LinearAlgebra.QuadraticForm.CartanDieudonne.SpecialOrthogonal
@@ -584,6 +585,53 @@ theorem apply_eq_of_smul_hyperbolicPair [FiniteDimensional K V] (hdim : Module.f
     · simp [L, hb1, hRf', hff', hp]; module
   rw [hL]
   simp [L, smul_smul]
+
+omit [Invertible (2 : K)] in
+/-- **A hyperbolic pair in a nondegenerate plane** `W` over an algebraically closed field (Tau
+Ceti's `QuadraticMap.exists_isotropic_pair_of_radical_eq_bot` for `Q|_W`, which is isotropic by
+`QuadraticForm.not_anisotropic_of_isAlgClosed`). -/
+theorem exists_hypPair_of_finrank_eq_two [IsAlgClosed K] {W : Submodule K V}
+    (hW : Module.finrank K W = 2)
+    (hnd : ∀ u ∈ W, (∀ u' ∈ W, QuadraticMap.polar Q u u' = 0) → u = 0) :
+    ∃ e ∈ W, ∃ f ∈ W, Q e = 0 ∧ Q f = 0 ∧ QuadraticMap.polar Q e f = 1 := by
+  have hrad : (Q.restrict W).radical = ⊥ := by
+    rw [Submodule.eq_bot_iff]
+    intro u hu
+    exact Subtype.ext (hnd u u.2 fun u' hu' => by
+      simpa [LinearMap.domRestrict₁₂_apply] using LinearMap.congr_fun hu.2 ⟨u', hu'⟩)
+  obtain ⟨x, y, -, hx, hy, hxy⟩ := QuadraticMap.exists_isotropic_pair_of_radical_eq_bot hrad
+    (QuadraticForm.not_anisotropic_of_isAlgClosed _ hW.ge)
+  exact ⟨x, x.2, y, y.2, hx, hy, hxy⟩
+
+omit [Invertible (2 : K)] in
+/-- A plane `W` with a hyperbolic pair `e, f` is spanned by it (`linearIndependent_hyperbolicPair`
+for `Q|_W`). -/
+theorem exists_eq_smul_add_smul_of_hypPair {W : Submodule K V} (hW : Module.finrank K W = 2)
+    {e f : V} (he : e ∈ W) (hf : f ∈ W) (hQe : Q e = 0) (hQf : Q f = 0)
+    (hef : QuadraticMap.polar Q e f = 1) {w : V} (hw : w ∈ W) :
+    ∃ a b : K, w = a • e + b • f := by
+  have hli := linearIndependent_hyperbolicPair (Q := Q.restrict W) (f := ⟨e, he⟩) (f' := ⟨f, hf⟩)
+    hQe hQf hef
+  let b := basisOfLinearIndependentOfCardEqFinrank hli (by simp [hW])
+  refine ⟨b.repr ⟨w, hw⟩ 0, b.repr ⟨w, hw⟩ 1, ?_⟩
+  have hb0 : (b 0 : V) = e := by simp [b]
+  have hb1 : (b 1 : V) = f := by simp [b]
+  have h := congrArg Subtype.val (b.sum_repr ⟨w, hw⟩)
+  rw [Fin.sum_univ_two, Submodule.coe_add, Submodule.coe_smul, Submodule.coe_smul, hb0, hb1] at h
+  exact h.symm
+
+/-- **Isometries of determinant `1` of a hyperbolic plane `W ⊆ V` are diagonal**: if `σ` preserves
+`Q` and `W ∋ e, f` (a hyperbolic pair), with `det σ|_W = 1`, then `σ e = c e` and `σ f = c⁻¹ f`
+(`exists_smul_of_isometry_det_one` for `Q|_W`). -/
+theorem exists_smul_of_det_restrict_eq_one {σ : Module.End K V} (hσ : ∀ v, Q (σ v) = Q v)
+    {W : Submodule K V} (hW2 : Module.finrank K W = 2) (hW : ∀ w ∈ W, σ w ∈ W) {e f : V}
+    (he : e ∈ W) (hf : f ∈ W) (hQe : Q e = 0) (hQf : Q f = 0) (hef : QuadraticMap.polar Q e f = 1)
+    (hdet : LinearMap.det (σ.restrict hW) = 1) :
+    ∃ c : Kˣ, σ e = (c : K) • e ∧ σ f = ((c⁻¹ : Kˣ) : K) • f := by
+  have : FiniteDimensional K W := Module.finite_of_finrank_eq_succ hW2
+  obtain ⟨t, h1, h2⟩ := exists_smul_of_isometry_det_one (Q := Q.restrict W) hW2
+    (f := ⟨e, he⟩) (f' := ⟨f, hf⟩) hQe hQf hef (σ.restrict hW) (fun v => hσ v) hdet
+  exact ⟨t⁻¹, by simpa using congrArg Subtype.val h1, by simpa using congrArg Subtype.val h2⟩
 
 end HyperbolicPair
 

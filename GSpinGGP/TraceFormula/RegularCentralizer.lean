@@ -19,8 +19,8 @@ the weighted orbital integrals of `TraceFormula/WeightedOrbital.lean` take as hy
   component `Z_G(x)⁰`; `centG x` is the full centralizer, which is the same here, since `Z_G(x)` is
   connected (Steinberg; the derived group `Spin × Spin` is simply connected).
 
-Both reduce, factor by factor on `G = GSpin(W) × GSpin(V)`, to `commute_of_isRegular` (not yet
-proved), and the second then to `mem_flagLevi_of_commute` (`GGP/RegularCentralizer.lean`).
+Both reduce, factor by factor on `G = GSpin(W) × GSpin(V)`, to `commute_of_isRegular`, and
+the second then to `mem_flagLevi_of_commute` (`GGP/RegularCentralizer.lean`).
 `weightedOrbitalIntegral_conj_K_of_mem_regularSet` is `weightedOrbitalIntegral_conj_K` for
 `x ∈ M(F) ∩ G_reg(F)` with these hypotheses discharged.
 -/

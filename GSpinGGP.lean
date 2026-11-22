@@ -156,6 +156,7 @@ import GSpinGGP.GGP.Contraction
 import GSpinGGP.Foundations.BilinFormAdjoint
 import GSpinGGP.Foundations.IsometryCentralizer
 import GSpinGGP.GGP.TorusCommute
+import GSpinGGP.GGP.CentralizerBaseChange
 import GSpinGGP.GGP.MovedCentralizer
 import GSpinGGP.Foundations.IsometrySemisimple
 import GSpinGGP.GGP.GSpinSemisimple
