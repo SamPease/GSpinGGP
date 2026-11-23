@@ -181,7 +181,9 @@ its maximal split subtorus `A_T`.  On `W` (and likewise `V`), `s = P(x_W) ∈ SO
 polynomial, and `b` pairs `W_p` with `W_{p*}` (`p*` the reciprocal polynomial), so `W_p` is
 totally isotropic for `p ≠ p*` and nondegenerate for `p = p*`.  The eigenspaces `W_{t∓1}` have
 dimension `≤ 2`, since `x` is regular (`𝔤_x` abelian, while `𝔰𝔬` of a space of dimension `≥ 3`
-is not).  The split part of `T` acts on
+is not), and every other eigenvalue (over `F̄`) has multiplicity `1`, so `dim W_p = deg p` and
+`W_p` is a field `F[t]/(p)` on which `s` acts by multiplication by `t`; this is what makes the
+centralizer on each piece the tori named below.  The split part of `T` acts on
 `W_p ⊕ W_{p*}` (`p ≠ p*`) by `τ` on `W_p` and `τ⁻¹` on `W_{p*}`; on a `W_p` with `p = p*` of
 degree `≥ 2` it acts trivially (the centralizer there is a norm-one torus, anisotropic); on an
 eigenspace `W_{t∓1}` that is a hyperbolic plane it acts by `τ^{±1}` on its two isotropic lines,
@@ -189,7 +191,9 @@ and trivially if that eigenspace is anisotropic.  Number these split pieces `1, 
 `k`-th piece weights `±k` (a basis adapted to the pieces); this is an `IsWtGrading` whose weight
 spaces are `P(x)`-stable, so `x ∈ (ofGrading …).M` (`mem_flagLevi_iff`).  The weight-`0` space is
 the sum of the anisotropic pieces; it is not a hyperbolic plane (an anisotropic `W_p`, `p = p*`,
-is not one, and `W_{t−1} ⊕ W_{t+1}` of two lines would give `det P(x) = −1`), so the datum is
+is not one: a `W_p` with anisotropic centralizer torus is not a hyperbolic plane, whose `SO` is a
+split torus; and `dim W_{t+1}` is even because `det P(x) = 1`, so `W_{t−1} ⊕ W_{t+1}` cannot be
+two lines), so the datum is
 reduced.  Then `A_M = A_T` (`AMF` is the lift of the scalars on the weight spaces), and
 `T(F)/A_T(F)` embeds in `(T/A_T)(F)` as a closed subgroup (Hilbert 90 for the split `A_T`), which
 is compact since `T/A_T` is anisotropic: `CompactSpace (CosetSpace (L.AGx x).subtype)`. -/

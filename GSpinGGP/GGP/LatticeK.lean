@@ -240,7 +240,7 @@ variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 `wtScalar` (`P(g)` is the scalar `t(w)` on the weight-`w` space, `t(0) = 1`) lies in
 `latticeSpin Q b` iff its determinant characters on the weight spaces `1, …, len` and `detChar`
 have norm `1`.  Both say `‖t(w)‖ = 1` for all weights: `det(P(g)|_{V_w}) = t(w)^{dim V_w}` for
-`w > 0`, and `t(−w) = t(w)⁻¹` (`IsFlagSplitting.mul_neg_eq_one`). -/
+`w > 0`, and `t(−w) = t(w)⁻¹` (`mul_neg_eq_one_of_orth`). -/
 theorem mem_latticeSpin_iff_of_mem_wtScalar (hQ : IsNondeg Q) (hs : IsFlagSplitting Fl b wt)
     {g : GSpin Q} (hg : g ∈ wtScalar Q b wt) :
     g ∈ latticeSpin Q b ↔
@@ -249,7 +249,7 @@ theorem mem_latticeSpin_iff_of_mem_wtScalar (hQ : IsNondeg Q) (hs : IsFlagSplitt
       ‖((detChar Q g : Fˣ) : F)‖ = 1 := by
   classical
   obtain ⟨t, ht0, ht⟩ := id hg
-  have hmul := hs.mul_neg_eq_one hQ ht
+  have hmul := mul_neg_eq_one_of_orth hQ hs.orth ht
   have hne : ∀ j, t (wt j) ≠ 0 := fun j h0 => by simpa [h0] using hmul j
   have hinv : ∀ j, specP Q g⁻¹ (b j) = (t (wt j))⁻¹ • b j := fun j =>
     (specP Q g).injective (by
@@ -565,13 +565,7 @@ def bVFin : Basis (Fin (Fintype.card L.ιV)) F d.V := L.bV.reindex (Fintype.equi
 omit [PAdicField F] in
 private theorem log_norm_eq_zero_iff (u : Fˣ) : Real.log ‖(u : F)‖ = 0 ↔ ‖(u : F)‖ = 1 := by
   have h0 : 0 < ‖(u : F)‖ := norm_pos_iff.2 u.ne_zero
-  rw [Real.log_eq_zero]
-  constructor
-  · rintro (h | h | h)
-    · exact absurd h h0.ne'
-    · exact h
-    · linarith
-  · exact fun h => Or.inr (Or.inl h)
+  exact ⟨Real.eq_one_of_pos_of_log_eq_zero h0, fun h => h ▸ Real.log_one⟩
 
 /-- **On `A_M(F)`, `ker H_M` is the lattice stabilizer `latticeK`** of the splitting bases:
 `m ∈ A_M(F)` acts by scalars `t(w)` on the weight spaces, and both conditions say `‖t(w)‖ = 1`

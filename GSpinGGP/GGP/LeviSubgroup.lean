@@ -277,12 +277,8 @@ theorem IsFlagSplitting.exists_wt_eq (hs : IsFlagSplitting F b wt) {w : ℤ} (h1
 theorem IsFlagSplitting.exists_wt_eq_neg (hQ : IsNondeg Q) (hs : IsFlagSplitting F b wt) {w : ℤ}
     (h1 : 1 ≤ w) (h2 : w ≤ F.len) : ∃ j, wt j = -w := by
   obtain ⟨i, hi⟩ := hs.exists_wt_eq h1 h2
-  by_contra hne
-  push Not at hne
-  refine b.ne_zero i (hQ.1 (b i) fun y => ?_)
-  rw [← b.sum_repr y, map_sum]
-  refine Finset.sum_eq_zero fun j _ => ?_
-  rw [map_smul, smul_eq_mul, hs.orth i j (fun h => hne j (by omega)), mul_zero]
+  obtain ⟨k, hk, -⟩ := exists_bform_ne_of_orth hQ hs.orth i
+  exact ⟨k, by omega⟩
 
 /-- The span of basis vectors no two of whose weights sum to `0` is totally isotropic, when
 `b(bᵢ, bⱼ) = 0` unless `wtᵢ + wtⱼ = 0`. -/
@@ -765,7 +761,9 @@ def opp : d.ReducedLeviDatum where
 /-- **The reduced datum of two weight gradings**: gradings of `W` and `V` (`IsWtGrading`) whose
 weight-`0` spaces are not hyperbolic planes give a reduced datum, with the flags of the gradings
 (`IsWtGrading.flag`) split by the gradings themselves.  Its Levi subgroup is the stabilizer of the
-weight spaces of both gradings (`ofGrading_M`, `mem_flagLevi_iff`). -/
+weight spaces of both gradings (`ofGrading_M`, `mem_flagLevi_iff`).  It is the intended witness of
+`exists_isMx` (`TraceFormula/ThetaFBP.lean`), whose proof is pending; checked at the toy datum in
+`Sanity/ThetaFBPAudit.lean` (`toyD_isMx_ofGrading`). -/
 def ofGrading {ιW ιV : Type} [Fintype ιW] [Fintype ιV] (bW : Basis ιW F (Fin d.m → F))
     (wtW : ιW → ℤ) {nW : ℕ} (hW : IsWtGrading d.QW bW wtW nW) (bV : Basis ιV F d.V)
     (wtV : ιV → ℤ) {nV : ℕ} (hV : IsWtGrading d.QV bV wtV nV)

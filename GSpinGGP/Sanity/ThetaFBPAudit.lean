@@ -127,10 +127,6 @@ theorem isCompact_toyOneSet : IsCompact (toyOneSet (F := F)) := by
 def toyEmb (L : (𝕋).ReducedLeviDatum) (x : ↥(𝕋).G) : ↥(L.AGx x) → ↥(𝕋).G :=
   fun a => ((a : ↥((𝕋).centG x)) : ↥(𝕋).G)
 
-theorem isClosedEmbedding_toyEmb (L : (𝕋).ReducedLeviDatum) (x : ↥(𝕋).G) :
-    Topology.IsClosedEmbedding (toyEmb L x) :=
-  ((𝕋).isClosedEmbedding_centG x).comp (L.isClosedEmbedding_AGx x)
-
 /-- For empty flags, `A_M(F) ∩ ker H_M` is `{|c₁| = |c₂| = 1}`. -/
 theorem toyD_AGxOne_eq (L : (𝕋).ReducedLeviDatum) (hW : L.FW.len = 0) (hV : L.FV.len = 0)
     (x : ↥(𝕋).G) :
@@ -155,6 +151,13 @@ theorem toyD_AGxOne_eq (L : (𝕋).ReducedLeviDatum) (hW : L.FW.len = 0) (hV : L
     · exact (hpos _).2 h1
     · exact absurd (i.isLt.trans_eq hV) (Nat.not_lt_zero _)
     · exact (hpos _).2 h2
+
+/-- `ReducedLeviDatum.ofGrading` (the intended witness of `exists_isMx`) at the toy datum: the datum
+rebuilt from the splittings of `L` (as weight gradings) satisfies `IsMx` for every `x`. -/
+theorem toyD_isMx_ofGrading (L : (𝕋).ReducedLeviDatum) (hM : L.M = ⊤) (x : ↥(𝕋).G) :
+    (ReducedLeviDatum.ofGrading L.bW L.wtW L.hsW.isWtGrading L.bV L.wtV L.hsV.isWtGrading
+      L.reducedW L.reducedV).IsMx x :=
+  toyD_isMx _ (by rw [ReducedLeviDatum.ofGrading_splitting_M]; exact hM) x
 
 theorem toyD_exists_isDcMeasure (L : (𝕋).ReducedLeviDatum) (hM : L.M = ⊤) (x : ↥(𝕋).G) :
     ∃ μ, L.IsDcMeasure x μ :=

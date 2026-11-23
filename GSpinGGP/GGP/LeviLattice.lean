@@ -75,10 +75,10 @@ theorem IsFlagSplitting.card_wt_neg (hQ : IsNondeg Q) (hs : IsFlagSplitting F b 
 
 /-- **Opposite weights have inverse scalars**: if `P(g) bⱼ = t(wtⱼ) bⱼ` for all `j`, then
 `t(w) t(−w) = 1` for every weight `w` of the splitting (`P(g)` preserves `b`). -/
-theorem IsFlagSplitting.mul_neg_eq_one (hQ : IsNondeg Q) (hs : IsFlagSplitting F b wt)
-    {g : GSpin Q} {t : ℤ → K} (ht : ∀ j, specP Q g (b j) = t (wt j) • b j) (j : ι) :
+theorem mul_neg_eq_one_of_orth (hQ : IsNondeg Q)
+    (horth : ∀ i j, wt i + wt j ≠ 0 → bform Q (b i) (b j) = 0) {g : GSpin Q} {t : ℤ → K} (ht : ∀ j, specP Q g (b j) = t (wt j) • b j) (j : ι) :
     t (wt j) * t (-wt j) = 1 := by
-  obtain ⟨k, hk, hne⟩ := exists_bform_ne_of_orth hQ hs.orth j
+  obtain ⟨k, hk, hne⟩ := exists_bform_ne_of_orth hQ horth j
   have h := bform_specP g (b j) (b k)
   simp only [ht, hk, map_smul, LinearMap.smul_apply, smul_eq_mul] at h
   exact mul_right_cancel₀ hne (by linear_combination h)
