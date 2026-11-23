@@ -140,7 +140,7 @@ theorem toyD_integral_eq_torus (T : (𝕋).MaxTorus) (μ : Measure ↥T.1) [μ.I
 
 /-- **The Weyl integration formula at `toyD`** (BP §1.7, p. 32), for every continuous compactly
 supported `f` and every family of Haar measures on the maximal tori: proved, from Weil's formula
-(the general statement is the `sorry` theorem `weyl_integration`). -/
+(the general statement is `weyl_integration`, from the axiom `weyl_integration_exists`). -/
 theorem toyD_weyl_integration (μ : ∀ T : Subgroup ↥(𝕋).G, Measure ↥T)
     (hμ : ∀ T : (𝕋).MaxTorus, (μ T.1).IsHaarMeasure) {f : ↥(𝕋).G → ℂ} (hf : Continuous f)
     (hfc : HasCompactSupport f) :

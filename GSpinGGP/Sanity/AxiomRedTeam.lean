@@ -13,6 +13,7 @@ import GSpinGGP.Sanity.AxiomRedTeam.BPQuasiCharacter
 import GSpinGGP.Sanity.AxiomRedTeam.WaldspurgerXi
 import GSpinGGP.Sanity.AxiomRedTeam.SmoothRepresentations
 import GSpinGGP.Sanity.AxiomRedTeam.WaldspurgerLie
+import GSpinGGP.Sanity.AxiomRedTeam.WeylIntegration
 
 /-!
 # Checks of the literature axioms on small instances
@@ -91,6 +92,15 @@ the axiom it tests; the computations of germs at `toyD` use `exists_isSelfDual` 
   (`toyD_locallyBounded`); nonvacuous for `θ = 1`. Not covered: nonzero nilpotent orbits.
 * `bp_integrable_kernel_scusp`: V when `A_G = G` (`bp_conclusion_of_AG_eq_top`, hyperbolic `V`,
   `toyD`). Not covered: `G/A_G` noncompact.
+* `weyl_integration_exists`: V at `toyD`, the whole statement (`toyD_weyl_integration_exists_check`),
+  with a genuine finite sum and integrable integrand (`toyD_summable_gammaIntegral`,
+  `toyD_integrable_weylIntegrand`); Haar families exist on every datum
+  (`isHaarMeasure_haarFamily`); junk values: the Haar conjunct is needed
+  (`not_formula_zero_family`), and the axiom forces maximal tori to exist
+  (`nonempty_maxTorusClass_of_axiom`), C with `hc_regular_open_dense_conull` and
+  `jantzen_finrank_soCentMat_ge` (`nonempty_maxTorusClass`); it also forces a class with a finite
+  Weyl group and a nonzero term (`exists_class_weylCardG_ne_zero_of_axiom`). Not covered (accepted):
+  nonabelian `G`, `|W(G,T)| > 1`, `D^G ≠ 1`, several torus classes.
 
 `WholeSystem.lean` also proves, at `toyD`, the conclusions of several `sorry` statements on the
 path of the main theorem and the multiplicity formula for the trivial representation, with both

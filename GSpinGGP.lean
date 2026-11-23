@@ -196,6 +196,8 @@ import GSpinGGP.TraceFormula.MGeomLimit
 import GSpinGGP.TraceFormula.Scusp
 import GSpinGGP.TraceFormula.Spectral
 import GSpinGGP.TraceFormula.GammaG
+import GSpinGGP.Literature.WeylIntegration
+import GSpinGGP.TraceFormula.WeylIntegration
 import GSpinGGP.TraceFormula.Geometric
 import GSpinGGP.TraceFormula.Lie
 import GSpinGGP.TraceFormula.Spine
