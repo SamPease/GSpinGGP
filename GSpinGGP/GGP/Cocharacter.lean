@@ -387,7 +387,10 @@ theorem IsFlagSplitting.mem_flagWt_of_isHomog (hs : IsFlagSplitting F b wt) {x :
     (hx : IsHomog b wt x w) : x ∈ flagWt F w :=
   hs.mem_flagWt_iff.2 fun i hi => hx i (by omega)
 
-theorem IsFlagSplitting.bform_eq_zero_of_isHomog (hs : IsFlagSplitting F b wt) {x y : V}
+/-- Homogeneous vectors of weights `a`, `c` with `a + c ≠ 0` are orthogonal, when the basis
+vectors are (`b(bᵢ, bⱼ) = 0` unless `wtᵢ + wtⱼ = 0`). -/
+theorem bform_eq_zero_of_isHomog_of_orth
+    (horth : ∀ i j, wt i + wt j ≠ 0 → bform Q (b i) (b j) = 0) {x y : V}
     {a c : ℤ} (hx : IsHomog b wt x a) (hy : IsHomog b wt y c) (hac : a + c ≠ 0) :
     bform Q x y = 0 := by
   rw [← b.sum_repr x, ← b.sum_repr y, LinearMap.BilinForm.sum_left]
@@ -397,9 +400,14 @@ theorem IsFlagSplitting.bform_eq_zero_of_isHomog (hs : IsFlagSplitting F b wt) {
   rw [LinearMap.BilinForm.smul_left, LinearMap.BilinForm.smul_right]
   by_cases hi : wt i = a
   · by_cases hj : wt j = c
-    · rw [hs.orth i j (by omega), mul_zero, mul_zero]
+    · rw [horth i j (by omega), mul_zero, mul_zero]
     · rw [hy j hj, zero_mul, mul_zero]
   · rw [hx i hi, zero_mul]
+
+theorem IsFlagSplitting.bform_eq_zero_of_isHomog (hs : IsFlagSplitting F b wt) {x y : V}
+    {a c : ℤ} (hx : IsHomog b wt x a) (hy : IsHomog b wt y c) (hac : a + c ≠ 0) :
+    bform Q x y = 0 :=
+  bform_eq_zero_of_isHomog_of_orth hs.orth hx hy hac
 
 omit [Invertible (2 : K)] [Fintype ι] in
 /-- An endomorphism preserving the weights of the basis vectors preserves homogeneity. -/

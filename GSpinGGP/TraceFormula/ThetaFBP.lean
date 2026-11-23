@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.TraceFormula.RegularCentralizer
 import GSpinGGP.TraceFormula.ThetaF
-import GSpinGGP.GGP.LeviLattice
+import GSpinGGP.GGP.LatticeK
 
 /-!
 # Beuzart-Plessis' `θ_f` by its formula
@@ -46,8 +46,8 @@ uses `d_c t` and has no separate factor `ν`.
   cuspidal `f` it does not (Beuzart-Plessis Lemma 5.2.1(ii); Waldspurger 2010, Lemme 5.2), which is
   not proved here.
 * When `d_c t` does not exist (no `IsDcMeasure`), `dcMeasure` is `0` and `thetaFBP` is `0`.  It
-  exists for `IsMx L x` once `A_M(F) ∩ ker H_M` is compact and open in `A_M(F)`
-  (`exists_isDcMeasure`).
+  exists for `IsMx L x` (`exists_isDcMeasure`, `IsMx.exists_isDcMeasure`): `A_M(F) ∩ ker H_M` is
+  compact and open in `A_M(F)` (`isCompact_AGxOne`, `isOpen_AGxOne`).
 
 ## Main definitions
 
@@ -61,8 +61,11 @@ uses `d_c t` and has no separate factor `ν`.
 ## Main results
 
 * `IsMx.centG_le`: `G_x(F) ⊆ M(F)` (and `x ∈ M(F)` by definition).
-* `IsDcMeasure.unique`, `dcMeasure_eq`: `d_c t` is unique; `exists_isDcMeasure`: it exists when
-  `A_M(F) ∩ ker H_M` is compact and open and `G_x(F)/A_M(F)` is compact.
+* `exists_isMx`: every `x ∈ G_reg(F)` has an `L` with `IsMx L x` (`sorry`, with a proof sketch;
+  not on the path of the main theorem).
+* `isCompact_AGxOne`, `isOpen_AGxOne`: `A_M(F) ∩ ker H_M` is compact and open in `A_M(F)`.
+* `IsDcMeasure.unique`, `dcMeasure_eq`: `d_c t` is unique; `exists_isDcMeasure`,
+  `IsMx.exists_isDcMeasure`: it exists when `G_x(F)/A_M(F)` is compact, e.g. for `IsMx L x`.
 * `dcMeasure_conj`: `d_c t` is transported by conjugation by `M(F)`.
 * `thetaFBP_eq_integral`: `thetaFBP = (−1)^{dim a_M^G} ∫_{G_x\G} f(g⁻¹ x g) v_M(g) dg/d_c t`.
 * `thetaFBP_conj`: `thetaFBP(m x m⁻¹) = thetaFBP(x)` for `m ∈ M(F)`.
@@ -108,13 +111,27 @@ def AGxToM (x : ↥d.G) : ↥(L.AGx x) →* ↥L.M :=
 /-- **The maximal compact subgroup `A_{G_x}(F)^1 = A_M(F) ∩ ker H_M`** (the subgroup of measure `1`
 for `d_c a`, Beuzart-Plessis §1.6).  For the split torus `A_M`, `H_M(A_M(F))` is a lattice of full
 rank in `a_M` (`span_HMAMF_eq_top`, `exists_HM_mem_zmultiples`), so `ker H_M ∩ A_M(F) = A_M(O)` is
-the maximal compact subgroup.  That it is compact and open is not proved here in general; it is a
-hypothesis of `exists_isDcMeasure`, checked at `toyD`. -/
+the maximal compact subgroup.  It is compact and open (`isCompact_AGxOne`, `isOpen_AGxOne`): on
+`A_M(F)`, `ker H_M` is the lattice stabilizer `latticeK` of the splitting bases
+(`HM_eq_zero_iff_mem_latticeK`). -/
 def AGxOne (x : ↥d.G) : Subgroup ↥(L.AGx x) := (L.HMHom.comp (L.AGxToM x)).ker
 
 theorem mem_AGxOne {x : ↥d.G} {a : ↥(L.AGx x)} :
     a ∈ L.AGxOne x ↔ L.HM (L.AGxToM x a) = 0 := by
   rw [AGxOne, MonoidHom.mem_ker]; rfl
+
+/-- `A_{G_x}(F)^1` is the preimage of the lattice stabilizer `latticeK` of the splitting bases
+(`HM_eq_zero_iff_mem_latticeK`). -/
+theorem AGxOne_eq_preimage (x : ↥d.G) : (L.AGxOne x : Set ↥(L.AGx x)) =
+    (fun a : ↥(L.AGx x) => ((a : ↥(d.centG x)) : ↥d.G)) ⁻¹' d.latticeK L.bWFin L.bVFin := by
+  ext a
+  rw [SetLike.mem_coe, mem_AGxOne]
+  exact L.HM_eq_zero_iff_mem_latticeK (m := L.AGxToM x a) (mem_AGx.1 a.2)
+
+/-- **`A_{G_x}(F)^1` is open** in `A_{G_x}(F)` (`latticeK` is open). -/
+theorem isOpen_AGxOne (x : ↥d.G) : IsOpen (L.AGxOne x : Set ↥(L.AGx x)) := by
+  rw [AGxOne_eq_preimage]
+  exact (d.isOpen_latticeK _ _).preimage (continuous_subtypeVal.comp continuous_subtypeVal)
 
 theorem isClosed_AGx (x : ↥d.G) : IsClosed (L.AGx x : Set ↥(d.centG x)) :=
   L.isClosed_AMF.preimage continuous_subtypeVal
@@ -132,6 +149,13 @@ instance isClosed_range_AGx (x : ↥d.G) :
     IsClosed ((L.AGx x).subtype.range : Set ↥(d.centG x)) := by
   rw [Subgroup.range_subtype]; exact L.isClosed_AGx x
 
+/-- **`A_{G_x}(F)^1` is compact** (`latticeK` is compact, and `A_{G_x}(F) → G(F)` is a closed
+embedding). -/
+theorem isCompact_AGxOne (x : ↥d.G) : IsCompact (L.AGxOne x : Set ↥(L.AGx x)) := by
+  rw [AGxOne_eq_preimage]
+  exact ((d.isClosedEmbedding_centG x).comp (L.isClosedEmbedding_AGx x)).isCompact_preimage
+    (d.isCompact_latticeK _ _)
+
 /-- **`L.M = M(x)`** (Beuzart-Plessis §5.2: `M(x)` is the centralizer of `A_{G_x}`, the minimal
 Levi subgroup containing `x`): `x` is regular semisimple, lies in `M(F)`, and is elliptic in `M`,
 i.e. `G_x(F)` is compact modulo `A_M(F)`.  For a Levi `M ∋ x` one has `A_M ⊆ A_{G_x}` and
@@ -147,6 +171,35 @@ variable {L}
 /-- **`G_x(F) ⊆ M(x)(F)`** (Waldspurger 2010, §2.3), from `centG_le_M`. -/
 theorem IsMx.centG_le {x : ↥d.G} (h : L.IsMx x) : d.centG x ≤ L.M :=
   centG_le_M L.toFlagLeviDatum h.regular h.mem
+
+/-- **Existence of `M(x)`** (Beuzart-Plessis §5.2; Waldspurger 2010, §2.3): every `x ∈ G_reg(F)`
+has a reduced Levi datum `L` with `L.M = M(x)`.  Not proved here.
+
+Proof sketch.  `T = G_x` is a maximal torus (`commute_of_mem_centG`); `M(x)` is the centralizer of
+its maximal split subtorus `A_T`.  On `W` (and likewise `V`), `s = P(x_W) ∈ SO(W)` is semisimple;
+`W = ⊕_p W_p`, `W_p = ker p(s)` over the monic irreducible factors `p` of its characteristic
+polynomial, and `b` pairs `W_p` with `W_{p*}` (`p*` the reciprocal polynomial), so `W_p` is
+totally isotropic for `p ≠ p*` and nondegenerate for `p = p*`.  The eigenspaces `W_{t∓1}` have
+dimension `≤ 2`, since `x` is regular (`𝔤_x` abelian, while `𝔰𝔬` of a space of dimension `≥ 3`
+is not), and every other eigenvalue (over `F̄`) has multiplicity `1`, so `dim W_p = deg p` and
+`W_p` is a field `F[t]/(p)` on which `s` acts by multiplication by `t`; this is what makes the
+centralizer on each piece the tori named below.  The split part of `T` acts on
+`W_p ⊕ W_{p*}` (`p ≠ p*`) by `τ` on `W_p` and `τ⁻¹` on `W_{p*}`; on a `W_p` with `p = p*` of
+degree `≥ 2` it acts trivially (the centralizer there is a norm-one torus, anisotropic); on an
+eigenspace `W_{t∓1}` that is a hyperbolic plane it acts by `τ^{±1}` on its two isotropic lines,
+and trivially if that eigenspace is anisotropic.  Number these split pieces `1, …, n` and give the
+`k`-th piece weights `±k` (a basis adapted to the pieces); this is an `IsWtGrading` whose weight
+spaces are `P(x)`-stable, so `x ∈ (ofGrading …).M` (`mem_flagLevi_iff`).  The weight-`0` space is
+the sum of the anisotropic pieces; it is not a hyperbolic plane (an anisotropic `W_p`, `p = p*`,
+is not one: a `W_p` with anisotropic centralizer torus is not a hyperbolic plane, whose `SO` is a
+split torus; and `dim W_{t+1}` is even because `det P(x) = 1`, so `W_{t−1} ⊕ W_{t+1}` cannot be
+two lines), so the datum is
+reduced.  Then `A_M = A_T` (`AMF` is the lift of the scalars on the weight spaces), and
+`T(F)/A_T(F)` embeds in `(T/A_T)(F)` as a closed subgroup (Hilbert 90 for the split `A_T`), which
+is compact since `T/A_T` is anisotropic: `CompactSpace (CosetSpace (L.AGx x).subtype)`. -/
+theorem exists_isMx {x : ↥d.G} (hx : x ∈ regularSet d.G d.lie) :
+    ∃ L : d.ReducedLeviDatum, L.IsMx x := by
+  sorry
 
 /-! ## 2. The measure `d_c t` -/
 
@@ -219,13 +272,14 @@ theorem dcMeasure_of_not_exists {x : ↥d.G} (h : ¬ ∃ μ, L.IsDcMeasure x μ)
   unfold dcMeasure
   rw [dite_eq_right_of_eq_false (eq_false h)]
 
-/-- **Existence of `d_c t`**, when `A_M(F) ∩ ker H_M` is compact and open in `A_M(F)` and
-`G_x(F)/A_M(F)` is compact (`IsMx`): normalize a Haar measure of `A_M(F)` on `AGxOne`, and a Haar
-measure of `G_x(F)` by the (finite, nonzero) total mass of the quotient. -/
+/-- **Existence of `d_c t`**, when `G_x(F)/A_M(F)` is compact (`IsMx`): normalize a Haar measure
+of `A_M(F)` on the compact open subgroup `AGxOne` (`isCompact_AGxOne`, `isOpen_AGxOne`), and a
+Haar measure of `G_x(F)` by the (finite, nonzero) total mass of the quotient. -/
 theorem exists_isDcMeasure {x : ↥d.G} (hx : x ∈ regularSet d.G d.lie)
-    [hc : CompactSpace (CosetSpace (L.AGx x).subtype)]
-    (ho : IsOpen (L.AGxOne x : Set ↥(L.AGx x))) (hk : IsCompact (L.AGxOne x : Set ↥(L.AGx x))) :
+    [hc : CompactSpace (CosetSpace (L.AGx x).subtype)] :
     ∃ μ, L.IsDcMeasure x μ := by
+  have ho := L.isOpen_AGxOne x
+  have hk := L.isCompact_AGxOne x
   set A1 : Set ↥(L.AGx x) := (L.AGxOne x : Set ↥(L.AGx x))
   set ι := (L.AGx x).subtype
   -- `d_c a`: the Haar measure normalized on the compact open subgroup `A¹`
@@ -245,6 +299,11 @@ theorem exists_isDcMeasure {x : ↥d.G} (hx : x ∈ regularSet d.G d.lie)
   refine ⟨(m0 Set.univ)⁻¹ • ν0, Measure.IsHaarMeasure.smul ν0 (ENNReal.inv_ne_zero.2 hfin)
     (ENNReal.inv_ne_top.2 hpos), μA, (m0 Set.univ)⁻¹ • m0, hA, hA1, hW0.smul_left _, ?_⟩
   simp only [smul_apply, smul_eq_mul, ENNReal.inv_mul_cancel hpos hfin]
+
+/-- **`d_c t` exists for `L.M = M(x)`.** -/
+theorem IsMx.exists_isDcMeasure {x : ↥d.G} (h : L.IsMx x) : ∃ μ, L.IsDcMeasure x μ := by
+  have := h.compact
+  exact ReducedLeviDatum.exists_isDcMeasure h.regular
 
 /-! ### Transport by conjugation in `M(F)` -/
 
