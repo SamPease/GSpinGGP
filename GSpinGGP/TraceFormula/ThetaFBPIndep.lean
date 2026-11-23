@@ -11,8 +11,10 @@ For `f ∈ C_c^∞(G(F))` strongly cuspidal (Waldspurger's *très cuspidale*) an
 `x ∈ M(F) ∩ G_reg(F)`, Waldspurger (Compos. Math. 146 (2010), Lemme 5.2, pp. 17–18) proves
 * (i) `J_M(x, f)` does not depend on `K`;
 * (ii) `J_M(x, ^y f) = J_M(x, f)` for every `y ∈ G(F)`;
-(Beuzart-Plessis, Astérisque 418, Lemma 5.2.1(ii), (iv), p. 109, quoting it).  Both statements
-are made there for special maximal compact subgroups `K` in good position relative to `M`.
+((i) is Beuzart-Plessis, Astérisque 418, Lemma 5.2.1(ii), p. 109; his (iv),
+`J_{y M y⁻¹}(y x y⁻¹, f) = J_M(x, f)`, follows from (i), (ii) by transport of structure).  Both
+statements are made there for special maximal compact subgroups `K` in good position relative
+to `M`.
 
 **The proof** (Waldspurger, loc. cit.) has two independent parts, which are stated separately
 here.
@@ -73,78 +75,6 @@ variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 namespace GGPData
 
 variable {d : GGPData F}
-
-/-! ## 1. Integrals over `G_x(F)\G(F)` with a general weight -/
-
-section General
-
-variable {x : ↥d.G}
-
-/-- **Right translation on `G_x(F)\G(F)`**: for `Φ` left `G_x(F)`-invariant,
-`∫ Φ(g γ) dg = ∫ Φ(g) dg` (`map_mulRight_orbQuotMeasure`). -/
-theorem integral_out_mulRight (μ : Measure ↥(d.centG x)) [μ.IsHaarMeasure]
-    [μ.IsMulRightInvariant] {Φ : ↥d.G → ℂ}
-    (hΦ : ∀ c ∈ d.centG x, ∀ g, Φ (c * g) = Φ g) (γ : ↥d.G) :
-    ∫ q, Φ (CosetSpace.out _ q * γ) ∂d.orbQuotMeasure x μ =
-      ∫ q, Φ (CosetSpace.out _ q) ∂d.orbQuotMeasure x μ := by
-  set ι := (d.centG x).subtype
-  have hout : ∀ g, Φ (CosetSpace.out ι (CosetSpace.mk ι g)) = Φ g := fun g => by
-    obtain ⟨c, hc⟩ := CosetSpace.exists_out_mk ι g
-    conv_rhs => rw [hc]
-    exact (hΦ c c.2 _).symm
-  conv_rhs => rw [← d.map_mulRight_orbQuotMeasure μ γ]
-  rw [show (d.orbQuotMeasure x μ).map (CosetSpace.mulRight ι γ) =
-      (d.orbQuotMeasure x μ).map (CosetSpace.mulRight ι γ).toMeasurableEquiv from rfl,
-    integral_map_equiv]
-  congr 1
-  funext q
-  change _ = Φ (CosetSpace.out ι (CosetSpace.mulRight ι γ q))
-  conv_rhs => rw [← CosetSpace.mk_out ι q, CosetSpace.mulRight_mk, hout]
-
-variable (L : d.ReducedLeviDatum)
-
-/-- **`f(g⁻¹ x g) φ(g)` is integrable on `G_x(F)\G(F)`** for `x` semisimple with
-`G_x(F) ⊆ M(F)`, `f` continuous with compact support and `φ` continuous and left
-`M(F)`-invariant (as `integrable_weightedIntegrand`, which is the case `φ = v_M`). -/
-theorem integrable_weight (hx : IsSS F ((x : d.ambientˣ) : d.ambient))
-    (hM : d.centG x ≤ L.M) {f : ↥d.G → ℂ} (hf : Continuous f) (hfc : HasCompactSupport f)
-    {φ : ↥d.G → ℝ} (hφ : Continuous φ) (hφM : ∀ m ∈ L.M, ∀ g, φ (m * g) = φ g)
-    (μ : Measure ↥(d.centG x)) [μ.IsHaarMeasure] [μ.IsMulRightInvariant] :
-    Integrable (fun q => f ((CosetSpace.out _ q)⁻¹ * x * CosetSpace.out _ q) *
-      (φ (CosetSpace.out _ q) : ℂ)) (d.orbQuotMeasure x μ) := by
-  set ι := (d.centG x).subtype
-  set Φ : ↥d.G → ℂ := fun g => f (g⁻¹ * x * g) * (φ g : ℂ)
-  have hcont : Continuous Φ :=
-    (hf.comp (by fun_prop)).mul (Complex.continuous_ofReal.comp hφ)
-  have hinv : ∀ c ∈ d.centG x, ∀ g, Φ (c * g) = Φ g := by
-    intro c hc g
-    have hcx : c⁻¹ * x * c = x := by
-      rw [mul_assoc, ← (Subgroup.mem_centralizer_singleton_iff.1 hc).eq, inv_mul_cancel_left]
-    have e : (c * g)⁻¹ * x * (c * g) = g⁻¹ * x * g := by
-      calc (c * g)⁻¹ * x * (c * g) = g⁻¹ * (c⁻¹ * x * c) * g := by group
-        _ = g⁻¹ * x * g := by rw [hcx]
-    simp only [Φ, e, hφM c (hM hc)]
-  have hout : ∀ g, Φ (CosetSpace.out ι (CosetSpace.mk ι g)) = Φ g := fun g => by
-    obtain ⟨c, hc⟩ := CosetSpace.exists_out_mk ι g
-    conv_rhs => rw [hc]
-    exact (hinv c c.2 _).symm
-  have hΦ : Continuous fun q : d.CentQuot x => Φ (CosetSpace.out ι q) := by
-    refine CosetSpace.continuous_of_comp_mk ι ?_
-    have : (fun q : d.CentQuot x => Φ (CosetSpace.out ι q)) ∘ CosetSpace.mk ι = Φ :=
-      funext hout
-    rw [this]; exact hcont
-  obtain ⟨C', hC', hsub⟩ := exists_isCompact_conj_mem hx hfc
-  refine hΦ.integrable_of_hasCompactSupport (HasCompactSupport.intro (hC'.image
-    (CosetSpace.continuous_mk ι)) fun q hq => ?_)
-  show Φ (CosetSpace.out ι q) = 0
-  by_contra hne
-  obtain ⟨c, hc, c', hc', he⟩ := hsub (CosetSpace.out ι q)
-    (subset_tsupport f (left_ne_zero_of_mul hne))
-  refine hq ⟨c', hc', ?_⟩
-  rw [← CosetSpace.mk_out ι q, CosetSpace.mk_eq_mk_iff, CosetSpace.rel_iff]
-  exact ⟨⟨c, hc⟩, he⟩
-
-end General
 
 namespace ReducedLeviDatum
 
@@ -211,7 +141,9 @@ cuspidale"): for `f ∈ C_c^∞(G(F))` strongly cuspidal, `x ∈ M(F) ∩ G_reg(
 `∫_U f(k⁻¹ u⁻¹ z u k) du` with `z = l⁻¹ x l ∈ L_Q(F)` regular in `G`; `u ↦ z⁻¹ u⁻¹ z u` is a
 bijection of `U(F)` with constant Jacobian (`Ad(z) − 1` is invertible on `𝔲`), so it is a
 multiple of `∫_U f(k⁻¹ z u k) du = ∫_{U} f^k(z u) du = 0`, `f^k = f(k⁻¹ · k)` being strongly
-cuspidal for the parabolic `k Q k⁻¹`.  Not yet proved. -/
+cuspidal for the parabolic `k Q k⁻¹`.  A proof needs a compact open `K` with `G = Q K` for the
+given proper `Q` (e.g. a `GoodK`, since `Q ⊇ M` contains some `P ∈ 𝒫(M)`, which is itself to be
+proved for flag parabolics).  Not yet proved. -/
 theorem integral_isCuspWeight_eq_zero {f : ↥d.G → ℂ} (hf : f ∈ testFunctions ↥d.G)
     (hcusp : IsStronglyCuspidalInline d f) {x : ↥d.G} (hx : x ∈ regularSet d.G d.lie)
     (hxM : x ∈ L.M) (μ : Measure ↥(d.centG x)) [μ.IsHaarMeasure] {φ : ↥d.G → ℝ}
@@ -246,14 +178,9 @@ theorem weightedOrbitalIntegral_eq_of_isStronglyCuspidal (K₁ K₂ : d.GoodK L.
     set Φ : ↥d.G → ℂ := fun g => f (g⁻¹ * x * g) * (L.vM K₁ (g * y) : ℂ)
     have hΦ : ∀ c ∈ d.centG x, ∀ g, Φ (c * g) = Φ g := by
       intro c hc g
-      have hcx : c⁻¹ * x * c = x := by
-        rw [mul_assoc, ← (Subgroup.mem_centralizer_singleton_iff.1 hc).eq, inv_mul_cancel_left]
-      have e : (c * g)⁻¹ * x * (c * g) = g⁻¹ * x * g := by
-        calc (c * g)⁻¹ * x * (c * g) = g⁻¹ * (c⁻¹ * x * c) * g := by group
-          _ = g⁻¹ * x * g := by rw [hcx]
-      simp only [Φ, e, mul_assoc c g y,
+      simp only [Φ, d.conj_mul_of_mem_centG x hc, mul_assoc c g y,
         show c * (g * y) = ((⟨c, hM hc⟩ : ↥L.M) : ↥d.G) * (g * y) from rfl, L.vM_mul_left]
-    refine Eq.trans ?_ (integral_out_mulRight μ hΦ y⁻¹)
+    refine Eq.trans ?_ (d.integral_out_mulRight μ hΦ y⁻¹)
     congr 1
     funext q
     simp only [Φ, ι, weightedIntegrand, inv_mul_cancel_right]
@@ -264,7 +191,7 @@ theorem weightedOrbitalIntegral_eq_of_isStronglyCuspidal (K₁ K₂ : d.GoodK L.
   have hint : ∀ ψ : ↥d.G → ℝ, Continuous ψ → (∀ m ∈ L.M, ∀ g, ψ (m * g) = ψ g) →
       Integrable (fun q => f ((CosetSpace.out ι q)⁻¹ * x * CosetSpace.out ι q) *
         (ψ (CosetSpace.out ι q) : ℂ)) m :=
-    fun ψ hψ hψM => integrable_weight L hx.1 hM hfc hf.2 hψ hψM μ
+    fun ψ hψ hψM => integrable_weight hx.1 hM hfc hf.2 hψ hψM μ
   have hv1 := hint (fun g => L.vM K₁ (g * y)) ((L.continuous_vM K₁).comp (continuous_id.mul continuous_const))
     (fun m' hm' g => by
       simp only [mul_assoc, show m' * (g * y) = ((⟨m', hm'⟩ : ↥L.M) : ↥d.G) * (g * y) from rfl,
@@ -301,9 +228,10 @@ theorem weightedOrbitalIntegral_indep (K₁ K₂ : d.GoodK L.toFlagLeviDatum) {f
   have h := weightedOrbitalIntegral_eq_of_isStronglyCuspidal K₁ K₂ 1 hf hcusp hx hxM μ
   simpa using h
 
-/-- **Waldspurger 2010, Lemme 5.2 (ii)** (Beuzart-Plessis Lemma 5.2.1(iv) for `y M y⁻¹ = M`'s
-content): for `f ∈ C_c^∞(G(F))` strongly cuspidal, `x ∈ M(F) ∩ G_reg(F)` and `y ∈ G(F)`,
-`J_M(x, f(y · y⁻¹)) = J_M(x, f)`.  (Rests on the two `sorry`s of §2.) -/
+/-- **Waldspurger 2010, Lemme 5.2 (ii)**: for `f ∈ C_c^∞(G(F))` strongly cuspidal, `x ∈ M(F) ∩ G_reg(F)` and `y ∈ G(F)`,
+`J_M(x, f(y · y⁻¹)) = J_M(x, f)`.  Beuzart-Plessis Lemma 5.2.1(iv),
+`J_{y M y⁻¹}(y x y⁻¹, f) = J_M(x, f)`, follows from this and (i) by transport of structure (not
+done here).  (Rests on the two `sorry`s of §2.) -/
 theorem weightedOrbitalIntegral_conj_fun (K : d.GoodK L.toFlagLeviDatum) (y : ↥d.G)
     {f : ↥d.G → ℂ} (hf : f ∈ testFunctions ↥d.G) (hcusp : IsStronglyCuspidalInline d f)
     {x : ↥d.G} (hx : x ∈ regularSet d.G d.lie) (hxM : x ∈ L.M) (μ : Measure ↥(d.centG x))
@@ -336,13 +264,8 @@ theorem weightedOrbitalIntegral_conj_fun_of_aG_eq_top (hG : L.aG = ⊤)
   set Φ : ↥d.G → ℂ := fun g => f (g⁻¹ * x * g)
   have hΦ : ∀ c ∈ d.centG x, ∀ g, Φ (c * g) = Φ g := by
     intro c hc g
-    have hcx : c⁻¹ * x * c = x := by
-      rw [mul_assoc, ← (Subgroup.mem_centralizer_singleton_iff.1 hc).eq, inv_mul_cancel_left]
-    show f ((c * g)⁻¹ * x * (c * g)) = f (g⁻¹ * x * g)
-    congr 1
-    calc (c * g)⁻¹ * x * (c * g) = g⁻¹ * (c⁻¹ * x * c) * g := by group
-      _ = g⁻¹ * x * g := by rw [hcx]
-  refine Eq.trans ?_ (integral_out_mulRight μ hΦ y⁻¹)
+    simp only [Φ, d.conj_mul_of_mem_centG x hc]
+  refine Eq.trans ?_ (d.integral_out_mulRight μ hΦ y⁻¹)
   congr 1
   funext q
   simp only [Φ]
@@ -367,9 +290,8 @@ theorem thetaFBP_indep (K₁ K₂ : d.GoodK L.toFlagLeviDatum) {f : ↥d.G → �
       weightedOrbitalIntegral_zero_measure]
 
 /-- **`θ_f(x)` is unchanged by conjugating `f` by any `y ∈ G(F)`**, for `f ∈ C_c^∞(G(F))`
-strongly cuspidal and `x ∈ M(F) ∩ G_reg(F)` (Waldspurger 2010, Lemme 5.2 (ii); the content of
-Beuzart-Plessis Lemma 5.2.1(iv), whose remaining step is transport of structure, see the module
-docstring).  Extends `thetaFBP_conj_K` (`y ∈ K`, any `f`).  (Rests on the two `sorry`s of §2.) -/
+strongly cuspidal and `x ∈ M(F) ∩ G_reg(F)` (Waldspurger 2010, Lemme 5.2 (ii); Beuzart-Plessis
+Lemma 5.2.1(iv) follows from it and (i) by transport of structure, see the module docstring).  Extends `thetaFBP_conj_K` (`y ∈ K`, any `f`).  (Rests on the two `sorry`s of §2.) -/
 theorem thetaFBP_conj_fun (K : d.GoodK L.toFlagLeviDatum) (y : ↥d.G) {f : ↥d.G → ℂ}
     (hf : f ∈ testFunctions ↥d.G) (hcusp : IsStronglyCuspidalInline d f) {x : ↥d.G}
     (hx : x ∈ regularSet d.G d.lie) (hxM : x ∈ L.M) :

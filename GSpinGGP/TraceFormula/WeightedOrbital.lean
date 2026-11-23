@@ -51,6 +51,9 @@ Haar measure on `G_x(F)` is right invariant (`isMulRightInvariant_of_mem_regular
 
 * `orbQuotMeasure_spec`: `dg/μ` is the Weil measure, for `μ` Haar and right invariant (`G_x(F)`
   unimodular; for regular `x` it is a torus).
+* `integral_out_mulRight`: `dg/μ` is right invariant, as an integral formula.
+* `integrable_weight`: `f(g⁻¹ x g) φ(g)` is integrable on `G_x(F)\G(F)` for continuous left
+  `M(F)`-invariant `φ` (same hypotheses as below).
 * `integrable_weightedIntegrand`: the integrand is integrable for continuous compactly
   supported `f`, `x` semisimple and `G_x(F) ⊆ M(F)`, from `exists_isCompact_conj_mem` (closed
   orbits; not yet proved).
@@ -92,6 +95,24 @@ theorem mem_centG_iff {g : ↥d.G} :
   rw [Subgroup.mem_centralizer_singleton_iff, grpCentralizer, Subgroup.mem_inf,
     Subgroup.mem_centralizer_singleton_iff]
   exact ⟨fun h => ⟨g.prop, congrArg Subtype.val h.eq⟩, fun h => Subtype.ext h.2.eq⟩
+
+/-- **Conjugating `x` by `c g` with `c ∈ G_x(F)`** is conjugating by `g`:
+`(c g)⁻¹ x (c g) = g⁻¹ x g`. -/
+theorem conj_mul_of_mem_centG {c : ↥d.G} (hc : c ∈ d.centG x) (g : ↥d.G) :
+    (c * g)⁻¹ * x * (c * g) = g⁻¹ * x * g := by
+  have hcx : c⁻¹ * x * c = x := by
+    rw [mul_assoc, ← (Subgroup.mem_centralizer_singleton_iff.1 hc).eq, inv_mul_cancel_left]
+  calc (c * g)⁻¹ * x * (c * g) = g⁻¹ * (c⁻¹ * x * c) * g := by group
+    _ = g⁻¹ * x * g := by rw [hcx]
+
+/-- **A left `G_x(F)`-invariant function at the chosen representative** of the coset of `g` is
+its value at `g`. -/
+theorem apply_out_mk_of_mul_left {α : Type*} {Φ : ↥d.G → α}
+    (hΦ : ∀ c ∈ d.centG x, ∀ g, Φ (c * g) = Φ g) (g : ↥d.G) :
+    Φ (CosetSpace.out _ (CosetSpace.mk (d.centG x).subtype g)) = Φ g := by
+  obtain ⟨c, hc⟩ := CosetSpace.exists_out_mk (d.centG x).subtype g
+  conv_rhs => rw [hc]
+  exact (hΦ c c.2 _).symm
 
 theorem isClosed_centG : IsClosed (d.centG x : Set ↥d.G) := Set.isClosed_centralizer _
 
@@ -150,6 +171,22 @@ theorem map_mulRight_orbQuotMeasure (γ : ↥d.G) :
       d.orbQuotMeasure x μ :=
   (d.orbQuotMeasure_eq μ ((d.orbQuotMeasure_spec μ).map_mulRight γ)).symm
 
+/-- **Right translation on `G_x(F)\G(F)`**: for `Φ` left `G_x(F)`-invariant,
+`∫ Φ(g γ) dg = ∫ Φ(g) dg` (`map_mulRight_orbQuotMeasure`). -/
+theorem integral_out_mulRight {Φ : ↥d.G → ℂ} (hΦ : ∀ c ∈ d.centG x, ∀ g, Φ (c * g) = Φ g)
+    (γ : ↥d.G) :
+    ∫ q, Φ (CosetSpace.out _ q * γ) ∂d.orbQuotMeasure x μ =
+      ∫ q, Φ (CosetSpace.out _ q) ∂d.orbQuotMeasure x μ := by
+  set ι := (d.centG x).subtype
+  conv_rhs => rw [← d.map_mulRight_orbQuotMeasure μ γ]
+  rw [show (d.orbQuotMeasure x μ).map (CosetSpace.mulRight ι γ) =
+      (d.orbQuotMeasure x μ).map (CosetSpace.mulRight ι γ).toMeasurableEquiv from rfl,
+    integral_map_equiv]
+  congr 1
+  funext q
+  change _ = Φ (CosetSpace.out ι (CosetSpace.mulRight ι γ q))
+  conv_rhs => rw [← CosetSpace.mk_out ι q, CosetSpace.mulRight_mk, d.apply_out_mk_of_mul_left x hΦ]
+
 end Quotient
 
 /-! ## 2. The integrals -/
@@ -190,13 +227,8 @@ variable {d L K x}
 theorem weightedIntegrand_mul_left (hM : d.centG x ≤ L.M) (f : ↥d.G → ℂ) {c : ↥d.G}
     (hc : c ∈ d.centG x) (g : ↥d.G) :
     d.weightedIntegrand L K x f (c * g) = d.weightedIntegrand L K x f g := by
-  have hcx : c⁻¹ * x * c = x := by
-    rw [mul_assoc, ← (Subgroup.mem_centralizer_singleton_iff.1 hc).eq, inv_mul_cancel_left]
-  have e : (c * g)⁻¹ * x * (c * g) = g⁻¹ * x * g := by
-    calc (c * g)⁻¹ * x * (c * g) = g⁻¹ * (c⁻¹ * x * c) * g := by group
-      _ = g⁻¹ * x * g := by rw [hcx]
   unfold weightedIntegrand
-  rw [e, show c * g = ((⟨c, hM hc⟩ : ↥L.M) : ↥d.G) * g from rfl, L.vM_mul_left]
+  rw [d.conj_mul_of_mem_centG x hc, show c * g = ((⟨c, hM hc⟩ : ↥L.M) : ↥d.G) * g from rfl, L.vM_mul_left]
 
 /-- `J_M = J_G` when `a_M = a_G`, e.g. for `M = G` (`v_G = 1`, `vM_eq_one_of_aG_eq_top`). -/
 theorem weightedOrbitalIntegral_eq_orbitalIntegral_of_aG_eq_top (hG : L.aG = ⊤)
@@ -215,10 +247,8 @@ theorem weightedOrbitalIntegral_eq_orbitalIntegral_of_len_eq_zero (hW : L.FW.len
 `G_x(F) ⊆ M(F)`. -/
 theorem weightedIntegrand_out_mk (hM : d.centG x ≤ L.M) (f : ↥d.G → ℂ) (g : ↥d.G) :
     d.weightedIntegrand L K x f (CosetSpace.out _ (CosetSpace.mk (d.centG x).subtype g)) =
-      d.weightedIntegrand L K x f g := by
-  obtain ⟨c, hc⟩ := CosetSpace.exists_out_mk (d.centG x).subtype g
-  conv_rhs => rw [hc]
-  exact (weightedIntegrand_mul_left hM f c.2 _).symm
+      d.weightedIntegrand L K x f g :=
+  d.apply_out_mk_of_mul_left x (fun _ hc g => weightedIntegrand_mul_left hM f hc g) g
 
 /-- **Semisimple orbits are closed, and `G_x(F)\G(F)` is homeomorphic to the orbit**, in the
 form: for semisimple `x` and compact `C ⊆ G(F)`, the `g` with `g⁻¹ x g ∈ C` lie in `G_x(F) C'`
@@ -243,37 +273,47 @@ theorem exists_isCompact_conj_mem (hx : IsSS F ((x : d.ambientˣ) : d.ambient)) 
       ∀ g : ↥d.G, g⁻¹ * x * g ∈ C → ∃ c ∈ d.centG x, ∃ c' ∈ C', g = c * c' := by
   sorry
 
-/-- **The integrand of `J_M(x, f)` is integrable** for `x` semisimple with `G_x(F) ⊆ M(F)` and `f`
-continuous with compact support (e.g. `f ∈ C_c^∞(G(F))`), for any Haar measure `μ` on the
-unimodular group `G_x(F)`: on `G_x(F)\G(F)` it is continuous (`continuous_vM`) and supported in
-the image of a compact set (`exists_isCompact_conj_mem`), and `dg/μ` is finite on compact sets. -/
-theorem integrable_weightedIntegrand (hx : IsSS F ((x : d.ambientˣ) : d.ambient))
+/-- **`f(g⁻¹ x g) φ(g)` is integrable on `G_x(F)\G(F)`** for `x` semisimple with
+`G_x(F) ⊆ M(F)`, `f` continuous with compact support and `φ` continuous and left
+`M(F)`-invariant: on `G_x(F)\G(F)` it is continuous and supported in the image of a compact set
+(`exists_isCompact_conj_mem`), and `dg/μ` is finite on compact sets. -/
+theorem integrable_weight (hx : IsSS F ((x : d.ambientˣ) : d.ambient))
     (hM : d.centG x ≤ L.M) {f : ↥d.G → ℂ} (hf : Continuous f) (hfc : HasCompactSupport f)
+    {φ : ↥d.G → ℝ} (hφ : Continuous φ) (hφM : ∀ m ∈ L.M, ∀ g, φ (m * g) = φ g)
     (μ : Measure ↥(d.centG x)) [μ.IsHaarMeasure] [μ.IsMulRightInvariant] :
-    Integrable (fun q => d.weightedIntegrand L K x f (CosetSpace.out _ q))
-      (d.orbQuotMeasure x μ) := by
+    Integrable (fun q => f ((CosetSpace.out _ q)⁻¹ * x * CosetSpace.out _ q) *
+      (φ (CosetSpace.out _ q) : ℂ)) (d.orbQuotMeasure x μ) := by
   set ι := (d.centG x).subtype
-  have hcont : Continuous (d.weightedIntegrand L K x f) := by
-    unfold weightedIntegrand
-    exact (hf.comp (by fun_prop)).mul (Complex.continuous_ofReal.comp (L.continuous_vM K))
-  have hΦ : Continuous fun q : d.CentQuot x =>
-      d.weightedIntegrand L K x f (CosetSpace.out ι q) := by
+  set Φ : ↥d.G → ℂ := fun g => f (g⁻¹ * x * g) * (φ g : ℂ)
+  have hcont : Continuous Φ :=
+    (hf.comp (by fun_prop)).mul (Complex.continuous_ofReal.comp hφ)
+  have hinv : ∀ c ∈ d.centG x, ∀ g, Φ (c * g) = Φ g := fun c hc g => by
+    simp only [Φ, d.conj_mul_of_mem_centG x hc, hφM c (hM hc)]
+  have hΦ : Continuous fun q : d.CentQuot x => Φ (CosetSpace.out ι q) := by
     refine CosetSpace.continuous_of_comp_mk ι ?_
-    have : (fun q : d.CentQuot x => d.weightedIntegrand L K x f (CosetSpace.out ι q)) ∘
-        CosetSpace.mk ι = d.weightedIntegrand L K x f :=
-      funext fun g => weightedIntegrand_out_mk hM f g
+    have : (fun q : d.CentQuot x => Φ (CosetSpace.out ι q)) ∘ CosetSpace.mk ι = Φ :=
+      funext (d.apply_out_mk_of_mul_left x hinv)
     rw [this]; exact hcont
   obtain ⟨C', hC', hsub⟩ := exists_isCompact_conj_mem hx hfc
   refine hΦ.integrable_of_hasCompactSupport (HasCompactSupport.intro (hC'.image
     (CosetSpace.continuous_mk ι)) fun q hq => ?_)
-  show d.weightedIntegrand L K x f (CosetSpace.out ι q) = 0
-  unfold weightedIntegrand
+  show Φ (CosetSpace.out ι q) = 0
   by_contra hne
   obtain ⟨c, hc, c', hc', he⟩ := hsub (CosetSpace.out ι q)
     (subset_tsupport f (left_ne_zero_of_mul hne))
   refine hq ⟨c', hc', ?_⟩
   rw [← CosetSpace.mk_out ι q, CosetSpace.mk_eq_mk_iff, CosetSpace.rel_iff]
   exact ⟨⟨c, hc⟩, he⟩
+
+/-- **The integrand of `J_M(x, f)` is integrable** for `x` semisimple with `G_x(F) ⊆ M(F)` and `f`
+continuous with compact support (e.g. `f ∈ C_c^∞(G(F))`), for any Haar measure `μ` on the
+unimodular group `G_x(F)` (`integrable_weight` with `φ = v_M`). -/
+theorem integrable_weightedIntegrand (hx : IsSS F ((x : d.ambientˣ) : d.ambient))
+    (hM : d.centG x ≤ L.M) {f : ↥d.G → ℂ} (hf : Continuous f) (hfc : HasCompactSupport f)
+    (μ : Measure ↥(d.centG x)) [μ.IsHaarMeasure] [μ.IsMulRightInvariant] :
+    Integrable (fun q => d.weightedIntegrand L K x f (CosetSpace.out _ q))
+      (d.orbQuotMeasure x μ) :=
+  integrable_weight hx hM hf hfc (L.continuous_vM K) (fun m hm g => L.vM_mul_left K ⟨m, hm⟩ g) μ
 
 /-- **Dependence on the Haar measure of `G_x(F)`**: replacing `μ` by `c • μ`, `0 < c < ∞`,
 divides the quotient measure, hence `J_M(x, f)`, by `c` (`IsWeilMeasure.smul_right`). -/
@@ -305,12 +345,11 @@ theorem weightedOrbitalIntegral_zero_measure (f : ↥d.G → ℂ) :
 
 /-- **`J_M(x, ·)` is invariant under conjugation of `f` by `K`** (Waldspurger 2010, §2.3:
 `v_M` is right `K`-invariant): `J_M(x, f(k · k⁻¹)) = J_M(x, f)` for `k ∈ K`, by the change of
-variables `g ↦ g k⁻¹` on `G_x(F)\G(F)` (`map_mulRight_orbQuotMeasure`). -/
+variables `g ↦ g k⁻¹` on `G_x(F)\G(F)` (`integral_out_mulRight`). -/
 theorem weightedOrbitalIntegral_conj_K (hM : d.centG x ≤ L.M) (μ : Measure ↥(d.centG x))
     [μ.IsHaarMeasure] [μ.IsMulRightInvariant] {k : ↥d.G} (hk : k ∈ K.K) (f : ↥d.G → ℂ) :
     d.weightedOrbitalIntegral L K x μ (fun g => f (k * g * k⁻¹)) =
       d.weightedOrbitalIntegral L K x μ f := by
-  set ι := (d.centG x).subtype
   have hpt : ∀ g, d.weightedIntegrand L K x (fun g => f (k * g * k⁻¹)) g =
       d.weightedIntegrand L K x f (g * k⁻¹) := by
     intro g
@@ -320,15 +359,10 @@ theorem weightedOrbitalIntegral_conj_K (hM : d.centG x ≤ L.M) (μ : Measure �
     group
   unfold weightedOrbitalIntegral
   congr 1
-  conv_rhs => rw [← d.map_mulRight_orbQuotMeasure μ k⁻¹]
-  rw [show (d.orbQuotMeasure x μ).map (CosetSpace.mulRight ι k⁻¹) =
-      (d.orbQuotMeasure x μ).map (CosetSpace.mulRight ι k⁻¹).toMeasurableEquiv from rfl,
-    integral_map_equiv]
+  rw [← d.integral_out_mulRight μ (fun c hc g => weightedIntegrand_mul_left hM f hc g) k⁻¹]
   congr 1
   funext q
-  rw [hpt]
-  change _ = d.weightedIntegrand L K x f (CosetSpace.out ι (CosetSpace.mulRight ι k⁻¹ q))
-  conv_rhs => rw [← CosetSpace.mk_out ι q, CosetSpace.mulRight_mk, weightedIntegrand_out_mk hM]
+  exact hpt _
 
 end Integrals
 
