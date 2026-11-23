@@ -106,6 +106,18 @@ theorem quotMeasureOn_spec (hT : IsClosed (T : Set ↥d.G)) (μ : Measure ↥T) 
   rw [dite_eq_left_of_eq_true (eq_true h)]
   exact h.choose_spec
 
+/-- **Rescaling the measure on `T(F)`**: `dg/(c μ) = c⁻¹ (dg/μ)` on `T(F)\G(F)` for `0 < c < ∞`,
+a closed subgroup `T` and a right invariant Haar measure `μ` (`IsWeilMeasure.smul_right` and the
+uniqueness of the Weil measure). -/
+theorem quotMeasureOn_smul (hT : IsClosed (T : Set ↥d.G)) (μ : Measure ↥T) [μ.IsHaarMeasure]
+    [μ.IsMulRightInvariant] {c : ENNReal} (hc0 : c ≠ 0) (hc : c ≠ ⊤) :
+    d.quotMeasureOn T (c • μ) = c⁻¹ • d.quotMeasureOn T μ := by
+  have : (c • μ).IsHaarMeasure := Measure.IsHaarMeasure.smul μ hc0 hc
+  have : LocallyCompactSpace ↥T := hT.locallyCompactSpace
+  have : SecondCountableTopology ↥T := Topology.IsEmbedding.subtypeVal.secondCountableTopology
+  exact IsWeilMeasure.unique continuous_subtypeVal hT.isClosedEmbedding_subtypeVal
+    (d.quotMeasureOn_spec T hT (c • μ)) ((d.quotMeasureOn_spec T hT μ).smul_right hc0 hc)
+
 /-- **The normalized orbital integral `J_G(t, f)` with `G_t(F) = T(F)`**:
 `D^G(t)^{1/2} ∫_{T(F)\G(F)} f(g⁻¹ t g) dg` for the quotient measure `dg/μ` (`quotMeasureOn`),
 integrating over the representatives `CosetSpace.out`.  For `t` regular with `centG t = T` it is
@@ -114,6 +126,16 @@ Beuzart-Plessis' `J_G(t, f)` (§1.8, p. 33); `orbitalIntegral x μ f` is the cas
 def orbitalIntegralOn (μ : Measure ↥T) (t : ↥d.G) (f : ↥d.G → ℂ) : ℂ :=
   (Real.sqrt (weylDisc d.lie (t : d.ambientˣ)) : ℂ) *
     ∫ q, f ((CosetSpace.out _ q)⁻¹ * t * CosetSpace.out _ q) ∂d.quotMeasureOn T μ
+
+/-- **Dependence of `J_G(t, f)` on the measure of `T(F)`**: replacing `μ` by `c • μ`,
+`0 < c < ∞`, divides it by `c` (`quotMeasureOn_smul`). -/
+theorem orbitalIntegralOn_smul_measure (hT : IsClosed (T : Set ↥d.G)) (μ : Measure ↥T)
+    [μ.IsHaarMeasure] [μ.IsMulRightInvariant] {c : ENNReal} (hc0 : c ≠ 0) (hc : c ≠ ⊤)
+    (t : ↥d.G) (f : ↥d.G → ℂ) :
+    d.orbitalIntegralOn T (c • μ) t f = ((c⁻¹).toReal : ℂ) * d.orbitalIntegralOn T μ t f := by
+  unfold orbitalIntegralOn
+  rw [d.quotMeasureOn_smul T hT μ hc0 hc, integral_smul_measure, Complex.real_smul]
+  ring
 
 end OnSubgroup
 
@@ -360,9 +382,8 @@ theorem weightedOrbitalIntegral_smul_measure (μ : Measure ↥(d.centG x)) [μ.I
     [μ.IsMulRightInvariant] {c : ENNReal} (hc0 : c ≠ 0) (hc : c ≠ ⊤) (f : ↥d.G → ℂ) :
     d.weightedOrbitalIntegral L K x (c • μ) f =
       ((c⁻¹).toReal : ℂ) * d.weightedOrbitalIntegral L K x μ f := by
-  have : (c • μ).IsHaarMeasure := Measure.IsHaarMeasure.smul μ hc0 hc
   have hq : d.orbQuotMeasure x (c • μ) = c⁻¹ • d.orbQuotMeasure x μ :=
-    d.orbQuotMeasure_eq (c • μ) ((d.orbQuotMeasure_spec μ).smul_right hc0 hc)
+    d.quotMeasureOn_smul _ (d.isClosed_centG x) μ hc0 hc
   unfold weightedOrbitalIntegral
   rw [hq, integral_smul_measure, Complex.real_smul]
   ring
