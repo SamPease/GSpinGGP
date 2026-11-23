@@ -175,6 +175,7 @@ import GSpinGGP.TraceFormula.SpinorNorm
 import GSpinGGP.TraceFormula.ThetaF
 import GSpinGGP.TraceFormula.DcQuotient
 import GSpinGGP.TraceFormula.ThetaFBP
+import GSpinGGP.TraceFormula.ThetaFBPIndep
 import GSpinGGP.TraceFormula.WeightedOrbital
 import GSpinGGP.TraceFormula.RegularCentralizer
 import GSpinGGP.TraceFormula.Analytic

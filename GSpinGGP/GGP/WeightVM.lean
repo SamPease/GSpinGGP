@@ -99,11 +99,16 @@ Waldspurger 2010, §1.1 and §2.3, takes `K` special maximal compact in good pos
 `A`-eigenspaces); `goodPositionW/V` keep only this consequence (not proved here from the building).
 Beuzart-Plessis (§1.10) takes `K` special.  These sources state that `(H_P(g))_{P ∈ 𝒫(M)}` is
 then a *positive* `(G,M)`-orthogonal family.  Positivity is expected from `goodPositionW/V` alone
-(not proved here; no roots of `A_M` are formalized yet): `H_P` does not change when `K` is
-enlarged to the stabilizer of the split lattices, and for adjacent `P, P'` the difference
-`H_P(g) - H_{P'}(g)` is a nonpositive multiple of the coroot, by submultiplicativity of the lattice
-norms on exterior powers (the dual lattice on the isotropic part).  Specialness is not imposed
-beyond the Iwasawa decompositions. -/
+(not proved here; no roots of `A_M` are formalized yet).  Sketch: the coordinates of `H_P(g)` are
+differences of `D_F(g) = log ‖ω_F‖ − log ‖∧ g⁻¹ ω_F‖` (`ω_F` a generator of the top exterior
+power of a member of the flag), for a `K`-invariant norm split by the weight spaces; no enlargement
+of `K` is needed (the stabilizer of the split lattices in `GSpin` contains the central `F^×` and is
+not compact).  For adjacent `P, P'` across a `GL`-type wall, `H_P(g) − H_{P'}(g)` is a nonpositive
+multiple of the coroot by submultiplicativity (submodularity of `log ν_g` on subspaces).  Across a
+wall exchanging the two isotropic members `X ↔ X'` of the middle, the norm of the lattice `Λ`
+itself can fail (e.g. `sl₂` with `Λ = ⟨ϖE, F, H⟩`); one uses instead the self-dual midpoint norm
+`(ν_Λ ν_{Λ^∨})^{1/2}`, which is diagonal in a weight-adapted hyperbolic basis and `K`-invariant.
+Specialness is not imposed beyond the Iwasawa decompositions. -/
 structure GoodK (L : d.FlagLeviDatum) where
   /-- the compact open subgroup -/
   K : Subgroup ↥d.G
