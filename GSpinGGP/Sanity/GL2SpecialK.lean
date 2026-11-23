@@ -22,10 +22,11 @@ At `gl2Data` (`W = 0`, `V` split of dimension `3`, `q = ac + b²` in the coordin
   (`not_isSpecial_gl2GoodK'`): every special stabilizer contains all scalars of norm `1` of
   `GSpin(W)`, and `1 + ϖ` is missing.  So `IsSpecial` is not satisfied by every `GoodK`.  This
   only tests that `K` must *equal* a special stabilizer: `gl2GoodK'` has the same `H_P`.
-* `not_exists_specialLattice_R_eq_edge`: the lattice `⟨z₋₁, z₀, ϖ · ½ z₁⟩`, whose stabilizer is
-  the maximal compact, non-special stabilizer of an edge midpoint of the tree of `PGL₂`, is not
-  W1-special for any hyperbolic system and `c`.  This tests the condition "`c` is a value of
-  `val_F ∘ q` on `V_an`" at the level of lattices.
+* `not_exists_specialLattice_R_eq_edge`: the lattice `⟨z₋₁, z₀, ϖ · ½ z₁⟩` (for `ϖ` a uniformizer,
+  the lattice of an edge midpoint of the tree of `PGL₂`) is not W1-special for any hyperbolic
+  system and `c`.  The proof uses only the shape of `R` (`SpecialLattice.norm_quadForm_le`) and
+  the anisotropy of `V_an`; it does **not** use the condition "`c` is a value of `val_F ∘ q` on
+  `V_an`" (`attained`), which is not tested here.
 -/
 
 noncomputable section
@@ -264,12 +265,12 @@ theorem not_isSpecial_gl2GoodK' : ¬ (gl2GoodK' (F := F)).IsSpecial := by
 
 /-! ## A lattice that is not special: `⟨z₋₁, z₀, ϖ · ½ z₁⟩`
 
-The lattice `Λ' = {‖a‖ ≤ 1, ‖b‖ ≤ 1, ‖c‖ ≤ ‖ϖ‖}` (coordinates of `gl2Basis`) is the lattice of
-the midpoint of an edge of the tree of `PGL₂ ≅ SO(V)`, whose stabilizer is maximal compact but not
-special.  It is not W1-special, for **any** hyperbolic system and `c`
-(`not_exists_specialLattice_R_eq_edge`), so in particular not for one adapted to `gl2Levi`.  The
-proof uses the condition "`c` is a value of `val_F ∘ q` on `V_an`" only through
-`SpecialLattice.norm_quadForm_le` (`‖q‖ ≤ |ϖ^c|` on `R`) and the anisotropy of `V_an`: `z₀ ∈ Λ'`
+The lattice `Λ' = {‖a‖ ≤ 1, ‖b‖ ≤ 1, ‖c‖ ≤ ‖ϖ‖}` (coordinates of `gl2Basis`; for `ϖ` a
+uniformizer, the lattice of the midpoint of an edge of the tree of `PGL₂ ≅ SO(V)`) is not
+W1-special, for **any** hyperbolic system and `c` (`not_exists_specialLattice_R_eq_edge`), so in
+particular not for one adapted to `gl2Levi`.  The proof does not use the condition `attained`
+("`c` is a value of `val_F ∘ q` on `V_an`"), only `SpecialLattice.norm_quadForm_le`
+(`‖q‖ ≤ |ϖ^c|` on `R`) and the anisotropy of `V_an`: `z₀ ∈ Λ'`
 forces `|ϖ^c| ≥ 1`, while two isotropic vectors of `Λ'` pair to norm `< 1`, so `Λ'` contains no
 `v_1`, `ϖ^c v_{-1}`. -/
 

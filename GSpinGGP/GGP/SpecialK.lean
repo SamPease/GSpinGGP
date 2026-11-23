@@ -99,8 +99,9 @@ harmless.
 * `GGPData.exists_specialK` (`sorry`): every reduced Levi datum has a special `GoodK`.
 
 The checks at `gl2Data` are in `Sanity/GL2SpecialK.lean`: `gl2GoodK` is special; a `GoodK` of
-finite index in it is not; and the lattice `⟨z₋₁, z₀, ϖ · ½ z₁⟩` of an edge midpoint of the tree
-(stabilizer maximal compact, not special) is not a special lattice.
+finite index in it is not; and the lattice `⟨z₋₁, z₀, ϖ · ½ z₁⟩` (for `ϖ` a uniformizer, that of an
+edge midpoint of the tree) is not a special lattice.  No check yet exercises the condition
+`attained`.
 -/
 
 noncomputable section
