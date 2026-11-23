@@ -27,6 +27,9 @@ of `F^×` and would not be compact.  `GGPData.latticeK e_W e_V` is `latticeSpin`
   `Λ_e`, `u w ∈ latticeSpin Q e`.
 * `exists_mem_latticeSpin_apply_eq_smul`: for the split rank-three form `ac + b²`, `latticeSpin`
   is transitive on the isotropic lines of `V`.
+* `mem_latticeSpin_iff_of_mem_wtScalar`, `ReducedLeviDatum.HM_eq_zero_iff_mem_latticeK`: on the
+  split centre `A_M(F)` of a flag Levi subgroup, `ker H_M` is `latticeK` of the splitting bases;
+  so `A_M(F) ∩ ker H_M` is compact and open (used in `TraceFormula/ThetaFBP.lean`).
 -/
 
 noncomputable section
@@ -560,7 +563,7 @@ def bWFin : Basis (Fin (Fintype.card L.ιW)) F (Fin d.m → F) :=
 def bVFin : Basis (Fin (Fintype.card L.ιV)) F d.V := L.bV.reindex (Fintype.equivFin L.ιV)
 
 omit [PAdicField F] in
-theorem log_norm_eq_zero_iff (u : Fˣ) : Real.log ‖(u : F)‖ = 0 ↔ ‖(u : F)‖ = 1 := by
+private theorem log_norm_eq_zero_iff (u : Fˣ) : Real.log ‖(u : F)‖ = 0 ↔ ‖(u : F)‖ = 1 := by
   have h0 : 0 < ‖(u : F)‖ := norm_pos_iff.2 u.ne_zero
   rw [Real.log_eq_zero]
   constructor
@@ -584,27 +587,6 @@ theorem HM_eq_zero_iff_mem_latticeK {m : ↥L.M} (hm : (m : ↥d.G) ∈ L.AMF) :
     mem_latticeSpin_iff_of_mem_wtScalar d.nondeg_QV L.hsV hm.2, funext_iff]
   simp only [Sum.forall, Unique.forall_iff, Pi.zero_apply, HM, log_norm_eq_zero_iff]
   rfl
-
-/-- `A_M(F) ∩ ker H_M`, as a set of `G(F)`. -/
-def AMFOne : Set ↥d.G := {g | g ∈ L.AMF ∧ ∀ hm : g ∈ L.M, L.HM ⟨g, hm⟩ = 0}
-
-theorem AMFOne_eq : L.AMFOne = (L.AMF : Set ↥d.G) ∩ d.latticeK L.bWFin L.bVFin := by
-  ext g
-  refine ⟨fun ⟨ha, h⟩ => ⟨ha, (L.HM_eq_zero_iff_mem_latticeK (m := ⟨g, L.AMF_le_M ha⟩) ha).1
-    (h _)⟩, fun ⟨ha, h⟩ => ⟨ha, fun hm => ?_⟩⟩
-  exact (L.HM_eq_zero_iff_mem_latticeK (m := ⟨g, hm⟩) ha).2 h
-
-/-- **`A_M(F) ∩ ker H_M` is compact** (Beuzart-Plessis, Astérisque 418, §1.6: the maximal compact
-subgroup `A_M(F)^1` of the split torus `A_M(F)`): it is a closed subset of the compact
-`latticeK` (`AMFOne_eq`, `isCompact_latticeK`). -/
-theorem isCompact_AMFOne : IsCompact L.AMFOne := by
-  rw [AMFOne_eq]
-  exact (d.isCompact_latticeK _ _).inter_left L.isClosed_AMF
-
-/-- **`A_M(F) ∩ ker H_M` is open in `A_M(F)`**: it is `A_M(F) ∩ latticeK`, and `latticeK` is open
-in `G(F)`. -/
-theorem AMFOne_eq_inter_isOpen : ∃ U : Set ↥d.G, IsOpen U ∧ L.AMFOne = (L.AMF : Set ↥d.G) ∩ U :=
-  ⟨_, d.isOpen_latticeK _ _, L.AMFOne_eq⟩
 
 end ReducedLeviDatum
 

@@ -61,6 +61,8 @@ uses `d_c t` and has no separate factor `ν`.
 ## Main results
 
 * `IsMx.centG_le`: `G_x(F) ⊆ M(F)` (and `x ∈ M(F)` by definition).
+* `exists_isMx`: every `x ∈ G_reg(F)` has an `L` with `IsMx L x` (`sorry`, with a proof sketch;
+  not on the path of the main theorem).
 * `isCompact_AGxOne`, `isOpen_AGxOne`: `A_M(F) ∩ ker H_M` is compact and open in `A_M(F)`.
 * `IsDcMeasure.unique`, `dcMeasure_eq`: `d_c t` is unique; `exists_isDcMeasure`,
   `IsMx.exists_isDcMeasure`: it exists when `G_x(F)/A_M(F)` is compact, e.g. for `IsMx L x`.
@@ -169,6 +171,29 @@ variable {L}
 /-- **`G_x(F) ⊆ M(x)(F)`** (Waldspurger 2010, §2.3), from `centG_le_M`. -/
 theorem IsMx.centG_le {x : ↥d.G} (h : L.IsMx x) : d.centG x ≤ L.M :=
   centG_le_M L.toFlagLeviDatum h.regular h.mem
+
+/-- **Existence of `M(x)`** (Beuzart-Plessis §5.2; Waldspurger 2010, §2.3): every `x ∈ G_reg(F)`
+has a reduced Levi datum `L` with `L.M = M(x)`.  Not proved here.
+
+Proof sketch.  `T = G_x` is a maximal torus (`commute_of_mem_centG`); `M(x)` is the centralizer of
+its maximal split subtorus `A_T`.  On `W` (and likewise `V`), `s = P(x_W) ∈ SO(W)` is semisimple;
+`W = ⊕_p W_p`, `W_p = ker p(s)` over the monic irreducible factors `p` of its characteristic
+polynomial, and `b` pairs `W_p` with `W_{p*}` (`p*` the reciprocal polynomial), so `W_p` is
+totally isotropic for `p ≠ p*` and nondegenerate for `p = p*`.  The split part of `T` acts on
+`W_p ⊕ W_{p*}` (`p ≠ p*`) by `τ` on `W_p` and `τ⁻¹` on `W_{p*}`; on a `W_p` with `p = p*` of
+degree `≥ 2` it acts trivially (the centralizer there is a norm-one torus, anisotropic); on an
+eigenspace `W_{t∓1}` that is a hyperbolic plane it acts by `τ^{±1}` on its two isotropic lines,
+and trivially if that eigenspace is anisotropic.  Number these split pieces `1, …, n` and give the
+`k`-th piece weights `±k` (a basis adapted to the pieces); this is an `IsWtGrading` whose weight
+spaces are `P(x)`-stable, so `x ∈ (ofGrading …).M` (`mem_flagLevi_iff`).  The weight-`0` space is
+the sum of the anisotropic pieces; it is not a hyperbolic plane (an anisotropic `W_p`, `p = p*`,
+is not one, and `W_{t−1} ⊕ W_{t+1}` of two lines would give `det P(x) = −1`), so the datum is
+reduced.  Then `A_M = A_T` (`AMF` is the lift of the scalars on the weight spaces), and
+`T(F)/A_T(F)` embeds in `(T/A_T)(F)` as a closed subgroup (Hilbert 90 for the split `A_T`), which
+is compact since `T/A_T` is anisotropic: `CompactSpace (CosetSpace (L.AGx x).subtype)`. -/
+theorem exists_isMx {x : ↥d.G} (hx : x ∈ regularSet d.G d.lie) :
+    ∃ L : d.ReducedLeviDatum, L.IsMx x := by
+  sorry
 
 /-! ## 2. The measure `d_c t` -/
 
