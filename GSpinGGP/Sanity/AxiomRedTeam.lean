@@ -97,8 +97,10 @@ the axiom it tests; the computations of germs at `toyD` use `exists_isSelfDual` 
   `toyD_integrable_weylIntegrand`); Haar families exist on every datum
   (`isHaarMeasure_haarFamily`); junk values: the Haar conjunct is needed
   (`not_formula_zero_family`), and the axiom forces maximal tori to exist
-  (`nonempty_maxTorusClass_of_axiom`), C with `hc_regular_open_dense_conull`
-  (`nonempty_maxTorusClass`). Not covered: nonabelian `G`, `|W(G,T)| > 1`, `D^G ≠ 1`.
+  (`nonempty_maxTorusClass_of_axiom`), C with `hc_regular_open_dense_conull` and
+  `jantzen_finrank_soCentMat_ge` (`nonempty_maxTorusClass`); it also forces a class with a finite
+  Weyl group and a nonzero term (`exists_class_weylCardG_ne_zero_of_axiom`). Not covered (accepted):
+  nonabelian `G`, `|W(G,T)| > 1`, `D^G ≠ 1`, several torus classes.
 
 `WholeSystem.lean` also proves, at `toyD`, the conclusions of several `sorry` statements on the
 path of the main theorem and the multiplicity formula for the trivial representation, with both

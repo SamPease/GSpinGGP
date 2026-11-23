@@ -76,7 +76,8 @@ As of November 2026:
   `weyl_integration_exists` (the Weyl integration formula as printed by Beuzart-Plessis, without
   proof, for connected reductive groups, for some Haar measures on the maximal tori; the
   identification of maximal tori with centralizers of regular semisimple elements, and of the
-  other objects, is written in the docstring);
+  other objects, is written in the docstring; the author decided on it as a verbatim citation,
+  and it is labelled derived because of these unfolding and identification steps);
   and `exists_iwasawaPair_xi_sq_integrable` (Waldspurger's `∫_G Ξ² (1 + σ)^{-d} < ∞` for connected
   reductive groups; the identification of his special maximal compact subgroup, `Ξ`, and `σ` for a
   lattice basis of `C(W) × C(V)` with ours is written in the docstring).

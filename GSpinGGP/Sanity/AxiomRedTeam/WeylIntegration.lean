@@ -24,13 +24,22 @@ import GSpinGGP.Literature.HarishChandra
   - An empty set of classes would make the `tsum` `0` (`gammaIntegral_of_isEmpty`); the axiom
     therefore implies that maximal tori exist (`nonempty_maxTorusClass_of_axiom`). **C**: the same
     follows from Harish-Chandra's density of `G_reg(F)` (`hc_regular_open_dense_conull`), without
-    the new axiom (`nonempty_maxTorusClass`), so no conflict arises there.
+    the new axiom (`nonempty_maxTorusClass`; it uses `hc_regular_open_dense_conull` and, through
+    `mem_regularSet_of_hcDisc_ne_zero`, `jantzen_finrank_soCentMat_ge`), so no conflict arises.
   - The `tsum` over classes is the finite sum when there are finitely many classes
     (`gammaIntegral_eq_sum`), as in BP. Independence of the torus measures holds term by term,
     with no integrability or summability hypothesis (`gammaIntegral_weylIntegrand_eq`), so the
     `∃`-form and the `∀`-form agree whatever the junk conventions.
 
-Not covered: nonabelian `G`, `|W(G,T)| > 1`, `D^G ≠ 1`, several classes of tori.
+* **Implicit consequence**: the axiom forces some class of tori with a finite Weyl group
+  (`weylCardG ≠ 0`) and a nonzero torus integral (`exists_class_weylCardG_ne_zero_of_axiom`).
+  True for `GSpin`; not proved independently here.
+
+Not covered (accepted gap): nonabelian `G`, `|W(G,T)| > 1`, `D^G ≠ 1`, several classes of tori.
+All nonabelian content of the formula (the power of `D^G`, the Weyl weights, the sum over
+classes) is untested; even `weylDisc` at a regular element of the nonabelian datum `gl2Data` is
+not computed (it is the trailing coefficient of a characteristic polynomial on the Lie algebra
+inside a Clifford algebra, not a cheap computation).
 -/
 
 open MeasureTheory GSpinGGP GSpinGGP.Sanity GSpinGGP.GGPData
@@ -138,5 +147,25 @@ regular set (`hc_regular_open_dense_conull`). -/
 theorem nonempty_maxTorusClass (d : GGPData F) : Nonempty d.MaxTorusClass := by
   obtain ⟨x, hx⟩ := (hc_regular_open_dense_conull d).2.1.nonempty
   exact ⟨Quot.mk _ ⟨d.centG x, x, mem_regularSet_of_hcDisc_ne_zero d hx, rfl⟩⟩
+
+/-- **Implicit consequence of the axiom**: some class of maximal tori has a finite Weyl group
+(`weylCardG ≠ 0`, i.e. not the junk value of `Nat.card`) and a nonzero torus integral, i.e. a
+nonzero, non-junk term in the `tsum`.  True for `GSpin` (`N_{G(F)}(T)/T(F)` is finite). -/
+theorem exists_class_weylCardG_ne_zero_of_axiom (d : GGPData F) :
+    ∃ μ : ∀ T : Subgroup ↥d.G, Measure ↥T, (∀ T : d.MaxTorus, (μ T.1).IsHaarMeasure) ∧
+      ∃ (f : ↥d.G → ℂ) (c : d.MaxTorusClass), f ∈ testFunctions ↥d.G ∧
+        weylCardG d (Quot.out c).1 ≠ 0 ∧
+        ∫ t : ↥(Quot.out c).1, d.weylIntegrand μ f (Quot.out c).1 t ∂μ (Quot.out c).1 ≠ 0 := by
+  obtain ⟨μ, hμ, hW⟩ := weyl_integration_exists d
+  obtain ⟨f, hf, hne⟩ := exists_testFunction_integral_ne_zero d
+  refine ⟨μ, hμ, f, ?_⟩
+  by_contra h
+  push Not at h
+  apply hne
+  rw [hW f hf, gammaIntegral]
+  refine (tsum_congr fun c => ?_).trans tsum_zero
+  by_cases hc : weylCardG d (Quot.out c).1 = 0
+  · simp [hc]
+  · rw [h c hf hc, mul_zero]
 
 end GSpinGGP.AxiomRedTeam
