@@ -27,7 +27,7 @@ of the `G(F)`-conjugacy classes of maximal tori, BP equips `Γ(G)` with the meas
   (`TraceFormula/Spectral.lean`) does for the elliptic ones (`EllTorus.toMaxTorus`).  The index
   set `GammaClass` of `Γ(G,H)` (`GGP/Triple.lean`) cannot be reused: it classifies the tori `T_x`
   of `GSpin(W)` attached to the GGP triple, not the maximal tori of `G`.
-* **`|W(G,T)|`** is `ellWeylCard d T = |N_{G(F)}(T(F))/T(F)|` (`Spectral.lean`), BP's
+* **`|W(G,T)|`** is `weylCardG d T = |N_{G(F)}(T(F))/T(F)|` (`Spectral.lean`), BP's
   `W(G,T) = Norm_{G(F)}(T)/T(F)`.
 * **The measure `dt` on `T(F)`.**  BP §1.6 (p. 30) gives `T(F)` the exp-lift of the autodual
   measure of `𝔱(F)` (the `dt` of §1.7, not `d_c t`; `ν(T)` only enters the measure of
@@ -46,8 +46,11 @@ of the `G(F)`-conjugacy classes of maximal tori, BP equips `Γ(G)` with the meas
 `J^A(f, f') = ∫_{A_G(F)\G(F)} K^A_{f,f'}(x, x) dx` (`jA`).  `A_G` is central, so `A_G(F)\G(F)`
 is the quotient group `G(F)/A_G(F)` (`GmodAG`), with the measure `measGmodAG = dg / d_c a`
 (`d_c a` gives the maximal compact subgroup of `A_G(F)` mass `1`): BP leaves the measure on
-`A_G(F)` unstated, and we read it with Arthur's convention (Arthur, *A local trace formula*, Publ.
-IHÉS 73 (1991), §1, p. 11), the only Haar measure on `A_G(F)` for which BP Thm 5.5.1(iv) can hold.
+`A_G(F)` unstated, and we read it with the convention of Arthur, Publ. IHÉS 73 (1991), §1, p. 11,
+and Waldspurger, J. reine angew. Math. 465 (1995), §1.4.  It is the one Haar measure on `A_G(F)` for
+which BP Thm 5.5.1(iv) can hold: `J^A` scales as `1/da_G`, and the right side of (iv) has no `A_G`
+parameter (`θ_f` carries `ν(G_x)⁻¹`, i.e. `d_c t`).  Tested at the toy datum with BP's `θ_f`
+(`toyD_jA_geom`, `Sanity/GammaGAudit.lean`).
 `J^A` is the orbital pairing already used for `θ_f`: `jA_eq_orbitalPairing` (`rfl`).
 
 **Integrability.**  BP Thm 5.5.1(ii) (printed without proof; BP defers it to its reference [18])
@@ -66,9 +69,6 @@ docstring), off the path of the main theorem.  At the commutative toy datum it i
 
 ## Main definitions
 
-* `GGPData.quotMeasureOn T μ`, `GGPData.orbitalIntegralOn T μ t f`: `dg/μ` on `T(F)\G(F)` and
-  `J_G(t, f)` for a closed subgroup `T`, indexed by `T` rather than by `t`; at `T = G_x(F)` they are
-  `orbQuotMeasure` and `orbitalIntegral` (`rfl`).
 * `GGPData.MaxTorus`, `GGPData.MaxTorusClass`, `GGPData.gammaIntegral`.
 * `GGPData.weylIntegrand`: `t ↦ D^G(t)^{1/2} J_G(t, f)` on `T(F)`, `0` off `G_reg(F)`.
 * `GGPData.kernelA`, `GGPData.jA`.
@@ -85,51 +85,6 @@ variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 namespace GGPData
 
 variable (d : GGPData F)
-
-/-! ## 1. Orbital integrals indexed by the torus -/
-
-section OnSubgroup
-
-variable (T : Subgroup ↥d.G)
-
-open scoped Classical in
-/-- **The quotient measure `dg/μ` on `T(F)\G(F)`** for a subgroup `T` of `G(F)` and a measure `μ` on
-`T(F)` (Weil's formula against `dg = Measure.haar`), chosen by the epsilon pattern; `0` if there is
-none.  At `T = G_x(F)` this is `orbQuotMeasure x μ` (`orbQuotMeasure_eq_quotMeasureOn`); indexing by
-`T` lets one quotient serve every `t ∈ T(F)`. -/
-def quotMeasureOn (μ : Measure ↥T) : Measure (CosetSpace T.subtype) :=
-  if h : ∃ m, IsWeilMeasure T.subtype (Measure.haar : Measure ↥d.G) μ m then h.choose else 0
-
-theorem orbQuotMeasure_eq_quotMeasureOn (x : ↥d.G) (μ : Measure ↥(d.centG x)) :
-    d.orbQuotMeasure x μ = d.quotMeasureOn (d.centG x) μ := rfl
-
-/-- **`dg/μ` is the Weil measure** for a closed subgroup `T` and a right invariant Haar measure `μ`
-(from `weil_quotient`). -/
-theorem quotMeasureOn_spec (hT : IsClosed (T : Set ↥d.G)) (μ : Measure ↥T) [μ.IsHaarMeasure]
-    [μ.IsMulRightInvariant] :
-    IsWeilMeasure T.subtype Measure.haar μ (d.quotMeasureOn T μ) := by
-  classical
-  have : LocallyCompactSpace ↥T := hT.locallyCompactSpace
-  have : SecondCountableTopology ↥T := Topology.IsEmbedding.subtypeVal.secondCountableTopology
-  have h := (weil_quotient T.subtype continuous_subtypeVal hT.isClosedEmbedding_subtypeVal
-    Measure.haar μ).exists
-  unfold quotMeasureOn
-  rw [dite_eq_left_of_eq_true (eq_true h)]
-  exact h.choose_spec
-
-/-- **The normalized orbital integral `J_G(t, f)` with `G_t(F) = T(F)`**:
-`D^G(t)^{1/2} ∫_{T(F)\G(F)} f(g⁻¹ t g) dg` for the quotient measure `dg/μ` (`quotMeasureOn`),
-integrating over the representatives `CosetSpace.out`.  For `t` regular with `centG t = T` it is
-BP's `J_G(t, f)` (§1.8, p. 33); at `T = centG x`, `t = x` it is `orbitalIntegral x μ f`
-(`orbitalIntegral_eq_orbitalIntegralOn`). -/
-def orbitalIntegralOn (μ : Measure ↥T) (t : ↥d.G) (f : ↥d.G → ℂ) : ℂ :=
-  (Real.sqrt (weylDisc d.lie (t : d.ambientˣ)) : ℂ) *
-    ∫ q, f ((CosetSpace.out _ q)⁻¹ * t * CosetSpace.out _ q) ∂d.quotMeasureOn T μ
-
-theorem orbitalIntegral_eq_orbitalIntegralOn (x : ↥d.G) (μ : Measure ↥(d.centG x))
-    (f : ↥d.G → ℂ) : d.orbitalIntegral x μ f = d.orbitalIntegralOn (d.centG x) μ x f := rfl
-
-end OnSubgroup
 
 /-! ## 2. Maximal tori and `Γ(G)` -/
 
@@ -201,13 +156,13 @@ variable (d)
 /-- **The integral over `Γ(G)`** (BP §1.7, p. 32):
 `∫_{Γ(G)} φ(x) dx = Σ_{T ∈ 𝒯(G)} |W(G,T)|⁻¹ ∫_{T(F)} φ_T(t) dμ_T(t)`,
 summing over the classes `MaxTorusClass` with their chosen representatives, `|W(G,T)|` =
-`ellWeylCard d T` = `|N_{G(F)}(T(F))/T(F)|`.  The measures `μ T` on the tori are an argument (BP's
+`weylCardG d T` = `|N_{G(F)}(T(F))/T(F)|`.  The measures `μ T` on the tori are an argument (BP's
 `dt` is the exp-lift of the autodual measure on `𝔱(F)`, not formalized; see the module docstring),
 and so is the dependence of the integrand on the torus (`φ T`): integrands such as
 `D^{1/2} J_G(·, f)` involve the measure on `T(F)` through `J_G`.  For a class function, take
 `φ` constant in `T`. -/
 def gammaIntegral (μ : ∀ T : Subgroup ↥d.G, Measure ↥T) (φ : Subgroup ↥d.G → ↥d.G → ℂ) : ℂ :=
-  ∑' c : d.MaxTorusClass, ((ellWeylCard d (Quot.out c).1 : ℂ))⁻¹ *
+  ∑' c : d.MaxTorusClass, ((weylCardG d (Quot.out c).1 : ℂ))⁻¹ *
     ∫ t : ↥(Quot.out c).1, φ (Quot.out c).1 t ∂μ (Quot.out c).1
 
 /-- `gammaIntegral` only sees the integrand on maximal tori. -/
@@ -281,8 +236,7 @@ theorem jA_eq_orbitalPairing (f f' : ↥d.G → ℂ) : d.jA f f' = orbitalPairin
 and `f' ∈ C_c^∞(G(F))` (BP Thm 5.5.1(ii)), from the literature axiom `bp_integrable_kernel_scusp`;
 the measure `measGmodAG` is a positive multiple of `Measure.haar`. -/
 theorem integrable_kernelA_diag_scusp (f : ↥d.G → ℂ) (hf : f ∈ testFunctions ↥d.G)
-    (hcusp : ∀ (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV), d.IsProperFlagPair FW FV →
-      ∀ p ∈ d.whittB FW FV, ∫ u : ↥(d.whittU FW FV), f (p * u) ∂Measure.haar = 0)
+    (hcusp : IsStronglyCuspidalInline d f)
     (f' : ↥d.G → ℂ) (hf' : f' ∈ testFunctions ↥d.G) :
     Integrable (fun x : d.GmodAG => d.kernelA f f' (Quotient.out x) (Quotient.out x))
       d.measGmodAG :=

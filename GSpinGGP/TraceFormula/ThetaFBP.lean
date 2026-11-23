@@ -401,7 +401,7 @@ theorem thetaFBP_of_aG_eq_top_eq_integral (hG : L.aG = ⊤) (K : d.GoodK L.toFla
       ∂d.orbQuotMeasure x (L.dcMeasure x) := by
   have hD : ((Real.sqrt (weylDisc d.lie (x : d.ambientˣ)) : ℂ)) ≠ 0 :=
     Complex.ofReal_ne_zero.2 (Real.sqrt_pos.2 (weylDisc_pos d x)).ne'
-  rw [thetaFBP_of_aG_eq_top hG, orbitalIntegral, ← mul_assoc, inv_mul_cancel₀ hD, one_mul]
+  rw [thetaFBP_of_aG_eq_top hG, orbitalIntegral_eq, ← mul_assoc, inv_mul_cancel₀ hD, one_mul]
 
 end ReducedLeviDatum
 

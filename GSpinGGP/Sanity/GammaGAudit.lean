@@ -12,7 +12,7 @@ import GSpinGGP.Sanity.DcQuotientAudit
 At the toy datum `toyD` (`G = GL₁ × GL₁`, commutative, `G_reg(F) = G(F)`, `D^G = 1`):
 
 * `G(F)` is the only maximal torus (`toyD_maxTorus_eq_top`), so `𝒯(G)` is a point
-  (`toyD_subsingleton_maxTorusClass`) and `|W(G,G)| = 1` (`toyD_ellWeylCard_top`);
+  (`toyD_subsingleton_maxTorusClass`) and `|W(G,G)| = 1` (`toyD_weylCardG_top`);
 * for every Haar measure `μ` on `T(F) = G(F)`, `J_G(t, f) = m(T\G) f(t)`, `m = dg/μ` on the point
   `T(F)\G(F)` (`toyD_orbitalIntegralOn`);
 * **the Weyl integration formula holds** for every continuous compactly supported `f` and every
@@ -21,8 +21,10 @@ At the toy datum `toyD` (`G = GL₁ × GL₁`, commutative, `G_reg(F) = G(F)`, `
   `weylIntegrand` (the weight `|W|⁻¹`, the factor `D^{1/2}` on top of the one inside `J_G`, and the
   quotient measure `dg/μ`); `D^G = 1` here, so the power of `D` is not tested;
 * `J^A(f, f') = c ∫_G f f'` with `c = dcScaleAG` the mass of the point `G(F)/A_G(F)`
-  (`toyD_jA`), and **BP Thm 5.5.1(iv) holds** with `θ_f = thetaF f`:
-  `J^A(f, f') = ∫_{Γ(G)} D^G(x)^{1/2} θ_f(x) J_G(x, f') dx` (`toyD_jA_geom`).
+  (`toyD_jA`), and **BP Thm 5.5.1(iv) holds** with Beuzart-Plessis' `θ_f` (`thetaFBP`, computed
+  independently of `jA`): `J^A(f, f') = ∫_{Γ(G)} D^G(x)^{1/2} θ_f(x) J_G(x, f') dx`
+  (`toyD_jA_geom`).  This tests the measure `dg / d_c a` on `A_G(F)\G(F)`: with another Haar
+  measure on the point `G(F)/A_G(F)` the two sides differ by a constant.
 
 No axioms beyond those of the imported modules (`weil_quotient_radon`, through the Weil measure).
 -/
@@ -58,8 +60,8 @@ instance toyD_subsingleton_maxTorusClass : Subsingleton (𝕋).MaxTorusClass :=
     rw [Subsingleton.elim T T']⟩
 
 /-- **`|W(G,G)| = 1`** at `toyD`. -/
-theorem toyD_ellWeylCard_top : ellWeylCard (𝕋) ⊤ = 1 := by
-  unfold ellWeylCard
+theorem toyD_weylCardG_top : weylCardG (𝕋) ⊤ = 1 := by
+  unfold weylCardG
   rw [Subgroup.top_subgroupOf]
   exact Subgroup.index_top
 
@@ -102,7 +104,7 @@ theorem toyD_gammaIntegral (μ : ∀ T : Subgroup ↥(𝕋).G, Measure ↥T)
   refine ⟨Quot.out c0, ?_⟩
   unfold gammaIntegral
   rw [tsum_eq_single c0 fun b hb => (hb (Subsingleton.elim _ _)).elim,
-    toyD_maxTorus_eq_top (Quot.out c0), toyD_ellWeylCard_top, Nat.cast_one, inv_one, one_mul]
+    toyD_maxTorus_eq_top (Quot.out c0), toyD_weylCardG_top, Nat.cast_one, inv_one, one_mul]
 
 /-- **Weil's formula at a maximal torus of `toyD`**: `∫_G f dg = m(T\G) ∫_T f dμ` for continuous
 compactly supported `f`, any Haar measure `μ` on `T(F) = G(F)`, `m = dg/μ`. -/
@@ -159,30 +161,40 @@ theorem toyD_jA {f f' : ↥(𝕋).G → ℂ} (hf : Continuous f) (hf' : f' ∈ t
   simp [mul_assoc]
 
 open scoped Classical in
-/-- **BP Thm 5.5.1(iv) at `toyD`**: `J^A(f, f') = ∫_{Γ(G)} D^G(x)^{1/2} θ_f(x) J_G(x, f') dx` for
-continuous compactly supported `f`, `f' ∈ C_c^∞(G(F))`, `θ_f = thetaF f`, and every family of Haar
-measures on the tori (`J_G(x, ·)` for `dg / μ T`).  With `θ_f = c f` (`toyD_thetaF_eq`) both sides
-are `c ∫ f f'` (`toyD_jA`, `toyD_weyl_integration`).  So the measure `dg / d_c a` on
-`A_G(F)\G(F)` in `jA` is the one for which (iv) holds here. -/
-theorem toyD_jA_geom (μ : ∀ T : Subgroup ↥(𝕋).G, Measure ↥T)
-    (hμ : ∀ T : (𝕋).MaxTorus, (μ T.1).IsHaarMeasure) {f f' : ↥(𝕋).G → ℂ} (hf : Continuous f)
-    (hfc : HasCompactSupport f) (hf' : f' ∈ testFunctions ↥(𝕋).G) :
-    (𝕋).jA f f' = (𝕋).gammaIntegral μ (fun T t =>
-      if t ∈ regularSet (𝕋).G (𝕋).lie then
-        (Real.sqrt (weylDisc (𝕋).lie (t : (𝕋).ambientˣ)) : ℂ) * thetaF (𝕋) f t *
-          (𝕋).orbitalIntegralOn T (μ T) t f'
-      else 0) := by
-  set c : ℂ := ((𝕋).dcScaleAG.toReal : ℂ)
+/-- **BP Thm 5.5.1(iv) at `toyD`, with Beuzart-Plessis' `θ_f`**:
+`J^A(f, f') = ∫_{Γ(G)} D^G(x)^{1/2} θ_f(x) J_G(x, f') dx` for continuous compactly supported `f`,
+`f' ∈ C_c^∞(G(F))`, every family of Haar measures on the tori (`J_G(x, ·)` for `dg / μ T`), and
+`θ_f = thetaFBP` (BP §5.2's formula with `d_c t`, for the Levi datum `M = G = M(x)` of
+`toyD_thetaFBP`).  This is a genuine check of the measure `dg / d_c a` on `A_G(F)\G(F)` in `jA`:
+the left side is `dcScaleAG · ∫ f f'` (`toyD_jA`, computed from `measGmodAG`), the right side is
+`haar_G(A_G(𝒪)) · ∫ f f'` (`toyD_thetaFBP`, `toyD_weyl_integration`, independent of `jA`), and the
+two constants agree by `toyD_dcScaleAG`.  With `Measure.haar` (mass `1`) on the point
+`G(F)/A_G(F)` the two sides would differ by that constant.  (With `θ_f = thetaF f` the identity
+would hold for any measure on `G(F)/A_G(F)`, since `thetaF` is defined through `jA`.) -/
+theorem toyD_jA_geom :
+    ∃ (L : (𝕋).ReducedLeviDatum) (K : (𝕋).GoodK L.toFlagLeviDatum), (∀ x, L.IsMx x) ∧
+      ∀ (μ : ∀ T : Subgroup ↥(𝕋).G, Measure ↥T), (∀ T : (𝕋).MaxTorus, (μ T.1).IsHaarMeasure) →
+      ∀ {f f' : ↥(𝕋).G → ℂ}, Continuous f → HasCompactSupport f →
+      f' ∈ testFunctions ↥(𝕋).G →
+        (𝕋).jA f f' = (𝕋).gammaIntegral μ (fun T t =>
+          if t ∈ regularSet (𝕋).G (𝕋).lie then
+            (Real.sqrt (weylDisc (𝕋).lie (t : (𝕋).ambientˣ)) : ℂ) * L.thetaFBP K f t *
+              (𝕋).orbitalIntegralOn T (μ T) t f'
+          else 0) := by
+  obtain ⟨L, K, hMx, -, -, hBP⟩ := toyD_thetaFBP (F := F)
+  refine ⟨L, K, hMx, fun μ hμ f f' hf hfc hf' => ?_⟩
+  set c : ℂ := ((Measure.haar : Measure ↥(𝕋).G).real toyOneSet : ℂ)
   have hcont' : Continuous f' := hf'.1.continuous
   have hh : Continuous (fun g => c * (f g * f' g)) := continuous_const.mul (hf.mul hcont')
   have hhc : HasCompactSupport (fun g => c * (f g * f' g)) :=
     (hfc.mul_right).mul_left
-  rw [toyD_jA hf hf', ← integral_const_mul, toyD_weyl_integration μ hμ hh hhc]
+  rw [toyD_jA hf hf', toyD_dcScaleAG, ← Measure.real, ← integral_const_mul,
+    toyD_weyl_integration μ hμ hh hhc]
   refine gammaIntegral_congr _ μ fun T t _ => ?_
   have hreg : t ∈ regularSet (𝕋).G (𝕋).lie := by rw [toy_regularSet_eq_univ]; trivial
   simp only [hreg, ↓reduceIte]
-  rw [toyD_weylIntegrand, toyD_weylDisc, Real.sqrt_one, Complex.ofReal_one, one_mul,
-    toyD_thetaF_eq hf, toyD_orbitalIntegralOn, Pi.smul_apply, smul_eq_mul]
+  rw [toyD_weylIntegrand, toyD_weylDisc, Real.sqrt_one, Complex.ofReal_one, one_mul, hBP,
+    toyD_orbitalIntegralOn]
   ring
 
 end GSpinGGP.GGPData
