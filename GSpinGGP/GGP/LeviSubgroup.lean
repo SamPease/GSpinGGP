@@ -310,12 +310,6 @@ theorem isTotallyIsotropic_span_of_orth
   rw [← QuadraticMap.associated_eq_self_apply K Q]
   exact horth u hu u hu
 
-/-- The span of basis vectors of negative weight is totally isotropic. -/
-theorem IsFlagSplitting.isTotallyIsotropic_span (hs : IsFlagSplitting F b wt) {s : Set ι}
-    (hneg : ∀ j ∈ s, wt j < 0) : IsTotallyIsotropic Q (Submodule.span K (b '' s)) :=
-  isTotallyIsotropic_span_of_orth hs.orth fun i hi j hj => by
-    have := hneg i hi; have := hneg j hj; omega
-
 variable (Q b wt) in
 /-- **A weight grading of length `n`**: integer weights on a basis `b` of `V` with
 `b(bᵢ, bⱼ) = 0` unless `wtᵢ + wtⱼ = 0`, total weight `0`, and positive weights exactly

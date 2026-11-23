@@ -179,7 +179,9 @@ Proof sketch.  `T = G_x` is a maximal torus (`commute_of_mem_centG`); `M(x)` is 
 its maximal split subtorus `A_T`.  On `W` (and likewise `V`), `s = P(x_W) ∈ SO(W)` is semisimple;
 `W = ⊕_p W_p`, `W_p = ker p(s)` over the monic irreducible factors `p` of its characteristic
 polynomial, and `b` pairs `W_p` with `W_{p*}` (`p*` the reciprocal polynomial), so `W_p` is
-totally isotropic for `p ≠ p*` and nondegenerate for `p = p*`.  The split part of `T` acts on
+totally isotropic for `p ≠ p*` and nondegenerate for `p = p*`.  The eigenspaces `W_{t∓1}` have
+dimension `≤ 2`, since `x` is regular (`𝔤_x` abelian, while `𝔰𝔬` of a space of dimension `≥ 3`
+is not).  The split part of `T` acts on
 `W_p ⊕ W_{p*}` (`p ≠ p*`) by `τ` on `W_p` and `τ⁻¹` on `W_{p*}`; on a `W_p` with `p = p*` of
 degree `≥ 2` it acts trivially (the centralizer there is a norm-one torus, anisotropic); on an
 eigenspace `W_{t∓1}` that is a hyperbolic plane it acts by `τ^{±1}` on its two isotropic lines,
