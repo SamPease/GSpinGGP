@@ -265,8 +265,9 @@ def EllTorus.Conj (T T' : EllTorus d) : Prop :=
 /-- The `G(F)`-conjugacy classes of elliptic maximal tori. -/
 def EllTorusClass : Type _ := Quot (EllTorus.Conj (d := d))
 
-/-- `|W(G,T)| = |N_G(T)(F)/T(F)|`. -/
-def ellWeylCard (T : Subgroup ↥d.G) : ℕ :=
+/-- `|W(G,T)| = |N_G(T)(F)/T(F)|`, for any subgroup `T` of `G(F)` (used for elliptic tori here and for
+all maximal tori in `gammaIntegral`, `TraceFormula/GammaG.lean`). -/
+def weylCardG (T : Subgroup ↥d.G) : ℕ :=
   Nat.card (↥(Subgroup.normalizer (T : Set ↥d.G)) ⧸
     T.subgroupOf (Subgroup.normalizer (T : Set ↥d.G)))
 
@@ -301,7 +302,7 @@ def ellTorusIntegral (Θ Θ' : ↥d.G → ℂ) (T : Subgroup ↥d.G) : ℂ :=
 
 /-- **The elliptic inner product** `⟨Θ, Θ'⟩_ell` (Arthur 1993, §1–§6; BP §2.7; Thesis §3.4). -/
 def ellInner (Θ Θ' : ↥d.G → ℂ) : ℂ :=
-  ∑' c : EllTorusClass d, ((ellWeylCard d (Quot.out c).1 : ℂ))⁻¹ *
+  ∑' c : EllTorusClass d, ((weylCardG d (Quot.out c).1 : ℂ))⁻¹ *
     ellTorusIntegral d Θ Θ' (Quot.out c).1
 
 theorem ellTorusIntegral_conj (Θ Θ' : ↥d.G → ℂ) (T : Subgroup ↥d.G) :

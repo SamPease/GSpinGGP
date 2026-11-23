@@ -43,8 +43,10 @@ Haar measure on `G_x(F)` is right invariant (`isMulRightInvariant_of_mem_regular
 
 * `GGPData.centG x`: `G_x(F)` as a closed subgroup of `G(F)`; `GGPData.CentQuot x`:
   `G_x(F)\G(F)`.
-* `GGPData.orbQuotMeasure x μ`: the quotient measure `dg/μ` on `G_x(F)\G(F)`.
-* `GGPData.orbitalIntegral x μ f`: `J_G(x, f)`.
+* `GGPData.quotMeasureOn T μ`, `GGPData.orbitalIntegralOn T μ t f`: `dg/μ` on `T(F)\G(F)` and
+  `J_G(t, f)` for a subgroup `T` with `G_t(F) = T(F)`.
+* `GGPData.orbQuotMeasure x μ`: the quotient measure `dg/μ` on `G_x(F)\G(F)` (`T = G_x(F)`).
+* `GGPData.orbitalIntegral x μ f`: `J_G(x, f)` (`T = G_x(F)`, `t = x`).
 * `GGPData.weightedOrbitalIntegral L K x μ f`: `J_M(x, f)`.
 
 ## Main results
@@ -75,6 +77,45 @@ variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 namespace GGPData
 
 variable (d : GGPData F)
+
+/-! ## 0. The quotient by a closed subgroup -/
+
+section OnSubgroup
+
+variable (T : Subgroup ↥d.G)
+
+open scoped Classical in
+/-- **The quotient measure `dg/μ` on `T(F)\G(F)`** for a subgroup `T` of `G(F)` and a measure `μ`
+on `T(F)` (Weil's formula against `dg = Measure.haar`), chosen by the epsilon pattern; `0` if
+there is none.  `orbQuotMeasure x μ` is the case `T = G_x(F)`; indexing by `T` lets one quotient
+serve every `t ∈ T(F)` (as in the Weyl integration formula, `TraceFormula/GammaG.lean`). -/
+def quotMeasureOn (μ : Measure ↥T) : Measure (CosetSpace T.subtype) :=
+  if h : ∃ m, IsWeilMeasure T.subtype (Measure.haar : Measure ↥d.G) μ m then h.choose else 0
+
+/-- **`dg/μ` is the Weil measure** for a closed subgroup `T` and a right invariant Haar measure `μ`
+(from `weil_quotient`). -/
+theorem quotMeasureOn_spec (hT : IsClosed (T : Set ↥d.G)) (μ : Measure ↥T) [μ.IsHaarMeasure]
+    [μ.IsMulRightInvariant] :
+    IsWeilMeasure T.subtype Measure.haar μ (d.quotMeasureOn T μ) := by
+  classical
+  have : LocallyCompactSpace ↥T := hT.locallyCompactSpace
+  have : SecondCountableTopology ↥T := Topology.IsEmbedding.subtypeVal.secondCountableTopology
+  have h := (weil_quotient T.subtype continuous_subtypeVal hT.isClosedEmbedding_subtypeVal
+    Measure.haar μ).exists
+  unfold quotMeasureOn
+  rw [dite_eq_left_of_eq_true (eq_true h)]
+  exact h.choose_spec
+
+/-- **The normalized orbital integral `J_G(t, f)` with `G_t(F) = T(F)`**:
+`D^G(t)^{1/2} ∫_{T(F)\G(F)} f(g⁻¹ t g) dg` for the quotient measure `dg/μ` (`quotMeasureOn`),
+integrating over the representatives `CosetSpace.out`.  For `t` regular with `centG t = T` it is
+Beuzart-Plessis' `J_G(t, f)` (§1.8, p. 33); `orbitalIntegral x μ f` is the case `T = G_x(F)`,
+`t = x`. -/
+def orbitalIntegralOn (μ : Measure ↥T) (t : ↥d.G) (f : ↥d.G → ℂ) : ℂ :=
+  (Real.sqrt (weylDisc d.lie (t : d.ambientˣ)) : ℂ) *
+    ∫ q, f ((CosetSpace.out _ q)⁻¹ * t * CosetSpace.out _ q) ∂d.quotMeasureOn T μ
+
+end OnSubgroup
 
 /-! ## 1. `G_x(F)\G(F)` and its measure -/
 
@@ -131,28 +172,21 @@ instance isClosed_range_centG : IsClosed ((d.centG x).subtype.range : Set ↥d.G
 /-- **`G_x(F)\G(F)`**, the space of right cosets `G_x(F) g`. -/
 abbrev CentQuot : Type := CosetSpace (d.centG x).subtype
 
-open scoped Classical in
 /-- **The quotient measure `dg/μ` on `G_x(F)\G(F)`** (Beuzart-Plessis §1.8, §1.10): for
 `dg = Measure.haar` on `G(F)` and a measure `μ` on `G_x(F)`, the measure `m` with
-`∫_G φ dg = ∫_{G_x\G} ∫_{G_x} φ(c g) dμ(c) dm(g)` for `φ ∈ C_c(G(F))` (`IsWeilMeasure`), chosen
-by the epsilon pattern; `0` if there is none.  For `μ` Haar and right invariant it exists and is
-unique (`orbQuotMeasure_spec`, `orbQuotMeasure_eq`). -/
+`∫_G φ dg = ∫_{G_x\G} ∫_{G_x} φ(c g) dμ(c) dm(g)` for `φ ∈ C_c(G(F))` (`IsWeilMeasure`):
+`quotMeasureOn (G_x(F)) μ`.  For `μ` Haar and right invariant it exists and is unique
+(`orbQuotMeasure_spec`, `orbQuotMeasure_eq`). -/
 def orbQuotMeasure (μ : Measure ↥(d.centG x)) : Measure (d.CentQuot x) :=
-  if h : ∃ m, IsWeilMeasure (d.centG x).subtype (Measure.haar : Measure ↥d.G) μ m then h.choose
-  else 0
+  d.quotMeasureOn (d.centG x) μ
 
 variable {x} (μ : Measure ↥(d.centG x)) [μ.IsHaarMeasure] [μ.IsMulRightInvariant]
 
-/-- **`dg/μ` is the Weil measure** (from `weil_quotient`): `G(F)` is unimodular
-(`isMulRightInvariant_haar_G`), and `G_x(F)` is closed. -/
+/-- **`dg/μ` is the Weil measure** (from `weil_quotient`, `quotMeasureOn_spec`): `G(F)` is
+unimodular (`isMulRightInvariant_haar_G`), and `G_x(F)` is closed. -/
 theorem orbQuotMeasure_spec :
-    IsWeilMeasure (d.centG x).subtype Measure.haar μ (d.orbQuotMeasure x μ) := by
-  classical
-  have h := (weil_quotient (d.centG x).subtype continuous_subtypeVal
-    (d.isClosedEmbedding_centG x) Measure.haar μ).exists
-  unfold orbQuotMeasure
-  rw [dite_eq_left_of_eq_true (eq_true h)]
-  exact h.choose_spec
+    IsWeilMeasure (d.centG x).subtype Measure.haar μ (d.orbQuotMeasure x μ) :=
+  d.quotMeasureOn_spec _ (d.isClosed_centG x) μ
 
 /-- Uniqueness: any Weil measure for `dg` and `μ` is `orbQuotMeasure x μ`. -/
 theorem orbQuotMeasure_eq {m : Measure (d.CentQuot x)}
@@ -202,10 +236,14 @@ def weightedIntegrand (f : ↥d.G → ℂ) (g : ↥d.G) : ℂ :=
 /-- **The normalized orbital integral** `J_G(x, f) = D^G(x)^{1/2} ∫_{G_x(F)\G(F)} f(g⁻¹ x g) dg`
 (Beuzart-Plessis §1.8, p. 33; Thesis §2.6), for the quotient measure `dg/μ`
 (`orbQuotMeasure`), integrating over the representatives `CosetSpace.out` (the integrand is
-left `G_x(F)`-invariant). -/
+left `G_x(F)`-invariant): `orbitalIntegralOn (G_x(F)) μ x f`. -/
 def orbitalIntegral (μ : Measure ↥(d.centG x)) (f : ↥d.G → ℂ) : ℂ :=
-  (Real.sqrt (weylDisc d.lie (x : d.ambientˣ)) : ℂ) *
-    ∫ q, f ((CosetSpace.out _ q)⁻¹ * x * CosetSpace.out _ q) ∂d.orbQuotMeasure x μ
+  d.orbitalIntegralOn (d.centG x) μ x f
+
+/-- `orbitalIntegral` unfolded, with the quotient measure written as `orbQuotMeasure`. -/
+theorem orbitalIntegral_eq (μ : Measure ↥(d.centG x)) (f : ↥d.G → ℂ) :
+    d.orbitalIntegral x μ f = (Real.sqrt (weylDisc d.lie (x : d.ambientˣ)) : ℂ) *
+      ∫ q, f ((CosetSpace.out _ q)⁻¹ * x * CosetSpace.out _ q) ∂d.orbQuotMeasure x μ := rfl
 
 /-- **Arthur's weighted orbital integral** (Beuzart-Plessis §1.10, p. 36; Waldspurger 2010, §2.3;
 Thesis §2.6): for a Levi subgroup `M` (the reduced Levi datum `L`), a good compact subgroup `K`
@@ -234,7 +272,8 @@ theorem weightedIntegrand_mul_left (hM : d.centG x ≤ L.M) (f : ↥d.G → ℂ)
 theorem weightedOrbitalIntegral_eq_orbitalIntegral_of_aG_eq_top (hG : L.aG = ⊤)
     (μ : Measure ↥(d.centG x)) (f : ↥d.G → ℂ) :
     d.weightedOrbitalIntegral L K x μ f = d.orbitalIntegral x μ f := by
-  simp [weightedOrbitalIntegral, orbitalIntegral, weightedIntegrand,
+  simp [weightedOrbitalIntegral, orbitalIntegral, orbitalIntegralOn, orbQuotMeasure,
+    weightedIntegrand,
     L.vM_eq_one_of_aG_eq_top hG]
 
 /-- **`J_G = J_M` for `M = G`** given by empty flags (`vM_eq_one_of_len_eq_zero`). -/
@@ -334,7 +373,7 @@ theorem orbQuotMeasure_zero : d.orbQuotMeasure x 0 = 0 := by
   classical
   have h : ¬ ∃ m, IsWeilMeasure (d.centG x).subtype (Measure.haar : Measure ↥d.G) 0 m :=
     fun ⟨_, hm⟩ => not_isWeilMeasure_zero hm
-  unfold orbQuotMeasure
+  unfold orbQuotMeasure quotMeasureOn
   rw [dite_eq_right_of_eq_false (eq_false h)]
 
 theorem weightedOrbitalIntegral_zero_measure (f : ↥d.G → ℂ) :

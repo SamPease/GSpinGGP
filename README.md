@@ -41,7 +41,7 @@ satisfying the stability, transfer and genericity hypotheses, which is all the p
 
 As of November 2026:
 
-- The project builds with 43 declarations containing `sorry`. The main theorem `local_ggp`
+- The project builds with 44 declarations containing `sorry`. The main theorem `local_ggp`
   depends on 23 of them. They are of two kinds: the analytic core of the local trace formula
   (Thesis Ch. 8–12, e.g. the bound on the kernel of the distribution `J` and its spectral
   expansion), and published results that the dissertation adapts to general spin groups (see
@@ -114,7 +114,7 @@ import GSpinGGP
 | `HarmonicAnalysis/` | group-agnostic harmonic analysis on locally compact groups (log-norms, BP §1.2; the function `Ξ^{H\G}` and polynomial growth, BP Prop 6.7.1(i),(iii),(iv)) |
 | `GGP/` | GGP triples, inner forms, semisimple descent, Levi subgroups |
 | `Literature/` | results assumed from the literature (Harish-Chandra, Waldspurger, Beuzart-Plessis, Arthur, Kottwitz, …) |
-| `TraceFormula/` | quasi-characters, `θ_f`, the distributions `J` and `J^Lie`, `m_geom`, spectral and geometric expansions |
+| `TraceFormula/` | quasi-characters, `θ_f`, `Γ(G)` and the Weyl integration formula, the distributions `J`, `J^A` and `J^Lie`, `m_geom`, spectral and geometric expansions |
 | `Main.lean` | the multiplicity formula and the deduction of the main theorem |
 | `Sanity/` | checks of definitions, and of the literature axioms (`Sanity/AxiomRedTeam.lean`), on small examples |
 
