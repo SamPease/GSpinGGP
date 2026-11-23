@@ -193,6 +193,7 @@ import GSpinGGP.TraceFormula.MGeom
 import GSpinGGP.TraceFormula.MGeomLimit
 import GSpinGGP.TraceFormula.Scusp
 import GSpinGGP.TraceFormula.Spectral
+import GSpinGGP.TraceFormula.GammaG
 import GSpinGGP.TraceFormula.Geometric
 import GSpinGGP.TraceFormula.Lie
 import GSpinGGP.TraceFormula.Spine
@@ -227,5 +228,6 @@ import GSpinGGP.Sanity.GL2Weight
 import GSpinGGP.Sanity.WeightedOrbitalAudit
 import GSpinGGP.Sanity.ThetaFBPAudit
 import GSpinGGP.Sanity.DcQuotientAudit
+import GSpinGGP.Sanity.GammaGAudit
 import GSpinGGP.Sanity.UnitaryRepAudit
 import GSpinGGP.Sanity.UnramifiedAudit
