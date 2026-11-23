@@ -11,7 +11,7 @@ import GSpinGGP.Sanity.WeightedOrbitalAudit
 At the toy datum `toyD` (`G = GL₁ × GL₁`, commutative) take the reduced Levi datum with empty flags
 (`M = G`).  Then `A_M(F) = G(F)` (`P(g) = 1`), every `x` is regular with `G_x(F) = G(F)`, so
 `IsMx L x` holds for every `x` (`x` is elliptic in `M = G`); `A_M(F) ∩ ker H_M` is
-`{(c₁, c₂) : |c₁| = |c₂| = 1}`, compact and open, so `d_c t` exists (`exists_isDcMeasure`) and is
+`{(c₁, c₂) : |c₁| = |c₂| = 1}` (`toyD_AGxOne_eq`), so `d_c t` exists (`IsMx.exists_isDcMeasure`) and is
 the Haar measure giving `O^× × O^×` measure `1`.  The sign is `1`, `D^G = 1`, `v_M = 1`, and
 `θ_f(x) = c f(x)` with `c = Measure.haar(O^× × O^×) > 0` (`toyD_thetaFBP`): `c` is the mass of the
 point `G_x(F)\G(F)` for `dg / d_c t` (`toyD_orbQuotMeasure_dc`), which tests the normalization
@@ -127,10 +127,6 @@ theorem isCompact_toyOneSet : IsCompact (toyOneSet (F := F)) := by
 def toyEmb (L : (𝕋).ReducedLeviDatum) (x : ↥(𝕋).G) : ↥(L.AGx x) → ↥(𝕋).G :=
   fun a => ((a : ↥((𝕋).centG x)) : ↥(𝕋).G)
 
-theorem isClosedEmbedding_toyEmb (L : (𝕋).ReducedLeviDatum) (x : ↥(𝕋).G) :
-    Topology.IsClosedEmbedding (toyEmb L x) :=
-  ((𝕋).isClosedEmbedding_centG x).comp (L.isClosedEmbedding_AGx x)
-
 /-- For empty flags, `A_M(F) ∩ ker H_M` is `{|c₁| = |c₂| = 1}`. -/
 theorem toyD_AGxOne_eq (L : (𝕋).ReducedLeviDatum) (hW : L.FW.len = 0) (hV : L.FV.len = 0)
     (x : ↥(𝕋).G) :
@@ -156,14 +152,16 @@ theorem toyD_AGxOne_eq (L : (𝕋).ReducedLeviDatum) (hW : L.FW.len = 0) (hV : L
     · exact absurd (i.isLt.trans_eq hV) (Nat.not_lt_zero _)
     · exact (hpos _).2 h2
 
-theorem toyD_exists_isDcMeasure (L : (𝕋).ReducedLeviDatum) (hM : L.M = ⊤) (hW : L.FW.len = 0)
-    (hV : L.FV.len = 0) (x : ↥(𝕋).G) : ∃ μ, L.IsDcMeasure x μ := by
-  have := (toyD_isMx L hM x).compact
-  refine ReducedLeviDatum.exists_isDcMeasure (toyD_isMx L hM x).regular ?_ ?_
-  · rw [toyD_AGxOne_eq L hW hV]
-    exact isOpen_toyOneSet.preimage (isClosedEmbedding_toyEmb L x).continuous
-  · rw [toyD_AGxOne_eq L hW hV]
-    exact (isClosedEmbedding_toyEmb L x).isCompact_preimage isCompact_toyOneSet
+/-- `ReducedLeviDatum.ofGrading` (the intended witness of `exists_isMx`) at the toy datum: the datum
+rebuilt from the splittings of `L` (as weight gradings) satisfies `IsMx` for every `x`. -/
+theorem toyD_isMx_ofGrading (L : (𝕋).ReducedLeviDatum) (hM : L.M = ⊤) (x : ↥(𝕋).G) :
+    (ReducedLeviDatum.ofGrading L.bW L.wtW L.hsW.isWtGrading L.bV L.wtV L.hsV.isWtGrading
+      L.reducedW L.reducedV).IsMx x :=
+  toyD_isMx _ (by rw [ReducedLeviDatum.ofGrading_splitting_M]; exact hM) x
+
+theorem toyD_exists_isDcMeasure (L : (𝕋).ReducedLeviDatum) (hM : L.M = ⊤) (x : ↥(𝕋).G) :
+    ∃ μ, L.IsDcMeasure x μ :=
+  (toyD_isMx L hM x).exists_isDcMeasure
 
 end Toy
 
@@ -280,7 +278,7 @@ theorem toyD_thetaFBP :
   let K : (𝕋).GoodK L.toFlagLeviDatum := GoodK.ofEqTop hM toyXiPair.K toyXiPair.isOpen_K
     toyXiPair.isCompact_K (toyD_stabilizesSplitLattice _ _).1 (toyD_stabilizesSplitLattice _ _).2
   have hdc : ∀ x, L.IsDcMeasure x (L.dcMeasure x) := fun x =>
-    ReducedLeviDatum.isDcMeasure_dcMeasure (toyD_exists_isDcMeasure L hM rfl rfl x)
+    ReducedLeviDatum.isDcMeasure_dcMeasure (toyD_exists_isDcMeasure L hM x)
   refine ⟨L, K, toyD_isMx L hM, hdc, ?_, fun x f => ?_⟩
   · exact ENNReal.toReal_pos (isOpen_toyOneSet.measure_pos _ ⟨1, one_mem_toyOneSet⟩).ne'
       isCompact_toyOneSet.measure_lt_top.ne
