@@ -73,7 +73,7 @@ theorem toyD_orbitalIntegral (x : ↥(𝕋).G) :
   have hpt : ∀ q : (𝕋).CentQuot x,
       f ((CosetSpace.out ι q)⁻¹ * x * CosetSpace.out ι q) = f x := fun q => by
     rw [mul_assoc, toyD_G_comm x, inv_mul_cancel_left]
-  unfold orbitalIntegral
+  rw [orbitalIntegral_eq]
   rw [hD, Real.sqrt_one]
   simp_rw [ι] at hpt; simp_rw [hpt]
   rw [integral_const, Complex.real_smul]
