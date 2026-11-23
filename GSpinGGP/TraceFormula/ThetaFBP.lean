@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.TraceFormula.RegularCentralizer
 import GSpinGGP.TraceFormula.ThetaF
-import GSpinGGP.GGP.LeviLattice
+import GSpinGGP.GGP.LatticeK
 
 /-!
 # Beuzart-Plessis' `θ_f` by its formula
@@ -46,8 +46,8 @@ uses `d_c t` and has no separate factor `ν`.
   cuspidal `f` it does not (Beuzart-Plessis Lemma 5.2.1(ii); Waldspurger 2010, Lemme 5.2), which is
   not proved here.
 * When `d_c t` does not exist (no `IsDcMeasure`), `dcMeasure` is `0` and `thetaFBP` is `0`.  It
-  exists for `IsMx L x` once `A_M(F) ∩ ker H_M` is compact and open in `A_M(F)`
-  (`exists_isDcMeasure`).
+  exists for `IsMx L x` (`exists_isDcMeasure`, `IsMx.exists_isDcMeasure`): `A_M(F) ∩ ker H_M` is
+  compact and open in `A_M(F)` (`isCompact_AGxOne`, `isOpen_AGxOne`).
 
 ## Main definitions
 
@@ -61,8 +61,9 @@ uses `d_c t` and has no separate factor `ν`.
 ## Main results
 
 * `IsMx.centG_le`: `G_x(F) ⊆ M(F)` (and `x ∈ M(F)` by definition).
-* `IsDcMeasure.unique`, `dcMeasure_eq`: `d_c t` is unique; `exists_isDcMeasure`: it exists when
-  `A_M(F) ∩ ker H_M` is compact and open and `G_x(F)/A_M(F)` is compact.
+* `isCompact_AGxOne`, `isOpen_AGxOne`: `A_M(F) ∩ ker H_M` is compact and open in `A_M(F)`.
+* `IsDcMeasure.unique`, `dcMeasure_eq`: `d_c t` is unique; `exists_isDcMeasure`,
+  `IsMx.exists_isDcMeasure`: it exists when `G_x(F)/A_M(F)` is compact, e.g. for `IsMx L x`.
 * `dcMeasure_conj`: `d_c t` is transported by conjugation by `M(F)`.
 * `thetaFBP_eq_integral`: `thetaFBP = (−1)^{dim a_M^G} ∫_{G_x\G} f(g⁻¹ x g) v_M(g) dg/d_c t`.
 * `thetaFBP_conj`: `thetaFBP(m x m⁻¹) = thetaFBP(x)` for `m ∈ M(F)`.
@@ -108,13 +109,27 @@ def AGxToM (x : ↥d.G) : ↥(L.AGx x) →* ↥L.M :=
 /-- **The maximal compact subgroup `A_{G_x}(F)^1 = A_M(F) ∩ ker H_M`** (the subgroup of measure `1`
 for `d_c a`, Beuzart-Plessis §1.6).  For the split torus `A_M`, `H_M(A_M(F))` is a lattice of full
 rank in `a_M` (`span_HMAMF_eq_top`, `exists_HM_mem_zmultiples`), so `ker H_M ∩ A_M(F) = A_M(O)` is
-the maximal compact subgroup.  That it is compact and open is not proved here in general; it is a
-hypothesis of `exists_isDcMeasure`, checked at `toyD`. -/
+the maximal compact subgroup.  It is compact and open (`isCompact_AGxOne`, `isOpen_AGxOne`): on
+`A_M(F)`, `ker H_M` is the lattice stabilizer `latticeK` of the splitting bases
+(`HM_eq_zero_iff_mem_latticeK`). -/
 def AGxOne (x : ↥d.G) : Subgroup ↥(L.AGx x) := (L.HMHom.comp (L.AGxToM x)).ker
 
 theorem mem_AGxOne {x : ↥d.G} {a : ↥(L.AGx x)} :
     a ∈ L.AGxOne x ↔ L.HM (L.AGxToM x a) = 0 := by
   rw [AGxOne, MonoidHom.mem_ker]; rfl
+
+/-- `A_{G_x}(F)^1` is the preimage of the lattice stabilizer `latticeK` of the splitting bases
+(`HM_eq_zero_iff_mem_latticeK`). -/
+theorem AGxOne_eq_preimage (x : ↥d.G) : (L.AGxOne x : Set ↥(L.AGx x)) =
+    (fun a : ↥(L.AGx x) => ((a : ↥(d.centG x)) : ↥d.G)) ⁻¹' d.latticeK L.bWFin L.bVFin := by
+  ext a
+  rw [SetLike.mem_coe, mem_AGxOne]
+  exact L.HM_eq_zero_iff_mem_latticeK (m := L.AGxToM x a) (mem_AGx.1 a.2)
+
+/-- **`A_{G_x}(F)^1` is open** in `A_{G_x}(F)` (`latticeK` is open). -/
+theorem isOpen_AGxOne (x : ↥d.G) : IsOpen (L.AGxOne x : Set ↥(L.AGx x)) := by
+  rw [AGxOne_eq_preimage]
+  exact (d.isOpen_latticeK _ _).preimage (continuous_subtypeVal.comp continuous_subtypeVal)
 
 theorem isClosed_AGx (x : ↥d.G) : IsClosed (L.AGx x : Set ↥(d.centG x)) :=
   L.isClosed_AMF.preimage continuous_subtypeVal
@@ -131,6 +146,13 @@ theorem isClosedEmbedding_AGx (x : ↥d.G) : IsClosedEmbedding (L.AGx x).subtype
 instance isClosed_range_AGx (x : ↥d.G) :
     IsClosed ((L.AGx x).subtype.range : Set ↥(d.centG x)) := by
   rw [Subgroup.range_subtype]; exact L.isClosed_AGx x
+
+/-- **`A_{G_x}(F)^1` is compact** (`latticeK` is compact, and `A_{G_x}(F) → G(F)` is a closed
+embedding). -/
+theorem isCompact_AGxOne (x : ↥d.G) : IsCompact (L.AGxOne x : Set ↥(L.AGx x)) := by
+  rw [AGxOne_eq_preimage]
+  exact ((d.isClosedEmbedding_centG x).comp (L.isClosedEmbedding_AGx x)).isCompact_preimage
+    (d.isCompact_latticeK _ _)
 
 /-- **`L.M = M(x)`** (Beuzart-Plessis §5.2: `M(x)` is the centralizer of `A_{G_x}`, the minimal
 Levi subgroup containing `x`): `x` is regular semisimple, lies in `M(F)`, and is elliptic in `M`,
@@ -219,13 +241,14 @@ theorem dcMeasure_of_not_exists {x : ↥d.G} (h : ¬ ∃ μ, L.IsDcMeasure x μ)
   unfold dcMeasure
   rw [dite_eq_right_of_eq_false (eq_false h)]
 
-/-- **Existence of `d_c t`**, when `A_M(F) ∩ ker H_M` is compact and open in `A_M(F)` and
-`G_x(F)/A_M(F)` is compact (`IsMx`): normalize a Haar measure of `A_M(F)` on `AGxOne`, and a Haar
-measure of `G_x(F)` by the (finite, nonzero) total mass of the quotient. -/
+/-- **Existence of `d_c t`**, when `G_x(F)/A_M(F)` is compact (`IsMx`): normalize a Haar measure
+of `A_M(F)` on the compact open subgroup `AGxOne` (`isCompact_AGxOne`, `isOpen_AGxOne`), and a
+Haar measure of `G_x(F)` by the (finite, nonzero) total mass of the quotient. -/
 theorem exists_isDcMeasure {x : ↥d.G} (hx : x ∈ regularSet d.G d.lie)
-    [hc : CompactSpace (CosetSpace (L.AGx x).subtype)]
-    (ho : IsOpen (L.AGxOne x : Set ↥(L.AGx x))) (hk : IsCompact (L.AGxOne x : Set ↥(L.AGx x))) :
+    [hc : CompactSpace (CosetSpace (L.AGx x).subtype)] :
     ∃ μ, L.IsDcMeasure x μ := by
+  have ho := L.isOpen_AGxOne x
+  have hk := L.isCompact_AGxOne x
   set A1 : Set ↥(L.AGx x) := (L.AGxOne x : Set ↥(L.AGx x))
   set ι := (L.AGx x).subtype
   -- `d_c a`: the Haar measure normalized on the compact open subgroup `A¹`
@@ -245,6 +268,11 @@ theorem exists_isDcMeasure {x : ↥d.G} (hx : x ∈ regularSet d.G d.lie)
   refine ⟨(m0 Set.univ)⁻¹ • ν0, Measure.IsHaarMeasure.smul ν0 (ENNReal.inv_ne_zero.2 hfin)
     (ENNReal.inv_ne_top.2 hpos), μA, (m0 Set.univ)⁻¹ • m0, hA, hA1, hW0.smul_left _, ?_⟩
   simp only [smul_apply, smul_eq_mul, ENNReal.inv_mul_cancel hpos hfin]
+
+/-- **`d_c t` exists for `L.M = M(x)`.** -/
+theorem IsMx.exists_isDcMeasure {x : ↥d.G} (h : L.IsMx x) : ∃ μ, L.IsDcMeasure x μ := by
+  have := h.compact
+  exact ReducedLeviDatum.exists_isDcMeasure h.regular
 
 /-! ### Transport by conjugation in `M(F)` -/
 

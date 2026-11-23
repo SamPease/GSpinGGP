@@ -73,6 +73,30 @@ theorem IsFlagSplitting.card_wt_neg (hQ : IsNondeg Q) (hs : IsFlagSplitting F b 
   refine le_antisymm ?_ (hs.card_wt_le_card_wt_neg hQ c)
   simpa using hs.card_wt_le_card_wt_neg hQ (-c)
 
+/-- **Every basis vector pairs with one of opposite weight**: `b(bⱼ, bₖ) ≠ 0` for some `k` with
+`wtₖ = −wtⱼ` (`b` is nondegenerate and `b(bⱼ, bₖ) = 0` unless `wtⱼ + wtₖ = 0`). -/
+theorem IsFlagSplitting.exists_bform_ne (hQ : IsNondeg Q) (hs : IsFlagSplitting F b wt) (j : ι) :
+    ∃ k, wt k = -wt j ∧ bform Q (b j) (b k) ≠ 0 := by
+  by_contra hne
+  push Not at hne
+  refine b.ne_zero j (hQ.1 (b j) fun y => ?_)
+  rw [← b.sum_repr y, map_sum]
+  refine Finset.sum_eq_zero fun k _ => ?_
+  rw [map_smul, smul_eq_mul]
+  by_cases hk : wt k = -wt j
+  · rw [hne k hk, mul_zero]
+  · rw [hs.orth j k (fun h => hk (by omega)), mul_zero]
+
+/-- **Opposite weights have inverse scalars**: if `P(g) bⱼ = t(wtⱼ) bⱼ` for all `j`, then
+`t(w) t(−w) = 1` for every weight `w` of the splitting (`P(g)` preserves `b`). -/
+theorem IsFlagSplitting.mul_neg_eq_one (hQ : IsNondeg Q) (hs : IsFlagSplitting F b wt)
+    {g : GSpin Q} {t : ℤ → K} (ht : ∀ j, specP Q g (b j) = t (wt j) • b j) (j : ι) :
+    t (wt j) * t (-wt j) = 1 := by
+  obtain ⟨k, hk, hne⟩ := hs.exists_bform_ne hQ j
+  have h := bform_specP g (b j) (b k)
+  simp only [ht, hk, map_smul, LinearMap.smul_apply, smul_eq_mul] at h
+  exact mul_right_cancel₀ hne (by linear_combination h)
+
 /-- The weights `1` on `w`, `−1` on `−w`, `0` elsewhere. -/
 def oneWt (w v : ℤ) : ℤ := (if v = w then 1 else 0) - (if v = -w then 1 else 0)
 

@@ -95,6 +95,32 @@ theorem mapsLattice_quadReflection [IsUltrametricDist F] (e : Basis κ F V)
   rw [norm_mul, norm_mul, norm_inv, hQu, inv_one, one_mul]
   exact le_one_mul_le_one (hpol u v hu hv) (norm_nonneg _) (hu i)
 
+/-- `MapsLattice` does not depend on the indexing of the basis. -/
+theorem mapsLattice_reindex {κ' : Type*} (e : Basis κ F V) (σ : κ ≃ κ') (A : V →ₗ[F] V) :
+    MapsLattice (e.reindex σ) A ↔ MapsLattice e A := by
+  constructor
+  · intro h v hv i
+    have := h v (fun i' => by rw [Basis.repr_reindex_apply]; exact hv _) (σ i)
+    simpa [Basis.repr_reindex_apply] using this
+  · intro h v hv i'
+    rw [Basis.repr_reindex_apply]
+    exact h v (fun i => by simpa [Basis.repr_reindex_apply] using hv (σ i)) _
+
+/-- **Diagonal maps**: `A bⱼ = sⱼ bⱼ` preserves `Λ_b` iff `‖sⱼ‖ ≤ 1` for all `j` (ultrametric). -/
+theorem mapsLattice_iff_of_diag [Finite κ] [IsUltrametricDist F] {b : Basis κ F V}
+    {A : V →ₗ[F] V} {s : κ → F} (hA : ∀ j, A (b j) = s j • b j) :
+    MapsLattice b A ↔ ∀ j, ‖s j‖ ≤ 1 := by
+  classical
+  rw [mapsLattice_iff]
+  constructor
+  · intro h j
+    simpa [hA, b.repr_self] using h j j
+  · intro h i j
+    rw [hA, map_smul, b.repr_self, Finsupp.smul_apply, Finsupp.single_apply]
+    split_ifs
+    · simpa using h j
+    · simp
+
 end MapsLattice
 
 /-! ## The subgroup `latticeSpin` -/
@@ -190,7 +216,85 @@ theorem gspinPair_mem_latticeSpin (Q : QuadraticForm F V) (e : Basis κ F V)
     rw [LinearEquiv.coe_coe, specP_gspinPair_inv_apply]
     exact sw _ (su v hv) i
 
+omit [Module.Finite F V] in
+/-- `latticeSpin` does not depend on the indexing of the basis. -/
+theorem latticeSpin_reindex {Q : QuadraticForm F V} {κ' : Type*} (e : Basis κ F V) (σ : κ ≃ κ') :
+    latticeSpin Q (e.reindex σ) = latticeSpin Q e := by
+  ext k
+  exact and_congr (mapsLattice_reindex e σ _) (and_congr (mapsLattice_reindex e σ _) Iff.rfl)
+
 end LatticeSpin
+
+/-! ## The split centre of a flag Levi subgroup meets `latticeSpin` in the kernel of `H_M` -/
+
+section WtScalarLattice
+
+variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
+  {V : Type*} [AddCommGroup V] [Module F V] {Q : QuadraticForm F V} {Fl : IsotropicFlag Q}
+  {ι : Type*} [Fintype ι] {b : Basis ι F V} {wt : ι → ℤ}
+
+/-- **`wtScalar ∩ latticeSpin` is `wtScalar ∩ ker`**: an element `g` of the split centre
+`wtScalar` (`P(g)` is the scalar `t(w)` on the weight-`w` space, `t(0) = 1`) lies in
+`latticeSpin Q b` iff its determinant characters on the weight spaces `1, …, len` and `detChar`
+have norm `1`.  Both say `‖t(w)‖ = 1` for all weights: `det(P(g)|_{V_w}) = t(w)^{dim V_w}` for
+`w > 0`, and `t(−w) = t(w)⁻¹` (`IsFlagSplitting.mul_neg_eq_one`). -/
+theorem mem_latticeSpin_iff_of_mem_wtScalar (hQ : IsNondeg Q) (hs : IsFlagSplitting Fl b wt)
+    {g : GSpin Q} (hg : g ∈ wtScalar Q b wt) :
+    g ∈ latticeSpin Q b ↔
+      (∀ i : Fin Fl.len,
+        ‖((wtDet (Q := Q) b wt ((i : ℤ) + 1) ⟨g, wtScalar_le_flagLevi hg⟩ : Fˣ) : F)‖ = 1) ∧
+      ‖((detChar Q g : Fˣ) : F)‖ = 1 := by
+  classical
+  obtain ⟨t, ht0, ht⟩ := id hg
+  have hmul := hs.mul_neg_eq_one hQ ht
+  have hne : ∀ j, t (wt j) ≠ 0 := fun j h0 => by simpa [h0] using hmul j
+  have hinv : ∀ j, specP Q g⁻¹ (b j) = (t (wt j))⁻¹ • b j := fun j =>
+    (specP Q g).injective (by
+      rw [specP_inv_apply_apply, map_smul, ht, smul_smul, inv_mul_cancel₀ (hne j), one_smul])
+  have hdet : ∀ w : ℤ, ((wtDet (Q := Q) b wt w ⟨g, wtScalar_le_flagLevi hg⟩ : Fˣ) : F) =
+      t w ^ Fintype.card {j // wt j = w} := fun w => by
+    rw [wtDet_apply, det_wtBlock_of_diag (s := fun j => t (wt j)) ht, Fintype.card_subtype,
+      ← Finset.prod_const, Finset.prod_filter]
+    exact Finset.prod_congr rfl fun j _ => by split_ifs with h <;> simp [h]
+  -- the weight condition is `‖t(w)‖ = 1` for all weights
+  have hunit : (∀ i : Fin Fl.len,
+      ‖((wtDet (Q := Q) b wt ((i : ℤ) + 1) ⟨g, wtScalar_le_flagLevi hg⟩ : Fˣ) : F)‖ = 1) ↔
+      ∀ j, ‖t (wt j)‖ = 1 := by
+    constructor
+    · intro h
+      have hpos : ∀ w : ℤ, 1 ≤ w → w ≤ Fl.len → ‖t w‖ = 1 := by
+        intro w h1 h2
+        have hw := h ⟨(w - 1).toNat, by omega⟩
+        rw [hdet, norm_pow] at hw
+        have e : (((⟨(w - 1).toNat, by omega⟩ : Fin Fl.len) : ℕ) : ℤ) + 1 = w := by
+          simp only; omega
+        rw [e] at hw
+        obtain ⟨j, hj⟩ := hs.exists_wt_eq h1 h2
+        have hn : Fintype.card {j // wt j = w} ≠ 0 := (Fintype.card_pos_iff.2 ⟨⟨j, hj⟩⟩).ne'
+        exact (pow_eq_one_iff_of_nonneg (norm_nonneg _) hn).1 hw
+      intro j
+      rcases lt_trichotomy (wt j) 0 with hj | hj | hj
+      · have h1 := hpos (-wt j) (by omega) (by have := hs.neg_len_le j; omega)
+        have h2 := congrArg norm (hmul j)
+        rw [norm_mul, h1, mul_one, norm_one] at h2
+        exact h2
+      · rw [hj, ht0, norm_one]
+      · exact hpos (wt j) (by omega) (hs.wt_le j)
+    · intro h i
+      rw [hdet, norm_pow]
+      obtain ⟨j, hj⟩ := hs.exists_wt_eq (w := (i : ℤ) + 1) (by omega) (by have := i.isLt; omega)
+      rw [← hj, h j, one_pow]
+  rw [hunit]
+  change MapsLattice b (specP Q g : V →ₗ[F] V) ∧ MapsLattice b (specP Q g⁻¹ : V →ₗ[F] V) ∧ _ ↔ _
+  rw [mapsLattice_iff_of_diag (s := fun j => t (wt j)) ht,
+    mapsLattice_iff_of_diag (s := fun j => (t (wt j))⁻¹) hinv, ← and_assoc]
+  refine and_congr_left' ⟨fun h j => le_antisymm (h.1 j) ?_, fun h => ⟨fun j => (h j).le,
+    fun j => by rw [norm_inv, h j, inv_one]⟩⟩
+  have := h.2 j
+  rw [norm_inv] at this
+  exact (inv_le_one₀ (norm_pos_iff.2 (hne j))).1 this
+
+end WtScalarLattice
 
 /-! ## A split form of rank three: transitivity on isotropic lines -/
 
@@ -441,6 +545,68 @@ theorem isCompact_latticeK : IsCompact (d.latticeK eW eV : Set ↥d.G) := by
 theorem inr_mem_latticeK {y : GSpin d.QV} (hy : y ∈ latticeSpin d.QV eV) :
     d.inr y ∈ d.latticeK eW eV :=
   ⟨show d.fst (d.inr y) ∈ latticeSpin d.QW eW by rw [fst_inr_eq_one]; exact one_mem _, hy⟩
+
+/-! ## `A_M(F) ∩ ker H_M` is compact and open -/
+
+namespace ReducedLeviDatum
+
+variable {d} (L : d.ReducedLeviDatum)
+
+/-- The splitting basis of `W`, indexed by `Fin`. -/
+def bWFin : Basis (Fin (Fintype.card L.ιW)) F (Fin d.m → F) :=
+  L.bW.reindex (Fintype.equivFin L.ιW)
+
+/-- The splitting basis of `V`, indexed by `Fin`. -/
+def bVFin : Basis (Fin (Fintype.card L.ιV)) F d.V := L.bV.reindex (Fintype.equivFin L.ιV)
+
+omit [PAdicField F] in
+theorem log_norm_eq_zero_iff (u : Fˣ) : Real.log ‖(u : F)‖ = 0 ↔ ‖(u : F)‖ = 1 := by
+  have h0 : 0 < ‖(u : F)‖ := norm_pos_iff.2 u.ne_zero
+  rw [Real.log_eq_zero]
+  constructor
+  · rintro (h | h | h)
+    · exact absurd h h0.ne'
+    · exact h
+    · linarith
+  · exact fun h => Or.inr (Or.inl h)
+
+/-- **On `A_M(F)`, `ker H_M` is the lattice stabilizer `latticeK`** of the splitting bases:
+`m ∈ A_M(F)` acts by scalars `t(w)` on the weight spaces, and both conditions say `‖t(w)‖ = 1`
+for all `w` and `‖detChar‖ = 1` on both factors (`mem_latticeSpin_iff_of_mem_wtScalar`). -/
+theorem HM_eq_zero_iff_mem_latticeK {m : ↥L.M} (hm : (m : ↥d.G) ∈ L.AMF) :
+    L.HM m = 0 ↔ (m : ↥d.G) ∈ d.latticeK L.bWFin L.bVFin := by
+  rw [L.mem_AMF_iff] at hm
+  have eK : (m : ↥d.G) ∈ d.latticeK L.bWFin L.bVFin ↔
+      d.fst m ∈ latticeSpin d.QW L.bW ∧ d.snd m ∈ latticeSpin d.QV L.bV := by
+    change d.fst m ∈ latticeSpin d.QW L.bWFin ∧ d.snd m ∈ latticeSpin d.QV L.bVFin ↔ _
+    rw [bWFin, bVFin, latticeSpin_reindex, latticeSpin_reindex]
+  rw [eK, mem_latticeSpin_iff_of_mem_wtScalar d.nondeg L.hsW hm.1,
+    mem_latticeSpin_iff_of_mem_wtScalar d.nondeg_QV L.hsV hm.2, funext_iff]
+  simp only [Sum.forall, Unique.forall_iff, Pi.zero_apply, HM, log_norm_eq_zero_iff]
+  rfl
+
+/-- `A_M(F) ∩ ker H_M`, as a set of `G(F)`. -/
+def AMFOne : Set ↥d.G := {g | g ∈ L.AMF ∧ ∀ hm : g ∈ L.M, L.HM ⟨g, hm⟩ = 0}
+
+theorem AMFOne_eq : L.AMFOne = (L.AMF : Set ↥d.G) ∩ d.latticeK L.bWFin L.bVFin := by
+  ext g
+  refine ⟨fun ⟨ha, h⟩ => ⟨ha, (L.HM_eq_zero_iff_mem_latticeK (m := ⟨g, L.AMF_le_M ha⟩) ha).1
+    (h _)⟩, fun ⟨ha, h⟩ => ⟨ha, fun hm => ?_⟩⟩
+  exact (L.HM_eq_zero_iff_mem_latticeK (m := ⟨g, hm⟩) ha).2 h
+
+/-- **`A_M(F) ∩ ker H_M` is compact** (Beuzart-Plessis, Astérisque 418, §1.6: the maximal compact
+subgroup `A_M(F)^1` of the split torus `A_M(F)`): it is a closed subset of the compact
+`latticeK` (`AMFOne_eq`, `isCompact_latticeK`). -/
+theorem isCompact_AMFOne : IsCompact L.AMFOne := by
+  rw [AMFOne_eq]
+  exact (d.isCompact_latticeK _ _).inter_left L.isClosed_AMF
+
+/-- **`A_M(F) ∩ ker H_M` is open in `A_M(F)`**: it is `A_M(F) ∩ latticeK`, and `latticeK` is open
+in `G(F)`. -/
+theorem AMFOne_eq_inter_isOpen : ∃ U : Set ↥d.G, IsOpen U ∧ L.AMFOne = (L.AMF : Set ↥d.G) ∩ U :=
+  ⟨_, d.isOpen_latticeK _ _, L.AMFOne_eq⟩
+
+end ReducedLeviDatum
 
 end GGPData
 
