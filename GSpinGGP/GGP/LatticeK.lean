@@ -146,6 +146,32 @@ def latticeSpin (Q : QuadraticForm F V) (e : Basis κ F V) : Subgroup (GSpin Q) 
   inv_mem' := fun {k} h => ⟨h.2.1, by rw [inv_inv]; exact h.1,
     by rw [map_inv, Units.val_inv_eq_inv_val, norm_inv, h.2.2, inv_one]⟩
 
+/-- **The stabilizer of a set `R ⊆ V` in `GSpin(V)`**: the `k` with `P(k) R = R`, i.e. `P(k)` and
+`P(k)⁻¹` map `R` into itself. -/
+def latticeStab (Q : QuadraticForm F V) (R : Set V) : Subgroup (GSpin Q) where
+  carrier := {k | Set.MapsTo (specP Q k) R R ∧ Set.MapsTo (specP Q k⁻¹) R R}
+  one_mem' := ⟨fun x hx => by rw [map_one]; exact hx,
+    fun x hx => by rw [inv_one, map_one]; exact hx⟩
+  mul_mem' := fun {k k'} h h' =>
+    ⟨fun x hx => by rw [specP_mul_apply]; exact h.1 (h'.1 hx),
+      fun x hx => by rw [mul_inv_rev, specP_mul_apply]; exact h'.2 (h.2 hx)⟩
+  inv_mem' := fun {k} h => ⟨h.2, by rw [inv_inv]; exact h.1⟩
+
+omit [Module.Finite F V] in
+/-- On a coordinate lattice `Λ_e`, `latticeStab` is the `MapsLattice` condition of `latticeSpin`. -/
+theorem mem_latticeStab_coord {κ : Type*} (Q : QuadraticForm F V) (e : Basis κ F V) (k : GSpin Q) :
+    k ∈ latticeStab Q {x | ∀ i, ‖e.repr x i‖ ≤ 1} ↔
+      MapsLattice e (specP Q k : V →ₗ[F] V) ∧ MapsLattice e (specP Q k⁻¹ : V →ₗ[F] V) :=
+  Iff.rfl
+
+omit [Module.Finite F V] in
+/-- **`latticeSpin` is `latticeStab` of `Λ_e` cut by `‖detChar‖ = 1`.** -/
+theorem mem_latticeSpin_iff_mem_latticeStab {κ : Type*} {Q : QuadraticForm F V} {e : Basis κ F V}
+    {k : GSpin Q} : k ∈ latticeSpin Q e ↔
+      k ∈ latticeStab Q {x | ∀ i, ‖e.repr x i‖ ≤ 1} ∧ ‖((detChar Q k : Fˣ) : F)‖ = 1 := by
+  rw [mem_latticeStab_coord]
+  exact and_assoc.symm
+
 omit [Module.Finite F V] in
 /-- **`latticeSpin` preserves the coordinate norm of `Λ_e`**: `‖P(k) v‖_e = ‖v‖_e` (`P(k)` and
 `P(k)⁻¹` have matrices with entries in `𝒪_F`). -/
