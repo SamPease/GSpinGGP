@@ -30,8 +30,13 @@ stabilizers (M. Asgari, *Local L-functions for split spinor groups*, Canad. J. M
   Levi component.
 * `GGPData.FlagLeviDatum`: flags with splittings of their weight filtrations; its Levi
   `M = flagLeviG` and its opposite datum (`FlagLeviDatum.opp`, the opposite parabolic `P̄ = M Ū`).
+* `IsWtGrading Q b wt n`: integer weights on a basis, `b(bᵢ, bⱼ) = 0` unless `wtᵢ + wtⱼ = 0`,
+  positive weights `1, …, n`; `IsWtGrading.flag` is its flag, which it splits
+  (`IsWtGrading.isFlagSplitting_flag`; the opposite flag `IsFlagSplitting.oppFlag` is the flag of
+  the negated grading).
 * `GGPData.ReducedLeviDatum`: a flag Levi datum whose weight-`0` spaces are not hyperbolic
-  planes; the space `a_M = Coord → ℝ` and `H_M : M → a_M`.
+  planes; the space `a_M = Coord → ℝ` and `H_M : M → a_M`.  `ReducedLeviDatum.ofGrading`: the
+  reduced datum of two gradings.
 * `GGPData.hP`: `H_P(g) = H_M(m)` for `g = m u k`, any `P ∈ 𝒫(M)` and any compact open `K`
   with `G = P K`.
 
@@ -199,7 +204,8 @@ theorem IsFlagSplitting.neg_len_le (hs : IsFlagSplitting F b wt) (j : ι) : -(F.
 
 /-- A vector paired to `0` with all basis vectors of weight `−c` has no weight-`c` coordinates
 (`b` nondegenerate, and `b(bᵢ, bₖ) = 0` unless `wtᵢ + wtₖ = 0`). -/
-theorem IsFlagSplitting.repr_eq_zero_of_bform (hQ : IsNondeg Q) (hs : IsFlagSplitting F b wt)
+theorem repr_eq_zero_of_bform_of_orth (hQ : IsNondeg Q)
+    (horth : ∀ i j, wt i + wt j ≠ 0 → bform Q (b i) (b j) = 0)
     {v : V} {c : ℤ} (hv : ∀ k, wt k = -c → bform Q (b k) v = 0) {i : ι} (hi : wt i = c) :
     b.repr v i = 0 := by
   set x := wtProj b wt c v
@@ -214,7 +220,7 @@ theorem IsFlagSplitting.repr_eq_zero_of_bform (hQ : IsNondeg Q) (hs : IsFlagSpli
     rw [map_smul, smul_eq_mul]
     by_cases hl : wt l = -wt k
     · rw [hy l hl, zero_mul]
-    · rw [hs.orth k l (by omega), mul_zero]
+    · rw [horth k l (by omega), mul_zero]
   have hx0 : x = 0 := by
     refine hQ.1 x fun y => ?_
     rw [bform_comm, ← b.sum_repr y, map_sum, LinearMap.sum_apply]
@@ -226,13 +232,33 @@ theorem IsFlagSplitting.repr_eq_zero_of_bform (hQ : IsNondeg Q) (hs : IsFlagSpli
         simp only [show wt l = c by omega, ite_true, sub_self]
       rw [map_sub, hv k hk, zero_sub, neg_eq_zero] at h1
       rw [h1, mul_zero]
-    · rw [hs.bform_eq_zero_of_isHomog (x := b k) (a := wt k)
+    · rw [bform_eq_zero_of_isHomog_of_orth horth (x := b k) (a := wt k)
         (fun l hl => by
           have hkl : k ≠ l := fun h => hl (h ▸ rfl)
           simp [b.repr_self, hkl])
         hx (by omega), mul_zero]
   have := congr(b.repr $hx0 i)
   simpa [x, repr_wtProj, hi] using this
+
+theorem IsFlagSplitting.repr_eq_zero_of_bform (hQ : IsNondeg Q) (hs : IsFlagSplitting F b wt)
+    {v : V} {c : ℤ} (hv : ∀ k, wt k = -c → bform Q (b k) v = 0) {i : ι} (hi : wt i = c) :
+    b.repr v i = 0 :=
+  repr_eq_zero_of_bform_of_orth hQ hs.orth hv hi
+
+/-- **Every basis vector pairs with one of opposite weight**: `b(bⱼ, bₖ) ≠ 0` for some `k` with
+`wtₖ = −wtⱼ` (`b` is nondegenerate and `b(bⱼ, bₖ) = 0` unless `wtⱼ + wtₖ = 0`). -/
+theorem exists_bform_ne_of_orth (hQ : IsNondeg Q)
+    (horth : ∀ i j, wt i + wt j ≠ 0 → bform Q (b i) (b j) = 0) (j : ι) :
+    ∃ k, wt k = -wt j ∧ bform Q (b j) (b k) ≠ 0 := by
+  by_contra hne
+  push Not at hne
+  refine b.ne_zero j (hQ.1 (b j) fun y => ?_)
+  rw [← b.sum_repr y, map_sum]
+  refine Finset.sum_eq_zero fun k _ => ?_
+  rw [map_smul, smul_eq_mul]
+  by_cases hk : wt k = -wt j
+  · rw [hne k hk, mul_zero]
+  · rw [horth j k (fun h => hk (by omega)), mul_zero]
 
 /-- Every weight `1, …, len` occurs in a splitting (the flag is strictly increasing). -/
 theorem IsFlagSplitting.exists_wt_eq (hs : IsFlagSplitting F b wt) {w : ℤ} (h1 : 1 ≤ w)
@@ -251,16 +277,15 @@ theorem IsFlagSplitting.exists_wt_eq (hs : IsFlagSplitting F b wt) {w : ℤ} (h1
 theorem IsFlagSplitting.exists_wt_eq_neg (hQ : IsNondeg Q) (hs : IsFlagSplitting F b wt) {w : ℤ}
     (h1 : 1 ≤ w) (h2 : w ≤ F.len) : ∃ j, wt j = -w := by
   obtain ⟨i, hi⟩ := hs.exists_wt_eq h1 h2
-  by_contra hne
-  push Not at hne
-  refine b.ne_zero i (hQ.1 (b i) fun y => ?_)
-  rw [← b.sum_repr y, map_sum]
-  refine Finset.sum_eq_zero fun j _ => ?_
-  rw [map_smul, smul_eq_mul, hs.orth i j (fun h => hne j (by omega)), mul_zero]
+  obtain ⟨k, hk, -⟩ := exists_bform_ne_of_orth hQ hs.orth i
+  exact ⟨k, by omega⟩
 
-/-- The span of basis vectors of negative weight is totally isotropic. -/
-theorem IsFlagSplitting.isTotallyIsotropic_span (hs : IsFlagSplitting F b wt) {s : Set ι}
-    (hneg : ∀ j ∈ s, wt j < 0) : IsTotallyIsotropic Q (Submodule.span K (b '' s)) := by
+/-- The span of basis vectors no two of whose weights sum to `0` is totally isotropic, when
+`b(bᵢ, bⱼ) = 0` unless `wtᵢ + wtⱼ = 0`. -/
+theorem isTotallyIsotropic_span_of_orth
+    (horth : ∀ i j, wt i + wt j ≠ 0 → bform Q (b i) (b j) = 0) {s : Set ι}
+    (hs : ∀ i ∈ s, ∀ j ∈ s, wt i + wt j ≠ 0) :
+    IsTotallyIsotropic Q (Submodule.span K (b '' s)) := by
   have horth : ∀ x ∈ Submodule.span K (b '' s), ∀ y ∈ Submodule.span K (b '' s),
       bform Q x y = 0 := by
     intro x hx y hy
@@ -270,7 +295,7 @@ theorem IsFlagSplitting.isTotallyIsotropic_span (hs : IsFlagSplitting F b wt) {s
       induction hy using Submodule.span_induction with
       | mem y hy =>
         obtain ⟨j, hj, rfl⟩ := hy
-        exact hs.orth i j (by have := hneg i hi; have := hneg j hj; omega)
+        exact horth i j (hs i hi j hj)
       | zero => simp
       | add y z _ _ h1 h2 => rw [map_add, h1, h2, add_zero]
       | smul c y _ h => rw [map_smul, h, smul_zero]
@@ -281,14 +306,49 @@ theorem IsFlagSplitting.isTotallyIsotropic_span (hs : IsFlagSplitting F b wt) {s
   rw [← QuadraticMap.associated_eq_self_apply K Q]
   exact horth u hu u hu
 
-/-- The opposite flag: `Z̄ᵢ` is spanned by the `bⱼ` with `−wtⱼ ≥ len + 1 − i`. -/
-def IsFlagSplitting.oppFlag (hQ : IsNondeg Q) (hs : IsFlagSplitting F b wt) : IsotropicFlag Q where
-  len := F.len
-  sub i := Submodule.span K (b '' {j | (F.len : ℤ) + 1 - i ≤ -wt j})
+variable (Q b wt) in
+/-- **A weight grading of length `n`**: integer weights on a basis `b` of `V` with
+`b(bᵢ, bⱼ) = 0` unless `wtᵢ + wtⱼ = 0`, total weight `0`, and positive weights exactly
+`1, …, n`.  The splitting of a flag is one (`IsFlagSplitting.isWtGrading`), and conversely a
+grading is the splitting of the flag `Zᵢ = ⊕_{w ≥ n + 1 − i} V_w` (`IsWtGrading.flag`,
+`IsWtGrading.isFlagSplitting_flag`): the flag of the cocharacter acting by `τ^w` on `V_w`. -/
+structure IsWtGrading (n : ℕ) : Prop where
+  orth : ∀ i j, wt i + wt j ≠ 0 → bform Q (b i) (b j) = 0
+  sum_wt : ∑ i, wt i = 0
+  wt_le : ∀ j, wt j ≤ n
+  exists_wt_eq : ∀ w : ℤ, 1 ≤ w → w ≤ n → ∃ i, wt i = w
+
+theorem IsFlagSplitting.isWtGrading (hs : IsFlagSplitting F b wt) : IsWtGrading Q b wt F.len :=
+  ⟨hs.orth, hs.sum_wt, hs.wt_le, fun _ h1 h2 => hs.exists_wt_eq h1 h2⟩
+
+namespace IsWtGrading
+
+variable {n : ℕ}
+
+/-- The weights of a grading of length `n` lie in `[−n, n]` (pairing). -/
+theorem neg_le (hQ : IsNondeg Q) (hg : IsWtGrading Q b wt n) (j : ι) : -(n : ℤ) ≤ wt j := by
+  obtain ⟨k, hk, -⟩ := exists_bform_ne_of_orth hQ hg.orth j
+  have := hg.wt_le k
+  omega
+
+/-- **The negated grading.** -/
+theorem neg (hQ : IsNondeg Q) (hg : IsWtGrading Q b wt n) : IsWtGrading Q b (-wt) n where
+  orth i j h := hg.orth i j (by simp only [Pi.neg_apply] at h; omega)
+  sum_wt := by simp [Finset.sum_neg_distrib, hg.sum_wt]
+  wt_le j := by simp only [Pi.neg_apply]; have := hg.neg_le hQ j; omega
+  exists_wt_eq w h1 h2 := by
+    obtain ⟨i, hi⟩ := hg.exists_wt_eq w h1 h2
+    obtain ⟨k, hk, -⟩ := exists_bform_ne_of_orth hQ hg.orth i
+    exact ⟨k, by simp only [Pi.neg_apply]; omega⟩
+
+/-- **The flag of a grading**: `Zᵢ` is spanned by the `bⱼ` with `wtⱼ ≥ n + 1 − i`. -/
+def flag (hQ : IsNondeg Q) (hg : IsWtGrading Q b wt n) : IsotropicFlag Q where
+  len := n
+  sub i := Submodule.span K (b '' {j | (n : ℤ) + 1 - i ≤ wt j})
   sub_zero := by
     rw [Submodule.span_eq_bot]
     rintro _ ⟨j, hj, rfl⟩
-    have := hs.neg_len_le j
+    have := hg.wt_le j
     simp only [Set.mem_ofPred_eq, Fin.val_zero, Nat.cast_zero, sub_zero] at hj
     omega
   strictMono := by
@@ -299,57 +359,55 @@ def IsFlagSplitting.oppFlag (hQ : IsNondeg Q) (hs : IsFlagSplitting F b wt) : Is
       omega
     · have hi' := i'.isLt
       have hi : (i : ℕ) < i' := hii'
-      obtain ⟨j, hj⟩ := hs.exists_wt_eq_neg hQ (w := (F.len : ℤ) + 1 - i') (by omega) (by omega)
-      have hmem : b j ∈ Submodule.span K (b '' {j | (F.len : ℤ) + 1 - i' ≤ -wt j}) :=
+      obtain ⟨j, hj⟩ := hg.exists_wt_eq ((n : ℤ) + 1 - i') (by omega) (by omega)
+      have hmem : b j ∈ Submodule.span K (b '' {j | (n : ℤ) + 1 - i' ≤ wt j}) :=
         Submodule.subset_span ⟨j, by simp [hj], rfl⟩
-      have he' : Submodule.span K (b '' {j | (F.len : ℤ) + 1 - i ≤ -wt j}) =
-          Submodule.span K (b '' {j | (F.len : ℤ) + 1 - i' ≤ -wt j}) := he
+      have he' : Submodule.span K (b '' {j | (n : ℤ) + 1 - i ≤ wt j}) =
+          Submodule.span K (b '' {j | (n : ℤ) + 1 - i' ≤ wt j}) := he
       rw [← he', b.self_mem_span_image] at hmem
       simp only [Set.mem_ofPred_eq] at hmem
       omega
-  isotropic i := hs.isTotallyIsotropic_span fun j hj => by
-    have := (i : Fin (F.len + 1)).isLt
-    simp only [Set.mem_ofPred_eq] at hj
+  isotropic i := isTotallyIsotropic_span_of_orth hg.orth fun j hj k hk => by
+    have := (i : Fin (n + 1)).isLt
+    simp only [Set.mem_ofPred_eq] at hj hk
     omega
 
-theorem IsFlagSplitting.oppFlag_sub (hQ : IsNondeg Q) (hs : IsFlagSplitting F b wt)
-    (i : Fin ((hs.oppFlag hQ).len + 1)) :
-    (hs.oppFlag hQ).sub i = Submodule.span K (b '' {j | (F.len : ℤ) + 1 - i ≤ -wt j}) := rfl
+theorem flag_len (hQ : IsNondeg Q) (hg : IsWtGrading Q b wt n) : (hg.flag hQ).len = n := rfl
 
-/-- **The opposite flag** (`P̄ = M Ū`): `(b, −wt)` splits the flag `oppFlag`. -/
-theorem IsFlagSplitting.isFlagSplitting_oppFlag (hQ : IsNondeg Q) (hs : IsFlagSplitting F b wt) :
-    IsFlagSplitting (hs.oppFlag hQ) b (-wt) := by
-  set F' := hs.oppFlag hQ
-  have hlen : F'.len = F.len := rfl
-  have hidx : ∀ t : ℤ, ((F'.idx t : Fin (F'.len + 1)) : ℕ) = min t.toNat F.len := fun _ => rfl
-  refine ⟨fun j => ?_, fun w v hv i hi => ?_, fun i j hij => hs.orth i j (by
-    simp only [Pi.neg_apply] at hij; omega), by simp [Finset.sum_neg_distrib, hs.sum_wt]⟩
-  · have hb1 := hs.wt_le j
-    have hb2 := hs.neg_len_le j
-    simp only [Pi.neg_apply]
-    by_cases hw : 1 ≤ -wt j
-    · rw [F'.flagWt_of_pos hw, hs.oppFlag_sub]
+theorem flag_sub (hQ : IsNondeg Q) (hg : IsWtGrading Q b wt n) (i : Fin ((hg.flag hQ).len + 1)) :
+    (hg.flag hQ).sub i = Submodule.span K (b '' {j | (n : ℤ) + 1 - i ≤ wt j}) := rfl
+
+/-- **A grading splits its flag.** -/
+theorem isFlagSplitting_flag (hQ : IsNondeg Q) (hg : IsWtGrading Q b wt n) :
+    IsFlagSplitting (hg.flag hQ) b wt := by
+  set F' := hg.flag hQ
+  have hlen : F'.len = n := rfl
+  have hidx : ∀ t : ℤ, ((F'.idx t : Fin (F'.len + 1)) : ℕ) = min t.toNat n := fun _ => rfl
+  refine ⟨fun j => ?_, fun w v hv i hi => ?_, hg.orth, hg.sum_wt⟩
+  · have hb1 := hg.wt_le j
+    have hb2 := hg.neg_le hQ j
+    by_cases hw : 1 ≤ wt j
+    · rw [F'.flagWt_of_pos hw, hg.flag_sub]
       refine Submodule.subset_span ⟨j, ?_, rfl⟩
       simp only [Set.mem_ofPred_eq]
-      have := hidx (F'.len + 1 - -wt j)
+      have := hidx (F'.len + 1 - wt j)
       omega
     · rw [F'.flagWt_of_nonpos (by omega), LinearMap.BilinForm.mem_orthogonal_iff]
       intro y hy
-      rw [hs.oppFlag_sub] at hy
-      have := hidx (F'.len + -wt j)
+      rw [hg.flag_sub] at hy
+      have := hidx (F'.len + wt j)
       induction hy using Submodule.span_induction with
       | mem y hy =>
         obtain ⟨k, hk, rfl⟩ := hy
         simp only [Set.mem_ofPred_eq] at hk
-        exact hs.orth k j (by omega)
+        exact hg.orth k j (by omega)
       | zero => simp
       | add y z _ _ h1 h2 => rw [map_add, LinearMap.add_apply, h1, h2, add_zero]
       | smul c y _ h => rw [map_smul, LinearMap.smul_apply, h, smul_zero]
-  · simp only [Pi.neg_apply] at hi
-    have hb1 := hs.wt_le i
-    have hb2 := hs.neg_len_le i
+  · have hb1 := hg.wt_le i
+    have hb2 := hg.neg_le hQ i
     by_cases hw : 1 ≤ w
-    · rw [F'.flagWt_of_pos hw, hs.oppFlag_sub] at hv
+    · rw [F'.flagWt_of_pos hw, hg.flag_sub] at hv
       have hsupp := b.repr_support_subset_of_mem_span _ hv
       by_contra hne
       have := hsupp (Finsupp.mem_support_iff.2 hne)
@@ -357,12 +415,28 @@ theorem IsFlagSplitting.isFlagSplitting_oppFlag (hQ : IsNondeg Q) (hs : IsFlagSp
       have := hidx (F'.len + 1 - w)
       omega
     · rw [F'.flagWt_of_nonpos (by omega), LinearMap.BilinForm.mem_orthogonal_iff] at hv
-      refine hs.repr_eq_zero_of_bform hQ (c := wt i) (fun k hk => hv _ ?_) rfl
-      rw [hs.oppFlag_sub]
+      refine repr_eq_zero_of_bform_of_orth hQ hg.orth (c := wt i) (fun k hk => hv _ ?_) rfl
+      rw [hg.flag_sub]
       refine Submodule.subset_span ⟨k, ?_, rfl⟩
       simp only [Set.mem_ofPred_eq]
       have := hidx (F'.len + w)
       omega
+
+end IsWtGrading
+
+/-- The opposite flag: `Z̄ᵢ` is spanned by the `bⱼ` with `−wtⱼ ≥ len + 1 − i` (the flag of the
+negated grading). -/
+def IsFlagSplitting.oppFlag (hQ : IsNondeg Q) (hs : IsFlagSplitting F b wt) : IsotropicFlag Q :=
+  (hs.isWtGrading.neg hQ).flag hQ
+
+theorem IsFlagSplitting.oppFlag_sub (hQ : IsNondeg Q) (hs : IsFlagSplitting F b wt)
+    (i : Fin ((hs.oppFlag hQ).len + 1)) :
+    (hs.oppFlag hQ).sub i = Submodule.span K (b '' {j | (F.len : ℤ) + 1 - i ≤ -wt j}) := rfl
+
+/-- **The opposite flag** (`P̄ = M Ū`): `(b, −wt)` splits the flag `oppFlag`. -/
+theorem IsFlagSplitting.isFlagSplitting_oppFlag (hQ : IsNondeg Q) (hs : IsFlagSplitting F b wt) :
+    IsFlagSplitting (hs.oppFlag hQ) b (-wt) :=
+  (hs.isWtGrading.neg hQ).isFlagSplitting_flag hQ
 
 /-- **The opposite flag is transversal**: `Z̄ ∩ Z = 0` for the tops of `F` and of `oppFlag`. -/
 theorem IsFlagSplitting.oppFlag_top_inf_top (hQ : IsNondeg Q) (hs : IsFlagSplitting F b wt) :
@@ -683,6 +757,43 @@ def opp : d.ReducedLeviDatum where
   reducedV := by
     change ¬ IsHypPlane (d.QV.comp (wtSpan L.bV (-L.wtV) 0).subtype)
     rw [wtSpan_neg]; exact L.reducedV
+
+/-- **The reduced datum of two weight gradings**: gradings of `W` and `V` (`IsWtGrading`) whose
+weight-`0` spaces are not hyperbolic planes give a reduced datum, with the flags of the gradings
+(`IsWtGrading.flag`) split by the gradings themselves.  Its Levi subgroup is the stabilizer of the
+weight spaces of both gradings (`ofGrading_M`, `mem_flagLevi_iff`).  It is the intended witness of
+`exists_isMx` (`TraceFormula/ThetaFBP.lean`), whose proof is pending; checked at the toy datum in
+`Sanity/ThetaFBPAudit.lean` (`toyD_isMx_ofGrading`). -/
+def ofGrading {ιW ιV : Type} [Fintype ιW] [Fintype ιV] (bW : Basis ιW F (Fin d.m → F))
+    (wtW : ιW → ℤ) {nW : ℕ} (hW : IsWtGrading d.QW bW wtW nW) (bV : Basis ιV F d.V)
+    (wtV : ιV → ℤ) {nV : ℕ} (hV : IsWtGrading d.QV bV wtV nV)
+    (rW : ¬ IsHypPlane (d.QW.comp (wtSpan bW wtW 0).subtype))
+    (rV : ¬ IsHypPlane (d.QV.comp (wtSpan bV wtV 0).subtype)) : d.ReducedLeviDatum where
+  FW := hW.flag d.nondeg
+  FV := hV.flag d.nondeg_QV
+  ιW := ιW
+  ιV := ιV
+  bW := bW
+  wtW := wtW
+  bV := bV
+  wtV := wtV
+  hsW := hW.isFlagSplitting_flag d.nondeg
+  hsV := hV.isFlagSplitting_flag d.nondeg_QV
+  reducedW := rW
+  reducedV := rV
+
+theorem ofGrading_M {ιW ιV : Type} [Fintype ιW] [Fintype ιV] (bW : Basis ιW F (Fin d.m → F))
+    (wtW : ιW → ℤ) {nW : ℕ} (hW : IsWtGrading d.QW bW wtW nW) (bV : Basis ιV F d.V)
+    (wtV : ιV → ℤ) {nV : ℕ} (hV : IsWtGrading d.QV bV wtV nV)
+    (rW : ¬ IsHypPlane (d.QW.comp (wtSpan bW wtW 0).subtype))
+    (rV : ¬ IsHypPlane (d.QV.comp (wtSpan bV wtV 0).subtype)) :
+    (ofGrading bW wtW hW bV wtV hV rW rV).M = d.flagLeviG bW wtW bV wtV := rfl
+
+/-- Every reduced datum is `ofGrading` of its own splittings, up to the flags: same Levi
+subgroup. -/
+theorem ofGrading_splitting_M :
+    (ofGrading L.bW L.wtW L.hsW.isWtGrading L.bV L.wtV L.hsV.isWtGrading L.reducedW
+      L.reducedV).M = L.M := rfl
 
 /-- The coordinates of `a_M`: the weights `1, …, len` of each flag (the `GL`-factors of `M`) and
 one coordinate for each `GSpin`-factor. -/
