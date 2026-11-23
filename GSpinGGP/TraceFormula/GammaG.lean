@@ -62,9 +62,12 @@ makes `x ↦ K^A(x, x)` integrable for strongly cuspidal `f`.  `jA` is the Lean 
 ## The Weyl integration formula (BP §1.7, p. 32)
 
 `∫_{G(F)} f(g) dg = ∫_{Γ(G)} D^G(x)^{1/2} J_G(x, f) dx` for `f ∈ C_c^∞(G(F))`, with
-`J_G(x, f) = D^G(x)^{1/2} ∫_{G_x(F)\G(F)} f(g⁻¹ x g) dg` (BP §1.8).  `weyl_integration` states it
-for every family of Haar measures on the maximal tori; it is a `sorry` (proof sketch in its
-docstring), off the path of the main theorem.  At the commutative toy datum it is proved
+`J_G(x, f) = D^G(x)^{1/2} ∫_{G_x(F)\G(F)} f(g⁻¹ x g) dg` (BP §1.8).
+The right side does not depend on the Haar measures chosen on the tori
+(`gammaIntegral_weylIntegrand_eq`).  The formula itself is the literature axiom
+`weyl_integration_exists` (`Literature/WeylIntegration.lean`; BP states it without proof), and
+`weyl_integration` (`TraceFormula/WeylIntegration.lean`) gives it for every family of Haar
+measures on the maximal tori.  At the commutative toy datum it is proved without the axiom
 (`Sanity/GammaGAudit.lean`).
 
 ## Main definitions
@@ -72,6 +75,11 @@ docstring), off the path of the main theorem.  At the commutative toy datum it i
 * `GGPData.MaxTorus`, `GGPData.MaxTorusClass`, `GGPData.gammaIntegral`.
 * `GGPData.weylIntegrand`: `t ↦ D^G(t)^{1/2} J_G(t, f)` on `T(F)`, `0` off `G_reg(F)`.
 * `GGPData.kernelA`, `GGPData.jA`.
+
+## Main statements
+
+* `GGPData.gammaIntegral_weylIntegrand_eq`: `∫_{Γ(G)} D^{1/2} J_G(·, f)` does not depend on the
+  Haar measures on the tori.
 -/
 
 noncomputable section
@@ -185,29 +193,51 @@ def weylIntegrand (μ : ∀ T : Subgroup ↥d.G, Measure ↥T) (f : ↥d.G → �
     (Real.sqrt (weylDisc d.lie (t : d.ambientˣ)) : ℂ) * d.orbitalIntegralOn T (μ T) t f
   else 0
 
-/-- **The Weyl integration formula** (BP §1.7, p. 32; Harish-Chandra): for `f ∈ C_c^∞(G(F))`,
-`∫_{G(F)} f(g) dg = ∫_{Γ(G)} D^G(x)^{1/2} J_G(x, f) dx
-  = Σ_{T ∈ 𝒯(G)} |W(G,T)|⁻¹ ∫_{T(F)} D^G(t)^{1/2} J_G(t, f) dt`,
-for every family `μ` of Haar measures on the maximal tori (`J_G(t, ·)` taken for `dg / μ T`; the
-right-hand side does not depend on `μ`, see the module docstring).
+/-- **The Weyl integrand under rescaling of one torus measure**: if `μ' T = c • μ T`,
+`0 < c < ∞`, on a maximal torus `T`, then `D^{1/2} J_G(t, f)` is divided by `c` on `T(F)`
+(`orbitalIntegralOn_smul_measure`). -/
+theorem weylIntegrand_of_eq_smul {μ μ' : ∀ T : Subgroup ↥d.G, Measure ↥T} (T : d.MaxTorus)
+    [(μ T.1).IsHaarMeasure] {c : ENNReal} (hc0 : c ≠ 0) (hc : c ≠ ⊤) (h : μ' T.1 = c • μ T.1)
+    (f : ↥d.G → ℂ) (t : ↥d.G) :
+    d.weylIntegrand μ' f T.1 t = ((c⁻¹).toReal : ℂ) * d.weylIntegrand μ f T.1 t := by
+  have := T.isMulRightInvariant (μ T.1)
+  unfold weylIntegrand
+  split_ifs
+  · rw [h, d.orbitalIntegralOn_smul_measure T.1 T.isClosed (μ T.1) hc0 hc]
+    ring
+  · rw [mul_zero]
 
-**Status: `sorry`, off the path of the main theorem.**  BP states it without proof, as standard.
-Proof sketch (Harish-Chandra; e.g. Kottwitz, *Harmonic analysis on reductive p-adic groups and Lie
-algebras*, Clay Math. Proc. 4 (2005)): (1) `G_reg(F)` is open and conull in `G(F)` (complement of the zero set of the
-nonzero polynomial `D^G`), so `∫_G f = ∫_{G_reg} f`.  (2) `G_reg(F)` is the disjoint union over
-`T ∈ 𝒯(G)` of the open sets `G_reg(F) ∩ ⋃_g g T(F) g⁻¹`.  (3) For each `T`, the map
-`T(F)\G(F) × T_reg(F) → G(F)`, `(g, t) ↦ g⁻¹ t g`, is a local analytic isomorphism, `|W(G,T)|`-to-one
-onto its image, with Jacobian `D^G(t)` for the measures `dg/dt` and `dt` (the differential is
-`1 − Ad(t⁻¹)` on `𝔤/𝔱`).  (4) The change of variables then gives
-`∫_{image} f = |W(G,T)|⁻¹ ∫_{T(F)} D^G(t) ∫_{T(F)\G(F)} f(g⁻¹ t g) dg dt`.  Missing here: the
-finiteness of `𝒯(G)`, the `p`-adic analytic change of variables formula and the Jacobian
-computation, and `T(F) = G_t(F)` for regular `t ∈ T(F)` with `T` a maximal torus (the last is
-`centG_eq_of_mem_regularSet`). -/
-theorem weyl_integration (μ : ∀ T : Subgroup ↥d.G, Measure ↥T)
-    (hμ : ∀ T : d.MaxTorus, (μ T.1).IsHaarMeasure) (f : ↥d.G → ℂ)
-    (hf : f ∈ testFunctions ↥d.G) :
-    ∫ g, f g ∂Measure.haar = d.gammaIntegral μ (d.weylIntegrand μ f) := by
-  sorry
+/-- **The right side of the Weyl integration formula does not depend on the Haar measures of the
+tori**: for two families `μ`, `μ'` of Haar measures on the maximal tori,
+`∫_{Γ(G)} D^{1/2} J_G(·, f)` is the same.  On each torus `μ' T = c μ T` with `0 < c < ∞`
+(uniqueness of Haar measure); the `T`-integral is multiplied by `c` and `J_G` divided by `c`
+(`weylIntegrand_of_eq_smul`).  No integrability or summability is needed: the terms of the sum
+agree one by one. -/
+theorem gammaIntegral_weylIntegrand_eq (μ μ' : ∀ T : Subgroup ↥d.G, Measure ↥T)
+    (hμ : ∀ T : d.MaxTorus, (μ T.1).IsHaarMeasure) (hμ' : ∀ T : d.MaxTorus, (μ' T.1).IsHaarMeasure)
+    (f : ↥d.G → ℂ) :
+    d.gammaIntegral μ (d.weylIntegrand μ f) = d.gammaIntegral μ' (d.weylIntegrand μ' f) := by
+  unfold gammaIntegral
+  refine tsum_congr fun c => ?_
+  congr 1
+  set T : d.MaxTorus := Quot.out c
+  have := hμ T
+  have := hμ' T
+  have : LocallyCompactSpace ↥T.1 := T.isClosed.locallyCompactSpace
+  have : SecondCountableTopology ↥T.1 := Topology.IsEmbedding.subtypeVal.secondCountableTopology
+  set k := Measure.haarScalarFactor (μ' T.1) (μ T.1)
+  have hk : μ' T.1 = (k : ENNReal) • μ T.1 := by
+    rw [Measure.isMulLeftInvariant_eq_smul (μ' T.1) (μ T.1)]
+    rfl
+  have hk0 : (k : ENNReal) ≠ 0 :=
+    ENNReal.coe_ne_zero.2 (Measure.haarScalarFactor_pos_of_isHaarMeasure _ _).ne'
+  have hpt : ∀ t : ↥T.1, d.weylIntegrand μ' f T.1 t =
+      (((k : ENNReal)⁻¹).toReal : ℂ) * d.weylIntegrand μ f T.1 t := fun t =>
+    d.weylIntegrand_of_eq_smul T hk0 ENNReal.coe_ne_top hk f t
+  simp_rw [hpt]
+  rw [hk, integral_smul_measure, integral_const_mul, Complex.real_smul, ← mul_assoc,
+    ← Complex.ofReal_mul, ← ENNReal.toReal_mul, ENNReal.mul_inv_cancel hk0 ENNReal.coe_ne_top,
+    ENNReal.toReal_one, Complex.ofReal_one, one_mul]
 
 /-! ## 3. `K^A` and `J^A` (BP §5.5, pp. 115–116) -/
 
