@@ -631,6 +631,25 @@ theorem isCompact_units_norm_pow {N : ℕ} (hN : 1 ≤ N) (B B' : ℝ) :
     exact ⟨Units.mk0 x hx0, rfl⟩
   exact (Units.isEmbedding_val₀.isInducing.isCompact_preimage_iff hsub).2 hA
 
+/-- **Off a hyperbolic plane, `H = 0` is `‖detChar‖ = 1`**: `hcMap` is `log ‖detChar‖` and a
+trivial second coordinate. -/
+theorem hcMap_eq_one_iff_of_not_isHypPlane {Q : QuadraticForm F V} (hQ : ¬ IsHypPlane Q)
+    (k : GSpin Q) : hcMap Q k = 1 ↔ ‖((detChar Q k : Fˣ) : F)‖ = 1 := by
+  classical
+  rw [hcMap_eq_one_iff]
+  have h1 : gspinChar₁ Q = detChar Q := by simp [gspinChar₁, hQ]
+  have h2 : gspinChar₂ Q = 1 := by simp [gspinChar₂, hQ]
+  simp [h1, h2]
+
+/-- **Scalars of norm one have `H = 0`**: their powers stay in the compact set of scalars of
+norm `1`. -/
+theorem hcMap_scalarGSpin_eq_one (Q : QuadraticForm F V) {u : Fˣ} (hu : ‖(u : F)‖ = 1) :
+    hcMap Q (scalarGSpin Q u) = 1 := by
+  refine hcMap_eq_one_of_zpow_mem_compact Q
+    (isCompact_unitSphere.image (continuous_scalarGSpin Q)) fun k => ⟨u ^ k, ?_, map_zpow _ _ _⟩
+  change ‖((u ^ k : Fˣ) : F)‖ = 1
+  rw [Units.val_zpow_eq_zpow_val, norm_zpow, hu, one_zpow]
+
 /-- **`A_{GSpin(U)} ∩ ker hcMap` is compact**: the scalars of norm `1` if `U` is not a hyperbolic
 plane (`det(L_c) = c^{2^n}`), and `{g : ‖χ₁ g‖ = ‖χ₂ g‖ = 1}` (contained in the compact set
 `{a ε₊ + b ε₋ : ‖a‖, ‖b‖ ≤ 1}` together with its inverse) if it is. -/

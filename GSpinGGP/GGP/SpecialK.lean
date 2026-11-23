@@ -82,16 +82,25 @@ harmless.
 
 ## Main results
 
+* `hypOrth_eq_orthogonal`: `V_an` is the `bform`-orthogonal of the span of the system.
+* `SpecialLattice.norm_quadForm_le`: `‖q(x)‖ ≤ |ϖ^c|` on a special lattice.
 * `GGPData.specialStab_eq_latticeK`: if `R_W`, `R_V` are the coordinate lattices `Λ_{e_W}`,
   `Λ_{e_V}` and neither `W` nor `V` is a hyperbolic plane, `specialStab = latticeK e_W e_V`.
+* `GGPData.isOpen_specialStab`, `GGPData.isCompact_specialStab`: for coordinate lattices.
 * `GGPData.pair_scalarGSpin_mem_specialStab`: every special stabilizer contains the scalars of
-  norm `1` of `GSpin(W)`; so a `GoodK` without them is not special (`Sanity/GL2SpecialK.lean`).
-* `GGPData.exists_goodK_eq_specialStab` (`sorry`): the stabilizer of adapted special lattices is a
-  `GoodK`.
+  norm `1` of `GSpin(W)`.
+* `GGPData.exists_goodK_eq_specialStab`: the stabilizer of adapted special lattices is a `GoodK`,
+  from two statements not proved here:
+  - `SpecialLattice.exists_basis_R_eq` (`sorry`, own work): an adapted special lattice is a
+    coordinate lattice of a basis made of vectors of weight spaces;
+  - `GGPData.specialStab_mul_eq` (`sorry`): the Iwasawa decomposition `G = P K` for `P ∈ 𝒫(M)`,
+    a composite of printed results (W1 §7.1–7.2, Tits 3.3.2, Bruhat–Tits) that cannot be proved
+    from the repository's own material and is to become a literature axiom.
 * `GGPData.exists_specialK` (`sorry`): every reduced Levi datum has a special `GoodK`.
 
-The checks at `gl2Data` are in `Sanity/GL2SpecialK.lean`: `gl2GoodK` is special, and a `GoodK` of
-finite index in it is not.
+The checks at `gl2Data` are in `Sanity/GL2SpecialK.lean`: `gl2GoodK` is special; a `GoodK` of
+finite index in it is not; and the lattice `⟨z₋₁, z₀, ϖ · ½ z₁⟩` of an edge midpoint of the tree
+(stabilizer maximal compact, not special) is not a special lattice.
 -/
 
 noncomputable section
@@ -113,8 +122,31 @@ def hypOrth (Q : QuadraticForm F V) {n : ℕ} (v v' : Fin n → V) : Submodule F
 
 omit [PAdicField F] in
 theorem mem_hypOrth {Q : QuadraticForm F V} {n : ℕ} {v v' : Fin n → V} {x : V} :
-    x ∈ hypOrth Q v v' ↔ ∀ i, QuadraticMap.polar Q (v i) x = 0 ∧ QuadraticMap.polar Q (v' i) x = 0 := by
+    x ∈ hypOrth Q v v' ↔
+      ∀ i, QuadraticMap.polar Q (v i) x = 0 ∧ QuadraticMap.polar Q (v' i) x = 0 := by
   simp [hypOrth, Submodule.mem_iInf, QuadraticMap.polarBilin_apply_apply]
+
+omit [PAdicField F] in
+/-- **`hypOrth` is the `bform`-orthogonal of the span of the system** (`polar = 2 bform`). -/
+theorem hypOrth_eq_orthogonal [Invertible (2 : F)] (Q : QuadraticForm F V) {n : ℕ}
+    (v v' : Fin n → V) :
+    hypOrth Q v v' = (bform Q).orthogonal (Submodule.span F (Set.range v ∪ Set.range v')) := by
+  have h2 : (2 : F) ≠ 0 := two_ne_zero' F
+  ext x
+  rw [mem_hypOrth, LinearMap.BilinForm.mem_orthogonal_iff]
+  simp only [polar_eq_two_mul_bform, mul_eq_zero, h2, false_or]
+  constructor
+  · intro h y hy
+    induction hy using Submodule.span_induction with
+    | mem y hy =>
+      rcases hy with ⟨i, rfl⟩ | ⟨i, rfl⟩
+      · exact (h i).1
+      · exact (h i).2
+    | zero => simp
+    | add y z _ _ hy hz => simp [hy, hz]
+    | smul a y _ hy => simp [hy]
+  · exact fun h i => ⟨h _ (Submodule.subset_span (Or.inl ⟨i, rfl⟩)),
+      h _ (Submodule.subset_span (Or.inr ⟨i, rfl⟩))⟩
 
 /-- **A special lattice of `(V, Q)`** (Waldspurger 2010, §7.1, arXiv p. 34, "réseaux spéciaux"),
 as its data: a hyperbolic system `v i = v_{i+1}`, `v' i = v_{-(i+1)}` (`q(v_i, v_j) = δ_{i,-j}` for
@@ -162,55 +194,111 @@ def IsAdapted {ι : Type*} (b : Basis ι F V) (wt : ι → ℤ) : Prop :=
   (∀ i, ∃ w, S.v i ∈ wtSpan b wt w) ∧ (∀ i, ∃ w, S.v' i ∈ wtSpan b wt w) ∧
     S.Van ≤ wtSpan b wt 0
 
+omit [PAdicField F] in
+/-- `Q` vanishes on a combination of pairwise `polar`-orthogonal isotropic vectors. -/
+theorem _root_.GSpinGGP.quadForm_sum_smul_eq_zero {ι : Type*} {Q : QuadraticForm F V}
+    {f : ι → V} (hf : ∀ i, Q (f i) = 0) (ho : ∀ i j, QuadraticMap.polar Q (f i) (f j) = 0)
+    (c : ι → F) (s : Finset ι) : Q (∑ i ∈ s, c i • f i) = 0 := by
+  classical
+  induction s using Finset.induction_on with
+  | empty => simp
+  | insert a s ha ih =>
+    rw [Finset.sum_insert ha, QuadraticMap.map_add (⇑Q), ih, QuadraticMap.map_smul, hf,
+      QuadraticMap.polar_smul_left, ← QuadraticMap.polarBilin_apply_apply, map_sum]
+    simp [QuadraticMap.polarBilin_apply_apply, ho]
+
+/-- The vectors of a hyperbolic system are isotropic. -/
+theorem quadForm_v (i : Fin S.n) : Q (S.v i) = 0 := by
+  have h := S.polar_v_v i i
+  rw [QuadraticMap.polar_self, two_nsmul, ← two_mul, mul_eq_zero] at h
+  exact h.resolve_left two_ne_zero
+
+theorem quadForm_v' (i : Fin S.n) : Q (S.v' i) = 0 := by
+  have h := S.polar_v'_v' i i
+  rw [QuadraticMap.polar_self, two_nsmul, ← two_mul, mul_eq_zero] at h
+  exact h.resolve_left two_ne_zero
+
+omit [PAdicField F] in
+theorem r_nonneg : 0 ≤ S.r := by
+  obtain ⟨a, -, ha⟩ := S.exists_norm_eq; rw [← ha]; exact norm_nonneg a
+
+/-- **`val_F(q) ≥ c` on a special lattice**: `‖Q x‖ ≤ r` for `x ∈ R` (W1 §7.1:
+`q(Σ a_i v_i + Σ b_i ϖ^c v_{-i} + y) = Σ a_i b_i ϖ^c + q(y)`). -/
+theorem norm_quadForm_le {x : V} (hx : x ∈ S.R) : ‖Q x‖ ≤ S.r := by
+  obtain ⟨a, b, y, ha, hb, hy, hQy, rfl⟩ := hx
+  have hA : Q (∑ i, a i • S.v i) = 0 :=
+    quadForm_sum_smul_eq_zero S.quadForm_v S.polar_v_v a _
+  have hB : Q (∑ i, b i • S.v' i) = 0 :=
+    quadForm_sum_smul_eq_zero S.quadForm_v' S.polar_v'_v' b _
+  have hAB : QuadraticMap.polar Q (∑ i, a i • S.v i) (∑ i, b i • S.v' i) = ∑ i, a i * b i := by
+    rw [show QuadraticMap.polar Q (∑ i, a i • S.v i) (∑ i, b i • S.v' i) =
+      QuadraticMap.polarBilin Q (∑ i, a i • S.v i) (∑ i, b i • S.v' i) from rfl]
+    simp [map_sum, LinearMap.sum_apply, QuadraticMap.polarBilin_apply_apply, S.polar_v_v',
+      mul_comm]
+  have hy' : ∀ z ∈ Submodule.span F (Set.range S.v ∪ Set.range S.v'),
+      QuadraticMap.polar Q z y = 0 := by
+    intro z hz
+    induction hz using Submodule.span_induction with
+    | mem z hz =>
+      rw [mem_hypOrth] at hy
+      rcases hz with ⟨i, rfl⟩ | ⟨i, rfl⟩
+      · exact (hy i).1
+      · exact (hy i).2
+    | zero => simp
+    | add z w _ _ hz hw => rw [QuadraticMap.polar_add_left, hz, hw, add_zero]
+    | smul c z _ hz => rw [QuadraticMap.polar_smul_left, hz, smul_zero]
+  have hmem : ∑ i, a i • S.v i + ∑ i, b i • S.v' i ∈
+      Submodule.span F (Set.range S.v ∪ Set.range S.v') :=
+    add_mem (sum_mem fun i _ => Submodule.smul_mem _ _ (Submodule.subset_span (Or.inl ⟨i, rfl⟩)))
+      (sum_mem fun i _ => Submodule.smul_mem _ _ (Submodule.subset_span (Or.inr ⟨i, rfl⟩)))
+  rw [QuadraticMap.map_add (⇑Q), hy' _ hmem, add_zero, QuadraticMap.map_add (⇑Q), hA, hB, hAB,
+    zero_add, zero_add]
+  refine (IsUltrametricDist.norm_add_le_max _ _).trans (max_le ?_ hQy)
+  refine IsUltrametricDist.norm_sum_le_of_forall_le_of_nonneg S.r_nonneg fun i _ => ?_
+  rw [norm_mul]
+  exact (mul_le_of_le_one_left (norm_nonneg _) (ha i)).trans (hb i)
+
 end SpecialLattice
 
-variable [Module.Finite F V]
+/-- **A special lattice adapted to `(b, wt)` is a coordinate lattice `Λ_e` for a basis `e` made of
+vectors of weight spaces** (not yet proved; own work).
 
-/-- **The stabilizer of a set `R ⊆ V` in `GSpin(V)`**: the `k` with `P(k) R = R`, i.e. `P(k)` and
-`P(k)⁻¹` map `R` into itself. -/
-def latticeStab (Q : QuadraticForm F V) (R : Set V) : Subgroup (GSpin Q) where
-  carrier := {k | Set.MapsTo (specP Q k) R R ∧ Set.MapsTo (specP Q k⁻¹) R R}
-  one_mem' := ⟨fun x hx => by rw [map_one]; exact hx,
-    fun x hx => by rw [inv_one, map_one]; exact hx⟩
-  mul_mem' := fun {k k'} h h' =>
-    ⟨fun x hx => by rw [specP_mul_apply]; exact h.1 (h'.1 hx),
-      fun x hx => by rw [mul_inv_rev, specP_mul_apply]; exact h'.2 (h.2 hx)⟩
-  inv_mem' := fun {k} h => ⟨h.2, by rw [inv_inv]; exact h.1⟩
+This is W1 §7.1's "C'est un `𝒪_F`-réseau de `V_an`" (stated there without proof) together with the
+splitting `V = Z ⊕ V_an`.  Sketch: `polar` is nondegenerate on `Z = span(v_i, v'_i)` (the Gram
+matrix is `[[0, 1], [1, 0]]` blockwise), so `V = Z ⊕ V_an`.  For `Q` anisotropic on `V_an` over a
+non-archimedean local field, `R_an = {y ∈ V_an : ‖Q y‖ ≤ r}` is a bounded open `𝒪_F`-submodule
+(O'Meara, *Introduction to quadratic forms*, 91:1: the norms of an anisotropic space form a
+lattice; closure under addition is the ultrametric inequality for `y ↦ ‖Q y‖^{1/2}`), hence free
+with a basis `f_j ∈ V_an ⊆ wtSpan 0`.  Take `e = (v_i, a • v'_i, f_j)` with `‖a‖ = r`; the
+`v_i`, `v'_i` lie in weight spaces by `IsAdapted`. -/
+theorem SpecialLattice.exists_basis_R_eq [Module.Finite F V] {Q : QuadraticForm F V}
+    (S : SpecialLattice Q) {ι : Type*} {b : Basis ι F V} {wt : ι → ℤ} (hS : S.IsAdapted b wt) :
+    ∃ (k : ℕ) (e : Basis (Fin k) F V), (∀ i, ∃ w, e i ∈ wtSpan b wt w) ∧
+      S.R = {x | ∀ i, ‖e.repr x i‖ ≤ 1} := by
+  sorry
 
-omit [Module.Finite F V] in
-/-- On a coordinate lattice `Λ_e`, `latticeStab` is the `MapsLattice` condition of `latticeSpin`. -/
-theorem mem_latticeStab_coord {κ : Type*} (Q : QuadraticForm F V) (e : Basis κ F V) (k : GSpin Q) :
-    k ∈ latticeStab Q {x | ∀ i, ‖e.repr x i‖ ≤ 1} ↔
-      MapsLattice e (specP Q k : V →ₗ[F] V) ∧ MapsLattice e (specP Q k⁻¹ : V →ₗ[F] V) :=
-  Iff.rfl
-
-/-- **Off a hyperbolic plane, `H = 0` is `‖detChar‖ = 1`**: `hcMap` is `log ‖detChar‖` and a
-trivial second coordinate. -/
-theorem hcMap_eq_one_iff_of_not_isHypPlane {Q : QuadraticForm F V} (hQ : ¬ IsHypPlane Q)
-    (k : GSpin Q) : hcMap Q k = 1 ↔ ‖((detChar Q k : Fˣ) : F)‖ = 1 := by
+/-- **The stabilizer of `Λ_e` with `H = 0` is compact**, given that `latticeSpin Q e` is: off a
+hyperbolic plane the two groups are equal (`H = 0` is `‖detChar‖ = 1`); on a hyperbolic plane
+`GSpin` is its own split centre and `ker H` is compact
+(`isCompact_splitCentral_inter_ker_hcMap`). -/
+theorem isCompact_latticeStab_inf_ker_hcMap [Module.Finite F V] {κ : Type*} [Finite κ]
+    [TopologicalSpace V] [IsModuleTopology F V] (Q : QuadraticForm F V) (e : Basis κ F V)
+    (hK : IsCompact (latticeSpin Q e : Set (GSpin Q))) :
+    IsCompact ((latticeStab Q {x | ∀ i, ‖e.repr x i‖ ≤ 1} ⊓ (hcMap Q).ker : Subgroup (GSpin Q)) :
+      Set (GSpin Q)) := by
   classical
-  rw [hcMap_eq_one_iff]
-  have h1 : gspinChar₁ Q = detChar Q := by simp [gspinChar₁, hQ]
-  have h2 : gspinChar₂ Q = 1 := by simp [gspinChar₂, hQ]
-  simp [h1, h2]
-
-/-- **Scalars of norm one have `H = 0`**: their powers stay in the compact set of scalars of
-norm `1`. -/
-theorem hcMap_scalarGSpin_eq_one (Q : QuadraticForm F V) {u : Fˣ} (hu : ‖(u : F)‖ = 1) :
-    hcMap Q (scalarGSpin Q u) = 1 := by
-  refine hcMap_eq_one_of_zpow_mem_compact Q
-    (isCompact_unitSphere.image (continuous_scalarGSpin Q)) fun k => ⟨u ^ k, ?_, map_zpow _ _ _⟩
-  change ‖((u ^ k : Fˣ) : F)‖ = 1
-  rw [Units.val_zpow_eq_zpow_val, norm_zpow, hu, one_zpow]
-
-omit [Module.Finite F V] in
-/-- A subset of a family stabilizing a weight-split lattice stabilizes it. -/
-theorem _root_.GSpinGGP.GGPData.StabilizesSplitLattice.mono {ι : Type*} {Q : QuadraticForm F V}
-    {b : Basis ι F V} {wt : ι → ℤ} {S S' : Set (GSpin Q)}
-    (h : GGPData.StabilizesSplitLattice Q b wt S) (hS : S' ⊆ S) :
-    GGPData.StabilizesSplitLattice Q b wt S' :=
-  let ⟨κ, hκ, e, he, hm⟩ := h
-  ⟨κ, hκ, e, he, fun g hg => hm g (hS hg)⟩
+  by_cases hQ : IsHypPlane Q
+  · have hopen : IsOpen ((latticeStab Q {x | ∀ i, ‖e.repr x i‖ ≤ 1} ⊓ (hcMap Q).ker :
+        Subgroup (GSpin Q)) : Set (GSpin Q)) := by
+      refine Subgroup.isOpen_mono (H₁ := latticeSpin Q e ⊓ (hcMap Q).ker) ?_ ?_
+      · exact fun k hk => ⟨(mem_latticeSpin_iff_mem_latticeStab.1 hk.1).1, hk.2⟩
+      · exact (isClopen_latticeSpin Q e).isOpen.inter ((isLocallyConstant_hcMap Q).isOpen_fiber 1)
+    refine (isCompact_splitCentral_inter_ker_hcMap Q).of_isClosed_subset
+      (Subgroup.isClosed_of_isOpen _ hopen) fun k hk => ⟨by simp [splitCentralGSpin, hQ], hk.2⟩
+  · convert hK using 2
+    ext k
+    simp only [Subgroup.mem_inf, MonoidHom.mem_ker, mem_latticeSpin_iff_mem_latticeStab,
+      hcMap_eq_one_iff_of_not_isHypPlane hQ]
 
 end SpecialLattice
 
@@ -299,24 +387,94 @@ theorem GoodK.IsSpecial.pair_scalarGSpin_mem {L : d.FlagLeviDatum} {K : d.GoodK 
   rw [hK]
   exact d.pair_scalarGSpin_mem_specialStab SW SV hu
 
-/-- **The stabilizer of adapted special lattices is a `GoodK`** (not yet proved).
+/-- **`latticeSpin` of `W` is compact**: it is the image of `latticeK` under `g ↦ g_W`. -/
+theorem isCompact_latticeSpin_W {nW : ℕ} (eW : Basis (Fin nW) F (Fin d.m → F)) :
+    IsCompact (latticeSpin d.QW eW : Set (GSpin d.QW)) := by
+  have h := (d.isCompact_latticeK eW (Module.finBasis F d.V)).image d.continuous_fst
+  convert h using 1
+  ext k
+  refine ⟨fun hk => ⟨d.pair (k, 1),
+    ⟨show d.fst (d.pair (k, 1)) ∈ latticeSpin _ _ by rw [d.fst_pair]; exact hk,
+      show d.snd (d.pair (k, 1)) ∈ latticeSpin _ _ by rw [d.snd_pair]; exact one_mem _⟩,
+    d.fst_pair _⟩, ?_⟩
+  rintro ⟨g, hg, rfl⟩
+  exact hg.1
 
-Sketch, field by field, for `K₀ = specialStab S_W S_V`:
-* *compact open*: `R_an = {y ∈ V_an : ‖Q y‖ ≤ r}` is an `𝒪_F`-lattice of `V_an` (W1 §7.1; for an
-  anisotropic form over a local field, `y ↦ ‖Q y‖^{1/2}` is an ultrametric norm), so `R` is a
-  lattice `Λ_e` for a basis `e` made of the `v_i`, scalar multiples of the `v'_i`, and a basis of
-  `R_an`.  The stabilizer of `Λ_e` is open; its image in `SO` is bounded, and `H_G = 0` bounds the
-  central part (as for `latticeK`, `isCompact_latticeK`; for a hyperbolic-plane factor use
-  `isCompact_splitCentral_inter_ker_hcMap`);
-* *good position*: the basis `e` above lies in weight spaces (`IsAdapted`; `R_an ⊆ V_an` is in
-  weight `0`);
-* *`G = P K₀` for `P ∈ 𝒫(M)`*: Iwasawa decomposition for a special subgroup fixing a special point
-  of the apartment of a maximal split torus `A ⊆ M ⊆ P` (Tits, Corvallis, 3.3.2, as in
-  `tits_iwasawa`), through the identification of the module docstring. -/
+/-- **`latticeSpin` of `V` is compact**: it is the image of `latticeK` under `g ↦ g_V`. -/
+theorem isCompact_latticeSpin_V {nV : ℕ} (eV : Basis (Fin nV) F d.V) :
+    IsCompact (latticeSpin d.QV eV : Set (GSpin d.QV)) := by
+  have h := (d.isCompact_latticeK (Module.finBasis F (Fin d.m → F)) eV).image d.continuous_snd
+  convert h using 1
+  ext k
+  refine ⟨fun hk => ⟨d.inr k, d.inr_mem_latticeK _ _ hk, d.snd_inr _⟩, ?_⟩
+  rintro ⟨g, hg, rfl⟩
+  exact hg.2
+
+/-- **`specialStab` of coordinate lattices is open**: it contains the open subgroup
+`latticeK ∩ ker H_G`. -/
+theorem isOpen_specialStab {nW nV : ℕ} (eW : Basis (Fin nW) F (Fin d.m → F))
+    (eV : Basis (Fin nV) F d.V) (SW : SpecialLattice d.QW) (SV : SpecialLattice d.QV)
+    (hRW : SW.R = {x | ∀ i, ‖eW.repr x i‖ ≤ 1}) (hRV : SV.R = {x | ∀ i, ‖eV.repr x i‖ ≤ 1}) :
+    IsOpen (d.specialStab SW SV : Set ↥d.G) := by
+  refine Subgroup.isOpen_mono (H₁ := d.latticeK eW eV ⊓ d.hcG.ker) (fun g hg => ?_)
+    ((d.isOpen_latticeK eW eV).inter (d.isLocallyConstant_hcG.isOpen_fiber 1))
+  rw [mem_specialStab, hRW, hRV]
+  exact ⟨hg.2, (mem_latticeSpin_iff_mem_latticeStab.1 hg.1.1).1,
+    (mem_latticeSpin_iff_mem_latticeStab.1 hg.1.2).1⟩
+
+/-- **`specialStab` of coordinate lattices is compact**: it lies in the image under `pair` of the
+product of the compact factor sets `latticeStab ∩ ker H` (`isCompact_latticeStab_inf_ker_hcMap`),
+and it is closed (open subgroup). -/
+theorem isCompact_specialStab {nW nV : ℕ} (eW : Basis (Fin nW) F (Fin d.m → F))
+    (eV : Basis (Fin nV) F d.V) (SW : SpecialLattice d.QW) (SV : SpecialLattice d.QV)
+    (hRW : SW.R = {x | ∀ i, ‖eW.repr x i‖ ≤ 1}) (hRV : SV.R = {x | ∀ i, ‖eV.repr x i‖ ≤ 1}) :
+    IsCompact (d.specialStab SW SV : Set ↥d.G) := by
+  have hc := ((isCompact_latticeStab_inf_ker_hcMap d.QW eW (d.isCompact_latticeSpin_W eW)).prod
+    (isCompact_latticeStab_inf_ker_hcMap d.QV eV (d.isCompact_latticeSpin_V eV))).image
+      d.continuous_pair
+  refine hc.of_isClosed_subset (Subgroup.isClosed_of_isOpen _
+    (d.isOpen_specialStab eW eV SW SV hRW hRV)) fun g hg => ?_
+  rw [SetLike.mem_coe, mem_specialStab, hcG_eq_one_iff, hRW, hRV] at hg
+  exact ⟨(d.fst g, d.snd g), ⟨⟨hg.2.1, hg.1.1⟩, ⟨hg.2.2, hg.1.2⟩⟩, d.pair_fst_snd g⟩
+
+/-- **Iwasawa decomposition `G = P K₀` for the stabilizer of adapted special lattices** (not
+provable in this repository; to become a literature axiom).
+
+`K₀ = specialStab S_W S_V` is special and fixes a special point of the apartment of the split torus
+`A ⊆ M` of the hyperbolic systems (W1 §7.1–7.2, stated without proof there, through the
+identification of the module docstring: Tits, Corvallis, 3.1, 1.2, 2.1, 1.12; BT II 4.2.15–16,
+5.1.20 Rem. 1, 5.1.29).  For every parabolic `P ⊇ A`, `G(F) = P(F) K₀` (Tits, Corvallis, 3.3.2;
+compare `tits_iwasawa`).  Each `P ∈ 𝒫(M)` contains `M ⊇ A`.  This is a composite of printed
+results with identification steps only; it is to be stated as an axiom of `Literature/` (with
+those steps in its docstring) before `exists_specialK` comes onto the path of `local_ggp`. -/
+theorem specialStab_mul_eq (L : d.FlagLeviDatum) (SW : SpecialLattice d.QW)
+    (SV : SpecialLattice d.QV) (hW : SW.IsAdapted L.bW L.wtW) (hV : SV.IsAdapted L.bV L.wtV) :
+    ∀ P ∈ d.parabolics L.M, ∀ g : ↥d.G, ∃ p ∈ P, ∃ k ∈ d.specialStab SW SV, g = p * k := by
+  sorry
+
+/-- **The stabilizer of adapted special lattices is a `GoodK`.**  `R_W`, `R_V` are coordinate
+lattices of bases made of vectors of weight spaces (`SpecialLattice.exists_basis_R_eq`); hence
+`specialStab` is open and compact (`isOpen_specialStab`, `isCompact_specialStab`) and in good
+position; `G = P K` is `specialStab_mul_eq`. -/
 theorem exists_goodK_eq_specialStab (L : d.FlagLeviDatum) (SW : SpecialLattice d.QW)
     (SV : SpecialLattice d.QV) (hW : SW.IsAdapted L.bW L.wtW) (hV : SV.IsAdapted L.bV L.wtV) :
     ∃ K : d.GoodK L, K.K = d.specialStab SW SV := by
-  sorry
+  obtain ⟨nW, eW, heW, hRW⟩ := SW.exists_basis_R_eq hW
+  obtain ⟨nV, eV, heV, hRV⟩ := SV.exists_basis_R_eq hV
+  refine ⟨{ K := d.specialStab SW SV
+            isOpen := d.isOpen_specialStab eW eV SW SV hRW hRV
+            isCompact := d.isCompact_specialStab eW eV SW SV hRW hRV
+            mul_eq := d.specialStab_mul_eq L SW SV hW hV
+            goodPositionW := ⟨Fin nW, inferInstance, eW, heW, ?_⟩
+            goodPositionV := ⟨Fin nV, inferInstance, eV, heV, ?_⟩ }, rfl⟩
+  · rintro _ ⟨g, hg, rfl⟩
+    have h := (d.mem_specialStab.1 hg).2.1
+    rw [hRW, mem_latticeStab_coord] at h
+    exact h.1
+  · rintro _ ⟨g, hg, rfl⟩
+    have h := (d.mem_specialStab.1 hg).2.2
+    rw [hRV, mem_latticeStab_coord] at h
+    exact h.1
 
 /-- **Every reduced Levi datum has a special `GoodK`** (not yet proved).
 

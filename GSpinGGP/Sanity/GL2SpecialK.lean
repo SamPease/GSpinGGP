@@ -20,7 +20,12 @@ At `gl2Data` (`W = 0`, `V` split of dimension `3`, `q = ac + b²` in the coordin
   `‖u − 1‖ < ‖ϖ‖`, for some `0 < ‖ϖ‖ < 1`.  It is a `GoodK` (`G = P K'` because the `W`-component
   is central and lies in every parabolic), of finite index in `gl2GoodK`, and it is **not** special
   (`not_isSpecial_gl2GoodK'`): every special stabilizer contains all scalars of norm `1` of
-  `GSpin(W)`, and `1 + ϖ` is missing.  So `IsSpecial` is not satisfied by every `GoodK`.
+  `GSpin(W)`, and `1 + ϖ` is missing.  So `IsSpecial` is not satisfied by every `GoodK`.  This
+  only tests that `K` must *equal* a special stabilizer: `gl2GoodK'` has the same `H_P`.
+* `not_exists_specialLattice_R_eq_edge`: the lattice `⟨z₋₁, z₀, ϖ · ½ z₁⟩`, whose stabilizer is
+  the maximal compact, non-special stabilizer of an edge midpoint of the tree of `PGL₂`, is not
+  W1-special for any hyperbolic system and `c`.  This tests the condition "`c` is a value of
+  `val_F ∘ q` on `V_an`" at the level of lattices.
 -/
 
 noncomputable section
@@ -256,5 +261,86 @@ theorem not_isSpecial_gl2GoodK' : ¬ (gl2GoodK' (F := F)).IsSpecial := by
     ‖(gl2Pi : F)‖ at hmem
   rw [fst_pair, detChar_scalarGSpin, finrank_cliffordAlgebra] at hmem
   simp [u] at hmem
+
+/-! ## A lattice that is not special: `⟨z₋₁, z₀, ϖ · ½ z₁⟩`
+
+The lattice `Λ' = {‖a‖ ≤ 1, ‖b‖ ≤ 1, ‖c‖ ≤ ‖ϖ‖}` (coordinates of `gl2Basis`) is the lattice of
+the midpoint of an edge of the tree of `PGL₂ ≅ SO(V)`, whose stabilizer is maximal compact but not
+special.  It is not W1-special, for **any** hyperbolic system and `c`
+(`not_exists_specialLattice_R_eq_edge`), so in particular not for one adapted to `gl2Levi`.  The
+proof uses the condition "`c` is a value of `val_F ∘ q` on `V_an`" only through
+`SpecialLattice.norm_quadForm_le` (`‖q‖ ≤ |ϖ^c|` on `R`) and the anisotropy of `V_an`: `z₀ ∈ Λ'`
+forces `|ϖ^c| ≥ 1`, while two isotropic vectors of `Λ'` pair to norm `< 1`, so `Λ'` contains no
+`v_1`, `ϖ^c v_{-1}`. -/
+
+/-- The lattice `Λ' = ⟨z₋₁, z₀, ϖ · ½ z₁⟩`. -/
+def gl2EdgeLattice : Set (𝔾).V :=
+  {x | ‖gl2Basis.repr x 0‖ ≤ 1 ∧ ‖gl2Basis.repr x 1‖ ≤ 1 ∧ ‖gl2Basis.repr x 2‖ ≤ ‖(gl2Pi : F)‖}
+
+/-- `‖2‖ ≤ 1` (ultrametric). -/
+theorem norm_two_le_one : ‖(2 : F)‖ ≤ 1 := by
+  have h := IsUltrametricDist.norm_add_le_max (1 : F) 1
+  rw [one_add_one_eq_two, norm_one, max_self] at h
+  exact h
+
+/-- **Two isotropic vectors of `Λ'` pair to norm `< 1`.** -/
+theorem norm_polar_lt_one_of_mem_edge {x y : (𝔾).V} (hx : x ∈ gl2EdgeLattice (F := F))
+    (hy : y ∈ gl2EdgeLattice (F := F)) (hQx : (𝔾).QV x = 0) :
+    ‖QuadraticMap.polar (𝔾).QV x y‖ < 1 := by
+  have hs := gl2Pi_lt_one (F := F)
+  obtain ⟨hx0, hx1, hx2⟩ := hx
+  obtain ⟨hy0, hy1, hy2⟩ := hy
+  rw [gl2_QV_eq] at hQx
+  have hb : ‖gl2Basis.repr x 1‖ < 1 := by
+    have e : (gl2Basis.repr x 1) ^ 2 = -(gl2Basis.repr x 0 * gl2Basis.repr x 2) := by
+      linear_combination hQx
+    have h2 : ‖gl2Basis.repr x 1‖ ^ 2 < 1 := by
+      rw [← norm_pow, e, norm_neg, norm_mul]
+      exact lt_of_le_of_lt (mul_le_of_le_one_left (norm_nonneg _) hx0 |>.trans hx2) hs
+    nlinarith [norm_nonneg (gl2Basis.repr x 1)]
+  rw [gl2_polar]
+  refine lt_of_le_of_lt (IsUltrametricDist.norm_add_le_max _ _) (max_lt ?_ ?_)
+  · refine lt_of_le_of_lt (IsUltrametricDist.norm_add_le_max _ _) (max_lt ?_ ?_)
+    · rw [norm_mul]
+      exact lt_of_le_of_lt ((mul_le_of_le_one_left (norm_nonneg _) hx0).trans hy2) hs
+    · rw [norm_mul]
+      exact lt_of_le_of_lt ((mul_le_of_le_one_left (norm_nonneg _) hy0).trans hx2) hs
+  · rw [norm_mul, norm_mul]
+    calc ‖(2 : F)‖ * (‖gl2Basis.repr x 1‖ * ‖gl2Basis.repr y 1‖)
+        ≤ 1 * (‖gl2Basis.repr x 1‖ * 1) := by gcongr; exact norm_two_le_one
+      _ < 1 := by rw [one_mul, mul_one]; exact hb
+
+/-- **`⟨z₋₁, z₀, ϖ · ½ z₁⟩` is not a W1-special lattice** (for any hyperbolic system and `c`). -/
+theorem not_exists_specialLattice_R_eq_edge :
+    ¬ ∃ S : SpecialLattice (𝔾).QV, S.R = gl2EdgeLattice (F := F) := by
+  rintro ⟨S, hS⟩
+  have hs := gl2Pi_pos (F := F)
+  -- `z₀ ∈ Λ'` and `q(z₀) = 1`, so `|ϖ^c| ≥ 1`
+  have he1 : gl2Basis 1 ∈ S.R := by
+    rw [hS]; refine ⟨?_, ?_, ?_⟩ <;> simp [hs.le]
+  have hr : 1 ≤ S.r := by
+    have h := S.norm_quadForm_le he1
+    have hq : (𝔾).QV (gl2Basis 1) = 1 := by rw [gl2_QV_eq]; simp
+    rwa [hq, norm_one] at h
+  rcases Nat.eq_zero_or_pos S.n with hn | hn
+  · -- no hyperbolic system: `V_an = V` is isotropic
+    have hmem : gl2Basis 0 ∈ S.Van := mem_hypOrth.2 fun i => absurd i.2 (by omega)
+    have h0 := S.aniso _ hmem (by rw [gl2_QV_eq]; simp)
+    exact gl2Basis.ne_zero 0 h0
+  · set i : Fin S.n := ⟨0, hn⟩
+    obtain ⟨α, -, hα⟩ := S.exists_norm_eq
+    have hv : S.v i ∈ S.R := by
+      refine ⟨Pi.single i 1, 0, 0, fun j => ?_, fun j => by simpa using S.r_nonneg, zero_mem _,
+        by simpa using S.r_nonneg, by simp [Pi.single_apply]⟩
+      by_cases h : j = i <;> simp [h]
+    have hv' : α • S.v' i ∈ S.R := by
+      refine ⟨0, Pi.single i α, 0, fun j => by simp, fun j => ?_, zero_mem _,
+        by simpa using S.r_nonneg, by simp [Pi.single_apply]⟩
+      by_cases h : j = i <;> simp [h, hα, S.r_nonneg]
+    rw [hS] at hv hv'
+    have hlt := norm_polar_lt_one_of_mem_edge hv hv' (S.quadForm_v i)
+    rw [QuadraticMap.polar_smul_right, S.polar_v_v'] at hlt
+    simp only [↓reduceIte, smul_eq_mul, mul_one, hα] at hlt
+    linarith
 
 end GSpinGGP.GGPData

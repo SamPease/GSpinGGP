@@ -83,6 +83,14 @@ def StabilizesSplitLattice (Q : QuadraticForm F V) (b : Basis ι F V) (wt : ι �
   ∃ (κ : Type) (_ : Fintype κ) (e : Basis κ F V), (∀ i, ∃ w, e i ∈ wtSpan b wt w) ∧
     ∀ g ∈ S, MapsLattice e (specP Q g : V →ₗ[F] V)
 
+/-- A subset of a family stabilizing a weight-split lattice stabilizes it. -/
+theorem StabilizesSplitLattice.mono {Q : QuadraticForm F V}
+    {b : Basis ι F V} {wt : ι → ℤ} {S S' : Set (GSpin Q)}
+    (h : StabilizesSplitLattice Q b wt S) (hS : S' ⊆ S) :
+    StabilizesSplitLattice Q b wt S' :=
+  let ⟨κ, hκ, e, he, hm⟩ := h
+  ⟨κ, hκ, e, he, fun g hg => hm g (hS hg)⟩
+
 end SplitLattice
 
 variable (d) in
