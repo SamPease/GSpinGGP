@@ -259,7 +259,7 @@ theorem weightedOrbitalIntegral_conj_fun_of_aG_eq_top (hG : L.aG = ⊤)
       d.weightedOrbitalIntegral L K x μ f := by
   rw [weightedOrbitalIntegral_eq_orbitalIntegral_of_aG_eq_top hG,
     weightedOrbitalIntegral_eq_orbitalIntegral_of_aG_eq_top hG]
-  unfold orbitalIntegral
+  rw [orbitalIntegral_eq, orbitalIntegral_eq]
   congr 1
   set Φ : ↥d.G → ℂ := fun g => f (g⁻¹ * x * g)
   have hΦ : ∀ c ∈ d.centG x, ∀ g, Φ (c * g) = Φ g := by
