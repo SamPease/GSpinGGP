@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import GSpinGGP.Literature.HarishChandra
 import GSpinGGP.GGP.UnitaryCharacters
 import GSpinGGP.Foundations.Determinant
+import GSpinGGP.Foundations.CharpolyContinuous
 import GSpinGGP.GGP.LieRegular
 import GSpinGGP.TraceFormula.JHatTransport
 import GSpinGGP.Foundations.OrbitChart
@@ -173,12 +174,13 @@ theorem finrank_lieCentralizer_eq_lieRank (d : GGPData F) {x : ↥d.G}
     (finrank_lieCentralizer_gspin_of_isLieAbelian d.nondeg (d.fst x) hssW habW)
     (finrank_lieCentralizer_gspin_of_isLieAbelian d.nondeg_QV (d.snd x) hssV habV)
 
-/-- **Regular semisimple elements lie in Harish-Chandra's `G'`**: `D(x) ≠ 0` for
+/-- **The order of vanishing of `det(t − (1 − Ad x))` at `t = 0` is the rank** for
 `x ∈ G_reg(F)`. `N = 1 − Ad x` is semisimple on `𝔤`, so the exact power of `t` dividing its
 characteristic polynomial is `t^{dim ker N}` (Mathlib `finrank_maxGenEigenspace_zero_eq`), with
 `ker N = 𝔤_x` and `dim 𝔤_x = lieRank 𝔤` (`finrank_lieCentralizer_eq_lieRank`). -/
-theorem hcDisc_ne_zero_of_mem_regularSet (d : GGPData F) {x : ↥d.G}
-    (hx : x ∈ regularSet d.G d.lie) : hcDisc d x ≠ 0 := by
+theorem natTrailingDegree_charpoly_oneSubAd (d : GGPData F) {x : ↥d.G}
+    (hx : x ∈ regularSet d.G d.lie) :
+    (LinearMap.charpoly (oneSubAd d x)).natTrailingDegree = lieRank d.lie := by
   obtain ⟨N, hNdef⟩ : ∃ N, N = oneSubAd d x := ⟨_, rfl⟩
   have hss : Module.End.IsSemisimple N := hNdef ▸ isSemisimple_oneSubAd d x hx.1
   have hdeg : (LinearMap.charpoly N).natTrailingDegree = Module.finrank F ↥(LinearMap.ker N) := by
@@ -220,14 +222,45 @@ theorem hcDisc_ne_zero_of_mem_regularSet (d : GGPData F) {x : ↥d.G}
   have hker' : Module.finrank F ↥(LinearMap.ker N) =
       Module.finrank F ↥(lieCentralizer d.lie ((x : d.ambientˣ) : d.ambient)) := by
     rw [← ha]; exact hker
-  have key : (LinearMap.charpoly N).coeff (lieRank d.lie) ≠ 0 := by
-    rw [← finrank_lieCentralizer_eq_lieRank d hx, ← hker', ← hdeg]
-    change (LinearMap.charpoly N).trailingCoeff ≠ 0
-    exact Polynomial.trailingCoeff_ne_zero.mpr (LinearMap.charpoly_monic N).ne_zero
-  rw [hNdef] at key
+  rw [← hNdef, hdeg, hker', finrank_lieCentralizer_eq_lieRank d hx]
+
+/-- **On `G_reg(F)`, `hcDisc` is the trailing coefficient** of `det(t − (1 − Ad x))`
+(`natTrailingDegree_charpoly_oneSubAd`). -/
+theorem hcDisc_eq_trailingCoeff (d : GGPData F) {x : ↥d.G} (hx : x ∈ regularSet d.G d.lie) :
+    hcDisc d x = (LinearMap.charpoly (oneSubAd d x)).trailingCoeff := by
   unfold hcDisc
-  rw [dite_eq_left (lie_conj_stable d x)]
-  exact key
+  rw [dite_eq_left (lie_conj_stable d x), Polynomial.trailingCoeff,
+    natTrailingDegree_charpoly_oneSubAd d hx]
+
+/-- **Regular semisimple elements lie in Harish-Chandra's `G'`**: `D(x) ≠ 0` for
+`x ∈ G_reg(F)`, since `D(x)` is then the trailing coefficient of a monic polynomial
+(`hcDisc_eq_trailingCoeff`). -/
+theorem hcDisc_ne_zero_of_mem_regularSet (d : GGPData F) {x : ↥d.G}
+    (hx : x ∈ regularSet d.G d.lie) : hcDisc d x ≠ 0 := by
+  rw [hcDisc_eq_trailingCoeff d hx]
+  exact Polynomial.trailingCoeff_ne_zero.mpr (LinearMap.charpoly_monic _).ne_zero
+
+/-- **On `G_reg(F)`, `D^G = |D|_F`**: the Weyl discriminant `weylDisc` (the absolute value of the
+trailing coefficient) is the absolute value of Harish-Chandra's `hcDisc` there
+(`hcDisc_eq_trailingCoeff`). -/
+theorem weylDisc_eq_absF_hcDisc (d : GGPData F) {x : ↥d.G} (hx : x ∈ regularSet d.G d.lie) :
+    weylDisc d.lie (x : d.ambientˣ) = absF (hcDisc d x) := by
+  rw [hcDisc_eq_trailingCoeff d hx, weylDisc, dite_eq_left (lie_conj_stable d x)]
+
+/-- **Harish-Chandra's discriminant is continuous** on `G(F)`: it is a coefficient of the
+characteristic polynomial of `1 − Ad x` on `𝔤`, whose matrix entries are continuous in `x`
+(`continuous_charpoly_coeff_of_continuous`). -/
+theorem continuous_hcDisc (d : GGPData F) : Continuous (hcDisc d) := by
+  have e : hcDisc d = fun x => (LinearMap.charpoly (oneSubAd d x)).coeff (lieRank d.lie) :=
+    funext fun x => by unfold hcDisc; rw [dite_eq_left (lie_conj_stable d x)]
+  rw [e]
+  refine continuous_charpoly_coeff_of_continuous d.lie.toSubmodule.subtype
+    d.lie.toSubmodule.injective_subtype (fun x => oneSubAd d x) (fun v => ?_) _
+  have hval : Continuous fun x : ↥d.G => ((x : d.ambientˣ) : d.ambient) :=
+    Units.continuous_val.comp continuous_subtypeVal
+  have hinv : Continuous fun x : ↥d.G => (((x : d.ambientˣ)⁻¹ : d.ambientˣ) : d.ambient) :=
+    Units.continuous_coe_inv.comp continuous_subtypeVal
+  exact continuous_const.sub ((hval.mul continuous_const).mul hinv)
 
 /-- **Harish-Chandra's `G'` consists of regular semisimple elements**: `D(x) ≠ 0` implies `x`
 semisimple with `𝔤_x` abelian.  The coefficient of `t^ℓ` (`ℓ = lieRank 𝔤 = lieRankNat d`,
