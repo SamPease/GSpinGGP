@@ -71,9 +71,10 @@ in other notation).  Each axiom's docstring lists which it uses.
   `X_*(A_M)`, as recorded in the docstring of `vM`).  The weight basis of `L` only constructs
   them.  So for `IsMx L x` and special `K`, `L.thetaFBP K f x` is W1's/BP's `θ_f(x)` computed
   with `K` (up to `c`, (I2)).  That two presentations `L`, `L'` with the same `M` give the same
-  value is this identification, **asserted here and not proved in Lean**; the check available is
-  for one presentation (`Sanity/AxiomRedTeam/BPThetaF.lean`).  `vM` is free of junk values only if
-  `𝒫(M)` is finite, which is the `sorry` `FlagLeviDatum.finite_parabolics`.
+  value is this identification.  It is **proved** for the pair `L`, `L.opp` (opposite flags,
+  negated weights; `ReducedLeviDatum.opp_thetaFBP`, `TraceFormula/ThetaFBPOpp.lean`) and
+  **asserted here, not proved in Lean,** for other presentations.  `vM` is free of junk values
+  only if `𝒫(M)` is finite, which is the `sorry` `FlagLeviDatum.finite_parabolics`.
 * **(I6) Regular set.**  `regularSet d.G d.lie` is `G_reg(F)` (`hcDisc_ne_zero_iff_mem_regularSet`);
   it is open and its complement is null (`hc_regular_open_dense_conull`, itself a literature
   axiom: Harish-Chandra), so a statement about

@@ -175,11 +175,13 @@ import GSpinGGP.GGP.Unramified
 import GSpinGGP.GGP.WeightVM
 import GSpinGGP.GGP.LatticeK
 import GSpinGGP.GGP.SpecialK
+import GSpinGGP.GGP.LeviOpp
 import GSpinGGP.TraceFormula.Basic
 import GSpinGGP.TraceFormula.SpinorNorm
 import GSpinGGP.TraceFormula.ThetaF
 import GSpinGGP.TraceFormula.DcQuotient
 import GSpinGGP.TraceFormula.ThetaFBP
+import GSpinGGP.TraceFormula.ThetaFBPOpp
 import GSpinGGP.TraceFormula.ThetaFBPIndep
 import GSpinGGP.TraceFormula.WeightedOrbital
 import GSpinGGP.TraceFormula.RegularCentralizer
@@ -237,6 +239,7 @@ import GSpinGGP.Sanity.AxiomRedTeam
 import GSpinGGP.Sanity.LeviAudit
 import GSpinGGP.Sanity.WeightAudit
 import GSpinGGP.Sanity.GL2GoodK
+import GSpinGGP.Sanity.GL2IsMx
 import GSpinGGP.Sanity.GL2SpecialK
 import GSpinGGP.Sanity.GL2Weight
 import GSpinGGP.Sanity.WeightedOrbitalAudit
