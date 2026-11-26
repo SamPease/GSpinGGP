@@ -6,6 +6,7 @@ import GSpinGGP.TraceFormula.Interface
 import GSpinGGP.TraceFormula.MGeom
 import GSpinGGP.GGP.Levi
 import GSpinGGP.TraceFormula.EllipticRepresentations
+import GSpinGGP.TraceFormula.GammaG
 
 /-!
 # The spectral side: Thesis Prop 7.4.1(ii) in elliptic form
@@ -265,11 +266,11 @@ def EllTorus.Conj (T T' : EllTorus d) : Prop :=
 /-- The `G(F)`-conjugacy classes of elliptic maximal tori. -/
 def EllTorusClass : Type _ := Quot (EllTorus.Conj (d := d))
 
-/-- `|W(G,T)| = |N_G(T)(F)/T(F)|`, for any subgroup `T` of `G(F)` (used for elliptic tori here and for
-all maximal tori in `gammaIntegral`, `TraceFormula/GammaG.lean`). -/
-def weylCardG (T : Subgroup ↥d.G) : ℕ :=
-  Nat.card (↥(Subgroup.normalizer (T : Set ↥d.G)) ⧸
-    T.subgroupOf (Subgroup.normalizer (T : Set ↥d.G)))
+/-- An elliptic maximal torus is a maximal torus (`MaxTorus`, `TraceFormula/GammaG.lean`). -/
+def GGPData.EllTorus.toMaxTorus (T : EllTorus d) : d.MaxTorus :=
+  ⟨T.1, by
+    obtain ⟨x, hx, hT⟩ := T.2
+    exact ⟨x, d.ellRegSet_subset_regularSet hx, hT⟩⟩
 
 theorem AG_le_ellTorus (T : EllTorus d) : d.AG ≤ T.1 := by
   obtain ⟨x, -, hT⟩ := T.2
