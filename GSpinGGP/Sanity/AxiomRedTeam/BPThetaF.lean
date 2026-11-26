@@ -98,9 +98,9 @@ does not consult it; it does consult `(gl2Levi, gl2GoodK)` and `(gl2Levi.opp, gl
   then `Measure.hullVolume_map` and `opp_latticeMG`.  This is a consistency check of an axiom,
   not only of the hypothesis: conjunct 1 of `waldspurger2010_lemme_5_3` is not guarded by
   `IsBPThetaF` and itself asserts the equality for strongly cuspidal test functions `f`
-  (`lemme_5_3_opp`, which uses the axiom).  If `v_M` differed for `L` and `L.opp` (mathematically it
-  does not: the points `H_P(g)` change sign modulo `a_G`, and so does the lattice), the axiom
-  would be false, not vacuous.
+  (`lemme_5_3_opp`, which uses the axiom).  If `v_M` differed for `L` and `L.opp`
+  (mathematically it does not: the points `H_P(g)` change sign modulo `a_G`, and so does the
+  lattice), the axiom would be false, not vacuous.
 
 **Non-vacuity off `toyD`.**  On a general datum, non-vacuity of the hypothesis `IsBPThetaF` rests on
 the `sorry`s `exists_isMx` and `exists_specialK`; if either failed, the axioms would be vacuous
