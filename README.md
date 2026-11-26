@@ -48,16 +48,17 @@ As of November 2026:
   below), plus some smaller lemmas. A `sorry` is a step this project still owes.
 - Results from the literature are assumed as `axiom`s in `GSpinGGP/Literature/`, each with a
   docstring citing its source; they are where the formalization stops, and are not meant to be
-  proved here. `local_ggp` uses 24 of the 26. The other two are `exists_iwasawaPair_xi_sq_integrable`
+  proved here. `local_ggp` uses 24 of the 29. The other five are `exists_iwasawaPair_xi_sq_integrable`
   (Waldspurger 2003, Lemme II.1.5), intended as an input of the estimates of Thesis Ch. 8 and 10,
-  and `weyl_integration_exists` (the Weyl integration formula), intended for the geometric side of
-  the local trace formula.
+  and four intended for the geometric side of the local trace formula: `weyl_integration_exists`
+  (the Weyl integration formula) and the three on Beuzart-Plessis's `θ_f` of a strongly cuspidal
+  function, `waldspurger2010_lemme_5_3`, `waldspurger2010_cor_5_9` and `bp_thm_5_5_1_iv`.
   There are two classes.
   A *verbatim* axiom is a statement printed in its source, for the group the source treats,
   specialized (one, `bp_integrable_kernel_scusp`, is stated without proof in its source).
   A *derived* axiom is a short, explicit combination of such statements, or a printed statement
   whose hypotheses are checked for our object in the docstring only; the docstring quotes the
-  ingredients and gives the steps. 10 of the 26 are derived (`scripts/derived-axioms.txt`).
+  ingredients and gives the steps. 13 of the 29 are derived (`scripts/derived-axioms.txt`).
   They are the three on Galois cohomology (applied to groups of `F̄`-points whose description as algebraic
   groups, and for Kottwitz's lemma as a fundamental maximal torus, is argued in the docstring);
   `jantzen_finrank_soCentMat_ge` (four statements of Jantzen combined);
@@ -78,9 +79,20 @@ As of November 2026:
   identification of maximal tori with centralizers of regular semisimple elements, and of the
   other objects, is written in the docstring; the author decided on it as a verbatim citation,
   and it is labelled derived because of these unfolding and identification steps);
-  and `exists_iwasawaPair_xi_sq_integrable` (Waldspurger's `∫_G Ξ² (1 + σ)^{-d} < ∞` for connected
+  `exists_iwasawaPair_xi_sq_integrable` (Waldspurger's `∫_G Ξ² (1 + σ)^{-d} < ∞` for connected
   reductive groups; the identification of his special maximal compact subgroup, `Ξ`, and `σ` for a
-  lattice basis of `C(W) × C(V)` with ours is written in the docstring).
+  lattice basis of `C(W) × C(V)` with ours is written in the docstring);
+  and three on `θ_f` for a strongly cuspidal `f ∈ C_c^∞(G(F))`, stated for every `θ` that equals
+  Beuzart-Plessis's formula on the regular set for every presentation with a special maximal compact
+  subgroup in lattice form (`IsBPThetaF`; the lattice form is Waldspurger 2010 §7.1–7.2, stated
+  without proof there): `waldspurger2010_lemme_5_3` (Waldspurger 2010, Lemmes 5.2–5.3:
+  independence of the special subgroup, conjugation invariance, local integrability),
+  `waldspurger2010_cor_5_9` (Waldspurger 2010, Cor 5.9: `θ_f` is a quasi-character; that his
+  quasi-characters are ours is checked in the docstring) and `bp_thm_5_5_1_iv` (Beuzart-Plessis
+  Thm 5.5.1(iv), the geometric expansion of `J^A`, stated without proof in its source, for some
+  Haar measures on the maximal tori; the measure on `A_G(F)` is Arthur's, which Beuzart-Plessis
+  leaves unstated; the form for all Haar measures is a theorem). Their identification steps
+  (`M(x)`, the special subgroup, the normalizations of `dg`) are written in the docstrings.
   The axioms on characters (Harish-Chandra, Beuzart-Plessis) and on multiplicity one (Pan Yan) are
   stated, as in their sources, for irreducible admissible smooth representations; the exception is
   `rodier_germ_one` (Rodier, Mœglin–Waldspurger), which is still stated for irreducible tempered

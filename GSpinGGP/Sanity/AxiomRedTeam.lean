@@ -14,6 +14,7 @@ import GSpinGGP.Sanity.AxiomRedTeam.WaldspurgerXi
 import GSpinGGP.Sanity.AxiomRedTeam.SmoothRepresentations
 import GSpinGGP.Sanity.AxiomRedTeam.WaldspurgerLie
 import GSpinGGP.Sanity.AxiomRedTeam.WeylIntegration
+import GSpinGGP.Sanity.AxiomRedTeam.BPThetaF
 
 /-!
 # Checks of the literature axioms on small instances
@@ -101,6 +102,16 @@ the axiom it tests; the computations of germs at `toyD` use `exists_isSelfDual` 
   `jantzen_finrank_soCentMat_ge` (`nonempty_maxTorusClass`); it also forces a class with a finite
   Weyl group and a nonzero term (`exists_class_weylCardG_ne_zero_of_axiom`). Not covered (accepted):
   nonabelian `G`, `|W(G,T)| > 1`, `D^G ≠ 1`, several torus classes.
+* `waldspurger2010_lemme_5_3`, `waldspurger2010_cor_5_9`, `bp_thm_5_5_1_iv`
+  (`AxiomRedTeam/BPThetaF.lean`): V at `toyD`, the whole statements (`toyD_lemme_5_3_check`,
+  `toyD_cor_5_9_check`, `toyD_bp_thm_5_5_1_iv_check`), with a special `K` built at `toyD`
+  (`toyD_specialK_isSpecial`) so that the hypothesis `IsBPThetaF` is satisfiable
+  (`toyD_isBPThetaF`) and pins `θ = c f` (`toyD_isBPThetaF_iff`, `toyD_not_isBPThetaF_add_one`);
+  a wrong `IsSpecial` makes the hypothesis unsatisfiable (`not_isBPThetaF_of_not_exists`,
+  `not_isBPThetaF_of_ne`), and `IsSpecial` excludes non-special `K` on `gl2Data`
+  (`not_isSpecial_gl2GoodK'`, `not_exists_specialLattice_R_eq_iwahori`); `f = 0`
+  (`bp_thm_5_5_1_iv_zero`); C, a joint model with `bp_integrable_kernel_scusp`
+  (`toyD_joint_check`). Not covered: nonabelian `G`, `M ≠ G`, `v_M ≠ 1`.
 
 `WholeSystem.lean` also proves, at `toyD`, the conclusions of several `sorry` statements on the
 path of the main theorem and the multiplicity formula for the trivial representation, with both
