@@ -3,7 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.TraceFormula.RegularCentralizer
-import GSpinGGP.TraceFormula.Spectral
+import GSpinGGP.TraceFormula.StronglyCuspidal
 
 /-!
 # `Γ(G)` with its measure, the kernel `K^A`, `J^A`, and the Weyl integration formula
@@ -27,7 +27,7 @@ of the `G(F)`-conjugacy classes of maximal tori, BP equips `Γ(G)` with the meas
   (`TraceFormula/Spectral.lean`) does for the elliptic ones (`EllTorus.toMaxTorus`).  The index
   set `GammaClass` of `Γ(G,H)` (`GGP/Triple.lean`) cannot be reused: it classifies the tori `T_x`
   of `GSpin(W)` attached to the GGP triple, not the maximal tori of `G`.
-* **`|W(G,T)|`** is `weylCardG d T = |N_{G(F)}(T(F))/T(F)|` (`Spectral.lean`), BP's
+* **`|W(G,T)|`** is `weylCardG d T = |N_{G(F)}(T(F))/T(F)|`, BP's
   `W(G,T) = Norm_{G(F)}(T)/T(F)`.
 * **The measure `dt` on `T(F)`.**  BP §1.6 (p. 30) gives `T(F)` the exp-lift of the autodual
   measure of `𝔱(F)` (the `dt` of §1.7, not `d_c t`; `ν(T)` only enters the measure of
@@ -90,6 +90,12 @@ namespace GSpinGGP
 
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
+/-- `|W(G,T)| = |N_G(T)(F)/T(F)|`, for any subgroup `T` of `G(F)` (used for all maximal tori in
+`gammaIntegral`, and for the elliptic tori in `TraceFormula/Spectral.lean`). -/
+def weylCardG (d : GGPData F) (T : Subgroup ↥d.G) : ℕ :=
+  Nat.card (↥(Subgroup.normalizer (T : Set ↥d.G)) ⧸
+    T.subgroupOf (Subgroup.normalizer (T : Set ↥d.G)))
+
 namespace GGPData
 
 variable (d : GGPData F)
@@ -107,12 +113,6 @@ def MaxTorus.Conj (T T' : d.MaxTorus) : Prop :=
 
 /-- **`𝒯(G)`**: the `G(F)`-conjugacy classes of maximal tori (BP §1.7, p. 32). -/
 def MaxTorusClass : Type _ := Quot (MaxTorus.Conj d)
-
-/-- An elliptic maximal torus (`EllTorus`, `TraceFormula/Spectral.lean`) is a maximal torus. -/
-def EllTorus.toMaxTorus (T : EllTorus d) : d.MaxTorus :=
-  ⟨T.1, by
-    obtain ⟨x, hx, hT⟩ := T.2
-    exact ⟨x, d.ellRegSet_subset_regularSet hx, hT⟩⟩
 
 variable {d}
 

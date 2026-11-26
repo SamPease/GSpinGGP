@@ -1,7 +1,7 @@
 import GSpinGGP.GGP.Triple
 import GSpinGGP.GGP.Centralizers
 import GSpinGGP.GGP.Germs
-import GSpinGGP.TraceFormula.StronglyCuspidal
+import GSpinGGP.TraceFormula.Basic
 import GSpinGGP.HarmonicAnalysis.HarishChandraXi
 
 /-!

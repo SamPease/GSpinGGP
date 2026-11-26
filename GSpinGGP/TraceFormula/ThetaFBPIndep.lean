@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.TraceFormula.ThetaFBP
+import GSpinGGP.TraceFormula.StronglyCuspidal
 
 /-!
 # `J_M(x, f)` and `θ_f` for strongly cuspidal `f`: independence of `K`, invariance
