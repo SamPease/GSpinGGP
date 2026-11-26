@@ -99,9 +99,10 @@ harmless.
 * `GGPData.exists_specialK` (`sorry`): every reduced Levi datum has a special `GoodK`.
 
 The checks at `gl2Data` are in `Sanity/GL2SpecialK.lean`: `gl2GoodK` is special; a `GoodK` of
-finite index in it is not; and the lattice `⟨z₋₁, z₀, ϖ · ½ z₁⟩` (for `ϖ` a uniformizer, that of an
-edge midpoint of the tree) is not a special lattice.  No check yet exercises the condition
-`attained`.
+finite index in it is not; the lattice `⟨z₋₁, z₀, ϖ · ½ z₁⟩` (for `ϖ` a uniformizer, that of an
+edge midpoint of the tree) is not a special lattice; and the lattice `⟨z₋₁, ϖ z₀, ϖ · ½ z₁⟩`
+(stabilizer the normalizer of an Iwahori subgroup) satisfies every condition except `attained` and
+is excluded by `attained` (`not_exists_specialLattice_R_eq_iwahori`).
 -/
 
 noncomputable section
