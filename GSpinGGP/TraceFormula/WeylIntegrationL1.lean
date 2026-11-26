@@ -28,10 +28,12 @@ for the sum).
 For a compact open `U ⊆ G(F)`, `1_U ∈ C_c^∞(G(F))`, so the Weyl integration formula for `1_U`
 gives `weylMeasure U = haar U`, *provided* each torus term is finite (Lean's Bochner integral and
 `tsum` are `0` on divergent input, so the formula for `1_U` alone does not exclude an infinite
-torus term).  That finiteness is `MaxTorus.isFiniteMeasureOnCompacts_weylMeasureOn` (not yet
-proved; see its docstring).  Compact open sets form a π-system generating the Borel sets
-(`measure_ext_of_isCompact_isOpen`), so `weylMeasure = haar` (`weylMeasure_eq_haar`), and the
-formula holds for every integrable `φ` (`weyl_integration_integrable`).
+torus term).  That finiteness is `MaxTorus.isFiniteMeasureOnCompacts_weylMeasureOn`, from the
+`[0, ∞]` convergence conjunct of `weyl_integration_exists` (BP §1.7, p. 32), Tonelli
+(`MaxTorus.lintegral_weylMeasureOn`) and the independence of a torus term from the Haar measure
+of the torus (`MaxTorus.weylMeasureOn_eq`).  Compact open sets form a π-system generating the
+Borel sets (`measure_ext_of_isCompact_isOpen`), so `weylMeasure = haar` (`weylMeasure_eq_haar`),
+and the formula holds for every integrable `φ` (`weyl_integration_integrable`).
 
 ## Main statements
 
@@ -145,36 +147,81 @@ theorem weylWeight_toReal (T : Subgroup ↥d.G) :
   rw [weylWeight, ENNReal.toReal_ofReal (inv_nonneg.2 (Nat.cast_nonneg _)), Complex.ofReal_inv,
     Complex.ofReal_natCast]
 
-/-- **Finiteness of a torus term on compact sets** (not yet proved): for a maximal torus `T`,
-a Haar measure `μ_T` on `T(F)` and compact `K ⊆ G(F)`,
-`∫_{T(F)} D^G(t) ∫_{T(F)\G(F)} 1_K(g⁻¹ t g) dġ dt < ∞`.
+/-- **Tonelli for a torus term**: for measurable `φ : G(F) → [0, ∞]`,
+`∫⁻ φ d(weylMeasureOn μ T) = ∫⁻_{T(F)} D^G(t) ∫⁻_{T(F)\G(F)} φ(g⁻¹ t g) dġ dμ_T(t)`
+(`D^G` cut off to `G_reg(F)`). -/
+theorem MaxTorus.lintegral_weylMeasureOn (T : d.MaxTorus) (μ : ∀ T : Subgroup ↥d.G, Measure ↥T)
+    [(μ T.1).IsHaarMeasure] {φ : ↥d.G → ℝ≥0∞} (hφ : Measurable φ) :
+    ∫⁻ g, φ g ∂d.weylMeasureOn μ T.1 = ∫⁻ t, d.weylDensity T.1 t *
+      ∫⁻ q, φ (d.weylConj T.1 (t, q)) ∂d.quotMeasureOn T.1 (μ T.1) ∂μ T.1 := by
+  have : LocallyCompactSpace ↥T.1 := T.isClosed.locallyCompactSpace
+  have : SecondCountableTopology ↥T.1 := Topology.IsEmbedding.subtypeVal.secondCountableTopology
+  have : IsFiniteMeasureOnCompacts (d.quotMeasureOn T.1 (μ T.1)) := by
+    have := T.isMulRightInvariant (μ T.1)
+    exact (T.quotMeasureOn_spec (μ T.1)).isFiniteMeasureOnCompacts continuous_subtypeVal
+      T.isClosed.isClosedEmbedding_subtypeVal
+  have hΦ : Measurable (d.weylConj T.1) := T.continuous_weylConj.measurable
+  have hm : Measurable fun t : ↥T.1 =>
+      ∫⁻ q, φ (d.weylConj T.1 (t, q)) ∂d.quotMeasureOn T.1 (μ T.1) :=
+    (hφ.comp hΦ).lintegral_prod_right'
+  unfold weylMeasureOn
+  rw [lintegral_map hφ hΦ,
+    lintegral_prod (fun z => φ (d.weylConj T.1 z)) (hφ.comp hΦ).aemeasurable,
+    lintegral_withDensity_eq_lintegral_mul _ (d.measurable_weylDensity T.1) hm]
+  rfl
 
-This is the absolute convergence of the right side of the Weyl integration formula, which BP's
-printed formula (§1.7, p. 32) presupposes but the Lean form `weyl_integration_exists` does not
-carry: there the outer and the inner integrals are Bochner integrals, which are `0` on divergent
-input, so neither integrability of the torus terms nor summability over `𝒯(G)` would recover it
-(the inner orbital integral could itself be a junk `0`).  What does is the formula's convergence
-in `[0, ∞]`: for the witness family `μ`, every `f ∈ C_c^∞(G(F))` and every maximal torus `T`,
-`∫⁻_{T(F)} 1_{G_reg}(t) D^G(t) ∫⁻_{T(F)\G(F)} ‖f(g⁻¹ t g)‖ₑ dġ dμ_T(t) < ∞`.  A separate
-pull request is to add this as a conjunct of `weyl_integration_exists`; with it, this statement
-follows for one Haar family (take `f = 1_U`, `U ⊇ K` compact open), hence for all
-(`weylMeasureOn` scales like `weylIntegrand`).
+/-- **A torus term does not depend on the Haar measure of the torus**: for Haar measures `μ T`,
+`μ' T` on `T(F)`, `weylMeasureOn μ T = weylMeasureOn μ' T`.  If `μ' T = c μ T`, the outer
+measure is multiplied by `c` and `dg/μ' T = c⁻¹ dg/μ T` (`quotMeasureOn_smul`). -/
+theorem MaxTorus.weylMeasureOn_eq (T : d.MaxTorus) (μ μ' : ∀ T : Subgroup ↥d.G, Measure ↥T)
+    [(μ T.1).IsHaarMeasure] [(μ' T.1).IsHaarMeasure] :
+    d.weylMeasureOn μ' T.1 = d.weylMeasureOn μ T.1 := by
+  have : LocallyCompactSpace ↥T.1 := T.isClosed.locallyCompactSpace
+  have : SecondCountableTopology ↥T.1 := Topology.IsEmbedding.subtypeVal.secondCountableTopology
+  have := T.isMulRightInvariant (μ T.1)
+  set k := Measure.haarScalarFactor (μ' T.1) (μ T.1)
+  have hk : μ' T.1 = (k : ℝ≥0∞) • μ T.1 := by
+    rw [Measure.isMulLeftInvariant_eq_smul (μ' T.1) (μ T.1)]
+    rfl
+  have hk0 : (k : ℝ≥0∞) ≠ 0 :=
+    ENNReal.coe_ne_zero.2 (Measure.haarScalarFactor_pos_of_isHaarMeasure _ _).ne'
+  ext s hs
+  rw [← lintegral_indicator_one hs, ← lintegral_indicator_one hs,
+    T.lintegral_weylMeasureOn μ' (measurable_one.indicator hs),
+    T.lintegral_weylMeasureOn μ (measurable_one.indicator hs), hk,
+    d.quotMeasureOn_smul T.1 T.isClosed (μ T.1) hk0 ENNReal.coe_ne_top, lintegral_smul_measure]
+  simp_rw [lintegral_smul_measure, smul_eq_mul, mul_left_comm _ (k : ℝ≥0∞)⁻¹]
+  rw [lintegral_const_mul' _ _ (ENNReal.inv_ne_top.2 hk0), ← mul_assoc,
+    ENNReal.mul_inv_cancel hk0 ENNReal.coe_ne_top, one_mul]
 
-Sketch without it (Harish-Chandra).  Replace `K` by a compact open `U ⊇ K`, so that
-`1_U ∈ C_c^∞(G(F))`.  The integrand is `D^G(t)^{1/2} · J_G(t, 1_U)`, where BP's normalized
-orbital integral `J_G(t, f) = D^G(t)^{1/2} ∫_{T(F)\G(F)} f(g⁻¹ t g) dġ` (p. 33) already contains
-one factor `D^{1/2}`.  (1) `t ↦ J_G(t, 1_U)` is locally bounded on `G(F)` (BP p. 33), and
-`D^G(t)^{1/2}` is bounded on compact subsets of `T(F)`.  (2) `J_G(t, 1_U) = 0` unless the
-conjugacy class of `t` meets `U`, and the set of such `t` is relatively compact in `T(F)`: the
-set of `g⁻¹ t g` is compact modulo conjugation, and such a set meets `T(F)` in a relatively
-compact set (BP p. 32); directly, in a faithful representation the characteristic polynomials of
-`t` and of `t⁻¹` have bounded coefficients, so the eigenvalues of `t` are bounded above and away
-from `0`.  So the integrand is bounded and vanishes off a compact subset of `T(F)`, and its
-integral is finite. -/
+/-- **Finiteness of a torus term on compact sets**: for a maximal torus `T`, a Haar measure `μ_T`
+on `T(F)` and compact `K ⊆ G(F)`, `∫_{T(F)} D^G(t) ∫_{T(F)\G(F)} 1_K(g⁻¹ t g) dġ dt < ∞`.
+
+This is the absolute convergence of the right side of the Weyl integration formula, the third
+conjunct of `weyl_integration_exists` (BP §1.7, p. 32, read in `[0, ∞]`).  Take a compact open
+`U ⊇ K`, so `1_U ∈ C_c^∞(G(F))`; the conjunct for `1_U` is `weylMeasureOn μ₀ T (U) < ∞` for the
+witness family `μ₀` (`MaxTorus.lintegral_weylMeasureOn`), and `weylMeasureOn` does not depend on
+the Haar measure of `T(F)` (`MaxTorus.weylMeasureOn_eq`). -/
 theorem MaxTorus.isFiniteMeasureOnCompacts_weylMeasureOn (T : d.MaxTorus)
     (μ : ∀ T : Subgroup ↥d.G, Measure ↥T) [(μ T.1).IsHaarMeasure] :
     IsFiniteMeasureOnCompacts (d.weylMeasureOn μ T.1) := by
-  sorry
+  obtain ⟨μ₀, hμ₀, -, hfin⟩ := weyl_integration_exists d
+  have := hμ₀ T
+  rw [T.weylMeasureOn_eq μ₀ μ]
+  have : TotallyDisconnectedSpace ↥d.G := totallyDisconnectedSpace_subgroup F d.ambient d.G
+  refine ⟨fun K hK => ?_⟩
+  obtain ⟨U, hUc, hUo, hKU, -⟩ :=
+    exists_isCompact_isClopen_between hK isOpen_univ (Set.subset_univ K)
+  refine (measure_mono hKU).trans_lt ?_
+  have h := hfin _ (indicator_mem_testFunctions hUc hUo) T
+  rw [← lintegral_indicator_one hUo.isOpen.measurableSet,
+    T.lintegral_weylMeasureOn μ₀ (measurable_one.indicator hUo.isOpen.measurableSet)]
+  refine lt_of_eq_of_lt (lintegral_congr fun t => ?_) h
+  congr 1
+  refine lintegral_congr fun q => ?_
+  rw [eNorm_indicator_eq_indicator_eNorm]
+  simp only [Pi.one_apply, eNorm_one]
+  rfl
 
 /-! ## The integral against a torus term -/
 
@@ -234,10 +281,7 @@ theorem weylMeasure_apply_eq_haar (μ : ∀ T : Subgroup ↥d.G, Measure ↥T)
     (hUo : IsOpen U) : d.weylMeasure μ U = Measure.haar U := by
   have hUm : MeasurableSet U := hUo.measurableSet
   set f : ↥d.G → ℂ := U.indicator fun _ => 1
-  have hf : f ∈ testFunctions ↥d.G :=
-    ⟨(LocallyConstant.indicator (LocallyConstant.const ↥d.G (1 : ℂ))
-      ⟨hUc.isClosed, hUo⟩).isLocallyConstant,
-      HasCompactSupport.intro hUc fun x hx => Set.indicator_of_notMem hx _⟩
+  have hf : f ∈ testFunctions ↥d.G := indicator_mem_testFunctions hUc ⟨hUc.isClosed, hUo⟩
   have hW := d.weyl_integration μ hμ f hf
   -- each torus term is `|W|⁻¹ weylMeasureOn μ T (U)`, a finite number
   set a : d.MaxTorusClass → ℝ≥0∞ := fun c =>

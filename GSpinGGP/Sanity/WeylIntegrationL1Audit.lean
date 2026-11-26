@@ -12,8 +12,10 @@ import GSpinGGP.Sanity.AxiomRedTeam.HarishChandra
 At `toyD` (`G = GL₁ × GL₁`, commutative, `D^G = 1`) the only maximal torus is `T(F) = G(F)`,
 `T(F)\G(F)` is a point and `(t, ġ) ↦ g⁻¹ t g` is `t ↦ t`, so `weylMeasureOn μ T` is
 `m(T\G) · μ_T` transported to `G(F)`, which is finite on compact sets
-(`toyD_isFiniteMeasureOnCompacts_weylMeasureOn`, proved without the `sorry`).  So the `sorry`
-statement holds in this degenerate instance.
+(`toyD_isFiniteMeasureOnCompacts_weylMeasureOn`, proved without the axiom
+`weyl_integration_exists`, from which the general statement is derived).  So the statement holds
+in this degenerate instance independently of the axiom (used in
+`Sanity/AxiomRedTeam/WeylIntegration.lean` to verify the axiom's convergence conjunct at `toyD`).
 -/
 
 noncomputable section
