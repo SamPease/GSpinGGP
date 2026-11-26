@@ -122,6 +122,12 @@ lemma absF_inv [LocallyCompactSpace F] (a : F) : absF a⁻¹ = (absF a)⁻¹ := 
   · simp [ha]
   exact eq_inv_of_mul_eq_one_left (by rw [← absF_mul, inv_mul_cancel₀ ha, absF_one])
 
+/-- `|a^c|_F = |a|_F^c` for `c ∈ ℤ`. -/
+lemma absF_zpow [LocallyCompactSpace F] (a : F) (c : ℤ) : absF (a ^ c) = absF a ^ c := by
+  rcases c with c | c
+  · simp [absF_pow]
+  · rw [zpow_negSucc, zpow_negSucc, absF_inv, absF_pow]
+
 open scoped Pointwise in
 /-- `|u|_F = 1` for `‖u‖ = 1`: multiplication by `u` preserves the closed unit ball. -/
 theorem absF_eq_one_of_norm_eq_one [LocallyCompactSpace F] {u : F} (hu : ‖u‖ = 1) :

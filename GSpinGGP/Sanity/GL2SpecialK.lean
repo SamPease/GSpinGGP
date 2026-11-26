@@ -30,10 +30,11 @@ At `gl2Data` (`W = 0`, `V` split of dimension `3`, `q = ac + b²` in the coordin
   `V_an`" (`attained`).
 * `not_exists_specialLattice_R_eq_iwahori`: the lattice `⟨z₋₁, ϖ z₀, ϖ · ½ z₁⟩` (for `ϖ` a
   uniformizer; its stabilizer is the normalizer of an Iwahori subgroup, maximal compact but not
-  special) is not W1-special for any hyperbolic system and `c`.  This tests `attained`: the
-  lattice satisfies every other condition of `SpecialLattice` (`gl2_iwahori_data`), and the proof
-  rules it out only because `q` takes square values on the orthogonal of every hyperbolic pair,
-  so `‖q‖` on `V_an` is never `|ϖ^c| = ‖ϖ‖`.
+  special: standard for `PGL₂`, not formalized here) is not W1-special for any hyperbolic
+  system and `c`.  This tests `attained`: the lattice satisfies every other condition of
+  `SpecialLattice` (`gl2_iwahori_data`), and the proof rules it out only because `q` takes square
+  values on the orthogonal of every hyperbolic pair, so `‖q‖` on `V_an` is never
+  `|ϖ^c| = ‖ϖ‖`.
 -/
 
 noncomputable section
@@ -357,10 +358,10 @@ For `ϖ` a uniformizer, the lattice `Λ'' = {‖a‖ ≤ 1, ‖b‖ ≤ ‖ϖ‖
 `gl2Basis`) has the shape `R` of W1 §7.1 for the hyperbolic pair `v = z₋₁`, `v' = ½ z₁`,
 `V_an = F z₀` and `|ϖ^c| = ‖ϖ‖` (`gl2_iwahori_data`): every condition of `SpecialLattice` holds
 except `attained`.  Its stabilizer in `SO(V) ≅ PGL₂` is the normalizer of an Iwahori subgroup,
-maximal compact but not special.  It is excluded only by `attained`
-(`not_exists_specialLattice_R_eq_iwahori`): on the orthogonal of a hyperbolic pair, `q = ac + b²`
-takes only square values (the discriminant of `q` is that of a hyperbolic plane plus a line of
-square class `1`), so `‖q(y)‖ ∈ ‖F^×‖²` is an even power of `‖ϖ‖`, while `|ϖ^c| = ‖ϖ‖`. -/
+maximal compact but not special (standard for `PGL₂`; not formalized here).  It is excluded
+only by `attained` (`not_exists_specialLattice_R_eq_iwahori`): on the orthogonal of a hyperbolic
+pair, `q = ac + b²` takes only square values (the discriminant of `q` is that of a hyperbolic
+plane plus a line of square class `1`), so `‖q(y)‖ ∈ ‖F^×‖²` is an even power of `‖ϖ‖`, while `|ϖ^c| = ‖ϖ‖`. -/
 
 /-- The lattice `Λ'' = ⟨z₋₁, ϖ z₀, ϖ · ½ z₁⟩`. -/
 def gl2IwahoriLattice (ϖ : F) : Set (𝔾).V :=
@@ -391,8 +392,8 @@ theorem gl2_gram_aux [Field F] (a1 b1 c1 a2 b2 c2 a3 b3 c3 : F) (h1 : a1 * c1 + 
     ((a1 * c2 + a2 * c1 + 2 * (b1 * b2)) * (a2 * c3 + a3 * c2 + 2 * (b2 * b3)) -
       (a2 * c2 + b2 ^ 2) * (a1 * c3 + a3 * c1 + 2 * (b1 * b3))) * h4
 
-/-- **On the orthogonal of a hyperbolic pair, `q` is a square**: if `q(v) = q(v') = 0`,
-`polar(v, v') = 1` and `y ⊥ v, v'`, then `q(y) = det(v, v', y)²` (compare Gram determinants in
+/-- **On the orthogonal of a hyperbolic pair, `q` is a square**: if `q(v) = 0`,
+`polar(v, v') = 1` and `polar(v, y) = 0`, then `q(y) = det(v, v', y)²` (compare Gram determinants in
 the bases `(v, v', y)` and `gl2Basis`: `−2 q(y) = −2 det(v, v', y)²`).  This holds for **every**
 hyperbolic pair of `V`, not only for `z₋₁, ½ z₁`. -/
 theorem gl2_quadForm_eq_sq {v v' y : (𝔾).V} (hv : (𝔾).QV v = 0)
@@ -440,18 +441,6 @@ theorem quadForm_gl2Cross {v v' : (𝔾).V} (hv : (𝔾).QV v = 0)
     ((gl2Basis.repr v 0 * gl2Basis.repr v' 2 + gl2Basis.repr v' 0 * gl2Basis.repr v 2 +
         2 * (gl2Basis.repr v 1 * gl2Basis.repr v' 1)) + 1) * hvv' -
       4 * (gl2Basis.repr v' 0 * gl2Basis.repr v' 2 + gl2Basis.repr v' 1 ^ 2) * hv
-
-omit [PAdicField F] in
-/-- **`‖ϖ‖` is not the norm of a square** when `ϖ` is a uniformizer: norms are the `‖ϖ‖^k`,
-`k ∈ ℤ`, and `2k ≠ 1`. -/
-theorem norm_sq_ne_of_uniformizer {ϖ : F} (h0 : 0 < ‖ϖ‖) (h1 : ‖ϖ‖ < 1)
-    (hmax : ∀ x : F, ‖x‖ < 1 → ‖x‖ ≤ ‖ϖ‖) (t : F) : ‖t‖ ^ 2 ≠ ‖ϖ‖ := by
-  intro h
-  have ht : t ≠ 0 := by rintro rfl; rw [norm_zero] at h; simp at h; linarith
-  obtain ⟨k, hk⟩ := exists_norm_eq_zpow h0 h1 hmax ht
-  rw [hk, ← zpow_natCast, ← zpow_mul] at h
-  have := (zpow_right_inj₀ h0 h1.ne).1 (h.trans (zpow_one _).symm)
-  omega
 
 /-- **`polar` has norm `≤ ‖ϖ‖` on `Λ''`.** -/
 theorem norm_polar_le_of_mem_iwahori {ϖ : F} (h1 : ‖ϖ‖ < 1) {x y : (𝔾).V}

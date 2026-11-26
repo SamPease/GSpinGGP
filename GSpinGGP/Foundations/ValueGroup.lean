@@ -84,4 +84,15 @@ theorem exists_log_norm_mem_zmultiples [PAdicField F] :
   push_cast
   ring
 
+/-- **`‖ϖ‖` is not the norm of a square** when `ϖ` is a uniformizer: norms are the `‖ϖ‖^k`,
+`k ∈ ℤ`, and `2k ≠ 1`. -/
+theorem norm_sq_ne_of_uniformizer {ϖ : F} (h0 : 0 < ‖ϖ‖) (h1 : ‖ϖ‖ < 1)
+    (hmax : ∀ x : F, ‖x‖ < 1 → ‖x‖ ≤ ‖ϖ‖) (t : F) : ‖t‖ ^ 2 ≠ ‖ϖ‖ := by
+  intro h
+  have ht : t ≠ 0 := by rintro rfl; rw [norm_zero] at h; simp at h; linarith
+  obtain ⟨k, hk⟩ := exists_norm_eq_zpow h0 h1 hmax ht
+  rw [hk, ← zpow_natCast, ← zpow_mul] at h
+  have := (zpow_right_inj₀ h0 h1.ne).1 (h.trans (zpow_one _).symm)
+  omega
+
 end GSpinGGP

@@ -232,6 +232,19 @@ theorem absF_lt_one_of_norm_lt_one {a : F} (h : ‖a‖ < 1) : absF a < 1 := by
   simp only [hs, iInf_const] at hm
   exact (Metric.measure_closedBall_pos μ (0 : F) zero_lt_one).ne' hm.symm
 
+/-- `|·|_F` and `‖·‖` define the same order on `F`. -/
+theorem absF_le_absF_iff {a b : F} : absF a ≤ absF b ↔ ‖a‖ ≤ ‖b‖ := by
+  refine ⟨fun h => ?_, absF_le_absF_of_norm_le⟩
+  by_contra hlt
+  push Not at hlt
+  have ha : a ≠ 0 := fun ha => by rw [ha, norm_zero] at hlt; exact (norm_nonneg b).not_gt hlt
+  have h1 : ‖b / a‖ < 1 := by rw [norm_div, div_lt_one (norm_pos_iff.2 ha)]; exact hlt
+  have h2 := absF_lt_one_of_norm_lt_one h1
+  have hb : b = (b / a) * a := by field_simp
+  rw [hb, absF_mul] at h
+  have hpos := absF_pos ha
+  nlinarith
+
 section Scaling'
 
 variable {V : Type*} [NormedAddCommGroup V] [NormedSpace F V] [FiniteDimensional F V]
