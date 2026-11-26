@@ -78,6 +78,8 @@ import GSpinGGP.GGP.LieRegular
 import GSpinGGP.GGP.Centralizers
 import GSpinGGP.Literature.TraceFormula
 import GSpinGGP.TraceFormula.StronglyCuspidal
+import GSpinGGP.TraceFormula.ThetaFRepresents
+import GSpinGGP.TraceFormula.RegularSetAG
 import GSpinGGP.TraceFormula.DeltaIntegrability
 import GSpinGGP.TraceFormula.EllipticRepresentations
 import GSpinGGP.TraceFormula.LieAlgebra

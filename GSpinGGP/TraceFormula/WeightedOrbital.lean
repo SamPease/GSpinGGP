@@ -168,6 +168,21 @@ theorem conj_mul_of_mem_centG {c : ↥d.G} (hc : c ∈ d.centG x) (g : ↥d.G) :
   calc (c * g)⁻¹ * x * (c * g) = g⁻¹ * (c⁻¹ * x * c) * g := by group
     _ = g⁻¹ * x * g := by rw [hcx]
 
+/-- **`G_{a x}(F) = G_x(F)` for `a ∈ A_G(F)`** (`A_G` is central in `G`). -/
+theorem centG_mul_AG {a : ↥d.G} (ha : a ∈ d.AG) : d.centG (a * x) = d.centG x := by
+  have hc : ∀ y : ↥d.G, y * a = a * y := fun y =>
+    Subgroup.mem_center_iff.mp (d.AG_le_center ha) y
+  ext y
+  simp only [Subgroup.mem_centralizer_iff, Set.mem_singleton_iff, forall_eq]
+  constructor
+  · intro h
+    calc x * y = a⁻¹ * (a * x * y) := by group
+      _ = a⁻¹ * (y * (a * x)) := by rw [h]
+      _ = a⁻¹ * (a * (y * x)) := by rw [← mul_assoc y, hc y, mul_assoc]
+      _ = y * x := by group
+  · intro h
+    rw [mul_assoc, h, ← mul_assoc, ← hc y, mul_assoc]
+
 /-- **A left `G_x(F)`-invariant function at the chosen representative** of the coset of `g` is
 its value at `g`. -/
 theorem apply_out_mk_of_mul_left {α : Type*} {Φ : ↥d.G → α}
