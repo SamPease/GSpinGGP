@@ -88,16 +88,19 @@ quantified over by `IsBPThetaF`.  For them: `dim a_M^G` (`opp_finrank_aMG`, via 
 `M(x)` (`gl2_isMx`; `G_x(F) ⊆ M(F) = A_M(F)`), and with `gl2GoodK_isSpecial` this witnesses the
 `∃` half of `IsBPThetaF` with `M ≠ G` (`gl2_isBPThetaF_exists_half`).  The datum with `M = G`
 is not `M(x)` (`gl2TopLevi_not_isMx`: `A_G(F)\G_x(F)` is not compact), so the `∀` half at `x`
-consults exactly the presentations of the torus, among them `(gl2Levi, gl2GoodK)` and
-`(gl2Levi.opp, gl2GoodK)` (`gl2_isBPThetaF_at_torus`).
+does not consult it; it does consult `(gl2Levi, gl2GoodK)` and `(gl2Levi.opp, gl2GoodK)`
+(`gl2_isBPThetaF_at_torus`).
 
 **Owed (not reachable cheaply now).**
 * `v_M(L.opp, K) = v_M(L, K)`, hence `thetaFBP L.opp K f x = thetaFBP L K f x` for every `f`
   (`opp_thetaFBP_of_vM`).  Missing: the duality `det(m|_{V_{−w}}) = det(m|_{V_w})⁻¹` for every
   `m ∈ M(F)` (proved here only on `A_M(F)`), which gives `H_P^{L.opp} = −H_P^{L}` modulo `a_G`;
-  then `Measure.hullVolume_map` and `opp_latticeMG`.  Until then, if the two presentations
-  disagreed for some `f`, `IsBPThetaF f θ` would be unsatisfiable at `gl2Data`
-  (`gl2_isBPThetaF_at_torus`), making the axioms vacuous there, not false.
+  then `Measure.hullVolume_map` and `opp_latticeMG`.  This is a consistency check of an axiom,
+  not only of the hypothesis: conjunct 1 of `waldspurger2010_lemme_5_3` is not guarded by
+  `IsBPThetaF` and itself asserts the equality for strongly cuspidal test functions `f`
+  (`lemme_5_3_opp`, which uses the axiom).  If `v_M` differed for `L` and `L.opp` (on paper it
+  does not: the points `H_P(g)` change sign modulo `a_G`, and so does the lattice), the axiom
+  would be false, not vacuous.
 
 **Non-vacuity off `toyD`.**  On a general datum, non-vacuity of the hypothesis `IsBPThetaF` rests on
 the `sorry`s `exists_isMx` and `exists_specialK`; if either failed, the axioms would be vacuous
@@ -394,6 +397,17 @@ theorem opp_thetaFBP_of_vM (L : d.ReducedLeviDatum) (K : d.GoodK L.toFlagLeviDat
     L.opp.thetaFBP (goodKOpp K) f x = L.thetaFBP K f x := by
   simp only [ReducedLeviDatum.thetaFBP, weightedOrbitalIntegral, weightedIntegrand,
     opp_finrank_aMG, opp_dcMeasure, hv]
+
+/-- **`waldspurger2010_lemme_5_3` asserts the presentation change** (uses the axiom; not a (V)
+check): its conjunct 1 with `y = 1`, `L' = L.opp`, `K' = K` (`IsMx.opp`, `isSpecial_goodKOpp`).
+The proof without the axiom is owed (`opp_thetaFBP_of_vM`: it remains to compare `v_M`). -/
+theorem lemme_5_3_opp {f : ↥d.G → ℂ} (hf : f ∈ testFunctions ↥d.G)
+    (hcusp : IsStronglyCuspidalInline d f) {L : d.ReducedLeviDatum}
+    {K : d.GoodK L.toFlagLeviDatum} {x : ↥d.G} (hx : L.IsMx x) (hK : K.IsSpecial) :
+    L.opp.thetaFBP (goodKOpp K) f x = L.thetaFBP K f x := by
+  have h := (waldspurger2010_lemme_5_3 d hf hcusp).1 x 1 L L.opp K (goodKOpp K) hx
+    (by simpa using IsMx.opp hx) hK (isSpecial_goodKOpp hK)
+  simpa using h
 
 end Opp
 

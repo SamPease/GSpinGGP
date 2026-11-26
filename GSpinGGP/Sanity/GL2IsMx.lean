@@ -28,8 +28,8 @@ At `gl2Data` (`W = 0`, `V` split of dimension `3`, `q = ac + b²` in the basis `
 * **`gl2TopLevi_not_isMx`**: the datum with empty flags and weights `0` (`gl2TopLevi`, `M = G`)
   is not `M(x)`, for every `c`: there `A_M(F) = A_G(F)` acts trivially on `V`, while
   `|eigenvalue on ½ z₁|` is continuous on `G_x(F)`, constant on `A_G(F)`-cosets and unbounded on
-  the torus `⊆ G_x(F)`; so `A_G(F)\G_x(F)` is not compact.  `IsMx` therefore picks out `M(x)` and
-  not merely some Levi subgroup containing `x`.
+  the torus `⊆ G_x(F)`; so `A_G(F)\G_x(F)` is not compact.  So `IsMx` rejects at least this Levi
+  subgroup containing `x` that is not `M(x)`.
 
 Nothing here uses an axiom or `sorry`.
 -/

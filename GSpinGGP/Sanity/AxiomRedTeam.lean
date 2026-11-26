@@ -121,7 +121,9 @@ the axiom it tests; the computations of germs at `toyD` use `exists_isSelfDual` 
   subgroup of `gl2Data` (nonabelian), the `∃` half holds (`gl2_isBPThetaF_exists_half`) and the
   datum with `M = G` is not `M(x)` (`gl2TopLevi_not_isMx`). Off `toyD`, non-vacuity rests on the
   `sorry`s `exists_isMx`, `exists_specialK`. Owed: `v_M` under `L ↦ L.opp` (determinant duality
-  on `M(F)`). Not covered: the conclusions off `toyD`, `v_M ≠ 1`.
+  on `M(F)`); `waldspurger2010_lemme_5_3` asserts the resulting `θ_f` equality
+  (`lemme_5_3_opp`), so this is a consistency check of the axiom. Not covered: the conclusions
+  off `toyD`, `v_M ≠ 1`.
 
 `WholeSystem.lean` also proves, at `toyD`, the conclusions of several `sorry` statements on the
 path of the main theorem and the multiplicity formula for the trivial representation, with both
