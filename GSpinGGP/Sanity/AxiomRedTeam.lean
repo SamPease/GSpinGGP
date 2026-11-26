@@ -15,6 +15,7 @@ import GSpinGGP.Sanity.AxiomRedTeam.SmoothRepresentations
 import GSpinGGP.Sanity.AxiomRedTeam.WaldspurgerLie
 import GSpinGGP.Sanity.AxiomRedTeam.WeylIntegration
 import GSpinGGP.Sanity.AxiomRedTeam.BPThetaF
+import GSpinGGP.Sanity.AxiomRedTeam.SpecialKIwasawa
 
 /-!
 # Checks of the literature axioms on small instances
@@ -118,6 +119,12 @@ the axiom it tests; the computations of germs at `toyD` use `exists_isSelfDual` 
   (`toyD_joint_check`); `IsMx` unchanged under `L ↦ L.opp` (`IsMx.opp`). Off `toyD`, non-vacuity
   rests on the `sorry`s `exists_isMx`, `exists_specialK`. Owed: a proper-Levi `IsMx` at `gl2Data`,
   `thetaFBP` under `L ↦ L.opp`. Not covered: nonabelian `G`, `M ≠ G`, `v_M ≠ 1`.
+* `tits_iwasawa_specialStab` (`AxiomRedTeam/SpecialKIwasawa.lean`): V for `M = G` on any datum
+  (`tits_iwasawa_specialStab_check_of_M_eq_top`), at `toyD` with the hypotheses met
+  (`toyD_tits_iwasawa_specialStab_check`), and at `gl2Data` for the diagonal torus `M` and every
+  `P ∈ 𝒫(M)` (`gl2_tits_iwasawa_specialStab_check`: `specialStab = gl2K`, `gl2_iwasawa`); not
+  applicable to the Iwahori lattice, excluded by `attained`
+  (`gl2_tits_iwasawa_specialStab_not_iwahori`, nonvacuous: `gl2_iwahori_exclusion_nonvacuous`). Not covered: `d_an ≥ 2`, Witt index `≥ 2`.
 
 `WholeSystem.lean` also proves, at `toyD`, the conclusions of several `sorry` statements on the
 path of the main theorem and the multiplicity formula for the trivial representation, with both

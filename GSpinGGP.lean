@@ -174,6 +174,8 @@ import GSpinGGP.GGP.LeviLattice
 import GSpinGGP.GGP.Unramified
 import GSpinGGP.GGP.WeightVM
 import GSpinGGP.GGP.LatticeK
+import GSpinGGP.GGP.SpecialLattice
+import GSpinGGP.Literature.SpecialKIwasawa
 import GSpinGGP.GGP.SpecialK
 import GSpinGGP.TraceFormula.Basic
 import GSpinGGP.TraceFormula.SpinorNorm
