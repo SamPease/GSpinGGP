@@ -37,11 +37,11 @@ import GSpinGGP.Literature.HarishChandra
     with no integrability or summability hypothesis (`gammaIntegral_weylIntegrand_eq`), so the
     `∃`-form and the `∀`-form agree whatever the junk conventions.
 
-* **The counter-model `ν₁ = ∞ · δ_x`** (why the third conjunct was added). The real-valued
-  identity cannot see an infinite atom in a torus term (`toReal_top_smul_dirac`,
-  `counterModel_toReal`: `haar`, `∞ · δ_x` satisfy `ν₀(U).toReal + ν₁(U).toReal = haar(U).toReal`
-  for every `U`), while the `[0, ∞]` form does (`counterModel_lintegral`). With the third conjunct
-  every torus term is finite on compacts for every Haar family, so it has no infinite atom
+* **The counter-model `ν₁ = ∞ · δ_x`** (why the third conjunct was added). Illustration (generic
+  measure facts, not a model of the first two conjuncts): an infinite atom is invisible to
+  `toReal` (`toReal_top_smul_dirac`, `counterModel_toReal`), but not to the `[0, ∞]` form
+  (`counterModel_lintegral`). Using the axiom: with the third conjunct every torus term is finite
+  on compacts for every Haar family, so it has no infinite atom
   (`weylMeasureOn_singleton_lt_top_of_axiom`, `weylMeasureOn_ne_top_smul_dirac_of_axiom`).
 * **No new conflict**: the strengthened statement still holds at `toyD` without the axiom (above),
   and its only consequence beyond the first two conjuncts, finiteness of the torus terms on
@@ -53,6 +53,8 @@ import GSpinGGP.Literature.HarishChandra
   True for `GSpin`; not proved independently here.
 
 Not covered (accepted gap): nonabelian `G`, `|W(G,T)| > 1`, `D^G ≠ 1`, several classes of tori.
+The toyD checks, including the one of the convergence conjunct, cover only a point quotient
+`T(F)\G(F)`; no noncommutative datum is checked in Lean.
 All nonabelian content of the formula (the power of `D^G`, the Weyl weights, the sum over
 classes) is untested; even `weylDisc` at a regular element of the nonabelian datum `gl2Data` is
 not computed (it is the trailing coefficient of a characteristic polynomial on the Lie algebra
@@ -135,8 +137,9 @@ theorem toReal_top_smul_dirac {X : Type*} [MeasurableSpace X] (x : X) (U : Set X
     (((⊤ : ℝ≥0∞) • Measure.dirac x) U).toReal = 0 := by
   rw [smul_apply, smul_eq_mul, ENNReal.toReal_mul, ENNReal.toReal_top, zero_mul]
 
-/-- With `ν₀ = haar`, `ν₁ = ∞ · δ_x`: `ν₀(U).toReal + ν₁(U).toReal = haar(U).toReal` for every `U`
-(the formal counter-model to finiteness under the first two conjuncts alone). -/
+/-- Illustration: an infinite atom is invisible to `toReal`. With `ν₀ = haar`, `ν₁ = ∞ · δ_x`,
+`ν₀(U).toReal + ν₁(U).toReal = haar(U).toReal` for every `U` (a generic fact, not a model of the
+first two conjuncts of the axiom). -/
 theorem counterModel_toReal (d : GGPData F) (x : ↥d.G) (U : Set ↥d.G) :
     ((Measure.haar : Measure ↥d.G) U).toReal + (((⊤ : ℝ≥0∞) • Measure.dirac x) U).toReal =
       ((Measure.haar : Measure ↥d.G) U).toReal := by

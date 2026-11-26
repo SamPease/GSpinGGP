@@ -88,24 +88,28 @@ steps, each an equivalence except (4), which weakens the statement.
      integrals in `[0, ∞]` of nonnegative functions: right after it (p. 32) "We deduce from this
      and the local boundedness of normalized orbital integrals the following fact (1.7.1) The
      function `x ↦ D^G(x)^{-1/2}` (…) is locally integrable on `G(F)`", which applies the formula to
-     a nonnegative function. For `f ∈ C_c^∞(G(F))` (`F` is `p`-adic), `|f| ∈ C_c^∞(G(F))` too, and
+     `1_K (D^G)^{-1/2}` for compact `K`, a nonnegative function that is not in `S(G(F))`; so BP's
+     formula is read in `[0, ∞]`. The conjunct needs less than this, only the formula for `|f|`
+     with `f ∈ C_c^∞(G(F))`. For `f ∈ C_c^∞(G(F))` (`F` is `p`-adic), `|f| ∈ C_c^∞(G(F))` too, and
      for `|f|` every term on the right is a nonnegative integral:
      `D^G(t)^{1/2} J_G(t, |f|) = 1_{G_reg}(t) D^G(t) ∫_{T(F)\G(F)} |f(g⁻¹ t g)| dġ`
      (one `D^{1/2}` is inside `J_G`, BP p. 33). So BP's formula for `|f|` gives, for each
      `T ∈ 𝒯(G)`, `|W(G,T)|⁻¹ ∫_{T(F)} 1_{G_reg}(t) D^G(t) ∫_{T(F)\G(F)} |f(g⁻¹ t g)| dġ dt
-     ≤ ∫_{G(F)} |f| dg < ∞`, and `|W(G,T)|` is finite (below). BP's `𝒯(G)` is any set of
+     ≤ ∫_{G(F)} |f| dg < ∞`, and `|W(G,T)|` is finite (below; BP's printed `|W(G,T)|⁻¹`
+     presupposes it). BP's `𝒯(G)` is any set of
      representatives (p. 32, "Let `𝒯(G)` be a set of representatives"), so every maximal torus
      `T` lies in some choice of it, and the witness of 4 is BP's `dt` on every maximal torus;
      hence the bound holds for every `T : d.MaxTorus`. This is the third conjunct, with
-     `‖f(·)‖ₑ = |f(·)|` and the inner integral over the representatives `CosetSpace.out`
-     (`quotMeasureOn T (μ T)` is `dg/dt`, step 6).
+     `‖f(·)‖ₑ = |f(·)|` and the inner integral over the representatives `CosetSpace.out`.
+     `quotMeasureOn T (μ T)` is the quotient of Lean's `Measure.haar = c · dg` (step 2) by `dt`,
+     so it is `c · (dg/dt)`; rescaling by `0 < c < ∞` preserves `< ∞`.
    * Consequently the Bochner integrals of the second conjunct converge absolutely: the inner one
      (also BP §1.8, p. 33), and the outer ones because `|J_G(x, f)| ≤ J_G(x, |f|)`. Hence the
      integrand is integrable on each `T(F)` and the terms of the sum over `𝒯(G)` are absolutely
      summable (`∫ |f| dg < ∞` bounds their sum).
    * Finiteness: `𝒯(G)` is finite for `p`-adic `F` and each `N_{G(F)}(T)/T(F)` is finite (it
-     embeds in the Weyl group of `T` over `F̄`), so neither the `tsum` nor the `Nat.card` in
-     `weylCardG` takes a junk value.
+     embeds in the Weyl group of `T` over `F̄`; BP's printed `|W(G,T)|⁻¹` presupposes it), so
+     neither the `tsum` nor the `Nat.card` in `weylCardG` takes a junk value.
    So Lean's Bochner integrals and `tsum` (which give `0` on non-integrable or non-summable input)
    agree with BP's.
 
@@ -115,9 +119,9 @@ with BP's `dt` as the witness.
 **Change to the statement (reviewed, deliberate).** The third conjunct (the `[0, ∞]` convergence
 of item 8) was added after the axiom was first stated with the first two conjuncts only. Reason:
 Lean's Bochner integrals and `tsum` are `0` on divergent input, so the identity alone cannot force
-a torus term to be finite; for `f = 1_U` it is also satisfied if a torus term, as a measure on
-`G(F)`, has an infinite atom. Integrability or summability conjuncts in the Bochner sense would not
-exclude this either, since the inner orbital integral can itself be a junk `0`; the `lintegral`
+a torus term to be finite: the identities for all `1_U` do not exclude a torus term, as a measure
+on `G(F)`, with an infinite atom. Integrability or summability conjuncts in the Bochner sense
+would not exclude this either, since the inner orbital integral can itself be a junk `0`; the `lintegral`
 conjunct does. It adds no hypothesis beyond the print: it is BP's formula for `|f|`, read in
 `[0, ∞]` as BP does for (1.7.1). -/
 axiom weyl_integration_exists (d : GGPData F) :

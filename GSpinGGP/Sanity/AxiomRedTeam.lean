@@ -93,9 +93,10 @@ the axiom it tests; the computations of germs at `toyD` use `exists_isSelfDual` 
 * `bp_integrable_kernel_scusp`: V when `A_G = G` (`bp_conclusion_of_AG_eq_top`, hyperbolic `V`,
   `toyD`). Not covered: `G/A_G` noncompact.
 * `weyl_integration_exists`: V at `toyD`, the whole statement including the `[0, ∞]` convergence
-  conjunct (`toyD_weyl_integration_exists_check`); the counter-model `∞ · δ_x` (invisible to the
-  real-valued identity, `counterModel_toReal`) is excluded by the convergence conjunct
-  (`counterModel_lintegral`, `weylMeasureOn_ne_top_smul_dirac_of_axiom`);
+  conjunct (`toyD_weyl_integration_exists_check`); an infinite atom `∞ · δ_x` is invisible to
+  `toReal` but not to `lintegral` (`counterModel_toReal`, `counterModel_lintegral`: generic facts,
+  no axiom), and the axiom excludes it from every torus term
+  (`weylMeasureOn_ne_top_smul_dirac_of_axiom`, the one check that uses the axiom);
   with a genuine finite sum and integrable integrand (`toyD_summable_gammaIntegral`,
   `toyD_integrable_weylIntegrand`); Haar families exist on every datum
   (`isHaarMeasure_haarFamily`); junk values: the Haar conjunct is needed
