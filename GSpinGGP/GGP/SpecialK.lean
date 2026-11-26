@@ -30,7 +30,9 @@ element of `F`, so that no uniformizer is chosen: `val_F(x) ≥ c` is `‖x‖ �
 The class of special lattices does not change when the form is scaled (the hyperbolic system and
 `|ϖ^c|` rescale together).  So the convention `q(·,·) = polar Q` used here and the convention
 `q(·,·) = bform Q` of `LuoDatum.IsSpecialLattice` (`TraceFormula/W1Lie.lean`) describe the same
-lattices; inside one definition the convention is used consistently.
+lattices; inside one definition the convention is used consistently.  One direction is proved in
+`TraceFormula/SpecialLatticeBridge.lean` (`SpecialLattice.isSpecialLattice`: `S.R` satisfies
+`IsSpecialLattice Q ϖ` for every uniformizer `ϖ`).
 
 ## The subgroup and the predicate
 
