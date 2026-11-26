@@ -19,7 +19,7 @@ Sources.
   (§1.1): `F` `p`-adic or `ℝ`, `G` a connected reductive group over `F`.
 
 Both define, for `f ∈ C_c^∞(G(F))` strongly cuspidal ("très cuspidale", W1 §5.1, arXiv p. 17;
-BP §5.1, p. 108) and `x ∈ G_reg(F)`,
+BP §5.1, pp. 107–108) and `x ∈ G_reg(F)`,
 `θ_f(x) = (−1)^{a_G − a_{M(x)}} ν(G_x)⁻¹ D^G(x)^{−1/2} J_{M(x)}(x, f)`
 (W1 §5.3, arXiv p. 18, with the sign written `(−1)^{a_{M(x)} − a_G}`, the same number; BP §5.2,
 p. 109).  The Lean form is `ReducedLeviDatum.thetaFBP`, and `GGPData.IsBPThetaF f θ` says `θ = θ_f`
@@ -65,7 +65,11 @@ in other notation).  Each axiom's docstring lists which it uses.
 * **(I5) Presentation.**  `thetaFBP L K f x` reads `L` only through objects attached to `M = L.M`
   in the sources: the sign `(−1)^{dim a_M^G}` (`aMG`, `dim a_M^G = a_M − a_G`), `d_c t` on
   `G_x(F)` (through `A_M(F)`, `AMF`), and `J_M(x, f)` (`weightedOrbitalIntegral`, with Arthur's
-  `v_M` for `K` by (I3)).  The weight basis of `L` only constructs them.  So for `IsMx L x` and
+  `v_M` for `K` by (I3); `vM` is the hull volume for the measure on `a_M^G` giving
+  `a_M^G/proj_M(H_M(A_M(F)))` volume `1`, W1 §1.2, arXiv p. 7; BP §1.6, pp. 29–30, normalizes
+  `a_M` and `a_G` instead, and the quotient measure is the same because `X_*(A_G)` is saturated in
+  `X_*(A_M)`, as recorded in the docstring of `vM`).  The weight basis of `L` only constructs
+  them.  So for `IsMx L x` and
   special `K`, `L.thetaFBP K f x` is W1's/BP's `θ_f(x)` computed with `K` (up to `c`, (I2)).
 * **(I6) Regular set.**  `regularSet d.G d.lie` is `G_reg(F)` (`hcDisc_ne_zero_iff_mem_regularSet`);
   it is open and its complement is null (`hc_regular_open_dense_conull`), so a statement about
@@ -146,8 +150,9 @@ for every nontrivial `ψ`.  Derivation:
     and `Nil(𝔤_x)` is finite (W1 sums over it), so `c` has finite support;
   - from almost every `X ∈ ω` to every `X ∈ ω` regular in `𝔤_x`: by W1 §3.1 (good neighbourhoods)
     `x exp X ∈ G_reg(F)` for such small `X` (here `exists_nhds_mul_expA_mem_regularSet`), where
-    `θ` is locally constant (W1 §4.1, arXiv p. 16) and `ĵ(O, ·)` is locally constant on the regular
-    set (Harish-Chandra; `IsJHat` asks continuity there); both sides are continuous on an open set
+    `θ` is locally constant (W1 §4.1, arXiv p. 16) and `ĵ(O, ·)` is a smooth, i.e. locally
+    constant, function on the regular set (BP §1.8, p. 34, after Harish-Chandra; `IsJHat` asks
+    continuity there); both sides are continuous on an open set
     on which they agree almost everywhere, and Haar measure charges every nonempty open set, so they
     agree there;
   - `ω` is a neighbourhood of `0` in `𝔤_x(F)`, hence the trace of a neighbourhood of `0` in the
@@ -159,6 +164,11 @@ for every nontrivial `ψ`.  Derivation:
 * (I6): `IsQuasiCharacter` only reads `θ` on `G_reg(F)` (its invariance clause is for regular `y`,
   and its expansion is evaluated at `x exp X ∈ G_reg(F)`), so it holds for any `θ` agreeing with
   `c · θ_f` there.
+
+The same conclusion is printed in BP Prop 5.6.1(ii) (p. 117: "Let `f ∈ 𝒞_scusp(G(F))`. Then, the
+function `θ_f` is a quasi-character on `G(F)`"), with BP's pointwise definition (§4.1, p. 74:
+the expansion holds "for all `Y ∈ ω_{x,reg}`"); BP's proof of (ii) uses Thm 5.5.1(iv)–(v), so W1's
+proved corollary is the anchor here.
 
 As for `hc_character_isQuasiCharacter_admissible`, the statement presupposes that `ĵ(O, ·)` exists
 (`jHat` is defined by choice, `0` otherwise); Harish-Chandra proves it. -/
@@ -189,7 +199,9 @@ Derivation (identification steps):
   subgroup of `A_G(F)` measure `1` (J. Arthur, Publ. Math. IHÉS 73 (1991), §1, p. 11; also
   Waldspurger, J. reine angew. Math. 465 (1995), §1.4): **flagged, BP leaves it unstated.**  It is
   the only Haar measure on `A_G(F)` for which (iv) can hold (both sides scale differently under it),
-  and it is the one tested at the toy datum (`toyD_jA_geom`).
+  and it is the one tested at the toy datum (`toyD_jA_geom`).  `measGmodAG` is
+  `dcScaleAG • Measure.haar` with `dcScaleAG` chosen by choice; its specification is proved
+  (`isDcQuotientAG_measGmodAG`, from `weil_quotient_radon` only), so no existence is hidden.
 * **(I2), `dg` homogeneity.**  With `Measure.haar = c · dg`: `kernelA` is `c` times BP's,
   `measGmodAG = (c · dg)/d_c a` is `c` times BP's, so `jA` is `c²` times BP's `J^A`; on the right,
   `J_G(t, f')` (`orbitalIntegralOn`, for `dg/μ_T`) is `c` times BP's and `θ = c · θ_f`, so the
@@ -206,7 +218,10 @@ Derivation (identification steps):
   (`jA_eq_gammaIntegral`).
 * **"Absolutely convergent".**  For BP's integrand on `Γ(G)`, absolute convergence means
   `∫_{T(F)} |D^{1/2} θ_f J_G(·, f')| dt < ∞` for each `T ∈ 𝒯(G)` and summability of the weighted
-  sum over the finitely many `T`; measurability: `θ_f` is locally constant on `G_reg(F)` (W1 §5.3)
+  sum over the finitely many `T`; the inner integral of `J_G(t, f')` over `G_t(F)\G(F)` is
+  absolutely convergent for `t ∈ G_reg(F)` (BP §1.8, p. 33: "the integral being absolutely
+  convergent for all `f ∈ 𝒞(G(F))`"), so `orbitalIntegralOn` is not a junk value either;
+  measurability: `θ_f` is locally constant on `G_reg(F)` (W1 §5.3)
   and `t ↦ D^{1/2} J_G(t, f')` is locally constant on `T_reg(F)` (Harish-Chandra).  These are the
   `Integrable` and `Summable` conjuncts; with them Lean's Bochner integrals and `tsum` are BP's
   integrals and sum, not junk values.
