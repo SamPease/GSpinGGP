@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import Mathlib
 import TauCeti.LinearAlgebra.Determinant.Quotient
+import GSpinGGP.Foundations.CharpolyContinuous
 
 /-!
 # Determinants of families of endomorphisms
@@ -117,19 +118,10 @@ theorem continuous_det_restrict_of_continuous {K : Type*} [Field K] [Topological
     (hC : ∀ x, ∀ v ∈ C, N x v ∈ C) :
     Continuous fun x => LinearMap.det ((N x).restrict (hC x)) := by
   classical
-  let b := Module.Free.chooseBasis K C
-  obtain ⟨ψ, hψ⟩ := LinearMap.exists_leftInverse_of_injective (ι ∘ₗ C.subtype)
-    (LinearMap.ker_eq_bot.mpr (hι.comp C.injective_subtype))
-  refine continuous_det_of_continuous_repr b _ fun c i => ?_
-  have h : ∀ x, b.repr ((N x).restrict (hC x) c) i = (b.coord i ∘ₗ ψ) (ι (N x c)) := by
-    intro x
-    have : ι (N x c) = (ι ∘ₗ C.subtype) ((N x).restrict (hC x) c) := by
-      simp [LinearMap.coe_restrict_apply]
-    rw [this, LinearMap.comp_apply, ← LinearMap.comp_apply ψ (ι ∘ₗ C.subtype), hψ,
-      LinearMap.id_apply]
-    rfl
-  simp_rw [h]
-  exact (IsModuleTopology.continuous_of_linearMap (b.coord i ∘ₗ ψ)).comp (hN c)
+  refine continuous_det_of_continuous_repr (Module.Free.chooseBasis K C) _ fun c i =>
+    continuous_repr_of_continuous (ι ∘ₗ C.subtype) (hι.comp C.injective_subtype)
+      (fun x => (N x).restrict (hC x)) (fun v => ?_) _ c i
+  simpa [LinearMap.coe_restrict_apply] using hN v
 
 /-- A semisimple endomorphism has `ker f ∩ Im f = 0`. -/
 theorem disjoint_ker_range_of_isSemisimple {K V : Type*} [Field K] [AddCommGroup V] [Module K V]

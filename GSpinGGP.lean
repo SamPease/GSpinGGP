@@ -211,7 +211,7 @@ import GSpinGGP.HarmonicAnalysis.RelativeXi
 import GSpinGGP.HarmonicAnalysis.PolynomialGrowth
 import GSpinGGP.HarmonicAnalysis.LatticeGrowth
 import GSpinGGP.HarmonicAnalysis.QuotientUnimodular
-import GSpinGGP.HarmonicAnalysis.CompactOpenExt
+import GSpinGGP.Foundations.CompactOpenExt
 import GSpinGGP.HarmonicAnalysis.HarishChandraXi
 import GSpinGGP.HarmonicAnalysis.LeviComplement
 import GSpinGGP.HarmonicAnalysis.HullVolume

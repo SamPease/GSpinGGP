@@ -3,7 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.TraceFormula.WeylIntegration
-import GSpinGGP.HarmonicAnalysis.CompactOpenExt
+import GSpinGGP.Foundations.CompactOpenExt
 import GSpinGGP.Foundations.TorusIntegrability
 
 /-!
@@ -20,7 +20,8 @@ For a maximal torus `T` with Haar measure `μ_T`, push the measure `D^G(t) dμ_T
 `(t, ġ) ↦ g⁻¹ t g` (`weylConj`; well defined because `T(F)` is commutative); this is
 `weylMeasureOn`.  The sum over the classes `c ∈ 𝒯(G)`, weighted by `|W(G,T_c)|⁻¹`, is
 `weylMeasure`.  By Fubini–Tonelli `∫ φ d(weylMeasure) = ∫_{Γ(G)} D^{1/2} J_G(·, φ)` whenever the
-left side converges (`integral_weylMeasure`).
+left side converges (`MaxTorus.integral_weylMeasureOn` for one torus, `weyl_integration_integrable`
+for the sum).
 
 ## From `C_c^∞` to `L¹`
 
@@ -148,19 +149,28 @@ theorem weylWeight_toReal (T : Subgroup ↥d.G) :
 a Haar measure `μ_T` on `T(F)` and compact `K ⊆ G(F)`,
 `∫_{T(F)} D^G(t) ∫_{T(F)\G(F)} 1_K(g⁻¹ t g) dġ dt < ∞`.
 
-This is the absolute convergence of the right side of the Weyl integration formula for `1_K`,
-which BP's printed formula (§1.7, p. 32) presupposes but the Lean form `weyl_integration_exists`
-does not carry: there the torus terms are Bochner integrals, which are `0` on divergent input.
+This is the absolute convergence of the right side of the Weyl integration formula, which BP's
+printed formula (§1.7, p. 32) presupposes but the Lean form `weyl_integration_exists` does not
+carry: there the outer and the inner integrals are Bochner integrals, which are `0` on divergent
+input, so neither integrability of the torus terms nor summability over `𝒯(G)` would recover it
+(the inner orbital integral could itself be a junk `0`).  What does is the formula's convergence
+in `[0, ∞]`: for the witness family `μ`, every `f ∈ C_c^∞(G(F))` and every maximal torus `T`,
+`∫⁻_{T(F)} 1_{G_reg}(t) D^G(t) ∫⁻_{T(F)\G(F)} ‖f(g⁻¹ t g)‖ₑ dġ dμ_T(t) < ∞`.  A separate
+pull request is to add this as a conjunct of `weyl_integration_exists`; with it, this statement
+follows for one Haar family (take `f = 1_U`, `U ⊇ K` compact open), hence for all
+(`weylMeasureOn` scales like `weylIntegrand`).
 
-Sketch (Harish-Chandra).  (1) The `t ∈ T(F)` whose conjugacy class meets `K` form a relatively
-compact subset of `T(F)`: the coefficients of the characteristic polynomial of `g⁻¹ t g` (in a
-faithful representation) are bounded on `K`, so the eigenvalues of `t` are bounded, and `T(F)` is
-closed in `G(F)`.  (2) The normalized orbital integral `t ↦ D^G(t)^{1/2} J_G(t, 1_K)` is bounded
-on `T_reg(F)` (Harish-Chandra's bound for orbital integrals of `f ∈ C_c^∞(G(F))`; BP §1.8 uses
-it).  (3) `D^G(t)^{1/2}` is bounded on compact subsets of `T(F)`.  So the integrand
-`D^G(t)^{1/2} · D^G(t)^{1/2} J_G(t, 1_K)` is bounded and supported in a compact subset of
-`T(F)`, and its integral is finite.  Once `weyl_integration_exists` is known to come with
-absolute convergence, this is immediate from it. -/
+Sketch without it (Harish-Chandra).  Replace `K` by a compact open `U ⊇ K`, so that
+`1_U ∈ C_c^∞(G(F))`.  The integrand is `D^G(t)^{1/2} · J_G(t, 1_U)`, where BP's normalized
+orbital integral `J_G(t, f) = D^G(t)^{1/2} ∫_{T(F)\G(F)} f(g⁻¹ t g) dġ` (p. 33) already contains
+one factor `D^{1/2}`.  (1) `t ↦ J_G(t, 1_U)` is locally bounded on `G(F)` (BP p. 33), and
+`D^G(t)^{1/2}` is bounded on compact subsets of `T(F)`.  (2) `J_G(t, 1_U) = 0` unless the
+conjugacy class of `t` meets `U`, and the set of such `t` is relatively compact in `T(F)`: the
+set of `g⁻¹ t g` is compact modulo conjugation, and such a set meets `T(F)` in a relatively
+compact set (BP p. 32); directly, in a faithful representation the characteristic polynomials of
+`t` and of `t⁻¹` have bounded coefficients, so the eigenvalues of `t` are bounded above and away
+from `0`.  So the integrand is bounded and vanishes off a compact subset of `T(F)`, and its
+integral is finite. -/
 theorem MaxTorus.isFiniteMeasureOnCompacts_weylMeasureOn (T : d.MaxTorus)
     (μ : ∀ T : Subgroup ↥d.G, Measure ↥T) [(μ T.1).IsHaarMeasure] :
     IsFiniteMeasureOnCompacts (d.weylMeasureOn μ T.1) := by
