@@ -13,8 +13,8 @@ import GSpinGGP.Literature.HarishChandra
 
 * **V at `toyD`** (`toyD_weyl_integration_exists_check`): the full statement of the axiom, all three
   conjuncts, proved without it, from Weil's formula (`toyD_weyl_integration`), the Haar family
-  `haarFamily`, and for the `[0, ∞]` convergence conjunct the axiom-free
-  `toyD_isFiniteMeasureOnCompacts_weylMeasureOn` with
+  `haarFamily`, and for the `[0, ∞]` convergence conjunct
+  `toyD_isFiniteMeasureOnCompacts_weylMeasureOn` (without `weyl_integration_exists`) with
   `lintegral_conjunct_of_isFiniteMeasureOnCompacts`
   (finiteness of a torus term on compacts implies the conjunct, for any datum, without the axiom).
   At `toyD` the right side is a genuine sum and integral, not a junk value: the class sum is finite
@@ -45,8 +45,8 @@ import GSpinGGP.Literature.HarishChandra
   (`weylMeasureOn_singleton_lt_top_of_axiom`, `weylMeasureOn_ne_top_smul_dirac_of_axiom`).
 * **No new conflict**: the strengthened statement still holds at `toyD` without the axiom (above),
   and its only consequence beyond the first two conjuncts, finiteness of the torus terms on
-  compacts, is what `weylMeasure_eq_haar` needs; at `toyD` it is the axiom-free
-  `toyD_isFiniteMeasureOnCompacts_weylMeasureOn`.
+  compacts, is what `weylMeasure_eq_haar` needs; at `toyD` it is
+  `toyD_isFiniteMeasureOnCompacts_weylMeasureOn`, proved without `weyl_integration_exists`.
 
 * **Implicit consequence**: the axiom forces some class of tori with a finite Weyl group
   (`weylCardG ≠ 0`) and a nonzero torus integral (`exists_class_weylCardG_ne_zero_of_axiom`).
@@ -84,10 +84,10 @@ theorem isHaarMeasure_haarFamily (d : GGPData F) (T : d.MaxTorus) :
   simp only [haarFamily, dite_eq_left h]
   infer_instance
 
-/-- **The convergence conjunct from finiteness on compacts** (no axiom): if a torus term
-`weylMeasureOn μ T` is finite on compact sets, the third conjunct of `weyl_integration_exists`
-holds for `μ` and `T` (Tonelli, `MaxTorus.lintegral_weylMeasureOn`; a test function is bounded with
-compact support). -/
+/-- **The convergence conjunct from finiteness on compacts** (without `weyl_integration_exists`):
+if a torus term `weylMeasureOn μ T` is finite on compact sets, the third conjunct of
+`weyl_integration_exists` holds for `μ` and `T` (Tonelli, `MaxTorus.lintegral_weylMeasureOn`; a
+test function is bounded with compact support). -/
 theorem lintegral_conjunct_of_isFiniteMeasureOnCompacts (d : GGPData F)
     (μ : ∀ T : Subgroup ↥d.G, Measure ↥T) (T : d.MaxTorus) [(μ T.1).IsHaarMeasure]
     [IsFiniteMeasureOnCompacts (d.weylMeasureOn μ T.1)] {f : ↥d.G → ℂ}
@@ -104,8 +104,9 @@ theorem lintegral_conjunct_of_isFiniteMeasureOnCompacts (d : GGPData F)
   exact h2
 
 /-- **The axiom at `toyD`, proved without it**, all three conjuncts; the third from
-`toyD_isFiniteMeasureOnCompacts_weylMeasureOn` (`Sanity/WeylIntegrationL1Audit.lean`,
-axiom-free). -/
+`toyD_isFiniteMeasureOnCompacts_weylMeasureOn` (`Sanity/WeylIntegrationL1Audit.lean`, without
+`weyl_integration_exists`; it uses `weil_quotient_radon`, `hc_regular_open_dense_conull`,
+`jantzen_finrank_soCentMat_ge`). -/
 theorem toyD_weyl_integration_exists_check :
     ∃ μ : ∀ T : Subgroup ↥(toyD (F := F)).G, Measure ↥T,
       (∀ T : (toyD (F := F)).MaxTorus, (μ T.1).IsHaarMeasure) ∧
