@@ -3,6 +3,7 @@ import GSpinGGP.Foundations.ValueGroup
 import GSpinGGP.Foundations.HaarLocal
 import GSpinGGP.Foundations.RankSemicontinuity
 import GSpinGGP.Foundations.Determinant
+import GSpinGGP.Foundations.CharpolyContinuous
 import GSpinGGP.Foundations.CharpolyLimit
 import GSpinGGP.Foundations.SubgroupTransport
 import GSpinGGP.Foundations.CayleyTransform
@@ -204,6 +205,7 @@ import GSpinGGP.TraceFormula.WeylIntegration
 import GSpinGGP.TraceFormula.BPThetaF
 import GSpinGGP.Literature.BPThetaF
 import GSpinGGP.TraceFormula.BPGeomExpansion
+import GSpinGGP.TraceFormula.WeylIntegrationL1
 import GSpinGGP.TraceFormula.Geometric
 import GSpinGGP.TraceFormula.Lie
 import GSpinGGP.TraceFormula.Spine
@@ -213,6 +215,7 @@ import GSpinGGP.HarmonicAnalysis.RelativeXi
 import GSpinGGP.HarmonicAnalysis.PolynomialGrowth
 import GSpinGGP.HarmonicAnalysis.LatticeGrowth
 import GSpinGGP.HarmonicAnalysis.QuotientUnimodular
+import GSpinGGP.Foundations.CompactOpenExt
 import GSpinGGP.HarmonicAnalysis.HarishChandraXi
 import GSpinGGP.HarmonicAnalysis.LeviComplement
 import GSpinGGP.HarmonicAnalysis.HullVolume
@@ -240,5 +243,6 @@ import GSpinGGP.Sanity.WeightedOrbitalAudit
 import GSpinGGP.Sanity.ThetaFBPAudit
 import GSpinGGP.Sanity.DcQuotientAudit
 import GSpinGGP.Sanity.GammaGAudit
+import GSpinGGP.Sanity.WeylIntegrationL1Audit
 import GSpinGGP.Sanity.UnitaryRepAudit
 import GSpinGGP.Sanity.UnramifiedAudit
