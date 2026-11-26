@@ -41,7 +41,7 @@ satisfying the stability, transfer and genericity hypotheses, which is all the p
 
 As of November 2026:
 
-- The project builds with 47 declarations containing `sorry`. The main theorem `local_ggp`
+- The project builds with 46 declarations containing `sorry`. The main theorem `local_ggp`
   depends on 23 of them. They are of two kinds: the analytic core of the local trace formula
   (Thesis Ch. 8–12, e.g. the bound on the kernel of the distribution `J` and its spectral
   expansion), and published results that the dissertation adapts to general spin groups (see
@@ -75,7 +75,9 @@ As of November 2026:
   connected reductive groups; that a quasi-character in our sense is one in BP's is checked in
   the docstring);
   `weyl_integration_exists` (the Weyl integration formula as printed by Beuzart-Plessis, without
-  proof, for connected reductive groups, for some Haar measures on the maximal tori; the
+  proof, for connected reductive groups, for some Haar measures on the maximal tori, together with
+  the finiteness of each torus term of its right side for `|f|`, which is the formula for `|f|`
+  read in `[0, ∞]` as Beuzart-Plessis reads it when deducing (1.7.1); the
   identification of maximal tori with centralizers of regular semisimple elements, and of the
   other objects, is written in the docstring; the author decided on it as a verbatim citation,
   and it is labelled derived because of these unfolding and identification steps);

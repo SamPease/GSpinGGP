@@ -3,14 +3,20 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Sanity.GammaGAudit
+import GSpinGGP.Sanity.WeylIntegrationL1Audit
 import GSpinGGP.TraceFormula.WeylIntegration
+import GSpinGGP.TraceFormula.WeylIntegrationL1
 import GSpinGGP.Literature.HarishChandra
 
 /-!
 # Check of `weyl_integration_exists` (BP §1.7, the Weyl integration formula)
 
-* **V at `toyD`** (`toyD_weyl_integration_exists_check`): the full statement of the axiom, proved
-  without it, from Weil's formula (`toyD_weyl_integration`) and the Haar family `haarFamily`.
+* **V at `toyD`** (`toyD_weyl_integration_exists_check`): the full statement of the axiom, all three
+  conjuncts, proved without it, from Weil's formula (`toyD_weyl_integration`), the Haar family
+  `haarFamily`, and for the `[0, ∞]` convergence conjunct
+  `toyD_isFiniteMeasureOnCompacts_weylMeasureOn` (without `weyl_integration_exists`) with
+  `lintegral_conjunct_of_isFiniteMeasureOnCompacts`
+  (finiteness of a torus term on compacts implies the conjunct, for any datum, without the axiom).
   At `toyD` the right side is a genuine sum and integral, not a junk value: the class sum is finite
   (`toyD_summable_gammaIntegral`) and the integrand is integrable on the torus
   (`toyD_integrable_weylIntegrand`).
@@ -31,11 +37,24 @@ import GSpinGGP.Literature.HarishChandra
     with no integrability or summability hypothesis (`gammaIntegral_weylIntegrand_eq`), so the
     `∃`-form and the `∀`-form agree whatever the junk conventions.
 
+* **The counter-model `ν₁ = ∞ · δ_x`** (why the third conjunct was added). Illustration (generic
+  measure facts, not a model of the first two conjuncts): an infinite atom is invisible to
+  `toReal` (`toReal_top_smul_dirac`, `counterModel_toReal`), but not to the `[0, ∞]` form
+  (`counterModel_lintegral`). Using the axiom: with the third conjunct every torus term is finite
+  on compacts for every Haar family, so it has no infinite atom
+  (`weylMeasureOn_singleton_lt_top_of_axiom`, `weylMeasureOn_ne_top_smul_dirac_of_axiom`).
+* **No new conflict**: the strengthened statement still holds at `toyD` without the axiom (above),
+  and its only consequence beyond the first two conjuncts, finiteness of the torus terms on
+  compacts, is what `weylMeasure_eq_haar` needs; at `toyD` it is
+  `toyD_isFiniteMeasureOnCompacts_weylMeasureOn`, proved without `weyl_integration_exists`.
+
 * **Implicit consequence**: the axiom forces some class of tori with a finite Weyl group
   (`weylCardG ≠ 0`) and a nonzero torus integral (`exists_class_weylCardG_ne_zero_of_axiom`).
   True for `GSpin`; not proved independently here.
 
 Not covered (accepted gap): nonabelian `G`, `|W(G,T)| > 1`, `D^G ≠ 1`, several classes of tori.
+The toyD checks, including the one of the convergence conjunct, cover only a point quotient
+`T(F)\G(F)`; no noncommutative datum is checked in Lean.
 All nonabelian content of the formula (the power of `D^G`, the Weyl weights, the sum over
 classes) is untested; even `weylDisc` at a regular element of the nonabelian datum `gl2Data` is
 not computed (it is the trailing coefficient of a characteristic polynomial on the Lie algebra
@@ -43,6 +62,7 @@ inside a Clifford algebra, not a cheap computation).
 -/
 
 open MeasureTheory GSpinGGP GSpinGGP.Sanity GSpinGGP.GGPData
+open scoped ENNReal
 
 noncomputable section
 
@@ -66,15 +86,91 @@ theorem isHaarMeasure_haarFamily (d : GGPData F) (T : d.MaxTorus) :
   simp only [haarFamily, dite_eq_left h]
   infer_instance
 
-/-- **The axiom at `toyD`, proved without it.** -/
+/-- **The convergence conjunct from finiteness on compacts** (without `weyl_integration_exists`):
+if a torus term `weylMeasureOn μ T` is finite on compact sets, the third conjunct of
+`weyl_integration_exists` holds for `μ` and `T` (Tonelli, `MaxTorus.lintegral_weylMeasureOn`; a
+test function is bounded with compact support). -/
+theorem lintegral_conjunct_of_isFiniteMeasureOnCompacts (d : GGPData F)
+    (μ : ∀ T : Subgroup ↥d.G, Measure ↥T) (T : d.MaxTorus) [(μ T.1).IsHaarMeasure]
+    [IsFiniteMeasureOnCompacts (d.weylMeasureOn μ T.1)] {f : ↥d.G → ℂ}
+    (hf : f ∈ testFunctions ↥d.G) :
+    ∫⁻ t : ↥T.1, (regularSet d.G d.lie).indicator
+        (fun x => ENNReal.ofReal (weylDisc d.lie (x : d.ambientˣ))) (t : ↥d.G) *
+      ∫⁻ q, ‖f ((CosetSpace.out _ q)⁻¹ * (t : ↥d.G) * CosetSpace.out _ q)‖ₑ
+        ∂d.quotMeasureOn T.1 (μ T.1) ∂μ T.1 < ⊤ := by
+  have hint := hf.1.continuous.integrable_of_hasCompactSupport hf.2
+    (μ := d.weylMeasureOn μ T.1)
+  have h2 := hint.2
+  unfold HasFiniteIntegral at h2
+  rw [T.lintegral_weylMeasureOn μ hf.1.continuous.measurable.eNorm] at h2
+  exact h2
+
+/-- **The axiom at `toyD`, proved without it**, all three conjuncts; the third from
+`toyD_isFiniteMeasureOnCompacts_weylMeasureOn` (`Sanity/WeylIntegrationL1Audit.lean`, without
+`weyl_integration_exists`; it uses `weil_quotient_radon`, `hc_regular_open_dense_conull`,
+`jantzen_finrank_soCentMat_ge`). -/
 theorem toyD_weyl_integration_exists_check :
     ∃ μ : ∀ T : Subgroup ↥(toyD (F := F)).G, Measure ↥T,
       (∀ T : (toyD (F := F)).MaxTorus, (μ T.1).IsHaarMeasure) ∧
-      ∀ f ∈ testFunctions ↥(toyD (F := F)).G,
+      (∀ f ∈ testFunctions ↥(toyD (F := F)).G,
         ∫ g, f g ∂Measure.haar = (toyD (F := F)).gammaIntegral μ
-          ((toyD (F := F)).weylIntegrand μ f) :=
-  ⟨haarFamily _, isHaarMeasure_haarFamily _, fun _ hf =>
-    toyD_weyl_integration _ (isHaarMeasure_haarFamily _) hf.1.continuous hf.2⟩
+          ((toyD (F := F)).weylIntegrand μ f)) ∧
+      ∀ f ∈ testFunctions ↥(toyD (F := F)).G, ∀ T : (toyD (F := F)).MaxTorus,
+        ∫⁻ t : ↥T.1, (regularSet (toyD (F := F)).G (toyD (F := F)).lie).indicator
+            (fun x => ENNReal.ofReal (weylDisc (toyD (F := F)).lie
+              (x : (toyD (F := F)).ambientˣ))) (t : ↥(toyD (F := F)).G) *
+          ∫⁻ q, ‖f ((CosetSpace.out _ q)⁻¹ * (t : ↥(toyD (F := F)).G) * CosetSpace.out _ q)‖ₑ
+            ∂(toyD (F := F)).quotMeasureOn T.1 (μ T.1) ∂μ T.1 < ⊤ := by
+  refine ⟨haarFamily _, isHaarMeasure_haarFamily _, fun _ hf =>
+    toyD_weyl_integration _ (isHaarMeasure_haarFamily _) hf.1.continuous hf.2, fun f hf T => ?_⟩
+  have := isHaarMeasure_haarFamily _ T
+  have := toyD_isFiniteMeasureOnCompacts_weylMeasureOn T (haarFamily _)
+  exact lintegral_conjunct_of_isFiniteMeasureOnCompacts _ _ T hf
+
+/-! ### The counter-model `ν₁ = ∞ · δ_x` -/
+
+/-- **The real-valued identity does not see an infinite atom**: `(∞ · δ_x)(U)` has real part `0`
+for every `U`, so adding `∞ · δ_x` as a torus term leaves every identity
+`Σ_c w_c · ν_c(U).toReal = haar(U).toReal` (the formula of the first two conjuncts for `f = 1_U`)
+unchanged. -/
+theorem toReal_top_smul_dirac {X : Type*} [MeasurableSpace X] (x : X) (U : Set X) :
+    (((⊤ : ℝ≥0∞) • Measure.dirac x) U).toReal = 0 := by
+  rw [smul_apply, smul_eq_mul, ENNReal.toReal_mul, ENNReal.toReal_top, zero_mul]
+
+/-- Illustration: an infinite atom is invisible to `toReal`. With `ν₀ = haar`, `ν₁ = ∞ · δ_x`,
+`ν₀(U).toReal + ν₁(U).toReal = haar(U).toReal` for every `U` (a generic fact, not a model of the
+first two conjuncts of the axiom). -/
+theorem counterModel_toReal (d : GGPData F) (x : ↥d.G) (U : Set ↥d.G) :
+    ((Measure.haar : Measure ↥d.G) U).toReal + (((⊤ : ℝ≥0∞) • Measure.dirac x) U).toReal =
+      ((Measure.haar : Measure ↥d.G) U).toReal := by
+  rw [toReal_top_smul_dirac, add_zero]
+
+/-- **The `[0, ∞]` form sees it**: `∫⁻ ‖1_U‖ₑ d(∞ · δ_x) = ∞` for `x ∈ U`, so the shape of the third
+conjunct rejects an infinite atom in a torus term. -/
+theorem counterModel_lintegral (d : GGPData F) {x : ↥d.G} {U : Set ↥d.G} (hU : MeasurableSet U)
+    (hx : x ∈ U) :
+    ∫⁻ g, ‖U.indicator (1 : ↥d.G → ℂ) g‖ₑ ∂((⊤ : ℝ≥0∞) • Measure.dirac x) = ⊤ := by
+  rw [lintegral_smul_measure,
+    lintegral_dirac' x (measurable_one.indicator hU).eNorm, Set.indicator_of_mem hx]
+  simp
+
+/-- **The axiom excludes the counter-model**: no torus term has an infinite atom, for any Haar
+family (`isFiniteMeasureOnCompacts_weylMeasureOn`, from the third conjunct). -/
+theorem weylMeasureOn_singleton_lt_top_of_axiom (d : GGPData F)
+    (μ : ∀ T : Subgroup ↥d.G, Measure ↥T) (T : d.MaxTorus) [(μ T.1).IsHaarMeasure] (x : ↥d.G) :
+    d.weylMeasureOn μ T.1 {x} < ⊤ := by
+  have := T.isFiniteMeasureOnCompacts_weylMeasureOn μ
+  exact isCompact_singleton.measure_lt_top
+
+/-- In particular no torus term is `∞ · δ_x`. -/
+theorem weylMeasureOn_ne_top_smul_dirac_of_axiom (d : GGPData F)
+    (μ : ∀ T : Subgroup ↥d.G, Measure ↥T) (T : d.MaxTorus) [(μ T.1).IsHaarMeasure] (x : ↥d.G) :
+    d.weylMeasureOn μ T.1 ≠ (⊤ : ℝ≥0∞) • Measure.dirac x := by
+  intro h
+  have h1 := weylMeasureOn_singleton_lt_top_of_axiom d μ T x
+  rw [h, smul_apply, Measure.dirac_apply_of_mem (Set.mem_singleton x), smul_eq_mul,
+    mul_one] at h1
+  exact lt_irrefl _ h1
 
 /-- At `toyD` the sum over classes of tori is a finite sum (one class), hence summable. -/
 theorem toyD_summable_gammaIntegral (μ : ∀ T : Subgroup ↥(toyD (F := F)).G, Measure ↥T)
@@ -138,7 +234,7 @@ theorem not_formula_zero_family (d : GGPData F) :
 theorem nonempty_maxTorusClass_of_axiom (d : GGPData F) : Nonempty d.MaxTorusClass := by
   by_contra hne
   rw [not_nonempty_iff] at hne
-  obtain ⟨μ, -, hW⟩ := weyl_integration_exists d
+  obtain ⟨μ, -, hW, -⟩ := weyl_integration_exists d
   obtain ⟨f, hf, hne'⟩ := exists_testFunction_integral_ne_zero d
   exact hne' ((hW f hf).trans (gammaIntegral_of_isEmpty d μ _))
 
@@ -156,7 +252,7 @@ theorem exists_class_weylCardG_ne_zero_of_axiom (d : GGPData F) :
       ∃ (f : ↥d.G → ℂ) (c : d.MaxTorusClass), f ∈ testFunctions ↥d.G ∧
         weylCardG d (Quot.out c).1 ≠ 0 ∧
         ∫ t : ↥(Quot.out c).1, d.weylIntegrand μ f (Quot.out c).1 t ∂μ (Quot.out c).1 ≠ 0 := by
-  obtain ⟨μ, hμ, hW⟩ := weyl_integration_exists d
+  obtain ⟨μ, hμ, hW, -⟩ := weyl_integration_exists d
   obtain ⟨f, hf, hne⟩ := exists_testFunction_integral_ne_zero d
   refine ⟨μ, hμ, f, ?_⟩
   by_contra h

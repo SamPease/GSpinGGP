@@ -41,7 +41,7 @@ theorem weyl_integration (μ : ∀ T : Subgroup ↥d.G, Measure ↥T)
     (hμ : ∀ T : d.MaxTorus, (μ T.1).IsHaarMeasure) (f : ↥d.G → ℂ)
     (hf : f ∈ testFunctions ↥d.G) :
     ∫ g, f g ∂Measure.haar = d.gammaIntegral μ (d.weylIntegrand μ f) := by
-  obtain ⟨μ₀, hμ₀, hW⟩ := weyl_integration_exists d
+  obtain ⟨μ₀, hμ₀, hW, -⟩ := weyl_integration_exists d
   rw [hW f hf, d.gammaIntegral_weylIntegrand_eq μ₀ μ hμ₀ hμ f]
 
 end GGPData
