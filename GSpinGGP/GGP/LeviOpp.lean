@@ -37,12 +37,6 @@ variable {V : Type*} [AddCommGroup V] [Module K V]
 variable {Q : QuadraticForm K V} {F : IsotropicFlag Q}
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {b : Basis ι K V} {wt : ι → ℤ}
 
-
-variable {K : Type*} [Field K] [Invertible (2 : K)]
-variable {V : Type*} [AddCommGroup V] [Module K V]
-variable {Q : QuadraticForm K V} {F : IsotropicFlag Q}
-variable {ι : Type*} [Fintype ι] [DecidableEq ι] {b : Basis ι K V} {wt : ι → ℤ}
-
 theorem toMatrix_specP_eq_zero_of_wt_ne {g : GSpin Q} (hg : g ∈ flagLevi (Q := Q) b wt) {i j : ι}
     (h : wt i ≠ wt j) : LinearMap.toMatrix b b (specP Q g : V →ₗ[K] V) i j = 0 := by
   rw [LinearMap.toMatrix_apply]
@@ -89,10 +83,10 @@ theorem det_wtBlock_eq_det_toSquareBlockProp {g : GSpin Q} (hg : g ∈ flagLevi 
     rw [hN, if_pos hj]
     exact toMatrix_specP_eq_zero_of_wt_ne hg (by rwa [hj])
 
-
-omit [Invertible (2 : K)] [DecidableEq ι] in
+omit [DecidableEq ι] in
 /-- A sum over `ι` of a function vanishing off `{wt = w}` is a sum over `{wt = w}`. -/
-theorem sum_eq_sum_subtype_of_wt (w : ℤ) (f : ι → K) (hf : ∀ i, wt i ≠ w → f i = 0) :
+theorem sum_eq_sum_subtype_of_wt {M : Type*} [AddCommMonoid M] (wt : ι → ℤ) (w : ℤ) (f : ι → M)
+    (hf : ∀ i, wt i ≠ w → f i = 0) :
     ∑ i, f i = ∑ i : {i // wt i = w}, f i := by
   have h := Fintype.sum_subtype_add_sum_subtype (fun i => wt i = w) f
   rw [Finset.sum_eq_zero (s := Finset.univ) (f := fun i : {i // ¬ wt i = w} => f i)
@@ -116,16 +110,15 @@ theorem transpose_mul_gram_mul {g : GSpin Q} (hg : g ∈ flagLevi (Q := Q) b wt)
   have e := bform_specP g (b s) (b t)
   rw [hA, hA] at e
   simp only [map_sum, map_smul, LinearMap.sum_apply, LinearMap.smul_apply, smul_eq_mul] at e
-  rw [of_apply, ← e, sum_eq_sum_subtype_of_wt (-w)
+  rw [of_apply, ← e, sum_eq_sum_subtype_of_wt wt (-w)
     (fun x => A x t * ∑ x1, A x1 s * bform Q (b x1) (b x))
     (fun x hx => by rw [h0 x t (by rw [t.2]; exact hx), zero_mul])]
   simp only [Matrix.mul_apply, transpose_apply, toSquareBlockProp_def, of_apply, Finset.sum_mul]
   refine Finset.sum_congr rfl fun j _ => ?_
-  rw [sum_eq_sum_subtype_of_wt w (fun x1 => A x1 s * bform Q (b x1) (b j))
+  rw [sum_eq_sum_subtype_of_wt wt w (fun x1 => A x1 s * bform Q (b x1) (b j))
     (fun x1 hx => by rw [h0 x1 s (by rw [s.2]; exact hx), zero_mul]), Finset.mul_sum]
   refine Finset.sum_congr rfl fun i _ => ?_
   ring
-
 
 /-- **Determinant duality on the Levi subgroup**: `det(P(g)|_{V_{−w}}) · det(P(g)|_{V_w}) = 1` for
 `g ∈ M_F` (`V_w`, `V_{−w}` are paired perfectly by `b`, and `P(g)` preserves `b`:
@@ -179,35 +172,15 @@ theorem det_toSquareBlockProp_neg_mul (hQ : IsNondeg Q) (hs : IsFlagSplitting F 
       _ = 1 * B'.det := by rw [hdet, one_mul]
   rw [mul_comm]; exact mul_right_cancel₀ hB' h3
 
-omit [Invertible (2 : K)] [Fintype ι] [DecidableEq ι] in
-/-- The weight-`w` projection of `−wt` is the weight-`(−w)` projection of `wt`. -/
-theorem wtProj_neg_wt (w : ℤ) : wtProj b (-wt) w = wtProj b wt (-w) :=
-  b.ext fun j => by simp only [wtProj_basis, Pi.neg_apply, neg_eq_iff_eq_neg]
-
-omit [Invertible (2 : K)] [Fintype ι] [DecidableEq ι] in
-theorem wtBlock_neg_wt (w : ℤ) (A : V →ₗ[K] V) : wtBlock b (-wt) w A = wtBlock b wt (-w) A := by
-  simp only [wtBlock, wtProj_neg_wt]
-
 /-- **Determinant duality**: `det(P(g)|_{V_{−w}}) · det(P(g)|_{V_w}) = 1` for `g ∈ M_F`, written
-with the weights `−wt` of the opposite datum. -/
+with the weights `−wt` of the opposite datum.  On the split centre `wtScalar` this is the scalar
+statement `t(w) t(−w) = 1` of `mul_neg_eq_one_of_orth` raised to `dim V_w = dim V_{−w}`. -/
 theorem det_wtBlock_neg_mul (hQ : IsNondeg Q) (hs : IsFlagSplitting F b wt) {g : GSpin Q}
     (hg : g ∈ flagLevi (Q := Q) b wt) (w : ℤ) :
     LinearMap.det (wtBlock b (-wt) w (specP Q g : V →ₗ[K] V)) *
       LinearMap.det (wtBlock b wt w (specP Q g : V →ₗ[K] V)) = 1 := by
   rw [wtBlock_neg_wt, det_wtBlock_eq_det_toSquareBlockProp hg,
     det_wtBlock_eq_det_toSquareBlockProp hg, det_toSquareBlockProp_neg_mul hQ hs hg w]
-
-omit [Invertible (2 : K)] [Fintype ι] [DecidableEq ι] in
-/-- The weight-`w` space of `−wt` is the weight-`(−w)` space of `wt`. -/
-theorem wtSpan_neg_wt (w : ℤ) : wtSpan b (-wt) w = wtSpan b wt (-w) := by
-  simp only [wtSpan, Pi.neg_apply, neg_eq_iff_eq_neg]
-
-omit [Invertible (2 : K)] [Fintype ι] [DecidableEq ι] in
-/-- Lying in some weight space does not see the sign of the weights. -/
-theorem exists_mem_wtSpan_neg {v : V} (h : ∃ w, v ∈ wtSpan b wt w) :
-    ∃ w, v ∈ wtSpan b (-wt) w := by
-  obtain ⟨w, hw⟩ := h
-  exact ⟨-w, by rwa [wtSpan_neg_wt, neg_neg]⟩
 
 omit [Fintype ι] [DecidableEq ι] in
 /-- The scalars on the weight spaces do not see the sign of the weights. -/

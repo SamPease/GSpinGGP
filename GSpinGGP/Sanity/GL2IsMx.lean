@@ -240,15 +240,6 @@ theorem gl2_M_le_AMF : (𝕃).M ≤ (𝕃).AMF := fun _ hg =>
   ((𝕃).mem_AMF_iff).2 ⟨⟨1, rfl, fun j => j.elim0⟩, gl2_levi_mem_wtScalar hg.2⟩
 
 
-/-- If `G_x(F) ⊆ A_M(F)`, the space `A_M(F)\G_x(F)` is a point. -/
-theorem subsingleton_cosetSpace_AGx {d : GGPData F} (L : d.ReducedLeviDatum) {x : ↥d.G}
-    (h : d.centG x ≤ L.AMF) : Subsingleton (CosetSpace (L.AGx x).subtype) := by
-  refine ⟨fun a b => ?_⟩
-  induction a using CosetSpace.ind with | h g => ?_
-  induction b using CosetSpace.ind with | h k => ?_
-  rw [CosetSpace.mk_eq_mk_iff, CosetSpace.rel_iff]
-  exact ⟨⟨k * g⁻¹, ReducedLeviDatum.mem_AGx.2 (h (k * g⁻¹).2)⟩, by simp⟩
-
 /-- **`G_x(F) ⊆ A_M(F)`** at `x = inr (gl2Torus c)`, `c ≠ 1`: `G_x(F) ⊆ M(F)` (`centG_le_M`) and
 `M(F) = A_M(F)` (`gl2_M_le_AMF`). -/
 theorem gl2_centG_le_AMF {c : Fˣ} (hc : (c : F) ≠ 1) :
@@ -262,7 +253,7 @@ theorem gl2_isMx {c : Fˣ} (hc : (c : F) ≠ 1) : (𝕃).IsMx ((𝔾).inr (gl2To
   regular := gl2_torus_mem_regularSet hc
   mem := gl2_torus_mem_M c
   compact := by
-    have := subsingleton_cosetSpace_AGx (𝕃) (gl2_centG_le_AMF hc)
+    have := (𝕃).subsingleton_cosetSpace_AGx (gl2_centG_le_AMF hc)
     infer_instance
 
 /-- **`M ≠ G`** for the torus datum: `n̄(1)⁻¹` moves `½ z₁` off its line. -/
@@ -299,14 +290,6 @@ theorem gl2_torus_mem_centG (c c' : Fˣ) :
     (𝔾).inr (gl2Torus c') ∈ (𝔾).centG ((𝔾).inr (gl2Torus c)) :=
   Subgroup.mem_centralizer_singleton_iff.2 ((gl2Torus_commute c' c).map (𝔾).inr).eq
 
-/-- A grading with all weights `0` (length `0`). -/
-theorem isWtGrading_zero {V ι : Type*} [AddCommGroup V] [Module F V] [Fintype ι]
-    (Q : QuadraticForm F V) (b : Basis ι F V) : IsWtGrading Q b (0 : ι → ℤ) 0 where
-  orth _ _ h := (h (by simp)).elim
-  sum_wt := by simp
-  wt_le _ := le_rfl
-  exists_wt_eq _ h1 h2 := absurd (h1.trans h2) (by norm_num)
-
 theorem gl2_wtSpan_zero :
     wtSpan (𝔾).stdBasis (0 : Fin (𝔾).m ⊕ Fin (2 * (𝔾).r + 1) → ℤ) 0 = ⊤ := by
   rw [wtSpan, show {j | (0 : (Fin (𝔾).m ⊕ Fin (2 * (𝔾).r + 1)) → ℤ) j = 0} = Set.univ from
@@ -314,8 +297,8 @@ theorem gl2_wtSpan_zero :
 
 /-- **The datum with `M = G`** at `gl2Data`: empty flags, all weights `0`. -/
 def gl2TopLevi : (𝔾).ReducedLeviDatum :=
-  ReducedLeviDatum.ofGrading (Pi.basisFun F (Fin 0)) 0 (isWtGrading_zero _ _) (𝔾).stdBasis 0
-    (isWtGrading_zero _ _)
+  ReducedLeviDatum.ofGrading (Pi.basisFun F (Fin 0)) 0 (IsWtGrading.zero _ _) (𝔾).stdBasis 0
+    (IsWtGrading.zero _ _)
     (not_isHypPlane_comp_of_finrank_le _ _ (by rw [Module.finrank_fin_fun]; simp))
     (fun hp => by
       have h2 := hp.1

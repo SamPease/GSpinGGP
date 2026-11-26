@@ -122,8 +122,25 @@ def wtSpan (b : Basis ι K V) (wt : ι → ℤ) (w : ℤ) : Submodule K V :=
   Submodule.span K (b '' {j | wt j = w})
 
 omit [Invertible (2 : K)] [Fintype ι] in
+/-- The weight-`w` projection of `−wt` is the weight-`(−w)` projection of `wt`. -/
+theorem wtProj_neg_wt (w : ℤ) : wtProj b (-wt) w = wtProj b wt (-w) :=
+  b.ext fun j => by simp only [wtProj_basis, Pi.neg_apply, neg_eq_iff_eq_neg]
+
+omit [Invertible (2 : K)] [Fintype ι] in
+/-- The weight-`w` space of `−wt` is the weight-`(−w)` space of `wt`. -/
+theorem wtSpan_neg_wt (w : ℤ) : wtSpan b (-wt) w = wtSpan b wt (-w) := by
+  simp only [wtSpan, Pi.neg_apply, neg_eq_iff_eq_neg]
+
+omit [Invertible (2 : K)] [Fintype ι] in
 theorem wtSpan_neg : wtSpan b (-wt) 0 = wtSpan b wt 0 := by
-  simp [wtSpan, neg_eq_zero]
+  rw [wtSpan_neg_wt, neg_zero]
+
+omit [Invertible (2 : K)] [Fintype ι] in
+/-- Lying in some weight space does not see the sign of the weights. -/
+theorem exists_mem_wtSpan_neg {v : V} (h : ∃ w, v ∈ wtSpan b wt w) :
+    ∃ w, v ∈ wtSpan b (-wt) w := by
+  obtain ⟨w, hw⟩ := h
+  exact ⟨-w, by rwa [wtSpan_neg_wt, neg_neg]⟩
 
 omit [Fintype ι] in
 /-- The Levi subgroup depends only on the weight spaces: `M(b, −wt) = M(b, wt)`. -/
@@ -341,6 +358,14 @@ theorem neg (hQ : IsNondeg Q) (hg : IsWtGrading Q b wt n) : IsWtGrading Q b (-wt
     obtain ⟨k, hk, -⟩ := exists_bform_ne_of_orth hQ hg.orth i
     exact ⟨k, by simp only [Pi.neg_apply]; omega⟩
 
+variable (Q b) in
+/-- The grading with all weights `0` (length `0`). -/
+theorem zero : IsWtGrading Q b (0 : ι → ℤ) 0 where
+  orth _ _ h := (h (by simp)).elim
+  sum_wt := by simp
+  wt_le _ := le_rfl
+  exists_wt_eq _ h1 h2 := absurd (h1.trans h2) (by norm_num)
+
 /-- **The flag of a grading**: `Zᵢ` is spanned by the `bⱼ` with `wtⱼ ≥ n + 1 − i`. -/
 def flag (hQ : IsNondeg Q) (hg : IsWtGrading Q b wt n) : IsotropicFlag Q where
   len := n
@@ -488,6 +513,9 @@ theorem wtBlock_comp {w : ℤ} {A B : V →ₗ[K] V} (hA : A ∘ₗ wtProj b wt 
 
 theorem wtBlock_id (w : ℤ) : wtBlock b wt w LinearMap.id = LinearMap.id := by
   simp [wtBlock]
+
+theorem wtBlock_neg_wt (w : ℤ) (A : V →ₗ[K] V) : wtBlock b (-wt) w A = wtBlock b wt (-w) A := by
+  simp only [wtBlock, wtProj_neg_wt]
 
 variable {Q : QuadraticForm K V} [Invertible (2 : K)]
 
