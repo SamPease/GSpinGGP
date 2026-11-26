@@ -61,12 +61,15 @@ lattices of `W` and `V` (`SpecialLattice`, W1 §7.1) adapted to `L`'s weight bas
   - 1.2, pp. 31–32: the apartment `A(G, S, K)` is an affine space under
     `X_*(S) ⊗ ℝ`, `Z(K)` acting by translations `ν(z)`, `χ(ν(z)) = −ω(χ(z))`; for `G` not
     semisimple it is "canonified" as `A(DG°, …) × X_*(S₀) ⊗ ℝ` (`S₀` the maximal split central
-    torus), i.e. the extended apartment.  2.1, p. 44: the building is the product of that of
-    `S₀` and those of the almost simple factors.
+    torus), i.e. the extended apartment.
+  - 2.1, pp. 43–44: "the building ℬ is canonically isomorphic with the direct product of the
+    buildings ℬ(S₀, K) (which is an affine space) and ℬ(G_i, K)" (`G_i` the almost simple
+    factors); "If G is K-anisotropic (i.e., if S = {1}), ℬ consists of a single point".
   - 1.9, p. 35: "The point x is called special … if every element of the root system Φ is
     proportional to some element of Φ_x, that is, if Φ and Φ_x have the same Weyl group"
     (`Φ_x`: vector parts of the affine roots vanishing at `x`).
-  - 1.12, p. 38: the local Dynkin data "are the same for G and for the adjoint group".
+  - 1.12, p. 38: "those data [the local Dynkin diagram and the index] are the same for G and for
+    the adjoint group of G°"; for a product they are disjoint unions.
   - 3.1, p. 50: "The stabilizers G(K)^x of special (resp. hyperspecial) points x ∈ ℬ are called
     special (resp. hyperspecial) subgroups of G(K)."
   - 3.2, pp. 50–51: "If the residue field K̄ is finite, G(K)^Ω is even compact"; "special
@@ -118,7 +121,8 @@ lattices of `W` and `V` (`SpecialLattice`, W1 §7.1) adapted to `L`'s weight bas
      `W' = F(v_n − v_{−n})` (both anisotropic, `q = ±1`), `R₀ = ⟨v_n, ϖ^c v_{−n}⟩` (special for
      `V₀`), `R_Z = ⟨v_i, ϖ^c v_{−i}⟩_{i < n}`.  W1's `M` is `A_U` (the torus of `v_{±1..±(n−1)}`
      times `SO(V₀)`, a split torus of rank `1`);
-   - if `n = 0` (`U` anisotropic) `SO(U)(F)` is compact and `K_U = SO(U)(F)`; nothing to place.
+   - if `n = 0` (`U` anisotropic) `SO(U)` is anisotropic, its building is a single point `y_U`
+     (Tits 2.1), `SO(U)(F)` is compact and `K_U = SO(U)(F) = SO(U)(F)^{y_U}`.
    In each case `R_U = R₀ ⊕ R_Z`, and W1 §7.2 gives: `K_U` is in good position relative to W1's
    `M`, i.e. (W1 §1.1) fixes a special point `y_U` of the apartment of some maximal split torus
    `A' ⊆ M`.  Here `M` has a unique maximal split torus, namely `A_U`: in the first case
@@ -127,12 +131,18 @@ lattices of `W` and `V` (`SpecialLattice`, W1 §7.1) adapted to `L`'s weight bas
    apartment of `A_U`.  As `K_U ⊆ SO(U)(F)^{y_U}`, `K_U` is special, hence maximal bounded
    (Tits 3.2), and `SO(U)(F)^{y_U}` is bounded: `K_U = SO(U)(F)^{y_U}`.
 3. *From `SO(U)` to `GSpin(U)` (identification through general Bruhat–Tits theory, for all
-   reductive groups).*  `π` is a central epimorphism onto `SO(U)` up to the adjoint group: both
-   `GSpin(U)` and `SO(U)` have the reduced building of `PSO(U)`, compatibly with `π`
-   (BT II 4.2.15; 5.1.20 Rem. 1 for non-quasi-split `U`), and the same local Dynkin diagram, so
+   reductive groups).*  `π : GSpin(U) → SO(U)` is surjective with central kernel `G_m`, so
+   BT II 4.2.15 applies to it (5.1.20 Rem. 1 for non-quasi-split `U`): `GSpin(U)` and `SO(U)`
+   have the same reduced building (that of `PSO(U)`), compatibly with `π`, and the same local
+   Dynkin diagram, so
    the same special points (Tits 1.12, 1.9).  So the stabilizer of `y_U` in `GSpin(U)(F)` for the
-   reduced building is `π⁻¹(K_U)`, and by BT II 4.2.16 (5.1.29) the stabilizer of the point
-   `x_U = (y_U, 0)` of the extended building `ℐ × V¹` is `π⁻¹(K_U) ∩ GSpin(U)(F)¹`.
+   reduced building is the preimage of the reduced stabilizer in `SO(U)(F)`, and by BT II 4.2.16
+   (5.1.29) the stabilizer of the point `x_U = (y_U, 0)` of the extended building `ℐ × V¹` is
+   `π⁻¹(K_U) ∩ GSpin(U)(F)¹` (`K_U` is the reduced stabilizer cut by `SO(U)(F)¹`, and `π` maps
+   `GSpin(U)(F)¹`, a bounded group, into `SO(U)(F)¹`).  When the semisimple part of `SO(U)` is
+   anisotropic or trivial (`U` anisotropic, or `dim U ≤ 2`), the reduced buildings are points,
+   `GSpin(U)(F)^{x_U} = GSpin(U)(F)¹`, and `π` maps it into the unique maximal bounded subgroup
+   `K_U` of `SO(U)(F)`, so the formula `π⁻¹(K_U) ∩ GSpin(U)(F)¹` still holds.
    `GSpin(U)(F)¹ = {g : |χ(g)| = 1 ∀ χ ∈ X_F(GSpin(U))}` is `ker H` (`hcMap`; for `U` a hyperbolic
    plane `X_F` has rank `2` and `hcMap` uses both characters).  `x_U` is special (step 2 and
    Tits 1.12; the factor `V¹` = `X_*(S₀) ⊗ ℝ` does not enter Tits 1.9), and lies in the extended

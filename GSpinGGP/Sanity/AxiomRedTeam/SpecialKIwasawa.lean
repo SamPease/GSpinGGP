@@ -20,8 +20,9 @@ has `G = P · specialStab S_W S_V`.
   diagonal torus of `GL₂ ≅ GSpin(3)` (`gl2Levi`), `P` running over **all** of `𝒫(M)` (both
   Borel subgroups containing it), `S_W = 0`, `S_V` the lattice `⟨z₋₁, z₀, ½ z₁⟩`
   (`gl2SpecialW/V`, adapted to `gl2Levi`).  Here `specialStab = gl2K` (`specialStab_eq_latticeK`)
-  and `G = P · gl2K` is `gl2_iwasawa`, proved by hand.  This is the instance where the axiom has
-  content (`P ≠ G`).
+  and `G = P · gl2K` is `gl2_iwasawa`, proved by hand.  `𝒫(M)` contains the stabilizer
+  `gl2Levi.P` of the isotropic line `⟨z₁⟩`, a proper (Borel) subgroup, so the axiom has content
+  here (properness standard; not formalized here).
 * **Not applicable to a non-special lattice** (`gl2_tits_iwasawa_specialStab_not_iwahori`): the
   lattice `⟨z₋₁, ϖ z₀, ϖ · ½ z₁⟩` satisfies every condition of `SpecialLattice` except `attained`
   (`gl2_iwahori_data`), and no `SpecialLattice` has it as `R`
