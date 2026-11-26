@@ -90,8 +90,9 @@ As of November 2026:
   `waldspurger2010_cor_5_9` (Waldspurger 2010, Cor 5.9: `θ_f` is a quasi-character; that his
   quasi-characters are ours is checked in the docstring) and `bp_thm_5_5_1_iv` (Beuzart-Plessis
   Thm 5.5.1(iv), the geometric expansion of `J^A`, stated without proof in its source, for some
-  Haar measures on the maximal tori; the measure on `A_G(F)` is Arthur's, which Beuzart-Plessis
-  leaves unstated; the form for all Haar measures is a theorem). Their identification steps
+  Haar measures on the maximal tori; the measure on `A_G(F)` is Arthur's `d_c a`, not the
+  exp-lifted one of Beuzart-Plessis's general rule, since it is the only one for which the
+  formula can hold; the form for all Haar measures is a theorem). Their identification steps
   (`M(x)`, the special subgroup, the normalizations of `dg`) are written in the docstrings.
   The axioms on characters (Harish-Chandra, Beuzart-Plessis) and on multiplicity one (Pan Yan) are
   stated, as in their sources, for irreducible admissible smooth representations; the exception is

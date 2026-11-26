@@ -393,7 +393,7 @@ def measLie0 : Measure ↥d.lieZero := selfDualHaar d.lieZero d.bilin ψ
 /-- The orbital pairing on `𝔤⁰`: `⟨f, f'⟩ = ∫_{G(F)/A_G(F)} ∫_{𝔤⁰(F)} f(x⁻¹Xx) f'(X) dX dx`
 (BP §5.5, Lie-algebra case; as `orbitalPairing`), for `measGmodAG = dg / d_c a` on
 `G(F)/A_G(F)` (`d_c a` gives the maximal compact subgroup of `A_G(F)` measure `1`: Arthur 1991,
-§1, p. 11; BP leaves the measure on `A_G(F)\G(F)` unstated). -/
+§1, p. 11, rather than BP §1.6's exp-lifted measure on `A_G(F)`). -/
 def orbitalPairingLie (f f' : ↥d.lieZero → ℂ) : ℂ :=
   ∫ x : d.GmodAG, (∫ X : ↥d.lieZero, f (d.adLie0 (Quotient.out x)⁻¹ X) * f' X ∂d.measLie0 ψ)
     ∂d.measGmodAG

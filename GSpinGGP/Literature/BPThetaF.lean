@@ -69,10 +69,14 @@ in other notation).  Each axiom's docstring lists which it uses.
   `a_M^G/proj_M(H_M(A_M(F)))` volume `1`, W1 §1.2, arXiv p. 7; BP §1.6, pp. 29–30, normalizes
   `a_M` and `a_G` instead, and the quotient measure is the same because `X_*(A_G)` is saturated in
   `X_*(A_M)`, as recorded in the docstring of `vM`).  The weight basis of `L` only constructs
-  them.  So for `IsMx L x` and
-  special `K`, `L.thetaFBP K f x` is W1's/BP's `θ_f(x)` computed with `K` (up to `c`, (I2)).
+  them.  So for `IsMx L x` and special `K`, `L.thetaFBP K f x` is W1's/BP's `θ_f(x)` computed
+  with `K` (up to `c`, (I2)).  That two presentations `L`, `L'` with the same `M` give the same
+  value is this identification, **asserted here and not proved in Lean**; the check available is
+  for one presentation (`Sanity/AxiomRedTeam/BPThetaF.lean`).  `vM` is free of junk values only if
+  `𝒫(M)` is finite, which is the `sorry` `FlagLeviDatum.finite_parabolics`.
 * **(I6) Regular set.**  `regularSet d.G d.lie` is `G_reg(F)` (`hcDisc_ne_zero_iff_mem_regularSet`);
-  it is open and its complement is null (`hc_regular_open_dense_conull`), so a statement about
+  it is open and its complement is null (`hc_regular_open_dense_conull`, itself a literature
+  axiom: Harish-Chandra), so a statement about
   `θ_f`, which is defined on `G_reg(F)` only, is a statement about any `θ` agreeing with it there.
 -/
 
@@ -118,7 +122,9 @@ too strict or too loose (`not_isBPThetaF_of_not_exists`, `not_isBPThetaF_of_ne`)
 bare `∀` over special presentations: it relies on (I3), i.e. on `IsSpecial` admitting only
 special `K` in good position.  That is the soundness direction of the definition of `IsSpecial`
 (W1 §7.1–7.2 with the Bruhat–Tits identification); it is tested on `gl2Data`, where a `GoodK` that
-is not special and lattices that are not special are excluded (`Sanity/GL2SpecialK.lean`). -/
+is not special and lattices that are not special are excluded (`Sanity/GL2SpecialK.lean`).
+Off the toy datum, non-vacuity of conjunct 2 rests on the `sorry`s `exists_isMx` and
+`exists_specialK` (vacuous, not false, if they failed). -/
 axiom waldspurger2010_lemme_5_3 (d : GGPData F) {f : ↥d.G → ℂ} (hf : f ∈ testFunctions ↥d.G)
     (hcusp : IsStronglyCuspidalInline d f) :
     (∀ (x y : ↥d.G) (L L' : d.ReducedLeviDatum) (K : d.GoodK L.toFlagLeviDatum)
@@ -133,45 +139,68 @@ with proof): "Corollaire. Soit `f ∈ C_c^∞(G(F))`. Supposons `f` très cuspid
 
 W1's definition (§4.1, arXiv pp. 15–16): a function `θ` defined almost everywhere on `G(F)` and
 invariant by conjugation is a quasi-character if for every `x ∈ G_ss(F)` there are a good
-neighbourhood `ω` of `0` in `𝔤_x(F)` (§3.1, arXiv p. 13) and `c_{θ,O}(x) ∈ ℂ`, `O ∈ Nil(𝔤_x)`, with
-`θ(x exp X) = Σ_O c_{θ,O}(x) ĵ(O, X)` for almost every `X ∈ ω`; then `θ` is locally constant on
-`G_reg(F)` (§4.1, arXiv p. 16).
+neighbourhood `ω` of `0` in `𝔤_x(F)` (§3.1, arXiv pp. 13–14) and `c_{θ,O}(x) ∈ ℂ`, `O ∈ Nil(𝔤_x)`,
+with `θ(x exp X) = Σ_O c_{θ,O}(x) ĵ(O, X)` for almost every `X ∈ ω`; then `θ` is locally constant on
+`G_reg(F)`, and W1 calls `θ` "développable dans `x exp(ω)`" when the equality holds for
+`X ∈ ω ∩ 𝔤_reg(F)` (§4.1, arXiv p. 16).  BP, recalling W1's definition for `p`-adic `F` ("The
+definition and basic properties of quasi-characters in this case have been established in [59]",
+§4.1, pp. 73–74), states it pointwise: `θ(x e^Y) = Σ_O c_{θ,O}(x) ĵ(O, Y)`
+"for all `Y ∈ ω_{x,reg}`".
+`IsQuasiCharacter` is this pointwise form.
 
 The statement: every `θ` with `IsBPThetaF f θ` satisfies `IsQuasiCharacter d.G d.lie d.bilin ψ θ`
 for every nontrivial `ψ`.  Derivation:
 * (I1), (I3), (I4), (I5): `θ = c · θ_f` on `G_reg(F)` (I2), and `c · θ_f` is a quasi-character
-  (W1's definition is linear).
+  (the definition is linear).
 * Invariance clause of `IsQuasiCharacter` (for regular `y`): `θ_f` is invariant (W1 §5.3 Lemme)
   and `G_reg(F)` is stable under conjugation (`conj_mem_regularSet`).
 * Expansion clause at semisimple `x` (`HasGermExpansion`):
   - the coefficients are indexed by `NilOrbit (grpCentralizer d.G x) …`, the nilpotent orbits of
     `Z_G(x)(F)` in `𝔤_x(F)`; `Z_G(x) = G_x` because the derived group `Spin(W) × Spin(V)` is
-    simply connected (Steinberg, Mem. AMS 80 (1968), Thm 8.1; `steinberg_centralizer_connected`),
-    and `Nil(𝔤_x)` is finite (W1 sums over it), so `c` has finite support;
-  - from almost every `X ∈ ω` to every `X ∈ ω` regular in `𝔤_x`: by W1 §3.1 (good neighbourhoods)
-    `x exp X ∈ G_reg(F)` for such small `X` (here `exists_nhds_mul_expA_mem_regularSet`), where
-    `θ` is locally constant (W1 §4.1, arXiv p. 16) and `ĵ(O, ·)` is a smooth, i.e. locally
-    constant, function on the regular set (BP §1.8, p. 34, after Harish-Chandra; `IsJHat` asks
-    continuity there); both sides are continuous on an open set
-    on which they agree almost everywhere, and Haar measure charges every nonempty open set, so they
-    agree there;
-  - `ω` is a neighbourhood of `0` in `𝔤_x(F)`, hence the trace of a neighbourhood of `0` in the
+    simply connected (Steinberg, Mem. AMS 80 (1968), Thm 8.1; `steinberg_centralizer_connected`).
+    `Nil(𝔤_x)` is finite: there are finitely many nilpotent orbits over `F̄` (`F` of
+    characteristic `0`), and each meets `𝔤_x(F)` in finitely many `G_x(F)`-orbits, which are
+    parametrized by a subset of `H¹(F, Z_{G_x}(N))`, finite by Borel–Serre, Comment. Math. Helv.
+    39 (1964), Thm 6.1 (as in the sketch of `finite_nilReg`).  So `c` has finite support;
+  - pointwise on `X ∈ ω` regular in `𝔤_x`: **this is printed**, in BP's definition (§4.1,
+    pp. 73–74, "for all `Y ∈ ω_{x,reg}`", given there as W1's notion), so the step passes because
+    it is in print, not because the argument below is short.  Cross-check from W1's a.e. form:
+    by W1 §3.1 (arXiv p. 14: for `X ∈ ω`, `G_{x exp X} = (G_x)_X` and
+    `D^G(x exp X) = D^G(x) D^{G_x}(X)`) `x exp X ∈ G_reg(F)` for such `X` (here
+    `exists_nhds_mul_expA_mem_regularSet`); there `θ` is locally constant (W1 §4.1, arXiv p. 16)
+    and so is `ĵ(O, ·)` (W1 §2.6, arXiv p. 12: "localement constante sur `𝔤_reg(F)`"); two
+    functions continuous on an open set and equal almost everywhere on it agree there, since Haar
+    measure charges every nonempty open set;
+  - W1's `exp` is `expA F` (the exponential series of the ambient algebra, defined near `0`), and
+    `ω` is a neighbourhood of `0` in `𝔤_x(F)`, hence the trace of a neighbourhood of `0` in the
     ambient algebra;
-  - normalization of `ĵ`: `jHat` is normalized by `d.bilin` and `ψ`; another invariant form,
-    character or measure rescales and permutes the `ĵ(O, ·)` (as recorded for
-    `hc_character_isQuasiCharacter_admissible`), which is absorbed into the coefficients, so the
-    statement holds for every `ψ`.
+  - **the normalization of `ĵ` is a hypothesis check, not a rescaling.**  W1 §1.2 (arXiv p. 6)
+    fixes an arbitrary nontrivial continuous character `ψ` of `F` and an arbitrary symmetric
+    nondegenerate bilinear form on `𝔤(F)` invariant under `G(F)`.  `d.bilin` is one: it is
+    invariant (`bilin_conj`), symmetric (the trace form `(X, Y) ↦ tr(L_{XY})`, `ggp_bilin_symm`),
+    nondegenerate on `𝔤` (`bilin_nondegenerate_lie`), and on `𝔤_x` for semisimple `x`
+    (`restrictForm_lieCentralizer_nondegenerate_of_isSS`), where W1 applies its conventions to the
+    reductive subgroup `G_x` ("le même procédé", p. 6).  So W1's corollary holds with W1's `ψ` and
+    form taken to be ours, for every `ψ`;
+  - `jHat` is W1's `ĵ(O, ·)` for these choices: `IsJHat` is W1's characterization (§2.6, arXiv
+    p. 12: the unique locally integrable function, locally constant on `𝔤_reg(F)`, with
+    `J_O(f̂) = ∫ f(Y) ĵ(O, Y) dY`), the Fourier transform `fourierLie` is W1's `f̂` for `ψ` and the
+    form, with the autodual measure `selfDualHaar` (W1 §1.2, p. 6), and `orbitMeasure` is W1's
+    "autoduale" measure on `O` from the symplectic form `(Y, Z) ↦ ⟨X, [Y, Z]⟩` (W1 §1.2, p. 6).
+    The two can differ only by a positive scalar per orbit (a different normalization of the
+    invariant measure on `O`), which is absorbed into the coefficient `c_{θ,O}(x)`.
 * (I6): `IsQuasiCharacter` only reads `θ` on `G_reg(F)` (its invariance clause is for regular `y`,
   and its expansion is evaluated at `x exp X ∈ G_reg(F)`), so it holds for any `θ` agreeing with
   `c · θ_f` there.
 
 The same conclusion is printed in BP Prop 5.6.1(ii) (p. 117: "Let `f ∈ 𝒞_scusp(G(F))`. Then, the
-function `θ_f` is a quasi-character on `G(F)`"), with BP's pointwise definition (§4.1, p. 74:
-the expansion holds "for all `Y ∈ ω_{x,reg}`"); BP's proof of (ii) uses Thm 5.5.1(iv)–(v), so W1's
+function `θ_f` is a quasi-character on `G(F)`"); BP's proof of (ii) uses Thm 5.5.1(iv)–(v), so W1's
 proved corollary is the anchor here.
 
 As for `hc_character_isQuasiCharacter_admissible`, the statement presupposes that `ĵ(O, ·)` exists
-(`jHat` is defined by choice, `0` otherwise); Harish-Chandra proves it. -/
+(`jHat` is defined by choice, `0` otherwise); W1 §2.6 and Harish-Chandra prove it.  Off the toy
+datum, non-vacuity of the hypothesis `IsBPThetaF` rests on the `sorry`s `exists_isMx` and
+`exists_specialK`; if they failed the axiom would be vacuous, not false. -/
 axiom waldspurger2010_cor_5_9 (d : GGPData F) {f : ↥d.G → ℂ} (hf : f ∈ testFunctions ↥d.G)
     (hcusp : IsStronglyCuspidalInline d f) :
     ∀ θ : ↥d.G → ℂ, d.IsBPThetaF f θ → ∀ ψ : NontrivialAddChar F,
@@ -194,19 +223,24 @@ Derivation (identification steps):
 * (I1) for `G`, `f`, `f'` (`C_c^∞ ⊆ 𝒞`); (I3)–(I5) for `θ = c · θ_f` on `G_reg(F)` (BP §5.2, p. 109;
   BP's `θ_f` does not depend on `K`, Lemma 5.2.1(ii)).
 * **`J^A`.**  `kernelA` is `K^A` for `dg = Measure.haar`; `jA` integrates it over
-  `A_G(F)\G(F) = G(F)/A_G(F)` (`A_G` central) for `measGmodAG = dg/d_c a`.  BP does not state the
-  measure on `A_G(F)`; we read it with Arthur's convention, `d_c a` giving the maximal compact
-  subgroup of `A_G(F)` measure `1` (J. Arthur, Publ. Math. IHÉS 73 (1991), §1, p. 11; also
-  Waldspurger, J. reine angew. Math. 465 (1995), §1.4): **flagged, BP leaves it unstated.**  It is
-  the only Haar measure on `A_G(F)` for which (iv) can hold (both sides scale differently under it),
-  and it is the one tested at the toy datum (`toyD_jA_geom`).  `measGmodAG` is
+  `A_G(F)\G(F) = G(F)/A_G(F)` (`A_G` central) for `measGmodAG = dg/d_c a`.  BP §1.6's general
+  rule would
+  give `A_G(F)` the exp-lifted measure; we use `d_c a`, which gives the maximal compact subgroup of
+  `A_G(F)` measure `1` (J. Arthur, Publ. Math. IHÉS 73 (1991), §1, p. 11; Waldspurger, J. reine
+  angew. Math. 465 (1995), §1.4, p. 45), the only Haar measure on `A_G(F)` for which (iv) can hold
+  (the left side scales with it and the right side does not): **flagged.**  It is the one tested
+  at the toy datum (`toyD_jA_geom`).  `measGmodAG` is
   `dcScaleAG • Measure.haar` with `dcScaleAG` chosen by choice; its specification is proved
   (`isDcQuotientAG_measGmodAG`, from `weil_quotient_radon` only), so no existence is hidden.
+  `jA` is a genuine integral, not a junk value: for each `x` the kernel integrand
+  `g ↦ f(x⁻¹ g x) f'(g)` has compact support, and `x ↦ K^A(x, x)` is integrable on `G(F)/A_G(F)`
+  by BP 5.5.1(ii) (`integrable_kernelA_diag_scusp`, from `bp_integrable_kernel_scusp`).
 * **(I2), `dg` homogeneity.**  With `Measure.haar = c · dg`: `kernelA` is `c` times BP's,
   `measGmodAG = (c · dg)/d_c a` is `c` times BP's, so `jA` is `c²` times BP's `J^A`; on the right,
   `J_G(t, f')` (`orbitalIntegralOn`, for `dg/μ_T`) is `c` times BP's and `θ = c · θ_f`, so the
   right side is `c²` times BP's.  The equality is equivalent to BP's.
-* **`Γ(G)` and `dx`** (BP §1.7, p. 32: `∫_{Γ(G)} φ(x) dx = Σ_{T ∈ 𝒯(G)} |W(G,T)|⁻¹ ∫_{T(F)} φ(t) dt`):
+* **`Γ(G)` and `dx`** (BP §1.7, p. 32:
+  `∫_{Γ(G)} φ(x) dx = Σ_{T ∈ 𝒯(G)} |W(G,T)|⁻¹ ∫_{T(F)} φ(t) dt`):
   the identifications 3, 5, 6 and 7 of the docstring of `weyl_integration_exists` (unfolding `dx`
   for integrable `φ`; `MaxTorus`/`MaxTorusClass` as BP's maximal tori up to `G(F)`-conjugacy;
   `weylCardG = |W(G,T)|`, `weylDisc = D^G`, `orbitalIntegralOn = J_G` (BP §1.8, p. 33); the
@@ -220,15 +254,19 @@ Derivation (identification steps):
   `∫_{T(F)} |D^{1/2} θ_f J_G(·, f')| dt < ∞` for each `T ∈ 𝒯(G)` and summability of the weighted
   sum over the finitely many `T`; the inner integral of `J_G(t, f')` over `G_t(F)\G(F)` is
   absolutely convergent for `t ∈ G_reg(F)` (BP §1.8, p. 33: "the integral being absolutely
-  convergent for all `f ∈ 𝒞(G(F))`"), so `orbitalIntegralOn` is not a junk value either;
-  measurability: `θ_f` is locally constant on `G_reg(F)` (W1 §5.3)
-  and `t ↦ D^{1/2} J_G(t, f')` is locally constant on `T_reg(F)` (Harish-Chandra).  These are the
+  convergent for all `f ∈ 𝒞(G(F))`"; in Lean `integrable_weight` gives it, modulo the `sorry`
+  `exists_isCompact_conj_mem`), so `orbitalIntegralOn` is not a junk value either; `𝒯(G)` and
+  each `W(G,T)` are finite (step 8 of the docstring of `weyl_integration_exists`), so neither the
+  `tsum` nor `weylCardG` takes a junk value; measurability of the integrand on each `T(F)` is part
+  of BP's printed "absolutely convergent".  These are the
   `Integrable` and `Summable` conjuncts; with them Lean's Bochner integrals and `tsum` are BP's
   integrals and sum, not junk values.
 
 The statement is no stronger than BP's: BP's (iv), for its `dg`, `dt` and `θ_f`, implies it with
-`μ = dt`.  `IsBPThetaF` has an existence and a universal half, so that a wrong `IsSpecial` makes the
-hypothesis unsatisfiable rather than the statement false. -/
+`μ = dt`.  Soundness relies on (I3), `IsSpecial` ⇒ special in good position, which is tested at
+`gl2Data` (`Sanity/GL2SpecialK.lean`).  Off the toy datum, non-vacuity of the hypothesis
+`IsBPThetaF` rests on the `sorry`s `exists_isMx` and `exists_specialK` (if they failed, the axiom
+would be vacuous, not false). -/
 axiom bp_thm_5_5_1_iv (d : GGPData F) :
     ∃ μ : ∀ T : Subgroup ↥d.G, Measure ↥T, (∀ T : d.MaxTorus, (μ T.1).IsHaarMeasure) ∧
       ∀ f ∈ testFunctions ↥d.G, IsStronglyCuspidalInline d f →

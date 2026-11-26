@@ -20,7 +20,8 @@ presentation, and some special presentation exists).
 **The toy datum `toyD`** (`W = 0`, `V` a line, `G ≅ F^× × F^×`).
 * Every isotropic flag has length `0` (`toyD_flag_len_eq_zero_W/V`), so every reduced Levi datum
   has `M = G`, and `IsMx L x` holds for all `L`, `x`.
-* **A special `K` exists for every `L`** (`toyD_specialK`, `toyD_specialK_isSpecial`): the stabilizer
+* **A special `K` exists for every `L`** (`toyD_specialK`, `toyD_specialK_isSpecial`): the
+  stabilizer
   of the special lattices `0 ⊆ W` and `𝒪_F z₀ ⊆ V` (`c = 0`, `q(z₀) = 1`).  Built here without
   `exists_specialK` (a `sorry`).
 * `θ_f = c f` with `c = Measure.haar(A_G(𝒪)) > 0` for **every** presentation `(L, K)`
@@ -42,7 +43,8 @@ presentation, and some special presentation exists).
   `θ_0 = 0`, `J^A(0, f') = 0`, and `IsBPThetaF 0 θ` forces `θ = 0` on `G_reg(F)`; so (iv) at
   `f = 0` says `0 = 0` (`bp_thm_5_5_1_iv_zero`), no junk value fires.
 
-**The guard of `IsSpecial` on a nonabelian datum** (`Sanity/GL2SpecialK.lean`, `gl2Data`): `IsSpecial`
+**The guard of `IsSpecial` on a nonabelian datum** (`Sanity/GL2SpecialK.lean`, `gl2Data`):
+`IsSpecial`
 is satisfiable (`gl2GoodK_isSpecial`); a `GoodK` that is not special exists
 (`not_isSpecial_gl2GoodK'`); the Iwahori-normalizer lattice satisfies every condition of a special
 lattice except `attained` (`gl2_iwahori_data`) and is excluded
@@ -70,6 +72,24 @@ over special presentations, and these are the checks that `IsSpecial` is not too
 **Automation probe** (run in a scratch file at `toyD` and at a general datum with all three axioms
 in context, not kept: a failing search does not compile): `exact?` and `aesop` find no proof of
 `False`.
+
+**Presentation change** (any datum): `L` and `L.opp` (opposite flags, negated weights, same `M`)
+have the same `A_M(F)` (`opp_AMF`, via `wtScalar_neg`) and the same `IsMx` (`IsMx.opp`).
+
+**Owed (not reachable cheaply now).**
+* At `gl2Data`, `gl2Levi.IsMx (inr (gl2Torus c))` for a regular torus element: this needs
+  `inr (gl2Torus c) ∈ G_reg(F)` (regularity in the Lie algebra inside the Clifford algebra, not
+  computed anywhere in the repository) and compactness of `G_x(F)/A_M(F)` (needs `G_x(F)`
+  explicitly).  With `gl2GoodK_isSpecial` it would witness the `∃` half at a proper Levi subgroup.
+* At `gl2Data`, that the datum with empty flags (`M = G`) is not `IsMx` at such `x`
+  (`T(F)/A_G(F) ≅ F^×` not compact): needs the same description of `G_x(F)`.
+* `thetaFBP 𝕃 K f x = thetaFBP 𝕃.opp K' f x` for every `f`, and the equality of `aMG`,
+  `AGxOne` and `latticeMG` under `opp` (the characters of `L.opp` are inverses of those of `L`).
+
+**Non-vacuity off `toyD`.**  On a general datum, non-vacuity of the hypothesis `IsBPThetaF` rests on
+the `sorry`s `exists_isMx` and `exists_specialK`; if either failed, the axioms would be vacuous
+there, not false.  `vM` is free of junk values only if `𝒫(M)` is finite, which is the `sorry`
+`FlagLeviDatum.finite_parabolics` (at `toyD`, `M = G` and `v_M = 1`).
 
 Not covered (accepted gap): nonabelian `G`, `M ≠ G`, weighted orbital integrals with `v_M ≠ 1`,
 several tori, nonzero nilpotent orbits.  No check here uses `exists_isMx` or `exists_specialK`.
@@ -116,6 +136,48 @@ theorem bp_thm_5_5_1_iv_zero (μ : ∀ T : Subgroup ↥d.G, Measure ↥T) {θ : 
   simp [gammaIntegral, thetaWeylIntegrand]
 
 end Zero
+
+/-! ## Any datum: `IsMx` does not depend on the presentation `L` versus `L.opp`
+
+`L.opp` has the opposite flags, the same bases and the negated weights, and the same Levi subgroup
+(`FlagLeviDatum.opp_M`).  The identification (I5) of `Literature/BPThetaF.lean` asserts that
+`thetaFBP` reads `L` only through `M`; here the part of it about `IsMx` and `A_M(F)` is checked. -/
+
+section Opp
+
+variable {d : GGPData F}
+
+omit [PAdicField F] in
+/-- The scalars on the weight spaces do not see the sign of the weights. -/
+theorem wtScalar_neg {V : Type*} [AddCommGroup V] [Module F V] [Invertible (2 : F)]
+    {Q : QuadraticForm F V} {ι : Type*} (b : Basis ι F V) (wt : ι → ℤ) :
+    wtScalar Q b (-wt) = wtScalar Q b wt := by
+  ext g
+  constructor
+  · rintro ⟨t, ht0, ht⟩
+    exact ⟨fun w => t (-w), by simpa using ht0, fun j => by simpa using ht j⟩
+  · rintro ⟨t, ht0, ht⟩
+    exact ⟨fun w => t (-w), by simpa using ht0, fun j => by simpa using ht j⟩
+
+/-- **`A_M(F)` is the same for `L` and `L.opp`.** -/
+theorem opp_AMF (L : d.ReducedLeviDatum) : L.opp.AMF = L.AMF := by
+  ext g
+  rw [ReducedLeviDatum.mem_AMF_iff, ReducedLeviDatum.mem_AMF_iff]
+  change d.fst g ∈ wtScalar d.QW L.bW (-L.wtW) ∧ d.snd g ∈ wtScalar d.QV L.bV (-L.wtV) ↔ _
+  rw [wtScalar_neg, wtScalar_neg]
+
+/-- **`IsMx` is the same for `L` and `L.opp`**: same `M`, same `A_M(F)`. -/
+theorem IsMx.opp {L : d.ReducedLeviDatum} {x : ↥d.G} (h : L.IsMx x) : L.opp.IsMx x where
+  regular := h.regular
+  mem := by
+    change x ∈ L.toFlagLeviDatum.opp.M
+    rw [FlagLeviDatum.opp_M]; exact h.mem
+  compact := by
+    have e : L.opp.AGx x = L.AGx x := by
+      simp only [ReducedLeviDatum.AGx, opp_AMF]
+    rw [e]; exact h.compact
+
+end Opp
 
 /-! ## The toy datum -/
 
