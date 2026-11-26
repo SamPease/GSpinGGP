@@ -9,6 +9,7 @@ import GSpinGGP.Sanity.AxiomRedTeam.HarishChandra
 import GSpinGGP.Sanity.ThetaFBPAudit
 import GSpinGGP.Sanity.GL2SpecialK
 import GSpinGGP.Sanity.GL2IsMx
+import GSpinGGP.TraceFormula.ThetaFBPOpp
 import GSpinGGP.Sanity.LieAudit
 import GSpinGGP.Sanity.AxiomRedTeam.Measure
 
@@ -74,14 +75,16 @@ over special presentations, and these are the checks that `IsSpecial` is not too
 in context, not kept: a failing search does not compile): `exact?` and `aesop` find no proof of
 `False`.
 
-**Presentation change** (any datum): `L` and `L.opp` (opposite flags, negated weights, same `M`)
-have the same `A_M(F)` (`opp_AMF`, via `wtScalar_neg`) and the same `IsMx` (`IsMx.opp`).  The same
-`K` is good and special for `L.opp` (`goodKOpp`, `isSpecial_goodKOpp`), so both presentations are
-quantified over by `IsBPThetaF`.  For them: `dim a_M^G` (`opp_finrank_aMG`, via `opp_aG`),
-`A_{G_x}(F)^1` (`opp_AGxOne`), `d_c t` (`opp_dcMeasure`) agree, and the lattice
-`proj_M^G(H_M(A_M(F)))` of `L.opp` is the image of that of `L` under `−1` (`opp_latticeMG`; on
-`A_M(F)` the `GL`-coordinates of `H_M` change sign, `opp_HM_add_mem_aG`).  Hence
-`θ_f(L.opp, K) = θ_f(L, K)` as soon as `v_M(L.opp, K) = v_M(L, K)` (`opp_thetaFBP_of_vM`).
+**Presentation change** (any datum; proved in the library, `GGP/LeviOpp.lean`,
+`TraceFormula/ThetaFBPOpp.lean`): `L` and `L.opp` (opposite flags, negated weights, same `M`) have
+the same `IsMx` (`IsMx.opp`), the same `K` is good and special for both (`oppK`,
+`oppK_isSpecial`), and `θ_f` is the same (`opp_thetaFBP`): the sign (`opp_finrank_aMG`), `d_c t`
+(`opp_dcMeasure`) and `v_M` (`opp_vM`) agree, the last because the points `H_P(g)` and the
+lattice `proj_M^G(H_M(A_M(F)))` both change sign in `a_M^G` (`opp_hPar`, `opp_latticeMG`; from
+the determinant duality `det_wtBlock_neg_mul` on `M(F)`).  Conjunct 1 of
+`waldspurger2010_lemme_5_3` is not guarded by `IsBPThetaF` and asserts this equality for strongly
+cuspidal `f`; `lemme_5_3_opp_check` proves that instance for every `f` without the axiom, so
+this conjunct is consistent with the presentation change.
 
 **A proper Levi subgroup** (`Sanity/GL2IsMx.lean`, `gl2Data`, `G = GL₁ × GSpin₃`, nonabelian): for
 `x = inr (gl2Torus c)`, `c ≠ 1`, `x` is regular (`gl2_torus_mem_regularSet`), the torus datum is
@@ -90,17 +93,6 @@ quantified over by `IsBPThetaF`.  For them: `dim a_M^G` (`opp_finrank_aMG`, via 
 is not `M(x)` (`gl2TopLevi_not_isMx`: `A_G(F)\G_x(F)` is not compact), so the `∀` half at `x`
 does not consult it; it does consult `(gl2Levi, gl2GoodK)` and `(gl2Levi.opp, gl2GoodK)`
 (`gl2_isBPThetaF_at_torus`).
-
-**Owed (not reachable cheaply now).**
-* `v_M(L.opp, K) = v_M(L, K)`, hence `thetaFBP L.opp K f x = thetaFBP L K f x` for every `f`
-  (`opp_thetaFBP_of_vM`).  Missing: the duality `det(m|_{V_{−w}}) = det(m|_{V_w})⁻¹` for every
-  `m ∈ M(F)` (proved here only on `A_M(F)`), which gives `H_P^{L.opp} = −H_P^{L}` modulo `a_G`;
-  then `Measure.hullVolume_map` and `opp_latticeMG`.  This is a consistency check of an axiom,
-  not only of the hypothesis: conjunct 1 of `waldspurger2010_lemme_5_3` is not guarded by
-  `IsBPThetaF` and itself asserts the equality for strongly cuspidal test functions `f`
-  (`lemme_5_3_opp`, which uses the axiom).  If `v_M` differed for `L` and `L.opp`
-  (mathematically it does not: the points `H_P(g)` change sign modulo `a_G`, and so does the
-  lattice), the axiom would be false, not vacuous.
 
 **Non-vacuity off `toyD`.**  On a general datum, non-vacuity of the hypothesis `IsBPThetaF` rests on
 the `sorry`s `exists_isMx` and `exists_specialK`; if either failed, the axioms would be vacuous
@@ -154,260 +146,28 @@ theorem bp_thm_5_5_1_iv_zero (μ : ∀ T : Subgroup ↥d.G, Measure ↥T) {θ : 
 
 end Zero
 
-/-! ## Any datum: `IsMx` does not depend on the presentation `L` versus `L.opp`
+/-! ## Any datum: the presentation `L` versus `L.opp`
 
 `L.opp` has the opposite flags, the same bases and the negated weights, and the same Levi subgroup
-(`FlagLeviDatum.opp_M`).  The identification (I5) of `Literature/BPThetaF.lean` asserts that
-`thetaFBP` reads `L` only through `M`; here the part of it about `IsMx` and `A_M(F)` is checked. -/
+(`FlagLeviDatum.opp_M`); the same `K` is good and special for it (`ReducedLeviDatum.oppK`,
+`oppK_isSpecial`).  The library proves that `θ_f` is the same for both presentations
+(`ReducedLeviDatum.opp_thetaFBP`, from `opp_vM` in `GGP/LeviOpp.lean`).  Here: the instance
+`y = 1`, `L' = L.opp`, `K' = K` of conjunct 1 of `waldspurger2010_lemme_5_3` holds for every `f`,
+without the axiom. -/
 
 section Opp
 
 variable {d : GGPData F}
 
-omit [PAdicField F] in
-/-- The scalars on the weight spaces do not see the sign of the weights. -/
-theorem wtScalar_neg {V : Type*} [AddCommGroup V] [Module F V] [Invertible (2 : F)]
-    {Q : QuadraticForm F V} {ι : Type*} (b : Basis ι F V) (wt : ι → ℤ) :
-    wtScalar Q b (-wt) = wtScalar Q b wt := by
-  ext g
-  constructor
-  · rintro ⟨t, ht0, ht⟩
-    exact ⟨fun w => t (-w), by simpa using ht0, fun j => by simpa using ht j⟩
-  · rintro ⟨t, ht0, ht⟩
-    exact ⟨fun w => t (-w), by simpa using ht0, fun j => by simpa using ht j⟩
-
-/-- **`A_M(F)` is the same for `L` and `L.opp`.** -/
-theorem opp_AMF (L : d.ReducedLeviDatum) : L.opp.AMF = L.AMF := by
-  ext g
-  rw [ReducedLeviDatum.mem_AMF_iff, ReducedLeviDatum.mem_AMF_iff]
-  change d.fst g ∈ wtScalar d.QW L.bW (-L.wtW) ∧ d.snd g ∈ wtScalar d.QV L.bV (-L.wtV) ↔ _
-  rw [wtScalar_neg, wtScalar_neg]
-
-/-- **`IsMx` is the same for `L` and `L.opp`**: same `M`, same `A_M(F)`. -/
-theorem IsMx.opp {L : d.ReducedLeviDatum} {x : ↥d.G} (h : L.IsMx x) : L.opp.IsMx x where
-  regular := h.regular
-  mem := by
-    change x ∈ L.toFlagLeviDatum.opp.M
-    rw [FlagLeviDatum.opp_M]; exact h.mem
-  compact := by
-    have e : L.opp.AGx x = L.AGx x := by
-      simp only [ReducedLeviDatum.AGx, opp_AMF]
-    rw [e]; exact h.compact
-
-/-! ### The rest of `θ_f` under `L ↦ L.opp`
-
-The same subgroup `K` is good and special for `L.opp` (`goodKOpp`, `isSpecial_goodKOpp`); the
-sign `(−1)^{dim a_M^G}` (`opp_finrank_aMG`), `A_M(F)^1` (`opp_AGxOne`), `d_c t` (`opp_dcMeasure`)
-and the lattice `proj_M^G(H_M(A_M(F)))` (`opp_latticeMG`: carried by `−1` under the
-identification `oppAMGEquiv`) agree.  So `θ_f` agrees as soon as `v_M` does
-(`opp_thetaFBP_of_vM`). -/
-
-omit [PAdicField F] in
-/-- The weight-`w` space of `−wt` is the weight-`(−w)` space of `wt`. -/
-theorem wtSpan_neg_wt {V ι : Type*} [AddCommGroup V] [Module F V] (b : Basis ι F V) (wt : ι → ℤ)
-    (w : ℤ) : wtSpan b (-wt) w = wtSpan b wt (-w) := by
-  simp only [wtSpan, Pi.neg_apply, neg_eq_iff_eq_neg]
-
-omit [PAdicField F] in
-/-- Lying in some weight space does not see the sign of the weights. -/
-theorem exists_mem_wtSpan_neg {V ι : Type*} [AddCommGroup V] [Module F V] {b : Basis ι F V}
-    {wt : ι → ℤ} {v : V} (h : ∃ w, v ∈ wtSpan b wt w) : ∃ w, v ∈ wtSpan b (-wt) w := by
-  obtain ⟨w, hw⟩ := h
-  exact ⟨-w, by rwa [wtSpan_neg_wt, neg_neg]⟩
-
-/-- Good position does not see the sign of the weights. -/
-theorem stabilizesSplitLattice_neg {V ι : Type*} [AddCommGroup V] [Module F V]
-    {Q : QuadraticForm F V} {b : Basis ι F V} {wt : ι → ℤ} {S : Set (GSpin Q)}
-    (h : StabilizesSplitLattice Q b wt S) : StabilizesSplitLattice Q b (-wt) S := by
-  obtain ⟨κ, hκ, e, he, hS⟩ := h
-  exact ⟨κ, hκ, e, fun i => exists_mem_wtSpan_neg (he i), hS⟩
-
-/-- **A good `K` for `L` is good for `L.opp`**: the same subgroup (`𝒫(M)` and the weight spaces
-up to sign are the same). -/
-def goodKOpp {L : d.FlagLeviDatum} (K : d.GoodK L) : d.GoodK L.opp where
-  K := K.K
-  isOpen := K.isOpen
-  isCompact := K.isCompact
-  mul_eq P hP := K.mul_eq P (L.opp_M ▸ hP)
-  goodPositionW := stabilizesSplitLattice_neg K.goodPositionW
-  goodPositionV := stabilizesSplitLattice_neg K.goodPositionV
-
-omit [PAdicField F] in
-/-- Adaptedness of a special lattice does not see the sign of the weights. -/
-theorem isAdapted_neg {V ι : Type*} [AddCommGroup V] [Module F V]
-    [FiniteDimensional F V] {Q : QuadraticForm F V} {S : SpecialLattice Q} {b : Basis ι F V}
-    {wt : ι → ℤ} (h : S.IsAdapted b wt) : S.IsAdapted b (-wt) := by
-  obtain ⟨h1, h2, h3⟩ := h
-  refine ⟨fun i => exists_mem_wtSpan_neg (h1 i), fun i => exists_mem_wtSpan_neg (h2 i), ?_⟩
-  rwa [wtSpan_neg]
-
-/-- **`K` special for `L` is special for `L.opp`.** -/
-theorem isSpecial_goodKOpp {L : d.FlagLeviDatum} {K : d.GoodK L} (h : K.IsSpecial) :
-    (goodKOpp K).IsSpecial := by
-  obtain ⟨SW, SV, hW, hV, hK⟩ := h
-  exact ⟨SW, SV, isAdapted_neg hW, isAdapted_neg hV, hK⟩
-
-/-- **`a_G` is the same for `L` and `L.opp`** (same `a_M`, the coordinates of the same characters up
-to sign; `a_G` is spanned by the central coordinates, `mem_aG_iff`). -/
-theorem opp_aG (L : d.ReducedLeviDatum) : L.opp.aG = L.aG := by
-  ext H
-  refine (L.opp.mem_aG_iff).trans (Iff.trans ?_ (L.mem_aG_iff (H := H)).symm)
-  constructor <;> intro h c hc <;> rcases c with (i | u) | (i | u) <;> exact h _ hc
-
-
-/-- `a_M^G` for `L` and `L.opp` (same `a_M`, same `a_G`). -/
-def oppAMGEquiv (L : d.ReducedLeviDatum) : L.aMG ≃ₗ[ℝ] L.opp.aMG :=
-  Submodule.quotEquivOfEq L.aG L.opp.aG (opp_aG L).symm
-
-@[simp] theorem oppAMGEquiv_mkQ (L : d.ReducedLeviDatum) (H : L.aM) :
-    oppAMGEquiv L (L.aG.mkQ H) = L.opp.aG.mkQ H := rfl
-
-/-- **`dim a_M^G` is the same for `L` and `L.opp`**, so the sign `(−1)^{dim a_M^G}` of `θ_f` is. -/
-theorem opp_finrank_aMG (L : d.ReducedLeviDatum) :
-    finrank ℝ L.opp.aMG = finrank ℝ L.aMG :=
-  (oppAMGEquiv L).finrank_eq.symm
-
-/-- `A_{G_x}(F)` is the same for `L` and `L.opp` (`opp_AMF`). -/
-theorem opp_AGx (L : d.ReducedLeviDatum) (x : ↥d.G) : L.opp.AGx x = L.AGx x := by
-  simp only [ReducedLeviDatum.AGx, opp_AMF]
-
-/-- **`A_M(F)^1` is the same for `L` and `L.opp`**: both are `A_M(F) ∩ latticeK` of the same bases
-(`AGxOne_eq_preimage`). -/
-theorem opp_AGxOne (L : d.ReducedLeviDatum) (x : ↥d.G) (a : ↥(d.centG x))
-    (ha : a ∈ L.AGx x) (ha' : a ∈ L.opp.AGx x) :
-    (⟨a, ha'⟩ : ↥(L.opp.AGx x)) ∈ L.opp.AGxOne x ↔ (⟨a, ha⟩ : ↥(L.AGx x)) ∈ L.AGxOne x := by
-  rw [← SetLike.mem_coe, ← SetLike.mem_coe, ReducedLeviDatum.AGxOne_eq_preimage,
-    ReducedLeviDatum.AGxOne_eq_preimage]
-  rfl
-
-/-- `IsDcMeasure` with `A_{G_x}(F)^1` written as `A_{G_x}(F) ∩ latticeK` (`AGxOne_eq_preimage`). -/
-theorem isDcMeasure_iff_preimage (L : d.ReducedLeviDatum) (x : ↥d.G) (μ : Measure ↥(d.centG x)) :
-    L.IsDcMeasure x μ ↔ μ.IsHaarMeasure ∧ ∃ (μA : Measure ↥(L.AGx x))
-      (m : Measure (CosetSpace (L.AGx x).subtype)), μA.IsHaarMeasure ∧
-        μA ((fun a : ↥(L.AGx x) => ((a : ↥(d.centG x)) : ↥d.G)) ⁻¹'
-          d.latticeK L.bWFin L.bVFin) = 1 ∧
-        IsWeilMeasure (L.AGx x).subtype μ μA m ∧ m Set.univ = 1 := by
-  rw [ReducedLeviDatum.IsDcMeasure, ReducedLeviDatum.AGxOne_eq_preimage]
-
-/-- **The normalization of `d_c t` is the same for `L` and `L.opp`.** -/
-theorem opp_isDcMeasure (L : d.ReducedLeviDatum) (x : ↥d.G) :
-    L.opp.IsDcMeasure x = L.IsDcMeasure x := by
-  funext μ
-  apply propext
-  rw [isDcMeasure_iff_preimage, isDcMeasure_iff_preimage, opp_AGx]
-  rfl
-
-/-- **`d_c t` is the same for `L` and `L.opp`.** -/
-theorem opp_dcMeasure (L : d.ReducedLeviDatum) (x : ↥d.G) :
-    L.opp.dcMeasure x = L.dcMeasure x := by
-  unfold ReducedLeviDatum.dcMeasure
-  rw [opp_isDcMeasure]
-
-
-omit [PAdicField F] in
-/-- `∏_{wt j = w} f(wt j) = f(w)^{#{wt = w}}`. -/
-theorem prod_ite_wt_eq {ι : Type*} [Fintype ι] (wt : ι → ℤ) (f : ℤ → F) (w : ℤ) :
-    (∏ j, if wt j = w then f (wt j) else 1) = f w ^ Fintype.card {j // wt j = w} := by
-  classical
-  rw [← Finset.prod_filter, Finset.prod_congr rfl fun j hj => by
-    rw [(Finset.mem_filter.1 hj).2], Finset.prod_const, Fintype.card_subtype]
-
-omit [PAdicField F] in
-/-- **On the split centre, the `GL`-coordinate of `H_M` changes sign under `wt ↦ −wt`**: an element
-acting by `t(w)` on the weight-`w` space has `t(−w) = t(w)⁻¹` (`mul_neg_eq_one_of_orth`), and
-opposite weight spaces have the same dimension (`card_wt_neg`). -/
-theorem log_norm_prod_neg_add {V ι : Type*} [AddCommGroup V] [Module F V] [Fintype ι]
-    [Invertible (2 : F)] {Q : QuadraticForm F V} (hQ : IsNondeg Q) {FL : IsotropicFlag Q}
-    {b : Basis ι F V} {wt : ι → ℤ} (hs : IsFlagSplitting FL b wt) {g : GSpin Q} {t : ℤ → F}
-    (ht : ∀ j, specP Q g (b j) = t (wt j) • b j) {w : ℤ} (h1 : 1 ≤ w) (h2 : w ≤ FL.len) :
-    Real.log ‖∏ j, if (-wt) j = w then t (wt j) else 1‖ +
-      Real.log ‖∏ j, if wt j = w then t (wt j) else 1‖ = 0 := by
-  obtain ⟨j, hj⟩ := hs.exists_wt_eq h1 h2
-  have hinv := mul_neg_eq_one_of_orth hQ hs.orth ht j
-  rw [hj] at hinv
-  have hneg : (∏ j, if (-wt) j = w then t (wt j) else 1) =
-      t (-w) ^ Fintype.card {j // wt j = w} := by
-    have := prod_ite_wt_eq (-wt) (fun v => t (-v)) w
-    simp only [Pi.neg_apply, neg_neg] at this
-    simp only [Pi.neg_apply]
-    rw [this]
-    congr 1
-    rw [← hs.card_wt_neg hQ w]
-    exact Fintype.card_congr (Equiv.subtypeEquivRight fun j => neg_eq_iff_eq_neg)
-  rw [hneg, prod_ite_wt_eq, eq_inv_of_mul_eq_one_right hinv, inv_pow, norm_inv, Real.log_inv,
-    neg_add_cancel]
-
-
-/-- **On `A_M(F)`, `H_M` for `L.opp` is `−H_M` for `L` modulo `a_G`**: the `GL`-coordinates change
-sign (`log_norm_prod_neg_add`), the `GSpin`-coordinates are the same and lie in `a_G`. -/
-theorem opp_HM_add_mem_aG (L : d.ReducedLeviDatum) (m : ↥L.M) (m' : ↥L.opp.M)
-    (hmm : (m' : ↥d.G) = m) (hm : (m : ↥d.G) ∈ L.AMF) :
-    (show L.aM from L.opp.HM m') + L.HM m ∈ L.aG := by
-  obtain ⟨⟨tW, -, htW⟩, ⟨tV, -, htV⟩⟩ := (L.mem_AMF_iff).1 hm
-  have hW' : ∀ j, specP d.QW (d.fst m') (L.opp.bW j) = tW (L.wtW j) • L.opp.bW j := by
-    rw [hmm]; exact htW
-  have hV' : ∀ j, specP d.QV (d.snd m') (L.opp.bV j) = tV (L.wtV j) • L.opp.bV j := by
-    rw [hmm]; exact htV
-  rw [L.mem_aG_iff]
-  rintro ((i | u) | (i | u)) hc
-  · have h1 := L.opp.HM_inl_inl_of_diag m' hW' i
-    have h2 := L.HM_inl_inl_of_diag m htW i
-    change L.opp.HM m' (Sum.inl (Sum.inl i)) + L.HM m (Sum.inl (Sum.inl i)) = 0
-    rw [h1, h2]
-    exact log_norm_prod_neg_add d.nondeg L.hsW htW (by omega) (by have := i.2; omega)
-  · exact absurd trivial hc
-  · have h1 := L.opp.HM_inr_inl_of_diag m' hV' i
-    have h2 := L.HM_inr_inl_of_diag m htV i
-    change L.opp.HM m' (Sum.inr (Sum.inl i)) + L.HM m (Sum.inr (Sum.inl i)) = 0
-    rw [h1, h2]
-    exact log_norm_prod_neg_add d.nondeg_QV L.hsV htV (by omega) (by have := i.2; omega)
-  · exact absurd trivial hc
-
-/-- **`latticeMG` under `L ↦ L.opp`**: the lattice `proj_M^G(H_M(A_M(F)))` of `L.opp` is the
-image of that of `L` under `−1`, transported by the identification of the two quotients
-`a_M / a_G` (`oppAMGEquiv`). -/
-theorem opp_latticeMG (L : d.ReducedLeviDatum) :
-    L.opp.latticeMG = L.latticeMG.map (-(oppAMGEquiv L).toLinearMap).toAddMonoidHom := by
-  have key : ∀ (m : ↥L.M) (m' : ↥L.opp.M), (m' : ↥d.G) = m → (m : ↥d.G) ∈ L.AMF →
-      L.opp.aG.mkQ (L.opp.HM m') = -(oppAMGEquiv L (L.aG.mkQ (L.HM m))) := by
-    intro m m' hmm hm
-    rw [oppAMGEquiv_mkQ, eq_neg_iff_add_eq_zero]
-    have h := opp_HM_add_mem_aG L m m' hmm hm
-    rw [← opp_aG] at h
-    exact (Submodule.Quotient.mk_eq_zero L.opp.aG).2 h
-  rw [ReducedLeviDatum.latticeMG, ReducedLeviDatum.latticeMG, AddMonoidHom.map_closure]
-  congr 1
-  ext v
-  constructor
-  · rintro ⟨⟨m', hm'⟩, rfl⟩
-    have hmM : (m' : ↥d.G) ∈ L.M := L.toFlagLeviDatum.opp_M ▸ m'.2
-    have hA : (m' : ↥d.G) ∈ L.AMF := opp_AMF L ▸ hm'
-    exact ⟨_, ⟨⟨⟨m', hmM⟩, hA⟩, rfl⟩, (key ⟨m', hmM⟩ m' rfl hA).symm⟩
-  · rintro ⟨_, ⟨⟨m, hm⟩, rfl⟩, rfl⟩
-    have hmM : (m : ↥d.G) ∈ L.opp.M := L.toFlagLeviDatum.opp_M.symm ▸ m.2
-    have hA : (m : ↥d.G) ∈ L.opp.AMF := (opp_AMF L).symm ▸ hm
-    exact ⟨⟨⟨m, hmM⟩, hA⟩, key m ⟨m, hmM⟩ rfl hm⟩
-
-
-/-- **What remains of the presentation change**: `θ_f` is the same for `(L, K)` and
-`(L.opp, K)` as soon as `v_M` is; the sign (`opp_finrank_aMG`), `D^G(x)` and `d_c t`
-(`opp_dcMeasure`) already agree. -/
-theorem opp_thetaFBP_of_vM (L : d.ReducedLeviDatum) (K : d.GoodK L.toFlagLeviDatum)
-    (hv : ∀ g, L.opp.vM (goodKOpp K) g = L.vM K g) (f : ↥d.G → ℂ) (x : ↥d.G) :
-    L.opp.thetaFBP (goodKOpp K) f x = L.thetaFBP K f x := by
-  simp only [ReducedLeviDatum.thetaFBP, weightedOrbitalIntegral, weightedIntegrand,
-    opp_finrank_aMG, opp_dcMeasure, hv]
-
-/-- **`waldspurger2010_lemme_5_3` asserts the presentation change** (uses the axiom; not a (V)
-check): its conjunct 1 with `y = 1`, `L' = L.opp`, `K' = K` (`IsMx.opp`, `isSpecial_goodKOpp`).
-The proof without the axiom is owed (`opp_thetaFBP_of_vM`: it remains to compare `v_M`). -/
-theorem lemme_5_3_opp {f : ↥d.G → ℂ} (hf : f ∈ testFunctions ↥d.G)
-    (hcusp : IsStronglyCuspidalInline d f) {L : d.ReducedLeviDatum}
-    {K : d.GoodK L.toFlagLeviDatum} {x : ↥d.G} (hx : L.IsMx x) (hK : K.IsSpecial) :
-    L.opp.thetaFBP (goodKOpp K) f x = L.thetaFBP K f x := by
-  have h := (waldspurger2010_lemme_5_3 d hf hcusp).1 x 1 L L.opp K (goodKOpp K) hx
-    (by simpa using IsMx.opp hx) hK (isSpecial_goodKOpp hK)
-  simpa using h
+/-- **Conjunct 1 of `waldspurger2010_lemme_5_3` for `(L, L.opp)`, without the axiom** (V): both
+presentations are admissible (`IsMx.opp`, `oppK_isSpecial`) and give the same `θ_f(x)`
+(`opp_thetaFBP`), for every `f`. -/
+theorem lemme_5_3_opp_check {L : d.ReducedLeviDatum} {K : d.GoodK L.toFlagLeviDatum} {x : ↥d.G}
+    (hx : L.IsMx x) (hK : K.IsSpecial) (f : ↥d.G → ℂ) :
+    L.opp.IsMx x ∧ (L.oppK K).IsSpecial ∧
+      L.opp.thetaFBP (L.oppK K) f (1 * x * 1⁻¹) = L.thetaFBP K f x := by
+  refine ⟨hx.opp, L.oppK_isSpecial hK, ?_⟩
+  rw [one_mul, inv_one, mul_one, ReducedLeviDatum.opp_thetaFBP]
 
 end Opp
 
@@ -721,17 +481,17 @@ theorem gl2_isBPThetaF_exists_half {c : Fˣ} (hc : (c : F) ≠ 1) :
 
 /-- **What `IsBPThetaF` asks at a proper Levi subgroup**: at `x = inr (gl2Torus c)`, `c ≠ 1`, it
 pins `θ x` to `θ_f` for both presentations `(gl2Levi, gl2GoodK)` and `(gl2Levi.opp, gl2GoodK)`
-(`opp_thetaFBP_of_vM`: these agree once `v_M` does), and it does not consult the datum with
+(which agree, `opp_thetaFBP`), and it does not consult the datum with
 `M = G`, which is not `M(x)` (`gl2TopLevi_not_isMx`). -/
 theorem gl2_isBPThetaF_at_torus {c : Fˣ} (hc : (c : F) ≠ 1) {f θ : ↥(𝔾).G → ℂ}
     (hθ : (𝔾).IsBPThetaF f θ) :
     θ ((𝔾).inr (gl2Torus c)) = (𝕃).thetaFBP gl2GoodK f ((𝔾).inr (gl2Torus c)) ∧
       θ ((𝔾).inr (gl2Torus c)) =
-        (𝕃).opp.thetaFBP (goodKOpp gl2GoodK) f ((𝔾).inr (gl2Torus c)) ∧
+        (𝕃).opp.thetaFBP ((𝕃).oppK gl2GoodK) f ((𝔾).inr (gl2Torus c)) ∧
       ¬ (gl2TopLevi (F := F)).IsMx ((𝔾).inr (gl2Torus c)) := by
   have h := (hθ _ (gl2_torus_mem_regularSet hc)).2
   exact ⟨h _ _ (gl2_isMx hc) gl2GoodK_isSpecial,
-    h _ _ (IsMx.opp (gl2_isMx hc)) (isSpecial_goodKOpp gl2GoodK_isSpecial), gl2TopLevi_not_isMx c⟩
+    h _ _ (gl2_isMx hc).opp ((𝕃).oppK_isSpecial gl2GoodK_isSpecial), gl2TopLevi_not_isMx c⟩
 
 end GL2
 

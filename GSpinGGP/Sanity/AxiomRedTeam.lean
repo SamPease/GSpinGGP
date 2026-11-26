@@ -115,15 +115,12 @@ the axiom it tests; the computations of germs at `toyD` use `exists_isSelfDual` 
   `not_isBPThetaF_of_ne`), and `IsSpecial` excludes non-special `K` on `gl2Data`
   (`not_isSpecial_gl2GoodK'`, `not_exists_specialLattice_R_eq_iwahori`); `f = 0`
   (`bp_thm_5_5_1_iv_zero`); C, a joint model with `bp_integrable_kernel_scusp`
-  (`toyD_joint_check`); `IsMx`, `K` special, `dim a_M^G`, `d_c t` and the lattice unchanged under
-  `L ↦ L.opp` (`IsMx.opp`, `isSpecial_goodKOpp`, `opp_finrank_aMG`, `opp_dcMeasure`,
-  `opp_latticeMG`), so `θ_f` is as soon as `v_M` is (`opp_thetaFBP_of_vM`); at a proper Levi
-  subgroup of `gl2Data` (nonabelian), the `∃` half holds (`gl2_isBPThetaF_exists_half`) and the
-  datum with `M = G` is not `M(x)` (`gl2TopLevi_not_isMx`). Off `toyD`, non-vacuity rests on the
-  `sorry`s `exists_isMx`, `exists_specialK`. Owed: `v_M` under `L ↦ L.opp` (determinant duality
-  on `M(F)`); `waldspurger2010_lemme_5_3` asserts the resulting `θ_f` equality
-  (`lemme_5_3_opp`), so this is a consistency check of the axiom. Not covered: the conclusions
-  off `toyD`, `v_M ≠ 1`.
+  (`toyD_joint_check`); on any datum, the instance `(L, L.opp)` of conjunct 1 of
+  `waldspurger2010_lemme_5_3` holds without the axiom (`lemme_5_3_opp_check`, from the library's
+  `opp_thetaFBP`); at a proper Levi subgroup of `gl2Data` (nonabelian), the `∃` half holds
+  (`gl2_isBPThetaF_exists_half`) and the datum with `M = G` is not `M(x)`
+  (`gl2TopLevi_not_isMx`). Off `toyD`, non-vacuity rests on the `sorry`s `exists_isMx`,
+  `exists_specialK`. Not covered: the conclusions off `toyD`, `v_M ≠ 1`.
 
 `WholeSystem.lean` also proves, at `toyD`, the conclusions of several `sorry` statements on the
 path of the main theorem and the multiplicity formula for the trivial representation, with both
