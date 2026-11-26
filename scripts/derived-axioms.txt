@@ -8,3 +8,6 @@ GSpinGGP.bp_sqrt_weylDisc_mul_locallyBounded
 GSpinGGP.waldspurger2010_thm_7_9
 GSpinGGP.exists_iwasawaPair_xi_sq_integrable
 GSpinGGP.weyl_integration_exists
+GSpinGGP.waldspurger2010_lemme_5_3
+GSpinGGP.waldspurger2010_cor_5_9
+GSpinGGP.bp_thm_5_5_1_iv

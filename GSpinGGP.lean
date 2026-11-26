@@ -202,6 +202,9 @@ import GSpinGGP.TraceFormula.Spectral
 import GSpinGGP.TraceFormula.GammaG
 import GSpinGGP.Literature.WeylIntegration
 import GSpinGGP.TraceFormula.WeylIntegration
+import GSpinGGP.TraceFormula.BPThetaF
+import GSpinGGP.Literature.BPThetaF
+import GSpinGGP.TraceFormula.BPGeomExpansion
 import GSpinGGP.TraceFormula.WeylIntegrationL1
 import GSpinGGP.TraceFormula.Geometric
 import GSpinGGP.TraceFormula.Lie

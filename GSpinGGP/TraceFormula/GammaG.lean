@@ -45,9 +45,10 @@ of the `G(F)`-conjugacy classes of maximal tori, BP equips `Γ(G)` with the meas
 `K^A_{f,f'}(g₁, g₂) = ∫_{G(F)} f(g₁⁻¹ g g₂) f'(g) dg` (`kernelA`) and
 `J^A(f, f') = ∫_{A_G(F)\G(F)} K^A_{f,f'}(x, x) dx` (`jA`).  `A_G` is central, so `A_G(F)\G(F)`
 is the quotient group `G(F)/A_G(F)` (`GmodAG`), with the measure `measGmodAG = dg / d_c a`
-(`d_c a` gives the maximal compact subgroup of `A_G(F)` mass `1`): BP leaves the measure on
-`A_G(F)` unstated, and we read it with the convention of Arthur, Publ. IHÉS 73 (1991), §1, p. 11,
-and Waldspurger, J. reine angew. Math. 465 (1995), §1.4.  It is the one Haar measure on `A_G(F)` for
+(`d_c a` gives the maximal compact subgroup of `A_G(F)` mass `1`): BP §1.6's general rule would
+give `A_G(F)` the exp-lifted measure; we use `d_c a`, the convention of Arthur, Publ. IHÉS 73
+(1991), §1, p. 11, and Waldspurger, J. reine angew. Math. 465 (1995), §1.4, p. 45.  It is the one
+Haar measure on `A_G(F)` for
 which BP Thm 5.5.1(iv) can hold: `J^A` scales as `1/da_G`, and the right side of (iv) has no `A_G`
 parameter (`θ_f` carries `ν(G_x)⁻¹`, i.e. `d_c t`).  Tested at the toy datum with BP's `θ_f`
 (`toyD_jA_geom`, `Sanity/GammaGAudit.lean`).
@@ -252,7 +253,8 @@ theorem kernelA_diag (f f' : ↥d.G → ℂ) (y : ↥d.G) :
 
 /-- **`J^A(f, f') = ∫_{A_G(F)\G(F)} K^A_{f,f'}(x, x) dx`** (BP §5.5, p. 116), integrating over the
 quotient group `G(F)/A_G(F)` (`= A_G(F)\G(F)`, `A_G` central) with `measGmodAG = dg / d_c a`
-(Arthur 1991, §1, p. 11; BP leaves the measure on `A_G(F)` unstated), at the representatives
+(Arthur 1991, §1, p. 11, rather than BP §1.6's exp-lifted measure on `A_G(F)`), at the
+representatives
 `Quotient.out` (`K^A(x a, x a) = K^A(x, x)` for `a ∈ A_G(F)`: `orbitalInner_mul_AG`).  It is the
 Lean integral: `0` when `x ↦ K^A(x, x)` is not integrable.  BP Thm 5.5.1(ii) gives integrability
 for strongly cuspidal `f` (`integrable_kernelA_diag_scusp`). -/

@@ -42,8 +42,8 @@ Contents:
 `θ_f` and `J` are both tied to one measure on the quotient group `G(F)/A_G(F)`, `measGmodAG`:
 the quotient of `Measure.haar` on `G(F)` by the Haar measure `d_c a` on `A_G(F)` giving its maximal
 compact subgroup measure `1`.  This is the convention of Arthur, Publ. IHÉS 73 (1991), §1, p. 11,
-and Waldspurger, J. reine angew. Math. 465 (1995), §1.4; Beuzart-Plessis §5.5 leaves it unstated.
-It is the one measure for which BP Thm 5.5.1(iv) can hold: `J^A` scales as `1/da_G`, and the right
+and Waldspurger, J. reine angew. Math. 465 (1995), §1.4, p. 45; Beuzart-Plessis §1.6's general
+rule would give `A_G(F)` the exp-lifted measure instead.  It is the one measure for which BP Thm 5.5.1(iv) can hold: `J^A` scales as `1/da_G`, and the right
 side of (iv) has no `A_G` parameter.  `θ_f` uses it through the
 orbital pairing, `J` through the Weil quotient measure.  The Haar measure on `H(F)/A_{G,H}(F)`
 cancels in `J` (`IsWeilMeasure.smul_right`).  So `J(f) = m_geom(θ_f)` does not depend on the
@@ -1968,8 +1968,9 @@ theorem isMulRightInvariant_haar_HmodAGH :
 
 `G(F)/A_G(F)` carries the quotient of the Haar measure `dg` on `G(F)` by the Haar measure `d_c a`
 on `A_G(F)` that gives the maximal compact subgroup of `A_G(F)` measure `1` (Arthur, Publ. IHÉS 73
-(1991), §1, p. 11; Beuzart-Plessis, Astérisque 418, §5.5 leaves the measure on `A_G(F)\G(F)`
-unstated).  It is `dcScaleAG • Measure.haar` (`measGmodAG`), where the constant `dcScaleAG` is
+(1991), §1, p. 11; Waldspurger 1995, §1.4, p. 45; Beuzart-Plessis, Astérisque 418, §1.6's general
+rule would give `A_G(F)` the exp-lifted measure instead, but `d_c a` is the only Haar measure on
+`A_G(F)` for which BP Thm 5.5.1(iv) can hold).  It is `dcScaleAG • Measure.haar` (`measGmodAG`), where the constant `dcScaleAG` is
 pinned by the quotient formula (`IsDcQuotientAG`); its existence and uniqueness are proved in
 `TraceFormula/DcQuotient.lean` (`isDcQuotientAG_measGmodAG`, `dcScaleAG_eq`); existence rests on the
 literature axiom `weil_quotient_radon` (through `weil_quotient`).  Both `θ_f` (through
@@ -2000,7 +2001,7 @@ def dcScaleAG : ENNReal :=
 
 /-- **The measure on `G(F)/A_G(F)`**: `dg / d_c a`, the quotient of the Haar measure of `G(F)` by
 the Haar measure on `A_G(F)` giving its maximal compact subgroup measure `1` (Arthur 1991, §1,
-p. 11; Beuzart-Plessis §5.5 leaves it unstated). -/
+p. 11; BP §1.6's general rule would give `A_G(F)` the exp-lifted measure instead). -/
 def measGmodAG : Measure d.GmodAG := d.dcScaleAG • Measure.haar
 
 theorem dcScaleAG_spec_of_exists
@@ -2304,7 +2305,7 @@ def orbitalInner (f f' : ↥d.G → ℂ) (y : ↥d.G) : ℂ :=
 /-- The orbital pairing `⟨f, f'⟩ = ∫_{G(F)/A_G(F)} ∫_{G(F)} f(x⁻¹ g x) f'(g) dg dx` (BP §5.5,
 number unverified; Thesis §4.8), for `Measure.haar` on `G(F)` and `measGmodAG = dg / d_c a` on the
 quotient group `G(F)/A_G(F)` (`d_c a` gives the maximal compact subgroup of `A_G(F)` measure `1`:
-Arthur 1991, §1, p. 11; BP leaves the measure on `A_G(F)\G(F)` unstated), integrating over coset
+Arthur 1991, §1, p. 11, rather than BP §1.6's exp-lifted measure on `A_G(F)`), integrating over coset
 representatives (the inner integral does not depend on the representative:
 `orbitalInner_mul_AG`). -/
 def orbitalPairing (f f' : ↥d.G → ℂ) : ℂ :=
