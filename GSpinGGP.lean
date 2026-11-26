@@ -118,6 +118,7 @@ import GSpinGGP.GGP.CliffordDescent
 import GSpinGGP.Literature.Localization
 import GSpinGGP.Literature.Waldspurger
 import GSpinGGP.TraceFormula.W1Lie
+import GSpinGGP.TraceFormula.SpecialLatticeBridge
 import GSpinGGP.Literature.WaldspurgerLie
 import GSpinGGP.TraceFormula.W1Untruncated
 import GSpinGGP.TraceFormula.LieHypW
