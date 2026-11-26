@@ -121,9 +121,9 @@ of item 8) was added after the axiom was first stated with the first two conjunc
 Lean's Bochner integrals and `tsum` are `0` on divergent input, so the identity alone cannot force
 a torus term to be finite: the identities for all `1_U` do not exclude a torus term, as a measure
 on `G(F)`, with an infinite atom. Integrability or summability conjuncts in the Bochner sense
-would not exclude this either, since the inner orbital integral can itself be a junk `0`; the `lintegral`
-conjunct does. It adds no hypothesis beyond the print: it is BP's formula for `|f|`, read in
-`[0, ∞]` as BP does for (1.7.1). -/
+would not exclude this either, since the inner orbital integral can itself be a junk `0`; the
+`lintegral` conjunct does. It adds no hypothesis beyond the print: it is BP's formula for `|f|`,
+read in `[0, ∞]` as BP does for (1.7.1). -/
 axiom weyl_integration_exists (d : GGPData F) :
     ∃ μ : ∀ T : Subgroup ↥d.G, Measure ↥T, (∀ T : d.MaxTorus, (μ T.1).IsHaarMeasure) ∧
       (∀ f ∈ testFunctions ↥d.G,
