@@ -30,7 +30,9 @@ element of `F`, so that no uniformizer is chosen: `val_F(x) ≥ c` is `‖x‖ �
 The class of special lattices does not change when the form is scaled (the hyperbolic system and
 `|ϖ^c|` rescale together).  So the convention `q(·,·) = polar Q` used here and the convention
 `q(·,·) = bform Q` of `LuoDatum.IsSpecialLattice` (`TraceFormula/W1Lie.lean`) describe the same
-lattices; inside one definition the convention is used consistently.
+lattices; inside one definition the convention is used consistently.  One direction is proved in
+`TraceFormula/SpecialLatticeBridge.lean` (`SpecialLattice.isSpecialLattice`: `S.R` satisfies
+`IsSpecialLattice Q ϖ` for every uniformizer `ϖ`).
 
 ## The subgroup and the predicate
 
@@ -99,9 +101,11 @@ harmless.
 * `GGPData.exists_specialK` (`sorry`): every reduced Levi datum has a special `GoodK`.
 
 The checks at `gl2Data` are in `Sanity/GL2SpecialK.lean`: `gl2GoodK` is special; a `GoodK` of
-finite index in it is not; and the lattice `⟨z₋₁, z₀, ϖ · ½ z₁⟩` (for `ϖ` a uniformizer, that of an
-edge midpoint of the tree) is not a special lattice.  No check yet exercises the condition
-`attained`.
+finite index in it is not; the lattice `⟨z₋₁, z₀, ϖ · ½ z₁⟩` (for `ϖ` a uniformizer, that of an
+edge midpoint of the tree) is not a special lattice; and the lattice `⟨z₋₁, ϖ z₀, ϖ · ½ z₁⟩`
+(stabilizer the normalizer of an Iwahori subgroup: standard for `PGL₂`, not formalized here)
+satisfies every condition except `attained` and is excluded by `attained`
+(`not_exists_specialLattice_R_eq_iwahori`).
 -/
 
 noncomputable section
@@ -258,6 +262,25 @@ theorem norm_quadForm_le {x : V} (hx : x ∈ S.R) : ‖Q x‖ ≤ S.r := by
   refine IsUltrametricDist.norm_sum_le_of_forall_le_of_nonneg S.r_nonneg fun i _ => ?_
   rw [norm_mul]
   exact (mul_le_of_le_one_left (norm_nonneg _) (ha i)).trans (hb i)
+
+omit [PAdicField F] in
+theorem polar_v'_v (i j : Fin S.n) :
+    QuadraticMap.polar Q (S.v' i) (S.v j) = if j = i then 1 else 0 := by
+  rw [QuadraticMap.polar_comm, S.polar_v_v']
+
+omit [PAdicField F] in
+/-- **`V = Z ⊕ V_an`**: `x − Σ polar(x, v'_k) v_k − Σ polar(x, v_k) v'_k ∈ V_an`. -/
+theorem sub_sum_mem_Van (x : V) :
+    x - (∑ k, QuadraticMap.polar Q x (S.v' k) • S.v k +
+      ∑ k, QuadraticMap.polar Q x (S.v k) • S.v' k) ∈ S.Van := by
+  rw [mem_hypOrth]
+  intro j
+  simp only [← QuadraticMap.polarBilin_apply_apply, map_sub, map_add, map_sum, map_smul,
+    smul_eq_mul]
+  simp only [QuadraticMap.polarBilin_apply_apply, S.polar_v_v, S.polar_v_v', S.polar_v'_v,
+    S.polar_v'_v', mul_zero, Finset.sum_const_zero, mul_ite, mul_one, Finset.sum_ite_eq,
+    Finset.sum_ite_eq', Finset.mem_univ, ite_true, zero_add, add_zero]
+  constructor <;> rw [QuadraticMap.polar_comm] <;> ring
 
 end SpecialLattice
 
