@@ -10,7 +10,8 @@ import TauCeti.Analysis.Normed.Algebra.NilpotentExponential
 /-!
 # Local fields and unbundled linear groups
 
-Generic `p`-adic foundations for the formalization of the dissertation
+Foundations over a local field of characteristic zero (`LocalField`; `p`-adic where a section
+says so) for the formalization of the dissertation
 *The Local Gan–Gross–Prasad Conjecture for General Spin Groups* (henceforth "Thesis").
 
 Everything here is **unbundled**: a "reductive group" is a plain `G : Subgroup Aˣ` and its
@@ -38,6 +39,15 @@ instances: their conclusions do not mention `F`, so instance search could not fi
 They are the theorems `isTopologicalRing_of_moduleTopology F A`, `t2Space_of_moduleTopology F A`,
 `locallyCompactSpace_of_moduleTopology F A` (plus `units_t2Space`, `units_locallyCompactSpace`,
 `subgroup_t2Space`, `subgroup_locallyCompactSpace_of_isClosed`); use them via `haveI`.
+
+**Binder rule for the field.** Statements that hold for every local field take `[LocalField F]`.
+Statements that need ultrametric facts take `[LocalField F] [IsUltrametricDist F]`, not
+`[PAdicField F]`: with the bundled class, a declaration that uses `LocalField` definitions sees its
+own instance only through the proof `PAdicField.toLocalField`, and elaboration (which compares
+proofs by proof irrelevance before unifying their arguments) then leaves that instance unassigned
+until the end, which made some unifications several times slower. Existing `[PAdicField F]`
+declarations, including the literature axioms, are left as they are; a file is migrated only
+with a heartbeat measurement, since migration is not mechanically faster.
 -/
 
 open MeasureTheory Topology Filter
@@ -54,10 +64,13 @@ namespace GSpinGGP
 
 /-! ## 1. The field -/
 
-/-- A *local field of characteristic zero* (Thesis §2.1): a `p`-adic field (a finite extension of
-some `ℚ_p`), `ℝ` or `ℂ`. We use the analytic characterization: a nontrivially normed field that is
-complete, locally compact and of characteristic zero. Fields of positive characteristic are
-excluded, as in the Thesis. The non-archimedean ones are the `PAdicField`s. -/
+/-- A *local field of characteristic zero*: a nontrivially normed field that is complete,
+locally compact and of characteristic zero. Thesis §2.1 takes `F` `p`-adic or `ℝ`; we also allow
+`ℂ`. By the classical classification (not proved here, and used only informally), these fields
+are exactly the finite extensions of some `ℚ_p`, `ℝ` and `ℂ`; the non-archimedean ones are the
+`PAdicField`s. Fields of positive characteristic are excluded, as in the Thesis.
+(`CompleteSpace` follows from local compactness, a locally compact normed field being proper,
+`ProperSpace.of_locallyCompactSpace`; it is kept as a field so that it is a direct instance.) -/
 class LocalField (F : Type*) [NontriviallyNormedField F] : Prop
     extends CompleteSpace F, LocallyCompactSpace F, CharZero F
 
@@ -65,9 +78,11 @@ class LocalField (F : Type*) [NontriviallyNormedField F] : Prop
 It is one named instance taking the `LocalField` instance as its argument, so that the same term
 arises over a `LocalField` and over a `PAdicField` (where the argument is
 `PAdicField.toLocalField`), instead of Mathlib's `invertibleTwo` applied to a `CharZero F` proof
-that differs between the two and is abstracted into auxiliary lemmas inside definitions. -/
-@[instance_reducible]
-instance (priority := high) LocalField.invertibleTwo (F : Type*) [NontriviallyNormedField F]
+that differs between the two and is abstracted into auxiliary lemmas inside definitions. It has
+default priority: declared after Mathlib's `invertibleTwo`, it is still preferred for `F`, while a
+raised priority would put it before every other instance on all `Invertible (2 : X)` goals, where
+it fails slowly when `X` is not a local field. -/
+instance LocalField.invertibleTwo (F : Type*) [NontriviallyNormedField F]
     [LocalField F] : Invertible (2 : F) :=
   _root_.invertibleTwo
 
@@ -77,17 +92,18 @@ instance : LocalField ℝ where
 /-- `ℂ` is a local field. -/
 instance : LocalField ℂ where
 
-/-- A *`p`-adic field*: a finite extension of `ℚ_p` (Thesis §2.1). We use the analytic
-characterization: a nontrivially normed field that is complete, locally compact, ultrametric and of
-characteristic zero, i.e. an ultrametric `LocalField`. (Any such field is a finite extension of
-some `ℚ_p`.) -/
+/-- A *`p`-adic field* (Thesis §2.1): an ultrametric `LocalField`, i.e. a nontrivially normed
+field that is complete, locally compact, ultrametric and of characteristic zero. (Classically,
+not proved here: these are the finite extensions of some `ℚ_p`.) New code uses the binders
+`[LocalField F] [IsUltrametricDist F]` instead; see the binder rule in the module docstring. -/
 class PAdicField (F : Type*) [NontriviallyNormedField F] : Prop
     extends LocalField F, IsUltrametricDist F
 
 /-- An ultrametric local field is a `p`-adic field, so that `[PAdicField F]` and
-`[LocalField F] [IsUltrametricDist F]` are interchangeable binders. New `p`-adic code uses the
-latter: there the `LocalField` instance is a variable of its own, which elaboration assigns
-directly, rather than the proof `PAdicField.toLocalField F`. -/
+`[LocalField F] [IsUltrametricDist F]` are interchangeable binders. This is a back-edge instance
+(it closes a cycle with `PAdicField.toLocalField`), hence its low priority. New `p`-adic code uses
+the unbundled binders: there the `LocalField` instance is a variable of its own, which elaboration
+assigns directly, rather than the proof `PAdicField.toLocalField`. -/
 instance (priority := 50) PAdicField.ofUltrametric (F : Type*) [NontriviallyNormedField F]
     [LocalField F] [IsUltrametricDist F] : PAdicField F where
 
