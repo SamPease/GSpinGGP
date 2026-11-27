@@ -199,7 +199,7 @@ theorem exists_eigen_hypPair {Q : QuadraticForm K V} (x : GSpin Q)
 
 section Gamma
 
-variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
+variable {F : Type} [NontriviallyNormedField F] [LocalField F]
 
 /-- **For `x ∈ Γ(G,H)`, a plane `W''_x` is anisotropic**: otherwise, with a hyperbolic pair `f, f'`
 of `W''_x`, `P(x)` is diagonal on `f, f'` (`exists_eigen_hypPair`), so the lifts `h(s)` of the

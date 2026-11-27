@@ -403,7 +403,7 @@ end Fixed
 
 section Centralizer
 
-variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
+variable {F : Type*} [NontriviallyNormedField F] [LocalField F]
 variable {V V' : Type*} [AddCommGroup V] [Module F V] [FiniteDimensional F V]
   [AddCommGroup V'] [Module F V'] [FiniteDimensional F V']
   {Q : QuadraticForm F V} {Q' : QuadraticForm F V'}
@@ -1155,7 +1155,7 @@ namespace GGPData
 
 section CentralizerG
 
-variable {F : Type*} [NontriviallyNormedField F] [PAdicField F] (d : GGPData F)
+variable {F : Type*} [NontriviallyNormedField F] [LocalField F] (d : GGPData F)
 variable {x : GSpin d.QW} (hx : IsNondeg (d.QW.comp (fixedSub x).subtype))
 
 /-- `W'_x` is the range of `W'_x ↪ W`. -/

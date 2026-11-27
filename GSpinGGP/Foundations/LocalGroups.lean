@@ -19,7 +19,7 @@ carrying the module topology. Other files apply these notions directly to Mathli
 (e.g. `GSpin Q ⊆ (CliffordAlgebra Q)ˣ`).
 
 Contents.
-* `PAdicField`, `absF`, `NontrivialAddChar` (Thesis §2.1, §2.4).
+* `LocalField`, `PAdicField`, `absF`, `NontrivialAddChar` (Thesis §2.1, §2.4).
 * Topology plumbing for the ambient algebra (as *theorems*, see the note below).
 * `conjAd`, `IsSS`, `lieCentralizer`, `grpCentralizer`, `IsRegularSS`, `regularSet`,
   `regularSetLie`, `weylDisc`, `weylDiscLie` (Thesis §2.1).
@@ -54,11 +54,29 @@ namespace GSpinGGP
 
 /-! ## 1. The field -/
 
+/-- A *local field of characteristic zero* (Thesis §2.1): a `p`-adic field (a finite extension of
+some `ℚ_p`), `ℝ` or `ℂ`. We use the analytic characterization: a nontrivially normed field that is
+complete, locally compact and of characteristic zero. Fields of positive characteristic are
+excluded, as in the Thesis. The non-archimedean ones are the `PAdicField`s. -/
+class LocalField (F : Type*) [NontriviallyNormedField F] : Prop
+    extends CompleteSpace F, LocallyCompactSpace F, CharZero F
+
+/-- `ℝ` is a local field. -/
+instance : LocalField ℝ where
+
+/-- `ℂ` is a local field. -/
+instance : LocalField ℂ where
+
 /-- A *`p`-adic field*: a finite extension of `ℚ_p` (Thesis §2.1). We use the analytic
 characterization: a nontrivially normed field that is complete, locally compact, ultrametric and of
-characteristic zero. (Any such field is a finite extension of some `ℚ_p`.) -/
+characteristic zero, i.e. an ultrametric `LocalField`. (Any such field is a finite extension of
+some `ℚ_p`.) -/
 class PAdicField (F : Type*) [NontriviallyNormedField F] : Prop
     extends CompleteSpace F, LocallyCompactSpace F, IsUltrametricDist F, CharZero F
+
+/-- A `p`-adic field is a local field. -/
+instance (priority := 100) PAdicField.toLocalField (F : Type*) [NontriviallyNormedField F]
+    [PAdicField F] : LocalField F where
 
 /-- `ℚ_p` is a `p`-adic field. -/
 instance (p : ℕ) [Fact p.Prime] : PAdicField ℚ_[p] where
@@ -207,7 +225,7 @@ end NontrivialAddChar
 
 section Topology
 
-variable (F) [PAdicField F]
+variable (F) [LocalField F]
 variable (A : Type*) [Ring A] [Algebra F A] [Module.Finite F A] [TopologicalSpace A]
   [IsModuleTopology F A]
 
@@ -285,6 +303,16 @@ theorem subgroup_sigmaCompactSpace_of_isClosed (G : Subgroup Aˣ) (hG : IsClosed
   have := subgroup_secondCountableTopology F A G
   infer_instance
 
+end Topology
+
+section TotallyDisconnected
+
+variable (F) [PAdicField F]
+variable (A : Type*) [Ring A] [Algebra F A] [Module.Finite F A] [TopologicalSpace A]
+  [IsModuleTopology F A]
+
+include F
+
 /-- The ambient algebra is totally disconnected (`F` is ultrametric, `A ≃ F^n`). -/
 theorem totallyDisconnectedSpace_of_moduleTopology : TotallyDisconnectedSpace A :=
   (toPiCLE F A).toHomeomorph.symm.totallyDisconnectedSpace
@@ -306,11 +334,11 @@ theorem totallyDisconnectedSpace_subgroup (G : Subgroup Aˣ) : TotallyDisconnect
   haveI := units_totallyDisconnectedSpace F A
   infer_instance
 
-end Topology
+end TotallyDisconnected
 
 section SubmoduleTopology
 
-variable [PAdicField F] {A : Type*} [Ring A] [Algebra F A] [Module.Finite F A]
+variable [LocalField F] {A : Type*} [Ring A] [Algebra F A] [Module.Finite F A]
   [TopologicalSpace A] [IsModuleTopology F A]
 
 /-- A subspace of the ambient algebra is a topological additive group. -/
@@ -329,6 +357,13 @@ theorem submodule_isModuleTopology (p : Submodule F A) : IsModuleTopology F ↥p
   haveI : T2Space ↥p := (IsEmbedding.mk hind Subtype.val_injective).t2Space
   exact isModuleTopologyOfFiniteDimensional (𝕜 := F) (E := ↥p)
 
+end SubmoduleTopology
+
+section SubmoduleTopologyPAdic
+
+variable [PAdicField F] {A : Type*} [Ring A] [Algebra F A] [Module.Finite F A]
+  [TopologicalSpace A] [IsModuleTopology F A]
+
 /-- The topological properties of a subspace `p ≅ F^n` of the ambient algebra used for Haar
 measures. -/
 theorem submodule_topology (p : Submodule F A) :
@@ -346,7 +381,7 @@ theorem submodule_topology (p : Submodule F A) :
     e.toHomeomorph.isEmbedding.secondCountableTopology,
     e.toHomeomorph.isEmbedding.pseudoMetrizableSpace⟩
 
-end SubmoduleTopology
+end SubmoduleTopologyPAdic
 
 /-- Elements of a group of points coerce directly to the ambient algebra, so that e.g.
 `lieCentralizer 𝔤 x` typechecks for `x : ↥G`. -/
@@ -613,7 +648,7 @@ theorem isRegularSS_smul_iff {𝔤 : LieSubalgebra F A} {c : F} (hc : c ≠ 0) (
   unfold IsRegularSS IsSS
   rw [hml, Module.End.IsSemisimple_smul_iff hc, hcent]
 
-variable [PAdicField F] [Module.Finite F A]
+variable [LocalField F] [Module.Finite F A]
 
 /-- The Weyl discriminant `D^G(x) = |det(1 - Ad x)|_{𝔤/𝔤_x}|_F` (Thesis §2.1), computed as the
 absolute value of the trailing coefficient of the characteristic polynomial of `1 - Ad x` on `𝔤`.
