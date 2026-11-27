@@ -47,12 +47,14 @@ value `0`.
      statements `prop_11_5_1_ii_ell`, `exists_scusp_ell` are not vacuous there);
    * `toy_distribJ`: `J(f) = c f(1)`, with `weilMeasureHG` of mass `c = dcScaleAG`, the mass of the
      point `G/A_G` for `dg / d_c a` (`toy_weilMeasureHG_real_univ`, from an explicit Weil measure);
-   * `toy_thetaF`: `θ_f = c · f` (`c = haar_G(A_G(𝒪))`: `toyD_dcScaleAG`,
-     `Sanity/DcQuotientAudit.lean`);
+   * `toy_thetaF` (`Sanity/ToyThetaF.lean`): `θ_f = c · f`, from Beuzart-Plessis' formula
+     (`c = haar_G(A_G(𝒪))`: `toyD_dcScaleAG`);
    * `toyD_mGeom`: `m_geom(θ) = θ(1)` for locally constant `θ` constant on `A_{G,H}`: one torus
      class, `|W(T)| = 1`, `D^G = Δ = 1`, probability measure = point mass, germ = value;
-   * `toy_geomAt`: the geometric expansion `J(f) = m_geom(θ_f)` (Thesis Thm 12.2.1) holds;
-   * `toy_multAt`, `toy_defect_zero`: the multiplicity formula and `defect = 0`, but only via the
+   * `toy_geomAt` (`Sanity/ToyThetaF.lean`): the geometric expansion `J(f) = m_geom(θ_f)`
+     (Thesis Thm 12.2.1) holds;
+   * `toy_multAt`, `toy_defect_zero` (`Sanity/ToyThetaF.lean`): the multiplicity formula and
+     `defect = 0`, but only via the
      spine (`multAt_of_hyp_geom`; (HYP) is vacuous since `dim G = 2` is minimal), hence through the
      spine `sorry`s `prop_11_5_1_ii_ell`, `exists_scusp_ell`.
    Generic by-products: `jHat_zeroOrbit_eq_one` (`ĵ(0,·) = 1` *pointwise* once a self-dual measure
@@ -1052,8 +1054,9 @@ end Packet
 
 For the toy datum (`m = 0`, `r = 0`) `G = A_G ≅ F^× × F^×`, `G/A_G = 1`, `H = A_{G,H}` and
 `Γ(G,H) = {GSpin(W)} = {F^×}`.  We compute both sides of the geometric expansion
-(Thesis Thm 12.2.1) directly: `J(f) = c f(1)` (`toyD_distribJ`), `θ_f = c f` (`toyD_thetaF`) and
-`m_geom(θ_f) = c f(1)` (`toyD_mGeom`), so `GeomAt` holds (`toy_geomAt`); here `c = dcScaleAG` is
+(Thesis Thm 12.2.1) directly: `J(f) = c f(1)` (`toyD_distribJ`), `θ_f = c f` (`toyD_thetaF`,
+`Sanity/ToyThetaF.lean`) and `m_geom(θ_f) = c f(1)` (`toyD_mGeom`), so `GeomAt` holds
+(`toy_geomAt`, `Sanity/ToyThetaF.lean`); here `c = dcScaleAG` is
 the mass of the point `G/A_G` for `measGmodAG = dg / d_c a`.  This checks that the
 normalizations of `J` (`weilMeasureHG`), `θ_f` (`orbitalPairing`, `measGmodAG` on `G/A_G`) and `m_geom`
 (`probHaar`, `weylCard`, `weylDisc`, `deltaGGP`, the germ at the zero orbit, `ĵ(0,·) = 1`) agree
@@ -1483,29 +1486,6 @@ theorem toyD_isThetaF {f : ↥(𝕋).G → ℂ} (hf : Continuous f) :
   funext g
   rw [toyD_G_comm _ g, inv_mul_cancel_right, Pi.smul_apply, smul_eq_mul, mul_assoc]
 
-/-- `θ_f = c f` on all of `G` for the toy datum, for every continuous `f`, `c = dcScaleAG`
-(uniqueness of `θ_f` on `G_reg = G`, by separation with test functions; no Harish-Chandra axiom is
-used). -/
-theorem toyD_thetaF_eq {f : ↥(𝕋).G → ℂ} (hf : Continuous f) :
-    thetaF (𝕋) f = ((𝕋).dcScaleAG.toReal : ℂ) • f := by
-  have h1 := isThetaF_thetaF_of_exists (𝕋) f ⟨_, toyD_isThetaF hf⟩
-  have h2 := toyD_isThetaF hf
-  haveI := totallyDisconnectedSpace_subgroup F (𝕋).ambient (𝕋).G
-  have hae : thetaF (𝕋) f =ᵐ[Measure.haar] ((𝕋).dcScaleAG.toReal : ℂ) • f :=
-    ae_eq_of_integral_testFunctions h1.1 h2.1 fun f' hf' => by rw [h1.2.2 f' hf', h2.2.2 f' hf']
-  have hc : Continuous (thetaF (𝕋) f) := by
-    refine continuousOn_univ.mp ?_
-    rw [← toy_regularSet_eq_univ]
-    exact h1.2.1
-  exact (hc.ae_eq_iff_eq Measure.haar (hf.const_smul _)).mp hae
-
-/-- **`θ_f = c · f` with `c` the mass of the point `G/A_G`** for `measGmodAG = dg / d_c a`, for
-`f ∈ 𝒞_scusp`; `c = haar_G(A_G(𝒪))` (`toyD_dcScaleAG`, `Sanity/DcQuotientAudit.lean`). -/
-theorem toyD_thetaF {f : ↥(𝕋).G → ℂ} (hf : f ∈ ScuspTestFn (𝕋) χ) :
-    thetaF (𝕋) f = (((𝕋).measGmodAG.real Set.univ : ℝ) : ℂ) • f := by
-  rw [toy_measGmodAG_real_univ]
-  exact toyD_thetaF_eq hf.1.continuous
-
 
 /-! ### The geometric side for the toy datum -/
 
@@ -1732,27 +1712,6 @@ theorem toyD_apply_diag {f : ↥(𝕋).G → ℂ} (hf : IsChiEquivariant (𝕋) 
   obtain ⟨c, hc⟩ := toy_gspinW_mem_range (K := F) t
   exact toy_apply_of_mem_AGH χ hf ⟨c, by rw [← hc]; rfl⟩
 
-/-- **The geometric expansion holds for the toy datum** (Thesis Thm 12.2.1 at `m = r = 0`):
-`J(f) = c f(1) = m_geom(θ_f)` for every `f ∈ 𝒞_scusp`, every `χ`, `c = dcScaleAG`.
-This checks that `J`, `θ_f` and `m_geom` are normalized consistently *at the zero orbit*:
-`dx` on the point `H\G/A_G` and `dg / d_c a` on `G/A_G` both have mass `c`, the probability measure
-on `T/A_{G,H}` is the point mass, and `ĵ(0,·) = 1`.  It does not test nonzero orbits.
-Uses the literature axiom `exists_isSelfDual` (via `exists_isSelfDual_toyLie`). -/
-theorem toyD_geomAt (ψ : NontrivialAddChar F) : GeomAt ψ (𝕋) χ := by
-  intro f hf
-  rw [toyD_distribJ χ ψ hf.2.1, toyD_thetaF_eq hf.1.continuous]
-  have h := toyD_mGeom ψ (θ := ((𝕋).dcScaleAG.toReal : ℂ) • f)
-    (hf.1.comp fun z => ((𝕋).dcScaleAG.toReal : ℂ) * z)
-    (fun t => by simp only [Pi.smul_apply, toyD_apply_diag χ hf.2.1])
-  rw [h, Pi.smul_apply, smul_eq_mul]
-
-
-/-- **The geometric expansion for the toy datum** (`GeomAt` for `toyData` itself; see
-`toyD_geomAt`). -/
-theorem toy_geomAt (ψ : NontrivialAddChar F) (χ' : CentralCharOn (toyData (K := F))) :
-    GeomAt ψ toyData χ' :=
-  toyD_geomAt χ' ψ
-
 /-- `dim G ≥ 2` for every GGP datum (`dim GSpin(U) ≥ 1`). -/
 theorem two_le_dimG (d : GGPData F) : 2 ≤ d.dimG := by
   unfold GGPData.dimG GGPData.dimGSpin
@@ -1765,18 +1724,6 @@ theorem toyD_dimG : (𝕋).dimG = 2 := by
 theorem toyD_hyp (ψ : NontrivialAddChar F) : HYP ψ (𝕋) := fun d' hd' =>
   absurd hd' (not_lt.mpr (by rw [toyD_dimG]; exact two_le_dimG d'))
 
-/-- **The multiplicity formula for the toy datum, from the spine** (`multAt_of_hyp_geom`, with
-`toy_hyp` and `toy_geomAt`).  Not a direct computation: it goes through the spine `sorry`s
-`prop_11_5_1_ii_ell` and `exists_scusp_ell` (and, among others, the axiom
-`emoryTakeda_mult_le_one`), so
-it checks only that the spine closes at the bottom of the induction, where (HYP) is empty. -/
-theorem toyD_multAt (ψ : NontrivialAddChar F) : MultAt ψ (𝕋) :=
-  multAt_of_hyp_geom ψ (𝕋) (toyD_hyp ψ) (fun χ' => toyD_geomAt χ' ψ)
-
-/-- `toyD_multAt` for `toyData` itself. -/
-theorem toy_multAt (ψ : NontrivialAddChar F) : MultAt ψ (toyData (K := F)) :=
-  toyD_multAt ψ
-
 /-- A representation with central character `η` on `A_G` is trivial on `A_{G,H}` (`η` is). -/
 theorem isTrivialOn_AGH_of_hasCentralChar {d : GGPData F} {η : CentralCharOn d}
     {π : UnitaryRep ↥d.G} (h : HasCentralChar π d.AG (fun a => ((η.toHom a : Circle) : ℂ))) :
@@ -1785,18 +1732,6 @@ theorem isTrivialOn_AGH_of_hasCentralChar {d : GGPData F} {η : CentralCharOn d}
   have h2 : η.toHom ⟨s, d.AGH_le_AG hs⟩ = 1 := η.trivial_AGH s hs
   calc π.ρ s = ((η.toHom ⟨s, d.AGH_le_AG hs⟩ : Circle) : ℂ) • 1 := h ⟨s, d.AGH_le_AG hs⟩
     _ = 1 := by simp only [h2, Circle.coe_one, one_smul]
-
-/-- **The defect vanishes on all virtual tempered representations of the toy datum**
-(`defect = m − m_geom`, Thesis §7.4), from `toy_multAt` (so with the same dependencies). -/
-theorem toy_defect_zero (ψ : NontrivialAddChar F) (η : CentralCharOn (toyData (K := F)))
-    (P : VirtualTemp toyData η) : defect ψ toyData P = 0 := by
-  induction P using Finsupp.induction_linear with
-  | zero => exact map_zero _
-  | add P Q hP hQ => rw [map_add, hP, hQ, add_zero]
-  | single c a =>
-    rw [defect_single, ((toy_multAt ψ) c.rep c.isTempCC_rep.1
-      (isTrivialOn_AGH_of_hasCentralChar c.isTempCC_rep.2)).2, sub_self,
-      mul_zero]
 
 /-! #### The four statements, stated for `toyData` itself (defeq to the `toyD` versions) -/
 
@@ -1808,14 +1743,6 @@ theorem toy_distribJ (ψ : NontrivialAddChar F) (χ' : CentralCharOn (toyData (K
     {f : ↥(toyData (K := F)).G → ℂ} (hf : IsChiEquivariant toyData χ' f) :
     distribJ toyData ψ f = ((toyD (F := F)).dcScaleAG.toReal : ℂ) * f 1 :=
   toyD_distribJ χ' ψ hf
-
-/-- **`θ_f = c · f`, `c` the mass of the point `G/A_G` for `dg / d_c a`, for the toy datum**
-(Thesis §4.8). -/
-theorem toy_thetaF (χ' : CentralCharOn (toyData (K := F))) {f : ↥(toyData (K := F)).G → ℂ}
-    (hf : f ∈ ScuspTestFn toyData χ') :
-    thetaF toyData f =
-      (((toyD (F := F)).measGmodAG.real Set.univ : ℝ) : ℂ) • f :=
-  toyD_thetaF χ' hf
 
 end ToyPAdic
 

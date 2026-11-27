@@ -32,7 +32,9 @@ presentation, and some special presentation exists).
   is satisfiable (`toyD_isBPThetaF`), and it excludes every other `θ`, e.g. `c f + 1`
   (`toyD_not_isBPThetaF_add_one`).  On any datum, a too-strict or too-loose `IsSpecial` makes the
   hypothesis unsatisfiable (`not_isBPThetaF_of_not_exists`, `not_isBPThetaF_of_ne`,
-  `TraceFormula/BPThetaF.lean`), so the axioms become vacuous, not false.
+  `TraceFormula/BPThetaF.lean`), so the axioms become vacuous, not false.  (The path of
+  `local_ggp` uses them at `θ = thetaF d f`, so it relies on their non-vacuity:
+  `exists_isMx`, `exists_specialK`.)
 * **V**: the conclusions of all three axioms at `toyD`, proved without them:
   `toyD_lemme_5_3_check` (every continuous `f`),
   `toyD_cor_5_9_check` (test functions), `toyD_bp_thm_5_5_1_iv_check` (the whole statement, with
@@ -96,7 +98,7 @@ does not consult it; it does consult `(gl2Levi, gl2GoodK)` and `(gl2Levi.opp, gl
 
 **Non-vacuity off `toyD`.**  On a general datum, non-vacuity of the hypothesis `IsBPThetaF` rests on
 the `sorry`s `exists_isMx` and `exists_specialK`; if either failed, the axioms would be vacuous
-there, not false.  `vM` is free of junk values only if `𝒫(M)` is finite, which is the `sorry`
+there, not false, but `thetaF` (on the path of `local_ggp`) would lose its link to them.  `vM` is free of junk values only if `𝒫(M)` is finite, which is the `sorry`
 `FlagLeviDatum.finite_parabolics` (at `toyD`, `M = G` and `v_M = 1`).
 
 Not covered (accepted gap): the conclusions of the axioms off `toyD` (at `gl2Data` only the

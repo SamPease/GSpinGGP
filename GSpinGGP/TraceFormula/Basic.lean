@@ -2196,6 +2196,41 @@ theorem zero_mem_scuspTestFn : (0 : ↥d.G → ℂ) ∈ ScuspTestFn d χ := by
   refine ⟨IsLocallyConstant.const 0, fun _ _ => by simp, ⟨∅, isCompact_empty, by simp⟩,
     fun FW FV _ p _ => ⟨integrable_zero _ _ _, by simp⟩⟩
 
+/-- `𝒞_scusp(G, χ⁻¹)` is a vector space. -/
+theorem add_mem_scuspTestFn {f g : ↥d.G → ℂ} (hf : f ∈ ScuspTestFn d χ)
+    (hg : g ∈ ScuspTestFn d χ) : f + g ∈ ScuspTestFn d χ := by
+  obtain ⟨hf1, hf2, ⟨C₁, hC₁, hs₁⟩, hf4⟩ := hf
+  obtain ⟨hg1, hg2, ⟨C₂, hC₂, hs₂⟩, hg4⟩ := hg
+  refine ⟨hf1.add hg1, fun a x => ?_, ⟨C₁ ∪ C₂, hC₁.union hC₂, fun x hx => ?_⟩,
+    fun FW FV hP p hp => ?_⟩
+  · simp only [Pi.add_apply, hf2 a x, hg2 a x, mul_add]
+  · rcases Function.support_add f g hx with h | h
+    · exact Set.mul_subset_mul_left Set.subset_union_left (hs₁ h)
+    · exact Set.mul_subset_mul_left Set.subset_union_right (hs₂ h)
+  · obtain ⟨i₁, e₁⟩ := hf4 FW FV hP p hp
+    obtain ⟨i₂, e₂⟩ := hg4 FW FV hP p hp
+    refine ⟨i₁.add i₂, ?_⟩
+    simp only [Pi.add_apply]
+    rw [integral_add i₁ i₂, e₁, e₂, add_zero]
+
+theorem smul_mem_scuspTestFn (c : ℂ) {f : ↥d.G → ℂ} (hf : f ∈ ScuspTestFn d χ) :
+    c • f ∈ ScuspTestFn d χ := by
+  obtain ⟨hf1, hf2, ⟨C, hC, hs⟩, hf4⟩ := hf
+  refine ⟨hf1.comp (fun z => c * z), fun a x => ?_, ⟨C, hC, fun x hx => hs ?_⟩,
+    fun FW FV hP p hp => ?_⟩
+  · simp only [Pi.smul_apply, smul_eq_mul, hf2 a x]
+    ring
+  · exact fun h => hx (by simp [h])
+  · obtain ⟨i, e⟩ := hf4 FW FV hP p hp
+    refine ⟨i.smul c, ?_⟩
+    simp only [Pi.smul_apply, smul_eq_mul]
+    rw [integral_const_mul, e, mul_zero]
+
+theorem sub_mem_scuspTestFn {f g : ↥d.G → ℂ} (hf : f ∈ ScuspTestFn d χ)
+    (hg : g ∈ ScuspTestFn d χ) : f - g ∈ ScuspTestFn d χ := by
+  rw [sub_eq_add_neg, ← neg_one_smul ℂ g]
+  exact add_mem_scuspTestFn d χ hf (smul_mem_scuspTestFn d χ (-1) hg)
+
 /-! ## 4. The kernel `K(f, x)` and the distribution `J(f)` -/
 
 variable (ψ : NontrivialAddChar F)
@@ -2383,30 +2418,5 @@ theorem haar_pairing_of_isThetaF {f θ : ↥d.G → ℂ} (h : IsThetaF d f θ) :
     funext g; simp [mul_assoc]
   rw [e1, integral_const_mul, h.2.2 f' hf', orbitalPairing_eq_haar, Complex.real_smul,
     ← mul_assoc, inv_mul_cancel₀ hc, one_mul]
-
-open scoped Classical in
-/-- **The quasi-character `θ_f` of a strongly cuspidal function** (Thesis §4.8; BP §5.5):
-the function representing the orbital pairing of `f` (`IsThetaF`), chosen by the
-epsilon pattern (as `characterOn`); `0` if there is none.  Its existence and the quasi-character
-property for `f ∈ ScuspTestFn d χ` are `thetaF_spec` (`TraceFormula/ThetaF.lean`).  It is unique
-on the regular set (`thetaF_unique`, ibid.).  Convention: `θ_f(ag) = χ(a)⁻¹ θ_f(g)`, so `θ_f` is
-matched with characters of representations with central character `χ⁻¹`. -/
-def thetaF (f : ↥d.G → ℂ) : ↥d.G → ℂ :=
-  if h : ∃ θ, IsThetaF d f θ then h.choose else 0
-
-/-- If some `θ` represents the orbital pairing of `f`, so does `thetaF d f`. -/
-theorem isThetaF_thetaF_of_exists (f : ↥d.G → ℂ) (h : ∃ θ, IsThetaF d f θ) :
-    IsThetaF d f (thetaF d f) := by
-  classical
-  unfold thetaF
-  rw [dite_eq_left_of_eq_true (eq_true h)]
-  exact h.choose_spec
-
-/-- If no function represents the orbital pairing of `f`, then `thetaF d f = 0`. -/
-theorem thetaF_of_not_exists (f : ↥d.G → ℂ) (h : ¬ ∃ θ, IsThetaF d f θ) :
-    thetaF d f = 0 := by
-  classical
-  unfold thetaF
-  rw [dite_eq_right_of_eq_false (eq_false h)]
 
 end GSpinGGP

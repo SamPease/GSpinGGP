@@ -107,7 +107,9 @@ steps, each an equivalence except (4), which weakens the statement.
      (also BP §1.8, p. 33), and the outer ones because `|J_G(x, f)| ≤ J_G(x, |f|)`. Hence the
      integrand is integrable on each `T(F)` and the terms of the sum over `𝒯(G)` are absolutely
      summable (`∫ |f| dg < ∞` bounds their sum).
-   * Finiteness: `𝒯(G)` is finite for `p`-adic `F` and each `N_{G(F)}(T)/T(F)` is finite (it
+   * Finiteness: `𝒯(G)` is finite for `p`-adic `F` (A. Borel, J.-P. Serre, Comment. Math.
+     Helv. 39 (1964), Cor. 6.5, p. 155: the maximal tori defined over `k` form finitely many
+     `G(k)`-conjugacy classes, for `k` with finite Galois cohomology as in their §6) and each `N_{G(F)}(T)/T(F)` is finite (it
      embeds in the Weyl group of `T` over `F̄`; BP's printed `|W(G,T)|⁻¹` presupposes it), so
      neither the `tsum` nor the `Nat.card` in `weylCardG` takes a junk value.
    So Lean's Bochner integrals and `tsum` (which give `0` on non-integrable or non-summable input)

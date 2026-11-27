@@ -37,7 +37,7 @@ variable (L : d.ReducedLeviDatum)
 
 /-- `A_{G_x}(F)` is the same for `L` and `L.opp` (`opp_AMF`). -/
 theorem opp_AGx (x : ↥d.G) : L.opp.AGx x = L.AGx x := by
-  simp only [ReducedLeviDatum.AGx, opp_AMF]
+  simp only [ReducedLeviDatum.AGx, ReducedLeviDatum.AGxOn, opp_AMF]
 
 /-- **`A_{G_x}(F)^1` is the same for `L` and `L.opp`**: both are `A_{G_x}(F) ∩ latticeK` of the same
 bases (`AGxOne_eq_preimage`). -/
@@ -54,7 +54,11 @@ theorem isDcMeasure_iff_preimage (x : ↥d.G) (μ : Measure ↥(d.centG x)) :
         μA ((fun a : ↥(L.AGx x) => ((a : ↥(d.centG x)) : ↥d.G)) ⁻¹'
           d.latticeK L.bWFin L.bVFin) = 1 ∧
         IsWeilMeasure (L.AGx x).subtype μ μA m ∧ m Set.univ = 1 := by
-  rw [ReducedLeviDatum.IsDcMeasure, ReducedLeviDatum.AGxOne_eq_preimage]
+  show (μ.IsHaarMeasure ∧ ∃ (μA : Measure ↥(L.AGx x))
+      (m : Measure (CosetSpace (L.AGx x).subtype)), μA.IsHaarMeasure ∧
+        μA (L.AGxOne x : Set ↥(L.AGx x)) = 1 ∧
+        IsWeilMeasure (L.AGx x).subtype μ μA m ∧ m Set.univ = 1) ↔ _
+  rw [ReducedLeviDatum.AGxOne_eq_preimage]
 
 /-- **The normalization of `d_c t` is the same for `L` and `L.opp`.** -/
 theorem opp_isDcMeasure (x : ↥d.G) : L.opp.IsDcMeasure x = L.IsDcMeasure x := by
@@ -65,8 +69,9 @@ theorem opp_isDcMeasure (x : ↥d.G) : L.opp.IsDcMeasure x = L.IsDcMeasure x := 
 
 /-- **`d_c t` is the same for `L` and `L.opp`.** -/
 theorem opp_dcMeasure (x : ↥d.G) : L.opp.dcMeasure x = L.dcMeasure x := by
-  unfold ReducedLeviDatum.dcMeasure
-  rw [opp_isDcMeasure]
+  unfold ReducedLeviDatum.dcMeasure ReducedLeviDatum.dcMeasureOn
+  rw [show L.opp.IsDcMeasureOn (d.centG x) = L.IsDcMeasureOn (d.centG x) from
+    opp_isDcMeasure L x]
 
 variable {L} in
 /-- **`IsMx` is the same for `L` and `L.opp`**: same `M`, same `A_M(F)`. -/

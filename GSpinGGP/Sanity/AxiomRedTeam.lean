@@ -122,6 +122,15 @@ the axiom it tests; the computations of germs at `toyD` use `exists_isSelfDual` 
   (`gl2_isBPThetaF_exists_half`) and the datum with `M = G` is not `M(x)`
   (`gl2TopLevi_not_isMx`). Off `toyD`, non-vacuity rests on the `sorry`s `exists_isMx`,
   `exists_specialK`. Not covered: the conclusions off `toyD`, `v_M ≠ 1`.
+  **Load-bearing since `thetaF` is Beuzart-Plessis' formula** (`TraceFormula/ThetaFGlobal.lean`):
+  conjunct 1 of `waldspurger2010_lemme_5_3` gives the independence of the chosen special
+  presentation (`thetaF_eq_thetaFBP`), also between presentations `L ≠ L'` of the same `M(x)`
+  (proved in Lean only for `L.opp`, `lemme_5_3_opp_check`; no other pair is checked), and the
+  `sorry`s `exists_isMx`, `exists_specialK` are on the path (`isBPThetaF_thetaF`).
+  `Sanity/ToyThetaF.lean`: at `toyD` a special presentation exists without those `sorry`s
+  (`toyD_thetaPres_isSome`), and `thetaF = c f` for every `f` directly from the formula
+  (`toyD_thetaF_eq`, `toyD_thetaF_eq_thetaFBP`), with no axiom about `θ_f`; the toy geometric
+  expansion (`toy_geomAt`) then uses only `exists_isSelfDual` and `weil_quotient_radon`.
 * `tits_iwasawa_specialStab` (`AxiomRedTeam/SpecialKIwasawa.lean`): V for `M = G` on any datum
   (`tits_iwasawa_specialStab_check_of_M_eq_top`), at `toyD` with the hypotheses met
   (`toyD_tits_iwasawa_specialStab_check`), and at `gl2Data` for the diagonal torus `M` and every

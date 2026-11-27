@@ -139,8 +139,7 @@ makes the sum finite; (3) is not cited from a source.  Direction of the central 
 `f(ag) = η(a) f(g)` gives `θ_f(ag) = η(a) θ_f(g)`, the law of characters in
 `VirtualTemp d η`; positive normalization constants are absorbed into `Π`.
 
-Degenerate cases: `f = 0` (take `Π = 0`); if no quasi-character represents the orbital pairing of
-`f`, then `thetaF d f = 0` by definition and `Π = 0` works.
+Degenerate case: `f = 0` (take `Π = 0`; `thetaF d 0 = 0`, `thetaF_zero_fun`).
 
 **Status: `sorry`, not a literature axiom** (the statement is not verbatim in a source). Adapted, as
 explained above. BP Prop 5.6.1(ii) holds for any connected reductive group (no compact-centre

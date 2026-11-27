@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Sanity.LieAudit
+import GSpinGGP.Sanity.ToyThetaF
 
 /-!
 # The slices of the descent to `𝔤⁰` at the toy datum
@@ -140,7 +141,7 @@ theorem toyD_torusIntegral_eq_torusIntegralLie_liftLie {ω : Set ↥(𝕋).lieZe
     torusIntegral ψ (𝕋) (thetaF (𝕋) f) (Quot.out c).1 s =
       (𝕋).torusIntegralLie ψ ((𝕋).thetaFLie ψ ((𝕋).liftLie ω f)) (Quot.out c).1 s := by
   rw [toyD_torusIntegralLie, toyD_thetaFLie, Pi.smul_apply, toyD_liftLie_zero hω,
-    toyD_thetaF_eq hf.1.continuous]
+    toyD_thetaF_eq f]
   exact toyD_torusIntegral ψ (θ := ((𝕋).dcScaleAG.toReal : ℂ) • f)
     (hf.1.comp fun z => ((𝕋).dcScaleAG.toReal : ℂ) * z)
     (fun t => by simp only [Pi.smul_apply, toyD_apply_diag χ hf.2.1]) c s

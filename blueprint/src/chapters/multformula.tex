@@ -94,9 +94,12 @@ Linearity of the integral, given convergence.
 \lean{GSpinGGP.thetaF}
 \leanok
 \uses{G, GGPData, GSpin, H, N, gspin}
-For strongly cuspidal $f$, $\theta_f$ is the function representing the orbital pairing
-$f'\mapsto\int_{G(F)/A_G(F)}\int_{G(F)}f(x^{-1}gx)f'(g)\,dg\,dx$ (Thesis \S4.8, \cite{BP} \S5.5);
-$0$ if there is none. Convention: $\theta_f(ag)=\chi(a)^{-1}\theta_f(g)$.
+Beuzart-Plessis' formula (\cite{BP} \S5.2; Waldspurger 2010, \S5.3): for $x\in\Greg(F)$,
+$\theta_f(x)=(-1)^{a_G-a_{M(x)}}\nu(G_x)^{-1}D^G(x)^{-1/2}J_{M(x)}(x,f)$, the weighted orbital integral
+taken with a special maximal compact subgroup in good position relative to $M(x)$, the presentation
+of $M(x)$ being chosen once for each torus $G_x(F)$; $0$ off $\Greg(F)$. For strongly cuspidal $f$
+it represents the orbital pairing $f'\mapsto\int_{G(F)/A_G(F)}\int_{G(F)}f(x^{-1}gx)f'(g)\,dg\,dx$
+(Thesis \S4.8). Convention: $\theta_f(ag)=\chi(a)^{-1}\theta_f(g)$.
 \end{definition}
 
 \begin{theorem}[$\theta_f$ represents the orbital pairing]
@@ -109,7 +112,13 @@ and locally constant on $\Greg(F)$, with $\int_{G(F)}\theta f'\,dg=\int_{G(F)/A_
 for every $f'\in C_c^\infty(G(F))$, the outer integrand being integrable.
 \end{theorem}
 \begin{proof}
-Not verbatim in the literature (adapted from, or derived from, published results); not yet formalized. Ingredients: \ingredients{\cite{BP}, Thm.~5.5.1(ii),(iv), Prop.~5.6.1(ii) (= Thesis Thm.~4.7.1, Prop.~4.8.1(ii)); \cite{Art91}; Weyl integration formula}
+\leanok
+\uses{thetaF}
+Take $\theta=c^{-1}\theta_f$ with $\theta_f$ Beuzart-Plessis' formula. Every special presentation gives the same
+value and $\theta_f$ is invariant, locally integrable and locally constant on $\Greg(F)$ (Waldspurger 2010, Lemme 5.3);
+$J^A(f_0,f')=\int_{\Gamma(G)}D^{1/2}\theta_fJ_G(\cdot,f')$ (\cite{BP} Thm.~5.5.1(iv)), which the Weyl integration formula
+turns into $\int_G\theta_ff'$; $\theta_f$ is a quasi-character (Waldspurger 2010, Cor.~5.9); integrability of the kernel is
+\cite{BP} Thm.~5.5.1(ii). Uses the existence of a special presentation of $M(x)$ (not yet formalized). Ingredients: \ingredients{\cite{BP}, Thm.~5.5.1(ii),(iv); Waldspurger 2010, Lemme 5.3, Cor.~5.9; \cite{Art91}; Weyl integration formula}
 \end{proof}
 
 \begin{lemma}[$\chi$-transfer of $\theta_f$]
@@ -122,8 +131,8 @@ is represented by a quasi-character (Thesis \S4.8, \S7.1).
 \end{lemma}
 \begin{proof}
 \leanok
-\uses{ScuspTestFn, bp_thetaF_exists, jHat}
-Glue central translates of the quasi-character of a cut-off of $P_\chi f_0$ along the fibres of the Harish-Chandra map $H_G$.
+\uses{ScuspTestFn, bp_thetaF_exists, thetaF, jHat}
+Apply the glueing below to $\theta_{\kappa P_\chi f_0}$ (Beuzart-Plessis' formula). Glue central translates of the quasi-character of a cut-off of $P_\chi f_0$ along the fibres of the Harish-Chandra map $H_G$.
 \end{proof}
 
 \begin{proposition}[$\theta_f$ of a strongly cuspidal function]
@@ -136,8 +145,10 @@ quasi-character (Thesis \S4.8, Prop.~4.8.1(ii)).
 \end{proposition}
 \begin{proof}
 \leanok
-\uses{hc_regularSet_open_conull, isThetaF_chiProj, jHat, weylDisc}
-From the $\chi$-transfer and uniqueness on the open conull regular set.
+\uses{hc_regularSet_open_conull, isThetaF_chiProj, bp_thetaF_exists, jHat, weylDisc}
+Apply the $\chi$-transfer to $\theta_{\kappa f}$; on $\Greg(F)$ the result is $\theta_f$ by the pointwise identities
+$\theta_{\kappa f}=\kappa\theta_f$ and $\theta_f(ax)=\chi(a)^{-1}\theta_f(x)$ of the formula, and the open conull regular set
+determines a representing function.
 \end{proof}
 
 \begin{definition}[$\QC(G(F),\chi^{-1})$]

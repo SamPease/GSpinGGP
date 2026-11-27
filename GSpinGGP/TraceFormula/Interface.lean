@@ -67,49 +67,7 @@ def HYP (d : GGPData F) : Prop :=
 
 end Hyp
 
-/-! ## 2. The test-function space is a vector space -/
-
-section Scusp
-
-variable (d : GGPData F) (χ : CentralCharOn d)
-
-theorem add_mem_scuspTestFn {f g : ↥d.G → ℂ} (hf : f ∈ ScuspTestFn d χ)
-    (hg : g ∈ ScuspTestFn d χ) : f + g ∈ ScuspTestFn d χ := by
-  obtain ⟨hf1, hf2, ⟨C₁, hC₁, hs₁⟩, hf4⟩ := hf
-  obtain ⟨hg1, hg2, ⟨C₂, hC₂, hs₂⟩, hg4⟩ := hg
-  refine ⟨hf1.add hg1, fun a x => ?_, ⟨C₁ ∪ C₂, hC₁.union hC₂, fun x hx => ?_⟩,
-    fun FW FV hP p hp => ?_⟩
-  · simp only [Pi.add_apply, hf2 a x, hg2 a x, mul_add]
-  · rcases Function.support_add f g hx with h | h
-    · exact Set.mul_subset_mul_left Set.subset_union_left (hs₁ h)
-    · exact Set.mul_subset_mul_left Set.subset_union_right (hs₂ h)
-  · obtain ⟨i₁, e₁⟩ := hf4 FW FV hP p hp
-    obtain ⟨i₂, e₂⟩ := hg4 FW FV hP p hp
-    refine ⟨i₁.add i₂, ?_⟩
-    simp only [Pi.add_apply]
-    rw [integral_add i₁ i₂, e₁, e₂, add_zero]
-
-theorem smul_mem_scuspTestFn (c : ℂ) {f : ↥d.G → ℂ} (hf : f ∈ ScuspTestFn d χ) :
-    c • f ∈ ScuspTestFn d χ := by
-  obtain ⟨hf1, hf2, ⟨C, hC, hs⟩, hf4⟩ := hf
-  refine ⟨hf1.comp (fun z => c * z), fun a x => ?_, ⟨C, hC, fun x hx => hs ?_⟩,
-    fun FW FV hP p hp => ?_⟩
-  · simp only [Pi.smul_apply, smul_eq_mul, hf2 a x]
-    ring
-  · exact fun h => hx (by simp [h])
-  · obtain ⟨i, e⟩ := hf4 FW FV hP p hp
-    refine ⟨i.smul c, ?_⟩
-    simp only [Pi.smul_apply, smul_eq_mul]
-    rw [integral_const_mul, e, mul_zero]
-
-theorem sub_mem_scuspTestFn {f g : ↥d.G → ℂ} (hf : f ∈ ScuspTestFn d χ)
-    (hg : g ∈ ScuspTestFn d χ) : f - g ∈ ScuspTestFn d χ := by
-  rw [sub_eq_add_neg, ← neg_one_smul ℂ g]
-  exact add_mem_scuspTestFn d χ hf (smul_mem_scuspTestFn d χ (-1) hg)
-
-end Scusp
-
-/-! ## 3. Quasi-characters with a central character -/
+/-! ## 2. Quasi-characters with a central character -/
 
 section QC
 
@@ -159,7 +117,7 @@ theorem mem_QCfin_of_mem_QC {χ : CentralCharOn d} {θ : ↥d.G → ℂ} (h : θ
 
 end QC
 
-/-! ## 4. Supports -/
+/-! ## 3. Supports -/
 
 section Support
 

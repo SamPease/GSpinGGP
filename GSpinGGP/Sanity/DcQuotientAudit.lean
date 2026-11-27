@@ -12,10 +12,11 @@ import GSpinGGP.Sanity.LieAudit
 At the toy datum `toyD` (`G = GL₁ × GL₁ = A_G`), `G(F)/A_G(F)` is a point.  Its mass for
 `measGmodAG = dg / d_c a` is the `dg`-volume of the maximal compact subgroup
 `A_G(𝒪) = {|c₁| = |c₂| = 1}` (`toyOneSet`), because `d_c a` gives `A_G(𝒪)` mass `1`
-(`toyD_dcScaleAG`).  So the orbital-pairing `θ_f` (`thetaF`, `θ_f = c f` by `toyD_thetaF_eq`)
-equals the `θ_f` of Beuzart-Plessis' formula (`thetaFBP`, `θ_f = c f` by `toyD_thetaFBP`):
-`toyD_thetaF_eq_thetaFBP`.  With `Measure.haar` on the point (mass `1`) instead, the two would
-differ by the factor `c`.  No new axioms; `weil_quotient_radon` is used (through
+(`toyD_dcScaleAG`).  So the function representing the orbital pairing for `dg / d_c a`
+(`toyD_isThetaF`, `c f` with `c = dcScaleAG`) equals Beuzart-Plessis' `θ_f` (`thetaFBP`,
+`θ_f = c f` by `toyD_thetaFBP`); `Sanity/ToyThetaF.lean` uses this to compute `thetaF` at
+`toyD`.  With `Measure.haar` on the point (mass `1`) instead, the two would differ by the
+factor `c`.  No new axioms; `weil_quotient_radon` is used (through
 `isDcQuotientAG_measGmodAG`).
 -/
 
@@ -97,16 +98,5 @@ theorem toyD_dcScaleAG :
     rw [e1, integral_mul_left_eq_self φ o, ht, integral_smul_measure, smul_eq_mul,
       ENNReal.coe_toReal]
   rw [hI, ← mul_assoc, mul_comm _ (t : ℝ), htS', one_mul]
-
-/-- **`thetaF = thetaFBP` at `toyD`**: for the Levi datum `M = G` and good compact subgroup of
-`toyD_thetaFBP`, the `θ_f` defined by the orbital pairing for `dg / d_c a` on `G/A_G` agrees with
-Beuzart-Plessis' formula, for every continuous `f`: both are `haar(A_G(𝒪)) · f`
-(`toyD_thetaF_eq`, `toyD_dcScaleAG`, `toyD_thetaFBP`). -/
-theorem toyD_thetaF_eq_thetaFBP :
-    ∃ (L : (𝕋).ReducedLeviDatum) (K : (𝕋).GoodK L.toFlagLeviDatum), (∀ x, L.IsMx x) ∧
-      ∀ f : ↥(𝕋).G → ℂ, Continuous f → thetaF (𝕋) f = L.thetaFBP K f := by
-  obtain ⟨L, K, hMx, -, -, hBP⟩ := toyD_thetaFBP (F := F)
-  refine ⟨L, K, hMx, fun f hf => funext fun x => ?_⟩
-  rw [toyD_thetaF_eq hf, hBP x f, Pi.smul_apply, smul_eq_mul, toyD_dcScaleAG, Measure.real]
 
 end GSpinGGP.GGPData

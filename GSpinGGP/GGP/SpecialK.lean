@@ -75,7 +75,9 @@ harmless.
   `tits_iwasawa_specialStab` (the Iwasawa decomposition `G = P K` for `P ∈ 𝒫(M)`: Tits,
   Corvallis, 3.3.2 and Waldspurger 2003, p. 240, applied through W1 §7.1–7.2 and the
   identification above).
-* `GGPData.exists_specialK` (`sorry`): every reduced Levi datum has a special `GoodK`.
+* `GGPData.exists_specialK` (`sorry`): every reduced Levi datum has a special `GoodK`.  It is on
+  the path of `local_ggp` (through `thetaF`, `TraceFormula/ThetaFGlobal.lean`), which relies on
+  the existence of special presentations.
 
 The checks at `gl2Data` are in `Sanity/GL2SpecialK.lean`: `gl2GoodK` is special; a `GoodK` of
 finite index in it is not; the lattice `⟨z₋₁, z₀, ϖ · ½ z₁⟩` (for `ϖ` a uniformizer, that of an

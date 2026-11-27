@@ -679,16 +679,25 @@ conjugacy class of `x` misses `supp f`).  Route from `IsThetaF`: for a test func
 in the open invariant set `G(F) ∖ Ω`, the orbital pairing `∫∫ f(y⁻¹ x y) f'(x)` vanishes, so
 `∫ θ_f f' = 0`; hence `θ_f = 0` almost everywhere on `G(F) ∖ Ω`, and everywhere on its regular
 points by local constancy of `θ_f` on `G_reg(F)`.
-Status: **proved**: `1_Ω f = f`, so `θ_f = θ_{1_Ω f} = 1_Ω θ_f` on `G_reg(F)` (`isThetaF_indicator`
-and uniqueness `eqOn_thetaF`); no literature input. -/
-theorem thetaF_eq_zero_of_support_subset {f : ↥d.G → ℂ} (hf : f ∈ ScuspTestFn d χ)
+Status: **proved** from the formula (`thetaF`, `thetaFBP_eq_integral`): for `g ∉ Ω` every
+conjugate `q⁻¹ g q` lies outside `Ω ⊇ supp f`, so the integrand vanishes; no literature input
+and no `sorry`. -/
+theorem thetaF_eq_zero_of_support_subset {f : ↥d.G → ℂ} (_hf : f ∈ ScuspTestFn d χ)
     {Ω : Set ↥d.G} (hΩ : IsInvariantClopen d Ω) (hs : Function.support f ⊆ Ω) :
     ∀ g ∈ regularSet d.G d.lie, g ∉ Ω → thetaF d f g = 0 := by
   intro g hg hgΩ
-  have hθ : IsThetaF d f (Ω.indicator (thetaF d f)) := by
-    have := isThetaF_indicator d (thetaF_spec d χ hf).1 hΩ
-    rwa [Set.indicator_eq_self.2 hs] at this
-  exact (eqOn_thetaF d hθ hg).trans (Set.indicator_of_notMem hgΩ _)
+  have h0 : ∀ q : ↥d.G, f (q⁻¹ * g * q) = 0 := fun q => by
+    by_contra hne
+    exact hgΩ ((hΩ.inv_conj_mem_iff q g).1 (hs hne))
+  unfold thetaF
+  rw [ite_eq_left hg]
+  cases d.thetaPres (d.centG g) with
+  | none => rfl
+  | some p =>
+    change p.1.thetaFBP p.2 f g = 0
+    rw [GGPData.ReducedLeviDatum.thetaFBP_eq_integral]
+    unfold GGPData.weightedIntegrand
+    simp [h0]
 
 /-- **Away from the elliptic set the expansion is free** (the case of non-elliptic
 points): if the invariant clopen `Ω` contains no
