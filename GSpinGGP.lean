@@ -178,6 +178,7 @@ import GSpinGGP.GGP.LatticeK
 import GSpinGGP.GGP.SpecialLattice
 import GSpinGGP.Literature.SpecialKIwasawa
 import GSpinGGP.GGP.SpecialK
+import GSpinGGP.GGP.WtSpan
 import GSpinGGP.GGP.LeviOpp
 import GSpinGGP.GGP.LeviPresentation
 import GSpinGGP.TraceFormula.Basic

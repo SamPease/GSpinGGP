@@ -78,22 +78,21 @@ over special presentations, and these are the checks that `IsSpecial` is not too
 in context, not kept: a failing search does not compile): `exact?` and `aesop` find no proof of
 `False`.
 
-**Presentation change** (any datum; proved in the library, `GGP/LeviOpp.lean`,
-`TraceFormula/ThetaFBPOpp.lean`): `L` and `L.opp` (opposite flags, negated weights, same `M`) have
-the same `IsMx` (`IsMx.opp`), the same `K` is good and special for both (`oppK`,
-`oppK_isSpecial`), and `θ_f` is the same (`opp_thetaFBP`): the sign (`opp_finrank_aMG`), `d_c t`
-(`opp_dcMeasure`) and `v_M` (`opp_vM`) agree, the last because the points `H_P(g)` and the
-lattice `proj_M^G(H_M(A_M(F)))` both change sign in `a_M^G` (`opp_hPar`, `opp_latticeMG`; from
-the determinant duality `det_wtBlock_neg_mul` on `M(F)`).  Conjunct 1 of
-`waldspurger2010_lemme_5_3` is not guarded by `IsBPThetaF` and asserts this equality for strongly
-cuspidal `f`; `lemme_5_3_opp_check` proves that instance for every `f` without the axiom, so
-this conjunct is consistent with the presentation change.  More generally
-(`TraceFormula/ThetaFBPPresentation.lean`), `θ_f` is the same for any two presentations whose
-weight spaces agree up to relabelling (reindexed or rescaled bases, signed permutations of the
-weights) and the same `K`; `lemme_5_3_sameWtSpaces_check` proves that instance of conjunct 1
-without the axiom (the gl2 instance with three presentations: `Sanity/GL2Presentation.lean`).
-For arbitrary presentations of the same `M` the same holds modulo the `sorry`
-`sameWtSpaces_of_M_eq` (off the path); conjunct 1 is consistent with that theorem.
+**Presentation change** (any datum; proved in the library, `GGP/LeviPresentation.lean`,
+`TraceFormula/ThetaFBPPresentation.lean`): for two presentations `L`, `L'` whose weight spaces
+agree up to relabelling (reindexed or rescaled bases, signed permutations of the weights; e.g.
+`L' = L.opp`) and good `K`, `K'` with the same underlying subgroup, `IsMx` agrees
+(`IsMx.of_sameWtSpaces`) and `θ_f` is the same (`thetaFBP_eq_of_sameWtSpaces`): the sign, `d_c t`
+and `v_M` agree, because a linear isomorphism of `a_M` carries `H_M` of one presentation to `H_M`
+of the other (each coordinate is `0` or `±` a coordinate, the sign `−` from the determinant
+duality `det_wtBlock_neg_mul`).  For `L.opp` these are `IsMx.opp`, `opp_finrank_aMG`,
+`opp_dcMeasure`, `opp_vM`, `opp_thetaFBP`, and the same `K` is special for both (`oppK`,
+`oppK_isSpecial`).  Conjunct 1 of `waldspurger2010_lemme_5_3` is not guarded by `IsBPThetaF` and
+asserts this equality for strongly cuspidal `f`; `lemme_5_3_opp_check` and
+`lemme_5_3_sameWtSpaces_check` prove those instances for every `f` without the axiom (the gl2
+instance with three presentations: `Sanity/GL2Presentation.lean`), so the conjunct is consistent
+with the presentation change.  For arbitrary presentations of the same `M` it agrees with
+`thetaFBP_eq_of_M_eq` (sorry-dependent: `sameWtSpaces_of_M_eq`, off the path).
 
 **A proper Levi subgroup** (`Sanity/GL2IsMx.lean`, `gl2Data`, `G = GL₁ × GSpin₃`, nonabelian): for
 `x = inr (gl2Torus c)`, `c ≠ 1`, `x` is regular (`gl2_torus_mem_regularSet`), the torus datum is
@@ -160,7 +159,7 @@ end Zero
 `L.opp` has the opposite flags, the same bases and the negated weights, and the same Levi subgroup
 (`FlagLeviDatum.opp_M`); the same `K` is good and special for it (`ReducedLeviDatum.oppK`,
 `oppK_isSpecial`).  The library proves that `θ_f` is the same for both presentations
-(`ReducedLeviDatum.opp_thetaFBP`, from `opp_vM` in `GGP/LeviOpp.lean`).  Here: the instance
+(`ReducedLeviDatum.opp_thetaFBP`, an instance of `thetaFBP_eq_of_sameWtSpaces`).  Here: the instance
 `y = 1`, `L' = L.opp`, `K' = K` of conjunct 1 of `waldspurger2010_lemme_5_3` holds for every `f`,
 without the axiom. -/
 
@@ -178,6 +177,14 @@ theorem lemme_5_3_opp_check {L : d.ReducedLeviDatum} {K : d.GoodK L.toFlagLeviDa
   refine ⟨hx.opp, L.oppK_isSpecial hK, ?_⟩
   rw [one_mul, inv_one, mul_one, ReducedLeviDatum.opp_thetaFBP]
 
+end Opp
+
+/-! ## Any datum: presentations with the same weight spaces -/
+
+section SameWtSpaces
+
+variable {d : GGPData F}
+
 /-- **Conjunct 1 of `waldspurger2010_lemme_5_3` for presentations with the same weight spaces,
 without the axiom** (V): for `L`, `L'` whose weight spaces agree up to relabelling and good `K`,
 `K'` with the same underlying subgroup, `L'` is again `M(x)` and gives the same `θ_f(x)`, for
@@ -187,11 +194,10 @@ theorem lemme_5_3_sameWtSpaces_check {L L' : d.ReducedLeviDatum}
     {K : d.GoodK L.toFlagLeviDatum} {K' : d.GoodK L'.toFlagLeviDatum} (hK : K'.K = K.K)
     {x : ↥d.G} (hx : L.IsMx x) (f : ↥d.G → ℂ) :
     L'.IsMx x ∧ L'.thetaFBP K' f (1 * x * 1⁻¹) = L.thetaFBP K f x := by
-  refine ⟨ReducedLeviDatum.IsMx.of_AMF_eq (ReducedLeviDatum.M_eq_of_sameWtSpaces hW hV)
-    (ReducedLeviDatum.AMF_eq_of_sameWtSpaces hW hV) hx, ?_⟩
+  refine ⟨hx.of_sameWtSpaces hW hV, ?_⟩
   rw [one_mul, inv_one, mul_one, ReducedLeviDatum.thetaFBP_eq_of_sameWtSpaces hW hV K K' hK]
 
-end Opp
+end SameWtSpaces
 
 /-! ## The toy datum -/
 

@@ -2,7 +2,8 @@
 Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import GSpinGGP.GGP.LeviOpp
+import GSpinGGP.GGP.WeightVM
+import GSpinGGP.GGP.WtSpan
 
 /-!
 # Arthur's weight `v_M` depends on the presentation only through the weight spaces
@@ -47,230 +48,19 @@ open Module MeasureTheory
 
 namespace GSpinGGP
 
-/-! ## 1. Weight spaces and weight projections -/
-
-section WtSpan
-
-variable {K : Type*} [Field K]
-variable {V : Type*} [AddCommGroup V] [Module K V]
-variable {ι ι' : Type*} {b : Basis ι K V} {wt : ι → ℤ} {b' : Basis ι' K V} {wt' : ι' → ℤ}
-
-theorem basis_mem_wtSpan (j : ι) : b j ∈ wtSpan b wt (wt j) :=
-  Submodule.subset_span ⟨j, rfl, rfl⟩
-
-/-- The weight projections on a vector of the weight-`u` space. -/
-theorem wtProj_apply_of_mem_wtSpan {u : ℤ} {x : V} (hx : x ∈ wtSpan b wt u) (w : ℤ) :
-    wtProj b wt w x = if u = w then x else 0 := by
-  induction hx using Submodule.span_induction with
-  | mem y hy =>
-    obtain ⟨j, hj, rfl⟩ := hy
-    simp only [Set.mem_ofPred_eq] at hj
-    rw [wtProj_basis, hj]
-  | zero => simp
-  | add x y _ _ hx hy => rw [map_add, hx, hy]; split_ifs <;> simp
-  | smul a x _ hx => rw [map_smul, hx]; split_ifs <;> simp
-
-theorem isHomog_of_mem_wtSpan {u : ℤ} {x : V} (hx : x ∈ wtSpan b wt u) : IsHomog b wt x u :=
-  (isHomog_iff_wtProj x u).2 (by rw [wtProj_apply_of_mem_wtSpan hx, ite_eq_left rfl])
-
-/-- Weight spaces of different weights meet in `0`. -/
-theorem disjoint_wtSpan {u v : ℤ} (h : u ≠ v) : Disjoint (wtSpan b wt u) (wtSpan b wt v) := by
-  rw [Submodule.disjoint_def]
-  intro x hu hv
-  have h1 := wtProj_apply_of_mem_wtSpan hu u
-  have h2 := wtProj_apply_of_mem_wtSpan hv u
-  rw [ite_eq_left rfl] at h1
-  rw [ite_eq_right (Ne.symm h)] at h2
-  rw [← h1, h2]
-
-theorem wtProj_eq_zero_of_forall_ne {w : ℤ} (h : ∀ j, wt j ≠ w) : wtProj b wt w = 0 :=
-  b.ext fun j => by rw [wtProj_basis, ite_eq_right (h j), LinearMap.zero_apply]
-
-theorem exists_wt_eq_of_wtSpan_ne_bot {w : ℤ} (h : wtSpan b wt w ≠ ⊥) : ∃ j, wt j = w := by
-  by_contra hne
-  push Not at hne
-  refine h ?_
-  rw [wtSpan, Submodule.span_eq_bot]
-  rintro _ ⟨j, hj, rfl⟩
-  exact absurd hj (hne j)
-
-/-- **The weight projections depend only on the weight spaces**: if every weight space of
-`(b, wt)` is a weight space of `(b', wt')` and `V'_{w'} = V_w`, the projections onto them agree
-(both are the projection onto `V_w` along the sum of the other weight spaces). -/
-theorem wtProj_eq_of_wtSpan_eq (h : ∀ u, ∃ u', wtSpan b wt u = wtSpan b' wt' u') {w w' : ℤ}
-    (hw : wtSpan b' wt' w' = wtSpan b wt w) : wtProj b' wt' w' = wtProj b wt w := by
-  refine b.ext fun j => ?_
-  obtain ⟨u', hu'⟩ := h (wt j)
-  have hj' : b j ∈ wtSpan b' wt' u' := hu' ▸ basis_mem_wtSpan j
-  rw [wtProj_apply_of_mem_wtSpan hj', wtProj_basis]
-  by_cases hj : wt j = w
-  · have hmem : b j ∈ wtSpan b' wt' w' := by rw [hw, ← hj]; exact basis_mem_wtSpan j
-    have : u' = w' := by
-      by_contra hne
-      exact b.ne_zero j (Submodule.disjoint_def.1 (disjoint_wtSpan hne) _ hj' hmem)
-    rw [ite_eq_left this, ite_eq_left hj]
-  · have : u' ≠ w' := by
-      rintro rfl
-      have hmem : b j ∈ wtSpan b wt w := hw ▸ hj'
-      exact b.ne_zero j (Submodule.disjoint_def.1 (disjoint_wtSpan hj) _
-        (basis_mem_wtSpan j) hmem)
-    rw [ite_eq_right this, ite_eq_right hj]
-
-theorem wtBlock_eq_of_wtSpan_eq (h : ∀ u, ∃ u', wtSpan b wt u = wtSpan b' wt' u') {w w' : ℤ}
-    (hw : wtSpan b' wt' w' = wtSpan b wt w) (A : V →ₗ[K] V) :
-    wtBlock b' wt' w' A = wtBlock b wt w A := by
-  simp only [wtBlock, wtProj_eq_of_wtSpan_eq h hw]
-
-/-- `wtBlock` on a weight that does not occur is the identity. -/
-theorem wtBlock_eq_id_of_forall_ne {w : ℤ} (h : ∀ j, wt j ≠ w) (A : V →ₗ[K] V) :
-    wtBlock b wt w A = LinearMap.id := by
-  simp [wtBlock, wtProj_eq_zero_of_forall_ne h]
-
-end WtSpan
-
-section WtSpanQ
-
-variable {K : Type*} [Field K] [Invertible (2 : K)]
-variable {V : Type*} [AddCommGroup V] [Module K V] {Q : QuadraticForm K V}
-variable {ι ι' : Type*} {b : Basis ι K V} {wt : ι → ℤ} {b' : Basis ι' K V} {wt' : ι' → ℤ}
-
-/-- **The Levi subgroup depends only on the weight spaces** (up to relabelling). -/
-theorem flagLevi_eq_of_wtSpan_eq (h : ∀ u, ∃ u', wtSpan b wt u = wtSpan b' wt' u')
-    (h' : ∀ u', ∃ u, wtSpan b' wt' u' = wtSpan b wt u) :
-    flagLevi (Q := Q) b' wt' = flagLevi (Q := Q) b wt := by
-  ext g
-  constructor
-  · intro hg w
-    obtain ⟨w', hw'⟩ := h w
-    rw [← wtProj_eq_of_wtSpan_eq h hw'.symm]
-    exact hg w'
-  · intro hg w'
-    obtain ⟨w, hw⟩ := h' w'
-    rw [wtProj_eq_of_wtSpan_eq h hw]
-    exact hg w
-
-theorem mem_wtScalar_iff_wtSpan {g : GSpin Q} :
-    g ∈ wtScalar Q b wt ↔
-      ∃ t : ℤ → K, t 0 = 1 ∧ ∀ w, ∀ x ∈ wtSpan b wt w, specP Q g x = t w • x := by
-  constructor
-  · rintro ⟨t, ht0, ht⟩
-    refine ⟨t, ht0, fun w x hx => ?_⟩
-    induction hx using Submodule.span_induction with
-    | mem y hy =>
-      obtain ⟨j, hj, rfl⟩ := hy
-      simp only [Set.mem_ofPred_eq] at hj
-      rw [ht j, hj]
-    | zero => simp
-    | add x y _ _ hx hy => rw [map_add, hx, hy, smul_add]
-    | smul a x _ hx => rw [map_smul, hx, smul_comm]
-  · rintro ⟨t, ht0, ht⟩
-    exact ⟨t, ht0, fun j => ht _ _ (basis_mem_wtSpan j)⟩
-
-/-- **The split centre depends only on the weight spaces** (up to relabelling the nonzero
-weights). -/
-theorem wtScalar_le_of_wtSpan_eq (h' : ∀ u', ∃ u, wtSpan b' wt' u' = wtSpan b wt u)
-    (h0 : wtSpan b' wt' 0 = wtSpan b wt 0) : wtScalar Q b wt ≤ wtScalar Q b' wt' := by
-  classical
-  intro g hg
-  obtain ⟨t, ht0, ht⟩ := mem_wtScalar_iff_wtSpan.1 hg
-  refine mem_wtScalar_iff_wtSpan.2 ⟨fun u' => if u' = 0 then 1 else t (h' u').choose,
-    by simp, fun u' x hx => ?_⟩
-  by_cases hu : u' = 0
-  · subst hu
-    simp only [↓reduceIte, one_smul]
-    rw [ht 0 x (h0 ▸ hx), ht0, one_smul]
-  · simp only [hu, ↓reduceIte]
-    exact ht _ x ((h' u').choose_spec ▸ hx)
-
-variable [Fintype ι] [Fintype ι']
-
-theorem bform_eq_zero_of_mem_wtSpan (horth : ∀ i j, wt i + wt j ≠ 0 → bform Q (b i) (b j) = 0)
-    {x y : V} {u v : ℤ} (hx : x ∈ wtSpan b wt u) (hy : y ∈ wtSpan b wt v) (h : u + v ≠ 0) :
-    bform Q x y = 0 :=
-  bform_eq_zero_of_isHomog_of_orth horth (isHomog_of_mem_wtSpan hx) (isHomog_of_mem_wtSpan hy) h
-
-/-- A nonzero weight-`0` space is not a weight space of nonzero weight of another splitting: those
-are totally isotropic, and `b` is nondegenerate on the weight-`0` space. -/
-theorem eq_zero_of_wtSpan_zero_eq (hQ : IsNondeg Q)
-    (horth : ∀ i j, wt i + wt j ≠ 0 → bform Q (b i) (b j) = 0)
-    (horth' : ∀ i j, wt' i + wt' j ≠ 0 → bform Q (b' i) (b' j) = 0) {u' : ℤ}
-    (hu : wtSpan b wt 0 = wtSpan b' wt' u') (hne : wtSpan b wt 0 ≠ ⊥) : u' = 0 := by
-  obtain ⟨j, hj⟩ := exists_wt_eq_of_wtSpan_ne_bot hne
-  obtain ⟨k, hk, hjk⟩ := exists_bform_ne_of_orth hQ horth j
-  by_contra hu0
-  refine hjk (bform_eq_zero_of_mem_wtSpan horth' (u := u') (v := u') ?_ ?_ (by omega))
-  · rw [← hu, ← hj]; exact basis_mem_wtSpan j
-  · rw [← hu, show (0 : ℤ) = wt k by omega]; exact basis_mem_wtSpan k
-
-/-- **The weight-`0` spaces agree** when the families of weight spaces have the same members. -/
-theorem wtSpan_zero_eq_of_wtSpan_eq (hQ : IsNondeg Q)
-    (horth : ∀ i j, wt i + wt j ≠ 0 → bform Q (b i) (b j) = 0)
-    (horth' : ∀ i j, wt' i + wt' j ≠ 0 → bform Q (b' i) (b' j) = 0)
-    (h : ∀ u, ∃ u', wtSpan b wt u = wtSpan b' wt' u')
-    (h' : ∀ u', ∃ u, wtSpan b' wt' u' = wtSpan b wt u) :
-    wtSpan b' wt' 0 = wtSpan b wt 0 := by
-  obtain ⟨u', hu'⟩ := h 0
-  by_cases hne : wtSpan b wt 0 = ⊥
-  · obtain ⟨u, hu⟩ := h' 0
-    by_cases hne' : wtSpan b' wt' 0 = ⊥
-    · rw [hne, hne']
-    · have := eq_zero_of_wtSpan_zero_eq hQ horth' horth hu hne'
-      rw [hu, this]
-  · have := eq_zero_of_wtSpan_zero_eq hQ horth horth' hu' hne
-    rw [hu', this]
-
-end WtSpanQ
-
-/-! ### Reindexing and rescaling a splitting -/
-
-section Rebase
-
-variable {K : Type*} [Field K] [Invertible (2 : K)]
-variable {V : Type*} [AddCommGroup V] [Module K V] {Q : QuadraticForm K V}
-variable {ι : Type*} {b : Basis ι K V} {wt : ι → ℤ}
-variable [Fintype ι] {κ : Type*} [Fintype κ]
-
-omit [Invertible (2 : K)] [Fintype ι] [Fintype κ] in
-/-- Reindexing and rescaling the basis does not change the weight spaces. -/
-theorem wtSpan_reindexUnits (e : ι ≃ κ) (u : κ → Kˣ) (w : ℤ) :
-    wtSpan ((b.reindex e).unitsSMul u) (wt ∘ e.symm) w = wtSpan b wt w := by
-  refine le_antisymm (Submodule.span_le.2 ?_) (Submodule.span_le.2 ?_)
-  · rintro _ ⟨i, hi, rfl⟩
-    rw [Basis.unitsSMul_apply, Basis.reindex_apply]
-    exact Submodule.smul_mem _ _ (Submodule.subset_span ⟨e.symm i, hi, rfl⟩)
-  · rintro _ ⟨j, hj, rfl⟩
-    have : b j = (u (e j))⁻¹ • (b.reindex e).unitsSMul u (e j) := by
-      rw [Basis.unitsSMul_apply, Basis.reindex_apply, Equiv.symm_apply_apply, smul_smul,
-        inv_mul_cancel, one_smul]
-    rw [this]
-    refine Submodule.smul_mem _ _ (Submodule.subset_span ⟨e j, ?_, rfl⟩)
-    simpa using hj
-
-/-- **A reindexed and rescaled splitting is a splitting** of the same flag. -/
-theorem IsFlagSplitting.reindexUnits {Fl : IsotropicFlag Q} (hs : IsFlagSplitting Fl b wt)
-    (e : ι ≃ κ) (u : κ → Kˣ) : IsFlagSplitting Fl ((b.reindex e).unitsSMul u) (wt ∘ e.symm) where
-  mem i := by
-    rw [Basis.unitsSMul_apply, Basis.reindex_apply]
-    exact Submodule.smul_mem _ _ (hs.mem _)
-  repr_eq_zero w v hv i hi := by
-    rw [Basis.repr_unitsSMul, Basis.repr_reindex_apply, hs.repr_eq_zero w v hv _ hi, smul_zero]
-  orth i j h := by
-    rw [Basis.unitsSMul_apply, Basis.unitsSMul_apply, Basis.reindex_apply, Basis.reindex_apply,
-      Units.smul_def, Units.smul_def, LinearMap.map_smul₂, LinearMap.map_smul,
-      hs.orth _ _ h, smul_zero, smul_zero]
-  sum_wt := by
-    rw [show (∑ i, (wt ∘ e.symm) i) = ∑ j, wt j from Equiv.sum_comp e.symm wt, hs.sum_wt]
-
-end Rebase
-
-
-/-! ## 2. Transport of `v_M` along an isomorphism of `a_M` -/
-
 namespace GGPData
 
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F] {d : GGPData F}
 
+/-- The projection `P → M` does not depend on how `M` is written. -/
+theorem IsLevi.coe_proj_congr {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV}
+    {M M' : Subgroup ↥d.G} (h : M = M') (hL : d.IsLevi FW FV M) (hL' : d.IsLevi FW FV M')
+    (p : ↥(d.whittB FW FV)) : ((hL.proj p : ↥M) : ↥d.G) = ((hL'.proj p : ↥M') : ↥d.G) := by
+  subst h; rfl
+
 namespace ReducedLeviDatum
+
+/-! ## 2. Transport of `v_M` along an isomorphism of `a_M` -/
 
 variable {L L' : d.ReducedLeviDatum}
 
@@ -461,52 +251,9 @@ theorem AMF_eq_of_sameWtSpaces (hW : SameWtSpacesW L L') (hV : SameWtSpacesV L L
   ext g
   rw [L'.mem_AMF_iff, L.mem_AMF_iff, eW, eV]
 
-/-- A weight `w` of a flag splitting either does not occur, or is `±(i + 1)` for some
-`i < len`, or is `0`. -/
-theorem _root_.GSpinGGP.IsFlagSplitting.wt_trichotomy {K V : Type*} [Field K]
-    [Invertible (2 : K)] [AddCommGroup V] [Module K V] {Q : QuadraticForm K V}
-    {Fl : IsotropicFlag Q} {ι : Type*} [Fintype ι] {b : Basis ι K V} {wt : ι → ℤ}
-    (hs : IsFlagSplitting Fl b wt) (w : ℤ) :
-    (∀ j, wt j ≠ w) ∨ w = 0 ∨ ∃ i : Fin Fl.len, ((i : ℤ) + 1 = w ∨ (i : ℤ) + 1 = -w) := by
-  by_cases h : ∃ j, wt j = w
-  · obtain ⟨j, rfl⟩ := h
-    right
-    have h1 := hs.wt_le j
-    have h2 := hs.neg_len_le j
-    rcases lt_trichotomy (wt j) 0 with hlt | heq | hgt
-    · exact Or.inr ⟨⟨(-wt j - 1).toNat, by omega⟩, Or.inr (by simp; omega)⟩
-    · exact Or.inl heq
-    · exact Or.inr ⟨⟨(wt j - 1).toNat, by omega⟩, Or.inl (by simp; omega)⟩
-  · push Not at h
-    exact Or.inl h
-
-/-- **`log ‖det(m|_{V_w})‖` on the Levi subgroup** is `0` when `w` does not occur, and
-`± log ‖det(m|_{V_{i+1}})‖` for some `i < len` otherwise, provided `w ≠ 0` or the weight `0` does
-not occur (determinant duality `det_wtBlock_neg_mul` for `w < 0`). -/
-theorem _root_.GSpinGGP.IsFlagSplitting.log_det_wtBlock_cases {K V : Type*}
-    [NontriviallyNormedField K] [Invertible (2 : K)] [AddCommGroup V] [Module K V]
-    {Q : QuadraticForm K V} {Fl : IsotropicFlag Q} {ι : Type*} [Fintype ι] {b : Basis ι K V}
-    {wt : ι → ℤ} (hQ : IsNondeg Q) (hs : IsFlagSplitting Fl b wt) (w : ℤ)
-    (hw : w = 0 → ∀ j, wt j ≠ 0) :
-    (∀ g ∈ flagLevi (Q := Q) b wt,
-      Real.log ‖LinearMap.det (wtBlock b wt w (specP Q g : V →ₗ[K] V))‖ = 0) ∨
-    ∃ (s : ℝ) (i : Fin Fl.len), ∀ g ∈ flagLevi (Q := Q) b wt,
-      Real.log ‖LinearMap.det (wtBlock b wt w (specP Q g : V →ₗ[K] V))‖ =
-        s * Real.log ‖LinearMap.det (wtBlock b wt ((i : ℤ) + 1) (specP Q g : V →ₗ[K] V))‖ := by
-  classical
-  rcases hs.wt_trichotomy w with h | h | ⟨i, hi | hi⟩
-  · exact Or.inl fun g _ => by
-      rw [wtBlock_eq_id_of_forall_ne h, LinearMap.det_id, norm_one, Real.log_one]
-  · exact Or.inl fun g _ => by
-      rw [wtBlock_eq_id_of_forall_ne (by subst h; exact hw rfl), LinearMap.det_id, norm_one, Real.log_one]
-  · exact Or.inr ⟨1, i, fun g _ => by rw [one_mul, hi]⟩
-  · refine Or.inr ⟨-1, i, fun g hg => ?_⟩
-    have h := det_wtBlock_neg_mul hQ hs hg ((i : ℤ) + 1)
-    rw [wtBlock_neg_wt, hi, neg_neg] at h
-    rw [eq_inv_of_mul_eq_one_left h, norm_inv, Real.log_inv, neg_one_mul, hi]
-
-/-- **Each coordinate of `H_M^{L'}` is `s` times a coordinate of `H_M^{L}`** (`s ∈ {0, ±1}`), when
-the weight spaces are the same up to relabelling. -/
+/-- **Each coordinate of `H_M^{L'}` is a real multiple of one coordinate of `H_M^{L}`**, uniformly
+in `m`, when the weight spaces are the same up to relabelling.  (The proof gives the multiplier
+`0` or `±1`; the statement only records some real `s`.) -/
 theorem exists_HM_coord_eq (hW : SameWtSpacesW L L') (hV : SameWtSpacesV L L') (c' : L'.Coord) :
     ∃ (s : ℝ) (c : L.Coord), ∀ (m : ↥L.M) (m' : ↥L'.M), (m' : ↥d.G) = m →
       L'.HM m' c' = s * L.HM m c := by
@@ -586,19 +333,13 @@ theorem vM_eq_of_sameWtSpaces (hW : SameWtSpacesW L L') (hV : SameWtSpacesV L L'
   obtain ⟨ψ, hψ⟩ := exists_aMEquiv_of_sameWtSpaces hW hV
   exact vM_eq_of_equiv ψ (M_eq_of_sameWtSpaces hW hV) (AMF_eq_of_sameWtSpaces hW hV) hψ K K' hK g
 
-/-! ## 4. Good subgroups, rebased data, the opposite datum -/
+/-- **`dim a_M^G` is the same** for the same weight spaces up to relabelling. -/
+theorem finrank_aMG_eq_of_sameWtSpaces (hW : SameWtSpacesW L L') (hV : SameWtSpacesV L L') :
+    finrank ℝ L'.aMG = finrank ℝ L.aMG := by
+  obtain ⟨ψ, hψ⟩ := exists_aMEquiv_of_sameWtSpaces hW hV
+  exact finrank_aMG_eq ψ (M_eq_of_sameWtSpaces hW hV) hψ
 
-/-- Good position only sees the weight spaces. -/
-theorem _root_.GSpinGGP.GGPData.StabilizesSplitLattice.of_wtSpan_eq {V ι ι' : Type*}
-    [AddCommGroup V] [Module F V] {Q : QuadraticForm F V} {b : Basis ι F V} {wt : ι → ℤ}
-    {b' : Basis ι' F V} {wt' : ι' → ℤ} {S : Set (GSpin Q)}
-    (h : ∀ w, ∃ w', wtSpan b wt w = wtSpan b' wt' w') (hS : StabilizesSplitLattice Q b wt S) :
-    StabilizesSplitLattice Q b' wt' S := by
-  obtain ⟨κ, hκ, e, he, hm⟩ := hS
-  refine ⟨κ, hκ, e, fun i => ?_, hm⟩
-  obtain ⟨w, hw⟩ := he i
-  obtain ⟨w', hw'⟩ := h w
-  exact ⟨w', hw' ▸ hw⟩
+/-! ## 4. Good subgroups, rebased data, the opposite datum -/
 
 /-- **A good `K` for `L` is good for `L'`** with the same weight spaces up to relabelling (same
 subgroup `K`). -/
@@ -668,10 +409,11 @@ Sketch (`G = GSpin(W) × GSpin(V)`, so `M` determines `flagLevi` of each factor;
    so it lies in `M = M'`; it sends `x'` to `x' + x ∉ V'_{v'}`, a contradiction.
 3. *`u = 0`: reducedness.*  If `0 ≠ x ∈ V_0 ∩ V'_{u'}` with `u' ≠ 0`, `x` is isotropic, so
    `V_0` (nondegenerate, not a hyperbolic plane) has dimension `≥ 3`; take `e ∈ V_0` with
-   `b(x, e) = 1`, `Q(e) = 0`, and `f ∈ V_0` anisotropic orthogonal to `x`, `e`.  The Eichler
-   transformation `v ↦ v + b(v, e) f − b(v, f) e − Q(f) b(v, e) e` acts on `V_0` only, so lies in
-   `M = M'`, and sends `x` to `x' = x + f − Q(f) e` with `b(x, x') = −Q(f) ≠ 0`; but `V'_{u'}` is
-   totally isotropic and contains `x'`, a contradiction.
+   `b(x, e) = 1`, `Q(e) = 0`, and `f ∈ V_0` anisotropic orthogonal to `x`, `e` (`b = bform Q`,
+   so `b(v, v) = Q(v)`).  The Eichler transformation
+   `v ↦ v + b(v, e) f − b(v, f) e − (Q(f)/2) b(v, e) e` acts on `V_0` only, so lies in `M = M'`,
+   and sends `x` to `x' = x + f − (Q(f)/2) e` with `b(x, x') = −Q(f)/2 ≠ 0`; but `V'_{u'}` is
+   totally isotropic and contains `x` and `x'`, a contradiction.
 From 1–3 each nonzero `V_u` lies in one `V'_{u'}` and each nonzero `V'_{u'}` in one `V_v`, hence
 `V_u = V'_{u'}` (`disjoint_wtSpan`). -/
 theorem sameWtSpaces_of_M_eq (hM : L'.M = L.M) : SameWtSpacesW L L' ∧ SameWtSpacesV L L' := by

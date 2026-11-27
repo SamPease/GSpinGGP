@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Sanity.GL2Weight
 import GSpinGGP.TraceFormula.ThetaFBPPresentation
-import GSpinGGP.TraceFormula.ThetaFBPOpp
+import GSpinGGP.GGP.LeviOpp
 
 /-!
 # Two presentations of the torus of `GSpin₃ ≅ GL₂`
@@ -13,17 +13,15 @@ At `gl2Data` the torus datum `gl2Levi` has the basis `z₋₁, z₀, z₁` of `V
 `gl2Rebase` presents the same torus with the basis permuted by the transposition of `z₋₁` and
 `z₁` and every vector doubled: its basis is `2 z₁, 2 z₀, 2 z₋₁` with weights `1, 0, −1` on the same
 index type (`gl2Rebase_bV`, `gl2Rebase_wtV`).  So the weight functions differ, and so do the basis
-vectors; but the weight spaces are the same, so the library's presentation independence
+vectors; but the labelled weight spaces are the same (`wtSpan` of weight `w` is the same for each
+`w`, so no relabelling is involved), and the library's presentation independence
 (`thetaFBP_eq_of_sameWtSpaces`) applies:
 
 * `gl2Rebase_vM_nbar`: `v_T(n̄(t)) = 2 log max(1, ‖t‖) / (−log ‖ϖ‖)` for `gl2Rebase` too;
 * `gl2Rebase_thetaFBP`: `θ_f` is the same for `(gl2Rebase, K)` and `(gl2Levi, K)`;
 * `gl2Rebase_opp_thetaFBP`: and for `gl2Rebase.opp`, whose weight spaces are those of `gl2Levi`
   relabelled by `w ↦ −w` (a third presentation, with neither the basis nor the weights of
-  `gl2Levi`).
-
-Any datum: `opp_thetaFBP_of_sameWtSpaces` recovers `opp_thetaFBP` (`TraceFormula/ThetaFBPOpp.lean`)
-from the general theorem, as a test of its hypotheses.
+  `gl2Levi`).  Only this one exercises a nontrivial relabelling.
 
 Nothing here uses an axiom or `sorry`.
 -/
@@ -35,14 +33,6 @@ open Module GSpinGGP.Sanity
 namespace GSpinGGP.GGPData
 
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
-
-/-- **`opp_thetaFBP` from the general theorem** (any datum): `L.opp` has the same weight spaces up
-to `w ↦ −w` (`sameWtSpaces_opp`). -/
-theorem opp_thetaFBP_of_sameWtSpaces {d : GGPData F} (L : d.ReducedLeviDatum)
-    (K : d.GoodK L.toFlagLeviDatum) (f : ↥d.G → ℂ) (x : ↥d.G) :
-    L.opp.thetaFBP (L.oppK K) f x = L.thetaFBP K f x :=
-  ReducedLeviDatum.thetaFBP_eq_of_sameWtSpaces (L.sameWtSpaces_opp).1 (L.sameWtSpaces_opp).2 K
-    (L.oppK K) rfl f x
 
 local notation "𝔾" => (gl2Data (F := F))
 
@@ -84,7 +74,8 @@ def gl2RebaseK : (𝔾).GoodK (gl2Rebase (F := F)).toFlagLeviDatum :=
 `gl2Levi` (`gl2_vM_nbar`). -/
 theorem gl2Rebase_vM_nbar {ϖ : F} (h0 : 0 < ‖ϖ‖) (h1 : ‖ϖ‖ < 1)
     (hmax : ∀ x : F, ‖x‖ < 1 → ‖x‖ ≤ ‖ϖ‖) (t : F) :
-    (gl2Rebase (F := F)).vM gl2RebaseK (gl2Nbar t) = 2 * Real.log (max 1 ‖t‖) / (-Real.log ‖ϖ‖) := by
+    (gl2Rebase (F := F)).vM gl2RebaseK (gl2Nbar t) =
+      2 * Real.log (max 1 ‖t‖) / (-Real.log ‖ϖ‖) := by
   rw [ReducedLeviDatum.vM_eq_of_sameWtSpaces gl2Rebase_sameWtSpaces.1 gl2Rebase_sameWtSpaces.2
     gl2GoodK gl2RebaseK rfl, gl2_vM_nbar h0 h1 hmax]
 

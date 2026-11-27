@@ -19,7 +19,7 @@ Such a `ψ` exists when the families of weight spaces of `L` and `L'` have the s
 (`exists_aMEquiv_of_sameWtSpaces`), so **`θ_f` computed with `(L', K')` equals `θ_f` computed with
 `(L, K)` for any good `K`, `K'` with the same underlying subgroup, every `f` and every `x`**
 (`thetaFBP_eq_of_sameWtSpaces`).  This covers reindexing and rescaling the bases, the opposite
-datum `L.opp` (`opp_thetaFBP`, proved directly in `TraceFormula/ThetaFBPOpp.lean`) and every
+datum `L.opp` (`opp_thetaFBP`, `TraceFormula/ThetaFBPOpp.lean`, a corollary) and every
 relabelling of the weight spaces by a signed permutation of the weights.
 
 **What is not proved here.**  That two reduced data with the same Levi subgroup `M` have the same
@@ -32,7 +32,8 @@ the conjugation invariance are not touched: they come from `waldspurger2010_lemm
 
 ## Main results
 
-* `IsMx.of_AMF_eq`, `dcMeasure_eq_of_equiv`: `IsMx` and `d_c t` agree.
+* `IsMx.of_AMF_eq`, `dcMeasure_eq_of_equiv` (and `IsMx.of_sameWtSpaces`,
+  `dcMeasure_eq_of_sameWtSpaces`): `IsMx` and `d_c t` agree.
 * `thetaFBP_eq_of_equiv`: `θ_f` agrees, given `ψ`.
 * `thetaFBP_eq_of_sameWtSpaces`: `θ_f` agrees for the same weight spaces up to relabelling;
   `rebase_thetaFBP`: reindexed and rescaled bases.
@@ -129,6 +130,17 @@ theorem thetaFBP_eq_of_equiv (ψ : L.aM ≃ₗ[ℝ] L'.aM) (hM : L'.M = L.M) (hA
     (f : ↥d.G → ℂ) (x : ↥d.G) : L'.thetaFBP K' f x = L.thetaFBP K f x := by
   simp only [ReducedLeviDatum.thetaFBP, weightedOrbitalIntegral, weightedIntegrand,
     finrank_aMG_eq ψ hM hψ, dcMeasure_eq_of_equiv ψ hM hA hψ, vM_eq_of_equiv ψ hM hA hψ K K' hK]
+
+/-- **`IsMx` agrees** for the same weight spaces up to relabelling. -/
+theorem IsMx.of_sameWtSpaces (hW : SameWtSpacesW L L') (hV : SameWtSpacesV L L') {x : ↥d.G}
+    (h : L.IsMx x) : L'.IsMx x :=
+  h.of_AMF_eq (M_eq_of_sameWtSpaces hW hV) (AMF_eq_of_sameWtSpaces hW hV)
+
+/-- **`d_c t` agrees** for the same weight spaces up to relabelling. -/
+theorem dcMeasure_eq_of_sameWtSpaces (hW : SameWtSpacesW L L') (hV : SameWtSpacesV L L')
+    (x : ↥d.G) : L'.dcMeasure x = L.dcMeasure x := by
+  obtain ⟨ψ, hψ⟩ := exists_aMEquiv_of_sameWtSpaces hW hV
+  exact dcMeasure_eq_of_equiv ψ (M_eq_of_sameWtSpaces hW hV) (AMF_eq_of_sameWtSpaces hW hV) hψ x
 
 /-- **`θ_f` depends on the presentation only through the weight spaces**: for reduced data `L`,
 `L'` whose families of weight spaces have the same members (for `W` and for `V`; e.g. reindexed or

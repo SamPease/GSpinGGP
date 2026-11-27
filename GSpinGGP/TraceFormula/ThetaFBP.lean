@@ -44,8 +44,8 @@ uses `d_c t` and has no separate factor `ν`.
 * `K` is a `GoodK` (compact open, `G = P K` for `P ∈ 𝒫(M)`, good position), where Beuzart-Plessis
   takes a special maximal compact subgroup.  `thetaFBP` depends on `K` through `v_M`, and on the
   presentation `L` of `M` through the coordinates of `a_M`.  The dependence on the presentation
-  is only apparent: for the same `K`, `thetaFBP` is the same for any two presentations with the
-  same weight spaces up to relabelling, for every `f` (`thetaFBP_eq_of_sameWtSpaces`,
+  is only through the weight spaces: for the same `K`, `thetaFBP` is the same for any two
+  presentations with the same weight spaces up to relabelling, for every `f` (`thetaFBP_eq_of_sameWtSpaces`,
   `TraceFormula/ThetaFBPPresentation.lean`), and for any two presentations of the same `M`
   modulo the `sorry` `sameWtSpaces_of_M_eq` (`thetaFBP_eq_of_M_eq`, off the path).  For strongly
   cuspidal `f` and `K` special (`GoodK.IsSpecial`) the independence of `K` is not proved here; it
