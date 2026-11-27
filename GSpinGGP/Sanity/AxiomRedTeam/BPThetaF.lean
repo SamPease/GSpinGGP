@@ -10,6 +10,7 @@ import GSpinGGP.Sanity.ThetaFBPAudit
 import GSpinGGP.Sanity.GL2SpecialK
 import GSpinGGP.Sanity.GL2IsMx
 import GSpinGGP.TraceFormula.ThetaFBPOpp
+import GSpinGGP.TraceFormula.ThetaFBPPresentation
 import GSpinGGP.Sanity.LieAudit
 import GSpinGGP.Sanity.AxiomRedTeam.Measure
 
@@ -86,7 +87,13 @@ lattice `proj_M^G(H_M(A_M(F)))` both change sign in `a_M^G` (`opp_hPar`, `opp_la
 the determinant duality `det_wtBlock_neg_mul` on `M(F)`).  Conjunct 1 of
 `waldspurger2010_lemme_5_3` is not guarded by `IsBPThetaF` and asserts this equality for strongly
 cuspidal `f`; `lemme_5_3_opp_check` proves that instance for every `f` without the axiom, so
-this conjunct is consistent with the presentation change.
+this conjunct is consistent with the presentation change.  More generally
+(`TraceFormula/ThetaFBPPresentation.lean`), `θ_f` is the same for any two presentations whose
+weight spaces agree up to relabelling (reindexed or rescaled bases, signed permutations of the
+weights) and the same `K`; `lemme_5_3_sameWtSpaces_check` proves that instance of conjunct 1
+without the axiom (the gl2 instance with three presentations: `Sanity/GL2Presentation.lean`).
+For arbitrary presentations of the same `M` the same holds modulo the `sorry`
+`sameWtSpaces_of_M_eq` (off the path); conjunct 1 is consistent with that theorem.
 
 **A proper Levi subgroup** (`Sanity/GL2IsMx.lean`, `gl2Data`, `G = GL₁ × GSpin₃`, nonabelian): for
 `x = inr (gl2Torus c)`, `c ≠ 1`, `x` is regular (`gl2_torus_mem_regularSet`), the torus datum is
@@ -170,6 +177,19 @@ theorem lemme_5_3_opp_check {L : d.ReducedLeviDatum} {K : d.GoodK L.toFlagLeviDa
       L.opp.thetaFBP (L.oppK K) f (1 * x * 1⁻¹) = L.thetaFBP K f x := by
   refine ⟨hx.opp, L.oppK_isSpecial hK, ?_⟩
   rw [one_mul, inv_one, mul_one, ReducedLeviDatum.opp_thetaFBP]
+
+/-- **Conjunct 1 of `waldspurger2010_lemme_5_3` for presentations with the same weight spaces,
+without the axiom** (V): for `L`, `L'` whose weight spaces agree up to relabelling and good `K`,
+`K'` with the same underlying subgroup, `L'` is again `M(x)` and gives the same `θ_f(x)`, for
+every `f`. -/
+theorem lemme_5_3_sameWtSpaces_check {L L' : d.ReducedLeviDatum}
+    (hW : ReducedLeviDatum.SameWtSpacesW L L') (hV : ReducedLeviDatum.SameWtSpacesV L L')
+    {K : d.GoodK L.toFlagLeviDatum} {K' : d.GoodK L'.toFlagLeviDatum} (hK : K'.K = K.K)
+    {x : ↥d.G} (hx : L.IsMx x) (f : ↥d.G → ℂ) :
+    L'.IsMx x ∧ L'.thetaFBP K' f (1 * x * 1⁻¹) = L.thetaFBP K f x := by
+  refine ⟨ReducedLeviDatum.IsMx.of_AMF_eq (ReducedLeviDatum.M_eq_of_sameWtSpaces hW hV)
+    (ReducedLeviDatum.AMF_eq_of_sameWtSpaces hW hV) hx, ?_⟩
+  rw [one_mul, inv_one, mul_one, ReducedLeviDatum.thetaFBP_eq_of_sameWtSpaces hW hV K K' hK]
 
 end Opp
 
