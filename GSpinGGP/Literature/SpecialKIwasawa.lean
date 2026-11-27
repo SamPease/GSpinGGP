@@ -197,19 +197,19 @@ lattices of `W` and `V` (`SpecialLattice`, W1 §7.1) adapted to `L`'s weight bas
    (`hcG`), and `G(F)^x = {g : H_G(g) = 0, π(g_W) ∈ K_W, π(g_V) ∈ K_V}`.  Since
    `latticeStab Q R = {k : π(k) R = R}`, this is `specialStab S_W S_V`.
 5. *`P ⊇ S`* (W2003's "semi-standard").  `P ∈ 𝒫(M)` is `whittB F'_W F'_V`, the stabilizer of
-   isotropic flags of `W` and `V`: the `F`-points of `π⁻¹(P_W) × π⁻¹(P_V)`,
+   isotropic flags of `W` and `V`: the `F`-points of `π⁻¹(P_W) × π⁻¹(P_V)`, where
    `P_U = Stab_{SO(U)}(F'_U)` (stabilizing each member).  This is a parabolic subgroup of `G`.
    All group schemes here are smooth (characteristic `0`, Milne 3.38).  Over `F̄`, `U ⊗ F̄` is
-   isometric to MT's standard form (nondegenerate quadratic forms of equal dimension over an algebraically closed field of
-   characteristic `≠ 2` are isometric), `F'_U ⊗ F̄` is a flag of totally singular subspaces, and
-   its stabilizer `P_{U,F̄}` contains a Borel subgroup (MT 12.13, first paragraph of the proof;
-   MT's and Milne's Borel subgroups agree, MT 6.3 = Milne 18.10).  If `dim U ≤ 1`, `SO(U)` is
-   trivial and `P_U = SO(U)`.  So `P_{U,F̄}` is parabolic (Milne 18.21) and `P_U` is parabolic
-   (Milne 18.63).  `π` is surjective with kernel `G_m`, smooth, so `π` is smooth (Milne 1.49),
-   hence flat and surjective, i.e. a quotient map (Milne 5.7); so `π⁻¹(P_U)` is parabolic in
-   `GSpin(U)` (Milne 18.24 over `F̄`, then 18.63).  Finally
-   `G/(π⁻¹(P_W) × π⁻¹(P_V)) ≅ GSpin(W)/π⁻¹(P_W) × GSpin(V)/π⁻¹(P_V)` is complete (Milne A.114(c)),
-   so the product is parabolic (Milne 18.63).
+   isometric to MT's standard form (nondegenerate quadratic forms of equal dimension over an
+   algebraically closed field of characteristic `≠ 2` are isometric), `F'_U ⊗ F̄` is a flag of
+   totally singular subspaces, and its stabilizer `P_{U,F̄}` contains a Borel subgroup (MT 12.13,
+   first paragraph of the proof; MT's and Milne's Borel subgroups agree, MT 6.3 = Milne 18.10).
+   If `dim U ≤ 1`, `SO(U)` is trivial and `P_U = SO(U)`.  So `P_{U,F̄}` is parabolic
+   (Milne 18.21) and `P_U` is parabolic (Milne 18.63).  `π` is surjective with smooth kernel
+   `G_m`, so `π` is smooth (Milne 1.49), hence flat and surjective, i.e. a quotient map
+   (Milne 5.7); so `π⁻¹(P_U)` is parabolic in `GSpin(U)` (Milne 18.24 over `F̄`, then 18.63).
+   Finally `G/(π⁻¹(P_W) × π⁻¹(P_V)) ≅ GSpin(W)/π⁻¹(P_W) × GSpin(V)/π⁻¹(P_V)` is complete
+   (Milne A.114(c)), so the product is parabolic (Milne 18.63).
    And `M ⊆ P` (`IsLevi.le`).
    `S ⊆ M`: by `IsAdapted` each of the lines `F v_i`, `F v_{−i}` and the space `V_an` lies in a
    single weight space; since `U = ⊕ F v_i ⊕ F v_{−i} ⊕ V_an` (`SpecialLattice.sub_sum_mem_Van`)
