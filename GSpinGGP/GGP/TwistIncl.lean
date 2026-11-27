@@ -16,7 +16,7 @@ noncomputable section
 
 namespace GSpinGGP
 
-variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
+variable {F : Type} [NontriviallyNormedField F] [LocalField F]
 
 variable {d : GGPData F}
 

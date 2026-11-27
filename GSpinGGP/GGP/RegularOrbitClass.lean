@@ -212,7 +212,7 @@ end Iso
 
 section OrbitNu
 
-variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
+variable {F : Type*} [NontriviallyNormedField F] [LocalField F]
 variable {W : Type*} [AddCommGroup W] [Module F W] [FiniteDimensional F W] {Q : QuadraticForm F W}
 
 /-- The data of `IsInOrbitNu Q ⊤ ν N` (`W = F d₀ ⊥ U₁`, `U₁ = F e ⊥ S`), with the consequences of
@@ -435,7 +435,7 @@ end Extend
 
 section Sub
 
-variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
+variable {F : Type*} [NontriviallyNormedField F] [LocalField F]
 variable {W : Type*} [AddCommGroup W] [Module F W] [FiniteDimensional F W] {Q : QuadraticForm F W}
 
 /-- `IsInOrbitNu Q U ν N` passes to `U` itself: `IsInOrbitNu (Q|_U) ⊤ ν (N|_U)`. -/

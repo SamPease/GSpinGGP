@@ -17,7 +17,7 @@ open scoped TensorProduct
 namespace GSpinGGP
 namespace TorusTransfer
 
-variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
+variable {F : Type} [NontriviallyNormedField F] [LocalField F]
 variable {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V₁] [AddCommGroup V₂] [Module F V₂]
   {Q₁ : QuadraticForm F V₁} {Q₂ : QuadraticForm F V₂}
 

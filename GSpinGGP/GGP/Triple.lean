@@ -39,7 +39,11 @@ open CliffordAlgebra (ιInv ιInv_ι ι_injective)
 
 namespace GSpinGGP
 
-variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
+variable {F : Type*} [NontriviallyNormedField F]
+
+section PAdicStatement
+
+variable [PAdicField F]
 
 /-! ## 0. Topological instances on `G(F)` -/
 
@@ -101,6 +105,12 @@ theorem kottwitzSign_eq_one_or (d : GGPData F) (τ : InnerTwist d.QW) :
   unfold kottwitzSign
   exact neg_one_pow_eq_or ℤ _
 
+end PAdicStatement
+
+section InnerForms
+
+variable [LocalField F]
+
 /-- The trivial inner form of `d` is `d` itself (definitionally). -/
 theorem GGPData.twist_reflTwist (d : GGPData F) : d.twist d.reflTwist = d := rfl
 
@@ -142,6 +152,12 @@ def toBase (x : ↥d.G) : ↥(IF.data IF.base).G :=
   cast (congrArg (fun e : GGPData F => (↥e.G : Type _)) IF.data_base.symm) x
 
 end InnerFormSystem
+
+end InnerForms
+
+section Packets
+
+variable [PAdicField F]
 
 /-! ## 3. Stability, transfer, tempered packets (Thesis §6.1, §6.3) -/
 
@@ -195,6 +211,12 @@ def TemperedPacketFamily.packetChar {d : GGPData F} {IF : InnerFormSystem d}
     (P : TemperedPacketFamily d IF) (α : IF.Idx) : ↥(IF.data α).G → ℂ :=
   fun y => ∑ i, charG (IF.data α) (P.rep α i) y
 
+end Packets
+
+section GammaOrbits
+
+variable [LocalField F]
+
 /-! ## 4. `Γ(G,H)` (Thesis §6.5) -/
 
 section Gamma
@@ -219,7 +241,7 @@ def fixerOf (Q : QuadraticForm F V) (U : Submodule F V) : Subgroup ↥(GSpin Q) 
 def commonFixed {Q : QuadraticForm F V} (T : Subgroup ↥(GSpin Q)) : Submodule F V :=
   ⨅ t : ↥T, fixedSub (t : ↥(GSpin Q))
 
-omit [PAdicField F] in
+omit [LocalField F] in
 /-- The central scalars commute with everything in `GSpin(V)`. -/
 theorem scalarGSpin_commute (Q : QuadraticForm F V) (c : Fˣ) (g : ↥(GSpin Q)) :
     Commute (scalarGSpin Q c) g := by
@@ -371,6 +393,10 @@ def orbitChoice (d : GGPData F) (x : ↥(GSpin d.QW)) :
       (lieCentralizer d.lie (((d.diag x : d.ambientˣ)) : d.ambient)),
       ∃ X ∈ nilOrbitSet O, OrbitSpec d x (X : d.ambient) then h.choose
   else Quotient.mk (nilSetoid _ _) ⟨0, LieSubalgebra.zero_mem _, IsNilpotent.zero⟩
+
+end GammaOrbits
+
+variable [PAdicField F]
 
 /-! ## 6. The geometric multiplicity (Thesis §7.2, Prop. 12.1.1) -/
 

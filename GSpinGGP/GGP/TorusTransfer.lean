@@ -24,7 +24,7 @@ set_option linter.unusedSectionVars false
 namespace GSpinGGP
 namespace TorusTransfer
 
-variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
+variable {F : Type} [NontriviallyNormedField F] [LocalField F]
 
 
 section Descent

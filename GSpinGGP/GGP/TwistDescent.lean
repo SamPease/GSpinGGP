@@ -35,7 +35,7 @@ set_option linter.unusedSectionVars false
 namespace GSpinGGP
 namespace TwistDescent
 
-variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
+variable {F : Type*} [NontriviallyNormedField F] [LocalField F]
 
 local notation "Kb" => AlgebraicClosure F
 

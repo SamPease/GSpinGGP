@@ -1748,6 +1748,21 @@ end ToyPAdic
 
 end CoreToy
 
+section LocalFieldReal
+
+/-! `LocalField` definitions apply at `ℝ` and `ℂ`: the instances exist, `2` is invertible through
+`LocalField.invertibleTwo`, and the Galois-cohomology definitions of `Literature/Kottwitz`
+(stated over `[LocalField F]`) elaborate at `F = ℝ`. -/
+
+example : LocalField ℝ := inferInstance
+example : LocalField ℂ := inferInstance
+example : (inferInstance : Invertible (2 : ℝ)) = LocalField.invertibleTwo ℝ := rfl
+example (S : Subgroup (GL (Fin 2) (AlgebraicClosure ℝ))) : Type := H1 S
+example : GalCocycle (⊤ : Subgroup (GL (Fin 2) (AlgebraicClosure ℝ))) :=
+  GalCocycle.one _
+
+end LocalFieldReal
+
 end Sanity
 
 end GSpinGGP

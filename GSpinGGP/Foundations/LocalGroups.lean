@@ -10,7 +10,8 @@ import TauCeti.Analysis.Normed.Algebra.NilpotentExponential
 /-!
 # Local fields and unbundled linear groups
 
-Generic `p`-adic foundations for the formalization of the dissertation
+Foundations over a local field of characteristic zero (`LocalField`; `p`-adic where a section
+says so) for the formalization of the dissertation
 *The Local Gan–Gross–Prasad Conjecture for General Spin Groups* (henceforth "Thesis").
 
 Everything here is **unbundled**: a "reductive group" is a plain `G : Subgroup Aˣ` and its
@@ -19,7 +20,7 @@ carrying the module topology. Other files apply these notions directly to Mathli
 (e.g. `GSpin Q ⊆ (CliffordAlgebra Q)ˣ`).
 
 Contents.
-* `PAdicField`, `absF`, `NontrivialAddChar` (Thesis §2.1, §2.4).
+* `LocalField`, `PAdicField`, `absF`, `NontrivialAddChar` (Thesis §2.1, §2.4).
 * Topology plumbing for the ambient algebra (as *theorems*, see the note below).
 * `conjAd`, `IsSS`, `lieCentralizer`, `grpCentralizer`, `IsRegularSS`, `regularSet`,
   `regularSetLie`, `weylDisc`, `weylDiscLie` (Thesis §2.1).
@@ -38,6 +39,15 @@ instances: their conclusions do not mention `F`, so instance search could not fi
 They are the theorems `isTopologicalRing_of_moduleTopology F A`, `t2Space_of_moduleTopology F A`,
 `locallyCompactSpace_of_moduleTopology F A` (plus `units_t2Space`, `units_locallyCompactSpace`,
 `subgroup_t2Space`, `subgroup_locallyCompactSpace_of_isClosed`); use them via `haveI`.
+
+**Binder rule for the field.** Statements that hold for every local field take `[LocalField F]`.
+Statements that need ultrametric facts take `[LocalField F] [IsUltrametricDist F]`, not
+`[PAdicField F]`: with the bundled class, a declaration that uses `LocalField` definitions sees its
+own instance only through the proof `PAdicField.toLocalField`, and elaboration (which compares
+proofs by proof irrelevance before unifying their arguments) then leaves that instance unassigned
+until the end, which made some unifications several times slower. Existing `[PAdicField F]`
+declarations, including the literature axioms, are left as they are; a file is migrated only
+with a heartbeat measurement, since migration is not mechanically faster.
 -/
 
 open MeasureTheory Topology Filter
@@ -54,11 +64,48 @@ namespace GSpinGGP
 
 /-! ## 1. The field -/
 
-/-- A *`p`-adic field*: a finite extension of `ℚ_p` (Thesis §2.1). We use the analytic
-characterization: a nontrivially normed field that is complete, locally compact, ultrametric and of
-characteristic zero. (Any such field is a finite extension of some `ℚ_p`.) -/
+/-- A *local field of characteristic zero*: a nontrivially normed field that is complete,
+locally compact and of characteristic zero. Thesis §2.1 takes `F` `p`-adic or `ℝ`; we also allow
+`ℂ`. By the classical classification (not proved here, and used only informally), these fields
+are exactly the finite extensions of some `ℚ_p`, `ℝ` and `ℂ`; the non-archimedean ones are the
+`PAdicField`s. Fields of positive characteristic are excluded, as in the Thesis.
+(`CompleteSpace` follows from local compactness, a locally compact normed field being proper,
+`ProperSpace.of_locallyCompactSpace`; it is kept as a field so that it is a direct instance.) -/
+class LocalField (F : Type*) [NontriviallyNormedField F] : Prop
+    extends CompleteSpace F, LocallyCompactSpace F, CharZero F
+
+/-- `2` is invertible in a local field. This is the `Invertible (2 : F)` carried by `GGPData F`.
+It is one named instance taking the `LocalField` instance as its argument, so that the same term
+arises over a `LocalField` and over a `PAdicField` (where the argument is
+`PAdicField.toLocalField`), instead of Mathlib's `invertibleTwo` applied to a `CharZero F` proof
+that differs between the two and is abstracted into auxiliary lemmas inside definitions. It has
+default priority: declared after Mathlib's `invertibleTwo`, it is still preferred for `F`, while a
+raised priority would put it before every other instance on all `Invertible (2 : X)` goals, where
+it fails slowly when `X` is not a local field. -/
+instance LocalField.invertibleTwo (F : Type*) [NontriviallyNormedField F]
+    [LocalField F] : Invertible (2 : F) :=
+  _root_.invertibleTwo
+
+/-- `ℝ` is a local field. -/
+instance : LocalField ℝ where
+
+/-- `ℂ` is a local field. -/
+instance : LocalField ℂ where
+
+/-- A *`p`-adic field* (Thesis §2.1): an ultrametric `LocalField`, i.e. a nontrivially normed
+field that is complete, locally compact, ultrametric and of characteristic zero. (Classically,
+not proved here: these are the finite extensions of some `ℚ_p`.) New code uses the binders
+`[LocalField F] [IsUltrametricDist F]` instead; see the binder rule in the module docstring. -/
 class PAdicField (F : Type*) [NontriviallyNormedField F] : Prop
-    extends CompleteSpace F, LocallyCompactSpace F, IsUltrametricDist F, CharZero F
+    extends LocalField F, IsUltrametricDist F
+
+/-- An ultrametric local field is a `p`-adic field, so that `[PAdicField F]` and
+`[LocalField F] [IsUltrametricDist F]` are interchangeable binders. This is a back-edge instance
+(it closes a cycle with `PAdicField.toLocalField`), hence its low priority. New `p`-adic code uses
+the unbundled binders: there the `LocalField` instance is a variable of its own, which elaboration
+assigns directly, rather than the proof `PAdicField.toLocalField`. -/
+instance (priority := 50) PAdicField.ofUltrametric (F : Type*) [NontriviallyNormedField F]
+    [LocalField F] [IsUltrametricDist F] : PAdicField F where
 
 /-- `ℚ_p` is a `p`-adic field. -/
 instance (p : ℕ) [Fact p.Prime] : PAdicField ℚ_[p] where
@@ -207,7 +254,7 @@ end NontrivialAddChar
 
 section Topology
 
-variable (F) [PAdicField F]
+variable (F) [LocalField F]
 variable (A : Type*) [Ring A] [Algebra F A] [Module.Finite F A] [TopologicalSpace A]
   [IsModuleTopology F A]
 
@@ -285,6 +332,16 @@ theorem subgroup_sigmaCompactSpace_of_isClosed (G : Subgroup Aˣ) (hG : IsClosed
   have := subgroup_secondCountableTopology F A G
   infer_instance
 
+end Topology
+
+section TotallyDisconnected
+
+variable (F) [PAdicField F]
+variable (A : Type*) [Ring A] [Algebra F A] [Module.Finite F A] [TopologicalSpace A]
+  [IsModuleTopology F A]
+
+include F
+
 /-- The ambient algebra is totally disconnected (`F` is ultrametric, `A ≃ F^n`). -/
 theorem totallyDisconnectedSpace_of_moduleTopology : TotallyDisconnectedSpace A :=
   (toPiCLE F A).toHomeomorph.symm.totallyDisconnectedSpace
@@ -306,11 +363,11 @@ theorem totallyDisconnectedSpace_subgroup (G : Subgroup Aˣ) : TotallyDisconnect
   haveI := units_totallyDisconnectedSpace F A
   infer_instance
 
-end Topology
+end TotallyDisconnected
 
 section SubmoduleTopology
 
-variable [PAdicField F] {A : Type*} [Ring A] [Algebra F A] [Module.Finite F A]
+variable [LocalField F] {A : Type*} [Ring A] [Algebra F A] [Module.Finite F A]
   [TopologicalSpace A] [IsModuleTopology F A]
 
 /-- A subspace of the ambient algebra is a topological additive group. -/
@@ -329,6 +386,13 @@ theorem submodule_isModuleTopology (p : Submodule F A) : IsModuleTopology F ↥p
   haveI : T2Space ↥p := (IsEmbedding.mk hind Subtype.val_injective).t2Space
   exact isModuleTopologyOfFiniteDimensional (𝕜 := F) (E := ↥p)
 
+end SubmoduleTopology
+
+section SubmoduleTopologyPAdic
+
+variable [PAdicField F] {A : Type*} [Ring A] [Algebra F A] [Module.Finite F A]
+  [TopologicalSpace A] [IsModuleTopology F A]
+
 /-- The topological properties of a subspace `p ≅ F^n` of the ambient algebra used for Haar
 measures. -/
 theorem submodule_topology (p : Submodule F A) :
@@ -346,7 +410,7 @@ theorem submodule_topology (p : Submodule F A) :
     e.toHomeomorph.isEmbedding.secondCountableTopology,
     e.toHomeomorph.isEmbedding.pseudoMetrizableSpace⟩
 
-end SubmoduleTopology
+end SubmoduleTopologyPAdic
 
 /-- Elements of a group of points coerce directly to the ambient algebra, so that e.g.
 `lieCentralizer 𝔤 x` typechecks for `x : ↥G`. -/
@@ -613,7 +677,7 @@ theorem isRegularSS_smul_iff {𝔤 : LieSubalgebra F A} {c : F} (hc : c ≠ 0) (
   unfold IsRegularSS IsSS
   rw [hml, Module.End.IsSemisimple_smul_iff hc, hcent]
 
-variable [PAdicField F] [Module.Finite F A]
+variable [LocalField F] [Module.Finite F A]
 
 /-- The Weyl discriminant `D^G(x) = |det(1 - Ad x)|_{𝔤/𝔤_x}|_F` (Thesis §2.1), computed as the
 absolute value of the trailing coefficient of the characteristic polynomial of `1 - Ad x` on `𝔤`.

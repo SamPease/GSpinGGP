@@ -43,11 +43,15 @@ open scoped Classical TensorProduct
 
 namespace GSpinGGP
 
-variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
+variable {F : Type*} [NontriviallyNormedField F]
 
 set_option linter.unusedSectionVars false
 
 /-! ## §1 Definitions -/
+
+section Definitions
+
+variable [LocalField F]
 
 /-- The absolute Galois group `Γ_F = Aut(F̄/F)` (abstract group; continuity of cocycles is imposed
 separately, `GalCocycle.continuous'`). -/
@@ -277,7 +281,13 @@ def TwistIdx {d : GGPData F} (IF : InnerFormSystem d) (x : ↥(GSpin d.QW))
     (β : H1 (d.torusBarFbar x)) (α : IF.Idx) : Prop :=
   ∃ a : GalCocycle (d.torusBarFbar x), H1.mk a = β ∧ IsTwistBy d.QW (IF.twist α).Q' a.toFun
 
+end Definitions
+
 /-! ## §2 Cited results -/
+
+section Cited
+
+variable [PAdicField F]
 
 /-- **Finiteness of `H¹(F, S_x)`** (Borel–Serre, *Théorèmes de finitude en cohomologie
 galoisienne*, Comment. Math. Helv. 39 (1964), Thm. 6.1, p. 153: for `k` locally compact of
@@ -305,5 +315,7 @@ not finite in general: `Z_{SO(W)}(S_x)` contains `SO(W'_x)`; so this does not fo
 `finite_H1_torusBar`.) -/
 axiom finite_H1_normalizerBar (d : GGPData F) (x : ↥(GSpin d.QW)) (hx : d.IsGammaElt x) :
     Finite (H1 (d.normalizerBar x))
+
+end Cited
 
 end GSpinGGP

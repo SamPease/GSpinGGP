@@ -24,7 +24,7 @@ open scoped TensorProduct
 
 namespace GSpinGGP
 
-variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
+variable {F : Type} [NontriviallyNormedField F] [LocalField F]
 
 local notation "Kb" => AlgebraicClosure F
 
