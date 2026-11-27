@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Sanity.AxiomRedTeam.Common
 import GSpinGGP.Sanity.LieAudit
+import GSpinGGP.Sanity.ToyThetaF
 import GSpinGGP.Literature.HarishChandra
 import GSpinGGP.Literature.GSpin
 import GSpinGGP.TraceFormula.MGeom
@@ -138,7 +139,7 @@ theorem toyD_germ_bound_of_mem_QC (ψ : NontrivialAddChar F) {χ : CentralCharOn
 theorem toyD_tendsto_mGeomS_thetaF (ψ : NontrivialAddChar F) (χ : CentralCharOn (𝕋))
     {f : ↥(𝕋).G → ℂ} (hf : f ∈ ScuspTestFn (𝕋) χ) :
     ∃ L : ℂ, Tendsto (mGeomS ψ (𝕋) (thetaF (𝕋) f)) (𝓝[>] (0 : ℝ)) (𝓝 L) := by
-  rw [toyD_thetaF_eq hf.1.continuous]
+  rw [toyD_thetaF_eq f]
   have hlc : IsLocallyConstant (((𝕋).dcScaleAG.toReal : ℂ) • f) :=
     hf.1.comp fun z => ((𝕋).dcScaleAG.toReal : ℂ) * z
   exact ⟨_, toyD_tendsto_mGeomS ψ (toyD_germ ψ hlc)
@@ -150,7 +151,7 @@ theorem toyD_germ_bound_thetaF (ψ : NontrivialAddChar F) (χ : CentralCharOn (�
     ∃ C : ℝ, ∀ t : ↥(GSpin (𝕋).QW), (𝕋).IsGammaElt t → (𝕋).torusOf t = T →
       ‖(Real.sqrt (weylDisc (𝕋).lie ((𝕋).diag t : (𝕋).ambientˣ)) : ℂ) *
         germ (𝕋).G (𝕋).lie (𝕋).bilin ψ (thetaF (𝕋) f) ((𝕋).diag t) (orbitChoice (𝕋) t)‖ ≤ C := by
-  rw [toyD_thetaF_eq hf.1.continuous]
+  rw [toyD_thetaF_eq f]
   have hlc : IsLocallyConstant (((𝕋).dcScaleAG.toReal : ℂ) • f) :=
     hf.1.comp fun z => ((𝕋).dcScaleAG.toReal : ℂ) * z
   exact toyD_germ_bound ψ (toyD_germ ψ hlc)
@@ -332,7 +333,7 @@ theorem toyD_exists_lie_descent (ψ : NontrivialAddChar F) (χ : CentralCharOn (
   refine ⟨Set.univ, isInvariantClopen_univ _, trivial, fun f hf _ => ?_⟩
   refine ⟨fun _ => f 1, toyD_isLieScusp _, ?_, ?_⟩
   · rw [toyD_distribJ χ ψ hf.2.1, toyD_distribJLie]
-  · rw [toyD_thetaFLie, toyD_mGeomLie, toyD_thetaF_eq hf.1.continuous,
+  · rw [toyD_thetaFLie, toyD_mGeomLie, toyD_thetaF_eq _,
       toyD_mGeom ψ (θ := ((𝕋).dcScaleAG.toReal : ℂ) • f)
         (hf.1.comp fun z => ((𝕋).dcScaleAG.toReal : ℂ) * z)
         (fun t => by simp only [Pi.smul_apply, toyD_apply_diag χ hf.2.1])]

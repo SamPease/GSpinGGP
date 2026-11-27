@@ -2384,29 +2384,4 @@ theorem haar_pairing_of_isThetaF {f θ : ↥d.G → ℂ} (h : IsThetaF d f θ) :
   rw [e1, integral_const_mul, h.2.2 f' hf', orbitalPairing_eq_haar, Complex.real_smul,
     ← mul_assoc, inv_mul_cancel₀ hc, one_mul]
 
-open scoped Classical in
-/-- **The quasi-character `θ_f` of a strongly cuspidal function** (Thesis §4.8; BP §5.5):
-the function representing the orbital pairing of `f` (`IsThetaF`), chosen by the
-epsilon pattern (as `characterOn`); `0` if there is none.  Its existence and the quasi-character
-property for `f ∈ ScuspTestFn d χ` are `thetaF_spec` (`TraceFormula/ThetaF.lean`).  It is unique
-on the regular set (`thetaF_unique`, ibid.).  Convention: `θ_f(ag) = χ(a)⁻¹ θ_f(g)`, so `θ_f` is
-matched with characters of representations with central character `χ⁻¹`. -/
-def thetaF (f : ↥d.G → ℂ) : ↥d.G → ℂ :=
-  if h : ∃ θ, IsThetaF d f θ then h.choose else 0
-
-/-- If some `θ` represents the orbital pairing of `f`, so does `thetaF d f`. -/
-theorem isThetaF_thetaF_of_exists (f : ↥d.G → ℂ) (h : ∃ θ, IsThetaF d f θ) :
-    IsThetaF d f (thetaF d f) := by
-  classical
-  unfold thetaF
-  rw [dite_eq_left_of_eq_true (eq_true h)]
-  exact h.choose_spec
-
-/-- If no function represents the orbital pairing of `f`, then `thetaF d f = 0`. -/
-theorem thetaF_of_not_exists (f : ↥d.G → ℂ) (h : ¬ ∃ θ, IsThetaF d f θ) :
-    thetaF d f = 0 := by
-  classical
-  unfold thetaF
-  rw [dite_eq_right_of_eq_false (eq_false h)]
-
 end GSpinGGP

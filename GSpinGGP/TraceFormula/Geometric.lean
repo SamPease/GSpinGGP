@@ -688,7 +688,7 @@ theorem thetaF_eq_zero_of_support_subset {f : ↥d.G → ℂ} (hf : f ∈ ScuspT
   have hθ : IsThetaF d f (Ω.indicator (thetaF d f)) := by
     have := isThetaF_indicator d (thetaF_spec d χ hf).1 hΩ
     rwa [Set.indicator_eq_self.2 hs] at this
-  exact (eqOn_thetaF d hθ hg).trans (Set.indicator_of_notMem hgΩ _)
+  exact (eqOn_thetaF d χ hf hθ hg).trans (Set.indicator_of_notMem hgΩ _)
 
 /-- **Away from the elliptic set the expansion is free** (the case of non-elliptic
 points): if the invariant clopen `Ω` contains no

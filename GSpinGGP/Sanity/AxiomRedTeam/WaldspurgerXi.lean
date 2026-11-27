@@ -262,7 +262,7 @@ theorem toyD_integrable_logNorm_rpow_neg {d : ℝ} (hd : (2 : ℝ) + 1 < d) :
 /-- The Iwasawa pair `(G, K)` at `toyD`, `K` the stabilizer of the unit ball of `C(W) × C(V)`. -/
 def toyXiPair : IwasawaPair ↥(𝕋).G where
   P := ⊤
-  K := (latticeStab F (A := (𝕋).ambient)).subgroupOf (𝕋).G
+  K := (Sanity.latticeStab F (A := (𝕋).ambient)).subgroupOf (𝕋).G
   isClosed_P := isClosed_univ
   isOpen_K := (isOpen_latticeStab F).preimage continuous_subtypeVal
   isCompact_K := (𝕋).isClosed_G.isClosedEmbedding_subtypeVal.isCompact_preimage

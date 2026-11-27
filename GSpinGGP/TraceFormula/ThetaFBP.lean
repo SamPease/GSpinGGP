@@ -15,9 +15,9 @@ Waldspurger, Compos. Math. 146 (2010), §5.3) sets
 where `M(x)` is the centralizer of `A_{G_x}`, the maximal split central torus of the torus `G_x`
 (the minimal Levi subgroup containing `x`), and `ν(G_x)` is defined by `d_c t = ν(G_x) dt`
 (Beuzart-Plessis §1.6, p. 30).  This file defines that function, `thetaFBP`, for a given Levi datum
-`L` with `L.M = M(x)` and a good compact subgroup `K`.  It is not (yet) related to `thetaF` in
-general; at the toy datum the two agree (`toyD_thetaF_eq_thetaFBP`, `Sanity/DcQuotientAudit.lean`),
-because `thetaF` uses `dg / d_c a` on `G(F)/A_G(F)` (`measGmodAG`).
+`L` with `L.M = M(x)` and a good compact subgroup `K`; `thetaF` (`TraceFormula/ThetaFGlobal.lean`)
+evaluates it at every regular `x` for a chosen special presentation of `M(x)`.  At the toy datum
+see `toyD_thetaF_eq_thetaFBP` (`Sanity/ToyThetaF.lean`).
 
 **`M(x)` and `A_{G_x}`.**  The Levi subgroup is an input: `IsMx L x` says that `x ∈ G_reg(F)`,
 `x ∈ M(F)`, and `G_x(F)` is compact modulo `A_M(F)`, i.e. `x` is elliptic in `M`.  For a Levi
@@ -62,7 +62,7 @@ uses `d_c t` and has no separate factor `ν`.
 
 * `IsMx.centG_le`: `G_x(F) ⊆ M(F)` (and `x ∈ M(F)` by definition).
 * `exists_isMx`: every `x ∈ G_reg(F)` has an `L` with `IsMx L x` (`sorry`, with a proof sketch;
-  not on the path of the main theorem).
+  on the path of the main theorem through `thetaF`).
 * `isCompact_AGxOne`, `isOpen_AGxOne`: `A_M(F) ∩ ker H_M` is compact and open in `A_M(F)`.
 * `IsDcMeasure.unique`, `dcMeasure_eq`: `d_c t` is unique; `exists_isDcMeasure`,
   `IsMx.exists_isDcMeasure`: it exists when `G_x(F)/A_M(F)` is compact, e.g. for `IsMx L x`.

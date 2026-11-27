@@ -12,11 +12,12 @@ import GSpinGGP.Literature.Measure
 /-!
 # The quasi-character `θ_f` of a strongly cuspidal function
 
-Theory of the function
-`thetaF d f` defined in `TraceFormula/Basic.lean` (Thesis §4.8, §7.1; BP §5.5–5.6), (the Weil measure on `H(F)\G(F)/A_G(F)` and its properties are in `TraceFormula/Basic.lean`).
+Theory of the function `thetaF d f` (Beuzart-Plessis' formula, defined in
+`TraceFormula/ThetaFGlobal.lean`; Thesis §4.8, §7.1; BP §5.2, §5.5–5.6) for
+`f ∈ 𝒞_scusp(G, χ⁻¹)` (`ScuspTestFn`), which is `χ`-equivariant and not compactly supported, so
+outside the class of the literature statements about `θ_f`; the Weil measure on
+`H(F)\G(F)/A_G(F)` and its properties are in `TraceFormula/Basic.lean`.
 
-* `bp_thetaF_exists_of_inline`: `bp_thetaF_exists` for the orbital pairing (with the inline form
-  of strong cuspidality, `isStronglyCuspidal_iff_inline` in `TraceFormula/StronglyCuspidal.lean`).
 * `thetaF_unique`: functions representing the same orbital pairing agree on `G_reg(F)`.
 * `isQuasiCharacter_congr_regularSet`: a quasi-character only depends on its values on
   `G_reg(F)` (needs `conj_mem_regularSet`, `TraceFormula/RegularSetAG.lean`, and the
@@ -26,17 +27,21 @@ Theory of the function
   cuspidality (`chiProj_isStronglyCuspidal`, Fubini over `A_G × U`) and surjectivity onto
   `ScuspTestFn` (`chiProj_surjective`), all proved from the cutoff `agCutoff` along `A_G(F)`
   (`IsAGCutoff`, `exists_isAGCutoff`; built from the Harish-Chandra map `H_G` of `SpinorNorm.lean`).
-* The `χ`-transfer `isThetaF_chiProj`, proved without Fubini: on each fibre of `H_G`,
-  `θ_{P_χ f₀} = c χ(b) θ_{κ P_χ f₀}(b ·)` (`chiTransfer_fibre`, `hasGermExpansion_transfer`); and the
+* The `χ`-transfer `isThetaF_of_cutoff` (and `isThetaF_chiProj`), proved without Fubini: on each
+  fibre of `H_G`, `θ_{φ} = c χ(b) θ_{κ φ}(b ·)` (`chiTransfer_fibre`, `hasGermExpansion_transfer`);
+  and the
   averaging formula `isThetaF_chiProj_avg`, by Fubini on `A_G × G`
   (`integrable_AG_prod`, `orbitalInner_chiProj`) and a finite decomposition of the `A_G`-integrals
   (`integral_char_mul_eq_sum`).
-* `thetaF_spec` (key deliverable), `thetaF_zero`, `thetaF_smul`, `thetaF_add`, `thetaF_conj`,
-  `thetaF_mul_AG` (on `G_reg(F)`), using `mul_mem_regularSet_of_mem_AG` (`G_reg(F)` is stable
-  under `A_G(F)`; `TraceFormula/RegularSetAG.lean`).  No `sorry` remains in this file.
-
-All equalities for `thetaF` hold on `G_reg(F)` only: `thetaF` is chosen by the epsilon pattern
-among functions determined up to null sets.
+* `thetaF_spec` (key deliverable): for `f ∈ ScuspTestFn d χ`, `thetaF d f` represents the orbital
+  pairing and is a quasi-character.  Proof: `κ f` is a strongly cuspidal test function, so
+  `thetaF d (κ f)` represents its pairing (`isThetaF_thetaF_of_cusp`); the `χ`-transfer gives a
+  function representing the pairing of `f`, equal to `c χ(b) θ_{κ f}(b ·)` on each fibre, and
+  that is `thetaF d f` on `G_reg(F)` by the pointwise identities `thetaF_mul_invariant`
+  (`θ_{κ f} = κ θ_f`) and `thetaF_mul_AG_of_isChiEquivariant` (`θ_f(b x) = χ(b)⁻¹ θ_f(x)`).
+* `eqOn_thetaF`, `thetaF_zero`, `thetaF_smul`, `thetaF_add`, `thetaF_conj`, `thetaF_mul_AG` (on
+  `G_reg(F)`), using `mul_mem_regularSet_of_mem_AG` (`G_reg(F)` is stable under `A_G(F)`;
+  `TraceFormula/RegularSetAG.lean`).  No `sorry` remains in this file.
 -/
 
 noncomputable section
@@ -125,31 +130,7 @@ theorem isLocallyConstant_integral_central {S B : Type*} [Group S] [Group B] [To
 
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
-/-! ### `bp_thetaF_exists` for the orbital pairing -/
-
 variable (d : GGPData F) (χ : CentralCharOn d)
-
-/-- `bp_thetaF_exists` (BP Thm 5.5.1) applied with the inline cuspidality predicate `IsStronglyCuspidalInline` (checks that
-the bridge matches the axiom's hypothesis exactly).  That statement is for `Measure.haar` on
-`G(F)/A_G(F)`; its `θ` is rescaled by `c = dcScaleAG` to represent `orbitalPairing`, which uses
-`measGmodAG = c • Measure.haar`. -/
-theorem bp_thetaF_exists_of_inline {f₀ : ↥d.G → ℂ} (hf₀ : f₀ ∈ testFunctions ↥d.G)
-    (h : IsStronglyCuspidalInline d f₀) :
-    ∃ θ : ↥d.G → ℂ, LocallyIntegrable θ Measure.haar ∧
-      ContinuousOn θ (regularSet d.G d.lie) ∧
-      (∀ ψ : NontrivialAddChar F, IsQuasiCharacter d.G d.lie d.bilin ψ θ) ∧
-      ∀ f' ∈ testFunctions ↥d.G,
-        Integrable (fun x : d.GmodAG => orbitalInner d f₀ f' (Quotient.out x)) Measure.haar ∧
-        ∫ g, θ g * f' g ∂Measure.haar = orbitalPairing d f₀ f' := by
-  -- `bp_thetaF_exists` is stated for `Measure.haar` on `G(F)/A_G(F)`; rescale to `measGmodAG`
-  obtain ⟨θ, h1, h2, h3, h4⟩ := LitTF.bp_thetaF_exists d f₀ hf₀ h
-  set c : ℂ := (d.dcScaleAG.toReal : ℂ)
-  refine ⟨c • θ, h1.smul c, h2.const_smul c, fun ψ => isQuasiCharacter_smul d ψ c
-    (h3 ψ), fun f' hf' => ⟨(h4 f' hf').1, ?_⟩⟩
-  have e1 : (fun g => (c • θ) g * f' g) = fun g => c * (θ g * f' g) := by
-    funext g; simp [mul_assoc]
-  rw [e1, integral_const_mul, (h4 f' hf').2, orbitalPairing_eq_haar, Complex.real_smul]
-  rfl
 
 /-! ### Uniqueness of `θ_f` on the regular set -/
 
@@ -168,10 +149,17 @@ theorem thetaF_unique {f θ₁ θ₂ : ↥d.G → ℂ} (h₁ : IsThetaF d f θ�
   Measure.eqOn_open_of_ae_eq (ae_restrict_of_ae (ae_eq_of_isThetaF d h₁ h₂))
     (hc_regularSet_open_conull d).1 h₁.2.1 h₂.2.1
 
-/-- `thetaF d f` agrees on `G_reg(F)` with any function representing the orbital pairing of `f`. -/
-theorem eqOn_thetaF {f θ : ↥d.G → ℂ} (h : IsThetaF d f θ) :
-    Set.EqOn (thetaF d f) θ (regularSet d.G d.lie) :=
-  thetaF_unique d (isThetaF_thetaF_of_exists d f ⟨θ, h⟩) h
+/-- **`IsThetaF` only sees `G_reg(F)`**: a function equal on `G_reg(F)` (open and conull) to one
+representing the orbital pairing of `f` also represents it. -/
+theorem isThetaF_congr_regularSet {f θ θ' : ↥d.G → ℂ} (h : IsThetaF d f θ)
+    (heq : Set.EqOn θ θ' (regularSet d.G d.lie)) : IsThetaF d f θ' := by
+  have hae : θ =ᵐ[(Measure.haar : Measure ↥d.G)] θ' := by
+    refine Filter.mem_of_superset (measure_eq_zero_iff_ae_notMem.1
+      (hc_regularSet_open_conull d).2) fun g hg => heq ?_
+    simpa using hg
+  refine ⟨h.1.congr hae, h.2.1.congr fun g hg => (heq hg).symm, fun f' hf' => ?_⟩
+  rw [← h.2.2 f' hf']
+  exact integral_congr_ae (hae.mono fun g hg => by rw [hg]) |>.symm
 
 /-! ### Quasi-characters only see the regular set -/
 
@@ -587,12 +575,6 @@ theorem integrable_orbitalInner_integrand {f f' : ↥d.G → ℂ} (hf : Continuo
   refine Continuous.integrable_of_hasCompactSupport ?_ (hf'.2.mul_left)
   exact (hf.comp (by fun_prop)).mul hf'.1.continuous
 
-/-- A locally integrable function times a test function is integrable. -/
-theorem integrable_mul_testFunction {θ f' : ↥d.G → ℂ}
-    (hθ : LocallyIntegrable θ (Measure.haar : Measure ↥d.G)) (hf' : f' ∈ testFunctions ↥d.G) :
-    Integrable (fun g => θ g * f' g) (Measure.haar : Measure ↥d.G) := by
-  simpa [mul_comm] using hθ.integrable_smul_left_of_hasCompactSupport hf'.1.continuous hf'.2
-
 /-- `C_c^∞(G(F))` is stable under left translation. -/
 theorem testFunctions_mul_left {f' : ↥d.G → ℂ} (hf' : f' ∈ testFunctions ↥d.G) (b : ↥d.G) :
     (fun g => f' (b * g)) ∈ testFunctions ↥d.G :=
@@ -833,33 +815,35 @@ theorem chiTransfer_fibre {φ θ₁ : ↥d.G → ℂ} (hφ : φ ∈ ScuspTestFn 
     rw [integral_const_mul]; ring
 
 set_option maxHeartbeats 2000000 in
-/-- **`χ`-transfer of `θ`** (Thesis §4.8, §7.1): for
-strongly cuspidal `f₀ ∈ C_c^∞(G(F))`, the orbital pairing of `P_χ f₀` is represented by a
-quasi-character, and its outer integrand is integrable on `G(F)/A_G(F)`.
+/-- **`χ`-transfer of `θ`** (Thesis §4.8, §7.1): for `φ ∈ 𝒞_scusp(G, χ⁻¹)` and a quasi-character
+`θ₁` representing the orbital pairing of the strongly cuspidal test function `κ φ`
+(`κ = agCutoff`, with integrable outer integrands), the orbital pairing of `φ` is represented by a
+quasi-character `θ`, its outer integrand is integrable on `G(F)/A_G(F)`, and on each fibre of
+`H_G`, `θ(g) = c χ(b) θ₁(b g)` for some `b ∈ A_G(F)` with `H_G(b g) ∈ D`.
 
-Proof (own work, no Fubini).  Put `φ = P_χ f₀ ∈ 𝒞_scusp` (`chiProj_mem_scusp`) and let `θ₁` be the
-quasi-character of the strongly cuspidal test function `κ φ` (`bp_thetaF_exists`; `κ = agCutoff`).
-For `t ∈ H_G(G)` choose `b_t ∈ A_G(F)` with `H_G(b_t) t ∈ D` and set, on the clopen fibre
-`H_G⁻¹(t)`, `θ(g) = c χ(b_t) θ₁(b_t g)` (`c = vol(A_G ∩ ker H_G)`).  Then:
+Proof (own work, no Fubini).  For `t ∈ H_G(G)` choose `b_t ∈ A_G(F)` with `H_G(b_t) t ∈ D` and
+set, on the clopen fibre `H_G⁻¹(t)`, `θ(g) = c χ(b_t) θ₁(b_t g)` (`c = vol(A_G ∩ ker H_G)`).  Then:
 * `θ` is locally a constant times a central translate of `θ₁`, hence locally integrable, continuous
   on `G_reg(F)` and a quasi-character (`hasGermExpansion_transfer`: `G_{bx} = G_x`, `𝔤_{bx} = 𝔤_x`,
   and `x e^X` stays in the fibre of `x` for small `X`, `eventually_mem_of_eq_mul_expA`);
 * a test function `f'` is the finite sum of its cuts `f'_t` along the fibres of `H_G`
   (`sum_fibInd_mul`), and on each fibre `⟨φ, f'_t⟩ = ∫ θ f'_t` with integrable outer integrand
   (`chiTransfer_fibre`), so the same holds for `f'`. -/
-theorem isThetaF_chiProj {f₀ : ↥d.G → ℂ} (hf₀ : f₀ ∈ testFunctions ↥d.G)
-    (hcusp : IsStronglyCuspidalInline d f₀) :
-    ∃ θ : ↥d.G → ℂ, IsThetaF d (chiProj d χ f₀) θ ∧
+theorem isThetaF_of_cutoff {φ : ↥d.G → ℂ} (hφ : φ ∈ ScuspTestFn d χ) {θ₁ : ↥d.G → ℂ}
+    (hθ₁li : LocallyIntegrable θ₁ (Measure.haar : Measure ↥d.G))
+    (hθ₁c : ContinuousOn θ₁ (regularSet d.G d.lie))
+    (hθ₁qc : ∀ ψ : NontrivialAddChar F, IsQuasiCharacter d.G d.lie d.bilin ψ θ₁)
+    (hθ₁ : ∀ f' ∈ testFunctions ↥d.G,
+      Integrable (fun x : d.GmodAG => orbitalInner d (d.agCutoff * φ) f' (Quotient.out x))
+        Measure.haar ∧ ∫ g, θ₁ g * f' g ∂Measure.haar = orbitalPairing d (d.agCutoff * φ) f') :
+    ∃ θ : ↥d.G → ℂ, IsThetaF d φ θ ∧
       (∀ ψ : NontrivialAddChar F, IsQuasiCharacter d.G d.lie d.bilin ψ θ) ∧
-      ∀ f' ∈ testFunctions ↥d.G,
-        Integrable (fun x : d.GmodAG => orbitalInner d (chiProj d χ f₀) f' (Quotient.out x))
-          Measure.haar := by
+      (∀ f' ∈ testFunctions ↥d.G,
+        Integrable (fun x : d.GmodAG => orbitalInner d φ f' (Quotient.out x)) Measure.haar) ∧
+      ∀ g : ↥d.G, ∃ b : ↥d.AG, d.hcA b * d.hcG g ∈ d.hcDomain ∧
+        θ g = (d.hcVol : ℂ) * ((χ.toHom b : Circle) : ℂ) * θ₁ ((b : ↥d.G) * g) := by
   classical
-  set φ := chiProj d χ f₀ with hφdef
-  have hφ : φ ∈ ScuspTestFn d χ := chiProj_mem_scusp d χ hf₀ hcusp
   have hφc : Continuous φ := hφ.1.continuous
-  obtain ⟨hf₁, hcusp₁, -⟩ := cutoff_mul_spec d χ (isAGCutoff_agCutoff d) hφ
-  obtain ⟨θ₁, hθ₁li, hθ₁c, hθ₁qc, hθ₁⟩ := bp_thetaF_exists_of_inline d hf₁ hcusp₁
   choose rep hrep using fun t : HCVal => d.exists_hcDomain t
   have hrepD : ∀ t, d.hcA (rep t) * t ∈ d.hcDomain := fun t => (hrep t (rep t)).2 rfl
   set c : ℂ := (d.hcVol : ℂ)
@@ -926,7 +910,8 @@ theorem isThetaF_chiProj {f₀ : ↥d.G → ℂ} (hf₀ : f₀ ∈ testFunctions
     intro f' hf'
     simp_rw [hpieces f' hf']
     exact integrable_finsetSum _ fun t _ => (hfibre f' hf' t).1
-  refine ⟨θ, ⟨hli, hcont, fun f' hf' => ?_⟩, fun ψ => ⟨?_, fun x hx => ?_⟩, hint⟩
+  refine ⟨θ, ⟨hli, hcont, fun f' hf' => ?_⟩, fun ψ => ⟨?_, fun x hx => ?_⟩, hint,
+    fun g => ⟨rep (d.hcG g), hrepD _, rfl⟩⟩
   · -- the pairing identity
     have e1 : ∫ g, θ g * f' g ∂Measure.haar =
         ∑ t ∈ (d.finite_image_hcG hf'.2).toFinset, ∫ g, θ g * (fibInd d t * f') g ∂Measure.haar := by
@@ -958,6 +943,24 @@ theorem isThetaF_chiProj {f₀ : ↥d.G → ℂ} (hf₀ : f₀ ∈ testFunctions
     refine ⟨(b : ↥d.G) * y, ?_, hfib _ y (hX y hy)⟩
     rw [Subgroup.coe_mul, Units.val_mul, hy, Subgroup.coe_mul, Units.val_mul, mul_assoc]
 
+/-- **`χ`-transfer of `θ` for `P_χ f₀`**: for strongly cuspidal `f₀ ∈ C_c^∞(G(F))`, the orbital
+pairing of `P_χ f₀` is represented by a quasi-character, and its outer integrand is integrable on
+`G(F)/A_G(F)` (`isThetaF_of_cutoff` with `θ₁ = θ_{κ P_χ f₀}`, `isThetaF_thetaF_of_cusp`; the
+integrability of the kernel of `κ P_χ f₀` is BP Thm 5.5.1(ii), `bp_integrable_kernel_scusp`). -/
+theorem isThetaF_chiProj {f₀ : ↥d.G → ℂ} (hf₀ : f₀ ∈ testFunctions ↥d.G)
+    (hcusp : IsStronglyCuspidalInline d f₀) :
+    ∃ θ : ↥d.G → ℂ, IsThetaF d (chiProj d χ f₀) θ ∧
+      (∀ ψ : NontrivialAddChar F, IsQuasiCharacter d.G d.lie d.bilin ψ θ) ∧
+      ∀ f' ∈ testFunctions ↥d.G,
+        Integrable (fun x : d.GmodAG => orbitalInner d (chiProj d χ f₀) f' (Quotient.out x))
+          Measure.haar := by
+  have hφ := chiProj_mem_scusp d χ hf₀ hcusp
+  obtain ⟨hf₁, hcusp₁, -⟩ := cutoff_mul_spec d χ (isAGCutoff_agCutoff d) hφ
+  obtain ⟨hθ₁, hqc₁⟩ := isThetaF_thetaF_of_cusp hf₁ hcusp₁
+  obtain ⟨θ, h1, h2, h3, -⟩ := isThetaF_of_cutoff d χ hφ hθ₁.1 hθ₁.2.1 hqc₁ fun f' hf' =>
+    ⟨LitTF.bp_integrable_kernel_scusp d _ hf₁ hcusp₁ f' hf', hθ₁.2.2 f' hf'⟩
+  exact ⟨θ, h1, h2, h3⟩
+
 /-! ### `θ_f` for `f ∈ 𝒞_scusp` -/
 
 /-- For `f ∈ 𝒞_scusp(G, χ⁻¹)` there is a quasi-character representing its orbital pairing, with
@@ -971,14 +974,43 @@ theorem exists_isThetaF_scusp {f : ↥d.G → ℂ} (hf : f ∈ ScuspTestFn d χ)
   exact isThetaF_chiProj d χ hf₀ hcusp
 
 /-- **`θ_f` of a strongly cuspidal function** (Thesis §4.8, Prop 4.8.1(ii); BP Thm 5.5.1, Prop 5.6.1):
-for `f ∈ ScuspTestFn d χ`, `thetaF d f`
-represents the orbital pairing of `f` and is a quasi-character (for every `ψ`). -/
+for `f ∈ ScuspTestFn d χ`, `thetaF d f` (Beuzart-Plessis' formula) represents the orbital
+pairing of `f` and is a quasi-character (for every `ψ`).
+
+Proof.  `κ f ∈ C_c^∞(G(F))` is strongly cuspidal (`cutoff_mul_spec`, `κ = agCutoff`), so
+`θ₁ = thetaF d (κ f)` represents its pairing and is a quasi-character (`isThetaF_thetaF_of_cusp`).
+The `χ`-transfer (`isThetaF_of_cutoff`) gives `θ` representing the pairing of `f`, a
+quasi-character, with `θ(g) = c χ(b) θ₁(b g)` where `H_G(b g) ∈ D`.  For regular `g`,
+`θ₁(b g) = κ(b g) θ_f(b g) = c⁻¹ χ(b)⁻¹ θ_f(g)` (`thetaF_mul_invariant`,
+`thetaF_mul_AG_of_isChiEquivariant`), so `θ = θ_f` on `G_reg(F)`. -/
 theorem thetaF_spec {f : ↥d.G → ℂ} (hf : f ∈ ScuspTestFn d χ) :
     IsThetaF d f (thetaF d f) ∧
       ∀ ψ : NontrivialAddChar F, IsQuasiCharacter d.G d.lie d.bilin ψ (thetaF d f) := by
-  obtain ⟨θ, hθ, hqc, -⟩ := exists_isThetaF_scusp d χ hf
-  exact ⟨isThetaF_thetaF_of_exists d f ⟨θ, hθ⟩, fun ψ =>
-    isQuasiCharacter_congr_regularSet d ψ (hqc ψ) (eqOn_thetaF d hθ).symm⟩
+  obtain ⟨hf₁, hcusp₁, -⟩ := cutoff_mul_spec d χ (isAGCutoff_agCutoff d) hf
+  obtain ⟨hθ₁, hqc₁⟩ := isThetaF_thetaF_of_cusp hf₁ hcusp₁
+  obtain ⟨θ, hθ, hqc, -, hfib⟩ := isThetaF_of_cutoff d χ hf hθ₁.1 hθ₁.2.1 hqc₁ fun f' hf' =>
+    ⟨LitTF.bp_integrable_kernel_scusp d _ hf₁ hcusp₁ f' hf', hθ₁.2.2 f' hf'⟩
+  have hκ : ∀ g y : ↥d.G, d.agCutoff (g⁻¹ * y * g) = d.agCutoff y := fun g y => by
+    simpa using (isAGCutoff_agCutoff d).conj g⁻¹ y
+  have heq : Set.EqOn θ (thetaF d f) (regularSet d.G d.lie) := by
+    intro g _
+    obtain ⟨b, hb, hθg⟩ := hfib g
+    have hcut : d.agCutoff ((b : ↥d.G) * g) = ((d.hcVol : ℂ))⁻¹ := by
+      have : d.hcG ((b : ↥d.G) * g) ∈ d.hcDomain := by rw [map_mul]; exact hb
+      simp only [GGPData.agCutoff, if_pos this]
+    have hc0 : (d.hcVol : ℂ) ≠ 0 := Complex.ofReal_ne_zero.2 d.hcVol_pos.ne'
+    have hχ : ((χ.toHom b : Circle) : ℂ) ≠ 0 := Circle.coe_ne_zero _
+    rw [hθg, thetaF_mul_invariant hκ f, hcut, thetaF_mul_AG_of_isChiEquivariant χ hf.2.1 b g,
+      Circle.coe_inv]
+    field_simp
+  exact ⟨isThetaF_congr_regularSet d hθ heq, fun ψ =>
+    isQuasiCharacter_congr_regularSet d ψ (hqc ψ) heq⟩
+
+/-- `thetaF d f` agrees on `G_reg(F)` with any function representing the orbital pairing of
+`f ∈ 𝒞_scusp(G, χ⁻¹)`. -/
+theorem eqOn_thetaF {f θ : ↥d.G → ℂ} (hf : f ∈ ScuspTestFn d χ) (h : IsThetaF d f θ) :
+    Set.EqOn (thetaF d f) θ (regularSet d.G d.lie) :=
+  thetaF_unique d (thetaF_spec d χ hf).1 h
 
 /-- For `f ∈ 𝒞_scusp(G, χ⁻¹)` and `f' ∈ C_c^∞(G(F))`, `x ↦ ∫_G f(x⁻¹gx) f'(g) dg` is integrable
 on `G(F)/A_G(F)` (Thesis Thm 4.7.1(ii) analogue; via `isThetaF_chiProj`). -/
@@ -994,9 +1026,44 @@ theorem isThetaF_zero : IsThetaF d 0 0 := by
   refine ⟨locallyIntegrable_zero, continuousOn_const, fun f' _ => ?_⟩
   simp [orbitalPairing]
 
-/-- `θ_0 = 0` on the regular set. -/
-theorem thetaF_zero : Set.EqOn (thetaF d 0) 0 (regularSet d.G d.lie) :=
-  eqOn_thetaF d (isThetaF_zero d)
+/-- `θ_0 = 0` on the regular set (in fact everywhere, `thetaF_zero_fun`). -/
+theorem thetaF_zero : Set.EqOn (thetaF d 0) 0 (regularSet d.G d.lie) := by
+  rw [thetaF_zero_fun]; exact fun _ _ => rfl
+
+/-- `𝒞_scusp(G, χ⁻¹)` is a vector space. -/
+theorem add_mem_scuspTestFn {f g : ↥d.G → ℂ} (hf : f ∈ ScuspTestFn d χ)
+    (hg : g ∈ ScuspTestFn d χ) : f + g ∈ ScuspTestFn d χ := by
+  obtain ⟨hf1, hf2, ⟨C₁, hC₁, hs₁⟩, hf4⟩ := hf
+  obtain ⟨hg1, hg2, ⟨C₂, hC₂, hs₂⟩, hg4⟩ := hg
+  refine ⟨hf1.add hg1, fun a x => ?_, ⟨C₁ ∪ C₂, hC₁.union hC₂, fun x hx => ?_⟩,
+    fun FW FV hP p hp => ?_⟩
+  · simp only [Pi.add_apply, hf2 a x, hg2 a x, mul_add]
+  · rcases Function.support_add f g hx with h | h
+    · exact Set.mul_subset_mul_left Set.subset_union_left (hs₁ h)
+    · exact Set.mul_subset_mul_left Set.subset_union_right (hs₂ h)
+  · obtain ⟨i₁, e₁⟩ := hf4 FW FV hP p hp
+    obtain ⟨i₂, e₂⟩ := hg4 FW FV hP p hp
+    refine ⟨i₁.add i₂, ?_⟩
+    simp only [Pi.add_apply]
+    rw [integral_add i₁ i₂, e₁, e₂, add_zero]
+
+theorem smul_mem_scuspTestFn (c : ℂ) {f : ↥d.G → ℂ} (hf : f ∈ ScuspTestFn d χ) :
+    c • f ∈ ScuspTestFn d χ := by
+  obtain ⟨hf1, hf2, ⟨C, hC, hs⟩, hf4⟩ := hf
+  refine ⟨hf1.comp (fun z => c * z), fun a x => ?_, ⟨C, hC, fun x hx => hs ?_⟩,
+    fun FW FV hP p hp => ?_⟩
+  · simp only [Pi.smul_apply, smul_eq_mul, hf2 a x]
+    ring
+  · exact fun h => hx (by simp [h])
+  · obtain ⟨i, e⟩ := hf4 FW FV hP p hp
+    refine ⟨i.smul c, ?_⟩
+    simp only [Pi.smul_apply, smul_eq_mul]
+    rw [integral_const_mul, e, mul_zero]
+
+theorem sub_mem_scuspTestFn {f g : ↥d.G → ℂ} (hf : f ∈ ScuspTestFn d χ)
+    (hg : g ∈ ScuspTestFn d χ) : f - g ∈ ScuspTestFn d χ := by
+  rw [sub_eq_add_neg, ← neg_one_smul ℂ g]
+  exact add_mem_scuspTestFn d χ hf (smul_mem_scuspTestFn d χ (-1) hg)
 
 /-- If `θ` represents the orbital pairing of `f`, then `c θ` represents that of `c f`. -/
 theorem isThetaF_smul (c : ℂ) {f θ : ↥d.G → ℂ} (h : IsThetaF d f θ) :
@@ -1017,7 +1084,7 @@ theorem isThetaF_smul (c : ℂ) {f θ : ↥d.G → ℂ} (h : IsThetaF d f θ) :
 /-- `θ_{c f} = c θ_f` on the regular set. -/
 theorem thetaF_smul (c : ℂ) {f : ↥d.G → ℂ} (hf : f ∈ ScuspTestFn d χ) :
     Set.EqOn (thetaF d (c • f)) (c • thetaF d f) (regularSet d.G d.lie) :=
-  eqOn_thetaF d (isThetaF_smul d c (thetaF_spec d χ hf).1)
+  eqOn_thetaF d χ (smul_mem_scuspTestFn d χ c hf) (isThetaF_smul d c (thetaF_spec d χ hf).1)
 
 /-- **Additivity of `IsThetaF`**: if `θ` and `θ'` represent the orbital pairings of the continuous
 `f` and `g`, and the kernels `x ↦ ∫_G f(x⁻¹ h x) f'(h) dh`, `x ↦ ∫_G g(x⁻¹ h x) f'(h) dh` are
@@ -1050,7 +1117,7 @@ theorem isThetaF_add {f g θ θ' : ↥d.G → ℂ} (hf : Continuous f) (hg : Con
 /-- `θ_{f+g} = θ_f + θ_g` on the regular set. -/
 theorem thetaF_add {f g : ↥d.G → ℂ} (hf : f ∈ ScuspTestFn d χ) (hg : g ∈ ScuspTestFn d χ) :
     Set.EqOn (thetaF d (f + g)) (thetaF d f + thetaF d g) (regularSet d.G d.lie) :=
-  eqOn_thetaF d (isThetaF_add d hf.1.continuous hg.1.continuous (thetaF_spec d χ hf).1
+  eqOn_thetaF d χ (add_mem_scuspTestFn d χ hf hg) (isThetaF_add d hf.1.continuous hg.1.continuous (thetaF_spec d χ hf).1
     (thetaF_spec d χ hg).1 (fun _ hf' => integrable_orbitalInner_scusp d χ hf hf')
     (fun _ hf' => integrable_orbitalInner_scusp d χ hg hf'))
 
@@ -1408,14 +1475,14 @@ Proof (own work).  Replace `θ₀` by `θ' = 1_{G_reg} θ₀` (equal a.e.; equal
 * `⟨P_χ f₀, f'⟩ = ∫_{G/A_G} ∫_{A_G} χ(a) ⟨⟨f₀, f'(a⁻¹·)⟩⟩(x) da dx` (`orbitalInner_chiProj`).  The
   map `a ↦ f'(a⁻¹·)` is locally constant and only `a` in the compact `agRange` contribute, so both
   `A_G`-integrals are the same finite sum `∑ w_τ (·)(τ)` (`integral_char_mul_eq_sum`), and the
-  `G/A_G`-integral of a finite sum is computed with the integrability from `bp_thetaF_exists`.
+  `G/A_G`-integral of a finite sum is computed with the integrability of the kernel (BP Thm
+  5.5.1(ii), `bp_integrable_kernel_scusp`).
 * Continuity on `G_reg(F)`: dominated convergence (`continuousOn_chiAvg`). -/
 theorem isThetaF_chiProj_avg {f₀ θ₀ : ↥d.G → ℂ} (hf₀ : f₀ ∈ testFunctions ↥d.G)
     (hcusp : IsStronglyCuspidalInline d f₀) (hθ₀ : IsThetaF d f₀ θ₀) :
     IsThetaF d (chiProj d χ f₀)
       (fun g => ∫ a : ↥d.AG, ((χ.toHom a : Circle) : ℂ) * θ₀ ((a : ↥d.G) * g) ∂Measure.haar) := by
   classical
-  obtain ⟨_θb, -, -, -, hbp⟩ := LitTF.bp_thetaF_exists d f₀ hf₀ hcusp
   have hreg := hc_regularSet_open_conull d
   set R := regularSet d.G d.lie
   have hRae : ∀ᵐ g ∂(Measure.haar : Measure ↥d.G), g ∈ R := by
@@ -1511,7 +1578,7 @@ theorem isThetaF_chiProj_avg {f₀ θ₀ : ↥d.G → ℂ} (hf₀ : f₀ ∈ tes
     · refine Finset.sum_congr rfl fun τ hτ => ?_
       rw [integral_const_mul, orbitalPairing_eq]
     · obtain ⟨a, rfl⟩ := hRf τ hτ
-      exact (d.integrable_measGmodAG (hbp _ (hΦtest a)).1).const_mul _
+      exact (d.integrable_measGmodAG (LitTF.bp_integrable_kernel_scusp d f₀ hf₀ hcusp _ (hΦtest a))).const_mul _
   rw [hL, hR]
 
 end Core2Cutoff
