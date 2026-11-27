@@ -56,9 +56,13 @@ As of November 2026:
   Beuzart-Plessis's `θ_f` of a strongly cuspidal function, `waldspurger2010_lemme_5_3`,
   `waldspurger2010_cor_5_9` and `bp_thm_5_5_1_iv`, through `thetaF`, which is Beuzart-Plessis's
   formula for `θ_f`.
+  That these axioms say what the sources say rests in part on two `sorry`s that are not on the path:
+  `finite_parabolics` (so that the weight `v_M` in `θ_f` is not a junk value) and
+  `exists_isCompact_conj_mem` (convergence of the orbital integrals).
   There are two classes.
   A *verbatim* axiom is a statement printed in its source, for the group the source treats,
-  specialized (one, `bp_integrable_kernel_scusp`, is stated without proof in its source).
+  specialized (`bp_integrable_kernel_scusp`, `bp_thm_5_5_1_iv` and `weyl_integration_exists` are
+  stated without proof in their sources).
   A *derived* axiom is a short, explicit combination of such statements, or a printed statement
   whose hypotheses are checked for our object in the docstring only; the docstring quotes the
   ingredients and gives the steps. 14 of the 30 are derived (`scripts/derived-axioms.txt`).

@@ -997,7 +997,7 @@ theorem thetaF_spec {f : ↥d.G → ℂ} (hf : f ∈ ScuspTestFn d χ) :
     obtain ⟨b, hb, hθg⟩ := hfib g
     have hcut : d.agCutoff ((b : ↥d.G) * g) = ((d.hcVol : ℂ))⁻¹ := by
       have : d.hcG ((b : ↥d.G) * g) ∈ d.hcDomain := by rw [map_mul]; exact hb
-      simp only [GGPData.agCutoff, if_pos this]
+      simp only [GGPData.agCutoff, ite_eq_left this]
     have hc0 : (d.hcVol : ℂ) ≠ 0 := Complex.ofReal_ne_zero.2 d.hcVol_pos.ne'
     have hχ : ((χ.toHom b : Circle) : ℂ) ≠ 0 := Circle.coe_ne_zero _
     rw [hθg, thetaF_mul_invariant hκ f, hcut, thetaF_mul_AG_of_isChiEquivariant χ hf.2.1 b g,
@@ -1029,41 +1029,6 @@ theorem isThetaF_zero : IsThetaF d 0 0 := by
 /-- `θ_0 = 0` on the regular set (in fact everywhere, `thetaF_zero_fun`). -/
 theorem thetaF_zero : Set.EqOn (thetaF d 0) 0 (regularSet d.G d.lie) := by
   rw [thetaF_zero_fun]; exact fun _ _ => rfl
-
-/-- `𝒞_scusp(G, χ⁻¹)` is a vector space. -/
-theorem add_mem_scuspTestFn {f g : ↥d.G → ℂ} (hf : f ∈ ScuspTestFn d χ)
-    (hg : g ∈ ScuspTestFn d χ) : f + g ∈ ScuspTestFn d χ := by
-  obtain ⟨hf1, hf2, ⟨C₁, hC₁, hs₁⟩, hf4⟩ := hf
-  obtain ⟨hg1, hg2, ⟨C₂, hC₂, hs₂⟩, hg4⟩ := hg
-  refine ⟨hf1.add hg1, fun a x => ?_, ⟨C₁ ∪ C₂, hC₁.union hC₂, fun x hx => ?_⟩,
-    fun FW FV hP p hp => ?_⟩
-  · simp only [Pi.add_apply, hf2 a x, hg2 a x, mul_add]
-  · rcases Function.support_add f g hx with h | h
-    · exact Set.mul_subset_mul_left Set.subset_union_left (hs₁ h)
-    · exact Set.mul_subset_mul_left Set.subset_union_right (hs₂ h)
-  · obtain ⟨i₁, e₁⟩ := hf4 FW FV hP p hp
-    obtain ⟨i₂, e₂⟩ := hg4 FW FV hP p hp
-    refine ⟨i₁.add i₂, ?_⟩
-    simp only [Pi.add_apply]
-    rw [integral_add i₁ i₂, e₁, e₂, add_zero]
-
-theorem smul_mem_scuspTestFn (c : ℂ) {f : ↥d.G → ℂ} (hf : f ∈ ScuspTestFn d χ) :
-    c • f ∈ ScuspTestFn d χ := by
-  obtain ⟨hf1, hf2, ⟨C, hC, hs⟩, hf4⟩ := hf
-  refine ⟨hf1.comp (fun z => c * z), fun a x => ?_, ⟨C, hC, fun x hx => hs ?_⟩,
-    fun FW FV hP p hp => ?_⟩
-  · simp only [Pi.smul_apply, smul_eq_mul, hf2 a x]
-    ring
-  · exact fun h => hx (by simp [h])
-  · obtain ⟨i, e⟩ := hf4 FW FV hP p hp
-    refine ⟨i.smul c, ?_⟩
-    simp only [Pi.smul_apply, smul_eq_mul]
-    rw [integral_const_mul, e, mul_zero]
-
-theorem sub_mem_scuspTestFn {f g : ↥d.G → ℂ} (hf : f ∈ ScuspTestFn d χ)
-    (hg : g ∈ ScuspTestFn d χ) : f - g ∈ ScuspTestFn d χ := by
-  rw [sub_eq_add_neg, ← neg_one_smul ℂ g]
-  exact add_mem_scuspTestFn d χ hf (smul_mem_scuspTestFn d χ (-1) hg)
 
 /-- If `θ` represents the orbital pairing of `f`, then `c θ` represents that of `c f`. -/
 theorem isThetaF_smul (c : ℂ) {f θ : ↥d.G → ℂ} (h : IsThetaF d f θ) :
@@ -1117,7 +1082,8 @@ theorem isThetaF_add {f g θ θ' : ↥d.G → ℂ} (hf : Continuous f) (hg : Con
 /-- `θ_{f+g} = θ_f + θ_g` on the regular set. -/
 theorem thetaF_add {f g : ↥d.G → ℂ} (hf : f ∈ ScuspTestFn d χ) (hg : g ∈ ScuspTestFn d χ) :
     Set.EqOn (thetaF d (f + g)) (thetaF d f + thetaF d g) (regularSet d.G d.lie) :=
-  eqOn_thetaF d χ (add_mem_scuspTestFn d χ hf hg) (isThetaF_add d hf.1.continuous hg.1.continuous (thetaF_spec d χ hf).1
+  eqOn_thetaF d χ (add_mem_scuspTestFn d χ hf hg)
+    (isThetaF_add d hf.1.continuous hg.1.continuous (thetaF_spec d χ hf).1
     (thetaF_spec d χ hg).1 (fun _ hf' => integrable_orbitalInner_scusp d χ hf hf')
     (fun _ hf' => integrable_orbitalInner_scusp d χ hg hf'))
 
@@ -1578,7 +1544,8 @@ theorem isThetaF_chiProj_avg {f₀ θ₀ : ↥d.G → ℂ} (hf₀ : f₀ ∈ tes
     · refine Finset.sum_congr rfl fun τ hτ => ?_
       rw [integral_const_mul, orbitalPairing_eq]
     · obtain ⟨a, rfl⟩ := hRf τ hτ
-      exact (d.integrable_measGmodAG (LitTF.bp_integrable_kernel_scusp d f₀ hf₀ hcusp _ (hΦtest a))).const_mul _
+      exact (d.integrable_measGmodAG
+        (LitTF.bp_integrable_kernel_scusp d f₀ hf₀ hcusp _ (hΦtest a))).const_mul _
   rw [hL, hR]
 
 end Core2Cutoff

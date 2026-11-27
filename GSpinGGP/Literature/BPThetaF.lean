@@ -11,7 +11,10 @@ import GSpinGGP.Literature.HarishChandra
 Sources.
 * **W1**: J.-L. Waldspurger, *Une formule intégrale reliée à la conjecture locale de
   Gross–Prasad*, Compositio Math. 146 (2010) 1180–1290.  Cited with the page numbers of
-  arXiv:0902.1875v1 ("arXiv p."); the Compositio page numbers have not been checked.  Setting
+  arXiv:0902.1875v1 ("arXiv p.") and, for the passages used, of the published version (checked):
+  §1.2 p. 1185, §2.6 p. 1190, §3.1 p. 1192, §4.1 p. 1194, §5.2 Lemme p. 1195, §5.3 (definition
+  of `θ_f`) p. 1196 and Lemme p. 1197, §5.9 Corollaire (printed "Corollary") p. 1204, §7.1
+  p. 1211, §7.2 p. 1212.  Setting
   (§1.1, arXiv p. 5): `F` non-archimedean of characteristic `0` (no condition on the residue
   characteristic), `G` a connected reductive group over `F`.
 * **BP**: R. Beuzart-Plessis, *A local trace formula for the Gan–Gross–Prasad conjecture for
@@ -36,9 +39,15 @@ in other notation).  Each axiom's docstring lists which it uses.
   (BP §1.5, p. 25) and `C_c^∞(G(F)) ∩ 𝒞_scusp(G(F))` is the strongly cuspidal `C_c^∞` functions.
   `IsStronglyCuspidalInline d f` is W1 §5.1 / BP §5.1 strong cuspidality: `∫_{U(F)} f(pu) du = 0`
   for every proper parabolic `P = MU` and `p ∈ P(F)` (equivalently `x ∈ M(F)`, writing `p = mu'`),
-  over the proper parabolics `whittB FW FV` given by pairs of isotropic flags (every parabolic of a
-  product of `GSpin`s is of this form, Thesis §5.1.2); the same identification as in the docstring
-  of `LitTF.bp_integrable_kernel_scusp`.
+  over the proper parabolics `whittB FW FV` given by pairs of isotropic flags.  Every parabolic
+  of `G` is of this form: parabolics of a product are products; the parabolics of `GSpin(U)` are
+  the preimages of those of `SO(U)` under the quotient map `π` (J. S. Milne, *Algebraic Groups*,
+  notes v2.00, Prop. 18.24, p. 318); and those of `SO(U)` are the stabilizers of totally
+  isotropic flags (G. Malle, D. Testerman, *Linear Algebraic Groups and Finite Groups of Lie
+  Type*, Prop. 12.13, p. 101, stated for simple classical groups; for `dim U ≤ 2` and the
+  non-simple `dim U = 4` the same description is the dissertation's, Thesis §5.1.2).  The
+  sources are the ones of `Literature/SpecialKIwasawa.lean`.  The same identification as in the
+  docstring of `LitTF.bp_integrable_kernel_scusp`.
 * **(I2) `dg` (homogeneity).**  W1 (§1.2, arXiv p. 7) and BP (§1.6, p. 30) fix `dg` through the
   exponential map; `Measure.haar = c · dg` for some `0 < c < ∞`.  `θ_f` has degree `1` in `dg`:
   `J_{M(x)}(x, f)` integrates over `G_x(F)\G(F)` for `dg/dt`, and `ν(G_x)⁻¹ (dg/dt) = dg/d_c t`
@@ -88,7 +97,8 @@ namespace GSpinGGP
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
 /-- **W1 Lemme 5.2 (i), (ii) and Lemme 5.3** (Waldspurger, Compositio Math. 146 (2010); §5.2,
-arXiv p. 17, and §5.3, arXiv p. 18; printed with proofs).
+arXiv p. 17, Compositio p. 1195, and §5.3, arXiv p. 18, Compositio pp. 1196–1197; printed with
+proofs).
 
 W1 §5.2 (arXiv p. 17), for `M` a Levi subgroup and `K` "un sous-groupe compact spécial de `G(F)` en
 bonne position relativement à `M`": "Lemme. Soient `f ∈ C_c^∞(G(F))` et `x ∈ M(F) ∩ G_reg(F)`. On
@@ -124,8 +134,13 @@ bare `∀` over special presentations: it relies on (I3), i.e. on `IsSpecial` ad
 special `K` in good position.  That is the soundness direction of the definition of `IsSpecial`
 (W1 §7.1–7.2 with the Bruhat–Tits identification); it is tested on `gl2Data`, where a `GoodK` that
 is not special and lattices that are not special are excluded (`Sanity/GL2SpecialK.lean`).
-Off the toy datum, non-vacuity of conjunct 2 rests on the `sorry`s `exists_isMx` and
-`exists_specialK` (vacuous, not false, if they failed). -/
+Conjunct 1 is load-bearing on the path of `local_ggp`: it gives the independence of the special
+presentation used by `thetaF` (`thetaF_eq_thetaFBP`), including between different presentations
+`L ≠ L'` of the same `M(x)`, which is the identification (I5), proved in Lean only for `L.opp`.
+Off the toy datum, `IsBPThetaF f (thetaF d f)` (`isBPThetaF_thetaF`) is proved from the
+`sorry`s `exists_isMx` and `exists_specialK`.  Were they false, the axiom would be vacuous there
+rather than false, but the path of `local_ggp` uses the axiom at `θ = thetaF d f`, so the main
+theorem's proof relies on its non-vacuity, i.e. on those two `sorry`s. -/
 axiom waldspurger2010_lemme_5_3 (d : GGPData F) {f : ↥d.G → ℂ} (hf : f ∈ testFunctions ↥d.G)
     (hcusp : IsStronglyCuspidalInline d f) :
     (∀ (x y : ↥d.G) (L L' : d.ReducedLeviDatum) (K : d.GoodK L.toFlagLeviDatum)
@@ -134,7 +149,8 @@ axiom waldspurger2010_lemme_5_3 (d : GGPData F) {f : ↥d.G → ℂ} (hf : f ∈
     ∀ θ : ↥d.G → ℂ, d.IsBPThetaF f θ →
       LocallyIntegrable θ (Measure.haar : Measure ↥d.G) ∧ ContinuousOn θ (regularSet d.G d.lie)
 
-/-- **W1 Corollaire 5.9** (Waldspurger, Compositio Math. 146 (2010), §5.9, arXiv p. 26; printed
+/-- **W1 Corollaire 5.9** (Waldspurger, Compositio Math. 146 (2010), §5.9, arXiv p. 26,
+Compositio p. 1204; printed
 with proof): "Corollaire. Soit `f ∈ C_c^∞(G(F))`. Supposons `f` très cuspidale. Alors la fonction
 `θ_f` est un quasi-caractère."
 
@@ -163,15 +179,18 @@ for every nontrivial `ψ`.  Derivation:
     characteristic `0`), and each meets `𝔤_x(F)` in finitely many `G_x(F)`-orbits, which are
     parametrized by a subset of `H¹(F, Z_{G_x}(N))`, finite by Borel–Serre, Comment. Math. Helv.
     39 (1964), Thm 6.1 (as in the sketch of `finite_nilReg`).  So `c` has finite support;
-  - pointwise on `X ∈ ω` regular in `𝔤_x`: **this is printed**, in BP's definition (§4.1,
-    pp. 73–74, "for all `Y ∈ ω_{x,reg}`", given there as W1's notion), so the step passes because
-    it is in print, not because the argument below is short.  Cross-check from W1's a.e. form:
-    by W1 §3.1 (arXiv p. 14: for `X ∈ ω`, `G_{x exp X} = (G_x)_X` and
-    `D^G(x exp X) = D^G(x) D^{G_x}(X)`) `x exp X ∈ G_reg(F)` for such `X` (here
-    `exists_nhds_mul_expA_mem_regularSet`); there `θ` is locally constant (W1 §4.1, arXiv p. 16)
-    and so is `ĵ(O, ·)` (W1 §2.6, arXiv p. 12: "localement constante sur `𝔤_reg(F)`"); two
-    functions continuous on an open set and equal almost everywhere on it agree there, since Haar
-    measure charges every nonempty open set;
+  - pointwise on `X ∈ ω` regular in `𝔤_x` (W1 states the expansion for almost every `X ∈ ω`).
+    Derivation from W1, step by step: `θ_f` is locally constant on `G_reg(F)` (W1 §5.3 Lemme,
+    arXiv p. 18, Compositio p. 1197); `ĵ(O, ·)` is locally constant on `𝔤_{x,reg}(F)` (W1 §2.6,
+    arXiv p. 12, Compositio p. 1190: "localement constante sur `𝔤_reg(F)`", applied to `G_x`);
+    for `X ∈ ω` regular in `𝔤_x`, `x exp X ∈ G_reg(F)` (W1 §3.1, arXiv p. 14, Compositio
+    p. 1192: `G_{x exp X} = (G_x)_X` and `D^G(x exp X) = D^G(x) D^{G_x}(X)`; here
+    `exists_nhds_mul_expA_mem_regularSet`); `exp` is a homeomorphism of `ω` onto its image
+    (W1 §3.1(2)), so `X ↦ θ_f(x exp X)` is locally constant on `ω ∩ 𝔤_{x,reg}(F)`, which is
+    open; two locally constant functions on an open set that agree almost everywhere agree
+    everywhere on it, since Haar measure charges every nonempty open set.  BP's definition
+    (§4.1, pp. 73–74, "for all `Y ∈ ω_{x,reg}`", given there as W1's notion) prints the same
+    pointwise form;
   - W1's `exp` is `expA F` (the exponential series of the ambient algebra, defined near `0`), and
     `ω` is a neighbourhood of `0` in `𝔤_x(F)`, hence the trace of a neighbourhood of `0` in the
     ambient algebra;
@@ -190,6 +209,10 @@ for every nontrivial `ψ`.  Derivation:
     "autoduale" measure on `O` from the symplectic form `(Y, Z) ↦ ⟨X, [Y, Z]⟩` (W1 §1.2, p. 6).
     The two can differ only by a positive scalar per orbit (a different normalization of the
     invariant measure on `O`), which is absorbed into the coefficient `c_{θ,O}(x)`.
+    **Identification step, with an uncounted existence**: W1's autodual measure on each `O`
+    (§1.2) satisfies `IsOrbitMeasure`; `orbitMeasure` is chosen by choice and is `0` when no
+    measure satisfies `IsOrbitMeasure`, so this step presupposes that one exists (as for
+    `germLie_unique_SO`, `Literature/Luo.lean`).  It is not proved here.
 * (I6): `IsQuasiCharacter` only reads `θ` on `G_reg(F)` (its invariance clause is for regular `y`,
   and its expansion is evaluated at `x exp X ∈ G_reg(F)`), so it holds for any `θ` agreeing with
   `c · θ_f` there.
@@ -199,9 +222,11 @@ function `θ_f` is a quasi-character on `G(F)`"); BP's proof of (ii) uses Thm 5.
 proved corollary is the anchor here.
 
 As for `hc_character_isQuasiCharacter_admissible`, the statement presupposes that `ĵ(O, ·)` exists
-(`jHat` is defined by choice, `0` otherwise); W1 §2.6 and Harish-Chandra prove it.  Off the toy
-datum, non-vacuity of the hypothesis `IsBPThetaF` rests on the `sorry`s `exists_isMx` and
-`exists_specialK`; if they failed the axiom would be vacuous, not false. -/
+(`jHat` is defined by choice, `0` otherwise); W1 §2.6 and Harish-Chandra prove it.
+Off the toy datum, `IsBPThetaF f (thetaF d f)` (`isBPThetaF_thetaF`) is proved from the
+`sorry`s `exists_isMx` and `exists_specialK`.  Were they false, the axiom would be vacuous there
+rather than false, but the path of `local_ggp` uses the axiom at `θ = thetaF d f`, so the main
+theorem's proof relies on its non-vacuity, i.e. on those two `sorry`s. -/
 axiom waldspurger2010_cor_5_9 (d : GGPData F) {f : ↥d.G → ℂ} (hf : f ∈ testFunctions ↥d.G)
     (hcusp : IsStronglyCuspidalInline d f) :
     ∀ θ : ↥d.G → ℂ, d.IsBPThetaF f θ → ∀ ψ : NontrivialAddChar F,
@@ -265,9 +290,10 @@ Derivation (identification steps):
 
 The statement is no stronger than BP's: BP's (iv), for its `dg`, `dt` and `θ_f`, implies it with
 `μ = dt`.  Soundness relies on (I3), `IsSpecial` ⇒ special in good position, which is tested at
-`gl2Data` (`Sanity/GL2SpecialK.lean`).  Off the toy datum, non-vacuity of the hypothesis
-`IsBPThetaF` rests on the `sorry`s `exists_isMx` and `exists_specialK` (if they failed, the axiom
-would be vacuous, not false). -/
+`gl2Data` (`Sanity/GL2SpecialK.lean`).  Off the toy datum, `IsBPThetaF f (thetaF d f)` (`isBPThetaF_thetaF`) is proved from the
+`sorry`s `exists_isMx` and `exists_specialK`.  Were they false, the axiom would be vacuous there
+rather than false, but the path of `local_ggp` uses the axiom at `θ = thetaF d f`, so the main
+theorem's proof relies on its non-vacuity, i.e. on those two `sorry`s. -/
 axiom bp_thm_5_5_1_iv (d : GGPData F) :
     ∃ μ : ∀ T : Subgroup ↥d.G, Measure ↥T, (∀ T : d.MaxTorus, (μ T.1).IsHaarMeasure) ∧
       ∀ f ∈ testFunctions ↥d.G, IsStronglyCuspidalInline d f →

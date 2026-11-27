@@ -24,7 +24,9 @@ statement about `θ_f` (they only see `G_reg(F)`, and every regular `x` has a pr
 
 The definition is the formula for every `f`, with no hypothesis.  For `f` strongly cuspidal in
 `C_c^∞(G(F))`, the literature axioms (`Literature/BPThetaF.lean`) say that every special
-presentation gives the same value, so `thetaF d f` is Beuzart-Plessis' `θ_f` (`isBPThetaF_thetaF`)
+presentation gives the same value (this includes presentations `L ≠ L'` of the same `M(x)`:
+`waldspurger2010_lemme_5_3`, conjunct 1, is the only source of that independence here), so
+`thetaF d f` is Beuzart-Plessis' `θ_f` (`isBPThetaF_thetaF`)
 for `dg = Measure.haar`; and then `thetaF d f` represents the orbital pairing (`IsThetaF`,
 `isThetaF_thetaF_of_cusp`): BP Thm 5.5.1(iv) gives `J^A(f, f') = ∫_{Γ(G)} D^{1/2} θ_f J_G(·, f')`,
 and the Weyl integration formula (for `θ_f f' ∈ L¹`, `integral_mul_invariant`) turns the right
@@ -32,7 +34,8 @@ side into `∫_G θ_f f'`.
 
 For `χ`-equivariant `f` (`ScuspTestFn`), which are not compactly supported, the axioms do not
 apply; `TraceFormula/ThetaF.lean` reduces that case to the compactly supported one with two
-pointwise identities proved here, which hold for every `f` and need no axiom:
+pointwise identities, which hold for every `f` and need no axiom (the one-presentation versions
+`thetaFBP_mul_AG`, `thetaFBP_mul_invariant` are in `TraceFormula/ThetaFBP.lean`):
 `thetaF_mul_AG_of_isChiEquivariant` (`θ_f(a x) = χ(a)⁻¹ θ_f(x)`) and `thetaF_mul_invariant`
 (`θ_{κ f} = κ θ_f` for conjugation-invariant `κ`).
 
@@ -45,7 +48,7 @@ pointwise identities proved here, which hold for every `f` and need no axiom:
 
 * `thetaF_eq_thetaFBP`: for `f ∈ C_c^∞` strongly cuspidal, `θ_f(x) = thetaFBP L K f x` for every
   special presentation `(L, K)` of `M(x)`.
-* `isBPThetaF_thetaF`, `thetaF_conj`.
+* `isBPThetaF_thetaF`, `thetaF_conj_of_cusp`.
 * `isThetaF_thetaF_of_cusp`: `thetaF d f` represents the orbital pairing and is a
   quasi-character.
 * `thetaF_mul_AG_of_isChiEquivariant`, `thetaF_mul_invariant`, `thetaF_zero_fun`.
@@ -62,93 +65,6 @@ variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 namespace GGPData
 
 variable {d : GGPData F}
-
-/-! ## Measures that depend on `x` only through `G_x(F)` -/
-
-namespace ReducedLeviDatum
-
-variable (L : d.ReducedLeviDatum)
-
-/-- `A_M(F) ∩ T` for a subgroup `T`; `AGx L x` is `AGxOn L (G_x(F))` (`AGx_eq_AGxOn`). -/
-def AGxOn (T : Subgroup ↥d.G) : Subgroup ↥T := L.AMF.subgroupOf T
-
-/-- The inclusion `A_M(F) ∩ T → M(F)`. -/
-def AGxToMOn (T : Subgroup ↥d.G) : ↥(L.AGxOn T) →* ↥L.M :=
-  (T.subtype.comp (L.AGxOn T).subtype).codRestrict L.M
-    fun a => L.AMF_le_M (Subgroup.mem_subgroupOf.1 a.2)
-
-/-- `A_M(F) ∩ T ∩ ker H_M`. -/
-def AGxOneOn (T : Subgroup ↥d.G) : Subgroup ↥(L.AGxOn T) := (L.HMHom.comp (L.AGxToMOn T)).ker
-
-/-- `IsDcMeasure` for a subgroup `T` in place of `G_x(F)`. -/
-def IsDcMeasureOn (T : Subgroup ↥d.G) (μ : Measure ↥T) : Prop :=
-  μ.IsHaarMeasure ∧ ∃ (μA : Measure ↥(L.AGxOn T)) (m : Measure (CosetSpace (L.AGxOn T).subtype)),
-    μA.IsHaarMeasure ∧ μA (L.AGxOneOn T : Set ↥(L.AGxOn T)) = 1 ∧
-      IsWeilMeasure (L.AGxOn T).subtype μ μA m ∧ m Set.univ = 1
-
-open scoped Classical in
-/-- `dcMeasure` for a subgroup `T` in place of `G_x(F)`. -/
-def dcMeasureOn (T : Subgroup ↥d.G) : Measure ↥T :=
-  if h : ∃ μ, L.IsDcMeasureOn T μ then h.choose else 0
-
-/-- `d_c t` on `G_x(F)` depends on `x` only through `G_x(F)`. -/
-theorem dcMeasure_eq_dcMeasureOn (x : ↥d.G) : L.dcMeasure x = L.dcMeasureOn (d.centG x) := rfl
-
-/-- **Integrals over `G_x(F)\G(F)` for `dg / d_c t` depend on `x` only through `G_x(F)`.** -/
-theorem integral_orbQuotMeasure_dcMeasure_congr {x y : ↥d.G} (h : d.centG x = d.centG y)
-    (Φ : ↥d.G → ℂ) :
-    ∫ q, Φ (CosetSpace.out _ q) ∂d.orbQuotMeasure x (L.dcMeasure x) =
-      ∫ q, Φ (CosetSpace.out _ q) ∂d.orbQuotMeasure y (L.dcMeasure y) := by
-  have key : ∀ T T' : Subgroup ↥d.G, T = T' →
-      ∫ q, Φ (CosetSpace.out T.subtype q) ∂d.quotMeasureOn T (L.dcMeasureOn T) =
-        ∫ q, Φ (CosetSpace.out T'.subtype q) ∂d.quotMeasureOn T' (L.dcMeasureOn T') := by
-    rintro T _ rfl; rfl
-  exact key _ _ h
-
-variable {L}
-
-/-- **`IsMx` depends on `x` only through `G_x(F)`** (for regular `x`): `x ∈ G_x(F) ⊆ M(F)`, and
-`A_{G_x}(F)` is defined from `G_x(F)`. -/
-theorem IsMx.of_centG_eq {x y : ↥d.G} (h : L.IsMx x) (hy : y ∈ regularSet d.G d.lie)
-    (hc : d.centG y = d.centG x) : L.IsMx y := by
-  refine ⟨hy, h.centG_le (hc ▸ Subgroup.mem_centralizer_singleton_iff.2 rfl), ?_⟩
-  have key : ∀ T T' : Subgroup ↥d.G, T = T' →
-      CompactSpace (CosetSpace (L.AGxOn T).subtype) →
-        CompactSpace (CosetSpace (L.AGxOn T').subtype) := by
-    rintro T _ rfl h; exact h
-  exact key _ _ hc.symm h.compact
-
-/-- **`θ_f(a x) = χ(a)⁻¹ θ_f(x)` for one presentation**, `f` `χ`-equivariant and `a ∈ A_G(F)`:
-`G_{a x}(F) = G_x(F)`, and `f(g⁻¹ a x g) = f(a g⁻¹ x g) = χ(a)⁻¹ f(g⁻¹ x g)` (`a` central). -/
-theorem thetaFBP_mul_AG (K : d.GoodK L.toFlagLeviDatum) (χ : CentralCharOn d) {f : ↥d.G → ℂ}
-    (hf : IsChiEquivariant d χ f) (a : ↥d.AG) (x : ↥d.G) :
-    L.thetaFBP K f ((a : ↥d.G) * x) = (((χ.toHom a)⁻¹ : Circle) : ℂ) * L.thetaFBP K f x := by
-  rw [thetaFBP_eq_integral, thetaFBP_eq_integral,
-    L.integral_orbQuotMeasure_dcMeasure_congr (d.centG_mul_AG x a.2)]
-  unfold weightedIntegrand
-  have hc : ∀ g : ↥d.G, g⁻¹ * ((a : ↥d.G) * x) * g = (a : ↥d.G) * (g⁻¹ * x * g) := fun g => by
-    have hb := Subgroup.mem_center_iff.mp (d.AG_le_center a.2) g⁻¹
-    rw [← mul_assoc, hb, mul_assoc, mul_assoc, mul_assoc]
-  simp_rw [hc, hf a, mul_assoc, integral_const_mul]
-  ring
-
-/-- **`θ_{κ f} = κ θ_f` for one presentation**, for `κ` invariant under conjugation. -/
-theorem thetaFBP_mul_invariant (K : d.GoodK L.toFlagLeviDatum) {κ : ↥d.G → ℂ}
-    (hκ : ∀ g y : ↥d.G, κ (g⁻¹ * y * g) = κ y) (f : ↥d.G → ℂ) (x : ↥d.G) :
-    L.thetaFBP K (κ * f) x = κ x * L.thetaFBP K f x := by
-  rw [thetaFBP_eq_integral, thetaFBP_eq_integral]
-  unfold weightedIntegrand
-  simp_rw [Pi.mul_apply, hκ, mul_assoc, integral_const_mul]
-  ring
-
-/-- `θ_0 = 0` for one presentation. -/
-theorem thetaFBP_zero_fun (K : d.GoodK L.toFlagLeviDatum) (x : ↥d.G) :
-    L.thetaFBP K 0 x = 0 := by
-  rw [thetaFBP_eq_integral]
-  unfold weightedIntegrand
-  simp
-
-end ReducedLeviDatum
 
 /-! ## The chosen presentation -/
 
@@ -185,7 +101,7 @@ theorem thetaPres_spec {T : Subgroup ↥d.G} {p : Σ L : d.ReducedLeviDatum, d.G
 theorem thetaPres_isSome {T : Subgroup ↥d.G} (h : d.HasThetaPres T) : (d.thetaPres T).isSome := by
   classical
   unfold thetaPres
-  rw [dif_pos h]
+  rw [dite_eq_left h]
   rfl
 
 /-- Every regular `x` has a special presentation of `M(x)` (from the `sorry`s `exists_isMx` and
@@ -203,17 +119,20 @@ end GGPData
 variable (d : GGPData F)
 
 open scoped Classical in
-/-- **Beuzart-Plessis' `θ_f`** (Astérisque 418, §5.2, p. 109; Waldspurger 2010, §5.3; Thesis
-§4.8): at `x ∈ G_reg(F)`,
+/-- **Beuzart-Plessis' `θ_f`** (Astérisque 418, §5.2, p. 109; Waldspurger 2010, §5.3), in
+Beuzart-Plessis' normalization (not the introductory formula `(−1)^{a_{M(x)}} J_{M(x)}(x, f)` of
+Thesis Ch. 1): at `x ∈ G_reg(F)`,
 `θ_f(x) = (−1)^{a_G − a_{M(x)}} ν(G_x)⁻¹ D^G(x)^{−1/2} J_{M(x)}(x, f) = L.thetaFBP K f x`
 for the special presentation `(L, K)` of `M(x)` chosen for the torus `G_x(F)` (`thetaPres`), with
 `dg = Measure.haar` on `G(F)`; `0` off `G_reg(F)` (and at a regular `x` without special
 presentation, which does not occur by `exists_isMx` and `exists_specialK`).
 
-The formula is evaluated for every `f`.  For `f ∈ C_c^∞(G(F))` strongly cuspidal it does not
-depend on the presentation (`thetaF_eq_thetaFBP`) and it represents the orbital pairing
-(`isThetaF_thetaF_of_cusp`); for `f ∈ 𝒞_scusp(G, χ⁻¹)` the same holds (`thetaF_spec`,
-`TraceFormula/ThetaF.lean`).  Convention: `θ_f(ag) = χ(a)⁻¹ θ_f(g)` for `χ`-equivariant `f`, so
+The formula is evaluated for every `f`.  For `f ∈ C_c^∞(G(F))` strongly cuspidal every special
+presentation gives the same value (`thetaF_eq_thetaFBP`, from `waldspurger2010_lemme_5_3`) and
+`thetaF d f` represents the orbital pairing (`isThetaF_thetaF_of_cusp`).  For
+`f ∈ 𝒞_scusp(G, χ⁻¹)` it represents the orbital pairing (`thetaF_spec`,
+`TraceFormula/ThetaF.lean`); independence of the presentation is not stated for such `f`.
+Convention: `θ_f(ag) = χ(a)⁻¹ θ_f(g)` for `χ`-equivariant `f`, so
 `θ_f` is matched with characters of representations with central character `χ⁻¹`. -/
 def thetaF (f : ↥d.G → ℂ) (x : ↥d.G) : ℂ :=
   if x ∈ regularSet d.G d.lie then
@@ -224,12 +143,12 @@ variable {d}
 
 theorem thetaF_of_not_mem {f : ↥d.G → ℂ} {x : ↥d.G} (hx : x ∉ regularSet d.G d.lie) :
     thetaF d f x = 0 := by
-  rw [thetaF, if_neg hx]
+  rw [thetaF, ite_eq_right hx]
 
 theorem thetaF_of_thetaPres {f : ↥d.G → ℂ} {x : ↥d.G} (hx : x ∈ regularSet d.G d.lie)
     {p : Σ L : d.ReducedLeviDatum, d.GoodK L.toFlagLeviDatum}
     (hp : d.thetaPres (d.centG x) = some p) : thetaF d f x = p.1.thetaFBP p.2 f x := by
-  rw [thetaF, if_pos hx, hp]
+  rw [thetaF, ite_eq_left hx, hp]
   rfl
 
 theorem thetaF_of_thetaPres_none {f : ↥d.G → ℂ} {x : ↥d.G}
@@ -272,11 +191,11 @@ theorem thetaF_mul_AG_of_isChiEquivariant (χ : CentralCharOn d) {f : ↥d.G →
   unfold thetaF
   rw [d.centG_mul_AG x a.2]
   by_cases hx : x ∈ regularSet d.G d.lie
-  · rw [if_pos (hreg.2 hx), if_pos hx]
+  · rw [ite_eq_left (hreg.2 hx), ite_eq_left hx]
     cases d.thetaPres (d.centG x) with
     | none => simp
     | some p => exact GGPData.ReducedLeviDatum.thetaFBP_mul_AG p.2 χ hf a x
-  · rw [if_neg (mt hreg.1 hx), if_neg hx, mul_zero]
+  · rw [ite_eq_right (mt hreg.1 hx), ite_eq_right hx, mul_zero]
 
 variable (d) in
 /-- A locally integrable function times a test function is integrable. -/

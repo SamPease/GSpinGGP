@@ -23,7 +23,8 @@ The composite statements built on it: `bp_thetaF_exists` (`TraceFormula/ThetaFRe
 the quasi-character `θ_f`; proved from this axiom and `bp_thetaF_represents`, itself proved from
 the axioms about Beuzart-Plessis' `θ_f` of `Literature/BPThetaF.lean` and the Weyl integration
 formula) and `bp_scusp_surj_ell` (`TraceFormula/Scusp.lean`; BP Cor 5.7.2(i), adapted to a
-non-compact centre; proved from this axiom and two `sorry` theorems of `TraceFormula/StronglyCuspidal.lean`).
+non-compact centre; proved from this axiom and two `sorry` theorems of
+`TraceFormula/StronglyCuspidal.lean`).
 
 Since `TraceFormula/Basic.lean` and `Literature/HarishChandra.lean` are in the same layer and not
 visible here, the kernel and strong cuspidality are written out inline with the L1 names

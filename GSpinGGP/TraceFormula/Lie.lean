@@ -169,7 +169,8 @@ theorem exists_lie_descent (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
 The first part copies generic lemmas of `Sanity/Witnesses.lean` (self-dual and orbit measures of the
 zero orbit, `ĵ(0,·) = 1`, Haar measure on a point, local constancy along `x e^X`), which cannot be
 imported here (`Sanity` imports this file).  The second part shows that when `V` is a hyperbolic
-plane (`dim W = 1`, `r = 0`) the datum behaves like the toy datum of `toy_geomAt` (`Sanity/ToyThetaF.lean`): `G = A_G` is
+plane (`dim W = 1`, `r = 0`) the datum behaves like the toy datum of `toy_geomAt`
+(`Sanity/ToyThetaF.lean`): `G = A_G` is
 commutative, `H = A_{G,H}`, every element of `G` and `𝔤` is regular semisimple, `𝔤` has no nonzero
 nilpotent, `Γ(G,H)` is the single torus `GSpin(W) = F^×`, and `D^G = Δ = 1`. -/
 
@@ -976,7 +977,10 @@ theorem isThetaF_self (hV : IsHypPlane d.QV) {f : ↥d.G → ℂ} (hf : Continuo
 
 /-- **`θ_f = c f`** when `V` is a hyperbolic plane (`G` commutative, `G/A_G` a point of mass
 `c = dcScaleAG`, `G_reg = G`), for `f ∈ 𝒞_scusp(G, χ⁻¹)`: both represent the orbital pairing of
-`f` (`thetaF_spec`, `isThetaF_self`), so they agree on `G_reg(F) = G(F)` (`thetaF_unique`). -/
+`f` (`thetaF_spec`, `isThetaF_self`), so they agree on `G_reg(F) = G(F)` (`thetaF_unique`).
+Through `thetaF_spec` this uses the axioms about `θ_f`, the Weyl integration formula and the
+`sorry`s `exists_isMx`, `exists_specialK` (unlike the toy datum, `Sanity/ToyThetaF.lean`, no
+special presentation is constructed here). -/
 theorem thetaF_eq (hV : IsHypPlane d.QV) (χ : CentralCharOn d) {f : ↥d.G → ℂ}
     (hf : f ∈ ScuspTestFn d χ) : thetaF d f = (d.dcScaleAG.toReal : ℂ) • f := by
   funext g
@@ -1181,8 +1185,12 @@ class of `1` (the only torus of `GSpin(W)` is the scalars) and `𝔤 = 𝔤_1` i
 (`ĵ(0,·) = 1`).  This is the computation `toy_geomAt` (`Sanity/ToyThetaF.lean`)
 for `dim W = 0`, `dim V = 1`, to be repeated for `dim W = 1`, `dim V = 2`.  The cited
 Lie-algebra theorems are not used (and do not apply: `J^Lie` of Luo diverges here).
-Status: proved, with `Ω = G(F)` (`HypVAux.geomAt`); the only axiom used is `exists_isSelfDual`
-(a self-dual measure on `𝔤`, for `ĵ(0,·) = 1`). -/
+Status: proved, with `Ω = G(F)` (`HypVAux.geomAt`), from `exists_isSelfDual` (a self-dual
+measure on `𝔤`, for `ĵ(0,·) = 1`) and `θ_f = c f` (`HypVAux.thetaF_eq`).  The latter is proved by
+uniqueness of the function representing the orbital pairing, so it uses `thetaF_spec`, hence the
+axioms about Beuzart-Plessis' `θ_f` (`Literature/BPThetaF.lean`), the Weyl integration formula and
+the `sorry`s `exists_isMx`, `exists_specialK`.  A direct computation from the formula would need a
+special `GoodK` at this datum (`V` a hyperbolic plane), which is not constructed here. -/
 theorem geomAt_near_of_isHypPlane_V (hV : IsHypPlane d.QV) (χ : CentralCharOn d) :
     ∃ Ω : Set ↥d.G, IsInvariantClopen d Ω ∧ (1 : ↥d.G) ∈ Ω ∧
       ∀ f ∈ ScuspTestFn d χ, Function.support f ⊆ Ω →
