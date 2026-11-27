@@ -43,10 +43,15 @@ uses `d_c t` and has no separate factor `ν`.
   comparison.
 * `K` is a `GoodK` (compact open, `G = P K` for `P ∈ 𝒫(M)`, good position), where Beuzart-Plessis
   takes a special maximal compact subgroup.  `thetaFBP` depends on `K` through `v_M`, and on the
-  presentation `L` of `M` through the coordinates of `a_M`.  For strongly cuspidal `f` and `K`
-  special (`GoodK.IsSpecial`) neither dependence is proved here: the independence of `K` and of
-  the presentation is assumed through `waldspurger2010_lemme_5_3` (Waldspurger 2010, Lemmes 5.2,
-  5.3; Beuzart-Plessis Lemma 5.2.1(ii)).  `thetaF` (`TraceFormula/ThetaFGlobal.lean`) uses
+  presentation `L` of `M` through the coordinates of `a_M`.  The dependence on the presentation
+  is only through the weight spaces: for the same `K`, `thetaFBP` is the same for any two
+  presentations with the same weight spaces up to relabelling, for every `f` (`thetaFBP_eq_of_sameWtSpaces`,
+  `TraceFormula/ThetaFBPPresentation.lean`), and for any two presentations of the same `M`
+  modulo the `sorry` `sameWtSpaces_of_M_eq` (`thetaFBP_eq_of_M_eq`, off the path).  For strongly
+  cuspidal `f` and `K` special (`GoodK.IsSpecial`) the independence of `K` is not proved here; it
+  and the independence of the presentation used by `thetaF` are assumed through
+  `waldspurger2010_lemme_5_3` (Waldspurger 2010, Lemmes 5.2, 5.3; Beuzart-Plessis Lemma
+  5.2.1(ii)).  `thetaF` (`TraceFormula/ThetaFGlobal.lean`) uses
   special `K` only; independence for a general `GoodK` is not used.
 * When `d_c t` does not exist (no `IsDcMeasure`), `dcMeasure` is `0` and `thetaFBP` is `0`.  It
   exists for `IsMx L x` (`exists_isDcMeasure`, `IsMx.exists_isDcMeasure`): `A_M(F) ∩ ker H_M` is
@@ -423,7 +428,8 @@ introductory formula `(−1)^{a_{M(x)}} J_{M(x)}(x, f)` quoted in Thesis Ch. 1.
 * It is Beuzart-Plessis' function only at `x` with `IsMx L x`; elsewhere it has no meaning.
 * `dg` on `G(F)` is `Measure.haar`, which differs from Beuzart-Plessis' measure by a positive
   constant (module docstring); `θ_f` is linear in `dg`.
-* It depends on `K` through `v_M` (and on the presentation `L`); Beuzart-Plessis Lemma 5.2.1(ii)
+* It depends on `K` through `v_M` (on the presentation `L` only through its weight spaces,
+  `thetaFBP_eq_of_sameWtSpaces`); Beuzart-Plessis Lemma 5.2.1(ii)
   (Waldspurger 2010, Lemme 5.2) says it does not for strongly cuspidal `f` and special `K`.  This
   is not proved here (`f` is arbitrary); `thetaF` takes it from `waldspurger2010_lemme_5_3`.
 * It is `0` if `d_c t` does not exist (`dcMeasure`). -/

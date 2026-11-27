@@ -91,6 +91,17 @@ theorem StabilizesSplitLattice.mono {Q : QuadraticForm F V}
   let ⟨κ, hκ, e, he, hm⟩ := h
   ⟨κ, hκ, e, he, fun g hg => hm g (hS hg)⟩
 
+/-- Good position only sees the weight spaces (up to relabelling the weights). -/
+theorem StabilizesSplitLattice.of_wtSpan_eq {ι' : Type*} {Q : QuadraticForm F V}
+    {b : Basis ι F V} {wt : ι → ℤ} {b' : Basis ι' F V} {wt' : ι' → ℤ} {S : Set (GSpin Q)}
+    (h : ∀ w, ∃ w', wtSpan b wt w = wtSpan b' wt' w') (hS : StabilizesSplitLattice Q b wt S) :
+    StabilizesSplitLattice Q b' wt' S := by
+  obtain ⟨κ, hκ, e, he, hm⟩ := hS
+  refine ⟨κ, hκ, e, fun i => ?_, hm⟩
+  obtain ⟨w, hw⟩ := he i
+  obtain ⟨w', hw'⟩ := h w
+  exact ⟨w', hw' ▸ hw⟩
+
 end SplitLattice
 
 variable (d) in

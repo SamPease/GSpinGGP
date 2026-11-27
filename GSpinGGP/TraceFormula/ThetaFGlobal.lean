@@ -25,7 +25,10 @@ statement about `θ_f` (they only see `G_reg(F)`, and every regular `x` has a pr
 The definition is the formula for every `f`, with no hypothesis.  For `f` strongly cuspidal in
 `C_c^∞(G(F))`, the literature axioms (`Literature/BPThetaF.lean`) say that every special
 presentation gives the same value (this includes presentations `L ≠ L'` of the same `M(x)`:
-`waldspurger2010_lemme_5_3`, conjunct 1, is the only source of that independence here), so
+`waldspurger2010_lemme_5_3`, conjunct 1, is the source used here; independently of it, the value
+is the same for presentations with the same weight spaces up to relabelling and the same `K`,
+`thetaFBP_eq_of_sameWtSpaces`, and for all presentations of `M(x)` modulo the off-path `sorry`
+`sameWtSpaces_of_M_eq`), so
 `thetaF d f` is Beuzart-Plessis' `θ_f` (`isBPThetaF_thetaF`)
 for `dg = Measure.haar`; and then `thetaF d f` represents the orbital pairing (`IsThetaF`,
 `isThetaF_thetaF_of_cusp`): BP Thm 5.5.1(iv) gives `J^A(f, f') = ∫_{Γ(G)} D^{1/2} θ_f J_G(·, f')`,

@@ -81,9 +81,14 @@ in other notation).  Each axiom's docstring lists which it uses.
   `X_*(A_M)`, as recorded in the docstring of `vM`).  The weight basis of `L` only constructs
   them.  So for `IsMx L x` and special `K`, `L.thetaFBP K f x` is W1's/BP's `θ_f(x)` computed
   with `K` (up to `c`, (I2)).  That two presentations `L`, `L'` with the same `M` give the same
-  value is this identification.  It is **proved** for the pair `L`, `L.opp` (opposite flags,
-  negated weights; `ReducedLeviDatum.opp_thetaFBP`, `TraceFormula/ThetaFBPOpp.lean`) and
-  **asserted here, not proved in Lean,** for other presentations.  `vM` is free of junk values
+  value is this identification.  It is **proved**, for every `f` and with the same `K`, for any two
+  presentations whose families of weight spaces have the same members (reindexed or rescaled
+  bases, `L.opp`, weight spaces relabelled by a signed permutation:
+  `ReducedLeviDatum.thetaFBP_eq_of_sameWtSpaces`, `TraceFormula/ThetaFBPPresentation.lean`).  For
+  arbitrary `L`, `L'` with the same `M` it is proved from the `sorry`
+  `ReducedLeviDatum.sameWtSpaces_of_M_eq` (the weight spaces are intrinsic to `M`; off the path):
+  `thetaFBP_eq_of_M_eq`.  Until that `sorry` is proved, it is **asserted here** for presentations
+  whose weight spaces are not known to agree.  `vM` is free of junk values
   only if `𝒫(M)` is finite, which is the `sorry` `FlagLeviDatum.finite_parabolics`.
 * **(I6) Regular set.**  `regularSet d.G d.lie` is `G_reg(F)` (`hcDisc_ne_zero_iff_mem_regularSet`);
   it is open and its complement is null (`hc_regular_open_dense_conull`, itself a literature
@@ -137,7 +142,9 @@ special `K` in good position.  That is the soundness direction of the definition
 is not special and lattices that are not special are excluded (`Sanity/GL2SpecialK.lean`).
 Conjunct 1 is load-bearing on the path of `local_ggp`: it gives the independence of the special
 presentation used by `thetaF` (`thetaF_eq_thetaFBP`), including between different presentations
-`L ≠ L'` of the same `M(x)`, which is the identification (I5), proved in Lean only for `L.opp`.
+`L ≠ L'` of the same `M(x)`, which is the identification (I5), proved in Lean for presentations
+with the same weight spaces up to relabelling (`thetaFBP_eq_of_sameWtSpaces`), and for all
+presentations of the same `M` modulo the off-path `sorry` `sameWtSpaces_of_M_eq`.
 Off the toy datum, `IsBPThetaF f (thetaF d f)` (`isBPThetaF_thetaF`) is proved from the
 `sorry`s `exists_isMx` and `exists_specialK`.  Were they false, the axiom would be vacuous there
 rather than false, but the path of `local_ggp` uses the axiom at `θ = thetaF d f`, so the main
