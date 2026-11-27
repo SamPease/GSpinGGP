@@ -74,21 +74,22 @@ def gl2RebaseK : (𝔾).GoodK (gl2Rebase (F := F)).toFlagLeviDatum :=
 `gl2Levi` (`gl2_vM_nbar`). -/
 theorem gl2Rebase_vM_nbar {ϖ : F} (h0 : 0 < ‖ϖ‖) (h1 : ‖ϖ‖ < 1)
     (hmax : ∀ x : F, ‖x‖ < 1 → ‖x‖ ≤ ‖ϖ‖) (t : F) :
-    (gl2Rebase (F := F)).vM gl2RebaseK (gl2Nbar t) =
+    (gl2Rebase (F := F)).vM gl2RebaseK.toIwasawaK (gl2Nbar t) =
       2 * Real.log (max 1 ‖t‖) / (-Real.log ‖ϖ‖) := by
   rw [ReducedLeviDatum.vM_eq_of_sameWtSpaces gl2Rebase_sameWtSpaces.1 gl2Rebase_sameWtSpaces.2
-    gl2GoodK gl2RebaseK rfl, gl2_vM_nbar h0 h1 hmax]
+    gl2GoodK.toIwasawaK gl2RebaseK.toIwasawaK rfl, gl2_vM_nbar h0 h1 hmax]
 
 /-- **`θ_f` in the second presentation** is `θ_f` in `gl2Levi`, for every `f` and `x`. -/
 theorem gl2Rebase_thetaFBP (f : ↥(𝔾).G → ℂ) (x : ↥(𝔾).G) :
-    (gl2Rebase (F := F)).thetaFBP gl2RebaseK f x = (𝕃).thetaFBP gl2GoodK f x :=
+    (gl2Rebase (F := F)).thetaFBP gl2RebaseK.toIwasawaK f x =
+      (𝕃).thetaFBP gl2GoodK.toIwasawaK f x :=
   ReducedLeviDatum.rebase_thetaFBP _ _ _ _ gl2GoodK f x
 
 /-- **A third presentation**, `gl2Rebase.opp` (basis `2 z₁, 2 z₀, 2 z₋₁`, weights `−1, 0, 1`: the
 weight spaces of `gl2Levi` relabelled by `w ↦ −w`), gives the same `θ_f`. -/
 theorem gl2Rebase_opp_thetaFBP (f : ↥(𝔾).G → ℂ) (x : ↥(𝔾).G) :
     (gl2Rebase (F := F)).opp.thetaFBP ((gl2Rebase (F := F)).oppK gl2RebaseK) f x =
-      (𝕃).thetaFBP gl2GoodK f x :=
+      (𝕃).thetaFBP gl2GoodK.toIwasawaK f x :=
   ReducedLeviDatum.thetaFBP_eq_of_sameWtSpaces
     ((gl2Rebase (F := F)).sameWtSpaces_opp.1.trans gl2Rebase_sameWtSpaces.1)
     ((gl2Rebase (F := F)).sameWtSpaces_opp.2.trans gl2Rebase_sameWtSpaces.2) gl2GoodK _ rfl f x

@@ -513,7 +513,7 @@ pins `θ x` to `θ_f` for both presentations `(gl2Levi, gl2GoodK)` and `(gl2Levi
 `M = G`, which is not `M(x)` (`gl2TopLevi_not_isMx`). -/
 theorem gl2_isBPThetaF_at_torus {c : Fˣ} (hc : (c : F) ≠ 1) {f θ : ↥(𝔾).G → ℂ}
     (hθ : (𝔾).IsBPThetaF f θ) :
-    θ ((𝔾).inr (gl2Torus c)) = (𝕃).thetaFBP gl2GoodK f ((𝔾).inr (gl2Torus c)) ∧
+    θ ((𝔾).inr (gl2Torus c)) = (𝕃).thetaFBP gl2GoodK.toIwasawaK f ((𝔾).inr (gl2Torus c)) ∧
       θ ((𝔾).inr (gl2Torus c)) =
         (𝕃).opp.thetaFBP ((𝕃).oppK gl2GoodK) f ((𝔾).inr (gl2Torus c)) ∧
       ¬ (gl2TopLevi (F := F)).IsMx ((𝔾).inr (gl2Torus c)) := by

@@ -264,7 +264,7 @@ end Quotient
 
 section Integrals
 
-variable (L : d.ReducedLeviDatum) (K : d.GoodK L.toFlagLeviDatum) (x : ↥d.G)
+variable (L : d.ReducedLeviDatum) (K : d.IwasawaK L.toFlagLeviDatum) (x : ↥d.G)
 
 /-- The integrand `g ↦ f(g⁻¹ x g) v_M(g)` of `J_M(x, f)`, on `G(F)`. -/
 def weightedIntegrand (f : ↥d.G → ℂ) (g : ↥d.G) : ℂ :=
@@ -283,8 +283,8 @@ theorem orbitalIntegral_eq (μ : Measure ↥(d.centG x)) (f : ↥d.G → ℂ) :
       ∫ q, f ((CosetSpace.out _ q)⁻¹ * x * CosetSpace.out _ q) ∂d.orbQuotMeasure x μ := rfl
 
 /-- **Arthur's weighted orbital integral** (Beuzart-Plessis §1.10, p. 36; Waldspurger 2010, §2.3;
-Thesis §2.6): for a Levi subgroup `M` (the reduced Levi datum `L`), a good compact subgroup `K`
-(`GoodK`) and `x ∈ G(F)`,
+Thesis §2.6): for a Levi subgroup `M` (the reduced Levi datum `L`), a compact subgroup `K` with
+`G = P K` for `P ∈ 𝒫(M)` (`IwasawaK`; the sources take `K` special, a `GoodK`) and `x ∈ G(F)`,
 `J_M(x, f) = D^G(x)^{1/2} ∫_{G_x(F)\G(F)} f(g⁻¹ x g) v_M(g) dg`,
 for the quotient measure `dg/μ` (`orbQuotMeasure`), integrating over the representatives
 `CosetSpace.out`.  The sources define it for `x ∈ M(F) ∩ G_reg(F)`, where `G_x(F) ⊆ M(F)` and the
@@ -383,8 +383,9 @@ theorem integrable_weight (hx : IsSS F ((x : d.ambientˣ) : d.ambient))
 
 /-- **The integrand of `J_M(x, f)` is integrable** for `x` semisimple with `G_x(F) ⊆ M(F)` and `f`
 continuous with compact support (e.g. `f ∈ C_c^∞(G(F))`), for any Haar measure `μ` on the
-unimodular group `G_x(F)` (`integrable_weight` with `φ = v_M`). -/
-theorem integrable_weightedIntegrand (hx : IsSS F ((x : d.ambientˣ) : d.ambient))
+unimodular group `G_x(F)` (`integrable_weight` with `φ = v_M`, continuous for `K` open). -/
+theorem integrable_weightedIntegrand {K : d.GoodK L.toFlagLeviDatum}
+    (hx : IsSS F ((x : d.ambientˣ) : d.ambient))
     (hM : d.centG x ≤ L.M) {f : ↥d.G → ℂ} (hf : Continuous f) (hfc : HasCompactSupport f)
     (μ : Measure ↥(d.centG x)) [μ.IsHaarMeasure] [μ.IsMulRightInvariant] :
     Integrable (fun q => d.weightedIntegrand L K x f (CosetSpace.out _ q))
@@ -491,7 +492,7 @@ def centConj (x m : ↥d.G) : ↥(d.centG x) ≃ₜ* ↥(d.centG (m * x * m⁻¹
 @[simp] theorem coe_centConj (x m : ↥d.G) (c : ↥(d.centG x)) :
     ((d.centConj x m c : ↥(d.centG (m * x * m⁻¹))) : ↥d.G) = m * c * m⁻¹ := rfl
 
-variable {d} {L : d.ReducedLeviDatum} {K : d.GoodK L.toFlagLeviDatum} {x : ↥d.G}
+variable {d} {L : d.ReducedLeviDatum} {K : d.IwasawaK L.toFlagLeviDatum} {x : ↥d.G}
 
 /-- `D^G(m x m⁻¹) = D^G(x)` for `m ∈ G(F)`. -/
 theorem weylDisc_conj (m : ↥d.G) :

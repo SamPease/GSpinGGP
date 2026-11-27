@@ -17,7 +17,7 @@ does not see the presentation beyond the family of weight spaces, up to relabell
 linear isomorphism `ψ : a_M^L ≃ a_M^{L'}` carries `H_M^L` to `H_M^{L'}` (exactly, not modulo
 `a_G`), then `ψ` carries `a_G` (`aG_eq_map`), the lattice `proj_M^G(H_M(A_M(F)))`
 (`latticeMG_eq_map`) and the points `H_P(g)` (`mkQ_hPar_eq`) of `L` to those of `L'`, so
-`v_M` is the same for any two good subgroups with the same underlying `K` (`vM_eq_of_equiv`).
+`v_M` is the same for any two `IwasawaK` with the same underlying `K` (`vM_eq_of_equiv`).
 The inverse of `ψ` need not be given: linear maps both ways compatible with `H_M` are inverse to
 each other because `H_M(A_M(F))` spans `a_M` (`aMEquivOfHM`).
 
@@ -137,11 +137,11 @@ theorem latticeMG_eq_map (hM : L'.M = L.M) (hA : L'.AMF = L.AMF)
   · rintro ⟨_, ⟨⟨m, hm⟩, rfl⟩, rfl⟩
     exact ⟨⟨⟨m, hM.ge m.2⟩, hA.symm ▸ hm⟩, mkQ_HM_eq ψ hM hψ m ⟨m, hM.ge m.2⟩ rfl⟩
 
-/-- **The points `H_P(g)` are carried by `ψ`**, for good subgroups `K`, `K'` of `L`, `L'` with the
+/-- **The points `H_P(g)` are carried by `ψ`**, for subgroups `K`, `K'` of `L`, `L'` with the
 same underlying subgroup and the same parabolic `P ∈ 𝒫(M)`. -/
 theorem mkQ_hPar_eq (hM : L'.M = L.M)
     (hψ : ∀ (m : ↥L.M) (m' : ↥L'.M), (m' : ↥d.G) = m → L'.HM m' = ψ (L.HM m))
-    (K : d.GoodK L.toFlagLeviDatum) (K' : d.GoodK L'.toFlagLeviDatum) (hK : K'.K = K.K)
+    (K : d.IwasawaK L.toFlagLeviDatum) (K' : d.IwasawaK L'.toFlagLeviDatum) (hK : K'.K = K.K)
     {P : Subgroup ↥d.G} (hP' : P ∈ d.parabolics L'.M) (hP : P ∈ d.parabolics L.M) (g : ↥d.G) :
     L'.aG.mkQ (L'.hPar K' ⟨P, hP'⟩ g) = aMGEquiv ψ hM hψ (L.aG.mkQ (L.hPar K ⟨P, hP⟩ g)) := by
   obtain ⟨FW, FV, hPeq, hL'⟩ := id hP'
@@ -150,17 +150,17 @@ theorem mkQ_hPar_eq (hM : L'.M = L.M)
   have hp' : p ∈ d.whittB FW FV := hPeq ▸ hp
   have hk' : k ∈ K'.K := hK ▸ hk
   rw [L'.hPar_eq K' ⟨P, hP'⟩ hPeq hL', L.hPar_eq K ⟨P, hP⟩ hPeq hL]
-  have e3 := L'.hP_eq hL' K'.isOpen K'.isCompact (hPeq ▸ K'.mul_eq P hP') ⟨p, hp'⟩ hk'
-  have e4 := L.hP_eq hL K.isOpen K.isCompact (hPeq ▸ K.mul_eq P hP) ⟨p, hp'⟩ hk
+  have e3 := L'.hP_eq hL' K'.isCompact (hPeq ▸ K'.mul_eq P hP') ⟨p, hp'⟩ hk'
+  have e4 := L.hP_eq hL K.isCompact (hPeq ▸ K.mul_eq P hP) ⟨p, hp'⟩ hk
   rw [e3, e4]
   exact mkQ_HM_eq ψ hM hψ _ _ (IsLevi.coe_proj_congr hM hL' hL _)
 
-/-- **`v_M` is carried by `ψ`**: `v_M^{L'}(g) = v_M^{L}(g)` for good subgroups with the same
+/-- **`v_M` is carried by `ψ`**: `v_M^{L'}(g) = v_M^{L}(g)` for subgroups with the same
 underlying `K` (the hull and the lattice are carried by the linear isomorphism `aMGEquiv ψ`,
 `Measure.hullVolume_map`). -/
 theorem vM_eq_of_equiv (hM : L'.M = L.M) (hA : L'.AMF = L.AMF)
     (hψ : ∀ (m : ↥L.M) (m' : ↥L'.M), (m' : ↥d.G) = m → L'.HM m' = ψ (L.HM m))
-    (K : d.GoodK L.toFlagLeviDatum) (K' : d.GoodK L'.toFlagLeviDatum) (hK : K'.K = K.K)
+    (K : d.IwasawaK L.toFlagLeviDatum) (K' : d.IwasawaK L'.toFlagLeviDatum) (hK : K'.K = K.K)
     (g : ↥d.G) : L'.vM K' g = L.vM K g := by
   have hS :
       (Set.range fun P : ↥(d.parabolics L'.M) => L'.aG.mkQ (L'.hPar K' P g)) =
@@ -325,10 +325,10 @@ theorem exists_aMEquiv_of_sameWtSpaces (hW : SameWtSpacesW L L') (hV : SameWtSpa
   exact ⟨aMEquivOfHM hM Φ Ψ hΦ (fun m m' hmm => hΨ m' m hmm.symm), fun m m' hmm => hΦ m m' hmm⟩
 
 /-- **`v_M` depends on the presentation only through the weight spaces**: for reduced data `L`,
-`L'` whose families of weight spaces have the same members (for `W` and for `V`), and good
+`L'` whose families of weight spaces have the same members (for `W` and for `V`), and
 subgroups `K`, `K'` with the same underlying subgroup, `v_M^{L'}(g) = v_M^{L}(g)`. -/
 theorem vM_eq_of_sameWtSpaces (hW : SameWtSpacesW L L') (hV : SameWtSpacesV L L')
-    (K : d.GoodK L.toFlagLeviDatum) (K' : d.GoodK L'.toFlagLeviDatum) (hK : K'.K = K.K)
+    (K : d.IwasawaK L.toFlagLeviDatum) (K' : d.IwasawaK L'.toFlagLeviDatum) (hK : K'.K = K.K)
     (g : ↥d.G) : L'.vM K' g = L.vM K g := by
   obtain ⟨ψ, hψ⟩ := exists_aMEquiv_of_sameWtSpaces hW hV
   exact vM_eq_of_equiv ψ (M_eq_of_sameWtSpaces hW hV) (AMF_eq_of_sameWtSpaces hW hV) hψ K K' hK g

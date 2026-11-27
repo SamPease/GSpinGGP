@@ -25,7 +25,9 @@ pairs of `M` and `H` (not built here).
 
 ## Main definitions
 
-* `IwasawaPair G`: closed `P`, compact open `K`, `G = P K`.
+* `IwasawaDecomp G`: closed `P`, compact `K`, `G = P K`; the choice of components `iwP`, `iwK`
+  and the extension `extend` of functions on `P` along `G = P K`.
+* `IwasawaPair G`: an `IwasawaDecomp` with `K` open.
 * `IwasawaPair.delta`: the modular character `δ_P` of `P` (Mathlib's `modularCharacter`,
   `μ(E p⁻¹) = δ_P(p) μ(E)`, which is `|det Ad(p)|_{𝔲}|` for `P = M U`, as in Waldspurger 2003
   §I.1); `IwasawaPair.rho g = δ_P(p(g))` (independent of the choice of `p(g)`).
@@ -151,41 +153,108 @@ end ModularCharacter
 
 /-! ## 1. Iwasawa pairs and `Ξ` -/
 
-/-- An **Iwasawa pair** in a topological group `G`: a closed subgroup `P` and a compact open
-subgroup `K` with `G = P K` (Waldspurger 2003 §I.1: `G = P K` for every semi-standard parabolic
-`P`, with `K` special maximal compact; here `K` is any compact open subgroup). -/
-structure IwasawaPair (G : Type*) [Group G] [TopologicalSpace G] where
+/-- An **Iwasawa decomposition** `G = P K` in a topological group `G`: a closed subgroup `P` and a
+compact subgroup `K` with `G = P K` (Waldspurger 2003 §I.1: `G = P K` for every semi-standard
+parabolic `P`, with `K` special maximal compact).  No openness of `K` is assumed, so that the
+archimedean case (`K` maximal compact, not open) fits; the refinement with `K` open is
+`IwasawaPair`. -/
+structure IwasawaDecomp (G : Type*) [Group G] [TopologicalSpace G] where
   /-- the parabolic subgroup -/
   P : Subgroup G
-  /-- the compact open subgroup -/
+  /-- the compact subgroup -/
   K : Subgroup G
   isClosed_P : IsClosed (P : Set G)
-  isOpen_K : IsOpen (K : Set G)
   isCompact_K : IsCompact (K : Set G)
   /-- the Iwasawa decomposition `G = P K` -/
   mul_eq : ∀ g : G, ∃ p ∈ P, ∃ k ∈ K, g = p * k
+
+/-- An **Iwasawa pair** in a topological group `G`: an Iwasawa decomposition `G = P K`
+(`IwasawaDecomp`) with `K` open, i.e. a closed subgroup `P` and a compact open subgroup `K` with
+`G = P K` (Waldspurger 2003 §I.1: `G = P K` for every semi-standard parabolic `P`, with `K`
+special maximal compact; here `K` is any compact open subgroup). -/
+structure IwasawaPair (G : Type*) [Group G] [TopologicalSpace G] extends IwasawaDecomp G where
+  isOpen_K : IsOpen (K : Set G)
+
+namespace IwasawaDecomp
+
+variable {G : Type*} [Group G] [TopologicalSpace G] (I : IwasawaDecomp G)
+
+instance locallyCompactSpace_P [IsTopologicalGroup G] [LocallyCompactSpace G] :
+    LocallyCompactSpace ↥I.P :=
+  I.isClosed_P.locallyCompactSpace
+
+instance compactSpace_K : CompactSpace ↥I.K :=
+  isCompact_iff_compactSpace.mp I.isCompact_K
+
+/-- `P ∩ K`, as a subgroup of `P`: a compact subgroup (open when `K` is). -/
+abbrev KP : Subgroup ↥I.P := I.K.subgroupOf I.P
+
+theorem isCompact_KP : IsCompact (I.KP : Set ↥I.P) :=
+  I.isClosed_P.isClosedEmbedding_subtypeVal.isCompact_preimage I.isCompact_K
+
+/-- A choice of `P`-component of `g = p k`. -/
+def iwP (g : G) : ↥I.P := ⟨(I.mul_eq g).choose, (I.mul_eq g).choose_spec.1⟩
+
+/-- A choice of `K`-component of `g = p k`. -/
+def iwK (g : G) : ↥I.K := ⟨(I.iwP g : G)⁻¹ * g, by
+  obtain ⟨k, hk, hg⟩ := (I.mul_eq g).choose_spec.2
+  have e : ((I.mul_eq g).choose)⁻¹ * g = k := by rw [inv_mul_eq_iff_eq_mul]; exact hg
+  change ((I.mul_eq g).choose)⁻¹ * g ∈ I.K
+  rw [e]
+  exact hk⟩
+
+theorem iwP_mul_iwK (g : G) : ((I.iwP g : G)) * (I.iwK g : G) = g := by
+  simp [iwK]
+
+/-- **Extension along `G = P K`**: `extend h g = h (p(g))` for the chosen decomposition
+`g = p(g) k(g)`.  It is independent of the choice when `h` is right invariant under `P ∩ K`
+(`extend_mul`); this is how `H_P(g) = H_M(m_P(g))` is defined (Thesis §2.1). -/
+def extend {E : Type*} (h : ↥I.P → E) (g : G) : E := h (I.iwP g)
+
+/-- `extend h (p k) = h p`, for `h` right invariant under `P ∩ K`. -/
+theorem extend_mul {E : Type*} {h : ↥I.P → E}
+    (hh : ∀ (p q : ↥I.P), (q : G) ∈ I.K → h (p * q) = h p) (p : ↥I.P) {k : G} (hk : k ∈ I.K) :
+    I.extend h ((p : G) * k) = h p := by
+  set p' := I.iwP ((p : G) * k)
+  have hmem : ((p'⁻¹ * p : ↥I.P) : G) ∈ I.K := by
+    have e : ((p'⁻¹ * p : ↥I.P) : G) = (I.iwK ((p : G) * k) : G) * k⁻¹ := by
+      have := I.iwP_mul_iwK ((p : G) * k)
+      push_cast
+      rw [inv_mul_eq_iff_eq_mul, ← mul_assoc, this]
+      group
+    rw [e]
+    exact I.K.mul_mem (I.iwK _).property (I.K.inv_mem hk)
+  have := hh p' _ hmem
+  rw [mul_inv_cancel_left] at this
+  exact this.symm
+
+/-- `extend h (g k) = extend h g` for `k ∈ K`, `h` right invariant under `P ∩ K`. -/
+theorem extend_mul_right {E : Type*} {h : ↥I.P → E}
+    (hh : ∀ (p q : ↥I.P), (q : G) ∈ I.K → h (p * q) = h p) (g : G) {k : G} (hk : k ∈ I.K) :
+    I.extend h (g * k) = I.extend h g := by
+  conv_lhs => rw [← I.iwP_mul_iwK g, mul_assoc]
+  exact I.extend_mul hh _ (I.K.mul_mem (I.iwK g).2 hk)
+
+/-- `extend h (p g) = h p + extend h g` for additive `h`, right invariant under `P ∩ K`. -/
+theorem extend_mul_left {E : Type*} [Add E] {h : ↥I.P → E}
+    (hh : ∀ (p q : ↥I.P), (q : G) ∈ I.K → h (p * q) = h p)
+    (hadd : ∀ p q : ↥I.P, h (p * q) = h p + h q) (p : ↥I.P) (g : G) :
+    I.extend h ((p : G) * g) = h p + I.extend h g := by
+  conv_lhs => rw [← I.iwP_mul_iwK g, ← mul_assoc]
+  rw [show (p : G) * (I.iwP g : G) = ((p * I.iwP g : ↥I.P) : G) from rfl,
+    I.extend_mul hh _ (I.iwK g).2, hadd]
+  rfl
+
+end IwasawaDecomp
 
 namespace IwasawaPair
 
 variable {G : Type*} [Group G] [TopologicalSpace G] [IsTopologicalGroup G]
   [LocallyCompactSpace G] (I : IwasawaPair G)
 
-instance locallyCompactSpace_P : LocallyCompactSpace ↥I.P :=
-  I.isClosed_P.locallyCompactSpace
-
-instance compactSpace_K : CompactSpace ↥I.K :=
-  isCompact_iff_compactSpace.mp I.isCompact_K
-
-/-- `P ∩ K`, as a subgroup of `P`: a compact open subgroup. -/
-abbrev KP : Subgroup ↥I.P := I.K.subgroupOf I.P
-
 omit [IsTopologicalGroup G] [LocallyCompactSpace G] in
 theorem isOpen_KP : IsOpen (I.KP : Set ↥I.P) :=
   I.isOpen_K.preimage continuous_subtypeVal
-
-omit [IsTopologicalGroup G] [LocallyCompactSpace G] in
-theorem isCompact_KP : IsCompact (I.KP : Set ↥I.P) :=
-  I.isClosed_P.isClosedEmbedding_subtypeVal.isCompact_preimage I.isCompact_K
 
 /-- The modular character `δ_P` of `P` (Mathlib's `modularCharacter`: `μ(E p⁻¹) = δ_P(p) μ(E)`
 for a left Haar measure `μ`; for `P = M U` this is `|det Ad(p)|_{𝔲}|`, Waldspurger's `δ_P`). -/
@@ -234,21 +303,6 @@ theorem exists_lowerBound_delta (S : Set ↥I.P) (hS : IsCompact S) :
     ∃ m : ℝ, 0 < m ∧ ∀ p ∈ S, m ≤ I.delta p :=
   exists_lowerBound_modularCharacter S hS
 
-/-- A choice of `P`-component of `g = p k`. -/
-def iwP (g : G) : ↥I.P := ⟨(I.mul_eq g).choose, (I.mul_eq g).choose_spec.1⟩
-
-/-- A choice of `K`-component of `g = p k`. -/
-def iwK (g : G) : ↥I.K := ⟨(I.iwP g : G)⁻¹ * g, by
-  obtain ⟨k, hk, hg⟩ := (I.mul_eq g).choose_spec.2
-  have e : ((I.mul_eq g).choose)⁻¹ * g = k := by rw [inv_mul_eq_iff_eq_mul]; exact hg
-  change ((I.mul_eq g).choose)⁻¹ * g ∈ I.K
-  rw [e]
-  exact hk⟩
-
-omit [IsTopologicalGroup G] [LocallyCompactSpace G] in
-theorem iwP_mul_iwK (g : G) : ((I.iwP g : G)) * (I.iwK g : G) = g := by
-  simp [iwK]
-
 /-- `ρ(g) = δ_P(p(g))`, for `g = p(g) k(g)`. -/
 def rho (g : G) : ℝ := I.delta (I.iwP g)
 
@@ -256,19 +310,21 @@ theorem rho_pos (g : G) : 0 < I.rho g := I.delta_pos _
 
 theorem rho_eq_delta {p : ↥I.P} {k g : G} (hk : k ∈ I.K) (hg : g = p * k) :
     I.rho g = I.delta p :=
-  I.delta_eq_of_mul_eq (I.iwK g).property hk (by rw [iwP_mul_iwK, hg])
+  I.delta_eq_of_mul_eq (I.iwK g).property hk (by rw [IwasawaDecomp.iwP_mul_iwK, hg])
 
 /-- `ρ(p) = δ_P(p)` on `P`. -/
 theorem rho_of_mem (p : ↥I.P) : I.rho p = I.delta p :=
   I.rho_eq_delta I.K.one_mem (mul_one _).symm
 
 theorem rho_mul_right {g k : G} (hk : k ∈ I.K) : I.rho (g * k) = I.rho g :=
-  I.rho_eq_delta (I.K.mul_mem (I.iwK g).property hk) (by rw [← mul_assoc, iwP_mul_iwK])
+  I.rho_eq_delta (I.K.mul_mem (I.iwK g).property hk) 
+    (by rw [← mul_assoc, IwasawaDecomp.iwP_mul_iwK])
 
 theorem rho_mul_left (p : ↥I.P) (g : G) : I.rho (p * g) = I.delta p * I.rho g := by
   change _ = I.delta p * I.delta (I.iwP g)
   rw [← I.delta_mul]
-  exact I.rho_eq_delta (I.iwK g).property (by rw [Subgroup.coe_mul, mul_assoc, iwP_mul_iwK])
+  exact I.rho_eq_delta (I.iwK g).property 
+    (by rw [Subgroup.coe_mul, mul_assoc, IwasawaDecomp.iwP_mul_iwK])
 
 /-- **The cocycle relation** `δ(p(xy)) = δ(p(x)) δ(p(k(x) y))`. -/
 theorem rho_mul (x y : G) : I.rho (x * y) = I.rho x * I.rho ((I.iwK x : G) * y) := by
@@ -280,48 +336,6 @@ theorem isLocallyConstant_rho : IsLocallyConstant I.rho :=
   isLocallyConstant_of_mul_right_invariant I.isOpen_K fun _ _ hk => I.rho_mul_right hk
 
 theorem continuous_rho : Continuous I.rho := I.isLocallyConstant_rho.continuous
-
-/-- **Extension along `G = P K`**: `extend h g = h (p(g))` for the chosen decomposition
-`g = p(g) k(g)`.  It is independent of the choice when `h` is right invariant under `P ∩ K`
-(`extend_mul`); this is how `H_P(g) = H_M(m_P(g))` is defined (Thesis §2.1). -/
-def extend {E : Type*} (h : ↥I.P → E) (g : G) : E := h (I.iwP g)
-
-omit [IsTopologicalGroup G] [LocallyCompactSpace G] in
-/-- `extend h (p k) = h p`, for `h` right invariant under `P ∩ K`. -/
-theorem extend_mul {E : Type*} {h : ↥I.P → E}
-    (hh : ∀ (p q : ↥I.P), (q : G) ∈ I.K → h (p * q) = h p) (p : ↥I.P) {k : G} (hk : k ∈ I.K) :
-    I.extend h ((p : G) * k) = h p := by
-  set p' := I.iwP ((p : G) * k)
-  have hmem : ((p'⁻¹ * p : ↥I.P) : G) ∈ I.K := by
-    have e : ((p'⁻¹ * p : ↥I.P) : G) = (I.iwK ((p : G) * k) : G) * k⁻¹ := by
-      have := I.iwP_mul_iwK ((p : G) * k)
-      push_cast
-      rw [inv_mul_eq_iff_eq_mul, ← mul_assoc, this]
-      group
-    rw [e]
-    exact I.K.mul_mem (I.iwK _).property (I.K.inv_mem hk)
-  have := hh p' _ hmem
-  rw [mul_inv_cancel_left] at this
-  exact this.symm
-
-omit [IsTopologicalGroup G] [LocallyCompactSpace G] in
-/-- `extend h (g k) = extend h g` for `k ∈ K`, `h` right invariant under `P ∩ K`. -/
-theorem extend_mul_right {E : Type*} {h : ↥I.P → E}
-    (hh : ∀ (p q : ↥I.P), (q : G) ∈ I.K → h (p * q) = h p) (g : G) {k : G} (hk : k ∈ I.K) :
-    I.extend h (g * k) = I.extend h g := by
-  conv_lhs => rw [← I.iwP_mul_iwK g, mul_assoc]
-  exact I.extend_mul hh _ (I.K.mul_mem (I.iwK g).2 hk)
-
-omit [IsTopologicalGroup G] [LocallyCompactSpace G] in
-/-- `extend h (p g) = h p + extend h g` for additive `h`, right invariant under `P ∩ K`. -/
-theorem extend_mul_left {E : Type*} [Add E] {h : ↥I.P → E}
-    (hh : ∀ (p q : ↥I.P), (q : G) ∈ I.K → h (p * q) = h p)
-    (hadd : ∀ p q : ↥I.P, h (p * q) = h p + h q) (p : ↥I.P) (g : G) :
-    I.extend h ((p : G) * g) = h p + I.extend h g := by
-  conv_lhs => rw [← I.iwP_mul_iwK g, ← mul_assoc]
-  rw [show (p : G) * (I.iwP g : G) = ((p * I.iwP g : ↥I.P) : G) from rfl,
-    I.extend_mul hh _ (I.iwK g).2, hadd]
-  rfl
 
 variable [MeasurableSpace G] [BorelSpace G]
 
@@ -551,11 +565,11 @@ theorem exists_integral_K_eq_mul [T2Space G] [SecondCountableTopology G] (J : Iw
       (∀ (p : ↥I.P) (x : G), φ ((p : G) * x) = (I.delta p : ℂ) * φ x) →
       ∫ k : ↥I.K, φ k ∂(Measure.haar : Measure ↥I.K) =
         c * ∫ k : ↥J.K, φ k ∂(Measure.haar : Measure ↥J.K) := by
-  obtain ⟨P, K, hPc, hKo, hKc, hmul⟩ := I
-  obtain ⟨P', K', hPc', hKo', hKc', hmul'⟩ := J
+  obtain ⟨⟨P, K, hPc, hKc, hmul⟩, hKo⟩ := I
+  obtain ⟨⟨P', K', hPc', hKc', hmul'⟩, hKo'⟩ := J
   obtain rfl : P = P' := hP
-  set I : IwasawaPair G := ⟨P, K, hPc, hKo, hKc, hmul⟩
-  set J : IwasawaPair G := ⟨P, K', hPc', hKo', hKc', hmul'⟩
+  set I : IwasawaPair G := ⟨⟨P, K, hPc, hKc, hmul⟩, hKo⟩
+  set J : IwasawaPair G := ⟨⟨P, K', hPc', hKc', hmul'⟩, hKo'⟩
   have : LocallyCompactSpace ↥P := hPc.locallyCompactSpace
   have : CompactSpace ↥K := isCompact_iff_compactSpace.mp hKc
   have : CompactSpace ↥K' := isCompact_iff_compactSpace.mp hKc'
@@ -591,11 +605,11 @@ then `ρ_K(g) = δ_P(p)` and `ρ_{K'}(g) = δ_P(p) ρ_{K'}(k)`, and the continuo
 `ρ_{K'}` is bounded below on the compact `K`. -/
 theorem rho_le_mul_rho (J : IwasawaPair G) (hP : I.P = J.P) :
     ∃ C : ℝ, 0 < C ∧ ∀ g : G, I.rho g ≤ C * J.rho g := by
-  obtain ⟨P, K, hPc, hKo, hKc, hmul⟩ := I
-  obtain ⟨P', K', hPc', hKo', hKc', hmul'⟩ := J
+  obtain ⟨⟨P, K, hPc, hKc, hmul⟩, hKo⟩ := I
+  obtain ⟨⟨P', K', hPc', hKc', hmul'⟩, hKo'⟩ := J
   obtain rfl : P = P' := hP
-  set I : IwasawaPair G := ⟨P, K, hPc, hKo, hKc, hmul⟩
-  set J : IwasawaPair G := ⟨P, K', hPc', hKo', hKc', hmul'⟩
+  set I : IwasawaPair G := ⟨⟨P, K, hPc, hKc, hmul⟩, hKo⟩
+  set J : IwasawaPair G := ⟨⟨P, K', hPc', hKc', hmul'⟩, hKo'⟩
   obtain ⟨k₀, -, hmin⟩ := hKc.exists_isMinOn ⟨1, K.one_mem⟩ J.continuous_rho.continuousOn
   have hm := J.rho_pos k₀
   refine ⟨(J.rho k₀)⁻¹, inv_pos.2 hm, fun g => ?_⟩
