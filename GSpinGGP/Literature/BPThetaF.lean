@@ -44,9 +44,10 @@ in other notation).  Each axiom's docstring lists which it uses.
   the preimages of those of `SO(U)` under the quotient map `π` (J. S. Milne, *Algebraic Groups*,
   notes v2.00, Prop. 18.24, p. 318); and those of `SO(U)` are the stabilizers of totally
   isotropic flags (G. Malle, D. Testerman, *Linear Algebraic Groups and Finite Groups of Lie
-  Type*, Prop. 12.13, p. 101, stated for simple classical groups; for `dim U ≤ 2` and the
-  non-simple `dim U = 4` the same description is the dissertation's, Thesis §5.1.2).  The
-  sources are the ones of `Literature/SpecialKIwasawa.lean`.  The same identification as in the
+  Type*, Prop. 12.13, p. 101; the direction "flag stabilizer ⇒ parabolic" is the first
+  paragraph of its proof, p. 102, which does not use simplicity, so it covers `dim U = 4`;
+  for `dim U ≤ 1`, `SO(U)` is trivial).  The sources and steps are those of step 5 of
+  `tits_iwasawa_specialStab` (`Literature/SpecialKIwasawa.lean`).  The same identification as in the
   docstring of `LitTF.bp_integrable_kernel_scusp`.
 * **(I2) `dg` (homogeneity).**  W1 (§1.2, arXiv p. 7) and BP (§1.6, p. 30) fix `dg` through the
   exponential map; `Measure.haar = c · dg` for some `0 < c < ∞`.  `θ_f` has degree `1` in `dg`:
