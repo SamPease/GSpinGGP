@@ -511,7 +511,8 @@ theorem exists_scusp_cut {f : ↥d.G → ℂ} (hf : f ∈ ScuspTestFn d χ) {Ω 
     ∃ f₁ ∈ ScuspTestFn d χ, Function.support f₁ ⊆ Ω ∧
       Set.EqOn (thetaF d f₁) (Ω.indicator (thetaF d f)) (regularSet d.G d.lie) :=
   ⟨Ω.indicator f, indicator_mem_scuspTestFn d χ hf hΩ, Set.support_indicator_subset,
-    eqOn_thetaF d (isThetaF_indicator d (thetaF_spec d χ hf).1 hΩ)⟩
+    eqOn_thetaF d χ (indicator_mem_scuspTestFn d χ hf hΩ)
+      (isThetaF_indicator d (thetaF_spec d χ hf).1 hΩ)⟩
 
 /-- **`θ_f` is compactly supported modulo conjugation and `A_G(F)`** for
 `f ∈ 𝒞_scusp(A_G(F)\G(F), χ⁻¹)` compactly supported modulo `A_G(F)` (BP §5.2, §5.5: `θ_f(x)` is a
@@ -535,7 +536,7 @@ theorem thetaF_hasCompactSupportModConjAG {f : ↥d.G → ℂ} (hf : f ∈ Scusp
     rwa [Set.indicator_eq_self.2 hsΩ] at this
   refine ⟨C', hC', fun g hg hne => hΩC' g ?_⟩
   by_contra hgΩ
-  exact hne ((eqOn_thetaF d hθ hg).trans (Set.indicator_of_notMem hgΩ _))
+  exact hne ((eqOn_thetaF d χ hf hθ hg).trans (Set.indicator_of_notMem hgΩ _))
 
 /-! ## 3. Elliptic isolation from BP Cor 5.7.2(i) and the own `χ`-transfer -/
 
@@ -597,7 +598,7 @@ theorem exists_scusp_of_qc_bp : ∃ Ω : Set ↥d.G, IsInvariantClopen d Ω ∧ 
       by_contra hne
       exact hgΩ ((hΩ.AG_mul_mem_iff a g).1 (hsuppf₀ hne))
     simp [this]
-  · rw [eqOn_thetaF d havg hg]
+  · rw [eqOn_thetaF d χ (chiProj_mem_scusp d χ hf₀ hcusp) havg hg]
     have hpt : ∀ a : ↥d.AG, ((χ.toHom a : Circle) : ℂ) * θ' ((a : ↥d.G) * g) =
         κ ((a : ↥d.G) * g) * θ g := by
       intro a

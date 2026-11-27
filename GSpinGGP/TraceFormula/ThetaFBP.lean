@@ -15,9 +15,9 @@ Waldspurger, Compos. Math. 146 (2010), §5.3) sets
 where `M(x)` is the centralizer of `A_{G_x}`, the maximal split central torus of the torus `G_x`
 (the minimal Levi subgroup containing `x`), and `ν(G_x)` is defined by `d_c t = ν(G_x) dt`
 (Beuzart-Plessis §1.6, p. 30).  This file defines that function, `thetaFBP`, for a given Levi datum
-`L` with `L.M = M(x)` and a good compact subgroup `K`.  It is not (yet) related to `thetaF` in
-general; at the toy datum the two agree (`toyD_thetaF_eq_thetaFBP`, `Sanity/DcQuotientAudit.lean`),
-because `thetaF` uses `dg / d_c a` on `G(F)/A_G(F)` (`measGmodAG`).
+`L` with `L.M = M(x)` and a good compact subgroup `K`; `thetaF` (`TraceFormula/ThetaFGlobal.lean`)
+evaluates it at every regular `x` for a chosen special presentation of `M(x)`.  At the toy datum
+see `toyD_thetaF_eq_thetaFBP` (`Sanity/ToyThetaF.lean`).
 
 **`M(x)` and `A_{G_x}`.**  The Levi subgroup is an input: `IsMx L x` says that `x ∈ G_reg(F)`,
 `x ∈ M(F)`, and `G_x(F)` is compact modulo `A_M(F)`, i.e. `x` is elliptic in `M`.  For a Levi
@@ -42,9 +42,12 @@ uses `d_c t` and has no separate factor `ν`.
   comparing with the sources must carry `c_G`.  `d_c t` itself is canonical and needs no
   comparison.
 * `K` is a `GoodK` (compact open, `G = P K` for `P ∈ 𝒫(M)`, good position), where Beuzart-Plessis
-  takes a special maximal compact subgroup.  `thetaFBP` depends on `K` through `v_M`; for strongly
-  cuspidal `f` it does not (Beuzart-Plessis Lemma 5.2.1(ii); Waldspurger 2010, Lemme 5.2), which is
-  not proved here.
+  takes a special maximal compact subgroup.  `thetaFBP` depends on `K` through `v_M`, and on the
+  presentation `L` of `M` through the coordinates of `a_M`.  For strongly cuspidal `f` and `K`
+  special (`GoodK.IsSpecial`) neither dependence is proved here: the independence of `K` and of
+  the presentation is assumed through `waldspurger2010_lemme_5_3` (Waldspurger 2010, Lemmes 5.2,
+  5.3; Beuzart-Plessis Lemma 5.2.1(ii)).  `thetaF` (`TraceFormula/ThetaFGlobal.lean`) uses
+  special `K` only; independence for a general `GoodK` is not used.
 * When `d_c t` does not exist (no `IsDcMeasure`), `dcMeasure` is `0` and `thetaFBP` is `0`.  It
   exists for `IsMx L x` (`exists_isDcMeasure`, `IsMx.exists_isDcMeasure`): `A_M(F) ∩ ker H_M` is
   compact and open in `A_M(F)` (`isCompact_AGxOne`, `isOpen_AGxOne`).
@@ -62,7 +65,7 @@ uses `d_c t` and has no separate factor `ν`.
 
 * `IsMx.centG_le`: `G_x(F) ⊆ M(F)` (and `x ∈ M(F)` by definition).
 * `exists_isMx`: every `x ∈ G_reg(F)` has an `L` with `IsMx L x` (`sorry`, with a proof sketch;
-  not on the path of the main theorem).
+  on the path of the main theorem through `thetaF`).
 * `isCompact_AGxOne`, `isOpen_AGxOne`: `A_M(F) ∩ ker H_M` is compact and open in `A_M(F)`.
 * `IsDcMeasure.unique`, `dcMeasure_eq`: `d_c t` is unique; `exists_isDcMeasure`,
   `IsMx.exists_isDcMeasure`: it exists when `G_x(F)/A_M(F)` is compact, e.g. for `IsMx L x`.
@@ -93,20 +96,35 @@ variable (L : d.ReducedLeviDatum)
 
 /-! ## 1. `A_{G_x}(F)` and `M(x)` -/
 
+/-! ### The objects attached to a subgroup `T` (`T = G_x(F)` below)
+
+`A_{G_x}(F)`, its maximal compact subgroup and `d_c t` depend on `x` only through `G_x(F)`; they
+are defined for a subgroup `T` and specialized to `T = G_x(F)`, so that two points with the same
+centralizer have literally the same objects (`integral_orbQuotMeasure_dcMeasure_congr`). -/
+
+/-- `A_M(F) ∩ T`, as a subgroup of `T`. -/
+def AGxOn (T : Subgroup ↥d.G) : Subgroup ↥T := L.AMF.subgroupOf T
+
+/-- The inclusion `A_M(F) ∩ T → M(F)`. -/
+def AGxToMOn (T : Subgroup ↥d.G) : ↥(L.AGxOn T) →* ↥L.M :=
+  (T.subtype.comp (L.AGxOn T).subtype).codRestrict L.M
+    fun a => L.AMF_le_M (Subgroup.mem_subgroupOf.1 a.2)
+
+/-- `A_M(F) ∩ T ∩ ker H_M`. -/
+def AGxOneOn (T : Subgroup ↥d.G) : Subgroup ↥(L.AGxOn T) := (L.HMHom.comp (L.AGxToMOn T)).ker
+
 /-- **`A_{G_x}(F)`, for `L.M = M(x)`** (Beuzart-Plessis §1.6, §5.2): `A_M(F)` as a subgroup of
 `G_x(F)`.  When `L.M = M(x)` (`IsMx`) the maximal split central torus `A_{G_x}` of the torus `G_x`
 is `A_M`.  Defined as `A_M(F) ∩ G_x(F)`, which is all of `A_M(F)` for `x ∈ M(F)` (`A_M` is central
 in `M`; not needed here and not proved). -/
-def AGx (x : ↥d.G) : Subgroup ↥(d.centG x) := L.AMF.subgroupOf (d.centG x)
+abbrev AGx (x : ↥d.G) : Subgroup ↥(d.centG x) := L.AGxOn (d.centG x)
 
 variable {L} in
 theorem mem_AGx {x : ↥d.G} {a : ↥(d.centG x)} : a ∈ L.AGx x ↔ (a : ↥d.G) ∈ L.AMF :=
   Subgroup.mem_subgroupOf
 
 /-- The inclusion `A_{G_x}(F) → M(F)`. -/
-def AGxToM (x : ↥d.G) : ↥(L.AGx x) →* ↥L.M :=
-  ((d.centG x).subtype.comp (L.AGx x).subtype).codRestrict L.M
-    fun a => L.AMF_le_M (mem_AGx.1 a.2)
+abbrev AGxToM (x : ↥d.G) : ↥(L.AGx x) →* ↥L.M := L.AGxToMOn (d.centG x)
 
 /-- **The maximal compact subgroup `A_{G_x}(F)^1 = A_M(F) ∩ ker H_M`** (the subgroup of measure `1`
 for `d_c a`, Beuzart-Plessis §1.6).  For the split torus `A_M`, `H_M(A_M(F))` is a lattice of full
@@ -114,11 +132,11 @@ rank in `a_M` (`span_HMAMF_eq_top`, `exists_HM_mem_zmultiples`), so `ker H_M ∩
 the maximal compact subgroup.  It is compact and open (`isCompact_AGxOne`, `isOpen_AGxOne`): on
 `A_M(F)`, `ker H_M` is the lattice stabilizer `latticeK` of the splitting bases
 (`HM_eq_zero_iff_mem_latticeK`). -/
-def AGxOne (x : ↥d.G) : Subgroup ↥(L.AGx x) := (L.HMHom.comp (L.AGxToM x)).ker
+abbrev AGxOne (x : ↥d.G) : Subgroup ↥(L.AGx x) := L.AGxOneOn (d.centG x)
 
 theorem mem_AGxOne {x : ↥d.G} {a : ↥(L.AGx x)} :
     a ∈ L.AGxOne x ↔ L.HM (L.AGxToM x a) = 0 := by
-  rw [AGxOne, MonoidHom.mem_ker]; rfl
+  rw [AGxOne, AGxOneOn, MonoidHom.mem_ker]; rfl
 
 /-- `A_{G_x}(F)^1` is the preimage of the lattice stabilizer `latticeK` of the splitting bases
 (`HM_eq_zero_iff_mem_latticeK`). -/
@@ -215,22 +233,33 @@ theorem exists_isMx {x : ↥d.G} (hx : x ∈ regularSet d.G d.lie) :
 
 variable (L)
 
-/-- **Beuzart-Plessis' measure `d_c t` on `G_x(F)`** (§1.6, p. 30): `μ` is a Haar measure on
-`G_x(F)` and there are a Haar measure `d_c a` on `A_{G_x}(F)` giving the maximal compact subgroup
+/-- **Beuzart-Plessis' measure `d_c t`** (§1.6, p. 30), on a subgroup `T` (`T = G_x(F)` below):
+`μ` is a Haar measure on `G_x(F)` and there are a Haar measure `d_c a` on `A_{G_x}(F)` giving the
+maximal compact subgroup
 `AGxOne` measure `1` and a quotient measure (`IsWeilMeasure`, `μ = (quotient) ∘ d_c a`) giving
 `A_{G_x}(F)\G_x(F)` measure `1`.  (`G_x(F)` is commutative for regular `x`, so right cosets are
 left cosets.) -/
-def IsDcMeasure (x : ↥d.G) (μ : Measure ↥(d.centG x)) : Prop :=
-  μ.IsHaarMeasure ∧ ∃ (μA : Measure ↥(L.AGx x)) (m : Measure (CosetSpace (L.AGx x).subtype)),
-    μA.IsHaarMeasure ∧ μA (L.AGxOne x : Set ↥(L.AGx x)) = 1 ∧
-      IsWeilMeasure (L.AGx x).subtype μ μA m ∧ m Set.univ = 1
+def IsDcMeasureOn (T : Subgroup ↥d.G) (μ : Measure ↥T) : Prop :=
+  μ.IsHaarMeasure ∧ ∃ (μA : Measure ↥(L.AGxOn T)) (m : Measure (CosetSpace (L.AGxOn T).subtype)),
+    μA.IsHaarMeasure ∧ μA (L.AGxOneOn T : Set ↥(L.AGxOn T)) = 1 ∧
+      IsWeilMeasure (L.AGxOn T).subtype μ μA m ∧ m Set.univ = 1
+
+/-- `IsDcMeasureOn` at `T = G_x(F)`. -/
+abbrev IsDcMeasure (x : ↥d.G) (μ : Measure ↥(d.centG x)) : Prop := L.IsDcMeasureOn (d.centG x) μ
 
 open scoped Classical in
+/-- `d_c t` on a subgroup `T`, chosen by the epsilon pattern; `0` if there is none. -/
+def dcMeasureOn (T : Subgroup ↥d.G) : Measure ↥T :=
+  if h : ∃ μ, L.IsDcMeasureOn T μ then h.choose else 0
+
 /-- **`d_c t` on `G_x(F)`** (Beuzart-Plessis §1.6), chosen by the epsilon pattern; `0` if there is
 none.  It is unique for regular `x` (`dcMeasure_eq`) and exists under `exists_isDcMeasure`.
 Beuzart-Plessis writes `d_c t = ν(G_x) dt`; using `d_c t` in `J_M` absorbs `ν(G_x)⁻¹`. -/
-def dcMeasure (x : ↥d.G) : Measure ↥(d.centG x) :=
-  if h : ∃ μ, L.IsDcMeasure x μ then h.choose else 0
+abbrev dcMeasure (x : ↥d.G) : Measure ↥(d.centG x) := L.dcMeasureOn (d.centG x)
+
+theorem AGx_eq_AGxOn (x : ↥d.G) : L.AGx x = L.AGxOn (d.centG x) := rfl
+
+theorem dcMeasure_eq_dcMeasureOn (x : ↥d.G) : L.dcMeasure x = L.dcMeasureOn (d.centG x) := rfl
 
 variable {L}
 
@@ -268,7 +297,7 @@ theorem IsDcMeasure.unique {x : ↥d.G} (hx : x ∈ regularSet d.G d.lie) {μ μ
 theorem isDcMeasure_dcMeasure {x : ↥d.G} (h : ∃ μ, L.IsDcMeasure x μ) :
     L.IsDcMeasure x (L.dcMeasure x) := by
   classical
-  unfold dcMeasure
+  unfold dcMeasure dcMeasureOn
   rw [dite_eq_left_of_eq_true (eq_true h)]
   exact h.choose_spec
 
@@ -279,7 +308,7 @@ theorem dcMeasure_eq {x : ↥d.G} (hx : x ∈ regularSet d.G d.lie) {μ : Measur
 theorem dcMeasure_of_not_exists {x : ↥d.G} (h : ¬ ∃ μ, L.IsDcMeasure x μ) :
     L.dcMeasure x = 0 := by
   classical
-  unfold dcMeasure
+  unfold dcMeasure dcMeasureOn
   rw [dite_eq_right_of_eq_false (eq_false h)]
 
 /-- **Existence of `d_c t`**, when `G_x(F)/A_M(F)` is compact (`IsMx`): normalize a Haar measure
@@ -394,8 +423,9 @@ introductory formula `(−1)^{a_{M(x)}} J_{M(x)}(x, f)` quoted in Thesis Ch. 1.
 * It is Beuzart-Plessis' function only at `x` with `IsMx L x`; elsewhere it has no meaning.
 * `dg` on `G(F)` is `Measure.haar`, which differs from Beuzart-Plessis' measure by a positive
   constant (module docstring); `θ_f` is linear in `dg`.
-* It depends on `K` through `v_M`; Beuzart-Plessis Lemma 5.2.1(ii) (Waldspurger 2010, Lemme 5.2)
-  says it does not for strongly cuspidal `f`.  This is not proved here, and `f` is arbitrary.
+* It depends on `K` through `v_M` (and on the presentation `L`); Beuzart-Plessis Lemma 5.2.1(ii)
+  (Waldspurger 2010, Lemme 5.2) says it does not for strongly cuspidal `f` and special `K`.  This
+  is not proved here (`f` is arbitrary); `thetaF` takes it from `waldspurger2010_lemme_5_3`.
 * It is `0` if `d_c t` does not exist (`dcMeasure`). -/
 def thetaFBP (K : d.GoodK L.toFlagLeviDatum) (f : ↥d.G → ℂ) (x : ↥d.G) : ℂ :=
   (-1) ^ finrank ℝ L.aMG * ((Real.sqrt (weylDisc d.lie (x : d.ambientˣ)) : ℂ))⁻¹ *
@@ -471,6 +501,62 @@ theorem thetaFBP_of_aG_eq_top_eq_integral (hG : L.aG = ⊤) (K : d.GoodK L.toFla
   have hD : ((Real.sqrt (weylDisc d.lie (x : d.ambientˣ)) : ℂ)) ≠ 0 :=
     Complex.ofReal_ne_zero.2 (Real.sqrt_pos.2 (weylDisc_pos d x)).ne'
   rw [thetaFBP_of_aG_eq_top hG, orbitalIntegral_eq, ← mul_assoc, inv_mul_cancel₀ hD, one_mul]
+
+/-! ## 4. Dependence on `x` only through `G_x(F)`; linearity -/
+
+variable (L) in
+/-- **Integrals over `G_x(F)\G(F)` for `dg / d_c t` depend on `x` only through `G_x(F)`.** -/
+theorem integral_orbQuotMeasure_dcMeasure_congr {x y : ↥d.G} (h : d.centG x = d.centG y)
+    (Φ : ↥d.G → ℂ) :
+    ∫ q, Φ (CosetSpace.out _ q) ∂d.orbQuotMeasure x (L.dcMeasure x) =
+      ∫ q, Φ (CosetSpace.out _ q) ∂d.orbQuotMeasure y (L.dcMeasure y) := by
+  have key : ∀ T T' : Subgroup ↥d.G, T = T' →
+      ∫ q, Φ (CosetSpace.out T.subtype q) ∂d.quotMeasureOn T (L.dcMeasureOn T) =
+        ∫ q, Φ (CosetSpace.out T'.subtype q) ∂d.quotMeasureOn T' (L.dcMeasureOn T') := by
+    rintro T _ rfl; rfl
+  exact key _ _ h
+
+
+/-- **`IsMx` depends on `x` only through `G_x(F)`** (for regular `x`): `x ∈ G_x(F) ⊆ M(F)`, and
+`A_{G_x}(F)` is defined from `G_x(F)`. -/
+theorem IsMx.of_centG_eq {x y : ↥d.G} (h : L.IsMx x) (hy : y ∈ regularSet d.G d.lie)
+    (hc : d.centG y = d.centG x) : L.IsMx y := by
+  refine ⟨hy, h.centG_le (hc ▸ Subgroup.mem_centralizer_singleton_iff.2 rfl), ?_⟩
+  have key : ∀ T T' : Subgroup ↥d.G, T = T' →
+      CompactSpace (CosetSpace (L.AGxOn T).subtype) →
+        CompactSpace (CosetSpace (L.AGxOn T').subtype) := by
+    rintro T _ rfl h; exact h
+  exact key _ _ hc.symm h.compact
+
+/-- **`θ_f(a x) = χ(a)⁻¹ θ_f(x)` for one presentation**, `f` `χ`-equivariant and `a ∈ A_G(F)`:
+`G_{a x}(F) = G_x(F)`, and `f(g⁻¹ a x g) = f(a g⁻¹ x g) = χ(a)⁻¹ f(g⁻¹ x g)` (`a` central). -/
+theorem thetaFBP_mul_AG (K : d.GoodK L.toFlagLeviDatum) (χ : CentralCharOn d) {f : ↥d.G → ℂ}
+    (hf : IsChiEquivariant d χ f) (a : ↥d.AG) (x : ↥d.G) :
+    L.thetaFBP K f ((a : ↥d.G) * x) = (((χ.toHom a)⁻¹ : Circle) : ℂ) * L.thetaFBP K f x := by
+  rw [thetaFBP_eq_integral, thetaFBP_eq_integral,
+    L.integral_orbQuotMeasure_dcMeasure_congr (d.centG_mul_AG x a.2)]
+  unfold weightedIntegrand
+  have hc : ∀ g : ↥d.G, g⁻¹ * ((a : ↥d.G) * x) * g = (a : ↥d.G) * (g⁻¹ * x * g) := fun g => by
+    have hb := Subgroup.mem_center_iff.mp (d.AG_le_center a.2) g⁻¹
+    rw [← mul_assoc, hb, mul_assoc, mul_assoc, mul_assoc]
+  simp_rw [hc, hf a, mul_assoc, integral_const_mul]
+  ring
+
+/-- **`θ_{κ f} = κ θ_f` for one presentation**, for `κ` invariant under conjugation. -/
+theorem thetaFBP_mul_invariant (K : d.GoodK L.toFlagLeviDatum) {κ : ↥d.G → ℂ}
+    (hκ : ∀ g y : ↥d.G, κ (g⁻¹ * y * g) = κ y) (f : ↥d.G → ℂ) (x : ↥d.G) :
+    L.thetaFBP K (κ * f) x = κ x * L.thetaFBP K f x := by
+  rw [thetaFBP_eq_integral, thetaFBP_eq_integral]
+  unfold weightedIntegrand
+  simp_rw [Pi.mul_apply, hκ, mul_assoc, integral_const_mul]
+  ring
+
+/-- `θ_0 = 0` for one presentation. -/
+theorem thetaFBP_zero_fun (K : d.GoodK L.toFlagLeviDatum) (x : ↥d.G) :
+    L.thetaFBP K 0 x = 0 := by
+  rw [thetaFBP_eq_integral]
+  unfold weightedIntegrand
+  simp
 
 end ReducedLeviDatum
 

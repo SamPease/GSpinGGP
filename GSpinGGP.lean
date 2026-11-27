@@ -79,6 +79,7 @@ import GSpinGGP.GGP.LieRegular
 import GSpinGGP.GGP.Centralizers
 import GSpinGGP.Literature.TraceFormula
 import GSpinGGP.TraceFormula.StronglyCuspidal
+import GSpinGGP.TraceFormula.ThetaFGlobal
 import GSpinGGP.TraceFormula.ThetaFRepresents
 import GSpinGGP.TraceFormula.RegularSetAG
 import GSpinGGP.TraceFormula.DeltaIntegrability
@@ -247,6 +248,7 @@ import GSpinGGP.Sanity.GL2Weight
 import GSpinGGP.Sanity.WeightedOrbitalAudit
 import GSpinGGP.Sanity.ThetaFBPAudit
 import GSpinGGP.Sanity.DcQuotientAudit
+import GSpinGGP.Sanity.ToyThetaF
 import GSpinGGP.Sanity.GammaGAudit
 import GSpinGGP.Sanity.WeylIntegrationL1Audit
 import GSpinGGP.Sanity.UnitaryRepAudit
