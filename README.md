@@ -41,24 +41,26 @@ satisfying the stability, transfer and genericity hypotheses, which is all the p
 
 As of November 2026:
 
-- The project builds with 46 declarations containing `sorry`. The main theorem `local_ggp`
+- The project builds with 45 declarations containing `sorry`. The main theorem `local_ggp`
   depends on 23 of them. They are of two kinds: the analytic core of the local trace formula
   (Thesis Ch. 8–12, e.g. the bound on the kernel of the distribution `J` and its spectral
   expansion), and published results that the dissertation adapts to general spin groups (see
   below), plus some smaller lemmas. A `sorry` is a step this project still owes.
 - Results from the literature are assumed as `axiom`s in `GSpinGGP/Literature/`, each with a
   docstring citing its source; they are where the formalization stops, and are not meant to be
-  proved here. `local_ggp` uses 24 of the 29. The other five are `exists_iwasawaPair_xi_sq_integrable`
+  proved here. `local_ggp` uses 24 of the 30. The other six are `exists_iwasawaPair_xi_sq_integrable`
   (Waldspurger 2003, Lemme II.1.5), intended as an input of the estimates of Thesis Ch. 8 and 10,
-  and four intended for the geometric side of the local trace formula: `weyl_integration_exists`
-  (the Weyl integration formula) and the three on Beuzart-Plessis's `θ_f` of a strongly cuspidal
-  function, `waldspurger2010_lemme_5_3`, `waldspurger2010_cor_5_9` and `bp_thm_5_5_1_iv`.
+  and five intended for the geometric side of the local trace formula: `weyl_integration_exists`
+  (the Weyl integration formula), the three on Beuzart-Plessis's `θ_f` of a strongly cuspidal
+  function, `waldspurger2010_lemme_5_3`, `waldspurger2010_cor_5_9` and `bp_thm_5_5_1_iv`, and
+  `tits_iwasawa_specialStab` (the Iwasawa decomposition for a special maximal compact subgroup in
+  lattice form).
   There are two classes.
   A *verbatim* axiom is a statement printed in its source, for the group the source treats,
   specialized (one, `bp_integrable_kernel_scusp`, is stated without proof in its source).
   A *derived* axiom is a short, explicit combination of such statements, or a printed statement
   whose hypotheses are checked for our object in the docstring only; the docstring quotes the
-  ingredients and gives the steps. 13 of the 29 are derived (`scripts/derived-axioms.txt`).
+  ingredients and gives the steps. 14 of the 30 are derived (`scripts/derived-axioms.txt`).
   They are the three on Galois cohomology (applied to groups of `F̄`-points whose description as algebraic
   groups, and for Kottwitz's lemma as a fundamental maximal torus, is argued in the docstring);
   `jantzen_finrank_soCentMat_ge` (four statements of Jantzen combined);
@@ -95,7 +97,12 @@ As of November 2026:
   Haar measures on the maximal tori; the measure on `A_G(F)` is Arthur's `d_c a`, not the
   exp-lifted one of Beuzart-Plessis's general rule, since it is the only one for which the
   formula can hold; the form for all Haar measures is a theorem). Their identification steps
-  (`M(x)`, the special subgroup, the normalizations of `dg`) are written in the docstrings.
+  (`M(x)`, the special subgroup, the normalizations of `dg`) are written in the docstrings;
+  `tits_iwasawa_specialStab` (`G = P K` for every `P ∈ 𝒫(M)`, with `K` the stabilizer, cut by
+  `H_G = 0`, of special lattices of `W` and `V` adapted to `M`: Tits's and Waldspurger 2003's
+  Iwasawa decomposition for the fixer of a special point, the latter stated without proof, applied
+  through Waldspurger 2010 §7.1–7.2, stated without proof there, and the Bruhat–Tits
+  identification of the buildings of `GSpin` and `SO`; every step is written in the docstring).
   The axioms on characters (Harish-Chandra, Beuzart-Plessis) and on multiplicity one (Pan Yan) are
   stated, as in their sources, for irreducible admissible smooth representations; the exception is
   `rodier_germ_one` (Rodier, Mœglin–Waldspurger), which is still stated for irreducible tempered
