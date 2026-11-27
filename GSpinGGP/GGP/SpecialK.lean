@@ -20,16 +20,10 @@ the stabilizer `GGPData.specialStab` are defined in `GGP/SpecialLattice.lean`, b
 literature axiom `tits_iwasawa_specialStab` (`Literature/SpecialKIwasawa.lean`) that this file
 uses.
 
-## The subgroup and the predicate
+## The predicate
 
-* `SpecialLattice.IsAdapted b wt`: each `v_{±i}` lies in one weight space of `(b, wt)` and
-  `V_an` lies in the weight-`0` space.  Then the split torus `A` of the hyperbolic system
-  (acting by `t_i` on `v_i`, `t_i⁻¹` on `v_{-i}`, trivially on `V_an`) preserves every weight space,
-  so `A ⊆ M` (`M` is the stabilizer of the weight spaces, `mem_flagLevi_iff`).
-* `GGPData.specialStab S_W S_V`: the `g ∈ G` with `H_G(g) = 0` (`hcG g = 1`) such that `P(g)`
-  stabilizes `R_W` and `R_V` (`latticeStab`).
-* `GGPData.GoodK.IsSpecial K`: `K` **equals** `specialStab S_W S_V` for special lattices adapted to
-  `L`.
+* `GGPData.GoodK.IsSpecial K`: `K` **equals** `specialStab S_W S_V` (defined in
+  `GGP/SpecialLattice.lean`, with `SpecialLattice.IsAdapted`) for special lattices adapted to `L`.
 
 ## Identification with "special, in good position relative to `M`"
 
@@ -80,7 +74,7 @@ harmless.
   coordinate lattice of a basis made of vectors of weight spaces) and the literature axiom
   `tits_iwasawa_specialStab` (the Iwasawa decomposition `G = P K` for `P ∈ 𝒫(M)`: Tits,
   Corvallis, 3.3.2 and Waldspurger 2003, p. 240, applied through W1 §7.1–7.2 and the
-  identification below).
+  identification above).
 * `GGPData.exists_specialK` (`sorry`): every reduced Levi datum has a special `GoodK`.
 
 The checks at `gl2Data` are in `Sanity/GL2SpecialK.lean`: `gl2GoodK` is special; a `GoodK` of

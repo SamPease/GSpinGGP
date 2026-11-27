@@ -233,9 +233,10 @@ namespace GGPData
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F] (d : GGPData F)
 
 /-- **The stabilizer of a pair of special lattices in `G`**: the `g ∈ G` with `H_G(g) = 0`
-(`hcG g = 1`) such that `P(g)` stabilizes `R_W` and `R_V`.  By the identification in the module
-docstring of `GGP/SpecialK.lean` (Tits 3.1, 1.2, 2.1; BT II 4.2.15–16, 5.1.20 Rem. 1, 5.1.29;
-W1 §7.1) it is a special maximal compact subgroup of `G(F)`. -/
+(`hcG g = 1`) such that `P(g)` stabilizes `R_W` and `R_V`.  By the identification written out
+in steps 1–4 of `tits_iwasawa_specialStab` (`Literature/SpecialKIwasawa.lean`; Tits 3.1, 1.2, 2.1;
+BT II 4.2.15–16, 5.1.20 Rem. 1, 5.1.29; W1 §7.1) it is the fixer of a special point of the
+extended building, a special maximal compact subgroup of `G(F)`. -/
 def specialStab (SW : SpecialLattice d.QW) (SV : SpecialLattice d.QV) : Subgroup ↥d.G :=
   d.hcG.ker ⊓ (latticeStab d.QW SW.R).comap d.fst ⊓ (latticeStab d.QV SV.R).comap d.snd
 
