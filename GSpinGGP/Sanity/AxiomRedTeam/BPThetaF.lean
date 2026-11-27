@@ -8,6 +8,8 @@ import GSpinGGP.Sanity.AxiomRedTeam.WeylIntegration
 import GSpinGGP.Sanity.AxiomRedTeam.HarishChandra
 import GSpinGGP.Sanity.ThetaFBPAudit
 import GSpinGGP.Sanity.GL2SpecialK
+import GSpinGGP.Sanity.GL2IsMx
+import GSpinGGP.TraceFormula.ThetaFBPOpp
 import GSpinGGP.Sanity.LieAudit
 import GSpinGGP.Sanity.AxiomRedTeam.Measure
 
@@ -73,26 +75,33 @@ over special presentations, and these are the checks that `IsSpecial` is not too
 in context, not kept: a failing search does not compile): `exact?` and `aesop` find no proof of
 `False`.
 
-**Presentation change** (any datum): `L` and `L.opp` (opposite flags, negated weights, same `M`)
-have the same `A_M(F)` (`opp_AMF`, via `wtScalar_neg`) and the same `IsMx` (`IsMx.opp`).
+**Presentation change** (any datum; proved in the library, `GGP/LeviOpp.lean`,
+`TraceFormula/ThetaFBPOpp.lean`): `L` and `L.opp` (opposite flags, negated weights, same `M`) have
+the same `IsMx` (`IsMx.opp`), the same `K` is good and special for both (`oppK`,
+`oppK_isSpecial`), and `θ_f` is the same (`opp_thetaFBP`): the sign (`opp_finrank_aMG`), `d_c t`
+(`opp_dcMeasure`) and `v_M` (`opp_vM`) agree, the last because the points `H_P(g)` and the
+lattice `proj_M^G(H_M(A_M(F)))` both change sign in `a_M^G` (`opp_hPar`, `opp_latticeMG`; from
+the determinant duality `det_wtBlock_neg_mul` on `M(F)`).  Conjunct 1 of
+`waldspurger2010_lemme_5_3` is not guarded by `IsBPThetaF` and asserts this equality for strongly
+cuspidal `f`; `lemme_5_3_opp_check` proves that instance for every `f` without the axiom, so
+this conjunct is consistent with the presentation change.
 
-**Owed (not reachable cheaply now).**
-* At `gl2Data`, `gl2Levi.IsMx (inr (gl2Torus c))` for a regular torus element: this needs
-  `inr (gl2Torus c) ∈ G_reg(F)` (regularity in the Lie algebra inside the Clifford algebra, not
-  computed anywhere in the repository) and compactness of `G_x(F)/A_M(F)` (needs `G_x(F)`
-  explicitly).  With `gl2GoodK_isSpecial` it would witness the `∃` half at a proper Levi subgroup.
-* At `gl2Data`, that the datum with empty flags (`M = G`) is not `IsMx` at such `x`
-  (`T(F)/A_G(F) ≅ F^×` not compact): needs the same description of `G_x(F)`.
-* `thetaFBP 𝕃 K f x = thetaFBP 𝕃.opp K' f x` for every `f`, and the equality of `aMG`,
-  `AGxOne` and `latticeMG` under `opp` (the characters of `L.opp` are inverses of those of `L`).
+**A proper Levi subgroup** (`Sanity/GL2IsMx.lean`, `gl2Data`, `G = GL₁ × GSpin₃`, nonabelian): for
+`x = inr (gl2Torus c)`, `c ≠ 1`, `x` is regular (`gl2_torus_mem_regularSet`), the torus datum is
+`M(x)` (`gl2_isMx`; `G_x(F) ⊆ M(F) = A_M(F)`), and with `gl2GoodK_isSpecial` this witnesses the
+`∃` half of `IsBPThetaF` with `M ≠ G` (`gl2_isBPThetaF_exists_half`).  The datum with `M = G`
+is not `M(x)` (`gl2TopLevi_not_isMx`: `A_G(F)\G_x(F)` is not compact), so the `∀` half at `x`
+does not consult it; it does consult `(gl2Levi, gl2GoodK)` and `(gl2Levi.opp, gl2GoodK)`
+(`gl2_isBPThetaF_at_torus`).
 
 **Non-vacuity off `toyD`.**  On a general datum, non-vacuity of the hypothesis `IsBPThetaF` rests on
 the `sorry`s `exists_isMx` and `exists_specialK`; if either failed, the axioms would be vacuous
 there, not false.  `vM` is free of junk values only if `𝒫(M)` is finite, which is the `sorry`
 `FlagLeviDatum.finite_parabolics` (at `toyD`, `M = G` and `v_M = 1`).
 
-Not covered (accepted gap): nonabelian `G`, `M ≠ G`, weighted orbital integrals with `v_M ≠ 1`,
-several tori, nonzero nilpotent orbits.  No check here uses `exists_isMx` or `exists_specialK`.
+Not covered (accepted gap): the conclusions of the axioms off `toyD` (at `gl2Data` only the
+hypothesis `IsBPThetaF` is tested), weighted orbital integrals with `v_M ≠ 1`, several tori,
+nonzero nilpotent orbits.  No check here uses `exists_isMx` or `exists_specialK`.
 -/
 
 open MeasureTheory Module GSpinGGP GSpinGGP.Sanity GSpinGGP.GGPData
@@ -137,45 +146,28 @@ theorem bp_thm_5_5_1_iv_zero (μ : ∀ T : Subgroup ↥d.G, Measure ↥T) {θ : 
 
 end Zero
 
-/-! ## Any datum: `IsMx` does not depend on the presentation `L` versus `L.opp`
+/-! ## Any datum: the presentation `L` versus `L.opp`
 
 `L.opp` has the opposite flags, the same bases and the negated weights, and the same Levi subgroup
-(`FlagLeviDatum.opp_M`).  The identification (I5) of `Literature/BPThetaF.lean` asserts that
-`thetaFBP` reads `L` only through `M`; here the part of it about `IsMx` and `A_M(F)` is checked. -/
+(`FlagLeviDatum.opp_M`); the same `K` is good and special for it (`ReducedLeviDatum.oppK`,
+`oppK_isSpecial`).  The library proves that `θ_f` is the same for both presentations
+(`ReducedLeviDatum.opp_thetaFBP`, from `opp_vM` in `GGP/LeviOpp.lean`).  Here: the instance
+`y = 1`, `L' = L.opp`, `K' = K` of conjunct 1 of `waldspurger2010_lemme_5_3` holds for every `f`,
+without the axiom. -/
 
 section Opp
 
 variable {d : GGPData F}
 
-omit [PAdicField F] in
-/-- The scalars on the weight spaces do not see the sign of the weights. -/
-theorem wtScalar_neg {V : Type*} [AddCommGroup V] [Module F V] [Invertible (2 : F)]
-    {Q : QuadraticForm F V} {ι : Type*} (b : Basis ι F V) (wt : ι → ℤ) :
-    wtScalar Q b (-wt) = wtScalar Q b wt := by
-  ext g
-  constructor
-  · rintro ⟨t, ht0, ht⟩
-    exact ⟨fun w => t (-w), by simpa using ht0, fun j => by simpa using ht j⟩
-  · rintro ⟨t, ht0, ht⟩
-    exact ⟨fun w => t (-w), by simpa using ht0, fun j => by simpa using ht j⟩
-
-/-- **`A_M(F)` is the same for `L` and `L.opp`.** -/
-theorem opp_AMF (L : d.ReducedLeviDatum) : L.opp.AMF = L.AMF := by
-  ext g
-  rw [ReducedLeviDatum.mem_AMF_iff, ReducedLeviDatum.mem_AMF_iff]
-  change d.fst g ∈ wtScalar d.QW L.bW (-L.wtW) ∧ d.snd g ∈ wtScalar d.QV L.bV (-L.wtV) ↔ _
-  rw [wtScalar_neg, wtScalar_neg]
-
-/-- **`IsMx` is the same for `L` and `L.opp`**: same `M`, same `A_M(F)`. -/
-theorem IsMx.opp {L : d.ReducedLeviDatum} {x : ↥d.G} (h : L.IsMx x) : L.opp.IsMx x where
-  regular := h.regular
-  mem := by
-    change x ∈ L.toFlagLeviDatum.opp.M
-    rw [FlagLeviDatum.opp_M]; exact h.mem
-  compact := by
-    have e : L.opp.AGx x = L.AGx x := by
-      simp only [ReducedLeviDatum.AGx, opp_AMF]
-    rw [e]; exact h.compact
+/-- **Conjunct 1 of `waldspurger2010_lemme_5_3` for `(L, L.opp)`, without the axiom** (V): both
+presentations are admissible (`IsMx.opp`, `oppK_isSpecial`) and give the same `θ_f(x)`
+(`opp_thetaFBP`), for every `f`. -/
+theorem lemme_5_3_opp_check {L : d.ReducedLeviDatum} {K : d.GoodK L.toFlagLeviDatum} {x : ↥d.G}
+    (hx : L.IsMx x) (hK : K.IsSpecial) (f : ↥d.G → ℂ) :
+    L.opp.IsMx x ∧ (L.oppK K).IsSpecial ∧
+      L.opp.thetaFBP (L.oppK K) f (1 * x * 1⁻¹) = L.thetaFBP K f x := by
+  refine ⟨hx.opp, L.oppK_isSpecial hK, ?_⟩
+  rw [one_mul, inv_one, mul_one, ReducedLeviDatum.opp_thetaFBP]
 
 end Opp
 
@@ -470,5 +462,37 @@ theorem toyD_joint_check {f f' : ↥(𝕋).G → ℂ} (hf : f ∈ testFunctions 
     (hiv f hf hcusp _ hθ f' hf').2.2⟩
 
 end Toy
+
+/-! ## A proper Levi subgroup: the torus of `GSpin₃ ≅ GL₂` (`Sanity/GL2IsMx.lean`) -/
+
+section GL2
+
+local notation "𝔾" => (gl2Data (F := F))
+
+local notation "𝕃" => (gl2Levi (F := F))
+
+/-- **The `∃` half of `IsBPThetaF` holds at a proper Levi subgroup** (for `x = inr (gl2Torus c)`,
+`c ≠ 1`): `x` is regular, and `(gl2Levi, gl2GoodK)` is a special presentation of `M(x) ≠ G`. -/
+theorem gl2_isBPThetaF_exists_half {c : Fˣ} (hc : (c : F) ≠ 1) :
+    (𝔾).inr (gl2Torus c) ∈ regularSet (𝔾).G (𝔾).lie ∧
+      ∃ (L : (𝔾).ReducedLeviDatum) (K : (𝔾).GoodK L.toFlagLeviDatum),
+        L.IsMx ((𝔾).inr (gl2Torus c)) ∧ K.IsSpecial ∧ L.M ≠ ⊤ :=
+  ⟨gl2_torus_mem_regularSet hc, gl2_exists_special_isMx hc⟩
+
+/-- **What `IsBPThetaF` asks at a proper Levi subgroup**: at `x = inr (gl2Torus c)`, `c ≠ 1`, it
+pins `θ x` to `θ_f` for both presentations `(gl2Levi, gl2GoodK)` and `(gl2Levi.opp, gl2GoodK)`
+(which agree, `opp_thetaFBP`), and it does not consult the datum with
+`M = G`, which is not `M(x)` (`gl2TopLevi_not_isMx`). -/
+theorem gl2_isBPThetaF_at_torus {c : Fˣ} (hc : (c : F) ≠ 1) {f θ : ↥(𝔾).G → ℂ}
+    (hθ : (𝔾).IsBPThetaF f θ) :
+    θ ((𝔾).inr (gl2Torus c)) = (𝕃).thetaFBP gl2GoodK f ((𝔾).inr (gl2Torus c)) ∧
+      θ ((𝔾).inr (gl2Torus c)) =
+        (𝕃).opp.thetaFBP ((𝕃).oppK gl2GoodK) f ((𝔾).inr (gl2Torus c)) ∧
+      ¬ (gl2TopLevi (F := F)).IsMx ((𝔾).inr (gl2Torus c)) := by
+  have h := (hθ _ (gl2_torus_mem_regularSet hc)).2
+  exact ⟨h _ _ (gl2_isMx hc) gl2GoodK_isSpecial,
+    h _ _ (gl2_isMx hc).opp ((𝕃).oppK_isSpecial gl2GoodK_isSpecial), gl2TopLevi_not_isMx c⟩
+
+end GL2
 
 end GSpinGGP.AxiomRedTeam

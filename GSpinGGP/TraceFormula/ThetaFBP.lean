@@ -172,6 +172,16 @@ variable {L}
 theorem IsMx.centG_le {x : ↥d.G} (h : L.IsMx x) : d.centG x ≤ L.M :=
   centG_le_M L.toFlagLeviDatum h.regular h.mem
 
+variable (L) in
+/-- If `G_x(F) ⊆ A_M(F)`, the space `A_M(F)\G_x(F)` is a point. -/
+theorem subsingleton_cosetSpace_AGx {x : ↥d.G} (h : d.centG x ≤ L.AMF) :
+    Subsingleton (CosetSpace (L.AGx x).subtype) := by
+  refine ⟨fun a b => ?_⟩
+  induction a using CosetSpace.ind with | h g => ?_
+  induction b using CosetSpace.ind with | h k => ?_
+  rw [CosetSpace.mk_eq_mk_iff, CosetSpace.rel_iff]
+  exact ⟨⟨k * g⁻¹, mem_AGx.2 (h (k * g⁻¹).2)⟩, by simp⟩
+
 /-- **Existence of `M(x)`** (Beuzart-Plessis §5.2; Waldspurger 2010, §2.3): every `x ∈ G_reg(F)`
 has a reduced Levi datum `L` with `L.M = M(x)`.  Not proved here.
 
