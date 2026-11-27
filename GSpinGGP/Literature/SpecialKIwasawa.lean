@@ -90,8 +90,11 @@ lattices of `W` and `V` (`SpecialLattice`, W1 §7.1) adapted to `L`'s weight bas
   l'immeuble de G. … Soit P = MU un sous-groupe parabolique semi-standard de G. Alors G = PK".
   **Stated there without proof** (the same decomposition as Tits 3.3.2, for all `P ⊇ A₀`).
 * (BT II) F. Bruhat, J. Tits, *Groupes réductifs sur un corps local II*, Publ. IHÉS 60 (1984).
-  - 4.2.15, pp. 93–94: the building is invariant under central epimorphisms `G → G'`, with a
-    unique isomorphism compatible with the actions of `G(K)` and `G'(K)`.
+  - 4.2.15, pp. 93–94: "L'immeuble de G est invariant par épimorphisme central : soit G' un
+    autre groupe algébrique défini sur K et soit j : G → G' un homomorphisme surjectif de noyau
+    central. Alors … l'image S' = j(S) en est un tore K-déployé maximal"; "il existe un
+    isomorphisme et un seul de ℐ sur l'immeuble ℐ' de G' compatible avec les actions de G(K) et
+    de G'(K)".
   - 4.2.16, pp. 94–95: the extended building `ℐ¹ = ℐ × V¹`, `V¹` dual to `X_K(G) ⊗ ℝ`, `g` acting
     on `V¹` by `θ(g)`, `⟨θ(g), χ⟩ = −ω(χ(g))`; "le stabilisateur de ℐ pour l'action de G sur ℐ¹
     est le sous-groupe distingué G¹ = {g ∈ G(K) | ω(χ(g)) = 0 pour tout χ ∈ X_K(G)}"; "Si X est le
@@ -102,6 +105,27 @@ lattices of `W` and `V` (`SpecialLattice`, W1 §7.1) adapted to `L`'s weight bas
     le groupe adjoint ad G (cf. 4.2.14 et 15)", the building being "le même pour G et ad G";
     this covers groups that are not quasi-split (here `d_an ∈ {3, 4}` occurs).  5.1.29, p. 157:
     the same for the extended building and `G¹`.
+* (MT) G. Malle, D. Testerman, *Linear Algebraic Groups and Finite Groups of Lie Type*, Cambridge
+  Stud. Adv. Math. 133 (2011), over an algebraically closed field `k` throughout (stated at the start of Ch. 1).
+  Prop. 12.13, p. 101: "The parabolic subgroups of a simple classical group Cl(V) are precisely
+  the subgroups of the form P = Stab_{Cl(V)}(0 ⊂ V₁ ⊂ … ⊂ V_r ⊂ V), where V_i is a totally
+  isotropic (totally singular if V is equipped with a quadratic form) subspace of V";
+  `Cl(V) = SO(V)` for a nondegenerate quadratic form.  The direction used here is the first
+  paragraph of the proof, p. 102: "Given a flag F of totally singular subspaces, refine this to
+  obtain a maximal flag inside a maximal totally singular subspace of V. By Witt's lemma …
+  there exists a Borel subgroup of G stabilizing a maximal flag of a maximal singular subspace
+  of V. So the stabilizer of F contains a Borel subgroup and hence is parabolic by
+  Proposition 12.2"; that paragraph does not use simplicity, and the Borel subgroup it uses is
+  Example 6.7(4), pp. 37–39, for `SO_{2n}`, every `n` (for `SO_{2n+1}` stated there, with the
+  check left as Exercise 10.19).
+* (Milne) J. S. Milne, *Algebraic Groups* (course notes, version 2.00, 2015; preliminary
+  version of the book, Cambridge 2017, whose numbering differs).  Thm 18.21, p. 317: "A subgroup
+  variety P of G is parabolic if and only if it contains a Borel subgroup".  Prop. 18.24, p. 318
+  (quotient map `q : G → Q` of connected group varieties), last paragraph of the proof: "Let H'
+  be a parabolic subgroup of Q. Then H' contains a Borel subgroup B', which we can write
+  B' = q(B) with B a Borel subgroup of G. Now H = q⁻¹(H') contains B, and so it is parabolic".
+  Def. 18.63, p. 329, over any field: "Let k' be a field containing k; then an algebraic
+  subgroup P of G is parabolic if and only if P_{k'} is parabolic in G_{k'}".
 
 **Steps** (`U` stands for `W` or `V`; `π = specP : GSpin(U) → SO(U)`).
 1. *Hypotheses.*  A `PAdicField` is a complete, discretely valued, non-archimedean field of
@@ -139,7 +163,7 @@ lattices of `W` and `V` (`SpecialLattice`, W1 §7.1) adapted to `L`'s weight bas
    reduced building is the preimage of the reduced stabilizer in `SO(U)(F)`, and by BT II 4.2.16
    (5.1.29) the stabilizer of the point `x_U = (y_U, 0)` of the extended building `ℐ × V¹` is
    `π⁻¹(K_U) ∩ GSpin(U)(F)¹` (`K_U` is the reduced stabilizer cut by `SO(U)(F)¹`, and `π` maps
-   `GSpin(U)(F)¹`, a bounded group, into `SO(U)(F)¹`).  When the semisimple part of `SO(U)` is
+   `GSpin(U)(F)¹` into `SO(U)(F)¹`, since `χ ∘ π ∈ X_F(GSpin(U))` for every `χ ∈ X_F(SO(U))`).  When the semisimple part of `SO(U)` is
    anisotropic or trivial (`U` anisotropic, or `dim U ≤ 2`), the reduced buildings are points,
    `GSpin(U)(F)^{x_U} = GSpin(U)(F)¹`, and `π` maps it into the unique maximal bounded subgroup
    `K_U` of `SO(U)(F)`, so the formula `π⁻¹(K_U) ∩ GSpin(U)(F)¹` still holds.
@@ -147,15 +171,22 @@ lattices of `W` and `V` (`SpecialLattice`, W1 §7.1) adapted to `L`'s weight bas
    plane `X_F` has rank `2` and `hcMap` uses both characters).  `x_U` is special (step 2 and
    Tits 1.12; the factor `V¹` = `X_*(S₀) ⊗ ℝ` does not enter Tits 1.9), and lies in the extended
    apartment of the maximal split torus `S_U` of `GSpin(U)` lying over `A_U` (the identity
-   component of `π⁻¹(A_U)`; Tits 1.2).
+   component of `π⁻¹(A_U)`, so that `π(S_U) = A_U`, which is BT II 4.2.15's `S' = j(S)`; Tits 1.2).
 4. *Product.*  For `G = GSpin(W) × GSpin(V)` the (extended) building is the product (Tits 2.1),
    `x = (x_W, x_V)` is special (Tits 1.9, 1.12: the diagram of a product is the disjoint union),
    `S = S_W × S_V` is a maximal split torus of `G` with `x` in its apartment, `G(F)¹ = ker H_G`
    (`hcG`), and `G(F)^x = {g : H_G(g) = 0, π(g_W) ∈ K_W, π(g_V) ∈ K_V}`.  Since
    `latticeStab Q R = {k : π(k) R = R}`, this is `specialStab S_W S_V`.
 5. *`P ⊇ S`* (W2003's "semi-standard").  `P ∈ 𝒫(M)` is `whittB F'_W F'_V`, the stabilizer of
-   isotropic flags of `W` and `V`, i.e. (the `F`-points of) a parabolic subgroup of `G` (Thesis
-   §5.1.2; for `SO` this is how W1 §7.2 defines its `P`), and `M ⊆ P` (`IsLevi.le`).
+   isotropic flags of `W` and `V`: the `F`-points of `π⁻¹(P_W) × π⁻¹(P_V)`, `P_U = Stab_{SO(U)}(F'_U)`.
+   This is a parabolic subgroup of `G`.  Over `F̄` the flag `F'_U ⊗ F̄` is a flag of totally
+   singular subspaces, so `P_{U,F̄}` (the stabilizer of the base-changed flag) is parabolic in
+   `SO(U)_{F̄}` (MT 12.13, first paragraph of the proof; if `dim U ≤ 2`, `SO(U)` is a torus or
+   trivial and every subgroup containing it is all of it); hence `P_U` is parabolic (Milne 18.63);
+   `π⁻¹(P_U)` is parabolic in `GSpin(U)` (Milne 18.24, `π` a quotient map, over `F̄`, then 18.63);
+   and a product of parabolic subgroups is parabolic in the product (it contains the product of
+   Borel subgroups, Milne 18.21).  Characteristic `0`, so all these group schemes are smooth.
+   And `M ⊆ P` (`IsLevi.le`).
    `S ⊆ M`: by `IsAdapted` each of the lines `F v_i`, `F v_{−i}` and the space `V_an` lies in a
    single weight space; since `U = ⊕ F v_i ⊕ F v_{−i} ⊕ V_an` (`SpecialLattice.sub_sum_mem_Van`)
    and `U = ⊕_w wtSpan w`, each weight space is the sum of the pieces it contains, so every
@@ -163,7 +194,11 @@ lattices of `W` and `V` (`SpecialLattice`, W1 §7.1) adapted to `L`'s weight bas
    `flagLevi` (`mem_flagLevi_iff`).  So `S ⊆ π⁻¹(A_W × A_V) ⊆ M ⊆ P`.
 6. *The decomposition.*  W2003 p. 240 with `A₀ = S`, `K = G(F)^x` the fixer of the special point
    `x` of the apartment of `A₀` (steps 3–4) and `P` semi-standard (step 5): `G(F) = P(F) K`.
-   Equivalently from Tits 3.3.2, which also gives the proof reference: `P ⊇ S` contains a minimal
+   W2003's building is read as the extended one: W2003 calls its `K` a maximal *compact*
+   subgroup, and a fixer in the reduced building contains the centre `Z_G(F)`, which is not
+   compact when `A_G ≠ 1` (here `A_G ⊇ G_m`); the extended fixer `G(F)^x` is the compact one.
+   This step rests on W2003 alone.  For comparison only (not used): the same follows from Tits
+   3.3.2, which also gives the proof reference: `P ⊇ S` contains a minimal
    parabolic subgroup `P₁ = Z U⁺ ⊇ S`, `U⁺` defined by a vector chamber `D` (concretely: each
    member of `F'_U` is `S`-stable, hence spanned by vectors `v_{±i}` — its intersection with
    `V_an` is isotropic, hence `0` — and refining it by these lines gives full flags whose
