@@ -178,13 +178,16 @@ import GSpinGGP.GGP.LatticeK
 import GSpinGGP.GGP.SpecialLattice
 import GSpinGGP.Literature.SpecialKIwasawa
 import GSpinGGP.GGP.SpecialK
+import GSpinGGP.GGP.WtSpan
 import GSpinGGP.GGP.LeviOpp
+import GSpinGGP.GGP.LeviPresentation
 import GSpinGGP.TraceFormula.Basic
 import GSpinGGP.TraceFormula.SpinorNorm
 import GSpinGGP.TraceFormula.ThetaF
 import GSpinGGP.TraceFormula.DcQuotient
 import GSpinGGP.TraceFormula.ThetaFBP
 import GSpinGGP.TraceFormula.ThetaFBPOpp
+import GSpinGGP.TraceFormula.ThetaFBPPresentation
 import GSpinGGP.TraceFormula.ThetaFBPIndep
 import GSpinGGP.TraceFormula.WeightedOrbital
 import GSpinGGP.TraceFormula.RegularCentralizer
@@ -245,6 +248,7 @@ import GSpinGGP.Sanity.GL2GoodK
 import GSpinGGP.Sanity.GL2IsMx
 import GSpinGGP.Sanity.GL2SpecialK
 import GSpinGGP.Sanity.GL2Weight
+import GSpinGGP.Sanity.GL2Presentation
 import GSpinGGP.Sanity.WeightedOrbitalAudit
 import GSpinGGP.Sanity.ThetaFBPAudit
 import GSpinGGP.Sanity.DcQuotientAudit

@@ -51,6 +51,23 @@ structure IsFlagSplitting (F : IsotropicFlag Q) {ι : Type*} [Fintype ι] (b : B
   orth : ∀ i j, wt i + wt j ≠ 0 → bform Q (b i) (b j) = 0
   sum_wt : ∑ i, wt i = 0
 
+/-- **A reindexed and rescaled splitting is a splitting** of the same flag. -/
+theorem IsFlagSplitting.reindexUnits {Fl : IsotropicFlag Q} {ι κ : Type*} [Fintype ι]
+    [Fintype κ] {b : Basis ι K V} {wt : ι → ℤ} (hs : IsFlagSplitting Fl b wt)
+    (e : ι ≃ κ) (u : κ → Kˣ) : IsFlagSplitting Fl ((b.reindex e).unitsSMul u) (wt ∘ e.symm) where
+  mem i := by
+    rw [Basis.unitsSMul_apply, Basis.reindex_apply]
+    exact Submodule.smul_mem _ _ (hs.mem _)
+  repr_eq_zero w v hv i hi := by
+    rw [Basis.repr_unitsSMul, Basis.repr_reindex_apply, hs.repr_eq_zero w v hv _ hi, smul_zero]
+  orth i j h := by
+    rw [Basis.unitsSMul_apply, Basis.unitsSMul_apply, Basis.reindex_apply, Basis.reindex_apply,
+      Units.smul_def, Units.smul_def, LinearMap.map_smul₂, LinearMap.map_smul,
+      hs.orth _ _ h, smul_zero, smul_zero]
+  sum_wt := by
+    rw [show (∑ i, (wt ∘ e.symm) i) = ∑ j, wt j from Equiv.sum_comp e.symm wt, hs.sum_wt]
+
+
 theorem IsotropicFlag.flagWt_one (F : IsotropicFlag Q) : flagWt F 1 = F.top := by
   rw [F.flagWt_of_pos le_rfl, IsotropicFlag.top]
   congr 1
