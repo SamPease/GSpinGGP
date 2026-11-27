@@ -291,8 +291,8 @@ Derivation (identification steps):
 
 The statement is no stronger than BP's: BP's (iv), for its `dg`, `dt` and `θ_f`, implies it with
 `μ = dt`.  Soundness relies on (I3), `IsSpecial` ⇒ special in good position, which is tested at
-`gl2Data` (`Sanity/GL2SpecialK.lean`).  Off the toy datum, `IsBPThetaF f (thetaF d f)` (`isBPThetaF_thetaF`) is proved from the
-`sorry`s `exists_isMx` and `exists_specialK`.  Were they false, the axiom would be vacuous there
+`gl2Data` (`Sanity/GL2SpecialK.lean`).  Off the toy datum, `IsBPThetaF f (thetaF d f)`
+(`isBPThetaF_thetaF`) is proved from the `sorry`s `exists_isMx` and `exists_specialK`.  Were they false, the axiom would be vacuous there
 rather than false, but the path of `local_ggp` uses the axiom at `θ = thetaF d f`, so the main
 theorem's proof relies on its non-vacuity, i.e. on those two `sorry`s. -/
 axiom bp_thm_5_5_1_iv (d : GGPData F) :
