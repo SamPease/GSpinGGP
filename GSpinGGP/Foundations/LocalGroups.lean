@@ -61,6 +61,16 @@ excluded, as in the Thesis. The non-archimedean ones are the `PAdicField`s. -/
 class LocalField (F : Type*) [NontriviallyNormedField F] : Prop
     extends CompleteSpace F, LocallyCompactSpace F, CharZero F
 
+/-- `2` is invertible in a local field. This is the `Invertible (2 : F)` carried by `GGPData F`.
+It is one named instance taking the `LocalField` instance as its argument, so that the same term
+arises over a `LocalField` and over a `PAdicField` (where the argument is
+`PAdicField.toLocalField`), instead of Mathlib's `invertibleTwo` applied to a `CharZero F` proof
+that differs between the two and is abstracted into auxiliary lemmas inside definitions. -/
+@[instance_reducible]
+instance (priority := high) LocalField.invertibleTwo (F : Type*) [NontriviallyNormedField F]
+    [LocalField F] : Invertible (2 : F) :=
+  _root_.invertibleTwo
+
 /-- `ℝ` is a local field. -/
 instance : LocalField ℝ where
 
@@ -72,11 +82,14 @@ characterization: a nontrivially normed field that is complete, locally compact,
 characteristic zero, i.e. an ultrametric `LocalField`. (Any such field is a finite extension of
 some `ℚ_p`.) -/
 class PAdicField (F : Type*) [NontriviallyNormedField F] : Prop
-    extends CompleteSpace F, LocallyCompactSpace F, IsUltrametricDist F, CharZero F
+    extends LocalField F, IsUltrametricDist F
 
-/-- A `p`-adic field is a local field. -/
-instance (priority := 100) PAdicField.toLocalField (F : Type*) [NontriviallyNormedField F]
-    [PAdicField F] : LocalField F where
+/-- An ultrametric local field is a `p`-adic field, so that `[PAdicField F]` and
+`[LocalField F] [IsUltrametricDist F]` are interchangeable binders. New `p`-adic code uses the
+latter: there the `LocalField` instance is a variable of its own, which elaboration assigns
+directly, rather than the proof `PAdicField.toLocalField F`. -/
+instance (priority := 50) PAdicField.ofUltrametric (F : Type*) [NontriviallyNormedField F]
+    [LocalField F] [IsUltrametricDist F] : PAdicField F where
 
 /-- `ℚ_p` is a `p`-adic field. -/
 instance (p : ℕ) [Fact p.Prime] : PAdicField ℚ_[p] where

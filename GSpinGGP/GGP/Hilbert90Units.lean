@@ -30,7 +30,7 @@ open Matrix
 
 namespace GSpinGGP
 
-variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
+variable {F : Type} [NontriviallyNormedField F] [LocalField F]
 
 
 
@@ -54,7 +54,7 @@ theorem IsGalContinuous.inv {G : Type*} [Inv G] {t : GalF F → G} (ht : IsGalCo
   exact ⟨E, hE, fun σ τ hστ => by simp only [Pi.inv_apply, h σ τ hστ]⟩
 
 /-- A semilinear action of `Γ_F` on an `F̄`-algebra by ring automorphisms, fixing a basis. -/
-structure GalAlgAction (F : Type) [NontriviallyNormedField F] [PAdicField F] (Ā : Type*) [Ring Ā]
+structure GalAlgAction (F : Type) [NontriviallyNormedField F] [LocalField F] (Ā : Type*) [Ring Ā]
     [Algebra (AlgebraicClosure F) Ā] {N : ℕ} (e : Module.Basis (Fin N) (AlgebraicClosure F) Ā) where
   /-- `σ` acting on `Ā` -/
   act : GalF F → Ā →+* Ā

@@ -23,7 +23,7 @@ namespace GSpinGGP
 
 open IntermediateField Matrix
 
-variable {F : Type*} [NontriviallyNormedField F] [PAdicField F]
+variable {F : Type*} [NontriviallyNormedField F] [LocalField F]
 
 variable {m : ℕ} {S : Subgroup (GL (Fin m) (AlgebraicClosure F))}
 

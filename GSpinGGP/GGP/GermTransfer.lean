@@ -26,7 +26,7 @@ namespace GSpinGGP
 
 open TorusTransfer HarishChandra
 
-variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
+variable {F : Type} [NontriviallyNormedField F] [LocalField F] [IsUltrametricDist F]
 
 section ProdTransport
 
