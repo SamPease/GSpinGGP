@@ -1,7 +1,10 @@
 name: Lean Action CI
 
+# One run per change: pull requests are built as merged into `main` (the `pull_request` event),
+# and `main` itself is built after every merge. Branch pushes without a pull request are not built.
 on:
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -24,14 +27,40 @@ jobs:
       # Prebuilt Mathlib and Tau Ceti outputs; without them Tau Ceti would be compiled from source.
       - name: Fetch build caches
         run: PATH="$HOME/.elan/bin:$PATH" bash scripts/get-cache.sh
+      # Pull requests start from the compiled project of an earlier run (of the same pull request,
+      # else of `main`), so that Lake recompiles only the modules that changed and those importing
+      # them. `main` is always compiled from scratch, and its result is what later runs start from.
+      - name: Restore the compiled project (pull requests)
+        if: github.event_name == 'pull_request'
+        uses: actions/cache/restore@v4
+        with:
+          path: .lake/build
+          key: project-build-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
+          restore-keys: |
+            project-build-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
       - name: Build
         run: |
           set -o pipefail
           ~/.elan/bin/lake build 2>&1 | tee build.log
+      # Not part of the check: a failure to save (for instance when a run is repeated on the same
+      # commit, whose entry already exists) only makes a later run compile more.
+      - name: Save the compiled project
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: .lake/build
+          key: project-build-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
       # Axioms only in Literature/, local_ggp's axioms as listed in scripts/main-axioms.txt, and the
-      # README's sorry and axiom counts up to date.
+      # README's sorry and axiom counts up to date. The counts are read from the compiled
+      # environment; on `main`, where every module was just compiled, they are also compared with
+      # the warnings in the build log.
       - name: Check assumptions and README counts
-        run: LAKE=~/.elan/bin/lake bash scripts/check-assumptions.sh build.log
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            LAKE=~/.elan/bin/lake bash scripts/check-assumptions.sh
+          else
+            LAKE=~/.elan/bin/lake bash scripts/check-assumptions.sh build.log
+          fi
 
       # Build the blueprint (web + PDF) into site/, next to the static landing page.
       # These are the steps of leanprover-community/docgen-action, except that pygraphviz is
