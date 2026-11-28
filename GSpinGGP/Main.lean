@@ -2684,7 +2684,7 @@ theorem sum_mult_eq_one_complex {d : GGPData F} (hqs : d.IsQuasiSplit) (IF : Inn
     · exact (hw _ (P.tempered IF.base i)).1 hm
     · exact (hw _ (P.tempered IF.base i)).2 hm
   rw [Finset.sum_congr rfl fun i _ => hval i]
-  exact sum_ite_unique_eq_one _ (P.whitt w)
+  exact sum_ite_unique_eq_one _ (P.whitt_hasModel w)
 
 /-- **Thesis (6.7.1)** in `ℕ∞`: `Σ_{(α, π)} m(π) = 1`, the sum over all members
 of all packets (finite: `InnerFormSystem.finite_idx`).  Uses `m(π) ≠ ∞` (`mult_ne_top`). -/
