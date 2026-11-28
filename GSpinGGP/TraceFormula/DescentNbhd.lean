@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import GSpinGGP.TraceFormula.LieAlgebra
 import GSpinGGP.TraceFormula.InvariantSets
 import GSpinGGP.Foundations.GSpinExp
+import GSpinGGP.Foundations.RatioNearOne
 
 /-!
 # Descent neighbourhoods of `0` in `𝔤⁰(F)`
@@ -38,33 +39,6 @@ open scoped Pointwise
 attribute [local instance 100] LieRing.ofAssociativeRing LieAlgebra.ofAssociativeAlgebra
 
 namespace GSpinGGP
-
-/-- If `p = c q` with `p, q` close to `n ≠ 0`, then `c` is close to `1`. -/
-theorem exists_mem_nhds_eq_mul_imp_mem {K : Type*} [NormedField K] {n : K} (hn : n ≠ 0)
-    {U : Set K} (hU : U ∈ 𝓝 (1 : K)) :
-    ∃ N ∈ 𝓝 n, ∀ p ∈ N, ∀ q ∈ N, ∀ c : K, p = c * q → c ∈ U := by
-  have hc : ContinuousAt (fun pq : K × K => pq.1 / pq.2) (n, n) :=
-    continuousAt_fst.div continuousAt_snd hn
-  have hpre : (fun pq : K × K => pq.1 / pq.2) ⁻¹' U ∈ 𝓝 (n, n) :=
-    hc.preimage_mem_nhds (by simpa [div_self hn] using hU)
-  obtain ⟨N₁, hN₁, N₂, hN₂, hsub⟩ := mem_nhds_prod_iff.1 hpre
-  refine ⟨N₁ ∩ N₂ ∩ {q | q ≠ 0}, inter_mem (inter_mem hN₁ hN₂) (isOpen_ne.mem_nhds hn),
-    fun p hp q hq c hpq => ?_⟩
-  have h := hsub (Set.mk_mem_prod hp.1.1 hq.1.2)
-  simp only [Set.mem_preimage] at h
-  rwa [hpq, mul_div_assoc, div_self hq.2, mul_one] at h
-
-/-- `exists_mem_nhds_eq_mul_imp_mem` on `K × K`, componentwise. -/
-theorem exists_mem_nhds_eq_mul_imp_mem_prod {K : Type*} [NormedField K] {n : K × K}
-    (hn₁ : n.1 ≠ 0) (hn₂ : n.2 ≠ 0) {U : Set (K × K)} (hU : U ∈ 𝓝 (1 : K × K)) :
-    ∃ N ∈ 𝓝 n, ∀ p ∈ N, ∀ q ∈ N, ∀ c : K × K, p = c * q → c ∈ U := by
-  rw [show (1 : K × K) = ((1 : K), (1 : K)) from rfl] at hU
-  obtain ⟨U₁, hU₁, U₂, hU₂, hsub⟩ := mem_nhds_prod_iff.1 hU
-  obtain ⟨N₁, hN₁, h₁⟩ := exists_mem_nhds_eq_mul_imp_mem hn₁ hU₁
-  obtain ⟨N₂, hN₂, h₂⟩ := exists_mem_nhds_eq_mul_imp_mem hn₂ hU₂
-  refine ⟨N₁ ×ˢ N₂, prod_mem_nhds hN₁ hN₂, fun p hp q hq c hpq => hsub ⟨?_, ?_⟩⟩
-  · exact h₁ p.1 hp.1 q.1 hq.1 c.1 (congrArg Prod.fst hpq)
-  · exact h₂ p.2 hp.2 q.2 hq.2 c.2 (congrArg Prod.snd hpq)
 
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F]
 
@@ -145,16 +119,6 @@ theorem trPair_cenAlg_mul (w : F × F) (Y : d.ambient) :
 
 theorem trPair_add (Y Y' : d.ambient) : d.trPair (Y + Y') = d.trPair Y + d.trPair Y' :=
   map_add d.trPairₗ Y Y'
-
-omit [PAdicField F] in
-/-- `tr L_{abc} = tr L_b` when `ca = 1`. -/
-theorem cliffTrace_mul_mul_of_mul_eq_one {V : Type*} [AddCommGroup V] [Module F V]
-    [Module.Finite F V] (Q : QuadraticForm F V) {a c : CliffordAlgebra Q} (b : CliffordAlgebra Q)
-    (hca : c * a = 1) :
-    cliffTrace Q (a * b * c) = cliffTrace Q b := by
-  show LinearMap.trace F _ (LinearMap.mulLeft F (a * b * c)) =
-    LinearMap.trace F _ (LinearMap.mulLeft F b)
-  rw [trace_mulLeft_comm Q (a * b) c, ← mul_assoc, hca, one_mul]
 
 /-- `trPair` is invariant under conjugation by `G(F)`. -/
 theorem trPair_conj (g : ↥d.G) (Y : d.ambient) :

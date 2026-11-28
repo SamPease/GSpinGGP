@@ -148,6 +148,14 @@ theorem cliffTrace_commutator [Module.Finite K V] (Q : QuadraticForm K V) (x y :
     show cliffTrace Q (x * y) = cliffTrace Q (y * x) from trace_mulLeft_comm Q x y]
   ring
 
+omit [Invertible (2 : K)] in
+/-- `tr L_{abc} = tr L_b` when `ca = 1` (conjugation invariance of the trace form). -/
+theorem cliffTrace_mul_mul_of_mul_eq_one [Module.Finite K V] (Q : QuadraticForm K V)
+    {a c : CliffordAlgebra Q} (b : CliffordAlgebra Q) (hca : c * a = 1) :
+    cliffTrace Q (a * b * c) = cliffTrace Q b := by
+  rw [show cliffTrace Q (a * b * c) = cliffTrace Q (c * (a * b)) from trace_mulLeft_comm Q _ _,
+    ← mul_assoc, hca, one_mul]
+
 end Trace
 
 section Centralizer

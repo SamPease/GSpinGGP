@@ -136,8 +136,7 @@ theorem conj_mem_soSub [Module.Finite K V] {Q : QuadraticForm K V} (g : GSpin Q)
       simp only [mul_assoc]; rw [← mul_assoc b a, hba, one_mul]
     rw [e1, e2, mul_sub, sub_mul]
   · show cliffTrace Q (a * X * b) = 0
-    rw [show cliffTrace Q (a * X * b) = cliffTrace Q (b * (a * X)) from trace_mulLeft_comm Q _ _,
-      ← mul_assoc, hba, one_mul, hXt]
+    rw [cliffTrace_mul_mul_of_mul_eq_one Q X hba, hXt]
 
 section Quadratic
 
