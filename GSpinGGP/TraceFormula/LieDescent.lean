@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.TraceFormula.LieAlgebra
+import GSpinGGP.TraceFormula.DescentNbhd
 
 /-!
 # Descent from `G` to `𝔤⁰` near `1`: the slices of Thesis Prop 12.4.1(i) and Prop 12.1.1(iv)
@@ -16,8 +17,8 @@ in `𝔤⁰(F)`, and `F = f_ω`, `f_ω(X) = f(e^X)` on `ω` and `0` off `ω` (`l
 case `j_G^H = 1` on a small enough `ω`, so `(j_G^H)^{1/2} f_ω = f_ω`.)  It then proves
 `exists_lie_descent` (as `exists_lie_descent_of_slices`) from four separate statements:
 
-* `exists_isLieDescentNbhd` (SORRY): such neighbourhoods exist inside every `ω₀^{G(F)}`
-  (Waldspurger 2010 §3.1 for `𝔤 = 𝔷 ⊕ 𝔤⁰`, BP §3.3);
+* `exists_isLieDescentNbhd` (proved, `TraceFormula/DescentNbhd.lean`): such neighbourhoods exist
+  inside every `ω₀^{G(F)}` (Waldspurger 2010 §3.1 for `𝔤 = 𝔷 ⊕ 𝔤⁰`, BP §3.3);
 * `kernelK_eq_kernelLie_liftLie` (SORRY): the kernels agree, `K(f, x) = K^Lie(f_ω, x)` for every
   `x ∈ G(F)` (BP (3.3.2) on `H`, Thesis Prop 12.4.1(i)); hence `J(f) = J^Lie(f_ω)`
   (`distribJ_eq_distribJLie_liftLie`, proved);
@@ -129,18 +130,22 @@ theorem IsLieDescentNbhd.one_mem {ω : Set ↥d.lieZero} {Ω₀ : Set ↥d.G}
 applied to `𝔤 = 𝔷 ⊕ 𝔤⁰`; BP §3.3), when neither `W` nor `V` is a hyperbolic plane (so `A_G(F)` is
 the group of pairs of scalars and `Lie(A_G) = 𝔷`).
 
-Proof sketch (not formalized): take a good neighbourhood `ω'` of `0` in `𝔤(F)` inside a small
-`ω₀'^{G(F)}` (`waldspurger_goodNbhd_one`) and `ω = ω' ∩ 𝔤⁰(F)`, `Ω₀ = exp(ω)`.  Since `𝔷` is
-central, `e^{Z + X} = e^Z e^X` with `e^Z ∈ A_G(F)` for small `Z ∈ 𝔷`, so `A_G(F)·Ω₀ = A_G(F)·exp(ω')`
-when `ω₀'` is a product of small balls of `𝔷` and `𝔤⁰`; that set is open, closed, invariant and
-`A_G(F)`-stable (`isInvariantClopen_AG_mul` applied to `exp(ω')`).  If `e^X = a e^{X'}` with
-`X, X' ∈ ω`, `a ∈ A_G(F)`, then `a` is close to `1` (the eigenvalues of `e^X`, `e^{X'}` are), so
-`a = e^z` with `z ∈ 𝔷` small, and `X = X' + z` by injectivity of `exp` on elements with small
-eigenvalues; `X − X'` has trace `0` in each factor, so `z = 0`. -/
+Proof (`exists_lieDescentNbhd_raw`, `TraceFormula/DescentNbhd.lean`): take a good neighbourhood
+`ω₁` of `0` in `𝔤(F)` (`waldspurger_goodNbhd_one`), a smaller one `ω₂ ⊆ S^{G(F)}` with `S` small
+relative to `ω₁` and `ω₀`, and `ω = {X ∈ 𝔤⁰(F) : z + X ∈ ω₂ for some small z ∈ 𝔷}` (the projection
+of `ω₂` along `𝔤 = 𝔷 ⊕ 𝔤⁰`), `Ω₀ = exp(ω)`.  Since `𝔷` is central, `e^{z + X} = e^z e^X` with
+`e^z ∈ A_G(F)`, so `A_G(F)·Ω₀ = A_G(F)·exp(ω₂)`, which is open, closed, invariant and
+`A_G(F)`-stable (`isInvariantClopen_AG_mul`); `ω ⊆ ω₁`, so `exp` is a homeomorphism of `ω` onto
+`Ω₀`.  If `e^X = a e^{X'}` with `X, X' ∈ ω`, `a ∈ A_G(F)`, then `a` is close to `1` (the traces of
+left multiplication by `e^X`, `e^{X'}` on `C(W)`, `C(V)` are conjugation invariant, hence close to
+`dim C(W)`, `dim C(V)`), so `a = e^z` with `z ∈ 𝔷` small, `e^X = e^{z + X'}` with `X, z + X' ∈ ω₁`,
+so `X = z + X'`, and `z ∈ 𝔷 ∩ 𝔤⁰ = 0`. -/
 theorem exists_isLieDescentNbhd (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
     {ω₀ : Set d.ambient} (hω₀ : ω₀ ∈ 𝓝 (0 : d.ambient)) :
     ∃ (ω : Set ↥d.lieZero) (Ω₀ : Set ↥d.G), d.IsLieDescentNbhd ω Ω₀ ∧ d.IsConjSmall ω₀ ω := by
-  sorry
+  obtain ⟨ω, Ω₀, hωo, hωc, h0, hinv, hΓ, he, hAG, hcl, hsmall⟩ :=
+    d.exists_lieDescentNbhd_raw hW hV hω₀
+  exact ⟨ω, Ω₀, ⟨hωo, hωc, h0, hinv, hΓ, he, hAG, hcl⟩, hsmall⟩
 
 variable (ψ : NontrivialAddChar F)
 

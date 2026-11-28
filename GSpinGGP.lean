@@ -99,6 +99,7 @@ import GSpinGGP.TraceFormula.LuoTransfer
 import GSpinGGP.TraceFormula.LuoGamma
 import GSpinGGP.TraceFormula.LuoWeyl
 import GSpinGGP.TraceFormula.LuoClass
+import GSpinGGP.TraceFormula.DescentNbhd
 import GSpinGGP.TraceFormula.LieDescent
 import GSpinGGP.TraceFormula.LuoTorus
 import GSpinGGP.TraceFormula.LuoTorusExp
