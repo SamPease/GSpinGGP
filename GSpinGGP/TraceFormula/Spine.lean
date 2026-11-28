@@ -279,7 +279,7 @@ theorem mult_ne_top_of_tempered (d : GGPData F) (π : UnitaryRep ↥d.G) (hπ : 
     mult ψ d π ≠ ⊤ := by
   have h := emoryTakeda_mult_le_one d ψ π hπ
   intro htop
-  unfold mult at htop
+  rw [mult_eq_multiplicity] at htop
   rw [htop] at h
   exact absurd h (by decide)
 
