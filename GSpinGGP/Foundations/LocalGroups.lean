@@ -92,6 +92,20 @@ instance : LocalField ℝ where
 /-- `ℂ` is a local field. -/
 instance : LocalField ℂ where
 
+/-- `ℝ` is not ultrametric: `|0 - 2| > max(|0 - 1|, |1 - 2|)`. -/
+theorem not_isUltrametricDist_real : ¬ IsUltrametricDist ℝ := by
+  intro h
+  have := h.dist_triangle_max (0 : ℝ) 1 2
+  rw [Real.dist_eq, Real.dist_eq, Real.dist_eq] at this
+  norm_num at this
+
+/-- `ℂ` is not ultrametric: `|0 - 2| > max(|0 - 1|, |1 - 2|)`. -/
+theorem not_isUltrametricDist_complex : ¬ IsUltrametricDist ℂ := by
+  intro h
+  have := h.dist_triangle_max (0 : ℂ) 1 2
+  rw [Complex.dist_eq, Complex.dist_eq, Complex.dist_eq] at this
+  norm_num at this
+
 /-- A *`p`-adic field* (Thesis §2.1): an ultrametric `LocalField`, i.e. a nontrivially normed
 field that is complete, locally compact, ultrametric and of characteristic zero. (Classically,
 not proved here: these are the finite extensions of some `ℚ_p`.) New code uses the binders

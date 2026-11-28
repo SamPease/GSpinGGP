@@ -257,3 +257,4 @@ import GSpinGGP.Sanity.GammaGAudit
 import GSpinGGP.Sanity.WeylIntegrationL1Audit
 import GSpinGGP.Sanity.UnitaryRepAudit
 import GSpinGGP.Sanity.UnramifiedAudit
+import GSpinGGP.Sanity.KottwitzSignAudit
