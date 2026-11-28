@@ -1046,7 +1046,8 @@ def toyPacketFamily : TemperedPacketFamily (toyData (K := F)) toyInnerForms wher
     show _ = (kottwitzSign (toyData (K := F)) (toyData (K := F)).reflTwist : ℂ) * _
     rw [kottwitzSign_refl, Int.cast_one, one_mul]
     rfl
-  whitt w := ⟨(), toy_hasModel_trivial w, fun _ _ => rfl⟩
+  whitt w :=
+    ⟨(), (localHasModel_of_isUltrametricDist _ _ _).mpr (toy_hasModel_trivial w), fun _ _ => rfl⟩
 
 end Packet
 

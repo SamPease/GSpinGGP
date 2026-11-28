@@ -2,6 +2,7 @@ import GSpinGGP.Foundations.LocalGroups
 import GSpinGGP.Foundations.Representations
 import GSpinGGP.Foundations.GSpin
 import GSpinGGP.Foundations.Determinant
+import GSpinGGP.Foundations.LocalAnalysis
 
 /-!
 # GGP-specific assembly: multiplicities, packets, `Γ(G,H)`, `m_geom`, the multiplicity formula
@@ -42,9 +43,9 @@ namespace GSpinGGP
 
 variable {F : Type*} [NontriviallyNormedField F]
 
-section PAdicStatement
+section LocalStatement
 
-variable [PAdicField F]
+variable [LocalField F]
 
 /-! ## 0. Topological instances on `G(F)` -/
 
@@ -74,29 +75,64 @@ end GGPData
 /-! ## 1. The multiplicity and characters -/
 
 /-- The multiplicity `m(π) = dim Hom_{H(F)}(π^∞, ξ)` of the GGP triple attached to `d`
-(Thesis §5.5), where `ξ(h) = ψ(λ(h))`. -/
+(Thesis §5.5), where `ξ(h) = ψ(λ(h))` (`localMultiplicity`):
+* `F` non-archimedean: `Hom` is all `H(F)`-equivariant linear forms on the smooth vectors `π^∞`;
+* `F = ℝ, ℂ`: `Hom` is the continuous `H(F)`-equivariant linear forms on the smooth vectors. -/
 def mult (ψ : NontrivialAddChar F) (d : GGPData F) (π : UnitaryRep ↥d.G) : ℕ∞ :=
-  multiplicity π d.H (d.xi ψ.toAddChar)
+  localMultiplicity F π d.H (d.xi ψ.toAddChar)
 
-/-- The Harish-Chandra character `θ_π` of `π`, normalized to be locally constant on the regular
-semisimple set `G_reg(F)` (Thesis Ch. 1). -/
+/-- The Harish-Chandra character `θ_π` of `π`, normalized to be continuous on the regular
+semisimple set `G_reg(F)` (Thesis Ch. 1; `localCharacterOn`):
+* `F` non-archimedean: `∫ θ_π f = tr π(f)` for locally constant compactly supported `f`;
+* `F = ℝ, ℂ`: `∫ θ_π f = tr π(f)` for smooth compactly supported `f` (distribution character).
+The value is `0` when `π` has no character function continuous on `G_reg(F)`. -/
 def charG (d : GGPData F) (π : UnitaryRep ↥d.G) : ↥d.G → ℂ :=
-  characterOn π (regularSet d.G d.lie)
+  localCharacterOn F π (regularSet d.G d.lie)
 
-/-! Characterising equations for `mult`, `charG` and `kottwitzSign`.  Proofs rewrite with these
-rather than unfolding the definitions, so that they do not depend on the definitions' bodies. -/
+/-! Characterising equations for `mult` and `charG`, one per case on the field.  Proofs rewrite
+with these rather than unfolding the definitions, so that they do not depend on the definitions'
+bodies. -/
 
-/-- `m(π) = dim Hom_{H(F)}(π^∞, ξ)`. -/
+section Ultrametric
+
+variable [IsUltrametricDist F]
+
+/-- `m(π) = dim Hom_{H(F)}(π^∞, ξ)` (`F` non-archimedean). -/
 theorem mult_eq_multiplicity (ψ : NontrivialAddChar F) (d : GGPData F) (π : UnitaryRep ↥d.G) :
     mult ψ d π = multiplicity π d.H (d.xi ψ.toAddChar) :=
-  rfl
+  localMultiplicity_of_isUltrametricDist _ _ _
 
-/-- `θ_π` is the character of `π` normalized on `G_reg(F)`. -/
+/-- `θ_π` is the character of `π` normalized on `G_reg(F)` (`F` non-archimedean). -/
 theorem charG_eq_characterOn (d : GGPData F) (π : UnitaryRep ↥d.G) :
     charG d π = characterOn π (regularSet d.G d.lie) :=
-  rfl
+  localCharacterOn_of_isUltrametricDist _ _
 
-end PAdicStatement
+end Ultrametric
+
+section Archimedean
+
+variable (h : ¬ IsUltrametricDist F)
+include h
+
+/-- `m(π)` for `F = ℝ, ℂ`: the dimension of the continuous `H(F)`-equivariant forms on the
+smooth vectors for the real Lie structure of the closed subgroup `G(F)`. -/
+theorem mult_of_not_isUltrametricDist (ψ : NontrivialAddChar F) (d : GGPData F)
+    (π : UnitaryRep ↥d.G)
+    (φ : RealEmbedding F := (nonempty_realEmbedding_of_not_isUltrametricDist h).some) :
+    mult ψ d π =
+      LieRep.multiplicity (φ.realLieStructure d.G d.isClosed_G) π d.H (d.xi ψ.toAddChar) :=
+  localMultiplicity_of_not_isUltrametricDist h d.isClosed_G _ _ _ φ
+
+/-- `θ_π` for `F = ℝ, ℂ`: the distribution character normalized on `G_reg(F)`. -/
+theorem charG_of_not_isUltrametricDist (d : GGPData F) (π : UnitaryRep ↥d.G)
+    (φ : RealEmbedding F := (nonempty_realEmbedding_of_not_isUltrametricDist h).some) :
+    charG d π =
+      LieRep.characterOn (φ.realLieStructure d.G d.isClosed_G) π (regularSet d.G d.lie) :=
+  localCharacterOn_of_not_isUltrametricDist h d.isClosed_G _ _ φ
+
+end Archimedean
+
+end LocalStatement
 
 /-! ## The Kottwitz sign -/
 
@@ -237,7 +273,7 @@ end InnerForms
 
 section Packets
 
-variable [PAdicField F]
+variable [LocalField F]
 
 /-! ## 3. Stability, transfer, tempered packets (Thesis §6.1, §6.3) -/
 
@@ -262,6 +298,7 @@ with central character trivial on `Z_{G,H}(F) = A_{G,H}(F)`, with
 * **(STAB)** `θ_α = Σ_{π ∈ Π_α} θ_π` stable;
 * **(TRANS)** `θ_α(y) = e(G_α) θ_1(x)` for stably conjugate regular `x ∈ G(F)`, `y ∈ G_α(F)`;
 * **(WHITT)** for every Whittaker datum of `G` exactly one member of `Π_1` has a model.
+The same three hypotheses are used for `F = ℝ, ℂ`, with `charG` and `LocalHasModel` as above.
 The Langlands parameter itself is not modelled. -/
 structure TemperedPacketFamily (d : GGPData F) (IF : InnerFormSystem d) where
   /-- the index set of the packet `Π_α` -/
@@ -280,9 +317,10 @@ structure TemperedPacketFamily (d : GGPData F) (IF : InnerFormSystem d) where
     ∑ i, charG (IF.data α) (rep α i) y =
       (kottwitzSign d (IF.twist α) : ℂ) *
         ∑ i, charG (IF.data IF.base) (rep IF.base i) (IF.toBase x)
-  /-- **(WHITT)** -/
+  /-- **(WHITT)**: for each Whittaker datum exactly one member of `Π_1` has a nonzero
+  `(U, χ)`-equivariant form on `π^∞` (continuous if `F = ℝ, ℂ`). -/
   whitt : ∀ w : WhittakerDatum (IF.data IF.base),
-    ∃! i : ι IF.base, HasModel (rep IF.base i) w.U w.χ
+    ∃! i : ι IF.base, LocalHasModel F (rep IF.base i) w.U w.χ
 
 attribute [instance] TemperedPacketFamily.fintype
 
@@ -290,6 +328,26 @@ attribute [instance] TemperedPacketFamily.fintype
 def TemperedPacketFamily.packetChar {d : GGPData F} {IF : InnerFormSystem d}
     (P : TemperedPacketFamily d IF) (α : IF.Idx) : ↥(IF.data α).G → ℂ :=
   fun y => ∑ i, charG (IF.data α) (P.rep α i) y
+
+/-- **(WHITT)** for `F` non-archimedean: for every Whittaker datum exactly one member of `Π_1`
+has a Whittaker model. -/
+theorem TemperedPacketFamily.whitt_hasModel [IsUltrametricDist F] {d : GGPData F}
+    {IF : InnerFormSystem d} (P : TemperedPacketFamily d IF)
+    (w : WhittakerDatum (IF.data IF.base)) :
+    ∃! i : P.ι IF.base, HasModel (P.rep IF.base i) w.U w.χ := by
+  simpa only [localHasModel_of_isUltrametricDist] using P.whitt w
+
+/-- **(WHITT)** for `F = ℝ, ℂ`: for every Whittaker datum exactly one member of `Π_1` has a
+nonzero continuous `(U, χ)`-equivariant form on its smooth vectors. -/
+theorem TemperedPacketFamily.whitt_of_not_isUltrametricDist (h : ¬ IsUltrametricDist F)
+    {d : GGPData F} {IF : InnerFormSystem d} (P : TemperedPacketFamily d IF)
+    (w : WhittakerDatum (IF.data IF.base))
+    (φ : RealEmbedding F := (nonempty_realEmbedding_of_not_isUltrametricDist h).some) :
+    ∃! i : P.ι IF.base, LieRep.HasModel
+      (φ.realLieStructure (IF.data IF.base).G (IF.data IF.base).isClosed_G)
+      (P.rep IF.base i) w.U w.χ := by
+  simpa only [localHasModel_of_not_isUltrametricDist h (IF.data IF.base).isClosed_G _ _ _ φ] using
+    P.whitt w
 
 end Packets
 

@@ -271,3 +271,4 @@ import GSpinGGP.Sanity.KottwitzSignAudit
 import GSpinGGP.Sanity.HilbertTraceAudit
 import GSpinGGP.Sanity.LieRepresentationsAudit
 import GSpinGGP.Sanity.LocalAnalysisAudit
+import GSpinGGP.Sanity.StatementInvariance

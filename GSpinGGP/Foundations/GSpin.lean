@@ -83,7 +83,8 @@ theorem exists_wittIndex [FiniteDimensional K V] (Q : QuadraticForm K V) :
   exact Nat.sSup_mem hne (wittIndex_bdd Q)
 
 /-- Twice `q(Spin(Q))` for a real form: `w (n - w)`, `w` the Witt index and `n` the dimension
-(used by `kottwitzSign`).  Over `ℝ`, for `Q` of signature `(p,q)` one has `w = min(p,q)`, so this
+(used by `kottwitzSign`; `q(G)` is half the dimension of the symmetric space of the simply
+connected cover of the derived group of `G`, Kottwitz 1983, p. 289).  Over `ℝ`, for `Q` of signature `(p,q)` one has `w = min(p,q)`, so this
 is `pq`, the dimension of the symmetric space of `Spin(p,q)` when `n ≥ 3`.  For `n ≤ 2` the
 symmetric space is a point (`Spin(Q)` is a torus in dimension `2`, `μ₂` in dimension `1`, trivial in
 dimension `0`; in each case `q = 0`), while `pq` can be `1` (signature `(1,1)`).  The two agree on

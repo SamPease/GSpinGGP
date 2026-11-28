@@ -1767,7 +1767,8 @@ theorem packet_germ_transfer (hqs : d.IsQuasiSplit) (P : TemperedPacketFamily d 
       d.StablyConj x x' → (e • P.baseChar) x = (e • P.baseChar) x' := by
     intro x hx x' hx' hc
     simp only [Pi.smul_apply, smul_eq_mul]
-    rw [P.baseChar_isStableFn x x' hx hx' hc]
+    have hS := P.baseChar_isStableFn
+    rw [hS x x' hx hx' hc]
   have htrans : ∀ x ∈ regularSet d.G d.lie,
       ∀ y ∈ regularSet (d.twist (IF.twist α)).G (d.twist (IF.twist α)).lie,
       d.StablyConjG (IF.twist α) x y → P.packetChar α y = (e • P.baseChar) x := by
@@ -1798,7 +1799,7 @@ def PacketGermTransfer (P : TemperedPacketFamily d IF) : Prop :=
 
 theorem packetGermTransfer_holds (hqs : d.IsQuasiSplit) (P : TemperedPacketFamily d IF) :
     PacketGermTransfer ψ P :=
-  fun α x y hx hy hxy O hO O' hO' => packet_germ_transfer ψ hqs P α x y hx hy hxy O hO O' hO'
+  packet_germ_transfer ψ hqs P
 
 end Packets
 
@@ -2684,7 +2685,7 @@ theorem sum_mult_eq_one_complex {d : GGPData F} (hqs : d.IsQuasiSplit) (IF : Inn
     · exact (hw _ (P.tempered IF.base i)).1 hm
     · exact (hw _ (P.tempered IF.base i)).2 hm
   rw [Finset.sum_congr rfl fun i _ => hval i]
-  exact sum_ite_unique_eq_one _ (P.whitt w)
+  exact sum_ite_unique_eq_one _ (P.whitt_hasModel w)
 
 /-- **Thesis (6.7.1)** in `ℕ∞`: `Σ_{(α, π)} m(π) = 1`, the sum over all members
 of all packets (finite: `InnerFormSystem.finite_idx`).  Uses `m(π) ≠ ∞` (`mult_ne_top`). -/
