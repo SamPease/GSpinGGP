@@ -16,7 +16,7 @@ maxSynthPendingDepth = 3
 [[require]]
 name = "TauCeti"
 git = "https://github.com/TauCetiProject/TauCeti"
-rev = "b608709b45f23ccda55703d572b0adb1fdec30fd"
+rev = "2e9ee3da1ce9556a1c432404959e7e265cc3adea"
 
 [[lean_lib]]
 name = "GSpinGGP"

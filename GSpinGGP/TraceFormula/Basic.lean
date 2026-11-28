@@ -2122,8 +2122,11 @@ instance isFiniteMeasureOnCompacts_weilMeasureHG : IsFiniteMeasureOnCompacts d.w
 the quotient is Hausdorff, locally compact and second countable (`CosetSpace.instT2Space`, …),
 hence metrizable, and the measure is finite on compact sets
 (`WeaklyRegular.of_pseudoMetrizableSpace_secondCountable_of_locallyFinite`). Instance search does
-not always find this chain, so it is recorded as an instance. -/
+not always find this chain, so it is recorded as an instance; the metrizability step (Urysohn,
+`metrizableSpace_of_t3_secondCountable`) is supplied by hand because the instance term exceeds
+the default `synthInstance.maxSize`. -/
 instance weaklyRegular_weilMeasureHG : d.weilMeasureHG.WeaklyRegular :=
+  haveI := TopologicalSpace.metrizableSpace_of_t3_secondCountable d.HGQuot
   Measure.WeaklyRegular.of_pseudoMetrizableSpace_secondCountable_of_locallyFinite _
 
 end GGPData

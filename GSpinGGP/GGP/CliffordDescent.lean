@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import GSpinGGP.Foundations.PAdicQuadraticForms
 import GSpinGGP.GGP.Hilbert90Units
 import GSpinGGP.GGP.GaloisTorus
-import TauCeti.NumberTheory.LocalField.QuadraticForm.Witt
+import TauCeti.NumberTheory.LocalField.QuadraticForm.Witt.Basic
 import TauCeti.LinearAlgebra.CliffordAlgebra.CentralSimple.Even
 
 /-!

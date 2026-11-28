@@ -160,6 +160,9 @@ theorem MaxTorus.lintegral_weylMeasureOn (T : d.MaxTorus) (μ : ∀ T : Subgroup
     have := T.isMulRightInvariant (μ T.1)
     exact (T.quotMeasureOn_spec (μ T.1)).isFiniteMeasureOnCompacts continuous_subtypeVal
       T.isClosed.isClosedEmbedding_subtypeVal
+  -- supplied by hand: found by instance search, but the `SigmaFinite` term built from it
+  -- exceeds the default `synthInstance.maxSize`
+  have : SigmaCompactSpace (CosetSpace T.1.subtype) := inferInstance
   have hΦ : Measurable (d.weylConj T.1) := T.continuous_weylConj.measurable
   have hm : Measurable fun t : ↥T.1 =>
       ∫⁻ q, φ (d.weylConj T.1 (t, q)) ∂d.quotMeasureOn T.1 (μ T.1) :=
@@ -252,6 +255,9 @@ theorem MaxTorus.integral_weylMeasureOn (T : d.MaxTorus) (μ : ∀ T : Subgroup 
     have := T.isMulRightInvariant (μ T.1)
     exact (T.quotMeasureOn_spec (μ T.1)).isFiniteMeasureOnCompacts continuous_subtypeVal
       T.isClosed.isClosedEmbedding_subtypeVal
+  -- supplied by hand: found by instance search, but the `SigmaFinite` term built from it
+  -- exceeds the default `synthInstance.maxSize`
+  have : SigmaCompactSpace (CosetSpace T.1.subtype) := inferInstance
   have hΦ : Measurable (d.weylConj T.1) := T.continuous_weylConj.measurable
   have hρ := d.measurable_weylDensity T.1
   have hρt : ∀ᵐ t ∂μ T.1, d.weylDensity T.1 t < ∞ :=
