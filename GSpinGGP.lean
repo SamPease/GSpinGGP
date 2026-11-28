@@ -230,6 +230,7 @@ import GSpinGGP.HarmonicAnalysis.HullVolume
 import GSpinGGP.Foundations.CosetSpaceTranslate
 import GSpinGGP.Foundations.CosetSpaceTopology
 import GSpinGGP.Foundations.NormDescent
+import GSpinGGP.Foundations.NuclearTraceHilbert
 import GSpinGGP.Foundations.HilbertTrace
 import GSpinGGP.TraceFormula.GoodParabolicLift
 import GSpinGGP.TraceFormula.LogNormDescent
