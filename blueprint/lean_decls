@@ -52,6 +52,8 @@ GSpinGGP.TemperedPacketFamily
 GSpinGGP.MultiplicityFormula
 GSpinGGP.multiplicity_formula
 GSpinGGP.sum_mult_eq_one
+GSpinGGP.local_ggp_of_isUltrametricDist
+GSpinGGP.local_ggp_of_not_isUltrametricDist
 GSpinGGP.local_ggp
 GSpinGGP.GGPData.IsGammaElt
 GSpinGGP.GammaClass

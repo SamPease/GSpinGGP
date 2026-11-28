@@ -19,7 +19,8 @@ Whittaker condition `HasModel`.
 * `local_ggp_pAdic`: Thesis Thm. 6.4.1 with these notions, deduced from `local_ggp`.
 
 Over `ℝ`, `mult_of_not_isUltrametricDist` evaluates `mult` through the real Lie structure of
-`G(F)` (`mult_real`).
+`G(F)` (`mult_real`), and `local_ggp_real` is the conclusion of `local_ggp` for `F = ℝ` written
+with it.
 -/
 
 namespace GSpinGGP.Sanity.StatementInvariance
@@ -107,5 +108,27 @@ theorem mult_real (ψ : NontrivialAddChar ℝ) (d : GGPData ℝ) (π : UnitaryRe
       ((nonempty_realEmbedding_of_not_isUltrametricDist not_isUltrametricDist_real).some
         |>.realLieStructure d.G d.isClosed_G) π d.H (d.xi ψ.toAddChar) :=
   mult_of_not_isUltrametricDist not_isUltrametricDist_real ψ d π
+
+/-- **Thesis Thm. 6.4.1 for `F = ℝ`**, with `m(π)` the dimension of the continuous
+`H(ℝ)`-equivariant forms on the smooth vectors of `π` (`mult_real`): the conclusion of
+`local_ggp` for `F = ℝ`.  It rests on `local_ggp_of_not_isUltrametricDist`, which is not yet
+proved. -/
+theorem local_ggp_real (ψ : NontrivialAddChar ℝ) (d : GGPData ℝ) (hqs : d.IsQuasiSplit)
+    (IF : InnerFormSystem d) (P : TemperedPacketFamily d IF) :
+    (∃! p : Σ α : IF.Idx, P.ι α, LieRep.multiplicity
+      ((nonempty_realEmbedding_of_not_isUltrametricDist not_isUltrametricDist_real).some
+        |>.realLieStructure (IF.data p.1).G (IF.data p.1).isClosed_G)
+      (P.rep p.1 p.2) (IF.data p.1).H ((IF.data p.1).xi ψ.toAddChar) = 1) ∧
+    ∀ p : Σ α, P.ι α,
+      LieRep.multiplicity
+        ((nonempty_realEmbedding_of_not_isUltrametricDist not_isUltrametricDist_real).some
+          |>.realLieStructure (IF.data p.1).G (IF.data p.1).isClosed_G)
+        (P.rep p.1 p.2) (IF.data p.1).H ((IF.data p.1).xi ψ.toAddChar) = 1 ∨
+      LieRep.multiplicity
+        ((nonempty_realEmbedding_of_not_isUltrametricDist not_isUltrametricDist_real).some
+          |>.realLieStructure (IF.data p.1).G (IF.data p.1).isClosed_G)
+        (P.rep p.1 p.2) (IF.data p.1).H ((IF.data p.1).xi ψ.toAddChar) = 0 := by
+  simp only [← mult_real]
+  exact local_ggp ψ d hqs IF P
 
 end GSpinGGP.Sanity.StatementInvariance
