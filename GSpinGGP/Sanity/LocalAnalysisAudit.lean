@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Foundations.LocalAnalysis
 import GSpinGGP.Sanity.LieRepresentationsAudit
+import GSpinGGP.Sanity.RealEmbeddingAudit
 
 /-!
 # Sanity checks for the analytic notions by case on the field
@@ -22,7 +23,7 @@ one-dimensional representation `1_G` of `G = Fˣ` (the subgroup `⊤ ≤ Fˣ`, w
 
 namespace GSpinGGP.Sanity.LocalAnalysisAudit
 
-open GSpinGGP GSpinGGP.LieRep.Audit
+open GSpinGGP GSpinGGP.LieRep.Audit GSpinGGP.Sanity.RealEmbeddingAudit
 
 /-! ### `F = ℝ` -/
 
@@ -73,6 +74,14 @@ example : LocalHasModel ℂ (trivialRep ↥(⊤ : Subgroup ℂˣ)) ⊤ (fun _ =>
     localMultiplicity_of_not_isUltrametricDist not_isUltrametricDist_complex isClosed_univ,
     multiplicity_trivialRep_one]
   exact one_ne_zero
+
+/-- With the real embedding given explicitly (the inclusion `ℝ → ℂ`) instead of by the
+classification. -/
+example : localMultiplicity ℂ (trivialRep ↥(⊤ : Subgroup ℂˣ)) ⊤ (fun _ => 1) =
+    LieRep.multiplicity (complexOfReal.realLieStructure ⊤ isClosed_univ)
+      (trivialRep ↥(⊤ : Subgroup ℂˣ)) ⊤ (fun _ => 1) :=
+  localMultiplicity_of_not_isUltrametricDist not_isUltrametricDist_complex isClosed_univ _ _ _
+    complexOfReal
 
 /-! ### A non-archimedean local field -/
 

@@ -51,7 +51,7 @@ and `…_of_not_isUltrametricDist` (the notion of `LieRep` at `φ.realLieStructu
 * `…_of_isUltrametricDist` and `…_of_not_isUltrametricDist` for each notion.
 * `localHasModel_iff_localMultiplicity_ne_zero`, and invariance under unitary equivalence:
   `localMultiplicity_congr`, `localHasModel_congr`, `localTraceOf_congr`,
-  `localIsCharacterOf_congr`, `localCharacterOn_congr`.
+  `localIsCharacterOf_congr`, `localCharacterOn_congr`; `localCharacterOn_spec`.
 -/
 
 namespace GSpinGGP
@@ -326,6 +326,18 @@ theorem localCharacterOn_congr (he : UnitaryRep.IsEquivalent π π') (S : Set �
   · cases archLieStructure? F G with
     | none => rfl
     | some L => exact LieRep.characterOn_congr L he S
+
+/-- If `π` has a character continuous on `S`, then `localCharacterOn F π S` is one. -/
+theorem localCharacterOn_spec (π : UnitaryRep ↥G) (S : Set ↥G)
+    (h : ∃ θ, LocalIsCharacterOf F π θ ∧ ContinuousOn θ S) :
+    LocalIsCharacterOf F π (localCharacterOn F π S) ∧ ContinuousOn (localCharacterOn F π S) S := by
+  unfold LocalIsCharacterOf localCharacterOn at *
+  split_ifs at * with hF
+  · exact characterOn_spec π S h
+  · revert h
+    cases archLieStructure? F G with
+    | none => simp
+    | some L => exact LieRep.characterOn_spec L π S
 
 end Relations
 
