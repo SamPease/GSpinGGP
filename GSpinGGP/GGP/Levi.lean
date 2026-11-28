@@ -708,8 +708,9 @@ abbrev pullback (Φ : GGPIso d d') (π' : UnitaryRep ↥d'.G) : UnitaryRep ↥d.
 /-- **Transport of the multiplicity**: `m(π' ∘ e) = m(π')` for a GGP
 isomorphism `e`, since `e(H) = H'` and `ξ' ∘ e = ξ` (Thesis §5.5: `m(π) = dim Hom_H(π^∞, ξ)`). -/
 theorem mult_congr_iso (Φ : GGPIso d d') (ψ : NontrivialAddChar F) (π' : UnitaryRep ↥d'.G) :
-    mult ψ d (Φ.pullback π') = mult ψ d' π' :=
-  multiplicity_comapCME Φ.toCME π' d.H d'.H Φ.mem_H_iff _ _ fun s => Φ.xi_e ψ.toAddChar s
+    mult ψ d (Φ.pullback π') = mult ψ d' π' := by
+  rw [mult_eq_multiplicity, mult_eq_multiplicity]
+  exact multiplicity_comapCME Φ.toCME π' d.H d'.H Φ.mem_H_iff _ _ fun s => Φ.xi_e ψ.toAddChar s
 
 /-- **Transport of temperedness** (Thesis §3.1.2: irreducible and weakly
 contained in the regular representation): `π' ∘ e` is tempered iff `π'` is.  The Haar measures
@@ -727,8 +728,9 @@ theorem isTempered_congr_iso (Φ : GGPIso d d') (π' : UnitaryRep ↥d'.G) :
 representatives, so no statement is made there. -/
 theorem charG_congr_iso (Φ : GGPIso d d') (π' : UnitaryRep ↥d'.G) (hπ' : IsTempered π') :
     ∀ g ∈ regularSet d.G d.lie, charG d (Φ.pullback π') g = charG d' π' (Φ.e g) := by
+  simp only [charG_eq_characterOn]
   obtain ⟨hchar', hcont'⟩ := hc_character d' π' hπ'
-  set θ' := charG d' π'
+  set θ' := characterOn π' (regularSet d'.G d'.lie)
   have hchar : IsCharacterOf (Φ.pullback π') (θ' ∘ Φ.toCME) :=
     UnitaryRep.IsCharacterOf.comapCME Φ.toCME π' hchar'
   have hcont : ContinuousOn (θ' ∘ Φ.toCME) (regularSet d.G d.lie) :=

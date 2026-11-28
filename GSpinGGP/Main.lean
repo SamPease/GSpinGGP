@@ -1704,8 +1704,9 @@ theorem TemperedPacketFamily.packetChar_isQuasiCharacter (P : TemperedPacketFami
     (α : IF.Idx) :
     IsQuasiCharacter (IF.data α).G (IF.data α).lie (IF.data α).bilin ψ (P.packetChar α) := by
   rw [P.packetChar_eq_sum]
-  exact isQuasiCharacter_finset_sum (IF.data α) ψ _ _ fun i _ =>
-    hc_character_isQuasiCharacter (IF.data α) ψ (P.rep α i) (P.tempered α i)
+  exact isQuasiCharacter_finset_sum (IF.data α) ψ _ _ fun i _ => by
+    rw [charG_eq_characterOn]
+    exact hc_character_isQuasiCharacter (IF.data α) ψ (P.rep α i) (P.tempered α i)
 
 theorem TemperedPacketFamily.baseChar_isQuasiCharacter (P : TemperedPacketFamily d IF) :
     IsQuasiCharacter d.G d.lie d.bilin ψ P.baseChar :=
@@ -2003,6 +2004,7 @@ theorem charG_diag_scalar_mul (π : UnitaryRep ↥d.G) (hπ : IsTempered π)
     (hc : IsTrivialOn π (d.AGH : Set ↥d.G)) (c : Fˣ) {y : ↥d.G}
     (hy : y ∈ regularSet d.G d.lie) :
     charG d π (d.diag (scalarGSpin d.QW c) * y) = charG d π y := by
+  rw [charG_eq_characterOn]
   set z := d.diag (scalarGSpin d.QW c)
   have hz : (((z : d.G) : d.ambientˣ) : d.ambient) = algebraMap F d.ambient (c : F) :=
     GGPData.coe_diag_scalarGSpin c
@@ -2017,7 +2019,8 @@ theorem charG_diag_scalar_mul (π : UnitaryRep ↥d.G) (hπ : IsTempered π)
     show IsRegularSS d.lie (((z * g : d.G) : d.ambientˣ) : d.ambient)
     simp only [Subgroup.coe_mul, Units.val_mul, hz]
     exact isRegularSS_algebraMap_mul d.lie c.ne_zero hg
-  have hcont' : ContinuousOn (fun g => charG d π (z * g)) (regularSet d.G d.lie) :=
+  have hcont' : ContinuousOn (fun g => characterOn π (regularSet d.G d.lie) (z * g))
+      (regularSet d.G d.lie) :=
     hcont.comp (continuous_const.mul continuous_id).continuousOn hreg
   have : TotallyDisconnectedSpace ↥d.G := totallyDisconnectedSpace_subgroup F d.ambient d.G
   have hae := hchar'.ae_eq hchar
@@ -2665,8 +2668,10 @@ theorem sum_mult_eq_one_complex {d : GGPData F} (hqs : d.IsQuasiSplit) (IF : Inn
   have hO := orbitChoice_one_mem_nilReg (IF.data IF.base) hqs'
   rw [P.packetChar_eq_sum, germ_finset_sum (IF.data IF.base) ψ Finset.univ
     (fun i => charG (IF.data IF.base) (P.rep IF.base i)) (isSS_one (IF.data IF.base))
-    (fun i _ => (hc_character_isQuasiCharacter (IF.data IF.base) ψ (P.rep IF.base i)
-      (P.tempered IF.base i)).2 _ (isSS_one (IF.data IF.base))) hO]
+    (fun i _ => by
+      rw [charG_eq_characterOn]
+      exact (hc_character_isQuasiCharacter (IF.data IF.base) ψ (P.rep IF.base i)
+        (P.tempered IF.base i)).2 _ (isSS_one (IF.data IF.base))) hO]
   obtain ⟨w, hw⟩ := rodier_germ_one (IF.data IF.base) hqs' ψ ((IF.data IF.base).diag 1)
     (map_one _) _ hO
   have hval : ∀ i, germ (IF.data IF.base).G (IF.data IF.base).lie (IF.data IF.base).bilin ψ
@@ -2674,6 +2679,7 @@ theorem sum_mult_eq_one_complex {d : GGPData F} (hqs : d.IsQuasiSplit) (IF : Inn
       (orbitChoice (IF.data IF.base) 1) =
         if HasModel (P.rep IF.base i) w.U w.χ then 1 else 0 := by
     intro i
+    rw [charG_eq_characterOn]
     split_ifs with hm
     · exact (hw _ (P.tempered IF.base i)).1 hm
     · exact (hw _ (P.tempered IF.base i)).2 hm

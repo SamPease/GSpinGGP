@@ -477,7 +477,7 @@ theorem kottwitzSign_eq_neg_one (d : GGPData F) (τ : InnerTwist d.QW)
         (QuadraticMap.IsometryEquiv.prodComm τ.Q' d.QZ)⟩)
   have hdimV : finrank F d.V = d.m + (2 * d.r + 1) := by
     rw [Module.finrank_prod, Module.finrank_fin_fun, Module.finrank_fin_fun]
-  unfold kottwitzSign
+  rw [kottwitzSign_eq_neg_one_pow]
   show (-1 : ℤ) ^ (wittIndex d.QW + wittIndex τ.Q' + wittIndex d.QV +
     wittIndex (τ.Q'.prod d.QZ)) = -1
   apply Odd.neg_one_pow
@@ -503,7 +503,7 @@ theorem kottwitzSign_eq_one_of_nonempty (d : GGPData F) (τ : InnerTwist d.QW)
   have hW := wittIndex_eq_of_isometryEquiv e
   have hV := wittIndex_eq_of_isometryEquiv
     (e.prod (QuadraticMap.IsometryEquiv.refl d.QZ))
-  unfold kottwitzSign
+  rw [kottwitzSign_eq_neg_one_pow]
   show (-1 : ℤ) ^ (wittIndex d.QW + wittIndex τ.Q' + wittIndex (d.QW.prod d.QZ) +
     wittIndex (τ.Q'.prod d.QZ)) = 1
   rw [← hW, ← hV, show ∀ a b : ℕ, a + a + b + b = 2 * (a + b) from fun a b => by ring, pow_mul]

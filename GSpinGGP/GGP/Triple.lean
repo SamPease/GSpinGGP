@@ -89,9 +89,28 @@ cohomological sign is Kottwitz 1983 (not formalized). -/
 def kottwitzSign (d : GGPData F) (τ : InnerTwist d.QW) : ℤ :=
   (-1) ^ (wittIndex d.QW + wittIndex (d.twist τ).QW + wittIndex d.QV + wittIndex (d.twist τ).QV)
 
+/-! Characterising equations for `mult`, `charG` and `kottwitzSign`.  Proofs rewrite with these
+rather than unfolding the definitions, so that they do not depend on the definitions' bodies. -/
+
+/-- `m(π) = dim Hom_{H(F)}(π^∞, ξ)`. -/
+theorem mult_eq_multiplicity (ψ : NontrivialAddChar F) (d : GGPData F) (π : UnitaryRep ↥d.G) :
+    mult ψ d π = multiplicity π d.H (d.xi ψ.toAddChar) :=
+  rfl
+
+/-- `θ_π` is the character of `π` normalized on `G_reg(F)`. -/
+theorem charG_eq_characterOn (d : GGPData F) (π : UnitaryRep ↥d.G) :
+    charG d π = characterOn π (regularSet d.G d.lie) :=
+  rfl
+
+/-- `e(G_α) = (-1)^{w(W)+w(W_α)+w(V)+w(V_α)}`. -/
+theorem kottwitzSign_eq_neg_one_pow (d : GGPData F) (τ : InnerTwist d.QW) :
+    kottwitzSign d τ = (-1) ^ (wittIndex d.QW + wittIndex (d.twist τ).QW + wittIndex d.QV +
+      wittIndex (d.twist τ).QV) :=
+  rfl
+
 /-- The trivial twist has Kottwitz sign `1`. -/
 theorem kottwitzSign_refl (d : GGPData F) : kottwitzSign d d.reflTwist = 1 := by
-  unfold kottwitzSign
+  rw [kottwitzSign_eq_neg_one_pow]
   have : wittIndex d.QW + wittIndex (d.twist d.reflTwist).QW + wittIndex d.QV +
       wittIndex (d.twist d.reflTwist).QV = 2 * (wittIndex d.QW + wittIndex d.QV) := by
     show wittIndex d.QW + wittIndex d.QW + wittIndex d.QV + wittIndex d.QV = _
@@ -102,7 +121,7 @@ theorem kottwitzSign_refl (d : GGPData F) : kottwitzSign d d.reflTwist = 1 := by
 /-- The Kottwitz sign is a sign. -/
 theorem kottwitzSign_eq_one_or (d : GGPData F) (τ : InnerTwist d.QW) :
     kottwitzSign d τ = 1 ∨ kottwitzSign d τ = -1 := by
-  unfold kottwitzSign
+  rw [kottwitzSign_eq_neg_one_pow]
   exact neg_one_pow_eq_or ℤ _
 
 end PAdicStatement
@@ -549,14 +568,16 @@ theorem TempClass.mk_eq_mk_iff {η : CentralCharOn d} {π π' : UnitaryRep ↥d.
 /-- `m(π)` depends only on the class of `π`. -/
 theorem TempClass.mult_rep_mk (ψ : NontrivialAddChar F) {η : CentralCharOn d}
     (π : UnitaryRep ↥d.G) (hπ : IsTempCC d η π) :
-    mult ψ d (TempClass.mk π hπ).rep = mult ψ d π :=
-  multiplicity_congr (TempClass.rep_equiv π hπ) _ _
+    mult ψ d (TempClass.mk π hπ).rep = mult ψ d π := by
+  rw [mult_eq_multiplicity, mult_eq_multiplicity]
+  exact multiplicity_congr (TempClass.rep_equiv π hπ) _ _
 
 /-- `θ_π` depends only on the class of `π`. -/
 theorem TempClass.charG_rep_mk {η : CentralCharOn d} (π : UnitaryRep ↥d.G)
     (hπ : IsTempCC d η π) :
-    charG d (TempClass.mk π hπ).rep = charG d π :=
-  characterOn_congr (TempClass.rep_equiv π hπ) _
+    charG d (TempClass.mk π hπ).rep = charG d π := by
+  rw [charG_eq_characterOn, charG_eq_characterOn]
+  exact characterOn_congr (TempClass.rep_equiv π hπ) _
 
 
 /-- The character `θ_Π = Σ_c a_c θ_{π_c}` of a virtual tempered representation
@@ -723,6 +744,7 @@ theorem mult_eq_zero_of_not_isTrivialOn (ψ : NontrivialAddChar F) (d : GGPData 
     exact this
   have hbot := equivariantForms_eq_bot_of_scalar π d.H (d.xi ψ.toAddChar) a (d.AGH_le_H ha)
     (χ ⟨a, ha⟩) hρ hv (d.xi_eq_one_of_mem_AGH ψ.toAddChar ⟨a, d.AGH_le_H ha⟩ ha)
+  rw [mult_eq_multiplicity]
   by_contra hne
   exact ((hasModel_iff_multiplicity_ne_zero π d.H (d.xi ψ.toAddChar)).mpr hne) hbot
 
