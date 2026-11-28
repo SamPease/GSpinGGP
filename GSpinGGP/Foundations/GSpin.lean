@@ -82,6 +82,16 @@ theorem exists_wittIndex [FiniteDimensional K V] (Q : QuadraticForm K V) :
     ⟨0, ⊥, fun u hu => by rw [(Submodule.mem_bot K).1 hu, map_zero], finrank_bot K V⟩
   exact Nat.sSup_mem hne (wittIndex_bdd Q)
 
+/-- Twice `q(Spin(Q))` for a real form: `w (n - w)`, `w` the Witt index and `n` the dimension
+(used by `kottwitzSign`).  Over `ℝ`, for `Q` of signature `(p,q)` one has `w = min(p,q)`, so this
+is `pq`, the dimension of the symmetric space of `Spin(p,q)` when `n ≥ 3`.  For `n ≤ 2` the
+symmetric space is a point (`Spin(Q)` is a torus in dimension `2`, `μ₂` in dimension `1`, trivial in
+dimension `0`; in each case `q = 0`), while `pq` can be `1` (signature `(1,1)`).  The two agree on
+the differences used in `kottwitzSign`: an inner twist keeps dimension and discriminant, and the
+only real form of dimension `2` with the discriminant of `(1,1)` is `(1,1)`. -/
+def symSpaceDim (Q : QuadraticForm K V) : ℕ :=
+  wittIndex Q * (finrank K V - wittIndex Q)
+
 /-- `GSpin(V)` (equivalently `SO(V)`) is quasi-split iff the anisotropic kernel has dimension
 at most `2`, i.e. `dim V - 2 w(V) ≤ 2` (Thesis §5.1.4). -/
 def IsQuasiSplitQF (Q : QuadraticForm K V) : Prop :=
