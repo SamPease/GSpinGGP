@@ -661,6 +661,10 @@ theorem disjoint_lieCenter_lie0 : Disjoint d.lieCenter d.lie0 := by
   have hb := h2 (b • 1) (Submodule.smul_mem _ _ (Submodule.subset_span rfl)) (by simpa using h0.2)
   ext <;> simp [ha, hb]
 
+/-- `𝔷 ⊆ 𝔤`. -/
+theorem lieCenter_le_lie : d.lieCenter ≤ d.lie.toSubmodule :=
+  d.lie_eq_center_sup_lie0 ▸ le_sup_left
+
 /-- The underlying first component of `g ∈ G ⊆ (C(W) × C(V))^×`. -/
 theorem val_fst (g : d.G) :
     (((g : d.ambientˣ) : d.ambient)).1 = (((d.fst g : GSpin d.QW) : (CliffordAlgebra d.QW)ˣ) :
@@ -693,6 +697,12 @@ theorem scalarPair_commute (c₁ c₂ : Kˣ) (X : d.ambient) :
         X.2 = X.2 * (((scalarGSpin d.QV c₂ : GSpin d.QV) : (CliffordAlgebra d.QV)ˣ) :
           CliffordAlgebra d.QV)
     exact Algebra.commutes _ _
+
+/-- The value of `(c₁, c₂) ∈ G` in `C(W) × C(V)`. -/
+theorem val_scalarPair (c₁ c₂ : Kˣ) :
+    (((d.scalarPair c₁ c₂ : d.G) : d.ambientˣ) : d.ambient) =
+      (algebraMap K (CliffordAlgebra d.QW) c₁, algebraMap K (CliffordAlgebra d.QV) c₂) :=
+  rfl
 
 /-- The kernel of `G(F) → SO(W)(F) × SO(V)(F)` is the central `G_m × G_m`: if `g, g'` have the same images in `SO(W) × SO(V)` then `g = g' · (c₁, c₂)`. -/
 theorem exists_scalarPair_of_specP_eq {g g' : d.G}
@@ -1119,6 +1129,18 @@ theorem Pbar_snd_eq_one_of_mem_AG (hV : ¬ IsHypPlane d.QV) {z : d.G} (hz : z �
     unfold splitCentralGSpin at hb; rwa [ite_eq_right_of_eq_false _ _ (eq_false hV)] at hb
   obtain ⟨c, rfl⟩ := hb'
   exact Subtype.ext (specP_scalarGSpin_eq_one c)
+
+/-- Without hyperbolic-plane factors, `A_G(K)` is the group of pairs of scalars. -/
+theorem exists_eq_scalarPair_of_mem_AG (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
+    {a : d.G} (ha : a ∈ d.AG) : ∃ c₁ c₂ : Kˣ, a = d.scalarPair c₁ c₂ := by
+  obtain ⟨⟨x, y⟩, ⟨hx, hy⟩, rfl⟩ := ha
+  have hx' : x ∈ (scalarGSpin d.QW).range := by
+    unfold splitCentralGSpin at hx; rwa [ite_eq_right_of_eq_false _ _ (eq_false hW)] at hx
+  have hy' : y ∈ (scalarGSpin d.QV).range := by
+    unfold splitCentralGSpin at hy; rwa [ite_eq_right_of_eq_false _ _ (eq_false hV)] at hy
+  obtain ⟨c₁, rfl⟩ := hx'
+  obtain ⟨c₂, rfl⟩ := hy'
+  exact ⟨c₁, c₂, rfl⟩
 
 /-- When neither `W` nor `V` is a hyperbolic plane, `A_G = G_m × G_m` maps to `1` in `Ḡ`. -/
 theorem AGbar_eq_bot (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV) : d.AGbar = ⊥ := by

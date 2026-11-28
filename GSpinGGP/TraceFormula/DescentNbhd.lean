@@ -24,7 +24,7 @@ without a hyperbolic-plane factor (then `A_G(F)` is the group of pairs of scalar
   multiplication by `e^X` and `e^{X'}` on each factor are close to `dim C(W)`, `dim C(V)` (they are
   conjugation invariant), so the scalars `a = (c₁, c₂)` are close to `1` and `a = e^z` with `z ∈ 𝔷`
   small; then `e^X = e^{z + X'}` with `X, z + X' ∈ ω₁`, so `X = z + X'` and `z ∈ 𝔷 ∩ 𝔤⁰ = 0`.
-* `exists_lieDescentNbhd_raw`: the construction. Take a good neighbourhood `ω₁` (for injectivity of
+* `exists_isLieDescentNbhd`: the construction. Take a good neighbourhood `ω₁` (for injectivity of
   `exp`), a smaller one `ω₂` inside `S^{G(F)}` for a set `S` chosen small with respect to `ω₁`, and
   `ω = {X ∈ 𝔤⁰ : z + X ∈ ω₂ for some z ∈ 𝔷}` (the projection of `ω₂` to `𝔤⁰`). Then `ω ⊆ ω₁`,
   `exp` is a homeomorphism of `ω` onto its image `Ω₀`, injective modulo `A_G(F)`, and
@@ -46,6 +46,53 @@ namespace GGPData
 
 variable (d : GGPData F)
 
+/-! ## Descent neighbourhoods -/
+
+/-- **A descent neighbourhood of `0` in `𝔤⁰(F)`** (Thesis §12.4, BP §3.3, Waldspurger 2010 §3.1):
+`ω ⊆ 𝔤⁰(F)` open and closed, containing `0`, invariant under `G(F)`, compact modulo conjugation;
+`exp` is a homeomorphism of `ω` onto `Ω₀ ⊆ G(F)`; two elements of `Ω₀` that differ by an element of
+`A_G(F)` are equal; and `Ω = A_G(F)·Ω₀` is open, closed, invariant and `A_G(F)`-stable.  This is a
+weakening of the thesis's `G(F)`-excellent neighbourhood `ω` with `Ω = A_G(F)·exp(ω)`, written for
+`𝔤⁰` (Thesis §12.4 uses `𝔤 = Lie(A_G) ⊕ 𝔤⁰`); the smallness conditions are imposed separately by
+`IsConjSmall`. -/
+structure IsLieDescentNbhd (ω : Set ↥d.lieZero) (Ω₀ : Set ↥d.G) : Prop where
+  isOpen : IsOpen ω
+  isClosed : IsClosed ω
+  zero_mem : (0 : ↥d.lieZero) ∈ ω
+  adLie0_mem : ∀ (g : ↥d.G) (X : ↥d.lieZero), X ∈ ω → d.adLie0 g X ∈ ω
+  compact_mod_conj : ∃ Γ : Set ↥d.lieZero, IsCompact Γ ∧
+    ∀ X ∈ ω, ∃ g : ↥d.G, ∃ Y ∈ Γ, X = d.adLie0 g Y
+  exp_homeo : ∃ e : ↥ω ≃ₜ ↥Ω₀, ∀ X : ↥ω,
+    ((((e X : ↥Ω₀) : ↥d.G) : d.ambientˣ) : d.ambient) = expA F ((X : ↥d.lieZero) : d.ambient)
+  eq_of_mul_AG : ∀ g ∈ Ω₀, ∀ g' ∈ Ω₀, ∀ a ∈ d.AG, g = a * g' → g = g'
+  isInvariantClopen : IsInvariantClopen d ((d.AG : Set ↥d.G) * Ω₀)
+
+/-- Every element of `ω` is `G(F)`-conjugate into `ω₀` (`ω ⊆ ω₀^{G(F)}`, Waldspurger 2010 §3.1). -/
+def IsConjSmall (ω₀ : Set d.ambient) (ω : Set ↥d.lieZero) : Prop :=
+  ∀ X ∈ ω, ∃ g : ↥d.G, ∃ Y ∈ ω₀,
+    ((X : ↥d.lieZero) : d.ambient) = ((g : d.ambientˣ) : d.ambient) * Y * ((g⁻¹ : d.ambientˣ) : d.ambient)
+
+theorem IsConjSmall.mono {ω₀ ω₁ : Set d.ambient} {ω : Set ↥d.lieZero} (h : d.IsConjSmall ω₀ ω)
+    (h01 : ω₀ ⊆ ω₁) : d.IsConjSmall ω₁ ω := fun X hX => by
+  obtain ⟨g, Y, hY, e⟩ := h X hX
+  exact ⟨g, Y, h01 hY, e⟩
+
+theorem IsConjSmall.of_inter_left {ω₀ ω₁ : Set d.ambient} {ω : Set ↥d.lieZero}
+    (h : d.IsConjSmall (ω₀ ∩ ω₁) ω) : d.IsConjSmall ω₀ ω := h.mono _ Set.inter_subset_left
+
+theorem IsConjSmall.of_inter_right {ω₀ ω₁ : Set d.ambient} {ω : Set ↥d.lieZero}
+    (h : d.IsConjSmall (ω₀ ∩ ω₁) ω) : d.IsConjSmall ω₁ ω := h.mono _ Set.inter_subset_right
+
+/-- `1 = e^0 ∈ Ω = A_G(F)·Ω₀`. -/
+theorem IsLieDescentNbhd.one_mem {ω : Set ↥d.lieZero} {Ω₀ : Set ↥d.G}
+    (h : d.IsLieDescentNbhd ω Ω₀) : (1 : ↥d.G) ∈ (d.AG : Set ↥d.G) * Ω₀ := by
+  obtain ⟨e, he⟩ := h.exp_homeo
+  have h0 := he ⟨0, h.zero_mem⟩
+  rw [show (((⟨0, h.zero_mem⟩ : ↥ω) : ↥d.lieZero) : d.ambient) = 0 from rfl,
+    expA_zero_eq_one] at h0
+  have h1 : ((e ⟨0, h.zero_mem⟩ : ↥Ω₀) : ↥d.G) = 1 := Subtype.ext (Units.ext h0)
+  exact ⟨1, d.AG.one_mem, _, h1 ▸ (e ⟨0, h.zero_mem⟩).2, one_mul _⟩
+
 /-! ## The centre `𝔷 ≅ F × F` and the central coordinate -/
 
 section Central
@@ -66,9 +113,6 @@ theorem cenAlg_mem_lieCenter (w : F × F) : d.cenAlg w ∈ d.lieCenter := by
   exact add_mem (Submodule.smul_mem _ _ (Submodule.subset_span (by simp)))
     (Submodule.smul_mem _ _ (Submodule.subset_span (by simp)))
 
-theorem lieCenter_le_lie : d.lieCenter ≤ d.lie.toSubmodule :=
-  d.lie_eq_center_sup_lie0 ▸ le_sup_left
-
 theorem cenAlg_mem_lie (w : F × F) : d.cenAlg w ∈ d.lie :=
   d.lieCenter_le_lie (d.cenAlg_mem_lieCenter w)
 
@@ -85,13 +129,14 @@ theorem conj_add_cenAlg (g : ↥d.G) (w : F × F) (Y : d.ambient) :
     simp
   rw [mul_add, add_mul, h1]
 
-/-- The traces `(tr L_{Y₁}, tr L_{Y₂})` of left multiplication on the two factors. -/
-def trPair (Y : d.ambient) : F × F := (cliffTrace d.QW Y.1, cliffTrace d.QV Y.2)
-
-/-- `trPair` as a linear map. -/
+/-- The traces `(tr L_{Y₁}, tr L_{Y₂})` of left multiplication on the two factors, as a linear
+map. -/
 def trPairₗ : d.ambient →ₗ[F] F × F :=
   ((LinearMap.trace F _ ∘ₗ LinearMap.mul F _) ∘ₗ LinearMap.fst F _ _).prod
     ((LinearMap.trace F _ ∘ₗ LinearMap.mul F _) ∘ₗ LinearMap.snd F _ _)
+
+/-- `trPair Y = (tr L_{Y₁}, tr L_{Y₂})`. -/
+def trPair : d.ambient → F × F := ⇑d.trPairₗ
 
 theorem trPairₗ_apply (Y : d.ambient) : d.trPairₗ Y = d.trPair Y := rfl
 
@@ -99,14 +144,14 @@ theorem continuous_trPair : Continuous d.trPair :=
   IsModuleTopology.continuous_of_linearMap d.trPairₗ
 
 /-- `(dim C(W), dim C(V))`. -/
-def dimPair : F × F :=
+private def dimPair : F × F :=
   ((finrank F (CliffordAlgebra d.QW) : F), (finrank F (CliffordAlgebra d.QV) : F))
 
-theorem dimPair_fst_ne_zero : d.dimPair.1 ≠ 0 := cast_finrank_cliffordAlgebra_ne_zero d.QW
+private theorem dimPair_fst_ne_zero : d.dimPair.1 ≠ 0 := cast_finrank_cliffordAlgebra_ne_zero d.QW
 
-theorem dimPair_snd_ne_zero : d.dimPair.2 ≠ 0 := cast_finrank_cliffordAlgebra_ne_zero d.QV
+private theorem dimPair_snd_ne_zero : d.dimPair.2 ≠ 0 := cast_finrank_cliffordAlgebra_ne_zero d.QV
 
-theorem trPair_one : d.trPair 1 = d.dimPair :=
+private theorem trPair_one : d.trPair 1 = d.dimPair :=
   Prod.ext (cliffTrace_one d.QW) (cliffTrace_one d.QV)
 
 theorem trPair_cenAlg_mul (w : F × F) (Y : d.ambient) :
@@ -184,22 +229,10 @@ section Exp
 theorem continuous_cenAlg : Continuous d.cenAlg :=
   IsModuleTopology.continuous_of_linearMap d.cenAlg.toLinearMap
 
-/-- The value of `(c₁, c₂) ∈ G(F)` in `C(W) × C(V)`. -/
-theorem val_scalarPair (c₁ c₂ : Fˣ) :
+/-- The value of `(c₁, c₂) ∈ G(F)` is `cenAlg (c₁, c₂)`. -/
+private theorem val_scalarPair_eq_cenAlg (c₁ c₂ : Fˣ) :
     (((d.scalarPair c₁ c₂ : ↥d.G) : d.ambientˣ) : d.ambient) = d.cenAlg ((c₁ : F), (c₂ : F)) :=
   rfl
-
-/-- Without hyperbolic-plane factors, `A_G(F)` is the group of pairs of scalars. -/
-theorem exists_eq_scalarPair_of_mem_AG (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
-    {a : ↥d.G} (ha : a ∈ d.AG) : ∃ c₁ c₂ : Fˣ, a = d.scalarPair c₁ c₂ := by
-  obtain ⟨⟨x, y⟩, ⟨hx, hy⟩, rfl⟩ := ha
-  have hx' : x ∈ (scalarGSpin d.QW).range := by
-    unfold splitCentralGSpin at hx; rwa [ite_eq_right_of_eq_false _ _ (eq_false hW)] at hx
-  have hy' : y ∈ (scalarGSpin d.QV).range := by
-    unfold splitCentralGSpin at hy; rwa [ite_eq_right_of_eq_false _ _ (eq_false hV)] at hy
-  obtain ⟨c₁, rfl⟩ := hx'
-  obtain ⟨c₂, rfl⟩ := hy'
-  exact ⟨c₁, c₂, rfl⟩
 
 /-- For `w` near `0`: `e^{cenAlg w} = cenAlg (e^w)`, and it is a pair of scalars in `A_G(F)`. -/
 theorem eventually_expA_cenAlg :
@@ -212,7 +245,7 @@ theorem eventually_expA_cenAlg :
   have hne1 : (expA F w).1 ≠ 0 := left_ne_zero_of_mul_eq_one (congrArg Prod.fst h1)
   have hne2 : (expA F w).2 ≠ 0 := left_ne_zero_of_mul_eq_one (congrArg Prod.snd h1)
   refine ⟨hw, d.scalarPair (Units.mk0 _ hne1) (Units.mk0 _ hne2), d.scalarPair_mem_AG _ _, ?_⟩
-  rw [val_scalarPair]
+  rw [val_scalarPair_eq_cenAlg]
   exact hw
 
 /-- Every `c ∈ F × F` near `1` is `e^w` with `w` in a given neighbourhood of `0`. -/
@@ -241,12 +274,9 @@ theorem exists_nhds_expA_cenAlg_add_conj :
 theorem exists_nhds_of_isOpen_lie {ω : Set d.ambient}
     (hωo : IsOpen (Subtype.val ⁻¹' ω : Set ↥d.lie)) (h0 : (0 : d.ambient) ∈ ω) :
     ∃ O ∈ 𝓝 (0 : d.ambient), ∀ Y ∈ O, Y ∈ d.lie → Y ∈ ω := by
-  obtain ⟨O, hOo, hOeq⟩ := isOpen_induced_iff.1 hωo
-  refine ⟨O, hOo.mem_nhds ?_, fun Y hY hYl => ?_⟩
-  · have : (⟨0, d.lie.zero_mem⟩ : ↥d.lie) ∈ Subtype.val ⁻¹' O := by rw [hOeq]; exact h0
-    exact this
-  · have : (⟨Y, hYl⟩ : ↥d.lie) ∈ Subtype.val ⁻¹' ω := by rw [← hOeq]; exact hY
-    exact this
+  obtain ⟨O, hO, hOω⟩ :=
+    (mem_nhds_subtype _ ⟨0, d.lie.zero_mem⟩ _).1 (hωo.mem_nhds (x := ⟨0, d.lie.zero_mem⟩) h0)
+  exact ⟨O, hO, fun Y hY hYl => hOω (a := ⟨Y, hYl⟩) hY⟩
 
 end Exp
 
@@ -266,7 +296,7 @@ every `c ∈ Uc` is `e^w`
 with `w ∈ WF`, and `p = cq` with `p, q ∈ N` forces `c ∈ Uc`. If `X, X' ∈ 𝔤⁰`, `X ∈ ω₁`, `X` is
 conjugate to `Y` with `trPair (e^Y) ∈ N`, `X'` is conjugate to `Y' ∈ V ∩ U ∩ 𝔤` with
 `trPair (e^{Y'}) ∈ N`, and `e^X = a e^{X'}` with `a ∈ A_G(F)`, then `X = X'`. -/
-theorem eq_of_expA_eq_mul_AG (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
+private theorem eq_of_expA_eq_mul_AG (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
     (hω₁inv : ∀ g : ↥d.G, ∀ X ∈ ω₁,
       ((g : d.ambientˣ) : d.ambient) * X * ((g⁻¹ : d.ambientˣ) : d.ambient) ∈ ω₁)
     {O : Set d.ambient} (hO : ∀ Y ∈ O, Y ∈ d.lie → Y ∈ ω₁)
@@ -293,11 +323,11 @@ theorem eq_of_expA_eq_mul_AG (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
   have hτX : d.trPair (expA F X) ∈ N := by rw [hXY, expA_conj_G d g, trPair_conj]; exact hYN
   have hτX' : d.trPair (expA F X') ∈ N := by rw [hXY', expA_conj_G d h, trPair_conj]; exact hY'N
   obtain ⟨w, hwWF, hew⟩ := hUc _ (hN _ hτX _ hτX' ((c₁ : F), (c₂ : F))
-    (by rw [heq, val_scalarPair, trPair_cenAlg_mul]))
+    (by rw [heq, val_scalarPair_eq_cenAlg, trPair_cenAlg_mul]))
   obtain ⟨hwV, hwU, hwexp⟩ := hWF w hwWF
   have hez : expA F (d.cenAlg w) =
       (((d.scalarPair c₁ c₂ : ↥d.G) : d.ambientˣ) : d.ambient) := by
-    rw [← hwexp, hew, val_scalarPair]
+    rw [← hwexp, hew, val_scalarPair_eq_cenAlg]
   have hsplit : expA F (d.cenAlg w + X') = expA F (d.cenAlg w) * expA F X' := by
     rw [hXY']; exact hU w hwU h Y' hY'U
   have hmem : d.cenAlg w + X' ∈ ω₁ := by
@@ -327,10 +357,10 @@ theorem isClosed_lieZero : IsClosed (d.lieZero : Set d.ambient) := by
 
 /-- The projection to `𝔤⁰` of the part of `ω₂` with central coordinate in `K`:
 `{X ∈ 𝔤⁰ : cenAlg w + X ∈ ω₂ for some w ∈ K}`. -/
-def projLie0 (K : Set (F × F)) (ω₂ : Set d.ambient) : Set ↥d.lieZero :=
+private def projLie0 (K : Set (F × F)) (ω₂ : Set d.ambient) : Set ↥d.lieZero :=
   {X | ∃ w ∈ K, d.cenAlg w + (X : d.ambient) ∈ ω₂}
 
-theorem isOpen_projLie0 (K : Set (F × F)) {ω₂ : Set d.ambient}
+private theorem isOpen_projLie0 (K : Set (F × F)) {ω₂ : Set d.ambient}
     (hω₂o : IsOpen (Subtype.val ⁻¹' ω₂ : Set ↥d.lie)) : IsOpen (d.projLie0 K ω₂) := by
   have e : d.projLie0 K ω₂ = ⋃ w ∈ K, (fun X : ↥d.lieZero => (⟨d.cenAlg w + X,
       add_mem (d.cenAlg_mem_lie w) (d.lieZero_le_lie X.2)⟩ : ↥d.lie)) ⁻¹'
@@ -342,7 +372,7 @@ theorem isOpen_projLie0 (K : Set (F × F)) {ω₂ : Set d.ambient}
 
 /-- For compact `K` and closed `ω₂`, the projection is closed (projection along a compact
 factor). -/
-theorem isClosed_projLie0 {K : Set (F × F)} (hK : IsCompact K) {ω₂ : Set d.ambient}
+private theorem isClosed_projLie0 {K : Set (F × F)} (hK : IsCompact K) {ω₂ : Set d.ambient}
     (hω₂c : IsClosed ω₂) : IsClosed (d.projLie0 K ω₂) := by
   have : CompactSpace ↥K := isCompact_iff_compactSpace.mp hK
   have := isTopologicalRing_of_moduleTopology F d.ambient
@@ -357,7 +387,7 @@ theorem isClosed_projLie0 {K : Set (F × F)} (hK : IsCompact K) {ω₂ : Set d.a
     (((d.continuous_cenAlg.comp continuous_subtypeVal).comp _root_.continuous_fst).add
       (continuous_subtypeVal.comp _root_.continuous_snd)))
 
-theorem adLie0_mem_projLie0 {K : Set (F × F)} {ω₂ : Set d.ambient}
+private theorem adLie0_mem_projLie0 {K : Set (F × F)} {ω₂ : Set d.ambient}
     (hω₂inv : ∀ g : ↥d.G, ∀ X ∈ ω₂,
       ((g : d.ambientˣ) : d.ambient) * X * ((g⁻¹ : d.ambientˣ) : d.ambient) ∈ ω₂)
     (g : ↥d.G) {X : ↥d.lieZero} (hX : X ∈ d.projLie0 K ω₂) : d.adLie0 g X ∈ d.projLie0 K ω₂ := by
@@ -370,7 +400,7 @@ theorem adLie0_mem_projLie0 {K : Set (F × F)} {ω₂ : Set d.ambient}
 
 /-- If every element of `ω₂` is conjugate into `S`, and `Y − cenAlg (cenCoord Y) ∈ P` for `Y ∈ S`,
 then every `X ∈ 𝔤⁰` with `cenAlg w + X ∈ ω₂` is conjugate to an element of `P ∩ 𝔤⁰`. -/
-theorem exists_conj_of_cenAlg_add_mem {ω₂ S P : Set d.ambient} (hω₂lie : ω₂ ⊆ d.lie)
+private theorem exists_conj_of_cenAlg_add_mem {ω₂ S P : Set d.ambient} (hω₂lie : ω₂ ⊆ d.lie)
     (hsmall : ∀ Y ∈ ω₂, ∃ g : ↥d.G, ∃ Y' ∈ S,
       Y = ((g : d.ambientˣ) : d.ambient) * Y' * ((g⁻¹ : d.ambientˣ) : d.ambient))
     (hS : ∀ Y ∈ S, Y - d.cenAlg (d.cenCoord Y) ∈ P)
@@ -390,21 +420,23 @@ theorem exists_conj_of_cenAlg_add_mem {ω₂ S P : Set d.ambient} (hω₂lie : �
   rw [show d.cenAlg w + (Y' - d.cenAlg w) = Y' by abel, ← hEq] at h2
   exact add_left_cancel h2
 
-/-- **Descent neighbourhoods in `𝔤⁰(F)` exist inside every `ω₀^{G(F)}`**, for triples without a
-hyperbolic-plane factor; the conclusion lists the fields of `IsLieDescentNbhd`
-(`TraceFormula/LieDescent.lean`) and the smallness condition `IsConjSmall`. -/
-theorem exists_lieDescentNbhd_raw (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
+/-- **Descent neighbourhoods exist inside every `ω₀^{G(F)}`** (Waldspurger 2010 §3.1 at `x = 1`,
+applied to `𝔤 = 𝔷 ⊕ 𝔤⁰`; BP §3.3), when neither `W` nor `V` is a hyperbolic plane (so `A_G(F)` is
+the group of pairs of scalars and `Lie(A_G) = 𝔷`).
+
+Proof: take a good neighbourhood
+`ω₁` of `0` in `𝔤(F)` (`waldspurger_goodNbhd_one`), a smaller one `ω₂ ⊆ S^{G(F)}` with `S` small
+relative to `ω₁` and `ω₀`, and `ω = {X ∈ 𝔤⁰(F) : z + X ∈ ω₂ for some small z ∈ 𝔷}` (the projection
+of `ω₂` along `𝔤 = 𝔷 ⊕ 𝔤⁰`), `Ω₀ = exp(ω)`.  Since `𝔷` is central, `e^{z + X} = e^z e^X` with
+`e^z ∈ A_G(F)`, so `A_G(F)·Ω₀ = A_G(F)·exp(ω₂)`, which is open, closed, invariant and
+`A_G(F)`-stable (`isInvariantClopen_AG_mul`); `ω ⊆ ω₁`, so `exp` is a homeomorphism of `ω` onto
+`Ω₀`.  If `e^X = a e^{X'}` with `X, X' ∈ ω`, `a ∈ A_G(F)`, then `a` is close to `1` (the traces of
+left multiplication by `e^X`, `e^{X'}` on `C(W)`, `C(V)` are conjugation invariant, hence close to
+`dim C(W)`, `dim C(V)`), so `a = e^z` with `z ∈ 𝔷` small, `e^X = e^{z + X'}` with `X, z + X' ∈ ω₁`,
+so `X = z + X'`, and `z ∈ 𝔷 ∩ 𝔤⁰ = 0`. -/
+theorem exists_isLieDescentNbhd (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
     {ω₀ : Set d.ambient} (hω₀ : ω₀ ∈ 𝓝 (0 : d.ambient)) :
-    ∃ (ω : Set ↥d.lieZero) (Ω₀ : Set ↥d.G), IsOpen ω ∧ IsClosed ω ∧ (0 : ↥d.lieZero) ∈ ω ∧
-      (∀ (g : ↥d.G) (X : ↥d.lieZero), X ∈ ω → d.adLie0 g X ∈ ω) ∧
-      (∃ Γ : Set ↥d.lieZero, IsCompact Γ ∧ ∀ X ∈ ω, ∃ g : ↥d.G, ∃ Y ∈ Γ, X = d.adLie0 g Y) ∧
-      (∃ e : ↥ω ≃ₜ ↥Ω₀, ∀ X : ↥ω,
-        ((((e X : ↥Ω₀) : ↥d.G) : d.ambientˣ) : d.ambient) =
-          expA F ((X : ↥d.lieZero) : d.ambient)) ∧
-      (∀ g ∈ Ω₀, ∀ g' ∈ Ω₀, ∀ a ∈ d.AG, g = a * g' → g = g') ∧
-      IsInvariantClopen d ((d.AG : Set ↥d.G) * Ω₀) ∧
-      (∀ X ∈ ω, ∃ g : ↥d.G, ∃ Y ∈ ω₀, ((X : ↥d.lieZero) : d.ambient) =
-        ((g : d.ambientˣ) : d.ambient) * Y * ((g⁻¹ : d.ambientˣ) : d.ambient)) := by
+    ∃ (ω : Set ↥d.lieZero) (Ω₀ : Set ↥d.G), d.IsLieDescentNbhd ω Ω₀ ∧ d.IsConjSmall ω₀ ω := by
   have := isTopologicalRing_of_moduleTopology F d.ambient
   -- the injectivity domain `ω₁` and the neighbourhoods chosen relative to it
   obtain ⟨ω₁, Ω₁, -, h0ω₁, hω₁o, -, hω₁inv, ⟨Γ₁, -, hΓ₁, hω₁Γ⟩, -, -, -, ⟨e₁, he₁⟩, -⟩ :=
@@ -414,7 +446,7 @@ theorem exists_lieDescentNbhd_raw (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane 
   obtain ⟨U, hU0, hU⟩ := d.exists_nhds_expA_cenAlg_add_conj
   set WF : Set (F × F) := {w | (d.cenAlg w ∈ V ∧ d.cenAlg w ∈ U ∧
     d.cenAlg (expA F w) = expA F (d.cenAlg w)) ∧
-      ∃ a ∈ d.AG, ((a : d.ambientˣ) : d.ambient) = expA F (d.cenAlg w)} with hWFdef
+      ∃ a ∈ d.AG, ((a : d.ambientˣ) : d.ambient) = expA F (d.cenAlg w)}
   have hWF : WF ∈ 𝓝 (0 : F × F) := by
     have hc : Tendsto d.cenAlg (𝓝 0) (𝓝 0) := by
       have := d.continuous_cenAlg.tendsto (0 : F × F)
@@ -422,19 +454,19 @@ theorem exists_lieDescentNbhd_raw (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane 
     filter_upwards [hc (inter_mem hV0 hU0), d.eventually_expA_cenAlg] with w hw hw'
     exact ⟨⟨hw.1, hw.2, hw'.1⟩, hw'.2⟩
   obtain ⟨K, hK0, hKWF, hK⟩ := local_compact_nhds hWF
-  set Uc : Set (F × F) := {c | ∃ w ∈ WF, expA F w = c} with hUcdef
+  set Uc : Set (F × F) := {c | ∃ w ∈ WF, expA F w = c}
   have hUc : Uc ∈ 𝓝 (1 : F × F) := eventually_exists_expA_eq hWF
   obtain ⟨N, hN0, hN⟩ :=
     exists_mem_nhds_eq_mul_imp_mem_prod d.dimPair_fst_ne_zero d.dimPair_snd_ne_zero hUc
-  set T : Set d.ambient := {Y | d.trPair (expA F Y) ∈ N} with hTdef
+  set T : Set d.ambient := {Y | d.trPair (expA F Y) ∈ N}
   have hT : T ∈ 𝓝 (0 : d.ambient) := by
     have hc : ContinuousAt (fun Y => d.trPair (expA F Y)) 0 :=
       d.continuous_trPair.continuousAt.comp (continuousAt_expA_at_zero F)
     exact hc.preimage_mem_nhds (by simpa [expA_zero_eq_one, trPair_one] using hN0)
-  set P : Set d.ambient := V ∩ U ∩ T ∩ ω₀ ∩ O with hPdef
+  set P : Set d.ambient := V ∩ U ∩ T ∩ ω₀ ∩ O
   have hP : P ∈ 𝓝 (0 : d.ambient) :=
     inter_mem (inter_mem (inter_mem (inter_mem hV0 hU0) hT) hω₀) hO
-  set S : Set d.ambient := {Y | d.cenCoord Y ∈ K ∧ Y - d.cenAlg (d.cenCoord Y) ∈ P} with hSdef
+  set S : Set d.ambient := {Y | d.cenCoord Y ∈ K ∧ Y - d.cenAlg (d.cenCoord Y) ∈ P}
   have hS : S ∈ 𝓝 (0 : d.ambient) := by
     refine (inter_mem ?_ ?_ : {Y : d.ambient | d.cenCoord Y ∈ K} ∩
       {Y | Y - d.cenAlg (d.cenCoord Y) ∈ P} ∈ 𝓝 (0 : d.ambient))
@@ -473,12 +505,12 @@ theorem exists_lieDescentNbhd_raw (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane 
       Topology.IsEmbedding.subtypeVal.comp Topology.IsEmbedding.subtypeVal
     have hι : Topology.IsEmbedding ι := (Topology.IsEmbedding.subtypeVal.of_comp_iff).1 h2
     exact Topology.IsEmbedding.subtypeVal.comp (e₁.isEmbedding.comp hι)
-  refine ⟨ω, Set.range f, d.isOpen_projLie0 K hω₂o,
+  refine ⟨ω, Set.range f, ⟨d.isOpen_projLie0 K hω₂o,
     d.isClosed_projLie0 hK (isClosed_of_subset_lie d hω₂lie hω₂c),
     ⟨0, mem_of_mem_nhds hK0, by
       show d.cenAlg 0 + ((0 : ↥d.lieZero) : d.ambient) ∈ ω₂
       rw [map_zero, zero_add]; exact h0ω₂⟩,
-    fun g X hX => d.adLie0_mem_projLie0 hω₂inv g hX, ?_, ⟨hf.toHomeomorph, hfval⟩, ?_, ?_, ?_⟩
+    fun g X hX => d.adLie0_mem_projLie0 hω₂inv g hX, ?_, ⟨hf.toHomeomorph, hfval⟩, ?_, ?_⟩, ?_⟩
   · -- compact modulo conjugation
     refine ⟨Subtype.val ⁻¹' Γ₁,
       d.isClosed_lieZero.isClosedEmbedding_subtypeVal.isCompact_preimage hΓ₁,
