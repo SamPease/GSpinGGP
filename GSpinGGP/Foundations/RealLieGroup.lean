@@ -2,12 +2,11 @@
 Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import GSpinGGP.Foundations.LocalGroups
 import GSpinGGP.Foundations.RealEmbeddingClassification
 import Mathlib.Geometry.Manifold.Instances.UnitsOfNormedAlgebra
+import Mathlib.Topology.Algebra.Group.Units
 import TauCeti.Analysis.Matrix.Normed
 import TauCeti.Geometry.Lie.Subgroup.Embedded
-import TauCeti.Geometry.Lie.Subgroup.Units
 import TauCeti.Geometry.Manifold.Algebra.LieGroup
 import TauCeti.Geometry.Manifold.PullbackGroupoid
 
@@ -32,21 +31,23 @@ the entrywise one. The charts on `G` are charts for the topology `G` already has
 
 For a local field `F` with a real embedding `φ` (so `F = ℝ` or `ℂ`), a finite-dimensional
 `F`-algebra `A` with its module topology is such a real algebra through `φ`
-(`RealEmbedding.algebraOf`), which applies the construction to the closed subgroups of `Aˣ`.
+(`RealEmbedding.algebraOf`); `RealEmbedding.realLieStructure` applies the construction to the
+closed subgroups of `Aˣ`.
 
 The structure depends on the choice of a basis of `A` and on the choice of slice charts made by
-the closed-subgroup theorem. Any two Lie group structures on the same topological group have the
-same smooth functions (a continuous homomorphism of Lie groups is smooth); this is not formalized
-here.
+the closed-subgroup theorem. For any two real Lie structures on the same topological group the
+identity is smooth (`RealLieStructure.contMDiff_id`), so the test functions and the smooth vectors
+do not depend on these choices (`RealLieStructure.testFunctions_eq`,
+`RealLieStructure.smoothVectors_eq`, in `GSpinGGP/Foundations/RealLieStructureOfClosed.lean`).
 
 ## Main definitions
 
 * `GSpinGGP.RealLieGroup.unitsMatrix A`: the closed embedding of topological groups
   `Aˣ → GLₙ(ℝ)` given by the left regular representation.
-* `GSpinGGP.RealLieGroup.model G hG`: the model space of the Lie group structure on a closed
+* `GSpinGGP.RealLieGroup.model G`: the model space of the Lie group structure on a closed
   subgroup `G ≤ Aˣ` (the Lie algebra of its image in `GLₙ(ℝ)`), a finite-dimensional real normed
   space in `Type`.
-* `GSpinGGP.RealLieGroup.chartedSpace G hG`, `GSpinGGP.RealLieGroup.lieGroup G hG`: the charts on
+* `GSpinGGP.RealLieGroup.chartedSpace hG`, `GSpinGGP.RealLieGroup.lieGroup hG`: the charts on
   `G` and the smoothness of its group operations.
 * `GSpinGGP.RealEmbedding.algebraOf φ`: the real algebra structure on an `F`-algebra given by a
   real embedding `φ` of `F`; `RealEmbedding.finiteDimensional_algebraOf`,
@@ -100,31 +101,15 @@ theorem isClosedEmbedding_leftRegular : Topology.IsClosedEmbedding (leftRegular 
   LinearMap.isClosedEmbedding_of_injective (f := (leftRegular A).toLinearMap)
     (LinearMap.ker_eq_bot.2 (leftRegular_injective A))
 
+/-- `Aˣ → GLₙ(ℝ)` is a closed embedding of topological groups (Mathlib's
+`Topology.IsClosedEmbedding.units_map` applied to the left regular representation). -/
+theorem isClosedEmbedding_unitsMatrix : Topology.IsClosedEmbedding (unitsMatrix A) := by
+  have h := isClosedEmbedding_leftRegular A
+  have : ContinuousMul A := h.isInducing.continuousMul (leftRegular A)
+  exact Topology.IsClosedEmbedding.units_map (f := (leftRegular A).toMonoidHom) h
+
 theorem isEmbedding_unitsMatrix : Topology.IsEmbedding (unitsMatrix A) :=
-  (isClosedEmbedding_leftRegular A).isEmbedding.units_map (f := (leftRegular A).toMonoidHom)
-
-/-- The image of `Aˣ` in `GLₙ(ℝ)` is closed: it consists of the invertible matrices `u` with `u`
-and `u⁻¹` in the (closed) image of `A`, since `ρ(x) ρ(y) = 1` forces `x y = 1` by injectivity. -/
-theorem isClosed_range_unitsMatrix : IsClosed (Set.range (unitsMatrix A)) := by
-  have hR := (isClosedEmbedding_leftRegular A).isClosed_range
-  have heq : Set.range (unitsMatrix A) =
-      {u : (Matrix (Fin (dim A)) (Fin (dim A)) ℝ)ˣ |
-          (u : Matrix _ _ ℝ) ∈ Set.range (leftRegular A)} ∩
-        {u : (Matrix (Fin (dim A)) (Fin (dim A)) ℝ)ˣ |
-          ((u⁻¹ : (Matrix _ _ ℝ)ˣ) : Matrix _ _ ℝ) ∈ Set.range (leftRegular A)} := by
-    ext u
-    constructor
-    · rintro ⟨v, rfl⟩
-      exact ⟨⟨v, rfl⟩, ⟨(v⁻¹ : Aˣ), by simp [unitsMatrix]⟩⟩
-    · rintro ⟨⟨x, hx⟩, ⟨y, hy⟩⟩
-      have hxy : x * y = 1 := leftRegular_injective A (by simp [map_mul, hx, hy])
-      have hyx : y * x = 1 := leftRegular_injective A (by simp [map_mul, hx, hy])
-      exact ⟨⟨x, y, hxy, hyx⟩, Units.ext hx⟩
-  rw [heq]
-  exact (hR.preimage Units.continuous_val).inter (hR.preimage Units.continuous_coe_inv)
-
-theorem isClosedEmbedding_unitsMatrix : Topology.IsClosedEmbedding (unitsMatrix A) :=
-  ⟨isEmbedding_unitsMatrix A, isClosed_range_unitsMatrix A⟩
+  (isClosedEmbedding_unitsMatrix A).isEmbedding
 
 variable {A} (G : Subgroup Aˣ)
 
@@ -138,18 +123,11 @@ theorem isClosed_image {G : Subgroup Aˣ} (hG : IsClosed (G : Set Aˣ)) :
   exact (isClosedEmbedding_unitsMatrix A).isClosedMap _ hG
 
 /-- `G` is isomorphic, as a topological group, to its image in `GLₙ(ℝ)`. -/
-noncomputable def homeomorphImage : G ≃ₜ* image G where
-  toMulEquiv := G.equivMapOfInjective (unitsMatrix A) (unitsMatrix_injective A)
-  continuous_toFun :=
-    ((isEmbedding_unitsMatrix A).continuous.comp continuous_subtypeVal).subtype_mk _
-  continuous_invFun := by
-    have hemb : Topology.IsEmbedding (fun x : G => unitsMatrix A x) :=
-      (isEmbedding_unitsMatrix A).comp Topology.IsEmbedding.subtypeVal
-    refine hemb.continuous_iff.2 (continuous_subtypeVal.congr fun y => ?_)
-    have := congrArg Subtype.val
-      ((G.equivMapOfInjective (unitsMatrix A) (unitsMatrix_injective A)).apply_symm_apply y)
-    rw [Subgroup.coe_equivMapOfInjective_apply] at this
-    exact this.symm
+noncomputable def homeomorphImage : G ≃ₜ* image G :=
+  let e := G.equivMapOfInjective (unitsMatrix A) (unitsMatrix_injective A)
+  ContinuousMulEquiv.mk' (e.toEquiv.toHomeomorphOfIsInducing
+    (Topology.IsInducing.subtypeVal.of_comp_iff.1
+      ((isEmbedding_unitsMatrix A).comp Topology.IsEmbedding.subtypeVal).isInducing)) e.map_mul
 
 /-- The model space of the Lie group structure on a closed subgroup `G ≤ Aˣ`: the Lie algebra of
 its image in `GLₙ(ℝ)`, a finite-dimensional real normed space. -/
@@ -195,7 +173,8 @@ theorem lieGroup :
   (homeomorphImage G).lieGroup_pullbackChartedSpace
 
 /-- For the Lie group structure on `G`, the left regular representation `g ↦ ρ(g) ∈ Mₙ(ℝ)` is
-smooth. -/
+smooth. (API for later use, e.g. smoothness of matrix coefficients; exercised in
+`GSpinGGP/Sanity/RealLieGroupAudit.lean`.) -/
 theorem contMDiff_leftRegular :
     letI := chartedSpace hG
     ContMDiff 𝓘(ℝ, model G) 𝓘(ℝ, Matrix (Fin (dim A)) (Fin (dim A)) ℝ) ∞
@@ -258,29 +237,6 @@ theorem continuousSMul_algebraOf [TopologicalSpace A] [ContinuousSMul F A] :
   ⟨(continuous_smul (M := F) (X := A)).comp (φ.continuous.prodMap continuous_id)⟩
 
 end Algebra
-
-section LieGroup
-
-variable {F : Type*} [NontriviallyNormedField F] [LocalField F] (φ : RealEmbedding F)
-  {A : Type*} [Ring A] [Algebra F A] [Module.Finite F A] [TopologicalSpace A] [IsModuleTopology F A]
-
-include φ in
-/-- Over a local field `F` with a real embedding (that is, `F = ℝ` or `ℂ`), every closed subgroup
-`G` of the units of a finite-dimensional `F`-algebra `A` with its module topology is a real Lie
-group for the topology it has as a subspace of `Aˣ`: `RealLieGroup.lieGroup` for `A` as a real
-algebra through `φ`. -/
-theorem exists_lieGroup (G : Subgroup Aˣ) (hG : IsClosed (G : Set Aˣ)) :
-    ∃ (E : Type) (_ : NormedAddCommGroup E) (_ : NormedSpace ℝ E) (_ : FiniteDimensional ℝ E)
-      (_ : ChartedSpace E G), LieGroup 𝓘(ℝ, E) ∞ G := by
-  let := φ.algebraOf A
-  have := φ.finiteDimensional_algebraOf A
-  have := φ.continuousSMul_algebraOf A
-  have := isTopologicalRing_of_moduleTopology F A
-  have := t2Space_of_moduleTopology F A
-  exact ⟨RealLieGroup.model G, inferInstance, inferInstance, inferInstance,
-    RealLieGroup.chartedSpace hG, RealLieGroup.lieGroup hG⟩
-
-end LieGroup
 
 end RealEmbedding
 

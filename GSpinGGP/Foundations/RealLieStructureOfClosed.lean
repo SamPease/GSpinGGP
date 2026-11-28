@@ -2,6 +2,7 @@
 Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
+import GSpinGGP.Foundations.LocalGroups
 import GSpinGGP.Foundations.RealLieGroup
 import GSpinGGP.Foundations.LieRepresentations
 import TauCeti.Geometry.Lie.AutomaticSmoothness
@@ -16,11 +17,13 @@ the units of a finite-dimensional `F`-algebra `A` with its module topology,
 regular representation of `A` as a real algebra through `φ`). Its charts are charts for the
 topology `G` has as a subspace of `Aˣ`.
 
-The structure involves choices (a basis of `A`, the slice charts of the closed-subgroup theorem),
-but the notions built on it do not depend on them: for any two `RealLieStructure`s on the same
-topological group, the identity is smooth in both directions (Tau Ceti's automatic smoothness of
-continuous homomorphisms of Lie groups), so the test functions and the smooth vectors of a unitary
-representation are the same.
+The structure involves choices (a basis of `A`, the slice charts of the closed-subgroup theorem).
+For any two `RealLieStructure`s on the same topological group the identity is smooth in both
+directions (Tau Ceti's automatic smoothness of continuous homomorphisms of Lie groups), so the test
+functions and the smooth vectors of a unitary representation do not depend on the chosen structure
+(`testFunctions_eq`, `smoothVectors_eq`). For the seminorms, the continuous and equivariant forms,
+the multiplicity, the trace and the character this is not yet proved: the spaces of smooth vectors
+are equal only propositionally, so forms on them must be transported.
 
 ## Main results
 
