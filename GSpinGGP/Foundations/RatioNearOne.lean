@@ -2,13 +2,13 @@
 Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import Mathlib.Analysis.Normed.Field.Lemmas
+import Mathlib.Topology.Algebra.GroupWithZero
 
 /-!
 # Ratios near `1`
 
-In a normed field, if `p = c q` with `p` and `q` both close to `n ≠ 0`, then `c` is close to `1`
-(`exists_mem_nhds_eq_mul_imp_mem`), and the same componentwise on `K × K`.
+In a topological group with zero, if `p = c q` with `p` and `q` both close to `n ≠ 0`, then `c` is
+close to `1` (`exists_mem_nhds_eq_mul_imp_mem`), and the same componentwise on `K × K`.
 -/
 
 open Topology Filter
@@ -16,7 +16,8 @@ open Topology Filter
 namespace GSpinGGP
 
 /-- If `p = c q` with `p, q` close to `n ≠ 0`, then `c` is close to `1`. -/
-theorem exists_mem_nhds_eq_mul_imp_mem {K : Type*} [NormedField K] {n : K} (hn : n ≠ 0)
+theorem exists_mem_nhds_eq_mul_imp_mem {K : Type*} [GroupWithZero K] [TopologicalSpace K]
+    [T1Space K] [ContinuousMul K] [ContinuousInv₀ K] {n : K} (hn : n ≠ 0)
     {U : Set K} (hU : U ∈ 𝓝 (1 : K)) :
     ∃ N ∈ 𝓝 n, ∀ p ∈ N, ∀ q ∈ N, ∀ c : K, p = c * q → c ∈ U := by
   have hc : ContinuousAt (fun pq : K × K => pq.1 / pq.2) (n, n) :=
@@ -31,7 +32,8 @@ theorem exists_mem_nhds_eq_mul_imp_mem {K : Type*} [NormedField K] {n : K} (hn :
   rwa [hpq, mul_div_assoc, div_self hq.2, mul_one] at h
 
 /-- `exists_mem_nhds_eq_mul_imp_mem` on `K × K`, componentwise. -/
-theorem exists_mem_nhds_eq_mul_imp_mem_prod {K : Type*} [NormedField K] {n : K × K}
+theorem exists_mem_nhds_eq_mul_imp_mem_prod {K : Type*} [GroupWithZero K] [TopologicalSpace K]
+    [T1Space K] [ContinuousMul K] [ContinuousInv₀ K] {n : K × K}
     (hn₁ : n.1 ≠ 0) (hn₂ : n.2 ≠ 0) {U : Set (K × K)} (hU : U ∈ 𝓝 (1 : K × K)) :
     ∃ N ∈ 𝓝 n, ∀ p ∈ N, ∀ q ∈ N, ∀ c : K × K, p = c * q → c ∈ U := by
   rw [show (1 : K × K) = ((1 : K), (1 : K)) from rfl] at hU

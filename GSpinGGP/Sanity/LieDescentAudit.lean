@@ -8,10 +8,11 @@ import GSpinGGP.Sanity.ToyThetaF
 /-!
 # The slices of the descent to `𝔤⁰` at the toy datum
 
-The four slices of `TraceFormula/LieDescent.lean` (`exists_isLieDescentNbhd`, now proved in general,
-and the `sorry` statements `kernelK_eq_kernelLie_liftLie`, `isLieScusp_liftLie`,
-`torusIntegral_eq_torusIntegralLie_liftLie`) are instantiated at the smallest triple (`toyData`:
-`W = 0`, `V` a line; neither factor is a hyperbolic plane, so all four apply) and *proved* there, without them:
+The four slices of the descent (`exists_isLieDescentNbhd`, proved in general in
+`TraceFormula/DescentNbhd.lean`, and the `sorry` statements `kernelK_eq_kernelLie_liftLie`,
+`isLieScusp_liftLie`, `torusIntegral_eq_torusIntegralLie_liftLie` of `TraceFormula/LieDescent.lean`)
+are instantiated at the smallest triple (`toyData`: `W = 0`, `V` a line; neither factor is a
+hyperbolic plane, so all four apply) and proved there directly, without using them:
 
 * `toyD_isLieDescentNbhd`: `ω = 𝔤⁰ = 0`, `Ω₀ = {1}` is a descent neighbourhood (non-vacuity of
   `IsLieDescentNbhd`), and it is conjugate-small for every `ω₀ ∋ 0`;

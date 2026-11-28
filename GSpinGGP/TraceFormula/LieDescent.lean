@@ -2,7 +2,6 @@
 Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import GSpinGGP.TraceFormula.LieAlgebra
 import GSpinGGP.TraceFormula.DescentNbhd
 
 /-!
@@ -17,8 +16,8 @@ in `𝔤⁰(F)`, and `F = f_ω`, `f_ω(X) = f(e^X)` on `ω` and `0` off `ω` (`l
 case `j_G^H = 1` on a small enough `ω`, so `(j_G^H)^{1/2} f_ω = f_ω`.)  It then proves
 `exists_lie_descent` (as `exists_lie_descent_of_slices`) from four separate statements:
 
-* `exists_isLieDescentNbhd` (proved, `TraceFormula/DescentNbhd.lean`): such neighbourhoods exist
-  inside every `ω₀^{G(F)}` (Waldspurger 2010 §3.1 for `𝔤 = 𝔷 ⊕ 𝔤⁰`, BP §3.3);
+* `exists_isLieDescentNbhd` (proved, `TraceFormula/DescentNbhd.lean`, where `IsLieDescentNbhd` and
+  `IsConjSmall` are defined): such neighbourhoods exist inside every `ω₀^{G(F)}` (Waldspurger 2010 §3.1 for `𝔤 = 𝔷 ⊕ 𝔤⁰`, BP §3.3);
 * `kernelK_eq_kernelLie_liftLie` (SORRY): the kernels agree, `K(f, x) = K^Lie(f_ω, x)` for every
   `x ∈ G(F)` (BP (3.3.2) on `H`, Thesis Prop 12.4.1(i)); hence `J(f) = J^Lie(f_ω)`
   (`distribJ_eq_distribJLie_liftLie`, proved);
@@ -56,41 +55,6 @@ variable (d : GGPData F)
 
 /-! ## 1. Descent neighbourhoods and the lift `f ↦ f_ω` -/
 
-/-- **A descent neighbourhood of `0` in `𝔤⁰(F)`** (Thesis §12.4, BP §3.3, Waldspurger 2010 §3.1):
-`ω ⊆ 𝔤⁰(F)` open and closed, containing `0`, invariant under `G(F)`, compact modulo conjugation;
-`exp` is a homeomorphism of `ω` onto `Ω₀ ⊆ G(F)`; two elements of `Ω₀` that differ by an element of
-`A_G(F)` are equal; and `Ω = A_G(F)·Ω₀` is open, closed, invariant and `A_G(F)`-stable.  This is a
-weakening of the thesis's `G(F)`-excellent neighbourhood `ω` with `Ω = A_G(F)·exp(ω)`, written for
-`𝔤⁰` (Thesis §12.4 uses `𝔤 = Lie(A_G) ⊕ 𝔤⁰`); the smallness conditions are imposed separately by
-`IsConjSmall`. -/
-structure IsLieDescentNbhd (ω : Set ↥d.lieZero) (Ω₀ : Set ↥d.G) : Prop where
-  isOpen : IsOpen ω
-  isClosed : IsClosed ω
-  zero_mem : (0 : ↥d.lieZero) ∈ ω
-  adLie0_mem : ∀ (g : ↥d.G) (X : ↥d.lieZero), X ∈ ω → d.adLie0 g X ∈ ω
-  compact_mod_conj : ∃ Γ : Set ↥d.lieZero, IsCompact Γ ∧
-    ∀ X ∈ ω, ∃ g : ↥d.G, ∃ Y ∈ Γ, X = d.adLie0 g Y
-  exp_homeo : ∃ e : ↥ω ≃ₜ ↥Ω₀, ∀ X : ↥ω,
-    ((((e X : ↥Ω₀) : ↥d.G) : d.ambientˣ) : d.ambient) = expA F ((X : ↥d.lieZero) : d.ambient)
-  eq_of_mul_AG : ∀ g ∈ Ω₀, ∀ g' ∈ Ω₀, ∀ a ∈ d.AG, g = a * g' → g = g'
-  isInvariantClopen : IsInvariantClopen d ((d.AG : Set ↥d.G) * Ω₀)
-
-/-- Every element of `ω` is `G(F)`-conjugate into `ω₀` (`ω ⊆ ω₀^{G(F)}`, Waldspurger 2010 §3.1). -/
-def IsConjSmall (ω₀ : Set d.ambient) (ω : Set ↥d.lieZero) : Prop :=
-  ∀ X ∈ ω, ∃ g : ↥d.G, ∃ Y ∈ ω₀,
-    ((X : ↥d.lieZero) : d.ambient) = ((g : d.ambientˣ) : d.ambient) * Y * ((g⁻¹ : d.ambientˣ) : d.ambient)
-
-theorem IsConjSmall.mono {ω₀ ω₁ : Set d.ambient} {ω : Set ↥d.lieZero} (h : d.IsConjSmall ω₀ ω)
-    (h01 : ω₀ ⊆ ω₁) : d.IsConjSmall ω₁ ω := fun X hX => by
-  obtain ⟨g, Y, hY, e⟩ := h X hX
-  exact ⟨g, Y, h01 hY, e⟩
-
-theorem IsConjSmall.of_inter_left {ω₀ ω₁ : Set d.ambient} {ω : Set ↥d.lieZero}
-    (h : d.IsConjSmall (ω₀ ∩ ω₁) ω) : d.IsConjSmall ω₀ ω := h.mono _ Set.inter_subset_left
-
-theorem IsConjSmall.of_inter_right {ω₀ ω₁ : Set d.ambient} {ω : Set ↥d.lieZero}
-    (h : d.IsConjSmall (ω₀ ∩ ω₁) ω) : d.IsConjSmall ω₁ ω := h.mono _ Set.inter_subset_right
-
 open Classical in
 /-- **`f_ω`** (Thesis §12.4): `f_ω(X) = f(e^X)` for `X ∈ ω` (when `e^X ∈ G(F)`), `0` otherwise. -/
 def liftLie (ω : Set ↥d.lieZero) (f : ↥d.G → ℂ) (X : ↥d.lieZero) : ℂ :=
@@ -114,38 +78,7 @@ theorem liftLie_of_notMem {ω : Set ↥d.lieZero} (f : ↥d.G → ℂ) {X : ↥d
   unfold liftLie
   rw [dite_eq_right_of_eq_false (eq_false (fun h => hX h.1))]
 
-/-- `1 = e^0 ∈ Ω = A_G(F)·Ω₀`. -/
-theorem IsLieDescentNbhd.one_mem {ω : Set ↥d.lieZero} {Ω₀ : Set ↥d.G}
-    (h : d.IsLieDescentNbhd ω Ω₀) : (1 : ↥d.G) ∈ (d.AG : Set ↥d.G) * Ω₀ := by
-  obtain ⟨e, he⟩ := h.exp_homeo
-  have h0 := he ⟨0, h.zero_mem⟩
-  rw [show (((⟨0, h.zero_mem⟩ : ↥ω) : ↥d.lieZero) : d.ambient) = 0 from rfl,
-    expA_zero_eq_one] at h0
-  have h1 : ((e ⟨0, h.zero_mem⟩ : ↥Ω₀) : ↥d.G) = 1 := Subtype.ext (Units.ext h0)
-  exact ⟨1, d.AG.one_mem, _, h1 ▸ (e ⟨0, h.zero_mem⟩).2, one_mul _⟩
-
 /-! ## 2. The slices (Thesis Prop 12.4.1(i), Prop 12.1.1(iv)) -/
-
-/-- **Descent neighbourhoods exist inside every `ω₀^{G(F)}`** (Waldspurger 2010 §3.1 at `x = 1`,
-applied to `𝔤 = 𝔷 ⊕ 𝔤⁰`; BP §3.3), when neither `W` nor `V` is a hyperbolic plane (so `A_G(F)` is
-the group of pairs of scalars and `Lie(A_G) = 𝔷`).
-
-Proof (`exists_lieDescentNbhd_raw`, `TraceFormula/DescentNbhd.lean`): take a good neighbourhood
-`ω₁` of `0` in `𝔤(F)` (`waldspurger_goodNbhd_one`), a smaller one `ω₂ ⊆ S^{G(F)}` with `S` small
-relative to `ω₁` and `ω₀`, and `ω = {X ∈ 𝔤⁰(F) : z + X ∈ ω₂ for some small z ∈ 𝔷}` (the projection
-of `ω₂` along `𝔤 = 𝔷 ⊕ 𝔤⁰`), `Ω₀ = exp(ω)`.  Since `𝔷` is central, `e^{z + X} = e^z e^X` with
-`e^z ∈ A_G(F)`, so `A_G(F)·Ω₀ = A_G(F)·exp(ω₂)`, which is open, closed, invariant and
-`A_G(F)`-stable (`isInvariantClopen_AG_mul`); `ω ⊆ ω₁`, so `exp` is a homeomorphism of `ω` onto
-`Ω₀`.  If `e^X = a e^{X'}` with `X, X' ∈ ω`, `a ∈ A_G(F)`, then `a` is close to `1` (the traces of
-left multiplication by `e^X`, `e^{X'}` on `C(W)`, `C(V)` are conjugation invariant, hence close to
-`dim C(W)`, `dim C(V)`), so `a = e^z` with `z ∈ 𝔷` small, `e^X = e^{z + X'}` with `X, z + X' ∈ ω₁`,
-so `X = z + X'`, and `z ∈ 𝔷 ∩ 𝔤⁰ = 0`. -/
-theorem exists_isLieDescentNbhd (hW : ¬ IsHypPlane d.QW) (hV : ¬ IsHypPlane d.QV)
-    {ω₀ : Set d.ambient} (hω₀ : ω₀ ∈ 𝓝 (0 : d.ambient)) :
-    ∃ (ω : Set ↥d.lieZero) (Ω₀ : Set ↥d.G), d.IsLieDescentNbhd ω Ω₀ ∧ d.IsConjSmall ω₀ ω := by
-  obtain ⟨ω, Ω₀, hωo, hωc, h0, hinv, hΓ, he, hAG, hcl, hsmall⟩ :=
-    d.exists_lieDescentNbhd_raw hW hV hω₀
-  exact ⟨ω, Ω₀, ⟨hωo, hωc, h0, hinv, hΓ, he, hAG, hcl⟩, hsmall⟩
 
 variable (ψ : NontrivialAddChar F)
 
