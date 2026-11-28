@@ -77,17 +77,42 @@ example (x : ℝ) :
 
 /-- The dichotomy at `ℚ_[p]`, `ℝ`, `ℂ`, each landing on the expected side. -/
 example (p : ℕ) [Fact p.Prime] : ¬ Nonempty (RealEmbedding ℚ_[p]) :=
-  fun h => not_isUltrametricDist_iff_nonempty_realEmbedding.2 h inferInstance
+  fun h => (not_isUltrametricDist_iff_nonempty_realEmbedding _).2 h inferInstance
 
 example : Nonempty (RealEmbedding ℝ) :=
-  not_isUltrametricDist_iff_nonempty_realEmbedding.1 not_isUltrametricDist_real
+  (not_isUltrametricDist_iff_nonempty_realEmbedding _).1 not_isUltrametricDist_real
 
 example : Nonempty (RealEmbedding ℂ) :=
-  not_isUltrametricDist_iff_nonempty_realEmbedding.1 not_isUltrametricDist_complex
+  (not_isUltrametricDist_iff_nonempty_realEmbedding _).1 not_isUltrametricDist_complex
 
 example (F : Type*) [NontriviallyNormedField F] [LocalField F] :
     IsUltrametricDist F ∨ Nonempty (RealEmbedding F) :=
-  isUltrametricDist_or_nonempty_realEmbedding
+  isUltrametricDist_or_nonempty_realEmbedding F
+
+/-! ### The archimedean cases at the binders later code uses -/
+
+section LocalField
+
+variable (F : Type*) [NontriviallyNormedField F] [LocalField F]
+
+example : ¬ IsUltrametricDist F ↔ Nonempty (RealEmbedding F) :=
+  not_isUltrametricDist_iff_nonempty_realEmbedding F
+
+/-- A non-ultrametric local field in which `-1` is not a square is `ℝ`. -/
+example (hu : ¬ IsUltrametricDist F) (h : ¬ IsSquare (-1 : F)) :
+    ∃ e : ℝ ≃+* F, IsHomeomorph e := by
+  obtain ⟨φ⟩ := nonempty_realEmbedding_of_not_isUltrametricDist hu
+  obtain ⟨e, he, -⟩ := φ.exists_ringEquiv_real_of_not_isSquare_neg_one h
+  exact ⟨e, he⟩
+
+/-- A non-ultrametric local field in which `-1` is a square is `ℂ`. -/
+example (hu : ¬ IsUltrametricDist F) (h : IsSquare (-1 : F)) :
+    ∃ e : ℂ ≃+* F, IsHomeomorph e := by
+  obtain ⟨φ⟩ := nonempty_realEmbedding_of_not_isUltrametricDist hu
+  obtain ⟨e, he, -⟩ := φ.exists_ringEquiv_complex_of_isSquare_neg_one h
+  exact ⟨e, he⟩
+
+end LocalField
 
 /-- `ℂ` has characteristic zero by the non-ultrametric criterion, consistent with Mathlib. -/
 example : CharZero ℂ := charZero_of_not_isUltrametricDist not_isUltrametricDist_complex

@@ -3,7 +3,14 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Foundations.RealEmbedding
-import GSpinGGP.Foundations.LocalGroups
+import Mathlib.Analysis.Complex.Polynomial.Basic
+import Mathlib.Analysis.Normed.Field.Ultra
+import Mathlib.Analysis.Normed.Unbundled.RingSeminorm
+import Mathlib.Analysis.SpecialFunctions.Pow.Continuity
+import Mathlib.NumberTheory.Ostrowski
+import Mathlib.Topology.Algebra.Module.FiniteDimension
+import Mathlib.Topology.Algebra.UniformRing
+import Mathlib.Topology.Instances.Rat
 
 /-!
 # Archimedean local fields: existence of the real embedding and the cases `ℝ`, `ℂ`
@@ -110,12 +117,14 @@ theorem nonempty_realEmbedding_of_not_isUltrametricDist (h : ¬ IsUltrametricDis
   refine ⟨⟨IsDenseInducing.extendRingHom (i := Rat.castHom ℝ) hue Rat.denseRange_cast huc, ?_⟩⟩
   exact (uniformContinuous_uniformly_extend hue Rat.denseRange_cast huc).continuous
 
+variable (F) in
 /-- A complete normed field is not ultrametric if and only if it has a real embedding. In
 particular this holds for every `LocalField`. -/
 theorem not_isUltrametricDist_iff_nonempty_realEmbedding :
     ¬ IsUltrametricDist F ↔ Nonempty (RealEmbedding F) :=
   ⟨nonempty_realEmbedding_of_not_isUltrametricDist, fun ⟨φ⟩ _ => IsEmpty.false φ⟩
 
+variable (F) in
 /-- A complete normed field (for instance a `LocalField`) is ultrametric or has a real embedding;
 not both, by `not_isUltrametricDist_iff_nonempty_realEmbedding`. -/
 theorem isUltrametricDist_or_nonempty_realEmbedding :
