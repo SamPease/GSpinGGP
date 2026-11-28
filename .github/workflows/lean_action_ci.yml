@@ -1,7 +1,10 @@
 name: Lean Action CI
 
+# One run per change: pull requests are built as merged into `main` (the `pull_request` event),
+# and `main` itself is built after every merge. Branch pushes without a pull request are not built.
 on:
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -24,10 +27,39 @@ jobs:
       # Prebuilt Mathlib and Tau Ceti outputs; without them Tau Ceti would be compiled from source.
       - name: Fetch build caches
         run: PATH="$HOME/.elan/bin:$PATH" bash scripts/get-cache.sh
+      # Pull requests start from the compiled project of the latest run on `main`, so that Lake recompiles only the modules that changed and those importing
+      # them. `main` is always compiled from scratch, and its result is what later runs start from.
+      - name: Restore the compiled project (pull requests)
+        if: github.event_name == 'pull_request'
+        uses: actions/cache/restore@v4
+        with:
+          path: .lake/build
+          key: project-build-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'lakefile.toml') }}-${{ github.sha }}
+          restore-keys: |
+            project-build-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'lakefile.toml') }}-
+      # Compiled files of modules whose source no longer exists (deleted or renamed since the restored run).
+      - name: Remove compiled files without a source
+        if: github.event_name == 'pull_request'
+        run: |
+          if [ -d .lake/build/lib/lean ]; then
+            find .lake/build/lib/lean -type f | while read -r f; do
+              rel="${f#.lake/build/lib/lean/}"
+              [ -f "${rel%%.*}.lean" ] || rm -f "$f"
+            done
+          fi
       - name: Build
         run: |
           set -o pipefail
           ~/.elan/bin/lake build 2>&1 | tee build.log
+      # Not part of the check: a failure to save (for instance when a run is repeated on the same
+      # commit, whose entry already exists) only makes later runs compile more.
+      - name: Save the compiled project (main)
+        if: github.event_name == 'push'
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: .lake/build
+          key: project-build-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'lakefile.toml') }}-${{ github.sha }}
       # Axioms only in Literature/, local_ggp's axioms as listed in scripts/main-axioms.txt, and the
       # README's sorry and axiom counts up to date.
       - name: Check assumptions and README counts
