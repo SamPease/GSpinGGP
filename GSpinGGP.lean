@@ -40,6 +40,7 @@ import GSpinGGP.GGP.PairBlock
 import GSpinGGP.GGP.Steinberg
 import GSpinGGP.Foundations.LocalFieldBridge
 import GSpinGGP.Foundations.RealEmbedding
+import GSpinGGP.Foundations.RealEmbeddingClassification
 import GSpinGGP.Foundations.PAdicQuadraticForms
 import GSpinGGP.Literature.Measure
 import GSpinGGP.Literature.Fourier

@@ -66,9 +66,10 @@ namespace GSpinGGP
 
 /-- A *local field of characteristic zero*: a nontrivially normed field that is complete,
 locally compact and of characteristic zero. Thesis §2.1 takes `F` `p`-adic or `ℝ`; we also allow
-`ℂ`. By the classical classification (not proved here, and used only informally), these fields
-are exactly the finite extensions of some `ℚ_p`, `ℝ` and `ℂ`; the non-archimedean ones are the
-`PAdicField`s. Fields of positive characteristic are excluded, as in the Thesis.
+`ℂ`. Classically these fields are exactly the finite extensions of some `ℚ_p`, `ℝ` and `ℂ`; the
+non-archimedean ones are the `PAdicField`s. That the non-ultrametric ones are `ℝ` and `ℂ` is proved
+in `GSpinGGP/Foundations/RealEmbeddingClassification.lean`; that the ultrametric ones are finite
+extensions of some `ℚ_p` remains classical and is not proved here. Fields of positive characteristic are excluded, as in the Thesis.
 (`CompleteSpace` follows from local compactness, a locally compact normed field being proper,
 `ProperSpace.of_locallyCompactSpace`; it is kept as a field so that it is a direct instance.) -/
 class LocalField (F : Type*) [NontriviallyNormedField F] : Prop
