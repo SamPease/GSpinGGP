@@ -23,8 +23,11 @@ The real Lie group structure is data, `RealLieStructure G`, not an instance: a g
 `G(F)` for a local field `F` gets it only in the archimedean case, and only after choices. The
 fields of a `RealLieStructure` are made local instances inside this file only. Any two
 `RealLieStructure`s on the same topological group give the same smooth structure (a continuous
-homomorphism of Lie groups is smooth, by Cartan's theorem), so the notions below do not depend on
-the choice of `L`; this independence is not formalized here.
+homomorphism of Lie groups is smooth, by Cartan's theorem). That the identity is smooth between
+two such structures, and that `testFunctions` and `smoothVectors` do not depend on `L`, is proved in
+`GSpinGGP/Foundations/RealLieStructureOfClosed.lean` (`RealLieStructure.contMDiff_id`,
+`RealLieStructure.testFunctions_eq`, `RealLieStructure.smoothVectors_eq`); for the seminorms,
+forms, multiplicity, trace and character it is not yet proved.
 
 Everything lives in the namespace `GSpinGGP.LieRep`, so the names (`smoothVectors`,
 `multiplicity`, …) do not clash with the `p`-adic ones. Every notion takes the Lie structure `L`
