@@ -232,6 +232,8 @@ import GSpinGGP.HarmonicAnalysis.HullVolume
 import GSpinGGP.Foundations.CosetSpaceTranslate
 import GSpinGGP.Foundations.CosetSpaceTopology
 import GSpinGGP.Foundations.NormDescent
+import GSpinGGP.Foundations.NuclearTraceHilbert
+import GSpinGGP.Foundations.HilbertTrace
 import GSpinGGP.TraceFormula.GoodParabolicLift
 import GSpinGGP.TraceFormula.LogNormDescent
 import GSpinGGP.TraceFormula.AMinGrowth
@@ -261,3 +263,4 @@ import GSpinGGP.Sanity.WeylIntegrationL1Audit
 import GSpinGGP.Sanity.UnitaryRepAudit
 import GSpinGGP.Sanity.UnramifiedAudit
 import GSpinGGP.Sanity.KottwitzSignAudit
+import GSpinGGP.Sanity.HilbertTraceAudit
