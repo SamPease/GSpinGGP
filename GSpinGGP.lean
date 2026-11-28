@@ -39,6 +39,7 @@ import GSpinGGP.Foundations.IsometryDet
 import GSpinGGP.GGP.PairBlock
 import GSpinGGP.GGP.Steinberg
 import GSpinGGP.Foundations.LocalFieldBridge
+import GSpinGGP.Foundations.RealEmbedding
 import GSpinGGP.Foundations.PAdicQuadraticForms
 import GSpinGGP.Literature.Measure
 import GSpinGGP.Literature.Fourier
@@ -243,6 +244,7 @@ import GSpinGGP.Sanity.WeakCartanFrame
 import GSpinGGP.Sanity.RelativeXi
 import GSpinGGP.Sanity.AxiomRedTeam
 import GSpinGGP.Sanity.LeviAudit
+import GSpinGGP.Sanity.RealEmbeddingAudit
 import GSpinGGP.Sanity.WeightAudit
 import GSpinGGP.Sanity.GL2GoodK
 import GSpinGGP.Sanity.GL2IsMx
