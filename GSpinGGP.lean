@@ -11,6 +11,7 @@ import GSpinGGP.Foundations.JHatTranslate
 import GSpinGGP.Foundations.LieEquivAd
 import GSpinGGP.Foundations.CentralizerIso
 import GSpinGGP.Foundations.ExpLocal
+import GSpinGGP.Foundations.RatioNearOne
 import GSpinGGP.Foundations.ExpHaar
 import GSpinGGP.Foundations.ExpDet
 import GSpinGGP.Foundations.TorusIntegrability
@@ -99,6 +100,7 @@ import GSpinGGP.TraceFormula.LuoTransfer
 import GSpinGGP.TraceFormula.LuoGamma
 import GSpinGGP.TraceFormula.LuoWeyl
 import GSpinGGP.TraceFormula.LuoClass
+import GSpinGGP.TraceFormula.DescentNbhd
 import GSpinGGP.TraceFormula.LieDescent
 import GSpinGGP.TraceFormula.LuoTorus
 import GSpinGGP.TraceFormula.LuoTorusExp
