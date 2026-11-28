@@ -110,8 +110,9 @@ variable (d) in
 /-- **A compact subgroup with the Iwasawa decompositions for the Levi datum `L`**, carried as data:
 a compact subgroup `K` of `G` with `G = P K` for every `P ∈ 𝒫(M)` (Thesis §2.1; Beuzart-Plessis
 §1.1).  This is all that `H_P` (`hPar`), the weight `v_M` (`vM`) and `θ_f` (`thetaFBP`) read from
-`K`.  No openness is assumed, so that the archimedean case (`K` maximal compact) fits; the
-`p`-adic refinement with `K` open and in good position is `GoodK`. -/
+`K`.  No openness is assumed, in preparation for the archimedean case (`K` maximal compact); the
+declarations here are still stated over a `p`-adic field.  The `p`-adic refinement with `K` open
+and in good position is `GoodK`. -/
 structure IwasawaK (L : d.FlagLeviDatum) where
   /-- the compact subgroup -/
   K : Subgroup ↥d.G
@@ -150,8 +151,11 @@ structure GoodK (L : d.FlagLeviDatum) extends d.IwasawaK L where
   goodPositionV : StabilizesSplitLattice d.QV L.bV L.wtV (d.snd '' (K : Set ↥d.G))
 
 /-- A good `K` as an `IwasawaK` (dropping openness and good position); a coercion, so that the
-definitions on `IwasawaK` (`hPar`, `vM`, `thetaFBP`, …) apply to a `GoodK`. -/
-instance {L : d.FlagLeviDatum} : CoeOut (d.GoodK L) (d.IwasawaK L) := ⟨GoodK.toIwasawaK⟩
+definitions on `IwasawaK` (`hPar`, `vM`, `thetaFBP`, …) apply to a `GoodK`.  Statements with a
+`GoodK` binder rely on it; elsewhere `toIwasawaK` is written explicitly where elaboration needs it
+(e.g. under projections). -/
+instance GoodK.instCoeOutIwasawaK {L : d.FlagLeviDatum} : CoeOut (d.GoodK L) (d.IwasawaK L) :=
+  ⟨GoodK.toIwasawaK⟩
 
 /-- The Iwasawa decomposition `G = P K` of an `IwasawaK` and `P ∈ 𝒫(M)`. -/
 def IwasawaK.toIwasawaDecomp {L : d.FlagLeviDatum} (K : d.IwasawaK L) {P : Subgroup ↥d.G}

@@ -155,9 +155,9 @@ end ModularCharacter
 
 /-- An **Iwasawa decomposition** `G = P K` in a topological group `G`: a closed subgroup `P` and a
 compact subgroup `K` with `G = P K` (Waldspurger 2003 §I.1: `G = P K` for every semi-standard
-parabolic `P`, with `K` special maximal compact).  No openness of `K` is assumed, so that the
-archimedean case (`K` maximal compact, not open) fits; the refinement with `K` open is
-`IwasawaPair`. -/
+parabolic `P`, with `K` special maximal compact).  No openness of `K` is assumed, so the notion
+does not exclude the archimedean case (`K` maximal compact, not open); the refinement with `K`
+open is `IwasawaPair`. -/
 structure IwasawaDecomp (G : Type*) [Group G] [TopologicalSpace G] where
   /-- the parabolic subgroup -/
   P : Subgroup G
@@ -317,13 +317,13 @@ theorem rho_of_mem (p : ↥I.P) : I.rho p = I.delta p :=
   I.rho_eq_delta I.K.one_mem (mul_one _).symm
 
 theorem rho_mul_right {g k : G} (hk : k ∈ I.K) : I.rho (g * k) = I.rho g :=
-  I.rho_eq_delta (I.K.mul_mem (I.iwK g).property hk) 
+  I.rho_eq_delta (I.K.mul_mem (I.iwK g).property hk)
     (by rw [← mul_assoc, IwasawaDecomp.iwP_mul_iwK])
 
 theorem rho_mul_left (p : ↥I.P) (g : G) : I.rho (p * g) = I.delta p * I.rho g := by
   change _ = I.delta p * I.delta (I.iwP g)
   rw [← I.delta_mul]
-  exact I.rho_eq_delta (I.iwK g).property 
+  exact I.rho_eq_delta (I.iwK g).property
     (by rw [Subgroup.coe_mul, mul_assoc, IwasawaDecomp.iwP_mul_iwK])
 
 /-- **The cocycle relation** `δ(p(xy)) = δ(p(x)) δ(p(k(x) y))`. -/

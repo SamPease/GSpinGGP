@@ -284,7 +284,8 @@ theorem orbitalIntegral_eq (μ : Measure ↥(d.centG x)) (f : ↥d.G → ℂ) :
 
 /-- **Arthur's weighted orbital integral** (Beuzart-Plessis §1.10, p. 36; Waldspurger 2010, §2.3;
 Thesis §2.6): for a Levi subgroup `M` (the reduced Levi datum `L`), a compact subgroup `K` with
-`G = P K` for `P ∈ 𝒫(M)` (`IwasawaK`; the sources take `K` special, a `GoodK`) and `x ∈ G(F)`,
+`G = P K` for `P ∈ 𝒫(M)` (`IwasawaK`; the sources take `K` special maximal compact, cf. `GoodK`,
+`GoodK.IsSpecial`) and `x ∈ G(F)`,
 `J_M(x, f) = D^G(x)^{1/2} ∫_{G_x(F)\G(F)} f(g⁻¹ x g) v_M(g) dg`,
 for the quotient measure `dg/μ` (`orbQuotMeasure`), integrating over the representatives
 `CosetSpace.out`.  The sources define it for `x ∈ M(F) ∩ G_reg(F)`, where `G_x(F) ⊆ M(F)` and the
@@ -384,7 +385,7 @@ theorem integrable_weight (hx : IsSS F ((x : d.ambientˣ) : d.ambient))
 /-- **The integrand of `J_M(x, f)` is integrable** for `x` semisimple with `G_x(F) ⊆ M(F)` and `f`
 continuous with compact support (e.g. `f ∈ C_c^∞(G(F))`), for any Haar measure `μ` on the
 unimodular group `G_x(F)` (`integrable_weight` with `φ = v_M`, continuous for `K` open). -/
-theorem integrable_weightedIntegrand {K : d.GoodK L.toFlagLeviDatum}
+theorem integrable_weightedIntegrand (K : d.GoodK L.toFlagLeviDatum)
     (hx : IsSS F ((x : d.ambientˣ) : d.ambient))
     (hM : d.centG x ≤ L.M) {f : ↥d.G → ℂ} (hf : Continuous f) (hfc : HasCompactSupport f)
     (μ : Measure ↥(d.centG x)) [μ.IsHaarMeasure] [μ.IsMulRightInvariant] :
