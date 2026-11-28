@@ -22,8 +22,8 @@ uniformly continuous for the usual metric of `ℚ` and extends to a continuous r
 `LocalField` is ultrametric or has a real embedding, and not both.
 
 A real embedding `φ` of a locally compact Hausdorff topological field `F` makes `F` a
-finite-dimensional `ℝ`-algebra (Riesz's theorem), hence `ℝ` or `ℂ` (Frobenius, via the
-fundamental theorem of algebra). Which case occurs is decided by whether `-1` is a square in `F`.
+finite-dimensional `ℝ`-algebra (Riesz's theorem), hence `ℝ` or `ℂ` (fundamental theorem of
+algebra; `Real.nonempty_algEquiv_or`). Which case occurs is decided by whether `-1` is a square in `F`.
 
 ## Main results
 
@@ -37,6 +37,8 @@ fundamental theorem of algebra). Which case occurs is decided by whether `-1` is
   the dichotomy for complete normed fields, in particular for every `LocalField`.
 * `RealEmbedding.isHomeomorph_of_not_isSquare_neg_one`: if `-1` is not a square, the real
   embedding is a bijective homeomorphism `ℝ → F`.
+* `RealEmbedding.exists_ringEquiv_real_of_not_isSquare_neg_one`: if `-1` is not a square, the
+  real embedding is a ring isomorphism `ℝ ≃+* F` that is a homeomorphism.
 * `RealEmbedding.exists_ringEquiv_complex_of_isSquare_neg_one`: if `-1` is a square, there is a
   ring isomorphism `ℂ ≃+* F` that is a homeomorphism and extends the real embedding.
 -/
@@ -77,12 +79,13 @@ section Exists
 
 variable {F : Type*} [NormedField F]
 
-/-- **Ostrowski.** In a normed field of characteristic zero that is not ultrametric, the norm
+/-- **Ostrowski.** In a normed field that is not ultrametric (hence of characteristic zero), the norm
 restricted to `ℚ` is a power of the usual absolute value: `‖(q : F)‖ = |q| ^ c` with `c > 0`.
 The norm on `ℚ` is unbounded on `ℕ` (`isUltrametricDist_iff_forall_norm_natCast_le_one`), hence
 equivalent to the usual absolute value (`Rat.AbsoluteValue.equiv_real_of_unbounded`). -/
-theorem exists_norm_ratCast_eq_rpow [CharZero F] (h : ¬ IsUltrametricDist F) :
+theorem exists_norm_ratCast_eq_rpow (h : ¬ IsUltrametricDist F) :
     ∃ c : ℝ, 0 < c ∧ ∀ q : ℚ, ‖(q : F)‖ = |(q : ℝ)| ^ c := by
+  have := charZero_of_not_isUltrametricDist h
   let f : AbsoluteValue ℚ ℝ := (NormedField.toAbsoluteValue F).comp (Rat.castHom F).injective
   have hf : ∀ q : ℚ, f q = ‖(q : F)‖ := fun _ => rfl
   have notbdd : ¬ ∀ n : ℕ, f n ≤ 1 := by
@@ -147,9 +150,7 @@ abbrev toAlgebra (φ : RealEmbedding F) : Algebra ℝ F := φ.toRingHom.toAlgebr
 theorem continuousSMul (φ : RealEmbedding F) :
     letI := φ.toAlgebra; ContinuousSMul ℝ F := by
   let := φ.toAlgebra
-  refine ⟨?_⟩
-  simp only [Algebra.smul_def]
-  exact (φ.continuous.comp continuous_fst).mul continuous_snd
+  exact continuousSMul_of_algebraMap ℝ F φ.continuous
 
 variable [T2Space F] [LocallyCompactSpace F]
 
