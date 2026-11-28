@@ -87,8 +87,13 @@ two factors of the Levi datum into $W$ and $V$ orthogonal to the tops of the fla
 For a datum of the Levi pair of a pair of isotropic flags, a Levi embedding exists.
 \end{lemma}
 \begin{proof}
-Not yet formalized: Witt decomposition adapted to the top of the flag, Witt cancellation, and the fact that the
-image of $\mathrm{GSpin}(\tilde W)$ fixes $\tilde W^\perp$ pointwise.
+\leanok
+Let $Z$ be the top of the flag in $W$, of dimension $a$. A complement $\tilde W$ of $Z$ in $Z^\perp$ is
+nondegenerate, since $Z^{\perp\perp}=Z$; its orthogonal $\tilde W^\perp$ is nondegenerate of dimension $2a$ and
+contains $Z$, hence is hyperbolic, so $W\cong\tilde W\perp H^a$. Witt cancellation against
+$W\cong H^a\perp W'$ (the Levi datum) gives an isometry $W'\cong\tilde W\subseteq Z^\perp$; the same for $V$.
+The image of $\mathrm{GSpin}(\tilde W)$ fixes $\tilde W^\perp\supseteq Z$ pointwise, hence lies in the
+parabolic subgroup.
 \end{proof}
 
 \begin{definition}[The $\tilde G$-factor of a representation of the Levi]

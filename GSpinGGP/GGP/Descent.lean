@@ -268,6 +268,17 @@ theorem specP_map_apply_of_orth (f : Q₁ →qᵢ Q₂) (hf : IsNondeg Q₁) (g 
   rw [ι_specP, GSpin.coe_map_inv, GSpin.coe_map, map_even_commute_ι f h0 hu, mul_assoc,
     ← map_mul, Units.mul_inv, map_one, mul_one]
 
+/-- `GSpin.map` along an isometric embedding whose image is orthogonal to the top of an isotropic
+flag lands in the flag stabilizer: it fixes `f(V₁)^⊥ ⊇ Z_len` pointwise
+(`specP_map_apply_of_orth`). -/
+theorem GSpin.map_mem_flagStab [FiniteDimensional K V₂] (f : Q₁ →qᵢ Q₂) (hf : IsNondeg Q₁)
+    (FL : IsotropicFlag Q₂) (horth : ∀ x, ∀ z ∈ FL.top, QuadraticMap.polar Q₂ (f x) z = 0)
+    (g : GSpin Q₁) : GSpin.map f hf g ∈ flagStab FL := by
+  refine mem_flagStab_iff.mpr fun i v hv => ?_
+  rw [specP_map_apply_of_orth f hf g fun w =>
+    horth w v (FL.strictMono.monotone (Fin.le_last i) hv)]
+  exact hv
+
 /-- `C(f)` maps elements with `g − 1` nilpotent to elements with `C(f) g − 1` nilpotent. -/
 theorem isNilpotent_map_sub_one (f : Q₁ →qᵢ Q₂) (hf : IsNondeg Q₁) (g : GSpin Q₁)
     (hg : IsNilpotent (((g : (CliffordAlgebra Q₁)ˣ) : CliffordAlgebra Q₁) - 1)) :

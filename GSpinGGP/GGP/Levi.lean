@@ -1,6 +1,7 @@
 import GSpinGGP.GGP.Triple
 import GSpinGGP.GGP.Centralizers
 import GSpinGGP.GGP.Germs
+import GSpinGGP.GGP.Descent
 import GSpinGGP.TraceFormula.Basic
 import GSpinGGP.HarmonicAnalysis.HarishChandraXi
 
@@ -37,8 +38,9 @@ For a pair of isotropic flags `(F_W, F_V)`, the Levi of `P = P_{F_W} × P_{F_V}`
 `LeviSpec`); `dimG_leviSmall_lt` is what the induction on `dim G` uses.  The existence of such a
 datum (`exists_leviSpec`) is proved (§4a: hyperbolic splitting, `Z ≅ H^r ⊥ ⟨ν⟩`, `H ≅ ⟨ν⟩ ⊥ ⟨-ν⟩`,
 from the cited Witt decomposition and Witt cancellation).  The Levi embedding `G̃(F) → P/U`
-induced by isometric embeddings of the Levi pair (`IsLeviEmbedding`) is defined; its existence
-(`exists_isLeviEmbedding`) is left as `sorry`.
+induced by isometric embeddings of the Levi pair (`IsLeviEmbedding`) is defined, and its existence
+(`exists_isLeviEmbedding`) is proved from an isometric embedding of the Levi factor orthogonal to
+a totally isotropic subspace (`LeviAux.exists_isometry_orthogonal_of_equivalent_hypForm_prod`).
 
 ## 6–7. Parabolic induction and `R_ind`
 
@@ -1045,6 +1047,96 @@ theorem exists_hypSplit {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensi
   obtain ⟨e⟩ := key
   exact ⟨_, Q', isNondeg_prod_right (isNondeg_of_isometryEquiv e hQ), ⟨e⟩⟩
 
+/-- **The anisotropic-side factor sits orthogonally to a totally isotropic subspace** (Lam Ch. I
+§3–4; Thesis §5.1.2: `V = (Z ⊕ Z') ⊥ Ṽ` with `Ṽ ⊆ Z^⊥`): if `Q` is nondegenerate, `U` is totally
+isotropic and `Q ≅ H^{dim U} ⊥ Q'`, then `Q'` embeds isometrically into `Q` with image orthogonal to
+`U`.  Proof: a complement `W̃` of `U` in `U^⊥` is nondegenerate (`U^⊥⊥ = U`), `W̃^⊥` is
+nondegenerate of dimension `2 dim U` and contains `U`, so `W̃^⊥ ≅ H^{dim U}` (`exists_hypSplit`);
+then `Q ≅ W̃ ⊥ H^{dim U}` and Witt cancellation gives `Q' ≅ W̃`. -/
+theorem exists_isometry_orthogonal_of_equivalent_hypForm_prod {V X : Type*} [AddCommGroup V]
+    [Module K V] [FiniteDimensional K V] [AddCommGroup X] [Module K X] [FiniteDimensional K X]
+    (Q : QuadraticForm K V) (hQ : IsNondeg Q) (U : Submodule K V) (hU : IsTotallyIsotropic Q U)
+    (Q' : QuadraticForm K X) (e : Q.Equivalent ((hypForm K (finrank K U)).prod Q')) :
+    ∃ j : Q' →qᵢ Q, ∀ x, ∀ z ∈ U, polar Q (j x) z = 0 := by
+  have hQn : Q.Nondegenerate := (isNondeg_iff_nondegenerate Q).mp hQ
+  have hBn : LinearMap.BilinForm.Nondegenerate (polarBilin Q) := nondegenerate_polar_iff.mpr hQn
+  have hBr : LinearMap.BilinForm.IsRefl (polarBilin Q) := (isSymm_polarBilin Q).isRefl
+  have hsymm : ∀ x y, polarBilin Q x y = polarBilin Q y x := fun x y => polar_comm Q x y
+  set P := LinearMap.BilinForm.orthogonal (polarBilin Q) U with hP
+  have hUP : U ≤ P := QuadraticMap.IsTotallyIsotropic.le_orthogonal_polarBilin hU
+  -- a complement `W̃` of `U` in `U^⊥`
+  obtain ⟨C, hC⟩ := Submodule.exists_isCompl U
+  set Wt := C ⊓ P with hWt
+  have hsup : U ⊔ Wt = P := by
+    rw [hWt, ← sup_inf_assoc_of_le C hUP, hC.sup_eq_top, top_inf_eq]
+  have hinf : U ⊓ Wt = ⊥ := by
+    rw [eq_bot_iff, ← hC.inf_eq_bot]
+    exact inf_le_inf_left _ inf_le_left
+  have hWtP : Wt ≤ P := inf_le_right
+  have hWn : (Q.restrict Wt).Nondegenerate := by
+    apply nondegenerate_polar_iff.mp
+    rw [polarBilin_restrict]
+    refine (polarBilin Q).nondegenerate_restrict_of_disjoint_orthogonal hBr ?_
+    rw [Submodule.disjoint_def]
+    intro w hw hwo
+    have h2 : w ∈ LinearMap.BilinForm.orthogonal (polarBilin Q) P := by
+      rw [LinearMap.BilinForm.mem_orthogonal_iff]
+      intro p hp
+      rw [← hsup] at hp
+      obtain ⟨u, hu, w', hw', rfl⟩ := Submodule.mem_sup.mp hp
+      rw [map_add, LinearMap.add_apply,
+        LinearMap.BilinForm.mem_orthogonal_iff.mp hwo w' hw', add_zero]
+      exact LinearMap.BilinForm.mem_orthogonal_iff.mp (hWtP hw) u hu
+    rw [hP, LinearMap.BilinForm.orthogonal_orthogonal hBn hBr] at h2
+    have h3 : w ∈ U ⊓ Wt := ⟨h2, hw⟩
+    rwa [hinf, Submodule.mem_bot] at h3
+  -- `R = W̃^⊥` is nondegenerate, contains `U`, and is hyperbolic of rank `dim U`
+  have hcomp := hWn.isCompl_orthogonal
+  set R := LinearMap.BilinForm.orthogonal (polarBilin Q) Wt with hR
+  have hRn : (Q.restrict R).Nondegenerate := hQn.nondegenerate_restrict_orthogonal hWn
+  have hUR : U ≤ R := fun u hu => by
+    rw [LinearMap.BilinForm.mem_orthogonal_iff]
+    intro w hw
+    rw [hsymm]
+    exact (LinearMap.BilinForm.mem_orthogonal_iff.mp (hWtP hw)) u hu
+  set U' := U.comap R.subtype
+  have hU'iso : IsTotallyIsotropic (Q.restrict R) U' := fun u hu => hU _ hu
+  have hU'dim : finrank K U' = finrank K U := by
+    rw [← Submodule.finrank_map_subtype_eq, Submodule.map_comap_subtype, inf_eq_right.mpr hUR]
+  obtain ⟨k, Q'', -, ⟨e2⟩⟩ := exists_hypSplit (Q.restrict R)
+    ((isNondeg_iff_nondegenerate _).mpr hRn) U' hU'iso
+  rw [hU'dim] at e2
+  have dP : finrank K P = finrank K V - finrank K U := LinearMap.BilinForm.finrank_orthogonal hBn U
+  have dR : finrank K R = finrank K V - finrank K Wt :=
+    LinearMap.BilinForm.finrank_orthogonal hBn Wt
+  have dsum := Submodule.finrank_sup_add_finrank_inf_eq U Wt
+  rw [hsup, hinf, finrank_bot] at dsum
+  have dUP := Submodule.finrank_mono hUP
+  have dPV := Submodule.finrank_le P
+  have de2 := e2.toLinearEquiv.finrank_eq
+  simp only [finrank_prod, finrank_fin_fun] at de2
+  have hk : k = 0 := by omega
+  subst hk
+  have hQ'' : Q'' = 0 := by
+    ext x
+    rw [Subsingleton.elim x 0, map_zero, zero_apply]
+  subst hQ''
+  -- `H^{dim U} ⊥ Q' ≅ Q ≅ W̃ ⊥ H^{dim U}`; cancel
+  have e3 : ((hypForm K (finrank K U)).prod Q').Equivalent ((hypForm K (finrank K U)).prod
+      ((Q.restrict Wt).prod (0 : QuadraticForm K (Fin 0 → K)))) := by
+    have a1 : Q.Equivalent ((Q.restrict Wt).prod ((hypForm K (finrank K U)).prod
+        (0 : QuadraticForm K (Fin 0 → K)))) :=
+      Equivalent.trans ⟨(IsometryEquiv.prodRestrictOrthogonal Q Wt hcomp).symm⟩
+        (equiv_prod (Equivalent.refl _) ⟨e2⟩)
+    exact e.symm.trans (a1.trans ((equiv_comm _ _).trans ((equiv_assoc _ _ _).trans
+      (equiv_prod (Equivalent.refl _) (equiv_comm _ _)))))
+  obtain ⟨c⟩ := witt_cancellation _ _ _ e3
+  let ιW : (Q.restrict Wt) →qᵢ Q := ⟨Wt.subtype, fun _ => rfl⟩
+  refine ⟨ιW.comp ((Isometry.fst _ _).comp c.toIsometry), fun x z hz => ?_⟩
+  change polar Q (((c x).1 : Wt) : V) z = 0
+  rw [polar_comm]
+  exact LinearMap.BilinForm.mem_orthogonal_iff.mp (hWtP (c x).1.property) z hz
+
 end Split
 
 end LeviAux
@@ -1355,14 +1447,54 @@ def IsLeviEmbedding (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV) (d' : GG
       ι g = QuotientGroup.mk p)
 
 /-- **Existence of the Levi embedding** (Thesis §5.1.2, §9.3) for a datum `d'` of the Levi pair.
-Own linear algebra: a hyperbolic partner `Z'_W` of `Z_W` gives `W = (Z_W ⊕ Z'_W) ⊥ W̃` with `W̃`
-nondegenerate (Witt), `W̃ ≅ d'.W` (resp. `d'.V`) by Witt cancellation from `LeviSpec`; the same for
-`V`.  `GSpin.map` along `W̃ ↪ W` fixes `W̃^⊥ ⊇ Z_W` pointwise (`map_even_commute_ι`), hence lies in
-the flag stabilizer.  Status: SORRY. -/
+Own linear algebra: for the top `Z_W` of the flag, a complement `W̃` of `Z_W` in `Z_W^⊥` is
+nondegenerate, and `W̃^⊥` is a nondegenerate space of dimension `2 dim Z_W` containing `Z_W`, hence
+hyperbolic; so `W ≅ W̃ ⊥ H^{dim Z_W}`, and Witt cancellation against `LeviSpec` gives an isometric
+embedding of `d'.W` (resp. `d'.V`) onto `W̃ ⊆ Z_W^⊥`
+(`LeviAux.exists_isometry_orthogonal_of_equivalent_hypForm_prod`); the same for `V`.  `GSpin.map`
+along it fixes `W̃^⊥ ⊇ Z_W` pointwise, hence lies in the flag stabilizer (`GSpin.map_mem_flagStab`). -/
 theorem exists_isLeviEmbedding (FW : IsotropicFlag d.QW) (FV : IsotropicFlag d.QV)
     {d' : GGPData F} (h : d.LeviSpec FW FV d') :
     ∃ ι : ↥d'.G →* d.LeviQuot FW FV, d.IsLeviEmbedding FW FV d' ι := by
-  sorry
+  -- the homomorphism `G̃(F) → P(F)` induced by two embeddings orthogonal to the flag tops
+  have key : ∀ {X Y : Type} [AddCommGroup X] [Module F X] [Module.Finite F X] [AddCommGroup Y]
+      [Module F Y] [Module.Finite F Y] {QX : QuadraticForm F X} {QY : QuadraticForm F Y}
+      (hX : IsNondeg QX) (hY : IsNondeg QY) (pX : ↥d'.G →* GSpin QX) (pY : ↥d'.G →* GSpin QY)
+      (jW : QX →qᵢ d.QW) (jV : QY →qᵢ d.QV),
+      (∀ x, ∀ z ∈ FW.top, QuadraticMap.polar d.QW (jW x) z = 0) →
+      (∀ y, ∀ z ∈ FV.top, QuadraticMap.polar d.QV (jV y) z = 0) →
+      ∃ φ : ↥d'.G →* ↥(d.whittB FW FV), ∀ g,
+        (φ g : ↥d.G) = d.pair (GSpin.map jW hX (pX g), GSpin.map jV hY (pY g)) := by
+    intro X Y _ _ _ _ _ _ QX QY hX hY pX pY jW jV hjW hjV
+    refine ⟨(d.pair.comp (((GSpin.map jW hX).comp pX).prod
+      ((GSpin.map jV hY).comp pY))).codRestrict _ fun g => ⟨?_, ?_⟩, fun _ => rfl⟩
+    · change d.fst (d.pair _) ∈ flagStab FW
+      rw [d.fst_pair]
+      exact GSpin.map_mem_flagStab jW hX FW hjW _
+    · change d.snd (d.pair _) ∈ flagStab FV
+      rw [d.snd_pair]
+      exact GSpin.map_mem_flagStab jV hY FV hjV _
+  rcases h with ⟨⟨eW⟩, ⟨eV⟩⟩ | ⟨⟨eW⟩, ⟨eV⟩⟩
+  · obtain ⟨jW, hjW⟩ := exists_isometry_orthogonal_of_equivalent_hypForm_prod d.QW d.nondeg
+      FW.top (FW.isotropic _) d'.QW ⟨eW⟩
+    obtain ⟨jV, hjV⟩ := exists_isometry_orthogonal_of_equivalent_hypForm_prod d.QV d.nondeg_QV
+      FV.top (FV.isotropic _) d'.QV ⟨eV⟩
+    obtain ⟨φ, hφ⟩ := key d'.nondeg d'.nondeg_QV d'.fst d'.snd jW jV hjW hjV
+    have dW := eW.toLinearEquiv.finrank_eq
+    have dV := eV.toLinearEquiv.finrank_eq
+    simp only [finrank_prod, finrank_fin_fun] at dW dV
+    exact ⟨(QuotientGroup.mk' _).comp φ,
+      Or.inl ⟨jW, jV, hjW, hjV, by omega, by omega, fun g => ⟨φ g, hφ g, rfl⟩⟩⟩
+  · obtain ⟨jW, hjW⟩ := exists_isometry_orthogonal_of_equivalent_hypForm_prod d.QW d.nondeg
+      FW.top (FW.isotropic _) d'.QV ⟨eW⟩
+    obtain ⟨jV, hjV⟩ := exists_isometry_orthogonal_of_equivalent_hypForm_prod d.QV d.nondeg_QV
+      FV.top (FV.isotropic _) d'.QW ⟨eV⟩
+    obtain ⟨φ, hφ⟩ := key d'.nondeg_QV d'.nondeg d'.snd d'.fst jW jV hjW hjV
+    have dW := eW.toLinearEquiv.finrank_eq
+    have dV := eV.toLinearEquiv.finrank_eq
+    simp only [finrank_prod, finrank_fin_fun] at dW dV
+    exact ⟨(QuotientGroup.mk' _).comp φ,
+      Or.inr ⟨jW, jV, hjW, hjV, by omega, by omega, fun g => ⟨φ g, hφ g, rfl⟩⟩⟩
 
 /-- `GSpin.map` along an isometric embedding carries the scalar `c` to the scalar `c`. -/
 theorem _root_.GSpinGGP.GSpin.map_scalarGSpin {V₁ V₂ : Type*} [AddCommGroup V₁] [Module F V₁]
