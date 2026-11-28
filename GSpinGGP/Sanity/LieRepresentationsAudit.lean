@@ -2,7 +2,6 @@
 Copyright (c) 2026 Samantha Pease. All rights reserved.
 -/
 import GSpinGGP.Foundations.LieRepresentations
-import Mathlib.Geometry.Manifold.Instances.UnitsOfNormedAlgebra
 
 /-!
 # Sanity checks for the representation theory of real Lie groups
@@ -57,21 +56,21 @@ theorem eq_smul_one (v : ↥(smoothVectors L (trivialRep G))) :
     v = coeC L v • one L := Subtype.ext (mul_one (coeC L v)).symm
 
 /-- The derived action of the trivial representation is `0`. -/
-theorem derivative_trivialRep [T2Space G] (X : LeftInvariantDerivation 𝓘(ℝ, L.E) G) :
+theorem derivative_trivialRep (X : LeftInvariantDerivation 𝓘(ℝ, L.E) G) :
     derivative L (trivialRep G) X = 0 := by
   ext v
   rw [derivative_apply]
   simp
 
 /-- The seminorms of `1_G` are the norm (empty list) and `0` (nonempty lists). -/
-theorem smoothSeminorm_trivialRep_cons [T2Space G] (X : LeftInvariantDerivation 𝓘(ℝ, L.E) G)
+theorem smoothSeminorm_trivialRep_cons (X : LeftInvariantDerivation 𝓘(ℝ, L.E) G)
     (Xs : List (LeftInvariantDerivation 𝓘(ℝ, L.E) G)) (v : ↥(smoothVectors L (trivialRep G))) :
     smoothSeminorm L (trivialRep G) (X :: Xs) v = 0 := by
   rw [smoothSeminorm_apply, derivedAction_cons, derivative_trivialRep, zero_mul]
   simp
 
 /-- Every linear form on `1_G^∞ = ℂ` is continuous: `|ℓ(v)| ≤ |ℓ(1)| ‖v‖`. -/
-theorem isContinuousForm_trivialRep [T2Space G]
+theorem isContinuousForm_trivialRep
     (ℓ : Module.Dual ℂ ↥(smoothVectors L (trivialRep G))) :
     IsContinuousForm L (trivialRep G) ℓ := by
   refine (isContinuousForm_iff L _ ℓ).2 ⟨{[]}, ‖ℓ (one L)‖₊, fun v => ?_⟩
@@ -81,13 +80,13 @@ theorem isContinuousForm_trivialRep [T2Space G]
   exact le_rfl
 
 /-- For the trivial character, every linear form on `1_G^∞` is equivariant and continuous. -/
-theorem equivariantForms_trivialRep_one [T2Space G] (S : Subgroup G) :
+theorem equivariantForms_trivialRep_one (S : Subgroup G) :
     equivariantForms L (trivialRep G) S (fun _ => 1) = ⊤ :=
   eq_top_iff.2 fun ℓ _ =>
     ⟨fun s v => by rw [one_mul]; rfl, isContinuousForm_trivialRep L ℓ⟩
 
 /-- `m(1_G) = 1` for the trivial character. -/
-theorem multiplicity_trivialRep_one [T2Space G] (S : Subgroup G) :
+theorem multiplicity_trivialRep_one (S : Subgroup G) :
     multiplicity L (trivialRep G) S (fun _ => 1) = 1 := by
   have e : ↥(smoothVectors L (trivialRep G)) ≃ₗ[ℂ] ℂ :=
     LinearEquiv.ofTop _ (smoothVectors_trivialRep L)
@@ -96,7 +95,7 @@ theorem multiplicity_trivialRep_one [T2Space G] (S : Subgroup G) :
     Cardinal.lift_id, e.rank_eq, Module.rank_self, map_one]
 
 /-- If `ξ(s) ≠ 1` for some `s ∈ S`, then `1_G` has no `(S, ξ)`-equivariant form. -/
-theorem multiplicity_trivialRep_eq_zero [T2Space G] {S : Subgroup G} {ξ : ↥S → ℂ} {s : ↥S}
+theorem multiplicity_trivialRep_eq_zero {S : Subgroup G} {ξ : ↥S → ℂ} {s : ↥S}
     (hs : ξ s ≠ 1) : multiplicity L (trivialRep G) S ξ = 0 := by
   have hbot : equivariantForms L (trivialRep G) S ξ = ⊥ := by
     refine eq_bot_iff.2 fun ℓ hℓ => ?_
@@ -108,16 +107,15 @@ theorem multiplicity_trivialRep_eq_zero [T2Space G] {S : Subgroup G} {ξ : ↥S 
     simpa [sub_ne_zero.2 hs.symm] using this
   rw [multiplicity, hbot, rank_bot, map_zero]
 
-theorem not_hasModel_trivialRep [T2Space G] {S : Subgroup G} {ξ : ↥S → ℂ} {s : ↥S}
+theorem not_hasModel_trivialRep {S : Subgroup G} {ξ : ↥S → ℂ} {s : ↥S}
     (hs : ξ s ≠ 1) : ¬ HasModel L (trivialRep G) S ξ := by
   rw [hasModel_iff_multiplicity_ne_zero, multiplicity_trivialRep_eq_zero L hs, not_not]
 
 section Character
 
-variable [IsTopologicalGroup G] [LocallyCompactSpace G] [T2Space G]
+variable [IsTopologicalGroup G] [LocallyCompactSpace G]
   [MeasurableSpace G] [BorelSpace G]
 
-omit [T2Space G] in
 theorem opOf_trivialRep {f : G → ℂ} (hf : f ∈ testFunctions L) :
     opOf (trivialRep G) f = (∫ g, f g ∂(Measure.haar : Measure G)) • 1 := by
   refine ContinuousLinearMap.ext fun v => ?_
@@ -126,7 +124,6 @@ theorem opOf_trivialRep {f : G → ℂ} (hf : f ∈ testFunctions L) :
   rw [integral_smul_const]
   rfl
 
-omit [T2Space G] in
 /-- The constant function `1` is the character of `1_G`: `π(f) = (∫ f) • 1` is nuclear (finite
 rank) and `tr π(f) = ∫ f`. -/
 theorem isCharacterOf_trivialRep_one : IsCharacterOf L (trivialRep G) (fun _ => 1) := by
@@ -140,7 +137,7 @@ end Character
 /-! ### A concrete real Lie group: `ℝˣ` -/
 
 /-- The real Lie group `ℝˣ`, with Mathlib's charts modelled on `ℝ`. -/
-noncomputable def unitsReal : RealLieStructure ℝˣ where
+noncomputable abbrev unitsReal : RealLieStructure ℝˣ where
   E := ℝ
 
 /-- The sign character of `ℝˣ`. -/

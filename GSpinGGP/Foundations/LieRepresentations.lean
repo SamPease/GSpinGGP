@@ -1,11 +1,11 @@
 /-
 Copyright (c) 2026 Samantha Pease. All rights reserved.
 -/
-import Mathlib
 import GSpinGGP.Foundations.Representations
 import GSpinGGP.Foundations.HilbertTrace
 import TauCeti.Geometry.Lie.TestFunction.Basic
 import TauCeti.RepresentationTheory.Continuous.LieSmoothVector
+import TauCeti.Analysis.LocallyConvex.WithSeminorms
 
 /-!
 # Unitary representations of real Lie groups
@@ -13,12 +13,18 @@ import TauCeti.RepresentationTheory.Continuous.LieSmoothVector
 The archimedean counterparts of the notions of `GSpinGGP/Foundations/Representations.lean`
 (which treats totally disconnected groups), for a unitary representation of a real Lie group,
 in the setting of Harish-Chandra and Casselman–Wallach: test functions are smooth with compact
-support, `π^∞` is the space of vectors with smooth orbit map, with its Fréchet topology, and the
-multiplicity counts *continuous* equivariant forms on `π^∞`.
+support, `π^∞` is the space of vectors with smooth orbit map, with its standard seminorms
+`v ↦ ‖dπ(X₁) ⋯ dπ(Xₙ) v‖`, and the multiplicity counts *continuous* equivariant forms on `π^∞`.
+Continuity of a linear form is expressed as boundedness by finitely many of these seminorms, which
+is continuity for the locally convex (Fréchet) topology they generate; that topology itself is not
+constructed here.
 
 The real Lie group structure is data, `RealLieStructure G`, not an instance: a group such as
 `G(F)` for a local field `F` gets it only in the archimedean case, and only after choices. The
-fields of a `RealLieStructure` are made local instances inside this file only.
+fields of a `RealLieStructure` are made local instances inside this file only. Any two
+`RealLieStructure`s on the same topological group give the same smooth structure (a continuous
+homomorphism of Lie groups is smooth, by Cartan's theorem), so the notions below do not depend on
+the choice of `L`; this independence is not formalized here.
 
 Everything lives in the namespace `GSpinGGP.LieRep`, so the names (`smoothVectors`,
 `multiplicity`, …) do not clash with the `p`-adic ones. Every notion takes the Lie structure `L`
@@ -34,10 +40,9 @@ as its first explicit argument and otherwise has the argument order and output t
 * `LieRep.smoothAction L π g`: the action of `G` on `π^∞`.
 * `LieRep.derivedAction L π Xs`: `dπ(X₁) ⋯ dπ(Xₙ)` on `π^∞` for a list of left-invariant
   derivations, from Tau Ceti's `lieSmoothVectorsDerivative`.
-* `LieRep.smoothSeminorm L π Xs`: `v ↦ ‖dπ(X₁) ⋯ dπ(Xₙ) v‖`, the seminorms defining the Fréchet
-  topology of `π^∞`.
+* `LieRep.smoothSeminorm L π Xs`: `v ↦ ‖dπ(X₁) ⋯ dπ(Xₙ) v‖`, the standard seminorms of `π^∞`.
 * `LieRep.continuousForms L π`: the linear forms on `π^∞` bounded by finitely many of these
-  seminorms (the continuous dual of the Fréchet space `π^∞`).
+  seminorms (continuous for the topology these seminorms generate).
 * `LieRep.equivariantForms L π S ξ`, `LieRep.multiplicity L π S ξ`, `LieRep.HasModel L π S ξ`.
 * `LieRep.traceOf π f`: `hilbertTrace (opOf π f)`, the trace of the trace-class operator `π(f)`.
 * `LieRep.IsCharacterOf L π θ`, `LieRep.characterOn L π S`.
@@ -77,7 +82,9 @@ normed space `E` and an atlas on `G` modelled on `E`, for which `G` is a smooth 
 with model `𝓘(ℝ, E)` (so without boundary). The topology of `G` is the given one. This is the
 shape of Tau Ceti's `EmbeddedLieSubgroupData`. -/
 structure RealLieStructure (G : Type u) [Group G] [TopologicalSpace G] where
-  /-- The model space of the charts (a real normed space of dimension `dim G`). -/
+  /-- The model space of the charts (a real normed space of dimension `dim G`). It lives in `Type`:
+  a finite-dimensional real normed space is isomorphic to some `ℝⁿ : Type`, so this loses no
+  generality and adds no universe parameter. -/
   E : Type
   [normedAddCommGroup : NormedAddCommGroup E]
   [normedSpace : NormedSpace ℝ E]
@@ -86,6 +93,15 @@ structure RealLieStructure (G : Type u) [Group G] [TopologicalSpace G] where
   [chartedSpace : ChartedSpace E G]
   /-- The group operations are smooth. -/
   [lieGroup : LieGroup 𝓘(ℝ, E) ∞ G]
+
+/-- A real Lie group is Hausdorff (Tau Ceti's `ModelWithCorners.t2Space_of_lieGroup`). -/
+theorem RealLieStructure.t2Space {G : Type u} [Group G] [TopologicalSpace G]
+    (L : RealLieStructure G) : T2Space G :=
+  letI := L.normedAddCommGroup
+  letI := L.normedSpace
+  letI := L.chartedSpace
+  haveI := L.lieGroup
+  𝓘(ℝ, L.E).t2Space_of_lieGroup ∞
 
 namespace LieRep
 
@@ -139,20 +155,20 @@ noncomputable def smoothAction (π : UnitaryRep G) (g : G) :
 theorem smoothAction_apply (π : UnitaryRep G) (g : G) (v : ↥(smoothVectors L π)) :
     (smoothAction L π g v : π.H) = π.ρ g v := rfl
 
-/-! ### The Fréchet topology of `π^∞` -/
+/-! ### The seminorms of `π^∞` -/
 
 section Seminorms
-
-variable [T2Space G]
 
 /-- The derived action `dπ(X) v = d/dt|₀ π(exp tX) v` of a left-invariant derivation `X` (an
 element of the Lie algebra) on `π^∞`: Tau Ceti's `lieSmoothVectorsDerivative`. -/
 noncomputable def derivative (π : UnitaryRep G) (X : LeftInvariantDerivation 𝓘(ℝ, L.E) G) :
     Module.End ℂ ↥(smoothVectors L π) :=
+  haveI := L.t2Space
   ContRepresentation.lieSmoothVectorsDerivative 𝓘(ℝ, L.E) π.toContRepresentation X
 
 theorem derivative_apply (π : UnitaryRep G) (X : LeftInvariantDerivation 𝓘(ℝ, L.E) G)
     (v : ↥(smoothVectors L π)) :
+    haveI := L.t2Space
     (derivative L π X v : π.H) =
       deriv (fun t : ℝ => π.ρ (lieExp (t • X)) (v : π.H)) 0 :=
   rfl
@@ -171,9 +187,9 @@ theorem derivedAction_cons (π : UnitaryRep G) (X : LeftInvariantDerivation 𝓘
   List.prod_cons
 
 /-- The seminorm `v ↦ ‖dπ(X₁) ⋯ dπ(Xₙ) v‖` on `π^∞`. The family over all finite lists of
-left-invariant derivations defines the Fréchet topology of `π^∞` (Wallach §1.6; it is the same
-topology as the one given by monomials in a basis of the Lie algebra, as `dπ` is linear). The
-empty list gives the norm of `H`. -/
+left-invariant derivations is the standard family of seminorms of `π^∞` (Wallach §1.6; it
+generates the same topology as the monomials in a basis of the Lie algebra, as `dπ` is linear);
+that topology is not constructed here. The empty list gives the norm of `H`. -/
 noncomputable def smoothSeminorm (π : UnitaryRep G)
     (Xs : List (LeftInvariantDerivation 𝓘(ℝ, L.E) G)) : Seminorm ℂ ↥(smoothVectors L π) :=
   (normSeminorm ℂ π.H).comp ((smoothVectors L π).subtype ∘ₗ derivedAction L π Xs)
@@ -186,9 +202,10 @@ theorem smoothSeminorm_apply (π : UnitaryRep G)
 theorem smoothSeminorm_nil (π : UnitaryRep G) (v : ↥(smoothVectors L π)) :
     smoothSeminorm L π [] v = ‖(v : π.H)‖ := rfl
 
-/-- A linear form on `π^∞` is continuous for the Fréchet topology iff it is bounded by a
-constant times the maximum of finitely many of the seminorms `smoothSeminorm` (Mathlib's
-`Seminorm.IsBounded`, against the absolute value on `ℂ`). -/
+/-- A linear form on `π^∞` is bounded by a constant times the maximum of finitely many of the
+seminorms `smoothSeminorm` (Mathlib's `Seminorm.IsBounded`, against the absolute value on `ℂ`).
+This is continuity for the locally convex topology the seminorms generate (that topology is not
+constructed here). -/
 def IsContinuousForm (π : UnitaryRep G) (ℓ : Module.Dual ℂ ↥(smoothVectors L π)) : Prop :=
   Seminorm.IsBounded (smoothSeminorm L π) (fun _ : Unit => normSeminorm ℂ ℂ) ℓ
 
@@ -199,8 +216,8 @@ theorem isContinuousForm_iff (π : UnitaryRep G) (ℓ : Module.Dual ℂ ↥(smoo
   rfl
 
 open Classical in
-/-- The continuous dual of the Fréchet space `π^∞`: linear forms bounded by finitely many of the
-seminorms `smoothSeminorm`. -/
+/-- The linear forms on `π^∞` bounded by finitely many of the seminorms `smoothSeminorm`
+(`IsContinuousForm`): the continuous dual for the topology these seminorms generate. -/
 noncomputable def continuousForms (π : UnitaryRep G) :
     Submodule ℂ (Module.Dual ℂ ↥(smoothVectors L π)) where
   carrier := {ℓ | IsContinuousForm L π ℓ}
@@ -237,10 +254,8 @@ end Seminorms
 
 section Multiplicity
 
-variable [T2Space G]
-
-/-- The space `Hom_S(π^∞, ξ)` of continuous `(S, ξ)`-equivariant linear forms on the Fréchet
-space `π^∞`: `ℓ(π(s) v) = ξ(s) ℓ(v)`, `ℓ` continuous (the archimedean multiplicity space of the
+/-- The space `Hom_S(π^∞, ξ)` of continuous `(S, ξ)`-equivariant linear forms on `π^∞`:
+`ℓ(π(s) v) = ξ(s) ℓ(v)`, `ℓ` continuous (the archimedean multiplicity space of the
 Gan–Gross–Prasad conjecture). -/
 noncomputable def equivariantForms (π : UnitaryRep G) (S : Subgroup G) (ξ : ↥S → ℂ) :
     Submodule ℂ (Module.Dual ℂ ↥(smoothVectors L π)) where
@@ -284,10 +299,8 @@ section Characters
 
 attribute [local instance] Classical.propDecidable
 
-variable [IsTopologicalGroup G] [LocallyCompactSpace G] [T2Space G]
-  [MeasurableSpace G] [BorelSpace G]
+variable [IsTopologicalGroup G] [LocallyCompactSpace G] [MeasurableSpace G] [BorelSpace G]
 
-omit [T2Space G] in
 /-- Test functions are `OpIntegrable`: `g ↦ f(g) π(g) v` is continuous with compact support. -/
 theorem opIntegrable_of_mem_testFunctions (π : UnitaryRep G) {f : G → ℂ}
     (hf : f ∈ testFunctions L) : OpIntegrable π f := fun v =>
@@ -316,7 +329,20 @@ representative). Defined by the epsilon pattern; `0` if no such representative e
 noncomputable def characterOn (π : UnitaryRep G) (S : Set G) : G → ℂ :=
   if h : ∃ θ, IsCharacterOf L π θ ∧ ContinuousOn θ S then h.choose else 0
 
-omit [T2Space G] in
+/-- The character is unique as a function a.e.: two functions satisfying `IsCharacterOf L π`
+agree almost everywhere for Haar measure (smooth compactly supported functions separate locally
+integrable functions on a manifold, Mathlib's `ae_eq_of_integral_contMDiff_smul_eq`). -/
+theorem IsCharacterOf.ae_eq [SigmaCompactSpace G] {π : UnitaryRep G} {θ θ' : G → ℂ}
+    (hθ : IsCharacterOf L π θ) (hθ' : IsCharacterOf L π θ') :
+    θ =ᵐ[(Measure.haar : Measure G)] θ' := by
+  have := L.t2Space
+  refine ae_eq_of_integral_contMDiff_smul_eq 𝓘(ℝ, L.E) hθ.1 hθ'.1 fun g hg hgc => ?_
+  have hf : (fun x => (g x : ℂ)) ∈ testFunctions L :=
+    (mem_testFunctions L).2 ⟨Complex.ofRealCLM.contMDiff.comp hg, hgc.comp_left Complex.ofReal_zero⟩
+  have h := (hθ.2 _ hf).2.trans (hθ'.2 _ hf).2.symm
+  simp only [Complex.real_smul]
+  simpa only [mul_comm] using h
+
 theorem characterOn_spec (π : UnitaryRep G) (S : Set G)
     (h : ∃ θ, IsCharacterOf L π θ ∧ ContinuousOn θ S) :
     IsCharacterOf L π (characterOn L π S) ∧ ContinuousOn (characterOn L π S) S := by
@@ -328,7 +354,7 @@ end Characters
 
 /-! ### Unitary equivalence
 
-Smooth vectors, the Fréchet seminorms, continuous equivariant forms, multiplicities, traces and
+Smooth vectors, the seminorms, continuous equivariant forms, multiplicities, traces and
 characters depend only on the unitary equivalence class of `π`. -/
 
 section MultCongr
@@ -368,12 +394,11 @@ theorem smoothEquiv_smoothAction (U : π.H ≃ₗᵢ[ℂ] π'.H)
     smoothEquiv L U hU (smoothAction L π g v) = smoothAction L π' g (smoothEquiv L U hU v) :=
   Subtype.ext (hU g v)
 
-variable [T2Space G]
-
 /-- A unitary intertwiner intertwines the derived actions: `U dπ(X) = dπ'(X) U`. -/
 theorem smoothEquiv_derivative (U : π.H ≃ₗᵢ[ℂ] π'.H) (hU : ∀ g v, U (π.ρ g v) = π'.ρ g (U v))
     (X : LeftInvariantDerivation 𝓘(ℝ, L.E) G) (v : ↥(smoothVectors L π)) :
     smoothEquiv L U hU (derivative L π X v) = derivative L π' X (smoothEquiv L U hU v) := by
+  have := L.t2Space
   apply Subtype.ext
   rw [coe_smoothEquiv, derivative_apply, derivative_apply, coe_smoothEquiv]
   set U' : π.H →L[ℝ] π'.H := U.toContinuousLinearEquiv.toContinuousLinearMap.restrictScalars ℝ
@@ -400,7 +425,7 @@ theorem smoothEquiv_derivedAction (U : π.H ≃ₗᵢ[ℂ] π'.H)
     rw [derivedAction_cons, derivedAction_cons, mul_apply_eq_comp, mul_apply_eq_comp,
       smoothEquiv_derivative, ih]
 
-/-- A unitary intertwiner preserves the Fréchet seminorms. -/
+/-- A unitary intertwiner preserves the seminorms of `π^∞`. -/
 theorem smoothSeminorm_smoothEquiv (U : π.H ≃ₗᵢ[ℂ] π'.H)
     (hU : ∀ g v, U (π.ρ g v) = π'.ρ g (U v)) (Xs : List (LeftInvariantDerivation 𝓘(ℝ, L.E) G))
     (v : ↥(smoothVectors L π)) :
@@ -408,27 +433,26 @@ theorem smoothSeminorm_smoothEquiv (U : π.H ≃ₗᵢ[ℂ] π'.H)
   rw [smoothSeminorm_apply, smoothSeminorm_apply, ← smoothEquiv_derivedAction, coe_smoothEquiv,
     LinearIsometryEquiv.norm_map]
 
-theorem finset_sup_smoothSeminorm_smoothEquiv (U : π.H ≃ₗᵢ[ℂ] π'.H)
-    (hU : ∀ g v, U (π.ρ g v) = π'.ρ g (U v))
-    (s : Finset (List (LeftInvariantDerivation 𝓘(ℝ, L.E) G))) (v : ↥(smoothVectors L π)) :
-    s.sup (smoothSeminorm L π') (smoothEquiv L U hU v) = s.sup (smoothSeminorm L π) v := by
-  simp only [Seminorm.finset_sup_apply, smoothSeminorm_smoothEquiv]
+/-- A unitary intertwiner is bounded for the seminorms of `π^∞` and `π'^∞`. -/
+theorem isBounded_smoothEquiv (U : π.H ≃ₗᵢ[ℂ] π'.H) (hU : ∀ g v, U (π.ρ g v) = π'.ρ g (U v)) :
+    Seminorm.IsBounded (smoothSeminorm L π) (smoothSeminorm L π')
+      (smoothEquiv L U hU : ↥(smoothVectors L π) →ₗ[ℂ] ↥(smoothVectors L π')) := fun i =>
+  ⟨{i}, 1, fun v => by simp [smoothSeminorm_smoothEquiv]⟩
 
 theorem isContinuousForm_iff_of_intertwines (U : π.H ≃ₗᵢ[ℂ] π'.H)
     (hU : ∀ g v, U (π.ρ g v) = π'.ρ g (U v)) (ℓ : Module.Dual ℂ ↥(smoothVectors L π')) :
     IsContinuousForm L π' ℓ ↔ IsContinuousForm L π ((smoothEquiv L U hU).dualMap ℓ) := by
-  set e := smoothEquiv L U hU
-  rw [isContinuousForm_iff, isContinuousForm_iff]
-  constructor
-  · rintro ⟨s, C, h⟩
-    refine ⟨s, C, fun v => ?_⟩
-    rw [LinearEquiv.dualMap_apply, ← finset_sup_smoothSeminorm_smoothEquiv L U hU]
-    exact h (e v)
-  · rintro ⟨s, C, h⟩
-    refine ⟨s, C, fun w => ?_⟩
-    have := h (e.symm w)
-    rwa [LinearEquiv.dualMap_apply, LinearEquiv.apply_symm_apply,
-      ← finset_sup_smoothSeminorm_smoothEquiv L U hU, LinearEquiv.apply_symm_apply] at this
+  refine ⟨fun h => h.comp (isBounded_smoothEquiv L U hU), fun h => ?_⟩
+  have hb : Seminorm.IsBounded (smoothSeminorm L π') (smoothSeminorm L π)
+      ((smoothEquiv L U hU).symm : ↥(smoothVectors L π') →ₗ[ℂ] ↥(smoothVectors L π)) :=
+    fun i => ⟨{i}, 1, fun w => by
+      simpa [smoothSeminorm_smoothEquiv] using
+        (smoothSeminorm_smoothEquiv L U hU i ((smoothEquiv L U hU).symm w)).ge⟩
+  have he : (smoothEquiv L U hU).dualMap ℓ ∘ₗ
+      ((smoothEquiv L U hU).symm : ↥(smoothVectors L π') →ₗ[ℂ] ↥(smoothVectors L π)) = ℓ := by
+    ext w
+    simp
+  simpa [IsContinuousForm, he] using h.comp hb
 
 theorem mem_equivariantForms_iff_of_intertwines (U : π.H ≃ₗᵢ[ℂ] π'.H)
     (hU : ∀ g v, U (π.ρ g v) = π'.ρ g (U v)) (S : Subgroup G) (ξ : ↥S → ℂ)
