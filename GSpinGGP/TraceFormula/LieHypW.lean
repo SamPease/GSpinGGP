@@ -27,7 +27,7 @@ algebra):
    `waldspurger2010_thm_7_9`): `∫ I(θ, φ, g) dg = I(θ, φ)`.
 3. **The geometric side for `W` a plane** (`Igeom_of_isHypPlane`): `𝒯` is `{1}`, so
    `I(θ, φ) = c_θ(0) c_f(0)`.  For `Y ≠ 0`, `T_Y = SO(W)` contains the split torus
-   `diag(t⁻¹, t)` and is not compact (`not_compactSpace_torusH`); for `Y = 0`, condition (4) is
+   `diag(t, t⁻¹)` and is not compact (`not_compactSpace_torusH`); for `Y = 0`, condition (4) is
    `d_an(V) = 1` (`anisoDim_top_of_isHypPlane`, using that `D ⊕ Z` is nondegenerate,
    `isNondeg_QZ`).
 -/
@@ -143,7 +143,7 @@ theorem anisoDim_top_of_isHypPlane {F : Type} [NontriviallyNormedField F] [PAdic
 
 end Witt
 
-/-! ## The split torus `SO` of a hyperbolic plane -/
+/-! ## Endomorphisms of a hyperbolic plane -/
 
 section HypTorus
 
@@ -175,84 +175,6 @@ theorem ext_hypPair (hdim : Module.finrank K V = 2) (hf : Q f = 0) (hf' : Q f' =
     rw [eq_polar_smul_add_of_hypPair hdim hf hf' hp w]
     simp only [map_add, map_smul, h1, h2]
 
-variable (Q f f') in
-/-- The element `diag(t⁻¹, t)` of `SO` of a plane in the hyperbolic pair `f, f'`. -/
-def hypTorusMap (t : Kˣ) : V →ₗ[K] V :=
-  LinearMap.id + (((t⁻¹ : Kˣ) : K) - 1) • ((polarBilin Q f').smulRight f) +
-    ((t : K) - 1) • ((polarBilin Q f).smulRight f')
-
-omit [Invertible (2 : K)] in
-theorem hypTorusMap_fst (hf : Q f = 0) (hp : polar Q f f' = 1) (t : Kˣ) :
-    hypTorusMap Q f f' t f = ((t⁻¹ : Kˣ) : K) • f := by
-  have hff : polar Q f f = 0 := by rw [polar_self, hf, smul_zero]
-  have hp' : polar Q f' f = 1 := by rw [polar_comm]; exact hp
-  simp [hypTorusMap, hff, hp']
-  module
-
-omit [Invertible (2 : K)] in
-theorem hypTorusMap_snd (hf' : Q f' = 0) (hp : polar Q f f' = 1) (t : Kˣ) :
-    hypTorusMap Q f f' t f' = (t : K) • f' := by
-  have hff' : polar Q f' f' = 0 := by rw [polar_self, hf', smul_zero]
-  simp [hypTorusMap, hff', hp]
-  module
-
-omit [Invertible (2 : K)] in
-theorem hypTorusMap_mul_inv (hdim : Module.finrank K V = 2) (hf : Q f = 0) (hf' : Q f' = 0)
-    (hp : polar Q f f' = 1) (t : Kˣ) :
-    hypTorusMap Q f f' t * hypTorusMap Q f f' t⁻¹ = 1 :=
-  ext_hypPair hdim hf hf' hp
-    (by rw [mul_apply_eq_comp, hypTorusMap_fst hf hp, map_smul, hypTorusMap_fst hf hp,
-      smul_smul, ← Units.val_mul, inv_inv, mul_inv_cancel, Units.val_one, one_smul,
-      one_apply_eq_self])
-    (by rw [mul_apply_eq_comp, hypTorusMap_snd hf' hp, map_smul, hypTorusMap_snd hf' hp,
-      smul_smul, ← Units.val_mul, inv_mul_cancel, Units.val_one, one_smul,
-      one_apply_eq_self])
-
-variable (Q f f') in
-/-- `diag(t⁻¹, t)` as a unit of `End V`. -/
-def hypTorus (hdim : Module.finrank K V = 2) (hf : Q f = 0) (hf' : Q f' = 0)
-    (hp : polar Q f f' = 1) (t : Kˣ) : (Module.End K V)ˣ where
-  val := hypTorusMap Q f f' t
-  inv := hypTorusMap Q f f' t⁻¹
-  val_inv := hypTorusMap_mul_inv hdim hf hf' hp t
-  inv_val := by
-    have := hypTorusMap_mul_inv hdim hf hf' hp t⁻¹
-    rwa [inv_inv] at this
-
-omit [Invertible (2 : K)] in
-/-- `Q(x f + y f') = x y`. -/
-theorem apply_smul_add_smul_of_hypPair (hf : Q f = 0) (hf' : Q f' = 0)
-    (hp : polar Q f f' = 1) (x y : K) : Q (x • f + y • f') = x * y := by
-  have hpol : polar Q (x • f) (y • f') = Q (x • f + y • f') - Q (x • f) - Q (y • f') := rfl
-  rw [polar_smul_left, polar_smul_right, hp, QuadraticMap.map_smul,
-    QuadraticMap.map_smul, hf, hf'] at hpol
-  simp only [smul_eq_mul, mul_one, mul_zero, sub_zero] at hpol
-  linear_combination -hpol
-
-omit [Invertible (2 : K)] in
-/-- `diag(t⁻¹, t)` lies in `SO(V)`. -/
-theorem hypTorus_mem_SOu (hdim : Module.finrank K V = 2) (hf : Q f = 0) (hf' : Q f' = 0)
-    (hp : polar Q f f' = 1) (t : Kˣ) : hypTorus Q f f' hdim hf hf' hp t ∈ SOu Q := by
-  have : FiniteDimensional K V := Module.finite_of_finrank_eq_succ hdim
-  refine ⟨fun v => ?_, ?_⟩
-  · show Q (hypTorusMap Q f f' t v) = Q v
-    rw [eq_polar_smul_add_of_hypPair hdim hf hf' hp v, map_add, map_smul, map_smul,
-      hypTorusMap_fst hf hp, hypTorusMap_snd hf' hp, smul_smul, smul_smul,
-      apply_smul_add_smul_of_hypPair hf hf' hp, apply_smul_add_smul_of_hypPair hf hf' hp]
-    have : ((t : K)) * ((t⁻¹ : Kˣ) : K) = 1 := by
-      rw [← Units.val_mul, mul_inv_cancel, Units.val_one]
-    linear_combination (polar Q v f' * polar Q v f) * this
-  · show LinearMap.det (hypTorusMap Q f f' t) = 1
-    have hli := linearIndependent_hyperbolicPair hf hf' hp
-    let b := basisOfLinearIndependentOfCardEqFinrank hli (by simp [hdim])
-    have hb0 : b 0 = f := by simp [b]
-    have hb1 : b 1 = f' := by simp [b]
-    rw [← LinearMap.det_toMatrix b, Matrix.det_fin_two]
-    simp only [LinearMap.toMatrix_apply, hb0, hb1, hypTorusMap_fst hf hp, hypTorusMap_snd hf' hp]
-    rw [← hb0, ← hb1]
-    simp only [map_smul, Module.Basis.repr_self, Finsupp.smul_apply, Finsupp.single_apply]
-    simp
-
 end HypTorus
 
 variable {F : Type} [NontriviallyNormedField F] [PAdicField F] {L : LuoDatum F}
@@ -282,8 +204,8 @@ theorem polar_asW_skew {Y : L.EndW} (hY : Y ∈ L.soW) (x y : L.W) :
   simp
 
 /-- **`T_Y` is not compact for `Y ≠ 0`** when `W` is a hyperbolic plane: `Y` is diagonal
-`diag(a, −a)` in a hyperbolic pair, `a ≠ 0`, so `ker Y = 0` and every `diag(t⁻¹, t)` lies in
-`T_Y = SO(W)`; its coordinate `t⁻¹` is unbounded. -/
+`diag(a, −a)` in a hyperbolic pair, `a ≠ 0`, so `ker Y = 0` and every `diag(t, t⁻¹)` (Tau Ceti's
+`hyperbolicPairTorus`) lies in `T_Y = SO(W)`; its coordinate `t` is unbounded. -/
 theorem not_compactSpace_torusH (hW : IsHypPlane L.QW) {Y : L.EndW} (hY : Y ∈ L.soW)
     (hY0 : Y ≠ 0) : ¬ CompactSpace ↥(L.torusH Y) := by
   intro hc
@@ -326,15 +248,27 @@ theorem not_compactSpace_torusH (hW : IsHypPlane L.QW) {Y : L.EndW} (hY : Y ∈ 
       have : α * polar L.QW w f = 0 := by linear_combination h
       exact (mul_eq_zero.1 this).resolve_left hα0
     rw [eq_polar_smul_add_of_hypPair hdim hf hf' hp w, e1, e2, zero_smul, zero_smul, add_zero]
-  have hmem : ∀ t : Fˣ, (hypTorus L.QW f f' hdim hf hf' hp t : L.EndWˣ) ∈ L.torusH Y := by
+  -- Tau Ceti's split torus of the pair `f, f'` (`f ↦ t f`, `f' ↦ t⁻¹ f'`), as units of `End W`
+  let g : Fˣ → L.EndWˣ := fun t => (LinearMap.GeneralLinearGroup.generalLinearEquiv F L.W).symm
+    (TauCeti.QuadraticMap.hyperbolicPairTorus L.QW hf hf' hp t : L.W ≃ₗ[F] L.W)
+  have hg : ∀ t : Fˣ, ∀ x, L.asW ((g t : L.EndWˣ) : L.EndW) x =
+      (TauCeti.QuadraticMap.hyperbolicPairTorus L.QW hf hf' hp t : L.W ≃ₗ[F] L.W) x :=
+    fun _ _ => rfl
+  have hgf : ∀ t : Fˣ, L.asW ((g t : L.EndWˣ) : L.EndW) f = (t : F) • f := fun t => by
+    rw [hg]; simp
+  have hgf' : ∀ t : Fˣ, L.asW ((g t : L.EndWˣ) : L.EndW) f' = ((t⁻¹ : Fˣ) : F) • f' :=
+    fun t => by rw [hg]; simp
+  have hmem : ∀ t : Fˣ, g t ∈ L.torusH Y := by
     intro t
-    refine ⟨hypTorus_mem_SOu hdim hf hf' hp t, ?_, fun w hw => ?_⟩
-    · show hypTorusMap L.QW f f' t * L.asW Y = L.asW Y * hypTorusMap L.QW f f' t
+    refine ⟨?_, ?_, fun w hw => ?_⟩
+    · show (LinearMap.GeneralLinearGroup.generalLinearEquiv F L.W) (g t) ∈ SOGrp L.QW
+      rw [MulEquiv.apply_symm_apply, SOGrp_eq_specialOrthogonalGroup]
+      exact TauCeti.QuadraticMap.hyperbolicPairTorus_mem_specialOrthogonalGroup _ _ _ t
+    · show L.asW ((g t : L.EndWˣ) : L.EndW) * L.asW Y = L.asW Y * L.asW ((g t : L.EndWˣ) : L.EndW)
       refine ext_hypPair hdim hf hf' hp ?_ ?_
-      · rw [mul_apply_eq_comp, mul_apply_eq_comp, hYf, map_smul, hypTorusMap_fst hf hp,
-          map_smul, hYf, smul_comm]
-      · rw [mul_apply_eq_comp, mul_apply_eq_comp, hYf', map_smul, hypTorusMap_snd hf' hp,
-          map_smul, hYf', smul_comm]
+      · rw [mul_apply_eq_comp, mul_apply_eq_comp, hYf, map_smul, hgf, map_smul, hYf, smul_comm]
+      · rw [mul_apply_eq_comp, mul_apply_eq_comp, hYf', map_smul, hgf', map_smul, hYf',
+          smul_comm]
     · rw [hker w hw, map_zero]
   -- the coordinate `g ↦ polar(g f, f')` is continuous and unbounded on `T_Y`
   let ℓ : L.EndW →ₗ[F] F :=
@@ -350,10 +284,10 @@ theorem not_compactSpace_torusH (hW : IsHypPlane L.QW) {Y : L.EndW} (hY : Y ∈ 
   have hC0 : 0 ≤ C := (norm_nonneg _).trans (hC 1 (Set.mem_univ _))
   obtain ⟨s, hs⟩ := NormedField.exists_lt_norm F C
   have hs0 : s ≠ 0 := norm_pos_iff.1 (hC0.trans_lt hs)
-  have hval := hC ⟨_, hmem (Units.mk0 s hs0)⁻¹⟩ (Set.mem_univ _)
-  have hℓ : ℓ (hypTorusMap L.QW f f' (Units.mk0 s hs0)⁻¹) = s := by
-    show polar L.QW (hypTorusMap L.QW f f' (Units.mk0 s hs0)⁻¹ f) f' = s
-    rw [hypTorusMap_fst hf hp, polar_smul_left, hp, inv_inv, Units.val_mk0, smul_eq_mul, mul_one]
+  have hval := hC ⟨_, hmem (Units.mk0 s hs0)⟩ (Set.mem_univ _)
+  have hℓ : ℓ ((g (Units.mk0 s hs0) : L.EndWˣ) : L.EndW) = s := by
+    show polar L.QW (L.asW ((g (Units.mk0 s hs0) : L.EndWˣ) : L.EndW) f) f' = s
+    rw [hgf, polar_smul_left, hp, Units.val_mk0, smul_eq_mul, mul_one]
   have : ‖s‖ ≤ C := by rw [← hℓ]; exact hval
   linarith
 

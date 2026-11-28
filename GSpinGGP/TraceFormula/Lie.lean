@@ -1203,8 +1203,8 @@ theorem geomAt_near_of_isHypPlane_V (hV : IsHypPlane d.QV) (χ : CentralCharOn d
 `SO(V)` with the quasi-character `θ` on `so(W)`: Waldspurger 2010 Thm 7.9
 (`waldspurger2010_thm_7_9`), whose space `U(F)SO(W)(F)\SO(V)(F)` is `H(F)\G(F)/A_G(F)` through
 `(t, g) ↦ t⁻¹ g`.  Status: proved (`geomAt_near_hypW`, `TraceFormula/LieHypW.lean`) from
-that axiom and the sorries `exists_hypW_descent` (descent and dictionary), `Igeom_of_isHypPlane`
-(Waldspurger's geometric side for `W` a plane) and `kappa_spec` (`κ_N → 1`). -/
+that axiom, `Igeom_of_isHypPlane` (Waldspurger's geometric side for `W` a plane), and the sorries
+`exists_hypW_descent` (descent and dictionary) and `kappa_spec` (`κ_N → 1`). -/
 theorem geomAt_near_of_isHypPlane_W (h : HYP ψ d) (hW : IsHypPlane d.QW) (χ : CentralCharOn d) :
     ∃ Ω : Set ↥d.G, IsInvariantClopen d Ω ∧ (1 : ↥d.G) ∈ Ω ∧
       ∀ f ∈ ScuspTestFn d χ, Function.support f ⊆ Ω →
