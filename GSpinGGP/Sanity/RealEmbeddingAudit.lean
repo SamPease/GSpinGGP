@@ -4,8 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Foundations.RealEmbedding
 import GSpinGGP.Foundations.LocalGroups
-import Mathlib.Analysis.Complex.Basic
-import Mathlib.NumberTheory.Padics.PadicNumbers
 
 /-!
 # Sanity checks for `RealEmbedding`
@@ -28,7 +26,7 @@ example : Nonempty (RealEmbedding ℝ) := ⟨realId⟩
 
 example : Nonempty (RealEmbedding ℂ) := ⟨complexOfReal⟩
 
-/-- Uniqueness recovers Mathlib's `Real.RingHom.unique` for continuous ring endomorphisms. -/
+/-- Uniqueness is consistent with Mathlib's `Real.RingHom.unique` (which needs no continuity). -/
 example {f : ℝ →+* ℝ} (hf : Continuous f) : f = RingHom.id ℝ :=
   realId.eq_of_continuous hf
 

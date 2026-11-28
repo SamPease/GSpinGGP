@@ -5,8 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import Mathlib.Analysis.Normed.Field.Basic
 import Mathlib.Analysis.Normed.Ring.Ultra
 import Mathlib.Analysis.SpecificLimits.Basic
-import Mathlib.Topology.Algebra.Order.Archimedean
-import Mathlib.Topology.Instances.Real.Lemmas
 
 /-!
 # Continuous embeddings of `ℝ`
@@ -14,8 +12,9 @@ import Mathlib.Topology.Instances.Real.Lemmas
 For a semiring `F` with a topology, `RealEmbedding F` is the type of continuous ring homomorphisms
 `ℝ →+* F`. It is the `ℝ`-structure used for the archimedean local fields: over `ℝ` it is the
 identity and over `ℂ` the inclusion. We do not use `NormedAlgebra ℝ F`, since the norm of a local
-field need not restrict to the absolute value of `ℝ` (for instance `|x|^{1/2}` on `ℝ`); only
-continuity is asked for.
+field need not restrict to the absolute value of `ℝ`: the field `ℝ` with the norm `|x|^{1/2}`
+(a type synonym of `ℝ` carrying this non-standard norm, not Mathlib's instance on `ℝ`) is a
+local field on which `‖r • x‖ = |r| ‖x‖` fails. Only continuity is asked for.
 
 ## Main results
 
@@ -28,9 +27,14 @@ continuity is asked for.
 namespace GSpinGGP
 
 /-- A *real embedding* of a semiring `F` with a topology: a continuous ring homomorphism
-`ℝ →+* F`. -/
-def RealEmbedding (F : Type*) [NonAssocSemiring F] [TopologicalSpace F] : Type _ :=
-  {φ : ℝ →+* F // Continuous φ}
+`ℝ →+* F`.
+
+It is injective when `F` is nontrivial (for instance a division ring), since `ℝ` is a field; the
+zero ring has one, which is not injective. This is not the notion of a real embedding of a number
+field (`NumberField.ComplexEmbedding.IsReal`). -/
+structure RealEmbedding (F : Type*) [NonAssocSemiring F] [TopologicalSpace F]
+    extends ℝ →+* F where
+  continuous_toFun : Continuous toFun
 
 namespace RealEmbedding
 
@@ -38,18 +42,13 @@ section Basic
 
 variable {F : Type*} [NonAssocSemiring F] [TopologicalSpace F]
 
-/-- The underlying ring homomorphism. -/
-def toRingHom (φ : RealEmbedding F) : ℝ →+* F := Subtype.val φ
-
-theorem toRingHom_injective : Function.Injective (toRingHom : RealEmbedding F → ℝ →+* F) :=
-  Subtype.val_injective
-
-/-- Build a real embedding from a continuous ring homomorphism. -/
-def mk (φ : ℝ →+* F) (hφ : Continuous φ) : RealEmbedding F := ⟨φ, hφ⟩
-
 instance : FunLike (RealEmbedding F) ℝ F where
-  coe φ := φ.toRingHom
-  coe_injective _ _ h := toRingHom_injective (DFunLike.coe_injective h)
+  coe φ := φ.toFun
+  coe_injective f g h := by
+    obtain ⟨f, _⟩ := f
+    obtain ⟨g, _⟩ := g
+    congr
+    exact DFunLike.coe_injective h
 
 instance : RingHomClass (RealEmbedding F) ℝ F where
   map_mul φ := map_mul φ.toRingHom
@@ -58,13 +57,11 @@ instance : RingHomClass (RealEmbedding F) ℝ F where
   map_zero φ := map_zero φ.toRingHom
 
 instance : ContinuousMapClass (RealEmbedding F) ℝ F where
-  map_continuous φ := Subtype.property φ
+  map_continuous φ := φ.continuous_toFun
 
 @[simp] theorem coe_toRingHom (φ : RealEmbedding F) : ⇑φ.toRingHom = φ := rfl
 
 @[simp] theorem coe_mk (φ : ℝ →+* F) (hφ : Continuous φ) : ⇑(mk φ hφ) = φ := rfl
-
-@[simp] theorem toRingHom_mk (φ : ℝ →+* F) (hφ : Continuous φ) : (mk φ hφ).toRingHom = φ := rfl
 
 @[continuity, fun_prop]
 protected theorem continuous (φ : RealEmbedding F) : Continuous φ := map_continuous φ
