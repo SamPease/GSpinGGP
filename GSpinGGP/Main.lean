@@ -2774,11 +2774,19 @@ ultrametric has a real embedding (`nonempty_realEmbedding_of_not_isUltrametricDi
 
 * For `F = ℝ` this is Thesis Thm. 6.4.1 (= Thm. 1.0.1), which the dissertation states for `F`
   `p`-adic or `ℝ`, with the inner forms indexed as in `InnerFormSystem` (by `H¹(F, SO(W))`).
-* For `F = ℂ` there is one inner form (`H¹(ℂ, SO(W))` is trivial) and the packet is a single
-  representation `π`, so the statement reduces to `m(π) = 1`: multiplicity one for the tempered
-  representations of `G(ℂ)`, together with the existence of a nonzero form.
+* For `F = ℂ` there is one inner form (all nondegenerate forms of a given dimension are
+  isometric).  If every irreducible tempered representation of `G(ℂ)` is generic — a classical
+  fact for complex groups (they are irreducible unitary principal series), neither proved nor cited
+  here — then (WHITT) forces the packet to be a single representation `π`, and the statement
+  reduces to `m(π) = 1`.
 
 Neither case is proved here yet.
+
+What the statement entails: (a) taking all packets empty, it implies that the quasi-split group
+`G` has a Whittaker datum (true: a generic character exists), which is not proved here; (b) its
+hypotheses (STAB), (TRANS) speak of `θ_π`, which exists as a function on the regular set by
+Harish-Chandra's regularity theorem; for `F = ℝ, ℂ` that theorem is neither assumed nor proved in
+this development, and `charG` is the function with that property when one exists, `0` otherwise.
 
 Proof sketch (Thesis §6.7, which treats `F` `p`-adic and `F = ℝ` together): sum the multiplicity
 formula `m(π) = m_geom(θ_π)` over each packet, rearrange the geometric side over strongly stable

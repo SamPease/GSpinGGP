@@ -20,8 +20,10 @@ every step of the proof coloured by formalization status.
 
 ## The main theorem
 
-Let `F` be a local field of characteristic zero: a finite extension of some `ℚ_p`, or `ℝ`, or `ℂ`
-(the dissertation treats `F` p-adic or `ℝ`). Let `W ⊂ V` be quadratic spaces over `F` with
+Let `F` be a local field of characteristic zero: in Lean, a nontrivially normed field that is
+complete, locally compact and of characteristic zero (`LocalField`). The archimedean ones are
+proved here to be `ℝ` and `ℂ`; that the others are the finite extensions of some `ℚ_p` is
+classical and not proved here. The dissertation treats `F` p-adic or `ℝ`. Let `W ⊂ V` be quadratic spaces over `F` with
 `V = W ⊕ Z`, `Z` split of odd dimension, and let `(G, H, ξ)` be the associated GGP triple,
 `G = GSpin(W) × GSpin(V)`, with `G` quasi-split.
 For a tempered irreducible representation `π` of `G(F)` write `m(π) = dim Hom_H(π^∞, ξ)`, the
