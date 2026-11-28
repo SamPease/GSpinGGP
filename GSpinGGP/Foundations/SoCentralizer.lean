@@ -148,6 +148,14 @@ theorem cliffTrace_commutator [Module.Finite K V] (Q : QuadraticForm K V) (x y :
     show cliffTrace Q (x * y) = cliffTrace Q (y * x) from trace_mulLeft_comm Q x y]
   ring
 
+omit [Invertible (2 : K)] in
+/-- `tr L_{abc} = tr L_b` when `ca = 1` (conjugation invariance of the trace form). -/
+theorem cliffTrace_mul_mul_of_mul_eq_one [Module.Finite K V] (Q : QuadraticForm K V)
+    {a c : CliffordAlgebra Q} (b : CliffordAlgebra Q) (hca : c * a = 1) :
+    cliffTrace Q (a * b * c) = cliffTrace Q b := by
+  rw [show cliffTrace Q (a * b * c) = cliffTrace Q (c * (a * b)) from trace_mulLeft_comm Q _ _,
+    ← mul_assoc, hca, one_mul]
+
 end Trace
 
 section Centralizer
@@ -256,9 +264,8 @@ theorem commute_of_lift {Q : QuadraticForm K V} (hQ : IsNondeg Q) (g : GSpin Q) 
       hYh0.1
   obtain ⟨r, hr⟩ := eq_algebraMap_of_commute_ι hQ hD0 hDc
   have htr : cliffTrace Q D = 0 := by
-    rw [hD, sub_eq_add_neg, cliffTrace_add,
-      show cliffTrace Q (a * Yh * b) = cliffTrace Q (b * (a * Yh)) from trace_mulLeft_comm Q _ _,
-      ← mul_assoc, hba, one_mul, ← neg_one_smul K Yh, cliffTrace_smul]
+    rw [hD, sub_eq_add_neg, cliffTrace_add, cliffTrace_mul_mul_of_mul_eq_one Q Yh hba,
+      ← neg_one_smul K Yh, cliffTrace_smul]
     ring
   have hr0 : r = 0 := by
     rw [hr, Algebra.algebraMap_eq_smul_one, cliffTrace_smul, cliffTrace_one] at htr
