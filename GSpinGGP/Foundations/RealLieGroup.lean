@@ -8,6 +8,7 @@ import Mathlib.Geometry.Manifold.Instances.UnitsOfNormedAlgebra
 import TauCeti.Analysis.Matrix.Normed
 import TauCeti.Geometry.Lie.Subgroup.Embedded
 import TauCeti.Geometry.Lie.Subgroup.Units
+import TauCeti.Geometry.Manifold.Algebra.LieGroup
 import TauCeti.Geometry.Manifold.PullbackGroupoid
 
 /-!
@@ -21,8 +22,8 @@ a real Lie group. The construction: the left regular representation `ρ : A → 
 induces a closed embedding of topological groups `Aˣ → GLₙ(ℝ)`, so `G` is homeomorphic, as a
 group, to a closed subgroup `K` of `GLₙ(ℝ)`. Cartan's closed-subgroup theorem (Tau Ceti's
 `TauCeti.Lie.EmbeddedLieSubgroupData.ofIsClosed`) makes `K` a Lie group modelled on its Lie
-algebra, and the charts are pulled back to `G` along the homeomorphism
-(`Homeomorph.pullbackChartedSpace`).
+algebra, and the charts are pulled back to `G` along the isomorphism of topological groups
+(`Homeomorph.pullbackChartedSpace`, `ContinuousMulEquiv.lieGroup_pullbackChartedSpace`).
 
 No norm is put on `A`: the only norm used is the `L∞` operator norm on `Mₙ(ℝ)`, whose topology is
 the entrywise one. The charts on `G` are charts for the topology `G` already has (the type
@@ -40,8 +41,6 @@ here.
 
 ## Main definitions
 
-* `Homeomorph.pullback_lieGroup`: a homeomorphism `e : N ≃ₜ M` onto a Lie group that is a group
-  homomorphism makes `N` a Lie group for the pulled-back charts.
 * `GSpinGGP.RealLieGroup.unitsMatrix A`: the closed embedding of topological groups
   `Aˣ → GLₙ(ℝ)` given by the left regular representation.
 * `GSpinGGP.RealLieGroup.model G hG`: the model space of the Lie group structure on a closed
@@ -60,46 +59,6 @@ here.
 -/
 
 open scoped ContDiff Manifold Matrix.Norms.Operator
-
-/-! ### Transport of a Lie group structure along a homeomorphic group isomorphism -/
-
-section Pullback
-
-variable {𝕜 : Type*} [NontriviallyNormedField 𝕜] {E : Type*} [NormedAddCommGroup E]
-  [NormedSpace 𝕜 E] {H : Type*} [TopologicalSpace H] (I : ModelWithCorners 𝕜 E H) (n : ℕ∞ω)
-  {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [Group M] [LieGroup I n M]
-  {N : Type*} [TopologicalSpace N] [Group N]
-
-/-- A homeomorphism `e : N ≃ₜ M` onto a Lie group which is a group homomorphism makes `N` a Lie
-group for the charts pulled back along `e`: the group operations of `N` are those of `M` read
-through the diffeomorphism `e`. -/
-theorem Homeomorph.pullback_lieGroup (e : N ≃ₜ M) (he : ∀ x y, e (x * y) = e x * e y) :
-    letI := e.pullbackChartedSpace (H := H)
-    LieGroup I n N := by
-  let := e.pullbackChartedSpace (H := H)
-  have := e.pullback_isManifold I n
-  let D := e.pullbackDiffeomorph I n
-  let f : N ≃* M := MulEquiv.mk' e.toEquiv he
-  have hmul : (fun p : N × N => p.1 * p.2) =
-      D.symm ∘ (fun p : M × M => p.1 * p.2) ∘ Prod.map D D := by
-    funext p
-    change p.1 * p.2 = e.symm (e p.1 * e p.2)
-    rw [← he, e.symm_apply_apply]
-  have hinv : (fun x : N => x⁻¹) = D.symm ∘ (fun x : M => x⁻¹) ∘ D := by
-    funext x
-    change x⁻¹ = e.symm (e x)⁻¹
-    have h : e x⁻¹ = (e x)⁻¹ := map_inv f x
-    rw [← h, e.symm_apply_apply]
-  exact
-    { contMDiff_mul := by
-        rw [hmul]
-        exact D.symm.contMDiff.comp
-          (contMDiff_mul I n |>.comp (D.contMDiff.prodMap D.contMDiff))
-      contMDiff_inv := by
-        rw [hinv]
-        exact D.symm.contMDiff.comp ((contMDiff_inv I n).comp D.contMDiff) }
-
-end Pullback
 
 namespace GSpinGGP
 
@@ -178,9 +137,9 @@ theorem isClosed_image {G : Subgroup Aˣ} (hG : IsClosed (G : Set Aˣ)) :
   rw [Subgroup.coe_map]
   exact (isClosedEmbedding_unitsMatrix A).isClosedMap _ hG
 
-/-- `G` is homeomorphic to its image in `GLₙ(ℝ)`, by a group isomorphism. -/
-noncomputable def homeomorphImage : G ≃ₜ image G where
-  toEquiv := (G.equivMapOfInjective (unitsMatrix A) (unitsMatrix_injective A)).toEquiv
+/-- `G` is isomorphic, as a topological group, to its image in `GLₙ(ℝ)`. -/
+noncomputable def homeomorphImage : G ≃ₜ* image G where
+  toMulEquiv := G.equivMapOfInjective (unitsMatrix A) (unitsMatrix_injective A)
   continuous_toFun :=
     ((isEmbedding_unitsMatrix A).continuous.comp continuous_subtypeVal).subtype_mk _
   continuous_invFun := by
@@ -191,10 +150,6 @@ noncomputable def homeomorphImage : G ≃ₜ image G where
       ((G.equivMapOfInjective (unitsMatrix A) (unitsMatrix_injective A)).apply_symm_apply y)
     rw [Subgroup.coe_equivMapOfInjective_apply] at this
     exact this.symm
-
-theorem homeomorphImage_mul (x y : G) :
-    homeomorphImage G (x * y) = homeomorphImage G x * homeomorphImage G y :=
-  map_mul (G.equivMapOfInjective (unitsMatrix A) (unitsMatrix_injective A)) x y
 
 /-- The model space of the Lie group structure on a closed subgroup `G ≤ Aˣ`: the Lie algebra of
 its image in `GLₙ(ℝ)`, a finite-dimensional real normed space. -/
@@ -229,7 +184,7 @@ pulled back along `homeomorphImage G`. -/
 @[instance_reducible]
 noncomputable def chartedSpace : ChartedSpace (model G) G :=
   letI := (imageData hG).chartedSpace
-  (homeomorphImage G).pullbackChartedSpace
+  (homeomorphImage G).toHomeomorph.pullbackChartedSpace
 
 /-- A closed subgroup `G ≤ Aˣ` is a real Lie group for `chartedSpace hG`. -/
 theorem lieGroup :
@@ -237,7 +192,7 @@ theorem lieGroup :
     LieGroup 𝓘(ℝ, model G) ∞ G :=
   letI := (imageData hG).chartedSpace
   haveI := (imageData hG).lieGroup
-  (homeomorphImage G).pullback_lieGroup _ _ (homeomorphImage_mul G)
+  (homeomorphImage G).lieGroup_pullbackChartedSpace
 
 /-- For the Lie group structure on `G`, the left regular representation `g ↦ ρ(g) ∈ Mₙ(ℝ)` is
 smooth. -/
@@ -247,7 +202,7 @@ theorem contMDiff_leftRegular :
       (fun g : G => leftRegular A (g : Aˣ)) := by
   let := (imageData hG).chartedSpace
   let := chartedSpace hG
-  have hD := ((homeomorphImage G).pullbackDiffeomorph 𝓘(ℝ, model G) ∞).contMDiff
+  have hD := ((homeomorphImage G).toHomeomorph.pullbackDiffeomorph 𝓘(ℝ, model G) ∞).contMDiff
   have h := (Units.contMDiff_val (𝕜 := ℝ)).comp ((imageData hG).contMDiff_subtypeVal.comp hD)
   exact h
 
