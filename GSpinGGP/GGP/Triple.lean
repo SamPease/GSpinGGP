@@ -10,7 +10,7 @@ Layer 2.  Everything specific to a GGP triple `(G, H, ξ)` of general spin group
 theorem and the trace-formula programme need to *state* their results:
 
 * `mult ψ d π = m(π)` (Thesis §5.5) and `charG d π = θ_π` (Thesis Ch. 1);
-* the Kottwitz sign `kottwitzSign`;
+* the Kottwitz sign `kottwitzSign`, defined over any `LocalField` by case on the field;
 * `InnerFormSystem d`: the inner forms `(G_α, H_α, ξ_α)` of the triple (Thesis §6.2);
 * `IsStableFn`, `IsTransfer`, `TemperedPacketFamily` (STAB, TRANS, WHITT; Thesis §6.3);
 * `Γ(G,H)`: `torusOf`, `IsGammaElt`, `GammaClass`, `weylCard`, `deltaGGP` (Thesis §6.5,
@@ -23,7 +23,8 @@ theorem and the trace-formula programme need to *state* their results:
 
 Only own (citation-free) lemmas are stated here; literature results are in `Literature/`.
 
-Conventions: `F` is a `p`-adic field (`PAdicField`), `ψ : NontrivialAddChar F`.
+Conventions: `F` is a `p`-adic field (`PAdicField`) except where a section binds `LocalField`,
+`ψ : NontrivialAddChar F`.
 `W = F^m`, `V = W ⊕ Z` as in `GGPData` (`Foundations/GSpin.lean`).
 -/
 
@@ -82,13 +83,6 @@ semisimple set `G_reg(F)` (Thesis Ch. 1). -/
 def charG (d : GGPData F) (π : UnitaryRep ↥d.G) : ↥d.G → ℂ :=
   characterOn π (regularSet d.G d.lie)
 
-/-- The Kottwitz sign `e(G_α)` of the inner form attached to the twist `τ`, by its `p`-adic
-formula `e(G_α) = (-1)^{rk_F G - rk_F G_α} = (-1)^{w(W)+w(W_α)+w(V)+w(V_α)}`
-(`w` = Witt index).  That this equals Kottwitz's
-cohomological sign is Kottwitz 1983 (not formalized). -/
-def kottwitzSign (d : GGPData F) (τ : InnerTwist d.QW) : ℤ :=
-  (-1) ^ (wittIndex d.QW + wittIndex (d.twist τ).QW + wittIndex d.QV + wittIndex (d.twist τ).QV)
-
 /-! Characterising equations for `mult`, `charG` and `kottwitzSign`.  Proofs rewrite with these
 rather than unfolding the definitions, so that they do not depend on the definitions' bodies. -/
 
@@ -102,29 +96,115 @@ theorem charG_eq_characterOn (d : GGPData F) (π : UnitaryRep ↥d.G) :
     charG d π = characterOn π (regularSet d.G d.lie) :=
   rfl
 
-/-- `e(G_α) = (-1)^{w(W)+w(W_α)+w(V)+w(V_α)}`. -/
-theorem kottwitzSign_eq_neg_one_pow (d : GGPData F) (τ : InnerTwist d.QW) :
+end PAdicStatement
+
+/-! ## The Kottwitz sign -/
+
+section KottwitzSign
+
+/-- Twice `q(Spin(Q))` for a real form: `w (n - w)`, `w` the Witt index and `n` the dimension.
+Over `ℝ`, for `Q` of signature `(p,q)` one has `w = min(p,q)`, so this is `pq`, the dimension of
+the symmetric space of `Spin(p,q)`.  (For `n ≤ 2`, `Spin(Q)` is a torus, whose symmetric space is
+a point, while `pq` can be `1`; the two agree on the differences used in `kottwitzSign`, since the
+real forms of dimension `≤ 2` with the discriminant of `(1,1)` are just `(1,1)`.) -/
+def symSpaceDim {K V : Type*} [Field K] [AddCommGroup V] [Module K V] (Q : QuadraticForm K V) :
+    ℕ :=
+  wittIndex Q * (finrank K V - wittIndex Q)
+
+/-- `2 q(G)` for `G = GSpin(W) × GSpin(V)` over `ℝ`: `q` is half the dimension of the symmetric
+space of the simply connected cover `Spin(W) × Spin(V)` of the derived group (Kottwitz 1983,
+p. 289). -/
+def GGPData.symSpaceDim {K : Type*} [Field K] [Invertible (2 : K)] (d : GGPData K) : ℕ :=
+  GSpinGGP.symSpaceDim d.QW + GSpinGGP.symSpaceDim d.QV
+
+variable [LocalField F]
+
+/-- The Kottwitz sign `e(G) e(G_α)` of the inner form `G_α` attached to the twist `τ`, which is
+`e(G_α)` when `G` is quasi-split (Kottwitz 1983, Prop. (1)).  It is defined by Kottwitz's values
+(Kottwitz 1983, pp. 289–290), by case on the field:
+* `F` non-archimedean: `(-1)^{r(G) - r(G_α)}`, `r` the `F`-rank of the derived group
+  `Spin(W) × Spin(V)`, i.e. `(-1)^{w(W)+w(W_α)+w(V)+w(V_α)}` (`w` = Witt index);
+* `F` archimedean with `-1` a square (`F = ℂ`): `1`;
+* `F` archimedean otherwise (`F = ℝ`): `(-1)^{q(G) - q(G_α)}`, `q` half the dimension of the
+  symmetric space (`GGPData.symSpaceDim` = `2q`), written as `1` iff `2q(G) ≡ 2q(G_α) mod 4`
+  (`2q(G) - 2q(G_α)` is even, Kottwitz 1983, p. 289).
+That these values are Kottwitz's cohomological sign is Kottwitz 1983 (not formalized). -/
+def kottwitzSign (d : GGPData F) (τ : InnerTwist d.QW) : ℤ :=
+  if IsUltrametricDist F then
+    (-1) ^ (wittIndex d.QW + wittIndex (d.twist τ).QW + wittIndex d.QV + wittIndex (d.twist τ).QV)
+  else if IsSquare (-1 : F) then 1
+  else if d.symSpaceDim % 4 = (d.twist τ).symSpaceDim % 4 then 1 else -1
+
+/-- Non-archimedean case: `e(G_α) = (-1)^{w(W)+w(W_α)+w(V)+w(V_α)}`. -/
+theorem kottwitzSign_of_isUltrametricDist [IsUltrametricDist F] (d : GGPData F)
+    (τ : InnerTwist d.QW) :
     kottwitzSign d τ = (-1) ^ (wittIndex d.QW + wittIndex (d.twist τ).QW + wittIndex d.QV +
       wittIndex (d.twist τ).QV) :=
-  rfl
+  ite_eq_left ‹_›
+
+/-- Archimedean case with `-1` a square (`F = ℂ`): `e(G_α) = 1`. -/
+theorem kottwitzSign_of_isSquare (hF : ¬ IsUltrametricDist F) (hsq : IsSquare (-1 : F))
+    (d : GGPData F) (τ : InnerTwist d.QW) : kottwitzSign d τ = 1 := by
+  rw [kottwitzSign, ite_eq_right hF, ite_eq_left hsq]
+
+/-- Archimedean case with `-1` not a square (`F = ℝ`): `e(G_α) = 1` iff
+`2q(G) ≡ 2q(G_α) mod 4`. -/
+theorem kottwitzSign_of_not_isSquare (hF : ¬ IsUltrametricDist F) (hsq : ¬ IsSquare (-1 : F))
+    (d : GGPData F) (τ : InnerTwist d.QW) :
+    kottwitzSign d τ = if d.symSpaceDim % 4 = (d.twist τ).symSpaceDim % 4 then 1 else -1 := by
+  rw [kottwitzSign, ite_eq_right hF, ite_eq_right hsq]
+
+/-- Archimedean case with `-1` not a square, in Kottwitz's form: when `2q(G) - 2q(G_α)` is even,
+`e(G_α) = (-1)^{q(G) - q(G_α)}`. -/
+theorem kottwitzSign_eq_negOnePow (hF : ¬ IsUltrametricDist F) (hsq : ¬ IsSquare (-1 : F))
+    (d : GGPData F) (τ : InnerTwist d.QW)
+    (hev : Even ((d.symSpaceDim : ℤ) - (d.twist τ).symSpaceDim)) :
+    kottwitzSign d τ = (((d.symSpaceDim : ℤ) - (d.twist τ).symSpaceDim) / 2).negOnePow := by
+  rw [kottwitzSign_of_not_isSquare hF hsq]
+  obtain ⟨c, hc⟩ := hev
+  have hc2 : ((d.symSpaceDim : ℤ) - (d.twist τ).symSpaceDim) / 2 = c := by omega
+  rw [hc2]
+  rcases Int.even_or_odd c with ⟨j, hj⟩ | ⟨j, hj⟩
+  · rw [ite_eq_left (by omega), Int.negOnePow_even c ⟨j, hj⟩, Units.val_one]
+  · rw [ite_eq_right (by omega), Int.negOnePow_odd c ⟨j, hj⟩, Units.val_neg, Units.val_one]
 
 /-- The trivial twist has Kottwitz sign `1`. -/
 theorem kottwitzSign_refl (d : GGPData F) : kottwitzSign d d.reflTwist = 1 := by
-  rw [kottwitzSign_eq_neg_one_pow]
-  have : wittIndex d.QW + wittIndex (d.twist d.reflTwist).QW + wittIndex d.QV +
-      wittIndex (d.twist d.reflTwist).QV = 2 * (wittIndex d.QW + wittIndex d.QV) := by
-    show wittIndex d.QW + wittIndex d.QW + wittIndex d.QV + wittIndex d.QV = _
-    ring
-  rw [this, pow_mul]
-  norm_num
+  rw [kottwitzSign]
+  split_ifs
+  · have : wittIndex d.QW + wittIndex (d.twist d.reflTwist).QW + wittIndex d.QV +
+        wittIndex (d.twist d.reflTwist).QV = 2 * (wittIndex d.QW + wittIndex d.QV) := by
+      show wittIndex d.QW + wittIndex d.QW + wittIndex d.QV + wittIndex d.QV = _
+      ring
+    rw [this, pow_mul]
+    norm_num
+  · rfl
+  · rfl
+  · exact absurd rfl ‹_›
 
 /-- The Kottwitz sign is a sign. -/
 theorem kottwitzSign_eq_one_or (d : GGPData F) (τ : InnerTwist d.QW) :
     kottwitzSign d τ = 1 ∨ kottwitzSign d τ = -1 := by
-  rw [kottwitzSign_eq_neg_one_pow]
-  exact neg_one_pow_eq_or ℤ _
+  rw [kottwitzSign]
+  split_ifs
+  · exact neg_one_pow_eq_or ℤ _
+  · exact Or.inl rfl
+  · exact Or.inl rfl
+  · exact Or.inr rfl
 
-end PAdicStatement
+end KottwitzSign
+
+section PAdicSign
+
+variable [PAdicField F]
+
+/-- `e(G_α) = (-1)^{w(W)+w(W_α)+w(V)+w(V_α)}` (`p`-adic case of `kottwitzSign`). -/
+theorem kottwitzSign_eq_neg_one_pow (d : GGPData F) (τ : InnerTwist d.QW) :
+    kottwitzSign d τ = (-1) ^ (wittIndex d.QW + wittIndex (d.twist τ).QW + wittIndex d.QV +
+      wittIndex (d.twist τ).QV) :=
+  kottwitzSign_of_isUltrametricDist d τ
+
+end PAdicSign
 
 section InnerForms
 
