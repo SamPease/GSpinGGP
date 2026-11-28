@@ -56,9 +56,9 @@ present, a single unproved step (`sorry`).
 
 As of November 2026:
 
-- The project builds with 46 declarations containing `sorry`. The main theorem `local_ggp`
-  depends on 25 of them. One is the whole case `F = ℝ, ℂ`, `local_ggp_of_not_isUltrametricDist`.
-  The other 24 are on the path of the non-archimedean case and are of two kinds: the analytic core
+- The project builds with 45 declarations containing `sorry`. The main theorem `local_ggp`
+  depends on 24 of them. One is the whole case `F = ℝ, ℂ`, `local_ggp_of_not_isUltrametricDist`.
+  The other 23 are on the path of the non-archimedean case and are of two kinds: the analytic core
   of the local trace formula (Thesis Ch. 8–12, e.g. the bound on the kernel of the distribution `J`
   and its spectral expansion), and published results that the dissertation adapts to general spin
   groups (see below), plus some smaller lemmas. A `sorry` is a step this project still owes.
