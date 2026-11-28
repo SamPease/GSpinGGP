@@ -168,7 +168,7 @@ theorem thetaF_zero_fun : thetaF d 0 = 0 := by
   split_ifs
   · cases h : d.thetaPres (d.centG x) with
     | none => rfl
-    | some p => exact GGPData.ReducedLeviDatum.thetaFBP_zero_fun p.2 x
+    | some p => exact GGPData.ReducedLeviDatum.thetaFBP_zero_fun p.2.toIwasawaK x
   · rfl
 
 /-- **`θ_{κ f} = κ θ_f`** for `κ` invariant under conjugation (no hypothesis on `f`). -/
@@ -178,7 +178,7 @@ theorem thetaF_mul_invariant {κ : ↥d.G → ℂ} (hκ : ∀ g y : ↥d.G, κ (
   split_ifs
   · cases d.thetaPres (d.centG x) with
     | none => simp
-    | some p => exact GGPData.ReducedLeviDatum.thetaFBP_mul_invariant p.2 hκ f x
+    | some p => exact GGPData.ReducedLeviDatum.thetaFBP_mul_invariant p.2.toIwasawaK hκ f x
   · simp
 
 /-- **`θ_f(a x) = χ(a)⁻¹ θ_f(x)`** for `χ`-equivariant `f` and `a ∈ A_G(F)`, at every `x`
@@ -197,7 +197,7 @@ theorem thetaF_mul_AG_of_isChiEquivariant (χ : CentralCharOn d) {f : ↥d.G →
   · rw [ite_eq_left (hreg.2 hx), ite_eq_left hx]
     cases d.thetaPres (d.centG x) with
     | none => simp
-    | some p => exact GGPData.ReducedLeviDatum.thetaFBP_mul_AG p.2 χ hf a x
+    | some p => exact GGPData.ReducedLeviDatum.thetaFBP_mul_AG p.2.toIwasawaK χ hf a x
   · rw [ite_eq_right (mt hreg.1 hx), ite_eq_right hx, mul_zero]
 
 variable (d) in

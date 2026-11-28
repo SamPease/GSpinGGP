@@ -25,7 +25,9 @@ definition below is the sources' `v_M` when it holds.
 
 ## Main definitions
 
-* `GGPData.GoodK L`: a compact open subgroup `K` with `G = P K` for every `P ∈ 𝒫(M)`, in good
+* `GGPData.IwasawaK L`: a compact subgroup `K` with `G = P K` for every `P ∈ 𝒫(M)`; `H_P` and
+  `v_M` are defined for it.
+* `GGPData.GoodK L`: an `IwasawaK` with `K` open and in good
   position relative to `M` (it stabilizes weight-split lattices of `W` and `V`).  Examples:
   `GoodK.ofEqTop` for `M = G`; a lattice stabilizer (`GGP/LatticeK.lean`) for a maximal torus of
   `GL₁ × GSpin₃` (`Sanity/GL2GoodK.lean`).
@@ -42,7 +44,7 @@ definition below is the sources' `v_M` when it holds.
   its fundamental domains volume `1` (`exists_isAddFundamentalDomain_latticeHaar_eq_one`).
 * `vM_mul_left`: `v_M(m g) = v_M(g)` for `m ∈ M`.
 * `vM_mul_right`: `v_M(g k) = v_M(g)` for `k ∈ K`.
-* `continuous_vM`: `v_M` is locally constant.
+* `continuous_vM`: `v_M` is locally constant (for `K` open, `GoodK`).
 * `vM_eq_hullVolume_neg`: the hull of the `−H_P(g)` has the same volume.
 * `vM_eq_one_of_aG_eq_top`: `v_M = 1` when `a_M = a_G` (e.g. `M = G`).
 -/
@@ -105,8 +107,22 @@ theorem StabilizesSplitLattice.of_wtSpan_eq {ι' : Type*} {Q : QuadraticForm F V
 end SplitLattice
 
 variable (d) in
-/-- **A good compact subgroup for the Levi datum `L`**, carried as data: a compact open subgroup
-`K` of `G` with
+/-- **A compact subgroup with the Iwasawa decompositions for the Levi datum `L`**, carried as data:
+a compact subgroup `K` of `G` with `G = P K` for every `P ∈ 𝒫(M)` (Thesis §2.1; Beuzart-Plessis
+§1.1).  This is all that `H_P` (`hPar`), the weight `v_M` (`vM`) and `θ_f` (`thetaFBP`) read from
+`K`.  No openness is assumed, in preparation for the archimedean case (`K` maximal compact); the
+declarations here are still stated over a `p`-adic field.  The `p`-adic refinement with `K` open
+and in good position is `GoodK`. -/
+structure IwasawaK (L : d.FlagLeviDatum) where
+  /-- the compact subgroup -/
+  K : Subgroup ↥d.G
+  isCompact : IsCompact (K : Set ↥d.G)
+  /-- `G = P K` for every `P ∈ 𝒫(M)` -/
+  mul_eq : ∀ P ∈ d.parabolics L.M, ∀ g : ↥d.G, ∃ p ∈ P, ∃ k ∈ K, g = p * k
+
+variable (d) in
+/-- **A good compact subgroup for the Levi datum `L`**, carried as data: an `IwasawaK` whose
+subgroup `K` is open, i.e. a compact open subgroup `K` of `G` with
 * the Iwasawa decomposition `G = P K` for every `P ∈ 𝒫(M)` (hence `G = Q K` for every parabolic
   `Q ⊇ M`, which contains some `P ∈ 𝒫(M)`);
 * **good position relative to `M`** in lattice form: `K` stabilizes `𝒪_F`-lattices of `W` and `V`
@@ -128,26 +144,33 @@ wall exchanging the two isotropic members `X ↔ X'` of the middle, the norm of 
 itself can fail (e.g. `sl₂` with `Λ = ⟨ϖE, F, H⟩`); one uses instead the self-dual midpoint norm
 `(ν_Λ ν_{Λ^∨})^{1/2}`, which is diagonal in a weight-adapted hyperbolic basis and `K`-invariant.
 Specialness is not imposed beyond the Iwasawa decompositions. -/
-structure GoodK (L : d.FlagLeviDatum) where
-  /-- the compact open subgroup -/
-  K : Subgroup ↥d.G
+structure GoodK (L : d.FlagLeviDatum) extends d.IwasawaK L where
   isOpen : IsOpen (K : Set ↥d.G)
-  isCompact : IsCompact (K : Set ↥d.G)
-  /-- `G = P K` for every `P ∈ 𝒫(M)` -/
-  mul_eq : ∀ P ∈ d.parabolics L.M, ∀ g : ↥d.G, ∃ p ∈ P, ∃ k ∈ K, g = p * k
   /-- good position: `K` stabilizes weight-split lattices of `W` and `V` -/
   goodPositionW : StabilizesSplitLattice d.QW L.bW L.wtW (d.fst '' (K : Set ↥d.G))
   goodPositionV : StabilizesSplitLattice d.QV L.bV L.wtV (d.snd '' (K : Set ↥d.G))
 
-/-- The Iwasawa pair `(P, K)` of a good `K` and `P ∈ 𝒫(M)`. -/
-def GoodK.toIwasawaPair {L : d.FlagLeviDatum} (K : d.GoodK L) {P : Subgroup ↥d.G}
-    (hP : P ∈ d.parabolics L.M) : IwasawaPair ↥d.G where
+/-- A good `K` as an `IwasawaK` (dropping openness and good position); a coercion, so that the
+definitions on `IwasawaK` (`hPar`, `vM`, `thetaFBP`, …) apply to a `GoodK`.  Statements with a
+`GoodK` binder rely on it; elsewhere `toIwasawaK` is written explicitly where elaboration needs it
+(e.g. under projections). -/
+instance GoodK.instCoeOutIwasawaK {L : d.FlagLeviDatum} : CoeOut (d.GoodK L) (d.IwasawaK L) :=
+  ⟨GoodK.toIwasawaK⟩
+
+/-- The Iwasawa decomposition `G = P K` of an `IwasawaK` and `P ∈ 𝒫(M)`. -/
+def IwasawaK.toIwasawaDecomp {L : d.FlagLeviDatum} (K : d.IwasawaK L) {P : Subgroup ↥d.G}
+    (hP : P ∈ d.parabolics L.M) : IwasawaDecomp ↥d.G where
   P := P
   K := K.K
   isClosed_P := by obtain ⟨FW, FV, rfl, -⟩ := hP; exact d.isClosed_whittB FW FV
-  isOpen_K := K.isOpen
   isCompact_K := K.isCompact
   mul_eq := K.mul_eq P hP
+
+/-- The Iwasawa pair `(P, K)` of a good `K` and `P ∈ 𝒫(M)`. -/
+def GoodK.toIwasawaPair {L : d.FlagLeviDatum} (K : d.GoodK L) {P : Subgroup ↥d.G}
+    (hP : P ∈ d.parabolics L.M) : IwasawaPair ↥d.G where
+  toIwasawaDecomp := K.toIwasawaDecomp hP
+  isOpen_K := K.isOpen
 
 /-- **For `M = G`** (`𝒫(G) = {G}`) a compact open subgroup in good position is good. -/
 def GoodK.ofEqTop {L : d.FlagLeviDatum} (hM : L.M = ⊤) (K : Subgroup ↥d.G)
@@ -172,28 +195,28 @@ variable (L : d.ReducedLeviDatum)
 /-- **`H_P : G → a_M` for `P ∈ 𝒫(M)`** (Thesis §2.1; Beuzart-Plessis §1.1): `H_P(p k) = H_M(m)`
 for `p = m u ∈ P`, `k ∈ K`.  Defined through flags `F_W`, `F_V` with `P = P_{F_W} × P_{F_V}`
 chosen from `P ∈ 𝒫(M)`; any other choice gives the same map (`hPar_eq`). -/
-def hPar (K : d.GoodK L.toFlagLeviDatum) (P : ↥(d.parabolics L.M)) : ↥d.G → L.aM :=
-  L.hP P.2.choose_spec.choose_spec.2 K.K K.isOpen K.isCompact
+def hPar (K : d.IwasawaK L.toFlagLeviDatum) (P : ↥(d.parabolics L.M)) : ↥d.G → L.aM :=
+  L.hP P.2.choose_spec.choose_spec.2 K.K K.isCompact
     (P.2.choose_spec.choose_spec.1 ▸ K.mul_eq P P.2)
 
 /-- `hPar` is `hP` for any flags defining `P`. -/
-theorem hPar_eq (K : d.GoodK L.toFlagLeviDatum) (P : ↥(d.parabolics L.M)) {FW : IsotropicFlag d.QW}
-    {FV : IsotropicFlag d.QV} (hP : (P : Subgroup ↥d.G) = d.whittB FW FV)
+theorem hPar_eq (K : d.IwasawaK L.toFlagLeviDatum) (P : ↥(d.parabolics L.M))
+    {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV} (hP : (P : Subgroup ↥d.G) = d.whittB FW FV)
     (hL : d.IsLevi FW FV L.M) :
-    L.hPar K P = L.hP hL K.K K.isOpen K.isCompact (hP ▸ K.mul_eq P P.2) :=
-  L.hP_congr _ hL (P.2.choose_spec.choose_spec.1.symm.trans hP) _ _ _ _
+    L.hPar K P = L.hP hL K.K K.isCompact (hP ▸ K.mul_eq P P.2) :=
+  L.hP_congr _ hL (P.2.choose_spec.choose_spec.1.symm.trans hP) _ _ _
 
 /-- `H_P(g k) = H_P(g)` for `k ∈ K`. -/
-theorem hPar_mul_right (K : d.GoodK L.toFlagLeviDatum) (P : ↥(d.parabolics L.M)) (g : ↥d.G)
+theorem hPar_mul_right (K : d.IwasawaK L.toFlagLeviDatum) (P : ↥(d.parabolics L.M)) (g : ↥d.G)
     {k : ↥d.G}
     (hk : k ∈ K.K) : L.hPar K P (g * k) = L.hPar K P g :=
-  L.hP_mul_right _ _ _ _ g hk
+  L.hP_mul_right _ _ _ g hk
 
 /-- `H_P(m g) = H_M(m) + H_P(g)` for `m ∈ M`. -/
-theorem hPar_mul_left (K : d.GoodK L.toFlagLeviDatum) (P : ↥(d.parabolics L.M)) (m : ↥L.M)
+theorem hPar_mul_left (K : d.IwasawaK L.toFlagLeviDatum) (P : ↥(d.parabolics L.M)) (m : ↥L.M)
     (g : ↥d.G) :
     L.hPar K P ((m : ↥d.G) * g) = L.HM m + L.hPar K P g :=
-  L.hP_mul_left_of_mem _ _ _ _ m g
+  L.hP_mul_left_of_mem _ _ _ m g
 
 /-! ## 4. `a_G`, `A_M(F)` and the measure on `a_M^G` -/
 
@@ -405,13 +428,13 @@ when `𝒫(M)` is finite (`FlagLeviDatum.finite_parabolics`), and `0` otherwise.
 is meaningful because `latticeMG` is a lattice (`latticeMG_isLattice`): `latticeHaar` gives its
 fundamental domains volume `1` (`exists_isAddFundamentalDomain_latticeHaar_eq_one`).  The weight is the sources'
 `v_M` when `(H_P(g))_P` is positive (see `GoodK`). -/
-def vM (K : d.GoodK L.toFlagLeviDatum) (g : ↥d.G) : ℝ :=
+def vM (K : d.IwasawaK L.toFlagLeviDatum) (g : ↥d.G) : ℝ :=
   Measure.hullVolume L.latticeMG
     (Set.range fun P : ↥(d.parabolics L.M) => L.aG.mkQ (L.hPar K P g))
 
 /-- **`v_M` is left `M`-invariant** (Beuzart-Plessis §1.10): every `H_P(m g)` is
 `H_M(m) + H_P(g)`, so the hull is translated. -/
-theorem vM_mul_left (K : d.GoodK L.toFlagLeviDatum) (m : ↥L.M) (g : ↥d.G) :
+theorem vM_mul_left (K : d.IwasawaK L.toFlagLeviDatum) (m : ↥L.M) (g : ↥d.G) :
     L.vM K ((m : ↥d.G) * g) = L.vM K g := by
   have : (Set.range fun P : ↥(d.parabolics L.M) => L.aG.mkQ (L.hPar K P ((m : ↥d.G) * g))) =
       L.aG.mkQ (L.HM m) +ᵥ Set.range fun P : ↥(d.parabolics L.M) => L.aG.mkQ (L.hPar K P g) := by
@@ -423,7 +446,7 @@ theorem vM_mul_left (K : d.GoodK L.toFlagLeviDatum) (m : ↥L.M) (g : ↥d.G) :
   rfl
 
 /-- **`v_M` is right `K`-invariant** (Beuzart-Plessis §1.10). -/
-theorem vM_mul_right (K : d.GoodK L.toFlagLeviDatum) (g : ↥d.G) {k : ↥d.G} (hk : k ∈ K.K) :
+theorem vM_mul_right (K : d.IwasawaK L.toFlagLeviDatum) (g : ↥d.G) {k : ↥d.G} (hk : k ∈ K.K) :
     L.vM K (g * k) = L.vM K g := by
   simp only [vM, L.hPar_mul_right K _ g hk]
 
@@ -441,7 +464,7 @@ theorem continuous_vM (K : d.GoodK L.toFlagLeviDatum) : Continuous (L.vM K) := b
 /-- **Sign conventions**: the hull of the `−H_P(g)` (the points of Waldspurger 2010, §2.1,
 `c_P(λ) = e^{−λ(Y_P)}`) has the same volume as the hull of the `H_P(g)` (Beuzart-Plessis §1.9,
 p. 36). -/
-theorem vM_eq_hullVolume_neg (K : d.GoodK L.toFlagLeviDatum) (g : ↥d.G) :
+theorem vM_eq_hullVolume_neg (K : d.IwasawaK L.toFlagLeviDatum) (g : ↥d.G) :
     L.vM K g = Measure.hullVolume L.latticeMG
       (Set.range fun P : ↥(d.parabolics L.M) => -L.aG.mkQ (L.hPar K P g)) := by
   rw [vM, ← Measure.hullVolume_neg, Set.neg_range]
@@ -487,7 +510,7 @@ theorem aG_eq_top_of_len_eq_zero (hW : L.FW.len = 0) (hV : L.FV.len = 0) : L.aG 
 
 /-- **`v_M = 1` when `a_M = a_G`** (e.g. `M = G`, Beuzart-Plessis §1.10 with `𝒫(G) = {G}`): the
 hull of a nonempty set in the zero space has volume `1`. -/
-theorem vM_eq_one_of_aG_eq_top (hG : L.aG = ⊤) (K : d.GoodK L.toFlagLeviDatum) (g : ↥d.G) :
+theorem vM_eq_one_of_aG_eq_top (hG : L.aG = ⊤) (K : d.IwasawaK L.toFlagLeviDatum) (g : ↥d.G) :
     L.vM K g = 1 := by
   have : Subsingleton L.aMG := Submodule.Quotient.subsingleton_iff.2 hG
   exact Measure.hullVolume_of_subsingleton _
@@ -495,7 +518,7 @@ theorem vM_eq_one_of_aG_eq_top (hG : L.aG = ⊤) (K : d.GoodK L.toFlagLeviDatum)
 
 /-- **`v_G = 1`**: for empty flags (`M = G`, `M_eq_top_of_len_eq_zero`) the weight is `1`. -/
 theorem vM_eq_one_of_len_eq_zero (hW : L.FW.len = 0) (hV : L.FV.len = 0)
-    (K : d.GoodK L.toFlagLeviDatum)
+    (K : d.IwasawaK L.toFlagLeviDatum)
     (g : ↥d.G) : L.vM K g = 1 :=
   L.vM_eq_one_of_aG_eq_top (L.aG_eq_top_of_len_eq_zero hW hV) K g
 

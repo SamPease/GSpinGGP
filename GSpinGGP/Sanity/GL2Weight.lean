@@ -184,10 +184,10 @@ theorem gl2_hP_apply {FW : IsotropicFlag (𝔾).QW} {FV : IsotropicFlag (𝔾).Q
     (hU : ∀ u ∈ (𝔾).whittU FW FV, specP (𝔾).QV ((𝔾).snd u) v = v) (e : ℤ)
     (hM : ∀ m : ↥(𝕃).M, specP (𝔾).QV ((𝔾).snd m) v = gl2Eig ((𝔾).snd m) 2 ^ e • v)
     (g : ↥(𝔾).G) :
-    e * (𝕃).hP hL gl2K ((𝔾).isOpen_latticeK _ _) ((𝔾).isCompact_latticeK _ _) hPK g gl2c₀ =
+    e * (𝕃).hP hL gl2K ((𝔾).isCompact_latticeK _ _) hPK g gl2c₀ =
       -Real.log (basisNorm 𝐟 (specP (𝔾).QV ((𝔾).snd g)⁻¹ v)) := by
   obtain ⟨p, hp, k, hk, rfl⟩ := hPK g
-  rw [(𝕃).hP_eq hL _ _ hPK ⟨p, hp⟩ hk]
+  rw [(𝕃).hP_eq hL _ hPK ⟨p, hp⟩ hk]
   set m := hL.proj ⟨p, hp⟩
   have hu := hL.inv_proj_mul_mem ⟨p, hp⟩
   set χ := gl2Eig ((𝔾).snd m) 2
@@ -229,9 +229,9 @@ theorem gl2_zero_mem_oppFlag : 𝐟 0 ∈ (𝕃).toFlagLeviDatum.opp.FV.sub 1 :=
   simp [flag]
 
 /-- **`H_B(g) = −log ‖P(g)⁻¹ (½ z₁)‖_Λ`** in the coordinate `gl2c₀`. -/
-theorem gl2_hPar_B (g : ↥(𝔾).G) : (𝕃).hPar gl2GoodK gl2B g gl2c₀ =
+theorem gl2_hPar_B (g : ↥(𝔾).G) : (𝕃).hPar gl2GoodK.toIwasawaK gl2B g gl2c₀ =
     -Real.log (basisNorm 𝐟 (specP (𝔾).QV ((𝔾).snd g)⁻¹ (𝐟 2))) := by
-  rw [(𝕃).hPar_eq gl2GoodK gl2B rfl (𝕃).isLevi]
+  rw [(𝕃).hPar_eq gl2GoodK.toIwasawaK gl2B rfl (𝕃).isLevi]
   have h := gl2_hP_apply (𝕃).isLevi (gl2_iwasawa _ _) (v := 𝐟 2) (basisNorm_basis 2)
     (fun u hu => by
       have := hu.2.2.1 ⟨0, Nat.zero_lt_one⟩ (𝐟 2) gl2_two_mem_flag
@@ -244,11 +244,11 @@ theorem gl2_hPar_B (g : ↥(𝔾).G) : (𝕃).hPar gl2GoodK gl2B g gl2c₀ =
   exact h
 
 /-- **`H_B̄(g) = log ‖P(g)⁻¹ z₋₁‖_Λ`** in the coordinate `gl2c₀`. -/
-theorem gl2_hPar_Bbar (g : ↥(𝔾).G) : (𝕃).hPar gl2GoodK gl2Bbar g gl2c₀ =
+theorem gl2_hPar_Bbar (g : ↥(𝔾).G) : (𝕃).hPar gl2GoodK.toIwasawaK gl2Bbar g gl2c₀ =
     Real.log (basisNorm 𝐟 (specP (𝔾).QV ((𝔾).snd g)⁻¹ (𝐟 0))) := by
   have hL : (𝔾).IsLevi (𝕃).toFlagLeviDatum.opp.FW (𝕃).toFlagLeviDatum.opp.FV (𝕃).M :=
     (𝕃).toFlagLeviDatum.opp_M ▸ (𝕃).toFlagLeviDatum.opp.isLevi
-  rw [(𝕃).hPar_eq gl2GoodK gl2Bbar rfl hL]
+  rw [(𝕃).hPar_eq gl2GoodK.toIwasawaK gl2Bbar rfl hL]
   have h := gl2_hP_apply hL (gl2_iwasawa _ _) (v := 𝐟 0) (basisNorm_basis 0)
     (fun u hu => by
       have := hu.2.2.1 ⟨0, Nat.zero_lt_one⟩ (𝐟 0) gl2_zero_mem_oppFlag
@@ -263,11 +263,12 @@ theorem gl2_hPar_Bbar (g : ↥(𝔾).G) : (𝕃).hPar gl2GoodK gl2Bbar g gl2c₀
 
 /-- **`H_B(n̄(t)) = −2 log max(1, ‖t‖)`** in the coordinate `gl2c₀`. -/
 theorem gl2_hPar_B_nbar (t : F) :
-    (𝕃).hPar gl2GoodK gl2B (gl2Nbar t) gl2c₀ = -(2 * Real.log (max 1 ‖t‖)) := by
+    (𝕃).hPar gl2GoodK.toIwasawaK gl2B (gl2Nbar t) gl2c₀ = -(2 * Real.log (max 1 ‖t‖)) := by
   rw [gl2_hPar_B, gl2_nbar_inv_two, gl2_basisNorm_nbar, Real.log_pow, Nat.cast_ofNat]
 
 /-- **`H_B̄(n̄(t)) = 0`**: `n̄(t)` fixes `z₋₁`. -/
-theorem gl2_hPar_Bbar_nbar (t : F) : (𝕃).hPar gl2GoodK gl2Bbar (gl2Nbar t) gl2c₀ = 0 := by
+theorem gl2_hPar_Bbar_nbar (t : F) :
+    (𝕃).hPar gl2GoodK.toIwasawaK gl2Bbar (gl2Nbar t) gl2c₀ = 0 := by
   rw [gl2_hPar_Bbar, gl2_nbar_inv_zero, basisNorm_basis, Real.log_one]
 
 /-! ## `𝒫(M) = {B, B̄}` -/
@@ -546,8 +547,9 @@ theorem gl2_latticeMG_map {ϖ : F} (h0 : 0 < ‖ϖ‖) (h1 : ‖ϖ‖ < 1)
 /-! ## The weight -/
 
 theorem gl2_range_hPar (g : ↥(𝔾).G) :
-    (Set.range fun P : ↥((𝔾).parabolics (𝕃).M) => (𝕃).aG.mkQ ((𝕃).hPar gl2GoodK P g)) =
-      {(𝕃).aG.mkQ ((𝕃).hPar gl2GoodK gl2B g), (𝕃).aG.mkQ ((𝕃).hPar gl2GoodK gl2Bbar g)} := by
+    (Set.range fun P : ↥((𝔾).parabolics (𝕃).M) => (𝕃).aG.mkQ ((𝕃).hPar gl2GoodK.toIwasawaK P g)) =
+      {(𝕃).aG.mkQ ((𝕃).hPar gl2GoodK.toIwasawaK gl2B g),
+        (𝕃).aG.mkQ ((𝕃).hPar gl2GoodK.toIwasawaK gl2Bbar g)} := by
   ext y
   constructor
   · rintro ⟨P, rfl⟩
@@ -565,7 +567,7 @@ segment between `H_B(n̄(t)) = −2 log max(1, ‖t‖)` and `H_B̄(n̄(t)) = 0`
 lattice is `ℤ (−log ‖ϖ‖)`. -/
 theorem gl2_vM_nbar {ϖ : F} (h0 : 0 < ‖ϖ‖) (h1 : ‖ϖ‖ < 1)
     (hmax : ∀ x : F, ‖x‖ < 1 → ‖x‖ ≤ ‖ϖ‖) (t : F) :
-    (𝕃).vM gl2GoodK (gl2Nbar t) = 2 * Real.log (max 1 ‖t‖) / (-Real.log ‖ϖ‖) := by
+    (𝕃).vM gl2GoodK.toIwasawaK (gl2Nbar t) = 2 * Real.log (max 1 ‖t‖) / (-Real.log ‖ϖ‖) := by
   rw [ReducedLeviDatum.vM, gl2_range_hPar,
     MeasureTheory.Measure.hullVolume_pair_of_equiv gl2AMGEquiv (neg_pos.2 (Real.log_neg h0 h1))
       (gl2_latticeMG_map h0 h1 hmax),
@@ -575,7 +577,7 @@ theorem gl2_vM_nbar {ϖ : F} (h0 : 0 < ‖ϖ‖) (h1 : ‖ϖ‖ < 1)
 /-- **`v_T(n̄(ϖ^{−n})) = 2n`.** -/
 theorem gl2_vM_nbar_zpow {ϖ : F} (h0 : 0 < ‖ϖ‖) (h1 : ‖ϖ‖ < 1)
     (hmax : ∀ x : F, ‖x‖ < 1 → ‖x‖ ≤ ‖ϖ‖) (n : ℕ) :
-    (𝕃).vM gl2GoodK (gl2Nbar (ϖ ^ n)⁻¹) = 2 * n := by
+    (𝕃).vM gl2GoodK.toIwasawaK (gl2Nbar (ϖ ^ n)⁻¹) = 2 * n := by
   have hl : Real.log ‖ϖ‖ ≠ 0 := (Real.log_neg h0 h1).ne
   have h1' : 1 ≤ ‖(ϖ ^ n)⁻¹‖ := by
     rw [norm_inv, norm_pow]
@@ -585,7 +587,7 @@ theorem gl2_vM_nbar_zpow {ϖ : F} (h0 : 0 < ‖ϖ‖) (h1 : ‖ϖ‖ < 1)
 
 /-- **`v_T(n̄(t)) = 0` iff `‖t‖ ≤ 1`**, i.e. iff the two points `H_B(n̄(t))`, `H_B̄(n̄(t))`
 coincide. -/
-theorem gl2_vM_nbar_eq_zero_iff (t : F) : (𝕃).vM gl2GoodK (gl2Nbar t) = 0 ↔ ‖t‖ ≤ 1 := by
+theorem gl2_vM_nbar_eq_zero_iff (t : F) : (𝕃).vM gl2GoodK.toIwasawaK (gl2Nbar t) = 0 ↔ ‖t‖ ≤ 1 := by
   obtain ⟨ϖ, h0, h1, hmax⟩ := exists_norm_lt_one_isGreatest (F := F)
   have hl : 0 < -Real.log ‖ϖ‖ := neg_pos.2 (Real.log_neg h0 h1)
   rw [gl2_vM_nbar h0 h1 hmax, div_eq_zero_iff, or_iff_left hl.ne', mul_eq_zero,
@@ -599,7 +601,7 @@ theorem gl2_vM_nbar_eq_zero_iff (t : F) : (𝕃).vM gl2GoodK (gl2Nbar t) = 0 ↔
 
 /-- **`v_T(n̄(t)) > 0` for `‖t‖ > 1`**: the weight of the torus is not identically zero (nor
 identically one, by `gl2_vM_nbar_eq_zero_iff`). -/
-theorem gl2_vM_nbar_pos {t : F} (ht : 1 < ‖t‖) : 0 < (𝕃).vM gl2GoodK (gl2Nbar t) := by
+theorem gl2_vM_nbar_pos {t : F} (ht : 1 < ‖t‖) : 0 < (𝕃).vM gl2GoodK.toIwasawaK (gl2Nbar t) := by
   obtain ⟨ϖ, h0, h1, hmax⟩ := exists_norm_lt_one_isGreatest (F := F)
   rw [gl2_vM_nbar h0 h1 hmax, max_eq_right ht.le]
   exact div_pos (mul_pos two_pos (Real.log_pos ht)) (neg_pos.2 (Real.log_neg h0 h1))

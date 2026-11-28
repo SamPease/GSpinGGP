@@ -99,7 +99,7 @@ theorem centG_le_M (L : d.FlagLeviDatum) (hx : x ∈ regularSet d.G d.lie) (hxM 
 measure on `G_x(F)`: `weightedOrbitalIntegral_conj_K` with `G_x(F) ⊆ M(F)` (`centG_le_M`) and the
 right invariance of the Haar measure (`isMulRightInvariant_of_mem_regularSet`) discharged. -/
 theorem weightedOrbitalIntegral_conj_K_of_mem_regularSet {L : d.ReducedLeviDatum}
-    {K : d.GoodK L.toFlagLeviDatum} (hx : x ∈ regularSet d.G d.lie) (hxM : x ∈ L.M)
+    {K : d.IwasawaK L.toFlagLeviDatum} (hx : x ∈ regularSet d.G d.lie) (hxM : x ∈ L.M)
     (μ : Measure ↥(d.centG x)) [μ.IsHaarMeasure] {k : ↥d.G} (hk : k ∈ K.K) (f : ↥d.G → ℂ) :
     d.weightedOrbitalIntegral L K x μ (fun g => f (k * g * k⁻¹)) =
       d.weightedOrbitalIntegral L K x μ f := by

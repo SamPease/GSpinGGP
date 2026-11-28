@@ -41,11 +41,12 @@ uses `d_c t` and has no separate factor `ν`.
   `thetaFBP = c_G · θ_f` (`θ_f` is linear in `dg` through the quotient measure); statements
   comparing with the sources must carry `c_G`.  `d_c t` itself is canonical and needs no
   comparison.
-* `K` is a `GoodK` (compact open, `G = P K` for `P ∈ 𝒫(M)`, good position), where Beuzart-Plessis
-  takes a special maximal compact subgroup.  `thetaFBP` depends on `K` through `v_M`, and on the
-  presentation `L` of `M` through the coordinates of `a_M`.  The dependence on the presentation
-  is only through the weight spaces: for the same `K`, `thetaFBP` is the same for any two
-  presentations with the same weight spaces up to relabelling, for every `f` (`thetaFBP_eq_of_sameWtSpaces`,
+* `K` is an `IwasawaK` (compact, `G = P K` for `P ∈ 𝒫(M)`; a `GoodK`, compact open in good
+  position, coerces to one), where Beuzart-Plessis takes a special maximal compact subgroup.
+  `thetaFBP` depends on `K` through `v_M`, and on the presentation `L` of `M` through the
+  coordinates of `a_M`.  The dependence on the presentation is only through the weight spaces:
+  for the same `K`, `thetaFBP` is the same for any two presentations with the same weight spaces
+  up to relabelling, for every `f` (`thetaFBP_eq_of_sameWtSpaces`,
   `TraceFormula/ThetaFBPPresentation.lean`), and for any two presentations of the same `M`
   modulo the `sorry` `sameWtSpaces_of_M_eq` (`thetaFBP_eq_of_M_eq`, off the path).  For strongly
   cuspidal `f` and `K` special (`GoodK.IsSpecial`) the independence of `K` is not proved here; it
@@ -433,7 +434,7 @@ introductory formula `(−1)^{a_{M(x)}} J_{M(x)}(x, f)` quoted in Thesis Ch. 1.
   (Waldspurger 2010, Lemme 5.2) says it does not for strongly cuspidal `f` and special `K`.  This
   is not proved here (`f` is arbitrary); `thetaF` takes it from `waldspurger2010_lemme_5_3`.
 * It is `0` if `d_c t` does not exist (`dcMeasure`). -/
-def thetaFBP (K : d.GoodK L.toFlagLeviDatum) (f : ↥d.G → ℂ) (x : ↥d.G) : ℂ :=
+def thetaFBP (K : d.IwasawaK L.toFlagLeviDatum) (f : ↥d.G → ℂ) (x : ↥d.G) : ℂ :=
   (-1) ^ finrank ℝ L.aMG * ((Real.sqrt (weylDisc d.lie (x : d.ambientˣ)) : ℂ))⁻¹ *
     d.weightedOrbitalIntegral L K x (L.dcMeasure x) f
 
@@ -441,7 +442,7 @@ variable {L}
 
 /-- **`θ_f(x) = (−1)^{dim a_M^G} ∫_{G_x(F)\G(F)} f(g⁻¹ x g) v_M(g) dg/d_c t`**: the factors
 `D^G(x)^{±1/2}` cancel (`D^G(x) > 0`). -/
-theorem thetaFBP_eq_integral (K : d.GoodK L.toFlagLeviDatum) (f : ↥d.G → ℂ) (x : ↥d.G) :
+theorem thetaFBP_eq_integral (K : d.IwasawaK L.toFlagLeviDatum) (f : ↥d.G → ℂ) (x : ↥d.G) :
     L.thetaFBP K f x = (-1) ^ finrank ℝ L.aMG *
       ∫ q, d.weightedIntegrand L K x f (CosetSpace.out _ q)
         ∂d.orbQuotMeasure x (L.dcMeasure x) := by
@@ -454,7 +455,7 @@ theorem thetaFBP_eq_integral (K : d.GoodK L.toFlagLeviDatum) (f : ↥d.G → ℂ
 and `x ∈ M(F) ∩ G_reg(F)` (Beuzart-Plessis §5.2, from Lemma 5.2.1(iv) with `y ∈ M(F)`; here from
 `weightedOrbitalIntegral_conj`, `weylDisc_conj` and the transport of `d_c t`, `dcMeasure_conj`).
 `IsMx L x` implies `IsMx L (m x m⁻¹)` for such `m`, which is not needed here. -/
-theorem thetaFBP_conj (K : d.GoodK L.toFlagLeviDatum) (f : ↥d.G → ℂ) {x m : ↥d.G}
+theorem thetaFBP_conj (K : d.IwasawaK L.toFlagLeviDatum) (f : ↥d.G → ℂ) {x m : ↥d.G}
     (hx : x ∈ regularSet d.G d.lie) (hxM : x ∈ L.M) (hm : m ∈ L.M) :
     L.thetaFBP K f (m * x * m⁻¹) = L.thetaFBP K f x := by
   have hx' : m * x * m⁻¹ ∈ regularSet d.G d.lie := conj_mem_regularSet d m x hx
@@ -476,7 +477,7 @@ theorem thetaFBP_conj (K : d.GoodK L.toFlagLeviDatum) (f : ↥d.G → ℂ) {x m 
 
 /-- **`θ_f(x)` is unchanged by conjugating `f` by `k ∈ K`**, for `x ∈ M(F) ∩ G_reg(F)`
 (`weightedOrbitalIntegral_conj_K_of_mem_regularSet`). -/
-theorem thetaFBP_conj_K (K : d.GoodK L.toFlagLeviDatum) (f : ↥d.G → ℂ) {x : ↥d.G}
+theorem thetaFBP_conj_K (K : d.IwasawaK L.toFlagLeviDatum) (f : ↥d.G → ℂ) {x : ↥d.G}
     (hx : x ∈ regularSet d.G d.lie) (hxM : x ∈ L.M) {k : ↥d.G} (hk : k ∈ K.K) :
     L.thetaFBP K (fun g => f (k * g * k⁻¹)) x = L.thetaFBP K f x := by
   unfold thetaFBP
@@ -489,7 +490,7 @@ theorem thetaFBP_conj_K (K : d.GoodK L.toFlagLeviDatum) (f : ↥d.G → ℂ) {x 
 
 /-- **The case `a_M = a_G`** (e.g. `M = G`, i.e. `x` elliptic in `G`): the sign is `1` and
 `v_M = 1`, so `θ_f(x) = D^G(x)^{−1/2} J_G(x, f; d_c t) = ∫_{G_x(F)\G(F)} f(g⁻¹ x g) dg/d_c t`. -/
-theorem thetaFBP_of_aG_eq_top (hG : L.aG = ⊤) (K : d.GoodK L.toFlagLeviDatum)
+theorem thetaFBP_of_aG_eq_top (hG : L.aG = ⊤) (K : d.IwasawaK L.toFlagLeviDatum)
     (f : ↥d.G → ℂ) (x : ↥d.G) :
     L.thetaFBP K f x =
       ((Real.sqrt (weylDisc d.lie (x : d.ambientˣ)) : ℂ))⁻¹ *
@@ -500,7 +501,7 @@ theorem thetaFBP_of_aG_eq_top (hG : L.aG = ⊤) (K : d.GoodK L.toFlagLeviDatum)
     weightedOrbitalIntegral_eq_orbitalIntegral_of_aG_eq_top hG]
 
 /-- The case `a_M = a_G` as an integral: `θ_f(x) = ∫_{G_x(F)\G(F)} f(g⁻¹ x g) dg/d_c t`. -/
-theorem thetaFBP_of_aG_eq_top_eq_integral (hG : L.aG = ⊤) (K : d.GoodK L.toFlagLeviDatum)
+theorem thetaFBP_of_aG_eq_top_eq_integral (hG : L.aG = ⊤) (K : d.IwasawaK L.toFlagLeviDatum)
     (f : ↥d.G → ℂ) (x : ↥d.G) :
     L.thetaFBP K f x = ∫ q, f ((CosetSpace.out _ q)⁻¹ * x * CosetSpace.out _ q)
       ∂d.orbQuotMeasure x (L.dcMeasure x) := by
@@ -536,7 +537,7 @@ theorem IsMx.of_centG_eq {x y : ↥d.G} (h : L.IsMx x) (hy : y ∈ regularSet d.
 
 /-- **`θ_f(a x) = χ(a)⁻¹ θ_f(x)` for one presentation**, `f` `χ`-equivariant and `a ∈ A_G(F)`:
 `G_{a x}(F) = G_x(F)`, and `f(g⁻¹ a x g) = f(a g⁻¹ x g) = χ(a)⁻¹ f(g⁻¹ x g)` (`a` central). -/
-theorem thetaFBP_mul_AG (K : d.GoodK L.toFlagLeviDatum) (χ : CentralCharOn d) {f : ↥d.G → ℂ}
+theorem thetaFBP_mul_AG (K : d.IwasawaK L.toFlagLeviDatum) (χ : CentralCharOn d) {f : ↥d.G → ℂ}
     (hf : IsChiEquivariant d χ f) (a : ↥d.AG) (x : ↥d.G) :
     L.thetaFBP K f ((a : ↥d.G) * x) = (((χ.toHom a)⁻¹ : Circle) : ℂ) * L.thetaFBP K f x := by
   rw [thetaFBP_eq_integral, thetaFBP_eq_integral,
@@ -549,7 +550,7 @@ theorem thetaFBP_mul_AG (K : d.GoodK L.toFlagLeviDatum) (χ : CentralCharOn d) {
   ring
 
 /-- **`θ_{κ f} = κ θ_f` for one presentation**, for `κ` invariant under conjugation. -/
-theorem thetaFBP_mul_invariant (K : d.GoodK L.toFlagLeviDatum) {κ : ↥d.G → ℂ}
+theorem thetaFBP_mul_invariant (K : d.IwasawaK L.toFlagLeviDatum) {κ : ↥d.G → ℂ}
     (hκ : ∀ g y : ↥d.G, κ (g⁻¹ * y * g) = κ y) (f : ↥d.G → ℂ) (x : ↥d.G) :
     L.thetaFBP K (κ * f) x = κ x * L.thetaFBP K f x := by
   rw [thetaFBP_eq_integral, thetaFBP_eq_integral]
@@ -558,7 +559,7 @@ theorem thetaFBP_mul_invariant (K : d.GoodK L.toFlagLeviDatum) {κ : ↥d.G → 
   ring
 
 /-- `θ_0 = 0` for one presentation. -/
-theorem thetaFBP_zero_fun (K : d.GoodK L.toFlagLeviDatum) (x : ↥d.G) :
+theorem thetaFBP_zero_fun (K : d.IwasawaK L.toFlagLeviDatum) (x : ↥d.G) :
     L.thetaFBP K 0 x = 0 := by
   rw [thetaFBP_eq_integral]
   unfold weightedIntegrand

@@ -918,13 +918,13 @@ theorem continuous_HM : Continuous L.HM :=
 
 /-- **The map `H_P`** (Thesis §2.1; Beuzart-Plessis §1.1; Waldspurger 2003 §I.1 uses the opposite
 sign and base `q`): for
-`P = P_{F_W} × P_{F_V} ∈ 𝒫(M)` and a compact open subgroup `K` with `G = P K`,
+`P = P_{F_W} × P_{F_V} ∈ 𝒫(M)` and a compact subgroup `K` with `G = P K`,
 `H_P(g) = H_M(m)` where `g = m u k` (`hP_mul`; well defined for every such `K`: `H_M` is trivial on
 the compact group `M`-part of `P ∩ K`). -/
 def hP {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV} (hL : d.IsLevi FW FV L.M)
-    (K : Subgroup ↥d.G) (hKo : IsOpen (K : Set ↥d.G)) (hKc : IsCompact (K : Set ↥d.G))
+    (K : Subgroup ↥d.G) (hKc : IsCompact (K : Set ↥d.G))
     (hPK : ∀ g : ↥d.G, ∃ p ∈ d.whittB FW FV, ∃ k ∈ K, g = p * k) : ↥d.G → L.aM :=
-  (IwasawaPair.mk (d.whittB FW FV) K (d.isClosed_whittB FW FV) hKo hKc hPK).extend
+  (IwasawaDecomp.mk (d.whittB FW FV) K (d.isClosed_whittB FW FV) hKc hPK).extend
     fun p => L.HM (hL.proj p)
 
 /-- **`H_M ∘ proj` kills elements generating relatively compact subgroups**: if all powers of
@@ -951,45 +951,44 @@ theorem HM_proj_mul_of_mem {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV}
 
 /-- **`H_P(p k) = H_M(proj p)`** for `p ∈ P`, `k ∈ K`. -/
 theorem hP_eq {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV} (hL : d.IsLevi FW FV L.M)
-    {K : Subgroup ↥d.G} (hKo : IsOpen (K : Set ↥d.G)) (hKc : IsCompact (K : Set ↥d.G))
+    {K : Subgroup ↥d.G} (hKc : IsCompact (K : Set ↥d.G))
     (hPK : ∀ g : ↥d.G, ∃ p ∈ d.whittB FW FV, ∃ k ∈ K, g = p * k) (p : ↥(d.whittB FW FV))
-    {k : ↥d.G} (hk : k ∈ K) : L.hP hL K hKo hKc hPK ((p : ↥d.G) * k) = L.HM (hL.proj p) :=
-  (IwasawaPair.mk (d.whittB FW FV) K (d.isClosed_whittB FW FV) hKo hKc hPK).extend_mul
+    {k : ↥d.G} (hk : k ∈ K) : L.hP hL K hKc hPK ((p : ↥d.G) * k) = L.HM (hL.proj p) :=
+  (IwasawaDecomp.mk (d.whittB FW FV) K (d.isClosed_whittB FW FV) hKc hPK).extend_mul
     (fun p q hq => L.HM_proj_mul_of_mem hL hKc p q hq) p hk
 
 /-- **`H_P(m u k) = H_M(m)`.** -/
 theorem hP_mul {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV} (hL : d.IsLevi FW FV L.M)
-    {K : Subgroup ↥d.G} (hKo : IsOpen (K : Set ↥d.G)) (hKc : IsCompact (K : Set ↥d.G))
+    {K : Subgroup ↥d.G} (hKc : IsCompact (K : Set ↥d.G))
     (hPK : ∀ g : ↥d.G, ∃ p ∈ d.whittB FW FV, ∃ k ∈ K, g = p * k) (m : ↥L.M)
     {u : ↥d.G} (hu : u ∈ d.whittU FW FV) {k : ↥d.G} (hk : k ∈ K) :
-    L.hP hL K hKo hKc hPK ((m : ↥d.G) * u * k) = L.HM m := by
-  rw [L.hP_eq hL hKo hKc hPK ⟨(m : ↥d.G) * u, (d.whittB FW FV).mul_mem (hL.le m.2)
+    L.hP hL K hKc hPK ((m : ↥d.G) * u * k) = L.HM m := by
+  rw [L.hP_eq hL hKc hPK ⟨(m : ↥d.G) * u, (d.whittB FW FV).mul_mem (hL.le m.2)
     (d.whittU_le_whittB FW FV hu)⟩ hk, hL.proj_mul m hu]
 
 /-- **`H_P` is right `K`-invariant.** -/
 theorem hP_mul_right {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV} (hL : d.IsLevi FW FV L.M)
-    {K : Subgroup ↥d.G} (hKo : IsOpen (K : Set ↥d.G)) (hKc : IsCompact (K : Set ↥d.G))
+    {K : Subgroup ↥d.G} (hKc : IsCompact (K : Set ↥d.G))
     (hPK : ∀ g : ↥d.G, ∃ p ∈ d.whittB FW FV, ∃ k ∈ K, g = p * k) (g : ↥d.G) {k : ↥d.G}
-    (hk : k ∈ K) : L.hP hL K hKo hKc hPK (g * k) = L.hP hL K hKo hKc hPK g :=
-  (IwasawaPair.mk (d.whittB FW FV) K (d.isClosed_whittB FW FV) hKo hKc hPK).extend_mul_right
+    (hk : k ∈ K) : L.hP hL K hKc hPK (g * k) = L.hP hL K hKc hPK g :=
+  (IwasawaDecomp.mk (d.whittB FW FV) K (d.isClosed_whittB FW FV) hKc hPK).extend_mul_right
     (fun p q hq => L.HM_proj_mul_of_mem hL hKc p q hq) g hk
 
 /-- **`H_P(p g) = H_M(proj p) + H_P(g)`** for `p ∈ P`; in particular
 `H_P(m g) = H_M(m) + H_P(g)` for `m ∈ M` (`hP_mul_left_of_mem`). -/
 theorem hP_mul_left {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV} (hL : d.IsLevi FW FV L.M)
-    {K : Subgroup ↥d.G} (hKo : IsOpen (K : Set ↥d.G)) (hKc : IsCompact (K : Set ↥d.G))
+    {K : Subgroup ↥d.G} (hKc : IsCompact (K : Set ↥d.G))
     (hPK : ∀ g : ↥d.G, ∃ p ∈ d.whittB FW FV, ∃ k ∈ K, g = p * k) (p : ↥(d.whittB FW FV))
     (g : ↥d.G) :
-    L.hP hL K hKo hKc hPK ((p : ↥d.G) * g) = L.HM (hL.proj p) + L.hP hL K hKo hKc hPK g :=
-  (IwasawaPair.mk (d.whittB FW FV) K (d.isClosed_whittB FW FV) hKo hKc hPK).extend_mul_left
+    L.hP hL K hKc hPK ((p : ↥d.G) * g) = L.HM (hL.proj p) + L.hP hL K hKc hPK g :=
+  (IwasawaDecomp.mk (d.whittB FW FV) K (d.isClosed_whittB FW FV) hKc hPK).extend_mul_left
     (fun p q hq => L.HM_proj_mul_of_mem hL hKc p q hq) (fun p q => by rw [map_mul, HM_mul]) p g
 
 theorem hP_mul_left_of_mem {FW : IsotropicFlag d.QW} {FV : IsotropicFlag d.QV}
-    (hL : d.IsLevi FW FV L.M) {K : Subgroup ↥d.G} (hKo : IsOpen (K : Set ↥d.G))
-    (hKc : IsCompact (K : Set ↥d.G))
+    (hL : d.IsLevi FW FV L.M) {K : Subgroup ↥d.G} (hKc : IsCompact (K : Set ↥d.G))
     (hPK : ∀ g : ↥d.G, ∃ p ∈ d.whittB FW FV, ∃ k ∈ K, g = p * k) (m : ↥L.M) (g : ↥d.G) :
-    L.hP hL K hKo hKc hPK ((m : ↥d.G) * g) = L.HM m + L.hP hL K hKo hKc hPK g := by
-  have := L.hP_mul_left hL hKo hKc hPK ⟨m, hL.le m.2⟩ g
+    L.hP hL K hKc hPK ((m : ↥d.G) * g) = L.HM m + L.hP hL K hKc hPK g := by
+  have := L.hP_mul_left hL hKc hPK ⟨m, hL.le m.2⟩ g
   have hm := hL.proj_mul m (d.whittU FW FV).one_mem
   simp only [mul_one] at hm
   rw [this, hm]
@@ -1018,14 +1017,14 @@ theorem HM_proj_congr {FW FW' : IsotropicFlag d.QW} {FV FV' : IsotropicFlag d.QV
 /-- **`H_P` depends only on `P` and `K`**, not on the flags defining `P` (`HM_proj_congr`). -/
 theorem hP_congr {FW FW' : IsotropicFlag d.QW} {FV FV' : IsotropicFlag d.QV}
     (hL : d.IsLevi FW FV L.M) (hL' : d.IsLevi FW' FV' L.M)
-    (hB : d.whittB FW FV = d.whittB FW' FV') {K : Subgroup ↥d.G} (hKo : IsOpen (K : Set ↥d.G))
+    (hB : d.whittB FW FV = d.whittB FW' FV') {K : Subgroup ↥d.G}
     (hKc : IsCompact (K : Set ↥d.G))
     (hPK : ∀ g : ↥d.G, ∃ p ∈ d.whittB FW FV, ∃ k ∈ K, g = p * k)
     (hPK' : ∀ g : ↥d.G, ∃ p ∈ d.whittB FW' FV', ∃ k ∈ K, g = p * k) :
-    L.hP hL K hKo hKc hPK = L.hP hL' K hKo hKc hPK' := by
+    L.hP hL K hKc hPK = L.hP hL' K hKc hPK' := by
   funext g
   obtain ⟨p, hp, k, hk, rfl⟩ := hPK g
-  rw [L.hP_eq hL hKo hKc hPK ⟨p, hp⟩ hk, L.hP_eq hL' hKo hKc hPK' ⟨p, hB ▸ hp⟩ hk,
+  rw [L.hP_eq hL hKc hPK ⟨p, hp⟩ hk, L.hP_eq hL' hKc hPK' ⟨p, hB ▸ hp⟩ hk,
     L.HM_proj_congr hL hL' hB p hp]
 
 end ReducedLeviDatum
