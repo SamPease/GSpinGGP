@@ -84,7 +84,8 @@ def mult (ψ : NontrivialAddChar F) (d : GGPData F) (π : UnitaryRep ↥d.G) : �
 /-- The Harish-Chandra character `θ_π` of `π`, normalized to be continuous on the regular
 semisimple set `G_reg(F)` (Thesis Ch. 1; `localCharacterOn`):
 * `F` non-archimedean: `∫ θ_π f = tr π(f)` for locally constant compactly supported `f`;
-* `F = ℝ, ℂ`: `∫ θ_π f = tr π(f)` for smooth compactly supported `f` (distribution character). -/
+* `F = ℝ, ℂ`: `∫ θ_π f = tr π(f)` for smooth compactly supported `f` (distribution character).
+The value is `0` when `π` has no character function continuous on `G_reg(F)`. -/
 def charG (d : GGPData F) (π : UnitaryRep ↥d.G) : ↥d.G → ℂ :=
   localCharacterOn F π (regularSet d.G d.lie)
 
@@ -105,11 +106,6 @@ theorem mult_eq_multiplicity (ψ : NontrivialAddChar F) (d : GGPData F) (π : Un
 theorem charG_eq_characterOn (d : GGPData F) (π : UnitaryRep ↥d.G) :
     charG d π = characterOn π (regularSet d.G d.lie) :=
   localCharacterOn_of_isUltrametricDist _ _
-
-/-- `π` has a Whittaker model of type `w` (`F` non-archimedean). -/
-theorem GGPData.localHasModel_iff_hasModel {d : GGPData F} (π : UnitaryRep ↥d.G)
-    (w : WhittakerDatum d) : LocalHasModel F π w.U w.χ ↔ HasModel π w.U w.χ :=
-  iff_of_eq (localHasModel_of_isUltrametricDist _ _ _)
 
 end Ultrametric
 
@@ -133,15 +129,6 @@ theorem charG_of_not_isUltrametricDist (d : GGPData F) (π : UnitaryRep ↥d.G)
     charG d π =
       LieRep.characterOn (φ.realLieStructure d.G d.isClosed_G) π (regularSet d.G d.lie) :=
   localCharacterOn_of_not_isUltrametricDist h d.isClosed_G _ _ φ
-
-/-- `π` has a Whittaker model of type `w` for `F = ℝ, ℂ`: a nonzero continuous
-`(U, χ)`-equivariant form on the smooth vectors. -/
-theorem GGPData.localHasModel_iff_of_not_isUltrametricDist {d : GGPData F}
-    (π : UnitaryRep ↥d.G) (w : WhittakerDatum d)
-    (φ : RealEmbedding F := (nonempty_realEmbedding_of_not_isUltrametricDist h).some) :
-    LocalHasModel F π w.U w.χ ↔
-      LieRep.HasModel (φ.realLieStructure d.G d.isClosed_G) π w.U w.χ :=
-  iff_of_eq (localHasModel_of_not_isUltrametricDist h d.isClosed_G _ _ _ φ)
 
 end Archimedean
 
@@ -311,6 +298,7 @@ with central character trivial on `Z_{G,H}(F) = A_{G,H}(F)`, with
 * **(STAB)** `θ_α = Σ_{π ∈ Π_α} θ_π` stable;
 * **(TRANS)** `θ_α(y) = e(G_α) θ_1(x)` for stably conjugate regular `x ∈ G(F)`, `y ∈ G_α(F)`;
 * **(WHITT)** for every Whittaker datum of `G` exactly one member of `Π_1` has a model.
+The same three hypotheses are used for `F = ℝ, ℂ`, with `charG` and `LocalHasModel` as above.
 The Langlands parameter itself is not modelled. -/
 structure TemperedPacketFamily (d : GGPData F) (IF : InnerFormSystem d) where
   /-- the index set of the packet `Π_α` -/
@@ -329,8 +317,8 @@ structure TemperedPacketFamily (d : GGPData F) (IF : InnerFormSystem d) where
     ∑ i, charG (IF.data α) (rep α i) y =
       (kottwitzSign d (IF.twist α) : ℂ) *
         ∑ i, charG (IF.data IF.base) (rep IF.base i) (IF.toBase x)
-  /-- **(WHITT)**: `LocalHasModel` is a nonzero `(U, χ)`-equivariant linear form on `π^∞`,
-  continuous if `F = ℝ, ℂ` -/
+  /-- **(WHITT)**: for each Whittaker datum exactly one member of `Π_1` has a nonzero
+  `(U, χ)`-equivariant form on `π^∞` (continuous if `F = ℝ, ℂ`). -/
   whitt : ∀ w : WhittakerDatum (IF.data IF.base),
     ∃! i : ι IF.base, LocalHasModel F (rep IF.base i) w.U w.χ
 
@@ -347,7 +335,7 @@ theorem TemperedPacketFamily.whitt_hasModel [IsUltrametricDist F] {d : GGPData F
     {IF : InnerFormSystem d} (P : TemperedPacketFamily d IF)
     (w : WhittakerDatum (IF.data IF.base)) :
     ∃! i : P.ι IF.base, HasModel (P.rep IF.base i) w.U w.χ := by
-  simpa only [GGPData.localHasModel_iff_hasModel] using P.whitt w
+  simpa only [localHasModel_of_isUltrametricDist] using P.whitt w
 
 /-- **(WHITT)** for `F = ℝ, ℂ`: for every Whittaker datum exactly one member of `Π_1` has a
 nonzero continuous `(U, χ)`-equivariant form on its smooth vectors. -/
@@ -358,7 +346,8 @@ theorem TemperedPacketFamily.whitt_of_not_isUltrametricDist (h : ¬ IsUltrametri
     ∃! i : P.ι IF.base, LieRep.HasModel
       (φ.realLieStructure (IF.data IF.base).G (IF.data IF.base).isClosed_G)
       (P.rep IF.base i) w.U w.χ := by
-  simpa only [GGPData.localHasModel_iff_of_not_isUltrametricDist h _ w φ] using P.whitt w
+  simpa only [localHasModel_of_not_isUltrametricDist h (IF.data IF.base).isClosed_G _ _ _ φ] using
+    P.whitt w
 
 end Packets
 

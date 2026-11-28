@@ -1767,7 +1767,8 @@ theorem packet_germ_transfer (hqs : d.IsQuasiSplit) (P : TemperedPacketFamily d 
       d.StablyConj x x' → (e • P.baseChar) x = (e • P.baseChar) x' := by
     intro x hx x' hx' hc
     simp only [Pi.smul_apply, smul_eq_mul]
-    rw [P.baseChar_isStableFn x x' hx hx' hc]
+    have hS := P.baseChar_isStableFn
+    rw [hS x x' hx hx' hc]
   have htrans : ∀ x ∈ regularSet d.G d.lie,
       ∀ y ∈ regularSet (d.twist (IF.twist α)).G (d.twist (IF.twist α)).lie,
       d.StablyConjG (IF.twist α) x y → P.packetChar α y = (e • P.baseChar) x := by
