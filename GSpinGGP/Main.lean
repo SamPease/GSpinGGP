@@ -1798,7 +1798,7 @@ def PacketGermTransfer (P : TemperedPacketFamily d IF) : Prop :=
 
 theorem packetGermTransfer_holds (hqs : d.IsQuasiSplit) (P : TemperedPacketFamily d IF) :
     PacketGermTransfer ψ P :=
-  fun α x y hx hy hxy O hO O' hO' => packet_germ_transfer ψ hqs P α x y hx hy hxy O hO O' hO'
+  packet_germ_transfer ψ hqs P
 
 end Packets
 
