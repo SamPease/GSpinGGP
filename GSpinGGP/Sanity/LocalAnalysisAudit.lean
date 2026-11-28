@@ -56,12 +56,31 @@ section Character
 local instance : LocallyCompactSpace ↥(⊤ : Subgroup ℝˣ) :=
   subgroup_locallyCompactSpace_of_isClosed ℝ ℝ ⊤ isClosed_univ
 
-
-example : LocalIsCharacterOf ℝ (trivialRep ↥(⊤ : Subgroup ℝˣ)) (fun _ => 1) := by
+theorem localIsCharacterOf_real_one :
+    LocalIsCharacterOf ℝ (trivialRep ↥(⊤ : Subgroup ℝˣ)) (fun _ => 1) := by
   rw [localIsCharacterOf_of_not_isUltrametricDist not_isUltrametricDist_real isClosed_univ]
   exact isCharacterOf_trivialRep_one _
 
+/-- The character of `1_G` exists, so `localCharacterOn` is a character of `1_G` continuous on `S`
+(not the junk value of the epsilon pattern). -/
+example (S : Set ↥(⊤ : Subgroup ℝˣ)) :
+    LocalIsCharacterOf ℝ (trivialRep ↥(⊤ : Subgroup ℝˣ))
+        (localCharacterOn ℝ (trivialRep ↥(⊤ : Subgroup ℝˣ)) S) ∧
+      ContinuousOn (localCharacterOn ℝ (trivialRep ↥(⊤ : Subgroup ℝˣ)) S) S :=
+  localCharacterOn_spec _ S ⟨fun _ => 1, localIsCharacterOf_real_one, continuousOn_const⟩
+
+/-- The trace is the Hilbert-space trace of `π(f)` (no Lie structure involved). -/
+example (f : ↥(⊤ : Subgroup ℝˣ) → ℂ) :
+    localTraceOf ℝ (trivialRep ↥(⊤ : Subgroup ℝˣ)) f = LieRep.traceOf (trivialRep _) f :=
+  localTraceOf_of_not_isUltrametricDist not_isUltrametricDist_real _ f
+
 end Character
+
+/-- The test functions are the smooth compactly supported functions for the Lie structure built
+from the real embedding `ℝ → ℝ`. -/
+example : localTestFunctions ℝ (⊤ : Subgroup ℝˣ) =
+    LieRep.testFunctions (realId.realLieStructure ⊤ isClosed_univ) :=
+  localTestFunctions_of_not_isUltrametricDist not_isUltrametricDist_real isClosed_univ realId
 
 /-! ### `F = ℂ` -/
 
@@ -74,6 +93,18 @@ example : LocalHasModel ℂ (trivialRep ↥(⊤ : Subgroup ℂˣ)) ⊤ (fun _ =>
     localMultiplicity_of_not_isUltrametricDist not_isUltrametricDist_complex isClosed_univ,
     multiplicity_trivialRep_one]
   exact one_ne_zero
+
+section CharacterC
+
+/-- `ℂˣ` is locally compact. -/
+local instance : LocallyCompactSpace ↥(⊤ : Subgroup ℂˣ) :=
+  subgroup_locallyCompactSpace_of_isClosed ℂ ℂ ⊤ isClosed_univ
+
+example : LocalIsCharacterOf ℂ (trivialRep ↥(⊤ : Subgroup ℂˣ)) (fun _ => 1) := by
+  rw [localIsCharacterOf_of_not_isUltrametricDist not_isUltrametricDist_complex isClosed_univ]
+  exact isCharacterOf_trivialRep_one _
+
+end CharacterC
 
 /-- With the real embedding given explicitly (the inclusion `ℝ → ℂ`) instead of by the
 classification. -/
@@ -110,6 +141,25 @@ theorem localMultiplicity_trivialRep_top :
     Module.Finite.equiv e.symm
   rw [multiplicity, equivariantForms_trivialRep_top, rank_top, Module.dual_rank_eq,
     Cardinal.lift_id, e.rank_eq, Module.rank_self, map_one]
+
+example : LocalHasModel F (trivialRep ↥(⊤ : Subgroup Fˣ)) ⊤ (fun _ => 1) := by
+  rw [localHasModel_iff_localMultiplicity_ne_zero, localMultiplicity_trivialRep_top]
+  exact one_ne_zero
+
+example : localTestFunctions F (⊤ : Subgroup Fˣ) = testFunctions ↥(⊤ : Subgroup Fˣ) :=
+  localTestFunctions_of_isUltrametricDist
+
+section Trace
+
+/-- `Fˣ` is locally compact. -/
+local instance : LocallyCompactSpace ↥(⊤ : Subgroup Fˣ) :=
+  subgroup_locallyCompactSpace_of_isClosed F F ⊤ isClosed_univ
+
+example (f : ↥(⊤ : Subgroup Fˣ) → ℂ) :
+    localTraceOf F (trivialRep ↥(⊤ : Subgroup Fˣ)) f = traceOf (trivialRep _) f :=
+  localTraceOf_of_isUltrametricDist _ f
+
+end Trace
 
 /-- There is no archimedean Lie structure in the non-archimedean case. -/
 example : archLieStructure? F (⊤ : Subgroup Fˣ) = none := archLieStructure?_eq_none F ⊤

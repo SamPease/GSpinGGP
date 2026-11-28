@@ -26,8 +26,9 @@ fields of a `RealLieStructure` are made local instances inside this file only. A
 homomorphism of Lie groups is smooth, by Cartan's theorem). That the identity is smooth between
 two such structures, and that `testFunctions` and `smoothVectors` do not depend on `L`, is proved in
 `GSpinGGP/Foundations/RealLieStructureOfClosed.lean` (`RealLieStructure.contMDiff_id`,
-`RealLieStructure.testFunctions_eq`, `RealLieStructure.smoothVectors_eq`); for the seminorms,
-forms, multiplicity, trace and character it is not yet proved.
+`RealLieStructure.testFunctions_eq`, `RealLieStructure.smoothVectors_eq`), and likewise for the
+character (`RealLieStructure.isCharacterOf_iff`, `RealLieStructure.characterOn_eq`); `traceOf`
+does not involve `L`. For the seminorms, forms, multiplicity and `HasModel` it is not yet proved.
 
 Everything lives in the namespace `GSpinGGP.LieRep`, so the names (`smoothVectors`,
 `multiplicity`, …) do not clash with the `p`-adic ones. Every notion takes the Lie structure `L`

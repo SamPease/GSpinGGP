@@ -23,7 +23,9 @@ norm of `F` is ultrametric:
 
 Only notions whose type does not depend on the case are split (not `π^∞` or the space of forms).
 The field `F` is an explicit argument, since it cannot be read off `G` or `π`; otherwise each
-notion has the argument order and the instance arguments of its `p`-adic namesake.
+notion has the argument order and the instance arguments of its `p`-adic namesake, except
+`localTraceOf`, which takes neither `[LocalField F]` nor the algebra instances on `A` (neither of
+its branches needs a Lie structure).
 
 In the archimedean case the Lie structure on `G` is `archLieStructure? F G`: the structure
 `φ.realLieStructure G hG` of `GSpinGGP/Foundations/RealLieStructureOfClosed.lean`, for the real
@@ -32,8 +34,10 @@ choice) when it exists and `G` is closed, and `none` otherwise. For a local fiel
 exists exactly when `F` is not ultrametric (`not_isUltrametricDist_iff_nonempty_realEmbedding`),
 so for closed `G` the value `none`, and with it the junk values of the selectors, is never reached
 (`isSome_archLieStructure?_iff`). The other choices inside `realLieStructure` (a basis of `A`, the
-slice charts) do not affect `C_c^∞(G)` and `π^∞` (`RealLieStructure.testFunctions_eq`,
-`RealLieStructure.smoothVectors_eq`); for the multiplicity and the character this is not yet proved.
+slice charts) do not affect `C_c^∞(G)`, `π^∞` and the character
+(`RealLieStructure.testFunctions_eq`, `RealLieStructure.smoothVectors_eq`,
+`RealLieStructure.isCharacterOf_iff`, `RealLieStructure.characterOn_eq`); for the seminorms, the
+continuous and equivariant forms, the multiplicity and `HasModel` this is not yet proved.
 
 The definitions are reduced only through the lemmas `…_of_isUltrametricDist` (the `p`-adic notion)
 and `…_of_not_isUltrametricDist` (the notion of `LieRep` at `φ.realLieStructure G hG`, for closed
@@ -91,11 +95,8 @@ theorem archLieStructure?_eq_none [IsUltrametricDist F] (G : Subgroup Aˣ) :
 are not reached for closed `G`. -/
 theorem isSome_archLieStructure?_iff {G : Subgroup Aˣ} (hG : IsClosed (G : Set Aˣ)) :
     (archLieStructure? F G).isSome ↔ ¬ IsUltrametricDist F := by
-  rw [not_isUltrametricDist_iff_nonempty_realEmbedding]
-  refine ⟨fun h => ?_, fun ⟨φ⟩ => by rw [archLieStructure?_eq_some F φ G hG]; rfl⟩
-  by_contra hne
-  rw [archLieStructure?, dite_eq_right fun h' => hne h'.1] at h
-  exact Bool.false_ne_true h
+  rw [archLieStructure?, Option.isSome_dite, not_isUltrametricDist_iff_nonempty_realEmbedding,
+    and_iff_left hG]
 
 variable {F}
 
@@ -158,7 +159,9 @@ def LocalIsCharacterOf (π : UnitaryRep ↥G) (θ : ↥G → ℂ) : Prop :=
 variable (F) in
 /-- The character `θ_π`, normalised to be continuous on `S`: `characterOn` if `F` is
 non-archimedean, `LieRep.characterOn` if `F` is archimedean (`0` in the unreachable case without
-a Lie structure). -/
+a Lie structure). In either branch the value is `0` when `π` has no character function continuous
+on `S`; over `ℝ` and `ℂ` its existence (on the regular set) is Harish-Chandra's regularity theorem,
+which is not assumed in this file. -/
 noncomputable def localCharacterOn (π : UnitaryRep ↥G) (S : Set ↥G) : ↥G → ℂ :=
   if IsUltrametricDist F then characterOn π S
   else (archLieStructure? F G).elim 0 fun L => LieRep.characterOn L π S
