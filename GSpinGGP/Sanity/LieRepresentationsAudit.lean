@@ -26,7 +26,8 @@ open scoped ContDiff Manifold NNReal
 namespace GSpinGGP.LieRep.Audit
 
 
-attribute [local instance] RealLieStructure.chartedSpace RealLieStructure.lieGroup
+attribute [local instance] RealLieStructure.normedAddCommGroup RealLieStructure.normedSpace
+  RealLieStructure.finiteDimensional RealLieStructure.chartedSpace RealLieStructure.lieGroup
 
 variable {G : Type} [Group G] [TopologicalSpace G]
 
@@ -34,7 +35,7 @@ variable {G : Type} [Group G] [TopologicalSpace G]
 noncomputable def trivialRep (G : Type) [Group G] [TopologicalSpace G] : UnitaryRep G :=
   UnitaryRep.ofMonoidHom ℂ 1 (fun _ => one_mem _) (fun _ => continuous_const)
 
-instance : FiniteDimensional ℂ (trivialRep G).H := inferInstanceAs (FiniteDimensional ℂ ℂ)
+local instance : FiniteDimensional ℂ (trivialRep G).H := inferInstanceAs (FiniteDimensional ℂ ℂ)
 
 @[simp]
 theorem trivialRep_ρ (g : G) (v : (trivialRep G).H) : (trivialRep G).ρ g v = v := rfl

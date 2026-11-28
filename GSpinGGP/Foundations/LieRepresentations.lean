@@ -77,7 +77,7 @@ normed space `E` and an atlas on `G` modelled on `E`, for which `G` is a smooth 
 with model `𝓘(ℝ, E)` (so without boundary). The topology of `G` is the given one. This is the
 shape of Tau Ceti's `EmbeddedLieSubgroupData`. -/
 structure RealLieStructure (G : Type u) [Group G] [TopologicalSpace G] where
-  /-- The model space (the Lie algebra, as a normed space). -/
+  /-- The model space of the charts (a real normed space of dimension `dim G`). -/
   E : Type
   [normedAddCommGroup : NormedAddCommGroup E]
   [normedSpace : NormedSpace ℝ E]
@@ -87,12 +87,10 @@ structure RealLieStructure (G : Type u) [Group G] [TopologicalSpace G] where
   /-- The group operations are smooth. -/
   [lieGroup : LieGroup 𝓘(ℝ, E) ∞ G]
 
-attribute [instance] RealLieStructure.normedAddCommGroup RealLieStructure.normedSpace
-  RealLieStructure.finiteDimensional
-
 namespace LieRep
 
-attribute [local instance] RealLieStructure.chartedSpace RealLieStructure.lieGroup
+attribute [local instance] RealLieStructure.normedAddCommGroup RealLieStructure.normedSpace
+  RealLieStructure.finiteDimensional RealLieStructure.chartedSpace RealLieStructure.lieGroup
 
 variable {G : Type u} [Group G] [TopologicalSpace G] (L : RealLieStructure G)
 
