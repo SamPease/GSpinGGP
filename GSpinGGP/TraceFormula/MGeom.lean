@@ -595,6 +595,7 @@ such characters agree on `G_reg(F)` (`hc_regularSet_open_conull`). -/
 theorem charG_mul_AG {η : CentralCharOn d} {π : UnitaryRep ↥d.G} (hπ : IsTempCC d η π)
     (a : ↥d.AG) {g : ↥d.G} (hg : g ∈ regularSet d.G d.lie) :
     charG d π ((a : ↥d.G) * g) = ((η.toHom a : Circle) : ℂ) * charG d π g := by
+  rw [charG_eq_characterOn]
   set z : ↥d.G := (a : ↥d.G)
   set c : ℂ := ((η.toHom a : Circle) : ℂ)
   have hc : c ≠ 0 := Circle.coe_ne_zero _
@@ -603,14 +604,16 @@ theorem charG_mul_AG {η : CentralCharOn d} {π : UnitaryRep ↥d.G} (hπ : IsTe
   have hπz : π.ρ z = c • (1 : π.H →L[ℂ] π.H) := hπ.2 a
   obtain ⟨hchar, hcont⟩ := hc_character d π hπ.1
   have hchar' := IsCharacterOf.comp_mul_left_of_scalar hchar hzc hc hπz
-  have hcont' : ContinuousOn (fun g' => c⁻¹ * charG d π (z * g')) (regularSet d.G d.lie) :=
+  have hcont' : ContinuousOn (fun g' => c⁻¹ * characterOn π (regularSet d.G d.lie) (z * g'))
+      (regularSet d.G d.lie) :=
     continuousOn_const.mul (hcont.comp (continuous_const.mul continuous_id).continuousOn
       fun g' hg' => mul_mem_regularSet_of_mem_AG d a hg')
   have : TotallyDisconnectedSpace ↥d.G := totallyDisconnectedSpace_subgroup F d.ambient d.G
   have hae := hchar'.ae_eq hchar
   have heq := Measure.eqOn_open_of_ae_eq (ae_restrict_of_ae hae) (hc_regularSet_open_conull d).1
     hcont' hcont hg
-  change c⁻¹ * charG d π (z * g) = charG d π g at heq
+  change c⁻¹ * characterOn π (regularSet d.G d.lie) (z * g) =
+    characterOn π (regularSet d.G d.lie) g at heq
   rw [← heq, ← mul_assoc, mul_inv_cancel₀ hc, one_mul]
 
 /-! ## 1. Interface statements -/
@@ -655,7 +658,8 @@ theorem mGeom_congr_regularSet {θ θ' : ↥d.G → ℂ} (h : Set.EqOn θ θ' (r
 Status: proved, via `charG_mul_AG`. -/
 theorem charG_mem_QC {η : CentralCharOn d} {π : UnitaryRep ↥d.G} (hπ : IsTempCC d η π) :
     charG d π ∈ QC d η.inv := by
-  refine ⟨fun ψ' => hc_character_isQuasiCharacter d ψ' π hπ.1, fun a g hg => ?_⟩
+  refine ⟨fun ψ' => by
+    rw [charG_eq_characterOn]; exact hc_character_isQuasiCharacter d ψ' π hπ.1, fun a g hg => ?_⟩
   rw [CentralCharOn.inv_apply, inv_inv]
   exact charG_mul_AG d hπ a hg
 

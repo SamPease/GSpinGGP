@@ -181,7 +181,7 @@ theorem toyD_mult_trivialRep (ψ : NontrivialAddChar F) :
     (hasModel_iff_multiplicity_ne_zero _ _ _).1
       (trivialRep_hasModel _ _ _ fun h => (𝕋).xi_eq_one_of_mem_AGH' ψ.toAddChar h
         (toyD_mem_AGH_of_mem_H h.2))
-  unfold mult
+  rw [mult_eq_multiplicity]
   generalize multiplicity (trivialRep ↥(𝕋).G) (𝕋).H ((𝕋).xi ψ.toAddChar) = m at hle hne ⊢
   rcases lt_or_eq_of_le hle with h | h
   · exact absurd (Order.lt_one_iff.mp h) hne
@@ -191,6 +191,7 @@ theorem toyD_mult_trivialRep (ψ : NontrivialAddChar F) :
 a model for every Whittaker datum of `toyD`) and `hc_character_isQuasiCharacter`. -/
 theorem toyD_charG_trivialRep_one (ψ : NontrivialAddChar F) :
     charG (𝕋) (trivialRep ↥(𝕋).G) 1 = 1 := by
+  rw [charG_eq_characterOn]
   have hQC := hc_character_isQuasiCharacter (𝕋) ψ _ toyD_trivialRep_isTempered
   obtain ⟨w, hw⟩ := rodier_germ_one (𝕋) toyData_isQuasiSplit ψ 1 rfl (zeroOrbit _ _)
     (toyD_mem_nilReg _ _ _)
