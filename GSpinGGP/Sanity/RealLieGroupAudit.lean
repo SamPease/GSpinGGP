@@ -3,6 +3,7 @@ Copyright (c) 2026 Samantha Pease. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import GSpinGGP.Foundations.RealLieGroup
+import GSpinGGP.Foundations.RealLieStructureOfClosed
 import GSpinGGP.Sanity.RealEmbeddingAudit
 import TauCeti.Geometry.Lie.AutomaticSmoothness
 
@@ -38,6 +39,12 @@ example : ∃ (E : Type) (_ : NormedAddCommGroup E) (_ : NormedSpace ℝ E)
     (_ : FiniteDimensional ℝ E) (_ : ChartedSpace E (⊥ : Subgroup ℝˣ)),
     LieGroup 𝓘(ℝ, E) ∞ (⊥ : Subgroup ℝˣ) :=
   realId.exists_lieGroup ⊥ (by simp)
+
+/-- The packaged structure for `ℝˣ` and for `ℂˣ`. -/
+noncomputable example : RealLieStructure (⊤ : Subgroup ℝˣ) := realId.realLieStructure ⊤ (by simp)
+
+noncomputable example : RealLieStructure (⊤ : Subgroup ℂˣ) :=
+  complexOfReal.realLieStructure ⊤ (by simp)
 
 section Units
 
