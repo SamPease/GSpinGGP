@@ -21,14 +21,17 @@ The structure involves choices (a basis of `A`, the slice charts of the closed-s
 For any two `RealLieStructure`s on the same topological group the identity is smooth in both
 directions (Tau Ceti's automatic smoothness of continuous homomorphisms of Lie groups), so the test
 functions and the smooth vectors of a unitary representation do not depend on the chosen structure
-(`testFunctions_eq`, `smoothVectors_eq`). For the seminorms, the continuous and equivariant forms,
-the multiplicity, the trace and the character this is not yet proved: the spaces of smooth vectors
-are equal only propositionally, so forms on them must be transported.
+(`testFunctions_eq`, `smoothVectors_eq`), nor do the character (`isCharacterOf_iff`,
+`characterOn_eq`, which see `L` only through the test functions) and the trace (which does not
+involve `L`). For the seminorms, the continuous and equivariant forms, the multiplicity and
+`HasModel` this is not yet proved: the spaces of smooth vectors are equal only propositionally, so
+forms on them must be transported.
 
 ## Main results
 
 * `RealEmbedding.realLieStructure φ G hG`: the real Lie structure on a closed subgroup `G ≤ Aˣ`.
 * `RealLieStructure.contMDiff_id`: the identity is smooth from one Lie structure to another.
+* `RealLieStructure.isCharacterOf_iff`, `RealLieStructure.characterOn_eq`: nor does the character.
 * `RealLieStructure.testFunctions_eq`, `RealLieStructure.smoothVectors_eq`: `C_c^∞(G)` and `π^∞`
   do not depend on the Lie structure.
 -/
@@ -89,6 +92,26 @@ theorem smoothVectors_eq (π : UnitaryRep G) :
     rw [LieRep.mem_smoothVectors_iff] at hv ⊢
     exact hv.comp (contMDiff_id L' L)
   exact le_antisymm (key L L') (key L' L)
+
+section Characters
+
+variable [IsTopologicalGroup G] [LocallyCompactSpace G] [MeasurableSpace G] [BorelSpace G]
+
+/-- Being the character of `π` does not depend on the Lie structure: it sees `L` only through
+`C_c^∞(G)` (`testFunctions_eq`). -/
+theorem isCharacterOf_iff (π : UnitaryRep G) (θ : G → ℂ) :
+    LieRep.IsCharacterOf L π θ ↔ LieRep.IsCharacterOf L' π θ := by
+  rw [LieRep.IsCharacterOf, LieRep.IsCharacterOf, testFunctions_eq L L']
+
+/-- The character `θ_π` normalised on `S` does not depend on the Lie structure. -/
+theorem characterOn_eq (π : UnitaryRep G) (S : Set G) :
+    LieRep.characterOn L π S = LieRep.characterOn L' π S := by
+  have h : LieRep.IsCharacterOf L π = LieRep.IsCharacterOf L' π :=
+    funext fun θ => propext (isCharacterOf_iff L L' π θ)
+  unfold LieRep.characterOn
+  rw [h]
+
+end Characters
 
 end RealLieStructure
 
