@@ -43,6 +43,7 @@ import GSpinGGP.Foundations.RealEmbedding
 import GSpinGGP.Foundations.RealEmbeddingClassification
 import GSpinGGP.Foundations.RealLieGroup
 import GSpinGGP.Foundations.RealLieStructureOfClosed
+import GSpinGGP.Foundations.LocalAnalysis
 import GSpinGGP.Foundations.PAdicQuadraticForms
 import GSpinGGP.Literature.Measure
 import GSpinGGP.Literature.Fourier
@@ -269,3 +270,4 @@ import GSpinGGP.Sanity.UnramifiedAudit
 import GSpinGGP.Sanity.KottwitzSignAudit
 import GSpinGGP.Sanity.HilbertTraceAudit
 import GSpinGGP.Sanity.LieRepresentationsAudit
+import GSpinGGP.Sanity.LocalAnalysisAudit
