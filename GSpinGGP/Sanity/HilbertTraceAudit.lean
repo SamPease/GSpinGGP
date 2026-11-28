@@ -7,10 +7,9 @@ import GSpinGGP.Foundations.HilbertTrace
 /-!
 # Sanity checks for `hilbertTrace`
 
-Values of `GSpinGGP.hilbertTrace` in small cases: the identity of `ℂⁿ` has trace `n`, a diagonal
-operator has the sum of its diagonal entries, the zero operator has trace `0`, a rank-one operator
-has trace `⟪x, y⟫`, and the identity of `ℓ²(ℕ, ℂ)`, which is not trace class, gets the junk
-value `0`.
+Values of `GSpinGGP.hilbertTrace` in small cases: the identity of `ℂⁿ` has trace `n`, the operator
+`2 • id` on `ℂ³` has trace `6`, the zero operator has trace `0`, a rank-one operator has trace
+`⟪x, y⟫`, and the identity of `ℓ²(ℕ, ℂ)`, which is not trace class, gets the junk value `0`.
 -/
 
 open scoped InnerProductSpace lp
