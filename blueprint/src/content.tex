@@ -52,16 +52,22 @@ Because every result on the path of the main theorem rests on literature assumpt
 dark green: the dark green nodes are the self-contained results. The graph's own legend uses the
 generic wording of the blueprint software (``ready to be formalized'' for the blue fill).
 
-\paragraph{Status} (November 2026). The project builds with 31 declarations containing
-\texttt{sorry}; the main theorem depends on 15 of them and on all 20 literature assumptions.
+\paragraph{Status} (November 2026). The main theorem is stated for every local field of
+characteristic zero ($p$-adic, $\mathbb R$ or $\mathbb C$). The project builds with 46 declarations
+containing \texttt{sorry}; the main theorem depends on 25 of them, one of which is the whole case
+$F=\mathbb R,\mathbb C$ (Theorem~\ref{local_ggp_of_not_isUltrametricDist}), and the other 21 are not on
+its path. Of the 30 literature assumptions, the main theorem uses 28, all through its non-archimedean
+case; 14 of the 30 are \emph{derived}: short, explicit combinations of printed statements, or printed
+statements whose hypotheses are checked for our objects in the docstring only, with the ingredients
+quoted and the steps written out. The others are printed statements, specialized. No literature
+assumption states for general spin groups a result that its source states for another group; where the
+dissertation adapts or combines published results, the statement is a theorem whose proof may not yet
+be formalized, and its proof sketch names the exact ingredients.
 Classical facts about quadratic forms (Witt cancellation and decomposition, Cartan--Dieudonn\'e,
 the classification over $p$-adic fields) are proved from the Tau Ceti library; Hilbert's Theorem 90
-for $\mathrm{GL}_m$ is proved from Mathlib. Only results stated verbatim in the literature (specialized
-to general spin groups, with the source's hypotheses checked) are literature assumptions; where the
-dissertation adapts or combines published results, the statement is a theorem whose proof is not yet
-formalized, and its proof sketch names the exact ingredients.
-The 11 unproved statements not on its path are collected in Chapter~\ref{chap:offpath}. To see exactly
-what the main theorem rests on, run \texttt{\#print axioms GSpinGGP.local\_ggp}.
+for $\mathrm{GL}_m$ is proved from Mathlib.
+Some of the unproved statements not on its path are collected in Chapter~\ref{chap:offpath}. To see
+exactly what the main theorem rests on, run \texttt{\#print axioms GSpinGGP.local\_ggp}.
 
 \input{chapters/gspin}
 \input{chapters/reps}

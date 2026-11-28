@@ -108,15 +108,15 @@ the regular orbit $\mathcal O_1$, $c_{\theta_1,\mathcal O_1}(1)$ is the number o
 model for the corresponding datum, which is $1$ by (WHITT). The multiplicity formula gives $m(\pi)<\infty$.
 \end{proof}
 
-\begin{theorem}[Main theorem: the local GGP conjecture for $\GSpin$]
-\label{local_ggp}
-\lean{GSpinGGP.local_ggp}
+\begin{theorem}[The main theorem for $F$ non-archimedean]
+\label{local_ggp_of_isUltrametricDist}
+\lean{GSpinGGP.local_ggp_of_isUltrametricDist}
 \leanok
 \uses{GGPData, InnerFormSystem, InnerTwist, IsQuasiSplit, TemperedPacketFamily, mult}
-(Thesis Thm.~6.4.1 = Thm.~1.0.1, $p$-adic case.) Let $G$ be quasi-split and $(\Pi_\alpha)_\alpha$ tempered
-packets on the inner forms $G_\alpha$, $\alpha\in H^1(F,\SO(W))$, with central characters trivial on
-$Z_{G,H}(F)$, satisfying (STAB), (TRANS), (WHITT). Then exactly one $\pi\in\bigsqcup_\alpha\Pi_\alpha$ has
-$m(\pi)=1$, and $m(\pi')=0$ for all others.
+(Thesis Thm.~6.4.1 = Thm.~1.0.1, $p$-adic case.) Let $F$ be $p$-adic, $G$ quasi-split and
+$(\Pi_\alpha)_\alpha$ tempered packets on the inner forms $G_\alpha$, $\alpha\in H^1(F,\SO(W))$, with central
+characters trivial on $Z_{G,H}(F)$, satisfying (STAB), (TRANS), (WHITT). Then exactly one
+$\pi\in\bigsqcup_\alpha\Pi_\alpha$ has $m(\pi)=1$, and $m(\pi')=0$ for all others.
 \end{theorem}
 \begin{proof}
 \leanok
@@ -126,3 +126,42 @@ multiplicities is $1$, and each is a natural number, so exactly one is $1$ and t
 (Thesis \S6.7). Multiplicity one is not needed for this deduction.
 \end{proof}
 
+\begin{theorem}[The main theorem for $F=\mathbb R,\mathbb C$]
+\label{local_ggp_of_not_isUltrametricDist}
+\lean{GSpinGGP.local_ggp_of_not_isUltrametricDist}
+\leanok
+\uses{GGPData, InnerFormSystem, InnerTwist, IsQuasiSplit, TemperedPacketFamily, mult}
+The statement of Theorem~\ref{local_ggp} for $F=\mathbb R$ or $\mathbb C$, with $m(\pi)$ the dimension of
+the continuous $H(F)$-equivariant forms on the smooth vectors of $\pi$, and characters and Whittaker
+models in (STAB), (TRANS), (WHITT) taken in the same sense. For $F=\mathbb R$ this is Thesis Thm.~6.4.1,
+with the inner forms indexed by $H^1(F,\SO(W))$. For $F=\mathbb C$ there is one inner form (all nondegenerate
+forms of a given dimension are isometric); if every irreducible tempered representation of $G(\mathbb C)$ is
+generic (a classical fact for complex groups, neither proved nor cited here), then (WHITT) forces the packet
+to be a single representation $\pi$, and the statement reduces to $m(\pi)=1$.
+\end{theorem}
+\begin{proof}
+Not yet formalized. Thesis \S6.7 treats $F$ $p$-adic and $F=\mathbb R$ together: sum the multiplicity
+formula over each packet, rearrange the geometric side over strongly stable classes using (STAB) and
+(TRANS), cancel the classes $x\neq1$ by the signed count of Kottwitz signs, and evaluate the germ at $1$
+by BP Prop.~4.8.1(i) and (WHITT). For $F=\mathbb R$ the multiplicity formula is the archimedean case of
+Thesis Thm.~7.2.2, whose proof follows Beuzart-Plessis \cite{BP}, who treats $p$-adic and archimedean
+fields together, and Luo \cite{Luo}.
+\end{proof}
+
+\begin{theorem}[Main theorem: the local GGP conjecture for $\GSpin$]
+\label{local_ggp}
+\lean{GSpinGGP.local_ggp}
+\leanok
+\uses{GGPData, InnerFormSystem, InnerTwist, IsQuasiSplit, TemperedPacketFamily, mult}
+(Thesis Thm.~6.4.1 = Thm.~1.0.1.) Let $F$ be a local field of characteristic zero ($p$-adic, $\mathbb R$ or
+$\mathbb C$), $G$ quasi-split and $(\Pi_\alpha)_\alpha$ tempered packets on the inner forms $G_\alpha$,
+$\alpha\in H^1(F,\SO(W))$, with central characters trivial on $Z_{G,H}(F)$, satisfying (STAB), (TRANS),
+(WHITT). Then exactly one $\pi\in\bigsqcup_\alpha\Pi_\alpha$ has $m(\pi)=1$, and $m(\pi')=0$ for all others.
+The dissertation treats $F$ $p$-adic or $\mathbb R$; $F=\mathbb C$ is included here.
+\end{theorem}
+\begin{proof}
+\leanok
+\uses{local_ggp_of_isUltrametricDist, local_ggp_of_not_isUltrametricDist}
+By cases on $F$: Theorem~\ref{local_ggp_of_isUltrametricDist} if $F$ is non-archimedean, and
+Theorem~\ref{local_ggp_of_not_isUltrametricDist} if $F=\mathbb R$ or $\mathbb C$.
+\end{proof}

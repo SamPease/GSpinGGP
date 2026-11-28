@@ -48,8 +48,13 @@ For a family of tempered packets `Π_α` on the inner forms `G_α` (STAB, TRANS,
    cancellation of Thesis §6.7; Galois cohomology is not modelled);
 6. `sum_mult_eq_germ_one` (Thesis (6.7.7)): `Σ_α Σ_π m(π) = c_{θ_1, O_1}(1)`;
 7. `sum_mult_eq_one` (Thesis (6.7.1)): `= 1`, by Rodier (BP Prop. 4.8.1(i)) and WHITT;
-8. `local_ggp`: exactly one member has `m(π) = 1`, all others `0` (a genuine proof from 7 and
-   `m(π) ≠ ∞`).
+8. `local_ggp_of_isUltrametricDist`: exactly one member has `m(π) = 1`, all others `0` (a genuine
+   proof from 7 and `m(π) ≠ ∞`);
+9. `local_ggp`: the theorem for every local field of characteristic zero, by cases on the field:
+   step 8 for `F` non-archimedean, and `local_ggp_of_not_isUltrametricDist` (`F = ℝ, ℂ`, not yet
+   proved).
+
+Steps 1–8 are stated for `F` `p`-adic.
 
 Own-work statements that are not yet proved are `sorry`; cited results are the axioms of
 `Literature/`.
@@ -2732,24 +2737,88 @@ theorem enat_sum_eq_one {ι : Type*} [Fintype ι] (f : ι → ℕ∞) (h : ∑ i
   rw [hi, hj] at this
   exact absurd this (by decide)
 
-/-! ## 10. The main theorem -/
+/-! ## 10. The main theorem for `F` non-archimedean -/
 
-/-- **MAIN THEOREM: the local Gan–Gross–Prasad conjecture for general spin groups**
-(Thesis Thm. 6.4.1 (= Thm. 1.0.1)), `p`-adic case.  Let `G` be quasi-split
-and `{Π_α}` tempered packets on the inner forms `G_α` (`α ∈ H¹(F, SO(W))`) with
-central characters trivial on `Z_{G,H}(F)` satisfying (STAB), (TRANS), (WHITT).  Then exactly one
-`π ∈ ⊔_α Π_α` has `m(π) = 1`, and `m(π') = 0` for all the others.
+/-- **The main theorem for `F` non-archimedean** (Thesis Thm. 6.4.1 (= Thm. 1.0.1), `p`-adic
+case).  Let `G` be quasi-split and `{Π_α}` tempered packets on the inner forms `G_α`
+(`α ∈ H¹(F, SO(W))`) with central characters trivial on `Z_{G,H}(F)` satisfying (STAB), (TRANS),
+(WHITT).  Then exactly one `π ∈ ⊔_α Π_α` has `m(π) = 1`, and `m(π') = 0` for all the others.
 
 The proof (Thesis §6.7) is the count `Σ_α Σ_{π∈Π_α} m(π) = 1` (`sum_mult_eq_one`),
 together with `m(π) ∈ ℕ` (`mult_ne_top`); multiplicity one (`emoryTakeda_mult_le_one`) is not
 needed for this deduction. -/
-theorem local_ggp (d : GGPData F) (hqs : d.IsQuasiSplit) (IF : InnerFormSystem d)
-    (P : TemperedPacketFamily d IF) :
+theorem local_ggp_of_isUltrametricDist (d : GGPData F) (hqs : d.IsQuasiSplit)
+    (IF : InnerFormSystem d) (P : TemperedPacketFamily d IF) :
     (∃! p : Σ α : IF.Idx, P.ι α, mult ψ (IF.data p.1) (P.rep p.1 p.2) = 1) ∧
     ∀ p : Σ α, P.ι α, mult ψ (IF.data p.1) (P.rep p.1 p.2) = 1 ∨
       mult ψ (IF.data p.1) (P.rep p.1 p.2) = 0 := by
   have : Finite IF.Idx := IF.finite_idx
   have : Fintype IF.Idx := Fintype.ofFinite _
   exact enat_sum_eq_one _ (sum_mult_eq_one ψ hqs IF P)
+
+end GSpinGGP
+
+/-! ## 11. The main theorem over every local field of characteristic zero -/
+
+namespace GSpinGGP
+
+variable {F : Type} [NontriviallyNormedField F] [LocalField F] (ψ : NontrivialAddChar F)
+
+/-- **The main theorem for `F = ℝ` and `F = ℂ`** (not yet proved).  A local field that is not
+ultrametric has a real embedding (`nonempty_realEmbedding_of_not_isUltrametricDist`), so it is
+`ℝ` or `ℂ`.  The statement is that of `local_ggp`, with `m(π)` the dimension of the continuous
+`H(F)`-equivariant forms on the smooth vectors for the real Lie structure of `G(F)`
+(`mult_of_not_isUltrametricDist`), and the characters and Whittaker models in (STAB), (TRANS),
+(WHITT) taken in the same sense (`charG_of_not_isUltrametricDist`,
+`TemperedPacketFamily.whitt_of_not_isUltrametricDist`).
+
+* For `F = ℝ` this is Thesis Thm. 6.4.1 (= Thm. 1.0.1), which the dissertation states for `F`
+  `p`-adic or `ℝ`, with the inner forms indexed as in `InnerFormSystem` (by `H¹(F, SO(W))`).
+* For `F = ℂ` there is one inner form (all nondegenerate forms of a given dimension are
+  isometric).  If every irreducible tempered representation of `G(ℂ)` is generic — a classical
+  fact for complex groups (they are irreducible unitary principal series), neither proved nor cited
+  here — then (WHITT) forces the packet to be a single representation `π`, and the statement
+  reduces to `m(π) = 1`.
+
+Neither case is proved here yet.
+
+What the statement entails: (a) taking all packets empty, it implies that the quasi-split group
+`G` has a Whittaker datum (true: a generic character exists), which is not proved here; (b) its
+hypotheses (STAB), (TRANS) speak of `θ_π`, which exists as a function on the regular set by
+Harish-Chandra's regularity theorem; for `F = ℝ, ℂ` that theorem is neither assumed nor proved in
+this development, and `charG` is the function with that property when one exists, `0` otherwise.
+
+Proof sketch (Thesis §6.7, which treats `F` `p`-adic and `F = ℝ` together): sum the multiplicity
+formula `m(π) = m_geom(θ_π)` over each packet, rearrange the geometric side over strongly stable
+classes using (STAB) and (TRANS), cancel the contributions of the classes `x ≠ 1` by the signed
+count of the Kottwitz signs over the inner forms, and evaluate the remaining germ at `1` by
+BP Prop. 4.8.1(i) and (WHITT).  For `F = ℝ` the multiplicity formula is the archimedean case of
+Thesis Thm. 7.2.2, whose proof (Thesis Ch. 7–12) follows Beuzart-Plessis's local trace formula
+for unitary groups (Astérisque 418), which treats `p`-adic and archimedean fields together, and
+Luo's treatment of special orthogonal groups over archimedean fields. -/
+theorem local_ggp_of_not_isUltrametricDist (h : ¬ IsUltrametricDist F) (d : GGPData F)
+    (hqs : d.IsQuasiSplit) (IF : InnerFormSystem d) (P : TemperedPacketFamily d IF) :
+    (∃! p : Σ α : IF.Idx, P.ι α, mult ψ (IF.data p.1) (P.rep p.1 p.2) = 1) ∧
+    ∀ p : Σ α, P.ι α, mult ψ (IF.data p.1) (P.rep p.1 p.2) = 1 ∨
+      mult ψ (IF.data p.1) (P.rep p.1 p.2) = 0 := by
+  sorry
+
+/-- **MAIN THEOREM: the local Gan–Gross–Prasad conjecture for general spin groups**
+(Thesis Thm. 6.4.1 (= Thm. 1.0.1)), for `F` a local field of characteristic zero (`p`-adic,
+`ℝ` or `ℂ`).  Let `G` be quasi-split and `{Π_α}` tempered packets on the inner forms `G_α`
+(`α ∈ H¹(F, SO(W))`) with central characters trivial on `Z_{G,H}(F)` satisfying (STAB), (TRANS),
+(WHITT).  Then exactly one `π ∈ ⊔_α Π_α` has `m(π) = 1`, and `m(π') = 0` for all the others.
+
+By cases on the field: `local_ggp_of_isUltrametricDist` (`F` non-archimedean) and
+`local_ggp_of_not_isUltrametricDist` (`F = ℝ, ℂ`, not yet proved).  The dissertation treats
+`F` `p`-adic or `ℝ`; `F = ℂ` is included here. -/
+theorem local_ggp (d : GGPData F) (hqs : d.IsQuasiSplit) (IF : InnerFormSystem d)
+    (P : TemperedPacketFamily d IF) :
+    (∃! p : Σ α : IF.Idx, P.ι α, mult ψ (IF.data p.1) (P.rep p.1 p.2) = 1) ∧
+    ∀ p : Σ α, P.ι α, mult ψ (IF.data p.1) (P.rep p.1 p.2) = 1 ∨
+      mult ψ (IF.data p.1) (P.rep p.1 p.2) = 0 := by
+  by_cases h : IsUltrametricDist F
+  · exact local_ggp_of_isUltrametricDist ψ d hqs IF P
+  · exact local_ggp_of_not_isUltrametricDist ψ h d hqs IF P
 
 end GSpinGGP

@@ -1,7 +1,8 @@
 # GSpinGGP
 
 A Lean 4 + Mathlib formalization, **in progress**, of the local Gan–Gross–Prasad conjecture for
-general spin groups over a p-adic field, following the PhD dissertation
+general spin groups over a local field of characteristic zero (p-adic, ℝ or ℂ), following the PhD
+dissertation
 
 > Samantha Pease, *The Local Gan-Gross-Prasad Conjecture for General Spin Groups*,
 > Rutgers University–Newark, 2026. [doi:10.7282/t3-qb3s-s249](https://doi.org/10.7282/t3-qb3s-s249)
@@ -9,17 +10,24 @@ general spin groups over a p-adic field, following the PhD dissertation
 cited in the source as "Thesis". The proof adapts Beuzart-Plessis's local trace formula for
 unitary groups (Astérisque 418) and Waldspurger's and Luo's work on special orthogonal groups.
 
-**This is a work in progress.** The main theorem is stated and its proof is assembled, but it still
-depends on unproved steps (`sorry`) and on results from the literature that are assumed as axioms.
+**This is a work in progress.** The main theorem is stated for every local field of characteristic
+zero. Its proof is assembled for non-archimedean fields, where it still depends on unproved steps
+(`sorry`) and on results from the literature that are assumed as axioms; for `F = ℝ, ℂ` it is, at
+present, a single unproved step.
 See [Status](#status), and the **[blueprint](https://sampease.github.io/GSpinGGP/)**, whose
 [dependency graph](https://sampease.github.io/GSpinGGP/blueprint/dep_graph_document.html) shows
 every step of the proof coloured by formalization status.
 
 ## The main theorem
 
-Let `W ⊂ V` be quadratic spaces over `F` with `V = W ⊕ Z`, `Z` split of odd dimension, and let
-`(G, H, ξ)` be the associated GGP triple, `G = GSpin(W) × GSpin(V)`, with `G` quasi-split.
-For a tempered irreducible representation `π` of `G(F)` write `m(π) = dim Hom_H(π, ξ)`.
+Let `F` be a local field of characteristic zero: in Lean, a nontrivially normed field that is
+complete, locally compact and of characteristic zero (`LocalField`). The archimedean ones are
+proved here to be `ℝ` and `ℂ`; that the others are the finite extensions of some `ℚ_p` is
+classical and not proved here. The dissertation treats `F` p-adic or `ℝ`. Let `W ⊂ V` be quadratic spaces over `F` with
+`V = W ⊕ Z`, `Z` split of odd dimension, and let `(G, H, ξ)` be the associated GGP triple,
+`G = GSpin(W) × GSpin(V)`, with `G` quasi-split.
+For a tempered irreducible representation `π` of `G(F)` write `m(π) = dim Hom_H(π^∞, ξ)`, the
+`H(F)`-equivariant linear forms on the smooth vectors (continuous ones if `F = ℝ, ℂ`).
 Given tempered packets `Π_α` on the pure inner forms `G_α` that are stable, transfer to one another
 with the Kottwitz sign, and are generic for every Whittaker datum (Thesis §6.3), exactly one
 member `π` of `⊔_α Π_α` has `m(π) = 1`, and all others have `m(π) = 0` (Thesis Thm. 6.4.1).
@@ -27,6 +35,8 @@ member `π` of `⊔_α Π_α` has `m(π) = 1`, and all others have `m(π) = 0` (
 In Lean (`GSpinGGP/Main.lean`):
 
 ```lean
+variable {F : Type} [NontriviallyNormedField F] [LocalField F] (ψ : NontrivialAddChar F)
+
 theorem local_ggp (d : GGPData F) (hqs : d.IsQuasiSplit) (IF : InnerFormSystem d)
     (P : TemperedPacketFamily d IF) :
     (∃! p : Σ α : IF.Idx, P.ι α, mult ψ (IF.data p.1) (P.rep p.1 p.2) = 1) ∧
@@ -34,21 +44,28 @@ theorem local_ggp (d : GGPData F) (hqs : d.IsQuasiSplit) (IF : InnerFormSystem d
       mult ψ (IF.data p.1) (P.rep p.1 p.2) = 0
 ```
 
-The Langlands parameter is not modelled: the theorem is proved for every family of packets
+The Langlands parameter is not modelled: the theorem is stated for every family of packets
 satisfying the stability, transfer and genericity hypotheses, which is all the proof uses.
+
+`local_ggp` is proved by cases on the field. For `F` non-archimedean it is
+`local_ggp_of_isUltrametricDist`, whose proof is assembled, with the `sorry`s and axioms listed
+under [Status](#status). For `F = ℝ, ℂ` it is `local_ggp_of_not_isUltrametricDist`, which is, at
+present, a single unproved step (`sorry`).
 
 ## Status
 
 As of November 2026:
 
-- The project builds with 45 declarations containing `sorry`. The main theorem `local_ggp`
-  depends on 24 of them. They are of two kinds: the analytic core of the local trace formula
-  (Thesis Ch. 8–12, e.g. the bound on the kernel of the distribution `J` and its spectral
-  expansion), and published results that the dissertation adapts to general spin groups (see
-  below), plus some smaller lemmas. A `sorry` is a step this project still owes.
+- The project builds with 46 declarations containing `sorry`. The main theorem `local_ggp`
+  depends on 25 of them. One is the whole case `F = ℝ, ℂ`, `local_ggp_of_not_isUltrametricDist`.
+  The other 24 are on the path of the non-archimedean case and are of two kinds: the analytic core
+  of the local trace formula (Thesis Ch. 8–12, e.g. the bound on the kernel of the distribution `J`
+  and its spectral expansion), and published results that the dissertation adapts to general spin
+  groups (see below), plus some smaller lemmas. A `sorry` is a step this project still owes.
 - Results from the literature are assumed as `axiom`s in `GSpinGGP/Literature/`, each with a
   docstring citing its source; they are where the formalization stops, and are not meant to be
-  proved here. `local_ggp` uses 28 of the 30. The other two are `exists_iwasawaPair_xi_sq_integrable`
+  proved here. `local_ggp` uses 28 of the 30. All of them enter through its non-archimedean case
+  `local_ggp_of_isUltrametricDist`. The other two are `exists_iwasawaPair_xi_sq_integrable`
   (Waldspurger 2003, Lemme II.1.5), intended as an input of the estimates of Thesis Ch. 8 and 10,
   and `tits_iwasawa_specialStab` (the Iwasawa decomposition for a special maximal compact subgroup
   in lattice form), intended for the existence of special presentations (`exists_specialK`).
